@@ -23,6 +23,167 @@ enum DioPal {
 
 enum DioMode { case home, focus, recede }
 
+// THE SYNC STATUS — the framework, FELT on the desk. Driven by the `DeskSyncDriver` outcome
+// + whether a Mac is paired. Premium + ambient, in the DioPal language: a quiet pill that
+// breathes while syncing, settles to a calm "synced · 2m ago", goes muted when there's no
+// peer, and flares honestly on error. NEVER a default spinner.
+enum DeskSyncState: Equatable {
+    case idle            // never run this session (paired, but no pass yet)
+    case unpaired        // no Mac paired → nothing to sync to
+    case syncing         // a pass is in flight
+    case synced          // last pass reached the hub and applied/pushed cleanly
+    case offline         // peer unreachable; the snapshot is queued for later
+    case error(String)   // a pass threw (kept honest)
+
+    var glyph: String {
+        switch self {
+        case .idle:     return "arrow.triangle.2.circlepath"
+        case .unpaired: return "wifi.slash"
+        case .syncing:  return "arrow.triangle.2.circlepath"
+        case .synced:   return "checkmark.circle.fill"
+        case .offline:  return "tray.and.arrow.up.fill"   // queued, will flush
+        case .error:    return "exclamationmark.triangle.fill"
+        }
+    }
+    var tint: Color {
+        switch self {
+        case .idle:     return DioPal.muted
+        case .unpaired: return DioPal.muted
+        case .syncing:  return DioPal.cobalt
+        case .synced:   return DioPal.mint
+        case .offline:  return DioPal.accent
+        case .error:    return Color(hex: 0xFF6B6B)
+        }
+    }
+    var spins: Bool { if case .syncing = self { return true } else { return false } }
+}
+
+// A relative "n ago" the status uses for its last-synced caption (calm + human).
+private func dioRelativeAgo(_ date: Date, now: Date = Date()) -> String {
+    let s = max(0, Int(now.timeIntervalSince(date)))
+    if s < 8 { return "just now" }
+    if s < 60 { return "\(s)s ago" }
+    let m = s / 60
+    if m < 60 { return "\(m)m ago" }
+    let h = m / 60
+    if h < 24 { return "\(h)h ago" }
+    return "\(h / 24)d ago"
+}
+
+// The desk's sync chip: a tap-to-sync pill that wears the live state. Ambient, breathing,
+// honest — and it carries the egress reality (bits port to your paired Mac on your LAN).
+struct DioSyncStatus: View {
+    let state: DeskSyncState
+    let lastSyncedAt: Date?
+    let peerLabel: String          // e.g. "192.168.1.13" — shown only when paired
+    let onSync: () -> Void
+    @State private var pressed = false
+
+    private var caption: String {
+        switch state {
+        case .idle:     return "Tap to sync"
+        case .unpaired: return "No Mac paired"
+        case .syncing:  return "Syncing…"
+        case .synced:   return lastSyncedAt.map { "Synced · \(dioRelativeAgo($0))" } ?? "Synced"
+        case .offline:  return "Offline · queued"
+        case .error(let m): return m.isEmpty ? "Sync failed" : m
+        }
+    }
+    private var title: String {
+        switch state {
+        case .unpaired: return "Sync"
+        case .syncing:  return "Sync"
+        case .synced:   return "Synced"
+        case .offline:  return "Queued"
+        case .error:    return "Sync error"
+        case .idle:     return "Sync"
+        }
+    }
+    var body: some View {
+        let tint = state.tint
+        Button(action: onSync) {
+            TimelineView(.animation(paused: !state.spins)) { tl in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                let breathe = state.spins ? (0.55 + 0.45 * (0.5 + 0.5 * sin(t * 3.0))) : 1.0
+                HStack(spacing: 9) {
+                    ZStack {
+                        Circle().fill(tint.opacity(0.16))
+                            .overlay(Circle().strokeBorder(tint.opacity(state.spins ? 0.55 * breathe : 0.4), lineWidth: 1.2))
+                            .frame(width: 30, height: 30)
+                        if state.spins {
+                            Circle().trim(from: 0, to: 0.7)
+                                .stroke(tint, style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
+                                .frame(width: 30, height: 30)
+                                .rotationEffect(.degrees(t * 220))
+                        }
+                        Image(systemName: state.glyph)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(tint)
+                            .opacity(state.spins ? 0.9 : 1)
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(title).font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text(caption).font(.system(size: 9.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+                    }
+                }
+                .padding(.leading, 8).padding(.trailing, 13).frame(height: 46)
+                .background(
+                    Capsule().fill(.white.opacity(0.07))
+                        .overlay(Capsule().strokeBorder(tint.opacity(state.spins ? 0.45 * breathe : 0.22), lineWidth: 1))
+                        .shadow(color: tint.opacity(state == .synced || state.spins ? 0.28 : 0), radius: 9, y: 3)
+                )
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(state.spins || state == .unpaired)
+        .scaleEffect(pressed ? 0.96 : 1)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pressed)
+        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: state)
+        .simultaneousGesture(DragGesture(minimumDistance: 0)
+            .onChanged { _ in if !pressed { pressed = true } }
+            .onEnded { _ in pressed = false })
+    }
+}
+
+// per-primitive sync cue — what's canonical (synced to your Mac) vs local-only / pending.
+enum PrimSyncCue: Equatable {
+    case synced          // confirmed canonical on the hub (this session) — calm mint dot
+    case pending         // edited locally, not yet pushed/confirmed — amber ring
+    case localOnly       // never syncs by design (games) — quiet, honest
+    case none            // no peer / not applicable → show nothing
+}
+
+// A tiny, hushed corner mark on a card carrying its sync cue. A filled mint check = canonical
+// on your Mac; a hollow amber ring = pending; a quiet slashed cloud = local-only (games).
+struct SyncCueBadge: View {
+    struct Spec { let glyph: String; let tint: Color; let filled: Bool; let breathes: Bool }
+    let spec: Spec
+    static func spec(_ cue: PrimSyncCue) -> Spec? {
+        switch cue {
+        case .synced:    return Spec(glyph: "checkmark", tint: DioPal.mint, filled: true, breathes: false)
+        case .pending:   return Spec(glyph: "arrow.up", tint: DioPal.accent, filled: false, breathes: true)
+        case .localOnly: return Spec(glyph: "iphone", tint: DioPal.muted, filled: false, breathes: false)
+        case .none:      return nil
+        }
+    }
+    var body: some View {
+        TimelineView(.animation(paused: !spec.breathes)) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            let pulse = spec.breathes ? (0.55 + 0.45 * (0.5 + 0.5 * sin(t * 2.4))) : 1.0
+            ZStack {
+                Circle().fill(spec.filled ? spec.tint : Color(hex: 0x12101A).opacity(0.92))
+                    .overlay(Circle().strokeBorder(spec.tint.opacity(spec.filled ? 0 : 0.85 * pulse), lineWidth: 1.4))
+                    .frame(width: 17, height: 17)
+                    .shadow(color: spec.filled ? spec.tint.opacity(0.45) : .black.opacity(0.4), radius: spec.filled ? 4 : 2)
+                Image(systemName: spec.glyph)
+                    .font(.system(size: 8.5, weight: .black))
+                    .foregroundStyle(spec.filled ? .white : spec.tint.opacity(0.95))
+            }
+            .opacity(spec.breathes ? pulse : 1)
+        }
+    }
+}
+
 // THE FIRST BOOT — an empty desk is not a void; it is a desk that teaches itself. A calm guided
 // spine orients you to the spatial model (objects · the AI core · zones) and points to the one
 // action that begins everything: record. Felt in motion — a breathing core, a staggered spine.
@@ -151,6 +312,54 @@ struct ZoneRec: Equatable {
     var glow: Bool = false
     var hex: Int = 0            // 0 ⇒ use the palette colour; else a fully custom colour
     var tint: Color { DioPal.zoneColor(color, hex) }
+
+    // Explicit memberwise init — restored because the `init(directory:)` bridge below
+    // suppresses Swift's synthesized memberwise initializer (all existing call sites use this).
+    init(path: String, color: Int, cx: Double, cy: Double, w: Double, h: Double,
+         borderW: Double = 1.5, borderStyle: Int = 0, fillStyle: Int = 0,
+         fillOpacity: Double = 0.12, glow: Bool = false, hex: Int = 0) {
+        self.path = path; self.color = color; self.cx = cx; self.cy = cy; self.w = w; self.h = h
+        self.borderW = borderW; self.borderStyle = borderStyle; self.fillStyle = fillStyle
+        self.fillOpacity = fillOpacity; self.glow = glow; self.hex = hex
+    }
+
+    // MARK: - CANONICAL BRIDGE (wave 4) — a ZoneRec IS the contract `Directory`.
+    //
+    // THE SPLIT: only identity + nesting cross the wire. The directory `id` is the zone's
+    // `path`; `parentId` is the parent path (a top-level zone → nil); `name` is the path's
+    // last segment. Geometry (cx/cy/w/h) + paint (color/border/fill/glow) are PER-DEVICE
+    // layout and are deliberately NOT carried — they stay on this ZoneRec only.
+    static func directoryId(forPath path: String) -> String { path }
+    static func parentId(forPath path: String) -> String? {
+        var c = path.split(separator: "/").map(String.init)
+        if !c.isEmpty { c.removeLast() }
+        let p = c.joined(separator: "/")
+        return p.isEmpty ? nil : p
+    }
+    func toDirectory(now: Date = Date()) -> Directory {
+        Directory(id: ZoneRec.directoryId(forPath: path),
+                  name: path.split(separator: "/").last.map(String.init) ?? path,
+                  parentId: ZoneRec.parentId(forPath: path),
+                  createdAt: now, updatedAt: now)
+    }
+    func synced(at: Date = Date()) -> Synced<Directory> {
+        .live(toDirectory(now: at), id: path, kind: .directory, modifiedAt: at)
+    }
+
+    // INVERSE BRIDGE — build a ZoneRec from an incoming `Directory` with DEFAULT geometry
+    // (the directory carried none). `index` spreads fresh zones across the canvas so a
+    // batch of pulled directories don't stack on one spot. The path-as-id round-trips
+    // back into the desk's slash-nested `path` model unchanged.
+    init(directory d: Directory, index: Int = 0) {
+        self.path = d.id
+        self.color = index
+        // a tidy default grid placement; the user can re-arrange + paint locally afterward
+        let col = index % 3, row = (index / 3) % 3
+        self.cx = 0.27 + 0.23 * Double(col)
+        self.cy = 0.20 + 0.18 * Double(row)
+        self.w = 168
+        self.h = 104
+    }
 }
 
 // the resolved look handed to the tray renderer
@@ -164,6 +373,7 @@ struct DioHero: View {
     var hot: Bool = false                          // a compatible primitive is hovering over me → I'm a route target
     var picked: Bool = false                       // selected by the lasso (part of an Ask bundle)
     var arrived: Bool = false                      // just woven off a recording → glaringly highlighted for a beat
+    var syncCue: PrimSyncCue = .none               // canonical (synced) vs local-only/pending — read on the card
     var onSummon: () -> Void = {}                   // long-press → radial summon (route/send)
     let onTap: () -> Void; let onDrop: (CGSize) -> Void; let onDragChange: (CGPoint?) -> Void
     @State private var drag: CGSize = .zero
@@ -194,6 +404,12 @@ struct DioHero: View {
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(Capsule().fill(DioPal.accent).shadow(color: DioPal.accent.opacity(0.7), radius: 6))
                         .offset(y: -s * 0.62).transition(.scale.combined(with: .opacity))
+                }
+                // the SUBTLE per-primitive sync cue: a corner mark for what's canonical (synced to
+                // your Mac) vs local-only / pending. Hushed by design — and yields to the NEW halo.
+                if !arrived && mode != .recede, let badge = SyncCueBadge.spec(syncCue) {
+                    SyncCueBadge(spec: badge).offset(x: s * 0.40, y: -s * 0.40)
+                        .transition(.scale.combined(with: .opacity))
                 }
             }
             Text(prim.title).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85))
@@ -323,15 +539,17 @@ struct DioZoneTray: View {
             .padding(13).frame(width: w, height: h, alignment: .topLeading)
             .background(zoneBackground(w, h, dashes))
             .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .gesture(DragGesture(minimumDistance: 0)
-                .onChanged { drag = $0.translation }                 // track 1:1 — no dead-zone, no implicit animation
+            .gesture(DragGesture(minimumDistance: 6)                 // small floor so a long-press-to-edit isn't read as a drag
+                .onChanged { drag = $0.translation }                 // track 1:1 — no implicit animation on the offset
                 .onEnded { v in
                     let d = hypot(v.translation.width, v.translation.height)
-                    if didEdit { didEdit = false; drag = .zero; return }
+                    // reset the local offset BEFORE committing the new position — otherwise the parent re-lays
+                    // the zone at its new spot while this view still carries the drag offset (= a 1-frame JUMP).
+                    let wasEdit = didEdit; didEdit = false; drag = .zero
+                    if wasEdit { return }
                     if d < 9 { onDive() } else { onMove(v.translation) }
-                    drag = .zero
                 })
-            .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in didEdit = true; haptic(); onEdit() })
+            .simultaneousGesture(LongPressGesture(minimumDuration: 0.45, maximumDistance: 8).onEnded { _ in didEdit = true; haptic(); onEdit() })
             // corner resize grip
             Image(systemName: "arrow.up.left.and.arrow.down.right")
                 .font(.system(size: 12, weight: .black)).foregroundStyle(tint)
@@ -395,99 +613,126 @@ struct ZonePattern: View {
 
 // THE ZONE STYLE EDITOR — paint a place: colour (palette or fully custom), border width + style, fill
 // pattern + opacity, glow. Long-press a zone to open it. Live preview swatch on top.
+// THE ZONE STUDIO — the zone itself is the hero: it lifts to focus, big and LIVE, and you paint it with a
+// real colour spectrum + curated looks. In-world, direct, premium (no detached settings form).
+struct ZoneLook { let name: String; let fill: Int; let edge: Int; let bw: Double; let op: Double; let glow: Bool }
 struct DioZoneEditor: View {
     @State var zone: ZoneRec
     let name: String
     let onSave: (ZoneRec) -> Void; let onDelete: () -> Void; let onCancel: () -> Void
-    @State private var custom = Color.white
+    @State private var hue: Double = 0
     private var tint: Color { zone.tint }
-    private let cols = [GridItem(.adaptive(minimum: 38), spacing: 10)]
+    private static let looks: [ZoneLook] = [
+        .init(name: "Glass", fill: 0, edge: 0, bw: 1.5, op: 0.14, glow: false),
+        .init(name: "Outline", fill: 0, edge: 0, bw: 3, op: 0.07, glow: false),
+        .init(name: "Dashed", fill: 0, edge: 1, bw: 2, op: 0.1, glow: false),
+        .init(name: "Hatch", fill: 2, edge: 0, bw: 1.5, op: 0.22, glow: false),
+        .init(name: "Dots", fill: 3, edge: 2, bw: 1.5, op: 0.2, glow: false),
+        .init(name: "Grid", fill: 4, edge: 0, bw: 1.5, op: 0.18, glow: false),
+        .init(name: "Neon", fill: 0, edge: 0, bw: 2.5, op: 0.24, glow: true),
+    ]
     var body: some View {
         ZStack {
-            Color.black.opacity(0.62).ignoresSafeArea().onTapGesture { onSave(zone) }
-            VStack(spacing: 0) {
-                HStack(spacing: 13) {
-                    previewSwatch.frame(width: 70, height: 48)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("PAINT THIS ZONE").font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1).foregroundStyle(tint)
-                        Text(name).font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
+            Color.black.opacity(0.78).ignoresSafeArea().onTapGesture { onSave(zone) }   // focus: dim the desk
+            RadialGradient(colors: [tint.opacity(0.16), .clear], center: .center, startRadius: 4, endRadius: 360)
+                .ignoresSafeArea().allowsHitTesting(false)                              // a soft spotlight on the lifted zone
+            VStack(spacing: 26) {
+                // THE HERO — the actual zone, large + live, lifted into focus, casting its own glow
+                heroZone.frame(width: 380, height: 188)
+                    .overlay(alignment: .topLeading) {
+                        HStack(spacing: 7) {
+                            Image(systemName: "square.dashed").font(.system(size: 12, weight: .bold)).foregroundStyle(tint)
+                            Text(name).font(.system(size: 16, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                        }.padding(16)
                     }
-                    Spacer(minLength: 0)
-                    Button { onSave(zone) } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 24)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
-                }.padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 14)
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 18) {
-                        sec("COLOUR") {
-                            LazyVGrid(columns: cols, spacing: 10) {
-                                ForEach(Array(DioPal.zonePalette.enumerated()), id: \.offset) { i, c in
-                                    Button { zone.color = i; zone.hex = 0; haptic() } label: {
-                                        Circle().fill(c).frame(width: 34, height: 34)
-                                            .overlay(Circle().strokeBorder(.white.opacity(zone.hex == 0 && zone.color == i ? 0.95 : 0.15), lineWidth: zone.hex == 0 && zone.color == i ? 2.5 : 1))
+                    .scaleEffect(1.0)
+                VStack(spacing: 20) {
+                    // a real continuous COLOUR SPECTRUM — drag to paint any hue
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("COLOUR").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1.6).foregroundStyle(DioPal.muted)
+                        GeometryReader { g in
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(LinearGradient(colors: Self.spectrum, startPoint: .leading, endPoint: .trailing)).frame(height: 22)
+                                    .overlay(Capsule().strokeBorder(.white.opacity(0.12), lineWidth: 0.5))
+                                Circle().fill(tint).overlay(Circle().strokeBorder(.white, lineWidth: 3)).frame(width: 30, height: 30)
+                                    .shadow(color: .black.opacity(0.45), radius: 4, y: 1)
+                                    .offset(x: hue * (g.size.width - 30))
+                            }
+                            .contentShape(Rectangle())
+                            .gesture(DragGesture(minimumDistance: 0).onChanged { v in
+                                hue = min(1, max(0, v.location.x / max(1, g.size.width - 30)))
+                                zone.hex = max(1, zoneHex(Color(hue: hue, saturation: 0.72, brightness: 0.96)))
+                            })
+                        }.frame(height: 30)
+                    }
+                    // curated LOOKS — tap to apply a whole style, keeping the colour
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("LOOK").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1.6).foregroundStyle(DioPal.muted)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 13) {
+                                ForEach(Array(Self.looks.enumerated()), id: \.offset) { _, lk in
+                                    let on = zone.fillStyle == lk.fill && zone.borderStyle == lk.edge && zone.glow == lk.glow && abs(zone.fillOpacity - lk.op) < 0.02
+                                    Button { withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { zone.fillStyle = lk.fill; zone.borderStyle = lk.edge; zone.borderW = lk.bw; zone.fillOpacity = lk.op; zone.glow = lk.glow }; haptic() } label: {
+                                        VStack(spacing: 6) {
+                                            styleSwatch(lk.fill, lk.edge, lk.bw, lk.glow, 80, 52, sel: on)
+                                            Text(lk.name).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(on ? DioPal.text : DioPal.muted)
+                                        }
                                     }.buttonStyle(.plain)
                                 }
-                                ColorPicker("", selection: $custom, supportsOpacity: false).labelsHidden().frame(width: 34, height: 34)
-                                    .onChange(of: custom) { c in zone.hex = max(1, zoneHex(c)) }
-                            }
+                            }.padding(.horizontal, 2).padding(.vertical, 4)
                         }
-                        sec("BORDER") {
-                            seg(["Solid", "Dashed", "Dotted"], $zone.borderStyle)
-                            labeledSlider("Width", value: $zone.borderW, range: 0.5...5)
-                        }
-                        sec("FILL") {
-                            seg(["Gradient", "Solid", "Hatch", "Dots", "Grid"], $zone.fillStyle)
-                            labeledSlider("Opacity", value: $zone.fillOpacity, range: 0.04...0.5)
-                        }
-                        sec("EFFECT") {
-                            Toggle(isOn: $zone.glow) { Text("Glow").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text) }.tint(tint)
-                        }
-                    }.padding(.horizontal, 20).padding(.bottom, 16)
+                    }
+                    HStack(spacing: 13) {
+                        Button { onDelete() } label: {
+                            HStack(spacing: 7) { Image(systemName: "trash"); Text("Delete").font(.system(size: 15, weight: .heavy, design: .rounded)) }
+                                .foregroundStyle(Color(hex: 0xFF6B6B)).frame(maxWidth: .infinity).frame(height: 54).background(Capsule().fill(.white.opacity(0.06)))
+                        }.buttonStyle(.plain)
+                        Button { onSave(zone) } label: {
+                            HStack(spacing: 8) { Image(systemName: "checkmark"); Text("Done").font(.system(size: 16.5, weight: .heavy, design: .rounded)) }
+                                .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 54)
+                                .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
+                                .shadow(color: tint.opacity(0.45), radius: 10, y: 4)
+                        }.buttonStyle(.plain)
+                    }
                 }
-                HStack(spacing: 12) {
-                    Button { onDelete() } label: {
-                        HStack(spacing: 6) { Image(systemName: "trash"); Text("Delete").font(.system(size: 14, weight: .heavy, design: .rounded)) }
-                            .foregroundStyle(Color(hex: 0xFF6B6B)).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(.white.opacity(0.05)))
-                    }.buttonStyle(.plain)
-                    Button { onSave(zone) } label: {
-                        HStack(spacing: 7) { Image(systemName: "checkmark"); Text("Done").font(.system(size: 15.5, weight: .heavy, design: .rounded)) }
-                            .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
-                            .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
-                    }.buttonStyle(.plain)
-                }.padding(.horizontal, 20).padding(.vertical, 14)
+                .frame(width: 380)
             }
-            .frame(maxWidth: 540)
-            .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(hex: 0x14121B)).overlay(RoundedRectangle(cornerRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
-            .padding(.horizontal, 24).padding(.vertical, 44)
+            .padding(.vertical, 8)
         }
-        .onAppear { if zone.hex != 0 { custom = Color(hex: UInt(max(0, zone.hex))) } }
+        .onAppear { hue = zone.hex != 0 ? hueOf(Color(hex: UInt(max(0, zone.hex)))) : 0 }
     }
-    private var previewSwatch: some View {
-        let dashes: [CGFloat]? = zone.borderStyle == 1 ? [6, 5] : (zone.borderStyle == 2 ? [1.5, 4] : nil)
-        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
+    private static let spectrum: [Color] = (0..<8).map { Color(hue: Double($0) / 7, saturation: 0.72, brightness: 0.96) }
+    // the hero — the real zone, large + live (mirrors the on-desk DioZoneTray look)
+    private var heroZone: some View {
+        let dashes: [CGFloat]? = zone.borderStyle == 1 ? [7, 5] : (zone.borderStyle == 2 ? [1.5, 5] : nil)
+        let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
         return ZStack {
-            if zone.fillStyle == 0 { shape.fill(LinearGradient(colors: [tint.opacity(zone.fillOpacity * 1.5), DioPal.trayBot.opacity(0.9)], startPoint: .top, endPoint: .bottom)) }
-            else { shape.fill(DioPal.trayBot.opacity(0.9)); if zone.fillStyle == 1 { shape.fill(tint.opacity(zone.fillOpacity)) } else { ZonePattern(kind: zone.fillStyle, color: tint.opacity(min(0.9, zone.fillOpacity * 2.4))).clipShape(shape) } }
-            shape.strokeBorder(tint.opacity(0.8), style: StrokeStyle(lineWidth: CGFloat(zone.borderW), dash: dashes ?? []))
-        }.shadow(color: (zone.glow ? tint : .black).opacity(zone.glow ? 0.6 : 0.3), radius: zone.glow ? 12 : 5)
-    }
-    @ViewBuilder private func sec<C: View>(_ t: String, @ViewBuilder _ c: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 10) { Text(t).font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1.2).foregroundStyle(DioPal.muted); c() }
-    }
-    private func seg(_ labels: [String], _ sel: Binding<Int>) -> some View {
-        HStack(spacing: 6) {
-            ForEach(Array(labels.enumerated()), id: \.offset) { i, l in
-                Button { sel.wrappedValue = i; haptic() } label: {
-                    Text(l).font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(sel.wrappedValue == i ? .white : DioPal.muted)
-                        .padding(.horizontal, 12).frame(height: 32).frame(maxWidth: .infinity)
-                        .background(Capsule().fill(sel.wrappedValue == i ? tint.opacity(0.85) : .white.opacity(0.06)))
-                }.buttonStyle(.plain)
-            }
+            if zone.fillStyle == 0 { shape.fill(LinearGradient(colors: [tint.opacity(zone.fillOpacity * 1.6), DioPal.trayBot.opacity(0.92)], startPoint: .top, endPoint: .bottom)) }
+            else { shape.fill(DioPal.trayBot.opacity(0.92)); if zone.fillStyle == 1 { shape.fill(tint.opacity(zone.fillOpacity)) } else { ZonePattern(kind: zone.fillStyle, color: tint.opacity(min(0.9, zone.fillOpacity * 2.4))).clipShape(shape) } }
+            shape.strokeBorder(tint.opacity(0.85), style: StrokeStyle(lineWidth: CGFloat(zone.borderW), dash: dashes ?? []))
         }
+        .shadow(color: (zone.glow ? tint : .black).opacity(zone.glow ? 0.7 : 0.4), radius: zone.glow ? 22 : 12, y: 8)
     }
-    private func labeledSlider(_ label: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
-        HStack(spacing: 10) {
-            Text(label).font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).frame(width: 64, alignment: .leading)
-            Slider(value: value, in: range).tint(tint)
+    private func styleSwatch(_ fill: Int, _ edge: Int, _ bw: Double, _ glow: Bool, _ w: CGFloat, _ h: CGFloat, sel: Bool) -> some View {
+        let dashes: [CGFloat]? = edge == 1 ? [4, 3] : (edge == 2 ? [1, 3] : nil)
+        let shape = RoundedRectangle(cornerRadius: 9, style: .continuous)
+        return ZStack {
+            if fill == 0 { shape.fill(LinearGradient(colors: [tint.opacity(0.5), DioPal.trayBot.opacity(0.9)], startPoint: .top, endPoint: .bottom)) }
+            else { shape.fill(DioPal.trayBot.opacity(0.9)); if fill == 1 { shape.fill(tint.opacity(0.4)) } else { ZonePattern(kind: fill, color: tint.opacity(0.7)).clipShape(shape) } }
+            shape.strokeBorder(tint.opacity(0.85), style: StrokeStyle(lineWidth: CGFloat(bw), dash: dashes ?? []))
         }
+        .frame(width: w, height: h)
+        .shadow(color: glow ? tint.opacity(0.6) : .clear, radius: glow ? 8 : 0)
+        .overlay(sel ? RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(.white.opacity(0.95), lineWidth: 2).padding(-3) : nil)
+    }
+    private func hueOf(_ c: Color) -> Double {
+        #if canImport(UIKit)
+        var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(c).getHue(&h, saturation: &s, brightness: &b, alpha: &a)
+        return Double(h)
+        #else
+        return 0
+        #endif
     }
     private func zoneHex(_ c: Color) -> Int {
         #if canImport(UIKit)
@@ -502,6 +747,101 @@ struct DioZoneEditor: View {
         #if canImport(UIKit)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         #endif
+    }
+}
+
+// THE NOTE EDITOR — a focused, in-world writing surface (not a system form). The note lifts onto a
+// frosted card in its own mint glow; you give it a title and body, then Done. Delete sits beside it.
+struct DioNoteEditor: View {
+    @State var note: NoteRecord
+    let onSave: (NoteRecord) -> Void; let onDelete: () -> Void; let onCancel: () -> Void
+    @FocusState private var bodyFocused: Bool
+    private let tint = DioPal.mint
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.78).ignoresSafeArea().onTapGesture { onSave(note) }
+            RadialGradient(colors: [tint.opacity(0.16), .clear], center: .center, startRadius: 4, endRadius: 360)
+                .ignoresSafeArea().allowsHitTesting(false)
+            VStack(spacing: 16) {
+                HStack(spacing: 9) {
+                    DeskSprite(name: "note", size: 30)
+                    Text("NOTE").font(.system(size: 11, weight: .black, design: .rounded)).tracking(2).foregroundStyle(tint)
+                    Spacer(minLength: 0)
+                }
+                VStack(alignment: .leading, spacing: 12) {
+                    TextField("Title", text: $note.title)
+                        .font(.system(size: 21, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                        .textFieldStyle(.plain)
+                    Rectangle().fill(.white.opacity(0.08)).frame(height: 1)
+                    ZStack(alignment: .topLeading) {
+                        if note.body.isEmpty {
+                            Text("Write your note…").font(.system(size: 15, weight: .medium, design: .rounded))
+                                .foregroundStyle(DioPal.muted.opacity(0.7)).padding(.top, 8).padding(.leading, 5)
+                        }
+                        TextEditor(text: $note.body)
+                            .font(.system(size: 15, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text)
+                            .scrollContentBackground(.hidden).background(.clear).focused($bodyFocused)
+                            .frame(minHeight: 150, maxHeight: 230)
+                    }
+                }
+                .padding(16)
+                .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(.white.opacity(0.05))
+                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(tint.opacity(0.25), lineWidth: 1)))
+                HStack(spacing: 13) {
+                    Button { onDelete() } label: {
+                        HStack(spacing: 7) { Image(systemName: "trash"); Text("Delete").font(.system(size: 15, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(Color(hex: 0xFF6B6B)).frame(maxWidth: .infinity).frame(height: 54).background(Capsule().fill(.white.opacity(0.06)))
+                    }.buttonStyle(.plain)
+                    Button { onSave(note) } label: {
+                        HStack(spacing: 8) { Image(systemName: "checkmark"); Text("Done").font(.system(size: 16.5, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 54)
+                            .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
+                            .shadow(color: tint.opacity(0.45), radius: 10, y: 4)
+                    }.buttonStyle(.plain)
+                }
+            }
+            .frame(width: 380).padding(.vertical, 8)
+        }
+    }
+}
+
+// THE KB EDITOR — rename or delete a knowledge base, in its own violet focus (matches the note editor).
+struct DioKBEditor: View {
+    @State var kb: KBRecord
+    let onSave: (KBRecord) -> Void; let onDelete: () -> Void; let onCancel: () -> Void
+    private let tint = DioPal.violet
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.78).ignoresSafeArea().onTapGesture { onSave(kb) }
+            RadialGradient(colors: [tint.opacity(0.16), .clear], center: .center, startRadius: 4, endRadius: 360)
+                .ignoresSafeArea().allowsHitTesting(false)
+            VStack(spacing: 16) {
+                HStack(spacing: 9) {
+                    DeskSprite(name: "crystal", size: 32)
+                    Text("KNOWLEDGE BASE").font(.system(size: 11, weight: .black, design: .rounded)).tracking(2).foregroundStyle(tint)
+                    Spacer(minLength: 0)
+                    Text("\(kb.items) item\(kb.items == 1 ? "" : "s")").font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+                }
+                TextField("Name", text: $kb.name)
+                    .font(.system(size: 21, weight: .black, design: .rounded)).foregroundStyle(DioPal.text).textFieldStyle(.plain)
+                    .padding(16)
+                    .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white.opacity(0.05))
+                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(tint.opacity(0.25), lineWidth: 1)))
+                HStack(spacing: 13) {
+                    Button { onDelete() } label: {
+                        HStack(spacing: 7) { Image(systemName: "trash"); Text("Delete").font(.system(size: 15, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(Color(hex: 0xFF6B6B)).frame(maxWidth: .infinity).frame(height: 54).background(Capsule().fill(.white.opacity(0.06)))
+                    }.buttonStyle(.plain)
+                    Button { onSave(kb) } label: {
+                        HStack(spacing: 8) { Image(systemName: "checkmark"); Text("Done").font(.system(size: 16.5, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 54)
+                            .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
+                            .shadow(color: tint.opacity(0.45), radius: 10, y: 4)
+                    }.buttonStyle(.plain)
+                }
+            }
+            .frame(width: 360).padding(.vertical, 8)
+        }
     }
 }
 
@@ -1929,8 +2269,13 @@ struct DioStage: View {
     @AppStorage("hs.diorama.pos") private var posCSV = ""
     @AppStorage("hs.diorama.zones") private var zonesCSV = ""
     @AppStorage("hs.diorama.filed") private var dfiledCSV = ""
-    @AppStorage("hs.desk.kbs") private var kbsCSV = ""
+    @AppStorage("hs.desk.kbs") private var kbsCSV = ""          // LEGACY (classic home) — migrated into kbs on load
     @AppStorage("hs.desk.filed") private var kbFiledCSV = ""
+    @AppStorage("hs.diorama.kbs") private var kbsJSON = ""      // the desk's own KB primitives (id/name/path/items)
+    @State private var kbs: [KBRecord] = []
+    @State private var editingKB: KBRecord? = nil              // the rename editor is open on this KB
+    @State private var namingKB = false
+    @State private var newKBName = ""
     @State private var landed = false
     @State private var path: [String] = []
     @State private var diveDir = 1
@@ -1951,6 +2296,15 @@ struct DioStage: View {
     @State private var arkadeOpen = false
     @AppStorage("hs.desk.arkanoid.posX") private var arkadeX: Double = 0.5
     @AppStorage("hs.desk.arkanoid.posY") private var arkadeY: Double = 0.46
+    // the arcade: games live in the rail's "Play" column; each launches into an ephemeral window
+    @State private var openGameId: String? = nil
+    @AppStorage("hs.desk.gamewin.posX") private var gameWinX: Double = 0.5
+    @AppStorage("hs.desk.gamewin.posY") private var gameWinY: Double = 0.46
+    @AppStorage("hs.diorama.games") private var gamesJSON = ""  // games placed on the desk as primitives
+    @State private var placedGames: [GameRecord] = []
+    @State private var coders: [CoderSession] = []             // HSM-17 live Claude/Codex sessions on the desk
+    @State private var answeringCoder: CoderSession? = nil     // the answer composer is open on this session
+    @State private var openCoderSession: CoderSession? = nil   // the live "running coder" feed is open
     @State private var showSettings = false
     @State private var openMeeting: Meeting? = nil
     @State private var positions: [String: CGPoint] = [:]
@@ -1974,6 +2328,9 @@ struct DioStage: View {
     // routing (the keystone: drag a primitive onto the AI core → LLM → a new primitive)
     @AppStorage("hs.diorama.outputs") private var outputsJSON = ""
     @State private var outputs: [OutputRecord] = []
+    @AppStorage("hs.diorama.notes") private var notesJSON = ""  // first-class notes you write + place
+    @State private var notes: [NoteRecord] = []
+    @State private var editingNote: NoteRecord? = nil          // the note editor is open on this draft
     @State private var dragHotObjectId: String? = nil          // a compatible route target under a dragged primitive
     @State private var routeSourceId: String? = nil
     @State private var routeLensRun = ""
@@ -2010,6 +2367,24 @@ struct DioStage: View {
     // agent chains (crews) — Scout → Critic → Editor, run in order
     @AppStorage("hs.diorama.chains") private var chainsJSON = ""
     @State private var chains: [ChainRecord] = []
+    // LIVE SYNC (THE PRIMITIVE FRAMEWORK, wave 2) — the desk's primitives port into the
+    // paired desktop hub (the canonical store) and flow back. LWW by meta.last_modified;
+    // the iPad's `updatedAt` projection is a side map id→instant (layout never syncs).
+    @AppStorage("hs.diorama.synctimes") private var syncTimesJSON = ""   // id → last_modified
+    @AppStorage("hs.diorama.tombstones") private var tombstonesJSON = "" // "kind:id" → deleted_at
+    @State private var syncModified: [String: Date] = [:]
+    @State private var syncTombstones: [String: Date] = [:]
+    @State private var syncing = false
+    @State private var lastSyncSummary: String? = nil
+    // the FELT sync status (drives DioSyncStatus): the last pass outcome + when it landed,
+    // so the desk shows syncing / synced·"2m ago" / offline / error — never a bare spinner.
+    @State private var syncState: DeskSyncState = .idle
+    @State private var lastSyncedAt: Date? = nil
+    // bare ids confirmed canonical on the hub this session (pushed or applied on a reached pass)
+    // → the per-primitive cue can honestly show "synced" vs "pending". Cleared by a fresh edit.
+    @State private var syncConfirmed: Set<String> = []
+    // ids the LAST pull brought in fresh (a note authored on the web, etc.) → they arrive on
+    // the desk with the NEW-arrival treatment (reuses `arrivedIds`), so cross-surface sync is seen.
     @State private var editingChain: ChainRecord? = nil   // chain builder open
     @State private var editingZone: ZoneRec? = nil        // the zone style editor is open
     @State private var runChainSheet: ChainRecord? = nil  // the run/manage sheet
@@ -2037,10 +2412,7 @@ struct DioStage: View {
     private var emptyZone: Bool { !path.isEmpty && contentMembers().isEmpty && childZones().isEmpty }
 
     private var meetings: [Meeting] { model.meetings.sorted { $0.startedAt > $1.startedAt } }
-    private var knowledgeBases: [String] { kbsCSV.split(separator: ";").map(String.init).filter { !$0.isEmpty } }
-    private func kbCount(_ n: String) -> Int {
-        kbFiledCSV.split(separator: ";").compactMap { p -> String? in let kv = p.split(separator: "=", maxSplits: 1); return kv.count == 2 ? String(kv[1]) : nil }.filter { $0 == n }.count
-    }
+    private var knowledgeBases: [String] { kbs.map(\.name) }   // the agent builder picks a KB by name
 
     // EVERYTHING is a DeskPrimitive — built here from the live model.
     // CONTENT lives on the desk (meetings, generated outputs, knowledge); TOOLS live in the dock.
@@ -2048,7 +2420,10 @@ struct DioStage: View {
         var out: [any DeskPrimitive] = []
         for (i, m) in meetings.enumerated() where (filed["m:\(m.id)"] ?? "") == pathKey { out.append(MeetingPrimitive(meeting: m, index: i)) }
         for rec in outputs where rec.path == pathKey { out.append(OutputPrimitive(rec: rec)) }
-        if path.isEmpty { for kb in knowledgeBases.prefix(3) { out.append(KBPrimitive(name: kb, items: kbCount(kb))) } }
+        for rec in notes where rec.path == pathKey { out.append(NotePrimitive(rec: rec)) }
+        for rec in kbs where rec.path == pathKey { out.append(KBPrimitive(rec: rec)) }   // KBs live anywhere now
+        for rec in placedGames where rec.path == pathKey { out.append(gamePrim(rec)) }   // games placed on the desk
+        if path.isEmpty { for s in coders where s.state != .ended { out.append(AgentSessionPrimitive(session: s)) } }  // live coders at the desk root
         return out
     }
     private func toolMembers() -> [any DeskPrimitive] {
@@ -2075,10 +2450,44 @@ struct DioStage: View {
         guard !h.isEmpty, let p = Int(peerPort.trimmingCharacters(in: .whitespaces)), p > 0 else { return nil }
         return DeskHostLink(host: h, port: p)
     }
+    /// The status the chip shows — reconciles the raw last-pass `syncState` against the live
+    /// truth (no peer paired ⇒ unpaired; a pass in flight ⇒ syncing) so the pill never lies.
+    private var liveSyncState: DeskSyncState {
+        if hostLink == nil { return .unpaired }
+        if syncing { return .syncing }
+        return syncState
+    }
+    /// The per-primitive sync cue: canonical (synced this session) vs pending (edited, not yet
+    /// confirmed) vs local-only (games, by design). Honest — never claims "synced" without a peer.
+    private func syncCue(for prim: any DeskPrimitive) -> PrimSyncCue {
+        // games never sync; show the honest local-only mark wherever they sit
+        if prim.kind == .game { return .localOnly }
+        guard hostLink != nil else { return .none }
+        // only the durable, syncable classes carry a canonical/pending cue
+        let syncable: Set<PrimitiveKind> = [.note, .agent, .kb, .artifact, .chain, .workflow]
+        guard syncable.contains(prim.kind) else { return .none }
+        // the bare record id (the side maps are keyed bare; the primitive id is "kind:bare")
+        let bare = prim.id.contains(":") ? String(prim.id.split(separator: ":", maxSplits: 1)[1]) : prim.id
+        // confirmed canonical on the hub this session?
+        if syncConfirmed.contains(bare) { return .synced }
+        // edited/created locally with a stamped instant but not yet confirmed pushed
+        if syncModified[bare] != nil { return .pending }
+        return .pending
+    }
     private func membersOf(_ zpath: String) -> [any DeskPrimitive] {
         var out: [any DeskPrimitive] = []
         for (i, m) in meetings.enumerated() where (filed["m:\(m.id)"] ?? "") == zpath { out.append(MeetingPrimitive(meeting: m, index: i)) }
+        for rec in outputs where rec.path == zpath { out.append(OutputPrimitive(rec: rec)) }   // filed agent/lens outputs
+        for rec in notes where rec.path == zpath { out.append(NotePrimitive(rec: rec)) }       // filed notes
+        for rec in kbs where rec.path == zpath { out.append(KBPrimitive(rec: rec)) }           // filed KBs
+        for rec in placedGames where rec.path == zpath { out.append(gamePrim(rec)) }           // filed games
         return out
+    }
+    // build a GamePrimitive from a placement, reading the live best score + display name/title
+    private func gamePrim(_ rec: GameRecord) -> GamePrimitive {
+        let name = rec.gameId == "arkanoid" ? "Arkanoid" : (MiniGames.game(rec.gameId)?.title ?? rec.gameId.capitalized)
+        let best = UserDefaults.standard.integer(forKey: "hs.mg.\(rec.gameId).best")
+        return GamePrimitive(gameId: rec.gameId, name: name, best: best, path: rec.path)
     }
     private func meeting(forObj id: String) -> Meeting? {
         guard id.hasPrefix("m:") else { return nil }
@@ -2229,22 +2638,28 @@ struct DioStage: View {
                     }.buttonStyle(.plain)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(.top, h * 0.045).padding(.leading, 18).zIndex(70)
                 }
-                // THE ARCADE — a quiet pinnable Breakout to play during a boring meeting (the desk keeps running behind it)
-                if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty && !arkadeOpen {
-                    DeskArkanoidToken { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { arkadeOpen = true } }
+                // THE SYNC STATUS — port your primitives to/from the paired Mac (hub), FELT.
+                // A premium ambient pill that wears the live state (syncing / synced·"2m ago" /
+                // offline·queued / error) instead of a bare spinner. Only when a Mac is paired.
+                if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty && hostLink != nil {
+                    DioSyncStatus(state: liveSyncState, lastSyncedAt: lastSyncedAt,
+                                  peerLabel: peerHost, onSync: { haptic(.light); syncDesk(reason: "manual") })
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding(.top, h * 0.13).padding(.leading, 22).zIndex(70)
+                        .padding(.top, h * 0.045).padding(.leading, 18 + 50).zIndex(70)
+                        .transition(.scale.combined(with: .opacity))
                 }
-                // THE AGENT ROSTER — your tailored characters, always to hand on the right edge. Tap one to
-                // ask it; long-press a card and pick it to route the card through it; "+" builds a new one.
+                // THE RAIL — Agents · Chains · Play (games live here as a third column, no separate launcher)
                 if landed && selected == nil && summonSource == nil && !capturing && openAgent == nil
                     && editingAgent == nil && editingChain == nil && runChainSheet == nil && chainRelay == nil
+                    && openGameId == nil && !arkadeOpen
                     && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet && !firstRun {
                     DioAgentRail(agents: agents, chains: chains, dimmed: false,
                                  onOpen: { a in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { openAgent = a } },
                                  onCreate: { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingAgent = AgentRecord.blank() } },
                                  onRunChain: { c in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { runChainSheet = c } },
-                                 onCreateChain: { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingChain = ChainRecord.blank() } })
+                                 onCreateChain: { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingChain = ChainRecord.blank() } },
+                                 onPlay: { id in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { if id == "arkanoid" { arkadeOpen = true } else { openGameId = id } } },
+                                 onPlace: { id in placeGame(id) })
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
                         .padding(.trailing, 10).zIndex(64).transition(.move(edge: .trailing).combined(with: .opacity))
                 }
@@ -2275,7 +2690,13 @@ struct DioStage: View {
                                           lensColors: LiveLenses.defaultPipeline.map { lensColor($0.name) },
                                           onSkip: { weaveCancel = true }).zIndex(111)
                 }
-                // the arcade window — a pinnable floating Breakout (above the recorder, below the routing sheets)
+                // a council mini-game in the shared ephemeral window
+                if let gid = openGameId, let g = MiniGames.game(gid) {
+                    DioGameWindow(game: g, onClose: { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { openGameId = nil } },
+                                  screen: CGSize(width: w, height: h), pinNX: $gameWinX, pinNY: $gameWinY)
+                        .id(gid).transition(.scale(scale: 0.9).combined(with: .opacity)).zIndex(112)
+                }
+                // the arcade window — Arkanoid keeps its own bespoke window (score/lives) above the recorder
                 if arkadeOpen {
                     DeskArkanoidWindow(onMinimize: { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { arkadeOpen = false } },
                                        onClose: { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { arkadeOpen = false } },
@@ -2420,6 +2841,37 @@ struct DioStage: View {
                                   onCancel: { withAnimation { editingZone = nil } })
                         .id(z.path).zIndex(147).transition(.opacity)
                 }
+                // the note editor — write + place a first-class note
+                if let n = editingNote {
+                    DioNoteEditor(note: n,
+                                  onSave: { saveNote($0) },
+                                  onDelete: { deleteNote("note:\(n.id)") },
+                                  onCancel: { withAnimation { editingNote = nil } })
+                        .id(n.id).zIndex(148).transition(.opacity)
+                }
+                // the KB editor — rename or delete a knowledge base
+                if let k = editingKB {
+                    DioKBEditor(kb: k,
+                                onSave: { renameKB($0) },
+                                onDelete: { deleteKB("kb:\(k.id)") },
+                                onCancel: { withAnimation { editingKB = nil } })
+                        .id(k.id).zIndex(148).transition(.opacity)
+                }
+                // the live "running coder" feed — replay the session, approve / answer inline (HSM-17-03)
+                if let c = openCoderSession {
+                    DioCoderSession(session: c,
+                                    onAnswer: { withAnimation { openCoderSession = nil; answeringCoder = c } },
+                                    onApprove: { approveCoder(c) },
+                                    onClose: { withAnimation { openCoderSession = nil } })
+                        .id(c.id).zIndex(149).transition(.opacity)
+                }
+                // the coder answer composer — reply into a live Claude/Codex session (HSM-17-04)
+                if let c = answeringCoder {
+                    DioCoderAnswer(session: c,
+                                   onSend: { answerCoder(c, $0) },
+                                   onCancel: { withAnimation { answeringCoder = nil } })
+                        .id(c.id).zIndex(150).transition(.opacity)
+                }
                 if let t = sentToast {
                     HStack(spacing: 7) { Image(systemName: "checkmark.circle.fill"); Text(t).font(.system(size: 13, weight: .heavy, design: .rounded)) }
                         .foregroundStyle(.white).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(DioPal.mint.opacity(0.92)))
@@ -2428,7 +2880,7 @@ struct DioStage: View {
                 }
             }
             .ignoresSafeArea()
-            .onAppear { landed = true; load(); model.refresh()
+            .onAppear { landed = true; load(); model.refresh(); syncDesk(reason: "desk load")
                 #if targetEnvironment(simulator)
                 if let s = ProcessInfo.processInfo.environment["HS_DESK_SETTINGS"], s == "1" || s == "local" {
                     if s == "local" { InferenceConfigStore.shared.mode = .local }
@@ -2451,8 +2903,13 @@ struct DioStage: View {
                     else if r == "weave" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { weaveStepName = "Action items"; weaveDone = 1; weaveTotal = 3; withAnimation { capturing = true; weaving = true } } }
                     else { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { capturing = true }; model.recording = true; model.level = 0.6 } }
                 }
-                if let a = ProcessInfo.processInfo.environment["HS_DESK_ARCADE"], a == "1" || a == "play" {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { arkadeOpen = true } }
+                if let a = ProcessInfo.processInfo.environment["HS_DESK_ARCADE"] {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        withAnimation {
+                            if a == "1" || a == "play" { arkadeOpen = true }
+                            else if MiniGames.game(a) != nil { openGameId = a }
+                        }
+                    }
                 }
                 if let zenv = ProcessInfo.processInfo.environment["HS_DESK_ZONE"] {
                     zones = [
@@ -2460,12 +2917,93 @@ struct DioStage: View {
                         ZoneRec(path: "Q3", color: 5, cx: 0.66, cy: 0.32, w: 180, h: 120, borderW: 2.5, borderStyle: 2, fillStyle: 2, fillOpacity: 0.22, glow: false),
                     ]
                     if zenv == "1" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { if let z = zones.first { withAnimation { editingZone = z } } } }
+                    // `directory` shows the wave-4 DIRECTORY model on the desk: a parent zone, a
+                    // nested child (parent_id chain), and a note filed into the parent (membership) —
+                    // exactly what now syncs. Geometry/paint stays this device's; identity+nesting+
+                    // membership are canonical.
+                    if zenv == "directory" {
+                        notes = [NoteRecord(id: "nAtlas", title: "Mesh sync owner", body: "Karol owns the mesh-sync approval contract.", path: "Atlas")]
+                        outputs = [OutputRecord(id: "oAtlas", title: "Q3 summary", body: "Ship the desk to the web; air-gapped proof due Friday.", source: "Q3 kickoff", lens: "Summary", path: "Atlas")]
+                    }
                 }
                 if ProcessInfo.processInfo.environment["HS_DESK_ARRIVE"] == "1" {
                     let m = Meeting(id: "demoNew", startedAt: Date(), title: "Q3 kickoff", segments: [Segment(text: "Welcome to the kickoff.", speaker: "Speaker 1", startTime: 0, endTime: 2)])
                     model.meetings = [m] + model.meetings
                     outputs = [OutputRecord(id: "delivNew", title: "Summary", body: "Shipping the desk to the web is the Q3 bet; Karol owns mesh sync and the approval contract; air-gapped proof due Friday.", source: "Q3 kickoff", lens: "Summary", path: "")]
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds = ["m:demoNew", "out:delivNew"]; flash = 0.5 }; withAnimation(.easeOut(duration: 0.9)) { flash = 0 } }
+                }
+                // THE SYNC STATUS demo — show the desk wearing each sync state + a pull-arrival.
+                // `synced` (calm, with a "just now") · `syncing` (breathing) · `offline` (queued) ·
+                // `error` · `pull` (a note authored on the web lands with the NEW-arrival halo).
+                if let sv = ProcessInfo.processInfo.environment["HS_DESK_SYNC"] {
+                    peerHost = peerHost.isEmpty ? "192.168.1.13" : peerHost
+                    notes = [NoteRecord(id: "nSynced", title: "Approval contract owner", body: "Karol owns the mesh-sync approval contract + egress badge copy.", path: ""),
+                             NoteRecord(id: "nPending", title: "Air-gapped proof script", body: "Record the LinkedIn proof offline before Friday's demo.", path: "")]
+                    agents = [AgentRecord(id: "agSynced", name: "Scout", avatar: "p1", role: "digs for the facts", systemPrompt: "You are a researcher.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: "")]
+                    kbs = [KBRecord(id: "kSynced", name: "Architecture", path: "", items: 7)]
+                    placedGames = [GameRecord(gameId: "merge", path: "")]   // local-only cue
+                    syncModified = ["nPending": Date()]                     // pending: edited, not pushed
+                    syncConfirmed = ["nSynced", "agSynced", "kSynced"]      // canonical on the hub
+                    lastSyncedAt = Date().addingTimeInterval(-135)          // "2m ago"
+                    switch sv {
+                    case "syncing": syncing = true
+                    case "offline": syncState = .offline
+                    case "error":   syncState = .error("Couldn’t reach your Mac")
+                    case "pull":
+                        // a remote-authored note arrives on the next pull → NEW-arrival treatment
+                        syncState = .synced
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                            let remote = NoteRecord(id: "nFromWeb", title: "Authored on the web", body: "This note was written on another surface and synced into your desk.", path: "")
+                            withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+                                notes.append(remote); syncConfirmed.insert("nFromWeb")
+                                arrivedIds.insert("note:nFromWeb"); flash = 0.45
+                            }
+                            withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
+                        }
+                    default: syncState = .synced
+                    }
+                }
+                if let pv = ProcessInfo.processInfo.environment["HS_DESK_PARITY"] {
+                    notes = [NoteRecord(id: "n1", title: "Follow up with Karol", body: "Confirm the mesh-sync approval contract owner and the air-gapped proof date before Friday's demo.", path: "")]
+                    kbs = [KBRecord(id: "k1", name: "Architecture", path: "", items: 7),
+                           KBRecord(id: "k2", name: "Onboarding", path: "", items: 3)]
+                    outputs = [OutputRecord(id: "o1", title: "Scout · reply", body: "Three facts: mesh sync is riskiest, proof due Friday, egress badge copy needs an owner.", source: "Scout", lens: "Agent", path: "")]
+                    placedGames = [GameRecord(gameId: "merge", path: ""), GameRecord(gameId: "reflex", path: "")]
+                    UserDefaults.standard.set(4096, forKey: "hs.mg.merge.best")
+                    if pv == "note" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { if let n = notes.first { withAnimation { editingNote = n } } } }
+                    if pv == "kb" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { if let k = kbs.first { withAnimation { editingKB = k } } } }
+                    if pv == "game" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { withAnimation { selected = "game:merge" } } }
+                }
+                if let cv = ProcessInfo.processInfo.environment["HS_DESK_CODER"] {
+                    let claudeEvents: [CoderEvent] = [
+                        .init(id: "e0", ts: nil, kind: .userPrompt("Decompose web_runtime into mixins and wire the dictation seam.")),
+                        .init(id: "e1", ts: nil, kind: .assistant("I'll map web_runtime first, then carve the mixins one seam at a time so routing stays byte-identical.")),
+                        .init(id: "e2", ts: nil, kind: .tool(.read, target: "holdspeak/web_runtime.py", detail: "2,635 lines")),
+                        .init(id: "e3", ts: nil, kind: .result(ok: true, summary: "read", added: nil, removed: nil)),
+                        .init(id: "e4", ts: nil, kind: .tool(.search, target: "self._", detail: "mixin candidates")),
+                        .init(id: "e5", ts: nil, kind: .result(ok: true, summary: "42 matches across 8 concerns", added: nil, removed: nil)),
+                        .init(id: "e6", ts: nil, kind: .tool(.edit, target: "holdspeak/runtime/dictation.py", detail: "extract DictationMixin")),
+                        .init(id: "e7", ts: nil, kind: .result(ok: true, summary: "edited", added: 118, removed: 6)),
+                        .init(id: "e8", ts: nil, kind: .command(cmd: "uv run pytest -q -k runtime", exit: 0, output: "142 passed in 7.81s")),
+                        .init(id: "e9", ts: nil, kind: .assistant("Tests green. The next step rewrites history on the shared branch.")),
+                        .init(id: "e10", ts: nil, kind: .approval(question: "Push the mixin split to origin/main? This is a force-with-lease on a shared branch.", command: "git push --force-with-lease origin main")),
+                    ]
+                    let codexEvents: [CoderEvent] = [
+                        .init(id: "c0", ts: nil, kind: .userPrompt("Add the coder primitive to the desk.")),
+                        .init(id: "c1", ts: nil, kind: .tool(.edit, target: "apple/App/MeetingCapture/DeskCoder.swift", detail: "AgentSessionPrimitive")),
+                        .init(id: "c2", ts: nil, kind: .result(ok: true, summary: "edited", added: 64, removed: 2)),
+                        .init(id: "c3", ts: nil, kind: .tool(.bash, target: "xcodebuild", detail: "Simulator build")),
+                    ]
+                    coders = [
+                        CoderSession(agent: "claude", sessionId: "s1", project: "holdspeak", model: "claude-opus-4-8", tokensUsed: 48210, state: .waiting, events: claudeEvents),
+                        CoderSession(agent: "codex", sessionId: "s2", project: "apple", model: "gpt-5-codex", tokensUsed: 12940, state: .working, events: codexEvents),
+                    ]
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds = ["coder:claude/s1"]; flash = 0.4 }
+                        withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
+                        if cv == "session" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { openCoderSession = coders.first } } }
+                        if cv == "answer" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { answeringCoder = coders.first } } }
+                    }
                 }
                 if ProcessInfo.processInfo.environment["HS_DESK_TRANSCRIPT"] == "1" {
                     let segs = [
@@ -2538,6 +3076,11 @@ struct DioStage: View {
                 Button("Cancel", role: .cancel) { newZoneName = "" }
                 Button("Create") { createZone(newZoneName); newZoneName = "" }
             } message: { Text(path.isEmpty ? "A place on your desk that holds meetings." : "A sub-zone inside \(name(of: pathKey)).") }
+            .alert("New knowledge base", isPresented: $namingKB) {
+                TextField("Name", text: $newKBName)
+                Button("Cancel", role: .cancel) { newKBName = "" }
+                Button("Create") { createKB(newKBName); newKBName = "" }
+            } message: { Text("A typed container you drop notes and outputs into, then ask grounded questions.") }
             .sheet(isPresented: Binding(get: { openMeeting != nil }, set: { if !$0 { openMeeting = nil } })) {
                 if let m = openMeeting { NavigationStack { MeetingDetailView(meeting: m) }.preferredColorScheme(.dark) }
             }
@@ -2559,20 +3102,33 @@ struct DioStage: View {
                     .position(x: w * z.cx, y: h * z.cy)
             }
             if selected == nil && !firstRun && !emptyZone {
-                Button { haptic(.light); namingZone = true } label: {
-                    HStack(spacing: 6) { Image(systemName: "plus.circle.fill").font(.system(size: 14, weight: .bold)); Text("New Zone").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
-                        .foregroundStyle(DioPal.muted).padding(.horizontal, 12).frame(height: 36)
-                        .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.muted.opacity(0.45)))
-                }.buttonStyle(.plain).opacity(landed ? 0.9 : 0)
+                HStack(spacing: 8) {
+                    Button { createNote() } label: {
+                        HStack(spacing: 6) { Image(systemName: "square.and.pencil").font(.system(size: 13, weight: .bold)); Text("New Note").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(DioPal.mint).padding(.horizontal, 12).frame(height: 36)
+                            .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.mint.opacity(0.4)))
+                    }.buttonStyle(.plain)
+                    Button { haptic(.light); namingKB = true } label: {
+                        HStack(spacing: 6) { Image(systemName: "diamond.fill").font(.system(size: 12, weight: .bold)); Text("New KB").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(DioPal.violet).padding(.horizontal, 12).frame(height: 36)
+                            .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.violet.opacity(0.4)))
+                    }.buttonStyle(.plain)
+                    Button { haptic(.light); namingZone = true } label: {
+                        HStack(spacing: 6) { Image(systemName: "plus.circle.fill").font(.system(size: 14, weight: .bold)); Text("New Zone").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(DioPal.muted).padding(.horizontal, 12).frame(height: 36)
+                            .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.muted.opacity(0.45)))
+                    }.buttonStyle(.plain)
+                }.opacity(landed ? 0.9 : 0)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(.top, h * 0.12).padding(.trailing, 20)
             }
 
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, p in
                 DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, looseHome(i, ms.count, w, h), w, h),
                         hot: dragHotObjectId == p.id, picked: selectedSet.contains(p.id), arrived: arrivedIds.contains(p.id),
+                        syncCue: syncCue(for: p),
                         onSummon: { summonAt = pos(p.id, looseHome(i, ms.count, w, h), w, h); haptic(.medium)
                                     withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { summonSource = p.id } },
-                        onTap: { select(selected == p.id ? nil : p.id) },
+                        onTap: { if let c = p as? AgentSessionPrimitive { haptic(.medium); withAnimation { openCoderSession = c.session } } else { select(selected == p.id ? nil : p.id) } },
                         onDrop: { tr in drop(p, looseHome(i, ms.count, w, h), tr, w, h) },
                         onDragChange: { pt in updateHot(p, pt, w, h) })
             }
@@ -2592,8 +3148,29 @@ struct DioStage: View {
 
     private func handle(_ act: PrimitiveAction, on prim: any DeskPrimitive) {
         switch act.role {
-        case .openEditor: if let m = meeting(forObj: prim.id) { openMeeting = m }
+        case .openEditor:
+            if let m = meeting(forObj: prim.id) { openMeeting = m }
+            else if let n = notes.first(where: { "note:\($0.id)" == prim.id }) { select(nil); withAnimation { editingNote = n } }
+            else if let k = kbs.first(where: { "kb:\($0.id)" == prim.id }) { select(nil); withAnimation { editingKB = k } }
         case .custom("connect"): connectURL = peerHost.isEmpty ? "" : "\(peerHost):\(peerPort)"; select(nil); connecting = true
+        case .custom("delete"):
+            if prim.id.hasPrefix("note:") { deleteNote(prim.id) }
+            else if prim.id.hasPrefix("out:") { deleteOutput(prim.id) }
+            else if prim.id.hasPrefix("kb:") { deleteKB(prim.id) }
+            else if prim.id.hasPrefix("game:") { removeGame(prim.id) }
+        case .custom("play"):
+            guard let g = prim as? GamePrimitive else { break }
+            select(nil); haptic(.medium)
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { if g.gameId == "arkanoid" { arkadeOpen = true } else { openGameId = g.gameId } }
+        case .custom("harvest"):
+            guard let g = prim as? GamePrimitive else { break }
+            harvestScore(g)
+        case .custom("answer"):
+            guard let c = prim as? AgentSessionPrimitive else { break }
+            select(nil); withAnimation { answeringCoder = c.session }
+        case .custom("opensession"):
+            guard let c = prim as? AgentSessionPrimitive else { break }
+            select(nil); haptic(.medium); withAnimation { openCoderSession = c.session }
         case .route, .send, .custom: break
         }
     }
@@ -2623,13 +3200,13 @@ struct DioStage: View {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) {
             zones.append(ZoneRec(path: zpath, color: zones.count, cx: 0.27 + 0.23 * Double(col), cy: 0.2 + 0.18 * Double(row), w: 168, h: 104))
         }
-        persistZones()
+        persistZones(); stampSync(zpath)   // the directory (identity+nesting) is a synced primitive
     }
     private func moveZone(_ path: String, _ tr: CGSize, _ w: CGFloat, _ h: CGFloat) {
         guard let idx = zones.firstIndex(where: { $0.path == path }) else { return }
         haptic(.light)
-        zones[idx].cx = min(0.92, max(0.08, zones[idx].cx + Double(tr.width / w)))
-        zones[idx].cy = min(0.84, max(0.1, zones[idx].cy + Double(tr.height / h)))
+        zones[idx].cx = min(0.95, max(0.05, zones[idx].cx + Double(tr.width / w)))
+        zones[idx].cy = min(0.93, max(0.06, zones[idx].cy + Double(tr.height / h)))
         persistZones()
     }
     private func resizeZone(_ path: String, _ tr: CGSize) {
@@ -2647,11 +3224,14 @@ struct DioStage: View {
     }
     private func deleteZone(_ path: String) {
         haptic(.medium)
+        // the directories about to go (this zone + every sub-zone) → tombstone each so the delete syncs
+        let gone = zones.filter { $0.path == path || $0.path.hasPrefix(path + "/") }.map(\.path)
         withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) {
             zones.removeAll { $0.path == path || $0.path.hasPrefix(path + "/") }   // drop the zone + any sub-zones
             filed = filed.filter { $0.value != path && !$0.value.hasPrefix(path + "/") }
             editingZone = nil
         }
+        for p in gone { tombstone(p, kind: .directory) }   // propagate the directory delete
         persistZones(); persistFiled()
     }
     private func dockToolPos(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
@@ -2921,6 +3501,14 @@ struct DioStage: View {
         }
         return nil
     }
+    // What can live inside a zone — declared in ONE place so filing is never re-gated per call site.
+    // Tools (model/connector/workflow) stay anchored in the dock (owner: tools are global, not filed).
+    private func isFileable(_ k: PrimitiveKind) -> Bool {
+        switch k {
+        case .meeting, .artifact, .summary, .actions, .transcript, .topics, .note, .kb, .game: return true
+        default: return false
+        }
+    }
     private func drop(_ p: any DeskPrimitive, _ fallback: CGPoint, _ tr: CGSize, _ w: CGFloat, _ h: CGFloat) {
         let start = pos(p.id, fallback, w, h)
         let end = CGPoint(x: start.x + tr.width, y: start.y + tr.height)
@@ -2930,8 +3518,32 @@ struct DioStage: View {
             routeFrom = start; routeTo = target.center            // the cable runs source → target
             beginRoute(sourceId: p.id, target: target.prim); return
         }
-        // 2) a meeting filed into a zone?
-        if p.kind == .meeting, let z = trayHit(end, w, h) { file(p.id, into: z); return }
+        // 2) content filed into a zone — ANY fileable primitive, kind-AGNOSTICALLY (was hard-gated to
+        // meeting/output, which is the rot that made "an agent-output note can't go in a zone" possible).
+        // Outputs persist their zone on their own record; everything else uses the unified `filed` map.
+        if let z = trayHit(end, w, h), isFileable(p.kind) {
+            #if canImport(UIKit)
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            #endif
+            if let idx = outputs.firstIndex(where: { "out:\($0.id)" == p.id }) {
+                withAnimation(focusSpring) { outputs[idx].path = z; positions[p.id] = nil }
+                persistOutputs()
+            } else if let idx = notes.firstIndex(where: { "note:\($0.id)" == p.id }) {
+                withAnimation(focusSpring) { notes[idx].path = z; positions[p.id] = nil }
+                persistNotes()
+            } else if let idx = kbs.firstIndex(where: { "kb:\($0.id)" == p.id }) {
+                withAnimation(focusSpring) { kbs[idx].path = z; positions[p.id] = nil }
+                persistKBs()
+            } else if let idx = placedGames.firstIndex(where: { "game:\($0.gameId)" == p.id }) {
+                withAnimation(focusSpring) { placedGames[idx].path = z; positions[p.id] = nil }
+                persistGames()
+            } else {
+                file(p.id, into: z)
+                return
+            }
+            stampSync("mem:\(p.id)")   // the filing is a synced membership edge
+            return
+        }
         // 3) free-place
         haptic(.light)
         let u = positions[p.id] ?? CGPoint(x: start.x / w, y: start.y / h)
@@ -2962,6 +3574,13 @@ struct DioStage: View {
             guard let cp = target as? ChainPrimitive,
                   let src = members().first(where: { $0.id == sourceId }) else { break }
             runChain(cp.rec, input: src.routableText, inputTitle: src.title)
+        case .kb:                                               // a knowledge base → file the card into it
+            guard let kp = target as? KBPrimitive, let idx = kbs.firstIndex(where: { $0.id == kp.rec.id }) else { break }
+            #if canImport(UIKit)
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            #endif
+            withAnimation(focusSpring) { kbs[idx].items += 1 }
+            persistKBs(); toast("Filed into \(kp.rec.name)")
         default:
             #if canImport(UIKit)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -3155,15 +3774,142 @@ struct DioStage: View {
             if let i = chains.firstIndex(where: { $0.id == rec.id }) { chains[i] = rec } else { chains.append(rec) }
             editingChain = nil
         }
-        persistChains()
+        persistChains(); stampSync(rec.id)
     }
     private func deleteChain(_ id: String) {
         haptic(.medium)
         withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) { chains.removeAll { $0.id == id }; runChainSheet = nil }
-        persistChains()
+        persistChains(); tombstone(id, kind: .chain)
     }
     private func persistChains() {
         if let data = try? JSONEncoder().encode(chains), let s = String(data: data, encoding: .utf8) { chainsJSON = s }
+    }
+
+    // MARK: - LIVE SYNC plumbing (port primitives ⇄ the desktop hub)
+
+    private func persistSyncMaps() {
+        let enc = JSONEncoder(); enc.dateEncodingStrategy = .iso8601
+        if let d = try? enc.encode(syncModified), let s = String(data: d, encoding: .utf8) { syncTimesJSON = s }
+        if let d = try? enc.encode(syncTombstones), let s = String(data: d, encoding: .utf8) { tombstonesJSON = s }
+    }
+    private func loadSyncMaps() {
+        let dec = JSONDecoder(); dec.dateDecodingStrategy = .iso8601
+        if let d = syncTimesJSON.data(using: .utf8), let m = try? dec.decode([String: Date].self, from: d) { syncModified = m }
+        if let d = tombstonesJSON.data(using: .utf8), let m = try? dec.decode([String: Date].self, from: d) { syncTombstones = m }
+    }
+    /// Stamp a primitive id as modified-now (the iPad's `updatedAt` → meta.last_modified).
+    private func stampSync(_ id: String) {
+        syncModified[id] = Date()
+        syncConfirmed.remove(id)        // a fresh local edit is pending again until the next pass confirms it
+        persistSyncMaps()
+    }
+    /// Record a tombstone (a propagated delete) keyed "kind:id"; clears the live instant.
+    private func tombstone(_ id: String, kind: SyncKind) {
+        syncModified[id] = nil
+        syncConfirmed.remove(id)
+        syncTombstones["\(kind.rawValue):\(id)"] = Date()
+        persistSyncMaps()
+    }
+    /// The desk's syncable records as a flat snapshot the store reads.
+    private func currentDeskRecords() -> DeskRecords {
+        DeskRecords(notes: notes, agents: agents, kbs: kbs, outputs: outputs,
+                    chains: chains, workflows: workflows,
+                    zones: zones, membership: unifiedMembership(),
+                    modified: syncModified, tombstones: syncTombstones)
+    }
+    /// The desk's filing as one synced map: primitiveId → directoryId (a zone path). Unifies the
+    /// `filed` map (meetings) with each output/note/kb/game record's `path`. Root ("") edges are
+    /// omitted — only a real filing is an edge worth syncing.
+    private func unifiedMembership() -> [String: String] {
+        var m: [String: String] = [:]
+        for (id, z) in filed where !z.isEmpty { m[id] = z }
+        for rec in outputs where !rec.path.isEmpty { m["out:\(rec.id)"] = rec.path }
+        for rec in notes where !rec.path.isEmpty { m["note:\(rec.id)"] = rec.path }
+        for rec in kbs where !rec.path.isEmpty { m["kb:\(rec.id)"] = rec.path }
+        for rec in placedGames where !rec.path.isEmpty { m["game:\(rec.gameId)"] = rec.path }
+        return m
+    }
+    /// Reconcile an incoming unified membership map back into the desk's two filing surfaces:
+    /// the `filed` map (meetings) and each record's `path` (outputs/notes/kbs/games). A primitive
+    /// missing from the map was unfiled (→ root). Geometry/paint never participates here.
+    private func applyMembership(_ m: [String: String]) {
+        // meetings → the filed map (keep only meeting keys; clear then reapply)
+        var f = filed
+        for k in f.keys where k.hasPrefix("m:") { f[k] = nil }
+        for (id, z) in m where id.hasPrefix("m:") { f[id] = z }
+        filed = f
+        for i in outputs.indices { outputs[i].path = m["out:\(outputs[i].id)"] ?? "" }
+        for i in notes.indices { notes[i].path = m["note:\(notes[i].id)"] ?? "" }
+        for i in kbs.indices { kbs[i].path = m["kb:\(kbs[i].id)"] ?? "" }
+        for i in placedGames.indices { placedGames[i].path = m["game:\(placedGames[i].gameId)"] ?? "" }
+    }
+    /// Write a merged record set back into the desk's @AppStorage-backed arrays + persist.
+    private func applyDeskRecords(_ r: DeskRecords) {
+        notes = r.notes; agents = r.agents; kbs = r.kbs
+        outputs = r.outputs; chains = r.chains; workflows = r.workflows
+        zones = r.zones
+        syncModified = r.modified; syncTombstones = r.tombstones
+        // membership reconciles back into the filed map + each record's path (it overwrites the
+        // record-path writes above for the filed surfaces — applied last so it wins).
+        applyMembership(r.membership)
+        persistNotes(); persistAgents(); persistKBs()
+        persistOutputs(); persistChains(); persistWorkflows()
+        persistZones(); persistFiled(); persistSyncMaps()
+    }
+    /// Run one real sync pass against the paired hub: push the local snapshot + pull/apply
+    /// remote changes (offline-safe; never on the author path). Triggered on desk load,
+    /// after authoring a Note/Agent, and from the manual "Sync" affordance.
+    private func syncDesk(reason: String) {
+        guard !syncing, let link = hostLink,
+              let driver = DeskSyncDriver.make(host: link.host, port: link.port) else { return }
+        syncing = true
+        let snapshot = currentDeskRecords()
+        // the desk's primitive ids BEFORE the pull → anything new afterward arrived from a peer
+        let before = deskPrimitiveIds(snapshot)
+        Task { @MainActor in
+            let (merged, outcome) = await driver.syncNow(snapshot)
+            if outcome.applied > 0 || merged != snapshot { applyDeskRecords(merged) }
+            syncing = false
+
+            if outcome.reachedPeer {
+                lastSyncedAt = Date()
+                syncState = .synced
+                // everything we just pushed/round-tripped is now canonical on the hub → mark it
+                // confirmed so the per-primitive cue can honestly read "synced".
+                syncConfirmed.formUnion(deskPrimitiveIds(merged))
+                lastSyncSummary = "Synced · \(outcome.pushed) sent · \(outcome.applied) in"
+                // PULL-APPLIED FEEDBACK: a remote primitive (a note authored on the web, an agent
+                // from the desktop) lands on the desk with the NEW-arrival treatment — cross-surface
+                // sync is visible + delightful, reusing the same `arrivedIds` halo as a fresh weave.
+                let after = deskPrimitiveIds(merged)
+                let fresh = after.subtracting(before)
+                if !fresh.isEmpty {
+                    haptic(.medium)
+                    withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds.formUnion(fresh); flash = 0.45 }
+                    withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 6) { withAnimation { arrivedIds.subtract(fresh) } }
+                }
+            } else if outcome.pendingAfter > 0 {
+                syncState = .offline
+                lastSyncSummary = "Offline · queued for your Mac"
+            } else {
+                syncState = .error("Couldn’t reach your Mac")
+                lastSyncSummary = nil
+            }
+            if let s = lastSyncSummary { toast(s) }
+        }
+    }
+    /// The set of card-level primitive ids (the `kind:bare` desk ids) present in a record set —
+    /// used to diff before/after a pull so freshly-pulled primitives get the arrival treatment.
+    private func deskPrimitiveIds(_ r: DeskRecords) -> Set<String> {
+        var ids = Set<String>()
+        ids.formUnion(r.notes.map { "note:\($0.id)" })
+        ids.formUnion(r.agents.map { "agent:\($0.id)" })
+        ids.formUnion(r.kbs.map { "kb:\($0.id)" })
+        ids.formUnion(r.outputs.map { "out:\($0.id)" })
+        ids.formUnion(r.chains.map { "chain:\($0.id)" })
+        ids.formUnion(r.workflows.map { "wf:\($0.id)" })
+        return ids
     }
 
     // harvest a reply onto the desk as a routable output card.
@@ -3171,7 +3917,7 @@ struct DioStage: View {
         haptic(.medium)
         let rec = OutputRecord(id: UUID().uuidString, title: "\(a.name) · reply", body: text, source: a.name, lens: "Agent", path: pathKey)
         withAnimation(focusSpring) { outputs.append(rec) }
-        persistOutputs()
+        persistOutputs(); stampSync(rec.id)
         withAnimation { sentToast = "Saved to desk" }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { withAnimation { sentToast = nil } }
     }
@@ -3196,7 +3942,7 @@ struct DioStage: View {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         #endif
         withAnimation(focusSpring) { outputs.append(rec); printed = nil }
-        routeSourceId = nil; persistOutputs()
+        routeSourceId = nil; persistOutputs(); stampSync(rec.id)
     }
     private func binPrinted() { haptic(.light); withAnimation { printed = nil }; routeSourceId = nil }
     private func file(_ id: String, into zpath: String) {
@@ -3204,7 +3950,7 @@ struct DioStage: View {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         #endif
         withAnimation(focusSpring) { filed[id] = zpath; positions[id] = nil }
-        persistFiled(); persistPositions()
+        persistFiled(); persistPositions(); stampSync("mem:\(id)")   // a membership edge is synced
     }
 
     private func persistPositions() { posCSV = positions.map { "\($0.key)=\($0.value.x),\($0.value.y)" }.joined(separator: ";") }
@@ -3216,6 +3962,114 @@ struct DioStage: View {
     private func persistFiled() { dfiledCSV = filed.map { "\($0.key)=\($0.value)" }.joined(separator: ";") }
     private func persistOutputs() {
         if let data = try? JSONEncoder().encode(outputs), let s = String(data: data, encoding: .utf8) { outputsJSON = s }
+    }
+    private func persistNotes() {
+        if let data = try? JSONEncoder().encode(notes), let s = String(data: data, encoding: .utf8) { notesJSON = s }
+    }
+    // create a fresh note at the current level and open the editor on it
+    private func createNote() {
+        haptic(.medium)
+        let rec = NoteRecord(id: UUID().uuidString, title: "", body: "", path: pathKey)
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { notes.append(rec); editingNote = rec }
+        persistNotes()
+    }
+    private func saveNote(_ rec: NoteRecord) {
+        haptic(.medium)
+        withAnimation(focusSpring) {
+            if let i = notes.firstIndex(where: { $0.id == rec.id }) { notes[i] = rec } else { notes.append(rec) }
+            editingNote = nil
+        }
+        persistNotes(); stampSync(rec.id); syncDesk(reason: "note saved")
+    }
+    private func deleteNote(_ id: String) {
+        haptic(.medium)
+        let raw = id.hasPrefix("note:") ? String(id.dropFirst(5)) : id
+        withAnimation(focusSpring) { notes.removeAll { $0.id == raw }; editingNote = nil; if selected == id { selected = nil } }
+        positions[id] = nil; persistNotes(); persistPositions(); tombstone(raw, kind: .note); syncDesk(reason: "note deleted")
+    }
+    private func deleteOutput(_ id: String) {
+        haptic(.medium)
+        let raw = id.hasPrefix("out:") ? String(id.dropFirst(4)) : id
+        withAnimation(focusSpring) { outputs.removeAll { $0.id == raw }; if selected == id { selected = nil } }
+        positions[id] = nil; persistOutputs(); persistPositions(); tombstone(raw, kind: .artifact)
+    }
+    private func persistKBs() {
+        if let data = try? JSONEncoder().encode(kbs), let s = String(data: data, encoding: .utf8) { kbsJSON = s }
+    }
+    private func createKB(_ raw: String) {
+        let nm = raw.trimmingCharacters(in: .whitespaces)
+        guard !nm.isEmpty, !kbs.contains(where: { $0.name.caseInsensitiveCompare(nm) == .orderedSame }) else { return }
+        haptic(.medium)
+        let newKB = KBRecord(id: UUID().uuidString, name: nm, path: pathKey, items: 0)
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) { kbs.append(newKB) }
+        persistKBs(); stampSync(newKB.id)
+    }
+    private func renameKB(_ rec: KBRecord) {
+        guard let i = kbs.firstIndex(where: { $0.id == rec.id }) else { return }
+        haptic(.medium)
+        withAnimation(focusSpring) { kbs[i] = rec; editingKB = nil }
+        persistKBs(); stampSync(rec.id)
+    }
+    private func deleteKB(_ id: String) {
+        haptic(.medium)
+        let raw = id.hasPrefix("kb:") ? String(id.dropFirst(3)) : id
+        withAnimation(focusSpring) { kbs.removeAll { $0.id == raw }; editingKB = nil; if selected == id { selected = nil } }
+        positions[id] = nil; persistKBs(); persistPositions(); tombstone(raw, kind: .kb)
+    }
+    private func persistGames() {
+        if let data = try? JSONEncoder().encode(placedGames), let s = String(data: data, encoding: .utf8) { gamesJSON = s }
+    }
+    // place a game on the desk as a primitive (idempotent — tapping an already-placed game just plays it)
+    private func placeGame(_ gameId: String) {
+        if placedGames.contains(where: { $0.gameId == gameId }) {
+            select("game:\(gameId)"); return
+        }
+        haptic(.medium)
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) { placedGames.append(GameRecord(gameId: gameId, path: pathKey)) }
+        persistGames(); toast("\(gamePrim(GameRecord(gameId: gameId, path: pathKey)).title) on the desk")
+    }
+    private func removeGame(_ id: String) {
+        haptic(.medium)
+        let raw = id.hasPrefix("game:") ? String(id.dropFirst(5)) : id
+        withAnimation(focusSpring) { placedGames.removeAll { $0.gameId == raw }; if selected == id { selected = nil } }
+        positions[id] = nil; persistGames(); persistPositions()
+    }
+    // HSM-17-04 — send your reply back into the live coding session. This slice does the optimistic desk
+    // side (clears the question, returns the coder to working, toasts). The real inject over
+    // `/api/dictation/remote` (the proven Phase-13 path) + voice / dropped-context / AI-draft land next.
+    private func answerCoder(_ session: CoderSession, _ text: String) {
+        let reply = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !reply.isEmpty else { return }
+        haptic(.medium)
+        // TODO(HSM-17-04): inject via HTTPDesktopClient.sendRemoteDictation(target: session) on real metal.
+        resolveCoder(session, with: .userPrompt(reply))
+        answeringCoder = nil
+        toast("Sent to \(session.display)")
+    }
+    private func approveCoder(_ session: CoderSession) {
+        haptic(.medium)
+        // TODO(HSM-17-04): send the approval down /api/dictation/remote (or the approve route) on real metal.
+        resolveCoder(session, with: .notification("You approved the request"))
+        openCoderSession = nil
+        toast("Approved · \(session.display) continues")
+    }
+    // optimistic desk side: clear the pending ask, append the resolving event, return the coder to working
+    private func resolveCoder(_ session: CoderSession, with event: CoderEvent.Kind) {
+        withAnimation(focusSpring) {
+            if let i = coders.firstIndex(where: { $0.id == session.id }) {
+                coders[i].events.append(CoderEvent(id: "ev-\(coders[i].events.count)", ts: nil, kind: event))
+                coders[i].state = .working
+            }
+            arrivedIds.remove(session.id)
+        }
+    }
+    // harvest a game's best score as a routable output card on the desk
+    private func harvestScore(_ g: GamePrimitive) {
+        haptic(.medium)
+        let body = g.best > 0 ? "Best score in \(g.title): \(g.best)." : "Played \(g.title) — no score recorded yet."
+        let rec = OutputRecord(id: UUID().uuidString, title: "\(g.title) · score", body: body, source: g.title, lens: "Score", path: pathKey)
+        withAnimation(focusSpring) { outputs.append(rec) }
+        persistOutputs(); stampSync(rec.id); select(nil); toast("Score harvested")
     }
     private func persistWorkflows() {
         if let data = try? JSONEncoder().encode(workflows), let s = String(data: data, encoding: .utf8) { workflowsJSON = s }
@@ -3232,23 +4086,22 @@ struct DioStage: View {
             if let i = agents.firstIndex(where: { $0.id == rec.id }) { agents[i] = rec } else { agents.append(rec) }
             editingAgent = nil
         }
-        persistAgents()
+        persistAgents(); stampSync(rec.id); syncDesk(reason: "agent saved")
     }
     private func deleteAgent(_ id: String) {
         haptic(.medium)
         withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) {
             agents.removeAll { $0.id == id }; openAgent = nil
         }
-        persistAgents()
+        persistAgents(); tombstone(id, kind: .agent); syncDesk(reason: "agent deleted")
     }
     private func saveTool() {
         let nm = toolName.trimmingCharacters(in: .whitespaces)
         guard !nm.isEmpty, !pendingToolPrompt.isEmpty else { return }
         haptic(.medium)
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) {
-            workflows.append(WorkflowRecord(id: UUID().uuidString, name: nm, prompt: pendingToolPrompt))
-        }
-        persistWorkflows()
+        let wf = WorkflowRecord(id: UUID().uuidString, name: nm, prompt: pendingToolPrompt)
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) { workflows.append(wf) }
+        persistWorkflows(); stampSync(wf.id)
     }
     private func load() {
         var pd: [String: CGPoint] = [:]
@@ -3279,9 +4132,17 @@ struct DioStage: View {
         }
         filed = fd
         if let data = outputsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([OutputRecord].self, from: data) { outputs = arr }
+        if let data = notesJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([NoteRecord].self, from: data) { notes = arr }
+        if let data = kbsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([KBRecord].self, from: data) { kbs = arr }
+        else {   // one-time migration: legacy classic-home KB names (CSV) → desk KB primitives at root
+            let legacy = kbsCSV.split(separator: ";").map(String.init).filter { !$0.isEmpty }
+            if !legacy.isEmpty { kbs = legacy.map { KBRecord(id: UUID().uuidString, name: $0, path: "", items: 0) }; persistKBs() }
+        }
+        if let data = gamesJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([GameRecord].self, from: data) { placedGames = arr }
         if let data = workflowsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([WorkflowRecord].self, from: data) { workflows = arr }
         if let data = agentsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([AgentRecord].self, from: data) { agents = arr }
         if let data = agentChatsJSON.data(using: .utf8), let d = try? JSONDecoder().decode([String: [AgentMessage]].self, from: data) { agentChats = d }
         if let data = chainsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([ChainRecord].self, from: data) { chains = arr }
+        loadSyncMaps()
     }
 }

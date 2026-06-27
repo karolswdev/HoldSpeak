@@ -99,6 +99,14 @@ public enum WorkflowOutput: String, Codable, Sendable, CaseIterable {
 }
 
 /// A complete, named, user-defined workflow.
+///
+/// RECONCILIATION (THE PRIMITIVE FRAMEWORK, tab 1) — this is the **executable engine model**, the
+/// richer Blueprints pipeline the on-device runner actually runs. Its SYNCED counterpart is the
+/// minimal wire contract `Contracts.WorkflowDefinition` (Sources/Contracts/Primitives.swift). They
+/// are kept distinct ON PURPOSE: the contract layer must not depend on this engine. To travel
+/// between surfaces a `Workflow` serializes into `WorkflowDefinition.graphJson` (the wire `kind`
+/// stays `workflow`); a surface with the engine rehydrates a runnable `Workflow` from it. Do not
+/// merge the two types — sync the definition, run the engine model.
 public struct Workflow: Identifiable, Codable, Sendable, Equatable {
     public var id: UUID
     public var name: String

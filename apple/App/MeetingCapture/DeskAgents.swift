@@ -26,6 +26,32 @@ struct AgentRecord: Codable, Identifiable, Equatable {
         AgentRecord(id: UUID().uuidString, name: "", avatar: AgentAvatars.all.first!.id, role: "",
                     systemPrompt: "", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: "")
     }
+
+    // CANONICAL BRIDGE — an AgentRecord IS the contract `Agent` persona (a synced
+    // capability primitive, not an @AppStorage local). The desk's `kb` is a KB *name*
+    // today; it rides through as `kbId` (reconcile name→id with the KB primitive later).
+    func toContract(now: Date = Date()) -> Agent {
+        Agent(id: id, name: name, avatar: avatar, role: role, systemPrompt: systemPrompt,
+              userTemplate: userTemplate, tools: [], kbId: kb.isEmpty ? nil : kb,
+              manualContext: manualContext, useZoneContext: useZoneContext,
+              createdAt: now, updatedAt: now)
+    }
+    init(contract a: Agent) {
+        self.id = a.id; self.name = a.name; self.avatar = a.avatar; self.role = a.role
+        self.systemPrompt = a.systemPrompt; self.userTemplate = a.userTemplate
+        self.manualContext = a.manualContext; self.useZoneContext = a.useZoneContext
+        self.kb = a.kbId ?? ""
+    }
+    init(id: String, name: String, avatar: String, role: String, systemPrompt: String,
+         userTemplate: String, manualContext: String, useZoneContext: Bool, kb: String) {
+        self.id = id; self.name = name; self.avatar = avatar; self.role = role
+        self.systemPrompt = systemPrompt; self.userTemplate = userTemplate
+        self.manualContext = manualContext; self.useZoneContext = useZoneContext; self.kb = kb
+    }
+    // sync-ready envelope (carried by ChangeSet.agents)
+    func synced(at: Date = Date()) -> Synced<Agent> {
+        .live(toContract(now: at), id: id, kind: .agent, modifiedAt: at)
+    }
 }
 
 // One turn in a conversation with an agent. Threads are persisted per agent (hs.diorama.agentchats).
@@ -192,12 +218,14 @@ struct DioAgentRail: View {
     let agents: [AgentRecord]; let chains: [ChainRecord]; let dimmed: Bool
     let onOpen: (AgentRecord) -> Void; let onCreate: () -> Void
     let onRunChain: (ChainRecord) -> Void; let onCreateChain: () -> Void
-    @State private var tab = 0   // 0 = agents, 1 = chains
+    let onPlay: (String) -> Void   // launch a game by id ("arkanoid" or a MiniGames id)
+    let onPlace: (String) -> Void  // place a game on the desk as a primitive (long-press)
+    @State private var tab = 0   // 0 = agents · 1 = chains · 2 = play
     var body: some View {
         VStack(spacing: 11) {
-            // two tiny tabs — Agents / Chains
+            // tiny tabs — Agents / Chains / Play
             HStack(spacing: 4) {
-                ForEach(Array(["Agents", "Chains"].enumerated()), id: \.offset) { i, t in
+                ForEach(Array(["Agents", "Chains", "Play"].enumerated()), id: \.offset) { i, t in
                     Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) { tab = i }; haptic() } label: {
                         Text(t).font(.system(size: 8.5, weight: .black, design: .rounded)).tracking(0.6)
                             .foregroundStyle(tab == i ? .white : DioPal.muted.opacity(0.8))
@@ -211,12 +239,23 @@ struct DioAgentRail: View {
                     if tab == 0 {
                         ForEach(agents) { a in Button { onOpen(a) } label: { DioAgentChip(agent: a) }.buttonStyle(.plain) }
                         plusTile(onCreate)
-                    } else {
+                    } else if tab == 1 {
                         ForEach(chains) { c in Button { onRunChain(c) } label: { DioChainChip(chain: c, agents: agents) }.buttonStyle(.plain) }
                         plusTile(onCreateChain)
                         if chains.isEmpty {
                             Text("Build a\ncrew").font(.system(size: 9, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).multilineTextAlignment(.center)
                         }
+                    } else {
+                        // PLAY — every game lives here (tap to play, long-press to place on the desk)
+                        Button { onPlay("arkanoid"); haptic() } label: { DioGameChip(id: "arkanoid", title: "Arkanoid", icon: "gamecontroller.fill") }.buttonStyle(.plain)
+                            .contextMenu { Button { onPlace("arkanoid") } label: { Label("Add to desk", systemImage: "plus.rectangle.on.rectangle") } }
+                        ForEach(MiniGames.all) { g in
+                            Button { onPlay(g.id); haptic() } label: { DioGameChip(id: g.id, title: g.title, icon: g.icon) }.buttonStyle(.plain)
+                                .contextMenu { Button { onPlace(g.id) } label: { Label("Add to desk", systemImage: "plus.rectangle.on.rectangle") } }
+                        }
+                        Text("Long-press a game\nto add it to the desk")
+                            .font(.system(size: 8.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.7))
+                            .multilineTextAlignment(.center).padding(.top, 2)
                     }
                 }
                 .padding(.vertical, 4)
@@ -227,6 +266,9 @@ struct DioAgentRail: View {
         .background(RoundedRectangle(cornerRadius: 22, style: .continuous)
             .fill(.black.opacity(0.32)).overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
         .opacity(dimmed ? 0 : 1).allowsHitTesting(!dimmed)
+        #if targetEnvironment(simulator)
+        .onAppear { if let t = ProcessInfo.processInfo.environment["HS_DESK_RAILTAB"], let i = Int(t) { tab = i } }
+        #endif
     }
     private func plusTile(_ action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -257,6 +299,22 @@ struct DioAgentChip: View {
             Text(agent.name.isEmpty ? "Agent" : agent.name)
                 .font(.system(size: 9.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9))
                 .lineLimit(1).frame(width: 60)
+        }
+    }
+}
+
+// a game entry in the rail's Play column — its PixelLab cover on a soft tile + the title
+struct DioGameChip: View {
+    let id: String; let title: String; let icon: String
+    var body: some View {
+        VStack(spacing: 4) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 15, style: .continuous)
+                    .fill(LinearGradient(colors: [DioPal.violet.opacity(0.32), Color(hex: 0x14121C)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+                GameCover(id: id, fallback: icon, size: 42)
+            }.frame(width: 54, height: 54)
+            Text(title).font(.system(size: 9.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9)).lineLimit(1).frame(width: 60)
         }
     }
 }
@@ -714,6 +772,21 @@ struct DioAgentChat: View {
 struct ChainRecord: Codable, Identifiable, Equatable {
     var id: String; var name: String; var steps: [String]   // ordered AgentRecord ids
     static func blank() -> ChainRecord { ChainRecord(id: UUID().uuidString, name: "", steps: []) }
+
+    // CANONICAL BRIDGE — a ChainRecord IS the contract `Chain` (capability/synced).
+    func toContract(now: Date = Date()) -> Chain {
+        Chain(id: id, name: name, steps: steps, createdAt: now, updatedAt: now)
+    }
+    // INVERSE BRIDGE — rebuild a desk ChainRecord from an incoming `Chain`.
+    init(contract c: Chain) {
+        self.id = c.id; self.name = c.name; self.steps = c.steps
+    }
+    init(id: String, name: String, steps: [String]) {
+        self.id = id; self.name = name; self.steps = steps
+    }
+    func synced(at: Date = Date()) -> Synced<Chain> {
+        .live(toContract(now: at), id: id, kind: .chain, modifiedAt: at)
+    }
 }
 
 // A chain as a routable primitive (route a card → run it through the crew).

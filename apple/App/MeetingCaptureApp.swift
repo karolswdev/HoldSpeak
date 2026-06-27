@@ -54,6 +54,9 @@ struct MeetingCaptureApp: App {
             .onAppear {
                 #if targetEnvironment(simulator)
                 let env = ProcessInfo.processInfo.environment
+                // LIVE SYNC in-code proof (no App-layer test target): run the desk store's
+                // 7-kind snapshot→push→pull→apply + tombstone + LWW round-trip and log it.
+                if env["HS_SYNC_SELFCHECK"] == "1" { DeskSyncStore.selfCheck() }
                 if env["HS_DEMO_QUEUE"] == "1" {
                     RunQueueStore.shared.seedDemo()
                     RunQueueStore.shared.expanded = env["HS_DEMO_QUEUE_OPEN"] == "1"

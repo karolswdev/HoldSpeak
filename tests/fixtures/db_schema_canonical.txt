@@ -30,23 +30,29 @@ ON activity_records(source_browser, source_profile, normalized_url)
 index idx_actuator_proposal_audit_proposal: CREATE INDEX idx_actuator_proposal_audit_proposal ON actuator_proposal_audit(proposal_id, created_at)
 index idx_actuator_proposals_meeting: CREATE INDEX idx_actuator_proposals_meeting ON actuator_proposals(meeting_id, created_at DESC)
 index idx_actuator_proposals_status: CREATE INDEX idx_actuator_proposals_status ON actuator_proposals(status, created_at DESC)
+index idx_agents_modified: CREATE INDEX idx_agents_modified ON agents(last_modified DESC)
 index idx_artifact_sources_ref: CREATE INDEX idx_artifact_sources_ref ON artifact_sources(source_type, source_ref)
 index idx_artifacts_meeting: CREATE INDEX idx_artifacts_meeting ON artifacts(meeting_id, created_at DESC)
 index idx_artifacts_type: CREATE INDEX idx_artifacts_type ON artifacts(artifact_type, created_at DESC)
 index idx_bookmarks_meeting: CREATE INDEX idx_bookmarks_meeting ON bookmarks(meeting_id)
+index idx_chains_modified: CREATE INDEX idx_chains_modified ON chains(last_modified DESC)
 index idx_connector_runs_connector_started: CREATE INDEX idx_connector_runs_connector_started
 ON connector_runs(connector_id, started_at DESC)
 index idx_dictation_corrections_recent: CREATE INDEX idx_dictation_corrections_recent
 ON dictation_corrections(created_at DESC, id DESC)
 index idx_dictation_journal_recent: CREATE INDEX idx_dictation_journal_recent
 ON dictation_journal(created_at DESC, id DESC)
+index idx_directories_modified: CREATE INDEX idx_directories_modified ON directories(last_modified DESC)
+index idx_directory_memberships_dir: CREATE INDEX idx_directory_memberships_dir ON directory_memberships(directory_id)
 index idx_intel_job_attempts_meeting: CREATE INDEX idx_intel_job_attempts_meeting ON intel_job_attempts(meeting_id, created_at DESC)
 index idx_intel_jobs_status: CREATE INDEX idx_intel_jobs_status ON intel_jobs(status, requested_at)
 index idx_intent_window_scores_meeting: CREATE INDEX idx_intent_window_scores_meeting ON intent_window_scores(meeting_id, window_id)
 index idx_intent_windows_meeting: CREATE INDEX idx_intent_windows_meeting ON intent_windows(meeting_id, start_seconds, created_at)
+index idx_kbs_modified: CREATE INDEX idx_kbs_modified ON kbs(last_modified DESC)
 index idx_meeting_projects_meeting: CREATE INDEX idx_meeting_projects_meeting ON meeting_projects(meeting_id)
 index idx_meeting_projects_project: CREATE INDEX idx_meeting_projects_project ON meeting_projects(project_id, detected_at DESC)
 index idx_meetings_date: CREATE INDEX idx_meetings_date ON meetings(started_at)
+index idx_notes_modified: CREATE INDEX idx_notes_modified ON notes(last_modified DESC)
 index idx_plugin_run_jobs_meeting: CREATE INDEX idx_plugin_run_jobs_meeting ON plugin_run_jobs(meeting_id, requested_at)
 index idx_plugin_run_jobs_status: CREATE INDEX idx_plugin_run_jobs_status ON plugin_run_jobs(status, requested_at)
 index idx_plugin_runs_idempotency: CREATE UNIQUE INDEX idx_plugin_runs_idempotency ON plugin_runs(idempotency_key)
@@ -62,6 +68,7 @@ index idx_segments_speaker_id: CREATE INDEX idx_segments_speaker_id ON segments(
 index idx_segments_time: CREATE INDEX idx_segments_time ON segments(meeting_id, start_time)
 index idx_speakers_name: CREATE INDEX idx_speakers_name ON speakers(name)
 index idx_topics_meeting: CREATE INDEX idx_topics_meeting ON topics(meeting_id)
+index idx_workflows_modified: CREATE INDEX idx_workflows_modified ON workflows(last_modified DESC)
 table action_items: CREATE TABLE action_items (
     id TEXT PRIMARY KEY,
     meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
@@ -200,6 +207,19 @@ table actuator_proposals: CREATE TABLE actuator_proposals (
     executed_at TEXT,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
+table agents: CREATE TABLE agents (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    avatar TEXT NOT NULL DEFAULT '',
+    role TEXT NOT NULL DEFAULT '',
+    system_prompt TEXT NOT NULL DEFAULT '',
+    user_template TEXT NOT NULL DEFAULT '',
+    tools_json TEXT NOT NULL DEFAULT '[]',
+    kb_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+)
 table artifact_sources: CREATE TABLE artifact_sources (
     artifact_id TEXT NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
     source_type TEXT NOT NULL,
@@ -227,6 +247,14 @@ table bookmarks: CREATE TABLE bookmarks (
     timestamp REAL NOT NULL,
     label TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table chains: CREATE TABLE chains (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    steps_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
 )
 table connector_runs: CREATE TABLE connector_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -264,6 +292,21 @@ table dictation_journal: CREATE TABLE dictation_journal (
     warnings TEXT NOT NULL DEFAULT '[]',
     corrected INTEGER NOT NULL DEFAULT 0,
     correction_id INTEGER
+)
+table directories: CREATE TABLE directories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    parent_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+)
+table directory_memberships: CREATE TABLE directory_memberships (
+    primitive_id TEXT PRIMARY KEY,
+    directory_id TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
 )
 table intel_job_attempts: CREATE TABLE intel_job_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -317,6 +360,14 @@ table intent_windows: CREATE TABLE intent_windows (
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (meeting_id, window_id)
 )
+table kbs: CREATE TABLE kbs (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    member_ids_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+)
 table meeting_projects: CREATE TABLE meeting_projects (
     meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
     project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -349,6 +400,16 @@ table meetings: CREATE TABLE meetings (
 table milestones: CREATE TABLE milestones (
     key TEXT PRIMARY KEY,
     achieved_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table notes: CREATE TABLE notes (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT '',
+    body_markdown TEXT NOT NULL DEFAULT '',
+    tags_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
 )
 table plugin_run_jobs: CREATE TABLE plugin_run_jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -442,6 +503,15 @@ table topics: CREATE TABLE topics (
     topic TEXT NOT NULL,
     extracted_at REAL NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table workflows: CREATE TABLE workflows (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    prompt TEXT NOT NULL DEFAULT '',
+    graph_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
 )
 trigger segments_ad: CREATE TRIGGER segments_ad AFTER DELETE ON segments BEGIN
     INSERT INTO segments_fts(segments_fts, rowid, text, speaker)

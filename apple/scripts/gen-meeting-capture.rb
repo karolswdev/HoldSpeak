@@ -64,7 +64,7 @@ res_group = project.new_group('Resources', File.join(ROOT, 'App'))
 end
 # HSM-14 — bundled PixelLab pixel-art: tailored-agent avatars (agent_*), diarized-speaker
 # portraits (speaker_*), and the Arkanoid desk-game sprites (ark_*).
-Dir[File.join(ROOT, 'App', '{agent,speaker,ark}_*.png')].sort.each do |p|
+Dir[File.join(ROOT, 'App', '{agent,speaker,ark,game}_*.png')].sort.each do |p|
   target.add_resources([res_group.new_reference(p)])
 end
 

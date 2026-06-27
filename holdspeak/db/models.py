@@ -412,6 +412,242 @@ class DictationCorrectionRecord:
 
 
 @dataclass
+class NoteRecord:
+    """A first-class desk Note — content/synced primitive (Primitive Framework).
+
+    The desk's freeform markdown note, authorable on any surface (desktop / iPad /
+    web) and synced to the desktop hub. Mirrors the meeting/artifact sync shape:
+    `last_modified` drives last-write conflict resolution and `deleted` is a
+    tombstone (a deleted note keeps its row so the tombstone propagates).
+    """
+
+    id: str
+    title: str
+    body_markdown: str
+    tags: list[str] = field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
+    last_modified: str = ""
+    deleted: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "title": self.title,
+            "body_markdown": self.body_markdown,
+            "tags": list(self.tags),
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "last_modified": self.last_modified,
+            "deleted": self.deleted,
+        }
+
+
+@dataclass
+class KBRecord:
+    """A desk Knowledge Base — organization/synced primitive (Primitive Framework).
+
+    The desk's knowledge container: a named bag of member primitive ids. NOTE:
+    this is DISTINCT from the existing `project.yaml` kb-map and the `.hs/` /
+    `.holdspeak/` context files — those are project-scoped dictation context. This
+    KB is the desk's user-authored organizational grouping, synced like meetings.
+    """
+
+    id: str
+    name: str
+    member_ids: list[str] = field(default_factory=list)
+    created_at: str = ""
+    last_modified: str = ""
+    deleted: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "member_ids": list(self.member_ids),
+            "created_at": self.created_at,
+            "last_modified": self.last_modified,
+            "deleted": self.deleted,
+        }
+
+
+@dataclass
+class AgentRecord:
+    """A first-class Agent persona — capability/synced primitive (Primitive Framework).
+
+    The iPad's Tailored-Agents persona promoted to a canonical server object: a
+    named, reusable prompt template (system + user) with an avatar, a role, an
+    optional tool list and an optional owning KB. Runnable on the hub via the
+    intel/LLM engine.
+
+    NOTE: this is DISTINCT from `holdspeak.agent_context` AgentSession, which is a
+    live claude/codex *coding* session capture — a different concept entirely.
+    Do not merge the two.
+    """
+
+    id: str
+    name: str
+    avatar: str = ""
+    role: str = ""
+    system_prompt: str = ""
+    user_template: str = ""
+    tools: list[str] = field(default_factory=list)
+    kb_id: Optional[str] = None
+    created_at: str = ""
+    last_modified: str = ""
+    deleted: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "avatar": self.avatar,
+            "role": self.role,
+            "system_prompt": self.system_prompt,
+            "user_template": self.user_template,
+            "tools": list(self.tools),
+            "kb_id": self.kb_id,
+            "created_at": self.created_at,
+            "last_modified": self.last_modified,
+            "deleted": self.deleted,
+        }
+
+
+@dataclass
+class ChainRecord:
+    """A Chain — capability/synced primitive (Primitive Framework).
+
+    An ordered run of agent personas: `steps` is a list of agent ids executed in
+    sequence. Synced like meetings/artifacts.
+    """
+
+    id: str
+    name: str
+    steps: list[str] = field(default_factory=list)
+    created_at: str = ""
+    last_modified: str = ""
+    deleted: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "steps": list(self.steps),
+            "created_at": self.created_at,
+            "last_modified": self.last_modified,
+            "deleted": self.deleted,
+        }
+
+
+@dataclass
+class DirectoryRecord:
+    """A Directory — organization/synced primitive (Primitive Framework).
+
+    The canonical organization container. The iPad renders a Directory as a
+    spatial **zone**; the web/desktop render it as a folder. What syncs is the
+    directory's *identity* and *nesting*: `id, name, parent_id` (a `parent_id`
+    chain is a nested zone / sub-directory). What does NOT sync is the zone's
+    per-device geometry/paint (cx, cy, w, h, color, …) — that is layout, kept
+    local on each surface and never canonical.
+
+    Membership (which primitive is filed in this directory) is a SEPARATE synced
+    map — see `DirectoryMembershipRecord` / `DirectoryMembershipRepository`.
+
+    Synced like meetings/artifacts: `last_modified` is the last-write-wins
+    conflict key and `deleted` is a tombstone (a deleted directory keeps its row
+    so the tombstone propagates to other surfaces).
+    """
+
+    id: str
+    name: str
+    parent_id: Optional[str] = None
+    created_at: str = ""
+    last_modified: str = ""
+    deleted: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "parent_id": self.parent_id,
+            "created_at": self.created_at,
+            "last_modified": self.last_modified,
+            "deleted": self.deleted,
+        }
+
+
+@dataclass
+class DirectoryMembershipRecord:
+    """A filing edge: which primitive is filed in which directory.
+
+    The canonical, synced **membership map** (`primitive_id → directory_id`). This
+    is *organization*, not layout, so it MUST sync — a meeting/artifact/note/agent
+    filed into a directory carries that edge to every surface.
+
+    RELATIONSHIP TO THE LEGACY `filed` MAP: the classic desktop home and the iPad
+    both kept membership as an in-surface dictionary (`hs.desk.filed` on the web,
+    the iPad's `filed: [primitive_id: zone_id]`). This record is the canonical
+    server-side formalization of that map, and SUPERSEDES it: each `(primitive_id)`
+    keys at most one membership row (a primitive lives in one directory), exactly
+    like those single-valued maps. The surfaces' local `filed` maps become caches
+    that hydrate from / push to these rows over `/api/sync`.
+
+    Keyed by `primitive_id` (one filing per primitive). `last_modified` is the
+    last-write-wins key; `deleted` is a tombstone (an unfiled primitive keeps its
+    row, deleted=1, so the unfile propagates). The synced id of this record is the
+    `primitive_id` (the map key).
+    """
+
+    primitive_id: str
+    directory_id: str
+    created_at: str = ""
+    last_modified: str = ""
+    deleted: bool = False
+
+    @property
+    def id(self) -> str:
+        """The membership's synced identity is its map key (the primitive id)."""
+        return self.primitive_id
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "primitive_id": self.primitive_id,
+            "directory_id": self.directory_id,
+            "created_at": self.created_at,
+            "last_modified": self.last_modified,
+            "deleted": self.deleted,
+        }
+
+
+@dataclass
+class WorkflowRecord:
+    """A Workflow — capability/synced primitive (Primitive Framework).
+
+    A saved Workbench workflow: either a freeform `prompt` or a node-graph
+    `graph_json` (the Blueprints visual program). Synced like meetings/artifacts.
+    """
+
+    id: str
+    name: str
+    prompt: str = ""
+    graph_json: dict[str, Any] = field(default_factory=dict)
+    created_at: str = ""
+    last_modified: str = ""
+    deleted: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "prompt": self.prompt,
+            "graph_json": self.graph_json,
+            "created_at": self.created_at,
+            "last_modified": self.last_modified,
+            "deleted": self.deleted,
+        }
+
+
+@dataclass
 class DictationJournalRecord:
     """One persisted dictation-journal entry (Phase 45, HS-45-01).
 

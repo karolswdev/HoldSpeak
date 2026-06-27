@@ -25,11 +25,15 @@ echo "== build + sign (destination id=$HWUDID) =="
 # swift macros, and flattening all products into one dir collides its per-module .o files
 # ("Multiple commands produce SwiftSyntax.o"). The nested derived-data layout keeps them apart.
 DD="$PWD/build/meeting-capture-dd"
+# Toolchain workaround: sever LLM.swift's swift-syntax macro (Xcode-beta Swift 6.3 can't build it),
+# then build without re-resolving so the patch survives. See scripts/patch-llm-macro.sh.
+scripts/patch-llm-macro.sh "$DD" build/HoldSpeakMeetingCapture.xcodeproj HoldSpeakMobile
 xcodebuild -project build/HoldSpeakMeetingCapture.xcodeproj -scheme HoldSpeakMobile \
   -configuration Debug \
   -destination "platform=iOS,id=$HWUDID" \
   -allowProvisioningUpdates \
   -skipMacroValidation \
+  -disableAutomaticPackageResolution \
   -derivedDataPath "$DD" \
   build
 

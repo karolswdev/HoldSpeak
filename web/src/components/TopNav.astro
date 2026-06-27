@@ -19,7 +19,7 @@
 import AppMark from "./AppMark.astro";
 import TrustChip from "./TrustChip.astro";
 
-type Route = "runtime" | "activity" | "history" | "dictation" | "companion" | "commands";
+type Route = "runtime" | "desk" | "activity" | "history" | "dictation" | "companion" | "commands";
 
 interface Props {
   current?: Route;
@@ -28,7 +28,13 @@ interface Props {
 const { current } = Astro.props;
 
 const groups: { label: string; routes: { slug: Route; label: string; href: string }[] }[] = [
-  { label: "Live", routes: [{ slug: "runtime", label: "Runtime", href: "/" }] },
+  {
+    label: "Live",
+    routes: [
+      { slug: "runtime", label: "Runtime", href: "/" },
+      { slug: "desk", label: "Desk", href: "/desk" },
+    ],
+  },
   {
     label: "Review",
     routes: [

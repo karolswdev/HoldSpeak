@@ -8,7 +8,7 @@ import SwiftUI
 // the keystone gesture (drag onto the AI core → LLM → new primitive) becomes trivial to add next.
 
 enum PrimitiveKind: String {
-    case meeting, summary, actions, transcript, topics, note, artifact, model, kb, workflow, connector, agent, chain
+    case meeting, summary, actions, transcript, topics, note, artifact, model, kb, workflow, connector, agent, chain, game, coder
 
     var glyph: String {                       // the sprite asset (one source of truth → canvas + card + pull-out)
         switch self {
@@ -18,6 +18,8 @@ enum PrimitiveKind: String {
         case .note:    return "note"
         case .agent:   return "sparkles"      // overridden per-agent by its chosen avatar
         case .chain:   return "arrow.triangle.branch"
+        case .game:    return "gamecontroller.fill"   // overridden per-game by its cover art
+        case .coder:   return "sparkles"              // a live coding session; overridden per-agent
         default:       return "cassette"
         }
     }
@@ -30,11 +32,13 @@ enum PrimitiveKind: String {
         case .connector:                    return DioPal.cobalt
         case .agent:                        return DioPal.mint   // overridden per-agent by its avatar hue
         case .chain:                        return DioPal.accent
+        case .game:                         return DioPal.cobalt
+        case .coder:                        return DioPal.cobalt
         }
     }
     var badge: String { rawValue.uppercased() }
     var base: CGFloat {                       // canvas sprite size
-        switch self { case .model: return 162; case .kb: return 120; case .note: return 106; case .agent: return 104; case .chain: return 110; default: return 130 }
+        switch self { case .model: return 162; case .kb: return 120; case .note: return 106; case .agent: return 104; case .chain: return 110; case .game: return 122; case .coder: return 118; default: return 130 }
     }
 }
 
@@ -152,22 +156,110 @@ struct ModelPrimitive: DeskPrimitive {
     var accepts: [PrimitiveKind] { [.meeting, .summary, .actions, .transcript, .topics, .note, .artifact] } // the AI core eats anything
 }
 
-struct KBPrimitive: DeskPrimitive {
-    let name: String; let items: Int
-    var id: String { "kb:\(name)" }
-    var kind: PrimitiveKind { .kb }
-    var title: String { name }
-    var preview: String? { "\(items) item\(items == 1 ? "" : "s")" }
-    var sections: [PrimitiveSection] {
-        [.init(label: "KNOWLEDGE", tint: DioPal.violet, body: .text("\(items) item\(items == 1 ? "" : "s") filed here. Ask a grounded question and get an answer cited from your own notes."))]
+// A KNOWLEDGE BASE — a typed container you ground answers in. Now a full desk primitive (stable id,
+// placeable, filable into zones, rename/delete on-desk). Persisted as a KBRecord; `items` is how many
+// cards have been routed into it.
+struct KBRecord: Codable, Identifiable, Equatable {
+    var id: String; var name: String; var path: String; var items: Int
+
+    // CANONICAL BRIDGE — a KBRecord IS the contract `KB` (organization/synced). The
+    // desk tracks `items` as a count; the contract carries `memberIds` (the Membership
+    // edges). v0 ships the count-only shape with empty members until membership lands.
+    func toContract(now: Date = Date(), memberIds: [String] = []) -> KB {
+        KB(id: id, name: name, memberIds: memberIds, createdAt: now, updatedAt: now)
     }
-    var accepts: [PrimitiveKind] { [.note, .artifact, .summary] }
+    // INVERSE BRIDGE — rebuild a desk KBRecord from an incoming synced `KB`. `path`
+    // (per-device layout) is never on the wire, so it defaults to root; `items` is the
+    // member count (v0: memberIds is the synced truth, the count is derived).
+    init(contract k: KB, path: String = "") {
+        self.id = k.id; self.name = k.name; self.path = path; self.items = k.memberIds.count
+    }
+    init(id: String, name: String, path: String, items: Int) {
+        self.id = id; self.name = name; self.path = path; self.items = items
+    }
+    func synced(at: Date = Date(), memberIds: [String] = []) -> Synced<KB> {
+        .live(toContract(now: at, memberIds: memberIds), id: id, kind: .kb, modifiedAt: at)
+    }
+}
+struct KBPrimitive: DeskPrimitive {
+    let rec: KBRecord
+    var id: String { "kb:\(rec.id)" }
+    var kind: PrimitiveKind { .kb }
+    var title: String { rec.name }
+    var preview: String? { "\(rec.items) item\(rec.items == 1 ? "" : "s")" }
+    var sections: [PrimitiveSection] {
+        [.init(label: "KNOWLEDGE", tint: DioPal.violet, body: .text("\(rec.items) item\(rec.items == 1 ? "" : "s") filed here. Drop a note or output on this KB to add it, then ask a grounded question cited from your own knowledge."))]
+    }
+    var actions: [PrimitiveAction] {
+        [PrimitiveAction(label: "Rename", icon: "pencil", role: .openEditor),
+         PrimitiveAction(label: "Delete", icon: "trash", role: .custom("delete"))]
+    }
+    var accepts: [PrimitiveKind] { [.note, .artifact, .summary, .actions, .topics] }
+}
+
+// A GAME placed on the desk — a first-class primitive (placeable, filable, deletable) with a "play"
+// capability and a harvestable score. Persisted as a GameRecord; `best` is read live from the game's
+// own UserDefaults so the card always shows the current high score.
+struct GameRecord: Codable, Identifiable, Equatable {
+    var gameId: String; var path: String
+    var id: String { gameId }
+}
+struct GamePrimitive: DeskPrimitive {
+    let gameId: String; let name: String; let best: Int; let path: String
+    var id: String { "game:\(gameId)" }
+    var kind: PrimitiveKind { .game }
+    var glyph: String { "game_\(gameId)" }    // the PixelLab cover art, rendered via DeskSprite
+    var base: CGFloat { 122 }
+    var title: String { name }
+    var subtitle: String { best > 0 ? "best \(best) · tap to play" : "tap to play" }
+    var preview: String? { best > 0 ? "Best: \(best)" : "Tap to play" }
+    var sections: [PrimitiveSection] {
+        [.init(label: "GAME", tint: DioPal.cobalt, body: .text(best > 0
+            ? "Your best is \(best). Play to beat it, then harvest the score onto your desk as a card."
+            : "A quick desk game. Play it, then harvest your score as a card you can route or file."))]
+    }
+    var actions: [PrimitiveAction] {
+        [PrimitiveAction(label: "Play", icon: "play.fill", role: .custom("play")),
+         PrimitiveAction(label: "Harvest score", icon: "tray.and.arrow.down.fill", role: .custom("harvest")),
+         PrimitiveAction(label: "Remove from desk", icon: "trash", role: .custom("delete"))]
+    }
+    var emits: [PrimitiveKind] { [.artifact] }
 }
 
 // A generated output — the result of routing a primitive through the AI core. It's a first-class primitive
 // itself, so you can route it AGAIN (every output is also an input). Persisted as an OutputRecord.
 struct OutputRecord: Codable, Identifiable, Equatable {
     var id: String; var title: String; var body: String; var source: String; var lens: String; var path: String
+
+    // CANONICAL BRIDGE — a desk OutputRecord IS the contract `Artifact` (content/synced).
+    // A desk-authored artifact has no parent meeting (meetingId ""), the iPad desk is its
+    // plugin source, and the lens/source ride in `structuredJson` so they survive sync.
+    func toContract(now: Date = Date()) -> Artifact {
+        Artifact(id: id, meetingId: "", artifactType: .pluginOutput, title: title,
+                 bodyMarkdown: body, structuredJson: .object(["lens": .string(lens), "source": .string(source)]),
+                 confidence: 1.0, status: .draft, pluginId: "ipad.desk", pluginVersion: "0",
+                 sources: [ArtifactSource(sourceType: "desk", sourceRef: source)],
+                 createdAt: now, updatedAt: now)
+    }
+    func synced(at: Date = Date()) -> Synced<Artifact> {
+        .live(toContract(now: at), id: id, kind: .artifact, modifiedAt: at)
+    }
+    // INVERSE BRIDGE — rebuild a desk OutputRecord from an incoming `Artifact`. The
+    // lens/source we stashed in `structuredJson` survive the round-trip; a meeting-born
+    // artifact (no desk metadata) falls back to its type/title. `path` is per-device.
+    init(contract a: Artifact, path: String = "") {
+        self.id = a.id; self.title = a.title; self.body = a.bodyMarkdown; self.path = path
+        if case let .object(o) = a.structuredJson,
+           case let .string(lens)? = o["lens"], case let .string(src)? = o["source"] {
+            self.lens = lens; self.source = src
+        } else {
+            self.lens = a.artifactType.rawValue
+            self.source = a.meetingId.isEmpty ? "synced" : "meeting"
+        }
+    }
+    init(id: String, title: String, body: String, source: String, lens: String, path: String) {
+        self.id = id; self.title = title; self.body = body; self.source = source; self.lens = lens; self.path = path
+    }
 }
 struct OutputPrimitive: DeskPrimitive {
     let rec: OutputRecord
@@ -180,6 +272,47 @@ struct OutputPrimitive: DeskPrimitive {
     var preview: String? { rec.body }
     var sections: [PrimitiveSection] { [.init(label: rec.lens.uppercased(), tint: DioPal.accent, body: .text(rec.body))] }
     var emits: [PrimitiveKind] { [.artifact] }
+}
+
+// A NOTE — a first-class jotting you write and place on the desk yourself (vs an Output, which the AI
+// generates). It files into zones, routes through the AI core, and deletes — like everything else.
+// Persisted as a NoteRecord; its zone lives on `path` (same model as OutputRecord).
+struct NoteRecord: Codable, Identifiable, Equatable {
+    var id: String; var title: String; var body: String; var path: String
+
+    // CANONICAL BRIDGE — a NoteRecord IS the contract `Note` (its `path` is per-device
+    // layout, which the contract correctly omits). `now` is the lastModified instant.
+    func toContract(now: Date = Date()) -> Note {
+        Note(id: id, title: title, bodyMarkdown: body, tags: [], createdAt: now, updatedAt: now)
+    }
+    init(contract n: Note, path: String = "") {
+        self.id = n.id; self.title = n.title; self.body = n.bodyMarkdown; self.path = path
+    }
+    init(id: String, title: String, body: String, path: String) {
+        self.id = id; self.title = title; self.body = body; self.path = path
+    }
+    // sync-ready envelope (carried by ChangeSet.notes)
+    func synced(at: Date = Date()) -> Synced<Note> {
+        .live(toContract(now: at), id: id, kind: .note, modifiedAt: at)
+    }
+}
+struct NotePrimitive: DeskPrimitive {
+    let rec: NoteRecord
+    var id: String { "note:\(rec.id)" }
+    var kind: PrimitiveKind { .note }
+    var glyph: String { "note" }
+    var base: CGFloat { 108 }
+    var title: String { rec.title.isEmpty ? "Note" : rec.title }
+    var subtitle: String { "a note · tap to edit" }
+    var preview: String? { rec.body.isEmpty ? "Empty note — tap to write" : rec.body }
+    var sections: [PrimitiveSection] {
+        [.init(label: "NOTE", tint: DioPal.mint, body: .text(rec.body.isEmpty ? "Tap Edit to write this note." : rec.body))]
+    }
+    var actions: [PrimitiveAction] {
+        [PrimitiveAction(label: "Edit note", icon: "pencil", role: .openEditor),
+         PrimitiveAction(label: "Delete", icon: "trash", role: .custom("delete"))]
+    }
+    var emits: [PrimitiveKind] { [.note, .artifact] }
 }
 
 // A CONNECTOR — a tool on the desk that sends an output OUT of the app (the integrations half). Same
@@ -212,6 +345,24 @@ struct ConnectorPrimitive: DeskPrimitive {
 // one-shot asks. Persisted as a WorkflowRecord; every output it makes is itself a routable primitive.
 struct WorkflowRecord: Codable, Identifiable, Equatable {
     var id: String; var name: String; var prompt: String
+
+    // CANONICAL BRIDGE — a WorkflowRecord (a saved Ask) IS the contract
+    // `WorkflowDefinition` (capability/synced); the prompt is the v0 carrier.
+    func toContract(now: Date = Date()) -> WorkflowDefinition {
+        WorkflowDefinition(id: id, name: name, prompt: prompt, createdAt: now, updatedAt: now)
+    }
+    // INVERSE BRIDGE — rebuild a desk WorkflowRecord from an incoming `WorkflowDefinition`.
+    // The desk's v0 carrier is the saved-Ask `prompt`; a graph-only workflow (no prompt)
+    // lands with an empty prompt until the Workbench graph carrier is reconciled.
+    init(contract w: WorkflowDefinition) {
+        self.id = w.id; self.name = w.name; self.prompt = w.prompt ?? ""
+    }
+    init(id: String, name: String, prompt: String) {
+        self.id = id; self.name = name; self.prompt = prompt
+    }
+    func synced(at: Date = Date()) -> Synced<WorkflowDefinition> {
+        .live(toContract(now: at), id: id, kind: .workflow, modifiedAt: at)
+    }
 }
 struct WorkflowPrimitive: DeskPrimitive {
     let rec: WorkflowRecord
