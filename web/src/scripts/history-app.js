@@ -23,6 +23,11 @@ function historyApp() {
     selectedMeetingArtifacts: [],
     selectedMeetingProposals: [],
     selectedMeetingAftercare: null,
+    // EQ-19: the persisted MIR record for this meeting — the intent timeline
+    // (which intents were active per window, plus the transitions between them)
+    // and the plugin-run history. Read-only; viewing never re-runs anything.
+    selectedMeetingIntentTimeline: null,
+    selectedMeetingPluginRuns: [],
     highlightedSegmentIndex: null,
     selectedSpeakerId: "",
     selectedSpeaker: null,
@@ -180,6 +185,78 @@ function historyApp() {
       const rel = this.formatRelativeFromNow(job.requested_at);
       if (!rel) return `Retry ${this.formatDate(job.requested_at)}`;
       return `Retry ${this.formatDate(job.requested_at)} (${rel})`;
+    },
+
+    // EQ-19 helpers: present the persisted MIR record on the meeting detail.
+
+    // The intent timeline as ordered window cells. Each carries the window's
+    // active intents and a clock-style label so the strip reads left-to-right.
+    intentTimelineCells() {
+      const windows = this.selectedMeetingIntentTimeline?.windows || [];
+      return windows.map((window) => ({
+        window_id: window.window_id,
+        label: this.formatClockRange(window.start_seconds, window.end_seconds),
+        intents: Array.isArray(window.active_intents) ? window.active_intents : [],
+        excerpt: window.transcript_excerpt || "",
+      }));
+    },
+
+    // The distinct intents observed across the meeting, for the legend.
+    intentTimelineLegend() {
+      const seen = new Set();
+      for (const cell of this.intentTimelineCells()) {
+        for (const intent of cell.intents) seen.add(intent);
+      }
+      return Array.from(seen);
+    },
+
+    // Stable color slot (0-7) for an intent name, so the same intent keeps its
+    // hue across the strip and legend. Pure function of the name.
+    intentColorSlot(intent) {
+      const name = String(intent || "");
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+      }
+      return hash % 8;
+    },
+
+    pluginRunStatusLabel(status) {
+      const value = String(status || "").trim().toLowerCase();
+      if (value === "ok" || value === "success" || value === "succeeded") return "Succeeded";
+      if (value === "error" || value === "failed") return "Failed";
+      if (value === "skipped") return "Skipped";
+      if (value === "running") return "Running";
+      if (value === "queued") return "Queued";
+      return value ? value.charAt(0).toUpperCase() + value.slice(1) : "Pending";
+    },
+
+    pluginRunStatusValue(status) {
+      const value = String(status || "").trim().toLowerCase();
+      if (value === "ok" || value === "success" || value === "succeeded") return "ok";
+      if (value === "error" || value === "failed") return "error";
+      if (value === "skipped") return "skipped";
+      return value || "pending";
+    },
+
+    pluginRunDurationLabel(ms) {
+      const value = Number(ms);
+      if (!Number.isFinite(value) || value < 0) return "--";
+      if (value < 1000) return `${Math.round(value)} ms`;
+      return `${(value / 1000).toFixed(value < 10000 ? 2 : 1)} s`;
+    },
+
+    // mm:ss-style label for a window's start..end seconds.
+    formatClockRange(start, end) {
+      const fmt = (seconds) => {
+        const total = Math.max(0, Math.round(Number(seconds) || 0));
+        const m = Math.floor(total / 60);
+        const s = total % 60;
+        return `${m}:${String(s).padStart(2, "0")}`;
+      };
+      const a = fmt(start);
+      const b = fmt(end);
+      return a === b ? a : `${a}–${b}`;
     },
 
     intelFailureRateLabel() {
@@ -538,6 +615,8 @@ function historyApp() {
         this.selectedMeetingArtifacts = [];
         this.selectedMeetingProposals = [];
         this.selectedMeetingAftercare = null;
+        this.selectedMeetingIntentTimeline = null;
+        this.selectedMeetingPluginRuns = [];
         this.selectedMeeting = await this.apiJson(`/api/meetings/${id}`);
         // HS-49-01: the aftercare digest (open / decided / changed). Read-only;
         // stays quiet (is_empty) when there's nothing to act on.
@@ -562,6 +641,25 @@ function historyApp() {
         } catch (proposalError) {
           console.error("Failed to load meeting proposals:", proposalError);
           this.selectedMeetingProposals = [];
+        }
+        // EQ-19: the persisted MIR intent timeline — which intents were active
+        // per window, and the transitions between them. Read-only.
+        try {
+          const timeline = await this.apiJson(`/api/meetings/${id}/intent-timeline`);
+          this.selectedMeetingIntentTimeline =
+            timeline && (timeline.windows || []).length ? timeline : null;
+        } catch (timelineError) {
+          console.error("Failed to load meeting intent timeline:", timelineError);
+          this.selectedMeetingIntentTimeline = null;
+        }
+        // EQ-19: the persisted MIR plugin-run history (which plugins ran on
+        // which window, their status + timing). Read-only.
+        try {
+          const runs = await this.apiJson(`/api/meetings/${id}/plugin-runs`);
+          this.selectedMeetingPluginRuns = runs.runs || [];
+        } catch (runError) {
+          console.error("Failed to load meeting plugin runs:", runError);
+          this.selectedMeetingPluginRuns = [];
         }
       } catch (error) {
         console.error("Failed to load meeting:", error);
