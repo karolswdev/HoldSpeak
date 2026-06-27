@@ -60,14 +60,56 @@ _PURE_TRANSFORM_KINDS = frozenset({"keep_if", "split_into_items"})
 
 _LINEAR_KINDS = _PASSTHROUGH_KINDS | _MODEL_KINDS | _PURE_TRANSFORM_KINDS
 
+# ── Per-node provenance the iPad Blueprint model carries (and we must not drop) ──
+#
+# Each `BPNode` (apple/Sources/RuntimeCore/Workbench/Blueprint.swift) carries a
+# `failure_policy`, and the node inspector adds a `runs_on` (model preference). The
+# raw on-the-wire values are the Swift enum raw strings; `None`/unset means inherit
+# the run default (== "auto" target, == the runner's default policy), which stays
+# byte-identical to the pre-provenance behaviour.
+#
+# What a run does when a node's model call throws (`FailurePolicy`):
+_FAILURE_POLICIES = frozenset({"retryThenQueue", "fallbackOnDevice", "skip"})
+# Where a model-op node prefers to run (`ModelPref`):
+_RUN_TARGETS = frozenset({"auto", "onDevice", "endpoint"})
+
+
+def _norm_failure_policy(raw: Any) -> Optional[str]:
+    """Normalize a node's raw `failure_policy` to a known value, else None (= inherit).
+
+    Accepts the Swift enum raw string (`retryThenQueue`/`fallbackOnDevice`/`skip`).
+    Unset / unrecognised → None so the runner falls back to its default (unchanged).
+    """
+    if isinstance(raw, str) and raw in _FAILURE_POLICIES:
+        return raw
+    return None
+
+
+def _norm_run_target(raw: Any) -> str:
+    """Normalize a node's raw `runs_on` to a known target; default "auto".
+
+    Accepts the iPad `ModelPref` raw string (`auto`/`onDevice`/`endpoint`). Unset /
+    unrecognised → "auto" (follow the hub's configured provider — byte-identical).
+    """
+    if isinstance(raw, str) and raw in _RUN_TARGETS:
+        return raw
+    return "auto"
+
 
 @dataclass(frozen=True)
 class GraphNode:
-    """One parsed Blueprint node: its id, its kind tag, and the kind's payload."""
+    """One parsed Blueprint node: id, kind tag, kind payload, and per-node provenance.
+
+    `failure_policy` (None == inherit the run default) and `runs_on` (the resolved
+    target, default "auto") are the per-node fields the iPad Blueprint carries; the
+    linear runner honours a faithful subset of them and surfaces them in the run steps.
+    """
 
     id: str
     kind: str
     payload: Any  # the value beside the kind tag (dict, str, or {} for nullary kinds)
+    failure_policy: Optional[str] = None  # retryThenQueue | fallbackOnDevice | skip | None
+    runs_on: str = "auto"  # auto | onDevice | endpoint
 
 
 @dataclass(frozen=True)
@@ -123,7 +165,13 @@ def parse_graph(graph_json: Any) -> Optional[list[GraphNode]]:
         if decoded is None:
             return None
         tag, payload = decoded
-        out.append(GraphNode(id=node_id, kind=tag, payload=payload))
+        out.append(GraphNode(
+            id=node_id,
+            kind=tag,
+            payload=payload,
+            failure_policy=_norm_failure_policy(raw.get("failure_policy")),
+            runs_on=_norm_run_target(raw.get("runs_on")),
+        ))
     return out
 
 
@@ -294,3 +342,40 @@ def apply_pure_transform(node: GraphNode, input_text: str) -> str:
         ]
         return "\n".join(items)
     return input_text
+
+
+# ── Per-node provenance the hub honours / surfaces ───────────────────────────
+
+
+def resolved_failure_policy(node: GraphNode, default: str = "retryThenQueue") -> str:
+    """The policy that governs this node: its own `failure_policy`, else the run default.
+
+    Mirrors the Swift `node.failurePolicy ?? policy.failurePolicy` resolution in
+    `BlueprintInterpreter`. `default` matches the runner's `RunPolicy` default
+    (`retryThenQueue`).
+    """
+    return node.failure_policy or default
+
+
+def on_node_error(node: GraphNode, carried_input: str) -> Optional[str]:
+    """Decide what the linear runner does when this node's model call throws.
+
+    Returns the text to carry forward (the step was handled), or None when the run
+    must surface the failure (the policy does not recover here):
+
+      * `skip`            → carry the resolved input through unchanged (Swift's
+                            `.skip`: "drop this step and carry the input straight
+                            through").
+      * `fallbackOnDevice`→ the hub has a single configured provider, so there is no
+                            separate fallback to swap to — carry the input through so
+                            the chain survives a transient endpoint failure rather
+                            than dropping the whole run (degrades gracefully).
+      * `retryThenQueue` / None (inherit) → None: the hub does not queue/park runs,
+                            so the caller surfaces the error honestly.
+
+    The runner records the chosen disposition in the step it returns.
+    """
+    policy = resolved_failure_policy(node)
+    if policy in ("skip", "fallbackOnDevice"):
+        return carried_input
+    return None

@@ -10,7 +10,9 @@ from holdspeak.web.routes.workflow_graph import (
     apply_pure_transform,
     build_node_prompt,
     linearize,
+    on_node_error,
     parse_graph,
+    resolved_failure_policy,
     GraphNode,
 )
 
@@ -156,3 +158,69 @@ def test_apply_pure_transform() -> None:
     split = apply_pure_transform(GraphNode("s", "split_into_items", {}),
                                  " one \n\n two \n")
     assert split == "one\ntwo"
+
+
+# ── per-node provenance: failure_policy + runs_on are carried, not dropped ────
+def test_parse_graph_carries_failure_policy_and_runs_on() -> None:
+    g = {"nodes": [
+        {"id": "a", "kind": {"summarize": {}},
+         "failure_policy": "skip", "runs_on": "endpoint"},
+        {"id": "b", "kind": {"summarize": {}},
+         "failure_policy": "fallbackOnDevice", "runs_on": "onDevice"},
+    ]}
+    nodes = parse_graph(g)
+    assert nodes is not None
+    assert (nodes[0].failure_policy, nodes[0].runs_on) == ("skip", "endpoint")
+    assert (nodes[1].failure_policy, nodes[1].runs_on) == ("fallbackOnDevice", "onDevice")
+
+
+def test_parse_graph_unset_or_unknown_provenance_is_byte_identical_default() -> None:
+    # No keys, explicit null, and unknown strings all normalize to the inherit-default:
+    # failure_policy None (inherit the run default), runs_on "auto" (follow Settings).
+    g = {"nodes": [
+        {"id": "a", "kind": {"summarize": {}}},                      # absent
+        {"id": "b", "kind": {"summarize": {}}, "failure_policy": None, "runs_on": None},
+        {"id": "c", "kind": {"summarize": {}},
+         "failure_policy": "teleport", "runs_on": "moon"},           # unrecognised
+    ]}
+    nodes = parse_graph(g)
+    assert nodes is not None
+    for n in nodes:
+        assert n.failure_policy is None
+        assert n.runs_on == "auto"
+
+
+def test_resolved_failure_policy_falls_back_to_run_default() -> None:
+    # An explicit node policy wins; unset inherits the runner's default.
+    assert resolved_failure_policy(GraphNode("a", "llm", {}, failure_policy="skip")) == "skip"
+    assert resolved_failure_policy(GraphNode("a", "llm", {})) == "retryThenQueue"
+    assert resolved_failure_policy(GraphNode("a", "llm", {}), default="skip") == "skip"
+
+
+def test_on_node_error_honors_skip_and_fallback_but_surfaces_retry() -> None:
+    carried = "the resolved input"
+    # skip → carry the input straight through (the step is dropped, run survives).
+    assert on_node_error(GraphNode("a", "llm", {}, failure_policy="skip"), carried) == carried
+    # fallbackOnDevice → no separate hub fallback, so carry through (degrade, don't drop run).
+    assert on_node_error(
+        GraphNode("a", "llm", {}, failure_policy="fallbackOnDevice"), carried) == carried
+    # retryThenQueue and unset → None: the hub surfaces the failure (no silent recovery).
+    assert on_node_error(GraphNode("a", "llm", {}, failure_policy="retryThenQueue"), carried) is None
+    assert on_node_error(GraphNode("a", "llm", {}), carried) is None
+
+
+def test_linearize_preserves_provenance_through_ordering() -> None:
+    g = {
+        "nodes": [
+            {"id": "a", "kind": {"summarize": {}},
+             "failure_policy": "skip", "runs_on": "endpoint"},
+            {"id": "b", "kind": {"rewrite": {"tone": "calm"}},
+             "failure_policy": "fallbackOnDevice", "runs_on": "onDevice"},
+        ],
+        "exec_edges": [_exec("a", "b")],
+    }
+    plan = linearize(g)
+    assert plan.linearizable
+    a, b = plan.ordered
+    assert (a.id, a.failure_policy, a.runs_on) == ("a", "skip", "endpoint")
+    assert (b.id, b.failure_policy, b.runs_on) == ("b", "fallbackOnDevice", "onDevice")

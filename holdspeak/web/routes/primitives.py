@@ -699,6 +699,26 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
            order — we run the prompt fallback and return an honest `warning`
            naming why the graph could not run.
 
+        Per-node provenance: the iPad Blueprint carries a per-node `failure_policy`
+        (retryThenQueue / fallbackOnDevice / skip) and a `runs_on` model preference
+        (auto / onDevice / endpoint). The linearizer now carries both, and each
+        linear `steps` entry surfaces the node's resolved `failure_policy` and
+        `runs_on` so the trail is honest about what was requested. On a model-op
+        error the hub honours a faithful subset of the failure policy: `skip` and
+        `fallbackOnDevice` carry the input through unchanged and continue the chain
+        (the step's `status` records which), while `retryThenQueue` / unset surface
+        the error as a 502 (no silent empty).
+
+        NOT yet applied on the hub (carried + surfaced honestly, not enforced):
+        `runs_on` does not pin a node to a specific provider — the hub runs every
+        model op on its single configured provider, so `runs_on` is reported but the
+        target is not switched per node. `retryThenQueue` does not retry-with-backoff
+        or park/queue the run (the hub has no run queue); it fails fast. `fallbackOnDevice`
+        has no separate on-device fallback to swap to on the hub, so it degrades to
+        carrying the input through rather than re-running on another model. Full
+        per-node target routing and queue/park semantics live on the iPad runner
+        (`WorkflowRunner` / `BlueprintInterpreter`) and the mesh (HSM-15).
+
         404 if the workflow is missing; 502 on engine failure (no silent empty).
         Returns `{workflow_id, output, provider}` (+ optional `steps`, `warning`,
         and a `sources` lineage array).
@@ -722,6 +742,8 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                 apply_pure_transform,
                 build_node_prompt,
                 linearize,
+                on_node_error,
+                resolved_failure_policy,
                 _MODEL_KINDS,
                 _PURE_TRANSFORM_KINDS,
             )
@@ -752,11 +774,33 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                                 max_tokens=int(max_tokens) if max_tokens is not None else None,
                             )
                         except MeetingIntelError as exc:
-                            return JSONResponse(
-                                {"error": str(exc), "workflow_id": workflow_id,
-                                 "node_id": gnode.id},
-                                status_code=502,
-                            )
+                            # Honour a faithful subset of the node's failure policy:
+                            # `skip` / `fallbackOnDevice` carry the input through and
+                            # continue; `retryThenQueue` / unset surface the error.
+                            handled = on_node_error(gnode, current)
+                            if handled is None:
+                                return JSONResponse(
+                                    {"error": str(exc), "workflow_id": workflow_id,
+                                     "node_id": gnode.id,
+                                     "failure_policy": resolved_failure_policy(gnode)},
+                                    status_code=502,
+                                )
+                            current = handled
+                            run_steps.append({
+                                "node_id": gnode.id,
+                                "kind": gnode.kind,
+                                "output": current,
+                                "provider": None,
+                                "failure_policy": resolved_failure_policy(gnode),
+                                "runs_on": gnode.runs_on,
+                                "status": (
+                                    "skipped"
+                                    if resolved_failure_policy(gnode) == "skip"
+                                    else "fell_back"
+                                ),
+                                "error": str(exc),
+                            })
+                            continue
                         current = out
                         ran_a_model_op = True
                         run_steps.append({
@@ -764,6 +808,9 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                             "kind": gnode.kind,
                             "output": out,
                             "provider": intel.active_provider,
+                            "failure_policy": resolved_failure_policy(gnode),
+                            "runs_on": gnode.runs_on,
+                            "status": "ok",
                         })
                     elif gnode.kind in _PURE_TRANSFORM_KINDS:
                         current = apply_pure_transform(gnode, current)
@@ -772,6 +819,9 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                             "kind": gnode.kind,
                             "output": current,
                             "provider": None,
+                            "failure_policy": resolved_failure_policy(gnode),
+                            "runs_on": gnode.runs_on,
+                            "status": "ok",
                         })
                     # pass-through nodes (entry/source/merge/output) carry `current`.
 

@@ -61,14 +61,25 @@ def _fake_db(tmp_path, *, meetings=(), artifacts=None):
     artifacts = artifacts or {}
     summaries = [types.SimpleNamespace(id=m, started_at=datetime(2026, 1, 1)) for m in meetings]
     states = {m: _meeting_state(m) for m in meetings}
+    # Equilibrium 23-04: the push route now live-merges meetings/artifacts, so the
+    # fake repos record the merge calls (LWW reads return None → the push wins).
+    saved_meetings: list = []
+    recorded_artifacts: list = []
     return types.SimpleNamespace(
         db_path=tmp_path / "hs.db",
+        saved_meetings=saved_meetings,
+        recorded_artifacts=recorded_artifacts,
         meetings=types.SimpleNamespace(
             list_meetings=lambda limit=50: summaries[:limit],
             get_meeting=lambda mid: states.get(mid),
+            save_meeting=lambda state: saved_meetings.append(state),
+            delete_meeting=lambda mid: True,
         ),
         plugins=types.SimpleNamespace(
             list_artifacts=lambda mid: artifacts.get(mid, []),
+            get_artifact=lambda aid: None,
+            delete_artifact=lambda aid: True,
+            record_artifact=lambda **kw: recorded_artifacts.append(kw),
         ),
         notes=_empty_primitive_repo(),
         kbs=_empty_primitive_repo(),
@@ -101,7 +112,9 @@ def test_pull_serializes_meetings_and_artifacts(monkeypatch, tmp_path):
     assert a["value"]["meeting_id"] == "m1"
 
 
-def test_push_writes_changeset_to_inbox(monkeypatch, tmp_path):
+def test_push_live_merges_meeting_and_keeps_audit_inbox(monkeypatch, tmp_path):
+    # Equilibrium 23-04: a pushed meeting live-merges into the real table (a
+    # `save_meeting` call) AND a copy lands in the durable JSON audit inbox.
     fake = _fake_db(tmp_path)
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: fake)
 
@@ -118,6 +131,11 @@ def test_push_writes_changeset_to_inbox(monkeypatch, tmp_path):
     assert body["received"]["meetings"] == 1
     assert body["received"]["artifacts"] == 0
 
+    # Live-merged into the meetings table (not just inboxed).
+    assert len(fake.saved_meetings) == 1
+    assert fake.saved_meetings[0].id == "m1"
+
+    # And a replayable audit copy still lands in the inbox.
     inbox = tmp_path / "sync_inbox"
     files = list(inbox.glob("inbox-*.json"))
     assert len(files) == 1

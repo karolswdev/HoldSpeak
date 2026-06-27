@@ -83,4 +83,25 @@ no story begins from a blank page.
   Chain/Workflow each graded separately) — a chart refinement, folded into 23's sync-integrity
   story rather than its own phase.
 
+## Wave log
+
+Equilibrium gaps land in waves (a build flotilla of worktree-isolated agents, one disjoint
+gap each, integrated + full-suite-verified together). Stories stay the canonical unit; the
+waves are how the backlog drains in parallel.
+
+### Wave 1 (2026-06-27) — hub + web, 6 gaps
+
+| Gap | Phase | What landed |
+|-----|-------|-------------|
+| Graph node policy/target | 22 | the linear runner carries + applies per-node `failure_policy` (skip/fallback continue, retry/unset fail fast) + `runs_on`, surfaced in the run steps; honestly documents what the hub does not yet enforce |
+| Banned copy + guard | 21 | "intelligent typing" replaced with canonical names in web product copy; the voice guard now scans `web/src/**/*.astro` so a reintroduction fails CI |
+| Web connector configs | 21 | the hub reads/writes `companion_webhook_url` + `companion_github_repo` (Slack-parity validation); the web settings page exposes them |
+| Sync live-merge | 23 | `POST /api/sync/push` live-merges pushed meeting + artifact content into their real tables (was a JSON inbox), so they are immediately queryable like the other kinds |
+| Workflow run signals | 22 | the web run UI surfaces the hub's honest `warning` (ran linear, branches skipped) + the per-node `steps` trail; `primitives.ts` `graphJson` type corrected |
+| Intent-timeline + plugin-runs | 19 | the web meeting-detail consumes the two persisted read routes (an intent-timeline strip + a plugin-run table) that had no consumer |
+
+Integrated + verified together: full Python suite **2924 passed**, web build green.
+**Known follow-up:** the shipped `docs/INTELLIGENT_TYPING_GUIDE.md` (asserted verbatim by a
+test) still carries the old name; the ban is scoped to product copy until that doc is renamed.
+
 See [[project_primitive_framework]], [[project_phase15_the_mesh]], [[project_phase17_agent_sync]].

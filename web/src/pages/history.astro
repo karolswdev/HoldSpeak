@@ -907,6 +907,61 @@ import AppLayout from "../layouts/AppLayout.astro";
                 </div>
               </div>
 
+              <!-- EQ-19: the persisted MIR intent timeline. Which intents were
+                   active across the meeting, window by window, plus a legend.
+                   Read-only; shows only when a timeline was recorded. -->
+              <div class="detail-card" x-show="selectedMeetingIntentTimeline" x-cloak>
+                <h4>Intent timeline</h4>
+                <p class="detail-sub">Which intents were active across the meeting, window by window.</p>
+                <div class="intent-legend" x-show="intentTimelineLegend().length" x-cloak>
+                  <template x-for="intent in intentTimelineLegend()" :key="intent">
+                    <span class="intent-chip" :class="`intent-c${intentColorSlot(intent)}`" x-text="intent"></span>
+                  </template>
+                </div>
+                <div class="intent-strip">
+                  <template x-for="cell in intentTimelineCells()" :key="cell.window_id">
+                    <div class="intent-cell" :title="cell.excerpt">
+                      <span class="intent-cell-time" x-text="cell.label"></span>
+                      <div class="intent-cell-bars">
+                        <template x-for="intent in cell.intents" :key="intent">
+                          <span class="intent-bar" :class="`intent-c${intentColorSlot(intent)}`" :title="intent" x-text="intent"></span>
+                        </template>
+                        <span class="intent-bar intent-bar--empty" x-show="!cell.intents.length" x-cloak>—</span>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <!-- EQ-19: the persisted MIR plugin-run history — which plugins
+                   ran on which window, with status + timing. Read-only. -->
+              <div class="detail-card" x-show="selectedMeetingPluginRuns.length" x-cloak>
+                <h4>Plugin runs</h4>
+                <p class="detail-sub">The MIR plugins that ran on this meeting, with status and timing.</p>
+                <div class="plugin-run-table" role="table" aria-label="Plugin runs">
+                  <div class="plugin-run-row plugin-run-row--head" role="row">
+                    <span role="columnheader">Plugin</span>
+                    <span role="columnheader">Window</span>
+                    <span role="columnheader">Status</span>
+                    <span role="columnheader">Duration</span>
+                  </div>
+                  <template x-for="run in selectedMeetingPluginRuns" :key="run.id">
+                    <div class="plugin-run-row" role="row" :title="run.error || ''">
+                      <span role="cell" class="plugin-run-id">
+                        <span class="plugin-run-name" x-text="run.plugin_id"></span>
+                        <span class="plugin-run-version" x-show="run.plugin_version" x-cloak x-text="`v${run.plugin_version}`"></span>
+                        <span class="pill pill--small" x-show="run.deduped" x-cloak title="Skipped — an identical run already happened">Deduped</span>
+                      </span>
+                      <span role="cell" class="plugin-run-window" x-text="run.window_id || '—'"></span>
+                      <span role="cell">
+                        <span class="status-pill" :class="`run-${pluginRunStatusValue(run.status)}`" x-text="pluginRunStatusLabel(run.status)"></span>
+                      </span>
+                      <span role="cell" class="plugin-run-duration" x-text="pluginRunDurationLabel(run.duration_ms)"></span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
               <div class="detail-card" x-show="selectedMeeting?.intel?.summary" x-cloak>
                 <h4>Summary</h4>
                 <p x-text="selectedMeeting?.intel?.summary"></p>
@@ -2480,6 +2535,149 @@ import AppLayout from "../layouts/AppLayout.astro";
   .status-pill.proposal-rejected { background: var(--surface-3); color: var(--text-muted); }
   /* A decided/terminal proposal reads quieter than a pending one. */
   .proposal-card.accent-default { opacity: 0.85; }
+
+  /* === EQ-19: intent timeline + plugin runs ============== */
+  .detail-sub {
+    margin: 0 0 var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  /* Plugin-run terminal status reuses the status-pill scale. */
+  .status-pill.run-ok { color: var(--success); border-color: var(--success); background: var(--success-soft, var(--accent-soft)); }
+  .status-pill.run-error { color: var(--danger); border-color: var(--danger); background: var(--danger-soft, var(--canvas-raised)); }
+  .status-pill.run-skipped { color: var(--text-faint); }
+  .status-pill.run-running, .status-pill.run-queued, .status-pill.run-pending {
+    color: var(--accent); border-color: var(--accent); background: var(--accent-soft);
+  }
+
+  /* The intent legend names every distinct intent observed, color-keyed. */
+  .intent-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .intent-chip {
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-mono);
+    border: 1px solid var(--intent-line, var(--line));
+    color: var(--intent-ink, var(--text-muted));
+    background: var(--intent-soft, var(--canvas-raised));
+  }
+
+  /* The strip is one column per window, scrolling left-to-right in time. */
+  .intent-strip {
+    display: flex;
+    gap: var(--space-1);
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+  }
+  .intent-cell {
+    flex: 0 0 auto;
+    min-width: 84px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-1);
+    background: var(--canvas-raised);
+  }
+  .intent-cell-time {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-faint);
+  }
+  .intent-cell-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .intent-bar {
+    font-size: var(--font-size-xs);
+    font-family: var(--font-mono);
+    padding: 2px var(--space-1);
+    border-radius: var(--radius-1);
+    border-left: 3px solid var(--intent-line, var(--accent));
+    color: var(--intent-ink, var(--text));
+    background: var(--intent-soft, var(--accent-soft));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .intent-bar--empty {
+    color: var(--text-faint);
+    border-left-color: var(--line);
+    background: transparent;
+  }
+
+  /* Eight stable hues so an intent keeps its color across strip + legend. */
+  .intent-c0 { --intent-ink: var(--accent); --intent-line: var(--accent); --intent-soft: var(--accent-soft); }
+  .intent-c1 { --intent-ink: var(--success); --intent-line: var(--success); --intent-soft: var(--success-soft, var(--accent-soft)); }
+  .intent-c2 { --intent-ink: var(--warn-signal, var(--accent)); --intent-line: var(--warn-signal, var(--accent)); --intent-soft: var(--warn-soft, var(--accent-soft)); }
+  .intent-c3 { --intent-ink: var(--info, var(--accent)); --intent-line: var(--info, var(--accent)); --intent-soft: var(--info-soft, var(--accent-soft)); }
+  .intent-c4 { --intent-ink: var(--danger); --intent-line: var(--danger); --intent-soft: var(--danger-soft, var(--accent-soft)); }
+  .intent-c5 { --intent-ink: color-mix(in srgb, var(--accent) 70%, var(--success)); --intent-line: color-mix(in srgb, var(--accent) 70%, var(--success)); --intent-soft: var(--accent-soft); }
+  .intent-c6 { --intent-ink: color-mix(in srgb, var(--accent) 50%, var(--danger)); --intent-line: color-mix(in srgb, var(--accent) 50%, var(--danger)); --intent-soft: var(--accent-soft); }
+  .intent-c7 { --intent-ink: var(--text-muted); --intent-line: var(--text-muted); --intent-soft: var(--canvas-raised); }
+
+  /* The plugin-run table: a 4-column CSS grid (plugin / window / status / duration). */
+  .plugin-run-table {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    overflow: hidden;
+  }
+  .plugin-run-row {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.8fr);
+    gap: var(--space-2);
+    align-items: center;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--line);
+  }
+  .plugin-run-row:last-child { border-bottom: none; }
+  .plugin-run-row--head {
+    background: var(--canvas-raised);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose);
+  }
+  .plugin-run-id {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+  .plugin-run-name {
+    font-family: var(--font-mono);
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .plugin-run-version { color: var(--text-faint); font-family: var(--font-mono); font-size: var(--font-size-xs); }
+  .pill--small { padding: 0 var(--space-1); font-size: 10px; }
+  .plugin-run-window {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .plugin-run-duration {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-align: right;
+  }
 
   .action-controls {
     display: flex;

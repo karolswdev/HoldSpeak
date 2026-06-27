@@ -550,3 +550,67 @@ class TestVoiceMacrosSettingsApi:
         persisted = Config.load(settings_path)
         assert persisted.dictation.macros.enabled is True
         assert persisted.dictation.macros.items[0].keyword == "docs"
+
+
+class TestSettingsCompanionConnectors:
+    """HSM-14 / EQ-21-03: the iPad desk's Webhook + GitHub connectors are
+    configured from the hub's settings, same posture as the Slack field."""
+
+    def test_put_round_trips_companion_webhook_and_github(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        payload = {
+            "meeting": {
+                "companion_webhook_url": "https://hooks.example.com/abc",
+                "companion_github_repo": "karolswdev/HoldSpeak",
+            }
+        }
+        response = test_client.put("/api/settings", json=payload)
+        assert response.status_code == 200, response.text
+        out = response.json()["settings"]["meeting"]
+        assert out["companion_webhook_url"] == "https://hooks.example.com/abc"
+        assert out["companion_github_repo"] == "karolswdev/HoldSpeak"
+
+        persisted = Config.load(path=settings_path)
+        assert persisted.meeting.companion_webhook_url == "https://hooks.example.com/abc"
+        assert persisted.meeting.companion_github_repo == "karolswdev/HoldSpeak"
+
+        # And the GET read path surfaces them.
+        got = test_client.get("/api/settings").json()["meeting"]
+        assert got["companion_webhook_url"] == "https://hooks.example.com/abc"
+        assert got["companion_github_repo"] == "karolswdev/HoldSpeak"
+
+    def test_put_rejects_non_https_companion_webhook(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        response = test_client.put(
+            "/api/settings",
+            json={"meeting": {"companion_webhook_url": "http://hooks.example.com/x"}},
+        )
+        assert response.status_code == 400
+        assert "companion_webhook_url" in response.json()["error"]
+
+    def test_put_rejects_malformed_companion_github_repo(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        response = test_client.put(
+            "/api/settings",
+            json={"meeting": {"companion_github_repo": "not-a-slug"}},
+        )
+        assert response.status_code == 400
+        assert "companion_github_repo" in response.json()["error"]
+
+    def test_put_omitting_connectors_preserves_them(
+        self, test_client: TestClient, settings_path: Path
+    ) -> None:
+        seed = {
+            "meeting": {
+                "companion_webhook_url": "https://hooks.example.com/keep",
+                "companion_github_repo": "owner/repo",
+            }
+        }
+        assert test_client.put("/api/settings", json=seed).status_code == 200
+        assert test_client.put("/api/settings", json={"ui": {"theme": "light"}}).status_code == 200
+        persisted = Config.load(settings_path)
+        assert persisted.meeting.companion_webhook_url == "https://hooks.example.com/keep"
+        assert persisted.meeting.companion_github_repo == "owner/repo"

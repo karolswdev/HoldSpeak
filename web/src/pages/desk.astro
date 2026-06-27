@@ -605,6 +605,32 @@ const GROUPS = [
             <span x-text="runningKind === 'chain' ? 'Running the crew…' : (runningKind === 'workflow' ? 'Running the workflow…' : 'Running the persona…')">Running…</span>
           </div>
 
+          {/* honest hub notice — a graph it would not guess an order for ran the
+              prompt fallback; surface that verbatim so the run is never silent */}
+          <div class="run-notice" x-show="runWarning && !runBusy" x-cloak>
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><path d="M12 9v4M12 17h.01" /></svg>
+            <span x-text="runWarning"></span>
+          </div>
+
+          {/* workflow graph trail — the per-node execution path the hub ran */}
+          <div class="crew-result" x-show="runningKind === 'workflow' && workflowSteps && !runBusy" x-cloak>
+            <span class="run-result-label">Graph trail</span>
+            <ol class="crew-steps">
+              <template x-for="(step, i) in (workflowSteps || [])" {...{ ":key": "i" }}>
+                <li class="crew-step">
+                  <div class="crew-step-head">
+                    <span class="chain-num" x-text="i + 1"></span>
+                    <span class="crew-step-name" x-text="step.nodeId || step.kind"></span>
+                    <span class="crew-step-kind" x-show="step.kind" x-cloak x-text="step.kind" title="Node kind"></span>
+                    <span class="crew-step-provider" x-show="step.provider" x-cloak x-text="step.provider" title="Ran on"></span>
+                    <svg class="crew-step-arrow" x-show="i < (workflowSteps.length - 1)" x-cloak viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>
+                  </div>
+                  <pre class="crew-step-output" x-text="step.output"></pre>
+                </li>
+              </template>
+            </ol>
+          </div>
+
           {/* chain crew result — each step in sequence, then the final output */}
           <div class="crew-result" x-show="runningKind === 'chain' && chainSteps && !runBusy" x-cloak>
             <span class="run-result-label">Crew run</span>
@@ -626,7 +652,7 @@ const GROUPS = [
           {/* result — final output (all kinds) */}
           <div class="run-result" x-show="runResult && !runBusy" x-cloak>
             <div class="run-result-head">
-              <span class="run-result-label" x-text="runningKind === 'chain' ? 'Final output' : 'Output'">Output</span>
+              <span class="run-result-label" x-text="(runningKind === 'chain' || (runningKind === 'workflow' && workflowSteps)) ? 'Final output' : 'Output'">Output</span>
               <span class="egress" :class="runEgress().scope" :title="runEgress().label">
                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
                 <span x-text="runEgress().scope === 'local' ? 'on-device' : (runEgress().scope === 'cloud' ? 'cloud' : 'egress')">egress</span>
@@ -1188,9 +1214,24 @@ const GROUPS = [
     background: var(--surface-3); border-radius: var(--radius-xs); padding: 0 5px;
     flex-shrink: 0; max-width: 10rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  .crew-step-kind {
+    font-family: var(--font-mono); font-size: 0.625rem; color: var(--ck, #A78BFA);
+    background: color-mix(in srgb, var(--ck, #A78BFA) 14%, var(--surface-3));
+    border-radius: var(--radius-xs); padding: 0 5px; flex-shrink: 0;
+  }
   .crew-step-arrow { margin-left: auto; color: #A78BFA; }
-  .crew-step-provider + .crew-step-arrow { margin-left: var(--space-2); }
+  .crew-step-provider + .crew-step-arrow,
+  .crew-step-kind + .crew-step-arrow { margin-left: var(--space-2); }
   .crew-step-output { margin: 0; padding: var(--space-3); font-family: var(--font-mono); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); color: var(--text-muted); white-space: pre-wrap; word-break: break-word; max-height: 22vh; overflow-y: auto; }
+  /* honest hub notice — a refused graph that fell back to the prompt */
+  .run-notice {
+    display: flex; align-items: flex-start; gap: var(--space-2);
+    margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
+    background: var(--warning-soft, color-mix(in srgb, #F59E0B 14%, var(--surface-2)));
+    color: var(--warning, #F59E0B); font-size: var(--font-size-sm);
+    border: 1px solid var(--warning-soft, color-mix(in srgb, #F59E0B 28%, transparent));
+  }
+  .run-notice svg { flex-shrink: 0; margin-top: 2px; }
 
   @media (max-width: 720px) {
     .desk { padding: var(--space-3); gap: var(--space-5); }

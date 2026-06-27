@@ -266,7 +266,24 @@ _AI_VOCAB = re.compile(
 )
 
 # Banned synonyms for canonical feature names (POSITIONING.md table).
+#
+# "intelligent typing" is a banned synonym for the dictation pipeline in
+# user-facing *product copy* (the web/src astro templates). The historical
+# setup guide docs/INTELLIGENT_TYPING_GUIDE.md keeps that name as its own
+# established title and is referenced verbatim across the docs corpus (and by
+# test_qlippy_doc_states_the_guarantees_verbatim), so the docs scan below uses
+# _BANNED_NAMES_DOCS, which omits that one term. Renaming the guide is a
+# separate, larger move outside this guard's scope.
 _BANNED_NAMES = re.compile(
+    r"\bvoice macros?\b"               # canonical: voice commands
+    r"|\bintelligent dictation\b"      # canonical: the dictation pipeline
+    r"|\bintelligent typing\b"         # canonical: the dictation pipeline / dictation
+    r"|\bslack (?:integration|export)\b",  # canonical: Send to Slack
+    re.IGNORECASE,
+)
+
+# The docs-corpus variant: same table, minus "intelligent typing" (see above).
+_BANNED_NAMES_DOCS = re.compile(
     r"\bvoice macros?\b"               # canonical: voice commands
     r"|\bintelligent dictation\b"      # canonical: the dictation pipeline
     r"|\bslack (?:integration|export)\b",  # canonical: Send to Slack
@@ -316,11 +333,23 @@ def test_no_user_facing_doc_uses_ai_vocabulary() -> None:
     )
 
 
+def _web_src_astro() -> list[Path]:
+    """The user-facing web copy in `web/src/**/*.astro`.
+
+    These templates carry product copy a user reads, so banned synonyms for
+    canonical feature names must not creep back in (e.g. "intelligent typing").
+    The generated bundle under holdspeak/static/_built is NOT scanned (it is
+    rebuilt from this source).
+    """
+    web_src = _REPO / "web" / "src"
+    return sorted(web_src.rglob("*.astro"))
+
+
 def test_no_user_facing_doc_uses_banned_feature_names() -> None:
     offenders = []
     for doc in _user_facing_docs():
         for lineno, line in _prose_lines(doc):
-            match = _BANNED_NAMES.search(line)
+            match = _BANNED_NAMES_DOCS.search(line)
             if match:
                 offenders.append(
                     f"{doc.relative_to(_REPO)}:{lineno}: {match.group(0)!r}"
@@ -329,6 +358,35 @@ def test_no_user_facing_doc_uses_banned_feature_names() -> None:
         "Non-canonical feature names (the canonical table lives in "
         "docs/internal/POSITIONING.md):\n  " + "\n  ".join(offenders)
     )
+
+
+def test_no_web_src_copy_uses_banned_feature_names() -> None:
+    """The user-facing web copy (web/src/**/*.astro) speaks in canonical names.
+    'intelligent typing' is a banned synonym for the dictation pipeline; this
+    catches a reintroduction in product copy. The generated bundle under
+    holdspeak/static/_built is rebuilt from this source and is not scanned."""
+    offenders = []
+    for tmpl in _web_src_astro():
+        for lineno, line in _prose_lines(tmpl):
+            match = _BANNED_NAMES.search(line)
+            if match:
+                offenders.append(
+                    f"{tmpl.relative_to(_REPO)}:{lineno}: {match.group(0)!r}"
+                )
+    assert not offenders, (
+        "Non-canonical feature names in web/src copy (the canonical table lives "
+        "in docs/internal/POSITIONING.md; 'intelligent typing' -> 'the dictation "
+        "pipeline' / 'dictation'):\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_banned_name_guard_scans_web_src() -> None:
+    """Sanity: the banned-name scan reaches the web/src astro templates, so a
+    reintroduction of a synonym like 'intelligent typing' fails here."""
+    astro = _web_src_astro()
+    assert len(astro) > 5
+    names = {p.name for p in astro}
+    assert {"index.astro", "dictation.astro", "welcome.astro"} <= names
 
 
 def test_voice_guard_patterns_catch_seeded_violations() -> None:
@@ -342,6 +400,7 @@ def test_voice_guard_patterns_catch_seeded_violations() -> None:
                  "every meeting, not just the visible page"):  # plain logic stays legal
         assert not _AI_VOCAB.search(keep), f"AI-vocab pattern should NOT flag {keep!r}"
     for hit in ("configure voice macros", "intelligent dictation mode",
+                "tune intelligent typing", "Intelligent typing (optional)",
                 "the Slack integration", "use the Slack export"):
         assert _BANNED_NAMES.search(hit), f"name pattern should flag {hit!r}"
     assert not _BANNED_NAMES.search("voice commands fire on keywords")
