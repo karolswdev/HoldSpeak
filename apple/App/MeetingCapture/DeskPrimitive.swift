@@ -226,20 +226,67 @@ struct GamePrimitive: DeskPrimitive {
     var emits: [PrimitiveKind] { [.artifact] }
 }
 
+// LINEAGE — where a generated output came from. Records the input card it was made from
+// (id + human title) and what produced it (the agent/chain that ran). Carried into the
+// synced `Artifact.sources`, so web reads the same provenance the iPad shows.
+struct RunProvenance: Codable, Equatable {
+    var sourceCardId: String      // the routed primitive's id (the input)
+    var sourceCardTitle: String   // its human title (what the lineage line names)
+    var viaId: String             // the agent/chain id that produced this
+    var viaName: String           // its name ("Scout", a crew name)
+    var viaKind: String           // "agent" | "chain"
+
+    // A tasteful one-line summary for the card: "from <source card> · via Scout".
+    var line: String {
+        let from = sourceCardTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let via = viaName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if from.isEmpty && via.isEmpty { return "" }
+        if via.isEmpty { return "from \(from)" }
+        if from.isEmpty { return "via \(via)" }
+        return "from \(from) · via \(via)"
+    }
+}
+
 // A generated output — the result of routing a primitive through the AI core. It's a first-class primitive
 // itself, so you can route it AGAIN (every output is also an input). Persisted as an OutputRecord.
 struct OutputRecord: Codable, Identifiable, Equatable {
     var id: String; var title: String; var body: String; var source: String; var lens: String; var path: String
+    // Provenance — populated when this output came from a routed run (agent/chain). nil for
+    // direct lens routes / live captures / harvested scores (their `source` is the lineage).
+    var provenance: RunProvenance? = nil
+
+    // The lineage line shown on the printed/kept card + the Output pull-out. Prefers the rich
+    // run provenance ("from <card> · via Scout"); falls back to the legacy `from <source>`.
+    var lineageLine: String {
+        if let p = provenance, !p.line.isEmpty { return p.line }
+        return source.isEmpty ? "" : "from \(source)"
+    }
 
     // CANONICAL BRIDGE — a desk OutputRecord IS the contract `Artifact` (content/synced).
     // A desk-authored artifact has no parent meeting (meetingId ""), the iPad desk is its
     // plugin source, and the lens/source ride in `structuredJson` so they survive sync.
+    // Run provenance rides BOTH in `sources` (the canonical provenance array web reads) and
+    // in `structuredJson` (so the inverse bridge can rebuild the typed `RunProvenance`).
     func toContract(now: Date = Date()) -> Artifact {
-        Artifact(id: id, meetingId: "", artifactType: .pluginOutput, title: title,
-                 bodyMarkdown: body, structuredJson: .object(["lens": .string(lens), "source": .string(source)]),
+        var sources: [ArtifactSource] = [ArtifactSource(sourceType: "desk", sourceRef: source)]
+        var structured: [String: JSONValue] = ["lens": .string(lens), "source": .string(source)]
+        if let p = provenance {
+            sources = [
+                ArtifactSource(sourceType: "card", sourceRef: p.sourceCardTitle),
+                ArtifactSource(sourceType: p.viaKind, sourceRef: p.viaName),
+            ]
+            structured["provenance"] = .object([
+                "source_card_id": .string(p.sourceCardId),
+                "source_card_title": .string(p.sourceCardTitle),
+                "via_id": .string(p.viaId),
+                "via_name": .string(p.viaName),
+                "via_kind": .string(p.viaKind),
+            ])
+        }
+        return Artifact(id: id, meetingId: "", artifactType: .pluginOutput, title: title,
+                 bodyMarkdown: body, structuredJson: .object(structured),
                  confidence: 1.0, status: .draft, pluginId: "ipad.desk", pluginVersion: "0",
-                 sources: [ArtifactSource(sourceType: "desk", sourceRef: source)],
-                 createdAt: now, updatedAt: now)
+                 sources: sources, createdAt: now, updatedAt: now)
     }
     func synced(at: Date = Date()) -> Synced<Artifact> {
         .live(toContract(now: at), id: id, kind: .artifact, modifiedAt: at)
@@ -256,9 +303,17 @@ struct OutputRecord: Codable, Identifiable, Equatable {
             self.lens = a.artifactType.rawValue
             self.source = a.meetingId.isEmpty ? "synced" : "meeting"
         }
+        if case let .object(o) = a.structuredJson, case let .object(p)? = o["provenance"],
+           case let .string(scid)? = p["source_card_id"], case let .string(sct)? = p["source_card_title"],
+           case let .string(vid)? = p["via_id"], case let .string(vn)? = p["via_name"],
+           case let .string(vk)? = p["via_kind"] {
+            self.provenance = RunProvenance(sourceCardId: scid, sourceCardTitle: sct, viaId: vid, viaName: vn, viaKind: vk)
+        }
     }
-    init(id: String, title: String, body: String, source: String, lens: String, path: String) {
+    init(id: String, title: String, body: String, source: String, lens: String, path: String,
+         provenance: RunProvenance? = nil) {
         self.id = id; self.title = title; self.body = body; self.source = source; self.lens = lens; self.path = path
+        self.provenance = provenance
     }
 }
 struct OutputPrimitive: DeskPrimitive {
@@ -268,7 +323,12 @@ struct OutputPrimitive: DeskPrimitive {
     var glyph: String { "note" }
     var base: CGFloat { 112 }
     var title: String { rec.title }
-    var subtitle: String { "from \(rec.source) · \(rec.lens.lowercased())" }
+    // The pull-out subtitle leads with lineage ("from <source card> · via Scout") when this
+    // output came from a routed run; otherwise the classic "from <source> · <lens>".
+    var subtitle: String {
+        if let p = rec.provenance, !p.line.isEmpty { return p.line }
+        return "from \(rec.source) · \(rec.lens.lowercased())"
+    }
     var preview: String? { rec.body }
     var sections: [PrimitiveSection] { [.init(label: rec.lens.uppercased(), tint: DioPal.accent, body: .text(rec.body))] }
     var emits: [PrimitiveKind] { [.artifact] }

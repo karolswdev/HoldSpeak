@@ -24,8 +24,10 @@ Route table (all snake_case JSON, ISO-8601 UTC `Z` timestamps):
     GET    /api/agents/{id}           -> {"agent": <agent>} | 404
     PUT    /api/agents/{id}           body (same fields as POST) -> {"agent": <agent>} | 404
     DELETE /api/agents/{id}           -> {"success": true} | 404   (tombstone)
-    POST   /api/agents/{id}/run       body {input?, variables?, max_tokens?, temperature?}
-                                       -> {"agent_id", "output", "provider"} | 404 | 502
+    POST   /api/agents/{id}/run       body {input?, variables?, source_ref?, max_tokens?, temperature?}
+                                       -> {"agent_id", "output", "provider", "sources"} | 404 | 502
+                                       (sources lineage: [{source_type:"agent", source_ref:<id>}
+                                        (+ {source_type:"input", source_ref} if source_ref given)])
 
   KBs (knowledge bases)
     GET    /api/kbs                   -> {"kbs": [<kb>...]}
@@ -42,8 +44,10 @@ Route table (all snake_case JSON, ISO-8601 UTC `Z` timestamps):
     DELETE /api/chains/{id}           -> {"success": true} | 404   (tombstone)
     POST   /api/chains/{id}/run       body {input?, variables?, max_tokens?, temperature?}
                                        -> {"chain_id", "steps":[{agent_id, output, provider}...],
-                                           "output"} | 400 | 404 | 502   (runs each agent in
-                                       `steps` in sequence, threading output -> next input)
+                                           "output", "provider", "sources"} | 400 | 404 | 502
+                                       (runs each agent in `steps` in sequence, threading
+                                        output -> next input; top-level `provider` is the last
+                                        step's; `sources` is [{chain}, {agent}...] lineage)
 
   Workflows
     GET    /api/workflows             -> {"workflows": [<workflow>...]}
@@ -52,9 +56,12 @@ Route table (all snake_case JSON, ISO-8601 UTC `Z` timestamps):
     PUT    /api/workflows/{id}        body {name?, prompt?, graph_json?} -> {"workflow": <workflow>} | 404
     DELETE /api/workflows/{id}        -> {"success": true} | 404   (tombstone)
     POST   /api/workflows/{id}/run    body {input?, variables?, max_tokens?, temperature?}
-                                       -> {"workflow_id", "output", "provider"[, "warning"]}
-                                       | 400 | 404 | 502   (v0: runs `prompt` through the
-                                       engine; graph_json execution is not yet wired)
+                                       -> {"workflow_id", "output", "provider", "sources"
+                                           [, "steps"][, "warning"]} | 400 | 404 | 502
+                                       (runs a LINEAR `graph_json` node chain in order when one
+                                        is present + linearizable [-> `steps`]; else runs
+                                        `prompt`; a non-linearizable graph is refused with an
+                                        honest `warning`, never a guessed order)
 
   Directories (the canonical organization container; the iPad's "zone")
     GET    /api/directories             -> {"directories": [<directory + member_ids[]>...]}
@@ -329,10 +336,20 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                     {"error": str(exc), "agent_id": agent_id}, status_code=502
                 )
 
+            # Provenance: what produced this output, so a surface that keeps the
+            # result as an Artifact can attach lineage ("from <agent>").
+            sources: list[dict[str, str]] = [
+                {"source_type": "agent", "source_ref": agent_id}
+            ]
+            provided_ref = str(body.get("source_ref") or "").strip()
+            if provided_ref:
+                sources.append({"source_type": "input", "source_ref": provided_ref})
+
             return JSONResponse({
                 "agent_id": agent_id,
                 "output": output,
                 "provider": intel.active_provider,
+                "sources": sources,
             })
         except Exception as exc:
             return error_500(exc, log, "Failed to run agent")
@@ -564,10 +581,25 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                 # Thread this step's output as the next step's input (the pipeline).
                 current_input = output
 
+            # Top-level provider = the last step's provider (so the web badge stops
+            # reading "provider unknown"); per-step providers are kept on `steps`.
+            top_provider = run_steps[-1]["provider"] if run_steps else None
+
+            # Provenance: the chain, plus each step's agent as contributing source.
+            sources: list[dict[str, str]] = [
+                {"source_type": "chain", "source_ref": chain_id}
+            ]
+            for step in run_steps:
+                sources.append(
+                    {"source_type": "agent", "source_ref": str(step["agent_id"])}
+                )
+
             return JSONResponse({
                 "chain_id": chain_id,
                 "steps": run_steps,
                 "output": run_steps[-1]["output"] if run_steps else "",
+                "provider": top_provider,
+                "sources": sources,
             })
         except Exception as exc:
             return error_500(exc, log, "Failed to run chain")
@@ -648,21 +680,28 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/workflows/{workflow_id}/run")
     async def api_run_workflow(workflow_id: str, request: Request) -> Any:
-        """Run a Workflow (v0).
+        """Run a Workflow.
 
         The Workbench saves a workflow as either a freeform `prompt` or a node
-        graph (`graph_json`). v0 execution:
+        graph (`graph_json`). Execution order:
 
-        - If the workflow has a `prompt`, run it through the engine with an empty
-          system prompt and the prompt rendered against `{input}` + `variables`.
-        - If it has only a `graph_json`, graph execution is NOT yet wired; we run
-          the `prompt` fallback (empty here) and note that via a `warning` while
-          still returning whatever the engine produced. (A best-effort linear
-          replay of arbitrary node graphs is not feasible without the Blueprints
-          runtime, so we are honest about the limit rather than guessing.)
+        1. **Linear graph.** If the workflow has a `graph_json` that is an
+           unambiguous single chain of LLM-call / prompt / pass-through nodes (no
+           branch / forEach / while / sequence / fan-out), run the nodes in
+           topological order, threading each node's output into the next node's
+           input through the same engine path personas use. The per-node trail is
+           returned as `steps`.
+        2. **Prompt.** Otherwise, if the workflow has a `prompt`, run it through
+           the engine with an empty system prompt rendered against `{input}` +
+           `variables`.
+        3. **Refused graph fallback.** If the graph contains control flow / fan-out
+           we cannot linearize (and there's no/empty prompt), we DO NOT guess an
+           order — we run the prompt fallback and return an honest `warning`
+           naming why the graph could not run.
 
         404 if the workflow is missing; 502 on engine failure (no silent empty).
-        Returns `{workflow_id, output, provider}` (+ an optional `warning`).
+        Returns `{workflow_id, output, provider}` (+ optional `steps`, `warning`,
+        and a `sources` lineage array).
         """
         body = await _json_body(request) or {}
         try:
@@ -677,29 +716,106 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
             max_tokens = body.get("max_tokens")
             temperature = body.get("temperature")
 
-            prompt = str(workflow.prompt or "").strip()
-            has_graph = bool(workflow.graph_json)
+            from ...intel.providers import build_configured_meeting_intel
+            from ...intel.models import MeetingIntelError
+            from .workflow_graph import (
+                apply_pure_transform,
+                build_node_prompt,
+                linearize,
+                _MODEL_KINDS,
+                _PURE_TRANSFORM_KINDS,
+            )
+
+            sources: list[dict[str, str]] = [
+                {"source_type": "workflow", "source_ref": workflow_id}
+            ]
+
+            # ── 1) Try the linear graph runner ─────────────────────────────
             warning: Optional[str] = None
-            if not prompt and has_graph:
-                # Graph execution is not yet wired (no Blueprints runtime on the
-                # hub). Be honest and fall back to the (empty) prompt path.
-                warning = "graph execution is not yet wired; ran the prompt fallback"
+            plan = linearize(workflow.graph_json) if workflow.graph_json else None
+            if plan is not None and plan.linearizable:
+                # Seed the chain with the rendered request input (variables applied).
+                current = _render_user_prompt("", variables or {}, user_input)
+                intel = build_configured_meeting_intel()
+                run_steps: list[dict[str, Any]] = []
+                ran_a_model_op = False
+                for gnode in plan.ordered:
+                    if gnode.kind in _MODEL_KINDS:
+                        node_prompt = build_node_prompt(gnode, current)
+                        if not node_prompt.strip():
+                            continue
+                        try:
+                            out = intel.run_prompt(
+                                system_prompt="",
+                                user_prompt=node_prompt,
+                                temperature=float(temperature) if temperature is not None else None,
+                                max_tokens=int(max_tokens) if max_tokens is not None else None,
+                            )
+                        except MeetingIntelError as exc:
+                            return JSONResponse(
+                                {"error": str(exc), "workflow_id": workflow_id,
+                                 "node_id": gnode.id},
+                                status_code=502,
+                            )
+                        current = out
+                        ran_a_model_op = True
+                        run_steps.append({
+                            "node_id": gnode.id,
+                            "kind": gnode.kind,
+                            "output": out,
+                            "provider": intel.active_provider,
+                        })
+                    elif gnode.kind in _PURE_TRANSFORM_KINDS:
+                        current = apply_pure_transform(gnode, current)
+                        run_steps.append({
+                            "node_id": gnode.id,
+                            "kind": gnode.kind,
+                            "output": current,
+                            "provider": None,
+                        })
+                    # pass-through nodes (entry/source/merge/output) carry `current`.
+
+                if not run_steps:
+                    return JSONResponse(
+                        {
+                            "error": (
+                                "nothing to run: the graph linearized but produced "
+                                "no executable steps; provide `input` or node prompts"
+                            ),
+                            "workflow_id": workflow_id,
+                        },
+                        status_code=400,
+                    )
+
+                return JSONResponse({
+                    "workflow_id": workflow_id,
+                    "output": current,
+                    "provider": intel.active_provider if ran_a_model_op else None,
+                    "steps": run_steps,
+                    "sources": sources,
+                })
+
+            # ── 2/3) Prompt path (+ honest warning if a graph was refused) ──
+            prompt = str(workflow.prompt or "").strip()
+            if plan is not None and not plan.linearizable:
+                # The graph exists but we won't guess an order for it. Be honest.
+                warning = (
+                    "graph execution skipped (" + plan.reason + "); "
+                    "ran the prompt fallback"
+                )
 
             user_prompt = _render_user_prompt(prompt, variables or {}, user_input)
             if not user_prompt.strip():
                 return JSONResponse(
                     {
                         "error": (
-                            "nothing to run: the workflow has no prompt and graph "
-                            "execution is not yet wired; provide `input` or a prompt"
+                            "nothing to run: the workflow has no runnable graph and "
+                            "no prompt; provide `input` or a prompt"
                         ),
                         "workflow_id": workflow_id,
                     },
                     status_code=400,
                 )
-
-            from ...intel.providers import build_configured_meeting_intel
-            from ...intel.models import MeetingIntelError
 
             intel = build_configured_meeting_intel()
             try:
@@ -718,6 +834,7 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                 "workflow_id": workflow_id,
                 "output": output,
                 "provider": intel.active_provider,
+                "sources": sources,
             }
             if warning:
                 result["warning"] = warning
