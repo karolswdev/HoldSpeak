@@ -222,7 +222,28 @@ follow-up. It is read-only and local: nothing is sent, and nothing runs,
 without your approval. See the
 [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md#meeting-aftercare-close-the-loop).
 
-## AIPI-Lite companion
+## Companions
+
+HoldSpeak runs as a desktop hub, and a companion on another device drives it
+over the same local HTTP API your browser uses, on your own network (LAN or
+Tailscale), with no hosted relay. Two companions exist today.
+
+### The iPad app
+
+The iPad is a first-class client of both modes, not a remote control for one.
+It talks to the hub through typed clients over the existing API: it dictates an
+answer into your desk (the hub runs that text through the full dictation
+pipeline, applying your corrections and routing, and types the result, and a
+matching voice command fires there too), pins your spoken language and your
+spoken-symbol dictionary on that dictation path, reads a meeting back with its
+artifacts, confidence, and sources, keeps proposing an action separate from
+approving it (the human gate stays its own step), reads the faceted archive, and
+pulls activity pre-briefing nudges. Its on-device storage is schema safe the
+same way the desktop is: it backs an older database up before migrating, and
+refuses to open one written by a newer build. The on-device screens for these
+are still coming together; the client layer they ride on is shipped and tested.
+
+### AIPI-Lite
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/aipi-lite-companion.png" alt="Pixel art AIPI-Lite companion device" width="220">
@@ -250,6 +271,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 | Map spoken keywords to real actions | [Voice Commands](https://github.com/karolswdev/HoldSpeak/blob/main/docs/VOICE_COMMANDS.md) |
 | Turn on Qlippy, the mascot | [Qlippy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_PIPELINE_GUIDE.md#qlippy-the-mascot-optional) |
 | Use meeting mode and configure AI intelligence | [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md) |
+| Drive HoldSpeak from another device | [Companions](#companions) |
 | Wire up the AIPI-Lite companion | [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AIPI_LITE_DEV_WORKFLOW.md) |
 | Install Claude / Codex agent hooks | [Agent Hook Install](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
 | Understand what's stored and what can leave my machine | [Security & Privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) |
