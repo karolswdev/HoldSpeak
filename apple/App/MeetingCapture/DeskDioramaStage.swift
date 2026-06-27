@@ -16,6 +16,9 @@ enum DioPal {
     static let accent = Color(hex: 0xFF6B35), cobalt = Color(hex: 0x5B8DEF), violet = Color(hex: 0x9B6BFF)
     static let mint = Color(hex: 0x3ECF8E), text = Color(hex: 0xF4ECE0), muted = Color(hex: 0x9C93A8)
     static let zoneTints: [Color] = [accent, cobalt, violet, mint]
+    // a richer ring zones can be painted from (the editor also allows a fully custom colour)
+    static let zonePalette: [Color] = [accent, cobalt, violet, mint, Color(hex: 0xFF4D6D), Color(hex: 0xFFC857), Color(hex: 0x4DD0E1), Color(hex: 0xB388FF), Color(hex: 0x9CCC65), Color(hex: 0xF06292)]
+    static func zoneColor(_ color: Int, _ hex: Int) -> Color { hex != 0 ? Color(hex: UInt(max(0, hex))) : zonePalette[color % zonePalette.count] }
 }
 
 enum DioMode { case home, focus, recede }
@@ -138,7 +141,22 @@ struct DioMenuItem: Identifiable { let id = UUID(); let label: String; let icon:
 
 // A zone is a resizable, free-placed AREA: a path (recursion), a colour, a unit-centre (cx,cy) and a size
 // (w,h in points). Drag to arrange (tetris), corner-grip to resize. Persisted in hs.diorama.zones.
-struct ZoneRec: Equatable { var path: String; var color: Int; var cx: Double; var cy: Double; var w: Double; var h: Double }
+struct ZoneRec: Equatable {
+    var path: String; var color: Int; var cx: Double; var cy: Double; var w: Double; var h: Double
+    // style (all optional, default to the old look): a zone is now paintable
+    var borderW: Double = 1.5
+    var borderStyle: Int = 0    // 0 solid · 1 dashed · 2 dotted
+    var fillStyle: Int = 0      // 0 gradient · 1 solid · 2 hatch · 3 dots · 4 grid
+    var fillOpacity: Double = 0.12
+    var glow: Bool = false
+    var hex: Int = 0            // 0 ⇒ use the palette colour; else a fully custom colour
+    var tint: Color { DioPal.zoneColor(color, hex) }
+}
+
+// the resolved look handed to the tray renderer
+struct ZoneStyle { let color: Color; let borderW: CGFloat; let borderStyle: Int; let fillStyle: Int; let fillOpacity: Double; let glow: Bool
+    init(_ z: ZoneRec) { color = z.tint; borderW = CGFloat(z.borderW); borderStyle = z.borderStyle; fillStyle = z.fillStyle; fillOpacity = z.fillOpacity; glow = z.glow }
+}
 
 // MARK: - canvas object — derived ENTIRELY from a DeskPrimitive (glyph/colour/title/id). Gesture on the stable outer view.
 struct DioHero: View {
@@ -274,15 +292,18 @@ struct DioTrayMote: View {
 // A resizable, movable 2D AREA — drag the body to arrange (tetris), drag the corner grip to resize, tap to
 // dive. Holds meetings; a meeting dropped inside it files there. `drag`/`rsz` give live feedback; commit on end.
 struct DioZoneTray: View {
-    let name: String, tint: Color
+    let name: String; let style: ZoneStyle
     let members: [any DeskPrimitive]; let subZones: Int; let size: CGSize
     let landed: Bool; let index: Int; let dimmed: Bool; let hot: Bool
-    let onDive: () -> Void; let onMove: (CGSize) -> Void; let onResize: (CGSize) -> Void
+    let onDive: () -> Void; let onMove: (CGSize) -> Void; let onResize: (CGSize) -> Void; let onEdit: () -> Void
     @State private var drag: CGSize = .zero
     @State private var rsz: CGSize = .zero
+    @State private var didEdit = false        // long-press opened the editor → swallow the trailing tap/drop
+    private var tint: Color { style.color }
     var body: some View {
         let w = max(120, size.width + rsz.width), h = max(78, size.height + rsz.height)
         let cap = max(1, Int((w - 26) / 40))
+        let dashes: [CGFloat]? = style.borderStyle == 1 ? [6, 5] : (style.borderStyle == 2 ? [1.5, 4] : nil)
         ZStack(alignment: .bottomTrailing) {
             VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 7) {
@@ -296,24 +317,21 @@ struct DioZoneTray: View {
                 Spacer(minLength: 0)
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.down.forward.and.arrow.up.backward").font(.system(size: 9, weight: .black))
-                    Text(hot ? "DROP TO FILE" : "TAP TO DIVE").font(.system(size: 9, weight: .heavy, design: .rounded)).tracking(1)
-                }.foregroundStyle(tint.opacity(0.9))
+                    Text(hot ? "DROP TO FILE" : "TAP TO DIVE · HOLD TO EDIT").font(.system(size: 9, weight: .heavy, design: .rounded)).tracking(1)
+                }.foregroundStyle(tint.opacity(0.9)).lineLimit(1)
             }
             .padding(13).frame(width: w, height: h, alignment: .topLeading)
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(LinearGradient(colors: [tint.opacity(hot ? 0.2 : 0.1), DioPal.trayBot.opacity(0.9)], startPoint: .top, endPoint: .bottom))
-                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(tint.opacity(hot ? 1 : 0.5), lineWidth: hot ? 2.5 : 1.5))
-                    .shadow(color: .black.opacity(0.4), radius: 12, y: 8)
-            )
+            .background(zoneBackground(w, h, dashes))
             .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .gesture(DragGesture(minimumDistance: 0)
-                .onChanged { if hypot($0.translation.width, $0.translation.height) > 6 { drag = $0.translation } }
+                .onChanged { drag = $0.translation }                 // track 1:1 — no dead-zone, no implicit animation
                 .onEnded { v in
                     let d = hypot(v.translation.width, v.translation.height)
+                    if didEdit { didEdit = false; drag = .zero; return }
                     if d < 9 { onDive() } else { onMove(v.translation) }
                     drag = .zero
                 })
+            .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in didEdit = true; haptic(); onEdit() })
             // corner resize grip
             Image(systemName: "arrow.up.left.and.arrow.down.right")
                 .font(.system(size: 12, weight: .black)).foregroundStyle(tint)
@@ -326,9 +344,164 @@ struct DioZoneTray: View {
         .frame(width: w, height: h)
         .scaleEffect(hot ? 1.03 : (landed ? 1 : 0.4)).opacity(landed ? (dimmed ? 0 : 1) : 0)
         .offset(drag)
+        .animation(nil, value: drag)                                 // the drag must NOT lerp — it follows the finger
+        .animation(.spring(response: 0.6, dampingFraction: 0.7), value: rsz)
         .animation(.spring(response: 0.65, dampingFraction: 0.62).delay(Double(index) * 0.06), value: landed)
         .animation(.spring(response: 0.35, dampingFraction: 0.6), value: hot)
         .allowsHitTesting(!dimmed)
+    }
+    @ViewBuilder private func zoneBackground(_ w: CGFloat, _ h: CGFloat, _ dashes: [CGFloat]?) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+        let op = hot ? max(style.fillOpacity, 0.2) : style.fillOpacity
+        ZStack {
+            // base fill by pattern
+            switch style.fillStyle {
+            case 0: shape.fill(LinearGradient(colors: [tint.opacity(op * 1.5), DioPal.trayBot.opacity(0.9)], startPoint: .top, endPoint: .bottom))
+            default:
+                shape.fill(DioPal.trayBot.opacity(0.9))
+                if style.fillStyle == 1 { shape.fill(tint.opacity(op)) }
+                else { ZonePattern(kind: style.fillStyle, color: tint.opacity(min(0.9, op * 2.4))).clipShape(shape) }
+            }
+            shape.strokeBorder(tint.opacity(hot ? 1 : 0.6), style: StrokeStyle(lineWidth: hot ? style.borderW + 1 : style.borderW, dash: dashes ?? []))
+        }
+        .shadow(color: (style.glow ? tint : .black).opacity(style.glow ? 0.55 : 0.4), radius: style.glow ? 16 : 12, y: 8)
+    }
+    private func haptic() {
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
+        #endif
+    }
+}
+
+// hatch / dots / grid fills painted into a zone
+struct ZonePattern: View {
+    let kind: Int; let color: Color    // 2 hatch · 3 dots · 4 grid
+    var body: some View {
+        Canvas { ctx, size in
+            let step: CGFloat = 12
+            if kind == 2 {            // diagonal hatch
+                var x: CGFloat = -size.height
+                while x < size.width { var p = Path(); p.move(to: CGPoint(x: x, y: size.height)); p.addLine(to: CGPoint(x: x + size.height, y: 0)); ctx.stroke(p, with: .color(color), lineWidth: 1); x += step }
+            } else if kind == 3 {     // dots
+                var y: CGFloat = step / 2
+                while y < size.height { var x: CGFloat = step / 2; while x < size.width { ctx.fill(Path(ellipseIn: CGRect(x: x - 1, y: y - 1, width: 2, height: 2)), with: .color(color)); x += step }; y += step }
+            } else {                  // grid
+                var x: CGFloat = 0; while x < size.width { var p = Path(); p.move(to: CGPoint(x: x, y: 0)); p.addLine(to: CGPoint(x: x, y: size.height)); ctx.stroke(p, with: .color(color.opacity(0.6)), lineWidth: 0.6); x += step }
+                var y: CGFloat = 0; while y < size.height { var p = Path(); p.move(to: CGPoint(x: 0, y: y)); p.addLine(to: CGPoint(x: size.width, y: y)); ctx.stroke(p, with: .color(color.opacity(0.6)), lineWidth: 0.6); y += step }
+            }
+        }
+    }
+}
+
+// THE ZONE STYLE EDITOR — paint a place: colour (palette or fully custom), border width + style, fill
+// pattern + opacity, glow. Long-press a zone to open it. Live preview swatch on top.
+struct DioZoneEditor: View {
+    @State var zone: ZoneRec
+    let name: String
+    let onSave: (ZoneRec) -> Void; let onDelete: () -> Void; let onCancel: () -> Void
+    @State private var custom = Color.white
+    private var tint: Color { zone.tint }
+    private let cols = [GridItem(.adaptive(minimum: 38), spacing: 10)]
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.62).ignoresSafeArea().onTapGesture { onSave(zone) }
+            VStack(spacing: 0) {
+                HStack(spacing: 13) {
+                    previewSwatch.frame(width: 70, height: 48)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("PAINT THIS ZONE").font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1).foregroundStyle(tint)
+                        Text(name).font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                    Button { onSave(zone) } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 24)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
+                }.padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 14)
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 18) {
+                        sec("COLOUR") {
+                            LazyVGrid(columns: cols, spacing: 10) {
+                                ForEach(Array(DioPal.zonePalette.enumerated()), id: \.offset) { i, c in
+                                    Button { zone.color = i; zone.hex = 0; haptic() } label: {
+                                        Circle().fill(c).frame(width: 34, height: 34)
+                                            .overlay(Circle().strokeBorder(.white.opacity(zone.hex == 0 && zone.color == i ? 0.95 : 0.15), lineWidth: zone.hex == 0 && zone.color == i ? 2.5 : 1))
+                                    }.buttonStyle(.plain)
+                                }
+                                ColorPicker("", selection: $custom, supportsOpacity: false).labelsHidden().frame(width: 34, height: 34)
+                                    .onChange(of: custom) { c in zone.hex = max(1, zoneHex(c)) }
+                            }
+                        }
+                        sec("BORDER") {
+                            seg(["Solid", "Dashed", "Dotted"], $zone.borderStyle)
+                            labeledSlider("Width", value: $zone.borderW, range: 0.5...5)
+                        }
+                        sec("FILL") {
+                            seg(["Gradient", "Solid", "Hatch", "Dots", "Grid"], $zone.fillStyle)
+                            labeledSlider("Opacity", value: $zone.fillOpacity, range: 0.04...0.5)
+                        }
+                        sec("EFFECT") {
+                            Toggle(isOn: $zone.glow) { Text("Glow").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text) }.tint(tint)
+                        }
+                    }.padding(.horizontal, 20).padding(.bottom, 16)
+                }
+                HStack(spacing: 12) {
+                    Button { onDelete() } label: {
+                        HStack(spacing: 6) { Image(systemName: "trash"); Text("Delete").font(.system(size: 14, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(Color(hex: 0xFF6B6B)).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(.white.opacity(0.05)))
+                    }.buttonStyle(.plain)
+                    Button { onSave(zone) } label: {
+                        HStack(spacing: 7) { Image(systemName: "checkmark"); Text("Done").font(.system(size: 15.5, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
+                            .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
+                    }.buttonStyle(.plain)
+                }.padding(.horizontal, 20).padding(.vertical, 14)
+            }
+            .frame(maxWidth: 540)
+            .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(hex: 0x14121B)).overlay(RoundedRectangle(cornerRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+            .padding(.horizontal, 24).padding(.vertical, 44)
+        }
+        .onAppear { if zone.hex != 0 { custom = Color(hex: UInt(max(0, zone.hex))) } }
+    }
+    private var previewSwatch: some View {
+        let dashes: [CGFloat]? = zone.borderStyle == 1 ? [6, 5] : (zone.borderStyle == 2 ? [1.5, 4] : nil)
+        let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
+        return ZStack {
+            if zone.fillStyle == 0 { shape.fill(LinearGradient(colors: [tint.opacity(zone.fillOpacity * 1.5), DioPal.trayBot.opacity(0.9)], startPoint: .top, endPoint: .bottom)) }
+            else { shape.fill(DioPal.trayBot.opacity(0.9)); if zone.fillStyle == 1 { shape.fill(tint.opacity(zone.fillOpacity)) } else { ZonePattern(kind: zone.fillStyle, color: tint.opacity(min(0.9, zone.fillOpacity * 2.4))).clipShape(shape) } }
+            shape.strokeBorder(tint.opacity(0.8), style: StrokeStyle(lineWidth: CGFloat(zone.borderW), dash: dashes ?? []))
+        }.shadow(color: (zone.glow ? tint : .black).opacity(zone.glow ? 0.6 : 0.3), radius: zone.glow ? 12 : 5)
+    }
+    @ViewBuilder private func sec<C: View>(_ t: String, @ViewBuilder _ c: () -> C) -> some View {
+        VStack(alignment: .leading, spacing: 10) { Text(t).font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1.2).foregroundStyle(DioPal.muted); c() }
+    }
+    private func seg(_ labels: [String], _ sel: Binding<Int>) -> some View {
+        HStack(spacing: 6) {
+            ForEach(Array(labels.enumerated()), id: \.offset) { i, l in
+                Button { sel.wrappedValue = i; haptic() } label: {
+                    Text(l).font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(sel.wrappedValue == i ? .white : DioPal.muted)
+                        .padding(.horizontal, 12).frame(height: 32).frame(maxWidth: .infinity)
+                        .background(Capsule().fill(sel.wrappedValue == i ? tint.opacity(0.85) : .white.opacity(0.06)))
+                }.buttonStyle(.plain)
+            }
+        }
+    }
+    private func labeledSlider(_ label: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
+        HStack(spacing: 10) {
+            Text(label).font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).frame(width: 64, alignment: .leading)
+            Slider(value: value, in: range).tint(tint)
+        }
+    }
+    private func zoneHex(_ c: Color) -> Int {
+        #if canImport(UIKit)
+        let ui = UIColor(c); var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (Int(r * 255) << 16) | (Int(g * 255) << 8) | Int(b * 255)
+        #else
+        return 0xFFFFFF
+        #endif
+    }
+    private func haptic() {
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
     }
 }
 
@@ -891,6 +1064,102 @@ struct ConstellationEcho: View {
     }
 }
 
+// THE WORD-SPAWN EFFECT LIBRARY — how live speech materializes onto the desk, emerging from the thinking prism.
+enum WordSpawn: String, CaseIterable {
+    case prism, swarm, shatter, lightWrite
+    var label: String { switch self { case .prism: return "Prism"; case .swarm: return "Swarm"; case .shatter: return "Shatter"; case .lightWrite: return "Light" } }
+    var icon: String { switch self { case .prism: return "triangle"; case .swarm: return "sparkles"; case .shatter: return "diamond"; case .lightWrite: return "pencil.tip" } }
+    var next: WordSpawn { let a = WordSpawn.allCases; return a[(a.firstIndex(of: self)! + 1) % a.count] }
+}
+
+// the MEANING-DRIVEN layer — a line's intent picks its colour + a small marker (heuristic, live; no LLM needed)
+func transcriptIntent(_ s: String) -> (tint: Color, icon: String?) {
+    let l = s.lowercased()
+    if s.contains("?") { return (DioPal.cobalt, "questionmark.circle.fill") }
+    if l.contains("risk") || l.contains("blocker") || l.contains("concern") || l.contains("worried") { return (Color(hex: 0xFFC857), "exclamationmark.triangle.fill") }
+    if l.contains("agreed") || l.contains("decide") || l.contains("decision") || l.contains("let's") || l.contains("we'll") { return (DioPal.accent, "flag.fill") }
+    if l.contains("action") || l.contains("owns") || l.contains("todo") || l.contains(" will ") || l.contains("by friday") || l.contains("next step") { return (DioPal.mint, "checkmark.circle.fill") }
+    return (DioPal.text.opacity(0.85), nil)
+}
+
+// renders one line with the chosen spawn animation, tinted by intent, ghosted while unconfirmed (confidence)
+struct SpawnText: View {
+    let text: String; let style: WordSpawn; let tint: Color; var ghost: Bool = false
+    @State private var shown = false
+    private var base: Double { ghost ? 0.5 : 1 }
+    private var font: Font { .system(size: 12.5, weight: ghost ? .semibold : .regular, design: .rounded) }
+    var body: some View {
+        content
+            .onAppear {
+                shown = false
+                let anim: Animation = style == .lightWrite ? .easeInOut(duration: 0.7) : .spring(response: 0.55, dampingFraction: 0.72)
+                withAnimation(anim) { shown = true }
+            }
+    }
+    @ViewBuilder private var content: some View {
+        switch style {
+        case .swarm:
+            HStack(spacing: 0) {
+                ForEach(Array(text.enumerated()), id: \.offset) { i, ch in
+                    Text(String(ch)).font(font).foregroundStyle(tint)
+                        .opacity(shown ? base : 0).blur(radius: shown ? 0 : 1.5)
+                        .offset(x: shown ? 0 : CGFloat(sin(Double(i) * 12.9) * 40), y: shown ? 0 : CGFloat(cos(Double(i) * 7.7) * 24))
+                        .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(Double(i) * 0.012), value: shown)
+                }
+            }
+        case .shatter:
+            Text(text).font(font).foregroundStyle(tint)
+                .opacity(shown ? base : 0).blur(radius: shown ? 0 : 4)
+                .scaleEffect(shown ? 1 : 1.25).rotation3DEffect(.degrees(shown ? 0 : 28), axis: (x: 1, y: 0.4, z: 0))
+        case .lightWrite:
+            Text(text).font(font).foregroundStyle(tint).opacity(base)
+                .mask(GeometryReader { g in Rectangle().frame(width: shown ? g.size.width : 0, alignment: .leading).frame(maxHeight: .infinity, alignment: .leading) })
+                .overlay(alignment: .leading) { GeometryReader { g in Circle().fill(.white).frame(width: 4, height: 4).shadow(color: tint, radius: 4).position(x: shown ? g.size.width : 0, y: g.size.height / 2).opacity(shown ? 0 : 1).animation(.easeInOut(duration: 0.7), value: shown) } }
+        case .prism:
+            Text(text).font(font).foregroundStyle(tint).modifier(MaterializeModifier(p: shown ? 1 : 0))
+        }
+    }
+}
+
+// the materialize transition — a line/word blurs in, rises, and scales up as if condensing out of the prism
+struct MaterializeModifier: ViewModifier {
+    let p: Double   // 0 = forming, 1 = formed
+    func body(content: Content) -> some View {
+        content.opacity(p).blur(radius: (1 - p) * 5).scaleEffect(0.82 + 0.18 * p, anchor: .leading).offset(y: (1 - p) * 10)
+    }
+}
+extension AnyTransition {
+    static var prismMaterialize: AnyTransition {
+        .asymmetric(insertion: .modifier(active: MaterializeModifier(p: 0), identity: MaterializeModifier(p: 1)), removal: .opacity)
+    }
+}
+
+// THE THINKING PRISM — a small rotating geometric prism with chromatic refraction; live words spawn from it.
+struct PrismTriangle: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path(); p.move(to: CGPoint(x: r.midX, y: r.minY)); p.addLine(to: CGPoint(x: r.maxX, y: r.maxY)); p.addLine(to: CGPoint(x: r.minX, y: r.maxY)); p.closeSubpath(); return p
+    }
+}
+struct DioPrism: View {
+    var size: CGFloat = 18; var active: Bool = true
+    var body: some View {
+        TimelineView(.animation) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            let rot = t * (active ? 55 : 20)
+            ZStack {
+                Circle().fill(RadialGradient(colors: [DioPal.cobalt.opacity(active ? 0.5 : 0.18), .clear], center: .center, startRadius: 1, endRadius: size * 0.9)).blur(radius: 3)
+                ForEach(Array([DioPal.accent, DioPal.mint, DioPal.cobalt].enumerated()), id: \.offset) { i, c in
+                    PrismTriangle().stroke(c.opacity(0.85), lineWidth: 1.2)
+                        .frame(width: size, height: size)
+                        .rotationEffect(.degrees(rot + Double(i) * 3))
+                        .offset(x: CGFloat(i - 1) * 0.8, y: CGFloat(i - 1) * 0.4)   // chromatic refraction split
+                }
+            }
+            .frame(width: size * 1.5, height: size * 1.5)
+        }
+    }
+}
+
 struct DioAmbientRecorder: View {
     @ObservedObject var model: CaptureModel
     let isDesktop: Bool
@@ -906,6 +1175,8 @@ struct DioAmbientRecorder: View {
     @State private var expanded = false          // the transcript grew in place
     @State private var panelH: CGFloat = 250      // committed transcript-panel height
     @State private var dragH: CGFloat = 0         // live resize delta from the corner grip
+    @AppStorage("hs.diorama.spawn") private var spawnRaw = "prism"   // the chosen word-spawn style
+    private var spawn: WordSpawn { WordSpawn(rawValue: spawnRaw) ?? .prism }
     private func timeString(_ s: Double) -> String { let i = Int(s); return String(format: "%d:%02d", i / 60, i % 60) }
     private var segments: [String] {
         model.liveTranscript.replacingOccurrences(of: "\n", with: " ").components(separatedBy: CharacterSet(charactersIn: ".?!")).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
@@ -951,7 +1222,7 @@ struct DioAmbientRecorder: View {
                 bottomRow
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-            .padding(.leading, 16).padding(.bottom, h * 0.03)
+            .padding(.leading, 16).padding(.bottom, h * 0.055)
             if let p = pending {
                 DioWindowSlider(title: targetTitle(p), icon: targetIcon(p), tint: targetTint(p), minutes: $mins,
                                 onGo: { onFire(p, mins); withAnimation { pending = nil } },
@@ -969,20 +1240,23 @@ struct DioAmbientRecorder: View {
         HStack(spacing: 11) {
             Button(action: onStop) {
                 ZStack {
-                    // the mic stays STILL; louder audio just makes its glow + fog more intense (no size jitter)
+                    // the mic stays STILL; louder audio just makes its glow + fog more intense (no size jitter).
+                    // CONCENTRIC — no offset shadow (that painted a stray circle BELOW the mic).
                     let lvl = CGFloat(min(1, model.level))
                     TimelineView(.animation) { tl in
                         let breathe = 0.85 + 0.15 * abs(sin(tl.date.timeIntervalSinceReferenceDate * 1.7))
-                        // the fog emitted from the mic — opacity rides the audio level
-                        Circle().fill(RadialGradient(colors: [hot.opacity((0.06 + 0.5 * lvl) * breathe), .clear], center: .center, startRadius: 2, endRadius: 64))
-                            .frame(width: 132, height: 132).blur(radius: 14)
-                        // a fixed-size ring whose brightness (not size) tracks the level
-                        Circle().stroke(hot.opacity(0.25 + 0.55 * lvl), lineWidth: 2).frame(width: 64, height: 64)
+                        // MUST be a ZStack — two bare circles in a TimelineView closure stack VERTICALLY
+                        // (that was the phantom "circle below the mic" bug). Concentric glow + ring now.
+                        ZStack {
+                            Circle().stroke(hot.opacity(0.18 + 0.5 * lvl), lineWidth: 2).frame(width: 62, height: 62)
+                            Circle().fill(hot).frame(width: 54, height: 54)
+                                .shadow(color: hot.opacity((0.3 + 0.5 * lvl) * breathe), radius: 8 + 16 * lvl)
+                                .shadow(color: .black.opacity(0.35), radius: 4, y: 2)
+                        }
                     }
-                    Circle().fill(hot).frame(width: 54, height: 54).shadow(color: hot.opacity(0.5 + 0.4 * lvl), radius: 12 + 10 * lvl, y: 5)
                     if model.transcribing { ProgressView().tint(.white) } else { RoundedRectangle(cornerRadius: 5, style: .continuous).fill(.white).frame(width: 18, height: 18) }
                 }
-                .frame(width: 132, height: 132)
+                .frame(width: 80, height: 80)
             }.buttonStyle(.plain).disabled(model.transcribing)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
@@ -998,56 +1272,63 @@ struct DioAmbientRecorder: View {
     // collapsed: a one-line peek; tap to GROW it in place (no separate modal — canon Law 1/2)
     private var peekChip: some View {
         Button { withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { expanded = true } } label: {
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 5) { Image(systemName: "text.alignleft").font(.system(size: 8, weight: .black)); Text("HEARING").font(.system(size: 8, weight: .heavy, design: .rounded)).tracking(1.5); Image(systemName: "chevron.up").font(.system(size: 7, weight: .black)) }.foregroundStyle(DioPal.muted)
-                Text(lastLine).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9)).lineLimit(2).frame(maxWidth: w * 0.5, alignment: .leading)
+            HStack(alignment: .top, spacing: 8) {
+                DioPrism(size: 15, active: !model.partial.isEmpty)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 5) { Text("HEARING").font(.system(size: 8, weight: .heavy, design: .rounded)).tracking(1.5); Image(systemName: "chevron.up").font(.system(size: 7, weight: .black)) }.foregroundStyle(DioPal.muted)
+                    Text(lastLine).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9)).lineLimit(2).frame(maxWidth: w * 0.46, alignment: .leading)
+                        .id(lastLine).transition(.prismMaterialize)
+                }
             }.padding(10).background(RoundedRectangle(cornerRadius: 13).fill(.black.opacity(0.4)).overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: lastLine)
         }.buttonStyle(.plain)
     }
     // expanded: the transcript grows out of the same frame, resizable by the pulsing corner grip
     private var transcriptPanel: some View {
         let H = min(max(140, panelH - dragH), h * 0.58)
         return VStack(spacing: 0) {
+            // TOP GRABBER — drag to size (clear of the collapse button now)
+            Capsule().fill(DioPal.muted.opacity(0.5)).frame(width: 42, height: 5)
+                .padding(.vertical, 7).frame(maxWidth: .infinity).contentShape(Rectangle())
+                .gesture(DragGesture(minimumDistance: 1)
+                    .onChanged { dragH = $0.translation.height }
+                    .onEnded { v in panelH = min(max(140, panelH - v.translation.height), h * 0.58); dragH = 0 })
             HStack(spacing: 7) {
-                Image(systemName: "text.alignleft").font(.system(size: 11, weight: .bold)).foregroundStyle(DioPal.accent)
+                DioPrism(size: 16, active: !model.partial.isEmpty)
                 Text("LIVE TRANSCRIPT").font(.system(size: 10, weight: .heavy, design: .rounded)).tracking(1).foregroundStyle(DioPal.text)
                 Spacer(minLength: 0)
-                Text(timeString(model.elapsedSeconds)).font(.system(size: 10.5, weight: .heavy, design: .rounded).monospacedDigit()).foregroundStyle(DioPal.muted)
-                Button { withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { expanded = false } } label: {
-                    Image(systemName: "chevron.down").font(.system(size: 11, weight: .black)).foregroundStyle(DioPal.muted).frame(width: 26, height: 26).background(Circle().fill(.white.opacity(0.08)))
+                // spawn-style switcher — cycles the word-spawn effect (persisted)
+                Button { spawnRaw = spawn.next.rawValue; tap() } label: {
+                    HStack(spacing: 4) { Image(systemName: spawn.icon).font(.system(size: 9, weight: .bold)); Text(spawn.label).font(.system(size: 10, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(DioPal.cobalt).padding(.horizontal, 8).frame(height: 26).background(Capsule().fill(DioPal.cobalt.opacity(0.16)))
                 }.buttonStyle(.plain)
-            }.padding(.horizontal, 12).padding(.top, 10).padding(.bottom, 6)
+                Button { withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { expanded = false } } label: {
+                    HStack(spacing: 4) { Image(systemName: "chevron.down").font(.system(size: 10, weight: .black)); Text("Collapse").font(.system(size: 10.5, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(DioPal.text.opacity(0.9)).padding(.horizontal, 9).frame(height: 26).background(Capsule().fill(.white.opacity(0.1)))
+                }.buttonStyle(.plain)
+            }.padding(.horizontal, 12).padding(.bottom, 6)
             ScrollViewReader { proxy in
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 7) {
                         ForEach(Array(segments.enumerated()), id: \.offset) { _, s in
-                            Text(s + ".").font(.system(size: 12.5, weight: .regular, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85)).frame(maxWidth: .infinity, alignment: .leading)
+                            let intent = transcriptIntent(s)
+                            HStack(alignment: .top, spacing: 6) {
+                                if let ic = intent.icon { Image(systemName: ic).font(.system(size: 9, weight: .bold)).foregroundStyle(intent.tint).padding(.top, 2) }
+                                SpawnText(text: s + ".", style: spawn, tint: intent.tint).frame(maxWidth: .infinity, alignment: .leading)
+                            }
                         }
                         if !model.partial.isEmpty {
-                            Text(model.partial).font(.system(size: 12.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.accent).frame(maxWidth: .infinity, alignment: .leading).id("tail")
+                            HStack(alignment: .top, spacing: 6) {
+                                SpawnText(text: model.partial, style: spawn, tint: DioPal.accent, ghost: true).frame(maxWidth: .infinity, alignment: .leading).id("tail")
+                            }
                         }
-                    }.padding(.horizontal, 12).padding(.bottom, 10)
+                    }.padding(.horizontal, 12).padding(.bottom, 10).animation(.spring(response: 0.5, dampingFraction: 0.8), value: segments.count)
                 }
                 .onChange(of: model.liveTranscript) { _ in withAnimation { proxy.scrollTo("tail", anchor: .bottom) } }
             }
         }
         .frame(width: w * 0.6, height: H, alignment: .top)
         .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.black.opacity(0.58)).overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
-        .overlay(alignment: .topTrailing) { resizeGrip }
-    }
-    // the corner grip — pulses to suggest "drag me to size"; drag up = taller
-    private var resizeGrip: some View {
-        TimelineView(.animation) { tl in
-            let p = 0.5 + 0.5 * sin(tl.date.timeIntervalSinceReferenceDate * 2.2)
-            Image(systemName: "arrow.up.and.down").font(.system(size: 10, weight: .black)).foregroundStyle(DioPal.accent)
-                .frame(width: 28, height: 28)
-                .background(Circle().fill(DioPal.accent.opacity(0.16)).overlay(Circle().strokeBorder(DioPal.accent.opacity(0.35 + 0.4 * p), lineWidth: 1.5)))
-                .scaleEffect(1 + 0.07 * p)
-        }
-        .offset(x: -6, y: 6)
-        .gesture(DragGesture(minimumDistance: 1)
-            .onChanged { dragH = $0.translation.height }
-            .onEnded { v in panelH = min(max(140, panelH - v.translation.height), h * 0.58); dragH = 0 })
     }
     private func tap() {
         #if canImport(UIKit)
@@ -1730,6 +2011,7 @@ struct DioStage: View {
     @AppStorage("hs.diorama.chains") private var chainsJSON = ""
     @State private var chains: [ChainRecord] = []
     @State private var editingChain: ChainRecord? = nil   // chain builder open
+    @State private var editingZone: ZoneRec? = nil        // the zone style editor is open
     @State private var runChainSheet: ChainRecord? = nil  // the run/manage sheet
     @State private var chainRelay: ChainRecord? = nil     // the live relay overlay
     @State private var chainStep = 0
@@ -1741,7 +2023,7 @@ struct DioStage: View {
     private var pathKey: String { path.joined(separator: "/") }
     private var curTint: Color { path.isEmpty ? DioPal.accent : tintFor(pathKey) }
     private func tintFor(_ zpath: String) -> Color {
-        if let z = zones.first(where: { $0.path == zpath }) { return DioPal.zoneTints[z.color % DioPal.zoneTints.count] }
+        if let z = zones.first(where: { $0.path == zpath }) { return z.tint }
         return DioPal.accent
     }
     private func name(of zpath: String) -> String { zpath.split(separator: "/").last.map(String.init) ?? zpath }
@@ -2130,6 +2412,14 @@ struct DioStage: View {
                     DioChainRelay(chain: c, agents: agents, step: chainStep, results: chainResults)
                         .zIndex(128).transition(.opacity)
                 }
+                // the zone style editor — paint a place (colour, border, fill, glow)
+                if let z = editingZone {
+                    DioZoneEditor(zone: z, name: name(of: z.path),
+                                  onSave: { saveZone($0) },
+                                  onDelete: { deleteZone(z.path) },
+                                  onCancel: { withAnimation { editingZone = nil } })
+                        .id(z.path).zIndex(147).transition(.opacity)
+                }
                 if let t = sentToast {
                     HStack(spacing: 7) { Image(systemName: "checkmark.circle.fill"); Text(t).font(.system(size: 13, weight: .heavy, design: .rounded)) }
                         .foregroundStyle(.white).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(DioPal.mint.opacity(0.92)))
@@ -2161,8 +2451,15 @@ struct DioStage: View {
                     else if r == "weave" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { weaveStepName = "Action items"; weaveDone = 1; weaveTotal = 3; withAnimation { capturing = true; weaving = true } } }
                     else { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { capturing = true }; model.recording = true; model.level = 0.6 } }
                 }
-                if ProcessInfo.processInfo.environment["HS_DESK_ARCADE"] == "1" {
+                if let a = ProcessInfo.processInfo.environment["HS_DESK_ARCADE"], a == "1" || a == "play" {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { arkadeOpen = true } }
+                }
+                if let zenv = ProcessInfo.processInfo.environment["HS_DESK_ZONE"] {
+                    zones = [
+                        ZoneRec(path: "Atlas", color: 2, cx: 0.28, cy: 0.3, w: 200, h: 120, borderW: 2, borderStyle: 1, fillStyle: 3, fillOpacity: 0.2, glow: true),
+                        ZoneRec(path: "Q3", color: 5, cx: 0.66, cy: 0.32, w: 180, h: 120, borderW: 2.5, borderStyle: 2, fillStyle: 2, fillOpacity: 0.22, glow: false),
+                    ]
+                    if zenv == "1" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { if let z = zones.first { withAnimation { editingZone = z } } } }
                 }
                 if ProcessInfo.processInfo.environment["HS_DESK_ARRIVE"] == "1" {
                     let m = Meeting(id: "demoNew", startedAt: Date(), title: "Q3 kickoff", segments: [Segment(text: "Welcome to the kickoff.", speaker: "Speaker 1", startTime: 0, endTime: 2)])
@@ -2253,11 +2550,12 @@ struct DioStage: View {
         let zs = childZones(); let ms = contentMembers()
         ZStack {
             ForEach(Array(zs.enumerated()), id: \.element.path) { i, z in
-                DioZoneTray(name: name(of: z.path), tint: DioPal.zoneTints[z.color % DioPal.zoneTints.count],
+                DioZoneTray(name: name(of: z.path), style: ZoneStyle(z),
                             members: membersOf(z.path), subZones: zones.filter { parent(of: $0.path) == z.path }.count,
                             size: CGSize(width: z.w, height: z.h), landed: landed, index: i, dimmed: selected != nil,
                             hot: dragHotZone == z.path, onDive: { dive(into: z.path) },
-                            onMove: { tr in moveZone(z.path, tr, w, h) }, onResize: { tr in resizeZone(z.path, tr) })
+                            onMove: { tr in moveZone(z.path, tr, w, h) }, onResize: { tr in resizeZone(z.path, tr) },
+                            onEdit: { editingZone = z })
                     .position(x: w * z.cx, y: h * z.cy)
             }
             if selected == nil && !firstRun && !emptyZone {
@@ -2340,6 +2638,21 @@ struct DioStage: View {
         zones[idx].w = min(360, max(120, zones[idx].w + Double(tr.width)))
         zones[idx].h = min(260, max(78, zones[idx].h + Double(tr.height)))
         persistZones()
+    }
+    private func saveZone(_ z: ZoneRec) {
+        guard let idx = zones.firstIndex(where: { $0.path == z.path }) else { return }
+        haptic(.medium)
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { zones[idx] = z; editingZone = nil }
+        persistZones()
+    }
+    private func deleteZone(_ path: String) {
+        haptic(.medium)
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) {
+            zones.removeAll { $0.path == path || $0.path.hasPrefix(path + "/") }   // drop the zone + any sub-zones
+            filed = filed.filter { $0.value != path && !$0.value.hasPrefix(path + "/") }
+            editingZone = nil
+        }
+        persistZones(); persistFiled()
     }
     private func dockToolPos(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
         let tile: CGFloat = 60, gap: CGFloat = 26
@@ -2895,7 +3208,11 @@ struct DioStage: View {
     }
 
     private func persistPositions() { posCSV = positions.map { "\($0.key)=\($0.value.x),\($0.value.y)" }.joined(separator: ";") }
-    private func persistZones() { zonesCSV = zones.map { "\($0.path)|\($0.color)|\($0.cx)|\($0.cy)|\($0.w)|\($0.h)" }.joined(separator: ";") }
+    private func persistZones() {
+        zonesCSV = zones.map { z in
+            "\(z.path)|\(z.color)|\(z.cx)|\(z.cy)|\(z.w)|\(z.h)|\(z.borderW)|\(z.borderStyle)|\(z.fillStyle)|\(z.fillOpacity)|\(z.glow ? 1 : 0)|\(z.hex)"
+        }.joined(separator: ";")
+    }
     private func persistFiled() { dfiledCSV = filed.map { "\($0.key)=\($0.value)" }.joined(separator: ";") }
     private func persistOutputs() {
         if let data = try? JSONEncoder().encode(outputs), let s = String(data: data, encoding: .utf8) { outputsJSON = s }
@@ -2944,7 +3261,12 @@ struct DioStage: View {
         zones = zonesCSV.split(separator: ";").enumerated().compactMap { idx, row in
             let f = row.split(separator: "|"); guard f.count >= 2, let ci = Int(f[1]) else { return nil }
             if f.count >= 6, let cx = Double(f[2]), let cy = Double(f[3]), let zw = Double(f[4]), let zh = Double(f[5]) {
-                return ZoneRec(path: String(f[0]), color: ci, cx: cx, cy: cy, w: zw, h: zh)
+                var z = ZoneRec(path: String(f[0]), color: ci, cx: cx, cy: cy, w: zw, h: zh)
+                if f.count >= 12 {   // style fields appended (backward-compatible)
+                    z.borderW = Double(f[6]) ?? 1.5; z.borderStyle = Int(f[7]) ?? 0; z.fillStyle = Int(f[8]) ?? 0
+                    z.fillOpacity = Double(f[9]) ?? 0.12; z.glow = (f[10] == "1"); z.hex = Int(f[11]) ?? 0
+                }
+                return z
             }
             // backward-compat: an old "path|color" zone gets a default frame
             let col = idx % 3, r = idx / 3

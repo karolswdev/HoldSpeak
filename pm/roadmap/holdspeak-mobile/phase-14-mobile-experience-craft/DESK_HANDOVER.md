@@ -114,6 +114,23 @@ derived** from that declaration — the canvas object, the pull-out, the routing
   `DioHero(arrived:)` (halo + pulsing ring + NEW badge + `flash`); `arrivedIds` (the meeting + its deliverables)
   cleared after ~6s. (Soft spot: the weave itself is one opaque async call so it's a single step; the
   intelligence steps are genuinely discrete. True sub-weave stage hooks = future work.)
+- **ZONES — paintable + smooth (2026-06-26).** Drag was sluggish: it fought an implicit `.animation` on the
+  offset + a 6px dead-zone; now 1:1 (`.animation(nil, value: drag)`). Long-press a zone → `DioZoneEditor`:
+  colour (palette + custom `ColorPicker`), border width + style (solid/dashed/dotted), fill pattern
+  (gradient/solid/hatch/dots/grid via `ZonePattern`), opacity, glow. `ZoneRec` gained style fields (CSV append,
+  backward-compatible); `ZoneStyle` is the resolved look handed to `DioZoneTray`.
+- **THE WORD-SPAWN LIBRARY (transcript).** `WordSpawn` {prism, swarm, shatter, lightWrite} — a header switcher
+  cycles it (persisted `hs.diorama.spawn`); `SpawnText` renders each line with the chosen animation. The
+  MEANING-DRIVEN layer (`transcriptIntent`) tints + marks each line by intent (action/decision/question/risk),
+  and the unconfirmed partial is ghosted (confidence). Words emerge from `DioPrism` (the thinking prism).
+- **TRANSCRIPT resize/collapse fix:** collapse is a clear labeled pill; resize is a top-center grabber (the old
+  corner grip overlapped/hid the collapse button under the "red circle").
+- **ORB bug:** the level glow/fog + ring must be in ONE `ZStack` inside the `TimelineView` — two bare circles
+  there stack VERTICALLY (painted a phantom ring below the mic). Concentric now.
+- **ARKANOID loop fix (`DeskArkanoid.swift`):** the game loop ran inside the view body (`game.tick()` mutating
+  `@Published` during a view update → SwiftUI stalled + flushed physics in bursts). Moved to a real `Timer` on
+  `RunLoop.common` (`game.start()`/`stop()` in onAppear/onDisappear). Tap-to-launch failed because the phase
+  overlay ate the tap (now `allowsHitTesting(false)`) and a DragGesture + onTapGesture conflicted (one gesture now).
 - **The record button is now corner-tucked** (`orbPos` = bottom-left), smaller (64pt), with a quiet "Record"
   label. Owner's call: it has to be on the desk but should not dominate. The first-boot trail re-aims at it.
 - **Zones** = resizable, free-placed fractal **areas** you file meetings into and **dive** through
