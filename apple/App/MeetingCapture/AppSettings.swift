@@ -36,6 +36,7 @@ struct SettingsView: View {
                     egressRow
                     label("TRANSCRIPTION")
                     whisperCard
+                    languageCard
                     label("WHO'S TALKING")
                     diarizeCard
                 }
@@ -258,6 +259,48 @@ struct SettingsView: View {
             } label: {
                 HStack(spacing: 6) {
                     Text(whisperTitle()).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text)
+                    Image(systemName: "chevron.up.chevron.down").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
+                }
+                .padding(.horizontal, 13).padding(.vertical, 11)
+                .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+            }
+        }
+        .padding(15).background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+    }
+
+    // HSM-18-03 — the spoken-language picker, mirroring the hub's one-knob model (one setting drives
+    // dictation, meetings, and import). "Auto" is Whisper's per-utterance detection; picking a language
+    // helps short or code-switching speech. Options come from the vendored WhisperLanguage registry.
+    private var languageItems: [(code: String, name: String)] {
+        WhisperLanguage.names.map { ($0.key, $0.value) }.sorted { $0.name < $1.name }
+    }
+    private func languageTitle() -> String {
+        let raw = cfg.whisperLanguage
+        if raw.isEmpty || raw == "auto" { return "Auto" }
+        return WhisperLanguage.names[raw] ?? raw
+    }
+    private var languageCard: some View {
+        HStack(spacing: 14) {
+            GlyphChip(system: "globe", gradient: Sig.localGradient, size: 50)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Spoken language").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Auto detects per utterance; pick one for short or mixed speech").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+            }
+            Spacer()
+            Menu {
+                Button { cfg.whisperLanguage = "auto"; tactile() } label: {
+                    Label("Auto (detect)", systemImage: (cfg.whisperLanguage.isEmpty || cfg.whisperLanguage == "auto") ? "checkmark" : "globe")
+                }
+                ForEach(languageItems, id: \.code) { item in
+                    Button { cfg.whisperLanguage = item.code; tactile() } label: {
+                        Label(item.name, systemImage: cfg.whisperLanguage == item.code ? "checkmark" : "character.bubble")
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Text(languageTitle()).font(.system(size: 15, weight: .semibold)).foregroundStyle(Sig.text)
                     Image(systemName: "chevron.up.chevron.down").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
                 }
                 .padding(.horizontal, 13).padding(.vertical, 11)
