@@ -114,4 +114,21 @@ Integrated + verified together: full Python suite **2924 passed**, web build gre
 
 Integrated + verified together: full Python suite green (route-preflight included, locally with Chromium), web build green. Cherry-pick note: the graph-builder + trust-chip both edited `desk.*` but git auto-merged them (additive, different regions).
 
+### Wave 3 (2026-06-27) — the iPad meeting-contract CLIENT layer (Phase 19), 4 gaps
+
+The first **iOS** build flotilla. Each agent built one typed `HTTPDesktopClient` client group in
+its OWN `+Feature.swift` extension file (+ Contracts type + a decode test), so they never collide
+with each other or the parallel teleprompter `+Dictation.swift`.
+
+| Gap | What landed |
+|-----|-------------|
+| Aftercare | `aftercare(meetingId:)` + `fileAftercareIssue(...)` + the `Aftercare` digest type (open items by owner, decisions, since-last diff). Agent caught that file-issue needs a `repo`. |
+| Faceted archive | `listFacets()` + `searchMeetings(query:speaker:type:)` + `MeetingFacets`. Agent read the real `db/meetings.py`: facets are `{speakers, tags}`, `type` maps to the `tag` param (corrected my brief). |
+| Artifact provenance | `meetingArtifacts(meetingId:)` + `MeetingArtifact` carrying the `confidence` + `sources` the iPad render currently drops. |
+| Proposals review | `meetingProposals(meetingId:)` + `decideProposal(...)` — the split propose→review→approve. |
+
+Verified together: `swift build --target Providers` + all `*ClientTests` (**39 tests**) green. This is
+the typed spine the Phase-19 SwiftUI screens (aftercare card, faceted archive, artifact ring, proposals
+review) consume next; the screens + the metal walk are hand-driven follow-ups.
+
 See [[project_primitive_framework]], [[project_phase15_the_mesh]], [[project_phase17_agent_sync]].
