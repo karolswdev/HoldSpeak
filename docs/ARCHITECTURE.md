@@ -206,11 +206,12 @@ The iPad keeps its own SQLite store
 (`apple/Sources/Providers/Storage/SQLiteStorage.swift`) for what it captures
 on device. It runs in WAL mode for crash safety: an integrity check on
 reopen confirms a committed write survives a crash, and an uncommitted write
-is rolled back. The schema carries a `user_version`, and a forward migration
-runs only when an older database is opened. This mirrors, on the mobile side,
-the same safe-by-default posture the desktop store takes. The desktop store
-is the one that also runs the four-way schema matrix below, where a database
-newer than the build is refused rather than rewritten.
+is rolled back. The schema carries a `user_version`, and the store reads it
+before it touches anything: a database newer than the build is refused (it
+throws rather than rewrite your data), an older one is backed up to a
+timestamped sibling and then migrated forward, and a current one is a no-op.
+That mirrors the desktop store's safe-by-default posture on the mobile side,
+the same four-way schema matrix described below.
 
 The desktop schema matrix:
 
