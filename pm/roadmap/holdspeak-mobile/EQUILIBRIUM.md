@@ -131,4 +131,18 @@ Verified together: `swift build --target Providers` + all `*ClientTests` (**39 t
 the typed spine the Phase-19 SwiftUI screens (aftercare card, faceted archive, artifact ring, proposals
 review) consume next; the screens + the metal walk are hand-driven follow-ups.
 
+### Wave 4 (2026-06-27) — schema safety + the activity client + a hardening catch, 3 gaps
+
+Dispatched in the background while Waves 18-01/19 PRs merged (the machine never idles).
+
+| Gap | Phase | What landed |
+|-----|-------|-------------|
+| iPad schema safety | 23 | `SQLiteStorage` now reads `user_version` BEFORE migrate/stamp and REFUSES a newer-than-build DB (`StorageError.tooNew`, no downgrade-stamp), and takes a timestamped backup before migrating, mirroring the desktop refuse-newer matrix. The data-loss stopper, the highest-leverage Apple-side framework gap. (3 new + 5 existing Storage tests green.) |
+| Activity-nudge client | 18 | `activityNudges()` / `selectNudge(recordId:)` / `dismissNudge(id:)` / `briefing()` + the `ActivityNudge` type (source-cited cards, the "Dictate with this" grounding). New `+Activity.swift`; 8 tests. |
+| Web null-guard (hardening) | 21 | a latent-bug audit of every launch route found ONE more genuine null-read of the index class: `/desk` evaluated `filing.id` under an `x-show` when `filing` was null. Fixed (4 sites → `filing?.id`); the rest were already guarded. Route-preflight green. |
+
+Verified together: `swift test` (storage + activity + no regression), web build, and `route_preflight`
+all green. The web hardening proves the pattern: every wave's integration runs the browser preflight CI
+silently skips, so this class of bug keeps getting caught instead of shipped.
+
 See [[project_primitive_framework]], [[project_phase15_the_mesh]], [[project_phase17_agent_sync]].
