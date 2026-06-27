@@ -113,10 +113,22 @@ public struct Chain: Codable, Equatable, Sendable, Identifiable {
 
 // MARK: - WorkflowDefinition (capability / synced) — a saved Ask or graph
 //
-// Named `WorkflowDefinition` (not `Workflow`) because RuntimeCore already owns a
-// richer `Workflow` (the Workbench Blueprints graph). This is the synced canonical
-// shape per the framework spec: {id, name, prompt | graphJson}. Reconcile with the
-// Workbench `Workflow` later — the desk's saved-Ask (`prompt`) is the v0 carrier.
+// RECONCILIATION (THE PRIMITIVE FRAMEWORK, tab 1) — two DISTINCT, deliberately-separate types:
+//
+//   • `Contracts.WorkflowDefinition` (THIS type) is the **synced wire contract** — the durable,
+//     last-write-wins shape that ports between surfaces (desk ⇄ hub ⇄ web). Minimal + Codable +
+//     Sendable: {id, name, prompt? | graphJson?, createdAt, updatedAt}. The wire `kind` is
+//     `workflow` (see `SyncKind.workflow`) — DO NOT rename it; the snake_case payload key is fixed.
+//
+//   • `RuntimeCore.Workbench.Workflow` (in Sources/RuntimeCore/Workbench/Workflow.swift) is the
+//     **executable engine model** — the richer Blueprints pipeline (source + typed steps + output)
+//     the on-device runner actually runs. It is NOT synced as-is.
+//
+// They are kept apart ON PURPOSE so the contract layer never depends on the engine. The bridge is
+// one-directional + lossy by design: a Workbench `Workflow` serializes its graph into this type's
+// `graphJson` to travel, and the desk's saved-Ask carries `prompt`. A receiving surface rehydrates
+// a runnable `Workflow` from `graphJson` when (and only when) it has the engine. Until the
+// graph-bridge lands, `prompt` (the saved-Ask) is the v0 carrier and `graphJson` is reserved.
 public struct WorkflowDefinition: Codable, Equatable, Sendable, Identifiable {
     public var id: String
     public var name: String

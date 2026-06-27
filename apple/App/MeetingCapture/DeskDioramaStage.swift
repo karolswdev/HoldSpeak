@@ -23,6 +23,167 @@ enum DioPal {
 
 enum DioMode { case home, focus, recede }
 
+// THE SYNC STATUS — the framework, FELT on the desk. Driven by the `DeskSyncDriver` outcome
+// + whether a Mac is paired. Premium + ambient, in the DioPal language: a quiet pill that
+// breathes while syncing, settles to a calm "synced · 2m ago", goes muted when there's no
+// peer, and flares honestly on error. NEVER a default spinner.
+enum DeskSyncState: Equatable {
+    case idle            // never run this session (paired, but no pass yet)
+    case unpaired        // no Mac paired → nothing to sync to
+    case syncing         // a pass is in flight
+    case synced          // last pass reached the hub and applied/pushed cleanly
+    case offline         // peer unreachable; the snapshot is queued for later
+    case error(String)   // a pass threw (kept honest)
+
+    var glyph: String {
+        switch self {
+        case .idle:     return "arrow.triangle.2.circlepath"
+        case .unpaired: return "wifi.slash"
+        case .syncing:  return "arrow.triangle.2.circlepath"
+        case .synced:   return "checkmark.circle.fill"
+        case .offline:  return "tray.and.arrow.up.fill"   // queued, will flush
+        case .error:    return "exclamationmark.triangle.fill"
+        }
+    }
+    var tint: Color {
+        switch self {
+        case .idle:     return DioPal.muted
+        case .unpaired: return DioPal.muted
+        case .syncing:  return DioPal.cobalt
+        case .synced:   return DioPal.mint
+        case .offline:  return DioPal.accent
+        case .error:    return Color(hex: 0xFF6B6B)
+        }
+    }
+    var spins: Bool { if case .syncing = self { return true } else { return false } }
+}
+
+// A relative "n ago" the status uses for its last-synced caption (calm + human).
+private func dioRelativeAgo(_ date: Date, now: Date = Date()) -> String {
+    let s = max(0, Int(now.timeIntervalSince(date)))
+    if s < 8 { return "just now" }
+    if s < 60 { return "\(s)s ago" }
+    let m = s / 60
+    if m < 60 { return "\(m)m ago" }
+    let h = m / 60
+    if h < 24 { return "\(h)h ago" }
+    return "\(h / 24)d ago"
+}
+
+// The desk's sync chip: a tap-to-sync pill that wears the live state. Ambient, breathing,
+// honest — and it carries the egress reality (bits port to your paired Mac on your LAN).
+struct DioSyncStatus: View {
+    let state: DeskSyncState
+    let lastSyncedAt: Date?
+    let peerLabel: String          // e.g. "192.168.1.13" — shown only when paired
+    let onSync: () -> Void
+    @State private var pressed = false
+
+    private var caption: String {
+        switch state {
+        case .idle:     return "Tap to sync"
+        case .unpaired: return "No Mac paired"
+        case .syncing:  return "Syncing…"
+        case .synced:   return lastSyncedAt.map { "Synced · \(dioRelativeAgo($0))" } ?? "Synced"
+        case .offline:  return "Offline · queued"
+        case .error(let m): return m.isEmpty ? "Sync failed" : m
+        }
+    }
+    private var title: String {
+        switch state {
+        case .unpaired: return "Sync"
+        case .syncing:  return "Sync"
+        case .synced:   return "Synced"
+        case .offline:  return "Queued"
+        case .error:    return "Sync error"
+        case .idle:     return "Sync"
+        }
+    }
+    var body: some View {
+        let tint = state.tint
+        Button(action: onSync) {
+            TimelineView(.animation(paused: !state.spins)) { tl in
+                let t = tl.date.timeIntervalSinceReferenceDate
+                let breathe = state.spins ? (0.55 + 0.45 * (0.5 + 0.5 * sin(t * 3.0))) : 1.0
+                HStack(spacing: 9) {
+                    ZStack {
+                        Circle().fill(tint.opacity(0.16))
+                            .overlay(Circle().strokeBorder(tint.opacity(state.spins ? 0.55 * breathe : 0.4), lineWidth: 1.2))
+                            .frame(width: 30, height: 30)
+                        if state.spins {
+                            Circle().trim(from: 0, to: 0.7)
+                                .stroke(tint, style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
+                                .frame(width: 30, height: 30)
+                                .rotationEffect(.degrees(t * 220))
+                        }
+                        Image(systemName: state.glyph)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(tint)
+                            .opacity(state.spins ? 0.9 : 1)
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(title).font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text(caption).font(.system(size: 9.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+                    }
+                }
+                .padding(.leading, 8).padding(.trailing, 13).frame(height: 46)
+                .background(
+                    Capsule().fill(.white.opacity(0.07))
+                        .overlay(Capsule().strokeBorder(tint.opacity(state.spins ? 0.45 * breathe : 0.22), lineWidth: 1))
+                        .shadow(color: tint.opacity(state == .synced || state.spins ? 0.28 : 0), radius: 9, y: 3)
+                )
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(state.spins || state == .unpaired)
+        .scaleEffect(pressed ? 0.96 : 1)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pressed)
+        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: state)
+        .simultaneousGesture(DragGesture(minimumDistance: 0)
+            .onChanged { _ in if !pressed { pressed = true } }
+            .onEnded { _ in pressed = false })
+    }
+}
+
+// per-primitive sync cue — what's canonical (synced to your Mac) vs local-only / pending.
+enum PrimSyncCue: Equatable {
+    case synced          // confirmed canonical on the hub (this session) — calm mint dot
+    case pending         // edited locally, not yet pushed/confirmed — amber ring
+    case localOnly       // never syncs by design (games) — quiet, honest
+    case none            // no peer / not applicable → show nothing
+}
+
+// A tiny, hushed corner mark on a card carrying its sync cue. A filled mint check = canonical
+// on your Mac; a hollow amber ring = pending; a quiet slashed cloud = local-only (games).
+struct SyncCueBadge: View {
+    struct Spec { let glyph: String; let tint: Color; let filled: Bool; let breathes: Bool }
+    let spec: Spec
+    static func spec(_ cue: PrimSyncCue) -> Spec? {
+        switch cue {
+        case .synced:    return Spec(glyph: "checkmark", tint: DioPal.mint, filled: true, breathes: false)
+        case .pending:   return Spec(glyph: "arrow.up", tint: DioPal.accent, filled: false, breathes: true)
+        case .localOnly: return Spec(glyph: "iphone", tint: DioPal.muted, filled: false, breathes: false)
+        case .none:      return nil
+        }
+    }
+    var body: some View {
+        TimelineView(.animation(paused: !spec.breathes)) { tl in
+            let t = tl.date.timeIntervalSinceReferenceDate
+            let pulse = spec.breathes ? (0.55 + 0.45 * (0.5 + 0.5 * sin(t * 2.4))) : 1.0
+            ZStack {
+                Circle().fill(spec.filled ? spec.tint : Color(hex: 0x12101A).opacity(0.92))
+                    .overlay(Circle().strokeBorder(spec.tint.opacity(spec.filled ? 0 : 0.85 * pulse), lineWidth: 1.4))
+                    .frame(width: 17, height: 17)
+                    .shadow(color: spec.filled ? spec.tint.opacity(0.45) : .black.opacity(0.4), radius: spec.filled ? 4 : 2)
+                Image(systemName: spec.glyph)
+                    .font(.system(size: 8.5, weight: .black))
+                    .foregroundStyle(spec.filled ? .white : spec.tint.opacity(0.95))
+            }
+            .opacity(spec.breathes ? pulse : 1)
+        }
+    }
+}
+
 // THE FIRST BOOT — an empty desk is not a void; it is a desk that teaches itself. A calm guided
 // spine orients you to the spatial model (objects · the AI core · zones) and points to the one
 // action that begins everything: record. Felt in motion — a breathing core, a staggered spine.
@@ -164,6 +325,7 @@ struct DioHero: View {
     var hot: Bool = false                          // a compatible primitive is hovering over me → I'm a route target
     var picked: Bool = false                       // selected by the lasso (part of an Ask bundle)
     var arrived: Bool = false                      // just woven off a recording → glaringly highlighted for a beat
+    var syncCue: PrimSyncCue = .none               // canonical (synced) vs local-only/pending — read on the card
     var onSummon: () -> Void = {}                   // long-press → radial summon (route/send)
     let onTap: () -> Void; let onDrop: (CGSize) -> Void; let onDragChange: (CGPoint?) -> Void
     @State private var drag: CGSize = .zero
@@ -194,6 +356,12 @@ struct DioHero: View {
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(Capsule().fill(DioPal.accent).shadow(color: DioPal.accent.opacity(0.7), radius: 6))
                         .offset(y: -s * 0.62).transition(.scale.combined(with: .opacity))
+                }
+                // the SUBTLE per-primitive sync cue: a corner mark for what's canonical (synced to
+                // your Mac) vs local-only / pending. Hushed by design — and yields to the NEW halo.
+                if !arrived && mode != .recede, let badge = SyncCueBadge.spec(syncCue) {
+                    SyncCueBadge(spec: badge).offset(x: s * 0.40, y: -s * 0.40)
+                        .transition(.scale.combined(with: .opacity))
                 }
             }
             Text(prim.title).font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85))
@@ -2160,6 +2328,15 @@ struct DioStage: View {
     @State private var syncTombstones: [String: Date] = [:]
     @State private var syncing = false
     @State private var lastSyncSummary: String? = nil
+    // the FELT sync status (drives DioSyncStatus): the last pass outcome + when it landed,
+    // so the desk shows syncing / synced·"2m ago" / offline / error — never a bare spinner.
+    @State private var syncState: DeskSyncState = .idle
+    @State private var lastSyncedAt: Date? = nil
+    // bare ids confirmed canonical on the hub this session (pushed or applied on a reached pass)
+    // → the per-primitive cue can honestly show "synced" vs "pending". Cleared by a fresh edit.
+    @State private var syncConfirmed: Set<String> = []
+    // ids the LAST pull brought in fresh (a note authored on the web, etc.) → they arrive on
+    // the desk with the NEW-arrival treatment (reuses `arrivedIds`), so cross-surface sync is seen.
     @State private var editingChain: ChainRecord? = nil   // chain builder open
     @State private var editingZone: ZoneRec? = nil        // the zone style editor is open
     @State private var runChainSheet: ChainRecord? = nil  // the run/manage sheet
@@ -2224,6 +2401,30 @@ struct DioStage: View {
         let h = peerHost.trimmingCharacters(in: .whitespaces)
         guard !h.isEmpty, let p = Int(peerPort.trimmingCharacters(in: .whitespaces)), p > 0 else { return nil }
         return DeskHostLink(host: h, port: p)
+    }
+    /// The status the chip shows — reconciles the raw last-pass `syncState` against the live
+    /// truth (no peer paired ⇒ unpaired; a pass in flight ⇒ syncing) so the pill never lies.
+    private var liveSyncState: DeskSyncState {
+        if hostLink == nil { return .unpaired }
+        if syncing { return .syncing }
+        return syncState
+    }
+    /// The per-primitive sync cue: canonical (synced this session) vs pending (edited, not yet
+    /// confirmed) vs local-only (games, by design). Honest — never claims "synced" without a peer.
+    private func syncCue(for prim: any DeskPrimitive) -> PrimSyncCue {
+        // games never sync; show the honest local-only mark wherever they sit
+        if prim.kind == .game { return .localOnly }
+        guard hostLink != nil else { return .none }
+        // only the durable, syncable classes carry a canonical/pending cue
+        let syncable: Set<PrimitiveKind> = [.note, .agent, .kb, .artifact, .chain, .workflow]
+        guard syncable.contains(prim.kind) else { return .none }
+        // the bare record id (the side maps are keyed bare; the primitive id is "kind:bare")
+        let bare = prim.id.contains(":") ? String(prim.id.split(separator: ":", maxSplits: 1)[1]) : prim.id
+        // confirmed canonical on the hub this session?
+        if syncConfirmed.contains(bare) { return .synced }
+        // edited/created locally with a stamped instant but not yet confirmed pushed
+        if syncModified[bare] != nil { return .pending }
+        return .pending
     }
     private func membersOf(_ zpath: String) -> [any DeskPrimitive] {
         var out: [any DeskPrimitive] = []
@@ -2389,20 +2590,15 @@ struct DioStage: View {
                     }.buttonStyle(.plain)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(.top, h * 0.045).padding(.leading, 18).zIndex(70)
                 }
-                // a desk-native SYNC entry — port your primitives to/from the paired Mac (hub).
-                // Only shown when a Mac is paired; spins while a pass runs.
+                // THE SYNC STATUS — port your primitives to/from the paired Mac (hub), FELT.
+                // A premium ambient pill that wears the live state (syncing / synced·"2m ago" /
+                // offline·queued / error) instead of a bare spinner. Only when a Mac is paired.
                 if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty && hostLink != nil {
-                    Button { haptic(.light); syncDesk(reason: "manual") } label: {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(syncing ? DioPal.accent : DioPal.text.opacity(0.85))
-                            .rotationEffect(.degrees(syncing ? 360 : 0))
-                            .animation(syncing ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: syncing)
-                            .frame(width: 42, height: 42)
-                            .background(Circle().fill(.white.opacity(0.08)).overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1)))
-                    }.buttonStyle(.plain).disabled(syncing)
+                    DioSyncStatus(state: liveSyncState, lastSyncedAt: lastSyncedAt,
+                                  peerLabel: peerHost, onSync: { haptic(.light); syncDesk(reason: "manual") })
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                         .padding(.top, h * 0.045).padding(.leading, 18 + 50).zIndex(70)
+                        .transition(.scale.combined(with: .opacity))
                 }
                 // THE RAIL — Agents · Chains · Play (games live here as a third column, no separate launcher)
                 if landed && selected == nil && summonSource == nil && !capturing && openAgent == nil
@@ -2680,6 +2876,37 @@ struct DioStage: View {
                     outputs = [OutputRecord(id: "delivNew", title: "Summary", body: "Shipping the desk to the web is the Q3 bet; Karol owns mesh sync and the approval contract; air-gapped proof due Friday.", source: "Q3 kickoff", lens: "Summary", path: "")]
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds = ["m:demoNew", "out:delivNew"]; flash = 0.5 }; withAnimation(.easeOut(duration: 0.9)) { flash = 0 } }
                 }
+                // THE SYNC STATUS demo — show the desk wearing each sync state + a pull-arrival.
+                // `synced` (calm, with a "just now") · `syncing` (breathing) · `offline` (queued) ·
+                // `error` · `pull` (a note authored on the web lands with the NEW-arrival halo).
+                if let sv = ProcessInfo.processInfo.environment["HS_DESK_SYNC"] {
+                    peerHost = peerHost.isEmpty ? "192.168.1.13" : peerHost
+                    notes = [NoteRecord(id: "nSynced", title: "Approval contract owner", body: "Karol owns the mesh-sync approval contract + egress badge copy.", path: ""),
+                             NoteRecord(id: "nPending", title: "Air-gapped proof script", body: "Record the LinkedIn proof offline before Friday's demo.", path: "")]
+                    agents = [AgentRecord(id: "agSynced", name: "Scout", avatar: "p1", role: "digs for the facts", systemPrompt: "You are a researcher.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: "")]
+                    kbs = [KBRecord(id: "kSynced", name: "Architecture", path: "", items: 7)]
+                    placedGames = [GameRecord(gameId: "merge", path: "")]   // local-only cue
+                    syncModified = ["nPending": Date()]                     // pending: edited, not pushed
+                    syncConfirmed = ["nSynced", "agSynced", "kSynced"]      // canonical on the hub
+                    lastSyncedAt = Date().addingTimeInterval(-135)          // "2m ago"
+                    switch sv {
+                    case "syncing": syncing = true
+                    case "offline": syncState = .offline
+                    case "error":   syncState = .error("Couldn’t reach your Mac")
+                    case "pull":
+                        // a remote-authored note arrives on the next pull → NEW-arrival treatment
+                        syncState = .synced
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                            let remote = NoteRecord(id: "nFromWeb", title: "Authored on the web", body: "This note was written on another surface and synced into your desk.", path: "")
+                            withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+                                notes.append(remote); syncConfirmed.insert("nFromWeb")
+                                arrivedIds.insert("note:nFromWeb"); flash = 0.45
+                            }
+                            withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
+                        }
+                    default: syncState = .synced
+                    }
+                }
                 if let pv = ProcessInfo.processInfo.environment["HS_DESK_PARITY"] {
                     notes = [NoteRecord(id: "n1", title: "Follow up with Karol", body: "Confirm the mesh-sync approval contract owner and the air-gapped proof date before Friday's demo.", path: "")]
                     kbs = [KBRecord(id: "k1", name: "Architecture", path: "", items: 7),
@@ -2842,6 +3069,7 @@ struct DioStage: View {
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, p in
                 DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, looseHome(i, ms.count, w, h), w, h),
                         hot: dragHotObjectId == p.id, picked: selectedSet.contains(p.id), arrived: arrivedIds.contains(p.id),
+                        syncCue: syncCue(for: p),
                         onSummon: { summonAt = pos(p.id, looseHome(i, ms.count, w, h), w, h); haptic(.medium)
                                     withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { summonSource = p.id } },
                         onTap: { if let c = p as? AgentSessionPrimitive { haptic(.medium); withAnimation { openCoderSession = c.session } } else { select(selected == p.id ? nil : p.id) } },
@@ -3511,11 +3739,13 @@ struct DioStage: View {
     /// Stamp a primitive id as modified-now (the iPad's `updatedAt` → meta.last_modified).
     private func stampSync(_ id: String) {
         syncModified[id] = Date()
+        syncConfirmed.remove(id)        // a fresh local edit is pending again until the next pass confirms it
         persistSyncMaps()
     }
     /// Record a tombstone (a propagated delete) keyed "kind:id"; clears the live instant.
     private func tombstone(_ id: String, kind: SyncKind) {
         syncModified[id] = nil
+        syncConfirmed.remove(id)
         syncTombstones["\(kind.rawValue):\(id)"] = Date()
         persistSyncMaps()
     }
@@ -3541,17 +3771,52 @@ struct DioStage: View {
               let driver = DeskSyncDriver.make(host: link.host, port: link.port) else { return }
         syncing = true
         let snapshot = currentDeskRecords()
+        // the desk's primitive ids BEFORE the pull → anything new afterward arrived from a peer
+        let before = deskPrimitiveIds(snapshot)
         Task { @MainActor in
             let (merged, outcome) = await driver.syncNow(snapshot)
             if outcome.applied > 0 || merged != snapshot { applyDeskRecords(merged) }
             syncing = false
+
             if outcome.reachedPeer {
+                lastSyncedAt = Date()
+                syncState = .synced
+                // everything we just pushed/round-tripped is now canonical on the hub → mark it
+                // confirmed so the per-primitive cue can honestly read "synced".
+                syncConfirmed.formUnion(deskPrimitiveIds(merged))
                 lastSyncSummary = "Synced · \(outcome.pushed) sent · \(outcome.applied) in"
+                // PULL-APPLIED FEEDBACK: a remote primitive (a note authored on the web, an agent
+                // from the desktop) lands on the desk with the NEW-arrival treatment — cross-surface
+                // sync is visible + delightful, reusing the same `arrivedIds` halo as a fresh weave.
+                let after = deskPrimitiveIds(merged)
+                let fresh = after.subtracting(before)
+                if !fresh.isEmpty {
+                    haptic(.medium)
+                    withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds.formUnion(fresh); flash = 0.45 }
+                    withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 6) { withAnimation { arrivedIds.subtract(fresh) } }
+                }
             } else if outcome.pendingAfter > 0 {
+                syncState = .offline
                 lastSyncSummary = "Offline · queued for your Mac"
+            } else {
+                syncState = .error("Couldn’t reach your Mac")
+                lastSyncSummary = nil
             }
             if let s = lastSyncSummary { toast(s) }
         }
+    }
+    /// The set of card-level primitive ids (the `kind:bare` desk ids) present in a record set —
+    /// used to diff before/after a pull so freshly-pulled primitives get the arrival treatment.
+    private func deskPrimitiveIds(_ r: DeskRecords) -> Set<String> {
+        var ids = Set<String>()
+        ids.formUnion(r.notes.map { "note:\($0.id)" })
+        ids.formUnion(r.agents.map { "agent:\($0.id)" })
+        ids.formUnion(r.kbs.map { "kb:\($0.id)" })
+        ids.formUnion(r.outputs.map { "out:\($0.id)" })
+        ids.formUnion(r.chains.map { "chain:\($0.id)" })
+        ids.formUnion(r.workflows.map { "wf:\($0.id)" })
+        return ids
     }
 
     // harvest a reply onto the desk as a routable output card.

@@ -41,6 +41,7 @@ Priority (owner): **web is king, iPad is king×2, the desktop hub is the happy b
 | **Meeting** | `meeting` | content | exists — `meetings` / `Contracts.Meeting` |
 | **Artifact** | `artifact` | content | `id, meeting_id?, artifact_type, title, body_markdown, structured_json?, status, sources[], egress?, created_at, updated_at, last_modified, deleted` — **the iPad `OutputRecord` IS this** |
 | **Note** | `note` | content | `id, title, body_markdown, tags[], created_at, updated_at, last_modified, deleted` |
+| **Directory** | `directory` | organization (identity+membership) · layout (geometry) | `id, name, parent_id?, created_at, last_modified, deleted` — **the iPad "zone" is this** (its name/nesting/membership sync; its geometry does NOT) |
 | **KB** | `kb` | organization | `id, name, member_ids[], created_at, last_modified, deleted` |
 | **Agent (persona)** | `agent` | capability | `id, name, avatar, role, system_prompt, user_template, tools[], kb_id?, created_at, last_modified, deleted` |
 | **Chain (crew)** | `chain` | capability | `id, name, steps[] (agent_ids), last_modified, deleted` |
@@ -59,6 +60,18 @@ Priority (owner): **web is king, iPad is king×2, the desktop hub is the happy b
 - They are different concepts. The desktop's existing `AgentSession` (agent_context) backs **Coder**, not
   **Agent**.
 
+### Zones ARE Directories (the iPad's spatial skin of a shared primitive)
+- A desk **zone** = a **Directory** rendered spatially. Split it cleanly:
+  - **Syncs (organization):** the directory's `id, name, parent_id` (nesting) and its **membership** — which
+    primitives are filed in it. A directory + its contents are the same on every surface.
+  - **Per-device (layout, never canonical):** the zone's geometry + paint — `cx, cy, w, h, color,
+    border, fill, glow` (the zone studio's styling). Your iPad arrangement is yours; web/desktop arrange
+    their own directory view.
+- The desktop already has this (the classic home's directories + the shared `filed` membership map); the
+  port unifies it under the `directory` kind. Nested zones (dive-into) = `parent_id` chains.
+- The iPad `ZoneRec` keeps its geometry/paint locally; only `{id (path), name, parent_id}` + membership
+  ride the wire.
+
 ### KB vs project-KB vs `.hs` context — do NOT conflate
 - **KB (`kb`)** here = the desk's knowledge *container* (named, holds member primitives).
 - The desktop's existing **project-KB** (`project.yaml` `kb:` map) and **`.hs/` context files** are a
@@ -75,7 +88,8 @@ Legend update: ✅ = wave-1 landed (built/verified on that surface).
 | Meeting | ● | ● | ◐ (cockpit) |
 | Artifact | ● | ✅ (`OutputRecord.toContract()→Artifact`) | ◐ |
 | Note | ✅ (DB+repo+CRUD+sync) | ✅ (contract + `synced()`) | ✅ (render+author) |
-| KB | ✅ (DB+repo+sync; **no CRUD route yet**) | ✅ (contract + `synced()`) | ◐ (render, local-mock author) |
+| **Directory** (iPad "zone") | ◐ (classic dirs + `filed` map)→(wave 4 `directory` kind) | ◐ (`ZoneRec`, local)→(wave 4 identity+membership sync) | ○→(wave 4) |
+| KB | ✅ (DB+repo+sync; CRUD now landing) | ✅ (contract + `synced()`) | ◐→live (wave 3) |
 | Agent (persona) | ✅ (DB+repo+CRUD+sync+`/run`) | ✅ (contract + `synced()`) | ✅ (render+author) |
 | Chain | ✅ (DB+repo+sync; **no CRUD route yet**) | ✅ (contract + `synced()`) | ◐ |
 | Workflow | ✅ (DB+repo+sync; **no CRUD route yet**) | ✅ (`WorkflowDefinition` + `synced()`) | ◐ |
@@ -102,6 +116,16 @@ the bridges + routes exist; no code moves a `ChangeSet` between surfaces.** That
 `/api/sync/pull|push` so a Note/Agent authored on one surface appears on the other via the hub; (b) the
 remaining hub CRUD routes (KB/Chain/Workflow) + web going live off them; (c) the field/name reconciliation
 above. THE proof: a note made on the iPad shows up on the web.
+
+**Wave 3 (in flight):** the live integration proof (real hub round-trip + cabled-iPad runbook), web close
+tabs + polish to "wonderful" (KB/Chain/Workflow author, Agent Run, sync/connection status), iPad sync UX
+(status indicator, per-primitive synced cue, pull-arrival delight) + the `WorkflowDefinition` naming.
+
+**Wave 4 (queued — fires after wave 3 frees the surface dirs):** **Directory (= the iPad zone).** Promote
+the zone's identity + nesting (`parent_id`) + membership to the canonical `directory` kind that syncs
+desktop↔iPad↔web (hub DB+repo+CRUD+sync; iPad `ZoneRec` → split identity/membership onto the wire, keep
+geometry/paint local; web renders directories + filing). Reconcile with the desktop classic-home dirs +
+`filed` membership map. Geometry/paint stays per-device layout, never canonical.
 
 **Wave 3:** the coder event-stream transport + persisted replay (Phase 17 17-01/02); membership sync;
 the full capability layer (declare-once primitives); web layout/desk polish to iPad parity.

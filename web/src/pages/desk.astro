@@ -1,41 +1,42 @@
 ---
 // The Web Desk — DeskOS on the unified Primitive Framework.
 //
-// "Web is king": this is a first-class AUTHORING port, not a viewer. Every
-// primitive is type-legible (meeting / artifact / note / KB / agent / chain /
-// workflow / coder), grouped by sync class, and reads from the desktop hub
-// where the route exists. You can author a Note and an Agent here and they
-// POST to the hub (with a clearly-flagged local fallback where the route is
-// not built yet). The Coder lane is a live presence stream off
-// /api/companion/status with an Answer affordance.
+// "Web is king": a first-class AUTHORING port, not a viewer. Every primitive
+// is type-legible (meeting / artifact / note / KB / agent / chain / workflow /
+// coder), grouped by sync class, reading live from the desktop hub. You can
+// AUTHOR notes, agents, KBs, chains and workflows here (POST to the hub), and
+// RUN an agent persona against a prompt. The Coder lane is a live presence feed
+// off /api/companion/status.
 //
-// The descriptor table (DESK_META) is the single visual-language source —
-// mirrors web/src/lib/primitives.ts so web / iPad / desktop agree. The
-// renderer is fully data-driven from it.
+// The descriptor table (META) is the single visual-language source — mirrors
+// web/src/lib/primitives.ts (icon + tone per kind) so web / iPad / desktop
+// agree. The renderer is fully data-driven from it.
 
 import AppLayout from "../layouts/AppLayout.astro";
 
 // Server-rendered descriptor table (type-legible language). Icon = 24×24
-// stroke path. Mirrors lib/primitives.ts PRIMITIVES + DESK_GROUPS.
+// stroke path. `tone` keys the per-kind colour identity. Mirrors
+// lib/primitives.ts PRIMITIVES + DESK_GROUPS.
+//   author: this kind can be authored on the web (drawer + POST route).
 const META = {
-  meeting: { label: "Meeting", plural: "Meetings", sync: "content", tone: "info", icon: "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-5 4z" },
-  artifact: { label: "Artifact", plural: "Artifacts", sync: "content", tone: "accent", icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6" },
-  note: { label: "Note", plural: "Notes", sync: "content", tone: "ok", icon: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z" },
-  agent: { label: "Agent", plural: "Agents", sync: "capability", tone: "accent", icon: "M12 8V4H8M4 8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zM9 13h.01M15 13h.01M9 17h6" },
-  chain: { label: "Chain", plural: "Chains", sync: "capability", tone: "info", icon: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" },
-  workflow: { label: "Workflow", plural: "Workflows", sync: "capability", tone: "info", icon: "M6 3v12M18 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a9 9 0 0 0 9 9" },
-  kb: { label: "Knowledge base", plural: "Knowledge bases", sync: "organization", tone: "warn", icon: "M2 7l10-4 10 4-10 4zM2 7v10l10 4 10-4V7M2 12l10 4 10-4" },
-  coder: { label: "Coder", plural: "Coder sessions", sync: "presence", tone: "accent", icon: "M16 18l6-6-6-6M8 6l-6 6 6 6" },
+  meeting:  { label: "Meeting",        plural: "Meetings",        sync: "content",      tone: "info",     author: false, icon: "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-5 4z" },
+  artifact: { label: "Artifact",       plural: "Artifacts",       sync: "content",      tone: "accent",   author: false, icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6" },
+  note:     { label: "Note",           plural: "Notes",           sync: "content",      tone: "ok",       author: true,  icon: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z" },
+  agent:    { label: "Agent",          plural: "Agents",          sync: "capability",   tone: "accent",   author: true,  icon: "M12 8V4H8M4 8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zM9 13h.01M15 13h.01M9 17h6" },
+  chain:    { label: "Chain",          plural: "Chains",          sync: "capability",   tone: "violet",   author: true,  icon: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" },
+  workflow: { label: "Workflow",       plural: "Workflows",       sync: "capability",   tone: "info",     author: true,  icon: "M6 3v12M18 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a9 9 0 0 0 9 9" },
+  kb:       { label: "Knowledge base", plural: "Knowledge bases", sync: "organization", tone: "warn",     author: true,  icon: "M2 7l10-4 10 4-10 4zM2 7v10l10 4 10-4V7M2 12l10 4 10-4" },
+  coder:    { label: "Coder",          plural: "Coder sessions",  sync: "presence",     tone: "accent",   author: false, icon: "M16 18l6-6-6-6M8 6l-6 6 6 6" },
 };
 
 const GROUPS = [
-  { label: "Content", blurb: "Bodies of record — synced through the hub.", kinds: ["meeting", "artifact", "note"] },
-  { label: "Capabilities", blurb: "Things that can run.", kinds: ["agent", "chain", "workflow"] },
-  { label: "Organization", blurb: "Groupings that ground your agents.", kinds: ["kb"] },
+  { label: "Content",      blurb: "Bodies of record — meetings, artifacts, notes.", kinds: ["meeting", "artifact", "note"] },
+  { label: "Capabilities", blurb: "Personas, crews and workflows that can run.",     kinds: ["agent", "chain", "workflow"] },
+  { label: "Organization", blurb: "Groupings that ground your agents.",              kinds: ["kb"] },
 ];
 ---
 
-<AppLayout title="HoldSpeak Desk" description="DeskOS on the unified Primitive Framework — author meetings, artifacts, notes, agents, chains and more on the web." current="desk">
+<AppLayout title="HoldSpeak Desk" description="DeskOS on the unified Primitive Framework — author meetings, artifacts, notes, agents, chains, workflows and KBs on the web." current="desk">
   <div class="desk" x-data="DeskApp()" x-init="init()" x-cloak>
     <header class="desk-head">
       <div class="desk-head-text">
@@ -43,8 +44,8 @@ const GROUPS = [
         <h1>The Desk</h1>
         <p class="lead">
           Every primitive, first-class on the web — authored here, living on
-          your desktop hub. Notes and agents read and write live; meetings,
-          artifacts, KBs, chains and workflows read live from the hub.
+          your desktop hub. Write notes, build agents, KBs, chains and
+          workflows, then run a persona on demand.
         </p>
       </div>
       <div class="desk-head-actions">
@@ -60,27 +61,36 @@ const GROUPS = [
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
           New agent
         </button>
-        <button type="button" class="btn ghost" @click="refresh()" :disabled="loading">
-          <span x-text="loading ? 'Refreshing…' : 'Refresh'">Refresh</span>
+        <button type="button" class="btn ghost icon-btn" @click="refresh()" :disabled="loading" :aria-busy="loading" aria-label="Refresh from hub" title="Refresh from hub">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="loading ? 'spin' : ''"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v5h-5" /></svg>
         </button>
       </div>
     </header>
 
-    <div class="desk-meta-row">
-      <span class="meta-pill" x-text="`Synced ${updatedLabel()}`">not loaded</span>
-      <span class="meta-pill error" x-show="error" x-cloak x-text="error"></span>
+    {/* ── hub connection + sync indicator ── */}
+    <div class="hub-bar" aria-live="polite">
+      <span class="hub-status" :class="hubState()">
+        <span class="hub-dot"></span>
+        <span x-text="hubLabel()">Connecting…</span>
+      </span>
+      <span class="hub-synced">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v5h-5" /></svg>
+        <span x-text="`Synced ${updatedLabel()}`">not synced</span>
+      </span>
+      <span class="hub-error" x-show="error" x-cloak x-text="error"></span>
     </div>
 
     {/* ── primitive sections, grouped by sync class ── */}
     {GROUPS.map((group) => (
       <section class="group" aria-label={group.label}>
         <div class="group-head">
-          <div>
+          <div class="group-head-text">
             <h2>{group.label}</h2>
             <p>{group.blurb}</p>
           </div>
         </div>
 
+        <div class="group-lanes">
         {group.kinds.map((kind) => {
           const m = META[kind];
           return (
@@ -91,12 +101,14 @@ const GROUPS = [
                 </span>
                 <span class="kind-title">{m.plural}</span>
                 <span class="kind-count" x-text={`count('${kind}')`}>0</span>
-                <span class="kind-sync">{m.sync}</span>
-                {/* honest per-lane status: live (no badge) · read-only · hub unreachable */}
-                <span class="kind-flag readonly" x-show={`isReadonly('${kind}')`} x-cloak title="Lives on the hub — no web create route yet">read-only</span>
-                <span class="kind-flag down" x-show={`isUnreachable('${kind}')`} x-cloak title="Could not reach the desktop hub">hub unreachable</span>
-                {(kind === "note" || kind === "agent") && (
-                  <button type="button" class="kind-add" @click={`openCreate('${kind}')`} aria-label={`New ${m.label}`}>
+                <span class="kind-sync" title={`sync class: ${m.sync}`}>{m.sync}</span>
+                {/* honest per-lane status: live (no badge) · read-only (content-derived) · hub unreachable */}
+                {!m.author && (
+                  <span class="kind-flag readonly" title="Synthesized on the hub — read-only on the web">read-only</span>
+                )}
+                <span class="kind-flag down" x-show={`isUnreachable('${kind}')`} x-cloak title="Could not reach the desktop hub">unreachable</span>
+                {m.author && (
+                  <button type="button" class="kind-add" @click={`openCreate('${kind}')`} aria-label={`New ${m.label}`} title={`New ${m.label}`}>
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
                   </button>
                 )}
@@ -107,7 +119,7 @@ const GROUPS = [
                 {kind === "meeting" && (
                   <template x-for={`item in items.meeting`} {...{ ":key": "item.id" }}>
                     <article class="card card--info">
-                      <div class="card-type"><span class="dot"></span><span x-text="'meeting'"></span></div>
+                      <div class="card-type"><span class="dot"></span><span>meeting</span></div>
                       <h3 class="card-title" x-text="item.title">Meeting</h3>
                       <p class="card-sub"><span x-text="relTime(item.startedAt)"></span><span x-show="item.segmentCount" x-cloak> · <span x-text="item.segmentCount"></span> segs</span><span x-show="item.actionItemCount" x-cloak> · <span x-text="item.actionItemCount"></span> actions</span></p>
                       <div class="card-foot">
@@ -148,13 +160,13 @@ const GROUPS = [
                   </template>
                 )}
 
-                {/* agent card */}
+                {/* agent card — with a live Run affordance */}
                 {kind === "agent" && (
                   <template x-for={`item in items.agent`} {...{ ":key": "item.id" }}>
                     <article class="card card--accent agent-card">
                       <div class="agent-top">
                         <span class="agent-avatar" x-text="item.avatar">🤖</span>
-                        <div>
+                        <div class="agent-id">
                           <div class="card-type"><span class="dot"></span><span>agent</span></div>
                           <h3 class="card-title" x-text="item.name">Agent</h3>
                         </div>
@@ -162,7 +174,13 @@ const GROUPS = [
                       <p class="card-body" x-text="item.role"></p>
                       <div class="card-foot">
                         <template x-for="t in item.tools" {...{ ":key": "t" }}><span class="tag mono" x-text="t"></span></template>
-                        <span class="tag" x-show="item.kbId" x-cloak x-text="`kb: ${item.kbId}`"></span>
+                        <span class="tag warn-tag" x-show="item.kbId" x-cloak x-text="`kb · ${item.kbId}`"></span>
+                      </div>
+                      <div class="card-actions">
+                        <button type="button" class="btn primary sm run-btn" @click="openRun(item)">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9z" /></svg>
+                          Run
+                        </button>
                       </div>
                     </article>
                   </template>
@@ -171,15 +189,15 @@ const GROUPS = [
                 {/* chain card */}
                 {kind === "chain" && (
                   <template x-for={`item in items.chain`} {...{ ":key": "item.id" }}>
-                    <article class="card card--info">
+                    <article class="card card--violet">
                       <div class="card-type"><span class="dot"></span><span>chain</span></div>
                       <h3 class="card-title" x-text="item.name">Chain</h3>
                       <p class="card-sub"><span x-text="item.steps.length"></span> step<span x-show="item.steps.length !== 1">s</span></p>
-                      <div class="card-foot chain-steps">
+                      <ol class="chain-flow" x-show="item.steps.length" x-cloak>
                         <template x-for="(s, i) in item.steps" {...{ ":key": "i" }}>
-                          <span class="tag mono" x-text="s"></span>
+                          <li class="chain-node"><span class="chain-num" x-text="i + 1"></span><span class="chain-name" x-text="agentName(s)"></span></li>
                         </template>
-                      </div>
+                      </ol>
                     </article>
                   </template>
                 )}
@@ -190,7 +208,11 @@ const GROUPS = [
                     <article class="card card--info">
                       <div class="card-type"><span class="dot"></span><span>workflow</span></div>
                       <h3 class="card-title" x-text="item.name">Workflow</h3>
-                      <p class="card-body" x-text="item.prompt || (item.graphJson ? 'graph workflow' : '')"></p>
+                      <p class="card-body" x-show="item.prompt" x-cloak x-text="item.prompt"></p>
+                      <div class="card-foot">
+                        <span class="tag mono" x-show="item.hasGraph" x-cloak>graph</span>
+                        <span class="tag" x-show="!item.hasGraph && item.prompt" x-cloak>prompt</span>
+                      </div>
                     </article>
                   </template>
                 )}
@@ -202,33 +224,49 @@ const GROUPS = [
                       <div class="card-type"><span class="dot"></span><span>kb</span></div>
                       <h3 class="card-title" x-text="item.name">Knowledge base</h3>
                       <p class="card-sub"><span x-text="item.memberIds.length"></span> member<span x-show="item.memberIds.length !== 1">s</span></p>
+                      <div class="card-foot" x-show="item.memberIds.length" x-cloak>
+                        <template x-for="(mid, i) in item.memberIds.slice(0, 6)" {...{ ":key": "i" }}><span class="tag mono" x-text="mid"></span></template>
+                      </div>
                     </article>
                   </template>
                 )}
 
-                {/* empty state — honest about reachability */}
+                {/* empty / unreachable state — honest about reachability */}
                 <div class="cards-empty" x-show={`count('${kind}') === 0`} x-cloak>
-                  <span x-show={`isUnreachable('${kind}')`} x-cloak>Could not reach the desktop hub for {m.plural.toLowerCase()}.</span>
-                  <span x-show={`!isUnreachable('${kind}')`} x-cloak>No {m.plural.toLowerCase()} yet.</span>
-                  {(kind === "note" || kind === "agent") && (
-                    <button type="button" class="card-link" x-show={`!isUnreachable('${kind}')`} x-cloak @click={`openCreate('${kind}')`}>Create the first {m.label.toLowerCase()}</button>
-                  )}
+                  <template x-if={`isUnreachable('${kind}')`}>
+                    <div class="empty-inner unreachable">
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" /></svg>
+                      <span>Could not reach the desktop hub for {m.plural.toLowerCase()}.</span>
+                    </div>
+                  </template>
+                  <template x-if={`!isUnreachable('${kind}')`}>
+                    <div class="empty-inner">
+                      <span>No {m.plural.toLowerCase()} yet.</span>
+                      {m.author && (
+                        <button type="button" class="card-link" @click={`openCreate('${kind}')`}>Create the first {m.label.toLowerCase()}</button>
+                      )}
+                    </div>
+                  </template>
                 </div>
               </div>
             </div>
           );
         })}
+        </div>
       </section>
     ))}
 
     {/* ── the Coder lane (live presence stream) ── */}
     <section class="group coder-lane" aria-label="Live coder sessions">
       <div class="group-head">
-        <div>
+        <div class="group-head-text">
           <h2>Live coders</h2>
           <p>Claude / Codex sessions from your hub — answer the coder by voice.</p>
         </div>
-        <span class="coder-status" :class="coderReady ? 'ready' : 'idle'" x-text="coderReady ? 'Ready to answer' : 'Idle'">Idle</span>
+        <span class="coder-status" :class="coderReady ? 'ready' : 'idle'">
+          <span class="coder-status-dot"></span>
+          <span x-text="coderReady ? 'Ready to answer' : 'Idle'">Idle</span>
+        </span>
       </div>
 
       <div class="coder-cards">
@@ -237,14 +275,21 @@ const GROUPS = [
             <div class="coder-card-head">
               <span class="coder-badge" :class="c.agent" x-text="c.agent === 'codex' ? 'Codex' : 'Claude'">Claude</span>
               <span class="coder-state" :class="coderTone(c)" x-text="c.state">running</span>
-              <span class="coder-pin" x-show="c.pinned" x-cloak>pinned</span>
+              <span class="coder-pin" x-show="c.pinned" x-cloak title="Pinned">📌</span>
             </div>
             <p class="coder-project" x-text="c.project || c.sessionId"></p>
-            <p class="coder-q" x-show="c.question" x-cloak x-text="c.question"></p>
-            <p class="coder-q muted" x-show="!c.question" x-cloak>Working — no question pending.</p>
+            <p class="coder-meta" x-show="c.model || c.tokensUsed" x-cloak>
+              <span x-show="c.model" x-cloak x-text="c.model"></span>
+              <span x-show="c.model && c.tokensUsed" x-cloak> · </span>
+              <span x-show="c.tokensUsed" x-cloak x-text="`${c.tokensUsed} tok`"></span>
+            </p>
+            <div class="coder-q-wrap" :class="{ asking: c.question }">
+              <p class="coder-q" x-show="c.question" x-cloak x-text="c.question"></p>
+              <p class="coder-q muted" x-show="!c.question" x-cloak>Working — no question pending.</p>
+            </div>
             <div class="coder-events" x-show="c.events && c.events.length" x-cloak>
               <template x-for="(e, i) in c.events.slice(-4)" {...{ ":key": "i" }}>
-                <span class="coder-event"><span class="ev-kind" x-text="e.kind"></span> <span x-text="(e.text || '').slice(0, 60)"></span></span>
+                <span class="coder-event"><span class="ev-kind" :class="e.kind" x-text="e.kind"></span> <span class="ev-text" x-text="(e.text || '').slice(0, 64)"></span></span>
               </template>
             </div>
             <div class="coder-actions">
@@ -256,39 +301,33 @@ const GROUPS = [
           </article>
         </template>
         <div class="cards-empty" x-show="items.coder.length === 0" x-cloak>
-          <span>No live coder sessions. Start Claude or Codex with the companion hooks installed.</span>
+          <div class="empty-inner">
+            <span>No live coder sessions. Start Claude or Codex with the companion hooks installed.</span>
+          </div>
         </div>
       </div>
     </section>
 
-    {/* ── create overlay (Note + Agent authoring) ── */}
-    <div class="create-overlay" x-show="creating" x-cloak @keydown.escape.window="closeCreate()">
-      <div class="create-backdrop" @click="closeCreate()"></div>
+    {/* ── create overlay (authoring drawers) ── */}
+    <div class="drawer-overlay" x-show="creating" x-cloak @keydown.escape.window="closeCreate()">
+      <div class="drawer-backdrop" @click="closeCreate()"></div>
 
       {/* Note form */}
-      <aside class="create-panel" x-show="creating === 'note'" role="dialog" aria-modal="true" aria-label="New note">
-        <header class="create-head">
+      <aside class="drawer" x-show="creating === 'note'" role="dialog" aria-modal="true" aria-label="New note">
+        <header class="drawer-head">
           <div>
-            <span class="create-eyebrow">Content · syncs to hub</span>
+            <span class="drawer-eyebrow ok">Content · syncs to hub</span>
             <h2>New note</h2>
           </div>
-          <button type="button" class="create-close" @click="closeCreate()" aria-label="Close">✕</button>
+          <button type="button" class="drawer-close" @click="closeCreate()" aria-label="Close">✕</button>
         </header>
-        <form class="create-body" @submit.prevent="submitNote()">
-          <label class="field">
-            <span>Title</span>
-            <input type="text" x-model="noteForm.title" placeholder="Standup decisions" />
-          </label>
-          <label class="field">
-            <span>Body (markdown)</span>
-            <textarea rows="7" x-model="noteForm.body" placeholder="- Decided to ship the Desk on web…"></textarea>
-          </label>
-          <label class="field">
-            <span>Tags (comma-separated)</span>
-            <input type="text" x-model="noteForm.tags" placeholder="desk, web" />
-          </label>
-          <p class="field-note">Saves live to <code>/api/notes</code> on your desktop hub.</p>
-          <div class="create-foot">
+        <form class="drawer-body" @submit.prevent="submitNote()">
+          <p class="drawer-err" x-show="error" x-cloak x-text="error"></p>
+          <label class="field"><span>Title</span><input type="text" x-model="noteForm.title" placeholder="Standup decisions" /></label>
+          <label class="field"><span>Body (markdown)</span><textarea rows="8" x-model="noteForm.body" placeholder="- Decided to ship the Desk on web…"></textarea></label>
+          <label class="field"><span>Tags (comma-separated)</span><input type="text" x-model="noteForm.tags" placeholder="desk, web" /></label>
+          <p class="field-note">Saves to <code>POST /api/notes</code> on your desktop hub.</p>
+          <div class="drawer-foot">
             <button type="button" class="btn ghost" @click="closeCreate()">Cancel</button>
             <button type="submit" class="btn primary" :disabled="busy"><span x-text="busy ? 'Saving…' : 'Create note'">Create note</span></button>
           </div>
@@ -296,53 +335,153 @@ const GROUPS = [
       </aside>
 
       {/* Agent form */}
-      <aside class="create-panel wide" x-show="creating === 'agent'" role="dialog" aria-modal="true" aria-label="New agent">
-        <header class="create-head">
+      <aside class="drawer wide" x-show="creating === 'agent'" role="dialog" aria-modal="true" aria-label="New agent">
+        <header class="drawer-head">
           <div>
-            <span class="create-eyebrow">Capability · syncs to hub</span>
+            <span class="drawer-eyebrow accent">Capability · syncs to hub</span>
             <h2>New agent</h2>
           </div>
-          <button type="button" class="create-close" @click="closeCreate()" aria-label="Close">✕</button>
+          <button type="button" class="drawer-close" @click="closeCreate()" aria-label="Close">✕</button>
         </header>
-        <form class="create-body" @submit.prevent="submitAgent()">
+        <form class="drawer-body" @submit.prevent="submitAgent()">
+          <p class="drawer-err" x-show="error" x-cloak x-text="error"></p>
           <div class="field-row">
-            <label class="field avatar-field">
-              <span>Avatar</span>
-              <input type="text" x-model="agentForm.avatar" maxlength="2" />
-            </label>
-            <label class="field grow">
-              <span>Name</span>
-              <input type="text" x-model="agentForm.name" placeholder="Standup Synthesizer" />
-            </label>
+            <label class="field avatar-field"><span>Avatar</span><input type="text" x-model="agentForm.avatar" maxlength="2" /></label>
+            <label class="field grow"><span>Name</span><input type="text" x-model="agentForm.name" placeholder="Standup Synthesizer" /></label>
           </div>
-          <label class="field">
-            <span>Role</span>
-            <input type="text" x-model="agentForm.role" placeholder="Turns a standup into decisions + actions." />
-          </label>
-          <label class="field">
-            <span>System prompt</span>
-            <textarea rows="4" x-model="agentForm.systemPrompt" placeholder="You are a precise meeting analyst…"></textarea>
-          </label>
-          <label class="field">
-            <span>User template</span>
-            <textarea rows="3" x-model="agentForm.userTemplate" placeholder="Summarize:\n{{transcript}}"></textarea>
-          </label>
+          <label class="field"><span>Role</span><input type="text" x-model="agentForm.role" placeholder="Turns a standup into decisions + actions." /></label>
+          <label class="field"><span>System prompt</span><textarea rows="4" x-model="agentForm.systemPrompt" placeholder="You are a precise meeting analyst…"></textarea></label>
+          <label class="field"><span>User template</span><textarea rows="3" x-model="agentForm.userTemplate" placeholder="Summarize:\n{{transcript}}"></textarea></label>
           <div class="field-row">
-            <label class="field grow">
-              <span>Tools (comma-separated)</span>
-              <input type="text" x-model="agentForm.tools" placeholder="summarize, extract_actions" />
-            </label>
-            <label class="field grow">
-              <span>KB id (optional)</span>
-              <input type="text" x-model="agentForm.kbId" placeholder="mock-kb-1" />
-            </label>
+            <label class="field grow"><span>Tools (comma-separated)</span><input type="text" x-model="agentForm.tools" placeholder="summarize, extract_actions" /></label>
+            <label class="field grow"><span>KB id (optional)</span><input type="text" x-model="agentForm.kbId" placeholder="kb-…" /></label>
           </div>
-          <p class="field-note">Saves live to <code>/api/agents</code> on your desktop hub. The persona is runnable via <code>{"/api/agents/{id}/run"}</code>.</p>
-          <div class="create-foot">
+          <p class="field-note">Saves to <code>POST /api/agents</code>. Runnable via <code>{"/api/agents/{id}/run"}</code>.</p>
+          <div class="drawer-foot">
             <button type="button" class="btn ghost" @click="closeCreate()">Cancel</button>
             <button type="submit" class="btn primary" :disabled="busy"><span x-text="busy ? 'Saving…' : 'Create agent'">Create agent</span></button>
           </div>
         </form>
+      </aside>
+
+      {/* KB form */}
+      <aside class="drawer" x-show="creating === 'kb'" role="dialog" aria-modal="true" aria-label="New knowledge base">
+        <header class="drawer-head">
+          <div>
+            <span class="drawer-eyebrow warn">Organization · syncs to hub</span>
+            <h2>New knowledge base</h2>
+          </div>
+          <button type="button" class="drawer-close" @click="closeCreate()" aria-label="Close">✕</button>
+        </header>
+        <form class="drawer-body" @submit.prevent="submitKb()">
+          <p class="drawer-err" x-show="error" x-cloak x-text="error"></p>
+          <label class="field"><span>Name</span><input type="text" x-model="kbForm.name" placeholder="Product context" /></label>
+          <label class="field"><span>Member ids (comma-separated, optional)</span><input type="text" x-model="kbForm.memberIds" placeholder="note-1, meeting-2" /></label>
+          <p class="field-note">A KB groups primitives to ground an agent. Saves to <code>POST /api/kbs</code>.</p>
+          <div class="drawer-foot">
+            <button type="button" class="btn ghost" @click="closeCreate()">Cancel</button>
+            <button type="submit" class="btn primary" :disabled="busy"><span x-text="busy ? 'Saving…' : 'Create KB'">Create KB</span></button>
+          </div>
+        </form>
+      </aside>
+
+      {/* Chain form */}
+      <aside class="drawer" x-show="creating === 'chain'" role="dialog" aria-modal="true" aria-label="New chain">
+        <header class="drawer-head">
+          <div>
+            <span class="drawer-eyebrow violet">Capability · syncs to hub</span>
+            <h2>New chain</h2>
+          </div>
+          <button type="button" class="drawer-close" @click="closeCreate()" aria-label="Close">✕</button>
+        </header>
+        <form class="drawer-body" @submit.prevent="submitChain()">
+          <p class="drawer-err" x-show="error" x-cloak x-text="error"></p>
+          <label class="field"><span>Name</span><input type="text" x-model="chainForm.name" placeholder="Standup → actions → ticket" /></label>
+          <label class="field"><span>Steps — agent ids, in order (comma-separated)</span><input type="text" x-model="chainForm.steps" placeholder="agent-summarize, agent-actions" /></label>
+          <p class="field-note">A chain runs agents in order, output flowing into the next. Saves to <code>POST /api/chains</code>.</p>
+          <div class="drawer-foot">
+            <button type="button" class="btn ghost" @click="closeCreate()">Cancel</button>
+            <button type="submit" class="btn primary" :disabled="busy"><span x-text="busy ? 'Saving…' : 'Create chain'">Create chain</span></button>
+          </div>
+        </form>
+      </aside>
+
+      {/* Workflow form */}
+      <aside class="drawer" x-show="creating === 'workflow'" role="dialog" aria-modal="true" aria-label="New workflow">
+        <header class="drawer-head">
+          <div>
+            <span class="drawer-eyebrow info">Capability · syncs to hub</span>
+            <h2>New workflow</h2>
+          </div>
+          <button type="button" class="drawer-close" @click="closeCreate()" aria-label="Close">✕</button>
+        </header>
+        <form class="drawer-body" @submit.prevent="submitWorkflow()">
+          <p class="drawer-err" x-show="error" x-cloak x-text="error"></p>
+          <label class="field"><span>Name</span><input type="text" x-model="workflowForm.name" placeholder="Weekly digest" /></label>
+          <label class="field"><span>Prompt</span><textarea rows="6" x-model="workflowForm.prompt" placeholder="Summarize this week's meetings into a digest…"></textarea></label>
+          <p class="field-note">A saved prompt that wires primitives into a run. Graph authoring lives in the Workbench. Saves to <code>POST /api/workflows</code>.</p>
+          <div class="drawer-foot">
+            <button type="button" class="btn ghost" @click="closeCreate()">Cancel</button>
+            <button type="submit" class="btn primary" :disabled="busy"><span x-text="busy ? 'Saving…' : 'Create workflow'">Create workflow</span></button>
+          </div>
+        </form>
+      </aside>
+    </div>
+
+    {/* ── agent run drawer ── */}
+    <div class="drawer-overlay" x-show="running" x-cloak @keydown.escape.window="closeRun()">
+      <div class="drawer-backdrop" @click="closeRun()"></div>
+      <aside class="drawer wide run-drawer" role="dialog" aria-modal="true" aria-label="Run agent">
+        <header class="drawer-head">
+          <div class="run-head-id">
+            <span class="run-avatar" x-text="running && running.avatar">🤖</span>
+            <div>
+              <span class="drawer-eyebrow accent">Run persona</span>
+              <h2 x-text="running && running.name">Agent</h2>
+              <p class="run-role" x-show="running && running.role" x-cloak x-text="running && running.role"></p>
+            </div>
+          </div>
+          <button type="button" class="drawer-close" @click="closeRun()" aria-label="Close">✕</button>
+        </header>
+        <div class="drawer-body">
+          <label class="field">
+            <span>Input</span>
+            <textarea rows="5" x-model="runInput" placeholder="Paste a transcript, a question, or anything the persona should work on…" @keydown.cmd.enter="submitRun()" @keydown.ctrl.enter="submitRun()"></textarea>
+          </label>
+          <p class="field-note">Runs <code>{"POST /api/agents/{id}/run"}</code> through your configured provider. <kbd>⌘</kbd>+<kbd>Enter</kbd> to run.</p>
+
+          <p class="drawer-err" x-show="runError" x-cloak x-text="runError"></p>
+
+          {/* loading */}
+          <div class="run-loading" x-show="runBusy" x-cloak>
+            <span class="run-spinner"></span>
+            <span>Running the persona…</span>
+          </div>
+
+          {/* result */}
+          <div class="run-result" x-show="runResult && !runBusy" x-cloak>
+            <div class="run-result-head">
+              <span class="run-result-label">Output</span>
+              <span class="egress" :class="runEgress().scope">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                <span x-text="runEgress().scope === 'local' ? 'on-device' : (runEgress().scope === 'cloud' ? 'cloud' : 'egress')">egress</span>
+              </span>
+              <span class="run-provider" x-show="runResult && runResult.provider" x-cloak x-text="runResult && runResult.provider"></span>
+              <button type="button" class="run-copy" @click="copyRun()" title="Copy output">
+                <span x-show="!runCopied" x-cloak>Copy</span>
+                <span x-show="runCopied" x-cloak class="copied">Copied ✓</span>
+              </button>
+            </div>
+            <pre class="run-output" x-text="runResult && runResult.output"></pre>
+          </div>
+        </div>
+        <div class="drawer-foot run-foot">
+          <button type="button" class="btn ghost" @click="closeRun()">Close</button>
+          <button type="button" class="btn primary" @click="submitRun()" :disabled="runBusy">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9z" /></svg>
+            <span x-text="runBusy ? 'Running…' : (runResult ? 'Run again' : 'Run')">Run</span>
+          </button>
+        </div>
       </aside>
     </div>
   </div>
@@ -370,6 +509,13 @@ const GROUPS = [
     max-width: 1320px;
     margin: 0 auto;
   }
+
+  /* per-kind colour identity (source: lib/primitives.ts tone) */
+  .kind--info   { --k: var(--info); }
+  .kind--accent { --k: var(--accent); }
+  .kind--ok     { --k: var(--ok); }
+  .kind--warn   { --k: var(--warn-signal); }
+  .kind--violet { --k: #A78BFA; }
 
   /* ── header ── */
   .desk-head {
@@ -401,334 +547,261 @@ const GROUPS = [
     font-size: var(--font-size-md);
     line-height: var(--line-height-relaxed);
   }
-  .desk-head-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-  }
+  .desk-head-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
   .desk-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    padding-right: var(--space-3);
-    margin-right: var(--space-1);
+    display: flex; flex-direction: column; align-items: flex-end;
+    padding-right: var(--space-3); margin-right: var(--space-1);
     border-right: 1px solid var(--border-subtle);
   }
-  .desk-stat strong {
-    font-family: var(--font-display);
-    font-size: var(--font-size-xl);
-    line-height: 1;
-  }
+  .desk-stat strong { font-family: var(--font-display); font-size: var(--font-size-xl); line-height: 1; }
   .desk-stat span {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    text-transform: uppercase;
-    letter-spacing: var(--letter-spacing-eyebrow);
-    color: var(--text-faint);
+    font-family: var(--font-mono); font-size: var(--font-size-xs);
+    text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-faint);
   }
 
   /* ── buttons ── */
   .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-4);
-    min-height: 2.25rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface-1);
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    cursor: pointer;
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-2) var(--space-4); min-height: 2.25rem;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface-1); color: var(--text);
+    font-family: var(--font-ui); font-size: var(--font-size-sm); font-weight: 500; cursor: pointer;
     transition: border-color var(--duration-short) var(--ease-standard), background var(--duration-short) var(--ease-standard), transform var(--duration-short) var(--ease-standard);
   }
   .btn:hover { border-color: var(--border-strong); background: var(--surface-2); }
   .btn:active { transform: translateY(1px); }
   .btn:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
   .btn:disabled { opacity: 0.55; cursor: default; }
-  .btn.primary {
-    background: var(--accent);
-    border-color: transparent;
-    color: var(--text-on-accent);
-    font-weight: 600;
-    box-shadow: var(--glow-accent);
-  }
+  .btn.primary { background: var(--accent); border-color: transparent; color: var(--text-on-accent); font-weight: 600; box-shadow: var(--glow-accent); }
   .btn.primary:hover { background: var(--accent-hover); }
+  .btn.primary:disabled:hover { background: var(--accent); }
   .btn.ghost { background: transparent; }
   .btn.sm { min-height: 1.9rem; padding: var(--space-1) var(--space-3); }
+  .icon-btn { padding: var(--space-2); min-width: 2.25rem; justify-content: center; }
+  .spin { animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── meta row ── */
-  .desk-meta-row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-top: calc(-1 * var(--space-3)); }
-  .meta-pill {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    color: var(--text-faint);
-    padding: var(--space-1) var(--space-3);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-pill);
+  /* ── hub connection bar ── */
+  .hub-bar {
+    display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+    margin-top: calc(-1 * var(--space-3));
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+    background: var(--surface-1);
   }
-  .meta-pill.error { color: var(--danger); border-color: var(--danger-soft); background: var(--danger-soft); }
+  .hub-status {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    font-family: var(--font-mono); font-size: var(--font-size-xs); font-weight: 600;
+    padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
+    border: 1px solid var(--border-subtle);
+  }
+  .hub-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-faint); }
+  .hub-status.connecting { color: var(--text-faint); }
+  .hub-status.connected  { color: var(--ok-strong); background: var(--ok-soft); border-color: transparent; }
+  .hub-status.connected .hub-dot  { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); animation: pulse 2.4s var(--ease-standard) infinite; }
+  .hub-status.partial    { color: var(--warn-strong); background: var(--warn-soft); border-color: transparent; }
+  .hub-status.partial .hub-dot    { background: var(--warn-signal); }
+  .hub-status.unreachable{ color: var(--danger); background: var(--danger-soft); border-color: transparent; }
+  .hub-status.unreachable .hub-dot{ background: var(--danger-signal); }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  .hub-synced { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-faint); }
+  .hub-error { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--danger); margin-left: auto; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* ── group ── */
   .group { display: flex; flex-direction: column; gap: var(--space-4); }
   .group-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
-  .group-head h2 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-  }
-  .group-head p { margin: var(--space-1) 0 0; color: var(--text-faint); font-size: var(--font-size-sm); }
+  .group-head-text h2 { margin: 0; font-family: var(--font-display); font-size: var(--font-size-xl); font-weight: 600; letter-spacing: var(--letter-spacing-tight); }
+  .group-head-text p { margin: var(--space-1) 0 0; color: var(--text-faint); font-size: var(--font-size-sm); }
+  .group-lanes { display: flex; flex-direction: column; gap: var(--space-3); }
 
   /* ── per-kind lane ── */
   .kind {
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    background: var(--surface-1);
-    padding: var(--space-4);
+    position: relative;
+    border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+    background: var(--surface-1); padding: var(--space-4) var(--space-4) var(--space-4) var(--space-5);
     box-shadow: var(--elev-1);
-    border-left: 3px solid var(--border-strong);
+    overflow: hidden;
   }
-  .kind + .kind { margin-top: var(--space-3); }
-  .kind--info { border-left-color: var(--info); }
-  .kind--accent { border-left-color: var(--accent); }
-  .kind--ok { border-left-color: var(--ok); }
-  .kind--warn { border-left-color: var(--warn-signal); }
+  /* the colour spine + a faint top wash, keyed by --k */
+  .kind::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--k); }
+  .kind::after  { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(90deg, color-mix(in srgb, var(--k) 60%, transparent), transparent 55%); }
 
-  .kind-head {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    margin-bottom: var(--space-4);
+  .kind-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+  .kind-icon {
+    display: inline-grid; place-items: center; width: 34px; height: 34px;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--k) 14%, var(--surface-3));
+    color: var(--k);
+    border: 1px solid color-mix(in srgb, var(--k) 30%, transparent);
   }
-  .kind-icon { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-sm); background: var(--surface-3); color: var(--text); }
-  .kind--info .kind-icon { color: var(--info); }
-  .kind--accent .kind-icon { color: var(--accent); }
-  .kind--ok .kind-icon { color: var(--ok); }
-  .kind--warn .kind-icon { color: var(--warn-signal); }
   .kind-title { font-family: var(--font-display); font-weight: 600; font-size: var(--font-size-lg); }
   .kind-count {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
-    background: var(--surface-3);
-    border-radius: var(--radius-pill);
-    padding: 1px var(--space-2);
-    min-width: 1.4rem;
-    text-align: center;
+    font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-muted);
+    background: var(--surface-3); border-radius: var(--radius-pill); padding: 1px var(--space-2);
+    min-width: 1.4rem; text-align: center;
   }
   .kind-sync {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    text-transform: uppercase;
-    letter-spacing: var(--letter-spacing-eyebrow);
-    color: var(--text-faint);
+    font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-faint);
   }
-  .kind-flag {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    border-radius: var(--radius-pill);
-    padding: 1px var(--space-2);
-    border: 1px solid transparent;
-  }
-  .kind-flag.readonly {
-    color: var(--text-faint);
-    background: var(--surface-3);
-    border-color: var(--border-subtle);
-  }
-  .kind-flag.down {
-    color: var(--danger);
-    background: var(--danger-soft);
-    border-color: var(--danger-soft);
-  }
+  .kind-flag { font-family: var(--font-mono); font-size: 0.6875rem; border-radius: var(--radius-pill); padding: 1px var(--space-2); border: 1px solid transparent; }
+  .kind-flag.readonly { color: var(--text-faint); background: var(--surface-3); border-color: var(--border-subtle); }
+  .kind-flag.down { color: var(--danger); background: var(--danger-soft); border-color: var(--danger-soft); }
   .kind-add {
-    margin-left: auto;
-    display: inline-grid;
-    place-items: center;
-    width: 28px; height: 28px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--surface-2);
-    color: var(--text-muted);
-    cursor: pointer;
+    margin-left: auto; display: inline-grid; place-items: center; width: 30px; height: 30px;
+    border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text-muted); cursor: pointer;
+    transition: color var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard), background var(--duration-short) var(--ease-standard);
   }
-  .kind-add:hover { color: var(--accent); border-color: var(--accent); }
+  .kind-add:hover { color: var(--k); border-color: var(--k); background: color-mix(in srgb, var(--k) 12%, var(--surface-2)); }
 
   /* ── cards grid ── */
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
-    gap: var(--space-3);
-  }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: var(--space-3); }
   .card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
+    display: flex; flex-direction: column; gap: var(--space-2);
+    padding: var(--space-4); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
     background: var(--surface-2);
     transition: transform var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
   }
-  .card:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: var(--elev-2); }
-  .card-type {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    text-transform: uppercase;
-    letter-spacing: var(--letter-spacing-eyebrow);
-    color: var(--text-faint);
-  }
-  .card-type .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-faint); }
-  .card--info .dot { background: var(--info); }
-  .card--accent .dot { background: var(--accent); }
-  .card--ok .dot { background: var(--ok); }
-  .card--warn .dot { background: var(--warn-signal); }
+  .card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--ck, var(--border-strong)) 45%, var(--border)); box-shadow: var(--elev-2); }
+  .card--info   { --ck: var(--info); }
+  .card--accent { --ck: var(--accent); }
+  .card--ok     { --ck: var(--ok); }
+  .card--warn   { --ck: var(--warn-signal); }
+  .card--violet { --ck: #A78BFA; }
+  .card-type { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-faint); }
+  .card-type .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ck, var(--text-faint)); }
   .card-title { margin: 0; font-family: var(--font-display); font-size: var(--font-size-md); font-weight: 600; line-height: var(--line-height-tight); overflow-wrap: anywhere; }
   .card-sub { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); }
-  .card-body {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-normal);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+  .card-body { margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-normal); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .card-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: auto; padding-top: var(--space-2); }
-  .tag {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    color: var(--text-muted);
-    background: var(--surface-3);
-    border-radius: var(--radius-xs);
-    padding: 1px var(--space-2);
-  }
-  .tag.mono { color: var(--accent); }
+  .tag { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-muted); background: var(--surface-3); border-radius: var(--radius-xs); padding: 1px var(--space-2); }
+  .tag.mono { color: var(--ck, var(--accent)); }
+  .tag.warn-tag { color: var(--warn-strong); background: var(--warn-soft); }
   .card-time { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); margin-left: auto; }
-  .card-link { color: var(--accent); font-size: var(--font-size-sm); text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; margin-left: auto; }
+  .card-link { color: var(--accent); font-size: var(--font-size-sm); text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; margin-left: auto; font-family: var(--font-ui); }
   .card-link:hover { text-decoration: underline; }
 
+  /* agent card */
   .agent-card .agent-top { display: flex; gap: var(--space-3); align-items: flex-start; }
-  .agent-avatar { font-size: 1.6rem; line-height: 1; }
-  .chain-steps { gap: var(--space-1); }
+  .agent-avatar { font-size: 1.7rem; line-height: 1; filter: saturate(1.1); }
+  .agent-id { min-width: 0; }
+  .card-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+  .run-btn { width: 100%; justify-content: center; }
 
-  .cards-empty {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    border: 1px dashed var(--border);
-    border-radius: var(--radius-md);
-    color: var(--text-faint);
-    font-size: var(--font-size-sm);
-  }
+  /* chain flow */
+  .chain-flow { list-style: none; margin: var(--space-1) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+  .chain-node { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); color: var(--text-muted); position: relative; }
+  .chain-node:not(:last-child)::after { content: ""; position: absolute; left: 9px; top: 22px; width: 1px; height: var(--space-1); background: var(--ck); opacity: 0.5; }
+  .chain-num { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: color-mix(in srgb, var(--ck) 18%, var(--surface-3)); color: var(--ck); font-family: var(--font-mono); font-size: 0.625rem; font-weight: 600; flex-shrink: 0; }
+  .chain-name { font-family: var(--font-mono); font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* empty / unreachable */
+  .cards-empty { grid-column: 1 / -1; }
+  .empty-inner { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); border: 1px dashed var(--border); border-radius: var(--radius-md); color: var(--text-faint); font-size: var(--font-size-sm); }
+  .empty-inner.unreachable { color: var(--danger); border-color: var(--danger-soft); background: var(--danger-soft); }
+  .empty-inner .card-link { margin-left: 0; }
 
   /* ── coder lane ── */
   .coder-lane { border-top: 1px solid var(--border-subtle); padding-top: var(--space-5); }
-  .coder-status {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-pill);
-  }
+  .coder-status { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-xs); font-weight: 600; padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); }
+  .coder-status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
   .coder-status.ready { color: var(--ok-strong); background: var(--ok-soft); }
+  .coder-status.ready .coder-status-dot { animation: pulse 2.4s var(--ease-standard) infinite; }
   .coder-status.idle { color: var(--text-faint); background: var(--surface-2); }
-  .coder-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--space-3); }
+  .coder-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: var(--space-3); }
   .coder-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
+    display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4);
+    border: 1px solid var(--border); border-radius: var(--radius-md);
+    background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
     border-left: 3px solid var(--accent);
+    transition: border-color var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
   }
   .coder-card.selected { box-shadow: var(--glow-accent); }
   .coder-card.waiting { border-left-color: var(--warn-signal); }
   .coder-card-head { display: flex; align-items: center; gap: var(--space-2); }
-  .coder-badge {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    padding: 1px var(--space-2);
-    border-radius: var(--radius-xs);
-    background: var(--accent-tint);
-    color: var(--accent);
-  }
+  .coder-badge { font-family: var(--font-mono); font-size: var(--font-size-xs); font-weight: 600; padding: 1px var(--space-2); border-radius: var(--radius-xs); background: var(--accent-tint); color: var(--accent); }
   .coder-badge.codex { background: var(--info-soft); color: var(--info); }
-  .coder-state {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    padding: 1px var(--space-2);
-    border-radius: var(--radius-xs);
-  }
+  .coder-state { font-family: var(--font-mono); font-size: var(--font-size-xs); padding: 1px var(--space-2); border-radius: var(--radius-xs); }
   .coder-state.ready { color: var(--ok-strong); background: var(--ok-soft); }
   .coder-state.warn { color: var(--warn-strong); background: var(--warn-soft); }
   .coder-state.neutral { color: var(--text-muted); background: var(--surface-3); }
-  .coder-pin { margin-left: auto; font-family: var(--font-mono); font-size: 0.6875rem; color: var(--accent); }
+  .coder-pin { margin-left: auto; font-size: 0.75rem; }
   .coder-project { margin: 0; font-family: var(--font-mono); font-size: var(--font-size-sm); color: var(--text); overflow-wrap: anywhere; }
+  .coder-meta { margin: 0; font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); }
+  .coder-q-wrap { padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--surface-3); border-left: 2px solid var(--border-strong); }
+  .coder-q-wrap.asking { background: var(--warn-soft); border-left-color: var(--warn-signal); }
   .coder-q { margin: 0; font-size: var(--font-size-sm); color: var(--text); line-height: var(--line-height-normal); }
   .coder-q.muted { color: var(--text-faint); }
-  .coder-events { display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--border-subtle); padding-top: var(--space-2); }
-  .coder-event { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ev-kind { color: var(--accent); }
+  .coder-events { display: flex; flex-direction: column; gap: 3px; border-top: 1px solid var(--border-subtle); padding-top: var(--space-2); }
+  .coder-event { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ev-kind { color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.04em; }
+  .ev-kind.result { color: var(--ok-strong); }
+  .ev-kind.approval, .ev-kind.command { color: var(--warn-strong); }
+  .ev-kind.tool { color: var(--info); }
+  .ev-kind.assistant { color: var(--accent); }
+  .ev-text { color: var(--text-muted); }
   .coder-actions { margin-top: var(--space-2); }
 
-  /* ── create overlay ── */
-  .create-overlay { position: fixed; inset: 0; z-index: var(--z-dialog); display: flex; justify-content: flex-end; }
-  .create-backdrop { position: absolute; inset: 0; background: var(--canvas-overlay); }
-  .create-panel {
-    position: relative;
-    height: 100%;
-    width: min(440px, 96vw);
-    display: flex;
-    flex-direction: column;
-    background: var(--surface-2);
-    border-left: 1px solid var(--border);
-    box-shadow: var(--elev-3);
-    animation: slidein var(--duration-long) var(--ease-emphasized);
+  /* ── drawers ── */
+  .drawer-overlay { position: fixed; inset: 0; z-index: var(--z-dialog); display: flex; justify-content: flex-end; }
+  .drawer-backdrop { position: absolute; inset: 0; background: var(--canvas-overlay); backdrop-filter: blur(2px); }
+  .drawer {
+    position: relative; height: 100%; width: min(460px, 96vw);
+    display: flex; flex-direction: column;
+    background: var(--surface-1); border-left: 1px solid var(--border);
+    box-shadow: var(--elev-3); animation: slidein var(--duration-long) var(--ease-emphasized);
   }
-  .create-panel.wide { width: min(560px, 96vw); }
-  @keyframes slidein { from { transform: translateX(100%); } to { transform: translateX(0); } }
-  .create-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding: var(--space-5); border-bottom: 1px solid var(--border-subtle); }
-  .create-head h2 { margin: var(--space-1) 0 0; font-family: var(--font-display); font-size: var(--font-size-xl); }
-  .create-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); color: var(--accent); }
-  .create-close { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: transparent; color: var(--text-muted); cursor: pointer; }
-  .create-close:hover { color: var(--text); border-color: var(--border-strong); }
-  .create-body { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+  .drawer.wide { width: min(600px, 96vw); }
+  @keyframes slidein { from { transform: translateX(2rem); opacity: 0.4; } to { transform: translateX(0); opacity: 1; } }
+  .drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); padding: var(--space-5); border-bottom: 1px solid var(--border-subtle); }
+  .drawer-head h2 { margin: var(--space-1) 0 0; font-family: var(--font-display); font-size: var(--font-size-xl); }
+  .drawer-eyebrow { font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); }
+  .drawer-eyebrow.accent { color: var(--accent); }
+  .drawer-eyebrow.ok { color: var(--ok-strong); }
+  .drawer-eyebrow.warn { color: var(--warn-strong); }
+  .drawer-eyebrow.info { color: var(--info); }
+  .drawer-eyebrow.violet { color: #A78BFA; }
+  .drawer-close { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: transparent; color: var(--text-muted); cursor: pointer; flex-shrink: 0; }
+  .drawer-close:hover { color: var(--text); border-color: var(--border-strong); }
+  .drawer-body { flex: 1; overflow-y: auto; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+  .drawer-err { margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--danger-soft); color: var(--danger); font-size: var(--font-size-sm); border: 1px solid var(--danger-soft); }
   .field { display: flex; flex-direction: column; gap: var(--space-2); }
   .field > span { font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-faint); }
-  .field input, .field textarea {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-sm);
-    color: var(--text);
-    background: var(--field-bg);
-    border: 1px solid var(--field-border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-2) var(--space-3);
-    resize: vertical;
-  }
+  .field input, .field textarea { font-family: var(--font-ui); font-size: var(--font-size-sm); color: var(--text); background: var(--field-bg); border: 1px solid var(--field-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); resize: vertical; }
   .field textarea { font-family: var(--font-mono); line-height: var(--line-height-normal); }
   .field input:focus, .field textarea:focus { outline: none; border-color: var(--field-focus-border); box-shadow: 0 0 0 2px var(--accent-tint); }
   .field-row { display: flex; gap: var(--space-3); }
   .field-row .grow { flex: 1; }
-  .avatar-field input { text-align: center; width: 4rem; }
+  .avatar-field input { text-align: center; width: 4rem; font-size: 1.25rem; }
   .field-note { margin: 0; font-size: var(--font-size-xs); color: var(--text-faint); line-height: var(--line-height-normal); }
   .field-note code { font-family: var(--font-mono); color: var(--accent); }
-  .create-foot { display: flex; justify-content: flex-end; gap: var(--space-2); padding-top: var(--space-2); margin-top: auto; }
+  .field-note kbd { font-family: var(--font-mono); font-size: 0.6875rem; background: var(--surface-3); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 0 4px; color: var(--text-muted); }
+  .drawer-foot { display: flex; justify-content: flex-end; gap: var(--space-2); padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border-subtle); }
+
+  /* ── run drawer ── */
+  .run-head-id { display: flex; gap: var(--space-3); align-items: flex-start; min-width: 0; }
+  .run-avatar { font-size: 2rem; line-height: 1; }
+  .run-role { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .run-loading { display: flex; align-items: center; gap: var(--space-3); color: var(--text-muted); font-size: var(--font-size-sm); padding: var(--space-4); border: 1px dashed var(--border); border-radius: var(--radius-md); }
+  .run-spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--surface-3); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+  .run-result { display: flex; flex-direction: column; gap: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); overflow: hidden; }
+  .run-result-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border-subtle); background: var(--surface-1); }
+  .run-result-label { font-family: var(--font-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-faint); }
+  .egress { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono); font-size: 0.6875rem; padding: 1px var(--space-2); border-radius: var(--radius-pill); }
+  .egress.local { color: var(--ok-strong); background: var(--ok-soft); }
+  .egress.cloud { color: var(--info); background: var(--info-soft); }
+  .egress.unknown { color: var(--text-faint); background: var(--surface-3); }
+  .run-provider { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); }
+  .run-copy { margin-left: auto; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-xs); color: var(--text-muted); font-family: var(--font-mono); font-size: 0.6875rem; padding: 1px var(--space-2); cursor: pointer; }
+  .run-copy:hover { color: var(--text); border-color: var(--border-strong); }
+  .run-copy .copied { color: var(--ok-strong); }
+  .run-output { margin: 0; padding: var(--space-4); font-family: var(--font-mono); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); color: var(--text); white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow-y: auto; }
 
   @media (max-width: 720px) {
     .desk { padding: var(--space-3); gap: var(--space-5); }
     .desk-head { flex-direction: column; }
     .field-row { flex-direction: column; }
+    .hub-error { max-width: 100%; white-space: normal; }
   }
 </style>
