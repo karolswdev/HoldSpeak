@@ -22,6 +22,8 @@ from .milestones import MilestoneRepository
 from .primitives import (
     AgentRepository,
     ChainRepository,
+    DirectoryMembershipRepository,
+    DirectoryRepository,
     KBRepository,
     NoteRepository,
     WorkflowRepository,
@@ -768,11 +770,39 @@ CREATE TABLE IF NOT EXISTS workflows (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
+-- Directory (organization/synced): the canonical organization container; the
+-- iPad renders it spatially as a "zone". Only identity + nesting sync here
+-- (`id, name, parent_id`); the zone's geometry/paint is per-device layout and
+-- stays on the surface, never canonical. `parent_id` chains = nested directories.
+CREATE TABLE IF NOT EXISTS directories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    parent_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+
+-- Directory membership (organization/synced): the canonical filing map
+-- `primitive_id -> directory_id`. SUPERSEDES the legacy single-valued `filed`
+-- maps (web `hs.desk.filed`, the iPad's `filed` dict): one filing per primitive,
+-- so the PRIMARY KEY is primitive_id. Membership is organization (it MUST sync),
+-- distinct from a primitive's free-place geometry (layout, never canonical).
+CREATE TABLE IF NOT EXISTS directory_memberships (
+    primitive_id TEXT PRIMARY KEY,
+    directory_id TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE INDEX IF NOT EXISTS idx_notes_modified ON notes(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_kbs_modified ON kbs(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_agents_modified ON agents(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_chains_modified ON chains(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_workflows_modified ON workflows(last_modified DESC);
+CREATE INDEX IF NOT EXISTS idx_directories_modified ON directories(last_modified DESC);
+CREATE INDEX IF NOT EXISTS idx_directory_memberships_dir ON directory_memberships(directory_id);
 """
 
 
@@ -798,6 +828,8 @@ class Database:
         self.agents = AgentRepository(self._connection, self)
         self.chains = ChainRepository(self._connection, self)
         self.workflows = WorkflowRepository(self._connection, self)
+        self.directories = DirectoryRepository(self._connection, self)
+        self.directory_memberships = DirectoryMembershipRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

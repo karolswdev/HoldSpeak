@@ -8,6 +8,8 @@
  *   Agents   — GET/POST /api/agents              (LIVE read + author)
  *   Agent run— POST /api/agents/{id}/run         (LIVE — runs the persona)
  *   KBs      — GET/POST /api/kbs                 (LIVE read + author)
+ *   Dirs     — GET/POST /api/directories         (LIVE read + author)
+ *   Filing   — PUT/DELETE /api/directories/{id}/members/{primitive_id}
  *   Chains   — GET/POST /api/chains              (LIVE read + author)
  *   Workflows— GET/POST /api/workflows           (LIVE read + author)
  *   Meetings — GET /api/meetings                 (LIVE read)
@@ -40,6 +42,7 @@ function DeskApp() {
       meeting: [],
       artifact: [],
       note: [],
+      directory: [],
       kb: [],
       agent: [],
       chain: [],
@@ -63,8 +66,14 @@ function DeskApp() {
       kbId: "",
     },
     kbForm: { name: "", memberIds: "" },
+    directoryForm: { name: "", parentId: "" },
     chainForm: { name: "", steps: "" },
     workflowForm: { name: "", prompt: "" },
+
+    // ── filing (membership picker) ──
+    filing: null, // the primitive being filed: { kind, id, title } | null
+    filingBusy: "", // directory id currently mutating membership | ""
+    filingError: "",
 
     // ── agent run ──
     running: null, // the agent currently being run (drawer target) | null
@@ -94,6 +103,10 @@ function DeskApp() {
     /** This kind reads live but the web cannot author it (content-derived). */
     isReadonly(kind) {
       return kind === "meeting" || kind === "artifact";
+    },
+    /** Any primitive kind (not a directory itself) can be filed into a directory. */
+    isFilable(kind) {
+      return kind !== "directory";
     },
 
     // ── hub connection rollup (header indicator) ───────────────────────────
@@ -137,6 +150,7 @@ function DeskApp() {
         this.loadNotes(),
         this.loadAgents(),
         this.loadKbs(),
+        this.loadDirectories(),
         this.loadChains(),
         this.loadWorkflows(),
       ]);
@@ -283,6 +297,115 @@ function DeskApp() {
         memberIds: k.member_ids || [],
         createdAt: k.created_at,
       };
+    },
+
+    // ── organization: Directories (LIVE — GET/POST /api/directories) ──
+    // Identity + membership sync; geometry/paint is per-device, never canonical.
+    async loadDirectories() {
+      try {
+        const data = await this.fetchJson("/api/directories");
+        // Tolerate either {directories:[…]} or a bare change-set list.
+        const raw = data.directories || this.liveValues(data);
+        this.items.directory = (raw || [])
+          .filter((d) => !d.deleted)
+          .map(this.fromWireDirectory);
+        this.status.directory = "live";
+      } catch (e) {
+        this.status.directory = "unreachable";
+        this.items.directory = [];
+        if (!this.error) this.error = `Directories: ${e.message}`;
+      }
+    },
+
+    fromWireDirectory(d) {
+      return {
+        kind: "directory",
+        id: d.id,
+        name: d.name,
+        parentId: d.parent_id || null,
+        // Membership rides /api/sync/pull + the directory record; accept either
+        // an inline member_ids list or a members map keyed by primitive id.
+        memberIds: d.member_ids || (d.members ? Object.keys(d.members) : []),
+        createdAt: d.created_at,
+      };
+    },
+
+    // ── filing helpers (membership = which directory a primitive lives in) ──
+    /** Directories this primitive id is filed in. */
+    directoriesFor(primitiveId) {
+      return (this.items.directory || []).filter((d) =>
+        (d.memberIds || []).includes(primitiveId),
+      );
+    },
+    /** True when this primitive is filed in the given directory. */
+    isFiledIn(primitiveId, dirId) {
+      const d = (this.items.directory || []).find((x) => x.id === dirId);
+      return Boolean(d && (d.memberIds || []).includes(primitiveId));
+    },
+    /** A short title for the move-picker header, by primitive identity. */
+    primitiveTitle(p) {
+      if (!p) return "";
+      return p.title || p.name || p.id;
+    },
+
+    // ── filing: open / close the "Move to…" picker ──
+    openFile(kind, item) {
+      this.filing = {
+        kind,
+        id: item.id,
+        title: this.primitiveTitle(item),
+      };
+      this.filingError = "";
+      this.filingBusy = "";
+    },
+    closeFile() {
+      this.filing = null;
+      this.filingBusy = "";
+      this.filingError = "";
+    },
+
+    /** Toggle membership of the filing primitive in a directory. */
+    async toggleFile(dir) {
+      if (!this.filing) return;
+      const pid = this.filing.id;
+      const dirId = dir.id;
+      const already = this.isFiledIn(pid, dirId);
+      this.filingBusy = dirId;
+      this.filingError = "";
+      const url = `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(pid)}`;
+      try {
+        await this.fetchJson(url, {
+          method: already ? "DELETE" : "PUT",
+          headers: { "content-type": "application/json" },
+        });
+        // Optimistic local membership update (the hub is the truth on reload).
+        const d = this.items.directory.find((x) => x.id === dirId);
+        if (d) {
+          d.memberIds = already
+            ? d.memberIds.filter((m) => m !== pid)
+            : [...d.memberIds, pid];
+        }
+      } catch (e) {
+        this.filingError = `${already ? "Unfile" : "File"}: ${e.message}`;
+      } finally {
+        this.filingBusy = "";
+      }
+    },
+
+    /** Resolve a filed primitive (any kind) to a card-legible summary. */
+    memberOf(primitiveId) {
+      for (const kind of ["meeting", "artifact", "note", "kb", "agent", "chain", "workflow"]) {
+        const hit = (this.items[kind] || []).find((x) => x.id === primitiveId);
+        if (hit) {
+          return {
+            kind,
+            id: primitiveId,
+            label: this.primitiveTitle(hit),
+          };
+        }
+      }
+      // Filed but not loaded on this surface (synced elsewhere) — show the id.
+      return { kind: "unknown", id: primitiveId, label: primitiveId };
     },
 
     // ── capability: chains (LIVE — GET/POST /api/chains) ──
@@ -518,6 +641,37 @@ function DeskApp() {
         this.closeCreate();
       } catch (e) {
         this.error = `Save KB: ${e.message}`;
+      } finally {
+        this.busy = false;
+      }
+    },
+
+    // ── authoring: Directory (LIVE POST /api/directories) ──
+    async submitDirectory() {
+      const f = this.directoryForm;
+      if (!f.name.trim()) {
+        this.error = "A directory needs a name.";
+        return;
+      }
+      const payload = {
+        name: f.name.trim(),
+        parent_id: f.parentId.trim() || null,
+      };
+      this.busy = true;
+      try {
+        const data = await this.fetchJson("/api/directories", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        this.items.directory.unshift(
+          this.fromWireDirectory(data.directory || data),
+        );
+        this.status.directory = "live";
+        this.directoryForm = { name: "", parentId: "" };
+        this.closeCreate();
+      } catch (e) {
+        this.error = `Save directory: ${e.message}`;
       } finally {
         this.busy = false;
       }

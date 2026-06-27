@@ -42,6 +42,8 @@ index idx_dictation_corrections_recent: CREATE INDEX idx_dictation_corrections_r
 ON dictation_corrections(created_at DESC, id DESC)
 index idx_dictation_journal_recent: CREATE INDEX idx_dictation_journal_recent
 ON dictation_journal(created_at DESC, id DESC)
+index idx_directories_modified: CREATE INDEX idx_directories_modified ON directories(last_modified DESC)
+index idx_directory_memberships_dir: CREATE INDEX idx_directory_memberships_dir ON directory_memberships(directory_id)
 index idx_intel_job_attempts_meeting: CREATE INDEX idx_intel_job_attempts_meeting ON intel_job_attempts(meeting_id, created_at DESC)
 index idx_intel_jobs_status: CREATE INDEX idx_intel_jobs_status ON intel_jobs(status, requested_at)
 index idx_intent_window_scores_meeting: CREATE INDEX idx_intent_window_scores_meeting ON intent_window_scores(meeting_id, window_id)
@@ -290,6 +292,21 @@ table dictation_journal: CREATE TABLE dictation_journal (
     warnings TEXT NOT NULL DEFAULT '[]',
     corrected INTEGER NOT NULL DEFAULT 0,
     correction_id INTEGER
+)
+table directories: CREATE TABLE directories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    parent_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+)
+table directory_memberships: CREATE TABLE directory_memberships (
+    primitive_id TEXT PRIMARY KEY,
+    directory_id TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
 )
 table intel_job_attempts: CREATE TABLE intel_job_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

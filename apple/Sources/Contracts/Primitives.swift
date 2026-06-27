@@ -38,6 +38,62 @@ public struct Note: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+// MARK: - Directory (organization / synced) — a place primitives are filed (the iPad "zone")
+//
+// THE PRIMITIVE FRAMEWORK, wave 4 — "Zones ARE Directories". A desk zone is a Directory
+// rendered spatially. The SPLIT is the whole point:
+//
+//   • Syncs (organization, THIS type): identity + nesting only — {id, name, parentId?}. The
+//     `id` is the zone's stable `path` (e.g. "Atlas" or "Atlas/Q3"); `parentId` is the
+//     parent path ("Atlas/Q3" → "Atlas", a top-level zone → nil). A directory + its
+//     contents are the same on every surface.
+//   • Per-device (layout, NEVER on the wire): the zone's geometry + paint — cx/cy/w/h,
+//     color/border/fill/glow (the zone studio styling). A directory pulled from the hub
+//     with no local geometry gets a sensible default placement on this device.
+//
+// Membership (which primitive is filed in which directory) is a SEPARATE synced edge —
+// see `Membership` below. Geometry/paint is the zone's `ZoneRec` and stays local.
+public struct Directory: Codable, Equatable, Sendable, Identifiable {
+    public var id: String            // the zone's stable path ("Atlas", "Atlas/Q3")
+    public var name: String          // the display name (the path's last segment)
+    public var parentId: String?     // the parent directory's id (nil ⇒ a top-level zone)
+    public var createdAt: Date
+    public var updatedAt: Date
+
+    public init(id: String, name: String, parentId: String? = nil,
+                createdAt: Date, updatedAt: Date) {
+        self.id = id
+        self.name = name
+        self.parentId = parentId
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+}
+
+// MARK: - Membership (organization / synced) — a primitive's home directory edge
+//
+// The synced classification edge: which primitive is filed in which directory. Identity is
+// the `primitiveId` (a primitive has at most one home directory), so the edge LWW-resolves
+// per primitive like any other synced record. `directoryId` is the Directory's id (a zone
+// path); an empty string means "filed at root" (the desk's home level). On the desk this
+// is the union of the `filed` map (meetings/games) and each output/note/kb record's `path`.
+//
+// NOTE: membership was previously treated as per-device layout (`path`). It is ORGANIZATION
+// and now rides the wire so filing a card on one surface files it on every surface.
+public struct Membership: Codable, Equatable, Sendable, Identifiable {
+    public var primitiveId: String   // the filed primitive's desk id ("note:…", "m:…", "out:…")
+    public var directoryId: String   // the Directory id (zone path); "" ⇒ root
+    public var updatedAt: Date
+
+    public var id: String { primitiveId }
+
+    public init(primitiveId: String, directoryId: String, updatedAt: Date) {
+        self.primitiveId = primitiveId
+        self.directoryId = directoryId
+        self.updatedAt = updatedAt
+    }
+}
+
 // MARK: - KB (organization / synced) — a named container of member primitive refs
 
 public struct KB: Codable, Equatable, Sendable, Identifiable {

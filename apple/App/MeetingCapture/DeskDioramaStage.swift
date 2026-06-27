@@ -312,6 +312,54 @@ struct ZoneRec: Equatable {
     var glow: Bool = false
     var hex: Int = 0            // 0 ⇒ use the palette colour; else a fully custom colour
     var tint: Color { DioPal.zoneColor(color, hex) }
+
+    // Explicit memberwise init — restored because the `init(directory:)` bridge below
+    // suppresses Swift's synthesized memberwise initializer (all existing call sites use this).
+    init(path: String, color: Int, cx: Double, cy: Double, w: Double, h: Double,
+         borderW: Double = 1.5, borderStyle: Int = 0, fillStyle: Int = 0,
+         fillOpacity: Double = 0.12, glow: Bool = false, hex: Int = 0) {
+        self.path = path; self.color = color; self.cx = cx; self.cy = cy; self.w = w; self.h = h
+        self.borderW = borderW; self.borderStyle = borderStyle; self.fillStyle = fillStyle
+        self.fillOpacity = fillOpacity; self.glow = glow; self.hex = hex
+    }
+
+    // MARK: - CANONICAL BRIDGE (wave 4) — a ZoneRec IS the contract `Directory`.
+    //
+    // THE SPLIT: only identity + nesting cross the wire. The directory `id` is the zone's
+    // `path`; `parentId` is the parent path (a top-level zone → nil); `name` is the path's
+    // last segment. Geometry (cx/cy/w/h) + paint (color/border/fill/glow) are PER-DEVICE
+    // layout and are deliberately NOT carried — they stay on this ZoneRec only.
+    static func directoryId(forPath path: String) -> String { path }
+    static func parentId(forPath path: String) -> String? {
+        var c = path.split(separator: "/").map(String.init)
+        if !c.isEmpty { c.removeLast() }
+        let p = c.joined(separator: "/")
+        return p.isEmpty ? nil : p
+    }
+    func toDirectory(now: Date = Date()) -> Directory {
+        Directory(id: ZoneRec.directoryId(forPath: path),
+                  name: path.split(separator: "/").last.map(String.init) ?? path,
+                  parentId: ZoneRec.parentId(forPath: path),
+                  createdAt: now, updatedAt: now)
+    }
+    func synced(at: Date = Date()) -> Synced<Directory> {
+        .live(toDirectory(now: at), id: path, kind: .directory, modifiedAt: at)
+    }
+
+    // INVERSE BRIDGE — build a ZoneRec from an incoming `Directory` with DEFAULT geometry
+    // (the directory carried none). `index` spreads fresh zones across the canvas so a
+    // batch of pulled directories don't stack on one spot. The path-as-id round-trips
+    // back into the desk's slash-nested `path` model unchanged.
+    init(directory d: Directory, index: Int = 0) {
+        self.path = d.id
+        self.color = index
+        // a tidy default grid placement; the user can re-arrange + paint locally afterward
+        let col = index % 3, row = (index / 3) % 3
+        self.cx = 0.27 + 0.23 * Double(col)
+        self.cy = 0.20 + 0.18 * Double(row)
+        self.w = 168
+        self.h = 104
+    }
 }
 
 // the resolved look handed to the tray renderer
@@ -2869,6 +2917,14 @@ struct DioStage: View {
                         ZoneRec(path: "Q3", color: 5, cx: 0.66, cy: 0.32, w: 180, h: 120, borderW: 2.5, borderStyle: 2, fillStyle: 2, fillOpacity: 0.22, glow: false),
                     ]
                     if zenv == "1" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { if let z = zones.first { withAnimation { editingZone = z } } } }
+                    // `directory` shows the wave-4 DIRECTORY model on the desk: a parent zone, a
+                    // nested child (parent_id chain), and a note filed into the parent (membership) —
+                    // exactly what now syncs. Geometry/paint stays this device's; identity+nesting+
+                    // membership are canonical.
+                    if zenv == "directory" {
+                        notes = [NoteRecord(id: "nAtlas", title: "Mesh sync owner", body: "Karol owns the mesh-sync approval contract.", path: "Atlas")]
+                        outputs = [OutputRecord(id: "oAtlas", title: "Q3 summary", body: "Ship the desk to the web; air-gapped proof due Friday.", source: "Q3 kickoff", lens: "Summary", path: "Atlas")]
+                    }
                 }
                 if ProcessInfo.processInfo.environment["HS_DESK_ARRIVE"] == "1" {
                     let m = Meeting(id: "demoNew", startedAt: Date(), title: "Q3 kickoff", segments: [Segment(text: "Welcome to the kickoff.", speaker: "Speaker 1", startTime: 0, endTime: 2)])
@@ -3144,7 +3200,7 @@ struct DioStage: View {
         withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) {
             zones.append(ZoneRec(path: zpath, color: zones.count, cx: 0.27 + 0.23 * Double(col), cy: 0.2 + 0.18 * Double(row), w: 168, h: 104))
         }
-        persistZones()
+        persistZones(); stampSync(zpath)   // the directory (identity+nesting) is a synced primitive
     }
     private func moveZone(_ path: String, _ tr: CGSize, _ w: CGFloat, _ h: CGFloat) {
         guard let idx = zones.firstIndex(where: { $0.path == path }) else { return }
@@ -3168,11 +3224,14 @@ struct DioStage: View {
     }
     private func deleteZone(_ path: String) {
         haptic(.medium)
+        // the directories about to go (this zone + every sub-zone) → tombstone each so the delete syncs
+        let gone = zones.filter { $0.path == path || $0.path.hasPrefix(path + "/") }.map(\.path)
         withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) {
             zones.removeAll { $0.path == path || $0.path.hasPrefix(path + "/") }   // drop the zone + any sub-zones
             filed = filed.filter { $0.value != path && !$0.value.hasPrefix(path + "/") }
             editingZone = nil
         }
+        for p in gone { tombstone(p, kind: .directory) }   // propagate the directory delete
         persistZones(); persistFiled()
     }
     private func dockToolPos(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
@@ -3480,7 +3539,9 @@ struct DioStage: View {
                 persistGames()
             } else {
                 file(p.id, into: z)
+                return
             }
+            stampSync("mem:\(p.id)")   // the filing is a synced membership edge
             return
         }
         // 3) free-place
@@ -3753,15 +3814,47 @@ struct DioStage: View {
     private func currentDeskRecords() -> DeskRecords {
         DeskRecords(notes: notes, agents: agents, kbs: kbs, outputs: outputs,
                     chains: chains, workflows: workflows,
+                    zones: zones, membership: unifiedMembership(),
                     modified: syncModified, tombstones: syncTombstones)
+    }
+    /// The desk's filing as one synced map: primitiveId → directoryId (a zone path). Unifies the
+    /// `filed` map (meetings) with each output/note/kb/game record's `path`. Root ("") edges are
+    /// omitted — only a real filing is an edge worth syncing.
+    private func unifiedMembership() -> [String: String] {
+        var m: [String: String] = [:]
+        for (id, z) in filed where !z.isEmpty { m[id] = z }
+        for rec in outputs where !rec.path.isEmpty { m["out:\(rec.id)"] = rec.path }
+        for rec in notes where !rec.path.isEmpty { m["note:\(rec.id)"] = rec.path }
+        for rec in kbs where !rec.path.isEmpty { m["kb:\(rec.id)"] = rec.path }
+        for rec in placedGames where !rec.path.isEmpty { m["game:\(rec.gameId)"] = rec.path }
+        return m
+    }
+    /// Reconcile an incoming unified membership map back into the desk's two filing surfaces:
+    /// the `filed` map (meetings) and each record's `path` (outputs/notes/kbs/games). A primitive
+    /// missing from the map was unfiled (→ root). Geometry/paint never participates here.
+    private func applyMembership(_ m: [String: String]) {
+        // meetings → the filed map (keep only meeting keys; clear then reapply)
+        var f = filed
+        for k in f.keys where k.hasPrefix("m:") { f[k] = nil }
+        for (id, z) in m where id.hasPrefix("m:") { f[id] = z }
+        filed = f
+        for i in outputs.indices { outputs[i].path = m["out:\(outputs[i].id)"] ?? "" }
+        for i in notes.indices { notes[i].path = m["note:\(notes[i].id)"] ?? "" }
+        for i in kbs.indices { kbs[i].path = m["kb:\(kbs[i].id)"] ?? "" }
+        for i in placedGames.indices { placedGames[i].path = m["game:\(placedGames[i].gameId)"] ?? "" }
     }
     /// Write a merged record set back into the desk's @AppStorage-backed arrays + persist.
     private func applyDeskRecords(_ r: DeskRecords) {
         notes = r.notes; agents = r.agents; kbs = r.kbs
         outputs = r.outputs; chains = r.chains; workflows = r.workflows
+        zones = r.zones
         syncModified = r.modified; syncTombstones = r.tombstones
+        // membership reconciles back into the filed map + each record's path (it overwrites the
+        // record-path writes above for the filed surfaces — applied last so it wins).
+        applyMembership(r.membership)
         persistNotes(); persistAgents(); persistKBs()
-        persistOutputs(); persistChains(); persistWorkflows(); persistSyncMaps()
+        persistOutputs(); persistChains(); persistWorkflows()
+        persistZones(); persistFiled(); persistSyncMaps()
     }
     /// Run one real sync pass against the paired hub: push the local snapshot + pull/apply
     /// remote changes (offline-safe; never on the author path). Triggered on desk load,
@@ -3857,7 +3950,7 @@ struct DioStage: View {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         #endif
         withAnimation(focusSpring) { filed[id] = zpath; positions[id] = nil }
-        persistFiled(); persistPositions()
+        persistFiled(); persistPositions(); stampSync("mem:\(id)")   // a membership edge is synced
     }
 
     private func persistPositions() { posCSV = positions.map { "\($0.key)=\($0.value.x),\($0.value.y)" }.joined(separator: ";") }

@@ -227,3 +227,63 @@ def test_workflow_crud_flow(client: TestClient) -> None:
 
 def test_workflow_create_requires_name(client: TestClient) -> None:
     assert client.post("/api/workflows", json={"prompt": "x"}).status_code == 400
+
+
+# ── Directories + membership ─────────────────────────────────────────────────
+def test_directory_crud_flow(client: TestClient) -> None:
+    assert client.get("/api/directories").json() == {"directories": []}
+
+    # Create requires a name.
+    assert client.post("/api/directories", json={}).status_code == 400
+
+    resp = client.post("/api/directories", json={"name": "Inbox"})
+    assert resp.status_code == 201
+    d = resp.json()["directory"]
+    did = d["id"]
+    assert d["name"] == "Inbox" and d["parent_id"] is None and d["deleted"] is False
+
+    # Nested child.
+    child = client.post("/api/directories", json={"name": "Sub", "parent_id": did}).json()["directory"]
+    assert child["parent_id"] == did
+
+    # List + get (get carries members, empty here).
+    assert len(client.get("/api/directories").json()["directories"]) == 2
+    got = client.get(f"/api/directories/{did}").json()
+    assert got["directory"]["name"] == "Inbox" and got["members"] == []
+
+    # Update (partial).
+    upd = client.put(f"/api/directories/{did}", json={"name": "Inbox 2"})
+    assert upd.status_code == 200 and upd.json()["directory"]["name"] == "Inbox 2"
+
+    # Delete (tombstone).
+    assert client.delete(f"/api/directories/{did}").json() == {"success": True}
+    assert client.get(f"/api/directories/{did}").status_code == 404
+    assert client.delete(f"/api/directories/{did}").status_code == 404
+
+
+def test_directory_membership_file_and_unfile(client: TestClient) -> None:
+    did = client.post("/api/directories", json={"name": "Bag"}).json()["directory"]["id"]
+
+    # File a primitive.
+    filed = client.put(f"/api/directories/{did}/members/note_42")
+    assert filed.status_code == 200
+    assert filed.json()["membership"]["primitive_id"] == "note_42"
+    assert filed.json()["membership"]["directory_id"] == did
+
+    # Membership is readable both via the directory GET and the members list.
+    members = client.get(f"/api/directories/{did}/members").json()["members"]
+    assert [m["primitive_id"] for m in members] == ["note_42"]
+    assert client.get(f"/api/directories/{did}").json()["members"][0]["primitive_id"] == "note_42"
+
+    # Filing into an unknown directory 404s.
+    assert client.put("/api/directories/nope/members/x").status_code == 404
+
+    # Unfile (tombstone) -> gone from the list.
+    assert client.delete(f"/api/directories/{did}/members/note_42").json() == {"success": True}
+    assert client.get(f"/api/directories/{did}/members").json()["members"] == []
+    # Unfiling again (already gone) 404s.
+    assert client.delete(f"/api/directories/{did}/members/note_42").status_code == 404
+
+
+def test_directory_member_listing_404_for_unknown_directory(client: TestClient) -> None:
+    assert client.get("/api/directories/ghost/members").status_code == 404

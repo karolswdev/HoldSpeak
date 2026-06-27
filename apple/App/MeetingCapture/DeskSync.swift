@@ -38,6 +38,15 @@ struct DeskRecords: Equatable {
     var outputs: [OutputRecord] = []
     var chains: [ChainRecord] = []
     var workflows: [WorkflowRecord] = []
+    /// The desk's zones = the canonical `directory` primitive (wave 4). Only their identity +
+    /// nesting (`path`) syncs; the geometry/paint on each `ZoneRec` is per-device layout and is
+    /// stripped by the `synced()` bridge. Incoming directories with no local zone get default
+    /// geometry (the inverse bridge), so a directory authored on the web shows up as a desk zone.
+    var zones: [ZoneRec] = []
+    /// MEMBERSHIP (wave 4) — primitiveId → directoryId (a zone path); "" ⇒ filed at root. This is
+    /// the unified view of the desk's `filed` map (meetings/games) + each output/note/kb record's
+    /// `path`. It is ORGANIZATION and syncs (it was wrongly treated as per-device layout before).
+    var membership: [String: String] = [:]
     /// id → last-modified instant (the iPad's `updatedAt` projection; maps to meta.last_modified).
     var modified: [String: Date] = [:]
     /// id → deleted-at instant for propagated deletes (tombstones; record is gone locally).
@@ -70,7 +79,22 @@ struct DeskSyncStore {
         let workflows = r.workflows.map { $0.synced(at: t($0.id)) }
             + tombstones(in: r, kind: .workflow) as [Synced<WorkflowDefinition>]
 
+        // DIRECTORIES (zones) — identity + nesting only; geometry/paint stripped by the bridge.
+        // A directory's sync id is its `path`. A root zone has path "" and is implicit — never a
+        // directory record (it's the home level), so skip empty paths.
+        let directories = r.zones.filter { !$0.path.isEmpty }.map { $0.synced(at: t($0.path)) }
+            + tombstones(in: r, kind: .directory) as [Synced<Directory>]
+
+        // MEMBERSHIP — one edge per filed primitive. The LWW instant is keyed `mem:<primitiveId>`
+        // so a re-file LWW-resolves independently of the primitive's own content edit.
+        let memberships = r.membership.map { pid, did -> Synced<Membership> in
+            let at = r.modified["mem:\(pid)"] ?? now
+            return .live(Membership(primitiveId: pid, directoryId: did, updatedAt: at),
+                         id: pid, kind: .membership, modifiedAt: at)
+        } + tombstones(in: r, kind: .membership) as [Synced<Membership>]
+
         return ChangeSet(meetings: [], artifacts: artifacts, notes: notes, kbs: kbs,
+                         directories: directories, directoryMemberships: memberships,
                          agents: agents, chains: chains, workflows: workflows)
     }
 
@@ -142,6 +166,43 @@ struct DeskSyncStore {
                      },
                      remove: { recs in recs.workflows.removeAll { $0.id == rec.meta.id } })
         }
+        // DIRECTORIES (zones) — create/update a ZoneRec from an incoming Directory. CRITICAL:
+        // geometry/paint is per-device, so an UPDATE to an existing local zone keeps that zone's
+        // local geometry untouched (path/name is all that's canonical). A NEW zone gets default
+        // geometry via the inverse bridge. Identity is the zone `path` (the directory id).
+        for rec in cs.directories {
+            mergeOne(&r, &report, meta: rec.meta, value: rec.value,
+                     find: { $0.zones.firstIndex { $0.path == rec.meta.id } },
+                     upsert: { recs, d in
+                         if recs.zones.firstIndex(where: { $0.path == d.id }) != nil {
+                             // existing zone: nothing canonical to change (path == id already);
+                             // keep ALL local geometry/paint. (Rename = a new path = a new id.)
+                         } else {
+                             recs.zones.append(ZoneRec(directory: d, index: recs.zones.count))
+                         }
+                     },
+                     remove: { recs in recs.zones.removeAll { $0.path == rec.meta.id } })
+        }
+        // MEMBERSHIP — apply each incoming edge to the unified membership map. A live edge files
+        // the primitive into its directory; a tombstone unfiles it (back to root). The view
+        // reconciles this map back into the `filed` map + record `path`s on apply.
+        for rec in cs.directoryMemberships {
+            let pid = rec.meta.id
+            let key = "mem:\(pid)"
+            let localTime = r.modified[key] ?? r.tombstones["\(SyncKind.membership.rawValue):\(pid)"]
+            if let lt = localTime, rec.meta.lastModified <= lt { report.skipped += 1; continue }
+            if rec.meta.deleted {
+                r.membership[pid] = nil
+                r.modified[key] = nil
+                r.tombstones["\(SyncKind.membership.rawValue):\(pid)"] = rec.meta.lastModified
+                report.applied += 1
+            } else if let v = rec.value {
+                r.membership[pid] = v.directoryId
+                r.modified[key] = rec.meta.lastModified
+                r.tombstones["\(SyncKind.membership.rawValue):\(pid)"] = nil
+                report.applied += 1
+            } else { report.skipped += 1 }
+        }
         // meetings are read-only on the desk (owned by the capture model), so the desk
         // never applies incoming meeting records here — it pushes its own primitives and
         // pulls the durable ones it authors. (Meetings flow via the capture pipeline.)
@@ -199,7 +260,12 @@ extension DeskSyncStore {
                                 systemPrompt: "research", userTemplate: "{input}",
                                 manualContext: "", useZoneContext: false, kb: "")]
         a.kbs = [KBRecord(id: "k1", name: "Knowledge", path: "/local", items: 0)]
-        a.modified = ["n1": t1, "ag1": t1, "k1": t1]
+        // a nested directory (zone) with rich LOCAL geometry/paint that must NOT cross the wire,
+        // and a membership edge filing the note into it.
+        a.zones = [ZoneRec(path: "Atlas", color: 2, cx: 0.4, cy: 0.5, w: 200, h: 130, glow: true),
+                   ZoneRec(path: "Atlas/Q3", color: 5, cx: 0.7, cy: 0.6, w: 180, h: 120)]
+        a.membership = ["note:n1": "Atlas"]
+        a.modified = ["n1": t1, "ag1": t1, "k1": t1, "Atlas": t1, "Atlas/Q3": t1, "mem:note:n1": t1]
         a.tombstones = ["note:nOld": t1]
 
         // Build the wire payload exactly as the driver would, then round-trip it.
@@ -218,7 +284,16 @@ extension DeskSyncStore {
         check(merged.agents.contains { $0.id == "ag1" && $0.name == "Scout" }, "agent ag1 not applied")
         check(merged.kbs.contains { $0.id == "k1" }, "kb k1 not applied")
         check(merged.tombstones["note:nOld"] != nil, "tombstone not carried")
-        check(report.applied == 4, "expected 4 applied, got \(report.applied)")
+        // DIRECTORY: both zones land by path; nesting (parent_id) survives; default geometry
+        // assigned (NOT A's local geometry — geometry/paint never crosses the wire).
+        check(merged.zones.contains { $0.path == "Atlas" }, "directory Atlas not applied")
+        check(merged.zones.contains { $0.path == "Atlas/Q3" }, "nested directory Atlas/Q3 not applied")
+        check(merged.zones.first { $0.path == "Atlas" }?.glow == false, "layout (glow) leaked through sync")
+        check(ZoneRec.parentId(forPath: "Atlas/Q3") == "Atlas", "parent_id nesting wrong")
+        check(ZoneRec.parentId(forPath: "Atlas") == nil, "top-level zone should have nil parent_id")
+        // MEMBERSHIP: the filing edge lands.
+        check(merged.membership["note:n1"] == "Atlas", "membership edge not applied")
+        check(report.applied == 7, "expected 7 applied, got \(report.applied)")
 
         // LWW: an OLDER incoming edit must NOT clobber the newer local copy.
         var local = merged
@@ -231,7 +306,7 @@ extension DeskSyncStore {
         check(afterLWW.notes.first { $0.id == "n1" }?.title == "Newer local", "LWW: older remote clobbered newer local")
         check(lwwReport.skipped == 1, "LWW: stale edit should have been skipped")
 
-        NSLog(ok ? "HS_SYNC_SELFCHECK: PASS (7-kind snapshot→push→pull→apply + tombstone + LWW)" : "HS_SYNC_SELFCHECK: FAILED")
+        NSLog(ok ? "HS_SYNC_SELFCHECK: PASS (9-kind snapshot→push→pull→apply + directory/membership + tombstone + LWW)" : "HS_SYNC_SELFCHECK: FAILED")
         return ok
     }
 }

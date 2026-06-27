@@ -75,6 +75,8 @@ def _fake_db(tmp_path, *, meetings=(), artifacts=None):
         agents=_empty_primitive_repo(),
         chains=_empty_primitive_repo(),
         workflows=_empty_primitive_repo(),
+        directories=_empty_primitive_repo(),
+        directory_memberships=_empty_primitive_repo(),
     )
 
 

@@ -18,6 +18,8 @@ from .primitives import (  # noqa: F401
     AgentRepository,
     ChainRepository,
     WorkflowRepository,
+    DirectoryRepository,
+    DirectoryMembershipRepository,
 )
 from .core import *  # noqa: F401,F403
 from .core import (  # noqa: F401  explicit: names import * may skip

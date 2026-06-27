@@ -25,6 +25,7 @@ const META = {
   agent:    { label: "Agent",          plural: "Agents",          sync: "capability",   tone: "accent",   author: true,  icon: "M12 8V4H8M4 8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zM9 13h.01M15 13h.01M9 17h6" },
   chain:    { label: "Chain",          plural: "Chains",          sync: "capability",   tone: "violet",   author: true,  icon: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" },
   workflow: { label: "Workflow",       plural: "Workflows",       sync: "capability",   tone: "info",     author: true,  icon: "M6 3v12M18 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a9 9 0 0 0 9 9" },
+  directory:{ label: "Directory",      plural: "Directories",     sync: "organization", tone: "folder",   author: true,  icon: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 11h18" },
   kb:       { label: "Knowledge base", plural: "Knowledge bases", sync: "organization", tone: "warn",     author: true,  icon: "M2 7l10-4 10 4-10 4zM2 7v10l10 4 10-4V7M2 12l10 4 10-4" },
   coder:    { label: "Coder",          plural: "Coder sessions",  sync: "presence",     tone: "accent",   author: false, icon: "M16 18l6-6-6-6M8 6l-6 6 6 6" },
 };
@@ -32,7 +33,7 @@ const META = {
 const GROUPS = [
   { label: "Content",      blurb: "Bodies of record — meetings, artifacts, notes.", kinds: ["meeting", "artifact", "note"] },
   { label: "Capabilities", blurb: "Personas, crews and workflows that can run.",     kinds: ["agent", "chain", "workflow"] },
-  { label: "Organization", blurb: "Groupings that ground your agents.",              kinds: ["kb"] },
+  { label: "Organization", blurb: "Containers that hold and ground your primitives.", kinds: ["directory", "kb"] },
 ];
 ---
 
@@ -126,6 +127,12 @@ const GROUPS = [
                         <span class="tag" x-show="item.intelStatus" x-cloak x-text="item.intelStatus"></span>
                         <a class="card-link" :href="`/history?meeting=${item.id}`">Open</a>
                       </div>
+                      <div class="filed-row">
+                        <template x-for="d in directoriesFor(item.id)" {...{ ":key": "d.id" }}>
+                          <span class="filed-chip"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg><span x-text="d.name"></span></span>
+                        </template>
+                        <button type="button" class="file-btn" @click="openFile('meeting', item)" title="File into a directory"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Move to…</button>
+                      </div>
                     </article>
                   </template>
                 )}
@@ -141,6 +148,12 @@ const GROUPS = [
                         <span class="tag" x-text="item.status"></span>
                         <span class="tag" x-show="item.confidence != null" x-cloak x-text="`conf ${Math.round((item.confidence||0)*100)}%`"></span>
                       </div>
+                      <div class="filed-row">
+                        <template x-for="d in directoriesFor(item.id)" {...{ ":key": "d.id" }}>
+                          <span class="filed-chip"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg><span x-text="d.name"></span></span>
+                        </template>
+                        <button type="button" class="file-btn" @click="openFile('artifact', item)" title="File into a directory"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Move to…</button>
+                      </div>
                     </article>
                   </template>
                 )}
@@ -155,6 +168,12 @@ const GROUPS = [
                       <div class="card-foot">
                         <template x-for="t in item.tags" {...{ ":key": "t" }}><span class="tag" x-text="t"></span></template>
                         <span class="card-time" x-text="relTime(item.createdAt)"></span>
+                      </div>
+                      <div class="filed-row">
+                        <template x-for="d in directoriesFor(item.id)" {...{ ":key": "d.id" }}>
+                          <span class="filed-chip"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg><span x-text="d.name"></span></span>
+                        </template>
+                        <button type="button" class="file-btn" @click="openFile('note', item)" title="File into a directory"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Move to…</button>
                       </div>
                     </article>
                   </template>
@@ -175,6 +194,12 @@ const GROUPS = [
                       <div class="card-foot">
                         <template x-for="t in item.tools" {...{ ":key": "t" }}><span class="tag mono" x-text="t"></span></template>
                         <span class="tag warn-tag" x-show="item.kbId" x-cloak x-text="`kb · ${item.kbId}`"></span>
+                      </div>
+                      <div class="filed-row">
+                        <template x-for="d in directoriesFor(item.id)" {...{ ":key": "d.id" }}>
+                          <span class="filed-chip"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg><span x-text="d.name"></span></span>
+                        </template>
+                        <button type="button" class="file-btn" @click="openFile('agent', item)" title="File into a directory"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Move to…</button>
                       </div>
                       <div class="card-actions">
                         <button type="button" class="btn primary sm run-btn" @click="openRun(item)">
@@ -198,6 +223,12 @@ const GROUPS = [
                           <li class="chain-node"><span class="chain-num" x-text="i + 1"></span><span class="chain-name" x-text="agentName(s)"></span></li>
                         </template>
                       </ol>
+                      <div class="filed-row">
+                        <template x-for="d in directoriesFor(item.id)" {...{ ":key": "d.id" }}>
+                          <span class="filed-chip"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg><span x-text="d.name"></span></span>
+                        </template>
+                        <button type="button" class="file-btn" @click="openFile('chain', item)" title="File into a directory"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Move to…</button>
+                      </div>
                     </article>
                   </template>
                 )}
@@ -213,6 +244,43 @@ const GROUPS = [
                         <span class="tag mono" x-show="item.hasGraph" x-cloak>graph</span>
                         <span class="tag" x-show="!item.hasGraph && item.prompt" x-cloak>prompt</span>
                       </div>
+                      <div class="filed-row">
+                        <template x-for="d in directoriesFor(item.id)" {...{ ":key": "d.id" }}>
+                          <span class="filed-chip"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg><span x-text="d.name"></span></span>
+                        </template>
+                        <button type="button" class="file-btn" @click="openFile('workflow', item)" title="File into a directory"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Move to…</button>
+                      </div>
+                    </article>
+                  </template>
+                )}
+
+                {/* directory card — a folder that holds filed primitives */}
+                {kind === "directory" && (
+                  <template x-for={`item in items.directory`} {...{ ":key": "item.id" }}>
+                    <article class="card card--folder dir-card">
+                      <div class="dir-top">
+                        <span class="dir-folder-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+                        </span>
+                        <div class="dir-id">
+                          <div class="card-type"><span class="dot"></span><span>directory</span></div>
+                          <h3 class="card-title" x-text="item.name">Directory</h3>
+                        </div>
+                        <span class="dir-count" x-text="`${item.memberIds.length}`">0</span>
+                      </div>
+                      <p class="card-sub" x-show="item.parentId" x-cloak>in <span class="mono-inline" x-text="item.parentId"></span></p>
+
+                      {/* what's filed in this directory */}
+                      <ul class="dir-members" x-show="item.memberIds.length" x-cloak>
+                        <template x-for="mid in item.memberIds.slice(0, 8)" {...{ ":key": "mid" }}>
+                          <li class="dir-member">
+                            <span class="dir-member-kind" x-text="memberOf(mid).kind"></span>
+                            <span class="dir-member-label" x-text="memberOf(mid).label"></span>
+                          </li>
+                        </template>
+                        <li class="dir-more" x-show="item.memberIds.length > 8" x-cloak x-text="`+${item.memberIds.length - 8} more`"></li>
+                      </ul>
+                      <p class="dir-empty" x-show="!item.memberIds.length" x-cloak>Empty — file a primitive here with “Move to…”.</p>
                     </article>
                   </template>
                 )}
@@ -226,6 +294,12 @@ const GROUPS = [
                       <p class="card-sub"><span x-text="item.memberIds.length"></span> member<span x-show="item.memberIds.length !== 1">s</span></p>
                       <div class="card-foot" x-show="item.memberIds.length" x-cloak>
                         <template x-for="(mid, i) in item.memberIds.slice(0, 6)" {...{ ":key": "i" }}><span class="tag mono" x-text="mid"></span></template>
+                      </div>
+                      <div class="filed-row">
+                        <template x-for="d in directoriesFor(item.id)" {...{ ":key": "d.id" }}>
+                          <span class="filed-chip"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg><span x-text="d.name"></span></span>
+                        </template>
+                        <button type="button" class="file-btn" @click="openFile('kb', item)" title="File into a directory"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Move to…</button>
                       </div>
                     </article>
                   </template>
@@ -364,6 +438,34 @@ const GROUPS = [
         </form>
       </aside>
 
+      {/* Directory form */}
+      <aside class="drawer" x-show="creating === 'directory'" role="dialog" aria-modal="true" aria-label="New directory">
+        <header class="drawer-head">
+          <div>
+            <span class="drawer-eyebrow folder">Organization · identity + membership sync</span>
+            <h2>New directory</h2>
+          </div>
+          <button type="button" class="drawer-close" @click="closeCreate()" aria-label="Close">✕</button>
+        </header>
+        <form class="drawer-body" @submit.prevent="submitDirectory()">
+          <p class="drawer-err" x-show="error" x-cloak x-text="error"></p>
+          <label class="field"><span>Name</span><input type="text" x-model="directoryForm.name" placeholder="Q3 planning" /></label>
+          <label class="field"><span>Parent directory id (optional — for nesting)</span>
+            <select x-model="directoryForm.parentId">
+              <option value="">— none (top level) —</option>
+              <template x-for="d in items.directory" {...{ ":key": "d.id" }}>
+                <option :value="d.id" x-text="d.name"></option>
+              </template>
+            </select>
+          </label>
+          <p class="field-note">A directory is the iPad <strong>zone</strong> — a folder that holds primitives. Its name + nesting + membership sync; its geometry stays per-device. Saves to <code>POST /api/directories</code>. File primitives in with “Move to…”.</p>
+          <div class="drawer-foot">
+            <button type="button" class="btn ghost" @click="closeCreate()">Cancel</button>
+            <button type="submit" class="btn primary" :disabled="busy"><span x-text="busy ? 'Saving…' : 'Create directory'">Create directory</span></button>
+          </div>
+        </form>
+      </aside>
+
       {/* KB form */}
       <aside class="drawer" x-show="creating === 'kb'" role="dialog" aria-modal="true" aria-label="New knowledge base">
         <header class="drawer-head">
@@ -484,6 +586,61 @@ const GROUPS = [
         </div>
       </aside>
     </div>
+
+    {/* ── filing picker (Move to… a directory) ── */}
+    <div class="drawer-overlay file-overlay" x-show="filing" x-cloak @keydown.escape.window="closeFile()">
+      <div class="drawer-backdrop" @click="closeFile()"></div>
+      <aside class="drawer file-drawer" role="dialog" aria-modal="true" aria-label="File into a directory">
+        <header class="drawer-head">
+          <div>
+            <span class="drawer-eyebrow folder">File into a directory</span>
+            <h2 x-text="filing && filing.title">Primitive</h2>
+            <p class="run-role"><span class="file-kind" x-text="filing && filing.kind"></span> · toggle the directories it’s filed in</p>
+          </div>
+          <button type="button" class="drawer-close" @click="closeFile()" aria-label="Close">✕</button>
+        </header>
+        <div class="drawer-body">
+          <p class="drawer-err" x-show="filingError" x-cloak x-text="filingError"></p>
+
+          {/* unreachable directories */}
+          <template x-if="isUnreachable('directory')">
+            <div class="empty-inner unreachable">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" /></svg>
+              <span>Could not reach the hub for directories — filing is unavailable.</span>
+            </div>
+          </template>
+
+          {/* no directories yet */}
+          <div class="empty-inner" x-show="!isUnreachable('directory') && items.directory.length === 0" x-cloak>
+            <span>No directories yet.</span>
+            <button type="button" class="card-link" @click="closeFile(); openCreate('directory')">Create one first</button>
+          </div>
+
+          {/* directory checklist */}
+          <ul class="file-list" x-show="items.directory.length" x-cloak>
+            <template x-for="d in items.directory" {...{ ":key": "d.id" }}>
+              <li>
+                <button type="button" class="file-option" :class="{ on: isFiledIn(filing.id, d.id) }" :disabled="filingBusy === d.id" @click="toggleFile(d)">
+                  <span class="file-check" :class="{ on: isFiledIn(filing.id, d.id) }">
+                    <svg x-show="isFiledIn(filing.id, d.id)" x-cloak viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                  </span>
+                  <span class="file-option-body">
+                    <span class="file-option-name" x-text="d.name"></span>
+                    <span class="file-option-meta" x-text="`${d.memberIds.length} item${d.memberIds.length === 1 ? '' : 's'}`"></span>
+                  </span>
+                  <span class="file-option-state" x-show="filingBusy === d.id" x-cloak>…</span>
+                  <span class="file-option-state filed" x-show="filingBusy !== d.id && isFiledIn(filing.id, d.id)" x-cloak>filed</span>
+                </button>
+              </li>
+            </template>
+          </ul>
+          <p class="field-note">Toggling files (<code>PUT</code>) or unfiles (<code>DELETE</code>) via <code>{"/api/directories/{id}/members/{primitive_id}"}</code>. Membership syncs to every surface; it is organization, not layout.</p>
+        </div>
+        <div class="drawer-foot">
+          <button type="button" class="btn primary" @click="closeFile()">Done</button>
+        </div>
+      </aside>
+    </div>
   </div>
 
   <script>
@@ -516,6 +673,7 @@ const GROUPS = [
   .kind--ok     { --k: var(--ok); }
   .kind--warn   { --k: var(--warn-signal); }
   .kind--violet { --k: #A78BFA; }
+  .kind--folder { --k: #E0A458; } /* a warm folder/manila tone */
 
   /* ── header ── */
   .desk-head {
@@ -669,6 +827,7 @@ const GROUPS = [
   .card--ok     { --ck: var(--ok); }
   .card--warn   { --ck: var(--warn-signal); }
   .card--violet { --ck: #A78BFA; }
+  .card--folder { --ck: #E0A458; }
   .card-type { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-faint); }
   .card-type .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ck, var(--text-faint)); }
   .card-title { margin: 0; font-family: var(--font-display); font-size: var(--font-size-md); font-weight: 600; line-height: var(--line-height-tight); overflow-wrap: anywhere; }
@@ -695,6 +854,86 @@ const GROUPS = [
   .chain-node:not(:last-child)::after { content: ""; position: absolute; left: 9px; top: 22px; width: 1px; height: var(--space-1); background: var(--ck); opacity: 0.5; }
   .chain-num { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: color-mix(in srgb, var(--ck) 18%, var(--surface-3)); color: var(--ck); font-family: var(--font-mono); font-size: 0.625rem; font-weight: 600; flex-shrink: 0; }
   .chain-name { font-family: var(--font-mono); font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── directory card (a folder holding primitives) ── */
+  .dir-card {
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--ck) 8%, var(--surface-2)), var(--surface-2));
+    /* a folder "tab" notch along the top edge */
+    border-top: 2px solid color-mix(in srgb, var(--ck) 55%, transparent);
+  }
+  .dir-top { display: flex; align-items: flex-start; gap: var(--space-3); }
+  .dir-folder-icon {
+    display: inline-grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--ck) 16%, var(--surface-3));
+    color: var(--ck);
+    border: 1px solid color-mix(in srgb, var(--ck) 32%, transparent);
+  }
+  .dir-id { min-width: 0; flex: 1; }
+  .dir-count {
+    font-family: var(--font-mono); font-size: var(--font-size-sm); font-weight: 600;
+    color: var(--ck); background: color-mix(in srgb, var(--ck) 14%, var(--surface-3));
+    border-radius: var(--radius-pill); padding: 1px var(--space-2); min-width: 1.6rem; text-align: center;
+    border: 1px solid color-mix(in srgb, var(--ck) 26%, transparent); flex-shrink: 0;
+  }
+  .mono-inline { font-family: var(--font-mono); color: var(--text-faint); }
+  .dir-members { list-style: none; margin: var(--space-1) 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .dir-member {
+    display: flex; align-items: center; gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    background: var(--surface-1); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs);
+  }
+  .dir-member-kind {
+    font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--ck); background: color-mix(in srgb, var(--ck) 12%, transparent);
+    border-radius: var(--radius-xs); padding: 0 4px; flex-shrink: 0;
+  }
+  .dir-member-label { font-size: var(--font-size-sm); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dir-more { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); padding-left: var(--space-1); }
+  .dir-empty { margin: var(--space-1) 0 0; font-size: var(--font-size-sm); color: var(--text-faint); font-style: italic; }
+
+  /* ── filed-into-directory row (on filable cards) ── */
+  .filed-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-2); padding-top: var(--space-2); border-top: 1px dashed var(--border-subtle); }
+  .filed-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--font-mono); font-size: 0.625rem;
+    color: #E0A458; background: color-mix(in srgb, #E0A458 14%, var(--surface-3));
+    border: 1px solid color-mix(in srgb, #E0A458 28%, transparent);
+    border-radius: var(--radius-pill); padding: 1px var(--space-2);
+  }
+  .file-btn {
+    display: inline-flex; align-items: center; gap: 4px; margin-left: auto;
+    font-family: var(--font-ui); font-size: 0.6875rem; color: var(--text-muted);
+    background: transparent; border: 1px solid var(--border); border-radius: var(--radius-xs);
+    padding: 2px var(--space-2); cursor: pointer;
+    transition: color var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard);
+  }
+  .file-btn:hover { color: #E0A458; border-color: color-mix(in srgb, #E0A458 50%, var(--border)); }
+
+  /* ── filing picker drawer ── */
+  .file-drawer .file-kind { font-family: var(--font-mono); color: #E0A458; text-transform: uppercase; font-size: 0.6875rem; }
+  .drawer-eyebrow.folder { color: #E0A458; }
+  .file-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+  .file-option {
+    width: 100%; display: flex; align-items: center; gap: var(--space-3); text-align: left;
+    padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md);
+    background: var(--surface-2); color: var(--text); cursor: pointer;
+    transition: border-color var(--duration-short) var(--ease-standard), background var(--duration-short) var(--ease-standard);
+  }
+  .file-option:hover { border-color: color-mix(in srgb, #E0A458 50%, var(--border)); background: var(--surface-3); }
+  .file-option:disabled { opacity: 0.6; cursor: default; }
+  .file-option.on { border-color: color-mix(in srgb, #E0A458 55%, transparent); background: color-mix(in srgb, #E0A458 8%, var(--surface-2)); }
+  .file-check {
+    display: inline-grid; place-items: center; width: 22px; height: 22px; flex-shrink: 0;
+    border-radius: var(--radius-xs); border: 1.5px solid var(--border-strong); color: var(--text-on-accent);
+  }
+  .file-check.on { background: #E0A458; border-color: #E0A458; }
+  .file-option-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+  .file-option-name { font-family: var(--font-display); font-weight: 600; font-size: var(--font-size-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-option-meta { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); }
+  .file-option-state { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-faint); flex-shrink: 0; }
+  .file-option-state.filed { color: #E0A458; }
 
   /* empty / unreachable */
   .cards-empty { grid-column: 1 / -1; }

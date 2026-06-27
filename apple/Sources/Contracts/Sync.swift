@@ -19,6 +19,8 @@ public enum SyncKind: String, Codable, Sendable, CaseIterable {
     case note
     // organization
     case kb
+    case directory      // the iPad "zone": identity + nesting (geometry/paint stays local)
+    case membership = "directory_membership"   // a primitive's home-directory edge; wire kind matches the hub
     // capability
     case agent
     case chain
@@ -74,18 +76,23 @@ public struct ChangeSet: Codable, Equatable, Sendable {
     public var artifacts: [Synced<Artifact>]
     public var notes: [Synced<Note>]
     public var kbs: [Synced<KB>]
+    public var directories: [Synced<Directory>]   // the iPad zone's identity + nesting
+    public var directoryMemberships: [Synced<Membership>]  // primitive → home-directory edges
     public var agents: [Synced<Agent>]
     public var chains: [Synced<Chain>]
     public var workflows: [Synced<WorkflowDefinition>]
 
     public init(meetings: [Synced<Meeting>] = [], artifacts: [Synced<Artifact>] = [],
                 notes: [Synced<Note>] = [], kbs: [Synced<KB>] = [],
+                directories: [Synced<Directory>] = [], directoryMemberships: [Synced<Membership>] = [],
                 agents: [Synced<Agent>] = [], chains: [Synced<Chain>] = [],
                 workflows: [Synced<WorkflowDefinition>] = []) {
         self.meetings = meetings
         self.artifacts = artifacts
         self.notes = notes
         self.kbs = kbs
+        self.directories = directories
+        self.directoryMemberships = directoryMemberships
         self.agents = agents
         self.chains = chains
         self.workflows = workflows
@@ -93,10 +100,12 @@ public struct ChangeSet: Codable, Equatable, Sendable {
 
     public var isEmpty: Bool {
         meetings.isEmpty && artifacts.isEmpty && notes.isEmpty && kbs.isEmpty
+            && directories.isEmpty && directoryMemberships.isEmpty
             && agents.isEmpty && chains.isEmpty && workflows.isEmpty
     }
     public var count: Int {
         meetings.count + artifacts.count + notes.count + kbs.count
+            + directories.count + directoryMemberships.count
             + agents.count + chains.count + workflows.count
     }
 }

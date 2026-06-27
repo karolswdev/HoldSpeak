@@ -175,3 +175,92 @@ def test_push_rejects_unknown_kind(env) -> None:
     resp = client.post("/api/sync/push", json=bad)
     assert resp.status_code == 422
     assert db.notes.get("n1") is None
+
+
+# ── Directory + membership sync ──────────────────────────────────────────────
+def test_pull_includes_directories_and_memberships(env) -> None:
+    db, client = env
+    db.directories.upsert(directory_id="d1", name="Root")
+    db.directory_memberships.upsert(primitive_id="note_1", directory_id="d1")
+
+    body = client.get("/api/sync/pull").json()
+    assert len(body["directories"]) == 1
+    drec = body["directories"][0]
+    assert drec["meta"]["kind"] == "directory"
+    assert drec["meta"]["id"] == "d1"
+    assert drec["meta"]["last_modified"].endswith("Z")
+    assert drec["value"]["name"] == "Root"
+
+    assert len(body["directory_memberships"]) == 1
+    mrec = body["directory_memberships"][0]
+    assert mrec["meta"]["kind"] == "directory_membership"
+    # The membership's synced id is the primitive id (the map key).
+    assert mrec["meta"]["id"] == "note_1"
+    assert mrec["value"]["directory_id"] == "d1"
+
+
+def test_directory_membership_push_pull_round_trip_and_tombstone(env) -> None:
+    db, client = env
+    lm = "2030-06-26T12:00:00Z"
+    changeset = {
+        "directories": [{
+            "meta": {"id": "d1", "kind": "directory", "last_modified": lm, "deleted": False},
+            "value": {"name": "Synced", "parent_id": None},
+        }],
+        "directory_memberships": [{
+            "meta": {"id": "note_1", "kind": "directory_membership",
+                     "last_modified": lm, "deleted": False},
+            "value": {"primitive_id": "note_1", "directory_id": "d1"},
+        }],
+    }
+    push = client.post("/api/sync/push", json=changeset)
+    assert push.status_code == 200
+    rcv = push.json()["received"]
+    assert rcv["directories"] == 1 and rcv["directory_memberships"] == 1
+
+    # Merged into the live store.
+    assert db.directories.get("d1").name == "Synced"
+    m = db.directory_memberships.get("note_1")
+    assert m is not None and m.directory_id == "d1"
+
+    # Pull brings them back with the right kind/id.
+    pulled = client.get("/api/sync/pull").json()
+    assert pulled["directories"][0]["meta"]["id"] == "d1"
+    assert pulled["directory_memberships"][0]["meta"]["id"] == "note_1"
+    assert pulled["directory_memberships"][0]["value"]["directory_id"] == "d1"
+
+    # A tombstone push (newer last_modified) unfiles + removes the directory.
+    lm2 = "2030-06-26T13:00:00Z"
+    tomb = {
+        "directories": [{"meta": {"id": "d1", "kind": "directory",
+                                  "last_modified": lm2, "deleted": True},
+                         "value": {"name": "Synced"}}],
+        "directory_memberships": [{"meta": {"id": "note_1", "kind": "directory_membership",
+                                            "last_modified": lm2, "deleted": True},
+                                   "value": {"primitive_id": "note_1", "directory_id": "d1"}}],
+    }
+    assert client.post("/api/sync/push", json=tomb).status_code == 200
+    assert db.directories.get("d1") is None
+    assert db.directory_memberships.get("note_1") is None
+
+    # The tombstones still ride a subsequent pull (so peers learn of the unfile).
+    repulled = client.get("/api/sync/pull").json()
+    assert repulled["directories"][0]["meta"]["deleted"] is True
+    assert repulled["directory_memberships"][0]["meta"]["deleted"] is True
+
+
+def test_directory_membership_push_last_write_wins(env) -> None:
+    db, client = env
+    # Stored copy is newer.
+    db.directory_memberships.upsert(
+        primitive_id="note_1", directory_id="d_new", last_modified="2031-01-01T00:00:00Z"
+    )
+    changeset = {"directory_memberships": [{
+        "meta": {"id": "note_1", "kind": "directory_membership",
+                 "last_modified": "2030-01-01T00:00:00Z", "deleted": False},
+        "value": {"primitive_id": "note_1", "directory_id": "d_old"},
+    }]}
+    resp = client.post("/api/sync/push", json=changeset)
+    assert resp.status_code == 200
+    assert resp.json()["received"]["directory_memberships"] == 0
+    assert db.directory_memberships.get("note_1").directory_id == "d_new"

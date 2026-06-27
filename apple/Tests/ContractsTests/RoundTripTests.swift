@@ -132,4 +132,44 @@ final class RoundTripTests: XCTestCase {
         XCTAssertNil(back.notes.first { $0.meta.id == "n2" }?.value)   // tombstone carries no payload
         XCTAssertEqual(back.agents.first?.value?.name, "Scout")
     }
+
+    /// WAVE 4 (the Directory): a `ChangeSet` carrying directories (the iPad zone's identity +
+    /// nesting) + membership edges round-trips byte-stable through the contract coder. The
+    /// directory shape is identity-only (no geometry/paint keys on the wire); `parent_id` carries
+    /// the nesting; a membership edge maps a primitive to its home directory; deletes are
+    /// tombstones with no payload.
+    func testDirectoryAndMembershipRoundTrip() throws {
+        let enc = HoldSpeakContracts.encoder()
+        let dec = HoldSpeakContracts.decoder()
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+
+        let cs = ChangeSet(
+            directories: [
+                Synced<Directory>.live(Directory(id: "Atlas", name: "Atlas", parentId: nil,
+                                                 createdAt: now, updatedAt: now),
+                                       id: "Atlas", kind: .directory, modifiedAt: now),
+                Synced<Directory>.live(Directory(id: "Atlas/Q3", name: "Q3", parentId: "Atlas",
+                                                 createdAt: now, updatedAt: now),
+                                       id: "Atlas/Q3", kind: .directory, modifiedAt: now),
+                Synced<Directory>.tombstone(id: "Old", kind: .directory, at: now)],
+            directoryMemberships: [
+                Synced<Membership>.live(Membership(primitiveId: "note:n1", directoryId: "Atlas", updatedAt: now),
+                                        id: "note:n1", kind: .membership, modifiedAt: now)])
+
+        let data = try enc.encode(cs)
+        let json = String(data: data, encoding: .utf8)!
+        XCTAssertTrue(json.contains("parent_id"))        // nesting, snake_case on the wire
+        XCTAssertTrue(json.contains("directory_id"))     // the membership edge
+        XCTAssertTrue(json.contains("primitive_id"))
+        XCTAssertFalse(json.contains("\"cx\""))          // geometry NEVER crosses the wire
+        XCTAssertFalse(json.contains("glow"))            // paint NEVER crosses the wire
+
+        let back = try dec.decode(ChangeSet.self, from: data)
+        XCTAssertEqual(back, cs)                          // byte-stable round-trip
+        XCTAssertEqual(back.count, 4)                     // 3 directories + 1 membership
+        XCTAssertEqual(back.directories.first { $0.meta.id == "Atlas/Q3" }?.value?.parentId, "Atlas")
+        XCTAssertNil(back.directories.first { $0.meta.id == "Atlas" }?.value?.parentId)
+        XCTAssertNil(back.directories.first { $0.meta.id == "Old" }?.value)   // tombstone, no payload
+        XCTAssertEqual(back.directoryMemberships.first?.value?.directoryId, "Atlas")
+    }
 }

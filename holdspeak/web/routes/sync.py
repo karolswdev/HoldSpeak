@@ -7,7 +7,8 @@ runtime). Two routes on the user's own server:
   contract change-set: per kind a list of ``{meta:{id, kind, last_modified,
   deleted}, value}`` records. Covers meetings + artifacts (already shipped) and,
   as part of the Primitive Framework hub, the desk's new first-class primitives:
-  notes, kbs, agents, chains, workflows. Read-only.
+  notes, kbs, agents, chains, workflows, directories and directory memberships
+  (the canonical filing map `primitive_id -> directory_id`). Read-only.
 - ``POST /api/sync/push`` — receive a pushed change-set. Meetings/artifacts land
   in a durable JSON inbox (``<db_dir>/sync_inbox/``) exactly as before; the new
   desk primitives are *merged into the live store* with last-write-wins on
@@ -35,7 +36,8 @@ log = get_logger("web.routes.sync")
 # the rest are the Primitive Framework desk primitives, each backed by a real
 # repository on the hub. Keep this in lockstep with the mobile/web SyncKind enum.
 SYNC_KINDS = frozenset(
-    {"meeting", "artifact", "note", "kb", "agent", "chain", "workflow"}
+    {"meeting", "artifact", "note", "kb", "agent", "chain", "workflow",
+     "directory", "directory_membership"}
 )
 
 # Repository-backed primitives the push route merges into the live store (the key
@@ -55,12 +57,21 @@ _MERGEABLE: dict[str, tuple[str, str, dict[str, str]]] = {
     "workflows": ("workflows", "workflow_id", {
         "name": "name", "prompt": "prompt", "graph_json": "graph_json",
     }),
+    "directories": ("directories", "directory_id", {
+        "name": "name", "parent_id": "parent_id",
+    }),
+    # Membership: the synced filing map. Keyed by `primitive_id` (the record id),
+    # value carries the `directory_id` edge. Supersedes the legacy `filed` maps.
+    "directory_memberships": ("directory_memberships", "primitive_id", {
+        "directory_id": "directory_id",
+    }),
 }
 
 # bucket name -> the kind string each record's meta must carry.
 _BUCKET_KIND = {
     "meetings": "meeting", "artifacts": "artifact", "notes": "note",
     "kbs": "kb", "agents": "agent", "chains": "chain", "workflows": "workflow",
+    "directories": "directory", "directory_memberships": "directory_membership",
 }
 
 
@@ -162,6 +173,15 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
                   for c in db.chains.list(include_deleted=True, limit=bounded)]
         workflows = [_primitive_record(w, "workflow")
                      for w in db.workflows.list(include_deleted=True, limit=bounded)]
+        directories = [_primitive_record(d, "directory")
+                       for d in db.directories.list(include_deleted=True, limit=bounded)]
+        # Membership rides the wire too (organization, not layout). The record's
+        # synced id is its `primitive_id` (the `id` property), the value carries
+        # the `directory_id` edge.
+        directory_memberships = [
+            _primitive_record(m, "directory_membership")
+            for m in db.directory_memberships.list(include_deleted=True, limit=bounded)
+        ]
 
         return JSONResponse({
             "meetings": meetings,
@@ -171,6 +191,8 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
             "agents": agents,
             "chains": chains,
             "workflows": workflows,
+            "directories": directories,
+            "directory_memberships": directory_memberships,
         })
 
     @router.post("/api/sync/push")

@@ -27,6 +27,8 @@ from .base import BaseRepository
 from .models import (
     AgentRecord,
     ChainRecord,
+    DirectoryMembershipRecord,
+    DirectoryRecord,
     KBRecord,
     NoteRecord,
     WorkflowRecord,
@@ -560,6 +562,241 @@ class WorkflowRepository(BaseRepository):
             name=row["name"],
             prompt=row["prompt"],
             graph_json=self._json_loads_dict(row["graph_json"]),
+            created_at=row["created_at"],
+            last_modified=row["last_modified"],
+            deleted=bool(row["deleted"]),
+        )
+
+
+class DirectoryRepository(BaseRepository):
+    """CRUD + sync access for Directories (organization/synced).
+
+    The canonical organization container; the iPad's "zone" rendered spatially.
+    Only identity + nesting (`id, name, parent_id`) sync here — geometry/paint is
+    per-device layout and lives on the surface, never canonical. Membership (what
+    is filed inside) is the separate `DirectoryMembershipRepository`.
+    """
+
+    def upsert(
+        self,
+        *,
+        directory_id: str,
+        name: str = "",
+        parent_id: Optional[str] = None,
+        last_modified: Optional[str] = None,
+        deleted: bool = False,
+        created_at: Optional[str] = None,
+    ) -> DirectoryRecord:
+        clean_id = str(directory_id or "").strip()
+        if not clean_id:
+            raise ValueError("directory id is required")
+        now = _now_iso()
+        with self._connection() as conn:
+            existing = conn.execute(
+                "SELECT created_at FROM directories WHERE id = ?", (clean_id,)
+            ).fetchone()
+            created = created_at or (existing["created_at"] if existing else now)
+            conn.execute(
+                """
+                INSERT INTO directories (id, name, parent_id, created_at,
+                                         last_modified, deleted)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    parent_id = excluded.parent_id,
+                    last_modified = excluded.last_modified,
+                    deleted = excluded.deleted
+                """,
+                (
+                    clean_id,
+                    str(name or ""),
+                    str(parent_id).strip() if parent_id else None,
+                    created,
+                    last_modified or now,
+                    1 if deleted else 0,
+                ),
+            )
+        return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
+
+    def get(self, directory_id: str, *, include_deleted: bool = False) -> Optional[DirectoryRecord]:
+        clean_id = str(directory_id or "").strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            row = conn.execute("SELECT * FROM directories WHERE id = ?", (clean_id,)).fetchone()
+        if not row:
+            return None
+        if row["deleted"] and not include_deleted:
+            return None
+        return self._row(row)
+
+    def list(self, *, include_deleted: bool = False, limit: int = 500) -> list[DirectoryRecord]:
+        bounded = max(1, min(int(limit), 2000))
+        with self._connection() as conn:
+            if include_deleted:
+                rows = conn.execute(
+                    "SELECT * FROM directories ORDER BY name ASC LIMIT ?", (bounded,)
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM directories WHERE deleted = 0 ORDER BY name ASC LIMIT ?",
+                    (bounded,),
+                ).fetchall()
+        return [self._row(r) for r in rows]
+
+    def delete(self, directory_id: str) -> bool:
+        clean_id = str(directory_id or "").strip()
+        if not clean_id:
+            return False
+        now = _now_iso()
+        with self._connection() as conn:
+            cur = conn.execute(
+                "UPDATE directories SET deleted = 1, last_modified = ? WHERE id = ? AND deleted = 0",
+                (now, clean_id),
+            )
+            return bool(cur.rowcount and cur.rowcount > 0)
+
+    def purge(self, directory_id: str) -> bool:
+        with self._connection() as conn:
+            cur = conn.execute("DELETE FROM directories WHERE id = ?", (str(directory_id).strip(),))
+            return bool(cur.rowcount and cur.rowcount > 0)
+
+    def _row(self, row: Any) -> DirectoryRecord:
+        return DirectoryRecord(
+            id=row["id"],
+            name=row["name"],
+            parent_id=row["parent_id"],
+            created_at=row["created_at"],
+            last_modified=row["last_modified"],
+            deleted=bool(row["deleted"]),
+        )
+
+
+class DirectoryMembershipRepository(BaseRepository):
+    """CRUD + sync access for directory membership edges (organization/synced).
+
+    The canonical formalization of the legacy `filed` map (`hs.desk.filed` on the
+    web, the iPad's `filed` dict): a synced map `primitive_id → directory_id`.
+    Keyed by `primitive_id` (a primitive is filed in at most one directory), so a
+    re-file overwrites the row. This SUPERSEDES the surfaces' local maps; they
+    become caches hydrated from / pushed to these rows.
+
+    Tombstone semantics: unfiling sets `deleted=1` (the row stays so the unfile
+    propagates). `last_modified` is the last-write-wins conflict key.
+    """
+
+    def upsert(
+        self,
+        *,
+        primitive_id: str,
+        directory_id: str = "",
+        last_modified: Optional[str] = None,
+        deleted: bool = False,
+        created_at: Optional[str] = None,
+    ) -> DirectoryMembershipRecord:
+        clean_pid = str(primitive_id or "").strip()
+        if not clean_pid:
+            raise ValueError("primitive id is required")
+        # A live (non-tombstone) membership must name a directory.
+        clean_dir = str(directory_id or "").strip()
+        if not deleted and not clean_dir:
+            raise ValueError("directory id is required")
+        now = _now_iso()
+        with self._connection() as conn:
+            existing = conn.execute(
+                "SELECT created_at FROM directory_memberships WHERE primitive_id = ?",
+                (clean_pid,),
+            ).fetchone()
+            created = created_at or (existing["created_at"] if existing else now)
+            conn.execute(
+                """
+                INSERT INTO directory_memberships (primitive_id, directory_id,
+                                                   created_at, last_modified, deleted)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(primitive_id) DO UPDATE SET
+                    directory_id = excluded.directory_id,
+                    last_modified = excluded.last_modified,
+                    deleted = excluded.deleted
+                """,
+                (
+                    clean_pid,
+                    clean_dir,
+                    created,
+                    last_modified or now,
+                    1 if deleted else 0,
+                ),
+            )
+        return self.get(clean_pid, include_deleted=True)  # type: ignore[return-value]
+
+    def get(self, primitive_id: str, *, include_deleted: bool = False) -> Optional[DirectoryMembershipRecord]:
+        clean_pid = str(primitive_id or "").strip()
+        if not clean_pid:
+            return None
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM directory_memberships WHERE primitive_id = ?", (clean_pid,)
+            ).fetchone()
+        if not row:
+            return None
+        if row["deleted"] and not include_deleted:
+            return None
+        return self._row(row)
+
+    def list(self, *, include_deleted: bool = False, limit: int = 2000) -> list[DirectoryMembershipRecord]:
+        bounded = max(1, min(int(limit), 5000))
+        with self._connection() as conn:
+            if include_deleted:
+                rows = conn.execute(
+                    "SELECT * FROM directory_memberships ORDER BY last_modified DESC LIMIT ?",
+                    (bounded,),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM directory_memberships WHERE deleted = 0 "
+                    "ORDER BY last_modified DESC LIMIT ?",
+                    (bounded,),
+                ).fetchall()
+        return [self._row(r) for r in rows]
+
+    def list_for_directory(self, directory_id: str) -> list[DirectoryMembershipRecord]:
+        """Live (non-tombstone) members filed into one directory."""
+        clean_dir = str(directory_id or "").strip()
+        if not clean_dir:
+            return []
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM directory_memberships "
+                "WHERE directory_id = ? AND deleted = 0 ORDER BY last_modified DESC",
+                (clean_dir,),
+            ).fetchall()
+        return [self._row(r) for r in rows]
+
+    def delete(self, primitive_id: str) -> bool:
+        """Unfile a primitive (tombstone). Returns True if a live row was affected."""
+        clean_pid = str(primitive_id or "").strip()
+        if not clean_pid:
+            return False
+        now = _now_iso()
+        with self._connection() as conn:
+            cur = conn.execute(
+                "UPDATE directory_memberships SET deleted = 1, last_modified = ? "
+                "WHERE primitive_id = ? AND deleted = 0",
+                (now, clean_pid),
+            )
+            return bool(cur.rowcount and cur.rowcount > 0)
+
+    def purge(self, primitive_id: str) -> bool:
+        with self._connection() as conn:
+            cur = conn.execute(
+                "DELETE FROM directory_memberships WHERE primitive_id = ?",
+                (str(primitive_id).strip(),),
+            )
+            return bool(cur.rowcount and cur.rowcount > 0)
+
+    def _row(self, row: Any) -> DirectoryMembershipRecord:
+        return DirectoryMembershipRecord(
+            primitive_id=row["primitive_id"],
+            directory_id=row["directory_id"],
             created_at=row["created_at"],
             last_modified=row["last_modified"],
             deleted=bool(row["deleted"]),

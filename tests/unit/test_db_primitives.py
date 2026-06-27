@@ -108,3 +108,68 @@ def test_last_modified_is_iso_utc_z(db: Database) -> None:
     # An explicit last_modified is preserved (sync push supplies the peer's stamp).
     note2 = db.notes.upsert(note_id="n2", title="t2", last_modified="2030-01-01T00:00:00Z")
     assert note2.last_modified == "2030-01-01T00:00:00Z"
+
+
+# ── Directory (organization/synced) ──────────────────────────────────────────
+def test_directory_upsert_get_list_nesting_and_tombstone(db: Database) -> None:
+    root = db.directories.upsert(directory_id="d1", name="Root")
+    assert root.id == "d1" and root.name == "Root" and root.parent_id is None
+    assert root.deleted is False and root.last_modified
+
+    # Nesting via parent_id.
+    child = db.directories.upsert(directory_id="d2", name="Child", parent_id="d1")
+    assert child.parent_id == "d1"
+
+    # List excludes tombstones; sorted by name.
+    names = [d.name for d in db.directories.list()]
+    assert names == ["Child", "Root"]
+
+    # Update preserves created_at, advances last_modified.
+    created = root.created_at
+    renamed = db.directories.upsert(directory_id="d1", name="Root 2")
+    assert renamed.name == "Root 2" and renamed.created_at == created
+
+    # Tombstone hides it from the default list/get, stays with include_deleted.
+    assert db.directories.delete("d1") is True
+    assert db.directories.get("d1") is None
+    assert db.directories.get("d1", include_deleted=True).deleted is True
+    assert [d.id for d in db.directories.list()] == ["d2"]
+
+
+def test_directory_upsert_requires_id(db: Database) -> None:
+    with pytest.raises(ValueError):
+        db.directories.upsert(directory_id="  ", name="x")
+
+
+def test_directory_membership_map_and_refile(db: Database) -> None:
+    db.directories.upsert(directory_id="d1", name="A")
+    db.directories.upsert(directory_id="d2", name="B")
+
+    # File a primitive — keyed by primitive_id, the record id IS the primitive id.
+    m = db.directory_memberships.upsert(primitive_id="note_1", directory_id="d1")
+    assert m.primitive_id == "note_1" and m.directory_id == "d1"
+    assert m.id == "note_1"  # synced identity == map key
+    assert m.deleted is False and m.last_modified
+
+    # One filing per primitive: re-file overwrites the edge (no second row).
+    moved = db.directory_memberships.upsert(primitive_id="note_1", directory_id="d2")
+    assert moved.directory_id == "d2"
+    assert len(db.directory_memberships.list()) == 1
+
+    # list_for_directory reflects the move.
+    assert [x.primitive_id for x in db.directory_memberships.list_for_directory("d2")] == ["note_1"]
+    assert db.directory_memberships.list_for_directory("d1") == []
+
+    # Unfile = tombstone (row stays so the unfile propagates over sync).
+    assert db.directory_memberships.delete("note_1") is True
+    assert db.directory_memberships.get("note_1") is None
+    assert db.directory_memberships.get("note_1", include_deleted=True).deleted is True
+    assert db.directory_memberships.list_for_directory("d2") == []
+
+
+def test_directory_membership_live_requires_directory(db: Database) -> None:
+    with pytest.raises(ValueError):
+        db.directory_memberships.upsert(primitive_id="p1", directory_id="")
+    # A tombstone may carry an empty directory (an unfile pushed from a peer).
+    tomb = db.directory_memberships.upsert(primitive_id="p1", directory_id="", deleted=True)
+    assert tomb.deleted is True
