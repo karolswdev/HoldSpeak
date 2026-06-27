@@ -517,7 +517,11 @@ final class VoiceCaptureState: ObservableObject {
         do {
             let segs = try await WhisperKitTranscriber(chunks: sink.drain(), model: "base").transcribe()
             let said = segs.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-            if said.isEmpty { self.error = "Didn't catch that — try again, or type it." } else { text = said }
+            // HSM-18-04 — this is the DICTATION (speak-to-fill) path, so spoken symbols apply here
+            // ("new line" -> newline, "open paren" -> "("). Meeting capture (Stores.swift) stays
+            // verbatim and never runs this. Built-ins only for now; the user-symbol editor follows.
+            if said.isEmpty { self.error = "Didn't catch that — try again, or type it." }
+            else { text = SpokenSymbols().process(said) }
         } catch { self.error = "Couldn't transcribe: \(error)" }
     }
 }
