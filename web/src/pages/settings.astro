@@ -275,6 +275,20 @@ const WHISPER_LANGUAGES = [
               <input class="input" type="text" placeholder="https://hooks.slack.com/services/…" x-model="settings.meeting.slack_webhook_url" />
               <p class="hint">Adds a Send to Slack button to each meeting's aftercare. Sends exactly what you preview, after you approve each send, only to this URL's host. Leave empty to turn the feature off.</p>
             </div>
+            {/* HSM-14: the iPad desk's Webhook connector. Same consent posture as
+                Slack — setting the URL is the consent for exactly its host. */}
+            <div class="field full" x-show="fieldVisible('meetings','common','companion webhook url ipad desk connector discord zapier n8n')" x-cloak>
+              <label>Companion Webhook URL</label>
+              <input class="input" type="text" placeholder="https://hooks.example.com/…" x-model="settings.meeting.companion_webhook_url" />
+              <p class="hint">Powers the iPad desk's Webhook connector (Discord, Zapier, n8n, any endpoint). Sends exactly what you approve, only to this URL's host. Leave empty to turn the connector off.</p>
+            </div>
+            {/* HSM-14: the iPad desk's GitHub connector. Auth is the host's local
+                gh — no token is stored or crosses the wire. */}
+            <div class="field full" x-show="fieldVisible('meetings','common','companion github repo ipad desk connector issue')" x-cloak>
+              <label>Companion GitHub repo</label>
+              <input class="input" type="text" placeholder="owner/name" x-model="settings.meeting.companion_github_repo" />
+              <p class="hint">The default repo the iPad desk's GitHub connector files issues into via your host's signed-in gh. No token is stored or sent. Leave empty to turn the connector off.</p>
+            </div>
           </div>
           <div class="check-row" x-show="sectionVisible('meetings') || searching">
             <label class="check" x-show="fieldVisible('meetings','common','intel enabled meeting intelligence')" x-cloak><input type="checkbox" x-model="settings.meeting.intel_enabled" /> <span>Intel enabled</span></label>

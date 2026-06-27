@@ -27,6 +27,8 @@ log = get_logger("web.routes.system")
 
 # Validates outbound webhook header names on the settings PUT path.
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
+# HSM-14: a GitHub `owner/name` slug for the companion GitHub connector.
+_GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
 
 # The active reply target stays fresh (matches the device path in web_runtime),
 # but the companion overview shows a wider window so the user can see — and
@@ -875,6 +877,51 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                         status_code=400,
                     )
             meeting_data["slack_webhook_url"] = slack_url
+
+            # HSM-14: the iPad desk's Webhook connector URL. Same consent posture
+            # as Slack — empty = the connector is off; anything else must pass THE
+            # shared rule (https with a host; plain http for loopback only). The
+            # URL's host is exactly what the Webhook connector may POST to, and the
+            # URL is a credential: it stays on the host and never rides a payload.
+            companion_webhook_url = str(
+                meeting_data.get(
+                    "companion_webhook_url",
+                    current.meeting.companion_webhook_url or "",
+                )
+                or ""
+            ).strip()
+            if companion_webhook_url:
+                from ...slack_export import slack_webhook_host
+
+                try:
+                    slack_webhook_host(companion_webhook_url)
+                except ValueError as exc:
+                    return JSONResponse(
+                        {"success": False, "error": f"companion_webhook_url: {exc}"},
+                        status_code=400,
+                    )
+            meeting_data["companion_webhook_url"] = companion_webhook_url
+
+            # HSM-14: the iPad desk's GitHub connector default repo (owner/name).
+            # Auth is the host's already-authenticated local `gh` — no token is
+            # stored or crosses the wire. Empty = the connector is off; otherwise
+            # it must be a plain `owner/name` slug.
+            companion_github_repo = str(
+                meeting_data.get(
+                    "companion_github_repo",
+                    current.meeting.companion_github_repo or "",
+                )
+                or ""
+            ).strip()
+            if companion_github_repo and not _GITHUB_REPO_RE.match(companion_github_repo):
+                return JSONResponse(
+                    {
+                        "success": False,
+                        "error": "companion_github_repo must be of the form owner/name",
+                    },
+                    status_code=400,
+                )
+            meeting_data["companion_github_repo"] = companion_github_repo
 
             similarity = float(meeting_data.get("similarity_threshold", current.meeting.similarity_threshold))
             if not (0.0 <= similarity <= 1.0):
