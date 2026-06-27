@@ -331,12 +331,15 @@ struct DeskSyncDriver {
     }
 
     /// Build a driver pointed at the paired hub. Returns nil when no peer is paired.
-    static func make(host: String, port: Int) -> DeskSyncDriver? {
+    /// The `token` is the hub's web auth token (required for a LAN/non-loopback bind) — it
+    /// rides every /api/sync request as `Authorization: Bearer <token>`.
+    static func make(host: String, port: Int, token: String? = nil) -> DeskSyncDriver? {
         guard !host.trimmingCharacters(in: .whitespaces).isEmpty, port > 0,
               let url = URL(string: "http://\(host):\(port)") else { return nil }
         let dir = (try? SyncQueue.defaultDirectory())
             ?? FileManager.default.temporaryDirectory.appendingPathComponent("hs-sync-queue")
-        return DeskSyncDriver(provider: HTTPSyncProvider(config: .init(baseURL: url)),
+        let key = token?.trimmingCharacters(in: .whitespaces)
+        return DeskSyncDriver(provider: HTTPSyncProvider(config: .init(baseURL: url, apiKey: (key?.isEmpty == false) ? key : nil)),
                               queue: SyncQueue(directory: dir))
     }
 

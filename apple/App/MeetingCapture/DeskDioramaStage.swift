@@ -750,97 +750,317 @@ struct DioZoneEditor: View {
     }
 }
 
-// THE NOTE EDITOR — a focused, in-world writing surface (not a system form). The note lifts onto a
-// frosted card in its own mint glow; you give it a title and body, then Done. Delete sits beside it.
-struct DioNoteEditor: View {
-    @State var note: NoteRecord
-    let onSave: (NoteRecord) -> Void; let onDelete: () -> Void; let onCancel: () -> Void
-    @FocusState private var bodyFocused: Bool
-    private let tint = DioPal.mint
+// THE SPEAK-TO-FILL MIC — the one building block behind "a mic on every input". Bind it to ANY
+// String and it dictates into that field: tap → listen (a breathing ring) → tap → transcribe
+// (on-device WhisperKit, fully local) → your words land (appended after existing text, or filling
+// an empty field). It's a voice product; no field should be voiceless. Reuses VoiceCaptureState.
+struct VoiceFillMic: View {
+    @Binding var text: String
+    var tint: Color = DioPal.mint
+    var size: CGFloat = 30
+    /// .append (default) adds after what's there; .replace overwrites — used where re-dictating
+    /// the whole value is the natural intent (a short name field).
+    enum Fill { case append, replace }
+    var fill: Fill = .append
+    @StateObject private var voice = VoiceCaptureState()
+    @State private var pulse = false
+
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.78).ignoresSafeArea().onTapGesture { onSave(note) }
-            RadialGradient(colors: [tint.opacity(0.16), .clear], center: .center, startRadius: 4, endRadius: 360)
-                .ignoresSafeArea().allowsHitTesting(false)
-            VStack(spacing: 16) {
-                HStack(spacing: 9) {
-                    DeskSprite(name: "note", size: 30)
-                    Text("NOTE").font(.system(size: 11, weight: .black, design: .rounded)).tracking(2).foregroundStyle(tint)
-                    Spacer(minLength: 0)
+        Button { tap() } label: {
+            ZStack {
+                Circle().fill(state == .idle ? Color.white.opacity(0.06) : tint.opacity(0.18))
+                    .overlay(Circle().strokeBorder(tint.opacity(state == .idle ? 0.30 : 0.85),
+                                                   lineWidth: state == .listening ? 2 : 1))
+                if state == .listening {
+                    Circle().strokeBorder(Color(hex: 0xFF4D6D).opacity(pulse ? 0.0 : 0.7), lineWidth: 2)
+                        .scaleEffect(pulse ? 1.6 : 1.0)
                 }
-                VStack(alignment: .leading, spacing: 12) {
-                    TextField("Title", text: $note.title)
-                        .font(.system(size: 21, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
-                        .textFieldStyle(.plain)
-                    Rectangle().fill(.white.opacity(0.08)).frame(height: 1)
-                    ZStack(alignment: .topLeading) {
-                        if note.body.isEmpty {
-                            Text("Write your note…").font(.system(size: 15, weight: .medium, design: .rounded))
-                                .foregroundStyle(DioPal.muted.opacity(0.7)).padding(.top, 8).padding(.leading, 5)
-                        }
-                        TextEditor(text: $note.body)
-                            .font(.system(size: 15, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text)
-                            .scrollContentBackground(.hidden).background(.clear).focused($bodyFocused)
-                            .frame(minHeight: 150, maxHeight: 230)
-                    }
-                }
-                .padding(16)
-                .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(.white.opacity(0.05))
-                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(tint.opacity(0.25), lineWidth: 1)))
-                HStack(spacing: 13) {
-                    Button { onDelete() } label: {
-                        HStack(spacing: 7) { Image(systemName: "trash"); Text("Delete").font(.system(size: 15, weight: .heavy, design: .rounded)) }
-                            .foregroundStyle(Color(hex: 0xFF6B6B)).frame(maxWidth: .infinity).frame(height: 54).background(Capsule().fill(.white.opacity(0.06)))
-                    }.buttonStyle(.plain)
-                    Button { onSave(note) } label: {
-                        HStack(spacing: 8) { Image(systemName: "checkmark"); Text("Done").font(.system(size: 16.5, weight: .heavy, design: .rounded)) }
-                            .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 54)
-                            .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
-                            .shadow(color: tint.opacity(0.45), radius: 10, y: 4)
-                    }.buttonStyle(.plain)
+                switch state {
+                case .transcribing:
+                    ProgressView().controlSize(.mini).tint(tint)
+                case .listening:
+                    Image(systemName: "waveform").font(.system(size: size * 0.42, weight: .black))
+                        .foregroundStyle(Color(hex: 0xFF4D6D))
+                default:
+                    Image(systemName: "mic.fill").font(.system(size: size * 0.42, weight: .black))
+                        .foregroundStyle(tint)
                 }
             }
-            .frame(width: 380).padding(.vertical, 8)
+            .frame(width: size, height: size)
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(state == .listening ? "Stop dictation" : "Dictate")
+        .disabled(state == .transcribing)
+        .onAppear { pulse = false }
+        .onChange(of: state) { _, s in
+            if s == .listening { withAnimation(.easeOut(duration: 0.9).repeatForever(autoreverses: false)) { pulse = true } }
+            else { pulse = false }
+        }
+        .onChange(of: voice.text) { _, said in
+            let words = said.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !words.isEmpty else { return }
+            let cur = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if fill == .replace || cur.isEmpty { text = words }
+            else { text = cur + (cur.hasSuffix("\n") ? "" : " ") + words }
+            voice.text = ""   // consume so a future identical dictation still fires onChange
+        }
+    }
+
+    private enum MicState { case idle, listening, transcribing }
+    private var state: MicState {
+        if voice.transcribing { return .transcribing }
+        if voice.recording { return .listening }
+        return .idle
+    }
+    private func tap() {
+        #if canImport(UIKit)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
+        if voice.recording { Task { await voice.stopAndTranscribe() } }
+        else { Task { await voice.start() } }
     }
 }
 
-// THE KB EDITOR — rename or delete a knowledge base, in its own violet focus (matches the note editor).
-struct DioKBEditor: View {
-    @State var kb: KBRecord
-    let onSave: (KBRecord) -> Void; let onDelete: () -> Void; let onCancel: () -> Void
-    private let tint = DioPal.violet
+// A small primary "Done" pill — the in-world commit button shared by the inline editors.
+struct DioDonePill: View {
+    let tint: Color; let action: () -> Void
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.78).ignoresSafeArea().onTapGesture { onSave(kb) }
-            RadialGradient(colors: [tint.opacity(0.16), .clear], center: .center, startRadius: 4, endRadius: 360)
-                .ignoresSafeArea().allowsHitTesting(false)
-            VStack(spacing: 16) {
-                HStack(spacing: 9) {
-                    DeskSprite(name: "crystal", size: 32)
-                    Text("KNOWLEDGE BASE").font(.system(size: 11, weight: .black, design: .rounded)).tracking(2).foregroundStyle(tint)
-                    Spacer(minLength: 0)
-                    Text("\(kb.items) item\(kb.items == 1 ? "" : "s")").font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+        Button(action: action) {
+            HStack(spacing: 6) { Image(systemName: "checkmark").font(.system(size: 13, weight: .black)); Text("Done").font(.system(size: 14, weight: .heavy, design: .rounded)) }
+                .foregroundStyle(.white).padding(.horizontal, 16).frame(height: 38)
+                .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.62)], startPoint: .top, endPoint: .bottom)))
+                .shadow(color: tint.opacity(0.5), radius: 8, y: 3)
+        }.buttonStyle(.plain)
+    }
+}
+
+// THE IN-WORLD NOTE CARD — note editing happens ON THE DESK, in place, never in a dimmed modal.
+// The card you tapped lifts where it sits (its own mint glow), shows a title + body you write or
+// SPEAK (a mic on each field), and commits on Done or when you tap the desk. The parent owns the
+// live draft (a Binding) so a tap-away commits exactly what's on screen.
+struct DioInlineNoteCard: View {
+    @Binding var note: NoteRecord
+    let onDone: () -> Void; let onDelete: () -> Void
+    @FocusState private var bodyFocused: Bool
+    @FocusState private var titleFocused: Bool
+    private let tint = DioPal.mint
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(spacing: 9) {
+                DeskSprite(name: "note", size: 24)
+                Text("NOTE").font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(2).foregroundStyle(tint)
+                Spacer(minLength: 0)
+                DioDonePill(tint: tint, action: onDone)
+            }
+            HStack(spacing: 8) {
+                TextField("Title", text: $note.title)
+                    .font(.system(size: 18, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                    .textFieldStyle(.plain).focused($titleFocused)
+                    .submitLabel(.next).onSubmit { bodyFocused = true }
+                VoiceFillMic(text: $note.title, tint: tint, size: 28, fill: .replace)
+            }
+            Rectangle().fill(.white.opacity(0.08)).frame(height: 1)
+            ZStack(alignment: .topLeading) {
+                if note.body.isEmpty {
+                    Text("Write or speak your note…").font(.system(size: 14.5, weight: .medium, design: .rounded))
+                        .foregroundStyle(DioPal.muted.opacity(0.7)).padding(.top, 8).padding(.leading, 5).allowsHitTesting(false)
                 }
-                TextField("Name", text: $kb.name)
-                    .font(.system(size: 21, weight: .black, design: .rounded)).foregroundStyle(DioPal.text).textFieldStyle(.plain)
-                    .padding(16)
-                    .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white.opacity(0.05))
-                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(tint.opacity(0.25), lineWidth: 1)))
-                HStack(spacing: 13) {
-                    Button { onDelete() } label: {
-                        HStack(spacing: 7) { Image(systemName: "trash"); Text("Delete").font(.system(size: 15, weight: .heavy, design: .rounded)) }
-                            .foregroundStyle(Color(hex: 0xFF6B6B)).frame(maxWidth: .infinity).frame(height: 54).background(Capsule().fill(.white.opacity(0.06)))
-                    }.buttonStyle(.plain)
-                    Button { onSave(kb) } label: {
-                        HStack(spacing: 8) { Image(systemName: "checkmark"); Text("Done").font(.system(size: 16.5, weight: .heavy, design: .rounded)) }
-                            .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 54)
-                            .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
-                            .shadow(color: tint.opacity(0.45), radius: 10, y: 4)
-                    }.buttonStyle(.plain)
+                TextEditor(text: $note.body)
+                    .font(.system(size: 14.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text)
+                    .scrollContentBackground(.hidden).background(.clear).focused($bodyFocused)
+                    .frame(minHeight: 96, maxHeight: 168)
+            }
+            HStack(spacing: 12) {
+                Button(action: onDelete) {
+                    HStack(spacing: 6) { Image(systemName: "trash").font(.system(size: 12, weight: .bold)); Text("Delete").font(.system(size: 13, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(Color(hex: 0xFF6B6B).opacity(0.9))
+                }.buttonStyle(.plain)
+                Spacer(minLength: 0)
+                HStack(spacing: 5) {
+                    Text("dictate").font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+                    VoiceFillMic(text: $note.body, tint: tint, size: 30, fill: .append)
                 }
             }
-            .frame(width: 360).padding(.vertical, 8)
+        }
+        .padding(16).frame(width: 304)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x1A1622), Color(hex: 0x100C18)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(tint.opacity(0.5), lineWidth: 1.5))
+        )
+        .shadow(color: tint.opacity(0.4), radius: 22, y: 8).shadow(color: .black.opacity(0.5), radius: 14, y: 10)
+        .transition(.scale(scale: 0.9).combined(with: .opacity))
+        .onAppear { if note.title.isEmpty { titleFocused = true } else { bodyFocused = true } }
+    }
+}
+
+// THE IN-WORLD KB CARD — rename / delete a knowledge base in place on the desk (violet, matching
+// the note card). Name it by typing or by voice; commit on Done or a tap-away.
+struct DioInlineKBCard: View {
+    @Binding var kb: KBRecord
+    let onDone: () -> Void; let onDelete: () -> Void
+    @FocusState private var nameFocused: Bool
+    private let tint = DioPal.violet
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(spacing: 9) {
+                DeskSprite(name: "crystal", size: 26)
+                Text("KNOWLEDGE BASE").font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1.6).foregroundStyle(tint)
+                Spacer(minLength: 0)
+                Text("\(kb.items) item\(kb.items == 1 ? "" : "s")").font(.system(size: 11.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+            }
+            HStack(spacing: 8) {
+                TextField("Name", text: $kb.name)
+                    .font(.system(size: 18, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                    .textFieldStyle(.plain).focused($nameFocused).submitLabel(.done).onSubmit(onDone)
+                VoiceFillMic(text: $kb.name, tint: tint, size: 28, fill: .replace)
+            }
+            HStack(spacing: 12) {
+                Button(action: onDelete) {
+                    HStack(spacing: 6) { Image(systemName: "trash").font(.system(size: 12, weight: .bold)); Text("Delete").font(.system(size: 13, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(Color(hex: 0xFF6B6B).opacity(0.9))
+                }.buttonStyle(.plain)
+                Spacer(minLength: 0)
+                DioDonePill(tint: tint, action: onDone)
+            }
+        }
+        .padding(16).frame(width: 288)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x1A1622), Color(hex: 0x100C18)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(tint.opacity(0.5), lineWidth: 1.5))
+        )
+        .shadow(color: tint.opacity(0.4), radius: 22, y: 8).shadow(color: .black.opacity(0.5), radius: 14, y: 10)
+        .transition(.scale(scale: 0.9).combined(with: .opacity))
+        .onAppear { nameFocused = true }
+    }
+}
+
+// THE IN-WORLD CONNECT CARD — pair your Mac FROM THE DESK (host · port · token), never a system
+// alert and never buried behind a flag. Host + token are required for a LAN bind; a Test button
+// proves the Mac answers before you commit. Lifts on the desk like the editor cards (no scrim).
+struct DioConnectCard: View {
+    @State var name: String
+    @State var host: String
+    @State var port: String
+    @State var token: String
+    let paired: Bool
+    let onConnect: (_ host: String, _ port: String, _ token: String, _ name: String) -> Void
+    let onForget: () -> Void
+    let onCancel: () -> Void
+    let onTest: (_ host: String, _ port: String, _ token: String) async -> Bool
+    @State private var testing = false
+    @State private var testResult: Bool? = nil
+    @FocusState private var hostFocused: Bool
+    private let tint = DioPal.cobalt
+    private var canConnect: Bool {
+        !host.trimmingCharacters(in: .whitespaces).isEmpty && (Int(port.trimmingCharacters(in: .whitespaces)) ?? 0) > 0
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 11, style: .continuous)
+                        .fill(LinearGradient(colors: [tint.opacity(0.4), Color(hex: 0x12101A)], startPoint: .top, endPoint: .bottom))
+                        .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(tint.opacity(0.7), lineWidth: 1.2))
+                        .frame(width: 38, height: 38)
+                    Image(systemName: "laptopcomputer").font(.system(size: 18, weight: .bold)).foregroundStyle(.white)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(paired ? "YOUR MAC" : "CONNECT YOUR MAC").font(.system(size: 11, weight: .black, design: .rounded)).tracking(1.4).foregroundStyle(tint)
+                    Text("Sync + send run through it").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                }
+                Spacer(minLength: 0)
+                Button(action: onCancel) { Image(systemName: "xmark").font(.system(size: 14, weight: .black)).foregroundStyle(DioPal.muted).frame(width: 30, height: 30).background(Circle().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
+            }
+            field(label: "NAME", placeholder: "e.g. Studio Mac", text: $name, mic: true, keyboard: .default)
+            field(label: "HOST", placeholder: "192.168.1.13", text: $host, mic: true, keyboard: .URL, focus: $hostFocused, mono: true)
+            HStack(alignment: .bottom, spacing: 12) {
+                field(label: "PORT", placeholder: "8765", text: $port, mic: false, keyboard: .numberPad, mono: true).frame(width: 96)
+                tokenField
+            }
+            HStack(spacing: 12) {
+                if paired {
+                    Button(action: onForget) {
+                        HStack(spacing: 6) { Image(systemName: "trash").font(.system(size: 12, weight: .bold)); Text("Forget").font(.system(size: 13, weight: .heavy, design: .rounded)) }
+                            .foregroundStyle(Color(hex: 0xFF6B6B).opacity(0.9))
+                    }.buttonStyle(.plain)
+                }
+                Button { runTest() } label: {
+                    HStack(spacing: 6) {
+                        if testing { ProgressView().controlSize(.mini).tint(tint) }
+                        else if let r = testResult { Image(systemName: r ? "checkmark.circle.fill" : "xmark.circle.fill").foregroundStyle(r ? DioPal.mint : Color(hex: 0xFF6B6B)) }
+                        else { Image(systemName: "dot.radiowaves.left.and.right") }
+                        Text(testResult == true ? "Reachable" : testResult == false ? "No answer" : "Test").font(.system(size: 13, weight: .heavy, design: .rounded))
+                    }
+                    .foregroundStyle(testResult == true ? DioPal.mint : DioPal.text)
+                    .padding(.horizontal, 13).frame(height: 38).background(Capsule().fill(.white.opacity(0.06)))
+                }.buttonStyle(.plain).disabled(!canConnect || testing)
+                Spacer(minLength: 0)
+                Button { onConnect(host, port, token, name) } label: {
+                    HStack(spacing: 6) { Image(systemName: "link").font(.system(size: 13, weight: .black)); Text(paired ? "Update" : "Connect").font(.system(size: 14, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(.white).padding(.horizontal, 18).frame(height: 38)
+                        .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.62)], startPoint: .top, endPoint: .bottom)))
+                        .shadow(color: tint.opacity(0.5), radius: 8, y: 3).opacity(canConnect ? 1 : 0.4)
+                }.buttonStyle(.plain).disabled(!canConnect)
+            }
+        }
+        .padding(18).frame(width: 380)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x1A1622), Color(hex: 0x0E0B16)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(tint.opacity(0.5), lineWidth: 1.5))
+        )
+        .shadow(color: tint.opacity(0.4), radius: 26, y: 10).shadow(color: .black.opacity(0.55), radius: 16, y: 12)
+        .transition(.scale(scale: 0.92).combined(with: .opacity))
+    }
+
+    @ViewBuilder
+    private func field(label: String, placeholder: String, text: Binding<String>, mic: Bool, keyboard: UIKeyboardType, focus: FocusState<Bool>.Binding? = nil, mono: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(label).font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1.4).foregroundStyle(DioPal.muted)
+            HStack(spacing: 8) {
+                Group {
+                    if let focus { TextField(placeholder, text: text).focused(focus) }
+                    else { TextField(placeholder, text: text) }
+                }
+                .font(.system(size: 15, weight: .bold, design: mono ? .monospaced : .rounded)).foregroundStyle(DioPal.text)
+                .textFieldStyle(.plain).keyboardType(keyboard).autocorrectionDisabled().textInputAutocapitalization(.never)
+                if mic { VoiceFillMic(text: text, tint: tint, size: 26, fill: .replace) }
+            }
+            .padding(.horizontal, 12).frame(height: 42)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.white.opacity(0.05))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+        }
+    }
+
+    private var tokenField: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 6) {
+                Text("TOKEN").font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1.4).foregroundStyle(DioPal.muted)
+                Spacer(minLength: 0)
+                Button {
+                    #if canImport(UIKit)
+                    if let s = UIPasteboard.general.string { token = s.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    #endif
+                } label: { Text("Paste").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(tint) }.buttonStyle(.plain)
+            }
+            TextField("from your Mac", text: $token)
+                .font(.system(size: 13, weight: .bold, design: .monospaced)).foregroundStyle(DioPal.text)
+                .textFieldStyle(.plain).autocorrectionDisabled().textInputAutocapitalization(.never)
+                .lineLimit(1).truncationMode(.middle)
+                .padding(.horizontal, 12).frame(height: 42)
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.white.opacity(0.05))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+        }
+    }
+
+    private func runTest() {
+        testing = true; testResult = nil
+        Task {
+            let ok = await onTest(host, port, token)
+            await MainActor.run { testing = false; testResult = ok }
         }
     }
 }
@@ -2002,6 +2222,7 @@ struct DioRouteSheet: View {
                         .scrollContentBackground(.hidden).foregroundStyle(DioPal.text).frame(height: 78)
                         .padding(10).background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.05))
                             .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+                        .overlay(alignment: .bottomTrailing) { VoiceFillMic(text: $prompt, tint: DioPal.accent, size: 28).padding(8) }
                 }
                 HStack(spacing: 10) {
                     Button(action: onCancel) { Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
@@ -2307,12 +2528,19 @@ struct DioActSheet: View {
 // HoldSpeak actuator framework (propose→approve→execute, Phase 37/38/61) via /api/companion/slack/*.
 struct DeskHostLink {
     let host: String; let port: Int
+    // The hub's web auth token. A LAN/non-loopback bind REQUIRES it, so every authed request rides
+    // `Authorization: Bearer <token>` — without this the companion (Slack/webhook) routes 401.
+    var token: String = ""
     enum HostError: Error { case message(String) }
     private var base: URL? { URL(string: "http://\(host):\(port)") }
+    private func auth(_ r: inout URLRequest) {
+        let t = token.trimmingCharacters(in: .whitespaces)
+        if !t.isEmpty { r.setValue("Bearer \(t)", forHTTPHeaderField: "Authorization") }
+    }
 
     func reachable() async -> Bool {
         guard let u = base?.appendingPathComponent("health") else { return false }
-        var r = URLRequest(url: u); r.timeoutInterval = 4
+        var r = URLRequest(url: u); r.timeoutInterval = 4; auth(&r)
         if let (_, resp) = try? await URLSession.shared.data(for: r), (resp as? HTTPURLResponse)?.statusCode == 200 { return true }
         return false
     }
@@ -2337,6 +2565,7 @@ struct DeskHostLink {
         guard let u = base?.appendingPathComponent(path) else { throw HostError.message("No Mac paired.") }
         var r = URLRequest(url: u); r.httpMethod = "POST"; r.timeoutInterval = 14
         r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        auth(&r)
         r.httpBody = try JSONSerialization.data(withJSONObject: body)
         return try await URLSession.shared.data(for: r)
     }
@@ -2509,6 +2738,8 @@ struct DioStage: View {
     // Routed through the paired host PC — the iPad holds no credential. Reuses the desk's Mac pairing.
     @AppStorage("hs.peer.host") private var peerHost = ""
     @AppStorage("hs.peer.port") private var peerPort = "8000"
+    @AppStorage("hs.peer.token") private var peerToken = ""   // hub web auth token (LAN bind requires it)
+    @AppStorage("hs.peer.name") private var peerName = ""     // friendly name for the paired Mac
     // The remembered RUNS-ON choice (Phase-15 fluid compute) — "" = unset (sensible default),
     // "device" = on this iPad, "mac" = on your Mac. The picker still opens; it just pre-honors
     // the last pick so the user isn't re-choosing every run. Falls back to on-device when unpaired.
@@ -2522,7 +2753,7 @@ struct DioStage: View {
     @State private var showSendCard = false
     @State private var sending = false
     @State private var connecting = false
-    @State private var connectURL = ""
+    @State private var railOpen = false   // iPhone (compact): the agent rail collapses behind an edge tab
     @State private var sentToast: String? = nil
     @State private var summonSource: String? = nil       // the card being routed (radial summon active)
     @State private var summonAt: CGPoint = .zero          // where the radial centers (the card's position)
@@ -2621,7 +2852,7 @@ struct DioStage: View {
     private var hostLink: DeskHostLink? {
         let h = peerHost.trimmingCharacters(in: .whitespaces)
         guard !h.isEmpty, let p = Int(peerPort.trimmingCharacters(in: .whitespaces)), p > 0 else { return nil }
-        return DeskHostLink(host: h, port: p)
+        return DeskHostLink(host: h, port: p, token: peerToken)
     }
     /// The status the chip shows — reconciles the raw last-pass `syncState` against the live
     /// truth (no peer paired ⇒ unpaired; a pass in flight ⇒ syncing) so the pill never lies.
@@ -2736,12 +2967,14 @@ struct DioStage: View {
                             }
                     )
 
+                // The decorative title is hidden on a phone (compact) — it collided with the corner
+                // affordances; the desk needs that scarce top width for the pill + create cluster.
                 VStack(spacing: 3) {
                     Text("HoldSpeak").font(.system(size: 25, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
                     Text("drag a meeting onto a zone · tap to open")
                         .font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
                 }
-                .opacity(landed && selected == nil && path.isEmpty && !firstRun ? 1 : 0)
+                .opacity(landed && selected == nil && path.isEmpty && !firstRun && w >= 500 ? 1 : 0)
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.05)
 
                 // THE FIRST BOOT — the cold-start ritual: an empty desk that teaches itself
@@ -2814,34 +3047,79 @@ struct DioStage: View {
                 // THE SYNC STATUS — port your primitives to/from the paired Mac (hub), FELT.
                 // A premium ambient pill that wears the live state (syncing / synced·"2m ago" /
                 // offline·queued / error) instead of a bare spinner. Only when a Mac is paired.
-                if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty && hostLink != nil {
-                    DioSyncStatus(state: liveSyncState, lastSyncedAt: lastSyncedAt,
-                                  peerLabel: peerHost, onSync: { haptic(.light); syncDesk(reason: "manual") })
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding(.top, h * 0.045).padding(.leading, 18 + 50).zIndex(70)
-                        .transition(.scale.combined(with: .opacity))
+                if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty && connecting == false {
+                    Group {
+                        if hostLink != nil {
+                            // Paired: the live sync pill + a quiet gear to re-open pairing (edit token / forget).
+                            HStack(spacing: 8) {
+                                DioSyncStatus(state: liveSyncState, lastSyncedAt: lastSyncedAt,
+                                              peerLabel: peerName.isEmpty ? peerHost : peerName, onSync: { haptic(.light); syncDesk(reason: "manual") })
+                                Button { haptic(.light); withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { connecting = true } } label: {
+                                    Image(systemName: "slider.horizontal.3").font(.system(size: 13, weight: .bold)).foregroundStyle(DioPal.muted)
+                                        .frame(width: 34, height: 34).background(Circle().fill(.white.opacity(0.06)))
+                                }.buttonStyle(.plain)
+                            }
+                        } else {
+                            // Unpaired: an inviting "Connect your Mac" pill — the front-door pairing entry
+                            // (was unreachable on the desk; pairing lived behind the classic home).
+                            Button { haptic(.medium); withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { connecting = true } } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "laptopcomputer.and.arrow.down").font(.system(size: 13, weight: .bold))
+                                    Text("Connect your Mac").font(.system(size: 13, weight: .heavy, design: .rounded))
+                                }
+                                .foregroundStyle(DioPal.cobalt).padding(.horizontal, 14).frame(height: 38)
+                                .background(Capsule().fill(DioPal.cobalt.opacity(0.12)).overlay(Capsule().strokeBorder(DioPal.cobalt.opacity(0.4), lineWidth: 1.2)))
+                            }.buttonStyle(.plain)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(.top, h * 0.045).padding(.leading, 18 + 50).zIndex(70)
+                    .transition(.scale.combined(with: .opacity))
                 }
-                // THE RAIL — Agents · Chains · Play (games live here as a third column, no separate launcher)
+                // THE RAIL — Agents · Chains · Play. On iPad it sits open at the right; on a phone
+                // (compact) it collapses behind a slim edge tab so it never covers the canvas.
                 if landed && selected == nil && summonSource == nil && !capturing && openAgent == nil
                     && editingAgent == nil && editingChain == nil && runChainSheet == nil && chainRelay == nil
-                    && openGameId == nil && !arkadeOpen
+                    && openGameId == nil && !arkadeOpen && connecting == false
                     && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet && !firstRun {
-                    DioAgentRail(agents: agents, chains: chains, dimmed: false,
-                                 onOpen: { a in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { openAgent = a } },
-                                 onCreate: { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingAgent = AgentRecord.blank() } },
-                                 onRunChain: { c in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { runChainSheet = c } },
-                                 onCreateChain: { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingChain = ChainRecord.blank() } },
-                                 onPlay: { id in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { if id == "arkanoid" { arkadeOpen = true } else { openGameId = id } } },
-                                 onPlace: { id in placeGame(id) })
+                    let compact = w < 500
+                    if compact && !railOpen {
+                        // the collapsed handle — tap to slide the rail in
+                        Button { haptic(.light); withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { railOpen = true } } label: {
+                            VStack(spacing: 5) {
+                                Image(systemName: "person.2.fill").font(.system(size: 13, weight: .bold))
+                                Image(systemName: "chevron.left").font(.system(size: 10, weight: .black))
+                            }
+                            .foregroundStyle(DioPal.muted)
+                            .padding(.vertical, 13).padding(.horizontal, 7)
+                            .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(.black.opacity(0.42))
+                                .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+                        }.buttonStyle(.plain)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                        .padding(.trailing, 10).zIndex(64).transition(.move(edge: .trailing).combined(with: .opacity))
+                        .padding(.trailing, 6).zIndex(64).transition(.move(edge: .trailing).combined(with: .opacity))
+                    } else {
+                        if compact {
+                            // tap the canvas to dismiss the rail (transparent, no scrim)
+                            Color.clear.contentShape(Rectangle()).ignoresSafeArea()
+                                .onTapGesture { withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { railOpen = false } }.zIndex(63)
+                        }
+                        DioAgentRail(agents: agents, chains: chains, dimmed: false,
+                                     onOpen: { a in railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { openAgent = a } },
+                                     onCreate: { railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingAgent = AgentRecord.blank() } },
+                                     onRunChain: { c in railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { runChainSheet = c } },
+                                     onCreateChain: { railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingChain = ChainRecord.blank() } },
+                                     onPlay: { id in railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { if id == "arkanoid" { arkadeOpen = true } else { openGameId = id } } },
+                                     onPlace: { id in placeGame(id) })
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                            .padding(.trailing, compact ? 6 : 10).zIndex(64).transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
                 }
 
                 // the mode picker — hovering over the corner mic
                 if showRecordPicker && !capturing {
                     DioRecordModePicker(anchor: orbPos(w, h),
                                         onMeeting: { startCapture(desktop: false) },
-                                        onDesktop: { if hostLink == nil { withAnimation { showRecordPicker = false }; connectURL = peerHost.isEmpty ? "" : "\(peerHost):\(peerPort)"; connecting = true } else { startCapture(desktop: true) } },
+                                        onDesktop: { if hostLink == nil { withAnimation { showRecordPicker = false; connecting = true } } else { startCapture(desktop: true) } },
                                         onClose: { withAnimation { showRecordPicker = false } })
                         .zIndex(116)
                 }
@@ -3025,22 +3303,7 @@ struct DioStage: View {
                                   onCancel: { withAnimation { editingZone = nil } })
                         .id(z.path).zIndex(147).transition(.opacity)
                 }
-                // the note editor — write + place a first-class note
-                if let n = editingNote {
-                    DioNoteEditor(note: n,
-                                  onSave: { saveNote($0) },
-                                  onDelete: { deleteNote("note:\(n.id)") },
-                                  onCancel: { withAnimation { editingNote = nil } })
-                        .id(n.id).zIndex(148).transition(.opacity)
-                }
-                // the KB editor — rename or delete a knowledge base
-                if let k = editingKB {
-                    DioKBEditor(kb: k,
-                                onSave: { renameKB($0) },
-                                onDelete: { deleteKB("kb:\(k.id)") },
-                                onCancel: { withAnimation { editingKB = nil } })
-                        .id(k.id).zIndex(148).transition(.opacity)
-                }
+                // Notes + KBs are edited IN-WORLD on the desk (see `level`), never in a dimmed modal.
                 // the live "running coder" feed — replay the session, approve / answer inline (HSM-17-03)
                 if let c = openCoderSession {
                     DioCoderSession(session: c,
@@ -3055,6 +3318,23 @@ struct DioStage: View {
                                    onSend: { answerCoder(c, $0) },
                                    onCancel: { withAnimation { answeringCoder = nil } })
                         .id(c.id).zIndex(150).transition(.opacity)
+                }
+                // THE IN-WORLD CONNECT CARD — pair the Mac from the desk. A transparent (no scrim)
+                // catcher dismisses it on a tap-away; the card itself carries Connect / Test / Forget.
+                if connecting {
+                    Color.clear.contentShape(Rectangle()).ignoresSafeArea()
+                        .onTapGesture { withAnimation { connecting = false } }.zIndex(151)
+                    DioConnectCard(name: peerName, host: peerHost, port: peerPort.isEmpty ? "8765" : peerPort, token: peerToken,
+                                   paired: hostLink != nil,
+                                   onConnect: { hh, pp, tt, nn in savePeerFull(host: hh, port: pp, token: tt, name: nn) },
+                                   onForget: { forgetPeer() },
+                                   onCancel: { withAnimation { connecting = false } },
+                                   onTest: { hh, pp, tt in
+                                       guard let p = Int(pp.trimmingCharacters(in: .whitespaces)), p > 0 else { return false }
+                                       return await DeskHostLink(host: hh.trimmingCharacters(in: .whitespaces), port: p, token: tt).reachable()
+                                   })
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .padding(.top, h * 0.08).zIndex(152).transition(.scale(scale: 0.92).combined(with: .opacity))
                 }
                 if let t = sentToast {
                     HStack(spacing: 7) { Image(systemName: "checkmark.circle.fill"); Text(t).font(.system(size: 13, weight: .heavy, design: .rounded)) }
@@ -3115,6 +3395,16 @@ struct DioStage: View {
                     model.meetings = [m] + model.meetings
                     outputs = [OutputRecord(id: "delivNew", title: "Summary", body: "Shipping the desk to the web is the Q3 bet; Karol owns mesh sync and the approval contract; air-gapped proof due Friday.", source: "Q3 kickoff", lens: "Summary", path: "")]
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds = ["m:demoNew", "out:delivNew"]; flash = 0.5 }; withAnimation(.easeOut(duration: 0.9)) { flash = 0 } }
+                }
+                // IN-WORLD editing + pairing demos (layout checks for the device punch-list).
+                // HS_DESK_NOTE=1 → a fresh note, edited in place on the desk (no modal).
+                // HS_DESK_CONNECT=1 → the in-world Connect card (host · port · token).
+                if ProcessInfo.processInfo.environment["HS_DESK_NOTE"] == "1" {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { createNote() }
+                }
+                if ProcessInfo.processInfo.environment["HS_DESK_CONNECT"] == "1" {
+                    peerHost = ""   // force the unpaired front door
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { connecting = true } }
                 }
                 // THE SYNC STATUS demo — show the desk wearing each sync state + a pull-arrival.
                 // `synced` (calm, with a "just now") · `syncing` (breathing) · `offline` (queued) ·
@@ -3267,11 +3557,7 @@ struct DioStage: View {
             .alert("Couldn’t route", isPresented: Binding(get: { routeError != nil }, set: { if !$0 { routeError = nil } })) {
                 Button("OK", role: .cancel) { routeError = nil }
             } message: { Text(routeError ?? "") }
-            .alert("Pair your Mac", isPresented: $connecting) {
-                TextField("host or host:port (e.g. 192.168.1.13:8000)", text: $connectURL)
-                Button("Cancel", role: .cancel) {}
-                Button("Save") { savePeer(connectURL) }
-            } message: { Text("Your iPad sends through your Mac. The Slack credential stays on the Mac — the iPad never holds it.") }
+            // Pairing is IN-WORLD on the desk now (DioConnectCard), not a system alert.
             .alert("Save as a tool", isPresented: $savingTool) {
                 TextField("Tool name (e.g. Risks, Brief)", text: $toolName)
                 Button("Cancel", role: .cancel) { routeSourceId = nil }
@@ -3307,14 +3593,16 @@ struct DioStage: View {
                             onEdit: { editingZone = z })
                     .position(x: w * z.cx, y: h * z.cy)
             }
-            if selected == nil && !firstRun && !emptyZone {
+            // The create cluster is always at hand when nothing is selected or being edited — a notes
+            // product should never make you hunt for "New Note". (Was gated off on empty/first-run.)
+            if selected == nil && editingNote == nil && editingKB == nil {
                 HStack(spacing: 8) {
                     Button { createNote() } label: {
                         HStack(spacing: 6) { Image(systemName: "square.and.pencil").font(.system(size: 13, weight: .bold)); Text("New Note").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
                             .foregroundStyle(DioPal.mint).padding(.horizontal, 12).frame(height: 36)
                             .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.mint.opacity(0.4)))
                     }.buttonStyle(.plain)
-                    Button { haptic(.light); namingKB = true } label: {
+                    Button { createKBInline() } label: {
                         HStack(spacing: 6) { Image(systemName: "diamond.fill").font(.system(size: 12, weight: .bold)); Text("New KB").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
                             .foregroundStyle(DioPal.violet).padding(.horizontal, 12).frame(height: 36)
                             .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.violet.opacity(0.4)))
@@ -3328,15 +3616,33 @@ struct DioStage: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(.top, h * 0.12).padding(.trailing, 20)
             }
 
+            // A transparent (NOT dimmed) catcher behind the lifted editor card: tapping the desk
+            // commits the in-world edit. No scrim — the desk stays fully visible around the card.
+            if editingNote != nil || editingKB != nil {
+                Color.clear.contentShape(Rectangle()).ignoresSafeArea()
+                    .onTapGesture { commitInlineEdit() }.zIndex(40)
+            }
+
             ForEach(Array(ms.enumerated()), id: \.element.id) { i, p in
-                DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, looseHome(i, ms.count, w, h), w, h),
-                        hot: dragHotObjectId == p.id, picked: selectedSet.contains(p.id), arrived: arrivedIds.contains(p.id),
-                        syncCue: syncCue(for: p),
-                        onSummon: { summonAt = pos(p.id, looseHome(i, ms.count, w, h), w, h); haptic(.medium)
-                                    withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { summonSource = p.id } },
-                        onTap: { if let c = p as? AgentSessionPrimitive { haptic(.medium); withAnimation { openCoderSession = c.session } } else { select(selected == p.id ? nil : p.id) } },
-                        onDrop: { tr in drop(p, looseHome(i, ms.count, w, h), tr, w, h) },
-                        onDragChange: { pt in updateHot(p, pt, w, h) })
+                let home = looseHome(i, ms.count, w, h)
+                if let n = editingNote, "note:\(n.id)" == p.id {
+                    DioInlineNoteCard(note: editingNoteBinding(n), onDone: { commitNote() }, onDelete: { deleteNote("note:\(n.id)") })
+                        .position(clampInline(pos(p.id, home, w, h), w, h, cardW: 304, cardH: 320))
+                        .zIndex(60).id(n.id)
+                } else if let k = editingKB, "kb:\(k.id)" == p.id {
+                    DioInlineKBCard(kb: editingKBBinding(k), onDone: { commitKB() }, onDelete: { deleteKB("kb:\(k.id)") })
+                        .position(clampInline(pos(p.id, home, w, h), w, h, cardW: 288, cardH: 170))
+                        .zIndex(60).id(k.id)
+                } else {
+                    DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, home, w, h),
+                            hot: dragHotObjectId == p.id, picked: selectedSet.contains(p.id), arrived: arrivedIds.contains(p.id),
+                            syncCue: syncCue(for: p),
+                            onSummon: { summonAt = pos(p.id, home, w, h); haptic(.medium)
+                                        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { summonSource = p.id } },
+                            onTap: { tapPrimitive(p) },
+                            onDrop: { tr in drop(p, home, tr, w, h) },
+                            onDragChange: { pt in updateHot(p, pt, w, h) })
+                }
             }
 
             if selected != nil {
@@ -3345,6 +3651,34 @@ struct DioStage: View {
             }
         }
     }
+
+    /// A live binding the inline editor card writes into, so a tap-away commits exactly what's
+    /// on screen. Non-nil in the branch where it's used (`fallback` only satisfies the type).
+    private func editingNoteBinding(_ fallback: NoteRecord) -> Binding<NoteRecord> {
+        Binding(get: { editingNote ?? fallback }, set: { editingNote = $0 })
+    }
+    private func editingKBBinding(_ fallback: KBRecord) -> Binding<KBRecord> {
+        Binding(get: { editingKB ?? fallback }, set: { editingKB = $0 })
+    }
+    /// Keep a lifted editor card fully on-screen, biased into the top half so the keyboard never
+    /// covers what you're writing.
+    private func clampInline(_ p: CGPoint, _ w: CGFloat, _ h: CGFloat, cardW: CGFloat, cardH: CGFloat) -> CGPoint {
+        let pad: CGFloat = 16
+        let x = min(max(p.x, cardW / 2 + pad), w - cardW / 2 - pad)
+        let y = min(max(p.y, cardH / 2 + pad), max(cardH / 2 + pad, h * 0.46))
+        return CGPoint(x: x, y: y)
+    }
+    /// Tap a desk card: notes + KBs flip to IN-WORLD edit in place; a live coder opens its feed;
+    /// everything else opens its pullout (select).
+    private func tapPrimitive(_ p: any DeskPrimitive) {
+        if let c = p as? AgentSessionPrimitive { haptic(.medium); withAnimation { openCoderSession = c.session } }
+        else if let n = notes.first(where: { "note:\($0.id)" == p.id }) { haptic(.medium); select(nil); withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) { editingNote = n } }
+        else if let k = kbs.first(where: { "kb:\($0.id)" == p.id }) { haptic(.medium); select(nil); withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) { editingKB = k } }
+        else { select(selected == p.id ? nil : p.id) }
+    }
+    private func commitNote() { if let n = editingNote { saveNote(n) } }
+    private func commitKB() { if let k = editingKB { renameKB(k) } else { withAnimation { editingKB = nil } } }
+    private func commitInlineEdit() { if editingNote != nil { commitNote() } else if editingKB != nil { commitKB() } }
 
     private func crumbs() -> [(String, Color)] {
         var out: [(String, Color)] = [("Desk", DioPal.accent)]; var acc: [String] = []
@@ -3358,7 +3692,7 @@ struct DioStage: View {
             if let m = meeting(forObj: prim.id) { openMeeting = m }
             else if let n = notes.first(where: { "note:\($0.id)" == prim.id }) { select(nil); withAnimation { editingNote = n } }
             else if let k = kbs.first(where: { "kb:\($0.id)" == prim.id }) { select(nil); withAnimation { editingKB = k } }
-        case .custom("connect"): connectURL = peerHost.isEmpty ? "" : "\(peerHost):\(peerPort)"; select(nil); connecting = true
+        case .custom("connect"): select(nil); withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { connecting = true }
         case .custom("delete"):
             if prim.id.hasPrefix("note:") { deleteNote(prim.id) }
             else if prim.id.hasPrefix("out:") { deleteOutput(prim.id) }
@@ -3857,12 +4191,27 @@ struct DioStage: View {
             }
         }
     }
-    private func savePeer(_ raw: String) {
-        let s = raw.trimmingCharacters(in: .whitespaces)
-        guard !s.isEmpty else { return }
-        if let colon = s.lastIndex(of: ":"), let p = Int(s[s.index(after: colon)...]), p > 0 {
-            peerHost = String(s[..<colon]); peerPort = String(p)
-        } else { peerHost = s }
+    // Commit the in-world Connect card: host (a bare host, or host:port), port, the auth token and
+    // an optional name. Then sync immediately so pairing is felt right away (the chip goes live).
+    private func savePeerFull(host: String, port: String, token: String, name: String) {
+        var h = host.trimmingCharacters(in: .whitespaces)
+        var p = port.trimmingCharacters(in: .whitespaces)
+        // tolerate a pasted "host:port" in the host field
+        if let colon = h.lastIndex(of: ":"), let pp = Int(h[h.index(after: colon)...]), pp > 0 {
+            p = String(pp); h = String(h[..<colon])
+        }
+        guard !h.isEmpty, (Int(p) ?? 0) > 0 else { return }
+        haptic(.medium)
+        peerHost = h; peerPort = p
+        peerToken = token.trimmingCharacters(in: .whitespaces)
+        peerName = name.trimmingCharacters(in: .whitespaces)
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { connecting = false }
+        syncDesk(reason: "paired")
+    }
+    private func forgetPeer() {
+        haptic(.medium)
+        peerHost = ""; peerToken = ""; peerName = ""
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { connecting = false }
     }
     private func toast(_ s: String) {
         withAnimation { sentToast = s }
@@ -4179,7 +4528,7 @@ struct DioStage: View {
     /// after authoring a Note/Agent, and from the manual "Sync" affordance.
     private func syncDesk(reason: String) {
         guard !syncing, let link = hostLink,
-              let driver = DeskSyncDriver.make(host: link.host, port: link.port) else { return }
+              let driver = DeskSyncDriver.make(host: link.host, port: link.port, token: peerToken) else { return }
         syncing = true
         let snapshot = currentDeskRecords()
         // the desk's primitive ids BEFORE the pull → anything new afterward arrived from a peer
@@ -4321,6 +4670,14 @@ struct DioStage: View {
         let newKB = KBRecord(id: UUID().uuidString, name: nm, path: pathKey, items: 0)
         withAnimation(.spring(response: 0.6, dampingFraction: 0.62)) { kbs.append(newKB) }
         persistKBs(); stampSync(newKB.id)
+    }
+    // create a KB at the current level and immediately open the in-world rename card on it (no
+    // naming alert) — the same instant-create-then-edit gesture as a Note.
+    private func createKBInline() {
+        haptic(.medium)
+        let rec = KBRecord(id: UUID().uuidString, name: "", path: pathKey, items: 0)
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { kbs.append(rec); editingKB = rec }
+        persistKBs()
     }
     private func renameKB(_ rec: KBRecord) {
         guard let i = kbs.firstIndex(where: { $0.id == rec.id }) else { return }

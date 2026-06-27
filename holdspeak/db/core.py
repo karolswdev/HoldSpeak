@@ -36,7 +36,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 class SchemaVersionError(RuntimeError):
@@ -898,8 +898,13 @@ class Database:
 
         Phase 31 (HS-31-04) squashed the former 18-version migration ladder to a
         single canonical schema: SCHEMA_SQL builds the full current schema in one
-        shot. There is no in-place upgrade path (greenfield) — SCHEMA_VERSION starts
-        fresh at 1; future schema changes add migration steps from here.
+        shot. Because every statement in SCHEMA_SQL is `CREATE TABLE/INDEX IF NOT
+        EXISTS` (and the seed rows are `INSERT OR IGNORE/REPLACE`), re-applying it
+        to an existing database is idempotent and only adds what is missing. So the
+        migration FROM an older version IS re-applying SCHEMA_SQL: bumping
+        SCHEMA_VERSION routes an older DB through `_ensure_schema`'s backup-then-apply
+        path, which lands the new tables. v2 (the Primitive Framework) added
+        notes/kbs/agents/chains/workflows/directories/directory_memberships this way.
         """
         conn.executescript(SCHEMA_SQL)
         conn.execute(

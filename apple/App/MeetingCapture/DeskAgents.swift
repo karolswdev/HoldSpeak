@@ -567,10 +567,13 @@ struct DioAgentBuilder: View {
         }
     }
     @ViewBuilder private func field(_ label: String, text: Binding<String>, placeholder: String) -> some View {
-        TextField("", text: text, prompt: Text(placeholder).foregroundColor(DioPal.muted.opacity(0.7)))
-            .font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text)
-            .padding(.horizontal, 14).frame(height: 46)
-            .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+        HStack(spacing: 8) {
+            TextField("", text: text, prompt: Text(placeholder).foregroundColor(DioPal.muted.opacity(0.7)))
+                .font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text)
+            VoiceFillMic(text: text, tint: DioPal.mint, size: 26)
+        }
+        .padding(.horizontal, 14).frame(height: 46)
+        .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
     }
     @ViewBuilder private func editor(_ text: Binding<String>, placeholder: String, minH: CGFloat) -> some View {
         ZStack(alignment: .topLeading) {
@@ -583,6 +586,7 @@ struct DioAgentBuilder: View {
                 .scrollContentBackground(.hidden).padding(.horizontal, 11).padding(.vertical, 7).frame(minHeight: minH)
         }
         .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+        .overlay(alignment: .bottomTrailing) { VoiceFillMic(text: text, tint: DioPal.mint, size: 28).padding(9) }
     }
 
     private func haptic(_ s: UIImpactFeedbackGenerator.FeedbackStyle = .light) {
@@ -729,6 +733,7 @@ struct DioAgentChat: View {
                 .font(.system(size: 15, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text).focused($focused)
                 .padding(.horizontal, 14).padding(.vertical, 10)
                 .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white.opacity(0.06)).overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+            VoiceFillMic(text: $input, tint: tint, size: 36)
             Button { send() } label: {
                 Image(systemName: "arrow.up").font(.system(size: 17, weight: .black)).foregroundStyle(.white)
                     .frame(width: 44, height: 44).background(Circle().fill(canSend ? AnyShapeStyle(tint) : AnyShapeStyle(Color.white.opacity(0.1))))
@@ -864,6 +869,7 @@ struct DioChainSheet: View {
                     if input.isEmpty { Text("e.g. our Q3 plan, the rough idea, the notes…").font(.system(size: 14, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.6)).padding(.horizontal, 16).padding(.top, 13).allowsHitTesting(false) }
                     TextEditor(text: $input).font(.system(size: 14, design: .rounded)).foregroundStyle(DioPal.text).scrollContentBackground(.hidden).padding(.horizontal, 11).padding(.vertical, 6).frame(height: 80)
                 }.background(RoundedRectangle(cornerRadius: 14).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+                    .overlay(alignment: .bottomTrailing) { VoiceFillMic(text: $input, tint: DioPal.accent, size: 28).padding(9) }
                 Button { let q = input.trimmingCharacters(in: .whitespacesAndNewlines); guard ready else { return }; onRun(q) } label: {
                     HStack(spacing: 8) { Image(systemName: "play.fill"); Text("Run the chain").font(.system(size: 16, weight: .heavy, design: .rounded)) }
                         .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 52)
@@ -962,7 +968,10 @@ struct DioChainBuilder: View {
     private func move(_ i: Int, _ d: Int) { let j = i + d; guard draft.steps.indices.contains(j) else { return }; haptic(); draft.steps.swapAt(i, j) }
     @ViewBuilder private func sec<C: View>(_ t: String, @ViewBuilder _ c: () -> C) -> some View { VStack(alignment: .leading, spacing: 10) { Text(t).font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1.2).foregroundStyle(DioPal.muted); c() } }
     @ViewBuilder private func field(_ b: Binding<String>, _ p: String) -> some View {
-        TextField("", text: b, prompt: Text(p).foregroundColor(DioPal.muted.opacity(0.7))).font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text).padding(.horizontal, 14).frame(height: 46).background(RoundedRectangle(cornerRadius: 13).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+        HStack(spacing: 8) {
+            TextField("", text: b, prompt: Text(p).foregroundColor(DioPal.muted.opacity(0.7))).font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.text)
+            VoiceFillMic(text: b, tint: DioPal.mint, size: 26)
+        }.padding(.horizontal, 14).frame(height: 46).background(RoundedRectangle(cornerRadius: 13).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
     }
     private func haptic(_ s: UIImpactFeedbackGenerator.FeedbackStyle = .light) { 
         #if canImport(UIKit)
