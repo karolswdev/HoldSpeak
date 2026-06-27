@@ -291,3 +291,176 @@ def test_malformed_changeset_is_rejected_and_not_merged(env) -> None:
     resp = client.post("/api/sync/push", json=bad)
     assert resp.status_code == 422
     assert client.get("/api/notes/x1").status_code == 404
+
+
+# ── Equilibrium 23-04: meeting + artifact content live-merges (not just inbox) ──
+# The desktop footnote: a meeting/artifact pushed from a peer must round-trip into
+# its REAL table and be queryable through the normal read paths, matching the desk
+# primitives. These prove readability (not inboxing), plus LWW + tombstone.
+
+def _meeting_changeset(meeting_id, lm, *, title="Pushed meeting", deleted=False):
+    """A pushed meeting record in the `MeetingState.to_dict` wire shape."""
+    return {
+        "meta": {"id": meeting_id, "kind": "meeting",
+                 "last_modified": lm, "deleted": deleted},
+        "value": {
+            "id": meeting_id,
+            "started_at": lm,
+            "ended_at": None,
+            "title": title,
+            "tags": ["mobile"],
+            "segments": [{
+                "text": "spoken on the iPad", "speaker": "Me",
+                "speaker_id": None, "start_time": 0.0, "end_time": 2.5,
+                "is_bookmarked": False, "device_id": None,
+            }],
+            "bookmarks": [],
+            "intel": None,
+            "intel_status": {"state": "disabled", "detail": None,
+                             "requested_at": None, "completed_at": None},
+            "mic_label": "Me", "remote_label": "Remote", "web_url": None,
+        },
+    }
+
+
+def _artifact_changeset(artifact_id, meeting_id, lm, *, title="Pushed artifact", deleted=False):
+    """A pushed artifact record in the Phase-0 `Artifact` contract shape."""
+    return {
+        "meta": {"id": artifact_id, "kind": "artifact",
+                 "last_modified": lm, "deleted": deleted},
+        "value": {
+            "id": artifact_id,
+            "meeting_id": meeting_id,
+            "artifact_type": "summary",
+            "title": title,
+            "body_markdown": "# From the iPad\n\nlive-merged",
+            "structured_json": {"k": "v"},
+            "confidence": 0.8,
+            "status": "draft",
+            "plugin_id": "mobile",
+            "plugin_version": "1.0",
+            "sources": [{"source_type": "segment", "source_ref": "seg-1"}],
+        },
+    }
+
+
+def test_pushed_meeting_and_artifact_are_readable_via_crud_and_pull(env) -> None:
+    """A meeting + its artifact pushed the IPAD way live-merge into their real
+    tables and are queryable via the normal read paths (NOT just inboxed)."""
+    db, client = env
+    lm = "2030-06-26T12:00:00Z"
+    changeset = {
+        "meetings": [_meeting_changeset("ipad_meeting_1", lm)],
+        "artifacts": [_artifact_changeset("ipad_artifact_1", "ipad_meeting_1", lm)],
+    }
+    push = client.post("/api/sync/push", json=changeset)
+    assert push.status_code == 200, push.text
+    rcv = push.json()["received"]
+    assert rcv["meetings"] == 1 and rcv["artifacts"] == 1
+
+    # Readable via the normal meeting read path (GET /api/meetings/{id}).
+    meeting = client.get("/api/meetings/ipad_meeting_1")
+    assert meeting.status_code == 200
+    body = meeting.json()
+    assert body["title"] == "Pushed meeting"
+    assert body["tags"] == ["mobile"]
+    assert len(body["segments"]) == 1
+    assert body["segments"][0]["text"] == "spoken on the iPad"
+
+    # Readable via the normal artifact read path (GET .../artifacts).
+    arts = client.get("/api/meetings/ipad_meeting_1/artifacts")
+    assert arts.status_code == 200
+    rows = arts.json()["artifacts"]
+    assert len(rows) == 1
+    assert rows[0]["id"] == "ipad_artifact_1"
+    assert rows[0]["title"] == "Pushed artifact"
+    assert rows[0]["body_markdown"] == "# From the iPad\n\nlive-merged"
+    assert rows[0]["structured_json"] == {"k": "v"}
+    assert rows[0]["sources"] == [{"source_type": "segment", "source_ref": "seg-1"}]
+
+    # And both ride the next pull (the round-trip a second surface would read).
+    pulled = client.get("/api/sync/pull").json()
+    assert _bucket_by_id(pulled["meetings"], "ipad_meeting_1") is not None
+    assert _bucket_by_id(pulled["artifacts"], "ipad_artifact_1") is not None
+
+
+def test_pushed_meeting_lww_older_does_not_clobber_newer(env) -> None:
+    """An older pushed meeting edit does NOT clobber a newer stored one; a newer
+    push wins — LWW on last_modified, in the real meetings table."""
+    db, client = env
+    newer = "2030-06-26T12:00:00Z"
+    older = "2020-01-01T00:00:00Z"
+    assert client.post(
+        "/api/sync/push",
+        json={"meetings": [_meeting_changeset("m_lww", newer, title="Newer")]},
+    ).status_code == 200
+
+    # Older push for the same id → skipped.
+    resp = client.post(
+        "/api/sync/push",
+        json={"meetings": [_meeting_changeset("m_lww", older, title="Stale")]},
+    )
+    assert resp.json()["received"]["meetings"] == 0
+    assert client.get("/api/meetings/m_lww").json()["title"] == "Newer"
+
+    # A strictly newer push → wins.
+    newest = "2040-01-01T00:00:00Z"
+    resp = client.post(
+        "/api/sync/push",
+        json={"meetings": [_meeting_changeset("m_lww", newest, title="Newest")]},
+    )
+    assert resp.json()["received"]["meetings"] == 1
+    assert client.get("/api/meetings/m_lww").json()["title"] == "Newest"
+
+
+def test_pushed_meeting_tombstone_removes_it(env) -> None:
+    """A newer `deleted:true` meeting push removes it from the live store."""
+    db, client = env
+    lm = "2030-06-26T12:00:00Z"
+    client.post("/api/sync/push", json={"meetings": [_meeting_changeset("m_tomb", lm)]})
+    assert client.get("/api/meetings/m_tomb").status_code == 200
+
+    later = "2031-01-01T00:00:00Z"
+    resp = client.post(
+        "/api/sync/push",
+        json={"meetings": [_meeting_changeset("m_tomb", later, deleted=True)]},
+    )
+    assert resp.json()["received"]["meetings"] == 1
+    assert client.get("/api/meetings/m_tomb").status_code == 404
+
+
+def test_pushed_artifact_lww_and_tombstone(env) -> None:
+    """Artifact LWW + tombstone hold in the real artifacts table."""
+    db, client = env
+    lm = "2030-06-26T12:00:00Z"
+    # Need a meeting for the artifact FK; push it first.
+    client.post("/api/sync/push", json={
+        "meetings": [_meeting_changeset("a_meet", lm)],
+        "artifacts": [_artifact_changeset("a_art", "a_meet", lm, title="v1")],
+    })
+    rows = client.get("/api/meetings/a_meet/artifacts").json()["artifacts"]
+    assert rows[0]["title"] == "v1"
+
+    # Older push → skipped.
+    older = "2020-01-01T00:00:00Z"
+    resp = client.post("/api/sync/push", json={
+        "artifacts": [_artifact_changeset("a_art", "a_meet", older, title="stale")],
+    })
+    assert resp.json()["received"]["artifacts"] == 0
+    assert client.get("/api/meetings/a_meet/artifacts").json()["artifacts"][0]["title"] == "v1"
+
+    # Newer push → wins.
+    newer = "2040-01-01T00:00:00Z"
+    resp = client.post("/api/sync/push", json={
+        "artifacts": [_artifact_changeset("a_art", "a_meet", newer, title="v2")],
+    })
+    assert resp.json()["received"]["artifacts"] == 1
+    assert client.get("/api/meetings/a_meet/artifacts").json()["artifacts"][0]["title"] == "v2"
+
+    # Newer tombstone → removed.
+    newest = "2050-01-01T00:00:00Z"
+    resp = client.post("/api/sync/push", json={
+        "artifacts": [_artifact_changeset("a_art", "a_meet", newest, deleted=True)],
+    })
+    assert resp.json()["received"]["artifacts"] == 1
+    assert client.get("/api/meetings/a_meet/artifacts").json()["artifacts"] == []

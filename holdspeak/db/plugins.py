@@ -667,8 +667,15 @@ class PluginArtifactRepository(BaseRepository):
         plugin_id: str = "unknown",
         plugin_version: str = "unknown",
         sources: Optional[list[dict[str, str]]] = None,
+        updated_at: Optional[str] = None,
     ) -> None:
-        """Insert or update one synthesized artifact and its lineage sources."""
+        """Insert or update one synthesized artifact and its lineage sources.
+
+        ``updated_at`` defaults to now; the sync receiver passes the pushed
+        ``last_modified`` so the artifact's last-write-wins key survives the
+        round-trip (``pull`` re-emits ``updated_at`` as the artifact's
+        ``last_modified``), mirroring how meetings preserve ``started_at``.
+        """
         clean_artifact_id = str(artifact_id).strip()
         clean_meeting_id = str(meeting_id).strip()
         clean_type = str(artifact_type).strip().lower() or "plugin_output"
@@ -698,6 +705,7 @@ class PluginArtifactRepository(BaseRepository):
                 normalized_sources.append((source_type, source_ref))
 
         now_iso = datetime.now().isoformat()
+        updated_iso = str(updated_at).strip() if isinstance(updated_at, str) and updated_at.strip() else now_iso
         with self._connection() as conn:
             conn.execute(
                 """
@@ -730,7 +738,7 @@ class PluginArtifactRepository(BaseRepository):
                     clean_plugin_id,
                     clean_plugin_version,
                     now_iso,
-                    now_iso,
+                    updated_iso,
                 ),
             )
             conn.execute(
@@ -745,6 +753,64 @@ class PluginArtifactRepository(BaseRepository):
                     """,
                     (clean_artifact_id, source_type, source_ref, now_iso),
                 )
+
+    def get_artifact(self, artifact_id: str) -> Optional[ArtifactSummary]:
+        """Load one synthesized artifact by id (including lineage refs).
+
+        The single-record read path the sync receiver uses for last-write-wins
+        conflict resolution; mirrors the row shape `list_artifacts` returns.
+        """
+        clean_id = str(artifact_id or "").strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM artifacts WHERE id = ?", (clean_id,)
+            ).fetchone()
+            if row is None:
+                return None
+            source_rows = conn.execute(
+                """
+                SELECT source_type, source_ref
+                FROM artifact_sources
+                WHERE artifact_id = ?
+                ORDER BY source_type ASC, source_ref ASC
+                """,
+                (clean_id,),
+            ).fetchall()
+
+        sources = [
+            {"source_type": str(r["source_type"]), "source_ref": str(r["source_ref"])}
+            for r in source_rows
+        ]
+        return ArtifactSummary(
+            id=str(row["id"]),
+            meeting_id=str(row["meeting_id"]),
+            artifact_type=str(row["artifact_type"]),
+            title=str(row["title"]),
+            body_markdown=str(row["body_markdown"] or ""),
+            structured_json=self._json_loads_dict(row["structured_json"]),
+            confidence=float(row["confidence"] if row["confidence"] is not None else 0.0),
+            status=str(row["status"] or "draft"),
+            plugin_id=str(row["plugin_id"] or "unknown"),
+            plugin_version=str(row["plugin_version"] or "unknown"),
+            sources=sources,
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
+    def delete_artifact(self, artifact_id: str) -> bool:
+        """Hard-delete one artifact (sources cascade). Returns True if removed.
+
+        Artifacts are content (not first-class synced primitives), so a synced
+        delete is a hard removal, mirroring `delete_meeting`.
+        """
+        clean_id = str(artifact_id or "").strip()
+        if not clean_id:
+            return False
+        with self._connection() as conn:
+            result = conn.execute("DELETE FROM artifacts WHERE id = ?", (clean_id,))
+            return result.rowcount > 0
 
     def list_artifacts(
         self,

@@ -9,10 +9,14 @@ runtime). Two routes on the user's own server:
   as part of the Primitive Framework hub, the desk's new first-class primitives:
   notes, kbs, agents, chains, workflows, directories and directory memberships
   (the canonical filing map `primitive_id -> directory_id`). Read-only.
-- ``POST /api/sync/push`` — receive a pushed change-set. Meetings/artifacts land
-  in a durable JSON inbox (``<db_dir>/sync_inbox/``) exactly as before; the new
-  desk primitives are *merged into the live store* with last-write-wins on
-  ``last_modified`` and tombstone deletes, since they have real repositories.
+- ``POST /api/sync/push`` — receive a pushed change-set. Every kind is *merged
+  into the live store* with last-write-wins on ``last_modified`` and tombstone
+  deletes: the desk primitives through their repositories, and meetings +
+  artifacts through ``MeetingRepository``/``PluginArtifactRepository``, so a
+  meeting or artifact pushed from a peer is immediately queryable via the normal
+  read paths (``GET /api/meetings/{id}``, ``.../artifacts``), matching the other
+  kinds. A copy of the pushed meeting/artifact records is also kept in a durable
+  JSON inbox (``<db_dir>/sync_inbox/``) as a replayable audit trail.
 
 The wire is snake_case, ISO-8601 UTC ``Z`` timestamps, last-write-by
 ``last_modified`` conflict resolution, and tombstone deletes — mirroring how
@@ -127,6 +131,199 @@ def _primitive_record(rec: Any, kind: str) -> dict[str, Any]:
     }
 
 
+def _parse_dt(value: Any) -> Any:
+    """ISO-8601 string → naive datetime; tolerant of a trailing ``Z`` (UTC).
+
+    Returned naive (tzinfo dropped) to match how every other meeting path stores
+    timestamps (naive ``datetime.now()``); a stored mix of naive/aware stamps
+    breaks ``MeetingState.duration`` (naive ``now`` minus an aware ``started_at``).
+    """
+    from datetime import datetime
+
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.replace(tzinfo=None) if value.tzinfo is not None else value
+    text = str(value).strip()
+    if not text:
+        return None
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    parsed = datetime.fromisoformat(text)
+    return parsed.replace(tzinfo=None) if parsed.tzinfo is not None else parsed
+
+
+def _meeting_state_from_value(value: dict[str, Any]) -> Any:
+    """A pushed meeting `value` (the `MeetingState.to_dict` wire shape) → a
+    `MeetingState`, ready to hand to ``MeetingRepository.save_meeting``.
+
+    The exact inverse of `MeetingState.to_dict`: started/ended timestamps,
+    transcript segments, bookmarks and the latest intel snapshot all round-trip.
+    """
+    from ...meeting_session import (
+        Bookmark,
+        IntelSnapshot,
+        MeetingState,
+        TranscriptSegment,
+    )
+
+    segments = [
+        TranscriptSegment(
+            text=str(seg.get("text") or ""),
+            speaker=str(seg.get("speaker") or ""),
+            start_time=float(seg.get("start_time") or 0.0),
+            end_time=float(seg.get("end_time") or 0.0),
+            is_bookmarked=bool(seg.get("is_bookmarked")),
+            speaker_id=seg.get("speaker_id"),
+            device_id=seg.get("device_id"),
+        )
+        for seg in (value.get("segments") or [])
+        if isinstance(seg, dict)
+    ]
+    bookmarks = []
+    for bm in value.get("bookmarks") or []:
+        if not isinstance(bm, dict):
+            continue
+        created = _parse_dt(bm.get("created_at"))
+        kwargs: dict[str, Any] = {
+            "timestamp": float(bm.get("timestamp") or 0.0),
+            "label": str(bm.get("label") or ""),
+        }
+        if created is not None:
+            kwargs["created_at"] = created
+        bookmarks.append(Bookmark(**kwargs))
+
+    intel = None
+    raw_intel = value.get("intel")
+    if isinstance(raw_intel, dict):
+        intel = IntelSnapshot(
+            timestamp=float(raw_intel.get("timestamp") or 0.0),
+            topics=[str(t) for t in (raw_intel.get("topics") or [])],
+            action_items=list(raw_intel.get("action_items") or []),
+            summary=str(raw_intel.get("summary") or ""),
+        )
+
+    status_block = value.get("intel_status")
+    if isinstance(status_block, dict):
+        intel_status = str(status_block.get("state") or "disabled")
+        intel_status_detail = status_block.get("detail")
+        intel_requested_at = _parse_dt(status_block.get("requested_at"))
+        intel_completed_at = _parse_dt(status_block.get("completed_at"))
+    else:
+        intel_status = "disabled"
+        intel_status_detail = None
+        intel_requested_at = None
+        intel_completed_at = None
+
+    started = _parse_dt(value.get("started_at"))
+    if started is None:
+        from datetime import datetime
+
+        started = datetime.now()
+
+    return MeetingState(
+        id=str(value.get("id") or "").strip(),
+        started_at=started,
+        ended_at=_parse_dt(value.get("ended_at")),
+        title=value.get("title"),
+        tags=[str(t) for t in (value.get("tags") or [])],
+        segments=segments,
+        bookmarks=bookmarks,
+        intel=intel,
+        intel_status=intel_status,
+        intel_status_detail=intel_status_detail,
+        intel_requested_at=intel_requested_at,
+        intel_completed_at=intel_completed_at,
+        mic_label=str(value.get("mic_label") or "Me"),
+        remote_label=str(value.get("remote_label") or "Remote"),
+        web_url=value.get("web_url"),
+    )
+
+
+def _merge_meetings(db: Any, records: list[dict[str, Any]]) -> int:
+    """Live-merge pushed meeting records (LWW on `last_modified`, tombstone-aware).
+
+    The LWW stamp for the stored copy is the meeting's `started_at` ISO — exactly
+    the field ``pull`` emits as the meeting's `last_modified`, so the conflict key
+    is symmetric across surfaces.
+    """
+    merged = 0
+    for rec in records:
+        meta = rec["meta"]
+        rec_id = str(meta["id"]).strip()
+        if not rec_id:
+            continue
+        incoming_lm = _parse_dt(meta.get("last_modified"))
+        existing = db.meetings.get_meeting(rec_id)
+        if existing is not None and incoming_lm is not None:
+            # The stored copy's LWW key is `started_at` — the field `pull` emits
+            # as the meeting's `last_modified`, so the conflict key is symmetric.
+            if existing.started_at >= incoming_lm:
+                continue
+        if meta.get("deleted"):
+            db.meetings.delete_meeting(rec_id)
+            merged += 1
+            continue
+        value = rec.get("value") or {}
+        if not isinstance(value, dict):
+            continue
+        state = _meeting_state_from_value({**value, "id": rec_id})
+        if not state.id:
+            continue
+        db.meetings.save_meeting(state)
+        merged += 1
+    return merged
+
+
+def _merge_artifacts(db: Any, records: list[dict[str, Any]]) -> int:
+    """Live-merge pushed artifact records (LWW on `last_modified`, tombstone-aware).
+
+    The LWW stamp for the stored copy is the artifact's `updated_at` ISO — the
+    field ``pull`` emits as the artifact's `last_modified`.
+    """
+    merged = 0
+    for rec in records:
+        meta = rec["meta"]
+        rec_id = str(meta["id"]).strip()
+        if not rec_id:
+            continue
+        incoming_lm = _parse_dt(meta.get("last_modified"))
+        existing = db.plugins.get_artifact(rec_id)
+        if existing is not None and incoming_lm is not None:
+            # The stored copy's LWW key is `updated_at` — the field `pull` emits.
+            if existing.updated_at >= incoming_lm:
+                continue
+        if meta.get("deleted"):
+            db.plugins.delete_artifact(rec_id)
+            merged += 1
+            continue
+        value = rec.get("value") or {}
+        if not isinstance(value, dict):
+            continue
+        meeting_id = str(value.get("meeting_id") or "").strip()
+        if not meeting_id:
+            # An artifact with no meeting can't be filed (FK to meetings); skip.
+            continue
+        db.plugins.record_artifact(
+            artifact_id=rec_id,
+            meeting_id=meeting_id,
+            artifact_type=str(value.get("artifact_type") or "plugin_output"),
+            title=str(value.get("title") or "Artifact"),
+            body_markdown=str(value.get("body_markdown") or ""),
+            structured_json=value.get("structured_json") if isinstance(value.get("structured_json"), dict) else None,
+            confidence=float(value.get("confidence") or 0.0),
+            status=str(value.get("status") or "draft"),
+            plugin_id=str(value.get("plugin_id") or "unknown"),
+            plugin_version=str(value.get("plugin_version") or "unknown"),
+            sources=value.get("sources") if isinstance(value.get("sources"), list) else None,
+            # Preserve the wire LWW key (naive, to match the stored stamp format)
+            # so it survives the round-trip and `pull` re-emits it.
+            updated_at=incoming_lm.isoformat() if incoming_lm is not None else None,
+        )
+        merged += 1
+    return merged
+
+
 def build_sync_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -225,22 +422,29 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
         db = get_database()
         received: dict[str, int] = {}
 
-        # Meetings/artifacts: durable JSON inbox (merge into the live store is
-        # HSM-10-03 territory; unchanged here).
-        n_meetings = len(body.get("meetings") or [])
-        n_artifacts = len(body.get("artifacts") or [])
-        if n_meetings or n_artifacts:
+        # Meetings/artifacts: live-merge into their real tables (LWW on
+        # last_modified, tombstone-aware) so a pushed meeting/artifact is
+        # immediately queryable via the normal read paths, matching the desk
+        # primitives. A copy of the pushed records is also kept in the durable
+        # JSON inbox as a replayable audit trail.
+        meeting_records = body.get("meetings") or []
+        artifact_records = body.get("artifacts") or []
+        if meeting_records or artifact_records:
             inbox = db.db_path.parent / "sync_inbox"
             inbox.mkdir(parents=True, exist_ok=True)
             idx = len(list(inbox.glob("inbox-*.json")))
             dest = inbox / f"inbox-{idx:06d}.json"
             dest.write_text(json.dumps(
-                {"meetings": body.get("meetings") or [],
-                 "artifacts": body.get("artifacts") or []}
+                {"meetings": meeting_records, "artifacts": artifact_records}
             ), encoding="utf-8")
-            log.info(f"sync push inboxed: meetings={n_meetings} artifacts={n_artifacts} -> {dest.name}")
-        received["meetings"] = n_meetings
-        received["artifacts"] = n_artifacts
+        # Meetings merge before artifacts so each artifact's meeting FK exists.
+        received["meetings"] = _merge_meetings(db, meeting_records)
+        received["artifacts"] = _merge_artifacts(db, artifact_records)
+        log.info(
+            "sync push merged: meetings=%s/%s artifacts=%s/%s",
+            received["meetings"], len(meeting_records),
+            received["artifacts"], len(artifact_records),
+        )
 
         # Desk primitives: merge into the live store, last-write-wins on
         # last_modified, tombstone deletes.
