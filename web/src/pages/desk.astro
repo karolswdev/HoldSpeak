@@ -78,6 +78,18 @@ const GROUPS = [
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v5h-5" /></svg>
         <span x-text="`Synced ${updatedLabel()}`">not synced</span>
       </span>
+      {/* ── ambient trust: the canonical egress badge + a readiness line,
+            both sourced from GET /api/setup/status (no reassurance prose;
+            POSITIONING canon — ONE structured badge, never a sentence). ── */}
+      <a class="hub-egress egress-badge" :class="`is-${egressBadge().scope}`"
+         x-show="setupLoaded" x-cloak href="/setup"
+         :title="egressBadge().title" :aria-label="egressBadge().title"
+         x-text="egressBadge().text">Local</a>
+      <a class="hub-ready" :class="readyTone()" x-show="setupLoaded" x-cloak
+         href="/setup" :title="readyTitle()">
+        <span class="hub-ready-dot"></span>
+        <span x-text="readyLine()">Ready</span>
+      </a>
       <span class="hub-error" x-show="error" x-cloak x-text="error"></span>
     </div>
 
@@ -540,8 +552,63 @@ const GROUPS = [
         <form class="drawer-body" @submit.prevent="submitWorkflow()">
           <p class="drawer-err" x-show="error" x-cloak x-text="error"></p>
           <label class="field"><span>Name</span><input type="text" x-model="workflowForm.name" placeholder="Weekly digest" /></label>
-          <label class="field"><span>Prompt</span><textarea rows="6" x-model="workflowForm.prompt" placeholder="Summarize this week's meetings into a digest…"></textarea></label>
-          <p class="field-note">A saved prompt that wires primitives into a run. Graph authoring lives in the Workbench. Saves to <code>POST /api/workflows</code>.</p>
+
+          {/* mode toggle — a saved prompt OR a linear chain */}
+          <div class="field">
+            <span>How it runs</span>
+            <div class="seg" role="tablist" aria-label="Workflow authoring mode">
+              <button type="button" class="seg-opt" :class="{ on: workflowForm.mode === 'prompt' }" @click="workflowForm.mode = 'prompt'" role="tab" :aria-selected="workflowForm.mode === 'prompt'">Prompt</button>
+              <button type="button" class="seg-opt" :class="{ on: workflowForm.mode === 'graph' }" @click="workflowForm.mode = 'graph'" role="tab" :aria-selected="workflowForm.mode === 'graph'">Linear chain</button>
+            </div>
+          </div>
+
+          {/* prompt mode */}
+          <template x-if="workflowForm.mode === 'prompt'">
+            <div class="field">
+              <span>Prompt</span>
+              <textarea rows="6" x-model="workflowForm.prompt" placeholder="Summarize this week's meetings into a digest…"></textarea>
+            </div>
+          </template>
+
+          {/* linear chain mode — ordered steps, entry → … → output */}
+          <template x-if="workflowForm.mode === 'graph'">
+            <div class="field">
+              <span>Steps — run top to bottom, each feeding the next</span>
+              <ol class="wf-chain" x-show="workflowForm.nodes.length" x-cloak>
+                <template x-for="(step, i) in workflowForm.nodes" {...{ ":key": "i" }}>
+                  <li class="wf-step">
+                    <div class="wf-step-head">
+                      <span class="wf-step-num" x-text="i + 1"></span>
+                      <select class="wf-step-kind" x-model="step.kind">
+                        <template x-for="k in workflowStepKinds" {...{ ":key": "k.kind" }}>
+                          <option :value="k.kind" x-text="k.label"></option>
+                        </template>
+                      </select>
+                      <div class="wf-step-ctl">
+                        <button type="button" class="wf-icon" :disabled="i === 0" @click="moveWorkflowStep(i, -1)" aria-label="Move step up">↑</button>
+                        <button type="button" class="wf-icon" :disabled="i === workflowForm.nodes.length - 1" @click="moveWorkflowStep(i, 1)" aria-label="Move step down">↓</button>
+                        <button type="button" class="wf-icon danger" @click="removeWorkflowStep(i)" aria-label="Remove step">✕</button>
+                      </div>
+                    </div>
+                    {/* per-kind payload */}
+                    <textarea class="wf-step-field" rows="2" x-show="step.kind === 'llm'" x-cloak x-model="step.prompt" placeholder="Your instruction. Use {input} for the prior step's text…"></textarea>
+                    <input class="wf-step-field" type="text" x-show="step.kind === 'rewrite'" x-cloak x-model="step.tone" placeholder="Tone (e.g. concise, formal)" />
+                    <input class="wf-step-field" type="text" x-show="step.kind === 'extract'" x-cloak x-model="step.artifactType" placeholder="Artifact (e.g. decisions, action_items)" />
+                  </li>
+                </template>
+              </ol>
+              <p class="wf-empty" x-show="!workflowForm.nodes.length" x-cloak>No steps yet. Add one to start the chain.</p>
+              <div class="wf-add">
+                <template x-for="k in workflowStepKinds" {...{ ":key": "k.kind" }}>
+                  <button type="button" class="btn sm ghost" @click="addWorkflowStep(k.kind)"><span aria-hidden="true">+</span> <span x-text="k.label"></span></button>
+                </template>
+              </div>
+            </div>
+          </template>
+
+          <p class="field-note" x-show="workflowForm.mode === 'prompt'" x-cloak>A saved prompt that wires primitives into a run. Saves to <code>POST /api/workflows</code>.</p>
+          <p class="field-note" x-show="workflowForm.mode === 'graph'" x-cloak>A <strong>linear chain</strong> (entry → steps → output) emitting the same <code>graph_json</code> the iPad Workbench produces and the hub linearizes. Branch and loop authoring lives in the Workbench; the web Desk ships the chain. Saves to <code>POST /api/workflows</code>.</p>
+
           <div class="drawer-foot">
             <button type="button" class="btn ghost" @click="closeCreate()">Cancel</button>
             <button type="submit" class="btn primary" :disabled="busy"><span x-text="busy ? 'Saving…' : 'Create workflow'">Create workflow</span></button>
@@ -870,6 +937,23 @@ const GROUPS = [
   .hub-status.unreachable .hub-dot{ background: var(--danger-signal); }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
   .hub-synced { display: inline-flex; align-items: center; gap: var(--space-2); font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-faint); }
+  /* ambient trust: the egress badge (canonical .egress-badge styling) + a
+     one-line readiness chip, both linking through to /setup. */
+  .hub-egress { font-family: var(--font-mono); text-decoration: none; cursor: pointer; }
+  .hub-egress:hover { filter: brightness(1.15); }
+  .hub-egress:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
+  .hub-ready {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    font-family: var(--font-mono); font-size: var(--font-size-xs); text-decoration: none;
+    padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill);
+    border: 1px solid var(--border-subtle); color: var(--text-faint);
+  }
+  .hub-ready:hover { border-color: var(--border-strong); color: var(--text-muted); }
+  .hub-ready:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
+  .hub-ready-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .hub-ready.ready   { color: var(--ok-strong); }
+  .hub-ready.warn    { color: var(--warn-strong); }
+  .hub-ready.blocked { color: var(--danger); }
   .hub-error { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--danger); margin-left: auto; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* ── group ── */
@@ -1138,6 +1222,31 @@ const GROUPS = [
   .field-note code { font-family: var(--font-mono); color: var(--accent); }
   .field-note kbd { font-family: var(--font-mono); font-size: 0.6875rem; background: var(--surface-3); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 0 4px; color: var(--text-muted); }
   .drawer-foot { display: flex; justify-content: flex-end; gap: var(--space-2); padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border-subtle); }
+
+  /* ── segmented mode toggle (prompt | linear chain) ── */
+  .seg { display: inline-flex; gap: 2px; padding: 2px; background: var(--surface-3); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); }
+  .seg-opt { flex: 1; font-family: var(--font-ui); font-size: var(--font-size-sm); color: var(--text-muted); background: transparent; border: none; border-radius: var(--radius-xs); padding: var(--space-1) var(--space-3); cursor: pointer; min-height: 1.9rem; }
+  .seg-opt:hover { color: var(--text); }
+  .seg-opt.on { color: var(--text-on-accent); background: var(--info); font-weight: 600; }
+  .seg-opt:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
+
+  /* ── linear chain builder ── */
+  .wf-chain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); --ck: var(--info); }
+  .wf-step { position: relative; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); background: var(--surface-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); }
+  .wf-step:not(:last-child)::after { content: ""; position: absolute; left: 50%; bottom: calc(-1 * var(--space-2)); width: 1px; height: var(--space-2); background: var(--ck); opacity: 0.5; }
+  .wf-step-head { display: flex; align-items: center; gap: var(--space-2); }
+  .wf-step-num { flex: none; width: 1.4rem; height: 1.4rem; display: grid; place-items: center; font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--info); background: color-mix(in srgb, var(--info) 16%, var(--surface-3)); border-radius: var(--radius-pill); }
+  .wf-step-kind { flex: 1; font-family: var(--font-ui); font-size: var(--font-size-sm); color: var(--text); background: var(--field-bg); border: 1px solid var(--field-border); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); }
+  .wf-step-kind:focus { outline: none; border-color: var(--field-focus-border); box-shadow: 0 0 0 2px var(--accent-tint); }
+  .wf-step-ctl { display: flex; gap: 2px; }
+  .wf-icon { width: 1.6rem; height: 1.6rem; display: grid; place-items: center; font-size: var(--font-size-sm); color: var(--text-muted); background: transparent; border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); cursor: pointer; }
+  .wf-icon:hover { color: var(--text); border-color: var(--border-strong); }
+  .wf-icon.danger:hover { color: var(--danger, #F87171); border-color: var(--danger, #F87171); }
+  .wf-icon:disabled { opacity: 0.4; cursor: default; }
+  .wf-step-field { font-family: var(--font-mono); font-size: var(--font-size-sm); color: var(--text); background: var(--field-bg); border: 1px solid var(--field-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); resize: vertical; }
+  .wf-step-field:focus { outline: none; border-color: var(--field-focus-border); box-shadow: 0 0 0 2px var(--accent-tint); }
+  .wf-empty { margin: 0; font-size: var(--font-size-sm); color: var(--text-faint); font-style: italic; }
+  .wf-add { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-1); }
 
   /* ── run drawer ── */
   .run-head-id { display: flex; gap: var(--space-3); align-items: flex-start; min-width: 0; }

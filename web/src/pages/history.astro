@@ -1247,6 +1247,9 @@ import AppLayout from "../layouts/AppLayout.astro";
                             <span class="status-pill" :class="`proposal-${p.status}`" x-text="proposalStatusLabel(p.status)"></span>
                             <span class="pill" x-text="p.reversible ? 'reversible' : 'irreversible'"></span>
                             <span class="pill" x-show="p.decided_by" x-cloak x-text="`by ${p.decided_by}`"></span>
+                            <!-- EQ-W2: the honest egress badge — one structured chip
+                                 (⌂ Local only / ☁ target), never a privacy sentence. -->
+                            <span class="egress-badge" :class="`is-${proposalEgress(p).scope}`" x-text="proposalEgressText(p)"></span>
                           </div>
                         </div>
                         <div class="artifact-card__actions">

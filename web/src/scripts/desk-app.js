@@ -37,6 +37,12 @@ function DeskApp() {
     coderReady: false,
     coderBlockers: [],
 
+    // ── ambient trust (HS-21-04) — the canonical egress posture + readiness,
+    // both sourced from GET /api/setup/status. `setup` is the raw status block
+    // (or null when the adapter is unreachable — the chips simply hide).
+    setup: null,
+    setupLoaded: false,
+
     // ── the store, by kind ──
     items: {
       meeting: [],
@@ -68,7 +74,10 @@ function DeskApp() {
     kbForm: { name: "", memberIds: "" },
     directoryForm: { name: "", parentId: "" },
     chainForm: { name: "", steps: "" },
-    workflowForm: { name: "", prompt: "" },
+    // A workflow is authored either as a saved prompt OR as a minimal LINEAR
+    // chain of steps (entry → … → output). `nodes` holds the ordered model-op
+    // steps the chain builder emits; `mode` toggles which the form ships.
+    workflowForm: { name: "", prompt: "", mode: "prompt", nodes: [] },
 
     // ── filing (membership picker) ──
     filing: null, // the primitive being filed: { kind, id, title } | null
@@ -94,8 +103,87 @@ function DeskApp() {
     async init() {
       await this.loadAll();
       this.loading = false;
+      this.loadSetup();
       this.refreshCoders();
       this.coderTimer = setInterval(() => this.refreshCoders(), 4000);
+    },
+
+    // ── ambient trust + readiness (HS-21-04) ─────────────────────────────────
+    // Read the live posture from the same adapter the /setup surface uses
+    // (GET /api/setup/status). Failures are silent: the chips stay hidden so we
+    // never assert a posture we couldn't confirm.
+    async loadSetup() {
+      try {
+        const res = await fetch("/api/setup/status");
+        if (!res.ok) return;
+        this.setup = await res.json();
+        this.setupLoaded = true;
+      } catch (_e) {
+        /* adapter unreachable — leave the ambient chips hidden (honest). */
+      }
+    },
+
+    /**
+     * The canonical egress badge for the live posture: `{scope, text, title}`.
+     * `scope` is the structured value the shared `.egress-badge` CSS keys on
+     * (local | mixed | cloud) — the ONE structured badge that replaces privacy
+     * prose (POSITIONING canon). The glyph + fallback word mirror the shared
+     * `EGRESS_SCOPES` map in egress-badge.js; this is a placement port, not a
+     * new visual language (desk-app.js is eval'd via ?raw, so no ES import).
+     */
+    egressBadge() {
+      const t = (this.setup && this.setup.trust) || {};
+      // Off-loopback bind with no auth token, or actuators on → external writes
+      // are possible: local + cloud.
+      const bind = t.web_bind;
+      const offLoopback = bind && bind !== "127.0.0.1" && bind !== "localhost" && bind !== "::1";
+      if (t.actuators_enabled || (offLoopback && !t.auth_token_set)) {
+        return { scope: "mixed", text: "⌂+☁ Local + cloud", title: "Local plus a configured cloud reach. Writes still need your approval." };
+      }
+      // A transcript can be sent to a configured endpoint → cloud.
+      if (t.transcript_egress && t.transcript_egress !== "none") {
+        const ep = (t.configured_endpoints && t.configured_endpoints[0]) || "";
+        const label = ep ? `Cloud · ${ep}` : "Configured endpoint";
+        return { scope: "cloud", text: `☁ ${label}`, title: "A transcript can be sent to a configured endpoint." };
+      }
+      // Nothing leaves the machine → local.
+      return { scope: "local", text: "⌂ Local only", title: "Everything stays on this machine." };
+    },
+
+    /** The /api/setup/status overall verdict: "ready" | "blocked" | other. */
+    setupOverall() {
+      return (this.setup && this.setup.overall) || "unknown";
+    },
+
+    /** The readiness chip tone class. */
+    readyTone() {
+      const o = this.setupOverall();
+      if (o === "ready") return "ready";
+      if (o === "blocked") return "blocked";
+      return "warn";
+    },
+
+    /** A one-line readiness indicator, e.g. "Ready · 6/6 checks". */
+    readyLine() {
+      const s = this.setup;
+      if (!s) return "";
+      const sections = s.sections || [];
+      const pass = sections.filter((x) => x.status === "pass").length;
+      const total = sections.length;
+      const counts = total ? ` · ${pass}/${total} checks` : "";
+      const o = this.setupOverall();
+      if (o === "ready") return `Ready${counts}`;
+      if (o === "blocked") {
+        const fails = sections.filter((x) => x.status === "fail").length;
+        return `${fails || 1} blocking${counts}`;
+      }
+      const advisory = sections.filter((x) => x.status === "warn").length;
+      return advisory ? `${advisory} to review${counts}` : `Almost ready${counts}`;
+    },
+
+    /** Hover title for the readiness chip — points at /setup for the detail. */
+    readyTitle() {
+      return `${this.readyLine()}. Open Setup for the full checklist.`;
     },
 
     // ── totals + grouping helpers (data-driven by the page descriptor) ──
@@ -774,6 +862,88 @@ function DeskApp() {
       }
     },
 
+    // ── authoring: the linear chain builder ──
+    //
+    // The web Desk authors a MINIMAL LINEAR workflow: entry → step → … → output.
+    // The kinds offered are the chain-safe ones the hub's `workflow_graph.linearize`
+    // accepts and the iPad Blueprint produces (no branch/loop/fan-out). Each step
+    // is one model op; `buildGraphJson` lowers them to the canonical snake_case
+    // `graph_json` wire (nodes with id + a single-key `kind` tag, ordered `exec_edges`
+    // on the "then" exec-out, and the `entry` id) — byte-shaped like the iPad's and
+    // accepted as-is by the hub linearizer.
+
+    /** The step kinds the linear builder offers (chain-safe model ops). */
+    workflowStepKinds: [
+      { kind: "llm", label: "Prompt", hint: "Your own instruction; {input} is the prior step's text." },
+      { kind: "summarize", label: "Summarize", hint: "Tighten the input into a faithful summary." },
+      { kind: "rewrite", label: "Rewrite", hint: "Restate the input in a tone you set." },
+      { kind: "extract", label: "Extract", hint: "Pull one artifact (decisions, actions…) out of the input." },
+    ],
+
+    /** Append a fresh step to the linear chain. */
+    addWorkflowStep(kind = "llm") {
+      this.workflowForm.nodes.push({
+        kind,
+        prompt: "",       // llm
+        tone: "concise",  // rewrite
+        artifactType: "decisions", // extract
+      });
+    },
+    /** Drop the step at `i` from the chain. */
+    removeWorkflowStep(i) {
+      this.workflowForm.nodes.splice(i, 1);
+    },
+    /** Move a step one slot toward the start (`dir=-1`) or end (`dir=+1`). */
+    moveWorkflowStep(i, dir) {
+      const j = i + dir;
+      const n = this.workflowForm.nodes;
+      if (j < 0 || j >= n.length) return;
+      [n[i], n[j]] = [n[j], n[i]];
+    },
+
+    /**
+     * Lower the ordered builder steps into the canonical snake_case `graph_json`.
+     *
+     * Shape (matches the iPad Blueprint + the hub `workflow_graph.linearize`):
+     *   nodes: [{ id, kind }]   kind is a single-key tag —
+     *     entry/summarize/output → {"entry":{}}, {"summarize":{}}, {"output":{}}
+     *     llm     → {"llm": {"name": .., "prompt": ..}}
+     *     rewrite → {"rewrite": {"tone": ..}}
+     *     extract → {"extract": "decisions"}   (bare-string payload)
+     *   exec_edges: [{ from: { node, name: "then" }, to }]  in chain order
+     *   entry: <entry node id>
+     *
+     * Web ships LINEAR-only by construction; it labels itself so (no control flow).
+     */
+    buildGraphJson(steps) {
+      const nodes = [{ id: "entry", kind: { entry: {} } }];
+      steps.forEach((s, i) => {
+        const id = `n${i + 1}`;
+        let kind;
+        if (s.kind === "llm") {
+          kind = { llm: { name: "Prompt", prompt: s.prompt || "" } };
+        } else if (s.kind === "rewrite") {
+          kind = { rewrite: { tone: s.tone || "concise" } };
+        } else if (s.kind === "extract") {
+          kind = { extract: s.artifactType || "decisions" };
+        } else {
+          kind = { summarize: {} };
+        }
+        nodes.push({ id, kind });
+      });
+      nodes.push({ id: "output", kind: { output: {} } });
+
+      // Wire one straight chain along the "then" exec-out, in node order.
+      const execEdges = [];
+      for (let i = 0; i < nodes.length - 1; i++) {
+        execEdges.push({
+          from: { node: nodes[i].id, name: "then" },
+          to: nodes[i + 1].id,
+        });
+      }
+      return { entry: "entry", nodes, exec_edges: execEdges, linear: true };
+    },
+
     // ── authoring: Workflow (LIVE POST /api/workflows) ──
     async submitWorkflow() {
       const f = this.workflowForm;
@@ -781,11 +951,22 @@ function DeskApp() {
         this.error = "A workflow needs a name.";
         return;
       }
+      const graphing = f.mode === "graph";
+      if (graphing && !f.nodes.length) {
+        this.error = "Add at least one step, or switch to a prompt.";
+        return;
+      }
+      if (!graphing && !f.prompt.trim()) {
+        this.error = "A prompt workflow needs a prompt, or switch to a chain.";
+        return;
+      }
       const payload = {
         name: f.name.trim(),
-        prompt: f.prompt,
-        // graph authoring lives in the Workbench; the web form ships a prompt.
-        graph_json: {},
+        // A graph workflow carries an empty prompt; the chain IS the run.
+        prompt: graphing ? "" : f.prompt,
+        // Prompt workflows ship no graph; chain workflows ship the linear graph_json
+        // the hub linearizer + the iPad both speak.
+        graph_json: graphing ? this.buildGraphJson(f.nodes) : {},
       };
       this.busy = true;
       try {
@@ -796,7 +977,7 @@ function DeskApp() {
         });
         this.items.workflow.unshift(this.fromWireWorkflow(data.workflow || data));
         this.status.workflow = "live";
-        this.workflowForm = { name: "", prompt: "" };
+        this.workflowForm = { name: "", prompt: "", mode: "prompt", nodes: [] };
         this.closeCreate();
       } catch (e) {
         this.error = `Save workflow: ${e.message}`;

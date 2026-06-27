@@ -51,7 +51,7 @@ comes back as typed, reviewable artifacts:
   it took. Fix a wrong result in one tap and the correction memory learns; the
   learning digest reports a real "learned from N similar" count, honest at
   zero; replay an old utterance through the updated pipeline and watch the
-  routing change. See [the learning loop](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay).
+  routing change. See [the learning loop](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_PIPELINE_GUIDE.md#12-dictation-journal-corrections--replay).
 - **Meetings end with their loops closed.** A meeting produces artifacts,
   an aftercare digest, and approval-gated actions where most tools stop at
   a transcript. Actuators are off by default, audited, and only ever run
@@ -245,10 +245,10 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 | Get it running and verify my setup | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
 | Choose / configure a model | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
 | See speech become a project-grounded task | [The Dictation Copilot](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_COPILOT.md) |
-| Set up the dictation pipeline for Codex / Claude | [Intelligent Typing Setup](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md) |
-| Review, correct, and replay past dictations | [The dictation journal & replay](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay) |
+| Set up the dictation pipeline for Codex / Claude | [Dictation Pipeline Setup](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_PIPELINE_GUIDE.md) |
+| Review, correct, and replay past dictations | [The dictation journal & replay](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_PIPELINE_GUIDE.md#12-dictation-journal-corrections--replay) |
 | Map spoken keywords to real actions | [Voice Commands](https://github.com/karolswdev/HoldSpeak/blob/main/docs/VOICE_COMMANDS.md) |
-| Turn on Qlippy, the mascot | [Qlippy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INTELLIGENT_TYPING_GUIDE.md#qlippy-the-mascot-optional) |
+| Turn on Qlippy, the mascot | [Qlippy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_PIPELINE_GUIDE.md#qlippy-the-mascot-optional) |
 | Use meeting mode and configure AI intelligence | [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md) |
 | Wire up the AIPI-Lite companion | [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AIPI_LITE_DEV_WORKFLOW.md) |
 | Install Claude / Codex agent hooks | [Agent Hook Install](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |

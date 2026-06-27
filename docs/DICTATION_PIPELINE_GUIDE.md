@@ -1,4 +1,4 @@
-# HoldSpeak Intelligent Typing Setup
+# HoldSpeak Dictation Pipeline Setup
 
 The gap between what you say and what you meant to type is where dictation
 tools usually stop; the dictation pipeline is HoldSpeak crossing it. It

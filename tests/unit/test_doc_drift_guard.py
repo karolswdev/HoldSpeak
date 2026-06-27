@@ -220,7 +220,7 @@ def test_qlippy_doc_states_the_guarantees_verbatim() -> None:
     """HS-56-06 / revised HS-62-01: the mascot doc keeps the never-acts
     guarantee, and the cards state egress with the BADGE, never a privacy
     paragraph (the owner's Quiet Trust direction — one symbol, no novels)."""
-    guide = (_REPO / "docs" / "INTELLIGENT_TYPING_GUIDE.md").read_text()
+    guide = (_REPO / "docs" / "DICTATION_PIPELINE_GUIDE.md").read_text()
     assert "Qlippy, the mascot" in guide
     assert "never acts on his own" in guide
     assert "the egress badge" in guide  # the documented contract
@@ -267,25 +267,14 @@ _AI_VOCAB = re.compile(
 
 # Banned synonyms for canonical feature names (POSITIONING.md table).
 #
-# "intelligent typing" is a banned synonym for the dictation pipeline in
-# user-facing *product copy* (the web/src astro templates). The historical
-# setup guide docs/INTELLIGENT_TYPING_GUIDE.md keeps that name as its own
-# established title and is referenced verbatim across the docs corpus (and by
-# test_qlippy_doc_states_the_guarantees_verbatim), so the docs scan below uses
-# _BANNED_NAMES_DOCS, which omits that one term. Renaming the guide is a
-# separate, larger move outside this guard's scope.
+# "intelligent typing" is a banned synonym for the dictation pipeline. The
+# setup guide it once titled is now docs/DICTATION_PIPELINE_GUIDE.md, so this
+# single guard bans the term EVERYWHERE: the user-facing docs *and* the web/src
+# product copy. There is no docs-corpus exception anymore.
 _BANNED_NAMES = re.compile(
     r"\bvoice macros?\b"               # canonical: voice commands
     r"|\bintelligent dictation\b"      # canonical: the dictation pipeline
     r"|\bintelligent typing\b"         # canonical: the dictation pipeline / dictation
-    r"|\bslack (?:integration|export)\b",  # canonical: Send to Slack
-    re.IGNORECASE,
-)
-
-# The docs-corpus variant: same table, minus "intelligent typing" (see above).
-_BANNED_NAMES_DOCS = re.compile(
-    r"\bvoice macros?\b"               # canonical: voice commands
-    r"|\bintelligent dictation\b"      # canonical: the dictation pipeline
     r"|\bslack (?:integration|export)\b",  # canonical: Send to Slack
     re.IGNORECASE,
 )
@@ -349,7 +338,7 @@ def test_no_user_facing_doc_uses_banned_feature_names() -> None:
     offenders = []
     for doc in _user_facing_docs():
         for lineno, line in _prose_lines(doc):
-            match = _BANNED_NAMES_DOCS.search(line)
+            match = _BANNED_NAMES.search(line)
             if match:
                 offenders.append(
                     f"{doc.relative_to(_REPO)}:{lineno}: {match.group(0)!r}"

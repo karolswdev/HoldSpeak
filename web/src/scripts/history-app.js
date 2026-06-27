@@ -852,6 +852,23 @@ function historyApp() {
       return { github: "🐙", jira: "🧩", slack: "💬", webhook: "🔗" }[target] || "⚡";
     },
 
+    // EQ-W2: the honest egress badge for a proposal — the canonical structured
+    // {scope, label} chip (POSITIONING canon: ONE badge, never a sentence). A
+    // proposal whose target is an off-machine connector LEAVES the device on
+    // approve; anything else stays local (the decision only records DB state).
+    proposalEgress(proposal) {
+      const target = String(proposal?.target || "").toLowerCase();
+      const labels = { slack: "Slack", github: "GitHub", jira: "Jira", webhook: "Webhook" };
+      if (target in labels) return { scope: "cloud", label: labels[target] };
+      return { scope: "local", label: "Local only" };
+    },
+
+    proposalEgressText(proposal) {
+      const badge = this.proposalEgress(proposal);
+      const glyph = { local: "⌂", mixed: "⌂+☁", cloud: "☁" }[badge.scope] || "⌂";
+      return `${glyph} ${badge.label}`;
+    },
+
     // The reviewable preview: action → target, the human preview, then the
     // exact machine payload — the source of truth a reviewer is approving.
     proposalPreviewText(proposal) {
