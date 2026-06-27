@@ -30,6 +30,7 @@ Use these guides depending on what you are setting up:
 | Agent hooks | Lets Claude Code and Codex report current cwd/session state to HoldSpeak | `/dictation` -> Agent Hooks |
 | Meeting mode | Captures microphone plus optional system audio | Dashboard, `holdspeak meeting` command |
 | Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts | Dashboard and `/history` |
+| iPad companion | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
 | Runtime setup | Configures local MLX, llama.cpp, or OpenAI-compatible endpoints | `/dictation` -> Runtime, `/docs/dictation-runtime` |
 
@@ -436,6 +437,47 @@ Example cloud/homelab config:
   }
 }
 ```
+
+## Companions
+
+HoldSpeak runs as a desktop hub. A companion on another device drives it over
+the same local HTTP API your browser uses, on your own network (LAN or
+Tailscale), with no hosted relay. Every request carries the hub's bearer token,
+exactly as the browser does when the runtime is bound off loopback.
+
+### The iPad app
+
+The iPad is a client of both modes, not a remote control for one. It reaches the
+hub through typed clients over the existing API, so the work happens on the desk
+and the iPad shows it:
+
+- **Dictate into your desk.** Speak an answer on the iPad and the hub runs that
+  text through the full dictation pipeline (your corrections, your blocks, your
+  routing) and types the result into the focused app or answers a waiting
+  Claude/Codex session. A configured voice command fires on this remote path
+  too, the same bounded action it would fire at the desk, so a keyword is not
+  dictated as prose. The spoken language setting and the spoken-symbol
+  dictionary apply on this path, the same as local dictation.
+- **Read a meeting back in full.** Pull a meeting's artifacts with their
+  confidence scores and the transcript sources each was grounded in, browse the
+  archive narrowed server-side by speaker, tag, or text (the same facets as
+  `/history`), and read its aftercare: what is open, decided, and changed.
+- **Approve, separately.** Proposing an action and approving it stay two steps,
+  the same human gate the desktop keeps. The iPad reads the proposals queued for
+  review and decides them one at a time; nothing runs without that approval.
+- **See what is grounded.** Activity pre-briefing nudges, source-cited, come
+  through to the iPad so you can pick a record to ground the next dictation in.
+
+The iPad's own storage is schema safe the way the desktop is: it backs an older
+database up before migrating it, and refuses to open one written by a newer
+build rather than risk your data. The on-device screens for these are still
+coming together; the client layer they ride on is shipped and tested.
+
+### AIPI-Lite
+
+AIPI-Lite is an optional portable device for meeting controls, status feedback,
+and spoken replies to a waiting Claude/Codex session. Firmware and bridge setup
+are in the [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md).
 
 ## Privacy Model
 

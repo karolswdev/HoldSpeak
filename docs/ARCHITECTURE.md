@@ -31,6 +31,14 @@ approval, and the network crossings are enumerated in the
 [trust boundary](#the-trust-boundary) below and in
 [`SECURITY.md`](SECURITY.md).
 
+An iPad companion can join over your own network. It is a typed client of
+the same FastAPI routes the web UI calls, not a second runtime: it reads
+meetings, artifacts, aftercare, and faceted search, decides proposals, and
+sends dictation back to a focused app or a waiting coding agent. The desktop
+stays the hub; the iPad is an authoring port. Its piece of the
+[device path](#the-device-path) is the typed client layer, and the LAN
+crossing it opens is listed in the [trust boundary](#the-trust-boundary).
+
 ## The components
 
 How the major pieces connect. Boxes are subsystems, not classes; the module
@@ -60,6 +68,11 @@ flowchart TB
     CN["Gated connectors<br/>(plugins/gated_connector.py)"]
   end
 
+  subgraph ipad["iPad companion (apple/Sources/Providers/)"]
+    HC["Typed hub client<br/>(Desktop/HTTPDesktopClient*.swift)"]
+    LS[("On-device SQLite<br/>(Storage/SQLiteStorage.swift)")]
+  end
+
   DB[("SQLite<br/>(db/*)")]
   LLM(["LLM backend<br/>(local GGUF / MLX / OpenAI-compatible)"])
 
@@ -79,6 +92,8 @@ flowchart TB
   SRV --> UI
   runtime <--> DB
   SRV -. "WebSocket" .-> DEV
+  HC -. "meeting / dictation / proposal routes, LAN, Bearer token" .-> SRV
+  HC <--> LS
 ```
 
 The dictation and meeting flows are detailed in their own sections below.
@@ -147,6 +162,69 @@ sequenceDiagram
   end
 ```
 
+### The iPad companion
+
+The iPad joins the same hub over your own network (LAN or Tailscale, no
+hosted relay). It is a typed client of the FastAPI routes, built around one
+HTTP client (`apple/Sources/Providers/Desktop/HTTPDesktopClient.swift`)
+split into focused extensions, one per surface it reads or drives:
+
+- `HTTPDesktopClient+Aftercare.swift` reads the aftercare digest and files an
+  accepted action as a GitHub issue proposal (`GET .../aftercare`,
+  `POST .../aftercare/file-issue`).
+- `HTTPDesktopClient+Facets.swift` lists and searches meetings with the
+  server-side facets (`GET api/meetings/facets`, `GET api/meetings`).
+- `HTTPDesktopClient+Artifacts.swift` reads a meeting's typed artifacts
+  (`GET api/meetings/{id}/artifacts`).
+- `HTTPDesktopClient+Proposals.swift` reads pending proposals and submits an
+  approve or reject decision (`GET`/`POST .../proposals`); the executor still
+  runs on the hub, so the iPad approves but never acts on its own.
+- `HTTPDesktopClient+Dictation.swift` previews the dictation pipeline and
+  reports readiness (`POST api/dictation/dry-run`,
+  `GET api/dictation/readiness`); the base client sends the dictation itself
+  to a focused app or a waiting coding agent (`POST api/dictation/remote`).
+
+Every request carries the desktop's Bearer token, joined at call time and
+never stored in a payload. The hub is the only place state changes; the iPad
+is an authoring port onto it.
+
+```mermaid
+sequenceDiagram
+  participant IP as iPad companion
+  participant HC as Typed hub client
+  participant SRV as Web server + API
+  participant RT as WebRuntime
+  IP->>HC: read meeting, decide proposal, send dictation
+  HC->>SRV: route call over LAN, Bearer token
+  SRV->>RT: dispatch to the runtime
+  RT->>SRV: meetings, artifacts, aftercare, facets, decision result
+  SRV->>HC: typed response
+  HC->>IP: render on the authoring port
+```
+
+The iPad keeps its own SQLite store
+(`apple/Sources/Providers/Storage/SQLiteStorage.swift`) for what it captures
+on device. It runs in WAL mode for crash safety: an integrity check on
+reopen confirms a committed write survives a crash, and an uncommitted write
+is rolled back. The schema carries a `user_version`, and the store reads it
+before it touches anything: a database newer than the build is refused (it
+throws rather than rewrite your data), an older one is backed up to a
+timestamped sibling and then migrated forward, and a current one is a no-op.
+That mirrors the desktop store's safe-by-default posture on the mobile side,
+the same four-way schema matrix described below.
+
+The desktop schema matrix:
+
+- **Newer than this build:** refuse to touch it, and let `doctor` report the
+  mismatch, so a newer build never gets a downgrade rewrite from an older one.
+- **Older than this build:** back up first, then apply the migration, so the
+  pre-migration database is always recoverable.
+- **Already current:** no-op.
+- **Missing:** create a fresh database.
+
+Back up on demand with `holdspeak backup` and put a snapshot back with
+`holdspeak restore`. The matrix lives in `holdspeak/db/core.py`.
+
 ## The meeting pipeline
 
 How captured or imported audio becomes a transcript, typed artifacts, and an
@@ -192,4 +270,5 @@ flowchart LR
   RT -->|"opt-in; queue stats only, no transcript"| OPS(["Ops alert webhook"])
   RT -->|"one-time inbound fetch, about 7 MB"| WM(["Wake models, GitHub releases"])
   DEVCE(["Paired device, same LAN, PSK"]) -->|"audio in, status out"| RT
+  IPAD(["iPad companion, same LAN / Tailscale, Bearer token"]) -->|"meeting / dictation / proposal route calls"| RT
 ```

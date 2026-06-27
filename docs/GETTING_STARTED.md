@@ -209,6 +209,9 @@ Once hold-to-talk feels natural, the rest is one setting away each:
 - **Meetings**: [the Meeting Mode Guide](MEETING_MODE_GUIDE.md) covers live
   capture, importing recordings or transcripts you already have, and the
   aftercare that closes the loop.
+- **From another device**: an iPad [companion](USER_GUIDE.md#companions) drives
+  both modes over the hub's local API: dictate into your desk, read a meeting
+  back with its artifacts and sources, and approve a proposal.
 
 ## Troubleshooting
 
