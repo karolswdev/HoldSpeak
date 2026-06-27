@@ -15,7 +15,7 @@ Use these guides depending on what you are setting up:
 | Goal | Guide |
 | --- | --- |
 | Install HoldSpeak and get basic voice typing working | [Getting Started](GETTING_STARTED.md) |
-| Configure project-aware intelligent typing | [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md) |
+| Configure the project-aware dictation pipeline | [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md) |
 | Record and review meetings | [Meeting Mode Guide](MEETING_MODE_GUIDE.md) |
 | Configure local/LAN dictation models | `/docs/dictation-runtime` in the local web UI |
 
@@ -202,7 +202,7 @@ def total(items):
 could you refactor it?
 ```
 
-## Intelligent Typing For Coding Assistants
+## The Dictation Pipeline For Coding Assistants
 
 HoldSpeak can do more than transcription. With the dictation pipeline enabled, it can transform a rough spoken thought into a useful prompt for Claude, Codex, a terminal, a browser, or another target.
 
@@ -241,7 +241,7 @@ holdspeak dictation runtime status
 holdspeak dictation dry-run "ask codex to inspect the failing test"
 ```
 
-For a full step-by-step setup, see [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md).
+For a full step-by-step setup, see [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md).
 
 ### OpenAI-Compatible Endpoints
 
@@ -499,7 +499,7 @@ Common issues:
 
 - [README](../README.md): install, platform notes, configuration reference.
 - [Getting Started](GETTING_STARTED.md): first-run setup and basic voice typing.
-- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md): dictation pipeline, project context, target override, OpenAI-compatible endpoints, and agent hooks.
+- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): dictation pipeline, project context, target override, OpenAI-compatible endpoints, and agent hooks.
 - [Dictation runtime setup](../web/src/pages/docs/dictation-runtime.astro): source for the web runtime setup page.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and troubleshooting.
 - [Firefox Extension Guide](FIREFOX_EXTENSION_GUIDE.md): local companion extension install.

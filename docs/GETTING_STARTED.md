@@ -121,7 +121,7 @@ focused and use the focused hold-to-talk fallback.
 > notification everywhere). It shows whether it's listening, transcribing, or typing
 > while you dictate into another app, and it never takes keyboard focus. For a
 > headless launch you can force it on with `HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak`.
-> See [Desktop Presence](INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
+> See [Desktop Presence](DICTATION_PIPELINE_GUIDE.md#11-desktop-presence-ambient-on-desktop-status).
 
 ## 6. Use Punctuation Commands
 
@@ -187,12 +187,12 @@ Good project markers include:
 - `.holdspeak/`
 - `.hs/`
 
-## 9. Enable Intelligent Typing Later
+## 9. Enable The Dictation Pipeline Later
 
 Do not enable the dictation LLM pipeline until basic typing is working.
 When ready, continue with:
 
-- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md)
+- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md)
 - [User Guide](USER_GUIDE.md)
 
 ## 10. Where To Go Next
@@ -222,7 +222,7 @@ Once hold-to-talk feels natural, the rest is one setting away each:
 
 ## See also
 
-- [Intelligent Typing Setup](INTELLIGENT_TYPING_GUIDE.md): once basic voice typing
+- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): once basic voice typing
   works, turn on the project-aware copilot.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and capture.
 - [Models (bring your own)](MODELS.md): pick and point at an LLM.

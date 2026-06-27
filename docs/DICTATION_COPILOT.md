@@ -8,7 +8,7 @@ you how to turn it on and run the same demo yourself.
 
 > Everything here is **opt-in and off by default**. With the dictation pipeline
 > disabled, HoldSpeak types your transcript exactly as before. See
-> [Intelligent Typing Guide](./INTELLIGENT_TYPING_GUIDE.md) for the full setup
+> [Dictation Pipeline Guide](./DICTATION_PIPELINE_GUIDE.md) for the full setup
 > and [Models](./MODELS.md) for the bring-your-own-model contract.
 
 ## See it work
@@ -145,10 +145,10 @@ model-assist toggles, and a confidence threshold.](assets/cockpit/copilot-depth.
 
 Every feature above (① through ④) is a slider or toggle in **Runtime → Copilot depth**;
 the round-trip persists through the settings API. See the
-[Intelligent Typing Setup guide](./INTELLIGENT_TYPING_GUIDE.md) for the full
+[Dictation Pipeline Setup guide](./DICTATION_PIPELINE_GUIDE.md) for the full
 walk-through.
 
-Then add a project's [`.hs/` context](./INTELLIGENT_TYPING_GUIDE.md) (and,
+Then add a project's [`.hs/` context](./DICTATION_PIPELINE_GUIDE.md) (and,
 optionally, a `.holdspeak/blocks.yaml` taxonomy + `.holdspeak/project.yaml` KB)
 so the rewrite has facts to ground in.
 
@@ -201,9 +201,9 @@ hosted CI) and runs for real wherever your endpoint is reachable.
 
 ## See also
 
-- [Intelligent Typing Guide](./INTELLIGENT_TYPING_GUIDE.md): the full setup,
+- [Dictation Pipeline Guide](./DICTATION_PIPELINE_GUIDE.md): the full setup,
   `.hs/` conventions, target profiles, agent hooks, and every config knob.
-- [The learning loop](./INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay):
+- [The learning loop](./DICTATION_PIPELINE_GUIDE.md#12-dictation-journal-corrections--replay):
   what feature ② becomes over time. Correct a misfire in one tap, watch the "What
   HoldSpeak learned" digest count the honest reach, and replay to prove it improved.
 - [Models](./MODELS.md): choosing and pointing at a model.

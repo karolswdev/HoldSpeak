@@ -24,9 +24,9 @@ including the LLM. This page is the map. Pick a journey.
   how the two halves (typing and meetings) fit together. Also home to the wake
   word (hands-free entry, previewed before it types), the spoken language
   setting (any of Whisper's 99 languages), and the spoken-symbol dictionary.
-- **[Intelligent Typing Setup](./INTELLIGENT_TYPING_GUIDE.md)**: the project-aware
+- **[Dictation Pipeline Setup](./DICTATION_PIPELINE_GUIDE.md)**: the project-aware
   pipeline. Intent routing, project-facts enrichment, target profiles, LLM rewriting.
-- **[Project knowledge: facts + context](./INTELLIGENT_TYPING_GUIDE.md#5-set-up-project-knowledge)**:
+- **[Project knowledge: facts + context](./DICTATION_PIPELINE_GUIDE.md#5-set-up-project-knowledge)**:
   teach the copilot about a repo. Facts (the `project.yaml` KB, stamped in verbatim)
   and context (the `.hs/` files an optional rewrite reads) are two different things;
   this is what each is and how to set up both.
@@ -41,15 +41,15 @@ including the LLM. This page is the map. Pick a journey.
   dismissible, never acting on their own. One action pins a record so your next
   dictation can use it as context. Gated by the activity tracking toggle: off means
   no cards.
-- **[The learning loop: journal, correct, see what it learned, replay](./INTELLIGENT_TYPING_GUIDE.md#12-dictation-journal-corrections--replay)**:
+- **[The learning loop: journal, correct, see what it learned, replay](./DICTATION_PIPELINE_GUIDE.md#12-dictation-journal-corrections--replay)**:
   the local-only loop that gets better at your voice. Fix a misfire in one tap, see
   the honest "learned from N similar" count in the "What HoldSpeak learned" digest,
   and replay an utterance to watch the routing change. The proof, not the promise.
-- **[Desktop Presence](./INTELLIGENT_TYPING_GUIDE.md#11-desktop-presence-ambient-on-desktop-status)**:
+- **[Desktop Presence](./DICTATION_PIPELINE_GUIDE.md#11-desktop-presence-ambient-on-desktop-status)**:
   an opt-in, native, focus-safe status surface (a macOS HUD, a Linux tray and
   notification) that shows whether it's listening, transcribing, or typing while you
   dictate elsewhere. Optionally with
-  **[Qlippy, the mascot](./INTELLIGENT_TYPING_GUIDE.md#qlippy-the-mascot-optional)**:
+  **[Qlippy, the mascot](./DICTATION_PIPELINE_GUIDE.md#qlippy-the-mascot-optional)**:
   an ambient pixel-art dock plus one-at-a-time cards for the moments that need
   you (approvals, results, learning, meeting follow-ups), each carrying an
   egress badge that shows where its data goes. He never acts on his own.
