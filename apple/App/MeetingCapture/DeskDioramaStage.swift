@@ -2753,6 +2753,7 @@ struct DioStage: View {
     @State private var showSendCard = false
     @State private var sending = false
     @State private var connecting = false
+    @State private var railOpen = false   // iPhone (compact): the agent rail collapses behind an edge tab
     @State private var sentToast: String? = nil
     @State private var summonSource: String? = nil       // the card being routed (radial summon active)
     @State private var summonAt: CGPoint = .zero          // where the radial centers (the card's position)
@@ -2966,12 +2967,14 @@ struct DioStage: View {
                             }
                     )
 
+                // The decorative title is hidden on a phone (compact) — it collided with the corner
+                // affordances; the desk needs that scarce top width for the pill + create cluster.
                 VStack(spacing: 3) {
                     Text("HoldSpeak").font(.system(size: 25, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
                     Text("drag a meeting onto a zone · tap to open")
                         .font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
                 }
-                .opacity(landed && selected == nil && path.isEmpty && !firstRun ? 1 : 0)
+                .opacity(landed && selected == nil && path.isEmpty && !firstRun && w >= 500 ? 1 : 0)
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.05)
 
                 // THE FIRST BOOT — the cold-start ritual: an empty desk that teaches itself
@@ -3073,20 +3076,43 @@ struct DioStage: View {
                     .padding(.top, h * 0.045).padding(.leading, 18 + 50).zIndex(70)
                     .transition(.scale.combined(with: .opacity))
                 }
-                // THE RAIL — Agents · Chains · Play (games live here as a third column, no separate launcher)
+                // THE RAIL — Agents · Chains · Play. On iPad it sits open at the right; on a phone
+                // (compact) it collapses behind a slim edge tab so it never covers the canvas.
                 if landed && selected == nil && summonSource == nil && !capturing && openAgent == nil
                     && editingAgent == nil && editingChain == nil && runChainSheet == nil && chainRelay == nil
-                    && openGameId == nil && !arkadeOpen
+                    && openGameId == nil && !arkadeOpen && connecting == false
                     && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet && !firstRun {
-                    DioAgentRail(agents: agents, chains: chains, dimmed: false,
-                                 onOpen: { a in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { openAgent = a } },
-                                 onCreate: { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingAgent = AgentRecord.blank() } },
-                                 onRunChain: { c in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { runChainSheet = c } },
-                                 onCreateChain: { haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingChain = ChainRecord.blank() } },
-                                 onPlay: { id in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { if id == "arkanoid" { arkadeOpen = true } else { openGameId = id } } },
-                                 onPlace: { id in placeGame(id) })
+                    let compact = w < 500
+                    if compact && !railOpen {
+                        // the collapsed handle — tap to slide the rail in
+                        Button { haptic(.light); withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { railOpen = true } } label: {
+                            VStack(spacing: 5) {
+                                Image(systemName: "person.2.fill").font(.system(size: 13, weight: .bold))
+                                Image(systemName: "chevron.left").font(.system(size: 10, weight: .black))
+                            }
+                            .foregroundStyle(DioPal.muted)
+                            .padding(.vertical, 13).padding(.horizontal, 7)
+                            .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(.black.opacity(0.42))
+                                .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+                        }.buttonStyle(.plain)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                        .padding(.trailing, 10).zIndex(64).transition(.move(edge: .trailing).combined(with: .opacity))
+                        .padding(.trailing, 6).zIndex(64).transition(.move(edge: .trailing).combined(with: .opacity))
+                    } else {
+                        if compact {
+                            // tap the canvas to dismiss the rail (transparent, no scrim)
+                            Color.clear.contentShape(Rectangle()).ignoresSafeArea()
+                                .onTapGesture { withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { railOpen = false } }.zIndex(63)
+                        }
+                        DioAgentRail(agents: agents, chains: chains, dimmed: false,
+                                     onOpen: { a in railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { openAgent = a } },
+                                     onCreate: { railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingAgent = AgentRecord.blank() } },
+                                     onRunChain: { c in railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { runChainSheet = c } },
+                                     onCreateChain: { railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingChain = ChainRecord.blank() } },
+                                     onPlay: { id in railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { if id == "arkanoid" { arkadeOpen = true } else { openGameId = id } } },
+                                     onPlace: { id in placeGame(id) })
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                            .padding(.trailing, compact ? 6 : 10).zIndex(64).transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
                 }
 
                 // the mode picker — hovering over the corner mic
