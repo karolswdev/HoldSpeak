@@ -85,6 +85,11 @@ function DeskApp() {
     // ── chain / workflow run (capability execution, mirrors the agent run) ──
     runningKind: null, // "agent" | "chain" | "workflow" | null — which drawer
     chainSteps: null, // [{ agentId, agentName, output }] | null (crew result)
+    // Honest signals the hub lands on a workflow run:
+    //   `warning` (a graph it refused to guess an order for) and `steps`
+    //   (the per-node execution trail of a linearized graph). Both surfaced.
+    runWarning: "", // hub `data.warning` for the active run, or ""
+    workflowSteps: null, // [{ nodeId, kind, output, provider }] | null (graph trail)
 
     async init() {
       await this.loadAll();
@@ -460,6 +465,8 @@ function DeskApp() {
         name: w.name,
         prompt: w.prompt || "",
         hasGraph: Boolean(hasGraph),
+        // `graph_json` is a JSON OBJECT on the wire (Record<string, unknown> or
+        // null), never a string; kept as the object the graph editor reads.
         graphJson: graph,
       };
     },
@@ -801,7 +808,7 @@ function DeskApp() {
     // ── capability run — one drawer, three kinds ──
     //   agent    → POST /api/agents/{id}/run     → { output, provider }
     //   chain    → POST /api/chains/{id}/run      → { chain_id, steps:[{agent_id, output}], output }
-    //   workflow → POST /api/workflows/{id}/run   → { workflow_id, output, provider }
+    //   workflow → POST /api/workflows/{id}/run   → { workflow_id, output, provider[, steps][, warning] }
     openRun(target, kind = "agent") {
       this.running = target;
       this.runningKind = kind;
@@ -809,6 +816,8 @@ function DeskApp() {
       this.runError = "";
       this.runResult = null;
       this.chainSteps = null;
+      this.workflowSteps = null;
+      this.runWarning = "";
       this.runBusy = false;
     },
     closeRun() {
@@ -816,6 +825,8 @@ function DeskApp() {
       this.runningKind = null;
       this.runBusy = false;
       this.chainSteps = null;
+      this.workflowSteps = null;
+      this.runWarning = "";
     },
     /** The verb + display name for the active run drawer. */
     runTitle() {
@@ -910,12 +921,26 @@ function DeskApp() {
       this.runBusy = true;
       this.runError = "";
       this.runResult = null;
+      this.workflowSteps = null;
+      this.runWarning = "";
       try {
         const data = await this.fetchJson(`/api/workflows/${this.running.id}/run`, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ input }),
         });
+        // The hub is honest about a graph it would not guess an order for: it
+        // runs the prompt fallback and lands a `warning`. Surface it verbatim.
+        this.runWarning = data.warning || "";
+        // A linearized graph lands its per-node execution trail in `steps`
+        // ({node_id, kind, output, provider}); render it under the output.
+        this.workflowSteps = (data.steps || []).map((s) => ({
+          nodeId: s.node_id || "",
+          kind: s.kind || "",
+          output: s.output || "",
+          provider: s.provider || "",
+        }));
+        if (!this.workflowSteps.length) this.workflowSteps = null;
         this.runResult = {
           output: data.output || "",
           provider: data.provider || "",
