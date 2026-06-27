@@ -9,10 +9,28 @@
 > 🚀 **New agent (general):** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Current phase:** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
-(web/Astro parity of the DeskOS + desktop sync of the organization layer across the mesh).
+**Current phase:** [Phase 17 — Agent Sync (the coder on your desk)](./phase-17-agent-sync/current-phase-status.md)
+(live Claude/Codex coding sessions as synced DeskOS primitives: a coder asks → it surfaces on your desk →
+you answer by voice / typed / dropped-context / **AI-drafted** → injected back into the live session).
+Phase 16 (web parity + mesh sync) remains open in parallel.
 
-**Last updated:** 2026-06-24 (**DESK: drop-to-tag + dive shipped** on `holdspeak-mobile/the-desk` — a 3D
+**Last updated:** 2026-06-26 (**PHASE 17 — AGENT SYNC OPENED.** On the owner's direct instruction:
+*"the full agent sync... we inject ourselves by running our hooks on our Claude and Codex instances, and
+then those instances are showing on our DeskOS as primitives when the agent has a question, when we
+answer, and so on"* — plus *"use a local / remote agent to construct the response too."* Authored directly
+after a two-sided parity audit (desktop server domain + the cross-device sync contract) that found
+**"agent" means two unrelated things** in our code: the canonical one is a live `AgentSession` (claude/
+codex, captured by `agent_hook.py` / `agent_context`, already on the companion seam), and the divergent
+one is the iPad's local `AgentRecord` persona builder. This phase makes the **coding session** the real
+synced primitive and **resolves the collision**. 7 stories: **17-01 the agent-session as a synced
+primitive** (the contract — leads, reclaims `PrimitiveKind.agent`, decides the persona disposition),
+17-02 the hooks (capture into live instances), 17-03 the agent on the desk (glaring *"needs you"*),
+17-04 answer the coder (spoken/typed/dropped-context → `/api/dictation/remote`), **17-05 AI-drafted
+answers** (route the question through `ILLMProvider`, approve-then-inject — the owner's headline), 17-06
+the real-metal proof, 17-07 docs. Reuses three proven seams (`agent_context` hooks, the companion inject
+path, `ILLMProvider`); the only new construction is the primitive + sync promotion. **Never autonomous**:
+AI may draft, only a human approval sends. Prior context below. **PHASE 16 — THE DESK, EVERYWHERE** stays
+open in parallel. Prior to that: **DESK: drop-to-tag + dive shipped** on `holdspeak-mobile/the-desk` — a 3D
 zone is now a persisted place that holds cards (drop a card in to file it), **double-tapping a zone dives
 INTO it** as a recursive nested desk with a breadcrumb back, and **cards now mean something** — a real
 content snippet on each, type-legible badges, different shapes/sizes per kind, and a looser hand-placed

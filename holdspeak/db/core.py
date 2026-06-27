@@ -19,6 +19,13 @@ from .actuators import ActuatorRepository
 from .corrections import DictationCorrectionRepository
 from .journal import DictationJournalRepository
 from .milestones import MilestoneRepository
+from .primitives import (
+    AgentRepository,
+    ChainRepository,
+    KBRepository,
+    NoteRepository,
+    WorkflowRepository,
+)
 
 log = get_logger("db")
 
@@ -694,6 +701,78 @@ CREATE TABLE IF NOT EXISTS dictation_journal (
 
 CREATE INDEX IF NOT EXISTS idx_dictation_journal_recent
 ON dictation_journal(created_at DESC, id DESC);
+
+-- ── Primitive Framework: the desk's synced first-class primitives ──────────
+-- Note / KB / Agent (persona) / Chain / Workflow. Authorable on any surface
+-- (desktop / iPad / web), the desktop is the canonical store. Each carries a
+-- `last_modified` (ISO-8601 UTC, last-write-wins) and a `deleted` tombstone so
+-- it syncs exactly like meetings/artifacts (see web/routes/sync.py).
+
+-- Note (content/synced): freeform markdown.
+CREATE TABLE IF NOT EXISTS notes (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT '',
+    body_markdown TEXT NOT NULL DEFAULT '',
+    tags_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+
+-- KB (organization/synced): the desk's knowledge container — a named bag of
+-- member primitive ids. DISTINCT from project.yaml kb-map / .hs context files.
+CREATE TABLE IF NOT EXISTS kbs (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    member_ids_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+
+-- Agent persona (capability/synced): the canonical, runnable persona. DISTINCT
+-- from agent_context.AgentSession (a live claude/codex coding session).
+CREATE TABLE IF NOT EXISTS agents (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    avatar TEXT NOT NULL DEFAULT '',
+    role TEXT NOT NULL DEFAULT '',
+    system_prompt TEXT NOT NULL DEFAULT '',
+    user_template TEXT NOT NULL DEFAULT '',
+    tools_json TEXT NOT NULL DEFAULT '[]',
+    kb_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+
+-- Chain (capability/synced): an ordered run of agent personas.
+CREATE TABLE IF NOT EXISTS chains (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    steps_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+
+-- Workflow (capability/synced): a saved Workbench workflow (prompt | graph_json).
+CREATE TABLE IF NOT EXISTS workflows (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    prompt TEXT NOT NULL DEFAULT '',
+    graph_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_notes_modified ON notes(last_modified DESC);
+CREATE INDEX IF NOT EXISTS idx_kbs_modified ON kbs(last_modified DESC);
+CREATE INDEX IF NOT EXISTS idx_agents_modified ON agents(last_modified DESC);
+CREATE INDEX IF NOT EXISTS idx_chains_modified ON chains(last_modified DESC);
+CREATE INDEX IF NOT EXISTS idx_workflows_modified ON workflows(last_modified DESC);
 """
 
 
@@ -713,6 +792,12 @@ class Database:
         self.dictation_corrections = DictationCorrectionRepository(self._connection, self)
         self.dictation_journal = DictationJournalRepository(self._connection, self)
         self.milestones = MilestoneRepository(self._connection, self)
+        # Primitive Framework: the desk's synced first-class primitives.
+        self.notes = NoteRepository(self._connection, self)
+        self.kbs = KBRepository(self._connection, self)
+        self.agents = AgentRepository(self._connection, self)
+        self.chains = ChainRepository(self._connection, self)
+        self.workflows = WorkflowRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

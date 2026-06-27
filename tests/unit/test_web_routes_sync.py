@@ -46,6 +46,17 @@ def _artifact(aid: str, mid: str):
     )
 
 
+def _empty_primitive_repo():
+    # The Primitive Framework desk repos default to empty for the meeting/artifact
+    # focused tests in this module (their own coverage lives in
+    # test_web_routes_sync_primitives.py).
+    return types.SimpleNamespace(
+        list=lambda include_deleted=False, limit=500: [],
+        get=lambda rid, include_deleted=False: None,
+        upsert=lambda **kw: None,
+    )
+
+
 def _fake_db(tmp_path, *, meetings=(), artifacts=None):
     artifacts = artifacts or {}
     summaries = [types.SimpleNamespace(id=m, started_at=datetime(2026, 1, 1)) for m in meetings]
@@ -59,6 +70,11 @@ def _fake_db(tmp_path, *, meetings=(), artifacts=None):
         plugins=types.SimpleNamespace(
             list_artifacts=lambda mid: artifacts.get(mid, []),
         ),
+        notes=_empty_primitive_repo(),
+        kbs=_empty_primitive_repo(),
+        agents=_empty_primitive_repo(),
+        chains=_empty_primitive_repo(),
+        workflows=_empty_primitive_repo(),
     )
 
 
@@ -95,7 +111,10 @@ def test_push_writes_changeset_to_inbox(monkeypatch, tmp_path):
     }
     resp = _client().post("/api/sync/push", json=changeset)
     assert resp.status_code == 200
-    assert resp.json() == {"success": True, "received": {"meetings": 1, "artifacts": 0}}
+    body = resp.json()
+    assert body["success"] is True
+    assert body["received"]["meetings"] == 1
+    assert body["received"]["artifacts"] == 0
 
     inbox = tmp_path / "sync_inbox"
     files = list(inbox.glob("inbox-*.json"))

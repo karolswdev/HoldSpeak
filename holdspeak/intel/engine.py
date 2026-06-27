@@ -220,6 +220,38 @@ class MeetingIntel:
         raw = response.choices[0].message.content if response.choices else ""
         return _extract_openai_message_text(raw)
 
+    def run_prompt(
+        self,
+        *,
+        system_prompt: str = "",
+        user_prompt: str,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        """Run a freeform chat completion and return the raw text.
+
+        The generic seam the Primitive Framework uses to RUN a saved Agent persona
+        on the hub: a persona's `system_prompt` + rendered `user_template` go in,
+        the model's text comes out, through the same local/cloud provider plumbing
+        the meeting intel engine already uses (so a persona honours the user's
+        configured endpoint). No JSON coercion — personas produce free text.
+        """
+        messages: list[dict[str, str]] = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": user_prompt})
+        try:
+            return self._chat_completion_text(
+                messages,
+                temperature=self.temperature if temperature is None else temperature,
+                max_tokens=self.max_tokens if max_tokens is None else max_tokens,
+            )
+        except MeetingIntelError:
+            raise
+        except Exception as exc:
+            log.error(f"Persona run failed: {exc}", exc_info=True)
+            raise MeetingIntelError(f"Persona run failed: {exc}") from exc
+
     def _analyze_once(self, transcript: str) -> IntelResult:
         messages = _json_only_messages(transcript)
         try:
