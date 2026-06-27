@@ -7,6 +7,10 @@ private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.sel
 
 public enum StorageError: Error, Equatable {
     case open(String), exec(String), prepare(String)
+    /// The stored database is newer than this build understands. Raised instead
+    /// of touching the data, so an older build can never downgrade-stamp a
+    /// database written by a newer one (mirrors the desktop `SchemaVersionError`).
+    case tooNew(stored: Int32, build: Int32)
 }
 
 /// SQLite-backed `IStorage` + `ISyncStore` (HSM-4-01, HSM-10-01). Greenfield, WAL
@@ -31,6 +35,19 @@ public final class SQLiteStorage: IStorage, ISyncStore, @unchecked Sendable {
         guard sqlite3_open_v2(path, &db, flags, nil) == SQLITE_OK else {
             throw StorageError.open(lastError)
         }
+        // Read the stored version BEFORE migrating or stamping. A `user_version`
+        // greater than this build's schema means a NEWER build wrote it; refuse to
+        // open for writes (close the handle, throw) so we never downgrade-stamp it.
+        // This mirrors the desktop refuse-newer matrix (holdspeak/db/core.py
+        // `_ensure_schema` + `SchemaVersionError`). A fresh DB reads `user_version`
+        // as 0, which falls through to the create/equal paths unchanged.
+        let stored = (try? userVersion()) ?? 0
+        if stored > Self.schemaVersion {
+            sqlite3_close(db)
+            db = nil
+            throw StorageError.tooNew(stored: stored, build: Self.schemaVersion)
+        }
+
         try exec("PRAGMA journal_mode=WAL;")
         try exec("PRAGMA foreign_keys=ON;")
         try exec("""
@@ -42,14 +59,40 @@ public final class SQLiteStorage: IStorage, ISyncStore, @unchecked Sendable {
               modified_at TEXT, deleted INTEGER NOT NULL DEFAULT 0);
             CREATE INDEX IF NOT EXISTS idx_artifacts_meeting ON artifacts(meeting_id);
             """)
-        try migrateIfNeeded()
+        // An older DB (stored < build) is about to be ALTERed. Snapshot it first so
+        // an upgrade never changes data without leaving a recoverable copy. The
+        // equal/fresh path runs no ALTERs and takes no backup.
+        if stored > 0 && stored < Self.schemaVersion {
+            backupBeforeMigrate(path: path, stored: stored)
+        }
+        try migrateIfNeeded(stored: stored)
         try exec("PRAGMA user_version=\(Self.schemaVersion);")
+    }
+
+    /// Best-effort, logged copy of the SQLite file to a timestamped sibling before
+    /// an upgrade runs its ALTERs. A failed copy must not block opening the store,
+    /// so this never throws (mirrors the desktop `backup_database` safety net).
+    private func backupBeforeMigrate(path: String, stored: Int32) {
+        let timestamp = DateFormatter.backupTimestamp.string(from: Date())
+        var backup = "\(path).\(timestamp).bak"
+        let fm = FileManager.default
+        var counter = 1
+        while fm.fileExists(atPath: backup) {
+            backup = "\(path).\(timestamp)-\(counter).bak"
+            counter += 1
+        }
+        do {
+            try fm.copyItem(atPath: path, toPath: backup)
+            print("[SQLiteStorage] schema \(stored) < \(Self.schemaVersion); backed up to \(backup) before migrating")
+        } catch {
+            print("[SQLiteStorage] backup before migrate failed (continuing): \(error)")
+        }
     }
 
     /// v1 → v2: a pre-existing v1 DB lacks `modified_at`/`deleted`. Add them
     /// (guarded — ignore "duplicate column"). Greenfield, so this is the only step.
-    private func migrateIfNeeded() throws {
-        guard (try? userVersion()) ?? 0 < 2 else { return }
+    private func migrateIfNeeded(stored: Int32) throws {
+        guard stored < 2 else { return }
         for sql in [
             "ALTER TABLE meetings ADD COLUMN modified_at TEXT;",
             "ALTER TABLE meetings ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0;",
@@ -218,4 +261,15 @@ public final class SQLiteStorage: IStorage, ISyncStore, @unchecked Sendable {
         }
         return out
     }
+}
+
+private extension DateFormatter {
+    /// `yyyyMMdd-HHmmss`, matching the desktop backup naming so a backup sibling
+    /// reads the same on both surfaces.
+    static let backupTimestamp: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyyMMdd-HHmmss"
+        return f
+    }()
 }
