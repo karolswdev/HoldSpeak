@@ -2,6 +2,12 @@
 
 > The program chart. Grounded in [`PARITY-AUDIT-2026-06-27.md`](./PARITY-AUDIT-2026-06-27.md)
 > (50-agent flotilla, 22 features, 70 verified gaps, 17 high). Authored 2026-06-27.
+>
+> **The design layer:** [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) —
+> a 16-agent design flotilla reframed these gaps as experiences and designed them masterfully across
+> web + iOS (iPad and iPhone as one adaptive app). It is the *how it should feel* to this program's
+> *what it must do*; every phase below has a matching per-experience direction there. Build against
+> the vision, not the checklist.
 
 ## What "equilibrium" means
 

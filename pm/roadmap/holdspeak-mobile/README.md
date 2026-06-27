@@ -20,8 +20,19 @@ contract parity across desktop / web / iPad / iPhone. Six phases (**18–23**), 
 pattern the parity audit found, grounded in [`PARITY-AUDIT-2026-06-27.md`](./PARITY-AUDIT-2026-06-27.md)
 (50-agent flotilla, 22 features, 70 verified gaps). **Phase 18 leads** (the iPad joins the
 dictation contracts) and ships with full stories; the rest open in sequence.
+Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
+masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-06-27 (**THE EQUILIBRIUM PROGRAM AUTHORED (Phases 18–23).** On the owner's
+**Last updated:** 2026-06-27 (**THE EXPERIENCE VISION authored** — a 16-agent design flotilla
+(ground → design → adversarial crit → direct) reframed the equilibrium gaps as experiences and
+designed them masterfully across web + iOS, iPad=iPhone: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md).
+Philosophy: *"HoldSpeak is a debugger for trust... it ships the receipt a half-second before the
+action."* One product, two skins (flat dark web cockpit / lit physical desk), a cross-surface
+doctrine (one accent, one card recipe, one egress badge, one adaptive `DeskCamera` law), six
+signature moments (the macro fires as an object, the confidence-ring drop, the chip that refuses to
+lie, walk-the-lineage-by-touch, the branch forks in front of you, the disk-vault seals), and a
+sharpening pass that promoted the iPhone meeting-review to a first-class signature surface. Build
+against the vision, not the checklist. Earlier today: **THE EQUILIBRIUM PROGRAM AUTHORED (Phases 18–23).** On the owner's
 instruction to *"send a flotilla of equilibrium agents"* and then *"create this roadmap"*: a 50-agent
 parity-audit flotilla (chart → audit → adversarial verify → synthesize) mapped 22 canonical features
 across desktop / web / iPad / iPhone and found 70 verified gaps (17 high) in six systemic patterns
