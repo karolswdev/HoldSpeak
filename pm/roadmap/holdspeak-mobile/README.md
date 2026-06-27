@@ -14,7 +14,36 @@
 you answer by voice / typed / dropped-context / **AI-drafted** → injected back into the live session).
 Phase 16 (web parity + mesh sync) remains open in parallel.
 
-**Last updated:** 2026-06-26 (**PHASE 17 — AGENT SYNC OPENED.** On the owner's direct instruction:
+**📐 Next program — THE EQUILIBRIUM (authored, ready to open):**
+[`EQUILIBRIUM.md`](./EQUILIBRIUM.md) — bringing every original HoldSpeak feature into full
+contract parity across desktop / web / iPad / iPhone. Six phases (**18–23**), one per systemic
+pattern the parity audit found, grounded in [`PARITY-AUDIT-2026-06-27.md`](./PARITY-AUDIT-2026-06-27.md)
+(50-agent flotilla, 22 features, 70 verified gaps). **Phase 18 leads** (the iPad joins the
+dictation contracts) and ships with full stories; the rest open in sequence.
+Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
+masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
+
+**Last updated:** 2026-06-27 (**THE EXPERIENCE VISION authored** — a 16-agent design flotilla
+(ground → design → adversarial crit → direct) reframed the equilibrium gaps as experiences and
+designed them masterfully across web + iOS, iPad=iPhone: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md).
+Philosophy: *"HoldSpeak is a debugger for trust... it ships the receipt a half-second before the
+action."* One product, two skins (flat dark web cockpit / lit physical desk), a cross-surface
+doctrine (one accent, one card recipe, one egress badge, one adaptive `DeskCamera` law), six
+signature moments (the macro fires as an object, the confidence-ring drop, the chip that refuses to
+lie, walk-the-lineage-by-touch, the branch forks in front of you, the disk-vault seals), and a
+sharpening pass that promoted the iPhone meeting-review to a first-class signature surface. Build
+against the vision, not the checklist. Earlier today: **THE EQUILIBRIUM PROGRAM AUTHORED (Phases 18–23).** On the owner's
+instruction to *"send a flotilla of equilibrium agents"* and then *"create this roadmap"*: a 50-agent
+parity-audit flotilla (chart → audit → adversarial verify → synthesize) mapped 22 canonical features
+across desktop / web / iPad / iPhone and found 70 verified gaps (17 high) in six systemic patterns
+([`PARITY-AUDIT-2026-06-27.md`](./PARITY-AUDIT-2026-06-27.md)). Authored the six-phase program
+([`EQUILIBRIUM.md`](./EQUILIBRIUM.md)): **18** the iPad joins the dictation contracts (leads, fully
+storied), **19** the iPad joins the meeting contracts, **20** one app every size (the iPhone
+`horizontalSizeClass` pass), **21** honest everywhere (egress/provenance/names), **22** the graph
+travels (the Workbench `graph_json` bridge), **23** mesh-safe storage (iPad refuse-newer + doctor).
+18 + 19 lead in parallel; 20 follows them on purpose (you cannot lay out at compact width what does not
+exist yet). Also this session: the device-gap in-world pass + iPhone compact mode merged (PR #143).
+Phase 17 stays the active build. Prior context below. **PHASE 17 — AGENT SYNC OPENED.** On the owner's direct instruction:
 *"the full agent sync... we inject ourselves by running our hooks on our Claude and Codex instances, and
 then those instances are showing on our DeskOS as primitives when the agent has a question, when we
 answer, and so on"* — plus *"use a local / remote agent to construct the response too."* Authored directly
