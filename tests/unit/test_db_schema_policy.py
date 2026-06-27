@@ -74,9 +74,9 @@ def test_older_db_is_backed_up_then_applied(db_path: Path, monkeypatch) -> None:
     conn.commit()
     conn.close()
 
-    # Now pretend this build is newer than the database (SCHEMA_VERSION is 1, so
-    # there is no representable older version yet; bumping the constant in the
-    # fixture simulates the first real schema bump).
+    # Now pretend this build is newer than the database by bumping the constant in
+    # the fixture, exercising the backup-then-apply path that a real schema bump
+    # (e.g. v1 -> v2, the Primitive Framework tables) takes for an older DB.
     monkeypatch.setattr(db_core, "SCHEMA_VERSION", SCHEMA_VERSION + 1)
     backups: list[Path] = []
     real_backup = db_core.backup_database

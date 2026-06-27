@@ -994,6 +994,7 @@ private struct NodeInspectorSheet: View {
                 }
                 .background(Sig.s2, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Sig.topHairline, lineWidth: 1))
+                .overlay(alignment: .bottomTrailing) { VoiceFillMic(text: $prompt, tint: Sig.accent, size: 28).padding(9) }
                 Button { prompt += (prompt.isEmpty ? "" : " ") + "{input}" } label: {
                     Label("Insert {input}", systemImage: "curlybraces").font(.system(size: 12, weight: .bold))
                         .foregroundStyle(Sig.accent).padding(.horizontal, 12).padding(.vertical, 7)
