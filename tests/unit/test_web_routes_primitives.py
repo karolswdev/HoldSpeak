@@ -198,6 +198,86 @@ def test_chain_create_requires_name(client: TestClient) -> None:
     assert client.post("/api/chains", json={"steps": []}).status_code == 400
 
 
+# ── Run a chain (crew) ───────────────────────────────────────────────────────
+def _make_agent(client: TestClient, name: str, template: str) -> str:
+    return client.post("/api/agents", json={
+        "name": name, "system_prompt": f"SYS-{name}", "user_template": template,
+    }).json()["agent"]["id"]
+
+
+def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
+    a1 = _make_agent(client, "A1", "step1: {input}")
+    a2 = _make_agent(client, "A2", "step2: {input}")
+    cid = client.post("/api/chains", json={"name": "C", "steps": [a1, a2]}).json()["chain"]["id"]
+
+    calls = []
+
+    class _FakeIntel:
+        active_provider = "local"
+
+        def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
+            calls.append((system_prompt, user_prompt))
+            return f"out({user_prompt})"
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+    )
+
+    resp = client.post(f"/api/chains/{cid}/run", json={"input": "hello"})
+    assert resp.status_code == 200
+    body = resp.json()
+
+    # Step 1 ran on the request input; step 2 ran on step 1's output (threaded).
+    assert calls[0] == ("SYS-A1", "step1: hello")
+    assert calls[1] == ("SYS-A2", "step2: out(step1: hello)")
+
+    assert body["chain_id"] == cid
+    assert [s["agent_id"] for s in body["steps"]] == [a1, a2]
+    assert body["steps"][0]["output"] == "out(step1: hello)"
+    assert body["steps"][0]["provider"] == "local"
+    # Chain output is the last step's output.
+    assert body["output"] == body["steps"][-1]["output"] == "out(step2: out(step1: hello))"
+
+
+def test_run_chain_unknown_chain_is_404(client: TestClient) -> None:
+    assert client.post("/api/chains/nope/run", json={"input": "x"}).status_code == 404
+
+
+def test_run_chain_missing_agent_is_404(client: TestClient) -> None:
+    cid = client.post(
+        "/api/chains", json={"name": "C", "steps": ["ghost_agent"]}
+    ).json()["chain"]["id"]
+    resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
+    assert resp.status_code == 404
+    assert "ghost_agent" in resp.json()["error"]
+
+
+def test_run_chain_empty_steps_is_400(client: TestClient) -> None:
+    cid = client.post("/api/chains", json={"name": "Empty", "steps": []}).json()["chain"]["id"]
+    assert client.post(f"/api/chains/{cid}/run", json={"input": "x"}).status_code == 400
+
+
+def test_run_chain_engine_error_is_502(client: TestClient, monkeypatch) -> None:
+    a1 = _make_agent(client, "A1", "{input}")
+    cid = client.post("/api/chains", json={"name": "C", "steps": [a1]}).json()["chain"]["id"]
+
+    from holdspeak.intel.models import MeetingIntelError
+
+    class _Boom:
+        active_provider = None
+
+        def run_prompt(self, **kwargs):
+            raise MeetingIntelError("no model")
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
+    )
+    resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
+    assert resp.status_code == 502
+    assert "no model" in resp.json()["error"]
+    assert resp.json()["agent_id"] == a1
+
+
 # ── Workflows ──────────────────────────────────────────────────────────────
 def test_workflow_crud_flow(client: TestClient) -> None:
     assert client.get("/api/workflows").json() == {"workflows": []}
@@ -227,6 +307,86 @@ def test_workflow_crud_flow(client: TestClient) -> None:
 
 def test_workflow_create_requires_name(client: TestClient) -> None:
     assert client.post("/api/workflows", json={"prompt": "x"}).status_code == 400
+
+
+# ── Run a workflow ───────────────────────────────────────────────────────────
+def _stub_intel(monkeypatch, output="WF-OUT", provider="local"):
+    class _FakeIntel:
+        active_provider = provider
+
+        def __init__(self):
+            self.captured = {}
+
+        def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
+            self.captured["system_prompt"] = system_prompt
+            self.captured["user_prompt"] = user_prompt
+            return output
+
+    fake = _FakeIntel()
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+    )
+    return fake
+
+
+def test_run_workflow_prompt(client: TestClient, monkeypatch) -> None:
+    wid = client.post(
+        "/api/workflows", json={"name": "WF", "prompt": "Do: {input}"}
+    ).json()["workflow"]["id"]
+    fake = _stub_intel(monkeypatch)
+
+    resp = client.post(f"/api/workflows/{wid}/run", json={"input": "the thing"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body == {"workflow_id": wid, "output": "WF-OUT", "provider": "local"}
+    # Workflow runs with an empty system prompt + the rendered prompt.
+    assert fake.captured == {"system_prompt": "", "user_prompt": "Do: the thing"}
+
+
+def test_run_workflow_graph_only_warns(client: TestClient, monkeypatch) -> None:
+    wid = client.post(
+        "/api/workflows", json={"name": "G", "graph_json": {"nodes": [1, 2]}}
+    ).json()["workflow"]["id"]
+    _stub_intel(monkeypatch)
+
+    # No prompt, but `input` keeps it runnable; the response notes graph isn't wired.
+    resp = client.post(f"/api/workflows/{wid}/run", json={"input": "x"})
+    assert resp.status_code == 200
+    assert "graph execution is not yet wired" in resp.json()["warning"]
+
+
+def test_run_workflow_graph_only_no_input_is_400(client: TestClient, monkeypatch) -> None:
+    wid = client.post(
+        "/api/workflows", json={"name": "G", "graph_json": {"nodes": [1]}}
+    ).json()["workflow"]["id"]
+    _stub_intel(monkeypatch)
+    # No prompt and no input => nothing to run.
+    assert client.post(f"/api/workflows/{wid}/run", json={}).status_code == 400
+
+
+def test_run_workflow_unknown_is_404(client: TestClient) -> None:
+    assert client.post("/api/workflows/nope/run", json={"input": "x"}).status_code == 404
+
+
+def test_run_workflow_engine_error_is_502(client: TestClient, monkeypatch) -> None:
+    wid = client.post(
+        "/api/workflows", json={"name": "WF", "prompt": "{input}"}
+    ).json()["workflow"]["id"]
+
+    from holdspeak.intel.models import MeetingIntelError
+
+    class _Boom:
+        active_provider = None
+
+        def run_prompt(self, **kwargs):
+            raise MeetingIntelError("no model")
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
+    )
+    resp = client.post(f"/api/workflows/{wid}/run", json={"input": "x"})
+    assert resp.status_code == 502
+    assert "no model" in resp.json()["error"]
 
 
 # ── Directories + membership ─────────────────────────────────────────────────
@@ -287,3 +447,29 @@ def test_directory_membership_file_and_unfile(client: TestClient) -> None:
 
 def test_directory_member_listing_404_for_unknown_directory(client: TestClient) -> None:
     assert client.get("/api/directories/ghost/members").status_code == 404
+
+
+def test_directory_reads_include_member_ids(client: TestClient) -> None:
+    did = client.post("/api/directories", json={"name": "Folder"}).json()["directory"]["id"]
+
+    # Empty to start: both the list item and the detail carry member_ids: [].
+    assert client.get("/api/directories").json()["directories"][0]["member_ids"] == []
+    assert client.get(f"/api/directories/{did}").json()["member_ids"] == []
+
+    # File two primitives.
+    client.put(f"/api/directories/{did}/members/note_1")
+    client.put(f"/api/directories/{did}/members/agent_2")
+
+    # The list item now carries the filed ids.
+    item = client.get("/api/directories").json()["directories"][0]
+    assert sorted(item["member_ids"]) == ["agent_2", "note_1"]
+
+    # The detail response carries member_ids AND keeps the full members bucket.
+    detail = client.get(f"/api/directories/{did}").json()
+    assert sorted(detail["member_ids"]) == ["agent_2", "note_1"]
+    assert sorted(m["primitive_id"] for m in detail["members"]) == ["agent_2", "note_1"]
+
+    # Unfiling drops the id from member_ids (tombstone excluded).
+    client.delete(f"/api/directories/{did}/members/note_1")
+    assert client.get(f"/api/directories/{did}").json()["member_ids"] == ["agent_2"]
+    assert client.get("/api/directories").json()["directories"][0]["member_ids"] == ["agent_2"]

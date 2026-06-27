@@ -202,7 +202,7 @@ const GROUPS = [
                         <button type="button" class="file-btn" @click="openFile('agent', item)" title="File into a directory"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Move to…</button>
                       </div>
                       <div class="card-actions">
-                        <button type="button" class="btn primary sm run-btn" @click="openRun(item)">
+                        <button type="button" class="btn primary sm run-btn" @click="openRun(item, 'agent')">
                           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9z" /></svg>
                           Run
                         </button>
@@ -229,6 +229,12 @@ const GROUPS = [
                         </template>
                         <button type="button" class="file-btn" @click="openFile('chain', item)" title="File into a directory"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Move to…</button>
                       </div>
+                      <div class="card-actions">
+                        <button type="button" class="btn primary sm run-btn" @click="openRun(item, 'chain')" :disabled="!item.steps.length" :title="item.steps.length ? 'Run the crew' : 'Add steps to run this chain'">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9z" /></svg>
+                          Run crew
+                        </button>
+                      </div>
                     </article>
                   </template>
                 )}
@@ -249,6 +255,12 @@ const GROUPS = [
                           <span class="filed-chip"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg><span x-text="d.name"></span></span>
                         </template>
                         <button type="button" class="file-btn" @click="openFile('workflow', item)" title="File into a directory"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Move to…</button>
+                      </div>
+                      <div class="card-actions">
+                        <button type="button" class="btn primary sm run-btn" @click="openRun(item, 'workflow')" title="Run the workflow">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9z" /></svg>
+                          Run
+                        </button>
                       </div>
                     </article>
                   </template>
@@ -530,40 +542,82 @@ const GROUPS = [
       </aside>
     </div>
 
-    {/* ── agent run drawer ── */}
+    {/* ── capability run drawer (agent · chain · workflow) ── */}
     <div class="drawer-overlay" x-show="running" x-cloak @keydown.escape.window="closeRun()">
       <div class="drawer-backdrop" @click="closeRun()"></div>
-      <aside class="drawer wide run-drawer" role="dialog" aria-modal="true" aria-label="Run agent">
+      <aside class="drawer wide run-drawer" role="dialog" aria-modal="true" aria-label="Run capability">
         <header class="drawer-head">
           <div class="run-head-id">
-            <span class="run-avatar" x-text="running && running.avatar">🤖</span>
+            {/* agent gets its avatar; chain/workflow get a kind glyph */}
+            <span class="run-avatar" x-show="runningKind === 'agent'" x-cloak x-text="running && running.avatar">🤖</span>
+            <span class="run-glyph violet" x-show="runningKind === 'chain'" x-cloak aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" /></svg>
+            </span>
+            <span class="run-glyph info" x-show="runningKind === 'workflow'" x-cloak aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12M18 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a9 9 0 0 0 9 9" /></svg>
+            </span>
             <div>
-              <span class="drawer-eyebrow accent">Run persona</span>
-              <h2 x-text="running && running.name">Agent</h2>
-              <p class="run-role" x-show="running && running.role" x-cloak x-text="running && running.role"></p>
+              <span class="drawer-eyebrow accent" x-show="runningKind === 'agent'" x-cloak>Run persona</span>
+              <span class="drawer-eyebrow violet" x-show="runningKind === 'chain'" x-cloak>Run crew</span>
+              <span class="drawer-eyebrow info" x-show="runningKind === 'workflow'" x-cloak>Run workflow</span>
+              <h2 x-text="runTitle()">Run</h2>
+              <p class="run-role" x-show="runningKind === 'agent' && running && running.role" x-cloak x-text="running && running.role"></p>
+              <p class="run-role" x-show="runningKind === 'chain' && running" x-cloak x-text="`${(running && running.steps || []).length} agent${((running && running.steps || []).length) === 1 ? '' : 's'}, output flowing into the next`"></p>
+              <p class="run-role" x-show="runningKind === 'workflow' && running && running.prompt" x-cloak x-text="running && running.prompt"></p>
             </div>
           </div>
           <button type="button" class="drawer-close" @click="closeRun()" aria-label="Close">✕</button>
         </header>
         <div class="drawer-body">
+          {/* chain crew preview — the ordered roster before you run */}
+          <div class="crew-roster" x-show="runningKind === 'chain' && running && running.steps.length" x-cloak>
+            <span class="run-result-label">Crew</span>
+            <ol class="chain-flow">
+              <template x-for="(s, i) in (running ? running.steps : [])" {...{ ":key": "i" }}>
+                <li class="chain-node"><span class="chain-num" x-text="i + 1"></span><span class="chain-name" x-text="agentName(s)"></span></li>
+              </template>
+            </ol>
+          </div>
+
           <label class="field">
-            <span>Input</span>
-            <textarea rows="5" x-model="runInput" placeholder="Paste a transcript, a question, or anything the persona should work on…" @keydown.cmd.enter="submitRun()" @keydown.ctrl.enter="submitRun()"></textarea>
+            <span x-text="runningKind === 'chain' ? 'Input — fed to the first agent' : 'Input'">Input</span>
+            <textarea rows="5" x-model="runInput"
+              :placeholder="runningKind === 'chain' ? 'Paste a transcript, a brief, or anything the first agent should work on…' : (runningKind === 'workflow' ? 'Anything the workflow should work on (optional for a graph workflow)…' : 'Paste a transcript, a question, or anything the persona should work on…')"
+              @keydown.cmd.enter="submitRun()" @keydown.ctrl.enter="submitRun()"></textarea>
           </label>
-          <p class="field-note">Runs <code>{"POST /api/agents/{id}/run"}</code> through your configured provider. <kbd>⌘</kbd>+<kbd>Enter</kbd> to run.</p>
+          <p class="field-note" x-show="runningKind === 'agent'" x-cloak>Runs <code>{"POST /api/agents/{id}/run"}</code> through your configured provider. <kbd>⌘</kbd>+<kbd>Enter</kbd> to run.</p>
+          <p class="field-note" x-show="runningKind === 'chain'" x-cloak>Runs <code>{"POST /api/chains/{id}/run"}</code> — each agent runs in order, its output flowing into the next. <kbd>⌘</kbd>+<kbd>Enter</kbd> to run.</p>
+          <p class="field-note" x-show="runningKind === 'workflow'" x-cloak>Runs <code>{"POST /api/workflows/{id}/run"}</code> through your configured provider. <kbd>⌘</kbd>+<kbd>Enter</kbd> to run.</p>
 
           <p class="drawer-err" x-show="runError" x-cloak x-text="runError"></p>
 
           {/* loading */}
           <div class="run-loading" x-show="runBusy" x-cloak>
             <span class="run-spinner"></span>
-            <span>Running the persona…</span>
+            <span x-text="runningKind === 'chain' ? 'Running the crew…' : (runningKind === 'workflow' ? 'Running the workflow…' : 'Running the persona…')">Running…</span>
           </div>
 
-          {/* result */}
+          {/* chain crew result — each step in sequence, then the final output */}
+          <div class="crew-result" x-show="runningKind === 'chain' && chainSteps && !runBusy" x-cloak>
+            <span class="run-result-label">Crew run</span>
+            <ol class="crew-steps">
+              <template x-for="(step, i) in (chainSteps || [])" {...{ ":key": "i" }}>
+                <li class="crew-step">
+                  <div class="crew-step-head">
+                    <span class="chain-num" x-text="i + 1"></span>
+                    <span class="crew-step-name" x-text="step.agentName"></span>
+                    <svg class="crew-step-arrow" x-show="i < (chainSteps.length - 1)" x-cloak viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>
+                  </div>
+                  <pre class="crew-step-output" x-text="step.output"></pre>
+                </li>
+              </template>
+            </ol>
+          </div>
+
+          {/* result — final output (all kinds) */}
           <div class="run-result" x-show="runResult && !runBusy" x-cloak>
             <div class="run-result-head">
-              <span class="run-result-label">Output</span>
+              <span class="run-result-label" x-text="runningKind === 'chain' ? 'Final output' : 'Output'">Output</span>
               <span class="egress" :class="runEgress().scope">
                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
                 <span x-text="runEgress().scope === 'local' ? 'on-device' : (runEgress().scope === 'cloud' ? 'cloud' : 'egress')">egress</span>
@@ -581,7 +635,7 @@ const GROUPS = [
           <button type="button" class="btn ghost" @click="closeRun()">Close</button>
           <button type="button" class="btn primary" @click="submitRun()" :disabled="runBusy">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9z" /></svg>
-            <span x-text="runBusy ? 'Running…' : (runResult ? 'Run again' : 'Run')">Run</span>
+            <span x-text="runBusy ? 'Running…' : ((runResult || chainSteps) ? 'Run again' : 'Run')">Run</span>
           </button>
         </div>
       </aside>
@@ -1036,6 +1090,28 @@ const GROUPS = [
   .run-copy:hover { color: var(--text); border-color: var(--border-strong); }
   .run-copy .copied { color: var(--ok-strong); }
   .run-output { margin: 0; padding: var(--space-4); font-family: var(--font-mono); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); color: var(--text); white-space: pre-wrap; word-break: break-word; max-height: 40vh; overflow-y: auto; }
+
+  /* run-drawer kind glyph (chain / workflow) */
+  .run-glyph {
+    display: inline-grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--g, var(--accent)) 14%, var(--surface-3));
+    color: var(--g, var(--accent));
+    border: 1px solid color-mix(in srgb, var(--g, var(--accent)) 30%, transparent);
+  }
+  .run-glyph.violet { --g: #A78BFA; }
+  .run-glyph.info { --g: var(--info); }
+
+  /* crew roster (chain preview) + crew run result */
+  .crew-roster { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--surface-2); }
+  .crew-roster .chain-flow { --ck: #A78BFA; }
+  .crew-result { display: flex; flex-direction: column; gap: var(--space-2); }
+  .crew-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); --ck: #A78BFA; }
+  .crew-step { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-2); overflow: hidden; }
+  .crew-step-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border-subtle); background: var(--surface-1); }
+  .crew-step-name { font-family: var(--font-display); font-weight: 600; font-size: var(--font-size-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .crew-step-arrow { margin-left: auto; color: #A78BFA; }
+  .crew-step-output { margin: 0; padding: var(--space-3); font-family: var(--font-mono); font-size: var(--font-size-sm); line-height: var(--line-height-relaxed); color: var(--text-muted); white-space: pre-wrap; word-break: break-word; max-height: 22vh; overflow-y: auto; }
 
   @media (max-width: 720px) {
     .desk { padding: var(--space-3); gap: var(--space-5); }

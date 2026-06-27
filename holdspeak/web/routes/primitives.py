@@ -40,6 +40,10 @@ Route table (all snake_case JSON, ISO-8601 UTC `Z` timestamps):
     GET    /api/chains/{id}           -> {"chain": <chain>} | 404
     PUT    /api/chains/{id}           body {name?, steps?} -> {"chain": <chain>} | 404
     DELETE /api/chains/{id}           -> {"success": true} | 404   (tombstone)
+    POST   /api/chains/{id}/run       body {input?, variables?, max_tokens?, temperature?}
+                                       -> {"chain_id", "steps":[{agent_id, output, provider}...],
+                                           "output"} | 400 | 404 | 502   (runs each agent in
+                                       `steps` in sequence, threading output -> next input)
 
   Workflows
     GET    /api/workflows             -> {"workflows": [<workflow>...]}
@@ -47,11 +51,16 @@ Route table (all snake_case JSON, ISO-8601 UTC `Z` timestamps):
     GET    /api/workflows/{id}        -> {"workflow": <workflow>} | 404
     PUT    /api/workflows/{id}        body {name?, prompt?, graph_json?} -> {"workflow": <workflow>} | 404
     DELETE /api/workflows/{id}        -> {"success": true} | 404   (tombstone)
+    POST   /api/workflows/{id}/run    body {input?, variables?, max_tokens?, temperature?}
+                                       -> {"workflow_id", "output", "provider"[, "warning"]}
+                                       | 400 | 404 | 502   (v0: runs `prompt` through the
+                                       engine; graph_json execution is not yet wired)
 
   Directories (the canonical organization container; the iPad's "zone")
-    GET    /api/directories             -> {"directories": [<directory>...]}
+    GET    /api/directories             -> {"directories": [<directory + member_ids[]>...]}
     POST   /api/directories             body {name, parent_id?[, id]} -> {"directory": <directory>} (201)
-    GET    /api/directories/{id}        -> {"directory": <directory>, "members": [<member>...]} | 404
+    GET    /api/directories/{id}        -> {"directory": <directory>, "member_ids": [primitive_id...],
+                                           "members": [<member>...]} | 404
     PUT    /api/directories/{id}        body {name?, parent_id?} -> {"directory": <directory>} | 404
     DELETE /api/directories/{id}        -> {"success": true} | 404   (tombstone)
 
@@ -472,6 +481,97 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to delete chain")
 
+    @router.post("/api/chains/{chain_id}/run")
+    async def api_run_chain(chain_id: str, request: Request) -> Any:
+        """Run a Chain (crew): each agent in `steps` in sequence, threading output.
+
+        Each step loads its AgentRecord, renders its `user_template` against the
+        current input (the previous step's output, or the request `input` for the
+        first step) + the shared `variables`, and runs it through the same
+        persona-run path as `POST /api/agents/{id}/run`
+        (`build_configured_meeting_intel().run_prompt`). 404 if the chain or any
+        referenced agent is missing; 502 on the first engine failure (no silent
+        empty). Returns the per-step trail plus the last step's output.
+        """
+        body = await _json_body(request) or {}
+        try:
+            from ...db import get_database
+            db = get_database()
+            chain = db.chains.get(chain_id)
+            if chain is None:
+                return JSONResponse({"error": f"Unknown chain: {chain_id}"}, status_code=404)
+
+            steps = list(chain.steps or [])
+            if not steps:
+                return JSONResponse(
+                    {"error": f"chain {chain_id} has no steps to run"}, status_code=400
+                )
+
+            # Resolve every agent up front so a missing one 404s before any run.
+            agents = []
+            for agent_id in steps:
+                agent = db.agents.get(str(agent_id))
+                if agent is None:
+                    return JSONResponse(
+                        {"error": f"Unknown agent in chain: {agent_id}"}, status_code=404
+                    )
+                agents.append(agent)
+
+            variables = body.get("variables") if isinstance(body.get("variables"), dict) else {}
+            max_tokens = body.get("max_tokens")
+            temperature = body.get("temperature")
+
+            from ...intel.providers import build_configured_meeting_intel
+            from ...intel.models import MeetingIntelError
+
+            intel = build_configured_meeting_intel()
+
+            current_input = str(body.get("input") or "")
+            run_steps: list[dict[str, Any]] = []
+            for agent in agents:
+                user_prompt = _render_user_prompt(
+                    agent.user_template, variables or {}, current_input
+                )
+                if not user_prompt.strip():
+                    return JSONResponse(
+                        {
+                            "error": (
+                                f"nothing to run for step {agent.id}: provide `input` "
+                                "or an agent user_template"
+                            ),
+                            "chain_id": chain_id,
+                            "agent_id": agent.id,
+                        },
+                        status_code=400,
+                    )
+                try:
+                    output = intel.run_prompt(
+                        system_prompt=agent.system_prompt,
+                        user_prompt=user_prompt,
+                        temperature=float(temperature) if temperature is not None else None,
+                        max_tokens=int(max_tokens) if max_tokens is not None else None,
+                    )
+                except MeetingIntelError as exc:
+                    return JSONResponse(
+                        {"error": str(exc), "chain_id": chain_id, "agent_id": agent.id},
+                        status_code=502,
+                    )
+                run_steps.append({
+                    "agent_id": agent.id,
+                    "output": output,
+                    "provider": intel.active_provider,
+                })
+                # Thread this step's output as the next step's input (the pipeline).
+                current_input = output
+
+            return JSONResponse({
+                "chain_id": chain_id,
+                "steps": run_steps,
+                "output": run_steps[-1]["output"] if run_steps else "",
+            })
+        except Exception as exc:
+            return error_500(exc, log, "Failed to run chain")
+
     # ── Workflows ─────────────────────────────────────────────────────────
     @router.get("/api/workflows")
     async def api_list_workflows() -> Any:
@@ -546,13 +646,99 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to delete workflow")
 
+    @router.post("/api/workflows/{workflow_id}/run")
+    async def api_run_workflow(workflow_id: str, request: Request) -> Any:
+        """Run a Workflow (v0).
+
+        The Workbench saves a workflow as either a freeform `prompt` or a node
+        graph (`graph_json`). v0 execution:
+
+        - If the workflow has a `prompt`, run it through the engine with an empty
+          system prompt and the prompt rendered against `{input}` + `variables`.
+        - If it has only a `graph_json`, graph execution is NOT yet wired; we run
+          the `prompt` fallback (empty here) and note that via a `warning` while
+          still returning whatever the engine produced. (A best-effort linear
+          replay of arbitrary node graphs is not feasible without the Blueprints
+          runtime, so we are honest about the limit rather than guessing.)
+
+        404 if the workflow is missing; 502 on engine failure (no silent empty).
+        Returns `{workflow_id, output, provider}` (+ an optional `warning`).
+        """
+        body = await _json_body(request) or {}
+        try:
+            from ...db import get_database
+            db = get_database()
+            workflow = db.workflows.get(workflow_id)
+            if workflow is None:
+                return JSONResponse({"error": f"Unknown workflow: {workflow_id}"}, status_code=404)
+
+            variables = body.get("variables") if isinstance(body.get("variables"), dict) else {}
+            user_input = str(body.get("input") or "")
+            max_tokens = body.get("max_tokens")
+            temperature = body.get("temperature")
+
+            prompt = str(workflow.prompt or "").strip()
+            has_graph = bool(workflow.graph_json)
+            warning: Optional[str] = None
+            if not prompt and has_graph:
+                # Graph execution is not yet wired (no Blueprints runtime on the
+                # hub). Be honest and fall back to the (empty) prompt path.
+                warning = "graph execution is not yet wired; ran the prompt fallback"
+
+            user_prompt = _render_user_prompt(prompt, variables or {}, user_input)
+            if not user_prompt.strip():
+                return JSONResponse(
+                    {
+                        "error": (
+                            "nothing to run: the workflow has no prompt and graph "
+                            "execution is not yet wired; provide `input` or a prompt"
+                        ),
+                        "workflow_id": workflow_id,
+                    },
+                    status_code=400,
+                )
+
+            from ...intel.providers import build_configured_meeting_intel
+            from ...intel.models import MeetingIntelError
+
+            intel = build_configured_meeting_intel()
+            try:
+                output = intel.run_prompt(
+                    system_prompt="",
+                    user_prompt=user_prompt,
+                    temperature=float(temperature) if temperature is not None else None,
+                    max_tokens=int(max_tokens) if max_tokens is not None else None,
+                )
+            except MeetingIntelError as exc:
+                return JSONResponse(
+                    {"error": str(exc), "workflow_id": workflow_id}, status_code=502
+                )
+
+            result: dict[str, Any] = {
+                "workflow_id": workflow_id,
+                "output": output,
+                "provider": intel.active_provider,
+            }
+            if warning:
+                result["warning"] = warning
+            return JSONResponse(result)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to run workflow")
+
     # ── Directories (the canonical organization container; iPad "zone") ────
     @router.get("/api/directories")
     async def api_list_directories() -> Any:
         try:
             from ...db import get_database
-            directories = get_database().directories.list()
-            return JSONResponse({"directories": [d.to_dict() for d in directories]})
+            db = get_database()
+            directories = db.directories.list()
+            out = []
+            for d in directories:
+                item = d.to_dict()
+                members = db.directory_memberships.list_for_directory(d.id)
+                item["member_ids"] = [m.primitive_id for m in members]
+                out.append(item)
+            return JSONResponse({"directories": out})
         except Exception as exc:
             return error_500(exc, log, "Failed to list directories")
 
@@ -587,6 +773,7 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
             members = db.directory_memberships.list_for_directory(directory_id)
             return JSONResponse({
                 "directory": directory.to_dict(),
+                "member_ids": [m.primitive_id for m in members],
                 "members": [m.to_dict() for m in members],
             })
         except Exception as exc:
