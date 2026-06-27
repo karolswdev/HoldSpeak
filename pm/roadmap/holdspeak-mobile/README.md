@@ -9,21 +9,31 @@
 > 🚀 **New agent (general):** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Current phase:** [Phase 17 — Agent Sync (the coder on your desk)](./phase-17-agent-sync/current-phase-status.md)
-(live Claude/Codex coding sessions as synced DeskOS primitives: a coder asks → it surfaces on your desk →
-you answer by voice / typed / dropped-context / **AI-drafted** → injected back into the live session).
-Phase 16 (web parity + mesh sync) remains open in parallel.
+**Current phase:** [Phase 18 — The iPad joins the dictation contracts](./phase-18-ipad-dictation-contracts/current-phase-status.md)
+— **THE EQUILIBRIUM PROGRAM HAS BEGUN** ([`EQUILIBRIUM.md`](./EQUILIBRIUM.md)), built against the
+[Experience Vision](./EXPERIENCE-VISION-2026-06-27.md). First fix landed: voice-command macros now fire
+on the remote relay (HSM-18-02 hub half, tested), the backend behind the "macro fires as an object"
+signature moment. Phases 16/17 (web parity + mesh sync; agent sync) remain open in parallel.
 
-**📐 Next program — THE EQUILIBRIUM (authored, ready to open):**
+**📐 The program — THE EQUILIBRIUM:**
 [`EQUILIBRIUM.md`](./EQUILIBRIUM.md) — bringing every original HoldSpeak feature into full
 contract parity across desktop / web / iPad / iPhone. Six phases (**18–23**), one per systemic
 pattern the parity audit found, grounded in [`PARITY-AUDIT-2026-06-27.md`](./PARITY-AUDIT-2026-06-27.md)
-(50-agent flotilla, 22 features, 70 verified gaps). **Phase 18 leads** (the iPad joins the
-dictation contracts) and ships with full stories; the rest open in sequence.
+(50-agent flotilla, 22 features, 70 verified gaps). **Phase 18 is open and leads** (the iPad joins the
+dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-06-27 (**THE EXPERIENCE VISION authored** — a 16-agent design flotilla
+**Last updated:** 2026-06-27 (**PHASE 18 OPENED — THE EQUILIBRIUM BEGINS.** Merged the
+equilibrium package (PR #144: parity audit + the 6-phase program + the Experience Vision), then
+opened **Phase 18 (the iPad joins the dictation contracts)** and landed its first fix: the
+**voice-command macro relay** (HSM-18-02 hub half). `api_dictation_remote` never fired macros, so
+a macro keyword spoken from the iPad was silently dictated as prose; it now fires through the same
+bounded/guarded connector as the local path, a `type_text` macro free-types into the focused Mac
+app via the proven focused relay, and the response carries a `fired` object the companion renders
+as the macro chip (the vision's "macro fires as an object" moment). Off by default (byte-identical
+plain dictation). Proven: `test_web_routes_remote_dictation.py` 11/11 incl. the remote-path macro
+test the audit demanded. Earlier today: **THE EXPERIENCE VISION authored** — a 16-agent design flotilla
 (ground → design → adversarial crit → direct) reframed the equilibrium gaps as experiences and
 designed them masterfully across web + iOS, iPad=iPhone: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md).
 Philosophy: *"HoldSpeak is a debugger for trust... it ships the receipt a half-second before the

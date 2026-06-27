@@ -30,6 +30,16 @@ def _stub_pipeline(monkeypatch):
     monkeypatch.setattr(PIPELINE, lambda text, *a, **k: {"final_text": f"[corrected] {text}"})
 
 
+@pytest.fixture(autouse=True)
+def _default_macros_off(monkeypatch):
+    # HSM-18-02: the remote route now consults ``Config.load()`` to fire voice-command
+    # macros. Default macros OFF for hermetic, byte-identical plain-dictation tests; the
+    # macro test below overrides this with an enabled config.
+    from holdspeak.config import Config
+
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls: Config()))
+
+
 def _ctx(**kw) -> WebContext:
     return WebContext(get_state=lambda: {}, **kw)
 
@@ -136,3 +146,48 @@ def test_rejects_unknown_target_mode():
         "/api/dictation/remote", json={"text": "hi", "target_mode": "nonsense"}
     )
     assert r.status_code == 400
+
+
+# ── HSM-18-02: voice command macros fire on the remote relay (not just the local path) ──
+
+
+def test_voice_macro_fires_on_relay_and_is_not_dictated(monkeypatch):
+    """A configured, enabled macro keyword posted over the relay FIRES (it is not
+    dictated as prose). This is the exact seam that shipped broken: the local path
+    dispatched macros, the remote path went straight to the dry-run. A ``type_text``
+    macro free-types into the focused Mac app via the relay; the response carries the
+    ``fired`` object the companion renders as the macro-object chip."""
+    from holdspeak.config import Config, MacrosConfig, VoiceMacro, VoiceMacroAction
+
+    cfg = Config()
+    cfg.dictation.macros = MacrosConfig(
+        enabled=True, items=[VoiceMacro("standup", VoiceMacroAction("type_text", "## Standup"))]
+    )
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls: cfg))
+
+    typed: list = []
+    ctx = _ctx(on_remote_dictation=lambda t, *, target="agent": typed.append((t, target)))
+    r = _client(ctx).post("/api/dictation/remote", json={"text": "standup"})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["fired"]["kind"] == "type_text"
+    assert body["fired"]["keyword"] == "standup"
+    assert body["fired"]["ok"] is True
+    assert body["final_text"] == ""  # NOT run through the dictation pipeline
+    # the macro typed into the focused app via the relay, not delivered as a dictation answer
+    assert typed == [("## Standup", "focused")]
+
+
+def test_no_macro_match_falls_through_to_dictation():
+    """With macros off (the autouse default), a normal utterance is dictated exactly as
+    before this fix: no ``fired`` key, pipeline-processed, delivered into the coder."""
+    delivered: list = []
+    ctx = _ctx(on_remote_dictation=lambda t: delivered.append(t))
+    r = _client(ctx).post("/api/dictation/remote", json={"text": "ship it friday"})
+
+    assert r.status_code == 200
+    body = r.json()
+    assert "fired" not in body
+    assert body["final_text"] == "[corrected] ship it friday"
+    assert delivered == ["[corrected] ship it friday"]

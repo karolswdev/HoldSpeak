@@ -329,6 +329,46 @@ def build_pipeline_router(
                 status_code=400,
             )
 
+        # HSM-18-02 — voice command macros must fire on the remote relay too, exactly
+        # as they do on the local dictation path (dictation_capture._maybe_dispatch_
+        # voice_command). A configured, enabled macro keyword is NOT dictated as prose;
+        # it fires through the same bounded, guarded connector and returns a "fired"
+        # result the companion renders as the macro-object chip (the Phase-18 signature
+        # moment). Off by default: macros disabled -> dispatch returns None -> the
+        # normal dictation path below runs, byte-identical to before this fix.
+        from ....config import Config
+        from ....dictation_runner import dispatch_voice_command
+
+        def _remote_type(t: str) -> None:
+            # a `type_text` macro free-types into the focused Mac app via the proven
+            # focused-delivery relay; if nothing can deliver, the macro still fires its
+            # action, it just cannot type.
+            if ctx.on_remote_dictation is not None:
+                ctx.on_remote_dictation(t, target="focused")
+
+        try:
+            fired = dispatch_voice_command(
+                text, config=Config.load(), type_writer=_remote_type
+            )
+        except Exception as exc:  # a macro failure must never block plain dictation
+            log.error(f"Remote voice-command dispatch failed: {exc}")
+            fired = None
+        if fired is not None and fired.handled:
+            return JSONResponse(
+                {
+                    "success": True,
+                    "fired": {
+                        "keyword": fired.keyword,
+                        "kind": fired.kind,
+                        "preview": fired.preview,
+                        "ok": fired.ok,
+                        "error": fired.error,
+                    },
+                    "delivered": fired.ok,
+                    "final_text": "",
+                }
+            )
+
         # Reuse the exact rich-pipeline path the browser dry-run uses, so the same
         # corrections/blocks/plugins apply — the answer is as smart as one spoken at
         # the desk, not raw transcript.

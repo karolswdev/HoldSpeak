@@ -1,12 +1,18 @@
 # Phase 18 — The iPad joins the dictation contracts
 
-**Status:** planned — **leads The Equilibrium program** ([`EQUILIBRIUM.md`](../EQUILIBRIUM.md)).
-Ready to open; stories authored.
+**Status:** in-progress (opened 2026-06-27) — **leads The Equilibrium program**
+([`EQUILIBRIUM.md`](../EQUILIBRIUM.md)), built against the
+[Experience Vision](../EXPERIENCE-VISION-2026-06-27.md) (the dictation teleprompter + the
+"macro fires as an object" signature moment).
 
-**Last updated:** 2026-06-27 (**authored** from the parity audit. The biggest single
-imbalance the flotilla found: the iPad authors desk primitives but is a *tourist* for the
-dictation contracts. The hub already serves every route; the iPad has no Swift client. This
-phase builds the clients.)
+**Last updated:** 2026-06-27 (**OPENED + first fix landed.** HSM-18-02's hub half shipped:
+`api_dictation_remote` now fires voice-command macros on the remote relay (it never did, so a
+macro spoken from the iPad was silently dictated as prose). The macro fires through the same
+bounded/guarded connector as the local path; a `type_text` macro free-types into the focused
+Mac app via the proven focused relay; the response carries a `fired` object the companion
+renders as the macro chip. Off by default (macros disabled → byte-identical plain dictation).
+Proven: `tests/unit/test_web_routes_remote_dictation.py` 11/11 incl. the remote-path macro
+test the audit demanded — the seam that shipped broken because only the local path was tested.)
 
 ## Why this phase exists
 
@@ -58,7 +64,7 @@ reuses three proven seams:
 | ID | Title | Status |
 |----|-------|--------|
 | HSM-18-01 | The dictation pipeline client + authoring/preview screen — **leads** | todo |
-| HSM-18-02 | Voice command macros fire on the remote relay + the iPad CommandsBoard | todo |
+| HSM-18-02 | Voice command macros fire on the remote relay + the iPad CommandsBoard | in-progress (hub half landed; iPad board todo) |
 | HSM-18-03 | Spoken language at every WhisperKit call site | todo |
 | HSM-18-04 | The spoken-symbol dictionary, ported to Swift | todo |
 | HSM-18-05 | Activity pre-briefing — the source-cited nudge client | todo |
@@ -66,11 +72,12 @@ reuses three proven seams:
 
 ## Where we are
 
-Not started. The audit supplies every story's starting `file:symbol` evidence. **18-01
-leads** (it stands up the client surface the dictation features hang off); **18-02 is the
-highest-value single fix** (a one-function hub gap that makes the entire macro feature work
-from the iPad). 18-03 and 18-04 are independent on-device ports and can run in parallel.
-18-06 is the gate.
+**Opened, with the first fix landed.** HSM-18-02's hub half is done + tested (the macro
+relay; see Last updated). Remaining: 18-02's iPad CommandsBoard; 18-01 (the dictation pipeline
+client + teleprompter preview screen, the phase's experience hero); 18-03/18-04 (the
+independent on-device language + symbol ports, parallel-startable); 18-05 (activity nudges,
+needs 18-01's dictate path); 18-06 (the real-metal gate). The audit supplies every story's
+starting `file:symbol` evidence.
 
 ## Carried context
 
