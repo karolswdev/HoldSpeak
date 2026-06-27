@@ -529,10 +529,10 @@ import HoldMark from "../components/HoldMark.astro";
               </button>
             </div>
             <p class="rail-muted" x-show="routePreview && routePreview.active_intents" x-cloak>
-              <strong>Active intents:</strong> <span x-text="(routePreview.active_intents || []).join(', ') || 'none'"></span>
+              <strong>Active intents:</strong> <span x-text="(routePreview?.active_intents || []).join(', ') || 'none'"></span>
             </p>
             <p class="rail-muted" x-show="routePreview && routePreview.plugin_chain" x-cloak>
-              <strong>Plugin chain:</strong> <span x-text="(routePreview.plugin_chain || []).join(' -> ') || 'none'"></span>
+              <strong>Plugin chain:</strong> <span x-text="(routePreview?.plugin_chain || []).join(' -> ') || 'none'"></span>
             </p>
           </div>
         </section>

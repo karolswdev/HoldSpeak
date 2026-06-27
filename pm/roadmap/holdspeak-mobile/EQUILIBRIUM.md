@@ -101,7 +101,17 @@ waves are how the backlog drains in parallel.
 | Intent-timeline + plugin-runs | 19 | the web meeting-detail consumes the two persisted read routes (an intent-timeline strip + a plugin-run table) that had no consumer |
 
 Integrated + verified together: full Python suite **2924 passed**, web build green.
-**Known follow-up:** the shipped `docs/INTELLIGENT_TYPING_GUIDE.md` (asserted verbatim by a
-test) still carries the old name; the ban is scoped to product copy until that doc is renamed.
+
+### Wave 2 (2026-06-27) — finish the honesty ban + more web, 4 gaps
+
+| Gap | Phase | What landed |
+|-----|-------|-------------|
+| Rename the guide + global ban | 21 | `docs/INTELLIGENT_TYPING_GUIDE.md` → `DICTATION_PIPELINE_GUIDE.md` (all refs + the verbatim test updated); `_BANNED_NAMES_DOCS` collapsed back so "intelligent typing" is now banned EVERYWHERE (docs + web). Closes the Wave 1 follow-up. |
+| Web proposals egress | 19 | the proposals review surface already existed (Phase 37); the real gap was its egress being a guard SENTENCE, replaced with the structured egress badge ({scope,label}) per canon |
+| Web linear graph builder | 22 | the web Desk authors a real minimal LINEAR `graph_json` (was hardcoded `{}`), in the exact shape `workflow_graph.linearize()` + the iPad Blueprint speak, so a web-authored chain round-trips |
+| Web ambient trust chip | 21 | an ambient egress/trust chip + a readiness line from `/api/setup/status` on the web Desk (reusing the egress component, never prose) |
+| Index page null-guard (bonus) | 21 | a pre-existing latent bug the integrated preflight caught: `index.astro` route-preview `x-text` read `routePreview.active_intents` un-guarded and threw on load when null; fixed with optional chaining (CI skips this e2e without Chromium, so it had hidden) |
+
+Integrated + verified together: full Python suite green (route-preflight included, locally with Chromium), web build green. Cherry-pick note: the graph-builder + trust-chip both edited `desk.*` but git auto-merged them (additive, different regions).
 
 See [[project_primitive_framework]], [[project_phase15_the_mesh]], [[project_phase17_agent_sync]].
