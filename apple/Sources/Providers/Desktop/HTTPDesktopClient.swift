@@ -196,6 +196,25 @@ public struct HTTPDesktopClient: IDesktopClient {
                                            body: ["agent": agent, "session_id": sessionID, "pinned": pinned]))
     }
 
+    // MARK: - Run on the hub (HSM-15-xx)
+
+    /// `POST /api/agents/{id}/run` body `{input}` → `{output}`. The big model runs on
+    /// the Mac; a non-2xx (e.g. 502 no model loaded) throws `DesktopClientError.http`
+    /// so the desk surfaces an honest failure, never a silent empty card.
+    public func runAgent(id: String, input: String) async throws -> HubRunResult {
+        let data = try await send(makeJSONRequest(path: "api/agents/\(id)/run", body: ["input": input]))
+        do { return try HoldSpeakContracts.decoder().decode(HubRunResult.self, from: data) }
+        catch { throw DesktopClientError.malformed }
+    }
+
+    /// `POST /api/chains/{id}/run` body `{input}` → `{output, steps}`. The crew runs
+    /// agent-by-agent on the Mac; the per-step trail rides back in `steps`.
+    public func runChain(id: String, input: String) async throws -> HubRunResult {
+        let data = try await send(makeJSONRequest(path: "api/chains/\(id)/run", body: ["input": input]))
+        do { return try HoldSpeakContracts.decoder().decode(HubRunResult.self, from: data) }
+        catch { throw DesktopClientError.malformed }
+    }
+
     // MARK: - internals
 
     struct MeetingsEnvelope: Decodable { var meetings: [MeetingSummary] }

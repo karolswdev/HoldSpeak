@@ -82,6 +82,10 @@ function DeskApp() {
     runError: "",
     runResult: null, // { output, provider } | null
 
+    // ── chain / workflow run (capability execution, mirrors the agent run) ──
+    runningKind: null, // "agent" | "chain" | "workflow" | null — which drawer
+    chainSteps: null, // [{ agentId, agentName, output }] | null (crew result)
+
     async init() {
       await this.loadAll();
       this.loading = false;
@@ -737,20 +741,37 @@ function DeskApp() {
       }
     },
 
-    // ── agent run (LIVE POST /api/agents/{id}/run) ──
-    openRun(agent) {
-      this.running = agent;
+    // ── capability run — one drawer, three kinds ──
+    //   agent    → POST /api/agents/{id}/run     → { output, provider }
+    //   chain    → POST /api/chains/{id}/run      → { chain_id, steps:[{agent_id, output}], output }
+    //   workflow → POST /api/workflows/{id}/run   → { workflow_id, output, provider }
+    openRun(target, kind = "agent") {
+      this.running = target;
+      this.runningKind = kind;
       this.runInput = "";
       this.runError = "";
       this.runResult = null;
+      this.chainSteps = null;
       this.runBusy = false;
     },
     closeRun() {
       this.running = null;
+      this.runningKind = null;
       this.runBusy = false;
+      this.chainSteps = null;
+    },
+    /** The verb + display name for the active run drawer. */
+    runTitle() {
+      if (!this.running) return "";
+      return this.running.name || "Run";
     },
     async submitRun() {
       if (!this.running) return;
+      if (this.runningKind === "chain") return this.submitChainRun();
+      if (this.runningKind === "workflow") return this.submitWorkflowRun();
+      return this.submitAgentRun();
+    },
+    async submitAgentRun() {
       const input = this.runInput.trim();
       if (!input && !(this.running.userTemplate || "").trim()) {
         this.runError = "Give the agent something to work on.";
@@ -761,6 +782,68 @@ function DeskApp() {
       this.runResult = null;
       try {
         const data = await this.fetchJson(`/api/agents/${this.running.id}/run`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ input }),
+        });
+        this.runResult = {
+          output: data.output || "",
+          provider: data.provider || "",
+        };
+      } catch (e) {
+        this.runError = e.message;
+      } finally {
+        this.runBusy = false;
+      }
+    },
+
+    // ── chain run (LIVE POST /api/chains/{id}/run) ──
+    async submitChainRun() {
+      const input = this.runInput.trim();
+      if (!input) {
+        this.runError = "Give the crew something to work on.";
+        return;
+      }
+      this.runBusy = true;
+      this.runError = "";
+      this.runResult = null;
+      this.chainSteps = null;
+      try {
+        const data = await this.fetchJson(`/api/chains/${this.running.id}/run`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ input }),
+        });
+        this.chainSteps = (data.steps || []).map((s) => ({
+          agentId: s.agent_id || "",
+          agentName: this.agentName(s.agent_id),
+          output: s.output || "",
+        }));
+        this.runResult = {
+          output: data.output || "",
+          provider: data.provider || "",
+        };
+      } catch (e) {
+        this.runError = e.message;
+      } finally {
+        this.runBusy = false;
+      }
+    },
+
+    // ── workflow run (LIVE POST /api/workflows/{id}/run) ──
+    async submitWorkflowRun() {
+      const input = this.runInput.trim();
+      const w = this.running;
+      // A graph workflow can run on its own wiring; a prompt-only one needs input.
+      if (!input && !w.hasGraph && !(w.prompt || "").trim()) {
+        this.runError = "Give the workflow something to work on.";
+        return;
+      }
+      this.runBusy = true;
+      this.runError = "";
+      this.runResult = null;
+      try {
+        const data = await this.fetchJson(`/api/workflows/${this.running.id}/run`, {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ input }),

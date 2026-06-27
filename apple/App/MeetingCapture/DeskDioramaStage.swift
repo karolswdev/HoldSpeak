@@ -1844,6 +1844,90 @@ struct DioRecordOrb: View {
 }
 
 // THE ROUTE SHEET — drop a primitive on the AI core → pick a lens (or write a prompt) → Ask.
+// A pending route through an agent/chain whose "where it runs" the user is choosing —
+// on this iPad (on-device) or on the paired Mac (the hub's big model). Captured so the
+// run target sheet can fire the right path with the card's text intact.
+struct PendingHubRun: Identifiable, Equatable {
+    enum Kind: Equatable { case agent(AgentRecord); case chain(ChainRecord) }
+    let id = UUID()
+    let kind: Kind
+    let input: String
+    let inputTitle: String
+    var name: String { switch kind { case .agent(let a): return a.name.isEmpty ? "Agent" : a.name
+                                      case .chain(let c): return c.name.isEmpty ? "Crew" : c.name } }
+    var isChain: Bool { if case .chain = kind { return true }; return false }
+}
+
+// WHERE IT RUNS — the Mesh RUNS-ON choice for routing a card through an agent/chain:
+// on this iPad (private, on-device) or on your Mac (its big model, LAN egress). When no
+// Mac is paired, the hub row is disabled with a clear "pair first" cue; on-device stays
+// the default. Premium DioPal sheet — never a flat picker.
+struct DioRunTargetSheet: View {
+    let run: PendingHubRun
+    let paired: Bool
+    let peerLabel: String          // e.g. "192.168.1.43" — what the hub row names
+    let onDevice: () -> Void
+    let onHub: () -> Void
+    let onCancel: () -> Void
+    @State private var shown = false
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.6).ignoresSafeArea().onTapGesture { onCancel() }
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 9) {
+                    Image(systemName: run.isChain ? "arrow.triangle.branch" : "person.crop.square.fill")
+                        .font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 36, height: 36).background(Circle().fill(DioPal.accent))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Run \(run.name)").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text("where should it run?").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+                    }
+                    Spacer(minLength: 0)
+                }
+                // ON DEVICE — the default, private, no network.
+                runRow(icon: "ipad", tint: DioPal.mint, name: "On this iPad",
+                       sub: "private · no network", egress: .local, enabled: true, action: onDevice)
+                // ON YOUR MAC — the hub's big model; LAN egress; disabled when unpaired.
+                runRow(icon: "desktopcomputer", tint: Color(hex: 0xF5A524),
+                       name: "On your Mac",
+                       sub: paired ? "big model · \(peerLabel)" : "pair your Mac to use its big model",
+                       egress: .cloud("your Mac"), enabled: paired, action: onHub)
+                Button(action: onCancel) {
+                    Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+                        .frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(.white.opacity(0.06)))
+                }.buttonStyle(.plain)
+            }
+            .padding(20).frame(maxWidth: 440)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1))
+                .shadow(color: .black.opacity(0.6), radius: 30, y: 16))
+            .padding(.horizontal, 18).scaleEffect(shown ? 1 : 0.9).opacity(shown ? 1 : 0)
+        }
+        .transition(.opacity)
+        .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.74)) { shown = true } }
+    }
+    @ViewBuilder private func runRow(icon: String, tint: Color, name: String, sub: String,
+                                     egress: EgressBadge.Scope, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: { if enabled { action() } }) {
+            HStack(spacing: 12) {
+                Image(systemName: icon).font(.system(size: 17, weight: .bold)).foregroundStyle(enabled ? tint : DioPal.muted)
+                    .frame(width: 30)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name).font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(enabled ? DioPal.text : DioPal.muted)
+                    Text(sub).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                if enabled { EgressBadge(scope: egress) }
+                else { Image(systemName: "lock.slash").font(.system(size: 13, weight: .bold)).foregroundStyle(DioPal.muted) }
+            }
+            .padding(13).frame(maxWidth: .infinity)
+            .background(RoundedRectangle(cornerRadius: 16).fill(enabled ? tint.opacity(0.10) : .white.opacity(0.03))
+                .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder((enabled ? tint : .white).opacity(enabled ? 0.4 : 0.06), lineWidth: 1)))
+        }.buttonStyle(.plain).opacity(enabled ? 1 : 0.7)
+    }
+}
+
 struct DioRouteSheet: View {
     let sourceTitle: String; let onAsk: (String, String) -> Void; let onCancel: () -> Void; let onSaveTool: (String) -> Void
     @State private var lens = RouteLenses.all.first!.name
@@ -1939,8 +2023,13 @@ struct DioRoutingTheater: View {
 
 // THE PRINTED CARD — the new primitive that just came out of the core. Keep it (lands on the desk) or bin it.
 struct DioPrintedCard: View {
-    let rec: OutputRecord; let onKeep: () -> Void; let onBin: () -> Void
+    let rec: OutputRecord; let egress: EgressBadge.Scope; let onKeep: () -> Void; let onBin: () -> Void
     @State private var shown = false
+    // honest provenance: a hub run reads "fresh from your Mac", anything else "from the AI core".
+    private var provenance: String {
+        if case .cloud(let t) = egress, t == "your Mac" { return "fresh from your Mac · from \(rec.source)" }
+        return "fresh from the AI core · from \(rec.source)"
+    }
     var body: some View {
         ZStack {
             Color.black.opacity(0.7).ignoresSafeArea().onTapGesture { onBin() }
@@ -1949,9 +2038,10 @@ struct DioPrintedCard: View {
                     DeskSprite(name: "note", size: 38)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(rec.title).font(.system(size: 17, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                        Text("fresh from the AI core · from \(rec.source)").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+                        Text(provenance).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
                     }
                     Spacer(minLength: 0)
+                    EgressBadge(scope: egress)
                 }.padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 10)
                 ScrollView(showsIndicators: false) {
                     Text(rec.body).font(.system(size: 14.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.92))
@@ -2339,6 +2429,9 @@ struct DioStage: View {
     @State private var routeFrom: CGPoint = .zero
     @State private var routeTo: CGPoint = .zero
     @State private var printed: OutputRecord? = nil
+    // the egress of the CURRENT printed card — on-device routes are .local; a hub run is
+    // .cloud("your Mac"). Drives the printed card's honest egress badge (POSITIONING canon).
+    @State private var printedEgress: EgressBadge.Scope = .local
     @State private var routeError: String? = nil
     // connectors (the integrations half: drop an output on Slack → approve → the MAC sends).
     // Routed through the paired host PC — the iPad holds no credential. Reuses the desk's Mac pairing.
@@ -2388,6 +2481,10 @@ struct DioStage: View {
     @State private var editingChain: ChainRecord? = nil   // chain builder open
     @State private var editingZone: ZoneRec? = nil        // the zone style editor is open
     @State private var runChainSheet: ChainRecord? = nil  // the run/manage sheet
+    // RUN ON THE HUB (the Mesh "RUNS ON: your Mac") — routing a card through an agent/chain
+    // offers running it on the desktop hub's big model instead of on-device. The choice
+    // sheet captures the pending run; the hub run lands a printed card with a cloud egress.
+    @State private var pendingHubRun: PendingHubRun? = nil  // the run/where-it-runs picker is open
     @State private var chainRelay: ChainRecord? = nil     // the live relay overlay
     @State private var chainStep = 0
     @State private var chainResults: [String] = []
@@ -2771,7 +2868,16 @@ struct DioStage: View {
                                       lens: routeLensRun, local: InferenceConfigStore.shared.isLocal, tint: DioPal.accent).zIndex(125)
                 }
                 if let rec = printed {
-                    DioPrintedCard(rec: rec, onKeep: { keepPrinted() }, onBin: { binPrinted() }).zIndex(130)
+                    DioPrintedCard(rec: rec, egress: printedEgress, onKeep: { keepPrinted() }, onBin: { binPrinted() }).zIndex(130)
+                }
+                // WHERE IT RUNS — the run-target picker for an agent/chain route (on-device vs your Mac).
+                if let run = pendingHubRun {
+                    DioRunTargetSheet(run: run, paired: hostLink != nil,
+                                      peerLabel: peerHost.isEmpty ? "your Mac" : peerHost,
+                                      onDevice: { runOnDevice(run) },
+                                      onHub: { runOnHub(run) },
+                                      onCancel: { withAnimation { pendingHubRun = nil } })
+                        .zIndex(132)
                 }
                 if showSendCard {
                     let member = members().first(where: { $0.id == sendSourceId })
@@ -3028,6 +3134,26 @@ struct DioStage: View {
                     if ag == "builder" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { editingAgent = AgentRecord.blank() } } }
                     if ag == "chainbuild" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { editingChain = ChainRecord(id: "newc", name: "Refine", steps: ["seed1", "seed3"]) } } }
                     if ag == "chainrun" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { runChainSheet = chains.first } } }
+                    // the WHERE-IT-RUNS picker (on-device vs your Mac) — seeded paired so the hub row is live.
+                    if ag == "runtarget" || ag == "runtarget-unpaired" {
+                        if ag == "runtarget" { peerHost = "192.168.1.43"; peerPort = "8080" }
+                        else { peerHost = ""; peerPort = "8000" }   // unpaired → hub row disabled with a cue
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            withAnimation { pendingHubRun = PendingHubRun(kind: .agent(agents[0]),
+                                                                          input: "Welcome to the Q3 kickoff. The big bet is shipping the desk to the web; Karol owns mesh sync.",
+                                                                          inputTitle: "Q3 kickoff") }
+                        }
+                    }
+                    // a hub run's RESULT — the printed card with the cloud · your Mac egress badge.
+                    if ag == "hubresult" {
+                        peerHost = "192.168.1.43"; peerPort = "8080"
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            printedEgress = .cloud("your Mac")
+                            withAnimation { printed = OutputRecord(id: "hubdemo", title: "Scout",
+                                body: "Three concrete facts: the mesh-sync approval contract is the riskiest piece, the air-gapped proof is due Friday, and the egress badge copy still has no owner.",
+                                source: "Q3 kickoff", lens: "Agent · your Mac", path: "") }
+                        }
+                    }
                     if ag == "chainrelay" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { chainStep = 1; chainResults = ["Three key facts: the mesh-sync approval contract is the riskiest piece, the air-gapped proof is due Friday, and the egress badge copy has no owner yet."]; withAnimation { chainRelay = chains.first } } }
                     if ["p0", "o0", "s0"].contains(ag) { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { var d = AgentRecord.blank(); d.avatar = ag; d.name = "Buddy"; withAnimation { editingAgent = d } } }
                     if ag == "sheet" || ag == "chat" {
@@ -3569,11 +3695,12 @@ struct DioStage: View {
         case .agent:                                            // a tailored agent → answer grounded in the card
             guard let ap = target as? AgentPrimitive,
                   let src = members().first(where: { $0.id == sourceId }) else { break }
-            runAgent(ap.rec, input: src.routableText, inputTitle: src.title)
+            // offer WHERE it runs (on-device vs your Mac's big model) — on-device stays default.
+            offerRunTarget(.init(kind: .agent(ap.rec), input: src.routableText, inputTitle: src.title))
         case .chain:                                            // a crew → run the card through each agent in order
             guard let cp = target as? ChainPrimitive,
                   let src = members().first(where: { $0.id == sourceId }) else { break }
-            runChain(cp.rec, input: src.routableText, inputTitle: src.title)
+            offerRunTarget(.init(kind: .chain(cp.rec), input: src.routableText, inputTitle: src.title))
         case .kb:                                               // a knowledge base → file the card into it
             guard let kp = target as? KBPrimitive, let idx = kbs.firstIndex(where: { $0.id == kp.rec.id }) else { break }
             #if canImport(UIKit)
@@ -3691,6 +3818,7 @@ struct DioStage: View {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     printed = OutputRecord(id: UUID().uuidString, title: lens, body: clean.isEmpty ? "(the model returned nothing)" : clean,
                                            source: source, lens: lens, path: zpath)
+                    printedEgress = InferenceConfigStore.shared.isLocal ? .local : .cloud("endpoint")
                 }
                 selectedSet = []
             case .failure(let e):
@@ -3765,9 +3893,99 @@ struct DioStage: View {
             #endif
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                 printed = OutputRecord(id: UUID().uuidString, title: c.name, body: carry, source: inputTitle, lens: "Chain", path: zpath)
+                printedEgress = InferenceConfigStore.shared.isLocal ? .local : .cloud("endpoint")
             }
         }
     }
+    // MARK: - Run on the hub (the Mesh "RUNS ON: your Mac")
+
+    /// A built `HTTPDesktopClient` for the paired peer, or nil when unpaired/malformed.
+    /// Reuses the same host/port the desk already pairs against (`hs.peer.*`); the hub
+    /// run is a longer call than a health probe, so it gets a generous timeout.
+    private var desktopClient: HTTPDesktopClient? {
+        let h = peerHost.trimmingCharacters(in: .whitespaces)
+        guard !h.isEmpty, let p = Int(peerPort.trimmingCharacters(in: .whitespaces)), p > 0 else { return nil }
+        let peer = DesktopPeer(host: h, port: p)
+        guard let cfg = HTTPDesktopClient.Config(peer: peer, timeout: 120) else { return nil }
+        return HTTPDesktopClient(config: cfg)
+    }
+
+    /// Open the where-it-runs picker for a routed agent/chain. On-device stays the
+    /// default; "your Mac" is offered when paired, disabled (with a cue) when not.
+    private func offerRunTarget(_ run: PendingHubRun) {
+        haptic(.medium)
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { pendingHubRun = run }
+    }
+
+    /// The user picked on-device — fire the existing local run (unchanged behavior).
+    private func runOnDevice(_ run: PendingHubRun) {
+        withAnimation { pendingHubRun = nil }
+        switch run.kind {
+        case .agent(let a): runAgent(a, input: run.input, inputTitle: run.inputTitle)
+        case .chain(let c): runChain(c, input: run.input, inputTitle: run.inputTitle)
+        }
+    }
+
+    /// The user picked "your Mac" — run the agent/chain on the desktop hub's big model
+    /// via `HTTPDesktopClient`, land the result as a printed card with a CLOUD egress
+    /// badge (it ran on the Mac, not on-device). Errors surface honestly — never silent.
+    private func runOnHub(_ run: PendingHubRun) {
+        withAnimation { pendingHubRun = nil }
+        guard let client = desktopClient else {
+            routeError = "Pair your Mac first to run on its big model."
+            return
+        }
+        let input = String(run.input.prefix(8000))
+        let title = run.name
+        let source = run.inputTitle
+        let zpath = pathKey
+        routeLensRun = title
+        haptic(.heavy)
+        withAnimation { routing = true }
+        Task { @MainActor in
+            do {
+                let result: HubRunResult
+                switch run.kind {
+                case .agent(let a): result = try await client.runAgent(id: a.id, input: input)
+                case .chain(let c): result = try await client.runChain(id: c.id, input: input)
+                }
+                withAnimation { routing = false }
+                let clean = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+                #if canImport(UIKit)
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                #endif
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    printed = OutputRecord(id: UUID().uuidString,
+                                           title: title,
+                                           body: clean.isEmpty ? "(your Mac returned nothing)" : clean,
+                                           source: source,
+                                           lens: run.isChain ? "Chain · your Mac" : "Agent · your Mac",
+                                           path: zpath)
+                    printedEgress = .cloud("your Mac")
+                }
+                selectedSet = []
+            } catch {
+                withAnimation { routing = false }
+                routeError = hubRunError(error)
+            }
+        }
+    }
+
+    /// A human, honest message for a failed hub run — unreachable Mac, a 502 (no model
+    /// loaded on the hub), or a bad payload. Never a silent failure.
+    private func hubRunError(_ error: Error) -> String {
+        if let e = error as? HTTPDesktopClient.DesktopClientError {
+            switch e {
+            case .http(502), .http(503): return "Your Mac has no model loaded — start the desktop runtime and try again."
+            case .http(404): return "That agent or crew isn’t on your Mac yet — sync first, then run on the hub."
+            case .http(let code): return "Your Mac refused the run (status \(code))."
+            case .malformed: return "Your Mac sent back something the desk couldn’t read."
+            }
+        }
+        if error is URLError { return "Your Mac isn’t reachable. Wake it and make sure it’s on the same network." }
+        return "Couldn’t run on your Mac."
+    }
+
     private func saveChain(_ rec: ChainRecord) {
         haptic(.medium)
         withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
