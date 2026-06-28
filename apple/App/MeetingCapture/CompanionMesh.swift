@@ -130,7 +130,7 @@ struct AgentDeskView: View {
             }
             VStack(spacing: 6) {
                 Text("No agents linked").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Run a coding agent on your desktop — it appears here the moment it needs you")
+                Text("Run a coding agent on your desktop")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.faint)
                     .multilineTextAlignment(.center)
             }
@@ -281,10 +281,10 @@ private struct AgentDeskCard: View {
     }
 }
 
-// MARK: - Dictate to your Mac (HSM-15-01 — the flagship mesh surface)
+// MARK: - Dictate to your desktop (HSM-15-01 — the flagship mesh surface)
 
 /// The paired desktop peer, persisted across launches. The flagship home reads this to name the
-/// "Dictate to {your Mac}" tile and to know whether to invite pairing. Seedable via the
+/// "Dictate to {your desktop}" tile and to know whether to invite pairing. Seedable via the
 /// `HS_DESKTOP_*` env (a real-metal LAN trace) so a device run points at a live server with no taps.
 @MainActor final class DictatePeerStore: ObservableObject {
     static let shared = DictatePeerStore()
@@ -316,7 +316,7 @@ private struct AgentDeskCard: View {
         let n = name.trimmingCharacters(in: .whitespaces)
         if !n.isEmpty { return n }
         let h = host.trimmingCharacters(in: .whitespaces)
-        return h.isEmpty ? "your Mac" : h
+        return h.isEmpty ? "your desktop" : h
     }
 
     var peer: DesktopPeer? {
@@ -456,8 +456,8 @@ private struct AgentDeskCard: View {
     #endif
 }
 
-/// The flagship "Dictate to your Mac" surface (HSM-15-01): the iPad is the best mic in the house,
-/// your Mac has every app you work in. Pick it up, talk, and the words land in whatever is focused —
+/// The flagship "Dictate to your desktop" surface (HSM-15-01): the iPad is the best mic in the house,
+/// your desktop has every app you work in. Pick it up, talk, and the words land in whatever is focused —
 /// transcribed on-device, typed through the desktop's full dictation pipeline. No prose; chips + symbols.
 struct DictateView: View {
     @StateObject private var model = DictateModel()
@@ -557,7 +557,7 @@ struct DictateView: View {
         let armed = model.isPaired
         return HStack(spacing: 12) {
             Image(systemName: model.listening ? "waveform" : "mic.fill").font(.system(size: 20, weight: .bold))
-            Text(model.listening ? "Release to send" : (armed ? "Hold to talk" : "Pair your Mac to start"))
+            Text(model.listening ? "Release to send" : (armed ? "Hold to talk" : "Pair your desktop to start"))
                 .font(.system(size: 17, weight: .heavy))
             if model.listening { Spacer(minLength: 4); MicWaveform(level: CGFloat(model.level), active: true, bars: 16, height: 22).frame(width: 90, height: 22) }
         }
@@ -637,12 +637,12 @@ struct DictateView: View {
         switch model.reach {
         case .unpaired:
             Button { tactile(.medium); pairing = true } label: {
-                statusChip("link.badge.plus", "Pair your Mac to start", Sig.accent, filled: true)
+                statusChip("link.badge.plus", "Pair your desktop to start", Sig.accent, filled: true)
             }
             .buttonStyle(PressableCard())
         case .asleep:
             Button { tactile(); Task { await model.probe() } } label: {
-                statusChip("moon.zzz.fill", "Mac asleep · not reachable — tap to retry", Sig.warn)
+                statusChip("moon.zzz.fill", "Desktop asleep · not reachable — tap to retry", Sig.warn)
             }
             .buttonStyle(PressableCard())
         case .reachable:
@@ -795,7 +795,7 @@ struct DictateView: View {
     }
 }
 
-// MARK: - The Connect surface ("Your Computer" — discovery-first pairing, HSM-15-10)
+// MARK: - The Connect surface ("Your Desktop" — discovery-first pairing, HSM-15-10)
 
 /// One computer the iPad found on the LAN by Bonjour (`_holdspeak._tcp`). Identified by the
 /// advertised name; host/port arrive on resolve so tap-to-connect needs no IP typing. `requiresToken`
@@ -930,7 +930,7 @@ struct MeshInfo: Decodable, Equatable {
     var requiresToken: Bool?
 }
 
-/// "Your Computer" — the first-class, discovery-first place to find and pair with your desktop
+/// "Your Desktop" — the first-class, discovery-first place to find and pair with your desktop
 /// (HSM-15-10). Browses the LAN by Bonjour, lists computers by name + reach, tap-to-connect (host/port
 /// from discovery — no IP typing), a tight token pairing step when required, and a manual fallback.
 /// The single paired peer it writes (`DictatePeerStore`) is what dictation / Agent Desk / the Queue
@@ -1003,7 +1003,7 @@ struct ConnectView: View {
                 .padding(.horizontal, 10).padding(.vertical, 5)
                 .background(Sig.local.opacity(0.12), in: Capsule())
                 .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
-                Text("Your Computer").font(.system(size: 36, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Your Desktop").font(.system(size: 36, weight: .heavy)).foregroundStyle(Sig.text)
                     .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
             }
             Spacer()
@@ -1135,8 +1135,8 @@ struct ConnectView: View {
                     .foregroundStyle(Sig.local)
             }
             VStack(spacing: 6) {
-                Text("Looking for your computer…").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Run HoldSpeak on your Mac and it shows up here by name. No IP to type.")
+                Text("Looking for your desktop…").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Run HoldSpeak on your desktop.")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.faint)
                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
             }
@@ -1193,7 +1193,7 @@ struct ConnectView: View {
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .padding(14).background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Sig.line, lineWidth: 1))
-                    Text("Your Mac prints it on startup. Copy it here once and this iPad stays paired.")
+                    Text("Printed on your desktop at startup.")
                         .font(.system(size: 12)).foregroundStyle(Sig.faint)
                 }
                 Button { connect(target, token: pairToken.isEmpty ? nil : pairToken) } label: {
@@ -1261,7 +1261,7 @@ struct ConnectView: View {
 
 #if targetEnvironment(simulator)
 /// Simulator-only: the Connect surface with a seeded discovery list (HS_DEMO_CONNECT=1) so the
-/// "Your Computer" screen renders fully without a live LAN service.
+/// "Your Desktop" screen renders fully without a live LAN service.
 struct ConnectDemo: View {
     var body: some View { NavigationStack { ConnectView() } }
 }
@@ -1279,14 +1279,14 @@ struct PairMacSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     HStack {
-                        Text("Pair your Mac").font(.system(size: 28, weight: .heavy)).foregroundStyle(Sig.text)
+                        Text("Pair your desktop").font(.system(size: 28, weight: .heavy)).foregroundStyle(Sig.text)
                         Spacer()
                         Button { dismiss() } label: {
                             Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
                                 .frame(width: 38, height: 38).background(Sig.s2, in: Circle())
                         }
                     }
-                    Text("Run HoldSpeak on your Mac, then point this iPad at it over your network.")
+                    Text("Run HoldSpeak on your desktop.")
                         .font(.system(size: 14)).foregroundStyle(Sig.faint)
                     field("Name", text: $peers.name, placeholder: "Karol's Mac")
                     field("Host", text: $peers.host, placeholder: "192.168.1.x")

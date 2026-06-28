@@ -29,7 +29,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     label("WHERE INTELLIGENCE RUNS")
-                    targetCard(.local, "This iPad", "Fully on-device · nothing ever leaves", "ipad", Sig.localGradient)
+                    targetCard(.local, "This iPad", "Runs on this iPad", "ipad", Sig.localGradient)
                     if cfg.isLocal { onDeviceModelCard }
                     targetCard(.homelab, "LAN endpoint", "An OpenAI-compatible server on your network", "server.rack", Sig.accentGradient)
                     if !cfg.isLocal { endpointCard }
@@ -71,7 +71,7 @@ struct SettingsView: View {
                         GlyphChip(system: "tray.and.arrow.down.fill", gradient: Sig.accentGradient, size: 42)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("No models on this iPad").font(.system(size: 15.5, weight: .heavy)).foregroundStyle(Sig.text)
-                            Text("Import a .gguf to run intelligence on-device").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                            Text("Tap to download one").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
                         }
                         Spacer(); Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
                     }
@@ -286,7 +286,7 @@ struct SettingsView: View {
             GlyphChip(system: "globe", gradient: Sig.localGradient, size: 50)
             VStack(alignment: .leading, spacing: 3) {
                 Text("Spoken language").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Auto detects per utterance; pick one for short or mixed speech").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                Text("Auto-detects per utterance.").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
             }
             Spacer()
             Menu {

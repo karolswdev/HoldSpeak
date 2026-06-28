@@ -23,7 +23,9 @@ struct MeetingCaptureApp: App {
             ZStack(alignment: .top) {
                 // HS_DEMO_NOTEBOOK opens straight onto the notebook surface for a
                 // screenshot run (no mic/taps needed); the real entry is the meeting list.
-                if ProcessInfo.processInfo.environment["HS_DEMO_NOTEBOOK"] != nil {
+                if ProcessInfo.processInfo.environment["HS_DEMO_MODELS"] != nil {
+                    NavigationStack { ModelsView() }
+                } else if ProcessInfo.processInfo.environment["HS_DEMO_NOTEBOOK"] != nil {
                     DemoNotebookView()
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_CAPTURE"] != nil {
                     // HSM-20-03 — the live capture canvas straight, for a compact-width screenshot run.
@@ -578,10 +580,10 @@ struct MeetingListView: View {
                             .accessibilityLabel("New recording — capture a meeting on-device")
                         Button { tactile(.medium); showDictate = true } label: { dictateCta }
                             .buttonStyle(PressableCard())
-                            .accessibilityLabel("Dictate to your Mac — talk on this iPad, the words land on your Mac")
+                            .accessibilityLabel("Dictate to your desktop — talk on this iPad, the words land on your desktop")
                         Button { tactile(.medium); showConnect = true } label: { connectCta }
                             .buttonStyle(PressableCard())
-                            .accessibilityLabel("Your Computer — find and pair with your desktop on your network")
+                            .accessibilityLabel("Your Desktop — find and pair with your desktop on your network")
                         NavigationLink { WorkbenchView() } label: { workbenchCta }.buttonStyle(PressableCard())
                         NavigationLink { AgentDeskView(state: CompanionBoardState()) } label: { agentDeskCta }.buttonStyle(PressableCard())
                         HStack(spacing: 12) {
@@ -701,7 +703,7 @@ struct MeetingListView: View {
             }
             VStack(alignment: .leading, spacing: 3) {
                 Text("New recording").font(.system(size: 21, weight: .heavy)).foregroundStyle(.black)
-                Text("Tap to capture — transcribed live on this iPad")
+                Text("Tap to capture")
                     .font(.system(size: 13, weight: .semibold)).foregroundStyle(.black.opacity(0.68))
             }
             Spacer()
@@ -734,7 +736,7 @@ struct MeetingListView: View {
             GlyphChip(system: "cpu.fill", gradient: Sig.localGradient, size: 50)
             VStack(alignment: .leading, spacing: 3) {
                 Text("Agent Desk").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Your live agents — answer the one that's waiting").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                Text("Your live agents").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
             }
             Spacer()
             Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
@@ -742,14 +744,14 @@ struct MeetingListView: View {
         .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
     }
 
-    // The flagship mesh tile — talk on this iPad, the words land in whatever's focused on your Mac.
+    // The flagship mesh tile — talk on this iPad, the words land in whatever's focused on your desktop.
     // Peer-named when paired; invites pairing when not. Wears the ON-DEVICE / local-mesh badge.
     private var dictateCta: some View {
         let paired = peers.isPaired
         return HStack(spacing: 14) {
             GlyphChip(system: "mic.fill", gradient: Sig.accentGradient, size: 50)
             VStack(alignment: .leading, spacing: 5) {
-                Text(paired ? "Dictate to \(peers.displayName)" : "Dictate to your Mac")
+                Text(paired ? "Dictate to \(peers.displayName)" : "Dictate to your desktop")
                     .font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
                 if paired {
                     HStack(spacing: 6) {
@@ -761,7 +763,7 @@ struct MeetingListView: View {
                     .background(Sig.local.opacity(0.12), in: Capsule())
                     .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
                 } else {
-                    Text("Tap to pair — your iPad is the best mic in the house")
+                    Text("Tap to pair")
                         .font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
                 }
             }
@@ -779,7 +781,7 @@ struct MeetingListView: View {
         return HStack(spacing: 14) {
             GlyphChip(system: "laptopcomputer", gradient: Sig.localGradient, size: 50)
             VStack(alignment: .leading, spacing: 5) {
-                Text(paired ? peers.displayName : "Your Computer")
+                Text(paired ? peers.displayName : "Your Desktop")
                     .font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
                 if paired {
                     HStack(spacing: 6) {
@@ -791,7 +793,7 @@ struct MeetingListView: View {
                     .background(Sig.local.opacity(0.12), in: Capsule())
                     .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
                 } else {
-                    Text("Find and pair your desktop — no IP to type")
+                    Text("Find and pair your desktop")
                         .font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
                 }
             }
@@ -859,7 +861,7 @@ struct MeetingListView: View {
             }
             VStack(spacing: 6) {
                 Text("No meetings yet").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Press New recording to capture your first meeting. It transcribes live and stays on this iPad — nothing leaves.")
+                Text("Tap New recording to start.")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.faint)
                     .multilineTextAlignment(.center).frame(maxWidth: 320).lineSpacing(2)
             }
@@ -986,7 +988,7 @@ struct CaptureView: View {
         } else {
             VStack(spacing: 8) {
                 Image(systemName: "pencil.and.scribble").font(.largeTitle).foregroundStyle(Sig.local)
-                Text("Press Record to start a meeting, then take handwritten notes here — they save with it.")
+                Text("Record a meeting to take notes.")
                     .font(.callout).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity, minHeight: 360)
@@ -1692,7 +1694,7 @@ struct MeetingDetailView: View {
             // Whatever's been produced so far — generated artifacts and/or handwritten
             // notes — streams in here.
             if review.artifacts.isEmpty && !review.generating {
-                Text("Generate decisions, action items, risks and more from this meeting — or add your handwritten notes. All on-device.")
+                Text("Generate decisions, actions, and risks.")
                     .font(.caption).foregroundStyle(Sig.faint)
             } else {
                 ForEach(review.groups, id: \.type) { group in

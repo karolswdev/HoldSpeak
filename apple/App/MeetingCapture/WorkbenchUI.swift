@@ -986,7 +986,7 @@ private struct NodeInspectorSheet: View {
             section("PROMPT") {
                 ZStack(alignment: .topLeading) {
                     if prompt.isEmpty {
-                        Text("Write what the model should do. Use {input} for the wired input.")
+                        Text("What should the model do? Use {input}.")
                             .font(.system(size: 14)).foregroundStyle(Sig.faint).padding(.horizontal, 9).padding(.vertical, 12)
                     }
                     TextEditor(text: $prompt).font(.system(size: 14)).foregroundStyle(Sig.text)

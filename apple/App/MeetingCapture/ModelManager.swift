@@ -55,6 +55,7 @@ struct ModelsView: View {
     @State private var importing = false
     @State private var note = ""
     @State private var busy = false
+    @ObservedObject private var dl = ModelDownloadManager.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -69,9 +70,15 @@ struct ModelsView: View {
                     }
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Models").font(.system(size: 32, weight: .heavy)).foregroundStyle(Sig.text)
-                        Text("Everything runs on this iPad. Import a .gguf from Files or AirDrop — no Mac, no account.")
+                        Text("Download one, or import a .gguf.")
                             .font(.system(size: 14)).foregroundStyle(Sig.faint)
                     }
+                    SuggestedModelsSection()
+                    if let err = dl.errorMsg {
+                        Text(err).font(.system(size: 12, weight: .semibold)).foregroundStyle(Sig.warn)
+                    }
+                    HFSearchSection()
+                    Text("OR IMPORT YOUR OWN").font(.system(size: 11, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.top, 4)
                     Button { importing = true } label: { importCta }.disabled(busy)
                     if !note.isEmpty {
                         HStack(spacing: 7) {
@@ -79,10 +86,8 @@ struct ModelsView: View {
                             Text(note).font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.muted)
                         }
                     }
-                    if models.isEmpty && !busy {
-                        Text("No models yet. Import one to power on-device intelligence.")
-                            .font(.callout).foregroundStyle(Sig.faint).padding(.top, 6)
-                    } else {
+                    if !models.isEmpty {
+                        Text("ON THIS IPAD").font(.system(size: 11, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.top, 4)
                         ForEach(models) { modelCard($0) }
                     }
                 }
@@ -102,6 +107,7 @@ struct ModelsView: View {
             }
         }
         .onAppear(perform: refresh)
+        .onChange(of: dl.activeFile) { _, now in if now == nil { refresh() } }   // a download just finished → relist
     }
 
     private func refresh() { withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { models = ModelFiles.installed() } }
@@ -111,7 +117,7 @@ struct ModelsView: View {
             Image(systemName: "square.and.arrow.down.fill").font(.system(size: 20, weight: .bold)).foregroundStyle(Sig.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Import a model").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Pick a .gguf from Files (AirDrop a model, then import it here)").font(.system(size: 12)).foregroundStyle(Sig.faint)
+                Text("Pick a .gguf from Files").font(.system(size: 12)).foregroundStyle(Sig.faint)
             }
             Spacer()
             Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
