@@ -39,6 +39,7 @@ import {
 } from "./memory.js";
 import { loadJournal, clearJournal, renderJournal } from "./journal.js";
 import { runDryRun, clearDryRun } from "./dryrun.js";
+import { initMic } from "./mic.js";
 import {
   loadAgentContext,
   clearAgentContext,
@@ -140,6 +141,7 @@ document.getElementById("journal-filter-warnings").addEventListener("change", re
 document.getElementById("journal-filter-corrected").addEventListener("change", renderJournal);
 document.getElementById("dry-btn-run").addEventListener("click", runDryRun);
 document.getElementById("dry-btn-clear").addEventListener("click", clearDryRun);
+initMic();
 document.getElementById("project-root-apply").addEventListener("click", applyProjectRootOverride);
 document.getElementById("project-root-clear").addEventListener("click", clearProjectRootOverride);
 document.getElementById("project-root-recent").addEventListener("change", useRecentProjectRoot);

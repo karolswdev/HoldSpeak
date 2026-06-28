@@ -777,6 +777,17 @@ import AppLayout from "../layouts/AppLayout.astro";
                       @click="draft === null ? (draft = await fetchFollowupDraft()) : (draft = null, copyState = 'idle')"
                       x-text="draft === null ? 'Draft follow-up' : 'Hide draft'"
                     ></button>
+                    <!-- HS-19 (web): honest egress on the actionable head — when
+                         Slack is configured these buttons LEAVE the device on
+                         approve. One structured {scope,label} chip, never prose. -->
+                    <span
+                      class="egress-badge"
+                      :class="`is-${aftercareEgress('slack').scope}`"
+                      x-show="selectedMeetingAftercare?.slack_configured"
+                      x-cloak
+                      x-text="aftercareEgressText('slack')"
+                      title="Sending to Slack leaves this device on approve"
+                    ></span>
                     <span class="aftercare-tag">Aftercare</span>
                   </div>
                 </div>
@@ -850,6 +861,9 @@ import AppLayout from "../layouts/AppLayout.astro";
                             <div class="loop-form-actions">
                               <button class="btn primary" @click="(await fileActionAsIssue(item, repo)) && (filing = false, repo = '')">Create proposal</button>
                               <button class="btn" @click="filing = false; repo = ''">Cancel</button>
+                              <!-- HS-19 (web): filing this action LEAVES the device
+                                   on approve (a GitHub issue). One egress chip. -->
+                              <span class="egress-badge" :class="`is-${aftercareEgress('github').scope}`" x-text="aftercareEgressText('github')" title="Approving this proposal opens a GitHub issue off this device"></span>
                             </div>
                             <p class="loop-note">Creates a proposal; approve it below (execution needs actuators enabled).</p>
                           </div>
@@ -1018,9 +1032,17 @@ import AppLayout from "../layouts/AppLayout.astro";
                           <p class="artifact-card__title" x-text="artifact.title"></p>
                           <div class="artifact-card__meta">
                             <span class="artifact-chip" x-text="artifactTypeLabel(artifact)"></span>
-                            <span class="pill" x-text="`${(artifact.confidence * 100).toFixed(0)}% confidence`"></span>
+                            <!-- HS-19 (web): confidence as a banded meter chip, not a
+                                 flat % — the bar fills to the score and the band
+                                 (high/medium/low) colors how much to trust it. -->
+                            <span class="confidence-chip" :class="`conf-${artifactConfidenceLevel(artifact)}`"
+                                  :title="`Synthesis confidence: ${artifactConfidencePct(artifact)}% (${artifactConfidenceLevel(artifact)})`">
+                              <span class="confidence-meter"><span class="confidence-fill" :style="`width:${artifactConfidencePct(artifact)}%`"></span></span>
+                              <span class="confidence-text" x-text="`${artifactConfidencePct(artifact)}% confidence`"></span>
+                            </span>
                             <span class="pill" x-text="formatDate(artifact.created_at)"></span>
-                            <span class="pill" x-show="artifact.sources?.length" x-cloak x-text="`${artifact.sources.length} sources`"></span>
+                            <span class="pill" x-show="artifact.sources?.length" x-cloak
+                                  x-text="`${artifact.sources?.length || 0} source${(artifact.sources?.length || 0) === 1 ? '' : 's'}`"></span>
                           </div>
                         </div>
                         <div class="artifact-card__actions">
@@ -1225,6 +1247,21 @@ import AppLayout from "../layouts/AppLayout.astro";
                       <p class="meta-line"
                          x-show="artifact.body_markdown && !hasStructuredRender(artifact)"
                          x-cloak x-text="artifact.body_markdown"></p>
+                      <!-- HS-19 (web): provenance — the lineage this artifact was
+                           synthesized from (intent windows + plugin runs). Reading
+                           sources?.length guards the null-read; each row is a
+                           humanized source_type · source_ref trail. -->
+                      <div class="artifact-sources" x-show="artifact.sources?.length" x-cloak>
+                        <p class="artifact-sources__label">Synthesized from</p>
+                        <ul class="artifact-sources__list">
+                          <template x-for="(src, sx) in artifact.sources || []" :key="`src${sx}`">
+                            <li class="artifact-source" :class="`src-${(src?.source_type || 'source').replace(/[^a-z0-9_]/gi, '-')}`">
+                              <span class="artifact-source__type" x-text="(src?.source_type || 'source').replace(/_/g, ' ')"></span>
+                              <span class="artifact-source__ref" x-text="src?.source_ref" :title="src?.source_ref"></span>
+                            </li>
+                          </template>
+                        </ul>
+                      </div>
                       </div>
                     </div>
                   </template>
@@ -2056,6 +2093,88 @@ import AppLayout from "../layouts/AppLayout.astro";
     color: var(--artifact-accent);
     background: var(--surface-3);
     border: 1px solid var(--artifact-accent);
+  }
+  /* HS-19 (web): confidence as a banded meter chip — the fill bar reads at a
+     glance, the band colors how much to trust the synthesis. */
+  .confidence-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    --conf-color: var(--text-muted);
+  }
+  .confidence-chip.conf-high { --conf-color: var(--ok); border-color: var(--ok-soft); }
+  .confidence-chip.conf-medium { --conf-color: var(--warn-strong); border-color: var(--warn-soft); }
+  .confidence-chip.conf-low { --conf-color: var(--danger-signal); border-color: var(--danger-soft); }
+  .confidence-meter {
+    position: relative;
+    width: 2.5rem;
+    height: 0.35rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-1);
+    overflow: hidden;
+    flex: 0 0 auto;
+  }
+  .confidence-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--conf-color);
+    transition: width 200ms ease;
+  }
+  .confidence-text { color: var(--conf-color); white-space: nowrap; }
+  /* HS-19 (web): provenance trail — what this artifact was synthesized from. */
+  .artifact-sources {
+    margin-top: var(--space-3);
+    padding-top: var(--space-2);
+    border-top: 1px dashed var(--border-subtle);
+  }
+  .artifact-sources__label {
+    margin: 0 0 var(--space-1);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.04em);
+    color: var(--text-muted);
+  }
+  .artifact-sources__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+  .artifact-source {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    max-width: 100%;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--surface-1);
+    border: 1px solid var(--border-subtle);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+  }
+  .artifact-source__type {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose, 0.04em);
+    flex: 0 0 auto;
+  }
+  .artifact-source__ref {
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 18rem;
   }
   .artifact-card__actions {
     flex: 0 0 auto;

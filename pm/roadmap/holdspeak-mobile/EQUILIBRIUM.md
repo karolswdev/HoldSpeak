@@ -168,4 +168,17 @@ of the owner's device-walk features.
 
 Both carry `String?` timestamps by construction (the Wave-6 naive-timestamp lesson, told to the agents up front). Integrated: 15 tests green, no regression. Gotcha flagged for future agents: under `.convertFromSnakeCase`, a snake_case literal CodingKey never matches, use the camelCase key.
 
+### Armada Fleet WEB (2026-06-27) — 4 distinct web pages, in parallel
+
+Run concurrently with the iOS + python fleets (partitioned by surface). 4 agents, one page each:
+
+| Page | What landed |
+|------|-------------|
+| /dictation | a browser-mic dry-run widget (getUserMedia capture, review, run the existing dry-run preview); local egress badge, preview-not-inject |
+| /history | egress badges on the aftercare actionables + a banded confidence meter + a "synthesized from" sources trail on each artifact (the provenance the hub already serves) |
+| /activity | a source-cited pre-briefing nudge board with "Dictate with this" (select grounds the next dictation) |
+| /companion | the iPad-companion explainer (the teleprompter, aftercare, schema-safe storage, pairing how-to), grounded in the shipped clients |
+
+Integrated: web build green + route-preflight green (the new pages load clean, null-guards held).
+
 See [[project_primitive_framework]], [[project_phase15_the_mesh]], [[project_phase17_agent_sync]].
