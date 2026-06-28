@@ -2,10 +2,12 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 20
-- **Status:** todo — **leads the phase.** Every other story asks this story's camera.
+- **Status:** done — **leads the phase.** Every other story asks this story's camera.
+  (Sim-proven; device walk deferred to 20-05.)
 - **Depends on:** nothing (it consolidates what ships today).
 - **Unblocks:** 20-02 (the desk reads the camera), 20-03, 20-04 (forms read the camera).
 - **Owner:** unassigned
+- **Evidence:** `evidence-story-01.md`.
 
 ## Problem
 

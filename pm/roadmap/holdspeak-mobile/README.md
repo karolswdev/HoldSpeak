@@ -24,7 +24,14 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-06-27 (**PHASE 18 OPENED — THE EQUILIBRIUM BEGINS.** Merged the
+**Last updated:** 2026-06-27 (**PHASE 20 BUILD STARTED — the iPhone pass.** Landed **HSM-20-01**:
+`DeskCamera` is now the one width authority for every Apple surface (derived from
+`horizontalSizeClass` first, geometry width second), and the four scattered `w < 500` / `w >= 500`
+/ `UIScreen.main.bounds` strays are folded into it. Byte-equivalent on iPad (`.wide` full diorama,
+`.narrow`/`.lane` rail-collapse unchanged); `swift test` 381 green + iPhone-17-Pro and iPad sim
+builds green. This is the foundation 20-02/03/04 read to reflow the desk into a one-thumb lane. See
+[`phase-20-one-app-every-size`](./phase-20-one-app-every-size/current-phase-status.md). Earlier:
+**PHASE 18 OPENED — THE EQUILIBRIUM BEGINS.** Merged the
 equilibrium package (PR #144: parity audit + the 6-phase program + the Experience Vision), then
 opened **Phase 18 (the iPad joins the dictation contracts)** and landed its first fix: the
 **voice-command macro relay** (HSM-18-02 hub half). `api_dictation_remote` never fired macros, so
