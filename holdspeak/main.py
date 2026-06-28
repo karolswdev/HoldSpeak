@@ -277,6 +277,10 @@ Logs are written to: {LOG_FILE}
         "brief", help="Today's prioritized brief: the top moves with prepared next actions"
     )
     cadence_brief_parser.add_argument("--json", action="store_true", help="Emit JSON")
+    cadence_closeout_parser = cadence_subparsers.add_parser(
+        "closeout", help="End-of-day: every open loop with a recommended close/file/snooze/kill"
+    )
+    cadence_closeout_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
     # device-psk subcommand (HS-14-03)
     device_psk_parser = subparsers.add_parser(

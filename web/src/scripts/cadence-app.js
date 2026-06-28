@@ -150,6 +150,50 @@ async function refresh() {
   }
 }
 
+function recCard(rec) {
+  const card = loopCard(rec.loop);
+  if (rec.severity === "escalated") card.classList.add("cad-sev-escalated");
+  else if (rec.severity === "persistent") card.classList.add("cad-sev-persistent");
+  // surface the recommended action as a badge in the head
+  const head = card.querySelector(".cad-card-head");
+  if (head) {
+    const badge = el("span", "cad-rec-action", rec.action);
+    badge.title = rec.reason;
+    head.insertBefore(badge, head.querySelector(".egress-badge"));
+  }
+  return card;
+}
+
+async function loadCloseout() {
+  const co = await jget(`${API}/closeout`);
+  const host = document.getElementById("cad-closeout");
+  if (!host) return;
+  host.textContent = "";
+  if (!co.recs || !co.recs.length) {
+    host.appendChild(emptyState("Your loops are clear. Nice."));
+    return;
+  }
+  co.recs.forEach((rec) => host.appendChild(recCard(rec)));
+}
+
+async function loadHistory() {
+  const data = await jget(`${API}/history?limit=20`);
+  const host = document.getElementById("cad-history");
+  if (!host) return;
+  host.textContent = "";
+  const nudges = data.nudges || [];
+  if (!nudges.length) {
+    host.appendChild(emptyState("No nudges yet."));
+    return;
+  }
+  nudges.forEach((n) => {
+    const row = el("div", "cad-history-row");
+    row.appendChild(el("span", "cad-history-surface", n.surface));
+    row.appendChild(el("span", null, n.title || n.status));
+    host.appendChild(row);
+  });
+}
+
 async function onAction(loopId, act, card) {
   if (act === "snooze") await jpost(`${API}/loops/${loopId}/snooze`, { hours: 24 });
   else if (act === "close") await jpost(`${API}/loops/${loopId}/close`);
@@ -178,12 +222,19 @@ export function initCadence() {
       }
     });
   }
+  const closeoutBtn = document.getElementById("cad-closeout-btn");
+  if (closeoutBtn) {
+    closeoutBtn.addEventListener("click", () => loadCloseout().catch((e) => console.error(e)));
+  }
   document.addEventListener("click", (ev) => {
     const btn = ev.target.closest("[data-act]");
     if (!btn) return;
     const card = btn.closest("[data-loop-id]");
     if (!card) return;
-    onAction(card.dataset.loopId, btn.dataset.act, card).catch((e) => console.error(e));
+    onAction(card.dataset.loopId, btn.dataset.act, card)
+      .then(() => loadHistory().catch(() => {}))
+      .catch((e) => console.error(e));
   });
   refresh().catch((e) => console.error(e));
+  loadHistory().catch((e) => console.error(e));
 }

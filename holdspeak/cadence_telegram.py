@@ -119,10 +119,14 @@ class TelegramSurface:
         if cmd in ("brief", "loops"):
             self._send_loops(chat_id, brief=(cmd == "brief"))
             return {"action": cmd}
+        if cmd == "closeout":
+            from .cadence.closeout import build_closeout, render_closeout_text
+            self._send(chat_id, "🧷 " + render_closeout_text(build_closeout(self._db)))
+            return {"action": "closeout"}
         if cmd == "status":
             self._send(chat_id, self._render_status())
             return {"action": "status"}
-        self._send(chat_id, "Commands: /brief /loops /status")
+        self._send(chat_id, "Commands: /brief /loops /closeout /status")
         return {"action": "help"}
 
     def _handle_callback(self, cb: dict) -> dict:

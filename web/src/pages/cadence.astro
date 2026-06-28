@@ -30,6 +30,19 @@ import AppLayout from "../layouts/AppLayout.astro";
       <h2>Open loops</h2>
       <div id="cad-loops" class="cad-list"></div>
     </section>
+
+    <section class="cad-section">
+      <div class="cad-section-head">
+        <h2>End-of-day closeout</h2>
+        <button class="cad-btn" id="cad-closeout-btn" type="button">Run closeout</button>
+      </div>
+      <div id="cad-closeout" class="cad-list"></div>
+    </section>
+
+    <section class="cad-section">
+      <h2>History</h2>
+      <div id="cad-history" class="cad-history"></div>
+    </section>
   </div>
 
   <script>
@@ -130,4 +143,20 @@ import AppLayout from "../layouts/AppLayout.astro";
     padding: 0.5rem 0.65rem; font: inherit; font-size: 0.88rem;
   }
   .cad-reply-input:focus { outline: none; border-color: var(--color-accent, #ff6b35); }
+
+  .cad-section-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+  .cad-section-head h2 { margin: 0; }
+  .cad-rec-action {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(255,107,53,0.16); color: var(--color-accent, #ff6b35);
+  }
+  .cad-sev-escalated { box-shadow: inset 0 0 0 1px rgba(255,77,109,0.5); }
+  .cad-sev-persistent { box-shadow: inset 0 0 0 1px rgba(246,195,86,0.4); }
+  .cad-history { display: flex; flex-direction: column; gap: 0.35rem; }
+  .cad-history-row {
+    display: flex; gap: 0.6rem; align-items: baseline; font-size: 0.84rem;
+    color: var(--color-text-muted, #9c93a8); padding: 0.35rem 0.1rem;
+    border-bottom: 1px solid var(--color-line, rgba(255,255,255,0.06));
+  }
+  .cad-history-surface { font-size: 0.66rem; font-weight: 800; text-transform: uppercase; color: var(--color-text-faint, #6f6880); }
 </style>

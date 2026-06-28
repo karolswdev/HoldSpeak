@@ -61,6 +61,29 @@ def test_brief_route_leads_with_top_move(client):
     assert b["egress"]["scope"] == "local"
 
 
+def test_closeout_recommends_and_batch_applies(client):
+    c, db = client
+    c.post("/api/cadence/run-now")
+    co = c.get("/api/cadence/closeout").json()
+    assert co["open_count"] >= 1 and co["recs"]
+    assert all("action" in r and "reason" in r and "severity" in r for r in co["recs"])
+    # batch-apply: snooze them all
+    decisions = [{"loop_id": r["loop"]["id"], "action": "snooze"} for r in co["recs"]]
+    res = c.post("/api/cadence/closeout/apply", json={"decisions": decisions}).json()
+    assert res["applied"] == len(decisions) and res["skipped"] == 0
+    assert all(l["status"] == "snoozed" for l in c.get("/api/cadence/loops").json()["loops"])
+
+
+def test_history_lists_nudges(client):
+    c, db = client
+    c.post("/api/cadence/run-now")
+    from holdspeak.cadence.models import Nudge
+    loop_id = c.get("/api/cadence/loops").json()["loops"][0]["id"]
+    db.cadence.record_nudge(Nudge(loop_id=loop_id, surface="web", title="pushed it"))
+    hist = c.get("/api/cadence/history").json()["nudges"]
+    assert hist and hist[0]["title"] == "pushed it" and hist[0]["surface"] == "web"
+
+
 def test_loop_detail_404_then_ok(client):
     c, _ = client
     assert c.get("/api/cadence/loops/nope").status_code == 404
