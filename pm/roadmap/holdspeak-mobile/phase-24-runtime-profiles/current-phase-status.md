@@ -4,7 +4,9 @@
 [`EQUILIBRIUM.md`](../EQUILIBRIUM.md): the same "honor the contract on every surface" discipline,
 applied to *where intelligence runs*.
 
-**Last updated:** 2026-06-28 (**24-01 landed.** The `RuntimeProfile` contract +
+**Last updated:** 2026-06-28 (**24-01 + 24-02 landed.** `InferenceConfigStore` is profile-backed
+(migration + key→Keychain + `makeProvider(profile:)` + `resolveProfile`); the reusable `RunsOnPicker`
+ships as the always-exposed "Active profile" chip. Below: 24-01 — The `RuntimeProfile` contract +
 `SyncKind.profile` + tolerant `ChangeSet` decode + the Keychain `ProfileKeyStore` + the
 legacy→profiles migration all ship, with the **never-sync-the-key invariant proven in a test**
 and a back-compat test for payloads that predate `profiles`. `swift test` 389/0; the app
@@ -50,6 +52,21 @@ RuntimeProfile {
 *assigned profile's* `contextLimit` — "Scout on Claude (200k) = 1% full; Scout on a local 3B (8k)
 = 22%."
 
+## The governing usability principle (owner, 2026-06-28)
+
+**Every surface that touches a model exposes a tiny, inline "Runs on: [Profile ▾]" control** — the
+resolved default already selected, one tap to change, *at the point of use*, every time. Not buried
+in Settings. Most users never touch it; but the default is always **shown** (never implicit) and
+**changeable at any moment**.
+
+- **Resolution order** for "which profile runs this": an explicit inline override → the agent's
+  assigned `profileId` → the global active profile. Whichever applies is the one the chip displays.
+- **One reusable component** (a `RunsOnPicker` chip) is dropped at every model-touch point —
+  dictation, meeting generate, agent run/chat, chains, the desk "Ask"/route-to-AI-core gesture, the
+  builder. Introduced in 24-02 (with the resolution helper); made pervasive in 24-03.
+- `makeProvider` takes an explicit `RuntimeProfile`; call sites resolve via the order above so the
+  inline override is honored.
+
 ## The one hard rule (security / robustness)
 
 **API keys are credentials and MUST NOT sync.** The profile *shape* (name/kind/baseURL/model/
@@ -70,7 +87,7 @@ reads `profile.egressScope` so trust stays honest per profile.
 | Story | One-liner | Status |
 |-------|-----------|--------|
 | HSM-24-01 | The `RuntimeProfile` contract + `SyncKind.profile` + the Keychain key store (key never syncs) — **leads, load-bearing** | **done** (contract + migration + tolerant `ChangeSet` decode + `ProfileKeyStore`; never-sync invariant tested; `swift test` 389/0) |
-| HSM-24-02 | Apple **basic** config — the active-profile picker over the existing `ILLMProvider` seam | planned |
+| HSM-24-02 | Apple **basic** config — the active-profile picker over the existing `ILLMProvider` seam | **done** (profile-backed `InferenceConfigStore` + migration + key→Keychain + `makeProvider(profile:)` + `resolveProfile` + the reusable `RunsOnPicker`; `swift test` 389/0) |
 | HSM-24-03 | Apple **advanced** config — manage the profile list + per-agent `profileId` + the gauge reads `profile.contextLimit` | planned |
 | HSM-24-04 | The desktop hub honors profiles (`web_runtime` maps a profile to its runtime) | planned |
 | HSM-24-05 | Web authors + uses profiles (the flagship surface) | planned |
@@ -97,8 +114,16 @@ yet know `profiles` still decodes), and `ProfileKeyStore` (App-layer Keychain; t
 profile id with `…ThisDeviceOnly` accessibility and **never** appears on the shape or in a
 `ChangeSet`). Eight tests, including the never-sync invariant and the back-compat decode.
 
-Next: **24-02** (Apple basic) — refactor `InferenceConfigStore` into "a list of profiles + one
-active," route `makeProvider` through the active profile, and run the migration on first launch.
+**24-02 also landed.** `InferenceConfigStore` is now profile-backed (`profiles` + `activeProfileId`,
+migrated on first launch, key moved to the Keychain); the active profile is applied onto the legacy
+fields so every existing reader is unchanged; `makeProvider(profile:)` + `resolveProfile` (override →
+agent → active) are in; and the **reusable `RunsOnPicker`** ships — shown in Settings as the always-
+exposed "Active profile" chip (the owner's "the default is always exposed + changeable" principle).
+
+Next: **24-03** (Apple advanced) — the profiles management screen (add/edit/delete, key→Keychain),
+per-agent `Agent.profileId`, the `RunsOnPicker` dropped at every model-touch point (dictation,
+generate, agent run/chat, the Ask gesture, the builder), and the gauge reading the assigned profile's
+`contextLimit`. That story also enables the live multi-profile switch walk 24-02 deferred.
 
 ## Carried context
 

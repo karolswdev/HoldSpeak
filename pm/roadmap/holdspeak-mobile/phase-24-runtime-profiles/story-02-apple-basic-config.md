@@ -1,6 +1,6 @@
 # HSM-24-02 — Apple basic config: the active-profile picker over the existing seam
 
-**Status:** planned (after 24-01).
+- **Status:** done (2026-06-28) — foundation + the always-exposed active picker. Evidence: [evidence-story-02.md](./evidence-story-02.md). `swift test` 389/0; a live multi-profile switch walks in 24-03 (which adds profile creation).
 
 ## Problem
 
