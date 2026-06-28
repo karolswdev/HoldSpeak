@@ -1,6 +1,8 @@
 # CAD-1-01 — Cadence models + SQLite migrations
 
-- **Program:** cadence-engine · **Phase:** 1 · **Status:** todo — **leads the phase.**
+- **Program:** cadence-engine · **Phase:** 1 · **Status:** done — **leads the phase.**
+  Built + tested (`tests/integration/test_cadence_store.py`, 9 green; schema snapshot regenerated;
+  77 db/doctor tests green). Off by default / inert.
 - **Depends on:** nothing. **Unblocks:** every other Phase-1 story.
 
 ## Problem

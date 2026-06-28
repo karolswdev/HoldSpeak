@@ -34,7 +34,7 @@ idempotency, the scoring, and the off-switch right here and the rest is surfaces
 
 | ID | Title | Status |
 |----|-------|--------|
-| CAD-1-01 | Cadence models + SQLite migrations (`cadence_*` tables, `CadenceRepository`) — **leads** | todo |
+| CAD-1-01 | Cadence models + SQLite migrations (`cadence_*` tables, `CadenceRepository`) — **leads** | done |
 | CAD-1-02 | The collector (meeting action items + pending proposals → source-projected loops) | todo |
 | CAD-1-03 | Stale-scoring v1 (deterministic, explainable) | todo |
 | CAD-1-04 | Cadence policies + quiet hours + the `CadenceMixin` tick (off by default) | todo |
@@ -43,10 +43,18 @@ idempotency, the scoring, and the off-switch right here and the rest is surfaces
 
 ## Where we are
 
-Not started; fully storied. **CAD-1-01 leads** (the models + tables everything else reads/writes).
-1-02/1-03 then build on it; 1-04 wires the tick + config gate; 1-05 exposes it; 1-06 locks the
-behavior. The whole phase is local + deterministic + off-by-default — a green `uv run pytest -q`
-and a `holdspeak cadence run-now` that prints projected loops is the bar.
+**CAD-1-01 landed** (the foundation): `cadence_*` tables in `SCHEMA_SQL` (`SCHEMA_VERSION 2→3`, the
+canonical snapshot regenerated), the `holdspeak/cadence/models.py` dataclasses, and
+`CadenceRepository` (`holdspeak/db/cadence.py`) registered on `Database`. Source-projection
+invariants proven by `tests/integration/test_cadence_store.py` (9 tests: idempotent upsert,
+killed-stays-killed, snooze-survives, `close_missing` spares user-decided loops, evidence cascade,
+policies round-trip) + the schema-policy/doctor suite (77 green). Inert + off by default: the tables
+exist but nothing reads them yet.
+
+**Next: CAD-1-02..06** — the collector (meeting actions + pending proposals → loops), deterministic
+stale-scoring, policies + quiet hours + the off-by-default `CadenceMixin` tick + `CadenceConfig`, and
+the `holdspeak cadence status|loops|run-now` CLI, closing with the no-side-effects guard. The bar:
+a green `uv run pytest -q` and `holdspeak cadence run-now` printing scored projected loops.
 
 ## Exit criteria
 

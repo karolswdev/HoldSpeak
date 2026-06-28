@@ -19,6 +19,7 @@ from .actuators import ActuatorRepository
 from .corrections import DictationCorrectionRepository
 from .journal import DictationJournalRepository
 from .milestones import MilestoneRepository
+from .cadence import CadenceRepository
 from .primitives import (
     AgentRepository,
     ChainRepository,
@@ -36,7 +37,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 
 class SchemaVersionError(RuntimeError):
@@ -803,6 +804,85 @@ CREATE INDEX IF NOT EXISTS idx_chains_modified ON chains(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_workflows_modified ON workflows(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_directories_modified ON directories(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_directory_memberships_dir ON directory_memberships(directory_id);
+
+-- ── Cadence Engine (CAD-1-01) ──────────────────────────────────────────────
+-- Open Loops are source-PROJECTED entities: the collector idempotently upserts
+-- one row per (source_type, source_id); the user's lifecycle decisions
+-- (snoozed/killed/nudge_count) live only here and survive re-collection (a
+-- killed loop stays killed). The engine is off by default and writes ONLY these
+-- cadence_* tables — it never performs an external side effect (that goes through
+-- the existing actuator propose->approve->execute path in later phases).
+CREATE TABLE IF NOT EXISTS cadence_loops (
+    id TEXT PRIMARY KEY,
+    source_type TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    project TEXT,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'open',     -- open, snoozed, closed, killed, delegated
+    priority TEXT NOT NULL DEFAULT 'normal',  -- low, normal, high, urgent
+    needs_review INTEGER NOT NULL DEFAULT 0,  -- low-confidence: quiet, never a push
+    owner TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    due_at TEXT,
+    snoozed_until TEXT,
+    stale_score REAL NOT NULL DEFAULT 0,
+    last_nudged_at TEXT,
+    nudge_count INTEGER NOT NULL DEFAULT 0
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_cadence_loops_source ON cadence_loops(source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_cadence_loops_status ON cadence_loops(status, snoozed_until);
+
+CREATE TABLE IF NOT EXISTS cadence_evidence_refs (
+    id TEXT PRIMARY KEY,
+    loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    ref_id TEXT NOT NULL,
+    label TEXT NOT NULL DEFAULT '',
+    timestamp TEXT,
+    deep_link TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_cadence_evidence_loop ON cadence_evidence_refs(loop_id);
+
+CREATE TABLE IF NOT EXISTS cadence_next_actions (
+    id TEXT PRIMARY KEY,
+    loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body_markdown TEXT NOT NULL DEFAULT '',
+    confidence REAL NOT NULL DEFAULT 0,
+    reversible INTEGER NOT NULL DEFAULT 1,
+    proposal_id TEXT,
+    generated_by TEXT NOT NULL DEFAULT 'deterministic',
+    generated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_cadence_next_actions_loop ON cadence_next_actions(loop_id);
+
+CREATE TABLE IF NOT EXISTS cadence_nudges (
+    id TEXT PRIMARY KEY,
+    loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE,
+    next_action_id TEXT,
+    surface TEXT NOT NULL,
+    severity TEXT NOT NULL DEFAULT 'normal',  -- quiet, normal, persistent, escalated
+    title TEXT NOT NULL DEFAULT '',
+    message_markdown TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',   -- pending, shown, acted, dismissed, expired
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    shown_at TEXT,
+    acted_at TEXT,
+    expires_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_cadence_nudges_loop ON cadence_nudges(loop_id);
+CREATE INDEX IF NOT EXISTS idx_cadence_nudges_status ON cadence_nudges(status);
+
+CREATE TABLE IF NOT EXISTS cadence_policies (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    config_json TEXT NOT NULL DEFAULT '{}',
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -822,6 +902,7 @@ class Database:
         self.dictation_corrections = DictationCorrectionRepository(self._connection, self)
         self.dictation_journal = DictationJournalRepository(self._connection, self)
         self.milestones = MilestoneRepository(self._connection, self)
+        self.cadence = CadenceRepository(self._connection, self)  # CAD-1-01
         # Primitive Framework: the desk's synced first-class primitives.
         self.notes = NoteRepository(self._connection, self)
         self.kbs = KBRepository(self._connection, self)
