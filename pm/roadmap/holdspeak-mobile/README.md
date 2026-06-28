@@ -24,7 +24,15 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-06-27 (**PHASE 20 — the iPhone pass — 20-01 → 20-04 all landed (sim).** The
+**Last updated:** 2026-06-27 (**PHASE 20 ON REAL METAL — the device pass began.** The whole iPhone
+size-class pass (20-01..04) is merged, and the app is now **built + installed + launched on a real
+iPhone 17 Pro Max** — which immediately caught a device-only build bug the simulator hid (`DictateDemo`
+sim-only, fixed #178) and surfaced a batch of usability issues. **Next session is the iPad walk + the
+iPhone polish; START at
+[`HANDOVER-2026-06-28-ipad-walk-iphone-polish.md`](./HANDOVER-2026-06-28-ipad-walk-iphone-polish.md)**
+— it has the two-device build playbook (with the exact device ids + the unlock/developer-disk gotchas),
+the verified iPhone-surface file map, and a capture-first slot for the usability issues. Earlier today:
+**20-01 → 20-04 all landed (sim).** The
 whole iPhone size-class pass is built and simulator-proven; only the device walk (20-05) remains.
 **20-01:** `DeskCamera` is the one width authority (the four `w<500`/`UIScreen.main.bounds` strays
 folded in). **20-02:** the iPhone desk reflows to a one-thumb **lane** (card column + chip rail + FAB
