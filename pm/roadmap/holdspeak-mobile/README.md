@@ -24,15 +24,17 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-06-27 (**PHASE 20 — the iPhone pass — 20-01 + 20-02 landed.** **HSM-20-01:**
-`DeskCamera` is the one width authority for every Apple surface (`horizontalSizeClass` first, width
-second), the four `w < 500`/`UIScreen.main.bounds` strays folded in. **HSM-20-02:** the iPhone desk
-now reflows to a one-thumb **lane** — a card column (`laneColumn`) with a dynamic kind-filter chip
-rail, full-width primitive rows, an accent FAB, and the signature **migrating pull-out** (rises from
-the bottom edge on iPhone / enters from the right on iPad, on a spring, over a transparent catcher,
-egress badge riding along). `positions[id]` is untouched so rotation restores the diorama; fixed
-cards clamped via `camera.cardWidth`. `swift test` 381 green + iPhone/iPad sim builds green. Next:
-20-03 (capture canvas) + 20-04 (forms + the hold-bar teleprompter); 20-05 is the device gate. See
+**Last updated:** 2026-06-27 (**PHASE 20 — the iPhone pass — 20-01 → 20-04 all landed (sim).** The
+whole iPhone size-class pass is built and simulator-proven; only the device walk (20-05) remains.
+**20-01:** `DeskCamera` is the one width authority (the four `w<500`/`UIScreen.main.bounds` strays
+folded in). **20-02:** the iPhone desk reflows to a one-thumb **lane** (card column + chip rail + FAB
++ the signature **migrating pull-out** that rises from the bottom edge / enters from the right on a
+spring; `positions[id]` untouched so rotation restores the diorama). **20-03:** the capture canvas
+(least-broken; recorder docks bottom) gains one-thumb tap-to-tack. **20-04:** the connect Port/Token
+row stacks on the lane + the iPhone **hold-bar teleprompter** (a bottom-edge accent HOLD BAR reflowing
+a bottom-up teleprompter on press, no dim) + coder-card clamps. One carried follow-up: the
+action-sheet/editor scrim → rising-sheet reframe (they already fit 390pt). meeting-capture +
+companion-shell sim builds green, `swift test` 381 green. See
 [`phase-20-one-app-every-size`](./phase-20-one-app-every-size/current-phase-status.md). Earlier:
 **PHASE 18 OPENED — THE EQUILIBRIUM BEGINS.** Merged the
 equilibrium package (PR #144: parity audit + the 6-phase program + the Experience Vision), then

@@ -28,6 +28,9 @@ struct MeetingCaptureApp: App {
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_CAPTURE"] != nil {
                     // HSM-20-03 — the live capture canvas straight, for a compact-width screenshot run.
                     NavigationStack { CaptureView(model: CaptureModel(), done: {}) }
+                } else if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] != nil {
+                    // HSM-20-04 — the dictation surface straight (the iPhone hold-bar teleprompter).
+                    DictateDemo()
                 } else if ProcessInfo.processInfo.environment["HS_CLASSIC_HOME"] != nil {
                     MeetingListView()
                         .onOpenURL { url in
