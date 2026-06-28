@@ -36,8 +36,25 @@ class CadenceMixin:
                     "cadence tick: %d projected, %d open, %d due",
                     result.projected, result.open_loops, result.due_count,
                 )
+                self._push_due_to_telegram(result.due)
         except Exception as exc:  # never let the tick crash the runtime
             log.error("cadence tick failed: %s", exc)
+
+    def _push_due_to_telegram(self, due_loops) -> None:
+        """Deliver due nudges to paired Telegram chats (CAD-4-05) — off unless the
+        Telegram surface is enabled + has a token + a paired chat."""
+        tg = getattr(self.config, "cadence_telegram", None)
+        if tg is None or not tg.is_active or not tg.allowed_chat_ids:
+            return
+        try:
+            from ..cadence_telegram import TelegramSurface
+            from ..db import get_database
+
+            sent = TelegramSurface(get_database(), tg).push_due_nudges(due_loops)
+            if sent:
+                log.info("cadence: pushed %d nudge(s) to Telegram", sent)
+        except Exception as exc:
+            log.error("cadence telegram push failed: %s", exc)
 
     def _cadence_loop(self) -> None:
         interval = max(30, int(getattr(self.config.cadence, "tick_interval_seconds", 300)))

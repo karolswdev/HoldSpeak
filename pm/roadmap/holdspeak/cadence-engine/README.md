@@ -5,16 +5,16 @@
 > next actions.** Qlippy does not merely remind. Qlippy pushes — with receipts, restraint, and a
 > ready-made next move.
 
-**Status:** Phase 0 (architecture hardening) complete — this chart IS its output. **Phases 1
-(cadence core), 2 (web coach surface), and 3 (agent-blocker push) are COMPLETE** — `holdspeak cadence
-run-now` projects scored loops; the `/cadence` page shows them with prepared next moves + one-tap
-decisions; and an awaiting Claude/Codex session becomes a top loop you can answer (the reply lands in
-its terminal). Off by default throughout. **Phase 4 (Telegram remote presence) is next.** Phases 5–8
-are sketched here and storied as each becomes the lead.
+**Status:** Phase 0 (architecture hardening) complete — this chart IS its output. **Phases 1–4 are
+COMPLETE** — the substrate (`run-now` projects scored loops), the `/cadence` web coach (prepared next
+moves + one-tap decisions), agent-blocker push (answer a waiting Claude/Codex from the board, the
+reply lands in its terminal), and **Telegram remote presence** (pair a chat → get nudges + act on
+inline buttons; hermetic, the live bot walk is the owner's button). Off by default throughout.
+**Phase 5 (daily push brief) is next.** Phases 6–8 are sketched here and storied as each becomes the lead.
 
-**Last updated:** 2026-06-28 (Phase 3 shipped — awaiting agent sessions → loops + a terminal-delivered
-reply; 141 cadence/web tests green. Phases 1–2: the substrate + the web coach. Program authored from
-the owner's rough design + a grounded seam map; §15 resolved below).
+**Last updated:** 2026-06-28 (Phase 4 shipped hermetically — the Telegram surface; 272 cadence/web/config
+tests green. Phases 1–3: the substrate + the web coach + agent-blocker push. Program authored from the
+owner's rough design + a grounded seam map; §15 resolved below).
 
 ---
 
@@ -119,7 +119,7 @@ Phase 1 leads and is fully storied. Each later phase is storied when it becomes 
 | **1 ✅** | **Cadence core** | *Done.* The loop/nudge/policy substrate: models, migrations, collector (meeting actions + pending proposals), stale-scoring v1, policies + quiet hours, CLI, unit tests. No external side effects, off by default. | — |
 | **2 ✅** | Web coach surface | *Done.* `/api/cadence/*` + a `/cadence` page: loops, evidence deep-links, snooze/kill/close, deterministic next-action, egress badges. | 1 |
 | **3 ✅** | Agent-blocker push | *Done.* Awaiting-response agent sessions → top loops + a reply composer; the typed reply is delivered into the agent's tmux pane (`send_text_to_pane`, in the route — never autonomous). | 1 |
-| **4** | Telegram remote presence | Pairing + a Telegram surface; `/brief` `/loops` `/agents`; inline-button decisions wired to the cadence API; unpaired-chat rejection; second-confirm for irreversible actions. | 2, 3 |
+| **4 ✅** | Telegram remote presence | *Done (hermetic; live walk = owner).* Pairing + a Telegram surface (`holdspeak/cadence_telegram.py`, a sibling of the core); `/brief` `/loops` `/status`; inline-button decisions (snooze/done + kill-confirm); unpaired-chat rejection; push-on-tick; token never logged/stored. | 2, 3 |
 | **5** | Daily push brief | A deterministic morning brief (first-activity trigger) with prepared moves; LLM wording behind a capability gate (policy never model-driven). | 2 |
 | **6** | Stale-loop + EOD closure | Escalation policy + an end-of-day closure ritual + batch closure UI; accepted-action → issue proposals; kill/delegate/snooze semantics. | 2, 5 |
 | **7** | LLM next-best-action | Structured-JSON next-action generator (issue/Slack drafts, dedupe clustering), fail-closed validation, preview/approval-gated. | 6 |

@@ -711,6 +711,33 @@ class CadenceConfig:
 
 
 @dataclass
+class TelegramConfig:
+    """The Cadence Telegram surface (CAD-4) — OFF BY DEFAULT.
+
+    `bot_token` is a CREDENTIAL — it is never logged or written into a message/row;
+    it is joined in memory only at the moment of an API call. `allowed_chat_ids` is the
+    hard pairing allow-list: only these chats may read anything. `pairing_code` (if set)
+    lets a chat self-pair via `/pair <code>`. With `enabled` False or no token, the
+    surface is inert (no poller, no send).
+    """
+
+    enabled: bool = False
+    bot_token: str = ""
+    allowed_chat_ids: list[str] = field(default_factory=list)
+    pairing_code: str = ""
+
+    def __post_init__(self) -> None:
+        self.bot_token = str(self.bot_token or "").strip()
+        self.pairing_code = str(self.pairing_code or "").strip()
+        self.allowed_chat_ids = [str(c).strip() for c in (self.allowed_chat_ids or []) if str(c).strip()]
+
+    @property
+    def is_active(self) -> bool:
+        """Live only when explicitly enabled AND a token is present."""
+        return bool(self.enabled and self.bot_token)
+
+
+@dataclass
 class Config:
     """Main configuration container."""
     config_version: int = CONFIG_VERSION
@@ -724,6 +751,7 @@ class Config:
     wake_word: WakeWordConfig = field(default_factory=WakeWordConfig)
     mesh: MeshConfig = field(default_factory=MeshConfig)
     cadence: CadenceConfig = field(default_factory=CadenceConfig)
+    cadence_telegram: TelegramConfig = field(default_factory=TelegramConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -768,6 +796,9 @@ class Config:
                 wake_word=_coerce(WakeWordConfig, data.get("wake_word", {}) or {}, section="wake_word"),
                 mesh=_coerce(MeshConfig, data.get("mesh", {}) or {}, section="mesh"),
                 cadence=_coerce(CadenceConfig, data.get("cadence", {}) or {}, section="cadence"),
+                cadence_telegram=_coerce(
+                    TelegramConfig, data.get("cadence_telegram", {}) or {}, section="cadence_telegram"
+                ),
             )
         except Exception as exc:
             # Last-resort fallback for a genuinely broken config (bad JSON, wrong
