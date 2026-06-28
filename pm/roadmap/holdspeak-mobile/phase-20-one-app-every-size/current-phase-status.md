@@ -1,8 +1,8 @@
 # Phase 20 — One app, every size (the iPhone pass)
 
 **Status:** in progress — **follows 18 + 19** (you cannot lay out at compact width what does not
-exist yet). **20-01 (the `DeskCamera`) + 20-02 (the desk lane + the migrating pull-out) landed**
-(sim-proven); 20-03/04 next, 20-05 is the device gate.
+exist yet). **20-01 (`DeskCamera`) + 20-02 (the desk lane) + 20-03 (the capture canvas) landed**
+(sim-proven); 20-04 next, 20-05 is the device gate.
 
 **Last updated:** 2026-06-27 (HSM-20-02 shipped: the iPhone desk lane — a one-thumb card column
 (`laneColumn`) with a dynamic kind-filter chip rail, full-width primitive rows, an accent FAB, and
@@ -55,7 +55,7 @@ Simulator screenshots do not close a row.
 |----|-------|--------|
 | HSM-20-01 | The `DeskCamera` foundation (one width authority + the lane helper) — **leads** | done (sim) |
 | HSM-20-02 | The desk at compact width (the lane + the migrating pull-out) | done (sim) |
-| HSM-20-03 | The capture canvas at compact width (docked recorder + wrapped chips) | todo |
+| HSM-20-03 | The capture canvas at compact width (docked recorder + wrapped chips) | done (sim) |
 | HSM-20-04 | The forms + screens at compact width (connect, editors, sheets, hold-bar teleprompter) | todo |
 | HSM-20-05 | On-device proof (every compact screen walked on a real iPhone) — **the gate** | todo |
 
@@ -71,7 +71,11 @@ badge riding along. `positions[id]` is untouched, so rotating back to `.wide` re
 Fixed cards (`DioConnectCard`/`DioZoneEditor`) clamped via `camera.cardWidth`. `swift test` 381
 green + iPhone/iPad sim builds green.
 
-**Next: 20-03 (capture canvas) + 20-04 (forms/screens + the hold-bar teleprompter).** 20-04 owns the
+**20-03 (capture canvas) landed:** confirmed the least-broken surface (it already scales; the
+recorder docks bottom by default) and added a one-thumb tap-to-tack on live bubbles + a
+`HS_DEMO_CAPTURE` screenshot seed.
+
+**Next: 20-04 (forms/screens + the hold-bar teleprompter).** 20-04 owns the
 remaining desk **scrim reframes** — the action sheets (`DioSendCard`/`DioActSheet`/`DioRunTargetSheet`/
 `DioRouteSheet`) and agent/chain editors — as the hand-built rising sheet (the "modal hells" the
 owner rejects, [[feedback_no_modals_in_world]]). **20-05 is the device gate** and the only thing that

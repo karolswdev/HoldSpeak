@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 20
-- **Status:** todo
+- **Status:** done (sim) — confirmed the least-broken surface (already scales, recorder docks
+  bottom by default); added a one-thumb tap-to-tack. Device walk = 20-05.
+- **Evidence:** `evidence-story-03.md`.
 - **Depends on:** 20-01 (`DeskCamera`).
 - **Unblocks:** nothing downstream.
 - **Owner:** unassigned
