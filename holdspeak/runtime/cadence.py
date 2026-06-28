@@ -37,8 +37,39 @@ class CadenceMixin:
                     result.projected, result.open_loops, result.due_count,
                 )
                 self._push_due_to_telegram(result.due)
+            self._maybe_push_daily_brief()
         except Exception as exc:  # never let the tick crash the runtime
             log.error("cadence tick failed: %s", exc)
+
+    def _maybe_push_daily_brief(self) -> None:
+        """First-activity morning push (CAD-5): once per day, after quiet hours, send the
+        brief to paired Telegram chats. Off unless the Telegram surface is active."""
+        tg = getattr(self.config, "cadence_telegram", None)
+        if tg is None or not tg.is_active or not tg.allowed_chat_ids:
+            return
+        try:
+            from datetime import datetime
+
+            from ..cadence.brief import should_send_daily_brief
+            from ..cadence.models import CadencePolicy
+            from ..cadence_telegram import TelegramSurface
+            from ..db import get_database
+
+            db = get_database()
+            policy = db.cadence.get_policy("daily_brief")
+            last_sent = (policy.config.get("last_sent_date") if policy else None)
+            earliest = int(getattr(self.config.cadence, "quiet_hours_end", 8))
+            now = datetime.now()
+            if not should_send_daily_brief(now, last_sent_date=last_sent, earliest_hour=earliest):
+                return
+            surface = TelegramSurface(db, tg)
+            for chat_id in tg.allowed_chat_ids:
+                surface.send_brief(chat_id)
+            db.cadence.upsert_policy(CadencePolicy(
+                name="daily_brief", config={"last_sent_date": now.strftime("%Y-%m-%d")}))
+            log.info("cadence: pushed the daily brief to %d chat(s)", len(tg.allowed_chat_ids))
+        except Exception as exc:
+            log.error("cadence daily brief failed: %s", exc)
 
     def _push_due_to_telegram(self, due_loops) -> None:
         """Deliver due nudges to paired Telegram chats (CAD-4-05) — off unless the

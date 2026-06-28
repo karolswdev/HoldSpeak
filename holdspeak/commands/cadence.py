@@ -33,8 +33,25 @@ def run_cadence_command(args, *, stream: Optional[TextIO] = None, db=None, confi
                           include_all=getattr(args, "all", False))
     if action == "run-now":
         return _cmd_run_now(out, db, config, as_json=getattr(args, "json", False))
+    if action == "brief":
+        return _cmd_brief(out, db, as_json=getattr(args, "json", False))
     print(f"Unknown cadence action: {action}", file=sys.stderr)
     return 2
+
+
+def _cmd_brief(out: TextIO, db, *, as_json: bool) -> int:
+    from ..cadence.brief import build_brief, render_brief_text
+
+    brief = build_brief(db)
+    if as_json:
+        print(json.dumps({
+            "date": brief.date, "headline": brief.headline, "open_count": brief.open_count,
+            "items": [{"title": it.loop.title, "next_action": it.next_action.title}
+                      for it in brief.items],
+        }, indent=2), file=out)
+        return 0
+    print(render_brief_text(brief), file=out)
+    return 0
 
 
 def _cmd_status(out: TextIO, db, config) -> int:

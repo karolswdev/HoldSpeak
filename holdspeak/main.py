@@ -273,6 +273,10 @@ Logs are written to: {LOG_FILE}
         "run-now", help="Run one tick now (projects + scores loops from your meetings)"
     )
     cadence_run_parser.add_argument("--json", action="store_true", help="Emit JSON")
+    cadence_brief_parser = cadence_subparsers.add_parser(
+        "brief", help="Today's prioritized brief: the top moves with prepared next actions"
+    )
+    cadence_brief_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
     # device-psk subcommand (HS-14-03)
     device_psk_parser = subparsers.add_parser(
