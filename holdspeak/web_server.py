@@ -502,6 +502,7 @@ class MeetingWebServer:
         from .web.context import WebContext
         from .web.routes import (
             build_activity_router,
+            build_cadence_router,
             build_core_router,
             build_dictation_router,
             build_meeting_import_router,
@@ -554,6 +555,7 @@ class MeetingWebServer:
             mesh_requires_token=not web_auth.is_loopback_host(self.host),
         )
         app.include_router(build_core_router(web_ctx))
+        app.include_router(build_cadence_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))
         app.include_router(build_meeting_import_router(web_ctx))
         app.include_router(build_mesh_router(web_ctx))

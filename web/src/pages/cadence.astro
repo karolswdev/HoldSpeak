@@ -1,0 +1,123 @@
+---
+// The Cadence coach (CAD-2-04). A read-only-by-default surface over the cadence
+// substrate: what's pressing now (with the prepared next move), the open loops, and
+// the policy. All loop text is rendered by cadence-app.js with textContent (source
+// text is data, never markup). Card CSS is `is:global` so it reaches the JS-injected
+// DOM — the standing Astro-scoped-CSS gotcha.
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="HoldSpeak Cadence">
+  <div class="cadence">
+    <header class="page-head">
+      <div>
+        <h1>Cadence</h1>
+        <p class="sub">
+          Open loops from your meetings and proposals, each with a prepared next move.
+          Local-only and off by default — nothing is pushed or sent without you.
+        </p>
+        <p class="cad-policy" id="cad-policy"></p>
+      </div>
+      <button class="cad-run" id="cad-run-now" type="button">Run now</button>
+    </header>
+
+    <section class="cad-section">
+      <h2>Now</h2>
+      <div id="cad-now" class="cad-list"></div>
+    </section>
+
+    <section class="cad-section">
+      <h2>Open loops</h2>
+      <div id="cad-loops" class="cad-list"></div>
+    </section>
+  </div>
+
+  <script>
+    import { initCadence } from "../scripts/cadence-app.js";
+    initCadence();
+  </script>
+</AppLayout>
+
+<style is:global>
+  /* `is:global` so these reach the cards cadence-app.js injects at runtime. */
+  .cadence { max-width: 80rem; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
+  .cadence .page-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 1rem; margin-bottom: 1.5rem;
+  }
+  .cadence .page-head h1 { margin: 0 0 0.35rem; }
+  .cadence .sub { margin: 0; color: var(--color-text-muted, #9c93a8); max-width: 46rem; }
+  .cad-policy { margin: 0.5rem 0 0; font-size: 0.82rem; color: var(--color-text-faint, #6f6880); }
+  .cad-run {
+    flex: none; cursor: pointer; font-weight: 700; color: #0b0d12;
+    background: var(--color-accent, #ff6b35); border: 0; border-radius: 0.6rem;
+    padding: 0.6rem 1.1rem;
+  }
+  .cad-run:disabled { opacity: 0.6; cursor: default; }
+
+  .cad-section { margin-bottom: 2rem; }
+  .cad-section h2 {
+    font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--color-text-faint, #6f6880); margin: 0 0 0.75rem;
+  }
+  .cad-list { display: flex; flex-direction: column; gap: 0.85rem; }
+  .cad-empty { color: var(--color-text-faint, #6f6880); font-size: 0.9rem; margin: 0; }
+
+  .cad-card {
+    background: var(--color-surface-1, rgba(255,255,255,0.04));
+    border: 1px solid var(--color-line, rgba(255,255,255,0.09));
+    border-radius: 0.85rem; padding: 1rem 1.1rem;
+  }
+  .cad-card.is-review { opacity: 0.82; }
+  .cad-card-head { display: flex; align-items: flex-start; gap: 0.8rem; }
+  .cad-score {
+    flex: none; font-weight: 800; font-variant-numeric: tabular-nums;
+    color: var(--color-accent, #ff6b35); min-width: 2.2rem; font-size: 1.1rem;
+  }
+  .cad-title-wrap { flex: 1 1 auto; min-width: 0; }
+  .cad-title { margin: 0 0 0.3rem; font-size: 1.02rem; }
+  .cad-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .cad-badge, .cad-owner, .cad-review {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
+    padding: 0.1rem 0.45rem; border-radius: 999px;
+  }
+  .cad-badge { background: rgba(91,141,239,0.16); color: #8fb4ff; text-transform: uppercase; }
+  .cad-owner { background: rgba(62,207,142,0.14); color: #5fd6a0; }
+  .cad-review { background: rgba(246,195,86,0.16); color: #f6c356; }
+
+  .cad-next {
+    margin-top: 0.8rem; padding: 0.7rem 0.85rem;
+    background: rgba(255,107,53,0.07); border: 1px solid rgba(255,107,53,0.22);
+    border-radius: 0.6rem;
+  }
+  .cad-next-label {
+    font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--color-accent, #ff6b35); margin-bottom: 0.25rem;
+  }
+  .cad-next-title { font-weight: 700; }
+  .cad-next-body {
+    margin: 0.4rem 0 0; white-space: pre-wrap; font-family: inherit;
+    font-size: 0.85rem; color: var(--color-text-muted, #9c93a8);
+  }
+
+  .cad-evidence { margin-top: 0.7rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .cad-evidence-label {
+    font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--color-text-faint, #6f6880);
+  }
+  .cad-evidence-link {
+    font-size: 0.82rem; color: #8fb4ff; text-decoration: none;
+    border-bottom: 1px dashed rgba(143,180,255,0.45);
+  }
+  .cad-evidence-link:hover { border-bottom-style: solid; }
+
+  .cad-actions { margin-top: 0.85rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .cad-btn {
+    cursor: pointer; font-size: 0.82rem; font-weight: 600;
+    color: var(--color-text, #f4ece0);
+    background: rgba(255,255,255,0.06); border: 1px solid var(--color-line, rgba(255,255,255,0.1));
+    border-radius: 0.5rem; padding: 0.4rem 0.75rem;
+  }
+  .cad-btn:hover { background: rgba(255,255,255,0.1); }
+  .cad-btn-danger { color: #ff8a8a; border-color: rgba(255,77,109,0.3); }
+</style>
