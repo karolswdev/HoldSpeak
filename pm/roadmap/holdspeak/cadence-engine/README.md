@@ -5,17 +5,17 @@
 > next actions.** Qlippy does not merely remind. Qlippy pushes — with receipts, restraint, and a
 > ready-made next move.
 
-**Status:** Phase 0 (architecture hardening) complete — this chart IS its output. **Phases 1–6 are
+**Status:** Phase 0 (architecture hardening) complete — this chart IS its output. **Phases 1–7 are
 COMPLETE** — the substrate, the `/cadence` web coach, agent-blocker push, Telegram remote presence,
-the daily push brief, and now **stale-loop escalation + the end-of-day closure ritual** (every open
-loop with a recommended cheap decision; batch-apply; a history view). Off by default throughout.
-**Phase 7 (LLM next-best-action) is next** — the one phase with real-metal LLM proof (which also
-lights up the Phase-5 brief polish). Phase 8 (hardening + dogfood) closes it.
+the daily push brief, stale-loop escalation + EOD closure, and the **LLM next-best-action**
+(structured-JSON, fail-closed, **proven on real metal** — `.43` drafted a real issue body, validated).
+Off by default throughout. **Phase 8 (hardening + dogfood) is next — the last phase, then the program
+closes.**
 
-**Last updated:** 2026-06-28 (Phase 6 shipped — escalation + EOD closeout across CLI/web/Telegram +
-batch-apply + history; 171 cadence/web tests green. Phases 1–5: substrate + web coach + agent push +
-Telegram + the daily brief. Program authored from the owner's rough design + a grounded seam map; §15
-resolved below).
+**Last updated:** 2026-06-28 (Phase 7 shipped — the LLM next-action generator, fail-closed + gated,
+with a control-vs-treatment proof on the live `.43` Qwen; 180 cadence/web tests green. Phases 1–6: the
+substrate + web coach + agent push + Telegram + the daily brief + escalation/closeout. Program authored
+from the owner's rough design + a grounded seam map; §15 resolved below).
 
 ---
 
@@ -123,7 +123,7 @@ Phase 1 leads and is fully storied. Each later phase is storied when it becomes 
 | **4 ✅** | Telegram remote presence | *Done (hermetic; live walk = owner).* Pairing + a Telegram surface (`holdspeak/cadence_telegram.py`, a sibling of the core); `/brief` `/loops` `/status`; inline-button decisions (snooze/done + kill-confirm); unpaired-chat rejection; push-on-tick; token never logged/stored. | 2, 3 |
 | **5 ✅** | Daily push brief | *Done.* A deterministic morning brief (`build_brief`, first-activity trigger) across CLI/web/Telegram with prepared moves; the LLM-wording-polish seam is tested + fail-closed (live wiring deferred to a real-metal follow-up). | 2 |
 | **6 ✅** | Stale-loop + EOD closure | *Done.* `escalation_severity` (nudges/age) + `build_closeout` (a recommended decision per loop) + batch-apply + kill/delegate/snooze/close semantics + a history view, across CLI/web/Telegram. | 2, 5 |
-| **7** | LLM next-best-action | Structured-JSON next-action generator (issue/Slack drafts, dedupe clustering), fail-closed validation, preview/approval-gated. | 6 |
+| **7 ✅** | LLM next-best-action | *Done (real-metal proven on `.43`).* `generate_llm_next_action` (structured JSON, fail-closed to deterministic), `cluster_duplicates`, the `use_llm` gate + loop-detail wiring; prompt-injection-safe (source text is data). | 6 |
 | **8** | Hardening + dogfood | A cadence dogfood protocol + fixtures + e2e, telemetry-free local audit export, docs, and the master off-switch proven. | all |
 
 **Anti-goals** (design §14): not a chatbot, not an autonomous shell executor, not a second runtime,
