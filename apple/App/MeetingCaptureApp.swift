@@ -25,7 +25,9 @@ struct MeetingCaptureApp: App {
             ZStack(alignment: .top) {
                 // HS_DEMO_NOTEBOOK opens straight onto the notebook surface for a
                 // screenshot run (no mic/taps needed); the real entry is the meeting list.
-                if ProcessInfo.processInfo.environment["HS_DEMO_AGENT"] != nil {
+                if ProcessInfo.processInfo.environment["HS_DEMO_PROFILES"] != nil {
+                    NavigationStack { ProfilesView() }
+                } else if ProcessInfo.processInfo.environment["HS_DEMO_AGENT"] != nil {
                     DioAgentBuilder(draft: .blank(), knowledgeBases: ["Q3 Planning", "Customer calls"], onSave: { _ in }, onCancel: {}, isNew: true, contextLimit: 8192, zoneTokens: 1800)
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_README"] != nil {
                     NavigationStack { ModelReadmeView(repo: "unsloth/gemma-3n-E4B-it-GGUF", fileName: "gemma-3n-E4B-it-Q4_K_M.gguf", name: "Gemma 3n E4B") }
@@ -76,6 +78,16 @@ struct MeetingCaptureApp: App {
                 ModelDownloadManager.shared.ensureSession()   // reattach any in-flight model download
                 #if targetEnvironment(simulator)
                 let env = ProcessInfo.processInfo.environment
+                // Seed a second (Claude) profile so the profiles list + the "Runs on" chips are
+                // meaningful in a screenshot run.
+                if env["HS_DEMO_PROFILES"] != nil || env["HS_DEMO_AGENT"] != nil {
+                    let cfg = InferenceConfigStore.shared
+                    if !cfg.profiles.contains(where: { $0.id == "demo.claude" }) {
+                        cfg.upsertProfile(RuntimeProfile(id: "demo.claude", name: "Claude", kind: .openAICompatible,
+                                                         baseURL: "https://api.anthropic.com/v1", model: "claude-3.5-sonnet",
+                                                         contextLimit: 200_000, requiresKey: true, createdAt: Date(), updatedAt: Date()))
+                    }
+                }
                 // LIVE SYNC in-code proof (no App-layer test target): run the desk store's
                 // 7-kind snapshot→push→pull→apply + tombstone + LWW round-trip and log it.
                 if env["HS_SYNC_SELFCHECK"] == "1" { DeskSyncStore.selfCheck() }

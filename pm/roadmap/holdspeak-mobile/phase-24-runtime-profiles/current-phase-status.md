@@ -88,7 +88,7 @@ reads `profile.egressScope` so trust stays honest per profile.
 |-------|-----------|--------|
 | HSM-24-01 | The `RuntimeProfile` contract + `SyncKind.profile` + the Keychain key store (key never syncs) — **leads, load-bearing** | **done** (contract + migration + tolerant `ChangeSet` decode + `ProfileKeyStore`; never-sync invariant tested; `swift test` 389/0) |
 | HSM-24-02 | Apple **basic** config — the active-profile picker over the existing `ILLMProvider` seam | **done** (profile-backed `InferenceConfigStore` + migration + key→Keychain + `makeProvider(profile:)` + `resolveProfile` + the reusable `RunsOnPicker`; `swift test` 389/0) |
-| HSM-24-03 | Apple **advanced** config — manage the profile list + per-agent `profileId` + the gauge reads `profile.contextLimit` | planned |
+| HSM-24-03 | Apple **advanced** config — manage the profile list + per-agent `profileId` + the gauge reads `profile.contextLimit` | in-progress (CRUD screen + `Agent.profileId` + builder "Runs on" chip + gauge-per-profile + agent-run routing land; inline chips on dictation/generate/the Ask gesture remain) |
 | HSM-24-04 | The desktop hub honors profiles (`web_runtime` maps a profile to its runtime) | planned |
 | HSM-24-05 | Web authors + uses profiles (the flagship surface) | planned |
 | HSM-24-06 | Cross-surface parity proof + the docs story | planned |
@@ -120,10 +120,17 @@ fields so every existing reader is unchanged; `makeProvider(profile:)` + `resolv
 agent → active) are in; and the **reusable `RunsOnPicker`** ships — shown in Settings as the always-
 exposed "Active profile" chip (the owner's "the default is always exposed + changeable" principle).
 
-Next: **24-03** (Apple advanced) — the profiles management screen (add/edit/delete, key→Keychain),
-per-agent `Agent.profileId`, the `RunsOnPicker` dropped at every model-touch point (dictation,
-generate, agent run/chat, the Ask gesture, the builder), and the gauge reading the assigned profile's
-`contextLimit`. That story also enables the live multi-profile switch walk 24-02 deferred.
+**24-03 in progress.** Landed: `Agent.profileId` (+ `AgentRecord.profileId`, tolerant decode so saved
+agents are never wiped); the **advanced Profiles screen** (`ProfilesView` — add/edit/delete on-device
++ OpenAI-compatible endpoints, **key→Keychain via `ProfileKeyStore`**, set-active), reached from
+Settings → "Manage profiles"; the builder's **"Runs on" chip** (per-agent profile) with the gauge now
+reading the *assigned* profile's `contextLimit`; and **agent-run routing** (`callLLM`/`runAssembled`/
+`agentReply` resolve the agent's profile → `makeProvider(profile:)`). Verified in the sim (2-profile
+list, the chip, the gauge).
+
+Remaining in 24-03: drop the inline `RunsOnPicker` at the OTHER model-touch points (dictation,
+meeting-generate, the desk "Ask"/route-to-AI-core gesture) so the principle is literally everywhere,
+plus the live multi-profile run walk on device. Then 24-04 (hub) / 24-05 (web) / 24-06 (proof).
 
 ## Carried context
 

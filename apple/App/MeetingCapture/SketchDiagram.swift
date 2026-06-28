@@ -588,6 +588,24 @@ struct SketchToDiagramView: View {
 
     private func persistProfiles() { if let data = try? JSONEncoder().encode(profiles) { d.set(data, forKey: K.profiles) } }
 
+    /// Add or replace a profile (advanced management). First profile becomes active.
+    func upsertProfile(_ p: RuntimeProfile) {
+        if let i = profiles.firstIndex(where: { $0.id == p.id }) { profiles[i] = p } else { profiles.append(p) }
+        if activeProfileId.isEmpty { activeProfileId = p.id }
+        else if activeProfileId == p.id { applyActive() }   // active edited → re-mirror to legacy
+    }
+
+    /// Delete a profile (and its Keychain key). Never leaves zero profiles — re-seeds a local default.
+    func deleteProfile(_ id: String) {
+        profiles.removeAll { $0.id == id }
+        ProfileKeyStore.delete(id)
+        if profiles.isEmpty {
+            profiles = [RuntimeProfile(id: RuntimeProfileMigration.localId, name: "This device",
+                                       kind: .onDevice, modelFile: localModelId, createdAt: Date(), updatedAt: Date())]
+        }
+        if !profiles.contains(where: { $0.id == activeProfileId }) { activeProfileId = profiles.first!.id }
+    }
+
     /// The resolved active profile (falls back to the first, then a synthesized on-device default).
     var activeProfile: RuntimeProfile {
         profiles.first { $0.id == activeProfileId } ?? profiles.first
