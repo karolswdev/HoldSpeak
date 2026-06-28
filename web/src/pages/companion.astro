@@ -1,428 +1,456 @@
 ---
-// HS-24-01: AI PI Companion surface.
+// Docs-in-product: /companion — the iPad is now a first-class CLIENT of both
+// HoldSpeak modes, reaching your own desktop/homelab hub over your own network.
 //
-// Read-only portal surface for the same companion state consumed by the
-// physical AI PI bridge. Controls come later; this page first makes the
-// selected target, waiting sessions, and reply readiness inspectable.
+// Every claim on this page is grounded in a SHIPPED client method on
+// `HTTPDesktopClient` (apple/Sources/Providers/Desktop/HTTPDesktopClient*.swift):
+//
+//   • Pairing            — `DesktopPeer{host,port,token,scheme}` → `Config(peer:)`,
+//                          `handshake()` (GET /health, GET /api/runtime/status).
+//   • Dictation mode     — `dictationDryRun(utterance:)`, `dictationReadiness()`
+//                          (the teleprompter: preview the rewrite + destination).
+//   • Meeting mode       — `listMeetings()`, `startMeeting`/`stopMeeting`,
+//                          `aftercare(meetingId:)`, `searchMeetings`/`listFacets`
+//                          (faceted archive), `meetingProposals`/`decideProposal`
+//                          (propose → review → approve).
+//   • Activity nudges    — `activityNudges(...)` (GET /api/activity/nudges).
+//   • Schema-safe store  — Providers/Storage/SQLiteStorage.swift: refuse-newer
+//                          (StorageError.tooNew) + backup-before-migrate.
+//
+// This is a STATIC explainer (no live data, no Alpine app, so no null-read class
+// to guard). Honest egress is the structured `.egress-badge` chip, never prose.
+// On-device authoring screens are still in progress, so they are not claimed here.
 
 import AppLayout from "../layouts/AppLayout.astro";
+
+// Egress chips, structured {scope, label} per POSITIONING (never a sentence).
+const egressLocal = { scope: "local", label: "stays on this machine" };
+const egressLan = { scope: "mixed", label: "local + your LAN" };
+
+type Capability = {
+  glyph: string;
+  title: string;
+  body: string;
+  route: string; // the shipped client method(s) this maps to
+  egress: { scope: string; label: string };
+};
+
+const dictation: Capability[] = [
+  {
+    glyph: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v4 M8 23h8",
+    title: "Preview before a keystroke leaves",
+    body:
+      "The teleprompter shows what WOULD be typed and where it lands — the routed, rewritten preview — before anything is delivered. Preview-not-inject by design.",
+    route: "dictationDryRun(utterance:) → POST /api/dictation/dry-run",
+    egress: egressLan,
+  },
+  {
+    glyph: "M9 12l2 2 4-4 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",
+    title: "Readiness at a glance",
+    body:
+      "A setup snapshot drives the dictate screen's status strip, so the iPad knows the hub is ready before you hold to talk.",
+    route: "dictationReadiness() → GET /api/dictation/readiness",
+    egress: egressLan,
+  },
+];
+
+const meeting: Capability[] = [
+  {
+    glyph: "M3 3v18h18 M7 14l4-4 3 3 5-6",
+    title: "The faceted archive",
+    body:
+      "Browse past meetings, then narrow the archive server-side by speaker or tag, or full-text search the transcripts — the same facets the web history row offers.",
+    route: "listMeetings() · listFacets() · searchMeetings(query:speaker:type:)",
+    egress: egressLan,
+  },
+  {
+    glyph: "M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
+    title: "Aftercare: close the loop",
+    body:
+      "The read-only aftercare digest — what's still open by owner, what was decided, the real diff vs the last meeting. Pure read; viewing it acts on nothing.",
+    route: "aftercare(meetingId:) → GET /api/meetings/{id}/aftercare",
+    egress: egressLan,
+  },
+  {
+    glyph: "M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3",
+    title: "Propose → review → approve",
+    body:
+      "The iPad keeps proposing and approving apart, exactly as the desktop's actuator audit does. Reading the queue performs no side effect; the human gate is a separate, explicit decision.",
+    route: "meetingProposals(meetingId:) · decideProposal(meetingId:proposalId:approved:)",
+    egress: egressLan,
+  },
+];
+
+const ambient: Capability[] = [
+  {
+    glyph: "M22 12h-4l-3 9L9 3l-3 9H2",
+    title: "Source-cited activity nudges",
+    body:
+      "The desktop's pre-briefing nudges reach the iPad too — the top cited cards, with select-for-next-dictation and dismiss. Returns nothing when activity tracking is off on the hub.",
+    route: "activityNudges(projectId:limit:) → GET /api/activity/nudges",
+    egress: egressLan,
+  },
+  {
+    glyph: "M4 7V4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3 M4 7h16v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z M9 11h6 M9 15h6",
+    title: "Schema-safe local storage",
+    body:
+      "What the iPad keeps locally is versioned the same safe way the desktop is: a newer database is refused rather than corrupted, and an older one is backed up before it migrates.",
+    route: "SQLiteStorage: StorageError.tooNew · backup-before-migrate",
+    egress: egressLocal,
+  },
+];
+
+const sections: { eyebrow: string; title: string; lead: string; cards: Capability[] }[] = [
+  {
+    eyebrow: "Dictation mode",
+    title: "The dictation teleprompter",
+    lead:
+      "Hold to talk on the iPad; the rewrite and its destination are previewed against your hub before a single character is delivered.",
+    cards: dictation,
+  },
+  {
+    eyebrow: "Meeting mode",
+    title: "Aftercare, archive & proposals",
+    lead:
+      "The full meeting afterlife is a client of your hub: search the archive, read the aftercare digest, and run the propose → approve gate without collapsing the two.",
+    cards: meeting,
+  },
+  {
+    eyebrow: "Ambient",
+    title: "Nudges & local memory",
+    lead:
+      "Source-cited activity nudges ride to the iPad, and whatever it keeps locally follows the same refuse-newer, backup-before-migrate discipline as the desktop.",
+    cards: ambient,
+  },
+];
+
+const pairingSteps = [
+  {
+    n: "01",
+    title: "Point it at your hub",
+    body:
+      "Enter the host and port of the machine your hub runs on — over your own network (LAN or Tailscale). There is no hosted relay in between.",
+    code: "host · port",
+  },
+  {
+    n: "02",
+    title: "Add a token if the hub wants one",
+    body:
+      "An optional bearer token authenticates the device. It is joined to each request at call time and is never logged or echoed back to the screen.",
+    code: "token (optional)",
+  },
+  {
+    n: "03",
+    title: "Choose the scheme",
+    body:
+      "Plain http over a trusted LAN or Tailscale by default; https once the hub has TLS. A half-filled form simply stays offline rather than building a junk URL.",
+    code: "scheme: http | https",
+  },
+  {
+    n: "04",
+    title: "Pair & probe",
+    body:
+      "The device probes /health, then reads /api/runtime/status for readiness. An unreachable hub is a rendered state, never a crash — the on-device runtime is never gated on it.",
+    code: "handshake()",
+  },
+];
 ---
 
 <AppLayout title="HoldSpeak Companion" current="companion">
-  <div class="companion" x-data="CompanionApp()" x-init="init()">
-    <header class="page-head">
-      <div>
-        <p class="eyebrow">AI PI Companion</p>
-        <h1>Agent sessions</h1>
-        <p class="lead">
-          Overview and controls for what AI PI can see: select, pin, dismiss, or
-          clear stale waiting agents, and inspect the selected reply target,
-          delivery confidence, and runtime readiness.
-        </p>
-      </div>
-      <div class="head-actions">
-        <span class="status-chip" :class="readinessTone()" x-text="readinessLabel()">Loading</span>
-        <button type="button" class="btn" @click="refresh()" :disabled="loading">
-          <span x-text="loading ? 'Refreshing' : 'Refresh'">Refresh</span>
-        </button>
+  <div class="companion-doc">
+    <header class="doc-hero">
+      <p class="eyebrow">Companion</p>
+      <h1>Your iPad is a first-class client of your hub.</h1>
+      <p class="lead">
+        Point an iPad at the same desktop or homelab hub a coding session runs
+        against, over your own network, and drive both HoldSpeak modes from it —
+        the dictation teleprompter and the full meeting afterlife. The device
+        talks to the hub's existing HTTP API, the same endpoints this portal uses.
+      </p>
+      <div class="hero-badges">
+        <span class={`egress-badge is-${egressLan.scope}`}>local + your LAN</span>
+        <span class="meta-pill">No hosted relay</span>
+        <span class="meta-pill">Never autonomous</span>
       </div>
     </header>
 
-    <section class="summary-grid" aria-label="Companion readiness">
-      <article class="summary-card">
-        <span class="label">AI PI</span>
-        <strong x-text="status?.devices?.connected ? `${status.devices.count} connected` : 'Not connected'">Loading</strong>
-        <p x-text="status?.devices?.query_names?.length ? `Queries: ${status.devices.query_names.join(', ')}` : 'Waiting for bridge/device status.'"></p>
-      </article>
-      <article class="summary-card">
-        <span class="label">Runtime</span>
-        <strong x-text="status?.runtime?.voice_state || 'unknown'">unknown</strong>
-        <p x-text="status?.runtime?.meeting_active ? `Meeting ${status.runtime.meeting_id || 'active'}` : 'Meeting idle'"></p>
-      </article>
-      <article class="summary-card">
-        <span class="label">Waiting</span>
-        <strong x-text="`${sessions().length} sessions`">0 sessions</strong>
-        <p x-text="status?.agent?.awaiting_response ? 'Selected target is waiting for an answer.' : 'No selected waiting target.'"></p>
-      </article>
-      <article class="summary-card">
-        <span class="label">Last refresh</span>
-        <strong x-text="updatedLabel()">not refreshed</strong>
-        <p x-text="error || 'Polling /api/companion/status every 3 seconds.'"></p>
-      </article>
-    </section>
-
-    <section class="selected-panel">
-      <div class="section-head">
-        <div>
-          <h2>Selected reply target</h2>
-          <p>The session AI PI will answer if right-hold capture starts now.</p>
+    {sections.map((section) => (
+      <section class="cap-section">
+        <div class="section-head">
+          <p class="eyebrow">{section.eyebrow}</p>
+          <h2>{section.title}</h2>
+          <p class="section-lead">{section.lead}</p>
         </div>
-      </div>
-
-      <template x-if="selectedSession()">
-        <article class="session-card selected">
-          <div class="session-top">
-            <div>
-              <h3 x-text="compactLabel(selectedSession())">Selected session</h3>
-              <p class="meta" x-text="sessionAge(selectedSession())">unknown age</p>
-            </div>
-            <span class="status-chip" :class="confidenceTone(selectedSession().identity)" x-text="confidenceLabel(selectedSession().identity)">unknown</span>
-          </div>
-          <p class="question" x-text="question(selectedSession())"></p>
-          <p class="reason" x-text="selectedSession().identity?.confidence_reason || 'No confidence detail reported.'"></p>
-        </article>
-      </template>
-
-      <template x-if="!selectedSession()">
-        <div class="empty">
-          <h3>No selected waiting session</h3>
-          <p>When Claude or Codex asks a replyable question, it will appear here.</p>
-        </div>
-      </template>
-    </section>
-
-    <section class="session-section">
-      <div class="section-head">
-        <div>
-          <h2>Waiting sessions</h2>
-          <p>Newest-first list from the companion status snapshot. Select, pin, or dismiss any session.</p>
-        </div>
-        <button
-          type="button"
-          class="btn"
-          @click="clearStale()"
-          x-show="staleCount() > 0"
-          :disabled="busyKey === '__global__'"
-          x-cloak
-        >
-          <span x-text="`Clear stale (${staleCount()})`">Clear stale</span>
-        </button>
-      </div>
-
-      <div class="session-list" x-show="sessions().length > 0" x-cloak>
-        <template x-for="item in sessions()" :key="`${item.session.agent}:${item.session.session_id}`">
-          <article class="session-card" :class="{ selected: item.selected, stale: isStale(item), pinned: isPinned(item) }">
-            <div class="session-top">
-              <div>
-                <h3 x-text="compactLabel(item)">Session</h3>
-                <p class="meta">
-                  <span x-text="item.selected ? 'Selected' : `#${item.index + 1}`"></span>
-                  <span> · </span>
-                  <span x-text="sessionAge(item)"></span>
-                </p>
+        <div class="cap-grid">
+          {section.cards.map((cap) => (
+            <article class="signal-card cap-card">
+              <span class="glyph-chip" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  {cap.glyph.split(" M").map((seg, i) => (
+                    <path d={i === 0 ? seg : `M${seg}`} />
+                  ))}
+                </svg>
+              </span>
+              <h3>{cap.title}</h3>
+              <p class="cap-body">{cap.body}</p>
+              <div class="cap-foot">
+                <code class="cap-route">{cap.route}</code>
+                <span class={`egress-badge is-${cap.egress.scope}`} title={cap.egress.label}>
+                  {cap.egress.scope === "local" ? "local-only" : "local + LAN"}
+                </span>
               </div>
-              <div class="chip-stack">
-                <span class="status-chip warn" x-show="isStale(item)" x-cloak>Stale</span>
-                <span class="status-chip ready" x-show="isPinned(item)" x-cloak>Pinned</span>
-                <span class="status-chip" :class="confidenceTone(item.identity)" x-text="confidenceLabel(item.identity)">unknown</span>
-              </div>
-            </div>
-            <p class="question" x-text="question(item)"></p>
-            <p class="reason" x-text="item.identity?.confidence_reason || 'No confidence detail reported.'"></p>
-            <div class="session-actions">
-              <button type="button" class="btn" @click="select(item)" :disabled="isBusy(item) || item.selected">
-                <span x-text="item.selected ? 'Selected' : 'Select'">Select</span>
-              </button>
-              <button type="button" class="btn" @click="togglePin(item)" :disabled="isBusy(item)">
-                <span x-text="isPinned(item) ? 'Unpin' : 'Pin'">Pin</span>
-              </button>
-              <button type="button" class="btn" @click="dismiss(item)" :disabled="isBusy(item)">Dismiss</button>
-            </div>
-          </article>
-        </template>
-      </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    ))}
 
-      <div class="empty" x-show="!loading && sessions().length === 0" x-cloak>
-        <h3>No waiting sessions</h3>
-        <p>Agent hooks are installed, but no current Claude/Codex session is awaiting a spoken answer.</p>
+    <section class="pair-section">
+      <div class="section-head">
+        <p class="eyebrow">Pairing</p>
+        <h2>How to pair the iPad</h2>
+        <p class="section-lead">
+          Pairing is host, port, an optional token, and a scheme — turned into the
+          device's hub config. Reachability is probed, never assumed.
+        </p>
       </div>
+      <ol class="pair-grid">
+        {pairingSteps.map((step) => (
+          <li class="signal-card pair-card">
+            <span class="pair-n" aria-hidden="true">{step.n}</span>
+            <h3>{step.title}</h3>
+            <p class="pair-body">{step.body}</p>
+            <code class="pair-code">{step.code}</code>
+          </li>
+        ))}
+      </ol>
+      <p class="pair-note">
+        The bearer token is a credential: it is joined to each request in memory
+        and never appears in a payload, a log, or back on screen.
+      </p>
     </section>
 
-    <section class="blocker-panel">
-      <div class="section-head">
-        <div>
-          <h2>Readiness blockers</h2>
-          <p>Reasons AI PI should not start a reply capture right now.</p>
-        </div>
-      </div>
-      <div class="blocker-list" x-show="status?.blockers?.length" x-cloak>
-        <template x-for="blocker in (status?.blockers || [])" :key="blocker">
-          <span class="blocker" x-text="blockerLabel(blocker)"></span>
-        </template>
-      </div>
-      <div class="empty compact" x-show="status && (!status.blockers || status.blockers.length === 0)" x-cloak>
-        <p>No blockers reported.</p>
-      </div>
+    <section class="status-note signal-card">
+      <h2>Still in progress</h2>
+      <p>
+        The on-device authoring screens — capturing, editing, and synthesizing
+        entirely on the iPad without a hub — are still landing. This page covers
+        what already ships: the iPad as a client of your hub. The fully on-device
+        story will be documented here once it is real on the device.
+      </p>
     </section>
   </div>
-
-  <script>
-    import Alpine from "alpinejs";
-    import factorySource from "../scripts/companion-app.js?raw";
-
-    const fn = new Function(factorySource + "; return CompanionApp;");
-    window.CompanionApp = fn();
-    window.Alpine = Alpine;
-    Alpine.start();
-  </script>
 </AppLayout>
 
 <style>
-  .companion {
+  .companion-doc {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: var(--space-5);
     display: flex;
     flex-direction: column;
-    gap: var(--space-5);
-    padding: var(--space-5);
+    gap: var(--space-6);
     color: var(--text);
   }
 
-  .page-head,
-  .section-head,
-  .session-top,
-  .head-actions {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-4);
-  }
+  h1, h2, h3, p { margin: 0; }
 
-  .page-head {
-    color: var(--text);
-  }
-
-  .eyebrow,
-  .label {
-    margin: 0 0 var(--space-1);
+  .eyebrow {
     font-family: var(--font-mono);
     font-size: var(--font-size-xs);
     text-transform: uppercase;
     letter-spacing: var(--letter-spacing-loose);
+    color: var(--accent);
+    margin-bottom: var(--space-2);
   }
 
-  .eyebrow,
-  .lead {
-    color: var(--on-desktop-muted);
+  /* === Hero ============================================== */
+  .doc-hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-5) 0 var(--space-2);
   }
-
-  h1,
-  h2,
-  h3,
-  p {
-    margin: 0;
-  }
-
-  h1 {
+  .doc-hero h1 {
     font-family: var(--font-display);
-    font-size: var(--font-size-3xl);
-    font-weight: 400;
-    letter-spacing: 0;
-    color: var(--text);
+    font-size: clamp(var(--font-size-2xl), 3.4vw, var(--font-size-3xl));
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    max-width: 22ch;
   }
-
-  h2 {
-    font-size: var(--font-size-xl);
-  }
-
-  h3 {
-    font-size: var(--font-size-lg);
-  }
-
   .lead {
-    max-width: 54rem;
-    margin-top: var(--space-2);
+    color: var(--text-muted);
     line-height: var(--line-height-relaxed);
+    max-width: 64ch;
+    font-size: var(--font-size-md);
   }
-
-  .btn,
-  .status-chip,
-  .blocker {
+  .hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+  .meta-pill {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    line-height: 1.2;
-    min-height: 2rem;
-    padding: var(--space-2) var(--space-3);
-    white-space: nowrap;
-  }
-
-  .btn {
-    background: var(--canvas);
-    color: var(--text);
-    cursor: pointer;
-  }
-
-  .btn:disabled {
-    background: var(--disabled-bg);
-    color: var(--disabled-fg);
-    cursor: wait;
-  }
-
-  .status-chip.ready {
-    background: var(--success-soft);
-    color: var(--success-strong);
-  }
-
-  .status-chip.warn {
-    background: var(--warn-soft);
-    color: var(--warn-strong);
-  }
-
-  .status-chip.blocked {
-    background: var(--danger-soft);
-    color: var(--danger-strong);
-  }
-
-  .status-chip.idle,
-  .status-chip.neutral {
-    background: var(--canvas);
+    padding: 0.12rem 0.55rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
     color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.02em;
   }
 
-  .summary-grid {
+  /* === Capability sections =============================== */
+  .cap-section,
+  .pair-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .section-head { display: flex; flex-direction: column; gap: var(--space-1); }
+  .section-head h2 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .section-lead {
+    color: var(--text-muted);
+    line-height: var(--line-height-relaxed);
+    max-width: 70ch;
+    font-size: var(--font-size-sm);
+  }
+
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  .cap-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+  }
+  .cap-card .glyph-chip { --chip-size: 40px; margin-bottom: var(--space-1); }
+  .cap-card h3 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .cap-body {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    flex: 1;
+  }
+  .cap-foot {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .cap-route {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    line-height: 1.5;
+    color: var(--text-faint);
+    overflow-wrap: anywhere;
+  }
+
+  /* === Pairing ========================================== */
+  .pair-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-3);
   }
-
-  .summary-card,
-  .selected-panel,
-  .session-section,
-  .blocker-panel,
-  .session-card,
-  .empty {
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
-  }
-
-  .summary-card {
-    min-height: 8rem;
+  .pair-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
     padding: var(--space-4);
   }
-
-  .summary-card strong {
-    display: block;
-    margin-bottom: var(--space-2);
-    font-size: var(--font-size-xl);
+  .pair-n {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.04em;
   }
-
-  .summary-card p,
-  .section-head p,
-  .meta,
-  .reason,
-  .empty p {
+  .pair-card h3 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .pair-body {
     color: var(--text-muted);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-relaxed);
+    flex: 1;
   }
-
-  .selected-panel,
-  .session-section,
-  .blocker-panel {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    padding: var(--space-4);
+  .pair-code {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2);
+    padding: var(--space-2) var(--space-3);
+    width: fit-content;
   }
-
-  .session-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3);
-  }
-
-  .session-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    padding: var(--space-4);
-  }
-
-  .session-card.selected {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-  }
-
-  .session-card.stale {
-    border-color: var(--warn-strong);
-  }
-
-  .chip-stack {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: var(--space-2);
-  }
-
-  .session-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    border-top: 1px solid var(--line);
-    padding-top: var(--space-3);
-  }
-
-  .question {
-    font-size: var(--font-size-md);
+  .pair-note {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
     line-height: var(--line-height-relaxed);
-    overflow-wrap: anywhere;
+    border-left: 3px solid var(--accent);
+    padding-left: var(--space-3);
+    max-width: 70ch;
   }
 
-  .reason {
-    border-top: 1px solid var(--line);
-    padding-top: var(--space-2);
-  }
-
-  .blocker-list {
+  /* === In-progress note ================================= */
+  .status-note {
+    padding: var(--space-5);
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: var(--space-2);
   }
-
-  .blocker {
-    background: var(--danger-soft);
-    color: var(--danger-strong);
+  .status-note h2 {
+    font-family: var(--font-display);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
   }
-
-  .empty {
-    padding: var(--space-4);
-  }
-
-  .empty.compact {
-    padding: var(--space-3);
+  .status-note p {
+    color: var(--text-muted);
+    line-height: var(--line-height-relaxed);
+    max-width: 72ch;
+    font-size: var(--font-size-sm);
   }
 
   @media (max-width: 1000px) {
-    .summary-grid,
-    .session-list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    .cap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pair-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
-
-  @media (max-width: 680px) {
-    .companion {
-      padding: var(--space-3);
-      gap: var(--space-3);
-    }
-
-    .page-head,
-    .section-head,
-    .session-top {
-      flex-direction: column;
-    }
-
-    .head-actions {
-      width: 100%;
-      flex-wrap: wrap;
-    }
-
-    .summary-grid,
-    .session-list {
-      grid-template-columns: 1fr;
-    }
+  @media (max-width: 600px) {
+    .companion-doc { padding: var(--space-3); gap: var(--space-5); }
+    .cap-grid,
+    .pair-grid { grid-template-columns: 1fr; }
   }
 </style>
