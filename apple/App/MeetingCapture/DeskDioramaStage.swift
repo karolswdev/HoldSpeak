@@ -2002,6 +2002,9 @@ struct DioTranscriptTape: View {
 struct DioLiveTranscriptModal: View {
     let segments: [String]; let partial: String; let elapsed: String; let onClose: () -> Void
     var body: some View {
+        // The sheet height is geometry-relative, not `UIScreen.main.bounds` (which lies in
+        // iPad split-view). The GeometryReader gives us this surface's real height (HSM-20-01).
+        GeometryReader { geo in
         ZStack(alignment: .bottom) {
             Color.black.opacity(0.6).ignoresSafeArea().contentShape(Rectangle()).onTapGesture(perform: onClose)
             VStack(spacing: 0) {
@@ -2032,10 +2035,11 @@ struct DioLiveTranscriptModal: View {
                     Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold)); Text("Still recording · on device").font(.system(size: 10.5, weight: .heavy, design: .rounded))
                 }.foregroundStyle(DioPal.mint).padding(.horizontal, 11).frame(height: 28).background(Capsule().fill(DioPal.mint.opacity(0.14))).padding(.bottom, 22)
             }
-            .frame(maxWidth: .infinity).frame(height: UIScreen.main.bounds.height * 0.62)
+            .frame(maxWidth: .infinity).frame(height: geo.size.height * 0.62)
             .background(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30, style: .continuous)
                 .fill(LinearGradient(colors: [Color(hex: 0x191522), Color(hex: 0x0B0910)], startPoint: .top, endPoint: .bottom))
                 .overlay(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)).ignoresSafeArea(edges: .bottom))
+        }
         }
     }
 }
@@ -2656,6 +2660,9 @@ struct DioDockHandle: View {
 }
 
 struct DioStage: View {
+    // The ONE width authority (HSM-20-01). Read the size class here; the camera is derived
+    // per-frame inside the body's GeometryReader where the live width is known.
+    @Environment(\.horizontalSizeClass) private var hSizeClass
     @StateObject private var model = CaptureModel()
     @AppStorage("hs.diorama.pos") private var posCSV = ""
     @AppStorage("hs.diorama.zones") private var zonesCSV = ""
@@ -2936,6 +2943,9 @@ struct DioStage: View {
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width, h = geo.size.height
+            // The one width authority — size class first, this frame's width second. Every
+            // stray `w < 500` / `w >= 500` / `UIScreen.main.bounds` read folds into this.
+            let camera = DeskCamera.resolve(sizeClass: hSizeClass, width: w)
             ZStack {
                 LinearGradient(colors: [DioPal.bgTop, DioPal.bgMid, DioPal.bgBot], startPoint: .top, endPoint: .bottom)
                 TimelineView(.animation) { tl in
@@ -2974,7 +2984,7 @@ struct DioStage: View {
                     Text("drag a meeting onto a zone · tap to open")
                         .font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
                 }
-                .opacity(landed && selected == nil && path.isEmpty && !firstRun && w >= 500 ? 1 : 0)
+                .opacity(landed && selected == nil && path.isEmpty && !firstRun && camera.isWide ? 1 : 0)
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.05)
 
                 // THE FIRST BOOT — the cold-start ritual: an empty desk that teaches itself
@@ -3082,7 +3092,7 @@ struct DioStage: View {
                     && editingAgent == nil && editingChain == nil && runChainSheet == nil && chainRelay == nil
                     && openGameId == nil && !arkadeOpen && connecting == false
                     && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet && !firstRun {
-                    let compact = w < 500
+                    let compact = camera.railCollapses
                     if compact && !railOpen {
                         // the collapsed handle — tap to slide the rail in
                         Button { haptic(.light); withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { railOpen = true } } label: {
@@ -3543,9 +3553,8 @@ struct DioStage: View {
                             AgentRecord(id: "seed3", name: "Critic", avatar: "a22", role: "finds the holes", systemPrompt: "You are a critic.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
                         ]
                     }
-                    let b = UIScreen.main.bounds
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
-                        summonAt = CGPoint(x: b.width * 0.5, y: b.height * 0.5)
+                        summonAt = CGPoint(x: w * 0.5, y: h * 0.5)
                         withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { summonSource = "out:demo" }
                     }
                 }

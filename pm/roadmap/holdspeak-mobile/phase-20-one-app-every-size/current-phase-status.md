@@ -1,10 +1,12 @@
 # Phase 20 — One app, every size (the iPhone pass)
 
-**Status:** planned — **follows 18 + 19** (you cannot lay out at compact width what does not
-exist yet). **Stories authored** (this is an executable front, lead-phase cadence).
+**Status:** in progress — **follows 18 + 19** (you cannot lay out at compact width what does not
+exist yet). **20-01 (the `DeskCamera` foundation) landed** (sim-proven); the lane work (20-02/03/04)
+reads it next.
 
-**Last updated:** 2026-06-27 (authored from the parity audit theme 1; **refined into an
-executable front** with a full handover + 5 detailed stories + verified file:line corrections.)
+**Last updated:** 2026-06-27 (HSM-20-01 shipped: `DeskCamera` is the one width authority,
+the four strays folded in, byte-equivalent on iPad — `swift test` 381 green + iPhone/iPad sim
+builds green; see `evidence-story-01.md`).
 
 **Start here:** `../HANDOVER-2026-06-27-phase20-one-app-every-size.md` — the master orientation
 doc (verified code map, the build/screenshot pipeline, the doctrine call, the hard-won lessons,
@@ -47,7 +49,7 @@ Simulator screenshots do not close a row.
 
 | ID | Title | Status |
 |----|-------|--------|
-| HSM-20-01 | The `DeskCamera` foundation (one width authority + the lane helper) — **leads** | todo |
+| HSM-20-01 | The `DeskCamera` foundation (one width authority + the lane helper) — **leads** | done (sim) |
 | HSM-20-02 | The desk at compact width (the lane + the migrating pull-out) | todo |
 | HSM-20-03 | The capture canvas at compact width (docked recorder + wrapped chips) | todo |
 | HSM-20-04 | The forms + screens at compact width (connect, editors, sheets, hold-bar teleprompter) | todo |
@@ -55,8 +57,14 @@ Simulator screenshots do not close a row.
 
 ## Where we are
 
-Not started; **fully storied and handed over.** **20-01 leads** (the `DeskCamera` authority the
-rest read). 20-02/03/04 parallelize once 20-01 lands (disjoint surfaces). The desk scrim overlays
+**20-01 landed (sim-proven).** `DeskCamera` is the only width authority — derived from
+`horizontalSizeClass` first, width (500pt boundary) second — and the four strays
+(`:2977 w >= 500`, `:3085 w < 500`, `:3546`/`DioLiveTranscriptModal` `UIScreen.main.bounds`) are
+folded into it. The consolidation is byte-equivalent on iPad (`.wide` shows the full diorama,
+`.narrow`/`.lane` collapse the rail exactly as before); `swift test` 381 green + iPhone-17-Pro and
+iPad sim builds green. The lane card column itself is 20-02 — 20-01 changed *who decides width*,
+not *what the lane looks like*. **20-02/03/04 now parallelize** (disjoint surfaces), each reading
+`camera` + `cardWidth`. The desk scrim overlays
 (`DioCoderSession`/`DioSendCard`/`DioZoneEditor`…) are also the "modal hells" the owner rejects
 ([[feedback_no_modals_in_world]]) — 20-02/04 reframe them as in-world or hand-built rising sheets,
 killing two birds. **20-05 is the gate** and the only thing that promotes an iPhone cell from
