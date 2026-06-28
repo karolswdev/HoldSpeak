@@ -1,12 +1,16 @@
 # Phase 20 — One app, every size (the iPhone pass)
 
 **Status:** in progress — **follows 18 + 19** (you cannot lay out at compact width what does not
-exist yet). **20-01 (the `DeskCamera` foundation) landed** (sim-proven); the lane work (20-02/03/04)
-reads it next.
+exist yet). **20-01 (the `DeskCamera`) + 20-02 (the desk lane + the migrating pull-out) landed**
+(sim-proven); 20-03/04 next, 20-05 is the device gate.
 
-**Last updated:** 2026-06-27 (HSM-20-01 shipped: `DeskCamera` is the one width authority,
-the four strays folded in, byte-equivalent on iPad — `swift test` 381 green + iPhone/iPad sim
-builds green; see `evidence-story-01.md`).
+**Last updated:** 2026-06-27 (HSM-20-02 shipped: the iPhone desk lane — a one-thumb card column
+(`laneColumn`) with a dynamic kind-filter chip rail, full-width primitive rows, an accent FAB, and
+the signature **migrating pull-out** that rises from the bottom edge on iPhone / enters from the
+right on iPad on a spring, over a transparent catcher (no scrim), egress badge riding along.
+Fixed cards clamped via `camera.cardWidth`; `positions[id]` untouched (rotation restores the
+diorama). `swift test` 381 green + iPhone/iPad sim builds green; see `evidence-story-02.md`.
+Earlier: HSM-20-01 — `DeskCamera` is the one width authority, the four strays folded in.)
 
 **Start here:** `../HANDOVER-2026-06-27-phase20-one-app-every-size.md` — the master orientation
 doc (verified code map, the build/screenshot pipeline, the doctrine call, the hard-won lessons,
@@ -50,23 +54,26 @@ Simulator screenshots do not close a row.
 | ID | Title | Status |
 |----|-------|--------|
 | HSM-20-01 | The `DeskCamera` foundation (one width authority + the lane helper) — **leads** | done (sim) |
-| HSM-20-02 | The desk at compact width (the lane + the migrating pull-out) | todo |
+| HSM-20-02 | The desk at compact width (the lane + the migrating pull-out) | done (sim) |
 | HSM-20-03 | The capture canvas at compact width (docked recorder + wrapped chips) | todo |
 | HSM-20-04 | The forms + screens at compact width (connect, editors, sheets, hold-bar teleprompter) | todo |
 | HSM-20-05 | On-device proof (every compact screen walked on a real iPhone) — **the gate** | todo |
 
 ## Where we are
 
-**20-01 landed (sim-proven).** `DeskCamera` is the only width authority — derived from
-`horizontalSizeClass` first, width (500pt boundary) second — and the four strays
-(`:2977 w >= 500`, `:3085 w < 500`, `:3546`/`DioLiveTranscriptModal` `UIScreen.main.bounds`) are
-folded into it. The consolidation is byte-equivalent on iPad (`.wide` shows the full diorama,
-`.narrow`/`.lane` collapse the rail exactly as before); `swift test` 381 green + iPhone-17-Pro and
-iPad sim builds green. The lane card column itself is 20-02 — 20-01 changed *who decides width*,
-not *what the lane looks like*. **20-02/03/04 now parallelize** (disjoint surfaces), each reading
-`camera` + `cardWidth`. The desk scrim overlays
-(`DioCoderSession`/`DioSendCard`/`DioZoneEditor`…) are also the "modal hells" the owner rejects
-([[feedback_no_modals_in_world]]) — 20-02/04 reframe them as in-world or hand-built rising sheets,
-killing two birds. **20-05 is the gate** and the only thing that promotes an iPhone cell from
-forward-constraint to proven.
+**20-01 + 20-02 landed (sim-proven).** `DeskCamera` is the only width authority (size class first,
+500pt boundary second; the four strays folded in, byte-equivalent on iPad). On top of it, **20-02
+built the iPhone desk lane**: `laneColumn` renders a dynamic kind-filter chip rail over full-width
+primitive rows (`DioLaneRow` glyph@44 · title · badge · subtitle · chevron; zones are divable rows),
+an accent FAB carries create, and the signature **migrating pull-out** rises from the bottom edge on
+iPhone / enters from the right on iPad on a spring, over a transparent catcher (no scrim), egress
+badge riding along. `positions[id]` is untouched, so rotating back to `.wide` restores the diorama.
+Fixed cards (`DioConnectCard`/`DioZoneEditor`) clamped via `camera.cardWidth`. `swift test` 381
+green + iPhone/iPad sim builds green.
+
+**Next: 20-03 (capture canvas) + 20-04 (forms/screens + the hold-bar teleprompter).** 20-04 owns the
+remaining desk **scrim reframes** — the action sheets (`DioSendCard`/`DioActSheet`/`DioRunTargetSheet`/
+`DioRouteSheet`) and agent/chain editors — as the hand-built rising sheet (the "modal hells" the
+owner rejects, [[feedback_no_modals_in_world]]). **20-05 is the device gate** and the only thing that
+promotes an iPhone cell from forward-constraint to proven.
 </content>
