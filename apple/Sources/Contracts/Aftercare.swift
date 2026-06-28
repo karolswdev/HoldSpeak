@@ -187,6 +187,14 @@ public struct Aftercare: Codable, Equatable, Sendable {
 /// issue — nothing leaves the machine until it is separately approved + actuators
 /// are enabled. Decoded loosely; the `preview` is the human-readable summary the
 /// approval surface shows (never the machine payload's secrets).
+///
+/// METAL-READINESS (EQ-W6 audit): this is `_proposal_to_dict` in
+/// holdspeak/web/routes/meetings.py — the same serializer Proposals use, so the
+/// timestamp fields are RAW ISO STRINGS, not `Date`. The hub re-emits them with
+/// `datetime.now().isoformat()` (naive/local/microsecond, NO `Z`, e.g.
+/// `2026-06-27T18:08:21.337333`), which the shared decoder's `.iso8601` strategy
+/// would reject — failing the whole file-issue decode on real metal. Carried as
+/// `String?` to match the contract's "Timestamps are ISO strings" and stay format-safe.
 public struct AftercareIssueProposal: Codable, Equatable, Sendable {
     public var id: String
     public var meetingId: String?
@@ -201,16 +209,17 @@ public struct AftercareIssueProposal: Codable, Equatable, Sendable {
     public var requiredCapabilities: [String]?
     public var decidedBy: String?
     public var error: String?
-    public var createdAt: Date?
-    public var decidedAt: Date?
-    public var executedAt: Date?
+    /// Raw ISO wire strings (naive/local, no `Z`); see the type doc. Never `Date`.
+    public var createdAt: String?
+    public var decidedAt: String?
+    public var executedAt: String?
 
     public init(id: String, meetingId: String? = nil, windowId: String? = nil,
                 pluginId: String? = nil, pluginVersion: String? = nil, status: String? = nil,
                 target: String? = nil, action: String? = nil, preview: String? = nil,
                 reversible: Bool? = nil, requiredCapabilities: [String]? = nil,
                 decidedBy: String? = nil, error: String? = nil,
-                createdAt: Date? = nil, decidedAt: Date? = nil, executedAt: Date? = nil) {
+                createdAt: String? = nil, decidedAt: String? = nil, executedAt: String? = nil) {
         self.id = id
         self.meetingId = meetingId
         self.windowId = windowId

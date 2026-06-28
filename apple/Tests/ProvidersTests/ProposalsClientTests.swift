@@ -77,6 +77,13 @@ final class ProposalsClientTests: XCTestCase {
     // A realistic GET /api/meetings/{id}/proposals envelope: one undecided slack
     // proposal (null decided_at/executed_at/decided_by/result/error) — the exact
     // shape `_proposal_to_dict` serializes.
+    //
+    // METAL-READINESS (EQ-W6 audit): `created_at` is the REAL wire shape the hub
+    // emits — `datetime.now().isoformat()`: naive/local, microseconds, NO `Z`
+    // (`2026-06-27T14:03:11.337333`). Before the fix the contract decoded these as
+    // `Date` via the shared `.iso8601` strategy, which throws on a zone-less string —
+    // so on real metal the whole envelope decode failed `.malformed`. The contract
+    // now carries the timestamps as raw `String?`, so this real shape decodes.
     private let proposalsJSON = #"""
     {
       "meeting_id": "m-42",
@@ -97,7 +104,7 @@ final class ProposalsClientTests: XCTestCase {
           "decided_by": null,
           "result": null,
           "error": null,
-          "created_at": "2026-06-27T14:03:11Z",
+          "created_at": "2026-06-27T14:03:11.337333",
           "decided_at": null,
           "executed_at": null
         }
@@ -127,7 +134,8 @@ final class ProposalsClientTests: XCTestCase {
         XCTAssertNil(p.decidedBy)
         XCTAssertNil(p.decidedAt)
         XCTAssertNil(p.executedAt)
-        XCTAssertNotNil(p.createdAt)               // ISO-8601 Z decoded
+        // The REAL naive/no-`Z` timestamp the hub emits, carried verbatim (not a Date).
+        XCTAssertEqual(p.createdAt, "2026-06-27T14:03:11.337333")
         XCTAssertEqual(p.payload, .object(["channel": .string("#standup"),
                                            "blocks": .number(3)]))
     }
@@ -153,9 +161,9 @@ final class ProposalsClientTests: XCTestCase {
             "decided_by": "ipad-user",
             "result": {"ok": true},
             "error": null,
-            "created_at": "2026-06-27T14:03:11Z",
-            "decided_at": "2026-06-27T14:05:00Z",
-            "executed_at": "2026-06-27T14:05:01Z"
+            "created_at": "2026-06-27T14:03:11.337333",
+            "decided_at": "2026-06-27T14:05:00.111222",
+            "executed_at": "2026-06-27T14:05:01.999000"
           }
         }
         """#
@@ -166,8 +174,9 @@ final class ProposalsClientTests: XCTestCase {
         let p = try XCTUnwrap(decision.proposal)
         XCTAssertEqual(p.status, .executed)
         XCTAssertEqual(p.decidedBy, "ipad-user")
-        XCTAssertNotNil(p.decidedAt)
-        XCTAssertNotNil(p.executedAt)
+        // Real naive/no-`Z` timestamps decode (they threw as `Date` before the fix).
+        XCTAssertEqual(p.decidedAt, "2026-06-27T14:05:00.111222")
+        XCTAssertEqual(p.executedAt, "2026-06-27T14:05:01.999000")
         XCTAssertEqual(p.result, .object(["ok": .bool(true)]))
     }
 
@@ -201,8 +210,8 @@ final class ProposalsClientTests: XCTestCase {
           "status": "approved", "target": "slack", "action": "send_message",
           "preview": "x", "payload": null, "reversible": false,
           "required_capabilities": [], "decided_by": "ipad-user",
-          "result": null, "error": null, "created_at": "2026-06-27T14:03:11Z",
-          "decided_at": "2026-06-27T14:05:00Z", "executed_at": null
+          "result": null, "error": null, "created_at": "2026-06-27T14:03:11.337333",
+          "decided_at": "2026-06-27T14:05:00.111222", "executed_at": null
         }}
         """#
         StubProtocol.routes = [
@@ -229,8 +238,8 @@ final class ProposalsClientTests: XCTestCase {
           "status": "rejected", "target": "slack", "action": "send_message",
           "preview": "x", "payload": null, "reversible": false,
           "required_capabilities": [], "decided_by": "ipad-user",
-          "result": null, "error": null, "created_at": "2026-06-27T14:03:11Z",
-          "decided_at": "2026-06-27T14:05:00Z", "executed_at": null
+          "result": null, "error": null, "created_at": "2026-06-27T14:03:11.337333",
+          "decided_at": "2026-06-27T14:05:00.111222", "executed_at": null
         }}
         """#
         StubProtocol.routes = [
@@ -252,5 +261,42 @@ final class ProposalsClientTests: XCTestCase {
         } catch {
             XCTFail("expected DesktopClientError.http, got \(error)")
         }
+    }
+
+    // MARK: metal-readiness regression (EQ-W6 audit)
+
+    /// The exact wire shape the hub produces for the proposal timestamps —
+    /// `datetime.now().isoformat()` (naive/local, microseconds, NO `Z`). Before the
+    /// audit fix, `created_at`/`decided_at`/`executed_at` decoded as `Date` via the
+    /// shared `.iso8601` strategy, which throws on a zone-less string — so the WHOLE
+    /// envelope failed `.malformed` on real metal even though every other field was
+    /// fine. This proves the contract now carries them as raw strings and decodes the
+    /// real shape. (A `+00:00` offset variant is included to prove offsets survive too.)
+    func testRealNaiveTimestampsDecodeAsRawStrings() throws {
+        let json = #"""
+        {
+          "meeting_id": "m-1",
+          "proposals": [
+            {
+              "id": "p-1", "meeting_id": "m-1", "window_id": null,
+              "plugin_id": "github_issue", "plugin_version": "1.0.0",
+              "status": "approved", "target": "github", "action": "create_issue",
+              "preview": "Open issue", "payload": null, "reversible": true,
+              "required_capabilities": ["github:issues:write"], "decided_by": "ipad-user",
+              "result": null, "error": null,
+              "created_at": "2026-06-27T18:08:21.337333",
+              "decided_at": "2026-06-27T18:09:00.000001",
+              "executed_at": "2026-06-27T18:10:42.500000+00:00"
+            }
+          ]
+        }
+        """#
+        let env = try HoldSpeakContracts.decoder()
+            .decode(MeetingProposalsEnvelope.self, from: Data(json.utf8))
+        let p = try XCTUnwrap(env.proposals.first)
+        XCTAssertEqual(p.status, .approved)
+        XCTAssertEqual(p.createdAt, "2026-06-27T18:08:21.337333")
+        XCTAssertEqual(p.decidedAt, "2026-06-27T18:09:00.000001")
+        XCTAssertEqual(p.executedAt, "2026-06-27T18:10:42.500000+00:00")
     }
 }
