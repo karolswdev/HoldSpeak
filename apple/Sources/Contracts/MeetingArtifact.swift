@@ -59,15 +59,23 @@ public struct MeetingArtifact: Codable, Equatable, Sendable {
     public var pluginVersion: String?
     /// The provenance list — `(source_type, source_ref)` lineage rows.
     public var sources: [MeetingArtifactSource]
-    public var createdAt: Date?
-    public var updatedAt: Date?
+    /// METAL-READINESS (EQ-W6 audit): RAW ISO STRINGS, not `Date`. The route emits
+    /// `artifact.created_at.isoformat()` where `created_at` was loaded via
+    /// `datetime.fromisoformat(row[...])` from a value the DB stored with
+    /// `datetime.now().isoformat()` — a *naive/local/microsecond* instant with NO `Z`
+    /// (e.g. `2026-06-27T18:08:21.337333`). The shared decoder's `.iso8601` strategy
+    /// REQUIRES a timezone and would throw on that exact shape, failing the whole
+    /// artifact decode on real metal. Carried as `String?` to stay format-safe; the
+    /// route always sends both, but optional keeps the read model tolerant.
+    public var createdAt: String?
+    public var updatedAt: String?
 
     public init(
         id: String, meetingId: String, artifactType: String,
         title: String, bodyMarkdown: String, structuredJson: JSONValue? = nil,
         confidence: Double? = nil, status: String, pluginId: String? = nil,
         pluginVersion: String? = nil, sources: [MeetingArtifactSource] = [],
-        createdAt: Date? = nil, updatedAt: Date? = nil
+        createdAt: String? = nil, updatedAt: String? = nil
     ) {
         self.id = id
         self.meetingId = meetingId

@@ -195,16 +195,21 @@ final class AftercareClientTests: XCTestCase {
     // MARK: file-issue
 
     func testFileAftercareIssuePostsAndDecodesProposal() async throws {
+        // The REAL `_proposal_to_dict` shape: it ALSO carries `payload` + `result`
+        // (which the loose AftercareIssueProposal model does not declare and harmlessly
+        // ignores), and the timestamps are the hub's naive/no-`Z` `isoformat()` (the
+        // EQ-W6 fix — they decode as raw strings, not `Date`).
         let body = #"""
         {"success": true,
          "proposal": {
             "id": "p1", "meeting_id": "m1", "window_id": "m1:aftercare",
             "plugin_id": "github_issue", "plugin_version": "1.0.0", "status": "proposed",
-            "target": "octo/repo", "action": "create_issue",
+            "target": "github", "action": "create_issue",
             "preview": "Open issue in octo/repo: Wire the sync transport",
+            "payload": {"repo": "octo/repo", "title": "Wire the sync transport"},
             "reversible": false, "required_capabilities": ["github:issues:write"],
-            "decided_by": null, "error": null,
-            "created_at": "2026-06-27T12:00:00+00:00", "decided_at": null, "executed_at": null}}
+            "decided_by": null, "result": null, "error": null,
+            "created_at": "2026-06-27T12:00:00.789654", "decided_at": null, "executed_at": null}}
         """#
         StubProtocol.routes = ["/api/meetings/m1/aftercare/file-issue": (200, Data(body.utf8))]
 
@@ -223,10 +228,11 @@ final class AftercareClientTests: XCTestCase {
         let proposal = try XCTUnwrap(result.proposal)
         XCTAssertEqual(proposal.id, "p1")
         XCTAssertEqual(proposal.status, "proposed")            // proposed only — nothing sent
-        XCTAssertEqual(proposal.target, "octo/repo")
+        XCTAssertEqual(proposal.target, "github")
         XCTAssertEqual(proposal.preview, "Open issue in octo/repo: Wire the sync transport")
         XCTAssertEqual(proposal.requiredCapabilities, ["github:issues:write"])
-        XCTAssertNotNil(proposal.createdAt)                    // ISO date decodes
+        // The real naive/no-`Z` timestamp carried verbatim (it threw as `Date` before).
+        XCTAssertEqual(proposal.createdAt, "2026-06-27T12:00:00.789654")
         XCTAssertNil(proposal.executedAt)
     }
 

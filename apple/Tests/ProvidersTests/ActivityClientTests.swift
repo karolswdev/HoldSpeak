@@ -109,6 +109,46 @@ final class ActivityClientTests: XCTestCase {
         XCTAssertNil(record.citations[0].lastSeenAt)
     }
 
+    /// Audit guard: every field of `Nudge.to_dict()` / `NudgeCitation.to_dict()`
+    /// (`holdspeak/activity_nudges.py`) decodes into the contract, at the type level. The
+    /// metal-readiness audit confirmed the activity client carries NO drift from these shapes; this
+    /// case pins that so a server-side field rename is caught here, not in the field.
+    func testActivityNudgeContractDecodesEveryServerField() throws {
+        let json = #"""
+        {"key":"record:42","kind":"record","title":"You were reading a PR",
+         "body":"github.com/x/y/pull/7","score":0.8765,
+         "window_since":"2026-06-27T12:00:00","window_record_count":3,
+         "extras":{"headline":"recent","n":2},
+         "citations":[
+           {"record_id":42,"source_browser":"chrome","source_profile":"Default",
+            "entity_type":"github_pull_request","entity_id":"7","domain":"github.com",
+            "title":"Fix the thing","url":"https://github.com/x/y/pull/7",
+            "last_seen_at":"2026-06-27T12:30:00Z","visit_count":3}
+         ]}
+        """#.data(using: .utf8)!
+        let nudge = try HoldSpeakContracts.decoder().decode(ActivityNudge.self, from: json)
+        XCTAssertEqual(nudge.key, "record:42")
+        XCTAssertEqual(nudge.kind, "record")
+        XCTAssertEqual(nudge.title, "You were reading a PR")
+        XCTAssertEqual(nudge.body, "github.com/x/y/pull/7")
+        XCTAssertEqual(nudge.score, 0.8765, accuracy: 0.0001)   // server rounds to 4 places
+        XCTAssertEqual(nudge.windowSince, "2026-06-27T12:00:00")
+        XCTAssertEqual(nudge.windowRecordCount, 3)
+        XCTAssertEqual(nudge.extras["headline"], .string("recent"))
+        XCTAssertEqual(nudge.extras["n"], .number(2))
+        let c = try XCTUnwrap(nudge.citations.first)
+        XCTAssertEqual(c.recordId, 42)
+        XCTAssertEqual(c.sourceBrowser, "chrome")
+        XCTAssertEqual(c.sourceProfile, "Default")
+        XCTAssertEqual(c.entityType, "github_pull_request")
+        XCTAssertEqual(c.entityId, "7")
+        XCTAssertEqual(c.domain, "github.com")
+        XCTAssertEqual(c.title, "Fix the thing")
+        XCTAssertEqual(c.url, "https://github.com/x/y/pull/7")
+        XCTAssertEqual(c.lastSeenAt, "2026-06-27T12:30:00Z")
+        XCTAssertEqual(c.visitCount, 3)
+    }
+
     func testActivityNudgesEmptyWhenTrackingOff() async throws {
         StubProtocol.routes = ["/api/activity/nudges": (200,
             Data(#"{"nudges":[],"activity_enabled":false}"#.utf8))]
