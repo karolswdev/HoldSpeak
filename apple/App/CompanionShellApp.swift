@@ -76,6 +76,7 @@ final class ShellModel: ObservableObject {
     @Published var board = CompanionBoardState()
     @Published var loading = false
     @Published var busy = ""                 // a short "starting…/stopping…" note
+    @Published var connectError = ""         // shown on the connect screen when host/port is invalid
 
     var canConnect: Bool { !host.trimmingCharacters(in: .whitespaces).isEmpty }
     var paired: Bool { state != nil }
@@ -95,7 +96,8 @@ final class ShellModel: ObservableObject {
     }
 
     func load() async {
-        guard let c = client() else { return }
+        guard let c = client() else { connectError = "Enter a valid host and port."; return }
+        connectError = ""
         loading = true; defer { loading = false }
         let summary = localSummary
         let shell = CompanionShell(link: CompanionLink(client: c),
@@ -134,8 +136,15 @@ final class ShellModel: ObservableObject {
         guard !utterance.isEmpty else { return }
         guard let c = client() else { dictateError = "Pair your Mac first."; return }
         dictating = true; dictateError = ""; dictateSent = false; defer { dictating = false }
-        do { dictatePreview = try await c.dictationDryRun(utterance: utterance) }
-        catch { dictatePreview = nil; dictateError = "Couldn't reach your Mac for a preview." }
+        do {
+            let result = try await c.dictationDryRun(utterance: utterance)
+            // An empty receipt is a broken receipt: never preview (or let Send free-type) nothing.
+            if result.finalText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                dictatePreview = nil; dictateError = "The pipeline returned nothing to type."
+            } else {
+                dictatePreview = result
+            }
+        } catch { dictatePreview = nil; dictateError = "Couldn't reach your Mac for a preview." }
     }
 
     /// Commit the previewed text: free-type the rewritten result into the focused Mac app.
@@ -145,7 +154,7 @@ final class ShellModel: ObservableObject {
         do {
             _ = try await c.sendRemoteDictation(text: preview.finalText, target: .focused)
             dictateSent = true; dictatePreview = nil; dictateText = ""
-        } catch { dictateError = "Send failed — is a Mac app focused?" }
+        } catch { dictateError = "Send failed. Is a Mac app focused?" }
     }
 
     // MARK: Aftercare (HSM-19-01) — the close-the-loop digest for a meeting.
@@ -216,8 +225,9 @@ struct ShellView: View {
                 model.dictateText = "use redis with a twenty four hour TTL period"
                 model.dictatePreview = DictationDryRun(
                     finalText: "Use Redis with a 24 hour TTL.",
-                    target: DryRunTarget(app: "Cursor", window: nil, process: nil, profile: nil, confidence: 0.91),
-                    warnings: [], totalElapsedMs: 380, status: "ok", blocksCount: 2, project: "holdspeak")
+                    target: DryRunTarget(label: "Cursor", confidence: 0.91),
+                    warnings: [], totalElapsedMs: 380, blocksCount: 2,
+                    project: DictationProject(name: "holdspeak"))
             }
             // HS_SHELL_DEMO=aftercare seeds a close-the-loop digest on the Meetings screen.
             if ProcessInfo.processInfo.environment["HS_SHELL_DEMO"] == "aftercare" {
@@ -426,7 +436,7 @@ struct ShellView: View {
             }
             let local = model.state?.local.meetings ?? []
             if local.isEmpty {
-                rowNote("No local recordings yet — capture, transcription and inference run here, nothing leaves.")
+                rowNote("No local recordings yet. Capture, transcription and inference run on-device.")
             } else {
                 ForEach(local) { m in meetingRow(m, tint: Sig.local) }
             }
@@ -444,7 +454,17 @@ struct ShellView: View {
                 if meetings.isEmpty {
                     rowNote("No meetings on the desktop yet.")
                 } else {
-                    ForEach(meetings) { m in meetingRow(m, tint: Sig.accent) }
+                    Text("Tap a meeting for its close-the-loop digest + artifacts")
+                        .font(.caption2).foregroundStyle(Sig.faint)
+                    ForEach(meetings) { m in
+                        Button {
+                            Task { await model.loadAftercare(meetingId: m.id); await model.loadArtifacts(meetingId: m.id) }
+                        } label: { meetingRow(m, tint: Sig.accent) }
+                        .buttonStyle(.plain)
+                    }
+                    if model.aftercareLoading {
+                        HStack(spacing: 7) { ProgressView().controlSize(.mini).tint(Sig.accent); Text("Loading the close-the-loop digest…").font(.caption2).foregroundStyle(Sig.faint) }
+                    }
                 }
                 HStack(spacing: 12) {
                     Button { Task { await model.startMeeting() } } label: {
@@ -468,9 +488,8 @@ struct ShellView: View {
     // MARK: Dictate — nav slot (on-device)
 
     private var dictateScreen: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                peerHeader("DICTATE", "Watch the rewrite resolve, then send to your Mac", Sig.local, live: true)
+        VStack(alignment: .leading, spacing: 14) {
+            peerHeader("DICTATE", "Watch the rewrite resolve, then send to your Mac", Sig.local, live: true)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("WHAT YOU'D SAY").font(.caption2.weight(.bold)).tracking(1.4).foregroundStyle(Sig.faint)
@@ -492,14 +511,14 @@ struct ShellView: View {
                 }
 
                 if let preview = model.dictatePreview {
-                    let destination = preview.target?.label
+                    let destination = preview.target?.displayLabel
                     VStack(alignment: .leading, spacing: 11) {
                         HStack(spacing: 7) {
                             Image(systemName: "arrow.right.circle.fill").foregroundStyle(Sig.local)
                             Text(destination.map { "Types into \($0)" } ?? "Types into the focused Mac app")
                                 .font(.caption.weight(.semibold)).foregroundStyle(Sig.muted)
                             Spacer()
-                            Text("local + LAN").font(.caption2.weight(.medium)).foregroundStyle(Sig.faint)
+                            egressChip("Local + \(model.host.isEmpty ? "your Mac" : model.host)")
                         }
                         Text(preview.finalText).font(.title3.weight(.semibold)).foregroundStyle(Sig.text)
                             .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
@@ -539,10 +558,20 @@ struct ShellView: View {
                 if !model.dictateError.isEmpty {
                     Text(model.dictateError).font(.caption).foregroundStyle(Sig.warn)
                 }
-                rowNote("Preview shows exactly what would type, before anything leaves the app. Send free-types it into the focused Mac app, never autonomously. Speak-to-fill lands next.")
+                rowNote("Preview shows exactly what would type. Send free-types it into the focused Mac app, never autonomously. Speak-to-fill lands next.")
             }
             .cardChrome(border: Sig.local.opacity(0.35))
+    }
+
+    // An honest compact egress chip (a label, never a reassurance sentence) for where text goes.
+    private func egressChip(_ label: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "house.fill").font(.system(size: 8, weight: .bold))
+            Text(label).font(.caption2.weight(.semibold))
         }
+        .foregroundStyle(Sig.local)
+        .padding(.horizontal, 7).padding(.vertical, 3)
+        .background(Sig.local.opacity(0.12), in: Capsule())
     }
 
     private func metaChip(_ text: String, _ icon: String, _ tint: Color) -> some View {
@@ -629,6 +658,9 @@ struct ShellView: View {
                             .background(Sig.accent, in: RoundedRectangle(cornerRadius: 12))
                     }
                     .disabled(!model.canConnect).opacity(model.canConnect ? 1 : 0.5)
+                    if !model.connectError.isEmpty {
+                        Text(model.connectError).font(.caption).foregroundStyle(Sig.warn)
+                    }
                 }
                 .cardChrome(border: Sig.line)
             }
@@ -642,12 +674,16 @@ struct ShellView: View {
         HStack(spacing: 9) {
             Circle().fill(live ? tint : Sig.faint).frame(width: 9, height: 9)
                 .shadow(color: live ? tint.opacity(0.6) : .clear, radius: 5)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.caption.weight(.bold)).tracking(1.5).foregroundStyle(tint)
                 Text(sub).font(.caption).foregroundStyle(Sig.faint)
             }
             Spacer()
         }
+        // color-alone status is also stated in text for VoiceOver + non-color-perceivers.
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title). \(live ? "active" : "idle"). \(sub)")
     }
 
     private func meetingRow(_ m: MeetingSummary, tint: Color) -> some View {

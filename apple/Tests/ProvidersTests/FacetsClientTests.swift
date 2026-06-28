@@ -100,11 +100,14 @@ final class FacetsClientTests: XCTestCase {
     // MARK: - searchMeetings(...) over the client
 
     func testSearchMeetingsDecodesEnvelopeAndCarriesQuery() async throws {
-        // The hub's faceted /api/meetings envelope: summaries + a `total`.
+        // The hub's faceted /api/meetings envelope: summaries + a `total`. The
+        // timestamps ride in the REAL naive-ISO shape the hub emits (no `Z`/offset,
+        // microsecond fractional), which a `Date?` field would reject and fail the
+        // whole decode on — `startedAt`/`endedAt` are `String?` (metal-readiness).
         let body = #"""
         {"meetings":[
-          {"id":"m1","title":"Q3 Standup","started_at":"2026-06-27T09:00:00Z",
-           "ended_at":"2026-06-27T09:30:00Z","duration_seconds":1800.0,
+          {"id":"m1","title":"Q3 Standup","started_at":"2026-06-27T09:00:00.512000",
+           "ended_at":"2026-06-27T09:30:00.004211","duration_seconds":1800.0,
            "segment_count":42,"action_item_count":3,"tags":["q3","standup"],
            "intel_status":"ready","intel_status_detail":null}
         ],"total":1}
@@ -118,6 +121,7 @@ final class FacetsClientTests: XCTestCase {
         let m = try XCTUnwrap(meetings.first)
         XCTAssertEqual(m.id, "m1")
         XCTAssertEqual(m.title, "Q3 Standup")
+        XCTAssertEqual(m.startedAt, "2026-06-27T09:00:00.512000")  // naive ISO survives
         XCTAssertEqual(m.segmentCount, 42)
         XCTAssertEqual(m.actionItemCount, 3)
         XCTAssertEqual(m.intelStatus, "ready")
