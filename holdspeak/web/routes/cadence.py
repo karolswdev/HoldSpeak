@@ -84,6 +84,26 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
         items = db.cadence.list_loops(include_terminal=all)
         return {"loops": [_loop_dict(loop) for loop in items], "egress": _LOCAL_EGRESS}
 
+    @router.get("/brief")
+    async def brief() -> dict[str, Any]:
+        from ...cadence.brief import build_brief
+        from ...db import get_database
+
+        b = build_brief(get_database())
+        return {
+            "date": b.date,
+            "headline": b.headline,
+            "open_count": b.open_count,
+            "generated_by": b.generated_by,
+            "items": [
+                {"loop": _loop_dict(it.loop, with_next_action=False),
+                 "next_action": {"kind": it.next_action.kind, "title": it.next_action.title,
+                                 "body_markdown": it.next_action.body_markdown}}
+                for it in b.items
+            ],
+            "egress": _LOCAL_EGRESS,
+        }
+
     @router.get("/loops/{loop_id}")
     async def loop_detail(loop_id: str) -> dict[str, Any]:
         from ...db import get_database

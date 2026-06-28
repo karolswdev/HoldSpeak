@@ -52,6 +52,15 @@ def test_run_now_then_loops_carry_evidence_and_next_action(client):
     assert top["egress"]["scope"] == "local"
 
 
+def test_brief_route_leads_with_top_move(client):
+    c, _ = client
+    c.post("/api/cadence/run-now")
+    b = c.get("/api/cadence/brief").json()
+    assert b["headline"] and b["items"] and b["open_count"] >= 1
+    assert b["items"][0]["next_action"]["title"]
+    assert b["egress"]["scope"] == "local"
+
+
 def test_loop_detail_404_then_ok(client):
     c, _ = client
     assert c.get("/api/cadence/loops/nope").status_code == 404

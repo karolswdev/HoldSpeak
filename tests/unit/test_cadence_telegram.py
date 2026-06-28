@@ -117,6 +117,13 @@ def test_unpaired_callback_rejected(db):
     assert db.cadence.get_loop(loop_id).status != "killed"
 
 
+def test_brief_command_renders_morning_push(db):
+    s, caller = _surface(db, allowed_chat_ids=["42"])
+    s.handle_update(msg("42", "/brief"))
+    texts = caller.sent_texts()
+    assert any("Morning Push" in t and "watchdog" in t for t in texts)
+
+
 def test_push_due_nudges_sends_and_records(db):
     s, caller = _surface(db, allowed_chat_ids=["42", "43"])
     due = db.cadence.list_loops()

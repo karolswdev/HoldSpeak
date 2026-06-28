@@ -184,15 +184,20 @@ class TelegramSurface:
             self._send(chat_id, "🧷 Nothing pressing right now.")
             return
         if brief:
-            top = loops[0]
-            from .cadence.next_action import generate_next_action
-            na = generate_next_action(top)
-            header = f"🧷 *Your highest-leverage move*\n\n*{top.title}*\n{na.title}"
-            self._send(chat_id, header, buttons=self._loop_buttons(top))
+            self.send_brief(chat_id)
             return
         for loop in loops[:5]:
             self._send(chat_id, f"*{loop.title}*  ·  _{loop.source_type}_  ·  {loop.stale_score:.0f}",
                        buttons=self._loop_buttons(loop))
+
+    def send_brief(self, chat_id: str) -> None:
+        """The morning push brief — the headline + the top moves, with action buttons
+        on the #1 loop."""
+        from .cadence.brief import build_brief, render_brief_markdown
+
+        brief = build_brief(self._db)
+        self._send(chat_id, render_brief_markdown(brief),
+                   buttons=self._loop_buttons(brief.items[0].loop) if brief.items else None)
 
     def _render_status(self) -> str:
         counts: dict[str, int] = {}
