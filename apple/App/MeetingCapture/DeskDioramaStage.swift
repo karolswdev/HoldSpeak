@@ -4536,13 +4536,13 @@ struct DioStage: View {
     // the shared inference tail: theater → callLLM → printed card (keep/bin). Used by routes and agents.
     // `provenance` is the run lineage (input card + the agent/chain that produced it) for routed runs;
     // nil for direct lens routes (their `source` is the lineage).
-    private func runAssembled(lens: String, source: String, fullPrompt: String, provenance: RunProvenance? = nil) {
+    private func runAssembled(lens: String, source: String, fullPrompt: String, provenance: RunProvenance? = nil, profileId: String? = nil) {
         routeLensRun = lens
         let zpath = pathKey
         haptic(.heavy)
         withAnimation { routing = true }
         Task { @MainActor in
-            let result = await callLLM(fullPrompt)
+            let result = await callLLM(fullPrompt, profileId: profileId)
             withAnimation { routing = false }
             switch result {
             case .success(let raw):
@@ -4603,7 +4603,7 @@ struct DioStage: View {
         let template = a.userTemplate.isEmpty ? "{input}" : a.userTemplate
         blocks.append("[TASK]\n" + template.replacingOccurrences(of: "{input}", with: String(input.prefix(6000))))
         routeSourceId = nil
-        runAssembled(lens: a.name, source: inputTitle, fullPrompt: blocks.joined(separator: "\n\n"), provenance: provenance)
+        runAssembled(lens: a.name, source: inputTitle, fullPrompt: blocks.joined(separator: "\n\n"), provenance: provenance, profileId: a.profileId)
     }
 
     // one conversational turn — role + context + the running transcript + the new message.
@@ -4614,7 +4614,7 @@ struct DioStage: View {
             blocks.append("[CONVERSATION SO FAR]\n" + convo)
         }
         blocks.append("[USER]\n" + String(question.prefix(6000)) + "\n\nReply as \(a.name).")
-        switch await callLLM(blocks.joined(separator: "\n\n")) {
+        switch await callLLM(blocks.joined(separator: "\n\n"), profileId: a.profileId) {
         case .success(let raw):
             let c = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             return c.isEmpty ? "⚠️ The model returned nothing — try rephrasing." : c
@@ -4910,12 +4910,17 @@ struct DioStage: View {
         withAnimation { sentToast = "Saved to desk" }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { withAnimation { sentToast = nil } }
     }
-    @MainActor private func callLLM(_ prompt: String) async -> Result<String, Error> {
+    // `profileId` (an agent's assignment) resolves which runtime executes this — override → agent →
+    // active. For an on-device profile, its `modelFile` chooses the GGUF; the key (endpoint) is joined
+    // from the Keychain inside makeProvider.
+    @MainActor private func callLLM(_ prompt: String, profileId: String? = nil) async -> Result<String, Error> {
         do {
             let cfg = InferenceConfigStore.shared
+            let profile = cfg.resolveProfile(agentProfileId: profileId)
             let langModels = ModelFiles.installed().filter { $0.kind == .language }
-            let chosen = langModels.first { $0.id == cfg.localModelId } ?? langModels.first
-            let provider = try cfg.makeProvider(localModelPath: chosen?.url.path, context: 8192)
+            let wantFile = profile.modelFile.isEmpty ? cfg.localModelId : profile.modelFile
+            let chosen = langModels.first { $0.id == wantFile } ?? langModels.first
+            let provider = try cfg.makeProvider(profile: profile, localModelPath: chosen?.url.path, context: 8192)
             let text = try await provider.complete(prompt: prompt)
             return .success(text)
         } catch { return .failure(error) }

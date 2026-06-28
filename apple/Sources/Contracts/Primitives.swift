@@ -126,13 +126,14 @@ public struct Agent: Codable, Equatable, Sendable, Identifiable {
     public var kbId: String?             // grounded in this KB when set
     public var manualContext: String     // always-on pinned context
     public var useZoneContext: Bool      // also feed the current zone's meetings (per-device hint)
+    public var profileId: String?        // Phase 24 — the RuntimeProfile this agent runs on (nil = active default)
     public var createdAt: Date
     public var updatedAt: Date
 
     public init(id: String, name: String, avatar: String, role: String,
                 systemPrompt: String, userTemplate: String, tools: [String] = [],
                 kbId: String? = nil, manualContext: String = "", useZoneContext: Bool = false,
-                createdAt: Date, updatedAt: Date) {
+                profileId: String? = nil, createdAt: Date, updatedAt: Date) {
         self.id = id
         self.name = name
         self.avatar = avatar
@@ -143,6 +144,7 @@ public struct Agent: Codable, Equatable, Sendable, Identifiable {
         self.kbId = kbId
         self.manualContext = manualContext
         self.useZoneContext = useZoneContext
+        self.profileId = profileId
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }

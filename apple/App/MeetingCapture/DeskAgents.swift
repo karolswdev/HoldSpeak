@@ -21,6 +21,24 @@ struct AgentRecord: Codable, Identifiable, Equatable {
     var manualContext: String       // always-on context the user pins
     var useZoneContext: Bool        // also feed the current zone's meetings
     var kb: String                  // an optional knowledge-base name ("" = none)
+    var profileId: String = ""      // Phase 24 — the RuntimeProfile this agent runs on ("" = active default)
+
+    // Tolerant decode: persisted agents predate `profileId` (and earlier fields), so absent keys
+    // default rather than fail — a missing field must never wipe a user's saved agents.
+    private enum CodingKeys: String, CodingKey { case id, name, avatar, role, systemPrompt, userTemplate, manualContext, useZoneContext, kb, profileId }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        avatar = try c.decode(String.self, forKey: .avatar)
+        role = try c.decode(String.self, forKey: .role)
+        systemPrompt = try c.decode(String.self, forKey: .systemPrompt)
+        userTemplate = try c.decode(String.self, forKey: .userTemplate)
+        manualContext = try c.decodeIfPresent(String.self, forKey: .manualContext) ?? ""
+        useZoneContext = try c.decodeIfPresent(Bool.self, forKey: .useZoneContext) ?? false
+        kb = try c.decodeIfPresent(String.self, forKey: .kb) ?? ""
+        profileId = try c.decodeIfPresent(String.self, forKey: .profileId) ?? ""
+    }
 
     static func blank() -> AgentRecord {
         AgentRecord(id: UUID().uuidString, name: "", avatar: AgentAvatars.all.first!.id, role: "",
@@ -34,19 +52,21 @@ struct AgentRecord: Codable, Identifiable, Equatable {
         Agent(id: id, name: name, avatar: avatar, role: role, systemPrompt: systemPrompt,
               userTemplate: userTemplate, tools: [], kbId: kb.isEmpty ? nil : kb,
               manualContext: manualContext, useZoneContext: useZoneContext,
+              profileId: profileId.isEmpty ? nil : profileId,
               createdAt: now, updatedAt: now)
     }
     init(contract a: Agent) {
         self.id = a.id; self.name = a.name; self.avatar = a.avatar; self.role = a.role
         self.systemPrompt = a.systemPrompt; self.userTemplate = a.userTemplate
         self.manualContext = a.manualContext; self.useZoneContext = a.useZoneContext
-        self.kb = a.kbId ?? ""
+        self.kb = a.kbId ?? ""; self.profileId = a.profileId ?? ""
     }
     init(id: String, name: String, avatar: String, role: String, systemPrompt: String,
-         userTemplate: String, manualContext: String, useZoneContext: Bool, kb: String) {
+         userTemplate: String, manualContext: String, useZoneContext: Bool, kb: String, profileId: String = "") {
         self.id = id; self.name = name; self.avatar = avatar; self.role = role
         self.systemPrompt = systemPrompt; self.userTemplate = userTemplate
         self.manualContext = manualContext; self.useZoneContext = useZoneContext; self.kb = kb
+        self.profileId = profileId
     }
     // sync-ready envelope (carried by ChangeSet.agents)
     func synced(at: Date = Date()) -> Synced<Agent> {
@@ -417,12 +437,29 @@ struct DioAgentBuilder: View {
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
     }
 
-    // STEP 2 — make it yours: the hero, name + vibe, personality, a collapsed face picker, advanced.
+    // The model this agent runs on (per-agent override of the active default). Empty = the active
+    // profile. The gauge below reads THIS profile's window — Scout on Claude vs a local 3B differ.
+    private var runsOnSection: some View {
+        section("RUNS ON") {
+            RunsOnPicker(selectedId: $draft.profileId, allowsDefault: true, label: "Model")
+        }
+    }
+
+    /// The context window the gauge measures against: the agent's chosen profile's limit, or — when it
+    /// uses the active default — the accurate RAM-aware budget the host passed in.
+    private var effectiveLimit: Int {
+        let cfg = InferenceConfigStore.shared
+        let p = cfg.resolveProfile(agentProfileId: draft.profileId.isEmpty ? nil : draft.profileId)
+        return p.id == cfg.activeProfile.id ? contextLimit : p.contextLimit
+    }
+
+    // STEP 2 — make it yours: the hero, name + vibe, where it runs, grounding, personality, face.
     private var step2Identity: some View {
         VStack(alignment: .leading, spacing: 22) {
             heroRow
             section("NAME") { field("Name", text: $draft.name, placeholder: "e.g. Scout") }
             section("VIBE · ONE LINE") { field("Vibe", text: $draft.role, placeholder: "e.g. digs for the facts") }
+            runsOnSection
             knowsSection
             personality
             faceCollapsible
@@ -435,7 +472,7 @@ struct DioAgentBuilder: View {
     private var knowsSection: some View {
         section("GROUNDING CONTEXT") {
             Text("Stuff your agent always knows.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
-            ContextGauge(used: groundingTokens, limit: contextLimit)
+            ContextGauge(used: groundingTokens, limit: effectiveLimit)
                 .padding(11)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.04)).overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
             Text("KNOWLEDGE BASE").font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted.opacity(0.8)).padding(.top, 2)

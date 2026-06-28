@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var models: [String] = []
     @State private var localModels: [InstalledModel] = []     // installed on-device GGUF language models
     @State private var showModels = false                     // present the model manager (import/delete)
+    @State private var showProfiles = false                   // present the runtime-profiles manager (Phase 24)
     enum Field: Hashable { case url, key }
     enum FetchState: Equatable { case idle, loading, ok(Int), fail }
 
@@ -29,9 +30,18 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     label("WHERE INTELLIGENCE RUNS")
-                    if cfg.profiles.count >= 1 {
-                        // The active profile is the default for everything that isn't overridden inline.
-                        RunsOnPicker(selectedId: $cfg.activeProfileId, label: "Active profile")
+                    // The active profile is the default for everything not overridden inline — always exposed.
+                    RunsOnPicker(selectedId: $cfg.activeProfileId, label: "Active profile")
+                    Button { tactile(); showProfiles = true } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "rectangle.stack.fill").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.accent)
+                            Text("Manage profiles").font(.system(size: 13.5, weight: .heavy)).foregroundStyle(Sig.text)
+                            Text("\(cfg.profiles.count)").font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.faint)
+                            Spacer(); Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
+                        }
+                        .padding(.horizontal, 13).padding(.vertical, 11)
+                        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Sig.line, lineWidth: 1))
                     }
                     targetCard(.local, "This \(DeviceLabel.current)", "Runs on this \(DeviceLabel.current)", DeviceLabel.current == "iPhone" ? "iphone" : "ipad", Sig.localGradient)
                     if cfg.isLocal { onDeviceModelCard }
@@ -52,6 +62,7 @@ struct SettingsView: View {
         .onTapGesture { focused = nil }
         .onAppear { refreshLocalModels() }
         .sheet(isPresented: $showModels, onDismiss: { refreshLocalModels() }) { NavigationStack { ModelsView() }.preferredColorScheme(.dark) }
+        .sheet(isPresented: $showProfiles) { NavigationStack { ProfilesView() }.preferredColorScheme(.dark) }
     }
 
     private func refreshLocalModels() { localModels = ModelFiles.installed().filter { $0.kind == .language } }
