@@ -11,14 +11,13 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Platform: macOS | Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)](#platform-support)
 
-Your voice does work in two places: at the keyboard and in meetings.
-HoldSpeak covers both with one runtime on macOS and Linux. Hold a hotkey,
-speak, release, and the text lands in whatever app you are in, optionally
-rewritten by your own LLM with your project's context. Record or import a
-meeting, and it comes back as reviewable decisions, action items, and typed
-artifacts, with a follow-up panel that shows what is still open. Whisper
-runs locally; the LLM is one you run or point at. No cloud, no account, no
-telemetry.
+Hold a key and speak, and your words land in whatever app you are in,
+optionally rewritten by your own model with your project's context. Record or
+import a meeting, and it comes back as reviewable decisions, action items, and
+typed artifacts, with a follow-up panel that shows what is still open. One
+local runtime on macOS and Linux does both, for the two places a developer's
+voice does work: the keyboard and the meeting. Whisper runs locally; the LLM is
+one you run or point at. No cloud, no account, no telemetry.
 
 > **Status: 0.x, early but real.** HoldSpeak is on PyPI (`pip install holdspeak`).
 > The features are mature; APIs, config, and defaults can still change while it is
