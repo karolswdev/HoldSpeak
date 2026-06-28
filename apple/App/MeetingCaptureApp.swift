@@ -25,6 +25,9 @@ struct MeetingCaptureApp: App {
                 // screenshot run (no mic/taps needed); the real entry is the meeting list.
                 if ProcessInfo.processInfo.environment["HS_DEMO_NOTEBOOK"] != nil {
                     DemoNotebookView()
+                } else if ProcessInfo.processInfo.environment["HS_DEMO_CAPTURE"] != nil {
+                    // HSM-20-03 — the live capture canvas straight, for a compact-width screenshot run.
+                    NavigationStack { CaptureView(model: CaptureModel(), done: {}) }
                 } else if ProcessInfo.processInfo.environment["HS_CLASSIC_HOME"] != nil {
                     MeetingListView()
                         .onOpenURL { url in
@@ -1198,7 +1201,13 @@ struct LiveCaptureCanvas: View {
                                    model.bubbleDragging = false; model.bubbleDragPoint = nil
                                    return committed
                                },
-                               onSendToNotes: { model.sendToNotes(b.text) })
+                               onSendToNotes: { model.sendToNotes(b.text) },
+                               onTack: {
+                                   withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                                       model.pin(b, at: CGPoint(x: tack.midX, y: tack.midY), in: size, boardTop: pinFloor)
+                                   }
+                                   tactile(.medium)
+                               })
             }
             if !model.partial.isEmpty { LiveCaption(text: model.partial) }
             Spacer(minLength: 0)
@@ -1384,6 +1393,7 @@ struct LiveBubbleView: View {
     var onDragChanged: (CGPoint) -> Void = { _ in }
     let onDrop: (CGPoint) -> Bool          // returns whether the drop committed (else snap home)
     var onSendToNotes: () -> Void = {}
+    var onTack: () -> Void = {}             // one-thumb tack (HSM-20-03): tap-to-tack via the menu
     @State private var offset: CGSize = .zero
     @State private var lifting = false
     @State private var appeared = false
@@ -1427,6 +1437,9 @@ struct LiveBubbleView: View {
             insertion: .scale(scale: 0.8).combined(with: .opacity),
             removal: .opacity))
         .contextMenu {
+            // One-thumb tack (HSM-20-03): a phone can't always drag a bubble to the tack zone, so the
+            // menu offers a direct "mark this moment" — the same MIR-steering tack as a drop-on-target.
+            Button { onTack() } label: { Label("Tack this moment", systemImage: "pin.fill") }
             Button { onSendToNotes() } label: { Label("Add to notes", systemImage: "square.and.pencil") }
             Button { UIPasteboard.general.string = bubble.text } label: { Label("Copy", systemImage: "doc.on.doc") }
         }
