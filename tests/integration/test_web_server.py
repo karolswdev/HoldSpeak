@@ -1832,41 +1832,37 @@ class TestHistoryUiSmoke:
 
 @pytest.mark.integration
 class TestCompanionUiSmoke:
-    """Smoke checks for the AI PI Companion portal surface."""
+    """Smoke checks for the /companion surface.
 
-    def test_companion_page_contains_read_only_session_overview(self, test_client):
+    Since HS docs-in-product (commit 452eec1), /companion is a STATIC explainer of the
+    iPad-as-first-class-client (no live Alpine app), not the old read-only session
+    portal. This smoke check asserts the explainer's stable content + that it documents
+    the real client→API route mappings.
+    """
+
+    def test_companion_page_explains_ipad_as_first_class_client(self, test_client):
         response = test_client.get("/companion")
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
         html = response.text
+        # The hero + the two non-negotiables the explainer leads with.
         for marker in (
-            "AI PI Companion",
-            "Agent sessions",
-            "Selected reply target",
-            "Waiting sessions",
-            "Readiness blockers",
-            "Clear stale",
+            "Companion",
+            "first-class client of your hub",
+            "No hosted relay",
+            "Never autonomous",
+            "How to pair the iPad",
         ):
-            assert marker in html
+            assert marker in html, f"missing companion explainer marker: {marker}"
 
-        import re
-
-        match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', html)
-        assert match, "expected companion JS chunk reference"
-        js = test_client.get(match.group(1)).text
-        for marker in (
-            "/api/companion/status",
-            "/api/companion/select",
-            "/api/companion/dismiss",
-            "/api/companion/pin",
-            "/api/companion/clear-stale",
-            "ready_for_agent_reply",
-            "target_confidence",
-            "text_injection_unavailable",
-            "No reply target",
+        # It documents the real client→API route mappings (so the page stays honest as
+        # the shipped client methods evolve). A few stable ones:
+        for route in (
+            "/api/dictation/dry-run",
+            "/api/dictation/readiness",
         ):
-            assert marker in js, f"missing companion JS marker: {marker}"
+            assert route in html, f"missing companion route mapping: {route}"
 
 
 @pytest.mark.integration
