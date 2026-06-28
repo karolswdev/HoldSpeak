@@ -181,6 +181,9 @@ final class ShellModel: ObservableObject {
 struct ShellView: View {
     @StateObject private var model = ShellModel()
     @State private var tab: Tab = ShellView.initialTab
+    // HSM-20-04 — the compact (iPhone) signal: stack the Port/Token row vertically on the lane.
+    @Environment(\.horizontalSizeClass) private var hSizeClass
+    private var isLane: Bool { hSizeClass == .compact }
 
     enum Tab: String, CaseIterable { case meetings = "Meetings", dictate = "Dictate", companion = "Companion"
         var icon: String { switch self { case .meetings: "waveform"; case .dictate: "mic"; case .companion: "person.wave.2" } }
@@ -648,9 +651,16 @@ struct ShellView: View {
                 }
                 VStack(alignment: .leading, spacing: 14) {
                     field("Host", text: $model.host, placeholder: "192.168.1.x", keyboard: .URL)
-                    HStack(spacing: 12) {
-                        field("Port", text: $model.portText, placeholder: "8000", keyboard: .numberPad).frame(width: 130)
+                    // On the lane the two-up Port/Token row is cramped, so it stacks; on iPad it stays
+                    // two-up (Port fixed, Token flexible). One layout, chosen by the size class.
+                    if isLane {
+                        field("Port", text: $model.portText, placeholder: "8000", keyboard: .numberPad)
                         field("Token", text: $model.token, placeholder: "Bearer token", secure: true)
+                    } else {
+                        HStack(spacing: 12) {
+                            field("Port", text: $model.portText, placeholder: "8000", keyboard: .numberPad).frame(width: 130)
+                            field("Token", text: $model.token, placeholder: "Bearer token", secure: true)
+                        }
                     }
                     Button { Task { await model.load() } } label: {
                         Text("Connect").font(.headline).foregroundStyle(.black)

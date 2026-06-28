@@ -1,16 +1,17 @@
 # Phase 20 — One app, every size (the iPhone pass)
 
 **Status:** in progress — **follows 18 + 19** (you cannot lay out at compact width what does not
-exist yet). **20-01 (`DeskCamera`) + 20-02 (the desk lane) + 20-03 (the capture canvas) landed**
-(sim-proven); 20-04 next, 20-05 is the device gate.
+exist yet). **20-01 → 20-04 all landed sim-proven** (`DeskCamera`, the desk lane, the capture canvas,
+the forms + the hold-bar teleprompter). Only **20-05 (the device walk)** remains — plus a carried
+follow-up: the action-sheet/editor scrim → rising-sheet reframe (see "Where we are").
 
-**Last updated:** 2026-06-27 (HSM-20-02 shipped: the iPhone desk lane — a one-thumb card column
-(`laneColumn`) with a dynamic kind-filter chip rail, full-width primitive rows, an accent FAB, and
-the signature **migrating pull-out** that rises from the bottom edge on iPhone / enters from the
-right on iPad on a spring, over a transparent catcher (no scrim), egress badge riding along.
-Fixed cards clamped via `camera.cardWidth`; `positions[id]` untouched (rotation restores the
-diorama). `swift test` 381 green + iPhone/iPad sim builds green; see `evidence-story-02.md`.
-Earlier: HSM-20-01 — `DeskCamera` is the one width authority, the four strays folded in.)
+**Last updated:** 2026-06-27 (HSM-20-04 shipped: the connect Port/Token row stacks vertically on the
+lane; the iPhone dictation surface gains the **hold-bar teleprompter** — a persistent bottom-edge
+accent HOLD BAR that, on press, reflows a bottom-up teleprompter (live partial nearest the thumb, the
+`→ Mac` target + egress pill above), no dim; the live-coder cards (`DioCoderSession`/`Answer`) clamped
+via `camera.cardWidth`. meeting-capture + companion-shell sim builds green, `swift test` 381 green;
+see `evidence-story-04.md`. Earlier today: 20-01 (`DeskCamera`), 20-02 (the desk lane + migrating
+pull-out), 20-03 (the capture canvas + one-thumb tack).)
 
 **Start here:** `../HANDOVER-2026-06-27-phase20-one-app-every-size.md` — the master orientation
 doc (verified code map, the build/screenshot pipeline, the doctrine call, the hard-won lessons,
@@ -56,7 +57,7 @@ Simulator screenshots do not close a row.
 | HSM-20-01 | The `DeskCamera` foundation (one width authority + the lane helper) — **leads** | done (sim) |
 | HSM-20-02 | The desk at compact width (the lane + the migrating pull-out) | done (sim) |
 | HSM-20-03 | The capture canvas at compact width (docked recorder + wrapped chips) | done (sim) |
-| HSM-20-04 | The forms + screens at compact width (connect, editors, sheets, hold-bar teleprompter) | todo |
+| HSM-20-04 | The forms + screens at compact width (connect, editors, sheets, hold-bar teleprompter) | done (sim)¹ |
 | HSM-20-05 | On-device proof (every compact screen walked on a real iPhone) — **the gate** | todo |
 
 ## Where we are
@@ -75,9 +76,24 @@ green + iPhone/iPad sim builds green.
 recorder docks bottom by default) and added a one-thumb tap-to-tack on live bubbles + a
 `HS_DEMO_CAPTURE` screenshot seed.
 
-**Next: 20-04 (forms/screens + the hold-bar teleprompter).** 20-04 owns the
-remaining desk **scrim reframes** — the action sheets (`DioSendCard`/`DioActSheet`/`DioRunTargetSheet`/
-`DioRouteSheet`) and agent/chain editors — as the hand-built rising sheet (the "modal hells" the
-owner rejects, [[feedback_no_modals_in_world]]). **20-05 is the device gate** and the only thing that
-promotes an iPhone cell from forward-constraint to proven.
+**20-04 (forms/screens) landed:** the connect Port/Token row stacks vertically on the lane
+(`ShellView` reads `horizontalSizeClass`); the iPhone dictation surface gains the **hold-bar
+teleprompter** (`DictateView.laneBody` — a persistent bottom-edge accent HOLD BAR that, on
+press-and-hold, reflows a bottom-up teleprompter with the live partial nearest the thumb and the
+`→ Mac` target + egress pill above, no dim; release commits with a `.heavy` haptic); the live-coder
+cards (`DioCoderSession`/`Answer`) clamped via `camera.cardWidth`. `HS_DEMO_DICTATE` promoted to root
+for screenshots.
+
+**¹ Carried follow-up (the remaining 20-04 sub-item).** The dim-scrim **action sheets**
+(`DioSendCard`/`DioActSheet`/`DioRunTargetSheet`/`DioRouteSheet`) and the agent/chain editors
+(`DeskAgents`) **already fit 390pt** (their `maxWidth: 440/460/560` caps below it) but keep their
+`Color.black.opacity(...)` scrims. Reframing them as the hand-built rising sheet (the owner's
+no-modal law, [[feedback_no_modals_in_world]]) touches ~6 desk overlays and is a larger, riskier
+change best done deliberately and walked on device — so it is carried as a focused follow-up rather
+than rushed in. The primitive editing the owner most cares about (notes/KBs) is already in-world on
+the lane (20-02).
+
+**Next: 20-05 — the device walk.** It is the gate and the only thing that promotes an iPhone cell
+from forward-constraint to proven (the owner walks the cabled iPhone;
+[[feedback_verify_on_device_not_seeded]]).
 </content>

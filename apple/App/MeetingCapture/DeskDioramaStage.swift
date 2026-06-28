@@ -3483,7 +3483,7 @@ struct DioStage: View {
                 // Notes + KBs are edited IN-WORLD on the desk (see `level`), never in a dimmed modal.
                 // the live "running coder" feed — replay the session, approve / answer inline (HSM-17-03)
                 if let c = openCoderSession {
-                    DioCoderSession(session: c,
+                    DioCoderSession(session: c, maxW: camera.cardWidth(480, in: w), maxH: min(560, h - h * 0.12),
                                     onAnswer: { withAnimation { openCoderSession = nil; answeringCoder = c } },
                                     onApprove: { approveCoder(c) },
                                     onClose: { withAnimation { openCoderSession = nil } })
@@ -3491,7 +3491,7 @@ struct DioStage: View {
                 }
                 // the coder answer composer — reply into a live Claude/Codex session (HSM-17-04)
                 if let c = answeringCoder {
-                    DioCoderAnswer(session: c,
+                    DioCoderAnswer(session: c, maxW: camera.cardWidth(400, in: w),
                                    onSend: { answerCoder(c, $0) },
                                    onCancel: { withAnimation { answeringCoder = nil } })
                         .id(c.id).zIndex(150).transition(.opacity)

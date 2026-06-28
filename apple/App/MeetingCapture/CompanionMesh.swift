@@ -466,20 +466,15 @@ struct DictateView: View {
     @State private var pairing = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    // HSM-20-04 — on iPhone the dictation surface promotes to a bottom-edge HOLD BAR that reflows,
+    // on press, into a bottom-up teleprompter (the vision's signature dictation beat).
+    @Environment(\.horizontalSizeClass) private var hSizeClass
+    private var isLane: Bool { hSizeClass == .compact }
 
     var body: some View {
         ZStack {
             background
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    header
-                    reachChip
-                    waveformHero
-                    talkControls
-                    readBack
-                }
-                .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
-            }
+            if isLane { laneBody } else { regularBody }
         }
         .toolbar(.hidden, for: .navigationBar)
         .tint(Sig.accent)
@@ -492,6 +487,102 @@ struct DictateView: View {
             #endif
             Task { await model.probe() }
         }
+    }
+
+    // The iPad / wide layout — the full scrolling stage with the centered push-to-talk hero.
+    private var regularBody: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                header
+                reachChip
+                waveformHero
+                talkControls
+                readBack
+            }
+            .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
+        }
+    }
+
+    // MARK: - The iPhone hold-bar teleprompter (HSM-20-04)
+
+    /// The lane layout: the read-back scrolls above, a persistent accent HOLD BAR lives on the
+    /// bottom edge (thumb zone), and pressing it reflows a bottom-up teleprompter UP from the bar —
+    /// no dim toward the bar (the bar's elevation carries focus, a dim would be a scrim).
+    private var laneBody: some View {
+        ZStack(alignment: .bottom) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    header
+                    reachChip
+                    readBack
+                }
+                .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 180)
+                .frame(maxWidth: .infinity)
+            }
+            if model.listening || !model.partial.isEmpty {
+                teleprompter.transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            holdBar
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.82), value: model.listening)
+    }
+
+    /// The bottom-up teleprompter that rises from the hold bar while you talk: a destination + egress
+    /// pill at the top, the "→ Cursor" target line full weight, and the live "you said" partial
+    /// largest and nearest the thumb. Reads bottom-to-top so the freshest words sit by your hand.
+    private var teleprompter: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.right").font(.system(size: 11, weight: .black))
+                Text("→ \(model.macName)").font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.accent)
+                Spacer(minLength: 8)
+                egressBadge
+            }
+            Text(model.partial.isEmpty ? "Listening…" : model.partial)
+                .font(.system(size: 23, weight: .bold)).foregroundStyle(model.partial.isEmpty ? Sig.faint : Sig.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .animation(.easeOut(duration: 0.18), value: model.partial)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Sig.s1.opacity(0.96), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Sig.accent.opacity(0.35), lineWidth: 1.5))
+        .shadow(color: .black.opacity(0.45), radius: 22, y: -6)
+        .padding(.horizontal, 14).padding(.bottom, 92)   // sits just above the hold bar
+    }
+
+    /// The persistent bottom-edge hold bar: an accent-gradient capsule the thumb owns. Press-and-hold
+    /// opens the mic (reusing the model's listen/deliver), release commits with a success haptic.
+    private var holdBar: some View {
+        let armed = model.isPaired
+        return HStack(spacing: 12) {
+            Image(systemName: model.listening ? "waveform" : "mic.fill").font(.system(size: 20, weight: .bold))
+            Text(model.listening ? "Release to send" : (armed ? "Hold to talk" : "Pair your Mac to start"))
+                .font(.system(size: 17, weight: .heavy))
+            if model.listening { Spacer(minLength: 4); MicWaveform(level: CGFloat(model.level), active: true, bars: 16, height: 22).frame(width: 90, height: 22) }
+        }
+        .foregroundStyle(armed ? .black : Sig.muted)
+        .frame(maxWidth: .infinity).padding(.vertical, 18)
+        .background(armed ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(Sig.s2),
+                    in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(armed ? Color.white.opacity(0.22) : Sig.line, lineWidth: 1))
+        .scaleEffect(model.listening ? 0.98 : 1)
+        .shadow(color: model.listening ? Sig.accent.opacity(0.45) : .black.opacity(0.3), radius: model.listening ? 24 : 12, y: 6)
+        .padding(.horizontal, 14).padding(.bottom, 10)
+        .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    guard armed, !model.handsFree, !model.listening else { return }
+                    tactile(.medium); Task { await model.startListening() }
+                }
+                .onEnded { _ in
+                    guard !model.handsFree, model.listening else { return }
+                    tactile(.heavy); Task { await model.stopAndDeliver() }   // release commits
+                }
+        )
+        .simultaneousGesture(TapGesture().onEnded { if !armed { tactile(.medium); pairing = true } })
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: model.listening)
     }
 
     private var background: some View {

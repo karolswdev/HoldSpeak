@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 20
-- **Status:** todo
+- **Status:** done (sim) — connect Port/Token stack + the iPhone hold-bar teleprompter + coder-card
+  clamps shipped. The action-sheet/editor **scrim → rising-sheet reframe** is carried to a focused
+  follow-up (those sheets already fit 390pt; the reframe is a larger, riskier no-modal polish best
+  walked on device). Device walk = 20-05.
+- **Evidence:** `evidence-story-04.md`.
 - **Depends on:** 20-01 (`DeskCamera` + `laneWidth`).
 - **Unblocks:** nothing downstream.
 - **Owner:** unassigned

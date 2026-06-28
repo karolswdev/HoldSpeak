@@ -151,6 +151,8 @@ enum CoderFeedRow {
 
 struct DioCoderSession: View {
     let session: CoderSession
+    var maxW: CGFloat = 480       // clamped by the caller's DeskCamera so it fits the lane (HSM-20-04)
+    var maxH: CGFloat = 560
     let onAnswer: () -> Void
     let onApprove: () -> Void
     let onClose: () -> Void
@@ -180,7 +182,7 @@ struct DioCoderSession: View {
                 }
                 if session.state == .waiting, let q = session.question { footer(q) }
             }
-            .frame(width: 480, height: 560)
+            .frame(width: maxW, height: maxH)
             .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.ultraThinMaterial)
                 .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(DioPal.cobalt.opacity(0.05)))
                 .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(.white.opacity(0.12), lineWidth: 0.5))
@@ -313,6 +315,7 @@ struct DioCoderSession: View {
 
 struct DioCoderAnswer: View {
     let session: CoderSession
+    var maxW: CGFloat = 400       // clamped by the caller's DeskCamera so it fits the lane (HSM-20-04)
     let onSend: (String) -> Void
     let onCancel: () -> Void
     @State private var text = ""
@@ -364,7 +367,7 @@ struct DioCoderAnswer: View {
                     }.buttonStyle(.plain).opacity(text.trimmingCharacters(in: .whitespaces).isEmpty ? 0.5 : 1)
                 }
             }
-            .frame(width: 400).padding(.vertical, 8)
+            .frame(width: maxW).padding(.vertical, 8)
         }
     }
 }
