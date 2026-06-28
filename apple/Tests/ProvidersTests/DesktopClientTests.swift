@@ -142,17 +142,24 @@ final class DesktopClientTests: XCTestCase {
     // MARK: meetings remote control (HSM-12-02)
 
     func testListMeetingsDecodesServerShape() async throws {
+        // The REAL hub emits `m.started_at.isoformat()` over a NAIVE `datetime.now()`:
+        // no `Z`, no offset, microsecond fractional (e.g. 2026-06-27T18:08:21.337333).
+        // The shared decoder's `.iso8601` strategy rejects that exact shape, so a
+        // `Date?` field would throw and fail the WHOLE list decode on the live archive.
+        // `startedAt`/`endedAt` are carried as `String?` (metal-readiness); this feeds
+        // the naive shape and asserts it round-trips verbatim.
         StubProtocol.routes = ["/api/meetings": (200, Data(#"""
         {"meetings":[
-          {"id":"m1","title":"Arch review","started_at":"2026-06-20T10:00:00Z","ended_at":null,
+          {"id":"m1","title":"Arch review","started_at":"2026-06-27T18:08:21.337333","ended_at":null,
            "duration_seconds":1800,"segment_count":42,"action_item_count":3,"intel_status":"ready"},
-          {"id":"m2","title":"Standup","started_at":"2026-06-19T09:00:00Z","duration_seconds":600}
+          {"id":"m2","title":"Standup","started_at":"2026-06-19T09:00:00","duration_seconds":600}
         ],"total":2}
         """#.utf8))]
         let meetings = try await client().listMeetings()
         XCTAssertEqual(meetings.count, 2)
         XCTAssertEqual(meetings[0].id, "m1")
         XCTAssertEqual(meetings[0].title, "Arch review")
+        XCTAssertEqual(meetings[0].startedAt, "2026-06-27T18:08:21.337333")  // naive ISO survives
         XCTAssertEqual(meetings[0].actionItemCount, 3)
         XCTAssertEqual(meetings[0].intelStatus, "ready")
         XCTAssertEqual(meetings[1].id, "m2")          // second decodes with fields absent

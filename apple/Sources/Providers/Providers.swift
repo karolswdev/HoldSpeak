@@ -219,17 +219,27 @@ public struct CompanionBoardState: Sendable, Equatable {
 /// A meeting as the desktop's `GET /api/meetings` summarizes it (HSM-12-02). Decoded
 /// loosely — only `id` is required — so the client tolerates the server's payload
 /// evolving. Keys arrive snake_case and convert via the shared decoder.
+///
+/// METAL-READINESS: `startedAt`/`endedAt` are RAW ISO STRINGS, not `Date`. The hub
+/// emits `m.started_at.isoformat()` where `started_at` is a *naive/local/microsecond*
+/// `datetime.now()` with NO `Z` and NO offset (e.g. `2026-06-27T18:08:21.337333`).
+/// The shared decoder's `.iso8601` strategy REQUIRES a timezone and rejects fractional
+/// seconds, so a `Date?` here throws on a present-but-naive value (`decodeIfPresent`
+/// only skips null/absent, not malformed) — failing the WHOLE `listMeetings()` /
+/// `searchMeetings()` decode on the live archive. Carried as `String?` to match the
+/// rest of the session contracts (MeetingProposal / MeetingArtifact / Aftercare) and
+/// stay format-safe; no consumer parses these as instants today.
 public struct MeetingSummary: Sendable, Equatable, Decodable, Identifiable {
     public var id: String
     public var title: String?
-    public var startedAt: Date?
-    public var endedAt: Date?
+    public var startedAt: String?
+    public var endedAt: String?
     public var durationSeconds: Double?
     public var segmentCount: Int?
     public var actionItemCount: Int?
     public var intelStatus: String?
 
-    public init(id: String, title: String? = nil, startedAt: Date? = nil, endedAt: Date? = nil,
+    public init(id: String, title: String? = nil, startedAt: String? = nil, endedAt: String? = nil,
                 durationSeconds: Double? = nil, segmentCount: Int? = nil,
                 actionItemCount: Int? = nil, intelStatus: String? = nil) {
         self.id = id; self.title = title; self.startedAt = startedAt; self.endedAt = endedAt
