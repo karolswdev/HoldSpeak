@@ -5,17 +5,18 @@
 > next actions.** Qlippy does not merely remind. Qlippy pushes — with receipts, restraint, and a
 > ready-made next move.
 
-**Status:** Phase 0 (architecture hardening) complete — this chart IS its output. **Phases 1–7 are
-COMPLETE** — the substrate, the `/cadence` web coach, agent-blocker push, Telegram remote presence,
-the daily push brief, stale-loop escalation + EOD closure, and the **LLM next-best-action**
-(structured-JSON, fail-closed, **proven on real metal** — `.43` drafted a real issue body, validated).
-Off by default throughout. **Phase 8 (hardening + dogfood) is next — the last phase, then the program
-closes.**
+**Status: 🎉 THE PROGRAM IS COMPLETE — all 8 phases done, merged, and green.** The HoldSpeak Cadence
+Engine is a working local-first technical chief-of-staff: it projects scored loops from your meetings
+/ proposals / waiting coding agents, prepares the next move (deterministic, or LLM-drafted and
+**proven on real metal**), pushes you at a useful cadence on the CLI / `/cadence` web page / Telegram,
+applies your one-tap decisions, and keeps a telemetry-free local audit of everything it did. **Off by
+default throughout.** The only remaining buttons are the owner's: turn the master switch on, do the
+live dogfood walk, and (optionally) pair a real Telegram bot.
 
-**Last updated:** 2026-06-28 (Phase 7 shipped — the LLM next-action generator, fail-closed + gated,
-with a control-vs-treatment proof on the live `.43` Qwen; 180 cadence/web tests green. Phases 1–6: the
-substrate + web coach + agent push + Telegram + the daily brief + escalation/closeout. Program authored
-from the owner's rough design + a grounded seam map; §15 resolved below).
+**Last updated:** 2026-06-28 (Phase 8 shipped — the telemetry-free audit, the end-to-end flow test,
+the master off-switch proof, `docs/CADENCE.md`, and the dogfood Tier-C section; 205 cadence/web/doc
+tests green. **Program closed (8/8).** Authored from the owner's rough design + a grounded seam map;
+§15 resolved below).
 
 ---
 
@@ -124,7 +125,7 @@ Phase 1 leads and is fully storied. Each later phase is storied when it becomes 
 | **5 ✅** | Daily push brief | *Done.* A deterministic morning brief (`build_brief`, first-activity trigger) across CLI/web/Telegram with prepared moves; the LLM-wording-polish seam is tested + fail-closed (live wiring deferred to a real-metal follow-up). | 2 |
 | **6 ✅** | Stale-loop + EOD closure | *Done.* `escalation_severity` (nudges/age) + `build_closeout` (a recommended decision per loop) + batch-apply + kill/delegate/snooze/close semantics + a history view, across CLI/web/Telegram. | 2, 5 |
 | **7 ✅** | LLM next-best-action | *Done (real-metal proven on `.43`).* `generate_llm_next_action` (structured JSON, fail-closed to deterministic), `cluster_duplicates`, the `use_llm` gate + loop-detail wiring; prompt-injection-safe (source text is data). | 6 |
-| **8** | Hardening + dogfood | A cadence dogfood protocol + fixtures + e2e, telemetry-free local audit export, docs, and the master off-switch proven. | all |
+| **8 ✅** | Hardening + dogfood | *Done.* `export_audit` (telemetry-free local snapshot) + the e2e flow test + the master off-switch proof + `docs/CADENCE.md` + the dogfood Tier-C section. | all |
 
 **Anti-goals** (design §14): not a chatbot, not an autonomous shell executor, not a second runtime,
 not a cloud-first memory, not an MCP free-for-all, not a surveillance daemon, not a vague-reminder

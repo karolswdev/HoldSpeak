@@ -281,6 +281,10 @@ Logs are written to: {LOG_FILE}
         "closeout", help="End-of-day: every open loop with a recommended close/file/snooze/kill"
     )
     cadence_closeout_parser.add_argument("--json", action="store_true", help="Emit JSON")
+    cadence_audit_parser = cadence_subparsers.add_parser(
+        "audit", help="Telemetry-free local audit: every loop + the nudge history (JSON)"
+    )
+    cadence_audit_parser.add_argument("--out", metavar="FILE", help="Write the audit JSON to FILE")
 
     # device-psk subcommand (HS-14-03)
     device_psk_parser = subparsers.add_parser(

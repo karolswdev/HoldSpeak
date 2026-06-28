@@ -41,6 +41,12 @@ including the LLM. This page is the map. Pick a journey.
   dismissible, never acting on their own. One action pins a record so your next
   dictation can use it as context. Gated by the activity tracking toggle: off means
   no cards.
+
+- **[The Cadence Engine](./CADENCE.md)**: the local-first technical chief-of-staff.
+  It turns your meetings, pending proposals, and waiting coding agents into
+  evidence-backed nudges with a prepared next move, on the CLI, the `/cadence` web
+  page, or Telegram. Off by default. It pushes with receipts, never acts without your
+  approval, and writes a telemetry-free local audit of everything it did.
 - **[The learning loop: journal, correct, see what it learned, replay](./DICTATION_PIPELINE_GUIDE.md#12-dictation-journal-corrections--replay)**:
   the local-only loop that gets better at your voice. Fix a misfire in one tap, see
   the honest "learned from N similar" count in the "What HoldSpeak learned" digest,

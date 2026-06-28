@@ -164,6 +164,14 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
 
         return {"nudges": get_database().cadence.list_nudges(limit=limit), "egress": _LOCAL_EGRESS}
 
+    @router.get("/audit")
+    async def audit() -> dict[str, Any]:
+        """The telemetry-free local audit snapshot (CAD-8) — nothing leaves the machine."""
+        from ...cadence.audit import export_audit
+        from ...db import get_database
+
+        return export_audit(get_database())
+
     @router.get("/loops/{loop_id}")
     async def loop_detail(loop_id: str) -> dict[str, Any]:
         from ...db import get_database
