@@ -158,8 +158,10 @@ _ROADMAP_VOCAB = re.compile(
     r"\bHS-\d{1,2}(?:-\d+)?\b"    # story ids: HS-25, HS-17-05, HS-9-03
     r"|\bphase[ -]\d+\b"          # phase tags: Phase 15, phase-37, phase 9
     r"|\bPMO\b"
-    r"|the current roadmap"
-    r"|\bcloseout\b",
+    r"|the current roadmap",
+    # NOTE: "closeout" used to be banned as roadmap-only vocab, but it is now a real
+    # shipped product command (`holdspeak cadence closeout`) + an /api/cadence concept,
+    # so a user-facing doc must be free to name it. Dropped from the ban-list.
     re.IGNORECASE,
 )
 
@@ -182,7 +184,7 @@ def test_no_user_facing_doc_leaks_roadmap_vocabulary() -> None:
 
     assert not offenders, (
         "A user-facing doc leaks internal roadmap vocabulary (Phase NN / HS-NN-NN / "
-        "PMO / 'the current roadmap' / 'closeout'). User-facing docs speak in "
+        "PMO / 'the current roadmap'). User-facing docs speak in "
         "product-tense; the internal corpus (docs/internal, docs/evidence, "
         "docs/assets, pm/roadmap) is where that vocabulary belongs. Reword these in "
         "product-tense, see docs/internal/DOCS_STYLE.md:\n  " + "\n  ".join(offenders)

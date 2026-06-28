@@ -327,6 +327,39 @@ pass bar; if reality disagrees, that's a `FAIL` and a finding.
 
 ---
 
+## Tier C · The Cadence Engine (CAD-8)
+
+> Off by default. These run under the isolated sandbox `hs` (HOME=`dogfood/_home`).
+> No external side effect should ever occur without an approval.
+
+- [ ] **C-01 · Projection.** Import a meeting (or run a `say`-pipeline scenario), then
+  `hs cadence run-now`.
+  - Expect: open loops are projected from the meeting's action items + any pending
+    proposals, scored, ordered by staleness; re-running does not duplicate them.
+  - Result: ___  · Note:
+
+- [ ] **C-02 · Brief + closeout.** `hs cadence brief` then `hs cadence closeout`.
+  - Expect: the brief leads with the single highest-leverage move; the closeout lists
+    every open loop with a recommended close/file/snooze/kill/delegate.
+  - Result: ___  · Note:
+
+- [ ] **C-03 · Decisions stick.** Kill a loop, then `hs cadence run-now` again.
+  - Expect: the killed loop does NOT reappear.
+  - Result: ___  · Note:
+
+- [ ] **C-04 · No egress.** `hs cadence audit --out /tmp/audit.json`.
+  - Expect: `egress.scope = "local"`; the audit JSON is complete (loops + nudges +
+    policies) and nothing left the machine during C-01..C-03.
+  - Result: ___  · Note:
+
+- [ ] **C-05 · Master off-switch.** With `cadence.enabled = false` (default), start
+  `hs web`.
+  - Expect: no cadence thread runs; the runtime is byte-identical to a build without
+    cadence; the read commands still work on demand.
+  - Result: ___  · Note:
+
+---
+
 ## Findings
 
 Log every `FAIL` / `PARTIAL` here as you go, so the run produces a worklist:

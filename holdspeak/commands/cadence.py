@@ -37,8 +37,26 @@ def run_cadence_command(args, *, stream: Optional[TextIO] = None, db=None, confi
         return _cmd_brief(out, db, as_json=getattr(args, "json", False))
     if action == "closeout":
         return _cmd_closeout(out, db, as_json=getattr(args, "json", False))
+    if action == "audit":
+        return _cmd_audit(out, db, path=getattr(args, "out", None))
     print(f"Unknown cadence action: {action}", file=sys.stderr)
     return 2
+
+
+def _cmd_audit(out: TextIO, db, *, path: Optional[str]) -> int:
+    from ..cadence.audit import export_audit
+
+    snapshot = export_audit(db)
+    text = json.dumps(snapshot, indent=2)
+    if path:
+        from pathlib import Path
+
+        Path(path).write_text(text, encoding="utf-8")
+        print(f"Local cadence audit written to {path} "
+              f"({snapshot['totals']['loops']} loops, {len(snapshot['nudges'])} nudges).", file=out)
+    else:
+        print(text, file=out)
+    return 0
 
 
 def _cmd_closeout(out: TextIO, db, *, as_json: bool) -> int:

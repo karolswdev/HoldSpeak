@@ -74,6 +74,15 @@ def test_closeout_recommends_and_batch_applies(client):
     assert all(l["status"] == "snoozed" for l in c.get("/api/cadence/loops").json()["loops"])
 
 
+def test_audit_route_is_local_and_complete(client):
+    c, _ = client
+    c.post("/api/cadence/run-now")
+    audit = c.get("/api/cadence/audit").json()
+    assert audit["egress"]["scope"] == "local"
+    assert audit["totals"]["loops"] >= 1
+    assert "loops" in audit and "nudges" in audit and "policies" in audit
+
+
 def test_history_lists_nudges(client):
     c, db = client
     c.post("/api/cadence/run-now")
