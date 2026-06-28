@@ -1,13 +1,14 @@
 # Phase 24 — Runtime profiles (basic + advanced), in equilibrium
 
-**Status:** planned (authored 2026-06-28) — a pre-GA extension of
+**Status:** in-progress (opened 2026-06-28) — a pre-GA extension of
 [`EQUILIBRIUM.md`](../EQUILIBRIUM.md): the same "honor the contract on every surface" discipline,
 applied to *where intelligence runs*.
 
-**Last updated:** 2026-06-28 (authored from the owner's call: split the single global
-inference choice into **basic** (pick one active target) vs **advanced** (named runtime
-profiles + per-agent assignment), and bring it to desktop / iPad / iPhone / web. Grounded in
-BACKLOG entry **S**.)
+**Last updated:** 2026-06-28 (**24-01 landed.** The `RuntimeProfile` contract +
+`SyncKind.profile` + tolerant `ChangeSet` decode + the Keychain `ProfileKeyStore` + the
+legacy→profiles migration all ship, with the **never-sync-the-key invariant proven in a test**
+and a back-compat test for payloads that predate `profiles`. `swift test` 389/0; the app
+compiles with the additions. No UI yet — that's 24-02.)
 
 ## Why this phase exists
 
@@ -68,7 +69,7 @@ reads `profile.egressScope` so trust stays honest per profile.
 
 | Story | One-liner | Status |
 |-------|-----------|--------|
-| HSM-24-01 | The `RuntimeProfile` contract + `SyncKind.profile` + the Keychain key store (key never syncs) — **leads, load-bearing** | planned |
+| HSM-24-01 | The `RuntimeProfile` contract + `SyncKind.profile` + the Keychain key store (key never syncs) — **leads, load-bearing** | **done** (contract + migration + tolerant `ChangeSet` decode + `ProfileKeyStore`; never-sync invariant tested; `swift test` 389/0) |
 | HSM-24-02 | Apple **basic** config — the active-profile picker over the existing `ILLMProvider` seam | planned |
 | HSM-24-03 | Apple **advanced** config — manage the profile list + per-agent `profileId` + the gauge reads `profile.contextLimit` | planned |
 | HSM-24-04 | The desktop hub honors profiles (`web_runtime` maps a profile to its runtime) | planned |
@@ -86,6 +87,18 @@ reads `profile.egressScope` so trust stays honest per profile.
 (basic) is a near-pure refactor of `InferenceConfigStore` into "a list with one active" and must
 stay byte-identical for the single-target user. 24-03 unlocks the per-agent power (and lights up
 the gauge). 24-04/05 bring the other surfaces into parity. 24-06 is the parity gate + docs.
+
+## Where we are
+
+**Opened; the foundation is in.** 24-01 landed the load-bearing contract with zero behavior change:
+`RuntimeProfile` + `RuntimeProfileMigration` (Contracts/Primitives.swift), `SyncKind.profile` +
+`ChangeSet.profiles` with a **tolerant decoder** (any absent array → `[]`, so a surface that doesn't
+yet know `profiles` still decodes), and `ProfileKeyStore` (App-layer Keychain; the key is keyed by
+profile id with `…ThisDeviceOnly` accessibility and **never** appears on the shape or in a
+`ChangeSet`). Eight tests, including the never-sync invariant and the back-compat decode.
+
+Next: **24-02** (Apple basic) — refactor `InferenceConfigStore` into "a list of profiles + one
+active," route `makeProvider` through the active profile, and run the migration on first launch.
 
 ## Carried context
 

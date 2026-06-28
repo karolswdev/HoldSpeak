@@ -167,6 +167,66 @@ public struct Chain: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+// MARK: - RuntimeProfile (capability / synced) — a named "where intelligence runs" target (Phase 24)
+
+/// A named, reusable inference target: on-device, or any OpenAI-compatible endpoint. The app keeps a
+/// LIST of these plus one active; an `Agent` may point at one (`Agent.profileId`).
+///
+/// **Security invariant (load-bearing):** the API key is NEVER a field here and NEVER syncs. It lives
+/// in the device Keychain (or, on the hub, its secrets), referenced by `id`, and is joined to an
+/// `EndpointConfig` only at request time. Only the SHAPE below crosses the wire.
+public struct RuntimeProfile: Codable, Equatable, Sendable, Identifiable {
+    public enum Kind: String, Codable, Sendable { case onDevice, openAICompatible }
+    public var id: String
+    public var name: String
+    public var kind: Kind
+    public var modelFile: String        // onDevice: the .gguf filename ("" = first installed)
+    public var baseURL: String          // openAICompatible: the OpenAI-compatible root
+    public var model: String            // openAICompatible: the served model id
+    public var contextLimit: Int        // usable window (on-device computed at run time; endpoint declared)
+    public var requiresKey: Bool        // openAICompatible: a key is expected in the Keychain (never here)
+    public var createdAt: Date
+    public var updatedAt: Date
+
+    public init(id: String, name: String, kind: Kind, modelFile: String = "", baseURL: String = "",
+                model: String = "", contextLimit: Int = 16_384, requiresKey: Bool = false,
+                createdAt: Date, updatedAt: Date) {
+        self.id = id; self.name = name; self.kind = kind; self.modelFile = modelFile
+        self.baseURL = baseURL; self.model = model; self.contextLimit = contextLimit
+        self.requiresKey = requiresKey; self.createdAt = createdAt; self.updatedAt = updatedAt
+    }
+
+    public var isLocal: Bool { kind == .onDevice }
+    /// The endpoint host for the egress badge (nil when on-device → "local").
+    public var egressHost: String? { kind == .openAICompatible ? URL(string: baseURL)?.host : nil }
+}
+
+/// Pure mapping from the legacy single inference config (one mode + one endpoint) to a profile list
+/// plus the active id. Deterministic (takes `now`) so the one-time app migration is testable. No key
+/// flows through here — `endpointHasKey` only signals the caller to move the key into the Keychain.
+public enum RuntimeProfileMigration {
+    public static let localId = "profile.local"
+    public static let endpointId = "profile.endpoint"
+
+    public static func migrate(legacyModeIsLocal: Bool, endpointURL: String, endpointModel: String,
+                               localModelFile: String, endpointHasKey: Bool, now: Date)
+        -> (profiles: [RuntimeProfile], activeId: String) {
+        var profiles: [RuntimeProfile] = [
+            RuntimeProfile(id: localId, name: "This device", kind: .onDevice,
+                           modelFile: localModelFile, createdAt: now, updatedAt: now)
+        ]
+        let url = endpointURL.trimmingCharacters(in: .whitespaces)
+        if !url.isEmpty {
+            let host = URL(string: url)?.host ?? "endpoint"
+            profiles.append(RuntimeProfile(id: endpointId, name: host, kind: .openAICompatible,
+                                           baseURL: url, model: endpointModel, requiresKey: endpointHasKey,
+                                           createdAt: now, updatedAt: now))
+        }
+        let activeId = (!legacyModeIsLocal && !url.isEmpty) ? endpointId : localId
+        return (profiles, activeId)
+    }
+}
+
 // MARK: - WorkflowDefinition (capability / synced) — a saved Ask or graph
 //
 // RECONCILIATION (THE PRIMITIVE FRAMEWORK, tab 1) — two DISTINCT, deliberately-separate types:

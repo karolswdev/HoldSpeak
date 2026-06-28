@@ -1,6 +1,6 @@
 # HSM-24-01 — The `RuntimeProfile` contract + `SyncKind.profile` + the Keychain key store
 
-**Status:** planned — **leads, load-bearing** (every surface depends on it).
+- **Status:** done (2026-06-28) — **leads, load-bearing** (every surface depends on it). Evidence: [evidence-story-01.md](./evidence-story-01.md). `swift test` 389/0 (+8).
 
 ## Problem
 
