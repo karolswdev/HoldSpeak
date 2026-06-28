@@ -35,8 +35,25 @@ def run_cadence_command(args, *, stream: Optional[TextIO] = None, db=None, confi
         return _cmd_run_now(out, db, config, as_json=getattr(args, "json", False))
     if action == "brief":
         return _cmd_brief(out, db, as_json=getattr(args, "json", False))
+    if action == "closeout":
+        return _cmd_closeout(out, db, as_json=getattr(args, "json", False))
     print(f"Unknown cadence action: {action}", file=sys.stderr)
     return 2
+
+
+def _cmd_closeout(out: TextIO, db, *, as_json: bool) -> int:
+    from ..cadence.closeout import build_closeout, render_closeout_text
+
+    co = build_closeout(db)
+    if as_json:
+        print(json.dumps({
+            "date": co.date, "open_count": co.open_count, "summary": co.summary,
+            "recs": [{"title": r.loop.title, "action": r.action, "severity": r.severity,
+                      "reason": r.reason} for r in co.recs],
+        }, indent=2), file=out)
+        return 0
+    print(render_closeout_text(co), file=out)
+    return 0
 
 
 def _cmd_brief(out: TextIO, db, *, as_json: bool) -> int:

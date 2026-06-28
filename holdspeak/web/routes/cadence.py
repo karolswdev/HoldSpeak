@@ -104,6 +104,48 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
             "egress": _LOCAL_EGRESS,
         }
 
+    @router.get("/closeout")
+    async def closeout() -> dict[str, Any]:
+        from datetime import datetime
+
+        from ...cadence.closeout import build_closeout, escalation_severity
+        from ...db import get_database
+
+        now = datetime.now()
+        co = build_closeout(get_database(), now=now)
+        return {
+            "date": co.date,
+            "open_count": co.open_count,
+            "summary": co.summary,
+            "recs": [
+                {"loop": _loop_dict(r.loop), "severity": r.severity,
+                 "action": r.action, "reason": r.reason}
+                for r in co.recs
+            ],
+            "egress": _LOCAL_EGRESS,
+        }
+
+    @router.post("/closeout/apply")
+    async def closeout_apply(body: dict = Body(default={})) -> dict[str, Any]:
+        """Batch-apply lifecycle decisions: [{loop_id, action}]. Local only."""
+        from ...cadence.closeout import apply_decision
+        from ...db import get_database
+
+        db = get_database()
+        applied, skipped = 0, 0
+        for d in (body.get("decisions") or []):
+            if apply_decision(db, str(d.get("loop_id", "")), str(d.get("action", ""))):
+                applied += 1
+            else:
+                skipped += 1
+        return {"applied": applied, "skipped": skipped, "egress": _LOCAL_EGRESS}
+
+    @router.get("/history")
+    async def history(limit: int = 50) -> dict[str, Any]:
+        from ...db import get_database
+
+        return {"nudges": get_database().cadence.list_nudges(limit=limit), "egress": _LOCAL_EGRESS}
+
     @router.get("/loops/{loop_id}")
     async def loop_detail(loop_id: str) -> dict[str, Any]:
         from ...db import get_database

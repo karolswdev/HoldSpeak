@@ -224,6 +224,20 @@ class CadenceRepository(BaseRepository):
             )
         return nudge_id
 
+    def list_nudges(self, *, limit: int = 50) -> list[dict]:
+        """Recent nudges (the cadence history), newest first — as plain dicts."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM cadence_nudges ORDER BY created_at DESC, id DESC LIMIT ?",
+                (int(limit),),
+            ).fetchall()
+        return [
+            {"id": r["id"], "loop_id": r["loop_id"], "surface": r["surface"],
+             "severity": r["severity"], "title": r["title"], "status": r["status"],
+             "created_at": r["created_at"]}
+            for r in rows
+        ]
+
     # ── policies ───────────────────────────────────────────────────────────
     def upsert_policy(self, policy: CadencePolicy) -> str:
         policy_id = policy.id or policy.name
