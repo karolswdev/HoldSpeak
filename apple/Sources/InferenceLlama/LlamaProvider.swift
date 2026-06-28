@@ -37,6 +37,47 @@ public final class LlamaProvider: ILLMProvider, @unchecked Sendable {
         self.llm = llm
     }
 
+    /// Build a provider that picks the model's chat template from its filename — so a
+    /// downloaded/imported Gemma, Llama-3, Mistral or Qwen is prompted in its OWN format
+    /// instead of a one-size-fits-all ChatML (wrong markers = degraded output). Prefer this
+    /// over the raw init at every call site that loads a user-chosen model.
+    public static func make(modelPath: String, maxTokenCount: Int32 = 2048) throws -> LlamaProvider {
+        try LlamaProvider(modelPath: modelPath,
+                          template: autoTemplate(for: modelPath),
+                          maxTokenCount: maxTokenCount)
+    }
+
+    /// Map a GGUF filename to its chat template. Families are detected by the conventional
+    /// tokens model authors keep in their filenames; unknown ⇒ ChatML (the safe, common default).
+    public static func autoTemplate(for modelPath: String) -> Template {
+        let n = (modelPath as NSString).lastPathComponent.lowercased()
+        if n.contains("gemma")                                           { return .gemma }
+        if n.contains("qwen")                                            { return .chatML() }   // Qwen = ChatML
+        if n.contains("mistral") || n.contains("mixtral") || n.contains("nemo") { return .mistral }
+        if n.contains("phi-3") || n.contains("phi3") || n.contains("phi-4") || n.contains("phi4") { return phi }
+        if n.contains("llama-3") || n.contains("llama3") || n.contains("meta-llama-3") { return llama3 }
+        return .chatML()
+    }
+
+    /// Llama-3/3.1/3.2 header format (the bundled `.llama()` preset is Llama-**2** `[INST]`,
+    /// which is wrong for the Llama-3 line). BOS is added by the tokenizer, so no prefix here.
+    static let llama3 = Template(
+        system: ("<|start_header_id|>system<|end_header_id|>\n\n", "<|eot_id|>"),
+        user:   ("<|start_header_id|>user<|end_header_id|>\n\n", "<|eot_id|>"),
+        bot:    ("<|start_header_id|>assistant<|end_header_id|>\n\n", "<|eot_id|>"),
+        stopSequence: "<|eot_id|>",
+        systemPrompt: nil
+    )
+
+    /// Phi-3/Phi-4 turn format.
+    static let phi = Template(
+        system: ("<|system|>\n", "<|end|>\n"),
+        user:   ("<|user|>\n", "<|end|>\n"),
+        bot:    ("<|assistant|>\n", "<|end|>\n"),
+        stopSequence: "<|end|>",
+        systemPrompt: nil
+    )
+
     public func complete(prompt: String) async throws -> String {
         // One-shot completion. NOTE: LLM.swift accumulates KV context across
         // `getCompletion` calls (it's built for chat) and never clears it, so a single

@@ -209,7 +209,7 @@ final class MeetingReviewState: ObservableObject {
             availableBytes: Self.availableMemoryBytes(), modelBytes: modelBytes,
             marginBytes: 768 * 1_048_576, ceiling: Self.contextCeiling)
         do {
-            let provider = try LlamaProvider(modelPath: modelPath, maxTokenCount: Int32(context))
+            let provider = try LlamaProvider.make(modelPath: modelPath, maxTokenCount: Int32(context))
             let transcript = Transcript(meetingId: meeting.id, segments: meeting.segments,
                                         transcriptHash: "ondevice-\(meeting.segments.count)")
             let fixed = try await ArtifactCorrection.corrected(
@@ -312,9 +312,14 @@ final class MeetingReviewState: ObservableObject {
 
     static func localGGUF() -> String? {
         guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
-        return ((try? FileManager.default.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil)) ?? [])
+        let ggufs = ((try? FileManager.default.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil)) ?? [])
             .filter { $0.pathExtension.lowercased() == "gguf" }
-            .sorted { $0.lastPathComponent < $1.lastPathComponent }.first?.path
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        // Honour the model picked in Settings (persisted by InferenceConfigStore under this key);
+        // fall back to the first installed model when nothing is selected.
+        let selected = UserDefaults.standard.string(forKey: "hs.inf.localmodel") ?? ""
+        if !selected.isEmpty, let m = ggufs.first(where: { $0.lastPathComponent == selected }) { return m.path }
+        return ggufs.first?.path
     }
 }
 
@@ -645,7 +650,7 @@ struct ArtifactDetailView: View {
                         Button { showVoice = true } label: {
                             HStack(spacing: 9) {
                                 Image(systemName: "mic.badge.plus").font(.system(size: 16, weight: .bold))
-                                Text("Not right? Fix it by voice").font(.system(size: 15.5, weight: .heavy))
+                                Text("Fix it by voice").font(.system(size: 15.5, weight: .heavy))
                             }
                             .foregroundStyle(tint)
                             .frame(maxWidth: .infinity).frame(height: 54)
@@ -964,7 +969,7 @@ struct GenerationTheater: View {
             if !types.isEmpty { constellation }
             HStack(spacing: 6) {
                 Image(systemName: "lock.shield.fill").font(.system(size: 11, weight: .bold))
-                Text("Running on this iPad · no network").font(.system(size: 11, weight: .semibold))
+                Text("On-device").font(.system(size: 11, weight: .semibold))
             }
             .foregroundStyle(Sig.local)
             .padding(.horizontal, 11).padding(.vertical, 6)

@@ -344,7 +344,7 @@ struct DiagramPreview: View {
             if graph.nodes.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "scribble.variable").font(.system(size: 26)).foregroundStyle(Sig.faint)
-                    Text("Draw boxes, diamonds and arrows — the diagram builds itself.")
+                    Text("Draw boxes, diamonds, and arrows.")
                         .font(.system(size: 13)).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
                 }.frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -476,7 +476,7 @@ struct SketchToDiagramView: View {
                         if model.mermaid.isEmpty {
                             VStack(spacing: 8) {
                                 Image(systemName: "scribble.variable").font(.system(size: 26)).foregroundStyle(Sig.faint)
-                                Text("Draw boxes, diamonds and arrows — or tap Recognize with AI.")
+                                Text("Draw boxes, diamonds, and arrows.")
                                     .font(.system(size: 13)).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
                             }.frame(maxWidth: .infinity, maxHeight: .infinity)
                         } else {
@@ -570,7 +570,7 @@ struct SketchToDiagramView: View {
         switch mode {
         case .local:
             guard let p = localModelPath else { throw InferenceSettingsError.localEngineUnavailable }
-            return try LlamaProvider(modelPath: p, maxTokenCount: Int32(context))
+            return try LlamaProvider.make(modelPath: p, maxTokenCount: Int32(context))   // template auto-picked per model family
         case .homelab, .endpoint:
             guard let cfg = endpointConfig else { throw InferenceSettingsError.endpointNotConfigured }
             return OpenAIEndpointProvider(config: cfg)

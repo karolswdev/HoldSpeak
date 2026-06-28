@@ -134,7 +134,7 @@ final class ShellModel: ObservableObject {
     func previewDictation() async {
         let utterance = dictateText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !utterance.isEmpty else { return }
-        guard let c = client() else { dictateError = "Pair your Mac first."; return }
+        guard let c = client() else { dictateError = "Pair your desktop first."; return }
         dictating = true; dictateError = ""; dictateSent = false; defer { dictating = false }
         do {
             let result = try await c.dictationDryRun(utterance: utterance)
@@ -144,17 +144,17 @@ final class ShellModel: ObservableObject {
             } else {
                 dictatePreview = result
             }
-        } catch { dictatePreview = nil; dictateError = "Couldn't reach your Mac for a preview." }
+        } catch { dictatePreview = nil; dictateError = "Couldn't reach your desktop for a preview." }
     }
 
-    /// Commit the previewed text: free-type the rewritten result into the focused Mac app.
+    /// Commit the previewed text: free-type the rewritten result into the focused desktop app.
     func sendDictation() async {
         guard let c = client(), let preview = dictatePreview else { return }
         dictating = true; dictateError = ""; defer { dictating = false }
         do {
             _ = try await c.sendRemoteDictation(text: preview.finalText, target: .focused)
             dictateSent = true; dictatePreview = nil; dictateText = ""
-        } catch { dictateError = "Send failed. Is a Mac app focused?" }
+        } catch { dictateError = "Send failed. Is a desktop app focused?" }
     }
 
     // MARK: Aftercare (HSM-19-01) — the close-the-loop digest for a meeting.
@@ -349,7 +349,7 @@ struct ShellView: View {
                 .padding(11).background(Sig.s2, in: RoundedRectangle(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(art.status == "needs_review" ? Sig.warn.opacity(0.4) : Sig.line, lineWidth: 1))
             }
-            rowNote("Confidence is the model's certainty in the synthesis; the sources are where it came from. A needs-review artifact stays unsettled until you accept it.")
+            rowNote("Accept a needs-review artifact to settle it.")
         }
         .cardChrome(border: Sig.accent.opacity(0.3))
     }
@@ -415,7 +415,7 @@ struct ShellView: View {
                 }
             }
 
-            rowNote("An accepted action becomes a GitHub issue proposal you approve separately, never automatically.")
+            rowNote("Accepted actions become issue proposals you approve.")
         }
         .cardChrome(border: Sig.accent.opacity(0.3))
     }
@@ -439,7 +439,7 @@ struct ShellView: View {
             }
             let local = model.state?.local.meetings ?? []
             if local.isEmpty {
-                rowNote("No local recordings yet. Capture, transcription and inference run on-device.")
+                rowNote("No recordings yet.")
             } else {
                 ForEach(local) { m in meetingRow(m, tint: Sig.local) }
             }
@@ -457,7 +457,7 @@ struct ShellView: View {
                 if meetings.isEmpty {
                     rowNote("No meetings on the desktop yet.")
                 } else {
-                    Text("Tap a meeting for its close-the-loop digest + artifacts")
+                    Text("Tap a meeting for its digest")
                         .font(.caption2).foregroundStyle(Sig.faint)
                     ForEach(meetings) { m in
                         Button {
@@ -481,7 +481,7 @@ struct ShellView: View {
                     }
                 }
             } else {
-                rowNote("The desktop isn't reachable right now. Nothing here is blocked — your iPad's own runtime above is fully live. It reconnects on its own when the server returns.")
+                rowNote("Desktop not reachable. Your iPad runtime stays live.")
                 Button { Task { await model.load() } } label: { label("Retry", "arrow.clockwise", filled: false) }
             }
         }
@@ -492,7 +492,7 @@ struct ShellView: View {
 
     private var dictateScreen: some View {
         VStack(alignment: .leading, spacing: 14) {
-            peerHeader("DICTATE", "Watch the rewrite resolve, then send to your Mac", Sig.local, live: true)
+            peerHeader("DICTATE", "Watch the rewrite resolve, then send to your desktop", Sig.local, live: true)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("WHAT YOU'D SAY").font(.caption2.weight(.bold)).tracking(1.4).foregroundStyle(Sig.faint)
@@ -518,10 +518,10 @@ struct ShellView: View {
                     VStack(alignment: .leading, spacing: 11) {
                         HStack(spacing: 7) {
                             Image(systemName: "arrow.right.circle.fill").foregroundStyle(Sig.local)
-                            Text(destination.map { "Types into \($0)" } ?? "Types into the focused Mac app")
+                            Text(destination.map { "Types into \($0)" } ?? "Types into the focused desktop app")
                                 .font(.caption.weight(.semibold)).foregroundStyle(Sig.muted)
                             Spacer()
-                            egressChip("Local + \(model.host.isEmpty ? "your Mac" : model.host)")
+                            egressChip("Local + \(model.host.isEmpty ? "your desktop" : model.host)")
                         }
                         Text(preview.finalText).font(.title3.weight(.semibold)).foregroundStyle(Sig.text)
                             .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
@@ -540,7 +540,7 @@ struct ShellView: View {
                                 HStack(spacing: 7) {
                                     if model.dictating { ProgressView().controlSize(.mini).tint(.black) }
                                     else { Image(systemName: "paperplane.fill") }
-                                    Text("Send to your Mac")
+                                    Text("Send to your desktop")
                                 }
                                 .font(.subheadline.weight(.semibold)).foregroundStyle(.black)
                                 .frame(maxWidth: .infinity).padding(.vertical, 11)
@@ -555,13 +555,12 @@ struct ShellView: View {
                 if model.dictateSent {
                     HStack(spacing: 7) {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Sig.ok)
-                        Text("Sent to your Mac").font(.caption.weight(.semibold)).foregroundStyle(Sig.ok)
+                        Text("Sent to your desktop").font(.caption.weight(.semibold)).foregroundStyle(Sig.ok)
                     }
                 }
                 if !model.dictateError.isEmpty {
                     Text(model.dictateError).font(.caption).foregroundStyle(Sig.warn)
                 }
-                rowNote("Preview shows exactly what would type. Send free-types it into the focused Mac app, never autonomously. Speak-to-fill lands next.")
             }
             .cardChrome(border: Sig.local.opacity(0.35))
     }
@@ -594,7 +593,7 @@ struct ShellView: View {
             peerHeader("ANSWER THE CODER", "The agent's question, on your iPad", Sig.accent,
                        live: model.board.awaiting)
             if model.board.targets.isEmpty {
-                rowNote("No coder is waiting right now. When an agent in your session asks a question, it surfaces here — answer it by voice.")
+                rowNote("No coder is waiting.")
             } else {
                 ForEach(model.board.targets) { t in
                     VStack(alignment: .leading, spacing: 6) {
@@ -614,7 +613,6 @@ struct ShellView: View {
                     .overlay(RoundedRectangle(cornerRadius: 11).stroke(Sig.line, lineWidth: 1))
                 }
             }
-            rowNote("Speak your answer; it transcribes on-device and delivers into the coder — never autonomously.")
         }
         .cardChrome(border: Sig.line)
     }
@@ -646,8 +644,6 @@ struct ShellView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("COMPANION").font(.caption.weight(.bold)).tracking(2).foregroundStyle(Sig.accent)
                     Text("Point your iPad at your desktop").font(.largeTitle.bold()).foregroundStyle(Sig.text)
-                    Text("It stays a full on-device runtime — pairing just adds the server you code against.")
-                        .font(.footnote).foregroundStyle(Sig.faint)
                 }
                 VStack(alignment: .leading, spacing: 14) {
                     field("Host", text: $model.host, placeholder: "192.168.1.x", keyboard: .URL)

@@ -484,7 +484,7 @@ struct DioAgentBuilder: View {
             if showAdvanced {
                 Text("WHAT TO ASK").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted)
                 editor($draft.userTemplate, placeholder: "{input}", minH: 52)
-                Text("Use {input} for your question, or the card you route through it.")
+                Text("Use {input} for your question.")
                     .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                 Text("CONTEXT IT CARRIES").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted).padding(.top, 4)
                 editor($draft.manualContext, placeholder: "Pinned notes the agent always knows…", minH: 60)
@@ -683,7 +683,7 @@ struct DioAgentChat: View {
                     if !agent.manualContext.isEmpty { tag("Pinned notes", "note.text") }
                 }
             }
-            Text("Tip: long-press a card on the desk and pick \(agent.name) to bring it in.")
+            Text("Long-press a desk card to use \(agent.name).")
                 .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8)).multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity).padding(.top, 28)
@@ -876,7 +876,7 @@ struct DioChainSheet: View {
                         .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom)))
                         .opacity(ready ? 1 : 0.45)
                 }.buttonStyle(.plain)
-                Text("Tip: long-press a desk card and pick this chain to run it on that card.").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8))
+                Text("Long-press a desk card to run this chain.").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8))
             }
             .padding(20).frame(maxWidth: 520)
             .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Color(hex: 0x14121B)).overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
@@ -919,7 +919,7 @@ struct DioChainBuilder: View {
                         sec("NAME") { field($draft.name, "e.g. Refine") }
                         sec("THE PIPELINE · runs top to bottom") {
                             if draft.steps.isEmpty {
-                                Text("Add agents below — each one's output flows into the next.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                                Text("Add agents to the chain.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                             }
                             ForEach(Array(draft.steps.enumerated()), id: \.offset) { i, sid in
                                 if let a = agents.first(where: { $0.id == sid }) {
@@ -939,7 +939,7 @@ struct DioChainBuilder: View {
                         }
                         sec("ADD AN AGENT") {
                             if agents.isEmpty {
-                                Text("Create some agents first, then chain them here.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                                Text("Create an agent first.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                             } else {
                                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
                                     ForEach(agents) { a in

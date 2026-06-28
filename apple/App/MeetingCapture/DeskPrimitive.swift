@@ -151,7 +151,7 @@ struct ModelPrimitive: DeskPrimitive {
     var title: String { name }
     var preview: String? { "on device · ready" }
     var sections: [PrimitiveSection] {
-        [.init(label: "MODEL", tint: DioPal.cobalt, body: .text("\(name) — loaded and ready. Every meeting is summarised on this iPad; nothing leaves the device."))]
+        [.init(label: "MODEL", tint: DioPal.cobalt, body: .text("\(name) — loaded and ready."))]
     }
     var accepts: [PrimitiveKind] { [.meeting, .summary, .actions, .transcript, .topics, .note, .artifact] } // the AI core eats anything
 }
@@ -188,7 +188,7 @@ struct KBPrimitive: DeskPrimitive {
     var title: String { rec.name }
     var preview: String? { "\(rec.items) item\(rec.items == 1 ? "" : "s")" }
     var sections: [PrimitiveSection] {
-        [.init(label: "KNOWLEDGE", tint: DioPal.violet, body: .text("\(rec.items) item\(rec.items == 1 ? "" : "s") filed here. Drop a note or output on this KB to add it, then ask a grounded question cited from your own knowledge."))]
+        [.init(label: "KNOWLEDGE", tint: DioPal.violet, body: .text("\(rec.items) item\(rec.items == 1 ? "" : "s") filed here."))]
     }
     var actions: [PrimitiveAction] {
         [PrimitiveAction(label: "Rename", icon: "pencil", role: .openEditor),
@@ -214,9 +214,7 @@ struct GamePrimitive: DeskPrimitive {
     var subtitle: String { best > 0 ? "best \(best) · tap to play" : "tap to play" }
     var preview: String? { best > 0 ? "Best: \(best)" : "Tap to play" }
     var sections: [PrimitiveSection] {
-        [.init(label: "GAME", tint: DioPal.cobalt, body: .text(best > 0
-            ? "Your best is \(best). Play to beat it, then harvest the score onto your desk as a card."
-            : "A quick desk game. Play it, then harvest your score as a card you can route or file."))]
+        [.init(label: "GAME", tint: DioPal.cobalt, body: .text(best > 0 ? "Your best: \(best)." : "A quick desk game."))]
     }
     var actions: [PrimitiveAction] {
         [PrimitiveAction(label: "Play", icon: "play.fill", role: .custom("play")),
@@ -387,15 +385,15 @@ struct ConnectorPrimitive: DeskPrimitive {
     var color: Color { tint }
     var base: CGFloat { 116 }
     var title: String { name }
-    var subtitle: String { configured ? "via your Mac · \(detail)" : "tap to pair your Mac" }
-    var preview: String? { configured ? "via your Mac" : "pair your Mac" }
+    var subtitle: String { configured ? "via your desktop · \(detail)" : "tap to pair your desktop" }
+    var preview: String? { configured ? "via your desktop" : "pair your desktop" }
     var sections: [PrimitiveSection] {
         [.init(label: "CONNECTOR", tint: tint, body: .text(configured
-            ? "Sends go through your Mac (\(detail)). Drop a card here, approve it, and your Mac posts to \(name) — the credential stays on the Mac, never on this iPad."
-            : "Pair your Mac to send. Your iPad proposes; your Mac approves and posts to \(name). The iPad never holds the \(name) credential."))]
+            ? "Sends to \(name) via your desktop (\(detail))."
+            : "Pair your desktop to send to \(name)."))]
     }
     var actions: [PrimitiveAction] {
-        [PrimitiveAction(label: configured ? "Your Mac · \(detail)" : "Pair your Mac", icon: "desktopcomputer", role: .custom("connect"))]
+        [PrimitiveAction(label: configured ? "Your desktop ·\(detail)" : "Pair your desktop", icon: "desktopcomputer", role: .custom("connect"))]
     }
     var accepts: [PrimitiveKind] { configured ? [.artifact, .summary, .actions, .topics, .meeting] : [] }
 }
@@ -436,7 +434,7 @@ struct WorkflowPrimitive: DeskPrimitive {
     var subtitle: String { "a saved Ask · drop to run" }
     var preview: String? { "drop to run" }
     var sections: [PrimitiveSection] {
-        [.init(label: "WORKFLOW", tint: DioPal.violet, body: .text("A saved Ask. Drop a meeting or an output here and it runs through the AI core — no prompt to retype.")),
+        [.init(label: "WORKFLOW", tint: DioPal.violet, body: .text("A saved Ask.")),
          .init(label: "PROMPT", tint: DioPal.muted, body: .text(rec.prompt))]
     }
     var accepts: [PrimitiveKind] { [.meeting, .summary, .actions, .topics, .artifact] }

@@ -221,3 +221,31 @@ user-facing guide re-framed with why-ledes + canonical feature names + the
 humanizer voice (and the em-dash cleanup the pre-P55 corpus never had), and
 a voice drift guard. The pitch stays as honest as the product.
 *Lands on:* the Phase-51 docs hygiene lineage + the per-phase docs-story culture.
+
+---
+### R. Core AI provider (mobile / Apple on-device, iOS 27) — PARKED (toolchain-blocked)
+Apple shipped **Core AI** (the iOS/macOS 27 on-device inference runtime) + the open
+`apple/coreai-models` repo (HF→`.aimodel` export recipes + a Swift runtime) + the
+**Foundation Models** `LanguageModel`/`LanguageModelExecutor` protocol that lets a custom
+model plug into `LanguageModelSession` exactly like Apple's system model. This is the durable
+answer to the llama.cpp-xcframework treadmill: Apple owns the runtime + a maintained catalog
+(Gemma 3, Qwen2.5/3, Qwen3-MoE, Mistral, Mixtral, GPT-OSS), with ANE acceleration.
+
+**The play (NOT a rewrite):** add `CoreAIProvider: ILLMProvider` as a new Mode behind the
+existing seam, gated `@available(iOS 27)` + `#if canImport(CoreAI)`, wrapping
+`CoreAILanguageModel`/`LanguageModelSession`. llama.cpp/GGUF stays the path for iOS 17–26;
+Core AI is additive for 27+. Optionally route the app boundary through `LanguageModelSession`
+so Apple-system / PCC / cloud / Core AI all sit behind one protocol.
+
+**Why parked (do not start until cleared):**
+- **Toolchain:** needs Xcode 27 + iOS 27 SDK. We're on Xcode 26.5 / iOS 26.5 — `CoreAI.framework`
+  is not in our SDK (only `FoundationModels.framework`). Cannot compile/verify until installed.
+- **Different artifact pipeline:** Core AI runs Mac-exported `.aimodel` bundles, NOT GGUF — so the
+  in-app HF GGUF downloader feeds llama.cpp, not Core AI. Core AI needs its own `.aimodel`
+  distribution story (bundle or host exported assets).
+- **Beta risk:** `CoreAI.framework` is device-SDK-only (needs `canImport` guards), `AIModelCache`
+  cache-honoring bugs, and a reported Gemma-4-12B MPSGraph scratch-heap overflow on macOS 27 beta.
+  Not accepting PRs.
+
+*Lands on:* the existing `ILLMProvider` seam (Contracts/RuntimeCore depend on the protocol, not the
+engine) + the per-device model policy. Owner action gates the start: install Xcode 27 / iOS 27.

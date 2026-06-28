@@ -169,7 +169,7 @@ struct QueueHUD: View {
             if store.blocked > 0 {
                 HStack(spacing: 7) {
                     Image(systemName: "clock.arrow.circlepath").font(.system(size: 11, weight: .bold))
-                    Text("Blocked runs auto-resume when their model is reachable.").font(.system(size: 11, weight: .medium))
+                    Text("Resumes when the model is reachable.").font(.system(size: 11, weight: .medium))
                 }
                 .foregroundStyle(Sig.faint).padding(.horizontal, 16).padding(.bottom, 14)
             }

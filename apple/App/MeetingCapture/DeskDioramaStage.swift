@@ -82,7 +82,7 @@ struct DioSyncStatus: View {
     private var caption: String {
         switch state {
         case .idle:     return "Tap to sync"
-        case .unpaired: return "No Mac paired"
+        case .unpaired: return "No desktop paired"
         case .syncing:  return "Syncing…"
         case .synced:   return lastSyncedAt.map { "Synced · \(dioRelativeAgo($0))" } ?? "Synced"
         case .offline:  return "Offline · queued"
@@ -145,7 +145,7 @@ struct DioSyncStatus: View {
     }
 }
 
-// per-primitive sync cue — what's canonical (synced to your Mac) vs local-only / pending.
+// per-primitive sync cue — what's canonical (synced to your desktop) vs local-only / pending.
 enum PrimSyncCue: Equatable {
     case synced          // confirmed canonical on the hub (this session) — calm mint dot
     case pending         // edited locally, not yet pushed/confirmed — amber ring
@@ -154,7 +154,7 @@ enum PrimSyncCue: Equatable {
 }
 
 // A tiny, hushed corner mark on a card carrying its sync cue. A filled mint check = canonical
-// on your Mac; a hollow amber ring = pending; a quiet slashed cloud = local-only (games).
+// on your desktop; a hollow amber ring = pending; a quiet slashed cloud = local-only (games).
 struct SyncCueBadge: View {
     struct Spec { let glyph: String; let tint: Color; let filled: Bool; let breathes: Bool }
     let spec: Spec
@@ -209,7 +209,7 @@ struct DioZoneEmpty: View {
                 .frame(height: 130)
                 VStack(spacing: 7) {
                     Text("\(name) is empty").font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
-                    Text("Drag a meeting onto this zone from your desk to file it here.")
+                    Text("Drag a meeting here to file it.")
                         .font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                         .multilineTextAlignment(.center).frame(maxWidth: 300)
                 }
@@ -259,7 +259,7 @@ struct DioFirstBoot: View {
                 .frame(height: 140)
                 VStack(spacing: 6) {
                     Text("Your desk is ready").font(.system(size: 21, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
-                    Text("An empty desk, waiting for your first meeting.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                    Text("Record your first meeting.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                 }
                 .padding(.bottom, 26)
                 // the guided spine
@@ -406,7 +406,7 @@ struct DioHero: View {
                         .offset(y: -s * 0.62).transition(.scale.combined(with: .opacity))
                 }
                 // the SUBTLE per-primitive sync cue: a corner mark for what's canonical (synced to
-                // your Mac) vs local-only / pending. Hushed by design — and yields to the NEW halo.
+                // your desktop) vs local-only / pending. Hushed by design — and yields to the NEW halo.
                 if !arrived && mode != .recede, let badge = SyncCueBadge.spec(syncCue) {
                     SyncCueBadge(spec: badge).offset(x: s * 0.40, y: -s * 0.40)
                         .transition(.scale.combined(with: .opacity))
@@ -1040,7 +1040,7 @@ struct DioInlineKBCard: View {
     }
 }
 
-// THE IN-WORLD CONNECT CARD — pair your Mac FROM THE DESK (host · port · token), never a system
+// THE IN-WORLD CONNECT CARD — pair your desktop FROM THE DESK (host · port · token), never a system
 // alert and never buried behind a flag. Host + token are required for a LAN bind; a Test button
 // proves the Mac answers before you commit. Lifts on the desk like the editor cards (no scrim).
 struct DioConnectCard: View {
@@ -1073,13 +1073,13 @@ struct DioConnectCard: View {
                     Image(systemName: "laptopcomputer").font(.system(size: 18, weight: .bold)).foregroundStyle(.white)
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(paired ? "YOUR MAC" : "CONNECT YOUR MAC").font(.system(size: 11, weight: .black, design: .rounded)).tracking(1.4).foregroundStyle(tint)
+                    Text(paired ? "YOUR DESKTOP" : "CONNECT YOUR DESKTOP").font(.system(size: 11, weight: .black, design: .rounded)).tracking(1.4).foregroundStyle(tint)
                     Text("Sync + send run through it").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                 }
                 Spacer(minLength: 0)
                 Button(action: onCancel) { Image(systemName: "xmark").font(.system(size: 14, weight: .black)).foregroundStyle(DioPal.muted).frame(width: 30, height: 30).background(Circle().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
             }
-            field(label: "NAME", placeholder: "e.g. Studio Mac", text: $name, mic: true, keyboard: .default)
+            field(label: "NAME", placeholder: "e.g. Studio desktop", text: $name, mic: true, keyboard: .default)
             field(label: "HOST", placeholder: "192.168.1.13", text: $host, mic: true, keyboard: .URL, focus: $hostFocused, mono: true)
             HStack(alignment: .bottom, spacing: 12) {
                 field(label: "PORT", placeholder: "8765", text: $port, mic: false, keyboard: .numberPad, mono: true).frame(width: 96)
@@ -1151,7 +1151,7 @@ struct DioConnectCard: View {
                     #endif
                 } label: { Text("Paste").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(tint) }.buttonStyle(.plain)
             }
-            TextField("from your Mac", text: $token)
+            TextField("from your desktop", text: $token)
                 .font(.system(size: 13, weight: .bold, design: .monospaced)).foregroundStyle(DioPal.text)
                 .textFieldStyle(.plain).autocorrectionDisabled().textInputAutocapitalization(.never)
                 .lineLimit(1).truncationMode(.middle)
@@ -1500,7 +1500,7 @@ struct DioRecordModePicker: View {
             VStack(alignment: .leading, spacing: 11) {
                 Text("WHAT ARE WE CAPTURING?").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1.2).foregroundStyle(DioPal.muted)
                 choice(icon: "waveform.badge.mic", title: "Start a meeting", sub: "record & weave it on-device", tint: DioPal.accent, action: onMeeting)
-                choice(icon: "desktopcomputer", title: "Talk to the desktop", sub: "dictate straight to your Mac", tint: DioPal.cobalt, action: onDesktop)
+                choice(icon: "desktopcomputer", title: "Talk to the desktop", sub: "dictate straight to your desktop", tint: DioPal.cobalt, action: onDesktop)
             }
             .padding(15).frame(width: 296)
             .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color(hex: 0x15121C))
@@ -1929,7 +1929,7 @@ struct DioAmbientRecorder: View {
                     Text(model.transcribing ? "WEAVING" : (isDesktop ? "DICTATING" : "REC")).font(.system(size: 10, weight: .heavy, design: .rounded)).tracking(2).foregroundStyle(DioPal.text)
                     Text(timeString(model.elapsedSeconds)).font(.system(size: 11, weight: .heavy, design: .rounded).monospacedDigit()).foregroundStyle(DioPal.muted)
                 }
-                HStack(spacing: 4) { Image(systemName: isDesktop ? "desktopcomputer" : "lock.fill").font(.system(size: 8, weight: .bold)); Text(isDesktop ? "to your Mac" : "on device").font(.system(size: 9, weight: .heavy, design: .rounded)) }
+                HStack(spacing: 4) { Image(systemName: isDesktop ? "desktopcomputer" : "lock.fill").font(.system(size: 8, weight: .bold)); Text(isDesktop ? "to your desktop" : "on device").font(.system(size: 9, weight: .heavy, design: .rounded)) }
                     .foregroundStyle(isDesktop ? DioPal.cobalt : DioPal.mint)
             }
         }
@@ -2026,7 +2026,7 @@ struct DioWindowSlider: View {
                         .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
                         .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
                 }.buttonStyle(.plain)
-                Text("Runs now — your recording keeps going.").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity, alignment: .center)
+                Text("Runs now.").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity, alignment: .center)
             }
             .padding(20).frame(width: 322)
             .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color(hex: 0x15121C)).overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.12), lineWidth: 1)))
@@ -2176,7 +2176,7 @@ struct DioRecordOrb: View {
 // A pending route through an agent/chain whose "where it runs" the user is choosing —
 // on this iPad (on-device) or on the paired Mac (the hub's big model). Captured so the
 // run target sheet can fire the right path with the card's text intact.
-// The RUNS-ON choice the user can remember (Phase-15 fluid compute) — on this iPad or your Mac.
+// The RUNS-ON choice the user can remember (Phase-15 fluid compute) — on this iPad or your desktop.
 // (Named `DeskRunTarget` to avoid colliding with RuntimeCore's workflow-step `RunTarget`.)
 enum DeskRunTarget: String { case device, mac }
 
@@ -2201,7 +2201,7 @@ struct PendingHubRun: Identifiable, Equatable {
 }
 
 // WHERE IT RUNS — the Mesh RUNS-ON choice for routing a card through an agent/chain:
-// on this iPad (private, on-device) or on your Mac (its big model, LAN egress). When no
+// on this iPad (private, on-device) or on your desktop (its big model, LAN egress). When no
 // Mac is paired, the hub row is disabled with a clear "pair first" cue; on-device stays
 // the default. Premium DioPal sheet — never a flat picker.
 struct DioRunTargetSheet: View {
@@ -2234,9 +2234,9 @@ struct DioRunTargetSheet: View {
                        isDefault: preferred == .device, action: onDevice)
                 // ON YOUR MAC — the hub's big model; LAN egress; disabled when unpaired.
                 runRow(icon: "desktopcomputer", tint: Color(hex: 0xF5A524),
-                       name: "On your Mac",
-                       sub: paired ? "big model · \(peerLabel)" : "pair your Mac to use its big model",
-                       egress: .cloud("your Mac"), enabled: paired,
+                       name: "On your desktop",
+                       sub: paired ? "big model · \(peerLabel)" : "pair your desktop to use its big model",
+                       egress: .cloud("your desktop"), enabled: paired,
                        isDefault: paired && preferred == .mac, action: onHub)
                 Button(action: onCancel) {
                     Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
@@ -2389,9 +2389,9 @@ struct DioRoutingTheater: View {
 struct DioPrintedCard: View {
     let rec: OutputRecord; let egress: EgressBadge.Scope; let onKeep: () -> Void; let onBin: () -> Void
     @State private var shown = false
-    // honest provenance: a hub run reads "fresh from your Mac", anything else "from the AI core".
+    // honest provenance: a hub run reads "fresh from your desktop", anything else "from the AI core".
     private var freshLine: String {
-        if case .cloud(let t) = egress, t == "your Mac" { return "fresh from your Mac" }
+        if case .cloud(let t) = egress, t == "your desktop" { return "fresh from your desktop" }
         return "fresh from the AI core"
     }
     var body: some View {
@@ -2587,14 +2587,14 @@ struct DioActSheet: View {
                 if !configured {
                     HStack(spacing: 6) {
                         Image(systemName: "desktopcomputer").font(.system(size: 10, weight: .bold))
-                        Text("Pair your Mac to send · tap a connector tile on the desk").font(.system(size: 10.5, weight: .heavy, design: .rounded))
+                        Text("Pair your desktop to send").font(.system(size: 10.5, weight: .heavy, design: .rounded))
                     }.foregroundStyle(DioPal.muted).padding(.horizontal, 10).frame(height: 28).background(Capsule().fill(.white.opacity(0.05)))
                 }
                 Text("SEND TO").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(1.4)
                 VStack(spacing: 8) {
                     ForEach(connectors, id: \.connId) { c in
                         Button { onSend(c.connId, c.name) } label: {
-                            actRow(symbol: c.symbol, tint: c.tint, name: "Send to \(c.name)", sub: configured ? "via your Mac" : "needs your Mac", egress: .cloud(c.name))
+                            actRow(symbol: c.symbol, tint: c.tint, name: "Send to \(c.name)", sub: configured ? "via your desktop" : "needs your desktop", egress: .cloud(c.name))
                         }.buttonStyle(.plain).disabled(!configured).opacity(configured ? 1 : 0.45)
                     }
                 }
@@ -2658,7 +2658,7 @@ struct DeskHostLink {
         var body: [String: Any] = ["text": text]
         if !title.isEmpty { body["title"] = title }
         let (data, resp) = try await post("api/companion/\(target)/propose", body)
-        try Self.check(data, resp, "Your Mac refused the send.")
+        try Self.check(data, resp, "Your desktop refused the send.")
         let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]
         return (p?["id"] as? String ?? "", p?["preview"] as? String ?? text)
     }
@@ -2666,12 +2666,12 @@ struct DeskHostLink {
     func decide(target: String, id: String, approved: Bool) async throws -> (status: String, error: String?) {
         let (data, resp) = try await post("api/companion/\(target)/\(id)/decision",
                                           ["decision": approved ? "approved" : "rejected", "decided_by": "ipad-desk"])
-        try Self.check(data, resp, "Your Mac refused the decision.")
+        try Self.check(data, resp, "Your desktop refused the decision.")
         let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]
         return (p?["status"] as? String ?? "", p?["error"] as? String)
     }
     private func post(_ path: String, _ body: [String: Any]) async throws -> (Data, URLResponse) {
-        guard let u = base?.appendingPathComponent(path) else { throw HostError.message("No Mac paired.") }
+        guard let u = base?.appendingPathComponent(path) else { throw HostError.message("No desktop paired.") }
         var r = URLRequest(url: u); r.httpMethod = "POST"; r.timeoutInterval = 14
         r.setValue("application/json", forHTTPHeaderField: "Content-Type")
         auth(&r)
@@ -2803,6 +2803,11 @@ struct DioStage: View {
     @State private var openGameId: String? = nil
     @AppStorage("hs.desk.gamewin.posX") private var gameWinX: Double = 0.5
     @AppStorage("hs.desk.gamewin.posY") private var gameWinY: Double = 0.46
+    // The in-world note/KB editor is a MOVABLE window on the lane (drag its grab bar, position
+    // persists) — the same affordance as a game window, so every primitive you open can be moved.
+    @AppStorage("hs.desk.editorwin.posX") private var editorWinX: Double = 0.5
+    @AppStorage("hs.desk.editorwin.posY") private var editorWinY: Double = 0.5
+    @State private var editorDragStart: CGPoint? = nil
     @AppStorage("hs.diorama.games") private var gamesJSON = ""  // games placed on the desk as primitives
     @State private var placedGames: [GameRecord] = []
     @State private var coders: [CoderSession] = []             // HSM-17 live Claude/Codex sessions on the desk
@@ -2843,7 +2848,7 @@ struct DioStage: View {
     @State private var routeTo: CGPoint = .zero
     @State private var printed: OutputRecord? = nil
     // the egress of the CURRENT printed card — on-device routes are .local; a hub run is
-    // .cloud("your Mac"). Drives the printed card's honest egress badge (POSITIONING canon).
+    // .cloud("your desktop"). Drives the printed card's honest egress badge (POSITIONING canon).
     @State private var printedEgress: EgressBadge.Scope = .local
     @State private var routeError: String? = nil
     // connectors (the integrations half: drop an output on Slack → approve → the MAC sends).
@@ -2853,7 +2858,7 @@ struct DioStage: View {
     @AppStorage("hs.peer.token") private var peerToken = ""   // hub web auth token (LAN bind requires it)
     @AppStorage("hs.peer.name") private var peerName = ""     // friendly name for the paired Mac
     // The remembered RUNS-ON choice (Phase-15 fluid compute) — "" = unset (sensible default),
-    // "device" = on this iPad, "mac" = on your Mac. The picker still opens; it just pre-honors
+    // "device" = on this iPad, "mac" = on your desktop. The picker still opens; it just pre-honors
     // the last pick so the user isn't re-choosing every run. Falls back to on-device when unpaired.
     @AppStorage("hs.desk.runtarget") private var runTargetPref = ""
     @State private var sendSourceId: String? = nil
@@ -2901,7 +2906,7 @@ struct DioStage: View {
     @State private var editingChain: ChainRecord? = nil   // chain builder open
     @State private var editingZone: ZoneRec? = nil        // the zone style editor is open
     @State private var runChainSheet: ChainRecord? = nil  // the run/manage sheet
-    // RUN ON THE HUB (the Mesh "RUNS ON: your Mac") — routing a card through an agent/chain
+    // RUN ON THE HUB (the Mesh "RUNS ON: your desktop") — routing a card through an agent/chain
     // offers running it on the desktop hub's big model instead of on-device. The choice
     // sheet captures the pending run; the hub run lands a printed card with a cloud egress.
     @State private var pendingHubRun: PendingHubRun? = nil  // the run/where-it-runs picker is open
@@ -3049,6 +3054,10 @@ struct DioStage: View {
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width, h = geo.size.height
+            // The desk is full-bleed (.ignoresSafeArea below), so `h` is the SAFE height but every
+            // element is laid out from the PHYSICAL top/bottom. These are the real device insets
+            // (Dynamic Island / home indicator) — top/bottom chrome must clear them by hand.
+            let topInset = geo.safeAreaInsets.top, botInset = geo.safeAreaInsets.bottom
             // The one width authority — size class first, this frame's width second. Every
             // stray `w < 500` / `w >= 500` / `UIScreen.main.bounds` read folds into this.
             let camera = DeskCamera.resolve(sizeClass: hSizeClass, width: w)
@@ -3122,7 +3131,7 @@ struct DioStage: View {
                 // card column on iPhone (.lane). `positions[id]` is untouched either way, so rotating
                 // back to .wide restores the exact hand-arranged desk (HSM-20-02).
                 ForEach([pathKey], id: \.self) { _ in
-                    if camera.isLane { laneColumn(w, h) } else { level(w, h) }
+                    if camera.isLane { laneColumn(w, h, topInset, botInset) } else { level(w, h) }
                 }
                     .transition(diveTransition)
 
@@ -3131,17 +3140,35 @@ struct DioStage: View {
                 if camera.isLane, editingNote != nil || editingKB != nil {
                     Color.clear.contentShape(Rectangle()).ignoresSafeArea()
                         .onTapGesture { commitInlineEdit() }.zIndex(58)
-                    if let n = editingNote {
-                        DioInlineNoteCard(note: editingNoteBinding(n), onDone: { commitNote() }, onDelete: { deleteNote("note:\(n.id)") })
-                            .frame(width: camera.cardWidth(304, in: w))
-                            .position(clampInline(CGPoint(x: w / 2, y: h * 0.4), w, h, cardW: camera.cardWidth(304, in: w), cardH: 320))
-                            .zIndex(60).id(n.id)
-                    } else if let k = editingKB {
-                        DioInlineKBCard(kb: editingKBBinding(k), onDone: { commitKB() }, onDelete: { deleteKB("kb:\(k.id)") })
-                            .frame(width: camera.cardWidth(288, in: w))
-                            .position(clampInline(CGPoint(x: w / 2, y: h * 0.4), w, h, cardW: camera.cardWidth(288, in: w), cardH: 170))
-                            .zIndex(60).id(k.id)
+                    let isNote = editingNote != nil
+                    let cardW = camera.cardWidth(isNote ? 304 : 288, in: w)
+                    let cardH: CGFloat = isNote ? 320 : 170
+                    let pin = editorWinPin(w, h, cardW: cardW, cardH: cardH + 30)
+                    VStack(spacing: 0) {
+                        // grab bar — drag the window anywhere, the spot persists (like a game window)
+                        ZStack {
+                            Capsule().fill(.white.opacity(0.10)).frame(width: 60, height: 22)
+                            Capsule().fill(.white.opacity(0.55)).frame(width: 38, height: 5)
+                        }
+                            .frame(maxWidth: .infinity).frame(height: 30).contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(coordinateSpace: .global)
+                                    .onChanged { v in
+                                        if editorDragStart == nil { editorDragStart = pin }
+                                        editorWinX = Double((editorDragStart!.x + v.translation.width) / w)
+                                        editorWinY = Double((editorDragStart!.y + v.translation.height) / h)
+                                    }
+                                    .onEnded { _ in editorDragStart = nil }
+                            )
+                        if let n = editingNote {
+                            DioInlineNoteCard(note: editingNoteBinding(n), onDone: { commitNote() }, onDelete: { deleteNote("note:\(n.id)") }).id(n.id)
+                        } else if let k = editingKB {
+                            DioInlineKBCard(kb: editingKBBinding(k), onDone: { commitKB() }, onDelete: { deleteKB("kb:\(k.id)") }).id(k.id)
+                        }
                     }
+                    .frame(width: cardW)
+                    .position(pin)
+                    .zIndex(60)
                 }
 
                 // the live lasso rectangle while dragging on empty desk
@@ -3203,7 +3230,7 @@ struct DioStage: View {
                         Image(systemName: "gearshape.fill").font(.system(size: 16, weight: .bold)).foregroundStyle(DioPal.text.opacity(0.85))
                             .frame(width: 42, height: 42).background(Circle().fill(.white.opacity(0.08)).overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1)))
                     }.buttonStyle(.plain)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(.top, h * 0.045).padding(.leading, 18).zIndex(70)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(.top, topInset + 8).padding(.leading, 18).zIndex(70)
                 }
                 // THE SYNC STATUS — port your primitives to/from the paired Mac (hub), FELT.
                 // A premium ambient pill that wears the live state (syncing / synced·"2m ago" /
@@ -3221,12 +3248,12 @@ struct DioStage: View {
                                 }.buttonStyle(.plain)
                             }
                         } else {
-                            // Unpaired: an inviting "Connect your Mac" pill — the front-door pairing entry
+                            // Unpaired: an inviting "Connect your desktop" pill — the front-door pairing entry
                             // (was unreachable on the desk; pairing lived behind the classic home).
                             Button { haptic(.medium); withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { connecting = true } } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "laptopcomputer.and.arrow.down").font(.system(size: 13, weight: .bold))
-                                    Text("Connect your Mac").font(.system(size: 13, weight: .heavy, design: .rounded))
+                                    Text("Connect your desktop").font(.system(size: 13, weight: .heavy, design: .rounded))
                                 }
                                 .foregroundStyle(DioPal.cobalt).padding(.horizontal, 14).frame(height: 38)
                                 .background(Capsule().fill(DioPal.cobalt.opacity(0.12)).overlay(Capsule().strokeBorder(DioPal.cobalt.opacity(0.4), lineWidth: 1.2)))
@@ -3234,15 +3261,17 @@ struct DioStage: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                    .padding(.top, h * 0.045).padding(.leading, 18 + 50).zIndex(70)
+                    .padding(.top, topInset + 8).padding(.leading, 18 + 50).zIndex(70)
                     .transition(.scale.combined(with: .opacity))
                 }
                 // THE RAIL — Agents · Chains · Play. On iPad it sits open at the right; on a phone
                 // (compact) it collapses behind a slim edge tab so it never covers the canvas.
-                if landed && selected == nil && summonSource == nil && !capturing && openAgent == nil
+                if landed && selected == nil && summonSource == nil && openAgent == nil
                     && editingAgent == nil && editingChain == nil && runChainSheet == nil && chainRelay == nil
                     && openGameId == nil && !arkadeOpen && connecting == false
                     && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet && !firstRun {
+                    // NB: the rail (Agents · Chains · Play) stays available DURING a meeting — recording
+                    // and playing/answering are not mutually exclusive (owner: the phone can do both).
                     let compact = camera.railCollapses
                     if compact && !railOpen {
                         // the collapsed handle — tap to slide the rail in
@@ -3331,7 +3360,7 @@ struct DioStage: View {
                         VStack(spacing: 6) {
                             Image(systemName: "tray").font(.system(size: 26)).foregroundStyle(DioPal.muted)
                             Text("No tool can take this yet").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                            Text("Add a model in Settings, or pair your Mac for connectors.").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).multilineTextAlignment(.center)
+                            Text("Add a model in Settings.").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).multilineTextAlignment(.center)
                         }.padding(18).background(RoundedRectangle(cornerRadius: 18).fill(.black.opacity(0.8)))
                         .frame(maxWidth: 280).position(x: w / 2, y: max(140, summonAt.y - 150)).zIndex(121)
                     } else {
@@ -3374,7 +3403,7 @@ struct DioStage: View {
                         .overlay(alignment: .top) {
                             if lane { Capsule().fill(.white.opacity(0.32)).frame(width: 46, height: 5).padding(.top, 9) }
                         }
-                        .padding(.vertical, lane ? 0 : 22).padding(.trailing, lane ? 0 : 16)
+                        .padding(.top, lane ? 0 : 22).padding(.bottom, lane ? botInset : 22).padding(.trailing, lane ? 0 : 16)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: lane ? .bottom : .trailing)
                         .transition(.move(edge: lane ? .bottom : .trailing).combined(with: .opacity))
                         .animation(dockSpring, value: lane).zIndex(60)
@@ -3383,7 +3412,7 @@ struct DioStage: View {
                 if !path.isEmpty && selected == nil && !showRouteSheet && !routing && printed == nil && !showSendCard {
                     DioBackBar(crumbs: crumbs(), onBack: { climbOut() }, onJump: { jump(to: $0) })
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                        .padding(.top, h * 0.045).zIndex(100)
+                        .padding(.top, topInset + 8).zIndex(100)
                 }
 
                 // the keystone routing flow: sheet → theater → printed card (keep/bin)
@@ -3401,10 +3430,10 @@ struct DioStage: View {
                 if let rec = printed {
                     DioPrintedCard(rec: rec, egress: printedEgress, onKeep: { keepPrinted() }, onBin: { binPrinted() }).zIndex(130)
                 }
-                // WHERE IT RUNS — the run-target picker for an agent/chain route (on-device vs your Mac).
+                // WHERE IT RUNS — the run-target picker for an agent/chain route (on-device vs your desktop).
                 if let run = pendingHubRun {
                     DioRunTargetSheet(run: run, paired: hostLink != nil,
-                                      peerLabel: peerHost.isEmpty ? "your Mac" : peerHost,
+                                      peerLabel: peerHost.isEmpty ? "your desktop" : peerHost,
                                       preferred: preferredRunTarget,
                                       remembered: DeskRunTarget(rawValue: runTargetPref) != nil,
                                       onDevice: { runOnDevice(run) },
@@ -3516,7 +3545,7 @@ struct DioStage: View {
                 if let t = sentToast {
                     HStack(spacing: 7) { Image(systemName: "checkmark.circle.fill"); Text(t).font(.system(size: 13, weight: .heavy, design: .rounded)) }
                         .foregroundStyle(.white).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(DioPal.mint.opacity(0.92)))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top).padding(.top, h * 0.04)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top).padding(.top, topInset + 8)
                         .transition(.move(edge: .top).combined(with: .opacity)).zIndex(200)
                 }
             }
@@ -3608,7 +3637,7 @@ struct DioStage: View {
                     switch sv {
                     case "syncing": syncing = true
                     case "offline": syncState = .offline
-                    case "error":   syncState = .error("Couldn’t reach your Mac")
+                    case "error":   syncState = .error("Couldn’t reach your desktop")
                     case "pull":
                         // a remote-authored note arrives on the next pull → NEW-arrival treatment
                         syncState = .synced
@@ -3688,7 +3717,7 @@ struct DioStage: View {
                     if ag == "builder" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { editingAgent = AgentRecord.blank() } } }
                     if ag == "chainbuild" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { editingChain = ChainRecord(id: "newc", name: "Refine", steps: ["seed1", "seed3"]) } } }
                     if ag == "chainrun" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { runChainSheet = chains.first } } }
-                    // the WHERE-IT-RUNS picker (on-device vs your Mac) — seeded paired so the hub row is live.
+                    // the WHERE-IT-RUNS picker (on-device vs your desktop) — seeded paired so the hub row is live.
                     if ag == "runtarget" || ag == "runtarget-unpaired" {
                         if ag == "runtarget" { peerHost = "192.168.1.43"; peerPort = "8080" }
                         else { peerHost = ""; peerPort = "8000" }   // unpaired → hub row disabled with a cue
@@ -3698,14 +3727,14 @@ struct DioStage: View {
                                                                           inputId: "mtg.q3", inputTitle: "Q3 kickoff") }
                         }
                     }
-                    // a hub run's RESULT — the printed card with the cloud · your Mac egress badge.
+                    // a hub run's RESULT — the printed card with the cloud · your desktop egress badge.
                     if ag == "hubresult" {
                         peerHost = "192.168.1.43"; peerPort = "8080"
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                            printedEgress = .cloud("your Mac")
+                            printedEgress = .cloud("your desktop")
                             withAnimation { printed = OutputRecord(id: "hubdemo", title: "Scout",
                                 body: "Three concrete facts: the mesh-sync approval contract is the riskiest piece, the air-gapped proof is due Friday, and the egress badge copy still has no owner.",
-                                source: "Q3 kickoff", lens: "Agent · your Mac", path: "",
+                                source: "Q3 kickoff", lens: "Agent · your desktop", path: "",
                                 provenance: RunProvenance(sourceCardId: "mtg.q3", sourceCardTitle: "Q3 kickoff",
                                                           viaId: "seed1", viaName: "Scout", viaKind: "agent")) }
                         }
@@ -3747,7 +3776,7 @@ struct DioStage: View {
                 TextField("Tool name (e.g. Risks, Brief)", text: $toolName)
                 Button("Cancel", role: .cancel) { routeSourceId = nil }
                 Button("Save") { saveTool(); routeSourceId = nil }
-            } message: { Text("It becomes a tile on your desk. Drop a meeting or output on it to run this Ask again — no retyping.") }
+            } message: { Text("Becomes a reusable tile on your desk.") }
             .alert("New zone", isPresented: $namingZone) {
                 TextField("Name", text: $newZoneName)
                 Button("Cancel", role: .cancel) { newZoneName = "" }
@@ -3757,7 +3786,7 @@ struct DioStage: View {
                 TextField("Name", text: $newKBName)
                 Button("Cancel", role: .cancel) { newKBName = "" }
                 Button("Create") { createKB(newKBName); newKBName = "" }
-            } message: { Text("A typed container you drop notes and outputs into, then ask grounded questions.") }
+            } message: { Text("A container for notes you can ask over.") }
             .sheet(isPresented: Binding(get: { openMeeting != nil }, set: { if !$0 { openMeeting = nil } })) {
                 if let m = openMeeting { NavigationStack { MeetingDetailView(meeting: m) }.preferredColorScheme(.dark) }
             }
@@ -3805,7 +3834,7 @@ struct DioStage: View {
     /// desk shows has a row here; zones are divable rows; the chip rail filters by kind. Tapping a
     /// row is identical to tapping its canvas primitive (notes/KBs edit in-world; everything else
     /// opens the pull-out, which rises from the bottom edge on the lane).
-    @ViewBuilder private func laneColumn(_ w: CGFloat, _ h: CGFloat) -> some View {
+    @ViewBuilder private func laneColumn(_ w: CGFloat, _ h: CGFloat, _ topInset: CGFloat, _ botInset: CGFloat) -> some View {
         let zs = childZones()
         let prims = members()
         let buckets = laneBuckets(prims)
@@ -3838,10 +3867,10 @@ struct DioStage: View {
                         DioLaneRow(glyph: p.glyph, tint: p.color, symbol: p.isSymbol, title: p.title,
                                    badge: p.kind.badge, subtitle: p.subtitle, arrived: arrivedIds.contains(p.id)) { tapPrimitive(p) }
                     }
-                }.padding(.horizontal, 16).padding(.top, 2).padding(.bottom, 132)
+                }.padding(.horizontal, 16).padding(.top, 2).padding(.bottom, 132 + botInset)
             }
         }
-        .padding(.top, h * 0.115)   // clear the top-left gear + connect/sync chrome
+        .padding(.top, topInset + 54)   // clear the Dynamic Island + the top-left gear/connect/sync chrome
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
@@ -3931,6 +3960,11 @@ struct DioStage: View {
         let x = min(max(p.x, cardW / 2 + pad), w - cardW / 2 - pad)
         let y = min(max(p.y, cardH / 2 + pad), max(cardH / 2 + pad, h * 0.46))
         return CGPoint(x: x, y: y)
+    }
+    /// The persisted, clamped centre for the movable in-world editor window (note/KB) on the lane.
+    private func editorWinPin(_ w: CGFloat, _ h: CGFloat, cardW: CGFloat, cardH: CGFloat) -> CGPoint {
+        CGPoint(x: min(max(CGFloat(editorWinX) * w, cardW / 2 + 8), w - cardW / 2 - 8),
+                y: min(max(CGFloat(editorWinY) * h, cardH / 2 + 30), h - cardH / 2 - 8))
     }
     /// Tap a desk card: notes + KBs flip to IN-WORLD edit in place; a live coder opens its feed;
     /// everything else opens its pullout (select).
@@ -4373,7 +4407,7 @@ struct DioStage: View {
         case .agent:                                            // a tailored agent → answer grounded in the card
             guard let ap = target as? AgentPrimitive,
                   let src = members().first(where: { $0.id == sourceId }) else { break }
-            // offer WHERE it runs (on-device vs your Mac's big model) — on-device stays default.
+            // offer WHERE it runs (on-device vs your desktop's big model) — on-device stays default.
             offerRunTarget(.init(kind: .agent(ap.rec), input: src.routableText, inputId: src.id, inputTitle: src.title))
         case .chain:                                            // a crew → run the card through each agent in order
             guard let cp = target as? ChainPrimitive,
@@ -4425,14 +4459,14 @@ struct DioStage: View {
     }
     private func sendNow(title: String, text: String) {
         guard let link = hostLink else {
-            withAnimation { showSendCard = false }; sendOverride = nil; routeError = "Pair your Mac first — tap the \(sendTargetName) tile."; return
+            withAnimation { showSendCard = false }; sendOverride = nil; routeError = "Pair your desktop first — tap the \(sendTargetName) tile."; return
         }
         sending = true
         let target = sendTargetName
         Task { @MainActor in
             if await link.reachable() == false {
                 sending = false; withAnimation { showSendCard = false }; sendOverride = nil
-                routeError = "Your Mac isn’t reachable. Wake it and make sure it’s on the same network."
+                routeError = "Your desktop isn’t reachable. Wake it and make sure it’s on the same network."
                 return
             }
             do {
@@ -4444,14 +4478,14 @@ struct DioStage: View {
                     #if canImport(UIKit)
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
                     #endif
-                    toast("Sent to \(target) via your Mac")
+                    toast("Sent to \(target) via your desktop")
                 } else {
                     routeError = decision.error ?? "\(target) send didn’t complete (status: \(decision.status))."
                 }
             } catch let DeskHostLink.HostError.message(m) {
                 sending = false; withAnimation { showSendCard = false }; sendOverride = nil; routeError = m
             } catch {
-                sending = false; withAnimation { showSendCard = false }; sendOverride = nil; routeError = "Couldn’t reach your Mac."
+                sending = false; withAnimation { showSendCard = false }; sendOverride = nil; routeError = "Couldn’t reach your desktop."
             }
         }
     }
@@ -4594,7 +4628,7 @@ struct DioStage: View {
             }
         }
     }
-    // MARK: - Run on the hub (the Mesh "RUNS ON: your Mac")
+    // MARK: - Run on the hub (the Mesh "RUNS ON: your desktop")
 
     /// A built `HTTPDesktopClient` for the paired peer, or nil when unpaired/malformed.
     /// Reuses the same host/port the desk already pairs against (`hs.peer.*`); the hub
@@ -4608,7 +4642,7 @@ struct DioStage: View {
     }
 
     /// The remembered RUN-ON choice, sanity-clamped to what's actually possible right now:
-    /// honors the last pick when valid; otherwise on-device. "On your Mac" is only sensible
+    /// honors the last pick when valid; otherwise on-device. "On your desktop" is only sensible
     /// when paired — an unpaired desk always defaults to on-device regardless of the stored pref.
     private var preferredRunTarget: DeskRunTarget {
         if hostLink != nil, DeskRunTarget(rawValue: runTargetPref) == .mac { return .mac }
@@ -4620,7 +4654,7 @@ struct DioStage: View {
     private func rememberRunTarget(_ t: DeskRunTarget) { runTargetPref = t.rawValue }
 
     /// Open the where-it-runs picker for a routed agent/chain. The picker pre-highlights the
-    /// remembered choice (on-device by default / when unpaired); "your Mac" is offered when
+    /// remembered choice (on-device by default / when unpaired); "your desktop" is offered when
     /// paired, disabled (with a cue) when not.
     private func offerRunTarget(_ run: PendingHubRun) {
         haptic(.medium)
@@ -4637,14 +4671,14 @@ struct DioStage: View {
         }
     }
 
-    /// The user picked "your Mac" — run the agent/chain on the desktop hub's big model
+    /// The user picked "your desktop" — run the agent/chain on the desktop hub's big model
     /// via `HTTPDesktopClient`, land the result as a printed card with a CLOUD egress
     /// badge (it ran on the Mac, not on-device). Errors surface honestly — never silent.
     private func runOnHub(_ run: PendingHubRun) {
         rememberRunTarget(.mac)
         withAnimation { pendingHubRun = nil }
         guard let client = desktopClient else {
-            routeError = "Pair your Mac first to run on its big model."
+            routeError = "Pair your desktop first to run on its big model."
             return
         }
         let input = String(run.input.prefix(8000))
@@ -4669,12 +4703,12 @@ struct DioStage: View {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     printed = OutputRecord(id: UUID().uuidString,
                                            title: title,
-                                           body: clean.isEmpty ? "(your Mac returned nothing)" : clean,
+                                           body: clean.isEmpty ? "(your desktop returned nothing)" : clean,
                                            source: source,
-                                           lens: run.isChain ? "Chain · your Mac" : "Agent · your Mac",
+                                           lens: run.isChain ? "Chain · your desktop" : "Agent · your desktop",
                                            path: zpath,
                                            provenance: run.provenance)
-                    printedEgress = .cloud("your Mac")
+                    printedEgress = .cloud("your desktop")
                 }
                 selectedSet = []
             } catch {
@@ -4689,14 +4723,14 @@ struct DioStage: View {
     private func hubRunError(_ error: Error) -> String {
         if let e = error as? HTTPDesktopClient.DesktopClientError {
             switch e {
-            case .http(502), .http(503): return "Your Mac has no model loaded — start the desktop runtime and try again."
-            case .http(404): return "That agent or crew isn’t on your Mac yet — sync first, then run on the hub."
-            case .http(let code): return "Your Mac refused the run (status \(code))."
-            case .malformed: return "Your Mac sent back something the desk couldn’t read."
+            case .http(502), .http(503): return "Your desktop has no model loaded — start the desktop runtime and try again."
+            case .http(404): return "That agent or crew isn’t on your desktop yet — sync first, then run on the hub."
+            case .http(let code): return "Your desktop refused the run (status \(code))."
+            case .malformed: return "Your desktop sent back something the desk couldn’t read."
             }
         }
-        if error is URLError { return "Your Mac isn’t reachable. Wake it and make sure it’s on the same network." }
-        return "Couldn’t run on your Mac."
+        if error is URLError { return "Your desktop isn’t reachable. Wake it and make sure it’s on the same network." }
+        return "Couldn’t run on your desktop."
     }
 
     private func saveChain(_ rec: ChainRecord) {
@@ -4822,9 +4856,9 @@ struct DioStage: View {
                 }
             } else if outcome.pendingAfter > 0 {
                 syncState = .offline
-                lastSyncSummary = "Offline · queued for your Mac"
+                lastSyncSummary = "Offline · queued for your desktop"
             } else {
-                syncState = .error("Couldn’t reach your Mac")
+                syncState = .error("Couldn’t reach your desktop")
                 lastSyncSummary = nil
             }
             if let s = lastSyncSummary { toast(s) }
