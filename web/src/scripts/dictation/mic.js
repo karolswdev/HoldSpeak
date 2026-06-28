@@ -173,17 +173,10 @@ function onRecordingStopped() {
     "is-ready",
   );
 
-  // Focus the transcript field so the next step (confirm the words) is obvious.
-  // We never auto-fill it: nothing transcribed your voice, so claiming a
-  // transcript would be dishonest. The user owns the words.
-  const ta = el("dry-utterance");
-  if (ta) {
-    try {
-      ta.focus({ preventScroll: false });
-    } catch {
-      ta.focus();
-    }
-  }
+  // We never auto-fill the transcript field: nothing transcribed your voice, so claiming a
+  // transcript would be dishonest. The user owns the words. We also never programmatically
+  // focus it: the dictation flow does not steal focus (a sacred invariant, enforced by
+  // test_dictation_moment_of_truth). The status copy points the user to the next step instead.
 }
 
 function onRecordClick() {
@@ -195,7 +188,6 @@ function onReviewRun() {
   const ta = el("dry-utterance");
   if (ta && !ta.value.trim()) {
     setStatus("Write what you said in the box first, then run the preview.", "is-error");
-    ta.focus();
     return;
   }
   runDryRun();
