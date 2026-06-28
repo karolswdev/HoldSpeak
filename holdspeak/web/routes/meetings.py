@@ -13,6 +13,7 @@ module-level `get_database()` directly, exactly as before.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Any, Callable, Optional
 
@@ -42,6 +43,12 @@ from ..runtime_support import _UnknownDeviceError, _meeting_callback_payload, er
 from ..context import WebContext
 
 log = get_logger("web.routes.meetings")
+
+# A companion-supplied GitHub repo must be `owner/name` — same shape the host
+# config path validates (system.py `_GITHUB_REPO_RE`). A malformed repo from an
+# iPad would otherwise land in the proposal payload and the `gh issue create`
+# argv unchecked.
+_COMPANION_GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
 
 # HSM-14: the runner the companion GitHub connector uses for `gh issue create`.
 # None = production `subprocess.run` (the host's local, authenticated `gh`); tests
@@ -1397,6 +1404,11 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         if not repo:
             return JSONResponse(
                 {"success": False, "error": "No GitHub repo (set companion_github_repo on the host, or pass repo)"},
+                status_code=400,
+            )
+        if not _COMPANION_GITHUB_REPO_RE.match(repo):
+            return JSONResponse(
+                {"success": False, "error": "repo must be of the form owner/name"},
                 status_code=400,
             )
         try:
