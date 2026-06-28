@@ -1,6 +1,6 @@
 # CAD-1-06 — Unit/integration tests + the no-side-effects guard
 
-- **Program:** cadence-engine · **Phase:** 1 · **Status:** todo — locks the phase's behavior.
+- **Program:** cadence-engine · **Phase:** 1 · **Status:** done (built + tested; CI green) — locks the phase's behavior.
 - **Depends on:** CAD-1-01..05.
 
 ## Problem

@@ -126,6 +126,7 @@ def _dictation_journal_repo():
 
 
 from .runtime.activity import RuntimeActivityMixin
+from .runtime.cadence import CadenceMixin
 from .runtime.device_glue import DeviceGlueMixin
 from .runtime.dictation_capture import DictationCaptureMixin
 from .runtime.meeting_glue import MeetingGlueMixin
@@ -144,6 +145,7 @@ class WebRuntime(
     DictationCaptureMixin,
     WakeWordGlueMixin,
     DeviceGlueMixin,
+    CadenceMixin,
 ):
     """Web-first runtime: owns the web server, hotkey/device capture, the
     meeting session, and the MIR plugin pipeline.
@@ -280,6 +282,8 @@ class WebRuntime(
             log.warning(f"plugin pack discovery failed: {_pack_err}")
 
         self.plugin_queue_thread: Optional[threading.Thread] = None
+        self.cadence_thread: Optional[threading.Thread] = None  # CAD-1-04 (off by default)
+        self._cadence_service_obj = None
 
         try:
             self.typer: Optional[TextTyper] = TextTyper()
@@ -480,6 +484,16 @@ class WebRuntime(
             daemon=True,
         )
         self.plugin_queue_thread.start()
+        # The Cadence Engine tick — OFF BY DEFAULT (CAD-1-04). The thread starts only
+        # when the user has opted in; otherwise the runtime is byte-identical to a
+        # build without cadence.
+        if self._cadence_enabled():
+            self.cadence_thread = threading.Thread(
+                target=self._cadence_loop,
+                name="HoldSpeakCadenceEngine",
+                daemon=True,
+            )
+            self.cadence_thread.start()
         self._warm_transcriber_in_background()
 
         try:
@@ -563,6 +577,8 @@ class WebRuntime(
                     log.debug(f"Desktop presence close failed: {exc}")
             if self.plugin_queue_thread is not None:
                 self.plugin_queue_thread.join(timeout=2.0)
+            if self.cadence_thread is not None:
+                self.cadence_thread.join(timeout=2.0)
 
 
 def run_web_runtime(

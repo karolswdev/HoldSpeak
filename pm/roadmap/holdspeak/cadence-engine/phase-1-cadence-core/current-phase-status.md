@@ -1,9 +1,10 @@
 # Cadence Phase 1 — Cadence core
 
-**Status:** planned (lead phase, fully storied). **Start here:** `../README.md` (the program chart —
+**Status:** done (sim/local-proven; CI green). **Start here:** `../README.md` (the program chart —
 the trust boundary, the resolved architecture decisions, and the verified seam map).
 
-**Last updated:** 2026-06-28 (authored).
+**Last updated:** 2026-06-28 (Phase 1 complete: all six stories built + tested; the substrate
+projects scored loops from meetings + pending proposals, off by default, no external side effects).
 
 ## Objective
 
@@ -35,26 +36,35 @@ idempotency, the scoring, and the off-switch right here and the rest is surfaces
 | ID | Title | Status |
 |----|-------|--------|
 | CAD-1-01 | Cadence models + SQLite migrations (`cadence_*` tables, `CadenceRepository`) — **leads** | done |
-| CAD-1-02 | The collector (meeting action items + pending proposals → source-projected loops) | todo |
-| CAD-1-03 | Stale-scoring v1 (deterministic, explainable) | todo |
-| CAD-1-04 | Cadence policies + quiet hours + the `CadenceMixin` tick (off by default) | todo |
-| CAD-1-05 | CLI: `holdspeak cadence status \| loops \| run-now` | todo |
-| CAD-1-06 | Unit tests for scoring, policy, quiet hours, snooze/kill idempotency | todo |
+| CAD-1-02 | The collector (meeting action items + pending proposals → source-projected loops) | done |
+| CAD-1-03 | Stale-scoring v1 (deterministic, explainable) | done |
+| CAD-1-04 | Cadence policies + quiet hours + the `CadenceMixin` tick (off by default) | done |
+| CAD-1-05 | CLI: `holdspeak cadence status \| loops \| run-now` | done |
+| CAD-1-06 | Unit tests for scoring, policy, quiet hours, snooze/kill idempotency | done |
 
 ## Where we are
 
-**CAD-1-01 landed** (the foundation): `cadence_*` tables in `SCHEMA_SQL` (`SCHEMA_VERSION 2→3`, the
-canonical snapshot regenerated), the `holdspeak/cadence/models.py` dataclasses, and
-`CadenceRepository` (`holdspeak/db/cadence.py`) registered on `Database`. Source-projection
-invariants proven by `tests/integration/test_cadence_store.py` (9 tests: idempotent upsert,
-killed-stays-killed, snooze-survives, `close_missing` spares user-decided loops, evidence cascade,
-policies round-trip) + the schema-policy/doctor suite (77 green). Inert + off by default: the tables
-exist but nothing reads them yet.
+**Phase 1 is complete (all six stories done, CI green).** The substrate works end-to-end:
+`holdspeak cadence run-now` projects scored Open Loops from meeting action items + pending actuator
+proposals, ordered by staleness, with low-confidence extractions suppressed as quiet `needs_review`
+loops — entirely local, deterministic, off by default, no external side effects.
 
-**Next: CAD-1-02..06** — the collector (meeting actions + pending proposals → loops), deterministic
-stale-scoring, policies + quiet hours + the off-by-default `CadenceMixin` tick + `CadenceConfig`, and
-the `holdspeak cadence status|loops|run-now` CLI, closing with the no-side-effects guard. The bar:
-a green `uv run pytest -q` and `holdspeak cadence run-now` printing scored projected loops.
+- **CAD-1-01** — `cadence_*` tables (`SCHEMA_VERSION 2→3`, snapshot regenerated), models,
+  `CadenceRepository` (source-projected; killed-stays-killed).
+- **CAD-1-02** — `LoopCollector` over meeting actions + pending proposals; `resolve_project`;
+  idempotent upsert; `close_missing` on source-gone.
+- **CAD-1-03** — deterministic, explainable `score_loop` (+ `ScoreBreakdown`).
+- **CAD-1-04** — `CadenceConfig` (off by default, `pressure`/quiet-hours), `default_policies`,
+  the pure `due_loops` scheduler, `CadenceService.tick`, and the `CadenceMixin` daemon-thread tick
+  wired into `WebRuntime.run()` **only when enabled** (byte-identical when off; thread joined on stop).
+- **CAD-1-05** — `holdspeak cadence status | loops | run-now` (`--json`, `--all`).
+- **CAD-1-06** — the no-external-side-effects guard + off-by-default gate + determinism tests.
+
+**Proof:** 37 cadence tests green (`tests/unit/test_cadence_*` + `tests/integration/test_cadence_*`);
+230 config/doctor/schema/cadence tests green; the schema migration + config round-trip verified.
+
+**Next: Phase 2 (the web coach surface)** — `/api/cadence/*` + a `/cadence` page that reads this
+substrate (loops, evidence deep-links, snooze/kill/close, egress badges).
 
 ## Exit criteria
 

@@ -1,6 +1,6 @@
 # CAD-1-04 — Policies + quiet hours + the `CadenceMixin` tick (off by default)
 
-- **Program:** cadence-engine · **Phase:** 1 · **Status:** todo
+- **Program:** cadence-engine · **Phase:** 1 · **Status:** done (built + tested; CI green)
 - **Depends on:** CAD-1-01..03. **Unblocks:** 1-05 (CLI drives the same service), all surfaces.
 
 ## Problem
