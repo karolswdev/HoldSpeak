@@ -6,6 +6,14 @@ import XCTest
 // fields the iPad render currently drops), plus the type/title/body/status the
 // SwiftUI screen already shows. The JSON literal mirrors the exact shape
 // holdspeak/web/routes/meetings.py::api_get_meeting_artifacts returns.
+//
+// METAL-READINESS (EQ-W6 audit): the `created_at`/`updated_at` literals use the REAL
+// wire shape — the route emits `artifact.created_at.isoformat()` where the value was
+// loaded via `datetime.fromisoformat(...)` from a DB string written by
+// `datetime.now().isoformat()`: naive/local, microseconds, NO `Z`. The contract
+// decoded these as `Date` via the shared `.iso8601` strategy, which THROWS on a
+// zone-less string — failing the whole artifact decode on real metal. Now carried as
+// raw `String?`.
 final class ArtifactsClientTests: XCTestCase {
 
     private static let envelopeJSON = """
@@ -27,8 +35,8 @@ final class ArtifactsClientTests: XCTestCase {
             {"source_type": "intent_window", "source_ref": "win-7"},
             {"source_type": "plugin_run", "source_ref": "run-42"}
           ],
-          "created_at": "2026-06-27T10:00:00Z",
-          "updated_at": "2026-06-27T10:05:00Z"
+          "created_at": "2026-06-27T10:00:00.123456",
+          "updated_at": "2026-06-27T10:05:00.654321"
         }
       ]
     }
@@ -61,8 +69,9 @@ final class ArtifactsClientTests: XCTestCase {
         XCTAssertEqual(artifact.sources[1].sourceType, "plugin_run")
         XCTAssertEqual(artifact.sources[1].sourceRef, "run-42")
 
-        XCTAssertNotNil(artifact.createdAt)
-        XCTAssertNotNil(artifact.updatedAt)
+        // Real naive/no-`Z` timestamps carried verbatim (they threw as `Date` before).
+        XCTAssertEqual(artifact.createdAt, "2026-06-27T10:00:00.123456")
+        XCTAssertEqual(artifact.updatedAt, "2026-06-27T10:05:00.654321")
     }
 
     /// `confidence` is `Double?` per the slice spec: an artifact without it still
@@ -86,8 +95,8 @@ final class ArtifactsClientTests: XCTestCase {
               "plugin_id": "action_items.core",
               "plugin_version": "1.0.0",
               "sources": [],
-              "created_at": "2026-06-27T11:00:00Z",
-              "updated_at": "2026-06-27T11:00:00Z"
+              "created_at": "2026-06-27T11:00:00.000000",
+              "updated_at": "2026-06-27T11:00:00.000000"
             }
           ]
         }

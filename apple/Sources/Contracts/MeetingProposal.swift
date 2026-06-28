@@ -10,10 +10,19 @@ import Foundation
 
 /// One actuator proposal as the hub serializes it (`_proposal_to_dict` in
 /// `holdspeak/web/routes/meetings.py`). snake_case wire keys map to camelCase via
-/// the shared decoder's `.convertFromSnakeCase` (see `Coding.swift`); the timestamp
-/// fields decode as ISO-8601 UTC `Z` and are optional because `decided_at` /
-/// `executed_at` are `null` for an undecided proposal. Robust-decode posture: every
-/// nullable wire field is optional so the review queue tolerates the payload evolving.
+/// the shared decoder's `.convertFromSnakeCase` (see `Coding.swift`).
+///
+/// METAL-READINESS (EQ-W6 audit): the timestamp fields are RAW ISO STRINGS, not
+/// `Date`. The hub stores + re-emits them with `datetime.now().isoformat()` — a
+/// *naive, local, microsecond* instant with NO `Z` and NO offset (e.g.
+/// `2026-06-27T18:08:21.337333`). The shared decoder's `.iso8601` strategy REQUIRES
+/// a timezone and would throw on that exact shape, failing the WHOLE proposal decode
+/// on real metal. The contract's own model doc says "Timestamps are ISO strings"
+/// (`ActuatorProposalRecord` in holdspeak/db/models.py), so this read model carries
+/// them verbatim as `String?` and never couples to a strict instant format. They are
+/// optional because `decided_at` / `executed_at` are `null` for an undecided
+/// proposal. Robust-decode posture: every nullable wire field is optional so the
+/// review queue tolerates the payload evolving.
 ///
 /// This is the review-side view; it intentionally mirrors (but does not depend on)
 /// the existing `ActuatorProposal` so this wave's client slice lives entirely in
@@ -34,9 +43,10 @@ public struct MeetingProposal: Codable, Equatable, Sendable {
     public var decidedBy: String?
     public var result: JSONValue?
     public var error: String?
-    public var createdAt: Date?
-    public var decidedAt: Date?
-    public var executedAt: Date?
+    /// Raw ISO wire string (naive/local, no `Z`); see the type doc. Never a `Date`.
+    public var createdAt: String?
+    public var decidedAt: String?
+    public var executedAt: String?
 
     public init(
         id: String, meetingId: String, windowId: String? = nil,
@@ -44,7 +54,7 @@ public struct MeetingProposal: Codable, Equatable, Sendable {
         status: ActuatorStatus, target: String, action: String, preview: String,
         payload: JSONValue? = nil, reversible: Bool, requiredCapabilities: [String] = [],
         decidedBy: String? = nil, result: JSONValue? = nil, error: String? = nil,
-        createdAt: Date? = nil, decidedAt: Date? = nil, executedAt: Date? = nil
+        createdAt: String? = nil, decidedAt: String? = nil, executedAt: String? = nil
     ) {
         self.id = id
         self.meetingId = meetingId
