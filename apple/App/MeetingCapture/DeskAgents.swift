@@ -327,9 +327,22 @@ struct DioAgentBuilder: View {
     let onSave: (AgentRecord) -> Void
     let onCancel: () -> Void
     var isNew: Bool
+    var contextLimit: Int = 16_384         // the chosen runtime's usable context (on-device budget)
+    var zoneTokens: Int = 0                // est. tokens the current zone's meetings would add
+
+    /// Tokens the grounding context costs at rest — exactly what `agentRoleAndContext` assembles:
+    /// the role (system prompt) + the notes + the zone's meetings (the KB injects only a hint today).
+    private var groundingTokens: Int {
+        OnDeviceBudget.estimateTokens(draft.systemPrompt)
+        + OnDeviceBudget.estimateTokens(draft.manualContext)
+        + (draft.useZoneContext ? zoneTokens : 0)
+        + (draft.kb.isEmpty ? 0 : 12)
+    }
     @State private var avatarGroup = 0
     @State private var showAdvanced = false
     @State private var showRawPrompt = false
+    @State private var showFaces = false
+    @State private var step = 0          // 0 = what it does · 1 = name & face
     @State private var pop = false
 
     private let cols = Array(repeating: GridItem(.flexible(), spacing: 12), count: 6)
@@ -343,14 +356,12 @@ struct DioAgentBuilder: View {
                 header
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 22) {
-                        pickAFace
-                        whoAreThey
-                        personality
-                        advanced
+                        if step == 0 { step1Behavior } else { step2Identity }
                     }
                     .padding(.horizontal, 22).padding(.top, 4).padding(.bottom, 18)
+                    .transition(.opacity)
                 }
-                saveBar
+                bottomBar
             }
             .frame(maxWidth: 600)
             .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(hex: 0x14121B))
@@ -361,76 +372,162 @@ struct DioAgentBuilder: View {
         .onChange(of: draft.avatar) { _ in pop = true; DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { pop = false } }
     }
 
-    // the playful hero — a big bobbing avatar that pops when you change it, the name inline, a dice to reroll
+    private func advance() { withAnimation(.spring(response: 0.4, dampingFraction: 0.86)) { step = 1 } }
+
+    // A light step-aware header — the title tells you where you are; close lives here.
     private var header: some View {
-        HStack(spacing: 14) {
-            TimelineView(.animation) { tl in
-                let bob = CGFloat(sin(tl.date.timeIntervalSinceReferenceDate * 1.4) * 3)
-                AgentAvatarView(avatarId: draft.avatar, size: 68).offset(y: -bob)
-                    .scaleEffect(pop ? 1.18 : 1).animation(.spring(response: 0.3, dampingFraction: 0.5), value: pop)
-            }
-            .frame(width: 72, height: 72)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(isNew ? "Meet your new agent" : "Edit agent").font(.system(size: 11.5, weight: .heavy, design: .rounded)).foregroundStyle(tint).tracking(0.4)
-                Text(draft.name.isEmpty ? "Unnamed" : draft.name).font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
-                Text(draft.role.isEmpty ? "give them a vibe below" : draft.role).font(.system(size: 12.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("STEP \(step + 1) OF 2").font(.system(size: 11, weight: .black, design: .rounded)).tracking(1).foregroundStyle(tint)
+                Text(step == 0 ? "What should it do?" : "Name & face").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
             }
             Spacer(minLength: 0)
-            Button { surprise() } label: {
-                Image(systemName: "dice.fill").font(.system(size: 17, weight: .bold)).foregroundStyle(.white)
-                    .frame(width: 40, height: 40).background(Circle().fill(tint.opacity(0.85)))
-            }.buttonStyle(.plain)
             Button { onCancel() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 26)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
         }
-        .padding(.horizontal, 22).padding(.top, 18).padding(.bottom, 14)
+        .padding(.horizontal, 22).padding(.top, 18).padding(.bottom, 12)
     }
 
-    // FACE FIRST — the fun part: group tabs + the gallery
-    private var pickAFace: some View {
-        section("PICK A FACE · \(AgentAvatars.all.count)") {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(Array(AgentAvatars.groups.enumerated()), id: \.element.id) { i, g in
-                        Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { avatarGroup = i }; haptic() } label: {
-                            Text("\(g.title) · \(g.avatars.count)")
-                                .font(.system(size: 12.5, weight: .heavy, design: .rounded))
-                                .foregroundStyle(avatarGroup == i ? .white : DioPal.muted)
-                                .padding(.horizontal, 14).frame(height: 34)
-                                .background(Capsule().fill(avatarGroup == i ? tint.opacity(0.85) : .white.opacity(0.06)))
-                        }.buttonStyle(.plain)
-                    }
-                }.padding(.horizontal, 2)
+    // STEP 1 — what it does: describe it, or tap a recipe (which jumps straight to naming).
+    private var step1Behavior: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            section("DESCRIBE IT, IN YOUR WORDS") {
+                editor($draft.systemPrompt, placeholder: "e.g. a sharp researcher who pulls out the facts, names and open questions…", minH: 92)
             }
-            LazyVGrid(columns: cols, spacing: 12) {
-                ForEach(AgentAvatars.groups[avatarGroup].avatars) { av in
-                    Button { draft.avatar = av.id; haptic() } label: {
-                        AgentAvatarView(avatarId: av.id, size: 44, selected: draft.avatar == av.id)
-                    }.buttonStyle(.plain)
+            section("OR START FROM A RECIPE") {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
+                    ForEach(AgentPresets.all, id: \.name) { p in
+                        Button { applyPreset(p); advance() } label: { recipeCard(p) }.buttonStyle(.plain)
+                    }
                 }
             }
         }
     }
 
-    private var whoAreThey: some View {
-        section("WHO ARE THEY?") {
-            field("Name", text: $draft.name, placeholder: "e.g. Scout")
-            field("Vibe (one line)", text: $draft.role, placeholder: "e.g. digs for the facts")
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 9) {
-                    ForEach(AgentPresets.all, id: \.name) { p in
-                        Button { applyPreset(p) } label: {
-                            HStack(spacing: 7) {
-                                AgentAvatarView(avatarId: p.avatar, size: 24)
-                                VStack(alignment: .leading, spacing: 0) {
-                                    Text(p.name).font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                                    Text(p.role).font(.system(size: 9, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
-                                }
-                            }
-                            .padding(.horizontal, 10).padding(.vertical, 7)
-                            .background(Capsule().fill(.white.opacity(0.06)).overlay(Capsule().strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+    private func recipeCard(_ p: AgentPreset) -> some View {
+        HStack(spacing: 10) {
+            AgentAvatarView(avatarId: p.avatar, size: 38)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(p.name).font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                Text(p.role).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(2).multilineTextAlignment(.leading)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(11).frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.05))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+    }
+
+    // STEP 2 — make it yours: the hero, name + vibe, personality, a collapsed face picker, advanced.
+    private var step2Identity: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            heroRow
+            section("NAME") { field("Name", text: $draft.name, placeholder: "e.g. Scout") }
+            section("VIBE · ONE LINE") { field("Vibe", text: $draft.role, placeholder: "e.g. digs for the facts") }
+            knowsSection
+            personality
+            faceCollapsible
+            advanced
+        }
+    }
+
+    // GROUNDING CONTEXT — first-class, not buried: point it at a knowledge base, pin facts it
+    // always carries, and optionally feed it the zone's meetings.
+    private var knowsSection: some View {
+        section("GROUNDING CONTEXT") {
+            Text("Stuff your agent always knows.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+            ContextGauge(used: groundingTokens, limit: contextLimit)
+                .padding(11)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.04)).overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
+            Text("KNOWLEDGE BASE").font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted.opacity(0.8)).padding(.top, 2)
+            if knowledgeBases.isEmpty {
+                Text("Make a knowledge base on the desk, then point this agent at it.")
+                    .font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8))
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        kbChip("None", icon: "nosign", on: draft.kb.isEmpty) { draft.kb = "" }
+                        ForEach(knowledgeBases, id: \.self) { k in
+                            kbChip(k, icon: "diamond.fill", on: draft.kb == k) { draft.kb = k }
+                        }
+                    }.padding(.horizontal, 2)
+                }
+            }
+            Text("NOTES").font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted.opacity(0.8)).padding(.top, 6)
+            editor($draft.manualContext, placeholder: "Facts it should always have on hand — names, preferences, project context…", minH: 64)
+            Toggle(isOn: $draft.useZoneContext) {
+                Text("Read this zone's meetings").font(.system(size: 13.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+            }.tint(tint).padding(.top, 2)
+        }
+    }
+
+    private func kbChip(_ label: String, icon: String, on: Bool, _ tap: @escaping () -> Void) -> some View {
+        Button { haptic(); tap() } label: {
+            HStack(spacing: 6) {
+                Image(systemName: icon).font(.system(size: 10, weight: .bold))
+                Text(label).font(.system(size: 12.5, weight: .heavy, design: .rounded)).lineLimit(1)
+                if on { Image(systemName: "checkmark").font(.system(size: 9, weight: .black)) }
+            }
+            .foregroundStyle(on ? .white : DioPal.text.opacity(0.85))
+            .padding(.horizontal, 12).frame(height: 34)
+            .background(Capsule().fill(on ? tint.opacity(0.85) : .white.opacity(0.06)).overlay(Capsule().strokeBorder(.white.opacity(on ? 0 : 0.1), lineWidth: 1)))
+        }.buttonStyle(.plain)
+    }
+
+    // the playful hero — a big bobbing avatar that pops when you change it, with a dice to reroll
+    private var heroRow: some View {
+        HStack(spacing: 14) {
+            TimelineView(.animation) { tl in
+                let bob = CGFloat(sin(tl.date.timeIntervalSinceReferenceDate * 1.4) * 3)
+                AgentAvatarView(avatarId: draft.avatar, size: 64).offset(y: -bob)
+                    .scaleEffect(pop ? 1.18 : 1).animation(.spring(response: 0.3, dampingFraction: 0.5), value: pop)
+            }
+            .frame(width: 70, height: 70)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(draft.name.isEmpty ? "Unnamed" : draft.name).font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
+                Text(draft.role.isEmpty ? "give it a vibe" : draft.role).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+            }
+            Spacer(minLength: 0)
+            Button { surprise() } label: {
+                Image(systemName: "dice.fill").font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
+                    .frame(width: 38, height: 38).background(Circle().fill(tint.opacity(0.85)))
+            }.buttonStyle(.plain)
+        }
+    }
+
+    // the face picker, collapsed by default (100 faces shouldn't dominate the screen)
+    private var faceCollapsible: some View {
+        section("FACE") {
+            Button { withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { showFaces.toggle() } } label: {
+                HStack(spacing: 11) {
+                    AgentAvatarView(avatarId: draft.avatar, size: 40)
+                    Text(showFaces ? "Hide faces" : "Change face").font(.system(size: 13.5, weight: .heavy, design: .rounded)).foregroundStyle(tint)
+                    Spacer(minLength: 0)
+                    Image(systemName: showFaces ? "chevron.up" : "chevron.down").font(.system(size: 12, weight: .black)).foregroundStyle(DioPal.muted)
+                }
+                .padding(.horizontal, 13).frame(height: 56)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.05)).overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+            }.buttonStyle(.plain)
+            if showFaces {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(Array(AgentAvatars.groups.enumerated()), id: \.element.id) { i, g in
+                            Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { avatarGroup = i }; haptic() } label: {
+                                Text("\(g.title) · \(g.avatars.count)")
+                                    .font(.system(size: 12.5, weight: .heavy, design: .rounded))
+                                    .foregroundStyle(avatarGroup == i ? .white : DioPal.muted)
+                                    .padding(.horizontal, 14).frame(height: 34)
+                                    .background(Capsule().fill(avatarGroup == i ? tint.opacity(0.85) : .white.opacity(0.06)))
+                            }.buttonStyle(.plain)
+                        }
+                    }.padding(.horizontal, 2)
+                }
+                LazyVGrid(columns: cols, spacing: 12) {
+                    ForEach(AgentAvatars.groups[avatarGroup].avatars) { av in
+                        Button { draft.avatar = av.id; haptic() } label: {
+                            AgentAvatarView(avatarId: av.id, size: 44, selected: draft.avatar == av.id)
                         }.buttonStyle(.plain)
                     }
-                }.padding(.horizontal, 2)
+                }
             }
         }
     }
@@ -477,7 +574,7 @@ struct DioAgentBuilder: View {
                 HStack(spacing: 7) {
                     Image(systemName: showAdvanced ? "chevron.down" : "chevron.right").font(.system(size: 11, weight: .black))
                     Text("ADVANCED").font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1.2)
-                    Text("context · what to ask").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.7))
+                    Text("prompt template").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.7))
                     Spacer(minLength: 0)
                 }.foregroundStyle(DioPal.muted)
             }.buttonStyle(.plain)
@@ -486,45 +583,41 @@ struct DioAgentBuilder: View {
                 editor($draft.userTemplate, placeholder: "{input}", minH: 52)
                 Text("Use {input} for your question.")
                     .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
-                Text("CONTEXT IT CARRIES").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted).padding(.top, 4)
-                editor($draft.manualContext, placeholder: "Pinned notes the agent always knows…", minH: 60)
-                Toggle(isOn: $draft.useZoneContext) {
-                    Text("Include this zone's meetings").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                }.tint(tint)
-                if !knowledgeBases.isEmpty {
-                    HStack {
-                        Text("Knowledge base").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                        Spacer()
-                        Menu {
-                            Button("None") { draft.kb = "" }
-                            ForEach(knowledgeBases, id: \.self) { k in Button(k) { draft.kb = k } }
-                        } label: {
-                            HStack(spacing: 5) { Text(draft.kb.isEmpty ? "None" : draft.kb).font(.system(size: 12.5, weight: .heavy, design: .rounded)); Image(systemName: "chevron.up.chevron.down").font(.system(size: 10, weight: .bold)) }
-                                .foregroundStyle(tint).padding(.horizontal, 12).frame(height: 34).background(Capsule().fill(.white.opacity(0.07)))
-                        }
-                    }
-                }
             }
         }
     }
 
-    private var saveBar: some View {
+    private var bottomBar: some View {
         HStack(spacing: 12) {
-            Button { onCancel() } label: {
-                Text("Cancel").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
-                    .frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(.white.opacity(0.06)))
-            }.buttonStyle(.plain)
-            Button { save() } label: {
-                HStack(spacing: 7) {
-                    Image(systemName: isNew ? "sparkles" : "checkmark")
-                    Text(isNew ? "Bring to life" : "Save").font(.system(size: 15.5, weight: .heavy, design: .rounded))
-                }
-                .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
-                .background(Capsule().fill(LinearGradient(colors: [tint, AgentAvatars.deep(draft.avatar)], startPoint: .top, endPoint: .bottom)))
-                .opacity(canSave ? 1 : 0.45)
-            }.buttonStyle(.plain).disabled(!canSave)
+            if step == 0 {
+                Button { onCancel() } label: { mutedCap("Cancel") }.buttonStyle(.plain)
+                Button { advance() } label: {
+                    HStack(spacing: 7) { Text("Next").font(.system(size: 15.5, weight: .heavy, design: .rounded)); Image(systemName: "arrow.right") }
+                        .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
+                        .background(Capsule().fill(LinearGradient(colors: [tint, AgentAvatars.deep(draft.avatar)], startPoint: .top, endPoint: .bottom)))
+                }.buttonStyle(.plain)
+            } else {
+                Button { withAnimation(.spring(response: 0.4, dampingFraction: 0.86)) { step = 0 } } label: {
+                    HStack(spacing: 6) { Image(systemName: "arrow.left"); Text("Back").font(.system(size: 15, weight: .heavy, design: .rounded)) }
+                        .foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(.white.opacity(0.06)))
+                }.buttonStyle(.plain)
+                Button { save() } label: {
+                    HStack(spacing: 7) {
+                        Image(systemName: isNew ? "sparkles" : "checkmark")
+                        Text(isNew ? "Bring to life" : "Save").font(.system(size: 15.5, weight: .heavy, design: .rounded))
+                    }
+                    .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
+                    .background(Capsule().fill(LinearGradient(colors: [tint, AgentAvatars.deep(draft.avatar)], startPoint: .top, endPoint: .bottom)))
+                    .opacity(canSave ? 1 : 0.45)
+                }.buttonStyle(.plain).disabled(!canSave)
+            }
         }
         .padding(.horizontal, 22).padding(.vertical, 16)
+    }
+
+    private func mutedCap(_ t: String) -> some View {
+        Text(t).font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+            .frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(.white.opacity(0.06)))
     }
 
     private var canSave: Bool { !draft.name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -593,6 +686,32 @@ struct DioAgentBuilder: View {
         #if canImport(UIKit)
         UIImpactFeedbackGenerator(style: s).impactOccurred()
         #endif
+    }
+}
+
+// A ring gauge: how much of the agent's context its grounding eats before you even ask. Green under
+// 60%, amber to 85%, red past it — a live "this knowledge base alone fills it" signal.
+struct ContextGauge: View {
+    let used: Int
+    let limit: Int
+    private var frac: Double { limit <= 0 ? 0 : min(1, Double(used) / Double(limit)) }
+    private var color: Color { frac < 0.6 ? DioPal.mint : (frac < 0.85 ? Color(hex: 0xF5A623) : Color(hex: 0xFF6B6B)) }
+    private func fmt(_ n: Int) -> String { n >= 1000 ? String(format: "%.1fk", Double(n) / 1000) : "\(n)" }
+    var body: some View {
+        HStack(spacing: 13) {
+            ZStack {
+                Circle().stroke(.white.opacity(0.08), lineWidth: 6)
+                Circle().trim(from: 0, to: frac).stroke(color, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90)).animation(.easeOut(duration: 0.3), value: frac)
+                Text("\(Int(frac * 100))%").font(.system(size: 12.5, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+            }
+            .frame(width: 48, height: 48)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("\(fmt(used)) / \(fmt(limit)) tokens").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                Text("filled before you ask a thing").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(color)
+            }
+            Spacer(minLength: 0)
+        }
     }
 }
 

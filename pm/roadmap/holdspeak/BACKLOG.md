@@ -249,3 +249,44 @@ so Apple-system / PCC / cloud / Core AI all sit behind one protocol.
 
 *Lands on:* the existing `ILLMProvider` seam (Contracts/RuntimeCore depend on the protocol, not the
 engine) + the per-device model policy. Owner action gates the start: install Xcode 27 / iOS 27.
+
+---
+### S. Runtime / connectivity profiles (cross-surface, pre-GA) — PARKED (design ready)
+Today the app conflates "where intelligence runs" into ONE global choice (`InferenceConfigStore`:
+mode = local | endpoint, a single endpoint URL/model/key). Owner's call (pre-GA): split it.
+
+- **Basic configuration** = today's experience, reframed: pick ONE active profile ("Run on: [This
+  iPhone ▾]"). Zero new concepts for the casual user.
+- **Advanced configuration** = a LIST of named **runtime profiles** (e.g. on-device Qwen3-4B; an
+  OpenRouter endpoint + key; a Claude endpoint + key; a LAN box) AND **per-agent assignment** so
+  agent A runs local, agent B on OpenRouter, agent C on Claude.
+
+**The model — `RuntimeProfile`** (a reusable connectivity target):
+`{ id, name, kind: .onDevice | .openAICompatible, onDevice: modelFile, openAICompatible: {baseURL,
+model, apiKeyRef}, contextLimit, egressScope }`. This is a clean generalization of the EXISTING
+`ILLMProvider` seam: `makeProvider(profile)` → `LlamaProvider` (onDevice) or `OpenAIEndpointProvider`
+(openAICompatible). The seam already exists; profiles turn the single config into a list + a default.
+
+**Ties to the context gauge (just shipped):** `AgentRecord.profileId` (empty = active/default). The
+GROUNDING CONTEXT ring then reads THAT profile's `contextLimit` — "Scout on Claude (200k) = 1% full;
+Scout on a local 3B (8k) = 22% full." Closes the loop.
+
+**Hard security rule (robustness):** API keys are credentials and MUST NOT sync across the mesh. The
+profile SHAPE (name/kind/baseURL/model/contextLimit) syncs as a primitive; the **key lives only in
+the device Keychain, referenced by profile id, never in the synced payload** — each surface holds its
+own key for a shared profile. (Matches the existing "API key never leaves this store" + the connector
+"credential stays on the desktop" pattern.)
+
+**Equilibrium (cross-surface, the whole point):** add `SyncKind.profile` so desktop hub / iPad /
+iPhone / web share the same named profiles (shape only). Each surface honors the profile CONTRACT via
+its own runtime (desktop → web_runtime; web → its inference path; Apple → the seam), honest `n/a`
+where a surface can't host a kind (an on-device GGUF profile is n/a on web). The egress badge reads
+`profile.egressScope` so trust stays honest per profile. See EQUILIBRIUM.md.
+
+**Why pre-GA:** retrofitting a profile contract AFTER sync + GA solidify means a migration; land it
+before. **Suggested phasing:** (1) `RuntimeProfile` contract + `SyncKind.profile` + Keychain key
+store; (2) Apple Basic (pick active) + Advanced (manage list + per-agent `profileId`) + gauge reads
+profile; (3) desktop hub honors profiles; (4) web authors/uses them. Each surface proven (parity).
+
+*Lands on:* the `ILLMProvider` seam (Contracts/RuntimeCore), `InferenceConfigStore`, the sync
+primitive framework, the per-agent `AgentRecord`, and the egress-badge canon.

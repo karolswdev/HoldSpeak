@@ -2229,7 +2229,7 @@ struct DioRunTargetSheet: View {
                     Spacer(minLength: 0)
                 }
                 // ON DEVICE — the default, private, no network.
-                runRow(icon: "ipad", tint: DioPal.mint, name: "On this iPad",
+                runRow(icon: DeviceLabel.current == "iPhone" ? "iphone" : "ipad", tint: DioPal.mint, name: "On this \(DeviceLabel.current)",
                        sub: "private · no network", egress: .local, enabled: true,
                        isDefault: preferred == .device, action: onDevice)
                 // ON YOUR MAC — the hub's big model; LAN egress; disabled when unpaired.
@@ -2376,7 +2376,7 @@ struct DioRoutingTheater: View {
             }
             VStack(spacing: 3) {
                 Text("Routing \(sourceTitle)").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                Text("\(lens) · \(local ? "on this iPad · no network" : "endpoint")").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                Text("\(lens) · \(local ? "on this \(DeviceLabel.current) · no network" : "endpoint")").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
             }
             .padding(.horizontal, 16).padding(.vertical, 9).background(Capsule().fill(.black.opacity(0.55)))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, 130)
@@ -3198,7 +3198,9 @@ struct DioStage: View {
                 // the bottom-right thumb corner); the diorama keeps it bottom-right.
                 DioCompanion(landed: landed, excited: selected != nil)
                     .position(x: w * 0.9, y: camera.isLane ? h * 0.66 : h * 0.86)
-                if landed && selected == nil && summonSource == nil && !capturing {
+                if landed && selected == nil && summonSource == nil && !capturing
+                    && editingNote == nil && editingKB == nil && !connecting
+                    && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet {
                     VStack(spacing: 4) {
                         DioRecordOrb { haptic(.medium); withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { showRecordPicker = true } }
                         Text("Record").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
@@ -3211,18 +3213,21 @@ struct DioStage: View {
                 if camera.isLane && landed && selected == nil && summonSource == nil && !capturing
                     && editingNote == nil && editingKB == nil && !connecting && !showRouteSheet && !routing
                     && printed == nil && !showSendCard && !showActSheet && !firstRun {
-                    Menu {
-                        Button { createNote() } label: { Label("New Note", systemImage: "square.and.pencil") }
-                        Button { createKBInline() } label: { Label("New KB", systemImage: "diamond.fill") }
-                        Button { haptic(.light); namingZone = true } label: { Label("New Zone", systemImage: "plus.circle.fill") }
-                    } label: {
-                        Image(systemName: "plus").font(.system(size: 24, weight: .black)).foregroundStyle(.white)
-                            .frame(width: 58, height: 58)
-                            .background(Circle().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom))
-                                .shadow(color: DioPal.accent.opacity(0.5), radius: 12, y: 4))
-                    }.simultaneousGesture(TapGesture().onEnded { haptic(.medium) })
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    .padding(.trailing, 20).padding(.bottom, h * 0.15).zIndex(73)
+                    VStack(spacing: 4) {
+                        Menu {
+                            Button { createNote() } label: { Label("New Note", systemImage: "square.and.pencil") }
+                            Button { createKBInline() } label: { Label("New KB", systemImage: "diamond.fill") }
+                            Button { haptic(.light); namingZone = true } label: { Label("New Zone", systemImage: "plus.circle.fill") }
+                        } label: {
+                            Image(systemName: "plus").font(.system(size: 24, weight: .black)).foregroundStyle(.white)
+                                .frame(width: 64, height: 64)
+                                .background(Circle().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom))
+                                    .shadow(color: DioPal.accent.opacity(0.5), radius: 12, y: 4))
+                        }.simultaneousGesture(TapGesture().onEnded { haptic(.medium) })
+                        Text("New").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
+                    }
+                    // mirror the Record orb (bottom-left) on the bottom-right, same baseline
+                    .position(x: w - 58, y: orbPos(w, h).y).zIndex(73)
                 }
                 // a desk-native settings entry (no bouncing to an old screen)
                 if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty {
@@ -3475,7 +3480,8 @@ struct DioStage: View {
                     DioAgentBuilder(draft: draft, knowledgeBases: knowledgeBases,
                                     onSave: { saveAgent($0) },
                                     onCancel: { withAnimation { editingAgent = nil } },
-                                    isNew: !agents.contains { $0.id == draft.id })
+                                    isNew: !agents.contains { $0.id == draft.id },
+                                    contextLimit: agentContextLimit(), zoneTokens: zoneGroundingTokens())
                         .id(draft.id)
                         .zIndex(145).transition(.opacity)
                 }
@@ -4570,6 +4576,24 @@ struct DioStage: View {
         if !a.kb.isEmpty { ctx.append("Lean on the knowledge base \"\(a.kb)\" when relevant.") }
         if !ctx.isEmpty { blocks.append("[CONTEXT]\n" + ctx.joined(separator: "\n\n")) }
         return blocks
+    }
+
+    // For the builder's context gauge: the est. tokens this zone's meetings would add as grounding
+    // (mirrors the assembly above — title + first 2000 chars per meeting).
+    private func zoneGroundingTokens() -> Int {
+        let z = contentMembers().filter { $0.kind == .meeting }
+            .map { "## \($0.title)\n\(String($0.routableText.prefix(2000)))" }.joined(separator: "\n\n")
+        return z.isEmpty ? 0 : OnDeviceBudget.estimateTokens("Meetings filed here:\n" + z)
+    }
+
+    // The chosen runtime's usable context: the on-device budget when local (clamped by RAM), else the
+    // ceiling as a reference for an endpoint (whose true window we don't control).
+    private func agentContextLimit() -> Int {
+        guard InferenceConfigStore.shared.isLocal, let p = MeetingReviewState.localGGUF() else { return 16_384 }
+        let modelBytes = ((try? FileManager.default.attributesOfItem(atPath: p))?[.size] as? Int) ?? 0
+        let availRaw = Int(os_proc_available_memory())
+        let avail = availRaw > 0 ? availRaw : Int(ProcessInfo.processInfo.physicalMemory / 2)
+        return OnDeviceBudget.contextTokens(availableBytes: avail, modelBytes: modelBytes, marginBytes: 768 * 1_048_576, ceiling: 16_384)
     }
 
     // route a card THROUGH an agent (radial): assemble role + context + the card, infer → printed card.

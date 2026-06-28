@@ -214,3 +214,16 @@ Integrated: the github + primitives + guard tests **49 passed**; cross-checked t
 Fleet WEB's new pages (green) before either landed, so the two fleets stay compatible on main.
 
 See [[project_primitive_framework]], [[project_phase15_the_mesh]], [[project_phase17_agent_sync]].
+
+---
+
+## Pre-GA extension — Phase 24: Runtime profiles
+
+The same discipline ("honor the contract on every surface, honest `n/a` otherwise") applied to
+*where intelligence runs*. Today the inference choice is one global target; Phase 24 splits it into
+**basic** (pick one active profile) vs **advanced** (named `RuntimeProfile`s + per-agent
+assignment), in equilibrium across desktop / web / iPad / iPhone. The crux is a security invariant:
+the profile *shape* syncs as `SyncKind.profile`; **the API key never does** (device Keychain / hub
+secrets, joined at request time). Authored 2026-06-28 from BACKLOG entry **S**; charter at
+[`phase-24-runtime-profiles/current-phase-status.md`](./phase-24-runtime-profiles/current-phase-status.md).
+A pre-GA call because retrofitting the contract after sync solidifies means a migration.

@@ -18,12 +18,18 @@ import WebKit
 
 @main
 struct MeetingCaptureApp: App {
+    // Captures iOS's background-URLSession relaunch so model downloads survive lock/suspend/terminate.
+    @UIApplicationDelegateAdaptor(HoldSpeakAppDelegate.self) private var appDelegate
     var body: some Scene {
         WindowGroup {
             ZStack(alignment: .top) {
                 // HS_DEMO_NOTEBOOK opens straight onto the notebook surface for a
                 // screenshot run (no mic/taps needed); the real entry is the meeting list.
-                if ProcessInfo.processInfo.environment["HS_DEMO_MODELS"] != nil {
+                if ProcessInfo.processInfo.environment["HS_DEMO_AGENT"] != nil {
+                    DioAgentBuilder(draft: .blank(), knowledgeBases: ["Q3 Planning", "Customer calls"], onSave: { _ in }, onCancel: {}, isNew: true, contextLimit: 8192, zoneTokens: 1800)
+                } else if ProcessInfo.processInfo.environment["HS_DEMO_README"] != nil {
+                    NavigationStack { ModelReadmeView(repo: "unsloth/gemma-3n-E4B-it-GGUF", fileName: "gemma-3n-E4B-it-Q4_K_M.gguf", name: "Gemma 3n E4B") }
+                } else if ProcessInfo.processInfo.environment["HS_DEMO_MODELS"] != nil {
                     NavigationStack { ModelsView() }
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_NOTEBOOK"] != nil {
                     DemoNotebookView()
@@ -67,6 +73,7 @@ struct MeetingCaptureApp: App {
             }
             .preferredColorScheme(.dark)
             .onAppear {
+                ModelDownloadManager.shared.ensureSession()   // reattach any in-flight model download
                 #if targetEnvironment(simulator)
                 let env = ProcessInfo.processInfo.environment
                 // LIVE SYNC in-code proof (no App-layer test target): run the desk store's
@@ -580,7 +587,7 @@ struct MeetingListView: View {
                             .accessibilityLabel("New recording — capture a meeting on-device")
                         Button { tactile(.medium); showDictate = true } label: { dictateCta }
                             .buttonStyle(PressableCard())
-                            .accessibilityLabel("Dictate to your desktop — talk on this iPad, the words land on your desktop")
+                            .accessibilityLabel("Dictate to your desktop — talk on this \(DeviceLabel.current), the words land on your desktop")
                         Button { tactile(.medium); showConnect = true } label: { connectCta }
                             .buttonStyle(PressableCard())
                             .accessibilityLabel("Your Desktop — find and pair with your desktop on your network")
@@ -808,7 +815,7 @@ struct MeetingListView: View {
         let n = ModelFiles.installed().count
         return tile(chip: GlyphChip(system: "cpu.fill"),
                     title: "Models",
-                    subtitle: n == 0 ? "Import to enable intelligence" : "\(n) on this iPad")
+                    subtitle: n == 0 ? "Tap to download one" : "\(n) on this \(DeviceLabel.current)")
     }
 
     private var sketchCta: some View {
