@@ -25,6 +25,7 @@ public enum SyncKind: String, Codable, Sendable, CaseIterable {
     case agent
     case chain
     case workflow
+    case profile        // a runtime/connectivity target (Phase 24); SHAPE only — the API key never syncs
 }
 
 /// The sync header for one entity: which entity, when it last changed, and whether
@@ -81,12 +82,13 @@ public struct ChangeSet: Codable, Equatable, Sendable {
     public var agents: [Synced<Agent>]
     public var chains: [Synced<Chain>]
     public var workflows: [Synced<WorkflowDefinition>]
+    public var profiles: [Synced<RuntimeProfile>]   // runtime targets — SHAPE only (key never synced)
 
     public init(meetings: [Synced<Meeting>] = [], artifacts: [Synced<Artifact>] = [],
                 notes: [Synced<Note>] = [], kbs: [Synced<KB>] = [],
                 directories: [Synced<Directory>] = [], directoryMemberships: [Synced<Membership>] = [],
                 agents: [Synced<Agent>] = [], chains: [Synced<Chain>] = [],
-                workflows: [Synced<WorkflowDefinition>] = []) {
+                workflows: [Synced<WorkflowDefinition>] = [], profiles: [Synced<RuntimeProfile>] = []) {
         self.meetings = meetings
         self.artifacts = artifacts
         self.notes = notes
@@ -96,16 +98,37 @@ public struct ChangeSet: Codable, Equatable, Sendable {
         self.agents = agents
         self.chains = chains
         self.workflows = workflows
+        self.profiles = profiles
+    }
+
+    // Decode tolerantly: any array absent from the payload defaults to []. A surface that doesn't yet
+    // know a kind (e.g. the hub before it learns `profiles`) sends a subset, and the others must still
+    // decode — the whole point of cross-surface equilibrium. (Encoding stays synthesized: all keys out.)
+    private enum CodingKeys: String, CodingKey {
+        case meetings, artifacts, notes, kbs, directories, directoryMemberships, agents, chains, workflows, profiles
+    }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        meetings = try c.decodeIfPresent([Synced<Meeting>].self, forKey: .meetings) ?? []
+        artifacts = try c.decodeIfPresent([Synced<Artifact>].self, forKey: .artifacts) ?? []
+        notes = try c.decodeIfPresent([Synced<Note>].self, forKey: .notes) ?? []
+        kbs = try c.decodeIfPresent([Synced<KB>].self, forKey: .kbs) ?? []
+        directories = try c.decodeIfPresent([Synced<Directory>].self, forKey: .directories) ?? []
+        directoryMemberships = try c.decodeIfPresent([Synced<Membership>].self, forKey: .directoryMemberships) ?? []
+        agents = try c.decodeIfPresent([Synced<Agent>].self, forKey: .agents) ?? []
+        chains = try c.decodeIfPresent([Synced<Chain>].self, forKey: .chains) ?? []
+        workflows = try c.decodeIfPresent([Synced<WorkflowDefinition>].self, forKey: .workflows) ?? []
+        profiles = try c.decodeIfPresent([Synced<RuntimeProfile>].self, forKey: .profiles) ?? []
     }
 
     public var isEmpty: Bool {
         meetings.isEmpty && artifacts.isEmpty && notes.isEmpty && kbs.isEmpty
             && directories.isEmpty && directoryMemberships.isEmpty
-            && agents.isEmpty && chains.isEmpty && workflows.isEmpty
+            && agents.isEmpty && chains.isEmpty && workflows.isEmpty && profiles.isEmpty
     }
     public var count: Int {
         meetings.count + artifacts.count + notes.count + kbs.count
             + directories.count + directoryMemberships.count
-            + agents.count + chains.count + workflows.count
+            + agents.count + chains.count + workflows.count + profiles.count
     }
 }
