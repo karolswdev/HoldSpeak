@@ -29,6 +29,10 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     label("WHERE INTELLIGENCE RUNS")
+                    if cfg.profiles.count >= 1 {
+                        // The active profile is the default for everything that isn't overridden inline.
+                        RunsOnPicker(selectedId: $cfg.activeProfileId, label: "Active profile")
+                    }
                     targetCard(.local, "This \(DeviceLabel.current)", "Runs on this \(DeviceLabel.current)", DeviceLabel.current == "iPhone" ? "iphone" : "ipad", Sig.localGradient)
                     if cfg.isLocal { onDeviceModelCard }
                     targetCard(.homelab, "LAN endpoint", "An OpenAI-compatible server on your network", "server.rack", Sig.accentGradient)

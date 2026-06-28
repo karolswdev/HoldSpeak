@@ -525,6 +525,14 @@ struct SketchToDiagramView: View {
     @Published var endpointURL: String { didSet { d.set(endpointURL, forKey: K.url) } }
     @Published var endpointModel: String { didSet { d.set(endpointModel, forKey: K.model) } }
     @Published var endpointKey: String { didSet { d.set(endpointKey, forKey: K.key) } }
+    /// Phase 24 — named runtime targets (SHAPE only; the API key lives in `ProfileKeyStore`/Keychain,
+    /// never here). Persisted locally as JSON; sync transport is a later story. The ACTIVE profile is
+    /// applied onto the legacy `mode`/endpoint/`localModelId` fields above, so every existing reader
+    /// (`endpointConfig`, `isLocal`, `localGGUF`) keeps working unchanged — profiles are a management
+    /// layer, not a rewrite of the inference path.
+    @Published var profiles: [RuntimeProfile] = [] { didSet { if loaded { persistProfiles() } } }
+    @Published var activeProfileId: String = "" { didSet { d.set(activeProfileId, forKey: K.activeProfile); if loaded { applyActive() } } }
+    private var loaded = false
     /// HSM-14-17 — on-device speaker diarization (opt-in). Default ON. When set, capture's `stop()`
     /// labels each transcript segment with who spoke it, fully on-device (no network).
     @Published var diarizationOn: Bool { didSet { d.set(diarizationOn, forKey: K.diarize) } }
@@ -543,7 +551,7 @@ struct SketchToDiagramView: View {
     static let whisperLangKey = "hs.inf.whisperlang"  // the UserDefaults key the transcriber reads directly
 
     private let d = UserDefaults.standard
-    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize", localModel = "hs.inf.localmodel", whisper = "hs.inf.whisper", whisperLang = "hs.inf.whisperlang" }
+    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize", localModel = "hs.inf.localmodel", whisper = "hs.inf.whisper", whisperLang = "hs.inf.whisperlang", profiles = "hs.inf.profiles", activeProfile = "hs.inf.activeprofile" }
     private init() {
         mode = RuntimeMode(rawValue: d.string(forKey: K.mode) ?? "") ?? .local
         endpointURL = d.string(forKey: K.url) ?? ""
@@ -553,28 +561,87 @@ struct SketchToDiagramView: View {
         localModelId = d.string(forKey: K.localModel) ?? ""
         whisperModel = d.string(forKey: K.whisper) ?? "base"
         whisperLanguage = d.string(forKey: K.whisperLang) ?? "auto"
+        if let data = d.data(forKey: K.profiles), let saved = try? JSONDecoder().decode([RuntimeProfile].self, from: data) {
+            profiles = saved
+            activeProfileId = d.string(forKey: K.activeProfile) ?? saved.first?.id ?? ""
+        } else {
+            migrateLegacyToProfiles()   // first launch with profiles — seed from the single legacy config
+        }
+        loaded = true
+    }
+
+    /// One-time: turn the legacy single config into a profile list + active id, moving any API key
+    /// from UserDefaults into the Keychain (and clearing it from UserDefaults — the key must not live
+    /// alongside the synced shape).
+    private func migrateLegacyToProfiles() {
+        let r = RuntimeProfileMigration.migrate(
+            legacyModeIsLocal: mode == .local, endpointURL: endpointURL, endpointModel: endpointModel,
+            localModelFile: localModelId, endpointHasKey: !endpointKey.isEmpty, now: Date())
+        if !endpointKey.isEmpty {
+            ProfileKeyStore.set(endpointKey, for: RuntimeProfileMigration.endpointId)
+            endpointKey = ""; d.removeObject(forKey: K.key)   // key leaves UserDefaults for the Keychain
+        }
+        profiles = r.profiles
+        activeProfileId = r.activeId
+        persistProfiles(); d.set(activeProfileId, forKey: K.activeProfile)
+    }
+
+    private func persistProfiles() { if let data = try? JSONEncoder().encode(profiles) { d.set(data, forKey: K.profiles) } }
+
+    /// The resolved active profile (falls back to the first, then a synthesized on-device default).
+    var activeProfile: RuntimeProfile {
+        profiles.first { $0.id == activeProfileId } ?? profiles.first
+            ?? RuntimeProfile(id: RuntimeProfileMigration.localId, name: "This device", kind: .onDevice,
+                              modelFile: localModelId, createdAt: Date(), updatedAt: Date())
+    }
+
+    /// Apply a profile onto the legacy fields so all existing readers see the active target. Called
+    /// when the active profile changes (the basic picker) or an active endpoint profile is edited.
+    private func applyActive() {
+        let p = activeProfile
+        mode = p.isLocal ? .local : .endpoint
+        if p.isLocal { localModelId = p.modelFile }
+        else { endpointURL = p.baseURL; endpointModel = p.model }
     }
 
     var isLocal: Bool { mode == .local }
 
-    /// The endpoint config, or nil if the URL is blank/invalid (so generate() can refuse cleanly).
+    /// The endpoint config, or nil if the URL is blank/invalid. The API key is sourced from the
+    /// Keychain (active profile id) first, falling back to the legacy field during the transition.
     var endpointConfig: EndpointConfig? {
         let t = endpointURL.trimmingCharacters(in: .whitespaces)
         guard !t.isEmpty, let u = URL(string: t), u.host != nil else { return nil }
-        return EndpointConfig(baseURL: u, model: endpointModel.isEmpty ? "local-model" : endpointModel,
-                              apiKey: endpointKey.isEmpty ? nil : endpointKey)
+        let key = ProfileKeyStore.get(activeProfile.id) ?? (endpointKey.isEmpty ? nil : endpointKey)
+        return EndpointConfig(baseURL: u, model: endpointModel.isEmpty ? "local-model" : endpointModel, apiKey: key)
     }
 
-    /// A fresh provider for one inference (Llama must be fresh per call; an endpoint client is cheap).
+    /// Resolve which profile runs a given action: an explicit inline override → the agent's assigned
+    /// profile → the global active profile. (The owner's "expose + change the default at any time".)
+    func resolveProfile(agentProfileId: String? = nil, override: String? = nil) -> RuntimeProfile {
+        for id in [override, agentProfileId].compactMap({ $0 }) where !id.isEmpty {
+            if let p = profiles.first(where: { $0.id == id }) { return p }
+        }
+        return activeProfile
+    }
+
+    /// A fresh provider for one inference, against the ACTIVE profile (legacy call path, unchanged).
     func makeProvider(localModelPath: String?, context: Int) throws -> ILLMProvider {
-        switch mode {
-        case .local:
+        try makeProvider(profile: activeProfile, localModelPath: localModelPath, context: context)
+    }
+
+    /// A fresh provider for one inference against an EXPLICIT profile (the inline "Runs on" path).
+    /// The endpoint key is joined from the Keychain at this moment, never carried on the shape.
+    func makeProvider(profile: RuntimeProfile, localModelPath: String?, context: Int) throws -> ILLMProvider {
+        if profile.isLocal {
             guard let p = localModelPath else { throw InferenceSettingsError.localEngineUnavailable }
             return try LlamaProvider.make(modelPath: p, maxTokenCount: Int32(context))   // template auto-picked per model family
-        case .homelab, .endpoint:
-            guard let cfg = endpointConfig else { throw InferenceSettingsError.endpointNotConfigured }
-            return OpenAIEndpointProvider(config: cfg)
         }
+        guard let u = URL(string: profile.baseURL.trimmingCharacters(in: .whitespaces)), u.host != nil else {
+            throw InferenceSettingsError.endpointNotConfigured
+        }
+        let key = ProfileKeyStore.get(profile.id)
+        let cfg = EndpointConfig(baseURL: u, model: profile.model.isEmpty ? "local-model" : profile.model, apiKey: key)
+        return OpenAIEndpointProvider(config: cfg)
     }
 
     /// The egress reality for the badge: local keeps everything on the iPad; an endpoint sends to its host.
