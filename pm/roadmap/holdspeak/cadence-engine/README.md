@@ -6,13 +6,14 @@
 > ready-made next move.
 
 **Status:** Phase 0 (architecture hardening) complete — this chart IS its output. **Phases 1
-(cadence core) + 2 (the web coach surface) are COMPLETE** (`holdspeak cadence run-now` projects
-scored loops; the `/cadence` page shows them with prepared next moves + one-tap decisions, off by
-default). **Phase 3 (agent-blocker push) is next.** Phases 4–8 are sketched here and storied as each
-becomes the lead.
+(cadence core), 2 (web coach surface), and 3 (agent-blocker push) are COMPLETE** — `holdspeak cadence
+run-now` projects scored loops; the `/cadence` page shows them with prepared next moves + one-tap
+decisions; and an awaiting Claude/Codex session becomes a top loop you can answer (the reply lands in
+its terminal). Off by default throughout. **Phase 4 (Telegram remote presence) is next.** Phases 5–8
+are sketched here and storied as each becomes the lead.
 
-**Last updated:** 2026-06-28 (Phase 2 shipped — `/api/cadence/*` + the `/cadence` coach page;
-137 cadence/web tests green. Phase 1: the loop/scoring/policy/CLI substrate. Program authored from
+**Last updated:** 2026-06-28 (Phase 3 shipped — awaiting agent sessions → loops + a terminal-delivered
+reply; 141 cadence/web tests green. Phases 1–2: the substrate + the web coach. Program authored from
 the owner's rough design + a grounded seam map; §15 resolved below).
 
 ---
@@ -117,7 +118,7 @@ Phase 1 leads and is fully storied. Each later phase is storied when it becomes 
 |-------|-------|----------|------------|
 | **1 ✅** | **Cadence core** | *Done.* The loop/nudge/policy substrate: models, migrations, collector (meeting actions + pending proposals), stale-scoring v1, policies + quiet hours, CLI, unit tests. No external side effects, off by default. | — |
 | **2 ✅** | Web coach surface | *Done.* `/api/cadence/*` + a `/cadence` page: loops, evidence deep-links, snooze/kill/close, deterministic next-action, egress badges. | 1 |
-| **3** | Agent-blocker push | Awaiting-response agent sessions → loops + a prepared reply; tmux/`/api/dictation/remote` delivery as a nudge action. | 1 |
+| **3 ✅** | Agent-blocker push | *Done.* Awaiting-response agent sessions → top loops + a reply composer; the typed reply is delivered into the agent's tmux pane (`send_text_to_pane`, in the route — never autonomous). | 1 |
 | **4** | Telegram remote presence | Pairing + a Telegram surface; `/brief` `/loops` `/agents`; inline-button decisions wired to the cadence API; unpaired-chat rejection; second-confirm for irreversible actions. | 2, 3 |
 | **5** | Daily push brief | A deterministic morning brief (first-activity trigger) with prepared moves; LLM wording behind a capability gate (policy never model-driven). | 2 |
 | **6** | Stale-loop + EOD closure | Escalation policy + an end-of-day closure ritual + batch closure UI; accepted-action → issue proposals; kill/delegate/snooze semantics. | 2, 5 |

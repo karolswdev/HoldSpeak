@@ -11,9 +11,20 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
+import os
+
 from .models import EvidenceRef, OpenLoop
 from .projects import resolve_project
 from .scoring import LoopSignals, score_loop
+
+
+def _first_line(text: str, *, limit: int = 120) -> str:
+    line = (text or "").strip().splitlines()[0].strip() if (text or "").strip() else ""
+    return line[:limit]
+
+
+def _basename(path) -> str:
+    return os.path.basename(str(path).rstrip("/")) if path else ""
 
 # Below this review confidence an extracted action becomes a quiet `needs_review`
 # loop (surfaced, never pushed) rather than a normal loop (chart §3.6). Phase 1
@@ -32,7 +43,49 @@ class LoopCollector:
         loops: list[OpenLoop] = []
         loops += self._collect_meeting_actions(now)
         loops += self._collect_pending_proposals(now)
+        loops += self._collect_agent_questions(now)
         return loops
+
+    # ── awaiting coding-agent sessions (CAD-3-01) ───────────────────────────
+    def _collect_agent_questions(self, now: datetime) -> list[OpenLoop]:
+        """Mirror awaiting Claude/Codex sessions into top-scored agent_question loops.
+
+        READ ONLY — reads the agent-session capture file; the reply DELIVERY is a
+        route concern (`send_text_to_pane`), never this package.
+        """
+        try:
+            from ..agent_context import list_recent_awaiting_agent_sessions
+            sessions = list_recent_awaiting_agent_sessions()
+        except Exception:
+            return []
+        present_ids: list[str] = []
+        out = []
+        for s in sessions:
+            present_ids.append(s.session_id)
+            question = (s.last_assistant_text or "").strip()
+            loop = OpenLoop(
+                source_type="agent_question",
+                source_id=s.session_id,
+                title=_first_line(question) or f"{s.agent} is waiting on you",
+                summary=f"{s.agent} · {s.project_name or _basename(s.repo_root) or s.cwd}",
+                project=resolve_project(explicit=s.project_name, repo_root=s.repo_root or s.cwd),
+                priority="urgent",  # a blocked agent is the top signal
+                owner="you",
+                evidence=[
+                    EvidenceRef(
+                        kind="agent_session",
+                        ref_id=s.session_id,
+                        label=f"{s.agent} session",
+                        timestamp=s.updated_at,
+                        deep_link="/cadence",  # the reply composer lives on the coach page
+                    )
+                ],
+            )
+            saved = self._db.cadence.upsert_loop(loop)
+            self._score(saved, now, LoopSignals())
+            out.append(saved)
+        self._db.cadence.close_missing("agent_question", present_ids)
+        return out
 
     # ── meeting action items ────────────────────────────────────────────────
     def _collect_meeting_actions(self, now: datetime) -> list[OpenLoop]:
