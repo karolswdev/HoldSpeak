@@ -35,6 +35,12 @@ index idx_artifact_sources_ref: CREATE INDEX idx_artifact_sources_ref ON artifac
 index idx_artifacts_meeting: CREATE INDEX idx_artifacts_meeting ON artifacts(meeting_id, created_at DESC)
 index idx_artifacts_type: CREATE INDEX idx_artifacts_type ON artifacts(artifact_type, created_at DESC)
 index idx_bookmarks_meeting: CREATE INDEX idx_bookmarks_meeting ON bookmarks(meeting_id)
+index idx_cadence_evidence_loop: CREATE INDEX idx_cadence_evidence_loop ON cadence_evidence_refs(loop_id)
+index idx_cadence_loops_source: CREATE UNIQUE INDEX idx_cadence_loops_source ON cadence_loops(source_type, source_id)
+index idx_cadence_loops_status: CREATE INDEX idx_cadence_loops_status ON cadence_loops(status, snoozed_until)
+index idx_cadence_next_actions_loop: CREATE INDEX idx_cadence_next_actions_loop ON cadence_next_actions(loop_id)
+index idx_cadence_nudges_loop: CREATE INDEX idx_cadence_nudges_loop ON cadence_nudges(loop_id)
+index idx_cadence_nudges_status: CREATE INDEX idx_cadence_nudges_status ON cadence_nudges(status)
 index idx_chains_modified: CREATE INDEX idx_chains_modified ON chains(last_modified DESC)
 index idx_connector_runs_connector_started: CREATE INDEX idx_connector_runs_connector_started
 ON connector_runs(connector_id, started_at DESC)
@@ -247,6 +253,67 @@ table bookmarks: CREATE TABLE bookmarks (
     timestamp REAL NOT NULL,
     label TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table cadence_evidence_refs: CREATE TABLE cadence_evidence_refs (
+    id TEXT PRIMARY KEY,
+    loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    ref_id TEXT NOT NULL,
+    label TEXT NOT NULL DEFAULT '',
+    timestamp TEXT,
+    deep_link TEXT
+)
+table cadence_loops: CREATE TABLE cadence_loops (
+    id TEXT PRIMARY KEY,
+    source_type TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    project TEXT,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'open',     -- open, snoozed, closed, killed, delegated
+    priority TEXT NOT NULL DEFAULT 'normal',  -- low, normal, high, urgent
+    needs_review INTEGER NOT NULL DEFAULT 0,  -- low-confidence: quiet, never a push
+    owner TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    due_at TEXT,
+    snoozed_until TEXT,
+    stale_score REAL NOT NULL DEFAULT 0,
+    last_nudged_at TEXT,
+    nudge_count INTEGER NOT NULL DEFAULT 0
+)
+table cadence_next_actions: CREATE TABLE cadence_next_actions (
+    id TEXT PRIMARY KEY,
+    loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body_markdown TEXT NOT NULL DEFAULT '',
+    confidence REAL NOT NULL DEFAULT 0,
+    reversible INTEGER NOT NULL DEFAULT 1,
+    proposal_id TEXT,
+    generated_by TEXT NOT NULL DEFAULT 'deterministic',
+    generated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table cadence_nudges: CREATE TABLE cadence_nudges (
+    id TEXT PRIMARY KEY,
+    loop_id TEXT NOT NULL REFERENCES cadence_loops(id) ON DELETE CASCADE,
+    next_action_id TEXT,
+    surface TEXT NOT NULL,
+    severity TEXT NOT NULL DEFAULT 'normal',  -- quiet, normal, persistent, escalated
+    title TEXT NOT NULL DEFAULT '',
+    message_markdown TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',   -- pending, shown, acted, dismissed, expired
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    shown_at TEXT,
+    acted_at TEXT,
+    expires_at TEXT
+)
+table cadence_policies: CREATE TABLE cadence_policies (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    config_json TEXT NOT NULL DEFAULT '{}',
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
 table chains: CREATE TABLE chains (
     id TEXT PRIMARY KEY,

@@ -12,6 +12,7 @@ from .actuators import ActuatorRepository  # noqa: F401
 from .corrections import DictationCorrectionRepository  # noqa: F401
 from .journal import DictationJournalRepository  # noqa: F401
 from .milestones import MilestoneRepository, FIRST_DICTATION_SUCCESS  # noqa: F401
+from .cadence import CadenceRepository  # noqa: F401
 from .primitives import (  # noqa: F401
     NoteRepository,
     KBRepository,

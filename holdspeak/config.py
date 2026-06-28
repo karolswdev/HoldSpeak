@@ -685,6 +685,32 @@ class WakeWordConfig:
 
 
 @dataclass
+class CadenceConfig:
+    """The Cadence Engine (CAD-1) — OFF BY DEFAULT.
+
+    When `enabled` is False the runtime starts no cadence thread and behaves
+    identically to a build without cadence. `pressure` scales policy *timings*
+    only (never what is nudged or any safety gate). `tick_interval_seconds` is how
+    often the in-runtime loop projects + scores. Quiet hours are default-on.
+    """
+
+    enabled: bool = False
+    pressure: str = "normal"  # gentle | normal | aggressive (timing multiplier only)
+    tick_interval_seconds: int = 300
+    quiet_hours_start: int = 22  # local hour [0..23]
+    quiet_hours_end: int = 8
+    max_nudges_per_day: int = 12
+
+    def __post_init__(self) -> None:
+        if self.pressure not in ("gentle", "normal", "aggressive"):
+            self.pressure = "normal"
+        self.tick_interval_seconds = max(30, int(self.tick_interval_seconds))
+        self.quiet_hours_start = int(self.quiet_hours_start) % 24
+        self.quiet_hours_end = int(self.quiet_hours_end) % 24
+        self.max_nudges_per_day = max(0, int(self.max_nudges_per_day))
+
+
+@dataclass
 class Config:
     """Main configuration container."""
     config_version: int = CONFIG_VERSION
@@ -697,6 +723,7 @@ class Config:
     presence: PresenceConfig = field(default_factory=PresenceConfig)
     wake_word: WakeWordConfig = field(default_factory=WakeWordConfig)
     mesh: MeshConfig = field(default_factory=MeshConfig)
+    cadence: CadenceConfig = field(default_factory=CadenceConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -740,6 +767,7 @@ class Config:
                 presence=_coerce(PresenceConfig, data.get("presence", {}) or {}, section="presence"),
                 wake_word=_coerce(WakeWordConfig, data.get("wake_word", {}) or {}, section="wake_word"),
                 mesh=_coerce(MeshConfig, data.get("mesh", {}) or {}, section="mesh"),
+                cadence=_coerce(CadenceConfig, data.get("cadence", {}) or {}, section="cadence"),
             )
         except Exception as exc:
             # Last-resort fallback for a genuinely broken config (bad JSON, wrong

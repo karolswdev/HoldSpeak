@@ -1,6 +1,6 @@
 # CAD-1-03 — Stale-scoring v1 (deterministic, explainable)
 
-- **Program:** cadence-engine · **Phase:** 1 · **Status:** todo
+- **Program:** cadence-engine · **Phase:** 1 · **Status:** done (built + tested; CI green)
 - **Depends on:** CAD-1-01, CAD-1-02. **Unblocks:** 1-04 (the tick orders by score), 1-05.
 
 ## Problem

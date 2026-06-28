@@ -5,12 +5,13 @@
 > next actions.** Qlippy does not merely remind. Qlippy pushes — with receipts, restraint, and a
 > ready-made next move.
 
-**Status:** Phase 0 (architecture hardening) complete — this chart IS its output. Phase 1
-(cadence core) is the lead and fully storied. Phases 2–8 are sketched here and storied as each
-becomes the lead.
+**Status:** Phase 0 (architecture hardening) complete — this chart IS its output. **Phase 1
+(cadence core) is COMPLETE** (built + tested, off by default; `holdspeak cadence run-now` projects
+scored loops from your meetings). **Phase 2 (the web coach surface) is next.** Phases 3–8 are
+sketched here and storied as each becomes the lead.
 
-**Last updated:** 2026-06-28 (program authored from the owner's rough design + a grounded seam map
-of the real runtime; §15 open questions resolved below).
+**Last updated:** 2026-06-28 (Phase 1 shipped — the loop/scoring/policy/CLI substrate; 37 cadence
+tests green. Program authored from the owner's rough design + a grounded seam map; §15 resolved below).
 
 ---
 
@@ -112,7 +113,7 @@ Phase 1 leads and is fully storied. Each later phase is storied when it becomes 
 
 | Phase | Title | The crux | Depends on |
 |-------|-------|----------|------------|
-| **1** | **Cadence core** | The loop/nudge/policy substrate: models, migrations, collector (meeting actions + pending proposals), stale-scoring v1, policies + quiet hours, CLI, unit tests. No external side effects, off by default. | — |
+| **1 ✅** | **Cadence core** | *Done.* The loop/nudge/policy substrate: models, migrations, collector (meeting actions + pending proposals), stale-scoring v1, policies + quiet hours, CLI, unit tests. No external side effects, off by default. | — |
 | **2** | Web coach surface | `/api/cadence/*` + a `/cadence` page: loops, evidence deep-links, snooze/kill/close, generate-next-action, egress badges. | 1 |
 | **3** | Agent-blocker push | Awaiting-response agent sessions → loops + a prepared reply; tmux/`/api/dictation/remote` delivery as a nudge action. | 1 |
 | **4** | Telegram remote presence | Pairing + a Telegram surface; `/brief` `/loops` `/agents`; inline-button decisions wired to the cadence API; unpaired-chat rejection; second-confirm for irreversible actions. | 2, 3 |

@@ -13,6 +13,7 @@ os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 from .config import Config
 from .transcribe import Transcriber
 from .commands.actions import run_actions_command
+from .commands.cadence import run_cadence_command
 from .commands.agent_hook import (
     build_argparse_subparsers as _build_agent_hook_subparsers,
     run_agent_hook_command,
@@ -258,6 +259,21 @@ Logs are written to: {LOG_FILE}
     )
     _build_agent_hook_subparsers(agent_hook_parser)
 
+    # cadence subcommand (CAD-1-05) — inspect the Cadence Engine
+    cadence_parser = subparsers.add_parser(
+        "cadence",
+        help="The Cadence Engine: see open loops + what would be nudged (off by default)",
+    )
+    cadence_subparsers = cadence_parser.add_subparsers(dest="cadence_action")
+    cadence_subparsers.add_parser("status", help="Show cadence config + loop counts")
+    cadence_loops_parser = cadence_subparsers.add_parser("loops", help="List open loops by staleness")
+    cadence_loops_parser.add_argument("--json", action="store_true", help="Emit JSON")
+    cadence_loops_parser.add_argument("--all", action="store_true", help="Include closed/killed")
+    cadence_run_parser = cadence_subparsers.add_parser(
+        "run-now", help="Run one tick now (projects + scores loops from your meetings)"
+    )
+    cadence_run_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
     # device-psk subcommand (HS-14-03)
     device_psk_parser = subparsers.add_parser(
         "device-psk",
@@ -360,6 +376,9 @@ Logs are written to: {LOG_FILE}
     # Handle agent-hook subcommand
     if args.command == "agent-hook":
         raise SystemExit(run_agent_hook_command(args))
+
+    if args.command == "cadence":
+        raise SystemExit(run_cadence_command(args))
 
     # Handle device-psk subcommand (HS-14-03)
     if args.command == "device-psk":

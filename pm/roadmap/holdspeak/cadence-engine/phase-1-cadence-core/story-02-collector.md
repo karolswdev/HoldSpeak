@@ -1,6 +1,6 @@
 # CAD-1-02 — The collector (sources → source-projected loops)
 
-- **Program:** cadence-engine · **Phase:** 1 · **Status:** todo
+- **Program:** cadence-engine · **Phase:** 1 · **Status:** done (built + tested; CI green)
 - **Depends on:** CAD-1-01. **Unblocks:** 1-03 (scoring reads loops), 1-05 (CLI shows them).
 
 ## Problem

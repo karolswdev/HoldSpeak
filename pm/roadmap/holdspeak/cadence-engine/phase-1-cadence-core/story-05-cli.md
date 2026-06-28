@@ -1,6 +1,6 @@
 # CAD-1-05 — CLI: `holdspeak cadence status | loops | run-now`
 
-- **Program:** cadence-engine · **Phase:** 1 · **Status:** todo
+- **Program:** cadence-engine · **Phase:** 1 · **Status:** done (built + tested; CI green)
 - **Depends on:** CAD-1-01..04. **Unblocks:** the phase exit criteria (the first usable surface).
 
 ## Problem
