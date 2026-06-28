@@ -19,6 +19,24 @@ from ..context import WebContext
 _LOCAL_EGRESS = {"scope": "local", "label": "Local only"}
 
 
+def _cadence_llm():
+    """The capability-gated LLM callable (CAD-7) — None unless `cadence.use_llm` is on.
+
+    Builds the user's configured intel provider; returns (system, user) -> text. The
+    next-action generator is fail-closed, so a None or a failing llm is harmless."""
+    from ...config import Config
+
+    if not getattr(Config.load().cadence, "use_llm", False):
+        return None
+    try:
+        from ...intel.providers import build_configured_meeting_intel
+
+        intel = build_configured_meeting_intel()
+        return lambda sysp, usr: intel.run_prompt(system_prompt=sysp, user_prompt=usr)
+    except Exception:
+        return None
+
+
 def _loop_dict(loop, *, with_next_action: bool = True) -> dict[str, Any]:
     from ...cadence.next_action import generate_next_action
 
@@ -153,7 +171,16 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
         loop = get_database().cadence.get_loop(loop_id)
         if loop is None:
             raise HTTPException(status_code=404, detail="loop not found")
-        return _loop_dict(loop)
+        # The single-loop detail is where a drafted next action is worth the LLM call
+        # (gated; fail-closed to deterministic). The list/brief stay deterministic.
+        from ...cadence.llm_action import next_action_for
+
+        out = _loop_dict(loop, with_next_action=False)
+        na = next_action_for(loop, llm=_cadence_llm())
+        out["next_action"] = {"kind": na.kind, "title": na.title,
+                              "body_markdown": na.body_markdown, "reversible": na.reversible,
+                              "confidence": na.confidence, "generated_by": na.generated_by}
+        return out
 
     def _require(loop_id: str):
         from ...db import get_database

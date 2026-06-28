@@ -696,6 +696,7 @@ class CadenceConfig:
 
     enabled: bool = False
     pressure: str = "normal"  # gentle | normal | aggressive (timing multiplier only)
+    use_llm: bool = False     # CAD-7: LLM-DRAFT next actions (fail-closed to deterministic)
     tick_interval_seconds: int = 300
     quiet_hours_start: int = 22  # local hour [0..23]
     quiet_hours_end: int = 8
