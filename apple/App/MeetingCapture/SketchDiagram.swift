@@ -578,7 +578,7 @@ struct SketchToDiagramView: View {
     }
 
     /// The egress reality for the badge: local keeps everything on the iPad; an endpoint sends to its host.
-    var egressLabel: String { isLocal ? "On-device · nothing leaves" : "Sends to \(endpointConfig?.baseURL.host ?? "your endpoint")" }
+    var egressLabel: String { isLocal ? "On-device" : "Sends to \(endpointConfig?.baseURL.host ?? "your endpoint")" }
 
     private struct ModelsResponse: Decodable { let data: [Entry]; struct Entry: Decodable { let id: String } }
 

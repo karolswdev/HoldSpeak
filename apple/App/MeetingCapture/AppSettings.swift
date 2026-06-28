@@ -29,7 +29,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     label("WHERE INTELLIGENCE RUNS")
-                    targetCard(.local, "This iPad", "Runs on this iPad", "ipad", Sig.localGradient)
+                    targetCard(.local, "This \(DeviceLabel.current)", "Runs on this \(DeviceLabel.current)", DeviceLabel.current == "iPhone" ? "iphone" : "ipad", Sig.localGradient)
                     if cfg.isLocal { onDeviceModelCard }
                     targetCard(.homelab, "LAN endpoint", "An OpenAI-compatible server on your network", "server.rack", Sig.accentGradient)
                     if !cfg.isLocal { endpointCard }
@@ -70,7 +70,7 @@ struct SettingsView: View {
                     HStack(spacing: 10) {
                         GlyphChip(system: "tray.and.arrow.down.fill", gradient: Sig.accentGradient, size: 42)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("No models on this iPad").font(.system(size: 15.5, weight: .heavy)).foregroundStyle(Sig.text)
+                            Text("No models on this \(DeviceLabel.current)").font(.system(size: 15.5, weight: .heavy)).foregroundStyle(Sig.text)
                             Text("Tap to download one").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
                         }
                         Spacer(); Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)

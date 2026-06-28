@@ -87,7 +87,7 @@ struct ModelsView: View {
                         }
                     }
                     if !models.isEmpty {
-                        Text("ON THIS IPAD").font(.system(size: 11, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.top, 4)
+                        Text("ON THIS \(DeviceLabel.current.uppercased())").font(.system(size: 11, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint).padding(.top, 4)
                         ForEach(models) { modelCard($0) }
                     }
                 }
@@ -102,7 +102,7 @@ struct ModelsView: View {
                 var ok = 0
                 for u in urls { if (try? ModelFiles.importModel(from: u)) != nil { ok += 1 } }
                 await MainActor.run {
-                    busy = false; note = "Imported \(ok) model\(ok == 1 ? "" : "s"). They're on this iPad now."; refresh()
+                    busy = false; note = "Imported \(ok) model\(ok == 1 ? "" : "s")."; refresh()
                 }
             }
         }
