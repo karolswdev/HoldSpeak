@@ -1370,6 +1370,47 @@ function historyApp() {
       return String(artifact?.artifact_type || "").replace(/_/g, " ");
     },
 
+    // HS-19 (web): the artifact's confidence as a banded level for the meter
+    // treatment (a flat % pill alone reads as noise). 0..1 -> high/medium/low.
+    artifactConfidenceLevel(artifact) {
+      const c = Number(artifact?.confidence);
+      if (!Number.isFinite(c)) return "low";
+      if (c >= 0.75) return "high";
+      if (c >= 0.5) return "medium";
+      return "low";
+    },
+
+    artifactConfidencePct(artifact) {
+      const c = Number(artifact?.confidence);
+      return Number.isFinite(c) ? Math.round(Math.max(0, Math.min(1, c)) * 100) : 0;
+    },
+
+    // HS-19 (web): humanize one lineage source ({source_type, source_ref}) so
+    // the provenance reads as a trail a person can follow, not a raw key.
+    artifactSourceLabel(source) {
+      const type = String(source?.source_type || "").replace(/_/g, " ").trim();
+      const ref = String(source?.source_ref || "").trim();
+      if (type && ref) return `${type} · ${ref}`;
+      return type || ref || "source";
+    },
+
+    // HS-19 (web): the honest egress badge for an actionable aftercare surface
+    // (POSITIONING canon: ONE structured {scope, label} chip, never a privacy
+    // sentence). The digest/follow-up Send-to-Slack LEAVES the device on
+    // approve; filing an accepted action as a GitHub issue does too. Everything
+    // else (jump-to-moment, copy) stays local. Mirrors proposalEgress.
+    aftercareEgress(what) {
+      const labels = { slack: "Slack", github: "GitHub" };
+      if (what in labels) return { scope: "cloud", label: labels[what] };
+      return { scope: "local", label: "Local only" };
+    },
+
+    aftercareEgressText(what) {
+      const badge = this.aftercareEgress(what);
+      const glyph = { local: "⌂", mixed: "⌂+☁", cloud: "☁" }[badge.scope] || "⌂";
+      return `${glyph} ${badge.label}`;
+    },
+
     // HS-36-02: serialize one artifact's structured_json to clean Markdown,
     // driven by the same per-type accessors the card renders from (so a
     // collapsed card still copies). Pure: artifact -> string. Tabular types

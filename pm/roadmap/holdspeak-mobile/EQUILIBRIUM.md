@@ -168,6 +168,38 @@ of the owner's device-walk features.
 
 Both carry `String?` timestamps by construction (the Wave-6 naive-timestamp lesson, told to the agents up front). Integrated: 15 tests green, no regression. Gotcha flagged for future agents: under `.convertFromSnakeCase`, a snake_case literal CodingKey never matches, use the camelCase key.
 
+### Armada Fleet WEB (2026-06-27) — 4 distinct web pages, in parallel
+
+Run concurrently with the iOS + python fleets (partitioned by surface). 4 agents, one page each:
+
+| Page | What landed |
+|------|-------------|
+| /dictation | a browser-mic dry-run widget (getUserMedia capture, review, run the existing dry-run preview); local egress badge, preview-not-inject |
+| /history | egress badges on the aftercare actionables + a banded confidence meter + a "synthesized from" sources trail on each artifact (the provenance the hub already serves) |
+| /activity | a source-cited pre-briefing nudge board with "Dictate with this" (select grounds the next dictation) |
+| /companion | the iPad-companion explainer (the teleprompter, aftercare, schema-safe storage, pairing how-to), grounded in the shipped clients |
+
+Integrated: web build green + route-preflight green (the new pages load clean, null-guards held).
+
+### God-quality review pass (2026-06-27) — 5 adversarial reviewers, real bugs caught
+
+A review armada (each reviewer running the FULL relevant suite, not a slice, the lesson from a
+focus-steal bug it pre-empted) over the session's merged work. What it caught:
+
+| Area | Caught |
+|------|--------|
+| Web (by hand, pre-launch) | the Fleet WEB mic widget called `.focus()`, breaking the SACRED no-steal-focus dictation invariant (test_dictation_moment_of_truth). The red check on #157. Removed. |
+| iOS clients | `MeetingSummary.startedAt/endedAt` typed `Date?` against the hub's naive-ISO strings, would THROW and fail the WHOLE listMeetings/searchMeetings decode on the live archive (the Wave-6 bug class, a NEW type the audit missed). Fixed to `String?` + de-masked the tests. |
+| Python | the graph `extract` node silently lost its artifact type: Swift encodes the unlabeled enum value under `_0`, so the real wire is `{"extract":{"_0":"decisions"}}` but the hub read a bare string. Fixed + de-masked the test. |
+| iOS screens (review-only, fixed by hand) | the **CRITICAL seed-vs-contract drift**: the teleprompter sim seed no longer matched the (audit-rewritten) DictationPreview, so a FRESH companion-shell build would not compile (earlier builds passed on stale flattened sources). Also: the aftercare/artifacts cards were DEAD on metal (seed-only, never loaded), egress shown as banned reassurance prose, a nested ScrollView, an empty-dry-run hole, a silent bad-port Connect, and zero accessibility. All fixed. |
+| Voice | a prose em-dash in a user-facing error string. Fixed. |
+
+Integrated + verified: full swift package suite **381 tests, 0 failures**; a FRESH companion-shell
+re-gen + build SUCCEEDED (proving the seed-vs-contract fix); the dictation moment-of-truth invariant
+green. The recurring theme: tests that asserted an idealized shape MASKED real bugs; the pass de-masked
+them. Remaining low-severity findings logged for follow-up (blob-key snake-case isolation, the URL-builder
+duplication, a few a11y polish items).
+
 ### Armada Fleet PYTHON (2026-06-27) — hub safety + a CI guard the browser test was hiding
 
 Run concurrently with the iOS + web fleets. 3 agents:

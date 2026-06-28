@@ -75,8 +75,113 @@ import CommandPreview from "../components/CommandPreview.astro";
         </section>
       </aside>
 
-      <!-- Main column (rules + candidates + records) -->
+      <!-- Main column (nudges + rules + candidates + records) -->
       <div class="main">
+        {/* Phase 18-05: source-cited pre-briefing nudges. A self-contained
+            Alpine island (window.HoldSpeakActivityNudges) so it does not
+            disturb the legacy vanilla-JS controller below. */}
+        <section class="panel" x-data="HoldSpeakActivityNudges()" x-init="init()">
+          <header class="panel-header">
+            <div class="panel-title">Pre-briefing nudges</div>
+            <div class="panel-toolbar">
+              <span
+                class="egress-badge is-local nudge-egress"
+                title="Computed locally from your activity ledger; nothing leaves this machine"
+                x-text="egressText()"
+              ></span>
+              <button class="btn btn--ghost btn--sm" type="button" @click="load()" :disabled="loading">Refresh</button>
+            </div>
+          </header>
+          <div class="panel-body">
+            <p class="sub">
+              Recent activity worth surfacing before you dictate or meet —
+              source-cited, dismissible, and never an LLM. Pick one to ground
+              your next dictation in that record.
+            </p>
+
+            {/* Parked-selection banner (HS-53-07). */}
+            <div class="nudge-selected" x-show="selectedRecordId !== null" x-cloak>
+              <span class="nudge-selected-text">
+                Next dictation will be grounded in record
+                <span class="mono" x-text="`#${selectedRecordId ?? ''}`"></span>.
+              </span>
+              <button
+                class="btn btn--ghost btn--sm"
+                type="button"
+                @click="clearSelection()"
+                :disabled="busyKey === '__clear__'"
+              >Clear</button>
+            </div>
+
+            <p class="error" x-show="error" x-cloak x-text="error"></p>
+
+            <div class="empty" x-show="loading" x-cloak>Loading nudges…</div>
+
+            <div class="empty" x-show="!loading && nudges.length === 0" x-cloak>
+              <strong>Nothing to surface right now</strong>
+              <template x-if="!activityEnabled">
+                <span>Activity tracking is paused, so there is nothing to pre-brief. Resume it in Controls to start surfacing nudges.</span>
+              </template>
+              <template x-if="activityEnabled">
+                <span>Quiet beats noisy — no recent activity crossed the relevance bar. Browse a tracked source and refresh.</span>
+              </template>
+            </div>
+
+            <div class="nudge-list" x-show="!loading && nudges.length > 0" x-cloak>
+              <template x-for="nudge in nudges" :key="nudge?.key">
+                <article class="nudge-card" :class="{ 'is-selected': isSelected(nudge) }">
+                  <header class="nudge-head">
+                    <div class="nudge-head-left">
+                      <span class="nudge-kind" x-text="(nudge?.kind || 'nudge')"></span>
+                      <h3 class="nudge-title" x-text="nudge?.title || 'Nudge'"></h3>
+                    </div>
+                    <button
+                      class="btn btn--ghost btn--sm nudge-dismiss"
+                      type="button"
+                      @click="dismiss(nudge)"
+                      :disabled="busyKey === nudge?.key"
+                      :aria-label="`Dismiss ${nudge?.title || 'nudge'}`"
+                    >Dismiss</button>
+                  </header>
+
+                  <p class="nudge-body" x-show="nudge?.body" x-text="nudge?.body"></p>
+
+                  {/* Citation chips — the records this nudge was computed
+                      from, verifiable below in Recent activity. */}
+                  <div class="nudge-citations" x-show="(nudge?.citations?.length || 0) > 0">
+                    <span class="nudge-citations-label">Cited from</span>
+                    <div class="nudge-chips">
+                      <template x-for="cite in (nudge?.citations || [])" :key="cite?.record_id">
+                        <a
+                          class="nudge-chip"
+                          :href="cite?.url || undefined"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          :title="citationMeta(cite)"
+                        >
+                          <span class="nudge-chip-label" x-text="citationLabel(cite)"></span>
+                          <span class="nudge-chip-meta" x-show="citationMeta(cite)" x-text="citationMeta(cite)"></span>
+                        </a>
+                      </template>
+                    </div>
+                  </div>
+
+                  <div class="nudge-actions">
+                    <button
+                      class="btn btn--primary btn--sm"
+                      type="button"
+                      x-show="canDictateWith(nudge)"
+                      @click="dictateWith(nudge)"
+                      :disabled="busyKey === nudge?.key"
+                      x-text="isSelected(nudge) ? 'Grounded ✓' : 'Dictate with this'"
+                    ></button>
+                  </div>
+                </article>
+              </template>
+            </div>
+          </div>
+        </section>
+
         <section class="panel">
           <header class="panel-header"><div class="panel-title">Project rules</div></header>
           <div class="panel-body">
@@ -178,6 +283,29 @@ import CommandPreview from "../components/CommandPreview.astro";
     // event handlers and calls load() at the end. Eval it once on
     // module import; the browser handles handler binding from there.
     new Function(factorySource)();
+  </script>
+
+  <script>
+    // Phase 18-05: the nudge board is the one Alpine island on this page.
+    // The shared egress-badge helpers (egressBadgeText / EGRESS_SCOPES) are
+    // concatenated ahead of the nudges factory so the factory can call them
+    // without becoming an ES module (same pattern as the dashboard).
+    import Alpine from "alpinejs";
+    import nudgesSource from "../scripts/activity-nudges-app.js?raw";
+    import egressBadgeSource from "../scripts/egress-badge.js?raw";
+
+    const stripExports = (src) =>
+      src.replace(/^\s*export\s+(function|const|let|var)/gm, "$1");
+    const fn = new Function(
+      stripExports(egressBadgeSource) +
+        "\n" +
+        stripExports(nudgesSource) +
+        "; return HoldSpeakActivityNudges;"
+    );
+    window.HoldSpeakActivityNudges = fn();
+
+    window.Alpine = Alpine;
+    Alpine.start();
   </script>
 </AppLayout>
 
@@ -577,6 +705,113 @@ import CommandPreview from "../components/CommandPreview.astro";
   #enabled-pill.warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
   #enabled-pill.danger { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
   #enabled-pill.danger .pill-dot, #enabled-pill.warn .pill-dot, #enabled-pill.success .pill-dot { background: currentColor; }
+
+  /* === Pre-briefing nudges (Phase 18-05) ===
+     Signal cards: raised surface, accent left-rail, dismissible. The
+     egress chip is the canonical structured badge (.egress-badge from
+     global.css), never a privacy sentence. */
+  .nudge-egress { white-space: nowrap; }
+
+  .nudge-selected {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space-3); flex-wrap: wrap;
+    padding: var(--space-2) var(--space-3);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-2);
+  }
+  .nudge-selected-text { color: var(--text); font-size: var(--font-size-sm); }
+  .nudge-selected-text .mono { font-family: var(--font-mono); color: var(--accent); }
+
+  .nudge-list { display: flex; flex-direction: column; gap: var(--space-3); }
+
+  .nudge-card {
+    display: flex; flex-direction: column; gap: var(--space-3);
+    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--line-strong);
+    border-radius: var(--radius-2);
+    transition: border-color var(--duration-short) var(--ease-standard),
+                background var(--duration-short) var(--ease-standard);
+  }
+  .nudge-card.is-selected {
+    border-left-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .nudge-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: var(--space-3);
+  }
+  .nudge-head-left {
+    display: flex; flex-direction: column; gap: var(--space-1);
+    min-width: 0;
+  }
+  .nudge-kind {
+    align-self: flex-start;
+    padding: 1px var(--space-2);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-loose);
+    color: var(--text-muted);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+  }
+  .nudge-title {
+    margin: 0; color: var(--text);
+    font-size: var(--font-size-md); font-weight: 600;
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .nudge-dismiss { color: var(--text-muted); flex: 0 0 auto; }
+
+  .nudge-body {
+    margin: 0; color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    overflow-wrap: anywhere;
+  }
+
+  .nudge-citations {
+    display: flex; flex-direction: column; gap: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--line);
+  }
+  .nudge-citations-label {
+    color: var(--text-faint); font-size: var(--font-size-xs);
+    text-transform: uppercase; letter-spacing: var(--letter-spacing-loose);
+  }
+  .nudge-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .nudge-chip {
+    display: inline-flex; flex-direction: column; gap: 1px;
+    max-width: 100%;
+    padding: var(--space-1) var(--space-2);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-2);
+    text-decoration: none;
+    transition: border-color var(--duration-short) var(--ease-standard);
+  }
+  .nudge-chip:hover { border-color: var(--accent); }
+  .nudge-chip:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .nudge-chip-label {
+    color: var(--text); font-size: var(--font-size-xs); font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 32ch;
+  }
+  .nudge-chip-meta {
+    color: var(--text-faint); font-size: var(--font-size-xs);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 32ch;
+  }
+
+  .nudge-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 
   @media (max-width: 960px) {
     .grid { grid-template-columns: 1fr; }

@@ -147,6 +147,12 @@ def test_build_node_prompt_matches_swift_templates() -> None:
         "Summarize the following")
     assert "executive tone" in build_node_prompt(
         GraphNode("r", "rewrite", {"tone": "executive"}), "B")
+    # `extract(ArtifactType)` is a single UNLABELED associated value, so Swift's
+    # synthesized Codable encodes it as {"extract": {"_0": "action_items"}}. The
+    # decoded payload is that {"_0": ...} object — the REAL wire shape the hub sees.
+    assert "extract the action items" in build_node_prompt(
+        GraphNode("x", "extract", {"_0": "action_items"}), "B")
+    # The bare-string payload is accepted too (defensive), but it is NOT the wire shape.
     assert "extract the action items" in build_node_prompt(
         GraphNode("x", "extract", "action_items"), "B")
 
