@@ -123,6 +123,16 @@ final class ShellModel: ObservableObject {
             dictateSent = true; dictatePreview = nil; dictateText = ""
         } catch { dictateError = "Send failed — is a Mac app focused?" }
     }
+
+    // MARK: Aftercare (HSM-19-01) — the close-the-loop digest for a meeting.
+    @Published var aftercare: Aftercare?
+    @Published var aftercareLoading = false
+
+    func loadAftercare(meetingId: String) async {
+        guard let c = client() else { return }
+        aftercareLoading = true; defer { aftercareLoading = false }
+        aftercare = try? await c.aftercare(meetingId: meetingId)
+    }
 }
 
 // MARK: - Shell
@@ -177,6 +187,32 @@ struct ShellView: View {
                     target: DryRunTarget(app: "Cursor", window: nil, process: nil, profile: nil, confidence: 0.91),
                     warnings: [], totalElapsedMs: 380, status: "ok", blocksCount: 2, project: "holdspeak")
             }
+            // HS_SHELL_DEMO=aftercare seeds a close-the-loop digest on the Meetings screen.
+            if ProcessInfo.processInfo.environment["HS_SHELL_DEMO"] == "aftercare" {
+                model.host = model.host.isEmpty ? "192.168.1.13" : model.host
+                model.aftercare = Aftercare(
+                    meetingId: "m1", meetingTitle: "Q3 kickoff", meetingDate: "2026-06-27",
+                    openItems: AftercareOpenItems(total: 3, byOwner: [
+                        AftercareOwnerGroup(owner: "Karol", count: 2, items: [
+                            AftercareOpenItem(id: "a1", task: "Own the mesh-sync approval contract", owner: "Karol", due: "Fri"),
+                            AftercareOpenItem(id: "a2", task: "Demo the air-gapped proof", owner: "Karol"),
+                        ]),
+                        AftercareOwnerGroup(owner: nil, count: 1, items: [
+                            AftercareOpenItem(id: "a3", task: "Decide the iPhone size-class cutoff", owner: nil),
+                        ]),
+                    ]),
+                    decisions: [
+                        AftercareDecision(decision: "Ship the desk to the web this quarter."),
+                        AftercareDecision(decision: "Whisper language is one knob across dictation, meetings, and import."),
+                    ],
+                    sinceLastMeeting: AftercareSinceLastMeeting(
+                        previousMeeting: AftercarePreviousMeeting(id: "m0", title: "Planning", date: "2026-06-20"),
+                        newDecisions: [AftercareDecision(decision: "Ship the desk to the web this quarter.")],
+                        newActions: [AftercareOpenItem(id: "a3", task: "Decide the iPhone size-class cutoff")],
+                        closedActions: [AftercareClosedAction(id: "c1", task: "Pick the on-device model", status: "done")],
+                        changed: true),
+                    isEmpty: false, slackConfigured: true)
+            }
             #endif
         }
     }
@@ -215,7 +251,71 @@ struct ShellView: View {
         VStack(alignment: .leading, spacing: 18) {
             thisIPadCard
             desktopCard
+            if let a = model.aftercare, !a.isEmpty { aftercareCard(a) }
         }
+    }
+
+    // MARK: Aftercare card (HSM-19-01) — close the loop: what's still open (by owner),
+    // what was decided, and the real diff since the previous meeting.
+    private func aftercareCard(_ a: Aftercare) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            peerHeader("AFTERCARE", a.meetingTitle ?? "Close the loop", Sig.accent, live: false)
+
+            if let since = a.sinceLastMeeting, since.changed {
+                HStack(spacing: 8) {
+                    if !since.newDecisions.isEmpty { diffChip("\(since.newDecisions.count) decided", "checkmark.seal.fill", Sig.ok) }
+                    if !since.newActions.isEmpty { diffChip("\(since.newActions.count) new", "plus.circle.fill", Sig.accent) }
+                    if !since.closedActions.isEmpty { diffChip("\(since.closedActions.count) closed", "checkmark.circle.fill", Sig.faint) }
+                    Spacer()
+                }
+            }
+
+            if a.openItems.total > 0 {
+                Text("STILL OPEN · \(a.openItems.total)").font(.caption2.weight(.bold)).tracking(1.2).foregroundStyle(Sig.faint)
+                ForEach(Array(a.openItems.byOwner.enumerated()), id: \.offset) { _, group in
+                    VStack(alignment: .leading, spacing: 7) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "person.fill").font(.system(size: 10, weight: .bold)).foregroundStyle(Sig.muted)
+                            Text(group.owner ?? "Unassigned").font(.caption.weight(.semibold)).foregroundStyle(Sig.text)
+                            Text("\(group.count)").font(.caption2).foregroundStyle(Sig.faint)
+                        }
+                        ForEach(group.items, id: \.id) { item in
+                            HStack(alignment: .top, spacing: 8) {
+                                Circle().fill(Sig.faint).frame(width: 5, height: 5).padding(.top, 6)
+                                Text(item.task).font(.callout).foregroundStyle(Sig.muted).fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 0)
+                                if let due = item.due { Text(due).font(.caption2).foregroundStyle(Sig.warn) }
+                            }
+                        }
+                    }
+                    .padding(11).background(Sig.s2, in: RoundedRectangle(cornerRadius: 11))
+                    .overlay(RoundedRectangle(cornerRadius: 11).stroke(Sig.line, lineWidth: 1))
+                }
+            }
+
+            if !a.decisions.isEmpty {
+                Text("DECIDED · \(a.decisions.count)").font(.caption2.weight(.bold)).tracking(1.2).foregroundStyle(Sig.faint)
+                ForEach(Array(a.decisions.enumerated()), id: \.offset) { _, d in
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "checkmark.seal.fill").font(.system(size: 12)).foregroundStyle(Sig.ok).padding(.top, 1)
+                        Text(d.decision).font(.callout).foregroundStyle(Sig.text).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+
+            rowNote("An accepted action becomes a GitHub issue proposal you approve separately, never automatically.")
+        }
+        .cardChrome(border: Sig.accent.opacity(0.3))
+    }
+
+    private func diffChip(_ text: String, _ icon: String, _ tint: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 9, weight: .bold))
+            Text(text).font(.caption2.weight(.semibold))
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 9).padding(.vertical, 5)
+        .background(tint.opacity(0.12), in: Capsule())
     }
 
     private var thisIPadCard: some View {

@@ -42,7 +42,7 @@ approval UI for any new propose→approve flow (split the one-tap send while her
 
 | ID | Title | Status |
 |----|-------|--------|
-| HSM-19-01 | Meeting aftercare — client + close-the-loop card + file-issue — **leads** | todo |
+| HSM-19-01 | Meeting aftercare — client + close-the-loop card + file-issue — **leads** | in-progress (client + close-the-loop card landed, sim-proven; file-issue + metal remain) |
 | HSM-19-02 | The faceted archive — search + facets (compact-aware) | todo |
 | HSM-19-03 | Meeting import on the iPad (audio + transcript → the hub engine) | todo |
 | HSM-19-04 | Artifact provenance — read the hub's artifacts, render confidence + sources | todo |
