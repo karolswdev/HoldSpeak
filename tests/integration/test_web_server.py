@@ -1866,6 +1866,32 @@ class TestCompanionUiSmoke:
 
 
 @pytest.mark.integration
+class TestCadenceUiSmoke:
+    """CAD-2-04 — the /cadence coach page serves and drives /api/cadence/*."""
+
+    def test_cadence_page_serves_with_sections(self, test_client):
+        response = test_client.get("/cadence")
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+        html = response.text
+        for marker in ("Cadence", "Open loops", "off by default"):
+            assert marker in html, f"missing cadence page marker: {marker}"
+
+    def test_cadence_page_js_calls_the_api(self, test_client):
+        import re
+
+        html = test_client.get("/cadence").text
+        chunks = re.findall(r'src="(/_built/_astro/[^"]+\.js)"', html)
+        assert chunks, "expected a bundled JS chunk reference on /cadence"
+        js = "".join(test_client.get(src).text for src in set(chunks))
+        # The bundler splits `${API}/status` into the base + the suffix, so assert the
+        # base path and each action segment (not the concatenated whole).
+        assert "/api/cadence" in js, "cadence page JS missing the API base path"
+        for segment in ("/status", "/loops", "/run-now", "/snooze"):
+            assert segment in js, f"cadence page JS missing API segment: {segment}"
+
+
+@pytest.mark.integration
 class TestSettingsApiEndpoints:
     """Tests for web settings API."""
 

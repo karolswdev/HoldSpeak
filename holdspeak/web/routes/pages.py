@@ -161,6 +161,28 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/cadence")
+    async def cadence_dashboard() -> Any:
+        """Serve the Cadence coach surface (CAD-2-04: the Astro-built
+        _built/cadence/index.html, driven by /api/cadence/*)."""
+        page = (
+            _HOLDSPEAK_DIR
+            / "static"
+            / "_built"
+            / "cadence"
+            / "index.html"
+        )
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read cadence.html: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak Cadence</title></head>"
+                "<body><h1>Cadence</h1><p>Page unavailable.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     @router.get("/dictation")
     async def dictation_dashboard() -> Any:
         """Serve the dictation block-config UI (HS-10-09: now read
