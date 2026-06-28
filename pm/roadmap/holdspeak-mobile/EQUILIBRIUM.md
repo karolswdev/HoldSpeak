@@ -145,4 +145,17 @@ Verified together: `swift test` (storage + activity + no regression), web build,
 all green. The web hardening proves the pattern: every wave's integration runs the browser preflight CI
 silently skips, so this class of bug keeps getting caught instead of shipped.
 
+### Armada Fleet WEB (2026-06-27) — 4 distinct web pages, in parallel
+
+Run concurrently with the iOS + python fleets (partitioned by surface). 4 agents, one page each:
+
+| Page | What landed |
+|------|-------------|
+| /dictation | a browser-mic dry-run widget (getUserMedia capture, review, run the existing dry-run preview); local egress badge, preview-not-inject |
+| /history | egress badges on the aftercare actionables + a banded confidence meter + a "synthesized from" sources trail on each artifact (the provenance the hub already serves) |
+| /activity | a source-cited pre-briefing nudge board with "Dictate with this" (select grounds the next dictation) |
+| /companion | the iPad-companion explainer (the teleprompter, aftercare, schema-safe storage, pairing how-to), grounded in the shipped clients |
+
+Integrated: web build green + route-preflight green (the new pages load clean, null-guards held).
+
 See [[project_primitive_framework]], [[project_phase15_the_mesh]], [[project_phase17_agent_sync]].
