@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 20
-- **Status:** todo — the heart of the phase (the signature device moment lives here).
+- **Status:** done (sim) — the heart of the phase (the signature device moment lives here).
+  Lane column + migrating pull-out + fixed-card clamps shipped; the action-sheet scrim reframes are
+  explicitly 20-04. Device walk = 20-05.
+- **Evidence:** `evidence-story-02.md`.
 - **Depends on:** 20-01 (`DeskCamera` + `laneWidth`).
 - **Unblocks:** nothing downstream; it is the centerpiece.
 - **Owner:** unassigned

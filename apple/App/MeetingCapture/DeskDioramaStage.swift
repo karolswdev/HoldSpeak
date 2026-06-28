@@ -493,6 +493,109 @@ struct DioHeroVisual: View {
     }
 }
 
+// MARK: - The lane (HSM-20-02) — the desk at compact width as a one-thumb card column.
+// The diorama is a place; the lane is the same place shrunk to thumb-reach. Every primitive that
+// exists on the wide desk has a row here (nothing is hidden between sizes); `positions[id]` is
+// never touched, so rotating back to `.wide` restores the exact hand-arranged desk.
+
+/// A primitive's glyph at a fixed lane size — the same sprite-vs-SF-symbol logic as `DioHeroVisual`,
+/// drawn flat (no bob/glow) so a column of them reads calmly.
+struct DioLaneGlyph: View {
+    let glyph: String; let tint: Color; let symbol: Bool; var size: CGFloat = 44
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
+                .fill(LinearGradient(colors: [tint.opacity(0.20), Color(hex: 0x14121C)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: size * 0.26, style: .continuous).strokeBorder(tint.opacity(0.45), lineWidth: 1))
+            if symbol {
+                Image(systemName: glyph).font(.system(size: size * 0.42, weight: .bold)).foregroundStyle(.white)
+            } else {
+                DeskSprite(name: glyph, size: size * 0.92)
+            }
+        }.frame(width: size, height: size)
+    }
+}
+
+/// One full-width row in the lane: glyph @44 · title · BADGE · subtitle · chevron. Tapping it does
+/// exactly what tapping the canvas primitive does (notes/KBs edit in-world; everything else opens
+/// the pull-out, which on the lane rises from the bottom edge).
+struct DioLaneRow: View {
+    let glyph: String; let tint: Color; let symbol: Bool
+    let title: String; let badge: String; let subtitle: String
+    var arrived: Bool = false
+    let onTap: () -> Void
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 13) {
+                DioLaneGlyph(glyph: glyph, tint: tint, symbol: symbol)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title).font(.system(size: 16, weight: .heavy, design: .rounded))
+                        .foregroundStyle(DioPal.text).lineLimit(1)
+                    HStack(spacing: 6) {
+                        Text(badge).font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(0.6)
+                            .foregroundStyle(tint).padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(Capsule().fill(tint.opacity(0.16)))
+                        if !subtitle.isEmpty {
+                            Text(subtitle).font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(DioPal.muted).lineLimit(1)
+                        }
+                    }
+                }
+                Spacer(minLength: 6)
+                Image(systemName: "chevron.right").font(.system(size: 13, weight: .black)).foregroundStyle(DioPal.muted.opacity(0.7))
+            }
+            .padding(.horizontal, 14).padding(.vertical, 11)
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(.white.opacity(0.05))
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(arrived ? DioPal.accent.opacity(0.8) : .white.opacity(0.09), lineWidth: arrived ? 2 : 1)))
+        }.buttonStyle(.plain)
+    }
+}
+
+/// A zone row in the lane — taps to dive in (the spatial nav, one-thumb). Mirrors `DioZoneTray`.
+struct DioLaneZoneRow: View {
+    let name: String; let tint: Color; let count: Int; let subZones: Int
+    let onDive: () -> Void
+    var body: some View {
+        Button(action: onDive) {
+            HStack(spacing: 13) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(tint.opacity(0.16))
+                        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(tint.opacity(0.5), lineWidth: 1))
+                    Image(systemName: subZones > 0 ? "square.stack.3d.up.fill" : "tray.full.fill")
+                        .font(.system(size: 18, weight: .bold)).foregroundStyle(tint)
+                }.frame(width: 44, height: 44)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(name).font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
+                    Text("ZONE · \(count) item\(count == 1 ? "" : "s")\(subZones > 0 ? " · +\(subZones)" : "")")
+                        .font(.system(size: 10, weight: .black, design: .rounded)).tracking(0.6).foregroundStyle(tint)
+                }
+                Spacer(minLength: 6)
+                Image(systemName: "chevron.right").font(.system(size: 13, weight: .black)).foregroundStyle(DioPal.muted.opacity(0.7))
+            }
+            .padding(.horizontal, 14).padding(.vertical, 11)
+            .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(tint.opacity(0.06))
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(tint.opacity(0.22), lineWidth: 1)))
+        }.buttonStyle(.plain)
+    }
+}
+
+/// A sticky kind-filter chip in the lane rail.
+struct DioLaneChip: View {
+    let label: String; let tint: Color; let active: Bool; let onTap: () -> Void
+    var body: some View {
+        Button(action: onTap) {
+            Text(label).font(.system(size: 12.5, weight: .heavy, design: .rounded))
+                .foregroundStyle(active ? .white : DioPal.muted)
+                .padding(.horizontal, 13).frame(height: 32)
+                .background(Capsule().fill(active ? tint.opacity(0.9) : .white.opacity(0.06))
+                    .overlay(Capsule().strokeBorder(active ? .clear : .white.opacity(0.1), lineWidth: 1)))
+        }.buttonStyle(.plain)
+    }
+}
+
 struct DioTrayMote: View {
     let glyph: String
     var body: some View {
@@ -619,6 +722,7 @@ struct ZoneLook { let name: String; let fill: Int; let edge: Int; let bw: Double
 struct DioZoneEditor: View {
     @State var zone: ZoneRec
     let name: String
+    var maxW: CGFloat = 380   // clamped by the caller's DeskCamera so it fits the lane (HSM-20-02)
     let onSave: (ZoneRec) -> Void; let onDelete: () -> Void; let onCancel: () -> Void
     @State private var hue: Double = 0
     private var tint: Color { zone.tint }
@@ -638,7 +742,7 @@ struct DioZoneEditor: View {
                 .ignoresSafeArea().allowsHitTesting(false)                              // a soft spotlight on the lifted zone
             VStack(spacing: 26) {
                 // THE HERO — the actual zone, large + live, lifted into focus, casting its own glow
-                heroZone.frame(width: 380, height: 188)
+                heroZone.frame(width: maxW, height: 188)
                     .overlay(alignment: .topLeading) {
                         HStack(spacing: 7) {
                             Image(systemName: "square.dashed").font(.system(size: 12, weight: .bold)).foregroundStyle(tint)
@@ -695,7 +799,7 @@ struct DioZoneEditor: View {
                         }.buttonStyle(.plain)
                     }
                 }
-                .frame(width: 380)
+                .frame(width: maxW)
             }
             .padding(.vertical, 8)
         }
@@ -944,6 +1048,7 @@ struct DioConnectCard: View {
     @State var host: String
     @State var port: String
     @State var token: String
+    var maxW: CGFloat = 380   // clamped by the caller's DeskCamera so it fits the lane (HSM-20-02)
     let paired: Bool
     let onConnect: (_ host: String, _ port: String, _ token: String, _ name: String) -> Void
     let onForget: () -> Void
@@ -1006,7 +1111,7 @@ struct DioConnectCard: View {
                 }.buttonStyle(.plain).disabled(!canConnect)
             }
         }
-        .padding(18).frame(width: 380)
+        .padding(18).frame(width: maxW)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(LinearGradient(colors: [Color(hex: 0x1A1622), Color(hex: 0x0E0B16)], startPoint: .top, endPoint: .bottom))
@@ -2761,6 +2866,7 @@ struct DioStage: View {
     @State private var sending = false
     @State private var connecting = false
     @State private var railOpen = false   // iPhone (compact): the agent rail collapses behind an edge tab
+    @State private var laneFilter = "all" // iPhone (.lane): the active kind-filter chip in the card column
     @State private var sentToast: String? = nil
     @State private var summonSource: String? = nil       // the card being routed (radial summon active)
     @State private var summonAt: CGPoint = .zero          // where the radial centers (the card's position)
@@ -3012,8 +3118,31 @@ struct DioStage: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity).zIndex(5).transition(.opacity)
                 }
 
-                ForEach([pathKey], id: \.self) { _ in level(w, h) }
+                // The desk reflows by camera: the lit diorama on iPad (.wide/.narrow), the one-thumb
+                // card column on iPhone (.lane). `positions[id]` is untouched either way, so rotating
+                // back to .wide restores the exact hand-arranged desk (HSM-20-02).
+                ForEach([pathKey], id: \.self) { _ in
+                    if camera.isLane { laneColumn(w, h) } else { level(w, h) }
+                }
                     .transition(diveTransition)
+
+                // On the lane, the in-world note/KB editors live in `level` — which the lane replaces —
+                // so render them here as a shared lifted card over a transparent catcher (no scrim).
+                if camera.isLane, editingNote != nil || editingKB != nil {
+                    Color.clear.contentShape(Rectangle()).ignoresSafeArea()
+                        .onTapGesture { commitInlineEdit() }.zIndex(58)
+                    if let n = editingNote {
+                        DioInlineNoteCard(note: editingNoteBinding(n), onDone: { commitNote() }, onDelete: { deleteNote("note:\(n.id)") })
+                            .frame(width: camera.cardWidth(304, in: w))
+                            .position(clampInline(CGPoint(x: w / 2, y: h * 0.4), w, h, cardW: camera.cardWidth(304, in: w), cardH: 320))
+                            .zIndex(60).id(n.id)
+                    } else if let k = editingKB {
+                        DioInlineKBCard(kb: editingKBBinding(k), onDone: { commitKB() }, onDelete: { deleteKB("kb:\(k.id)") })
+                            .frame(width: camera.cardWidth(288, in: w))
+                            .position(clampInline(CGPoint(x: w / 2, y: h * 0.4), w, h, cardW: camera.cardWidth(288, in: w), cardH: 170))
+                            .zIndex(60).id(k.id)
+                    }
+                }
 
                 // the live lasso rectangle while dragging on empty desk
                 if let r = lassoStart, let e = lassoEnd, hypot(e.x - r.x, e.y - r.y) > 12 {
@@ -3038,13 +3167,35 @@ struct DioStage: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, h * 0.12).zIndex(116)
                 }
 
-                DioCompanion(landed: landed, excited: selected != nil).position(x: w * 0.9, y: h * 0.86)
+                // Qlippy tucks up the right edge on the lane so it clears the accent FAB (both want
+                // the bottom-right thumb corner); the diorama keeps it bottom-right.
+                DioCompanion(landed: landed, excited: selected != nil)
+                    .position(x: w * 0.9, y: camera.isLane ? h * 0.66 : h * 0.86)
                 if landed && selected == nil && summonSource == nil && !capturing {
                     VStack(spacing: 4) {
                         DioRecordOrb { haptic(.medium); withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { showRecordPicker = true } }
                         Text("Record").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
                     }
                     .position(orbPos(w, h)).transition(.scale.combined(with: .opacity)).zIndex(72)
+                }
+                // THE LANE FAB — the create cluster lives in `level` (which the lane replaces), so on
+                // iPhone the accent FAB carries New Note / New KB / New Zone. A native Menu, not a
+                // dimmed sheet (the no-modal law governs primitive editing; a system menu is allowed).
+                if camera.isLane && landed && selected == nil && summonSource == nil && !capturing
+                    && editingNote == nil && editingKB == nil && !connecting && !showRouteSheet && !routing
+                    && printed == nil && !showSendCard && !showActSheet && !firstRun {
+                    Menu {
+                        Button { createNote() } label: { Label("New Note", systemImage: "square.and.pencil") }
+                        Button { createKBInline() } label: { Label("New KB", systemImage: "diamond.fill") }
+                        Button { haptic(.light); namingZone = true } label: { Label("New Zone", systemImage: "plus.circle.fill") }
+                    } label: {
+                        Image(systemName: "plus").font(.system(size: 24, weight: .black)).foregroundStyle(.white)
+                            .frame(width: 58, height: 58)
+                            .background(Circle().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom))
+                                .shadow(color: DioPal.accent.opacity(0.5), radius: 12, y: 4))
+                    }.simultaneousGesture(TapGesture().onEnded { haptic(.medium) })
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    .padding(.trailing, 20).padding(.bottom, h * 0.15).zIndex(73)
                 }
                 // a desk-native settings entry (no bouncing to an old screen)
                 if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty {
@@ -3204,13 +3355,29 @@ struct DioStage: View {
                     .blendMode(.plusLighter).allowsHitTesting(false)
 
                 if let p = selectedPrim() {
+                    // THE MIGRATING PULL-OUT (the signature moment, HSM-20-02). The SAME content
+                    // (DioPullout is maxWidth/maxHeight .infinity) enters from the RIGHT edge on the
+                    // iPad and RISES from the BOTTOM edge on iPhone — only the entry edge + a grab
+                    // handle change by camera. On the lane it sits over a transparent catcher, never a
+                    // dimming scrim. Animating on `dockSpring` keyed to the camera means that, in iPad
+                    // split-view, dragging the divider into compact migrates the pane right→bottom live.
+                    let lane = camera.isLane
+                    if lane {
+                        Color.clear.contentShape(Rectangle()).ignoresSafeArea()
+                            .onTapGesture { select(nil) }.zIndex(59)
+                    }
                     DioPullout(prim: p, onClose: { select(nil) }, onAction: { handle($0, on: p) },
                                onRouteSection: { t, x in routeFacet(t, x, w, h) },
                                onActItem: { task, text in beginActOnItem(from: p, task: task, text: text) })
-                        .frame(width: min(560, w * 0.62))
-                        .padding(.vertical, 22).padding(.trailing, 16)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                        .transition(.move(edge: .trailing).combined(with: .opacity)).zIndex(60)
+                        .frame(width: lane ? camera.cardWidth(560, in: w, margin: 8) : min(560, w * 0.62),
+                               height: lane ? h * 0.74 : nil)
+                        .overlay(alignment: .top) {
+                            if lane { Capsule().fill(.white.opacity(0.32)).frame(width: 46, height: 5).padding(.top, 9) }
+                        }
+                        .padding(.vertical, lane ? 0 : 22).padding(.trailing, lane ? 0 : 16)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: lane ? .bottom : .trailing)
+                        .transition(.move(edge: lane ? .bottom : .trailing).combined(with: .opacity))
+                        .animation(dockSpring, value: lane).zIndex(60)
                 }
 
                 if !path.isEmpty && selected == nil && !showRouteSheet && !routing && printed == nil && !showSendCard {
@@ -3307,7 +3474,7 @@ struct DioStage: View {
                 }
                 // the zone style editor — paint a place (colour, border, fill, glow)
                 if let z = editingZone {
-                    DioZoneEditor(zone: z, name: name(of: z.path),
+                    DioZoneEditor(zone: z, name: name(of: z.path), maxW: camera.cardWidth(380, in: w),
                                   onSave: { saveZone($0) },
                                   onDelete: { deleteZone(z.path) },
                                   onCancel: { withAnimation { editingZone = nil } })
@@ -3335,7 +3502,7 @@ struct DioStage: View {
                     Color.clear.contentShape(Rectangle()).ignoresSafeArea()
                         .onTapGesture { withAnimation { connecting = false } }.zIndex(151)
                     DioConnectCard(name: peerName, host: peerHost, port: peerPort.isEmpty ? "8765" : peerPort, token: peerToken,
-                                   paired: hostLink != nil,
+                                   maxW: camera.cardWidth(380, in: w), paired: hostLink != nil,
                                    onConnect: { hh, pp, tt, nn in savePeerFull(host: hh, port: pp, token: tt, name: nn) },
                                    onForget: { forgetPeer() },
                                    onCancel: { withAnimation { connecting = false } },
@@ -3415,6 +3582,15 @@ struct DioStage: View {
                 if ProcessInfo.processInfo.environment["HS_DESK_CONNECT"] == "1" {
                     peerHost = ""   // force the unpaired front door
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { connecting = true } }
+                }
+                // HS_DESK_OPEN=1 → seed a deliverable and open it, so the pull-out is shown. On the
+                // lane it RISES from the bottom edge with a grab handle; on iPad it enters from the
+                // right. For verifying the HSM-20-02 migrating pull-out in the simulator.
+                if ProcessInfo.processInfo.environment["HS_DESK_OPEN"] == "1" {
+                    outputs = [OutputRecord(id: "demoOpen", title: "Standup notes",
+                                            body: "Shipped the egress badge; review the dock by Friday.\n\nOwner: Karol · Due: Fri",
+                                            source: "Standup", lens: "Note", path: "")]
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { select("out:demoOpen") }
                 }
                 // THE SYNC STATUS demo — show the desk wearing each sync state + a pull-arrival.
                 // `synced` (calm, with a "just now") · `syncing` (breathing) · `offline` (queued) ·
@@ -3588,6 +3764,85 @@ struct DioStage: View {
             .sheet(isPresented: $showSettings) { NavigationStack { SettingsView() }.preferredColorScheme(.dark) }
         }
         .preferredColorScheme(.dark)
+    }
+
+    // MARK: - The lane (HSM-20-02): the desk reflowed to a one-thumb card column on iPhone.
+
+    /// Which filter bucket a primitive kind falls under (the chip rail).
+    private func laneBucketKey(_ k: PrimitiveKind) -> String {
+        switch k {
+        case .meeting, .summary, .actions, .transcript, .topics, .artifact: return "meetings"
+        case .note: return "notes"
+        case .kb: return "kb"
+        case .model, .connector, .workflow: return "tools"
+        case .agent, .chain, .coder: return "agents"
+        case .game: return "play"
+        }
+    }
+    private func laneBucketLabel(_ key: String) -> String {
+        switch key {
+        case "meetings": return "Meetings"; case "notes": return "Notes"; case "kb": return "KB"
+        case "tools": return "Tools"; case "agents": return "Agents"; case "play": return "Play"
+        default: return key.capitalized
+        }
+    }
+    private func laneBucketTint(_ key: String) -> Color {
+        switch key {
+        case "meetings": return DioPal.accent; case "notes": return DioPal.mint; case "kb": return DioPal.violet
+        case "tools": return DioPal.cobalt; case "agents": return DioPal.mint; case "play": return DioPal.cobalt
+        default: return DioPal.accent
+        }
+    }
+    /// The chip rail: "All" plus a chip per bucket that has at least one primitive (preserving a
+    /// stable order), so the lane never shows an empty filter.
+    private func laneBuckets(_ prims: [any DeskPrimitive]) -> [String] {
+        let order = ["meetings", "notes", "kb", "agents", "tools", "play"]
+        let present = Set(prims.map { laneBucketKey($0.kind) })
+        return order.filter { present.contains($0) }
+    }
+
+    /// The one-thumb card column — the lane camera's renderer (HSM-20-02). Every primitive the wide
+    /// desk shows has a row here; zones are divable rows; the chip rail filters by kind. Tapping a
+    /// row is identical to tapping its canvas primitive (notes/KBs edit in-world; everything else
+    /// opens the pull-out, which rises from the bottom edge on the lane).
+    @ViewBuilder private func laneColumn(_ w: CGFloat, _ h: CGFloat) -> some View {
+        let zs = childZones()
+        let prims = members()
+        let buckets = laneBuckets(prims)
+        let shown = laneFilter == "all" ? prims : prims.filter { laneBucketKey($0.kind) == laneFilter }
+        VStack(spacing: 0) {
+            if buckets.count > 1 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        DioLaneChip(label: "All", tint: DioPal.accent, active: laneFilter == "all") {
+                            haptic(.light); withAnimation(.easeOut(duration: 0.18)) { laneFilter = "all" }
+                        }
+                        ForEach(buckets, id: \.self) { key in
+                            DioLaneChip(label: laneBucketLabel(key), tint: laneBucketTint(key), active: laneFilter == key) {
+                                haptic(.light); withAnimation(.easeOut(duration: 0.18)) { laneFilter = key }
+                            }
+                        }
+                    }.padding(.horizontal, 16)
+                }.padding(.vertical, 8).zIndex(2)
+            }
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 10) {
+                    if laneFilter == "all" {
+                        ForEach(Array(zs.enumerated()), id: \.element.path) { _, z in
+                            DioLaneZoneRow(name: name(of: z.path), tint: ZoneStyle(z).color,
+                                           count: membersOf(z.path).count,
+                                           subZones: zones.filter { parent(of: $0.path) == z.path }.count) { dive(into: z.path) }
+                        }
+                    }
+                    ForEach(Array(shown.enumerated()), id: \.element.id) { _, p in
+                        DioLaneRow(glyph: p.glyph, tint: p.color, symbol: p.isSymbol, title: p.title,
+                                   badge: p.kind.badge, subtitle: p.subtitle, arrived: arrivedIds.contains(p.id)) { tapPrimitive(p) }
+                    }
+                }.padding(.horizontal, 16).padding(.top, 2).padding(.bottom, 132)
+            }
+        }
+        .padding(.top, h * 0.115)   // clear the top-left gear + connect/sync chrome
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     @ViewBuilder private func level(_ w: CGFloat, _ h: CGFloat) -> some View {
