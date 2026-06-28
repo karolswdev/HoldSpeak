@@ -159,4 +159,13 @@ Integrated: `swift build --target Providers` + the full package suite **366 test
 audit is the highest-value pre-metal move: it caught, in a worktree, a bug that would have failed three
 of the owner's device-walk features.
 
+### Armada Wave 7 (2026-06-27) — the last remaining Phase-19 iPad clients, 2 gaps
+
+| Slice | What landed |
+|-------|-------------|
+| Meeting import client | `importMeeting(fileURL:filename:mimeType:)` (multipart POST to /api/meetings/import) + `MeetingImport` types. The clients now cover the full Phase-19 meeting surface. |
+| Learning-loop read client | `journalEntries` + `learningDigest` (read-only; on-device journaling stays Phase 9) + `LearningJournal` types. |
+
+Both carry `String?` timestamps by construction (the Wave-6 naive-timestamp lesson, told to the agents up front). Integrated: 15 tests green, no regression. Gotcha flagged for future agents: under `.convertFromSnakeCase`, a snake_case literal CodingKey never matches, use the camelCase key.
+
 See [[project_primitive_framework]], [[project_phase15_the_mesh]], [[project_phase17_agent_sync]].
