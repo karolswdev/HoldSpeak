@@ -200,4 +200,17 @@ green. The recurring theme: tests that asserted an idealized shape MASKED real b
 them. Remaining low-severity findings logged for follow-up (blob-key snake-case isolation, the URL-builder
 duplication, a few a11y polish items).
 
+### Armada Fleet PYTHON (2026-06-27) — hub safety + a CI guard the browser test was hiding
+
+Run concurrently with the iOS + web fleets. 3 agents:
+
+| Slice | What landed |
+|-------|-------------|
+| GitHub-repo validation | the companion github propose path already threaded a repo but never validated its shape, so a malformed repo could reach the `gh issue create` argv. Added an owner/name regex guard (400 on bad input) + tests. |
+| **Chromium-free null-read guard** | a new pure-Python static test (`test_web_null_read_guard.py`) that flags the Alpine `x-text` member-read-on-null class on launch pages, so CI ENFORCES the bug class the browser e2e (which CI skips without Chromium) was the only thing catching. Proven to flag both historical bugs and pass the fixed tree. |
+| source_type pin | the hub was already canonical (`agent`/`input`/`chain`/`workflow`); added a test pinning the vocab + tolerating the iPad `card` alias, so a future drift is caught. |
+
+Integrated: the github + primitives + guard tests **49 passed**; cross-checked the guard against
+Fleet WEB's new pages (green) before either landed, so the two fleets stay compatible on main.
+
 See [[project_primitive_framework]], [[project_phase15_the_mesh]], [[project_phase17_agent_sync]].

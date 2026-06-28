@@ -126,6 +126,37 @@ def test_propose_carries_repo_title_body(client, db, settings_path):
 
 
 @pytest.mark.integration
+def test_request_repo_overrides_host_and_names_it_in_the_preview(client, db, settings_path):
+    # The iPad can target a repo per send; a request `repo` wins over the host's
+    # and is the one threaded into the payload + preview.
+    _configure(settings_path, repo="host/default")
+    proposal = client.post(
+        PROPOSE, json={"text": "the body", "title": "Ship", "repo": "other/repo"}
+    ).json()["proposal"]
+    assert proposal["payload"]["repo"] == "other/repo"
+    assert "other/repo" in proposal["preview"]
+    assert "host/default" not in proposal["preview"]
+
+
+@pytest.mark.integration
+def test_request_repo_with_no_host_configured(client, db):
+    # No host repo at all, but the iPad passes a valid one: it proposes.
+    proposal = client.post(
+        PROPOSE, json={"text": "ship it", "repo": "acme/app"}
+    ).json()["proposal"]
+    assert proposal["payload"]["repo"] == "acme/app"
+    assert "acme/app" in proposal["preview"]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("bad", ["not-a-repo", "owner/", "/name", "a/b/c", "bad repo/x", "owner/na me"])
+def test_malformed_request_repo_refuses_with_400(client, db, bad):
+    res = client.post(PROPOSE, json={"text": "ship it", "repo": bad})
+    assert res.status_code == 400, bad
+    assert "owner/name" in res.json()["error"].lower()
+
+
+@pytest.mark.integration
 def test_a_proposed_issue_files_nothing(client, db, settings_path, gh):
     _configure(settings_path)
     client.post(PROPOSE, json={"text": "ship it"})

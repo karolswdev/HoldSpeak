@@ -105,6 +105,45 @@ def _new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
+# ── Run-response provenance: the canonical `source_type` vocabulary ──────────
+#
+# Every primitive `run` endpoint here returns a `sources` lineage list whose
+# entries are `{"source_type": <canonical>, "source_ref": <id>}`. The hub is the
+# canonical authority for this vocabulary. The pinned set (and what each means):
+#
+#   "agent"    — a saved Agent persona that produced/contributed to the output
+#   "input"    — the run's input record (e.g. a meeting_id passed as source_ref)
+#   "chain"    — the Chain (crew) a run executed
+#   "workflow" — the Workflow a run executed
+#
+# A future change to any of these literals is a wire contract break for every
+# surface that attaches lineage; `test_run_response_source_type_vocab_is_pinned`
+# guards them.
+#
+# Aliases (tolerated, non-breaking): the iPad authoring port historically emits
+# "card" for an input source (its canvas card == an input record). We accept that
+# synonym and fold it to the canonical "input" via `canonical_source_type` so
+# lineage from either surface lands on one stored vocabulary; nothing is rejected.
+CANONICAL_SOURCE_TYPES: frozenset[str] = frozenset(
+    {"agent", "input", "chain", "workflow"}
+)
+
+# iPad / authoring-port synonyms → the canonical hub value (additive, tolerant).
+_SOURCE_TYPE_ALIASES: dict[str, str] = {"card": "input"}
+
+
+def canonical_source_type(raw: Any) -> str:
+    """Fold a raw `source_type` to the canonical hub vocabulary.
+
+    Canonical values pass through unchanged; known aliases (the iPad "card")
+    map to their canonical form. Anything else is returned lowercased + stripped
+    untouched (non-breaking: we never reject an unknown lineage tag, we just
+    don't claim it is canonical).
+    """
+    val = str(raw or "").strip().lower()
+    return _SOURCE_TYPE_ALIASES.get(val, val)
+
+
 async def _json_body(request: Request) -> Optional[dict[str, Any]]:
     try:
         body = await request.json()
@@ -343,7 +382,14 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
             ]
             provided_ref = str(body.get("source_ref") or "").strip()
             if provided_ref:
-                sources.append({"source_type": "input", "source_ref": provided_ref})
+                # The input source is canonical "input"; if a caller (e.g. the
+                # iPad) hands us its own source_type we fold it to the canonical
+                # vocab (its "card" → "input"), defaulting to "input" when unset.
+                provided_type = body.get("source_type")
+                input_type = (
+                    canonical_source_type(provided_type) if provided_type else "input"
+                )
+                sources.append({"source_type": input_type, "source_ref": provided_ref})
 
             return JSONResponse({
                 "agent_id": agent_id,
