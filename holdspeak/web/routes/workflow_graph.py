@@ -286,6 +286,23 @@ def linearize(graph_json: Any) -> LinearPlan:
 # ── Prompt templates (mirror BlueprintInterpreter.buildPrompt) ────────────────
 
 
+def _extract_artifact_type(payload: Any) -> str:
+    """The artifact type for an `extract` node from its decoded kind payload.
+
+    Swift encodes `case extract(ArtifactType)` (a single unlabeled associated
+    value) as `{"extract": {"_0": "<rawValue>"}}`, so the decoded payload is the
+    inner `{"_0": "decisions"}` object. We also accept a bare string payload
+    (`{"extract": "decisions"}`) defensively. Anything else → "" (no type).
+    """
+    if isinstance(payload, str):
+        return payload
+    if isinstance(payload, dict):
+        inner = payload.get("_0")
+        if isinstance(inner, str):
+            return inner
+    return ""
+
+
 def build_node_prompt(node: GraphNode, input_text: str) -> str:
     """Build a model-op node's prompt from its kind + the threaded input.
 
@@ -313,7 +330,11 @@ def build_node_prompt(node: GraphNode, input_text: str) -> str:
             "and detail. Return only the rewritten text.\n\n" + input_text
         )
     if node.kind == "extract":
-        artifact_type = node.payload if isinstance(node.payload, str) else ""
+        # `extract(ArtifactType)` is a single UNLABELED associated value, so Swift's
+        # synthesized Codable wraps the raw value under "_0":
+        #   {"extract": {"_0": "decisions"}}
+        # Accept that real wire shape first, then a bare string defensively.
+        artifact_type = _extract_artifact_type(node.payload)
         readable = artifact_type.replace("_", " ")
         return (
             f"From the following, extract the {readable}. Return only that "
