@@ -30,7 +30,14 @@ struct MeetingCaptureApp: App {
                     NavigationStack { CaptureView(model: CaptureModel(), done: {}) }
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] != nil {
                     // HSM-20-04 — the dictation surface straight (the iPhone hold-bar teleprompter).
-                    DictateDemo()
+                    // Inlined (not `DictateDemo()`, which is simulator-only) so this root entry
+                    // compiles on device too — the device build caught the cross-platform gap.
+                    NavigationStack { DictateView() }
+                        .onAppear {
+                            let peer = DictatePeerStore.shared
+                            if peer.host.isEmpty { peer.host = "192.168.1.13"; peer.portText = "8081" }
+                            if peer.name.isEmpty { peer.name = "Karol's Mac" }
+                        }
                 } else if ProcessInfo.processInfo.environment["HS_CLASSIC_HOME"] != nil {
                     MeetingListView()
                         .onOpenURL { url in

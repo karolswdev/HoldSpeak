@@ -2,8 +2,13 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 20
-- **Status:** todo — **the gate.** The ONLY story that promotes an iPhone cell from
-  forward-constraint to proven.
+- **Status:** in progress — **the gate.** The ONLY story that promotes an iPhone cell from
+  forward-constraint to proven. **Build + install + launch on a real iPhone 17 Pro Max
+  (00008150-…) succeeded** (2026-06-27). The device build immediately caught a real 20-04
+  bug the simulator hid: `MeetingCaptureApp`'s `HS_DEMO_DICTATE` root entry referenced the
+  **simulator-only** `DictateDemo` unconditionally (`cannot find 'DictateDemo' in scope` on
+  device); fixed by inlining the device-safe `NavigationStack { DictateView() }`. The app is
+  on the device; the owner's hand-walk of the compact surfaces is the remaining gate.
 - **Depends on:** 20-01, 20-02, 20-03, 20-04 (everything reflows before it is walked).
 - **Unblocks:** the phase closeout + every `🟡` iPhone cell in the parity matrix.
 - **Owner:** **the owner** (only he can walk the cabled iPhone).
