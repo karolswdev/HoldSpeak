@@ -45,7 +45,7 @@ approval UI for any new propose→approve flow (split the one-tap send while her
 | HSM-19-01 | Meeting aftercare — client + close-the-loop card + file-issue — **leads** | in-progress (client + close-the-loop card landed, sim-proven; file-issue + metal remain) |
 | HSM-19-02 | The faceted archive — search + facets (compact-aware) | todo |
 | HSM-19-03 | Meeting import on the iPad (audio + transcript → the hub engine) | todo |
-| HSM-19-04 | Artifact provenance — read the hub's artifacts, render confidence + sources | todo |
+| HSM-19-04 | Artifact provenance — read the hub's artifacts, render confidence + sources | in-progress (client + confidence-ring card landed, sim-proven; metal remains) |
 | HSM-19-05 | The proposals review surface + split the one-tap send | todo |
 | HSM-19-06 | The learning-loop review client (read-first; on-device journaling deferred) | todo |
 | HSM-19-07 | The real-metal proof + docs | todo |

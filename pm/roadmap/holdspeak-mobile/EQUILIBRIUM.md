@@ -145,6 +145,29 @@ Verified together: `swift test` (storage + activity + no regression), web build,
 all green. The web hardening proves the pattern: every wave's integration runs the browser preflight CI
 silently skips, so this class of bug keeps getting caught instead of shipped.
 
+### Wave 6 (2026-06-27) — finish the dictation client + a metal-readiness audit that earned its keep
+
+The first audit-and-fix iOS fleet, run before the device walk. 3 agents:
+
+| Slice | What landed |
+|-------|-------------|
+| Dictation client completion | `dictationBlocks` (+ full CRUD), `blockTemplates`, `projectContext` + Contracts types (the rest of the HSM-18-01 routes the iPad never called). 12 tests. |
+| **Meeting-client audit (caught a real metal-breaking bug)** | The hub serializes proposal/artifact timestamps with `datetime.now().isoformat()` (naive, no `Z`/offset). Swift's `.iso8601` decode strategy REQUIRES a timezone and THROWS on a zone-less string, so the WHOLE response decode failed (`.malformed`) the instant any timestamp was present, breaking Proposals + Aftercare-file-issue + Artifacts on real metal. The existing tests masked it with idealized `...Z` literals. Fix: carry those timestamps as raw `String?` (the contract's own rule), no edit to the shared decoder. |
+| Dictation/activity audit | dictation (dry-run/readiness) + activity verified field-by-field vs the real routes; tests strengthened. |
+
+Integrated: `swift build --target Providers` + the full package suite **366 tests, 0 failures**. The
+audit is the highest-value pre-metal move: it caught, in a worktree, a bug that would have failed three
+of the owner's device-walk features.
+
+### Armada Wave 7 (2026-06-27) — the last remaining Phase-19 iPad clients, 2 gaps
+
+| Slice | What landed |
+|-------|-------------|
+| Meeting import client | `importMeeting(fileURL:filename:mimeType:)` (multipart POST to /api/meetings/import) + `MeetingImport` types. The clients now cover the full Phase-19 meeting surface. |
+| Learning-loop read client | `journalEntries` + `learningDigest` (read-only; on-device journaling stays Phase 9) + `LearningJournal` types. |
+
+Both carry `String?` timestamps by construction (the Wave-6 naive-timestamp lesson, told to the agents up front). Integrated: 15 tests green, no regression. Gotcha flagged for future agents: under `.convertFromSnakeCase`, a snake_case literal CodingKey never matches, use the camelCase key.
+
 ### Armada Fleet PYTHON (2026-06-27) — hub safety + a CI guard the browser test was hiding
 
 Run concurrently with the iOS + web fleets. 3 agents:

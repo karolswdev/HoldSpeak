@@ -40,6 +40,30 @@ private extension Color {
     }
 }
 
+// HSM-19-04 — the confidence ring: an artifact's synthesis confidence as a filled arc, banded
+// (high green / medium amber / low red) so the machine's certainty reads at a glance. A high
+// confidence lands heavy and almost fully lit; a low one sits hollow and danger-tinted.
+private struct ConfidenceRing: View {
+    let confidence: Double            // 0...1
+    var size: CGFloat = 48
+    private var band: Color {
+        if confidence >= 0.75 { return Sig.ok }
+        if confidence >= 0.5 { return Sig.warn }
+        return Sig.bad
+    }
+    var body: some View {
+        ZStack {
+            Circle().stroke(Sig.s3, lineWidth: 4)
+            Circle().trim(from: 0, to: max(0.02, min(1, confidence)))
+                .stroke(band, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .shadow(color: band.opacity(confidence >= 0.75 ? 0.5 : 0), radius: 5)
+            Text("\(Int((confidence * 100).rounded()))").font(.system(size: size * 0.3, weight: .heavy)).foregroundStyle(band)
+        }
+        .frame(width: size, height: size)
+    }
+}
+
 // MARK: - Model
 
 @MainActor
@@ -133,6 +157,14 @@ final class ShellModel: ObservableObject {
         aftercareLoading = true; defer { aftercareLoading = false }
         aftercare = try? await c.aftercare(meetingId: meetingId)
     }
+
+    // MARK: Artifacts (HSM-19-04) — each meeting artifact wears its synthesis confidence.
+    @Published var artifacts: [MeetingArtifact] = []
+
+    func loadArtifacts(meetingId: String) async {
+        guard let c = client() else { return }
+        artifacts = (try? await c.meetingArtifacts(meetingId: meetingId)) ?? []
+    }
 }
 
 // MARK: - Shell
@@ -213,6 +245,25 @@ struct ShellView: View {
                         changed: true),
                     isEmpty: false, slackConfigured: true)
             }
+            // HS_SHELL_DEMO=artifacts seeds artifacts of varied confidence to show the ring banding.
+            if ProcessInfo.processInfo.environment["HS_SHELL_DEMO"] == "artifacts" {
+                model.host = model.host.isEmpty ? "192.168.1.13" : model.host
+                model.artifacts = [
+                    MeetingArtifact(id: "ar1", meetingId: "m1", artifactType: "decisions",
+                        title: "Ship the desk to the web this quarter.", bodyMarkdown: "",
+                        confidence: 0.92, status: "accepted",
+                        sources: [MeetingArtifactSource(sourceType: "transcript", sourceRef: "seg-14"),
+                                  MeetingArtifactSource(sourceType: "decision", sourceRef: "d-2")]),
+                    MeetingArtifact(id: "ar2", meetingId: "m1", artifactType: "action_items",
+                        title: "Karol owns the mesh-sync approval contract.", bodyMarkdown: "",
+                        confidence: 0.71, status: "needs_review",
+                        sources: [MeetingArtifactSource(sourceType: "transcript", sourceRef: "seg-31")]),
+                    MeetingArtifact(id: "ar3", meetingId: "m1", artifactType: "risk_register",
+                        title: "No owner for the air-gapped proof timeline.", bodyMarkdown: "",
+                        confidence: 0.41, status: "needs_review",
+                        sources: [MeetingArtifactSource(sourceType: "transcript", sourceRef: "seg-48")]),
+                ]
+            }
             #endif
         }
     }
@@ -251,8 +302,56 @@ struct ShellView: View {
         VStack(alignment: .leading, spacing: 18) {
             thisIPadCard
             desktopCard
+            if !model.artifacts.isEmpty { artifactsCard(model.artifacts) }
             if let a = model.aftercare, !a.isEmpty { aftercareCard(a) }
         }
+    }
+
+    // MARK: Artifacts card (HSM-19-04) — the confidence-ring moment: every artifact wears
+    // its synthesis confidence as an arc, and points at where it was synthesized from.
+    private func artifactsCard(_ arts: [MeetingArtifact]) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            peerHeader("ARTIFACTS", "Each one wears its confidence", Sig.accent, live: false)
+            ForEach(arts, id: \.id) { art in
+                HStack(alignment: .top, spacing: 12) {
+                    ConfidenceRing(confidence: art.confidence ?? 0).opacity(art.confidence == nil ? 0.4 : 1)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            Text(art.title).font(.subheadline.weight(.semibold)).foregroundStyle(Sig.text)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 6)
+                            statusPill(art.status)
+                        }
+                        Text(art.artifactType.replacingOccurrences(of: "_", with: " "))
+                            .font(.caption2.weight(.medium)).tracking(0.5).foregroundStyle(Sig.faint)
+                        if !art.sources.isEmpty {
+                            HStack(spacing: 5) {
+                                Image(systemName: "link").font(.system(size: 9, weight: .bold)).foregroundStyle(Sig.faint)
+                                Text("Synthesized from " + art.sources.map { $0.sourceType.replacingOccurrences(of: "_", with: " ") }.joined(separator: " · "))
+                                    .font(.caption2).foregroundStyle(Sig.muted).lineLimit(1)
+                            }
+                        }
+                    }
+                }
+                .padding(11).background(Sig.s2, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(art.status == "needs_review" ? Sig.warn.opacity(0.4) : Sig.line, lineWidth: 1))
+            }
+            rowNote("Confidence is the model's certainty in the synthesis; the sources are where it came from. A needs-review artifact stays unsettled until you accept it.")
+        }
+        .cardChrome(border: Sig.accent.opacity(0.3))
+    }
+
+    private func statusPill(_ s: String) -> some View {
+        let (label, tint): (String, Color) = {
+            switch s {
+            case "accepted": return ("accepted", Sig.ok)
+            case "needs_review": return ("needs review", Sig.warn)
+            case "rejected": return ("rejected", Sig.bad)
+            default: return (s.replacingOccurrences(of: "_", with: " "), Sig.faint)
+            }
+        }()
+        return Text(label).font(.caption2.weight(.semibold)).foregroundStyle(tint)
+            .padding(.horizontal, 7).padding(.vertical, 3).background(tint.opacity(0.12), in: Capsule())
     }
 
     // MARK: Aftercare card (HSM-19-01) — close the loop: what's still open (by owner),
