@@ -45,11 +45,13 @@ def _decide(loop: OpenLoop):
             False,
         )
     if src == "agent_question":
+        where = loop.summary or loop.project or "your terminal"
         return (
             "reply_to_agent",
             f"Reply to the waiting agent: {loop.title}",
-            "A coding agent is blocked on your answer. Review the suggested reply, edit if needed, "
-            "and send.",
+            f"A coding agent ({where}) is blocked on your answer:\n\n> {loop.title}\n\n"
+            "Type your reply on the cadence page — it is sent into the agent's terminal pane. "
+            "Never autonomous: nothing is sent until you press Send.",
             False,
         )
     if src in ("meeting_action", "manual"):

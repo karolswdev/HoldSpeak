@@ -124,6 +124,43 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
         db.cadence.set_status(loop_id, "closed")
         return _loop_dict(db.cadence.get_loop(loop_id))
 
+    @router.post("/loops/{loop_id}/reply")
+    async def reply_to_agent(loop_id: str, body: dict = Body(default={})) -> dict[str, Any]:
+        """Deliver a USER-TYPED reply into a waiting agent's terminal (CAD-3-03).
+
+        Never autonomous: requires an explicit non-empty `text`. Only valid for an
+        `agent_question` loop whose session still has a tmux pane. The delivery uses
+        the existing `send_text_to_pane` transport — the side effect lives HERE, not in
+        the cadence package (which the no-side-effects guard keeps clean).
+        """
+        db, loop = _require(loop_id)
+        if loop.source_type != "agent_question":
+            raise HTTPException(status_code=400, detail="not an agent loop")
+        text = str(body.get("text", "")).strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="reply text is required")
+
+        from ...agent_context import list_recent_awaiting_agent_sessions
+        from ...tmux_transport import TmuxTransportError, send_text_to_pane
+
+        session = next(
+            (s for s in list_recent_awaiting_agent_sessions() if s.session_id == loop.source_id),
+            None,
+        )
+        pane = getattr(session, "tmux_pane", None) if session else None
+        if not pane:
+            raise HTTPException(status_code=409, detail="no terminal pane for this agent session")
+        try:
+            delivery = send_text_to_pane(pane=pane, text=text, submit=True)
+        except TmuxTransportError as exc:
+            raise HTTPException(status_code=502, detail=f"delivery failed: {exc}") from exc
+
+        # The reply answers the agent — close the loop (its question is handled).
+        db.cadence.set_status(loop_id, "closed")
+        db.cadence.bump_nudge(loop_id)
+        return {"delivered": True, "pane": delivery.pane, "submitted": delivery.submitted,
+                "egress": _LOCAL_EGRESS}
+
     @router.post("/run-now")
     async def run_now() -> dict[str, Any]:
         from ...cadence.service import CadenceService

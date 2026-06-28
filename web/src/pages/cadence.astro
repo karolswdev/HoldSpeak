@@ -120,4 +120,14 @@ import AppLayout from "../layouts/AppLayout.astro";
   }
   .cad-btn:hover { background: rgba(255,255,255,0.1); }
   .cad-btn-danger { color: #ff8a8a; border-color: rgba(255,77,109,0.3); }
+  .cad-btn-send { color: #0b0d12; background: var(--color-accent, #ff6b35); border-color: transparent; font-weight: 700; }
+
+  .cad-reply { margin-top: 0.85rem; display: flex; gap: 0.5rem; align-items: flex-start; }
+  .cad-reply-input {
+    flex: 1 1 auto; resize: vertical; min-height: 2.4rem;
+    color: var(--color-text, #f4ece0); background: rgba(0,0,0,0.25);
+    border: 1px solid var(--color-line, rgba(255,255,255,0.12)); border-radius: 0.5rem;
+    padding: 0.5rem 0.65rem; font: inherit; font-size: 0.88rem;
+  }
+  .cad-reply-input:focus { outline: none; border-color: var(--color-accent, #ff6b35); }
 </style>

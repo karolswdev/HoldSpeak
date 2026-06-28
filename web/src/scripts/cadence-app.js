@@ -81,6 +81,19 @@ function loopCard(loop) {
     card.appendChild(ev);
   }
 
+  // An awaiting coding agent gets a reply composer — type and Send delivers the reply
+  // into its terminal pane (CAD-3-04). Never autonomous: nothing is sent until you click.
+  if (loop.source_type === "agent_question") {
+    const composer = el("div", "cad-reply");
+    const ta = el("textarea", "cad-reply-input");
+    ta.placeholder = "Type your reply to the agent…";
+    ta.rows = 2;
+    const send = el("button", "cad-btn cad-btn-send", "Send reply");
+    send.dataset.act = "reply";
+    composer.append(ta, send);
+    card.appendChild(composer);
+  }
+
   // One-tap decisions.
   const actions = el("div", "cad-actions");
   const snooze = el("button", "cad-btn", "Snooze 1d");
@@ -137,10 +150,16 @@ async function refresh() {
   }
 }
 
-async function onAction(loopId, act) {
+async function onAction(loopId, act, card) {
   if (act === "snooze") await jpost(`${API}/loops/${loopId}/snooze`, { hours: 24 });
   else if (act === "close") await jpost(`${API}/loops/${loopId}/close`);
   else if (act === "kill") await jpost(`${API}/loops/${loopId}/kill`);
+  else if (act === "reply") {
+    const ta = card && card.querySelector(".cad-reply-input");
+    const text = ta ? ta.value.trim() : "";
+    if (!text) return;
+    await jpost(`${API}/loops/${loopId}/reply`, { text });
+  }
   await refresh();
 }
 
@@ -164,7 +183,7 @@ export function initCadence() {
     if (!btn) return;
     const card = btn.closest("[data-loop-id]");
     if (!card) return;
-    onAction(card.dataset.loopId, btn.dataset.act).catch((e) => console.error(e));
+    onAction(card.dataset.loopId, btn.dataset.act, card).catch((e) => console.error(e));
   });
   refresh().catch((e) => console.error(e));
 }
