@@ -15,6 +15,48 @@
   <div class="grid">
     <section class="panel">
       <header class="panel-header"><h3>Input</h3></header>
+
+      {/* HS-18 (web): the browser-mic capture aid. Speak the utterance, play
+          it back to confirm what dictation would hear, then write what you
+          said and run the same local dry-run. Preview-only: the hub has no
+          dictation transcribe-preview route, so the capture stays in the
+          browser and nothing is injected. Egress is the canonical badge. */}
+      <div id="mic-widget" class="mic-widget">
+        <div class="mic-widget-head">
+          <span class="mic-widget-title">Speak it (preview)</span>
+          <span id="mic-egress" class="egress-badge is-local" hidden></span>
+        </div>
+        <p class="mic-widget-note">
+          Capture stays in your browser. Play it back to hear what dictation
+          would hear, then confirm the words below and run the dry-run. Nothing
+          is typed into any app.
+        </p>
+        <div id="mic-record-row" class="mic-record-row">
+          <button
+            id="mic-record-btn"
+            class="btn mic-record-btn"
+            type="button"
+            aria-pressed="false"
+          >
+            <span class="mic-record-dot" aria-hidden="true"></span>
+            <span class="mic-record-label">Record</span>
+          </button>
+          <span id="mic-elapsed" class="mic-elapsed" aria-live="off">00:00</span>
+        </div>
+        <p id="mic-status" class="mic-status" role="status" aria-live="polite"></p>
+        <audio id="mic-playback" class="mic-playback" controls preload="metadata" hidden></audio>
+        <div id="mic-review" class="mic-review" hidden>
+          <p class="mic-review-hint">
+            Now write what you said (your words, your call), then run the
+            preview to see the resolved text and where it would land.
+          </p>
+          <div class="actions">
+            <button class="btn primary" id="mic-review-run" type="button">Run preview</button>
+            <button class="btn" id="mic-discard" type="button">Discard recording</button>
+          </div>
+        </div>
+      </div>
+
       <label>Utterance
         <textarea id="dry-utterance" placeholder="Type the utterance to preview"></textarea>
       </label>
@@ -38,6 +80,100 @@
 </section>
 
 <style is:global>
+  /* === HS-18 (web): the browser-mic capture aid ===================== */
+  .mic-widget {
+    margin-bottom: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-3);
+    background: linear-gradient(180deg, var(--accent-tint), var(--surface-2) 70%);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .mic-widget-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+  .mic-widget-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+    color: var(--text);
+  }
+  .mic-widget-note {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+  .mic-record-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+  .mic-record-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .mic-record-dot {
+    flex: none;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  .mic-record-btn.is-recording {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .mic-record-btn.is-recording .mic-record-dot {
+    background: #e5484d;
+    animation: mic-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes mic-pulse {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, #e5484d 55%, transparent); }
+    70% { box-shadow: 0 0 0 0.5rem color-mix(in srgb, #e5484d 0%, transparent); }
+    100% { box-shadow: 0 0 0 0 color-mix(in srgb, #e5484d 0%, transparent); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mic-record-btn.is-recording .mic-record-dot { animation: none; }
+  }
+  .mic-elapsed {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .mic-status {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    line-height: var(--line-height-relaxed);
+  }
+  .mic-status.is-recording { color: var(--accent); }
+  .mic-status.is-ready { color: var(--success-strong, var(--success)); }
+  .mic-status.is-error { color: var(--danger, #e5484d); }
+  .mic-playback {
+    width: 100%;
+    margin-top: var(--space-1);
+  }
+  .mic-playback[hidden] { display: none; }
+  .mic-review[hidden] { display: none; }
+  .mic-review-hint {
+    margin: 0 0 var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+  }
+  .mic-record-row[hidden] { display: none; }
+
   /* === Trace (dry-run) — rendered at runtime into #dry-trace ========= */
   .trace-stage {
     border: 1px solid var(--line);
