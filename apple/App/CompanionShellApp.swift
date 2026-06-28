@@ -145,7 +145,7 @@ final class ShellModel: ObservableObject {
         do {
             _ = try await c.sendRemoteDictation(text: preview.finalText, target: .focused)
             dictateSent = true; dictatePreview = nil; dictateText = ""
-        } catch { dictateError = "Send failed — is a Mac app focused?" }
+        } catch { dictateError = "Send failed. Is a Mac app focused?" }
     }
 
     // MARK: Aftercare (HSM-19-01) — the close-the-loop digest for a meeting.
