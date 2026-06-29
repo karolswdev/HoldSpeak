@@ -1,6 +1,6 @@
 # HSM-24-04 — The desktop hub honors profiles
 
-**Status:** planned (after 24-01; parallel with the Apple stories).
+- **Status:** done (2026-06-28) — schema v3→v4 + ProfileRepository + sync + profiles CRUD + agent-run resolution (key from the hub's secrets). Evidence: [evidence-story-04.md](./evidence-story-04.md). Full `uv run pytest` 3039 passed.
 
 ## Problem
 

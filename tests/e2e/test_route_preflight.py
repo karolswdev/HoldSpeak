@@ -44,6 +44,7 @@ PAGE_ROUTES = [
     "/commands",
     "/companion",
     "/presence",
+    "/cadence",
     "/docs/dictation-runtime",
 ]
 

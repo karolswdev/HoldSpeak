@@ -111,6 +111,7 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
         "agent_id": aid,
         "output": "ANSWER",
         "provider": "local",
+        "profile_id": None,
         "sources": [{"source_type": "agent", "source_ref": aid}],
     }
     # The persona's system prompt + rendered template reached the engine.
@@ -664,3 +665,77 @@ def test_directory_reads_include_member_ids(client: TestClient) -> None:
     client.delete(f"/api/directories/{did}/members/note_1")
     assert client.get(f"/api/directories/{did}").json()["member_ids"] == ["agent_2"]
     assert client.get("/api/directories").json()["directories"][0]["member_ids"] == ["agent_2"]
+
+
+def test_profile_crud_roundtrip(client: TestClient) -> None:
+    """Phase 24 — profiles CRUD over the API (shape only; no key field)."""
+    created = client.post("/api/profiles", json={
+        "name": "Claude", "kind": "openAICompatible",
+        "base_url": "https://api.anthropic.com/v1", "model": "claude-3.5-sonnet",
+        "context_limit": 200000, "requires_key": True,
+    })
+    assert created.status_code == 201, created.text
+    pid = created.json()["profile"]["id"]
+    assert "api_key" not in created.json()["profile"] and "apiKey" not in created.json()["profile"]
+
+    assert client.get("/api/profiles").json()["profiles"][0]["id"] == pid
+    got = client.get(f"/api/profiles/{pid}").json()["profile"]
+    assert got["kind"] == "openAICompatible" and got["context_limit"] == 200000
+
+    upd = client.put(f"/api/profiles/{pid}", json={"name": "Claude 3.7", "context_limit": 128000})
+    assert upd.status_code == 200 and upd.json()["profile"]["name"] == "Claude 3.7"
+    assert upd.json()["profile"]["context_limit"] == 128000
+
+    assert client.delete(f"/api/profiles/{pid}").status_code == 200
+    assert client.get(f"/api/profiles/{pid}").status_code == 404
+
+
+def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) -> None:
+    """An agent assigned a profile runs on THAT profile (the per-profile builder is used),
+    and the run reports the resolved profile_id."""
+    pid = client.post("/api/profiles", json={
+        "name": "OpenRouter", "kind": "openAICompatible",
+        "base_url": "https://openrouter.ai/api/v1", "model": "x", "requires_key": True,
+    }).json()["profile"]["id"]
+    aid = client.post("/api/agents", json={
+        "name": "Scout", "system_prompt": "S", "user_template": "{input}", "profile_id": pid,
+    }).json()["agent"]["id"]
+    assert client.get(f"/api/agents/{aid}").json()["agent"]["profile_id"] == pid
+
+    seen = {}
+
+    class _FakeIntel:
+        active_provider = "cloud"
+        def run_prompt(self, **kwargs):
+            return "OUT"
+
+    def _for_profile(*, kind, base_url, model, profile_id):
+        seen.update(kind=kind, base_url=base_url, profile_id=profile_id)
+        return _FakeIntel()
+
+    monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile", _for_profile)
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel",
+        lambda: (_ for _ in ()).throw(AssertionError("default builder must NOT be used when a profile is assigned")),
+    )
+    resp = client.post(f"/api/agents/{aid}/run", json={"input": "hi"})
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["profile_id"] == pid
+    assert seen == {"kind": "openAICompatible", "base_url": "https://openrouter.ai/api/v1", "profile_id": pid}
+
+
+def test_run_agent_falls_back_when_profile_missing(client: TestClient, monkeypatch) -> None:
+    """A dangling profile_id (e.g. deleted) falls back to the hub default, reporting profile_id=None."""
+    aid = client.post("/api/agents", json={
+        "name": "Ghost", "system_prompt": "S", "user_template": "{input}", "profile_id": "gone",
+    }).json()["agent"]["id"]
+
+    class _FakeIntel:
+        active_provider = "local"
+        def run_prompt(self, **kwargs):
+            return "OUT"
+
+    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel())
+    resp = client.post(f"/api/agents/{aid}/run", json={"input": "hi"})
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["profile_id"] is None

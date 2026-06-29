@@ -222,6 +222,37 @@ def build_configured_meeting_intel() -> "MeetingIntel":
     return MeetingIntel(**kwargs)
 
 
+def profile_key_env(profile_id: str) -> str:
+    """The hub env var that holds a runtime profile's API key (Phase 24). The key lives in
+    the hub's SECRETS (env), never on the synced profile shape or in the payload."""
+    safe = "".join(ch if ch.isalnum() else "_" for ch in str(profile_id or "").upper())
+    return f"HOLDSPEAK_PROFILE_{safe}_KEY"
+
+
+def build_meeting_intel_for_profile(
+    *, kind: str, base_url: Optional[str], model: Optional[str], profile_id: str
+) -> "MeetingIntel":
+    """Build a `MeetingIntel` for a specific RuntimeProfile (Phase 24).
+
+    An ``openAICompatible`` profile runs on its endpoint, with the key resolved from the hub's
+    secrets — a per-profile env var (``HOLDSPEAK_PROFILE_<ID>_KEY``), falling back to the default
+    cloud key env. An ``onDevice`` (or unknown) profile falls back to the hub's configured default
+    (the hub can't host another device's GGUF — honest n/a, never a crash).
+    """
+    from .engine import MeetingIntel
+
+    if kind == "openAICompatible" and str(base_url or "").strip():
+        env = profile_key_env(profile_id)
+        key_env = env if os.environ.get(env) else DEFAULT_INTEL_CLOUD_API_KEY_ENV
+        return MeetingIntel(
+            provider="cloud",
+            cloud_model=(model or DEFAULT_INTEL_CLOUD_MODEL),
+            cloud_base_url=str(base_url).strip(),
+            cloud_api_key_env=key_env,
+        )
+    return build_configured_meeting_intel()
+
+
 def intel_egress_posture(provider: str = DEFAULT_INTEL_PROVIDER) -> tuple[bool, str]:
     """Describe whether the configured provider can send transcripts off-machine.
 
