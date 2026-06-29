@@ -21,6 +21,7 @@ final class MeetingReviewState: ObservableObject {
     @Published var generating = false
     @Published var note = ""
     @Published var correctingId: String?     // HSM-14-07 — the card regenerating from a voice correction
+    @Published var overrideProfileId: String = ""   // Phase 24 — run this generation on a chosen profile ("" = active)
     // HSM-14 generation theater — real per-type progress the UI animates as the model drafts each.
     @Published var genTypes: [ArtifactType] = []   // the lens's planned types for this run
     @Published var genDone: Set<ArtifactType> = [] // types the model has produced so far
@@ -150,7 +151,7 @@ final class MeetingReviewState: ObservableObject {
                     // it also dodges LLM.swift's `isAvailable` getting stuck after a bad run
                     // (the "had to restart the app" symptom). It deinits at scope exit, so
                     // only one llama context is ever resident.
-                    let provider = try cfg.makeProvider(localModelPath: modelPath, context: context)
+                    let provider = try cfg.makeProvider(profile: cfg.resolveProfile(override: overrideProfileId), localModelPath: modelPath, context: context)
                     let engine = ArtifactGenerationEngine(provider: provider, maxAttempts: 2)
                     let a = try await engine.generate(type, from: sub)
                     all.append(a)

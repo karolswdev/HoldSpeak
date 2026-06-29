@@ -27,6 +27,8 @@ struct MeetingCaptureApp: App {
                 // screenshot run (no mic/taps needed); the real entry is the meeting list.
                 if ProcessInfo.processInfo.environment["HS_DEMO_PROFILES"] != nil {
                     NavigationStack { ProfilesView() }
+                } else if ProcessInfo.processInfo.environment["HS_DEMO_ROUTE"] != nil {
+                    ZStack { Sig.bgGradient.ignoresSafeArea(); DioRouteSheet(sourceTitle: "Q3 kickoff · meeting", onAsk: { _, _, _ in }, onCancel: {}, onSaveTool: { _ in }) }
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_AGENT"] != nil {
                     DioAgentBuilder(draft: .blank(), knowledgeBases: ["Q3 Planning", "Customer calls"], onSave: { _ in }, onCancel: {}, isNew: true, contextLimit: 8192, zoneTokens: 1800)
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_README"] != nil {
@@ -80,7 +82,7 @@ struct MeetingCaptureApp: App {
                 let env = ProcessInfo.processInfo.environment
                 // Seed a second (Claude) profile so the profiles list + the "Runs on" chips are
                 // meaningful in a screenshot run.
-                if env["HS_DEMO_PROFILES"] != nil || env["HS_DEMO_AGENT"] != nil {
+                if env["HS_DEMO_PROFILES"] != nil || env["HS_DEMO_AGENT"] != nil || env["HS_DEMO_ROUTE"] != nil {
                     let cfg = InferenceConfigStore.shared
                     if !cfg.profiles.contains(where: { $0.id == "demo.claude" }) {
                         cfg.upsertProfile(RuntimeProfile(id: "demo.claude", name: "Claude", kind: .openAICompatible,
@@ -1733,11 +1735,12 @@ struct MeetingDetailView: View {
             // "Generate on-device" when nothing's there, "Regenerate on-device" once it is
             // (a clean regenerate drops the prior model artifacts and keeps your ink).
             if !review.generating {
+                RunsOnPicker(selectedId: $review.overrideProfileId, allowsDefault: true, label: "Runs on")
                 Button { Task { await review.generate() } } label: {
                     VStack(spacing: 2) {
                         HStack(spacing: 6) {
                             Image(systemName: review.hasGeneratedArtifacts ? "arrow.clockwise" : "sparkles")
-                            Text(review.hasGeneratedArtifacts ? "Regenerate on-device" : "Generate on-device")
+                            Text(review.hasGeneratedArtifacts ? "Regenerate" : "Generate")
                         }
                         .font(.subheadline.weight(.semibold))
                         Text("Through the \(review.profile.rawValue.capitalized) lens")
