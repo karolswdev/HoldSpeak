@@ -262,6 +262,7 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
             "user_template": str(pick("user_template", existing.user_template if existing else "")),
             "tools": list(pick("tools", existing.tools if existing else [])),
             "kb_id": (pick("kb_id", existing.kb_id if existing else None) or None),
+            "profile_id": (pick("profile_id", existing.profile_id if existing else None) or None),
         }
 
     @router.get("/api/agents")
@@ -359,10 +360,26 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
             max_tokens = body.get("max_tokens")
             temperature = body.get("temperature")
 
-            from ...intel.providers import build_configured_meeting_intel
+            from ...intel.providers import (
+                build_configured_meeting_intel,
+                build_meeting_intel_for_profile,
+            )
             from ...intel.models import MeetingIntelError
 
-            intel = build_configured_meeting_intel()
+            # Phase 24: run on the agent's assigned profile when set (its endpoint, key from the
+            # hub's secrets), else the hub's configured default.
+            ran_profile_id = (agent.profile_id or "").strip() or None
+            if ran_profile_id:
+                prof = get_database().profiles.get(ran_profile_id)
+                if prof is not None and not prof.deleted:
+                    intel = build_meeting_intel_for_profile(
+                        kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id
+                    )
+                else:
+                    ran_profile_id = None
+                    intel = build_configured_meeting_intel()
+            else:
+                intel = build_configured_meeting_intel()
             try:
                 output = intel.run_prompt(
                     system_prompt=agent.system_prompt,
@@ -395,10 +412,91 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                 "agent_id": agent_id,
                 "output": output,
                 "provider": intel.active_provider,
+                "profile_id": ran_profile_id,
                 "sources": sources,
             })
         except Exception as exc:
             return error_500(exc, log, "Failed to run agent")
+
+    # ── Runtime profiles (Phase 24) ───────────────────────────────────────
+    # SHAPE ONLY over the API. The api key never rides a profile body; it lives in
+    # the hub's secrets (env: HOLDSPEAK_PROFILE_<ID>_KEY) and is joined at run time.
+    def _profile_fields(body: dict[str, Any], existing=None) -> dict[str, Any]:
+        def pick(key: str, default: Any) -> Any:
+            return body[key] if key in body else default
+        return {
+            "name": str(pick("name", existing.name if existing else "")),
+            "kind": str(pick("kind", existing.kind if existing else "onDevice")),
+            "model_file": str(pick("model_file", existing.model_file if existing else "")),
+            "base_url": str(pick("base_url", existing.base_url if existing else "")),
+            "model": str(pick("model", existing.model if existing else "")),
+            "context_limit": int(pick("context_limit", existing.context_limit if existing else 16384)),
+            "requires_key": bool(pick("requires_key", existing.requires_key if existing else False)),
+        }
+
+    @router.get("/api/profiles")
+    async def api_list_profiles() -> Any:
+        try:
+            from ...db import get_database
+            return JSONResponse({"profiles": [p.to_dict() for p in get_database().profiles.list()]})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list profiles")
+
+    @router.post("/api/profiles")
+    async def api_create_profile(request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        if not str(body.get("name") or "").strip():
+            return JSONResponse({"error": "profile name is required"}, status_code=400)
+        try:
+            from ...db import get_database
+            profile = get_database().profiles.upsert(
+                profile_id=str(body.get("id") or _new_id("profile")),
+                **_profile_fields(body),
+            )
+            return JSONResponse({"profile": profile.to_dict()}, status_code=201)
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to create profile")
+
+    @router.get("/api/profiles/{profile_id}")
+    async def api_get_profile(profile_id: str) -> Any:
+        try:
+            from ...db import get_database
+            profile = get_database().profiles.get(profile_id)
+            if profile is None:
+                return JSONResponse({"error": f"Unknown profile: {profile_id}"}, status_code=404)
+            return JSONResponse({"profile": profile.to_dict()})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get profile")
+
+    @router.put("/api/profiles/{profile_id}")
+    async def api_update_profile(profile_id: str, request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            from ...db import get_database
+            db = get_database()
+            existing = db.profiles.get(profile_id)
+            if existing is None:
+                return JSONResponse({"error": f"Unknown profile: {profile_id}"}, status_code=404)
+            profile = db.profiles.upsert(profile_id=profile_id, **_profile_fields(body, existing))
+            return JSONResponse({"profile": profile.to_dict()})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to update profile")
+
+    @router.delete("/api/profiles/{profile_id}")
+    async def api_delete_profile(profile_id: str) -> Any:
+        try:
+            from ...db import get_database
+            if not get_database().profiles.delete(profile_id):
+                return JSONResponse({"error": f"Unknown profile: {profile_id}"}, status_code=404)
+            return JSONResponse({"success": True})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to delete profile")
 
     # ── KBs (knowledge bases) ─────────────────────────────────────────────
     @router.get("/api/kbs")
