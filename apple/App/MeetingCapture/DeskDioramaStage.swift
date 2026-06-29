@@ -3085,7 +3085,10 @@ struct DioStage: View {
         return fallback
     }
     // the record button's tucked-away corner home (bottom-left), shared by the button + the first-boot trail
-    private func orbPos(_ w: CGFloat, _ h: CGFloat) -> CGPoint { CGPoint(x: 58, y: h * 0.9) }
+    // The bottom controls hug the bottom safe edge, not a 0.9·h fraction (which left a big dead band
+    // below them — owner: "so much farther than the base bottom line"). `h` is the safe height, so the
+    // safe bottom is y == h; sit the orb+label VStack just above it.
+    private func orbPos(_ w: CGFloat, _ h: CGFloat) -> CGPoint { CGPoint(x: 58, y: h - 24) }
 
     private var diveTransition: AnyTransition {
         diveDir >= 0
