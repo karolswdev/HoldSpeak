@@ -58,6 +58,12 @@ function DeskApp() {
     // Per-kind reachability: "live" | "unreachable" (undefined until loaded).
     status: {},
 
+    // ── runtime profiles (Phase 24) ──
+    // The named "where intelligence runs" targets an agent can be pointed at.
+    // Authored on /profiles; here they populate the agent editor's "Runs on"
+    // picker and the per-agent chip. Shape only — the key never rides the wire.
+    profiles: [],
+
     // ── authoring ──
     creating: null, // "note" | "agent" | "kb" | "chain" | "workflow" | null
     busy: false,
@@ -70,6 +76,7 @@ function DeskApp() {
       userTemplate: "",
       tools: "",
       kbId: "",
+      profileId: "", // "" = the hub's default
     },
     kbForm: { name: "", memberIds: "" },
     directoryForm: { name: "", parentId: "" },
@@ -250,6 +257,7 @@ function DeskApp() {
         this.loadDirectories(),
         this.loadChains(),
         this.loadWorkflows(),
+        this.loadProfiles(),
       ]);
       this.updatedAt = Date.now();
     },
@@ -368,7 +376,44 @@ function DeskApp() {
         userTemplate: a.user_template || "",
         tools: a.tools || [],
         kbId: a.kb_id || null,
+        profileId: a.profile_id || "",
       };
+    },
+
+    // ── runtime profiles (LIVE — GET /api/profiles) ──
+    async loadProfiles() {
+      try {
+        const data = await this.fetchJson("/api/profiles");
+        this.profiles = (data.profiles || []).filter((p) => !p.deleted);
+        this.status.profile = "live";
+      } catch (_e) {
+        // Profiles are an enhancement on the agent editor; a missing route
+        // just leaves the picker at "Hub default" (honest, non-fatal).
+        this.profiles = [];
+        this.status.profile = "unreachable";
+      }
+    },
+
+    /** Display name for a profile id, or "" when unset/unknown. */
+    profileName(id) {
+      if (!id) return "";
+      const p = this.profiles.find((x) => x.id === id);
+      return p ? p.name : id;
+    },
+    /** The egress badge `{scope, text}` for an agent's assigned profile. */
+    profileEgress(id) {
+      const p = this.profiles.find((x) => x.id === id);
+      if (!p) return null;
+      if ((p.kind || "onDevice") === "onDevice") {
+        return { scope: "local", text: "⌂ On device" };
+      }
+      let host = "endpoint";
+      try {
+        host = new URL(p.base_url).host;
+      } catch (_e) {
+        host = (p.base_url || "").replace(/^https?:\/\//, "").split("/")[0] || "endpoint";
+      }
+      return { scope: "cloud", text: `☁ ${host}` };
     },
 
     // ── organization: KBs (LIVE — GET/POST /api/kbs) ──
@@ -751,6 +796,7 @@ function DeskApp() {
         user_template: f.userTemplate,
         tools: this.splitList(f.tools),
         kb_id: f.kbId.trim() || null,
+        profile_id: f.profileId || null,
       };
       this.busy = true;
       try {
@@ -763,7 +809,7 @@ function DeskApp() {
         this.status.agent = "live";
         this.agentForm = {
           name: "", avatar: "🤖", role: "", systemPrompt: "",
-          userTemplate: "", tools: "", kbId: "",
+          userTemplate: "", tools: "", kbId: "", profileId: "",
         };
         this.closeCreate();
       } catch (e) {

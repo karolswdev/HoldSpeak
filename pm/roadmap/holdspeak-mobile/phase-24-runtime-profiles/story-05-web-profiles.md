@@ -1,6 +1,16 @@
 # HSM-24-05 — Web authors + uses profiles
 
-**Status:** planned (after 24-01; needs the hub from 24-04 as its backend).
+- **Status:** done (2026-06-28) — the web `/profiles` surface (list + editor over `/api/profiles`) + the
+  desk agent editor's "Runs on" picker + per-agent chip; on-device profiles render honest n/a; the key
+  is the hub's secret (`HOLDSPEAK_PROFILE_<id>_KEY`), never the browser. Also fixed a pre-existing dead
+  nav link (`/desk` had no route). Evidence: [evidence-story-05.md](./evidence-story-05.md). Built
+  (`npm run build`), Playwright-screenshotted (0 page errors), full `uv run pytest` 3039 passed.
+
+**Key custody divergence (deliberate, stronger):** the plan said "hand the key to the hub over the
+session." The shipped hub (24-04) holds the key in its environment secrets and joins it at run time —
+so the key never rides ANY payload, not even a hub-bound one. The web editor therefore shows
+`requires_key` + the env var name to set on the hub; there is no key field and no key flow over the
+wire. This is a tighter never-sync posture than the story imagined.
 
 ## Problem
 

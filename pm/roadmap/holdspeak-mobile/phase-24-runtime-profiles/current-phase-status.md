@@ -4,7 +4,11 @@
 [`EQUILIBRIUM.md`](../EQUILIBRIUM.md): the same "honor the contract on every surface" discipline,
 applied to *where intelligence runs*.
 
-**Last updated:** 2026-06-28 (**24-01..04 landed — Apple side + the desktop hub are done.** The hub
+**Last updated:** 2026-06-28 (**24-01..05 landed — Apple + the hub + the web are done.** The web
+`/profiles` surface authors profiles and the desk assigns them per-agent (the inline "Runs on" picker),
+key custody is the hub's secret, on-device renders honest n/a; a pre-existing `/desk` dead nav link was
+fixed and brought under the launch pre-flight. 0 page errors; full `uv run pytest` 3039 passed.
+Remaining: the cross-surface parity proof + docs (24-06). Earlier: **24-01..04 — Apple side + the desktop hub.** The hub
 persists/syncs/manages/RUNS on profiles, key from its secrets; full `uv run pytest` 3039 passed.
 Remaining: web (24-05) + the cross-surface proof (24-06). Earlier: **24-01 + 24-02 + 24-03 — Apple's side complete.** Profiles
 exist, are managed (CRUD, key→Keychain), assignable per-agent, and the inline "Runs on" selector sits
@@ -95,7 +99,7 @@ reads `profile.egressScope` so trust stays honest per profile.
 | HSM-24-02 | Apple **basic** config — the active-profile picker over the existing `ILLMProvider` seam | **done** (profile-backed `InferenceConfigStore` + migration + key→Keychain + `makeProvider(profile:)` + `resolveProfile` + the reusable `RunsOnPicker`; `swift test` 389/0) |
 | HSM-24-03 | Apple **advanced** config — manage the profile list + per-agent `profileId` + the gauge reads `profile.contextLimit` | **done** (CRUD + per-agent chip + gauge-per-profile + agent-run routing + inline `RunsOnPicker` at the desk Ask/route & meeting generate, with honest egress; dictation n/a, workbench uses active) |
 | HSM-24-04 | The desktop hub honors profiles (`web_runtime` maps a profile to its runtime) | **done** (schema v3→v4 + `ProfileRepository` + sync + profiles CRUD routes + agent-run resolution with the key from the hub's secrets; never-sync-key tested; full `uv run pytest` 3039 passed) |
-| HSM-24-05 | Web authors + uses profiles (the flagship surface) | planned |
+| HSM-24-05 | Web authors + uses profiles (the flagship surface) | **done** (the web `/profiles` list+editor over `/api/profiles` + the desk agent "Runs on" picker + per-agent chip; honest n/a for on-device; key is the hub's secret, never the browser; fixed a pre-existing `/desk` dead nav link; 0 page errors; 3039 passed) |
 | HSM-24-06 | Cross-surface parity proof + the docs story | planned |
 
 ## Sequencing
@@ -144,8 +148,17 @@ on profiles (`/api/agents/{id}/run` resolves the agent's profile → its endpoin
 hub's secrets, never the payload; never-sync-key proven). Full `uv run pytest` 3039 passed. Also fixed
 the pre-existing `/cadence` route-preflight gap.
 
-Next: **24-05** (web authors/uses profiles) → **24-06** (cross-surface parity proof + docs). Apple +
-the hub are done; the web port + the proof remain.
+**24-05 DONE** — the web flagship authors profiles at parity with Apple advanced: a new `/profiles`
+surface (card grid + drawer editor over `/api/profiles`) and the desk agent editor's inline "Runs on:
+[Profile ▾]" picker + per-agent egress chip. On-device profiles render honest n/a (no GGUF in a
+browser); the key is the hub's env secret, shown by reference (`HOLDSPEAK_PROFILE_<id>_KEY`), never a
+field and never on any payload — a tighter never-sync posture than the plan imagined. Fixed a
+pre-existing dead nav link (`/desk` had no route; the TopNav pointed at it) and brought `/desk` +
+`/profiles` under the launch pre-flight. Built clean; Playwright pass = 0 page errors (profiles list +
+editor, desk cards + agent form); full `uv run pytest` 3039 passed.
+
+Next: **24-06** (cross-surface parity proof + docs). Apple + the hub + the web are done; only the
+parity gate + docs remain.
 
 ## Carried context
 

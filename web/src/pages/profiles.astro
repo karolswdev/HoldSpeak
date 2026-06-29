@@ -1,0 +1,502 @@
+---
+// HSM-24-05: the web Runtime Profiles surface.
+//
+// Web is a first-class AUTHORING port for "where intelligence runs". This page
+// manages the profile SHAPE (name / kind / endpoint / model / context window)
+// over the hub's /api/profiles routes, and the desk's agent editor points an
+// agent at one ("Runs on: [Profile ▾]").
+//
+// The hard rule (Phase 24): the API key NEVER touches the browser. A cloud
+// profile carries only `requires_key`; the secret lives on the hub as
+// HOLDSPEAK_PROFILE_<id>_KEY. On-device (GGUF) profiles can't run in a browser,
+// so their card is honestly marked unavailable-here.
+//
+// Cards + the editor are rendered at runtime by profiles-app.js, so their CSS
+// lives in a <style is:global> block (Astro scoped styles don't reach
+// JS-injected DOM — the standing gotcha).
+import AppLayout from "../layouts/AppLayout.astro";
+import EmptyState from "../components/EmptyState.astro";
+---
+
+<AppLayout
+  title="Runtime Profiles — HoldSpeak"
+  description="Named targets for where intelligence runs — on-device or an OpenAI-compatible endpoint. The API key stays on the hub, never the browser."
+  current="profiles"
+>
+  <div class="profiles" x-data="ProfilesApp()" x-init="init()" x-cloak>
+    <header class="pf-head">
+      <div class="pf-head-text">
+        <p class="pf-eyebrow">Runtime · where intelligence runs</p>
+        <h1 class="pf-title">Runtime Profiles</h1>
+        <p class="pf-lead">
+          A named place a model runs — this device, or an endpoint. Point an
+          agent at one on the Desk. Keys stay on the hub.
+        </p>
+      </div>
+      <div class="pf-head-actions">
+        <div class="pf-stat" aria-live="polite">
+          <strong x-text="count()">0</strong>
+          <span>profiles</span>
+        </div>
+        <button type="button" class="pf-btn primary" @click="openCreate()">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
+          New profile
+        </button>
+      </div>
+    </header>
+
+    <p class="pf-err" x-show="error" x-cloak x-text="error"></p>
+
+    {/* Unreachable hub */}
+    <div x-show="!loading && status === 'unreachable'" x-cloak>
+      <EmptyState
+        title="Hub unreachable"
+        body="The desktop hub isn't answering on /api/profiles. Start it, then reload."
+      />
+    </div>
+
+    {/* Empty */}
+    <div x-show="!loading && status === 'live' && profiles.length === 0" x-cloak>
+      <EmptyState
+        title="No profiles yet"
+        body="Add one to run agents on an endpoint like OpenRouter or Claude — or to name a model on this device."
+      />
+    </div>
+
+    {/* The list */}
+    <div class="pf-grid" x-show="profiles.length" x-cloak>
+      <template x-for="p in profiles" {...{ ":key": "p.id" }}>
+        <article class="signal-card pf-card">
+          <div class="pf-card-top">
+            <div class="pf-card-id">
+              <span class="pf-kind" :class="`is-${p.kind}`" x-text="kindLabel(p)">Endpoint</span>
+              <h3 class="pf-name" x-text="p.name">Profile</h3>
+            </div>
+            <span class="egress-badge" :class="`is-${egress(p).scope}`" :title="egress(p).title" x-text="egress(p).text">⌂ Local</span>
+          </div>
+
+          {/* Endpoint detail */}
+          <dl class="pf-meta" x-show="p.kind === 'openAICompatible'" x-cloak>
+            <div><dt>Endpoint</dt><dd class="mono" x-text="p.base_url || '—'"></dd></div>
+            <div><dt>Model</dt><dd class="mono" x-text="p.model || '—'"></dd></div>
+            <div><dt>Context</dt><dd class="mono" x-text="`${p.context_limit.toLocaleString()} tok`"></dd></div>
+            <div x-show="p.requires_key"><dt>Key</dt><dd class="pf-keyref">on the hub · <span class="mono" x-text="`HOLDSPEAK_PROFILE_${p.id}_KEY`"></span></dd></div>
+          </dl>
+
+          {/* On-device detail — honest n/a on web */}
+          <dl class="pf-meta" x-show="p.kind === 'onDevice'" x-cloak>
+            <div><dt>Model file</dt><dd class="mono" x-text="p.model_file || '—'"></dd></div>
+            <div><dt>Context</dt><dd class="mono" x-text="`${p.context_limit.toLocaleString()} tok`"></dd></div>
+            <div class="pf-na"><dt>On web</dt><dd>Unavailable — runs on a device.</dd></div>
+          </dl>
+
+          <div class="pf-card-actions">
+            <button type="button" class="pf-btn ghost sm" @click="openEdit(p)">Edit</button>
+            <template x-if="confirmingId !== p.id">
+              <button type="button" class="pf-btn danger-ghost sm" @click="askDelete(p)">Delete</button>
+            </template>
+            <template x-if="confirmingId === p.id">
+              <span class="pf-confirm">
+                <span>Delete?</span>
+                <button type="button" class="pf-btn danger sm" :disabled="busy" @click="confirmDelete(p)">Yes</button>
+                <button type="button" class="pf-btn ghost sm" @click="cancelDelete()">No</button>
+              </span>
+            </template>
+          </div>
+        </article>
+      </template>
+    </div>
+
+    {/* Editor drawer */}
+    <div class="pf-scrim" x-show="editing" x-cloak @click="close()"></div>
+    <aside class="pf-drawer" x-show="editing" x-cloak role="dialog" aria-modal="true" aria-label="Runtime profile">
+      <template x-if="editing">
+        <div class="pf-drawer-inner">
+          <header class="pf-drawer-head">
+            <div>
+              <span class="pf-drawer-eyebrow">Runtime profile · syncs to the hub</span>
+              <h2 x-text="isNew ? 'New profile' : 'Edit profile'">New profile</h2>
+            </div>
+            <button type="button" class="pf-drawer-close" @click="close()" aria-label="Close">✕</button>
+          </header>
+          <form class="pf-drawer-body" @submit.prevent="save()">
+            <p class="pf-err" x-show="error" x-cloak x-text="error"></p>
+
+            <label class="pf-field"><span>Name</span>
+              <input type="text" x-model="editing.name" placeholder="OpenRouter · Claude Sonnet" />
+            </label>
+
+            <div class="pf-field">
+              <span>Runs on</span>
+              <div class="pf-segmented" role="radiogroup" aria-label="Profile kind">
+                <button type="button" :class="{ 'is-on': editing.kind === 'openAICompatible' }" @click="editing.kind = 'openAICompatible'" role="radio" :aria-checked="editing.kind === 'openAICompatible'">Endpoint</button>
+                <button type="button" :class="{ 'is-on': editing.kind === 'onDevice' }" @click="editing.kind = 'onDevice'" role="radio" :aria-checked="editing.kind === 'onDevice'">On-device</button>
+              </div>
+            </div>
+
+            {/* Endpoint fields */}
+            <template x-if="editing.kind === 'openAICompatible'">
+              <div class="pf-fieldset">
+                <label class="pf-field"><span>Base URL</span>
+                  <input type="text" x-model="editing.base_url" placeholder="https://openrouter.ai/api/v1" />
+                </label>
+                <label class="pf-field"><span>Model</span>
+                  <input type="text" x-model="editing.model" placeholder="anthropic/claude-sonnet-4" />
+                </label>
+                <label class="pf-field"><span>Context window (tokens)</span>
+                  <input type="number" min="1" x-model.number="editing.context_limit" placeholder="200000" />
+                </label>
+                <label class="pf-check">
+                  <input type="checkbox" x-model="editing.requires_key" />
+                  <span>Needs an API key</span>
+                </label>
+                <p class="pf-keynote" x-show="editing.requires_key" x-cloak>
+                  Set it on the hub:
+                  <code x-text="isNew ? 'HOLDSPEAK_PROFILE_<id>_KEY' : `HOLDSPEAK_PROFILE_${editing.id}_KEY`">HOLDSPEAK_PROFILE_&lt;id&gt;_KEY</code>.
+                  The browser never sees it.
+                </p>
+              </div>
+            </template>
+
+            {/* On-device fields */}
+            <template x-if="editing.kind === 'onDevice'">
+              <div class="pf-fieldset">
+                <label class="pf-field"><span>Model file (GGUF)</span>
+                  <input type="text" x-model="editing.model_file" placeholder="Qwen3-4B-Instruct-Q6_K.gguf" />
+                </label>
+                <label class="pf-field"><span>Context window (tokens)</span>
+                  <input type="number" min="1" x-model.number="editing.context_limit" placeholder="16384" />
+                </label>
+                <p class="pf-keynote">Runs on a device that has this model. Unavailable here on the web.</p>
+              </div>
+            </template>
+
+            <div class="pf-drawer-foot">
+              <button type="button" class="pf-btn ghost" @click="close()">Cancel</button>
+              <button type="submit" class="pf-btn primary" :disabled="busy">
+                <span x-text="busy ? 'Saving…' : (isNew ? 'Create profile' : 'Save changes')">Create profile</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </template>
+    </aside>
+  </div>
+
+  <script>
+    import Alpine from "alpinejs";
+    import factorySource from "../scripts/profiles-app.js?raw";
+
+    const fn = new Function(factorySource + "; return ProfilesApp;");
+    window.ProfilesApp = fn();
+    window.Alpine = Alpine;
+    Alpine.start();
+  </script>
+</AppLayout>
+
+<style is:global>
+  [x-cloak] { display: none !important; }
+
+  .profiles {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-5) var(--space-8);
+  }
+
+  .pf-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-6);
+  }
+  .pf-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0 0 var(--space-2);
+  }
+  .pf-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.75rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin: 0;
+  }
+  .pf-lead {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    max-width: 46ch;
+    margin: var(--space-2) 0 0;
+  }
+  .pf-head-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .pf-stat {
+    text-align: right;
+    line-height: 1.1;
+  }
+  .pf-stat strong {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    color: var(--text);
+  }
+  .pf-stat span {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--text-faint);
+  }
+
+  .pf-err {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+    margin: 0 0 var(--space-4);
+  }
+
+  /* Grid of profile cards */
+  .pf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-4);
+  }
+  .pf-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+  .pf-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+  .pf-kind {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    padding: 0.1rem 0.45rem;
+    border-radius: var(--radius-xs);
+    margin-bottom: var(--space-1);
+  }
+  .pf-kind.is-openAICompatible {
+    color: var(--accent);
+    background: var(--accent-tint);
+  }
+  .pf-kind.is-onDevice {
+    color: var(--ok);
+    background: color-mix(in srgb, var(--ok) 12%, transparent);
+  }
+  .pf-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.25;
+  }
+
+  .pf-meta {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+  }
+  .pf-meta > div {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: var(--space-3);
+    align-items: baseline;
+  }
+  .pf-meta dt {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--text-faint);
+  }
+  .pf-meta dd {
+    margin: 0;
+    color: var(--text);
+    font-size: var(--font-size-sm);
+    word-break: break-word;
+  }
+  .pf-meta .mono { font-family: var(--font-mono); font-size: 0.8125rem; }
+  .pf-keyref { color: var(--text-muted); font-size: 0.8125rem; }
+  .pf-keyref .mono { font-size: 0.75rem; }
+  .pf-na dd { color: var(--warn); }
+
+  .pf-card-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: auto;
+    padding-top: var(--space-2);
+  }
+  .pf-confirm {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+  }
+
+  /* Buttons (self-contained — not relying on a global .btn) */
+  .pf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text);
+    cursor: pointer;
+    transition: background var(--duration-short) var(--ease-standard),
+      border-color var(--duration-short) var(--ease-standard),
+      color var(--duration-short) var(--ease-standard);
+  }
+  .pf-btn:hover { border-color: var(--border-strong); background: var(--surface-2); }
+  .pf-btn:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
+  .pf-btn:disabled { opacity: 0.55; cursor: default; }
+  .pf-btn.sm { padding: var(--space-1) var(--space-3); font-size: 0.8125rem; }
+  .pf-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-contrast, #06121f);
+  }
+  .pf-btn.primary:hover { background: color-mix(in srgb, var(--accent) 88%, white); }
+  .pf-btn.ghost { background: transparent; }
+  .pf-btn.danger-ghost { background: transparent; color: var(--danger); border-color: color-mix(in srgb, var(--danger) 30%, transparent); }
+  .pf-btn.danger-ghost:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); border-color: var(--danger); }
+  .pf-btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+  /* Editor drawer */
+  .pf-scrim {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in srgb, var(--bg) 65%, transparent);
+    backdrop-filter: blur(2px);
+    z-index: var(--z-overlay);
+  }
+  .pf-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(460px, 92vw);
+    background: var(--surface-1);
+    border-left: 1px solid var(--border-strong);
+    box-shadow: var(--elev-3);
+    z-index: calc(var(--z-overlay) + 1);
+    display: flex;
+    flex-direction: column;
+    animation: pf-slidein var(--duration-medium) var(--ease-standard);
+  }
+  @keyframes pf-slidein {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .pf-drawer-inner { display: flex; flex-direction: column; height: 100%; }
+  .pf-drawer-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .pf-drawer-eyebrow {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--text-faint);
+    margin-bottom: var(--space-1);
+  }
+  .pf-drawer-head h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; margin: 0; color: var(--text); }
+  .pf-drawer-close {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    width: 30px; height: 30px;
+    cursor: pointer;
+  }
+  .pf-drawer-close:hover { color: var(--text); border-color: var(--border-strong); }
+  .pf-drawer-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-5);
+    overflow-y: auto;
+    flex: 1;
+  }
+  .pf-fieldset { display: flex; flex-direction: column; gap: var(--space-4); }
+  .pf-field { display: flex; flex-direction: column; gap: var(--space-2); }
+  .pf-field > span {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--text-muted);
+  }
+  .pf-field input {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3);
+  }
+  .pf-field input:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-tint);
+  }
+  .pf-segmented { display: inline-flex; gap: 2px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px; width: fit-content; }
+  .pf-segmented button {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-muted);
+    background: transparent;
+    border: 0;
+    border-radius: calc(var(--radius-sm) - 2px);
+    padding: var(--space-2) var(--space-4);
+    cursor: pointer;
+  }
+  .pf-segmented button.is-on { background: var(--accent); color: var(--accent-contrast, #06121f); font-weight: 600; }
+  .pf-check { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); color: var(--text); cursor: pointer; }
+  .pf-keynote { font-size: 0.8125rem; color: var(--text-muted); margin: 0; line-height: 1.5; }
+  .pf-keynote code { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); background: var(--accent-tint); padding: 0.05rem 0.3rem; border-radius: var(--radius-xs); }
+  .pf-drawer-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding-top: var(--space-2);
+    margin-top: auto;
+  }
+
+  @media (max-width: 640px) {
+    .pf-head { align-items: flex-start; }
+    .pf-meta > div { grid-template-columns: 72px 1fr; }
+  }
+</style>
