@@ -2292,9 +2292,11 @@ struct DioRunTargetSheet: View {
 }
 
 struct DioRouteSheet: View {
-    let sourceTitle: String; let onAsk: (String, String) -> Void; let onCancel: () -> Void; let onSaveTool: (String) -> Void
+    let sourceTitle: String; let onAsk: (String, String, String) -> Void; let onCancel: () -> Void; let onSaveTool: (String) -> Void
     @State private var lens = RouteLenses.all.first!.name
     @State private var prompt = RouteLenses.all.first!.instruction
+    @State private var profileId = InferenceConfigStore.shared.activeProfileId   // which model runs this
+    private var resolvedProfile: RuntimeProfile { InferenceConfigStore.shared.resolveProfile(override: profileId) }
     var body: some View {
         ZStack {
             Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onCancel() }
@@ -2306,11 +2308,15 @@ struct DioRouteSheet: View {
                         Text(sourceTitle).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
                     }
                     Spacer(minLength: 0)
+                    // Honest egress for the CHOSEN profile (was hardcoded "On device").
                     HStack(spacing: 5) {
-                        Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold))
-                        Text("On device").font(.system(size: 10, weight: .heavy, design: .rounded))
-                    }.foregroundStyle(DioPal.mint).padding(.horizontal, 9).frame(height: 26).background(Capsule().fill(DioPal.mint.opacity(0.14)))
+                        Image(systemName: resolvedProfile.isLocal ? "lock.fill" : "cloud.fill").font(.system(size: 9, weight: .bold))
+                        Text(resolvedProfile.isLocal ? "On device" : (resolvedProfile.egressHost ?? "endpoint")).font(.system(size: 10, weight: .heavy, design: .rounded))
+                    }.foregroundStyle(resolvedProfile.isLocal ? DioPal.mint : DioPal.accent)
+                        .padding(.horizontal, 9).frame(height: 26)
+                        .background(Capsule().fill((resolvedProfile.isLocal ? DioPal.mint : DioPal.accent).opacity(0.14)))
                 }
+                RunsOnPicker(selectedId: $profileId, allowsDefault: true, label: "Runs on")
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
                     ForEach(RouteLenses.all) { l in
                         Button { lens = l.name; prompt = l.instruction } label: {
@@ -2335,7 +2341,7 @@ struct DioRouteSheet: View {
                 }
                 HStack(spacing: 10) {
                     Button(action: onCancel) { Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 46).background(Capsule().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
-                    Button { onAsk(lens, prompt) } label: {
+                    Button { onAsk(lens, prompt, profileId) } label: {
                         HStack(spacing: 6) { Image(systemName: "wand.and.stars").font(.system(size: 14, weight: .bold)); Text("Ask").font(.system(size: 15, weight: .heavy, design: .rounded)) }
                             .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 46)
                             .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom)))
@@ -3423,7 +3429,7 @@ struct DioStage: View {
                 // the keystone routing flow: sheet → theater → printed card (keep/bin)
                 if showRouteSheet {
                     DioRouteSheet(sourceTitle: routeSourceTitle(),
-                                  onAsk: { l, p in runRoute(lens: l, prompt: p) },
+                                  onAsk: { l, p, pid in runRoute(lens: l, prompt: p, profileId: pid) },
                                   onCancel: { withAnimation { showRouteSheet = false }; routeSourceId = nil },
                                   onSaveTool: { p in pendingToolPrompt = p; toolName = ""; withAnimation { showRouteSheet = false }; savingTool = true })
                         .zIndex(120)
@@ -4521,7 +4527,7 @@ struct DioStage: View {
         withAnimation { sentToast = s }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.9) { withAnimation { if sentToast == s { sentToast = nil } } }
     }
-    private func runRoute(lens: String, prompt: String) {
+    private func runRoute(lens: String, prompt: String, profileId: String? = nil) {
         withAnimation { showRouteSheet = false }
         let material: String, srcTitle: String
         if routeSourceId == "__bundle__" {
@@ -4530,7 +4536,7 @@ struct DioStage: View {
             guard let src = members().first(where: { $0.id == routeSourceId }) else { return }
             material = String(src.routableText.prefix(6000)); srcTitle = src.title
         }
-        runAssembled(lens: lens, source: srcTitle, fullPrompt: prompt + "\n\nMaterial:\n" + material)
+        runAssembled(lens: lens, source: srcTitle, fullPrompt: prompt + "\n\nMaterial:\n" + material, profileId: profileId)
     }
 
     // the shared inference tail: theater → callLLM → printed card (keep/bin). Used by routes and agents.

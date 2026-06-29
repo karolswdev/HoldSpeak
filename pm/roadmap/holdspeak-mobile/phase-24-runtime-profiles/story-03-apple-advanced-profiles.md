@@ -1,6 +1,6 @@
 # HSM-24-03 — Apple advanced config: manage profiles + per-agent assignment + the gauge
 
-**Status:** planned (after 24-02). The power-user payoff.
+- **Status:** done (2026-06-28) — CRUD + per-agent + inline selectors at the desk Ask/route, meeting generate, and the builder. Evidence: [evidence-story-03.md](./evidence-story-03.md). `swift test` 389/0. (Dictation = remote n/a; workbench uses the active default — per-node chips a noted follow-up.)
 
 ## Problem
 

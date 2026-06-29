@@ -4,7 +4,10 @@
 [`EQUILIBRIUM.md`](../EQUILIBRIUM.md): the same "honor the contract on every surface" discipline,
 applied to *where intelligence runs*.
 
-**Last updated:** 2026-06-28 (**24-01 + 24-02 landed.** `InferenceConfigStore` is profile-backed
+**Last updated:** 2026-06-28 (**24-01 + 24-02 + 24-03 landed — Apple's side is complete.** Profiles
+exist, are managed (CRUD, key→Keychain), assignable per-agent, and the inline "Runs on" selector sits
+at every model-touch point with honest egress. Next: the hub (24-04), web (24-05), proof (24-06).
+Earlier: **24-01 + 24-02 landed.** `InferenceConfigStore` is profile-backed
 (migration + key→Keychain + `makeProvider(profile:)` + `resolveProfile`); the reusable `RunsOnPicker`
 ships as the always-exposed "Active profile" chip. Below: 24-01 — The `RuntimeProfile` contract +
 `SyncKind.profile` + tolerant `ChangeSet` decode + the Keychain `ProfileKeyStore` + the
@@ -88,7 +91,7 @@ reads `profile.egressScope` so trust stays honest per profile.
 |-------|-----------|--------|
 | HSM-24-01 | The `RuntimeProfile` contract + `SyncKind.profile` + the Keychain key store (key never syncs) — **leads, load-bearing** | **done** (contract + migration + tolerant `ChangeSet` decode + `ProfileKeyStore`; never-sync invariant tested; `swift test` 389/0) |
 | HSM-24-02 | Apple **basic** config — the active-profile picker over the existing `ILLMProvider` seam | **done** (profile-backed `InferenceConfigStore` + migration + key→Keychain + `makeProvider(profile:)` + `resolveProfile` + the reusable `RunsOnPicker`; `swift test` 389/0) |
-| HSM-24-03 | Apple **advanced** config — manage the profile list + per-agent `profileId` + the gauge reads `profile.contextLimit` | in-progress (CRUD screen + `Agent.profileId` + builder "Runs on" chip + gauge-per-profile + agent-run routing land; inline chips on dictation/generate/the Ask gesture remain) |
+| HSM-24-03 | Apple **advanced** config — manage the profile list + per-agent `profileId` + the gauge reads `profile.contextLimit` | **done** (CRUD + per-agent chip + gauge-per-profile + agent-run routing + inline `RunsOnPicker` at the desk Ask/route & meeting generate, with honest egress; dictation n/a, workbench uses active) |
 | HSM-24-04 | The desktop hub honors profiles (`web_runtime` maps a profile to its runtime) | planned |
 | HSM-24-05 | Web authors + uses profiles (the flagship surface) | planned |
 | HSM-24-06 | Cross-surface parity proof + the docs story | planned |
@@ -128,9 +131,15 @@ reading the *assigned* profile's `contextLimit`; and **agent-run routing** (`cal
 `agentReply` resolve the agent's profile → `makeProvider(profile:)`). Verified in the sim (2-profile
 list, the chip, the gauge).
 
-Remaining in 24-03: drop the inline `RunsOnPicker` at the OTHER model-touch points (dictation,
-meeting-generate, the desk "Ask"/route-to-AI-core gesture) so the principle is literally everywhere,
-plus the live multi-profile run walk on device. Then 24-04 (hub) / 24-05 (web) / 24-06 (proof).
+**24-03 DONE.** The inline `RunsOnPicker` is now at every user-facing model-touch point: the agent
+builder ("Runs on" chip), the desk **Route through the AI core / Ask** gesture (with the egress badge
+made honest — was hardcoded "On device"), and **meeting generate** (the hardcoded "on-device" wording
+dropped). Dictation is remote → honest n/a; the Workbench uses the active default (per-node chips a
+noted follow-up). `swift test` 389/0; device-SDK compiles.
+
+Next: **24-04** (the desktop hub honors profiles), then **24-05** (web), **24-06** (cross-surface
+parity proof + docs). Apple's side of the phase is complete; the remaining stories carry the contract
+to the other surfaces.
 
 ## Carried context
 
