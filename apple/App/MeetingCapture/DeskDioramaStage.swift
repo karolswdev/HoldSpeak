@@ -597,7 +597,7 @@ struct DioLaneEmptyHint: View {
             }.frame(width: 44, height: 44)
             VStack(alignment: .leading, spacing: 3) {
                 Text("Nothing filed in \(name) yet").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
-                Text("Drag a meeting here to file it.").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+                Text("Long-press any item to file it.").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
             }
             Spacer(minLength: 6)
             Button(action: onNewSubzone) {
@@ -2862,6 +2862,7 @@ struct DioStage: View {
     @State private var filed: [String: String] = [:]
     @State private var dragHotZone: String? = nil
     @State private var namingZone = false
+    @State private var pendingFileId: String? = nil   // a primitive to file into the zone being created (lane "New zone…")
     @State private var newZoneName = ""
     // lasso → bundle → Ask (the Ask-AI atom): select many primitives, route them through the core together
     @State private var lassoStart: CGPoint? = nil
@@ -3862,7 +3863,7 @@ struct DioStage: View {
             } message: { Text("Becomes a reusable tile on your desk.") }
             .alert("New zone", isPresented: $namingZone) {
                 TextField("Name", text: $newZoneName)
-                Button("Cancel", role: .cancel) { newZoneName = "" }
+                Button("Cancel", role: .cancel) { newZoneName = ""; pendingFileId = nil }
                 Button("Create") { createZone(newZoneName); newZoneName = "" }
             } message: { Text(path.isEmpty ? "A place on your desk that holds meetings." : "A sub-zone inside \(name(of: pathKey)).") }
             .alert("New knowledge base", isPresented: $namingKB) {
@@ -3956,6 +3957,7 @@ struct DioStage: View {
                     ForEach(Array(shown.enumerated()), id: \.element.id) { _, p in
                         DioLaneRow(glyph: p.glyph, tint: p.color, symbol: p.isSymbol, title: p.title,
                                    badge: p.kind.badge, subtitle: p.subtitle, arrived: arrivedIds.contains(p.id)) { tapPrimitive(p) }
+                            .contextMenu { laneFileMenu(p) }
                     }
                 }.padding(.horizontal, 16).padding(.top, 2).padding(.bottom, 200 + botInset)
             }
@@ -4129,6 +4131,7 @@ struct DioStage: View {
             zones.append(ZoneRec(path: zpath, color: zones.count, cx: 0.27 + 0.23 * Double(col), cy: 0.2 + 0.18 * Double(row), w: 168, h: 104))
         }
         persistZones(); stampSync(zpath)   // the directory (identity+nesting) is a synced primitive
+        if let pid = pendingFileId { fileAny(pid, into: zpath); pendingFileId = nil }   // lane "New zone…" → file into it
     }
     private func moveZone(_ path: String, _ tr: CGSize, _ w: CGFloat, _ h: CGFloat) {
         guard let idx = zones.firstIndex(where: { $0.path == path }) else { return }
@@ -4450,33 +4453,70 @@ struct DioStage: View {
         // meeting/output, which is the rot that made "an agent-output note can't go in a zone" possible).
         // Outputs persist their zone on their own record; everything else uses the unified `filed` map.
         if let z = trayHit(end, w, h), isFileable(p.kind) {
-            #if canImport(UIKit)
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            #endif
-            if let idx = outputs.firstIndex(where: { "out:\($0.id)" == p.id }) {
-                withAnimation(focusSpring) { outputs[idx].path = z; positions[p.id] = nil }
-                persistOutputs()
-            } else if let idx = notes.firstIndex(where: { "note:\($0.id)" == p.id }) {
-                withAnimation(focusSpring) { notes[idx].path = z; positions[p.id] = nil }
-                persistNotes()
-            } else if let idx = kbs.firstIndex(where: { "kb:\($0.id)" == p.id }) {
-                withAnimation(focusSpring) { kbs[idx].path = z; positions[p.id] = nil }
-                persistKBs()
-            } else if let idx = placedGames.firstIndex(where: { "game:\($0.gameId)" == p.id }) {
-                withAnimation(focusSpring) { placedGames[idx].path = z; positions[p.id] = nil }
-                persistGames()
-            } else {
-                file(p.id, into: z)
-                return
-            }
-            stampSync("mem:\(p.id)")   // the filing is a synced membership edge
-            return
+            fileAny(p.id, into: z); return
         }
         // 3) free-place
         haptic(.light)
         let u = positions[p.id] ?? CGPoint(x: start.x / w, y: start.y / h)
         positions[p.id] = CGPoint(x: min(0.92, max(0.08, u.x + tr.width / w)), y: min(0.82, max(0.2, u.y + tr.height / h)))
         persistPositions()
+    }
+
+    /// File any fileable primitive into a zone path ("" = the desk root). Outputs/notes/KBs/games
+    /// persist their zone on their own record; everything else rides the unified `filed` map. Both
+    /// stamp a synced membership edge. Shared by drag-drop (iPad diorama) and the lane long-press
+    /// "File into…" menu (iPhone, which has no drag).
+    private func fileAny(_ id: String, into z: String) {
+        #if canImport(UIKit)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
+        if let idx = outputs.firstIndex(where: { "out:\($0.id)" == id }) {
+            withAnimation(focusSpring) { outputs[idx].path = z; positions[id] = nil }; persistOutputs()
+        } else if let idx = notes.firstIndex(where: { "note:\($0.id)" == id }) {
+            withAnimation(focusSpring) { notes[idx].path = z; positions[id] = nil }; persistNotes()
+        } else if let idx = kbs.firstIndex(where: { "kb:\($0.id)" == id }) {
+            withAnimation(focusSpring) { kbs[idx].path = z; positions[id] = nil }; persistKBs()
+        } else if let idx = placedGames.firstIndex(where: { "game:\($0.gameId)" == id }) {
+            withAnimation(focusSpring) { placedGames[idx].path = z; positions[id] = nil }; persistGames()
+        } else {
+            file(id, into: z); return   // file() already haptics + stamps the membership edge
+        }
+        stampSync("mem:\(id)")
+    }
+
+    /// Every zone path that exists, for the lane "File into…" picker. Deepest-labelled by its leaf.
+    private func allZonePaths() -> [String] { zones.map(\.path).sorted() }
+
+    /// Where a primitive currently lives ("" = the desk root), to check-mark it in the file menu.
+    private func currentPath(of p: any DeskPrimitive) -> String {
+        if let o = outputs.first(where: { "out:\($0.id)" == p.id }) { return o.path }
+        if let n = notes.first(where: { "note:\($0.id)" == p.id }) { return n.path }
+        if let k = kbs.first(where: { "kb:\($0.id)" == p.id }) { return k.path }
+        if let g = placedGames.first(where: { "game:\($0.gameId)" == p.id }) { return g.path }
+        return filed[p.id] ?? ""
+    }
+
+    /// The lane long-press menu (iPhone has no drag): Open + "File into…" a zone. The owner's
+    /// "how do I even drag a meeting to a zone on iPhone" — you don't; you long-press and pick.
+    @ViewBuilder private func laneFileMenu(_ p: any DeskPrimitive) -> some View {
+        Button { tapPrimitive(p) } label: { Label("Open", systemImage: "arrow.up.left.and.arrow.down.right") }
+        if isFileable(p.kind) {
+            let cur = currentPath(of: p)
+            Menu {
+                Button { fileAny(p.id, into: "") } label: {
+                    Label("Desk (root)", systemImage: cur.isEmpty ? "checkmark" : "tray")
+                }
+                ForEach(allZonePaths(), id: \.self) { zp in
+                    Button { fileAny(p.id, into: zp) } label: {
+                        Label(name(of: zp), systemImage: cur == zp ? "checkmark" : "folder")
+                    }
+                }
+                Divider()
+                Button { haptic(.light); pendingFileId = p.id; namingZone = true } label: {
+                    Label("New zone…", systemImage: "plus.circle")
+                }
+            } label: { Label("File into…", systemImage: "tray.and.arrow.down") }
+        }
     }
 
     // MARK: the intelligence engine — route a primitive through the AI core (or a KB)
