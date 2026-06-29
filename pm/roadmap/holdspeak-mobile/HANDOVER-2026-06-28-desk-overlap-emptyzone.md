@@ -72,9 +72,15 @@ OWNS the surface (it floats over the desk gradient bg, no list behind). The iPad
 ambient-over-canvas design (its canvas is sparse). Verified: the recording state now shows only the
 live cards + transcript + ASK LIVE lenses/agents + STOP, cleanly, over a clean background.
 
-## Still open (named, not fixed here)
+## 4. Qlippy overlapped the list (lane / iPhone)
 
-- **Qlippy on the lane** floats at `y = h*0.66` and overlaps a mid-list row at the right edge — the
-  same overlap class, smaller (a semi-transparent mascot). Not in the owner's named pair; a follow-up.
+**Symptom (owner):** "that clippy shit is annoying af too" — the `DioCompanion` mascot floated over the
+scrolling card column at the right edge, overlapping rows.
+
+**Fix:** Qlippy is now gated to the iPad DIORAMA only (`!camera.isLane`). It is purely decorative (no
+tap/gesture), so dropping it on the phone lane loses nothing and the spacious iPad keeps it.
+
+## Still open
+
 - The broader device-gap punch-list from [HANDOVER-2026-06-27-device-gap.md](./HANDOVER-2026-06-27-device-gap.md)
   (in-world editing for any remaining modals, mic on every input, etc.) continues.
