@@ -226,6 +226,46 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/desk")
+    async def desk_page() -> Any:
+        """Serve the Web Desk (Primitive Framework authoring port), read from the
+        Astro-built _built/desk/index.html. The TopNav links here, so it needs a
+        real route (it was previously reachable only at /_built/desk/, a dead nav
+        link). Driven client-side by the /api/* primitive routes."""
+        page = _HOLDSPEAK_DIR / "static" / "_built" / "desk" / "index.html"
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built desk page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak Desk</title></head>"
+                "<body><h1>The Desk</h1>"
+                "<p>Desk UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
+    @router.get("/profiles")
+    async def profiles_page() -> Any:
+        """Serve the Runtime Profiles surface (HSM-24-05), read from the
+        Astro-built _built/profiles/index.html. Driven client-side by
+        GET/POST/PUT/DELETE /api/profiles. SHAPE only — the API key never
+        reaches the browser; it lives in the hub's secrets."""
+        page = _HOLDSPEAK_DIR / "static" / "_built" / "profiles" / "index.html"
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built profiles page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>Runtime Profiles</title></head>"
+                "<body><h1>Runtime Profiles</h1>"
+                "<p>Profiles UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     @router.get("/companion")
     async def companion_dashboard() -> Any:
         """Serve the AI PI companion surface (HS-24-01)."""

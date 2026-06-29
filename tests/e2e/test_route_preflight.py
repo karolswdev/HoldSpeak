@@ -37,6 +37,7 @@ PAGE_ROUTES = [
     "/",
     "/welcome",
     "/setup",
+    "/desk",
     "/history",
     "/settings",
     "/activity",
@@ -45,6 +46,7 @@ PAGE_ROUTES = [
     "/companion",
     "/presence",
     "/cadence",
+    "/profiles",
     "/docs/dictation-runtime",
 ]
 

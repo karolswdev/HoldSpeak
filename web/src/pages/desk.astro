@@ -214,6 +214,7 @@ const GROUPS = [
                       <div class="card-foot">
                         <template x-for="t in item.tools" {...{ ":key": "t" }}><span class="tag mono" x-text="t"></span></template>
                         <span class="tag warn-tag" x-show="item.kbId" x-cloak x-text="`kb · ${item.kbId}`"></span>
+                        <span class="egress-badge runson-chip" x-show="item.profileId && profileEgress(item.profileId)" x-cloak :class="`is-${profileEgress(item.profileId)?.scope}`" :title="`Runs on ${profileName(item.profileId)}`" x-text="`${profileName(item.profileId)}`"></span>
                       </div>
                       <div class="filed-row">
                         <template x-for="d in directoriesFor(item.id)" {...{ ":key": "d.id" }}>
@@ -462,6 +463,19 @@ const GROUPS = [
             <label class="field grow"><span>Tools (comma-separated)</span><input type="text" x-model="agentForm.tools" placeholder="summarize, extract_actions" /></label>
             <label class="field grow"><span>KB id (optional)</span><input type="text" x-model="agentForm.kbId" placeholder="kb-…" /></label>
           </div>
+          <label class="field">
+            <span>Runs on</span>
+            <select x-model="agentForm.profileId" class="runson-select">
+              <option value="">Hub default</option>
+              <template x-for="p in profiles" {...{ ":key": "p.id" }}>
+                <option :value="p.id" x-text="`${p.name} · ${p.kind === 'onDevice' ? 'on-device' : 'endpoint'}`"></option>
+              </template>
+            </select>
+            <span class="runson-hint" x-show="agentForm.profileId && profileEgress(agentForm.profileId)" x-cloak>
+              <span class="egress-badge" :class="`is-${profileEgress(agentForm.profileId)?.scope}`" x-text="profileEgress(agentForm.profileId)?.text"></span>
+            </span>
+            <a class="runson-link" href="/profiles" x-show="!profiles.length" x-cloak>Add a profile →</a>
+          </label>
           <p class="field-note">Saves to <code>POST /api/agents</code>. Runnable via <code>{"/api/agents/{id}/run"}</code>.</p>
           <div class="drawer-foot">
             <button type="button" class="btn ghost" @click="closeCreate()">Cancel</button>
@@ -1220,6 +1234,22 @@ const GROUPS = [
   .avatar-field input { text-align: center; width: 4rem; font-size: 1.25rem; }
   .field-note { margin: 0; font-size: var(--font-size-xs); color: var(--text-faint); line-height: var(--line-height-normal); }
   .field-note code { font-family: var(--font-mono); color: var(--accent); }
+
+  /* "Runs on" — the per-agent runtime profile picker (Phase 24). */
+  .runson-select {
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3);
+  }
+  .runson-select:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-tint); }
+  .runson-hint { display: inline-flex; margin-top: var(--space-1); }
+  .runson-link { font-size: var(--font-size-xs); color: var(--accent); text-decoration: none; margin-top: var(--space-1); }
+  .runson-link:hover { text-decoration: underline; }
+  .runson-chip { margin-left: auto; }
   .field-note kbd { font-family: var(--font-mono); font-size: 0.6875rem; background: var(--surface-3); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 0 4px; color: var(--text-muted); }
   .drawer-foot { display: flex; justify-content: flex-end; gap: var(--space-2); padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border-subtle); }
 
