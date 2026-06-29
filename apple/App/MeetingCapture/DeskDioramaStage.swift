@@ -3177,7 +3177,14 @@ struct DioStage: View {
                 // card column on iPhone (.lane). `positions[id]` is untouched either way, so rotating
                 // back to .wide restores the exact hand-arranged desk (HSM-20-02).
                 ForEach([pathKey], id: \.self) { _ in
-                    if camera.isLane { laneColumn(w, h, topInset, botInset) } else { level(w, h) }
+                    if camera.isLane {
+                        // While recording/weaving, the ambient recorder OWNS the lane surface. Hiding the
+                        // card column stops the live UI (transcript, ASK LIVE lenses, agent markers, STOP)
+                        // from rendering on top of the list and colliding with every row. (Device
+                        // punch-list: recording overlapped everything on the phone.) The iPad diorama keeps
+                        // the ambient-over-canvas design — its canvas is sparse, not a dense column.
+                        if !(capturing || weaving) { laneColumn(w, h, topInset, botInset) }
+                    } else { level(w, h) }
                 }
                     .transition(diveTransition)
 

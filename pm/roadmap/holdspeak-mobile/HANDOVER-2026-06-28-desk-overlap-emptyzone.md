@@ -57,6 +57,21 @@ via a temporary `HS_DESK_DIVE=empty` seed, since removed). The fixed shots show 
 under the orbs, and "Nothing filed in Scratch yet" above the inherited connector rows. The device
 build was reinstalled on the iPhone 17 Pro Max.
 
+## 3. The whole recording UI overlapped the list (lane / iPhone)
+
+**Symptom (owner, "here's how it looks when I'm recording"):** during a recording the live-capture UI
+(the HEARING live transcript, the ASK LIVE lens chips, agent/crew markers, REC timer, STOP button) all
+floated ON TOP of the scrolling list — text-on-text everywhere.
+
+**Cause:** `DioAmbientRecorder` (zIndex 110) is a transparent bottom-anchored overlay, and `laneColumn`
+kept rendering *underneath* it during `capturing` — the recorder is designed to float over the iPad
+diorama (sparse canvas), but on the lane it floats over a dense list.
+
+**Fix:** on the lane, don't render `laneColumn` while `capturing || weaving` — the ambient recorder
+OWNS the surface (it floats over the desk gradient bg, no list behind). The iPad keeps the
+ambient-over-canvas design (its canvas is sparse). Verified: the recording state now shows only the
+live cards + transcript + ASK LIVE lenses/agents + STOP, cleanly, over a clean background.
+
 ## Still open (named, not fixed here)
 
 - **Qlippy on the lane** floats at `y = h*0.66` and overlaps a mid-list row at the right edge — the
