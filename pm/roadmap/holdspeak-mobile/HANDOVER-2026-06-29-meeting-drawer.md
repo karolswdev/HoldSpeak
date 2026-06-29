@@ -45,3 +45,16 @@ to drag a meeting to a zone**.
 - Loose-derivative rendering: `contentMembers()` (`DeskDioramaStage.swift` ~2983).
 - In-world pull-out: `DioPullout` (used for `selectedPrim()`).
 - Filing: `fileAny`/`file`/`drop`/`trayHit` in `DeskDioramaStage.swift`.
+
+## Follow-on — desk density (owner: "why even have the tool shelves" + "shrink when crowded")
+
+Both shipped together (one instinct: only content + things you invoke earn a permanent desk spot).
+- **#1 declutter:** the lane "All" filter now excludes the "tools" bucket (models / connectors /
+  workflows) — they live behind the existing "Tools" chip, surfaced at point-of-use, not as permanent
+  rows you can't even drop onto (no drag on the lane). Also makes a dived empty zone genuinely calm.
+  The iPad already separated content (canvas) / capabilities (rail) / tools (dock).
+- **#2 auto-fit:** `DioHero` gains `densityScale`; `level()` computes `densityScale(ms.count)` (1.0 →
+  floor 0.62) and `looseHome` widens (more columns as count grows: 2→3→4→5, y-band 0.30–0.80). A full
+  desk spreads + shrinks to a legible floor instead of piling into a cramped middle strip. Past the
+  floor, columns keep spreading (no illegible confetti); hierarchy (drawers/zones) is the real scale.
+  Sim-verified: lane "All" without tools; 12 notes on iPad → clean 4×3 grid at ~0.70 scale.
