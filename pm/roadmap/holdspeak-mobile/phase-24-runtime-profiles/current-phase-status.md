@@ -1,10 +1,15 @@
 # Phase 24 — Runtime profiles (basic + advanced), in equilibrium
 
-**Status:** in-progress (opened 2026-06-28) — a pre-GA extension of
+**Status:** done (opened + closed 2026-06-28) — a pre-GA extension of
 [`EQUILIBRIUM.md`](../EQUILIBRIUM.md): the same "honor the contract on every surface" discipline,
 applied to *where intelligence runs*.
 
-**Last updated:** 2026-06-28 (**24-01..05 landed — Apple + the hub + the web are done.** The web
+**Last updated:** 2026-06-28 (**PHASE 24 CLOSED — 24-01..06 all done.** 24-06 landed the cross-surface
+never-sync proof (a key from either ingress, sync push or REST body, never reaches any read surface;
+the served profile shape is field-for-field the agreed schema) + the entry-point docs (README pillar,
+docs/MODELS.md "Runtime profiles", docs/SECURITY.md §5 key custody). Full `uv run pytest` 3040 passed;
+voice/docs guard green. Profiles are in equilibrium across desktop / hub / iPad / iPhone / web with the
+key custodial per surface. Earlier: **24-01..05 — Apple + the hub + the web are done.** The web
 `/profiles` surface authors profiles and the desk assigns them per-agent (the inline "Runs on" picker),
 key custody is the hub's secret, on-device renders honest n/a; a pre-existing `/desk` dead nav link was
 fixed and brought under the launch pre-flight. 0 page errors; full `uv run pytest` 3039 passed.
@@ -100,7 +105,7 @@ reads `profile.egressScope` so trust stays honest per profile.
 | HSM-24-03 | Apple **advanced** config — manage the profile list + per-agent `profileId` + the gauge reads `profile.contextLimit` | **done** (CRUD + per-agent chip + gauge-per-profile + agent-run routing + inline `RunsOnPicker` at the desk Ask/route & meeting generate, with honest egress; dictation n/a, workbench uses active) |
 | HSM-24-04 | The desktop hub honors profiles (`web_runtime` maps a profile to its runtime) | **done** (schema v3→v4 + `ProfileRepository` + sync + profiles CRUD routes + agent-run resolution with the key from the hub's secrets; never-sync-key tested; full `uv run pytest` 3039 passed) |
 | HSM-24-05 | Web authors + uses profiles (the flagship surface) | **done** (the web `/profiles` list+editor over `/api/profiles` + the desk agent "Runs on" picker + per-agent chip; honest n/a for on-device; key is the hub's secret, never the browser; fixed a pre-existing `/desk` dead nav link; 0 page errors; 3039 passed) |
-| HSM-24-06 | Cross-surface parity proof + the docs story | planned |
+| HSM-24-06 | Cross-surface parity proof + the docs story | **done** (the cross-surface never-sync proof: a key from either ingress never reaches any read surface + served shape is field-for-field the agreed schema; entry-point docs in README/MODELS/SECURITY; 3040 passed) |
 
 ## Sequencing
 
@@ -157,8 +162,18 @@ pre-existing dead nav link (`/desk` had no route; the TopNav pointed at it) and 
 `/profiles` under the launch pre-flight. Built clean; Playwright pass = 0 page errors (profiles list +
 editor, desk cards + agent form); full `uv run pytest` 3039 passed.
 
-Next: **24-06** (cross-surface parity proof + docs). Apple + the hub + the web are done; only the
-parity gate + docs remain.
+**24-06 DONE — PHASE 24 CLOSED.** The cross-surface never-sync proof is in
+(`test_profile_never_sync_holds_across_every_read_surface`): a hostile key supplied to either ingress
+(a sync push or a REST body) never reappears on any read surface (the sync pull, the list route, the
+per-id route), and every served profile is field-for-field the agreed schema with no key field. The
+entry-point docs shipped in the closing commit (README pillar names runtime profiles; docs/MODELS.md
+gains a "Runtime profiles" section; docs/SECURITY.md §5 gains the key-custody bullet). Full
+`uv run pytest` 3040 passed.
+
+Profiles are in equilibrium across desktop / hub / iPad / iPhone / web. The owner's remaining leg is a
+live device walk: author a cloud profile on the phone, see it shape-only on the hub/web, run an agent
+on it with a real key in `HOLDSPEAK_PROFILE_<id>_KEY`. The latest Apple build with the profiles UI is
+installed on the iPhone 17 Pro Max.
 
 ## Carried context
 

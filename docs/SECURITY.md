@@ -117,6 +117,15 @@ machine except via the connector CLIs above (entity IDs only).
   a credential everywhere else: shown only on the Settings page, never on a
   proposal record, a broadcast, or any other API response (the connector
   joins it to the POST in memory at execution time).
+- **Runtime profile keys**: a runtime profile (the named "where intelligence
+  runs" target) stores only its shape: name, kind, endpoint, model, context
+  window. The API key is **never** part of the profile and **never syncs**.
+  Each surface holds its own key for a shared profile: the device Keychain on
+  iPad and iPhone, the hub's environment secret on the desktop
+  (`HOLDSPEAK_PROFILE_<id>_KEY`). The key is joined to the request only at run
+  time, never written to the synced shape, a ChangeSet, or any API response. A
+  regression test asserts a key supplied to any ingress (a sync push or a REST
+  body) never reappears on a read surface (the sync pull or the profile routes).
 - Bridge/firmware secrets (AIPI-Lite) live in gitignored `bridge.env` /
   `secrets.yaml`; `.example` templates are checked in.
 

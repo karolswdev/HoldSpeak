@@ -44,6 +44,9 @@ comes back as typed, reviewable artifacts:
 - **Everything is local, including the intelligence.** Whisper transcribes on
   your machine, in any of its 99 languages, and the LLM is yours: GGUF in-process, MLX on Apple Silicon, or
   any OpenAI-compatible endpoint you choose, including one on your own LAN.
+  Name those as reusable **runtime profiles** and run a different one per agent;
+  the profile shape syncs across your surfaces while the API key stays on each
+  one, never synced.
   See [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 - **It learns how you work, and shows you the receipts.** The dictation
   journal records what you said, what it typed, where it routed, and how long

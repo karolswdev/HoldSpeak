@@ -95,6 +95,31 @@ endpoint owns model loading; HoldSpeak needs no local weights.
 
 ---
 
+## Runtime profiles: where each agent runs
+
+The three backends above answer *how* an LLM runs. A **runtime profile**
+answers *where*: a named, reusable target you can point work at.
+
+- **Basic.** Pick one active profile. This is the single-target experience:
+  one model, app wide. Most users never need more.
+- **Advanced.** Keep a list of named profiles (on-device, or any
+  OpenAI-compatible endpoint such as OpenRouter or Claude) and assign one
+  **per agent**. Scout can run on-device while Editor runs on a cloud endpoint
+  and Critic runs on a third. Every place that touches a model shows a small
+  "Runs on" control with the resolved default already selected and changeable
+  at the point of use.
+
+A profile carries only its **shape**: name, kind, endpoint, model, and the
+usable context window. It never carries the API key. The shape syncs across
+your surfaces (desktop hub, iPad, iPhone, web) so the same named profile is
+available everywhere; a surface that cannot host a kind (an on-device GGUF in
+a browser) shows it as unavailable rather than pretending. The key stays with
+each surface and is joined only at request time. See
+[Security & privacy](SECURITY.md#5-secrets-handling).
+
+Manage profiles on the web at `/profiles`, or on iPad and iPhone under
+Settings; assign an agent to one in the agent editor.
+
 ## Current suggestions (a moving target)
 
 These are reasonable defaults at the time of writing, **not** mandates. Newer
