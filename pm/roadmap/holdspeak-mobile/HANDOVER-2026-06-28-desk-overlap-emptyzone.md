@@ -15,11 +15,17 @@ the new button on the right, overlap them. Unacceptable."
 directly under the orbs and collided with the row text. (The iPad `.wide` diorama was fine: items sit
 in the upper grid, the orb is in empty space.)
 
-**Fix:** a lane-only bottom fade behind the orbs (`DeskDioramaStage.swift`, just before the Record orb
-block) — a `LinearGradient(.clear → DioPal.bgBot)` `172 + botInset` tall, `zIndex 71` (under the orbs
-at 72/73, over the column). The column now dissolves into the desk beneath the controls, so they read
-as a floating toolbar instead of litter on the list. Gated by `camera.isLane` so the diorama is
+**Fix (v2, after the first pass was too weak on device):** a lane-only **solid control dock** behind
+the orbs (`DeskDioramaStage.swift`, just before the Record orb block) — a short gradient lip (56pt)
+over a **solid `DioPal.bgBot` base** (`150 + botInset`), seamless with the desk bg, `zIndex 71` (under
+the orbs at 72/73, over the column). The solid base genuinely OCCLUDES rows scrolling past (a faint
+fade left "Slack"/"Webhook" visible under the orbs), and the column's bottom inset was bumped to
+`200 + botInset` so the last row rests above the dock. Gated by `camera.isLane`; the diorama is
 untouched.
+
+**Also (owner): the Record orb read optically smaller than New.** It was a 46pt disc vs the New FAB's
+64pt. `DioRecordOrb` now uses a 64pt disc (icon 24, pulse rings + frame scaled to match) so the two
+bottom controls read as a pair.
 
 ## 2. The empty-zone coaching fired on a zone that wasn't empty
 
@@ -32,11 +38,16 @@ models, workflows) + `agentMembers()` + `chainMembers()` render in *every* zone 
 "tools are global at every level" decision — do NOT revert that). So the screen had the toolkit but
 claimed to be empty.
 
-**Fix:** reframe the headline to "Nothing filed in `<name>` yet" (`DeskDioramaStage.swift` ~L211). The
-zone's *content* (what you file) is what's empty; the toolkit is global scaffolding, not zone content.
-This is honest with the inherited tools present and keeps the no-prose rule (states the fact in the
-fewest words). The predicate (`emptyZone` = no content + no child zones) was already right; only the
-claim was wrong.
+**Fix (v2):** the copy reframe alone wasn't enough — on the lane the centred `DioZoneEmpty` card
+rendered ON TOP of the inherited connector/agent rows (text-on-text: "Nothing filed in Lolll yet" over
+"Webhook… your tailored agent"). So:
+- The centred `DioZoneEmpty` overlay is now **diorama-only** (`!camera.isLane`), where the canvas is
+  genuinely blank and a centred card fits.
+- On the lane, a new compact **`DioLaneEmptyHint`** row is prepended to the top of the column (above
+  the always-present toolkit rows) when a sub-zone has no filed content. No overlap; honest ("Nothing
+  filed in `<name>` yet" + a Sub-zone button); the global toolkit lists cleanly below it.
+- The headline reads "Nothing filed in `<name>` yet" (the zone's *content* is empty; the toolkit is
+  global scaffolding, not zone content). `emptyZone` (no content + no child zones) was already right.
 
 ## Proof
 
