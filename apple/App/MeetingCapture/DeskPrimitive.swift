@@ -49,6 +49,9 @@ enum SectionBody {
     case actions([(task: String, meta: String?)])
     case chips([String])
     case transcript([(who: String, what: String)])
+    // A meeting's derived primitives (summaries, decisions, agent replies…) shown as tappable cards
+    // INSIDE the meeting's drawer — the meeting owns its outputs instead of scattering them on the desk.
+    case derivatives([(id: String, title: String, lens: String, snippet: String)])
 }
 struct PrimitiveSection { let label: String; let tint: Color; let body: SectionBody }
 
@@ -97,6 +100,7 @@ extension DeskPrimitive {
             case .actions(let rows):  return rows.map { "- \($0.task)" }.joined(separator: "\n")
             case .chips(let c):       return c.joined(separator: ", ")
             case .transcript(let l):  return l.map { "\($0.who): \($0.what)" }.joined(separator: "\n")
+            case .derivatives(let d): return d.map { "\($0.lens): \($0.title)" }.joined(separator: "\n")
             }
         }.joined(separator: "\n\n")
     }
@@ -106,6 +110,7 @@ extension DeskPrimitive {
 
 struct MeetingPrimitive: DeskPrimitive {
     let meeting: Meeting; let index: Int
+    var derivatives: [OutputRecord] = []   // the meeting's own outputs (grouped by lineage), shown in its drawer
     var id: String { "m:\(meeting.id)" }
     var kind: PrimitiveKind { .meeting }
     var glyph: String { index % 2 == 0 ? "cassette" : "cassette2" }
@@ -120,6 +125,10 @@ struct MeetingPrimitive: DeskPrimitive {
     }
     var sections: [PrimitiveSection] {
         var out: [PrimitiveSection] = []
+        if !derivatives.isEmpty {
+            out.append(.init(label: "DERIVATIVES · \(derivatives.count)", tint: DioPal.accent,
+                             body: .derivatives(derivatives.map { (id: "out:\($0.id)", title: $0.title, lens: $0.lens, snippet: String($0.body.prefix(120))) })))
+        }
         if let s = meeting.intel?.summary, !s.isEmpty { out.append(.init(label: "SUMMARY", tint: DioPal.accent, body: .text(s))) }
         let acts = meeting.intel?.actionItems ?? []
         if !acts.isEmpty {
@@ -140,7 +149,8 @@ struct MeetingPrimitive: DeskPrimitive {
         let f = DateFormatter(); f.dateFormat = "MMM d · h:mm a"
         let spk = Set(meeting.segments.map(\.speaker)).count
         let dur = meeting.formattedDuration ?? (meeting.duration.map { "\(Int($0 / 60)) min" } ?? "")
-        return [f.string(from: meeting.startedAt), dur.isEmpty ? nil : dur, "\(spk) speaker\(spk == 1 ? "" : "s")"].compactMap { $0 }.joined(separator: "  ·  ")
+        let deriv = derivatives.isEmpty ? nil : "\(derivatives.count) artifact\(derivatives.count == 1 ? "" : "s")"
+        return [f.string(from: meeting.startedAt), dur.isEmpty ? nil : dur, "\(spk) speaker\(spk == 1 ? "" : "s")", deriv].compactMap { $0 }.joined(separator: "  ·  ")
     }
 }
 

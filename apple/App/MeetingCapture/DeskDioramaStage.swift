@@ -1340,12 +1340,14 @@ struct DioPullout: View {
     let prim: any DeskPrimitive
     let onClose: () -> Void; let onAction: (PrimitiveAction) -> Void; let onRouteSection: (String, String) -> Void
     var onActItem: ((String, String) -> Void)? = nil      // act on a single action row → send/file
+    var onOpenDerivative: ((String) -> Void)? = nil       // tap a derivative card → open its own drawer
     private func sectionText(_ body: SectionBody) -> String {
         switch body {
         case .text(let s): return s
         case .actions(let r): return r.map { "- \($0.task)" + ($0.meta.map { " (\($0))" } ?? "") }.joined(separator: "\n")
         case .chips(let c): return c.joined(separator: ", ")
         case .transcript(let l): return l.map { "\($0.who): \($0.what)" }.joined(separator: "\n")
+        case .derivatives(let d): return d.map { "\($0.lens): \($0.title)" }.joined(separator: "\n")
         }
     }
     var body: some View {
@@ -1371,9 +1373,10 @@ struct DioPullout: View {
                 let canRoute = !prim.emits.isEmpty
                 VStack(alignment: .leading, spacing: 16) {
                     ForEach(Array(prim.sections.enumerated()), id: \.offset) { _, sec in
+                        let isDerivatives: Bool = { if case .derivatives = sec.body { return true }; return false }()
                         VStack(alignment: .leading, spacing: 8) {
                             DrawerSection(label: sec.label, tint: sec.tint) { sectionBody(sec.body) }
-                            if canRoute {
+                            if canRoute && !isDerivatives {   // derivatives are already-run outputs; routing the list is meaningless
                                 Button { onRouteSection("\(prim.title) · \(sec.label.capitalized)", sectionText(sec.body)) } label: {
                                     HStack(spacing: 5) { Image(systemName: "wand.and.stars").font(.system(size: 11, weight: .bold)); Text("Route this to AI").font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
                                         .foregroundStyle(DioPal.accent).padding(.horizontal, 11).frame(height: 30)
@@ -1443,7 +1446,45 @@ struct DioPullout: View {
             }
         case .transcript(let lines):
             DioTranscriptSection(lines: lines)
+        case .derivatives(let cards):
+            VStack(spacing: 9) {
+                ForEach(Array(cards.enumerated()), id: \.offset) { _, c in
+                    Button { onOpenDerivative?(c.id) } label: {
+                        HStack(spacing: 11) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                HStack(spacing: 6) {
+                                    Text(c.lens.uppercased()).font(.system(size: 8.5, weight: .black, design: .rounded)).tracking(0.8)
+                                        .foregroundStyle(lensColorStatic(c.lens))
+                                        .padding(.horizontal, 6).padding(.vertical, 2)
+                                        .background(Capsule().fill(lensColorStatic(c.lens).opacity(0.16)))
+                                    Text(c.title).font(.system(size: 13.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
+                                }
+                                if !c.snippet.isEmpty {
+                                    Text(c.snippet).font(.system(size: 11.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            Spacer(minLength: 6)
+                            Image(systemName: "chevron.right").font(.system(size: 12, weight: .black)).foregroundStyle(DioPal.muted.opacity(0.7))
+                        }
+                        .padding(.horizontal, 13).padding(.vertical, 11)
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(.white.opacity(0.04))
+                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.10), lineWidth: 1)))
+                    }.buttonStyle(.plain)
+                }
+            }
         }
+    }
+}
+
+// The lens hue, available to the pull-out renderer (mirrors DeskDioramaStage.lensColor).
+private func lensColorStatic(_ lens: String) -> Color {
+    switch lens {
+    case "Summary": return DioPal.violet
+    case "Actions": return DioPal.mint
+    case "Decisions": return DioPal.accent
+    case "Questions": return DioPal.cobalt
+    default: return DioPal.accent
     }
 }
 
@@ -2979,12 +3020,27 @@ struct DioStage: View {
     private var meetings: [Meeting] { model.meetings.sorted { $0.startedAt > $1.startedAt } }
     private var knowledgeBases: [String] { kbs.map(\.name) }   // the agent builder picks a KB by name
 
+    // MEETING DRAWER (group by lineage) — an output belongs to a meeting if it was routed FROM it
+    // (`provenance.sourceCardId == "m:<id>"`) or its `source` is that meeting's title. Such outputs
+    // live INSIDE the meeting's drawer, not loose on the desk.
+    private func derivativesOf(_ m: Meeting) -> [OutputRecord] {
+        let mid = "m:\(m.id)"; let title = MeetingPrimitive(meeting: m, index: 0).title
+        return outputs.filter { ($0.provenance?.sourceCardId == mid) || (!$0.source.isEmpty && $0.source == title) }
+    }
+    // Every output id that sits in some meeting's drawer (so the loose desk/lane lists skip them).
+    private var meetingDerivedOutputIds: Set<String> {
+        var ids = Set<String>()
+        for m in meetings { for d in derivativesOf(m) { ids.insert("out:\(d.id)") } }
+        return ids
+    }
+
     // EVERYTHING is a DeskPrimitive — built here from the live model.
     // CONTENT lives on the desk (meetings, generated outputs, knowledge); TOOLS live in the dock.
     private func contentMembers() -> [any DeskPrimitive] {
         var out: [any DeskPrimitive] = []
-        for (i, m) in meetings.enumerated() where (filed["m:\(m.id)"] ?? "") == pathKey { out.append(MeetingPrimitive(meeting: m, index: i)) }
-        for rec in outputs where rec.path == pathKey { out.append(OutputPrimitive(rec: rec)) }
+        let derived = meetingDerivedOutputIds
+        for (i, m) in meetings.enumerated() where (filed["m:\(m.id)"] ?? "") == pathKey { out.append(MeetingPrimitive(meeting: m, index: i, derivatives: derivativesOf(m))) }
+        for rec in outputs where rec.path == pathKey && !derived.contains("out:\(rec.id)") { out.append(OutputPrimitive(rec: rec)) }
         for rec in notes where rec.path == pathKey { out.append(NotePrimitive(rec: rec)) }
         for rec in kbs where rec.path == pathKey { out.append(KBPrimitive(rec: rec)) }   // KBs live anywhere now
         for rec in placedGames where rec.path == pathKey { out.append(gamePrim(rec)) }   // games placed on the desk
@@ -3058,7 +3114,12 @@ struct DioStage: View {
         guard id.hasPrefix("m:") else { return nil }
         let mid = String(id.dropFirst(2)); return model.meetings.first { $0.id == mid }
     }
-    private func selectedPrim() -> (any DeskPrimitive)? { members().first { $0.id == selected } }
+    private func selectedPrim() -> (any DeskPrimitive)? {
+        if let m = members().first(where: { $0.id == selected }) { return m }
+        // a derivative opened from its meeting's drawer is hidden from the loose lists — resolve it directly
+        if let id = selected, id.hasPrefix("out:"), let o = outputs.first(where: { "out:\($0.id)" == id }) { return OutputPrimitive(rec: o) }
+        return nil
+    }
     private func mode(_ id: String) -> DioMode { selected == nil ? .home : (selected == id ? .focus : .recede) }
 
     // MARK: layout — low-profile shelf at top, objects on the open canvas
@@ -3480,7 +3541,8 @@ struct DioStage: View {
                     }
                     DioPullout(prim: p, onClose: { select(nil) }, onAction: { handle($0, on: p) },
                                onRouteSection: { t, x in routeFacet(t, x, w, h) },
-                               onActItem: { task, text in beginActOnItem(from: p, task: task, text: text) })
+                               onActItem: { task, text in beginActOnItem(from: p, task: task, text: text) },
+                               onOpenDerivative: { id in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { select(id) } })
                         .frame(width: lane ? camera.cardWidth(560, in: w, margin: 8) : min(560, w * 0.62),
                                height: lane ? h * 0.74 : nil)
                         .overlay(alignment: .top) {

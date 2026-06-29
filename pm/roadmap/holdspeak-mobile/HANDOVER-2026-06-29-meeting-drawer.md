@@ -22,10 +22,14 @@ to drag a meeting to a zone**.
   Extracted `fileAny(_ id:into:)` (shared by drag-drop + the menu), `currentPath(of:)`,
   `allZonePaths()`. Lane empty-hint copy fixed ("Long-press any item to file it" — the old "Drag a
   meeting here" was a lie on the phone). Builds; the menu is a device walk (simctl can't long-press).
-- **PR 2 — meeting drawer grouping.** Filter a meeting's derivatives OUT of the loose desk/lane lists
-  (`contentMembers()`/`members()`) and surface them as the meeting's children: the meeting row/card
-  shows a derivative count; `membersOfMeeting(m)` returns the matched outputs. Match by
-  `provenance.sourceCardId == "m:\(m.id)"` first, then `source == m.title`.
+- **PR 2 — meeting drawer grouping (DONE).** `derivativesOf(m)` matches outputs by
+  `provenance.sourceCardId == "m:<id>"` or `source == meeting.title`; `meetingDerivedOutputIds` excludes
+  them from the loose `contentMembers()` list. `MeetingPrimitive` gained `derivatives: [OutputRecord]`
+  and a lead "DERIVATIVES · N" section (`SectionBody.derivatives`), rendered by `DioPullout` as tappable
+  cards (`onOpenDerivative` → `select("out:<id>")`); `selectedPrim()` falls back to resolving a hidden
+  derivative by id. The meeting subtitle shows "N artifacts". The generic "Route this to AI" button is
+  suppressed for the derivatives section. Sim-verified: tap a meeting → its derivatives sit inside;
+  they're gone from the loose desk.
 - **PR 3 — the in-world drawer UI + detail/editor redesign.** Route a meeting tap to an in-world
   pull-out (reuse/extend `DioPullout`) showing: header (title/when/who/duration) → derivative cards
   (open/keep/dismiss/correct) → Transcript › → Notes ›. Replace the long-scroll `MeetingDetailView`
