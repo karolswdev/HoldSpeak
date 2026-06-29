@@ -374,6 +374,7 @@ struct DioHero: View {
     var picked: Bool = false                       // selected by the lasso (part of an Ask bundle)
     var arrived: Bool = false                      // just woven off a recording → glaringly highlighted for a beat
     var syncCue: PrimSyncCue = .none               // canonical (synced) vs local-only/pending — read on the card
+    var densityScale: CGFloat = 1                    // the desk shrinks its objects as it fills (to a usability floor)
     var onSummon: () -> Void = {}                   // long-press → radial summon (route/send)
     let onTap: () -> Void; let onDrop: (CGSize) -> Void; let onDragChange: (CGPoint?) -> Void
     @State private var drag: CGSize = .zero
@@ -382,7 +383,7 @@ struct DioHero: View {
     private var dim: Double { mode == .recede ? 0.3 : 1 }
     private let spring = Animation.spring(response: 0.5, dampingFraction: 0.72)
     var body: some View {
-        let s = prim.base
+        let s = prim.base * densityScale
         VStack(spacing: 7) {
             ZStack {
                 // the "glaringly new" beat — a bright halo + pulsing ring + a NEW badge, just after it weaves
@@ -3134,11 +3135,20 @@ struct DioStage: View {
         let y = h * 0.16 + CGFloat(r) * (size.height + 10)
         return CGPoint(x: x, y: y)
     }
+    // The count-driven column count: more items → more columns (so the desk SPREADS as it fills,
+    // instead of stacking 3-wide forever). Paired with `densityScale` (objects shrink to a floor).
+    private func looseCols(_ n: Int) -> Int { n <= 4 ? 2 : (n <= 9 ? 3 : (n <= 16 ? 4 : 5)) }
+    // Objects shrink as the scene fills, clamped to a usability floor (~0.62 → still a real tap target +
+    // readable glyph). Past the floor, columns keep spreading rather than shrinking into confetti.
+    private func densityScale(_ n: Int) -> CGFloat { n <= 6 ? 1.0 : max(0.62, 1.0 - 0.05 * CGFloat(n - 6)) }
     private func looseHome(_ i: Int, _ n: Int, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
-        let cols = max(1, min(3, n)); let r = i / cols, c = i % cols
-        let x = cols == 1 ? 0.5 : 0.22 + 0.56 * Double(c) / Double(cols - 1)
+        let cols = max(1, min(looseCols(n), n)); let r = i / cols, c = i % cols
         let rows = max(1, Int(ceil(Double(n) / Double(cols))))
-        let y = rows == 1 ? 0.55 : 0.48 + 0.2 * Double(r) / Double(rows - 1)
+        // Spread across the usable canvas (clear of the top chrome and the bottom orb dock) and widen
+        // the band as rows grow, so a full desk uses the whole surface instead of a cramped middle strip.
+        let yTop = 0.30, yBot = rows <= 2 ? 0.58 : 0.80
+        let x = cols == 1 ? 0.5 : 0.16 + 0.68 * Double(c) / Double(cols - 1)
+        let y = rows == 1 ? 0.52 : yTop + (yBot - yTop) * Double(r) / Double(rows - 1)
         return CGPoint(x: w * x, y: h * y)
     }
     private func pos(_ id: String, _ fallback: CGPoint, _ w: CGFloat, _ h: CGFloat) -> CGPoint {
@@ -3984,7 +3994,13 @@ struct DioStage: View {
         let zs = childZones()
         let prims = members()
         let buckets = laneBuckets(prims)
-        let shown = laneFilter == "all" ? prims : prims.filter { laneBucketKey($0.kind) == laneFilter }
+        // "All" is your CONTENT + things you invoke (meetings/notes/KBs/agents/chains/games). Pure
+        // infrastructure — models + connectors + workflows (the "tools" bucket) — is not content you
+        // browse; it earns a spot only as a drag-target, which the lane has none of. So it lives behind
+        // the "Tools" chip, out of the default view (owner: "why even have them there?"). This also keeps
+        // a dived zone genuinely calm instead of flooded with the inherited toolkit.
+        let shown = laneFilter == "all" ? prims.filter { laneBucketKey($0.kind) != "tools" }
+                                        : prims.filter { laneBucketKey($0.kind) == laneFilter }
         VStack(spacing: 0) {
             if buckets.count > 1 {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -4030,6 +4046,7 @@ struct DioStage: View {
 
     @ViewBuilder private func level(_ w: CGFloat, _ h: CGFloat) -> some View {
         let zs = childZones(); let ms = contentMembers()
+        let dScale = densityScale(ms.count)   // the desk shrinks its objects as it fills (#2)
         ZStack {
             ForEach(Array(zs.enumerated()), id: \.element.path) { i, z in
                 DioZoneTray(name: name(of: z.path), style: ZoneStyle(z),
@@ -4083,7 +4100,7 @@ struct DioStage: View {
                 } else {
                     DioHero(prim: p, landed: landed, mode: mode(p.id), index: i, pos: pos(p.id, home, w, h),
                             hot: dragHotObjectId == p.id, picked: selectedSet.contains(p.id), arrived: arrivedIds.contains(p.id),
-                            syncCue: syncCue(for: p),
+                            syncCue: syncCue(for: p), densityScale: dScale,
                             onSummon: { summonAt = pos(p.id, home, w, h); haptic(.medium)
                                         withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { summonSource = p.id } },
                             onTap: { tapPrimitive(p) },
