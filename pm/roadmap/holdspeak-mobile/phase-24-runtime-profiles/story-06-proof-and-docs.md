@@ -1,6 +1,10 @@
 # HSM-24-06 — Cross-surface parity proof + the docs story
 
-**Status:** planned (the phase gate; after 24-02..05).
+- **Status:** done (2026-06-28) — the cross-surface never-sync proof (a key from EITHER ingress, sync
+  push or REST body, never reaches ANY read surface; the served shape is field-for-field the agreed
+  schema) + the entry-point docs (README, docs/MODELS.md "Runtime profiles", docs/SECURITY.md §5 key
+  custody). Evidence: [evidence-story-06.md](./evidence-story-06.md). Full `uv run pytest` 3040 passed;
+  voice guard green. **Phase 24 closes with this story.**
 
 ## Problem
 

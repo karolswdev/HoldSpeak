@@ -510,3 +510,65 @@ def test_profile_syncs_shape_only_and_agent_carries_profile_id(env) -> None:
     blob = json.dumps(pulled)
     assert "api_key" not in blob and "SHOULD-NEVER-PERSIST" not in blob
     assert "api_key" not in prof_rec["value"] and "apiKey" not in prof_rec["value"]
+
+
+# The agreed cross-surface RuntimeProfile shape (matches db.models.ProfileRecord.to_dict and the
+# Apple Contracts/Primitives.swift RuntimeProfile fields). NO key field exists anywhere in it — the
+# secret is each surface's own custodian (iPad Keychain / hub env secrets), joined at run time.
+_PROFILE_SHAPE_KEYS = {
+    "id", "name", "kind", "model_file", "base_url", "model",
+    "context_limit", "requires_key", "created_at", "last_modified", "deleted",
+}
+
+
+def test_profile_never_sync_holds_across_every_read_surface(env) -> None:
+    """HSM-24-06 (the phase gate): one profile, observed in equilibrium. The SAME profile is served
+    SHAPE-ONLY through every surface's read path — the sync pull AND the web/API CRUD routes — with
+    the exact agreed field set and NO key material on any of them. This is the cross-surface
+    never-sync security crux: a key supplied to ANY ingress (sync push or the REST body) is dropped,
+    so it can never reappear on a surface that reads the hub."""
+    db, client = env
+    lm = "2030-06-27T09:00:00Z"
+
+    # Ingress 1 — the sync push (the iPad's path), carrying a hostile key.
+    push = client.post("/api/sync/push", json={
+        "profiles": [{
+            "meta": {"id": "prof_x", "kind": "profile", "last_modified": lm, "deleted": False},
+            "value": {
+                "id": "prof_x", "name": "Claude", "kind": "openAICompatible",
+                "model_file": "", "base_url": "https://api.anthropic.com/v1",
+                "model": "claude-3.5-sonnet", "context_limit": 200000, "requires_key": True,
+                "api_key": "sk-FROM-SYNC-MUST-VANISH",
+                "created_at": "2030-06-27T08:00:00Z", "last_modified": lm, "deleted": False,
+            },
+        }],
+    })
+    assert push.status_code == 200, push.text
+
+    # Ingress 2 — the REST CRUD (the web's path), also carrying a hostile key.
+    created = client.post("/api/profiles", json={
+        "id": "prof_y", "name": "OpenRouter", "kind": "openAICompatible",
+        "base_url": "https://openrouter.ai/api/v1", "model": "anthropic/claude-sonnet-4",
+        "context_limit": 200000, "requires_key": True,
+        "api_key": "sk-FROM-REST-MUST-VANISH",
+    })
+    assert created.status_code == 201, created.text
+
+    # Every READ surface a downstream surface consumes: the sync pull + both CRUD reads.
+    pulled = client.get("/api/sync/pull").json()
+    listed = client.get("/api/profiles").json()["profiles"]
+    got_x = client.get("/api/profiles/prof_x").json()["profile"]
+    got_y = client.get("/api/profiles/prof_y").json()["profile"]
+
+    # 1) The shape is exactly the agreed cross-surface field set — no more, no less, no key.
+    for served in (got_x, got_y, *listed):
+        assert set(served.keys()) == _PROFILE_SHAPE_KEYS, set(served.keys()) ^ _PROFILE_SHAPE_KEYS
+
+    # 2) No key material survives on ANY read surface, from EITHER ingress.
+    surfaces_blob = json.dumps([pulled, listed, got_x, got_y])
+    for needle in ("api_key", "apiKey", "FROM-SYNC-MUST-VANISH", "FROM-REST-MUST-VANISH"):
+        assert needle not in surfaces_blob, f"{needle!r} leaked onto a read surface"
+
+    # 3) The shape itself round-tripped intact (parity is real, not achieved by dropping data).
+    assert got_x["base_url"] == "https://api.anthropic.com/v1" and got_x["context_limit"] == 200000
+    assert got_y["model"] == "anthropic/claude-sonnet-4" and got_y["requires_key"] is True
