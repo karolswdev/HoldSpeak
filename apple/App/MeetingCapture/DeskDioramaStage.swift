@@ -208,7 +208,7 @@ struct DioZoneEmpty: View {
                 }
                 .frame(height: 130)
                 VStack(spacing: 7) {
-                    Text("\(name) is empty").font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                    Text("Nothing filed in \(name) yet").font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
                     Text("Drag a meeting here to file it.")
                         .font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                         .multilineTextAlignment(.center).frame(maxWidth: 300)
@@ -579,6 +579,40 @@ struct DioLaneZoneRow: View {
                 .fill(tint.opacity(0.06))
                 .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(tint.opacity(0.22), lineWidth: 1)))
         }.buttonStyle(.plain)
+    }
+}
+
+/// Compact inline "nothing filed yet" hint for an empty sub-zone on the lane. Sits at the TOP of the
+/// column (above the always-present global toolkit rows) so it never lands on a row, and states the
+/// truth: your content is empty here, the toolkit is global. (Device punch-list: the centred overlay
+/// used to render on top of the connector rows.)
+struct DioLaneEmptyHint: View {
+    let name: String; let tint: Color; let onNewSubzone: () -> Void
+    var body: some View {
+        HStack(spacing: 13) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(tint.opacity(0.5), style: StrokeStyle(lineWidth: 1.4, dash: [4, 4]))
+                Image(systemName: "tray").font(.system(size: 18, weight: .regular)).foregroundStyle(tint.opacity(0.9))
+            }.frame(width: 44, height: 44)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Nothing filed in \(name) yet").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
+                Text("Drag a meeting here to file it.").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
+            }
+            Spacer(minLength: 6)
+            Button(action: onNewSubzone) {
+                HStack(spacing: 5) {
+                    Image(systemName: "plus.circle.fill").font(.system(size: 12, weight: .bold))
+                    Text("Sub-zone").font(.system(size: 12, weight: .heavy, design: .rounded))
+                }
+                .foregroundStyle(.white).padding(.horizontal, 11).frame(height: 32)
+                .background(Capsule().fill(LinearGradient(colors: [tint.opacity(0.95), tint.opacity(0.7)], startPoint: .top, endPoint: .bottom)))
+            }.buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 11)
+        .background(RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(tint.opacity(0.05))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(tint.opacity(0.20), lineWidth: 1)))
     }
 }
 
@@ -2159,14 +2193,16 @@ struct DioRecordOrb: View {
                 ForEach(0..<2) { i in
                     let p = (sin(t * 1.3 + Double(i) * 1.6) * 0.5 + 0.5)
                     Circle().stroke(DioPal.accent.opacity(0.28 * (1 - p)), lineWidth: 1.5)
-                        .frame(width: 44 + CGFloat(p) * 28, height: 44 + CGFloat(p) * 28)
+                        .frame(width: 60 + CGFloat(p) * 26, height: 60 + CGFloat(p) * 26)
                 }
+                // The disc matches the New FAB's 64pt circle so the two bottom controls read as a pair
+                // (owner: the Record circle looked optically smaller than New — it was 46 vs 64).
                 Circle().fill(RadialGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent, Color(hex: 0xC23C16)],
-                                             center: .init(x: 0.4, y: 0.35), startRadius: 1, endRadius: 26))
-                    .frame(width: 46, height: 46).shadow(color: DioPal.accent.opacity(0.55), radius: 11, y: 4)
-                Image(systemName: "mic.fill").font(.system(size: 17, weight: .bold)).foregroundStyle(.white)
+                                             center: .init(x: 0.4, y: 0.35), startRadius: 1, endRadius: 34))
+                    .frame(width: 64, height: 64).shadow(color: DioPal.accent.opacity(0.55), radius: 12, y: 4)
+                Image(systemName: "mic.fill").font(.system(size: 24, weight: .bold)).foregroundStyle(.white)
             }
-            .scaleEffect(1 + CGFloat(sin(t * 2) * 0.02)).frame(width: 64, height: 64).contentShape(Circle())
+            .scaleEffect(1 + CGFloat(sin(t * 2) * 0.02)).frame(width: 72, height: 72).contentShape(Circle())
         }
         .onTapGesture(perform: onTap)
     }
@@ -3127,8 +3163,12 @@ struct DioStage: View {
                         .position(x: min(w - 130, orbPos(w, h).x + 96), y: orbPos(w, h).y - 4).zIndex(6).allowsHitTesting(false)
                 }
 
-                // an empty zone you dived into — teach how to fill it (you file from the desk; or nest deeper)
-                if emptyZone && landed && selected == nil {
+                // an empty zone you dived into — teach how to fill it (you file from the desk; or nest deeper).
+                // DIORAMA ONLY: on the iPad the canvas is genuinely blank, so the centred card fits. On the
+                // lane the zone still lists the global toolkit (connectors/models/agents), so a centred card
+                // would land ON those rows (text-on-text) and falsely read "empty" — the lane gets a compact
+                // inline hint at the top of the column instead (see laneColumn).
+                if emptyZone && !camera.isLane && landed && selected == nil {
                     DioZoneEmpty(name: name(of: pathKey), tint: curTint, onNewSubzone: { haptic(.light); namingZone = true })
                         .frame(maxWidth: .infinity, maxHeight: .infinity).zIndex(5).transition(.opacity)
                 }
@@ -3198,6 +3238,24 @@ struct DioStage: View {
                     }
                     .padding(.horizontal, 16).padding(.vertical, 8).background(Capsule().fill(.black.opacity(0.6)))
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, h * 0.12).zIndex(116)
+                }
+
+                // THE LANE CONTROL DOCK — the Record orb (bottom-left) and the New FAB (bottom-right)
+                // float over the scrolling card column; mid-scroll, rows used to collide with them. A
+                // SOLID bottom base (the desk colour, seamless with the bg) OCCLUDES the column under
+                // the controls, with a short gradient lip for softness — so a row scrolling past simply
+                // disappears into the desk instead of clashing with the orbs. (Device punch-list: the
+                // overlap gripe — a faint fade wasn't enough; the base must actually hide the rows.)
+                if camera.isLane && landed && selected == nil && summonSource == nil && !capturing
+                    && editingNote == nil && editingKB == nil && !connecting
+                    && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet {
+                    VStack(spacing: 0) {
+                        LinearGradient(colors: [.clear, DioPal.bgBot], startPoint: .top, endPoint: .bottom)
+                            .frame(height: 56)
+                        DioPal.bgBot.frame(height: 150 + botInset)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .allowsHitTesting(false).ignoresSafeArea().zIndex(71)
                 }
 
                 // Qlippy tucks up the right edge on the lane so it clears the accent FAB (both want
@@ -3868,6 +3926,13 @@ struct DioStage: View {
             }
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 10) {
+                    // Empty SUB-ZONE on the lane: a compact, inline hint at the top (NOT a centred card
+                    // over the rows). The zone still lists the global toolkit below, so this is honest —
+                    // your content is empty; the toolkit is always here. (Device punch-list: the false
+                    // "empty" overlay that landed on the connector rows.)
+                    if !path.isEmpty && contentMembers().isEmpty {
+                        DioLaneEmptyHint(name: name(of: pathKey), tint: curTint) { haptic(.light); namingZone = true }
+                    }
                     if laneFilter == "all" {
                         ForEach(Array(zs.enumerated()), id: \.element.path) { _, z in
                             DioLaneZoneRow(name: name(of: z.path), tint: ZoneStyle(z).color,
@@ -3879,7 +3944,7 @@ struct DioStage: View {
                         DioLaneRow(glyph: p.glyph, tint: p.color, symbol: p.isSymbol, title: p.title,
                                    badge: p.kind.badge, subtitle: p.subtitle, arrived: arrivedIds.contains(p.id)) { tapPrimitive(p) }
                     }
-                }.padding(.horizontal, 16).padding(.top, 2).padding(.bottom, 132 + botInset)
+                }.padding(.horizontal, 16).padding(.top, 2).padding(.bottom, 200 + botInset)
             }
         }
         .padding(.top, topInset + 54)   // clear the Dynamic Island + the top-left gear/connect/sync chrome
