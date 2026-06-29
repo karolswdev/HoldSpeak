@@ -3265,10 +3265,13 @@ struct DioStage: View {
                     .allowsHitTesting(false).ignoresSafeArea().zIndex(71)
                 }
 
-                // Qlippy tucks up the right edge on the lane so it clears the accent FAB (both want
-                // the bottom-right thumb corner); the diorama keeps it bottom-right.
-                DioCompanion(landed: landed, excited: selected != nil)
-                    .position(x: w * 0.9, y: camera.isLane ? h * 0.66 : h * 0.86)
+                // Qlippy lives on the spacious iPad DIORAMA only. On the phone lane it floated over the
+                // scrolling card column and just got in the way (owner: "annoying af too"). It is purely
+                // decorative (no tap/gesture), so dropping it on the lane loses nothing.
+                if !camera.isLane {
+                    DioCompanion(landed: landed, excited: selected != nil)
+                        .position(x: w * 0.9, y: h * 0.86)
+                }
                 if landed && selected == nil && summonSource == nil && !capturing
                     && editingNote == nil && editingKB == nil && !connecting
                     && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet {
