@@ -31,6 +31,7 @@ from .models import (
     DirectoryRecord,
     KBRecord,
     NoteRecord,
+    ProfileRecord,
     WorkflowRecord,
 )
 
@@ -267,6 +268,7 @@ class AgentRepository(BaseRepository):
         user_template: str = "",
         tools: Optional[list[str]] = None,
         kb_id: Optional[str] = None,
+        profile_id: Optional[str] = None,
         last_modified: Optional[str] = None,
         deleted: bool = False,
         created_at: Optional[str] = None,
@@ -283,8 +285,8 @@ class AgentRepository(BaseRepository):
             conn.execute(
                 """
                 INSERT INTO agents (id, name, avatar, role, system_prompt, user_template,
-                                    tools_json, kb_id, created_at, last_modified, deleted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                    tools_json, kb_id, profile_id, created_at, last_modified, deleted)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     avatar = excluded.avatar,
@@ -293,6 +295,7 @@ class AgentRepository(BaseRepository):
                     user_template = excluded.user_template,
                     tools_json = excluded.tools_json,
                     kb_id = excluded.kb_id,
+                    profile_id = excluded.profile_id,
                     last_modified = excluded.last_modified,
                     deleted = excluded.deleted
                 """,
@@ -305,6 +308,7 @@ class AgentRepository(BaseRepository):
                     str(user_template or ""),
                     self._json_dumps(tools or [], fallback="[]"),
                     str(kb_id).strip() if kb_id else None,
+                    str(profile_id).strip() if profile_id else None,
                     created,
                     last_modified or now,
                     1 if deleted else 0,
@@ -364,6 +368,121 @@ class AgentRepository(BaseRepository):
             user_template=row["user_template"],
             tools=self._json_loads_list(row["tools_json"]),
             kb_id=row["kb_id"],
+            profile_id=row["profile_id"] if "profile_id" in row.keys() else None,
+            created_at=row["created_at"],
+            last_modified=row["last_modified"],
+            deleted=bool(row["deleted"]),
+        )
+
+
+class ProfileRepository(BaseRepository):
+    """CRUD + sync access for RuntimeProfiles (capability/synced, Phase 24).
+
+    SHAPE ONLY — the API key is never stored here; the hub joins its own secret at
+    request time. Mirrors the other primitive repos (soft-delete tombstones).
+    """
+
+    def upsert(
+        self,
+        *,
+        profile_id: str,
+        name: str = "",
+        kind: str = "onDevice",
+        model_file: str = "",
+        base_url: str = "",
+        model: str = "",
+        context_limit: int = 16384,
+        requires_key: bool = False,
+        last_modified: Optional[str] = None,
+        deleted: bool = False,
+        created_at: Optional[str] = None,
+    ) -> ProfileRecord:
+        clean_id = str(profile_id or "").strip()
+        if not clean_id:
+            raise ValueError("profile id is required")
+        now = _now_iso()
+        with self._connection() as conn:
+            existing = conn.execute(
+                "SELECT created_at FROM profiles WHERE id = ?", (clean_id,)
+            ).fetchone()
+            created = created_at or (existing["created_at"] if existing else now)
+            conn.execute(
+                """
+                INSERT INTO profiles (id, name, kind, model_file, base_url, model,
+                                      context_limit, requires_key, created_at, last_modified, deleted)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    kind = excluded.kind,
+                    model_file = excluded.model_file,
+                    base_url = excluded.base_url,
+                    model = excluded.model,
+                    context_limit = excluded.context_limit,
+                    requires_key = excluded.requires_key,
+                    last_modified = excluded.last_modified,
+                    deleted = excluded.deleted
+                """,
+                (
+                    clean_id,
+                    str(name or ""),
+                    str(kind or "onDevice"),
+                    str(model_file or ""),
+                    str(base_url or ""),
+                    str(model or ""),
+                    int(context_limit or 16384),
+                    1 if requires_key else 0,
+                    created,
+                    last_modified or now,
+                    1 if deleted else 0,
+                ),
+            )
+        return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
+
+    def get(self, profile_id: str, *, include_deleted: bool = False) -> Optional[ProfileRecord]:
+        clean_id = str(profile_id or "").strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            row = conn.execute("SELECT * FROM profiles WHERE id = ?", (clean_id,)).fetchone()
+        if not row:
+            return None
+        if row["deleted"] and not include_deleted:
+            return None
+        return self._row(row)
+
+    def list(self, *, include_deleted: bool = False, limit: int = 500) -> list[ProfileRecord]:
+        bounded = max(1, min(int(limit), 2000))
+        with self._connection() as conn:
+            sql = "SELECT * FROM profiles" + ("" if include_deleted else " WHERE deleted = 0")
+            rows = conn.execute(sql + " ORDER BY name ASC LIMIT ?", (bounded,)).fetchall()
+        return [self._row(r) for r in rows]
+
+    def delete(self, profile_id: str) -> bool:
+        clean_id = str(profile_id or "").strip()
+        if not clean_id:
+            return False
+        now = _now_iso()
+        with self._connection() as conn:
+            cur = conn.execute(
+                "UPDATE profiles SET deleted = 1, last_modified = ? WHERE id = ? AND deleted = 0", (now, clean_id)
+            )
+            return bool(cur.rowcount and cur.rowcount > 0)
+
+    def purge(self, profile_id: str) -> bool:
+        with self._connection() as conn:
+            cur = conn.execute("DELETE FROM profiles WHERE id = ?", (str(profile_id).strip(),))
+            return bool(cur.rowcount and cur.rowcount > 0)
+
+    def _row(self, row: Any) -> ProfileRecord:
+        return ProfileRecord(
+            id=row["id"],
+            name=row["name"],
+            kind=row["kind"],
+            model_file=row["model_file"],
+            base_url=row["base_url"],
+            model=row["model"],
+            context_limit=int(row["context_limit"]),
+            requires_key=bool(row["requires_key"]),
             created_at=row["created_at"],
             last_modified=row["last_modified"],
             deleted=bool(row["deleted"]),

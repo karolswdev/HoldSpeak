@@ -222,6 +222,7 @@ table agents: CREATE TABLE agents (
     user_template TEXT NOT NULL DEFAULT '',
     tools_json TEXT NOT NULL DEFAULT '[]',
     kb_id TEXT,
+    profile_id TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0
@@ -507,6 +508,19 @@ table plugin_runs: CREATE TABLE plugin_runs (
     deduped INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table profiles: CREATE TABLE profiles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    kind TEXT NOT NULL DEFAULT 'onDevice',
+    model_file TEXT NOT NULL DEFAULT '',
+    base_url TEXT NOT NULL DEFAULT '',
+    model TEXT NOT NULL DEFAULT '',
+    context_limit INTEGER NOT NULL DEFAULT 16384,
+    requires_key INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
 )
 table project_detection_log: CREATE TABLE project_detection_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -41,7 +41,7 @@ log = get_logger("web.routes.sync")
 # repository on the hub. Keep this in lockstep with the mobile/web SyncKind enum.
 SYNC_KINDS = frozenset(
     {"meeting", "artifact", "note", "kb", "agent", "chain", "workflow",
-     "directory", "directory_membership"}
+     "directory", "directory_membership", "profile"}
 )
 
 # Repository-backed primitives the push route merges into the live store (the key
@@ -55,7 +55,13 @@ _MERGEABLE: dict[str, tuple[str, str, dict[str, str]]] = {
     "agents": ("agents", "agent_id", {
         "name": "name", "avatar": "avatar", "role": "role",
         "system_prompt": "system_prompt", "user_template": "user_template",
-        "tools": "tools", "kb_id": "kb_id",
+        "tools": "tools", "kb_id": "kb_id", "profile_id": "profile_id",
+    }),
+    # Runtime profiles (Phase 24) — SHAPE ONLY; no api key field crosses the wire.
+    "profiles": ("profiles", "profile_id", {
+        "name": "name", "kind": "kind", "model_file": "model_file",
+        "base_url": "base_url", "model": "model",
+        "context_limit": "context_limit", "requires_key": "requires_key",
     }),
     "chains": ("chains", "chain_id", {"name": "name", "steps": "steps"}),
     "workflows": ("workflows", "workflow_id", {
@@ -76,6 +82,7 @@ _BUCKET_KIND = {
     "meetings": "meeting", "artifacts": "artifact", "notes": "note",
     "kbs": "kb", "agents": "agent", "chains": "chain", "workflows": "workflow",
     "directories": "directory", "directory_memberships": "directory_membership",
+    "profiles": "profile",
 }
 
 
@@ -370,6 +377,8 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
                   for c in db.chains.list(include_deleted=True, limit=bounded)]
         workflows = [_primitive_record(w, "workflow")
                      for w in db.workflows.list(include_deleted=True, limit=bounded)]
+        profiles = [_primitive_record(p, "profile")
+                    for p in db.profiles.list(include_deleted=True, limit=bounded)]
         directories = [_primitive_record(d, "directory")
                        for d in db.directories.list(include_deleted=True, limit=bounded)]
         # Membership rides the wire too (organization, not layout). The record's
@@ -388,6 +397,7 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
             "agents": agents,
             "chains": chains,
             "workflows": workflows,
+            "profiles": profiles,
             "directories": directories,
             "directory_memberships": directory_memberships,
         })

@@ -493,6 +493,7 @@ class AgentRecord:
     user_template: str = ""
     tools: list[str] = field(default_factory=list)
     kb_id: Optional[str] = None
+    profile_id: Optional[str] = None   # Phase 24 — the RuntimeProfile this agent runs on
     created_at: str = ""
     last_modified: str = ""
     deleted: bool = False
@@ -507,6 +508,41 @@ class AgentRecord:
             "user_template": self.user_template,
             "tools": list(self.tools),
             "kb_id": self.kb_id,
+            "profile_id": self.profile_id,
+            "created_at": self.created_at,
+            "last_modified": self.last_modified,
+            "deleted": self.deleted,
+        }
+
+
+@dataclass
+class ProfileRecord:
+    """A RuntimeProfile — capability/synced primitive (Phase 24): a named "where
+    intelligence runs" target. SHAPE ONLY — the API key never lives here and never
+    syncs; the hub joins its own secret at request time."""
+
+    id: str
+    name: str = ""
+    kind: str = "onDevice"          # onDevice | openAICompatible
+    model_file: str = ""
+    base_url: str = ""
+    model: str = ""
+    context_limit: int = 16384
+    requires_key: bool = False
+    created_at: str = ""
+    last_modified: str = ""
+    deleted: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "kind": self.kind,
+            "model_file": self.model_file,
+            "base_url": self.base_url,
+            "model": self.model,
+            "context_limit": self.context_limit,
+            "requires_key": self.requires_key,
             "created_at": self.created_at,
             "last_modified": self.last_modified,
             "deleted": self.deleted,

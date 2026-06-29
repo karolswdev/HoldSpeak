@@ -21,6 +21,7 @@ exact-key agreement IS the cross-surface contract.
 """
 from __future__ import annotations
 
+import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -48,7 +49,7 @@ from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 NOTE_KEYS = {"id", "title", "body_markdown", "tags",
              "created_at", "updated_at", "last_modified", "deleted"}
 AGENT_KEYS = {"id", "name", "avatar", "role", "system_prompt", "user_template",
-              "tools", "kb_id", "created_at", "last_modified", "deleted"}
+              "tools", "kb_id", "profile_id", "created_at", "last_modified", "deleted"}
 KB_KEYS = {"id", "name", "member_ids", "created_at", "last_modified", "deleted"}
 META_KEYS = {"id", "kind", "last_modified", "deleted"}
 
@@ -464,3 +465,48 @@ def test_pushed_artifact_lww_and_tombstone(env) -> None:
     })
     assert resp.json()["received"]["artifacts"] == 1
     assert client.get("/api/meetings/a_meet/artifacts").json()["artifacts"] == []
+
+
+def test_profile_syncs_shape_only_and_agent_carries_profile_id(env) -> None:
+    """Phase 24 (HSM-24-04): a RuntimeProfile pushed from the iPad round-trips through the hub
+    SHAPE ONLY — the API key NEVER persists or appears in a pull — and an agent's profile_id rides."""
+    db, client = env
+    lm = "2030-06-27T09:00:00Z"
+    changeset = {
+        "profiles": [{
+            "meta": {"id": "prof_claude", "kind": "profile", "last_modified": lm, "deleted": False},
+            "value": {
+                "id": "prof_claude", "name": "Claude", "kind": "openAICompatible",
+                "model_file": "", "base_url": "https://api.anthropic.com/v1",
+                "model": "claude-3.5-sonnet", "context_limit": 200000, "requires_key": True,
+                # A hostile/extra key field MUST NOT be persisted — the field map has no key.
+                "api_key": "sk-SHOULD-NEVER-PERSIST",
+                "created_at": "2030-06-27T08:00:00Z", "last_modified": lm, "deleted": False,
+            },
+        }],
+        "agents": [{
+            "meta": {"id": "ag_on_claude", "kind": "agent", "last_modified": lm, "deleted": False},
+            "value": {
+                "id": "ag_on_claude", "name": "Scout", "avatar": "a21", "role": "researcher",
+                "system_prompt": "Be precise.", "user_template": "{input}", "tools": [],
+                "kb_id": None, "profile_id": "prof_claude",
+                "created_at": "2030-06-27T08:00:00Z", "last_modified": lm, "deleted": False,
+            },
+        }],
+    }
+    push = client.post("/api/sync/push", json=changeset)
+    assert push.status_code == 200, push.text
+    assert push.json()["received"]["profiles"] == 1 and push.json()["received"]["agents"] == 1
+
+    # The profile is stored as shape; the agent carries its profile_id.
+    stored = db.profiles.get("prof_claude")
+    assert stored is not None and stored.kind == "openAICompatible" and stored.context_limit == 200000
+    assert db.agents.get("ag_on_claude").profile_id == "prof_claude"
+
+    # THE NEVER-SYNC INVARIANT: no key material persisted, and none appears in a pull.
+    pulled = client.get("/api/sync/pull").json()
+    prof_rec = _bucket_by_id(pulled["profiles"], "prof_claude")
+    assert prof_rec is not None
+    blob = json.dumps(pulled)
+    assert "api_key" not in blob and "SHOULD-NEVER-PERSIST" not in blob
+    assert "api_key" not in prof_rec["value"] and "apiKey" not in prof_rec["value"]
