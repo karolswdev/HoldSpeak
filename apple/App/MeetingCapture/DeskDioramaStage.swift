@@ -208,7 +208,7 @@ struct DioZoneEmpty: View {
                 }
                 .frame(height: 130)
                 VStack(spacing: 7) {
-                    Text("\(name) is empty").font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                    Text("Nothing filed in \(name) yet").font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
                     Text("Drag a meeting here to file it.")
                         .font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                         .multilineTextAlignment(.center).frame(maxWidth: 300)
@@ -3198,6 +3198,20 @@ struct DioStage: View {
                     }
                     .padding(.horizontal, 16).padding(.vertical, 8).background(Capsule().fill(.black.opacity(0.6)))
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, h * 0.12).zIndex(116)
+                }
+
+                // THE LANE CONTROL FADE — the Record orb (bottom-left) and the New FAB (bottom-right)
+                // float over the scrolling card column; mid-scroll, rows used to collide with them. A
+                // bottom gradient dissolves the column into the desk beneath the controls so they read
+                // as a floating toolbar, not litter on the list. (Device punch-list: the overlap gripe.)
+                if camera.isLane && landed && selected == nil && summonSource == nil && !capturing
+                    && editingNote == nil && editingKB == nil && !connecting
+                    && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet {
+                    LinearGradient(colors: [.clear, DioPal.bgBot.opacity(0.82), DioPal.bgBot],
+                                   startPoint: .top, endPoint: .bottom)
+                        .frame(height: 172 + botInset)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .allowsHitTesting(false).ignoresSafeArea().zIndex(71)
                 }
 
                 // Qlippy tucks up the right edge on the lane so it clears the accent FAB (both want
