@@ -92,7 +92,7 @@ reads `profile.egressScope` so trust stays honest per profile.
 | HSM-24-01 | The `RuntimeProfile` contract + `SyncKind.profile` + the Keychain key store (key never syncs) — **leads, load-bearing** | **done** (contract + migration + tolerant `ChangeSet` decode + `ProfileKeyStore`; never-sync invariant tested; `swift test` 389/0) |
 | HSM-24-02 | Apple **basic** config — the active-profile picker over the existing `ILLMProvider` seam | **done** (profile-backed `InferenceConfigStore` + migration + key→Keychain + `makeProvider(profile:)` + `resolveProfile` + the reusable `RunsOnPicker`; `swift test` 389/0) |
 | HSM-24-03 | Apple **advanced** config — manage the profile list + per-agent `profileId` + the gauge reads `profile.contextLimit` | **done** (CRUD + per-agent chip + gauge-per-profile + agent-run routing + inline `RunsOnPicker` at the desk Ask/route & meeting generate, with honest egress; dictation n/a, workbench uses active) |
-| HSM-24-04 | The desktop hub honors profiles (`web_runtime` maps a profile to its runtime) | planned |
+| HSM-24-04 | The desktop hub honors profiles (`web_runtime` maps a profile to its runtime) | in-progress (DB layer done: `profiles` table + `agents.profile_id` + guarded migration v3→v4 + snapshot regen + `ProfileRepository` + sync push/pull with the never-sync-key test; CRUD routes + agent-run resolution remain) |
 | HSM-24-05 | Web authors + uses profiles (the flagship surface) | planned |
 | HSM-24-06 | Cross-surface parity proof + the docs story | planned |
 

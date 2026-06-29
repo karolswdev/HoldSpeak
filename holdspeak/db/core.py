@@ -27,6 +27,7 @@ from .primitives import (
     DirectoryRepository,
     KBRepository,
     NoteRepository,
+    ProfileRepository,
     WorkflowRepository,
 )
 
@@ -37,7 +38,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4   # v4 (Phase 24): runtime profiles table + agents.profile_id
 
 
 class SchemaVersionError(RuntimeError):
@@ -745,6 +746,7 @@ CREATE TABLE IF NOT EXISTS agents (
     user_template TEXT NOT NULL DEFAULT '',
     tools_json TEXT NOT NULL DEFAULT '[]',
     kb_id TEXT,
+    profile_id TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0
@@ -766,6 +768,23 @@ CREATE TABLE IF NOT EXISTS workflows (
     name TEXT NOT NULL DEFAULT '',
     prompt TEXT NOT NULL DEFAULT '',
     graph_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+
+-- Runtime profile (capability/synced, Phase 24): a named "where intelligence runs"
+-- target. SHAPE ONLY — the API key NEVER lives here and never syncs; the hub joins
+-- its own secret at request time (mirrors the connector credential rule).
+CREATE TABLE IF NOT EXISTS profiles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    kind TEXT NOT NULL DEFAULT 'onDevice',
+    model_file TEXT NOT NULL DEFAULT '',
+    base_url TEXT NOT NULL DEFAULT '',
+    model TEXT NOT NULL DEFAULT '',
+    context_limit INTEGER NOT NULL DEFAULT 16384,
+    requires_key INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0
@@ -907,6 +926,7 @@ class Database:
         self.notes = NoteRepository(self._connection, self)
         self.kbs = KBRepository(self._connection, self)
         self.agents = AgentRepository(self._connection, self)
+        self.profiles = ProfileRepository(self._connection, self)
         self.chains = ChainRepository(self._connection, self)
         self.workflows = WorkflowRepository(self._connection, self)
         self.directories = DirectoryRepository(self._connection, self)
@@ -988,6 +1008,12 @@ class Database:
         notes/kbs/agents/chains/workflows/directories/directory_memberships this way.
         """
         conn.executescript(SCHEMA_SQL)
+        # Re-applying SCHEMA_SQL adds missing TABLES idempotently but not new COLUMNS on existing
+        # tables. v4 (Phase 24) adds agents.profile_id — apply it here, guarded, so an upgraded
+        # (backed-up) v3 database gains the column. Fresh DBs already have it from SCHEMA_SQL.
+        agent_cols = {row[1] for row in conn.execute("PRAGMA table_info(agents)").fetchall()}
+        if "profile_id" not in agent_cols:
+            conn.execute("ALTER TABLE agents ADD COLUMN profile_id TEXT")
         conn.execute(
             """
             INSERT OR IGNORE INTO activity_privacy_settings
