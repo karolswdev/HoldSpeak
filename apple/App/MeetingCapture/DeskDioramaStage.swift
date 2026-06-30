@@ -1342,6 +1342,7 @@ struct DioPullout: View {
     let onClose: () -> Void; let onAction: (PrimitiveAction) -> Void; let onRouteSection: (String, String) -> Void
     var onActItem: ((String, String) -> Void)? = nil      // act on a single action row → send/file
     var onOpenDerivative: ((String) -> Void)? = nil       // tap a derivative card → open its own drawer
+    var onChangeIcon: (() -> Void)? = nil                 // tap the header sprite → pick a different icon
     private func sectionText(_ body: SectionBody) -> String {
         switch body {
         case .text(let s): return s
@@ -1354,7 +1355,17 @@ struct DioPullout: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 11) {
-                DeskSprite(name: prim.glyph, size: 40)
+                // The header sprite is tappable → change this object's icon (a small pencil hints it).
+                Button { onChangeIcon?() } label: {
+                    DeskSprite(name: prim.glyph, size: 40)
+                        .overlay(alignment: .bottomTrailing) {
+                            if onChangeIcon != nil {
+                                Image(systemName: "pencil.circle.fill").font(.system(size: 14, weight: .bold))
+                                    .foregroundStyle(DioPal.accent).background(Circle().fill(.black.opacity(0.5)))
+                                    .offset(x: 3, y: 3)
+                            }
+                        }
+                }.buttonStyle(.plain).disabled(onChangeIcon == nil)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(prim.title).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text).lineLimit(1)
                     Text(prim.subtitle).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
@@ -2905,6 +2916,8 @@ struct DioStage: View {
     @State private var dragHotZone: String? = nil
     @State private var namingZone = false
     @State private var pendingFileId: String? = nil   // a primitive to file into the zone being created (lane "New zone…")
+    @State private var iconPick: IconPickTarget? = nil          // the object whose icon the user is choosing
+    private let spriteKinds: Set<PrimitiveKind> = [.meeting, .note, .kb]   // kinds whose icon you can pick
     @State private var newZoneName = ""
     // lasso → bundle → Ask (the Ask-AI atom): select many primitives, route them through the core together
     @State private var lassoStart: CGPoint? = nil
@@ -3552,7 +3565,8 @@ struct DioStage: View {
                     DioPullout(prim: p, onClose: { select(nil) }, onAction: { handle($0, on: p) },
                                onRouteSection: { t, x in routeFacet(t, x, w, h) },
                                onActItem: { task, text in beginActOnItem(from: p, task: task, text: text) },
-                               onOpenDerivative: { id in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { select(id) } })
+                               onOpenDerivative: { id in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { select(id) } },
+                               onChangeIcon: spriteKinds.contains(p.kind) ? { haptic(.light); iconPick = IconPickTarget(id: p.id, kind: p.kind, title: p.title) } : nil)
                         .frame(width: lane ? camera.cardWidth(560, in: w, margin: 8) : min(560, w * 0.62),
                                height: lane ? h * 0.74 : nil)
                         .overlay(alignment: .top) {
@@ -3703,6 +3717,12 @@ struct DioStage: View {
                         .foregroundStyle(.white).padding(.horizontal, 16).frame(height: 40).background(Capsule().fill(DioPal.mint.opacity(0.92)))
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top).padding(.top, topInset + 8)
                         .transition(.move(edge: .top).combined(with: .opacity)).zIndex(200)
+                }
+                if let t = iconPick {
+                    DioIconPicker(target: t, current: SpriteStore.chosen(t.id),
+                                  onPick: { name in haptic(.medium); SpriteStore.set(t.id, to: name); withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { iconPick = nil } },
+                                  onClose: { withAnimation { iconPick = nil } })
+                        .transition(.opacity).zIndex(205)
                 }
             }
             .ignoresSafeArea()
@@ -4579,6 +4599,9 @@ struct DioStage: View {
     /// "how do I even drag a meeting to a zone on iPhone" — you don't; you long-press and pick.
     @ViewBuilder private func laneFileMenu(_ p: any DeskPrimitive) -> some View {
         Button { tapPrimitive(p) } label: { Label("Open", systemImage: "arrow.up.left.and.arrow.down.right") }
+        if spriteKinds.contains(p.kind) {
+            Button { haptic(.light); iconPick = IconPickTarget(id: p.id, kind: p.kind, title: p.title) } label: { Label("Change icon", systemImage: "wand.and.stars") }
+        }
         if isFileable(p.kind) {
             let cur = currentPath(of: p)
             Menu {

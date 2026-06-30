@@ -113,7 +113,7 @@ struct MeetingPrimitive: DeskPrimitive {
     var derivatives: [OutputRecord] = []   // the meeting's own outputs (grouped by lineage), shown in its drawer
     var id: String { "m:\(meeting.id)" }
     var kind: PrimitiveKind { .meeting }
-    var glyph: String { index % 2 == 0 ? "cassette" : "cassette2" }
+    var glyph: String { SpriteStore.sprite(id: id, kind: .meeting, fallback: index % 2 == 0 ? "cassette" : "cassette2") }
     var title: String {
         if let t = meeting.title, !t.isEmpty { return t }
         let f = DateFormatter(); f.dateFormat = "MMM d · h:mm a"; return f.string(from: meeting.startedAt)
@@ -195,6 +195,7 @@ struct KBPrimitive: DeskPrimitive {
     let rec: KBRecord
     var id: String { "kb:\(rec.id)" }
     var kind: PrimitiveKind { .kb }
+    var glyph: String { SpriteStore.sprite(id: id, kind: .kb, fallback: "crystal") }
     var title: String { rec.name }
     var preview: String? { "\(rec.items) item\(rec.items == 1 ? "" : "s")" }
     var sections: [PrimitiveSection] {
@@ -368,7 +369,7 @@ struct NotePrimitive: DeskPrimitive {
     let rec: NoteRecord
     var id: String { "note:\(rec.id)" }
     var kind: PrimitiveKind { .note }
-    var glyph: String { "note" }
+    var glyph: String { SpriteStore.sprite(id: id, kind: .note, fallback: "note") }
     var base: CGFloat { 108 }
     var title: String { rec.title.isEmpty ? "Note" : rec.title }
     var subtitle: String { "a note · tap to edit" }
