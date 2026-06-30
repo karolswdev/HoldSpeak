@@ -1,0 +1,19 @@
+  - llama-server (.13, owner's clean endpoint): unreachable
+
+Using Qwythos-9B (.43, fallback)
+  base_url=http://192.168.1.43:8080/v1
+  model=Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
+
+
+
+--- real-metal capture (1.7s) ---
+intel_token chunks streamed: 0  (drive the orb's 'thinking' pulse)
+streamed text length: 0 chars
+final.error: None
+summary: 'The team agreed on a token bucket per API key rate limiter design with a feature flag for gradual rollout. Bob will wire the flag by Friday. They also settled on Postgres as the primary store and will'
+action_items: 2
+topics: ['Rate limiter design', 'Feature flag', 'Service name', 'Database']
+
+constellation nodes that would light: ['summary', 'actions', 'topics']
+
+RESULT: PARTIAL — real Qwythos-9B (.43, fallback) produced 0 streamed chunks + a snapshot lighting ['summary', 'actions', 'topics'].

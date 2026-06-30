@@ -17,6 +17,7 @@ import ConfirmDialog from "../components/ConfirmDialog.astro";
 import QueueHud from "../components/QueueHud.astro";
 import Qlippy from "../components/Qlippy.astro";
 import Waveform from "../components/Waveform.astro";
+import GenerationTheater from "../components/GenerationTheater.astro";
 
 type Route = "runtime" | "desk" | "activity" | "history" | "dictation" | "companion" | "commands" | "profiles";
 
@@ -75,6 +76,10 @@ const hasSecondary = Astro.slots.has("secondary");
     {/* HS-69-08: the reactive mic waveform — reacts to the server's additive
         audio_level frame during capture; hidden at rest, floats bottom-center. */}
     <Waveform />
+
+    {/* HS-69-09: the generation theater — the orb + constellation set-piece,
+        revealed while meeting intelligence streams; non-blocking, auto-hides. */}
+    <GenerationTheater />
 
     <ConfirmDialog />
 

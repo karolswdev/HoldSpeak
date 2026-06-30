@@ -81,7 +81,7 @@ high-impact first; the heavy node-canvas epic last.
 | HS-69-06 | Qlippy dock into the cockpit | MED | **done** (extracted to shared `Qlippy.astro`, mounted in AppLayout; dock + cards in the cockpit with the egress badge; native HUD proven non-regressive; shell locks retargeted; see [evidence](./evidence-story-06.md)) | HS-69-01, HS-69-02 |
 | HS-69-07 | The Queue HUD (shell + store) | **built** (`runtime-bus.js` + `queue-hud.js` + `QueueHud.astro` in AppLayout; derives jobs from `intel_status`/`runtime_activity` WS frames; pill→ledger; build green; **caught live** — the "1 working" pill rendered the seeded meeting's queued intel) — honest gaps: indeterminate progress bar (no per-job % in frames), 2 concurrent jobs derivable | HS-69-02 |
 | HS-69-08 | Reactive mic waveform | MED | **done** (additive throttled `audio_level` broadcast wired into dictation + meeting recorders; floating canvas meter in AppLayout reacts + peak-glows + idle-hides; backend 4 tests + frontend screenshots; see [evidence](./evidence-story-08.md)) | server `audio_level` frame |
-| HS-69-09 | Generation theater (orb + constellation) | MED | backlog | HS-69-02 + a web `theaterorb` |
+| HS-69-09 | Generation theater (orb + constellation) | MED | **done** (iPad orb reused; theater in AppLayout driven by intel_status/token/complete frames; UI screenshots + **real-metal `.43` snapshot** lighting summary/actions/topics; see [evidence](./evidence-story-09.md)) | HS-69-02 + a web `theaterorb` |
 | HS-69-10 | Node canvas — foundation | HIGH (heavy) | backlog | HS-68-03 |
 | HS-69-11 | Node canvas — wiring + inspector | HIGH (heavy) | backlog | HS-69-10, HS-69-05 |
 | HS-69-12 | Web `/companion` → the Agent Desk | MED | backlog | HS-69-02 |
@@ -155,3 +155,14 @@ mirrored bars with an accent peak glow, revealing during capture and hiding on s
 ends: 4 backend unit tests (shape/throttle/clamp/no-server) + frontend screenshots (active meter +
 cropped detail) + the idle auto-hide. 24 passed across the slices. Next: HS-69-09 (the generation
 theater — proven on real metal).
+
+**2026-06-30 — HS-69-09 done.** The generation theater: the iPad's `theaterorb.png` reused verbatim,
+a centred non-blocking theater (`GenerationTheater.astro` + `theater.js`) in AppLayout driven by the
+intel frames that already flow — `intel_status` reveals/hides, `intel_token` pulses the orb,
+`intel_complete` lights the Summary/Decisions/Actions/Topics constellation. UI proven via simulated
+frames (the streaming "THINKING…" + the ready state with all 4 nodes lit). **Real metal:** the actual
+`MeetingIntel` pipeline run on `.43` (the owner's clean `.13` was down) produced a real accurate
+snapshot (summary + 2 actions + 4 topics) lighting three nodes — the `intel_complete` path proven on
+real metal; `.43` returned buffered (0 token chunks) so the token-pulse waits on `.13` (ready script
+ships). 7 passed. **Remaining: HS-69-10/11 (the full node canvas epic) + HS-69-12 (companion → desk).**
+Next: HS-69-10.
