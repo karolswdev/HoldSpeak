@@ -1834,35 +1834,36 @@ class TestHistoryUiSmoke:
 class TestCompanionUiSmoke:
     """Smoke checks for the /companion surface.
 
-    Since HS docs-in-product (commit 452eec1), /companion is a STATIC explainer of the
-    iPad-as-first-class-client (no live Alpine app), not the old read-only session
-    portal. This smoke check asserts the explainer's stable content + that it documents
-    the real client→API route mappings.
+    Since HS-69-12, /companion is the **Agent Desk** — a live desk of the real
+    agents + the companion link (Alpine `companionDesk()` over /api/agents +
+    /api/companion/status), not the old static docs portal. This smoke check
+    asserts the desk's stable structure + the preserved connection/credential
+    facts in the "How it connects" footer.
     """
 
-    def test_companion_page_explains_ipad_as_first_class_client(self, test_client):
+    def test_companion_page_is_the_agent_desk(self, test_client):
         response = test_client.get("/companion")
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
         html = response.text
-        # The hero + the two non-negotiables the explainer leads with.
+        # The Agent Desk hero + its zones.
         for marker in (
             "Companion",
-            "first-class client of your hub",
-            "No hosted relay",
-            "Never autonomous",
-            "How to pair the iPad",
+            "The Agent Desk",
+            "Needs you",
+            "Agents",
+            "companionDesk()",
         ):
-            assert marker in html, f"missing companion explainer marker: {marker}"
+            assert marker in html, f"missing Agent Desk marker: {marker}"
 
-        # It documents the real client→API route mappings (so the page stays honest as
-        # the shipped client methods evolve). A few stable ones:
-        for route in (
-            "/api/dictation/dry-run",
-            "/api/dictation/readiness",
+        # The pairing + credential facts survive, folded into "How it connects".
+        for marker in (
+            "How it connects",
+            "never autonomous",
+            "credential",
         ):
-            assert route in html, f"missing companion route mapping: {route}"
+            assert marker in html, f"missing companion connection fact: {marker}"
 
 
 @pytest.mark.integration
