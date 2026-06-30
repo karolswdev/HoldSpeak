@@ -75,7 +75,7 @@ high-impact first; the heavy node-canvas epic last.
 |-------|-------|----------|--------|------------|
 | HS-69-02 | The shared Signal card primitive | HIGH | **done** (composable `--signal-card-surface`; broadened to `/desk` (8 cards) + `/activity` (nudge + 4 rule cards, repairing a latent Astro-scope-on-JS-DOM gap); computed-style probes + screenshots; see [evidence](./evidence-story-02.md)) | — |
 | HS-69-03 | Gradient + hairline tokens | HIGH | **built** (`--accent-gradient`/`--bg-gradient`; gradient consumed by `.glyph-chip`) | — |
-| HS-69-04 | Materialize + stagger motion | HIGH | **built; visual pending** (needs seeded meetings to show the card-arrival on dashboard/history) | HS-69-02 |
+| HS-69-04 | Materialize + stagger motion | HIGH | **done** (on the keyed `/activity` nudge list + dashboard recent-cards; `animation-name: hs-materialize` probed on seeded DOM; reduced-motion double-gated; see [evidence](./evidence-story-04.md)) | HS-69-02 |
 | HS-69-01 | Egress badge → the cockpit | HIGH | **built** (`egress-badge.js` module + global `.egress-badge`; on the dashboard live-intel card; build green) — history/proposal cards intentionally skipped (no egress data; backend field needed) | — |
 | HS-69-05 | Premium sheets / modals uplift | MED | backlog | HS-69-02 |
 | HS-69-06 | Qlippy dock into the cockpit | MED | backlog | HS-69-01, HS-69-02 |
