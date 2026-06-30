@@ -1,456 +1,202 @@
 ---
-// Docs-in-product: /companion — the iPad is now a first-class CLIENT of both
-// HoldSpeak modes, reaching your own desktop/homelab hub over your own network.
-//
-// Every claim on this page is grounded in a SHIPPED client method on
-// `HTTPDesktopClient` (apple/Sources/Providers/Desktop/HTTPDesktopClient*.swift):
-//
-//   • Pairing            — `DesktopPeer{host,port,token,scheme}` → `Config(peer:)`,
-//                          `handshake()` (GET /health, GET /api/runtime/status).
-//   • Dictation mode     — `dictationDryRun(utterance:)`, `dictationReadiness()`
-//                          (the teleprompter: preview the rewrite + destination).
-//   • Meeting mode       — `listMeetings()`, `startMeeting`/`stopMeeting`,
-//                          `aftercare(meetingId:)`, `searchMeetings`/`listFacets`
-//                          (faceted archive), `meetingProposals`/`decideProposal`
-//                          (propose → review → approve).
-//   • Activity nudges    — `activityNudges(...)` (GET /api/activity/nudges).
-//   • Schema-safe store  — Providers/Storage/SQLiteStorage.swift: refuse-newer
-//                          (StorageError.tooNew) + backup-before-migrate.
-//
-// This is a STATIC explainer (no live data, no Alpine app, so no null-read class
-// to guard). Honest egress is the structured `.egress-badge` chip, never prose.
-// On-device authoring screens are still in progress, so they are not claimed here.
-
+// HS-69-12: /companion is now the Agent Desk — the same desk surface as the iPad
+// (HSM-15-08), not a plainer control panel. A living desk of the real agents +
+// the live companion link (the coders awaiting you), fed by the existing HTTP
+// API (/api/agents, /api/companion/status). The pairing/credential facts stay,
+// folded into a "How it connects" footer.
 import AppLayout from "../layouts/AppLayout.astro";
 
-// Egress chips, structured {scope, label} per POSITIONING (never a sentence).
-const egressLocal = { scope: "local", label: "stays on this machine" };
-const egressLan = { scope: "mixed", label: "local + your LAN" };
-
-type Capability = {
-  glyph: string;
-  title: string;
-  body: string;
-  route: string; // the shipped client method(s) this maps to
-  egress: { scope: string; label: string };
-};
-
-const dictation: Capability[] = [
-  {
-    glyph: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v4 M8 23h8",
-    title: "Preview before a keystroke leaves",
-    body:
-      "The teleprompter shows what WOULD be typed and where it lands — the routed, rewritten preview — before anything is delivered. Preview-not-inject by design.",
-    route: "dictationDryRun(utterance:) → POST /api/dictation/dry-run",
-    egress: egressLan,
-  },
-  {
-    glyph: "M9 12l2 2 4-4 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",
-    title: "Readiness at a glance",
-    body:
-      "A setup snapshot drives the dictate screen's status strip, so the iPad knows the hub is ready before you hold to talk.",
-    route: "dictationReadiness() → GET /api/dictation/readiness",
-    egress: egressLan,
-  },
-];
-
-const meeting: Capability[] = [
-  {
-    glyph: "M3 3v18h18 M7 14l4-4 3 3 5-6",
-    title: "The faceted archive",
-    body:
-      "Browse past meetings, then narrow the archive server-side by speaker or tag, or full-text search the transcripts — the same facets the web history row offers.",
-    route: "listMeetings() · listFacets() · searchMeetings(query:speaker:type:)",
-    egress: egressLan,
-  },
-  {
-    glyph: "M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
-    title: "Aftercare: close the loop",
-    body:
-      "The read-only aftercare digest — what's still open by owner, what was decided, the real diff vs the last meeting. Pure read; viewing it acts on nothing.",
-    route: "aftercare(meetingId:) → GET /api/meetings/{id}/aftercare",
-    egress: egressLan,
-  },
-  {
-    glyph: "M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3",
-    title: "Propose → review → approve",
-    body:
-      "The iPad keeps proposing and approving apart, exactly as the desktop's actuator audit does. Reading the queue performs no side effect; the human gate is a separate, explicit decision.",
-    route: "meetingProposals(meetingId:) · decideProposal(meetingId:proposalId:approved:)",
-    egress: egressLan,
-  },
-];
-
-const ambient: Capability[] = [
-  {
-    glyph: "M22 12h-4l-3 9L9 3l-3 9H2",
-    title: "Source-cited activity nudges",
-    body:
-      "The desktop's pre-briefing nudges reach the iPad too — the top cited cards, with select-for-next-dictation and dismiss. Returns nothing when activity tracking is off on the hub.",
-    route: "activityNudges(projectId:limit:) → GET /api/activity/nudges",
-    egress: egressLan,
-  },
-  {
-    glyph: "M4 7V4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3 M4 7h16v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7z M9 11h6 M9 15h6",
-    title: "Schema-safe local storage",
-    body:
-      "What the iPad keeps locally is versioned the same safe way the desktop is: a newer database is refused rather than corrupted, and an older one is backed up before it migrates.",
-    route: "SQLiteStorage: StorageError.tooNew · backup-before-migrate",
-    egress: egressLocal,
-  },
-];
-
-const sections: { eyebrow: string; title: string; lead: string; cards: Capability[] }[] = [
-  {
-    eyebrow: "Dictation mode",
-    title: "The dictation teleprompter",
-    lead:
-      "Hold to talk on the iPad; the rewrite and its destination are previewed against your hub before a single character is delivered.",
-    cards: dictation,
-  },
-  {
-    eyebrow: "Meeting mode",
-    title: "Aftercare, archive & proposals",
-    lead:
-      "The full meeting afterlife is a client of your hub: search the archive, read the aftercare digest, and run the propose → approve gate without collapsing the two.",
-    cards: meeting,
-  },
-  {
-    eyebrow: "Ambient",
-    title: "Nudges & local memory",
-    lead:
-      "Source-cited activity nudges ride to the iPad, and whatever it keeps locally follows the same refuse-newer, backup-before-migrate discipline as the desktop.",
-    cards: ambient,
-  },
-];
-
 const pairingSteps = [
-  {
-    n: "01",
-    title: "Point it at your hub",
-    body:
-      "Enter the host and port of the machine your hub runs on — over your own network (LAN or Tailscale). There is no hosted relay in between.",
-    code: "host · port",
-  },
-  {
-    n: "02",
-    title: "Add a token if the hub wants one",
-    body:
-      "An optional bearer token authenticates the device. It is joined to each request at call time and is never logged or echoed back to the screen.",
-    code: "token (optional)",
-  },
-  {
-    n: "03",
-    title: "Choose the scheme",
-    body:
-      "Plain http over a trusted LAN or Tailscale by default; https once the hub has TLS. A half-filled form simply stays offline rather than building a junk URL.",
-    code: "scheme: http | https",
-  },
-  {
-    n: "04",
-    title: "Pair & probe",
-    body:
-      "The device probes /health, then reads /api/runtime/status for readiness. An unreachable hub is a rendered state, never a crash — the on-device runtime is never gated on it.",
-    code: "handshake()",
-  },
+  { n: "1", title: "Point at your hub", body: "Host, port, an optional token, and a scheme — over your own network." },
+  { n: "2", title: "Probe, never assume", body: "The device probes /health, then reads /api/runtime/status for readiness." },
+  { n: "3", title: "Drive both modes", body: "The dictation teleprompter and the meeting afterlife, from the iPad." },
 ];
 ---
 
 <AppLayout title="HoldSpeak Companion" current="companion">
-  <div class="companion-doc">
-    <header class="doc-hero">
-      <p class="eyebrow">Companion</p>
-      <h1>Your iPad is a first-class client of your hub.</h1>
-      <p class="lead">
-        Point an iPad at the same desktop or homelab hub a coding session runs
-        against, over your own network, and drive both HoldSpeak modes from it —
-        the dictation teleprompter and the full meeting afterlife. The device
-        talks to the hub's existing HTTP API, the same endpoints this portal uses.
-      </p>
-      <div class="hero-badges">
-        <span class={`egress-badge is-${egressLan.scope}`}>local + your LAN</span>
-        <span class="meta-pill">No hosted relay</span>
-        <span class="meta-pill">Never autonomous</span>
+  <div class="agent-desk" x-data="companionDesk()" x-init="init()">
+    <header class="ad-head">
+      <div class="ad-head-lead">
+        <p class="ad-eyebrow">Companion</p>
+        <h1 class="ad-title">The Agent Desk</h1>
+        <p class="ad-sub">Your agents and the coders that need you — on the desk your iPad shares.</p>
+      </div>
+      <div class="ad-head-side">
+        <span class="ad-link" :class="`is-${linkScope}`">
+          <span class="ad-link-dot" :class="{ 'is-live': linkScope !== 'idle' }"></span>
+          <span x-text="linkLabel">Checking link…</span>
+        </span>
+        <span class="egress-badge is-mixed">local + your LAN</span>
       </div>
     </header>
 
-    {sections.map((section) => (
-      <section class="cap-section">
-        <div class="section-head">
-          <p class="eyebrow">{section.eyebrow}</p>
-          <h2>{section.title}</h2>
-          <p class="section-lead">{section.lead}</p>
-        </div>
-        <div class="cap-grid">
-          {section.cards.map((cap) => (
-            <article class="signal-card cap-card">
-              <span class="glyph-chip" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  {cap.glyph.split(" M").map((seg, i) => (
-                    <path d={i === 0 ? seg : `M${seg}`} />
-                  ))}
-                </svg>
-              </span>
-              <h3>{cap.title}</h3>
-              <p class="cap-body">{cap.body}</p>
-              <div class="cap-foot">
-                <code class="cap-route">{cap.route}</code>
-                <span class={`egress-badge is-${cap.egress.scope}`} title={cap.egress.label}>
-                  {cap.egress.scope === "local" ? "local-only" : "local + LAN"}
-                </span>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-    ))}
-
-    <section class="pair-section">
-      <div class="section-head">
-        <p class="eyebrow">Pairing</p>
-        <h2>How to pair the iPad</h2>
-        <p class="section-lead">
-          Pairing is host, port, an optional token, and a scheme — turned into the
-          device's hub config. Reachability is probed, never assumed.
-        </p>
+    {/* the coders awaiting you — the live CompanionBoard moment */}
+    <section class="ad-zone" x-show="awaiting.length" x-cloak>
+      <div class="ad-zone-head"><span class="ad-zone-spine is-needs"></span><h2>Needs you</h2></div>
+      <div class="ad-grid">
+        <template x-for="s in awaiting" {...{ ":key": "s.session_id || s.agent" }}>
+          <article class="signal-card ad-card is-needs">
+            <div class="ad-card-type"><span class="ad-dot is-needs"></span><span>coder · awaiting</span></div>
+            <h3 class="ad-card-title" x-text="sessionLabel(s)">session</h3>
+            <p class="ad-card-body" x-show="s.summary" x-cloak x-text="s.summary"></p>
+          </article>
+        </template>
       </div>
-      <ol class="pair-grid">
+    </section>
+
+    {/* the agents — the persona desk */}
+    <section class="ad-zone">
+      <div class="ad-zone-head"><span class="ad-zone-spine"></span><h2>Agents</h2>
+        <span class="ad-count" x-text="agents.length" x-cloak></span></div>
+
+      <div class="ad-empty signal-card" x-show="!loading && !agents.length" x-cloak>
+        <p>No agents yet. Create one on the <a href="/desk">Desk</a> and it appears here.</p>
+      </div>
+
+      <div class="ad-grid" x-show="agents.length" x-cloak>
+        <template x-for="a in agents" {...{ ":key": "a.id" }}>
+          <article class="signal-card ad-card is-pressable">
+            <div class="ad-card-head">
+              <span class="ad-avatar" x-text="a.avatar || '🤖'">🤖</span>
+              <div>
+                <div class="ad-card-type"><span class="ad-dot"></span><span>agent</span></div>
+                <h3 class="ad-card-title" x-text="a.name">Agent</h3>
+              </div>
+            </div>
+            <p class="ad-card-body" x-text="a.role" x-show="a.role" x-cloak></p>
+            <div class="ad-card-foot">
+              <template x-for="t in agentTools(a)" {...{ ":key": "t" }}>
+                <span class="ad-tag mono" x-text="t"></span>
+              </template>
+              <span class="ad-tag" x-show="a.kb_id" x-cloak x-text="`kb · ${a.kb_id}`"></span>
+              <a class="ad-card-link" :href="`/desk?agent=${a.id}`">Open on desk</a>
+            </div>
+          </article>
+        </template>
+      </div>
+    </section>
+
+    {/* how it connects — the pairing + credential facts, secondary */}
+    <details class="ad-connects signal-card">
+      <summary>How it connects</summary>
+      <ol class="ad-pair">
         {pairingSteps.map((step) => (
-          <li class="signal-card pair-card">
-            <span class="pair-n" aria-hidden="true">{step.n}</span>
-            <h3>{step.title}</h3>
-            <p class="pair-body">{step.body}</p>
-            <code class="pair-code">{step.code}</code>
-          </li>
+          <li><span class="ad-pair-n">{step.n}</span><div><strong>{step.title}</strong><p>{step.body}</p></div></li>
         ))}
       </ol>
-      <p class="pair-note">
-        The bearer token is a credential: it is joined to each request in memory
-        and never appears in a payload, a log, or back on screen.
-      </p>
-    </section>
-
-    <section class="status-note signal-card">
-      <h2>Still in progress</h2>
-      <p>
-        The on-device authoring screens — capturing, editing, and synthesizing
-        entirely on the iPad without a hub — are still landing. This page covers
-        what already ships: the iPad as a client of your hub. The fully on-device
-        story will be documented here once it is real on the device.
-      </p>
-    </section>
+      <p class="ad-pair-note">The bearer token is a credential — joined to each request in memory, never in a payload, a log, or back on screen. No hosted relay; never autonomous.</p>
+    </details>
   </div>
 </AppLayout>
 
+<script>
+  import Alpine from "alpinejs";
+  import factorySource from "../scripts/companion-desk.js?raw";
+  const fn = new Function(factorySource + "; return companionDesk;");
+  window.companionDesk = fn();
+  window.Alpine = Alpine;
+  Alpine.start();
+</script>
+
 <style>
-  .companion-doc {
-    max-width: 80rem;
+  .agent-desk {
+    max-width: 92rem;
     margin: 0 auto;
     padding: var(--space-5);
     display: flex;
     flex-direction: column;
-    gap: var(--space-6);
-    color: var(--text);
+    gap: var(--space-5);
   }
-
-  h1, h2, h3, p { margin: 0; }
-
-  .eyebrow {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    text-transform: uppercase;
-    letter-spacing: var(--letter-spacing-loose);
-    color: var(--accent);
-    margin-bottom: var(--space-2);
-  }
-
-  /* === Hero ============================================== */
-  .doc-hero {
+  .ad-head {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    padding: var(--space-5) 0 var(--space-2);
-  }
-  .doc-hero h1 {
-    font-family: var(--font-display);
-    font-size: clamp(var(--font-size-2xl), 3.4vw, var(--font-size-3xl));
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1.08;
-    max-width: 22ch;
-  }
-  .lead {
-    color: var(--text-muted);
-    line-height: var(--line-height-relaxed);
-    max-width: 64ch;
-    font-size: var(--font-size-md);
-  }
-  .hero-badges {
-    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
     flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2);
-    margin-top: var(--space-2);
   }
-  .meta-pill {
+  .ad-eyebrow {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--accent);
+  }
+  .ad-title { margin: var(--space-1) 0 0; font-size: var(--font-size-3xl); font-family: var(--font-display); }
+  .ad-sub { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .ad-head-side { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
+  .ad-link {
     display: inline-flex;
     align-items: center;
-    padding: 0.12rem 0.55rem;
+    gap: var(--space-2);
+    padding: 0.25rem var(--space-3);
     border-radius: var(--radius-pill);
     border: 1px solid var(--border);
-    background: var(--surface-2);
-    color: var(--text-muted);
-    font-size: var(--font-size-xs);
-    letter-spacing: 0.02em;
-  }
-
-  /* === Capability sections =============================== */
-  .cap-section,
-  .pair-section {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-  }
-  .section-head { display: flex; flex-direction: column; gap: var(--space-1); }
-  .section-head h2 {
-    font-family: var(--font-display);
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
-  .section-lead {
-    color: var(--text-muted);
-    line-height: var(--line-height-relaxed);
-    max-width: 70ch;
     font-size: var(--font-size-sm);
+    color: var(--text-muted);
   }
+  .ad-link.is-ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+  .ad-link.is-needs { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+  .ad-link-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+  .ad-link-dot.is-live { opacity: 1; animation: hs-pulse 1.6s var(--ease-standard) infinite; }
 
-  .cap-grid {
+  .ad-zone { display: flex; flex-direction: column; gap: var(--space-3); }
+  .ad-zone-head { display: flex; align-items: center; gap: var(--space-2); }
+  .ad-zone-head h2 { margin: 0; font-size: var(--font-size-lg); font-family: var(--font-display); }
+  .ad-zone-spine { width: 3px; height: 18px; border-radius: var(--radius-pill); background: var(--accent); }
+  .ad-zone-spine.is-needs { background: var(--warn-signal); }
+  .ad-count { font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-faint); }
+
+  .ad-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
     gap: var(--space-3);
   }
-  .cap-card {
+  .ad-card {
+    --signal-card-surface: var(--surface-2);
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     padding: var(--space-4);
   }
-  .cap-card .glyph-chip { --chip-size: 40px; margin-bottom: var(--space-1); }
-  .cap-card h3 {
-    font-family: var(--font-display);
-    font-size: var(--font-size-md);
-    font-weight: 600;
-    color: var(--text);
+  .ad-card.is-needs { --signal-card-surface: color-mix(in srgb, var(--warn-signal) 8%, var(--surface-2)); }
+  .ad-card-head { display: flex; align-items: center; gap: var(--space-3); }
+  .ad-avatar { font-size: 1.6rem; line-height: 1; }
+  .ad-card-type {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow); color: var(--text-faint);
   }
-  .cap-body {
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-    flex: 1;
+  .ad-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .ad-dot.is-needs { background: var(--warn-signal); }
+  .ad-card-title { margin: 0; font-family: var(--font-display); font-size: var(--font-size-md); font-weight: 600; }
+  .ad-card-body {
+    margin: 0; color: var(--text-muted); font-size: var(--font-size-sm); line-height: var(--line-height-normal);
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .cap-foot {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    margin-top: var(--space-2);
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--border-subtle);
+  .ad-card-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: auto; padding-top: var(--space-2); }
+  .ad-tag {
+    font-size: var(--font-size-xs); color: var(--text-muted);
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-pill);
+    padding: 0.05rem var(--space-2);
   }
-  .cap-route {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    line-height: 1.5;
-    color: var(--text-faint);
-    overflow-wrap: anywhere;
-  }
+  .ad-tag.mono { font-family: var(--font-mono); }
+  .ad-card-link { color: var(--accent); font-size: var(--font-size-sm); text-decoration: none; margin-left: auto; }
+  .ad-card-link:hover { text-decoration: underline; }
 
-  /* === Pairing ========================================== */
-  .pair-grid {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-3);
-  }
-  .pair-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-4);
-  }
-  .pair-n {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-lg);
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: 0.04em;
-  }
-  .pair-card h3 {
-    font-family: var(--font-display);
-    font-size: var(--font-size-md);
-    font-weight: 600;
-    color: var(--text);
-  }
-  .pair-body {
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-    flex: 1;
-  }
-  .pair-code {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    color: var(--text);
-    background: var(--surface-2);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-2);
-    padding: var(--space-2) var(--space-3);
-    width: fit-content;
-  }
-  .pair-note {
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-    border-left: 3px solid var(--accent);
-    padding-left: var(--space-3);
-    max-width: 70ch;
-  }
+  .ad-empty { padding: var(--space-5); text-align: center; color: var(--text-muted); }
+  .ad-empty a { color: var(--accent); }
 
-  /* === In-progress note ================================= */
-  .status-note {
-    padding: var(--space-5);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
+  .ad-connects { padding: var(--space-3) var(--space-4); }
+  .ad-connects summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; }
+  .ad-pair { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+  .ad-pair li { display: flex; gap: var(--space-3); }
+  .ad-pair-n {
+    flex: none; display: grid; place-items: center; width: 24px; height: 24px;
+    border-radius: 50%; background: var(--surface-2); color: var(--accent);
+    font-family: var(--font-mono); font-size: var(--font-size-xs);
   }
-  .status-note h2 {
-    font-family: var(--font-display);
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-  }
-  .status-note p {
-    color: var(--text-muted);
-    line-height: var(--line-height-relaxed);
-    max-width: 72ch;
-    font-size: var(--font-size-sm);
-  }
-
-  @media (max-width: 1000px) {
-    .cap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .pair-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
-  @media (max-width: 600px) {
-    .companion-doc { padding: var(--space-3); gap: var(--space-5); }
-    .cap-grid,
-    .pair-grid { grid-template-columns: 1fr; }
-  }
+  .ad-pair li strong { font-size: var(--font-size-sm); }
+  .ad-pair li p { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .ad-pair-note { margin: var(--space-3) 0 0; color: var(--text-faint); font-size: var(--font-size-xs); }
 </style>

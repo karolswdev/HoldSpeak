@@ -1,12 +1,15 @@
 # Phase 69 — Web, Re-crafted (the convergence delivery)
 
-**Status:** in-progress (opened 2026-06-22)
+**Status:** CLOSED (12/12) — 2026-06-30. See [`final-summary.md`](./final-summary.md). PR [#202](https://github.com/karolswdev/HoldSpeak/pull/202).
 
-**Last updated:** 2026-06-22 (**opened + Wave 3 building.** The delivery half of the convergence:
-bring the iPad's shipped Signal craft onto the web cockpit, **substrate-first**, per the Phase-68
-parity map. Generated directly from `pm/roadmap/holdspeak/phase-68-web-convergence/parity-map.md`
-(the ordered backlog) + `web-technical-design.md` (the how) + `design-pattern-catalog.md` (the what).
-Wave 3 dispatched: the Signal-card substrate (HS-69-02/03/04).)
+**Last updated:** 2026-06-29 (**cadence reconciled; full-sweep delivery underway.** The substrate
+(HS-69-02/03/04/01/07) is confirmed present in `web/src/` — but it had landed inside a mixed mobile
+checkpoint commit (`f64d80d HSM-14-19`) with no per-story evidence, and the desktop README still
+pointed "Current phase" at Phase 67. This update fixes both: the README now points here, and the
+program is resumed under the PMO gate. Owner direction (2026-06-29): deliver the **full sweep in
+sequence** through the **full node canvas** (1:1 with the iPad Workbench) and the `/companion`→Agent
+Desk — true two-way felt parity, multi-session. Prior: **opened + Wave 3** — the Signal-card substrate
+(HS-69-02/03/04) was built.)
 
 ## The thesis
 
@@ -30,6 +33,18 @@ high-impact first; the heavy node-canvas epic last.
 - **Companion portal direction (owner-approved):** the web `/companion` **becomes the Agent Desk** —
   the same desk surface as the iPad (HSM-15-08), not a plainer control panel. Added as **HS-69-12**.
 - **iPad-is-a-full-peer** principle stands (this phase is desktop/web; it does not weaken on-device).
+
+### Owner direction (2026-06-29) — the program for the rest of Phase 69
+
+- **Full sweep, in order.** Deliver every remaining story cheapest-high-impact-first, all the way
+  through the heavy node-canvas epic and the `/companion`→Agent-Desk. Multi-session; true full parity
+  over a fast partial.
+- **Full node canvas (not a lighter pipeline view).** HS-69-10/11 build the pannable dot-grid canvas
+  with draggable typed nodes, type-colored bezier cables, palette, and inspector — 1:1 with the iPad
+  Workbench. The §1c owner-confirm the parity map asked for is **answered: build the full canvas.**
+- **PMO discipline resumed.** Every commit through the contract gate (7 `[x]`), one story-flip per
+  commit with its `evidence-story-NN.md`, PR-per-slice merged on green CI, screenshot proof per story
+  and real-metal proof for the LLM-shaped ones (the generation theater especially).
 
 ## Scope
 
@@ -58,18 +73,18 @@ high-impact first; the heavy node-canvas epic last.
 
 | Story | Title | Priority | Status | Depends on |
 |-------|-------|----------|--------|------------|
-| HS-69-02 | The shared Signal card primitive | HIGH | **built + visually verified** (settings panel = raised signal-card; global-scoped; build green) | — |
-| HS-69-03 | Gradient + hairline tokens | HIGH | **built** (`--accent-gradient`/`--bg-gradient`; gradient consumed by `.glyph-chip`) | — |
-| HS-69-04 | Materialize + stagger motion | HIGH | **built; visual pending** (needs seeded meetings to show the card-arrival on dashboard/history) | HS-69-02 |
-| HS-69-01 | Egress badge → the cockpit | HIGH | **built** (`egress-badge.js` module + global `.egress-badge`; on the dashboard live-intel card; build green) — history/proposal cards intentionally skipped (no egress data; backend field needed) | — |
-| HS-69-05 | Premium sheets / modals uplift | MED | backlog | HS-69-02 |
-| HS-69-06 | Qlippy dock into the cockpit | MED | backlog | HS-69-01, HS-69-02 |
-| HS-69-07 | The Queue HUD (shell + store) | **built** (`runtime-bus.js` + `queue-hud.js` + `QueueHud.astro` in AppLayout; derives jobs from `intel_status`/`runtime_activity` WS frames; pill→ledger; build green; **caught live** — the "1 working" pill rendered the seeded meeting's queued intel) — honest gaps: indeterminate progress bar (no per-job % in frames), 2 concurrent jobs derivable | HS-69-02 |
-| HS-69-08 | Reactive mic waveform | MED | backlog | server `audio_level` frame |
-| HS-69-09 | Generation theater (orb + constellation) | MED | backlog | HS-69-02 + a web `theaterorb` |
-| HS-69-10 | Node canvas — foundation | HIGH (heavy) | backlog | HS-68-03 |
-| HS-69-11 | Node canvas — wiring + inspector | HIGH (heavy) | backlog | HS-69-10, HS-69-05 |
-| HS-69-12 | Web `/companion` → the Agent Desk | MED | backlog | HS-69-02 |
+| HS-69-02 | The shared Signal card primitive | HIGH | **done** (composable `--signal-card-surface`; broadened to `/desk` (8 cards) + `/activity` (nudge + 4 rule cards, repairing a latent Astro-scope-on-JS-DOM gap); computed-style probes + screenshots; see [evidence](./evidence-story-02.md)) | — |
+| HS-69-03 | Gradient + hairline tokens | HIGH | **done** (`--accent-gradient`/`--bg-gradient` in tokens.css; consumed by `.glyph-chip` + the `.signal-card::before` hairline; probed + visible everywhere; see [evidence](./evidence-story-03.md)) | — |
+| HS-69-04 | Materialize + stagger motion | HIGH | **done** (on the keyed `/activity` nudge list + dashboard recent-cards; `animation-name: hs-materialize` probed on seeded DOM; reduced-motion double-gated; see [evidence](./evidence-story-04.md)) | HS-69-02 |
+| HS-69-01 | Egress badge → the cockpit | HIGH | **done** (global `.egress-badge` + `egress-badge.js` on the dashboard, Qlippy cards, activity nudges/runs-on, and the companion desk; history/proposal cards skipped by design (no egress data); see [evidence](./evidence-story-01.md)) | — |
+| HS-69-05 | Premium sheets / modals uplift | MED | **done** (ConfirmDialog: grab handle + contextual glyph chip + top-lit hairline + tinted-glow backdrop + accent "Done" pill; screenshot-proven danger + affirmative; see [evidence](./evidence-story-05.md)) | HS-69-02 |
+| HS-69-06 | Qlippy dock into the cockpit | MED | **done** (extracted to shared `Qlippy.astro`, mounted in AppLayout; dock + cards in the cockpit with the egress badge; native HUD proven non-regressive; shell locks retargeted; see [evidence](./evidence-story-06.md)) | HS-69-01, HS-69-02 |
+| HS-69-07 | The Queue HUD (shell + store) | **done** (`runtime-bus.js` + `queue-hud.js` + `QueueHud.astro` in AppLayout; jobs derived from `intel_status`/`runtime_activity`; pill→ledger screenshot-proven (2 rows); honest gaps: indeterminate %, 2 concurrent jobs; see [evidence](./evidence-story-07.md)) | HS-69-02 |
+| HS-69-08 | Reactive mic waveform | MED | **done** (additive throttled `audio_level` broadcast wired into dictation + meeting recorders; floating canvas meter in AppLayout reacts + peak-glows + idle-hides; backend 4 tests + frontend screenshots; see [evidence](./evidence-story-08.md)) | server `audio_level` frame |
+| HS-69-09 | Generation theater (orb + constellation) | MED | **done** (iPad orb reused; theater in AppLayout driven by intel_status/token/complete frames; UI screenshots + **real-metal `.43` snapshot** lighting summary/actions/topics; see [evidence](./evidence-story-09.md)) | HS-69-02 + a web `theaterorb` |
+| HS-69-10 | Node canvas — foundation | HIGH (heavy) | **done** (new `/workbench`: pure-vanilla pannable/zoomable dot-grid world; `Workflow`-shaped model; draggable signal-card nodes + type-colored bezier cables (text/findings/signal); preset switching; route swept; see [evidence](./evidence-story-10.md)) | HS-68-03 |
+| HS-69-11 | Node canvas — wiring + inspector | HIGH (heavy) | **done** (drag-to-wire with type-compat highlight (green/danger) + commit; premium inspector drawer with type chips + live prompt edit; palette add-node; pan-steals-clicks bug fixed; see [evidence](./evidence-story-11.md)) | HS-69-10, HS-69-05 |
+| HS-69-12 | Web `/companion` → the Agent Desk | MED | **done** (the static docs portal became a living Agent Desk: real agents (`/api/agents`) as desk cards + the live companion link + the awaiting coders (`/api/companion/status`); pairing folded into a footer; see [evidence](./evidence-story-12.md)) | HS-69-02 |
 
 ## Where we are
 
@@ -91,3 +106,92 @@ a raised signal-card** (top-lit hairline + elevation), confirmed. The dashboard 
 and history meeting-cards + the `hs-materialize` arrival couldn't be shown on this fresh runtime
 (empty DB → `/` redirects to onboarding; history has no meetings) — they need seeded data to screenshot
 (a quick follow-up). Substrate is shipped + working; next: HS-69-01 (egress badge → cockpit).
+
+**2026-06-29 — cadence reconciled; full-sweep program resumed (Wave A).** A grounding pass confirmed the
+true state: HS-69-02/03/04/01/07 are all present in `web/src/` (the `.signal-card` primitive +
+gradient/hairline tokens in `tokens.css`/`global.css`, `egress-badge.js`, `runtime-bus.js` +
+`queue-hud.js` + `QueueHud.astro`), but they had been committed inside a **mixed mobile checkpoint**
+(`f64d80d HSM-14-19`) — a PMO-gate violation (multiple phases in one commit, no per-story evidence) that
+is already merged, so it is recorded here as paid-down debt rather than re-litigated. The desktop
+README "Current phase" pointer (stale at Phase 67) and "Last updated" line are corrected to point here.
+A web-flagship polish audit (this session) confirmed the substrate is **under-applied**: `.signal-card`
+rides only 5 pages; `/desk`, `/dictation`, and `/activity` lack it, and `/activity` still ships verbatim
+legacy vanilla JS. That becomes Wave B. The remaining seven stories (05 sheets, 06 Qlippy dock, 08
+waveform, 09 theater, 10/11 node canvas, 12 companion→desk) run in sequence per the owner direction
+above, on branch `phase-69-web-recrafted`.
+
+**2026-06-29 — Wave B: the substrate broadened (HS-69-02 done).** The primitive became composable
+(`--signal-card-surface`, default unchanged) and now rides the two surfaces the audit flagged as
+under-applied: `/desk` (all 8 primitive cards, surface-2 override to keep contrast inside the zones)
+and `/activity` (the Alpine nudge card + the 4 JS-injected rule cards). Applying the global primitive
+to `/activity` **repaired a latent bug** — Astro's default attribute-scoping meant the page's own
+`.rule-item` styles never reached its `innerHTML`-injected cards; the global primitive is what styles
+them now. Proven on the live seeded DOM with computed-style probes (`--elev-2` shadow, 18px radius, the
+correct surface, the `::before` hairline, and `animation-name: hs-materialize` on nudge cards) plus
+full-page screenshots, via `scripts/screenshot_phase69_substrate.py`. Slice green (65 passed) + route
+pre-flight (2 passed). Next: HS-69-04 (flip the materialize story on this proof), then HS-69-05.
+
+**2026-06-29 — HS-69-04 + HS-69-05 done.** Materialize flipped to done on the seeded-DOM probe
+(`animation-name: hs-materialize`). Then the premium sheet: `ConfirmDialog` (the one modal every page
+shares via `window.holdspeakConfirm`) gained the iPad sheet craft — grab handle, a contextual glyph
+chip (accent check ↔ danger alert), the top-lit gradient hairline, a tinted-glow backdrop, and accent
+"Done" pills — screenshot-proven in both the destructive and affirmative states, behaviour untouched.
+Next: HS-69-06 (bring the Qlippy dock + cards off `/presence` into the main cockpit).
+
+**2026-06-29 — HS-69-06 done.** Qlippy's dock + cards were extracted out of `presence.astro` into a
+shared `components/Qlippy.astro` (one source) and mounted in `AppLayout`, so the presence enhancer now
+rides every cockpit route (bottom-right; the Queue HUD is top-center — no collision). Proven both ways:
+a "DECISION NEEDED" card with the ⌂ Local badge + Approve/Decline/Later on `/history`, and the native
+HUD `/presence` still rendering the same shell (☁ github result card) — the extraction is
+non-regressive. Shell-lock test retargeted to the component; 49 passed across the presence/web slices.
+Next: HS-69-08 (the reactive mic waveform).
+
+**2026-06-30 — HS-69-08 done.** The reactive mic waveform, source = a small **additive** server
+`audio_level` WS frame (the Phase-68 decision), not an in-browser mic. The recorders already computed
+a 0..1 level per chunk (discarded by stub lambdas); `_emit_audio_level` now throttles (~15 Hz) + clamps
++ broadcasts it, wired into the dictation recorder + both meeting channels. A floating Signal meter
+(`Waveform.astro` + `waveform.js`) in AppLayout subscribes on the shared bus and renders gamma-expanded
+mirrored bars with an accent peak glow, revealing during capture and hiding on silence. Proven both
+ends: 4 backend unit tests (shape/throttle/clamp/no-server) + frontend screenshots (active meter +
+cropped detail) + the idle auto-hide. 24 passed across the slices. Next: HS-69-09 (the generation
+theater — proven on real metal).
+
+**2026-06-30 — HS-69-09 done.** The generation theater: the iPad's `theaterorb.png` reused verbatim,
+a centred non-blocking theater (`GenerationTheater.astro` + `theater.js`) in AppLayout driven by the
+intel frames that already flow — `intel_status` reveals/hides, `intel_token` pulses the orb,
+`intel_complete` lights the Summary/Decisions/Actions/Topics constellation. UI proven via simulated
+frames (the streaming "THINKING…" + the ready state with all 4 nodes lit). **Real metal:** the actual
+`MeetingIntel` pipeline run on `.43` (the owner's clean `.13` was down) produced a real accurate
+snapshot (summary + 2 actions + 4 topics) lighting three nodes — the `intel_complete` path proven on
+real metal; `.43` returned buffered (0 token chunks) so the token-pulse waits on `.13` (ready script
+ships). 7 passed. **Remaining: HS-69-10/11 (the full node canvas epic) + HS-69-12 (companion → desk).**
+Next: HS-69-10.
+
+**2026-06-30 — HS-69-10 done (the node canvas foundation).** A new `/workbench` route renders the
+canonical linear `Workflow` (`source → steps → output`, byte-compatible with the iPad's Codable form)
+as a node graph — pure-vanilla per the Phase-68 design: SVG bezier cables + HTML signal-card nodes in
+one transformed world layer, no graph lib. Pan + zoom (about the cursor) + node drag (live cable
+re-layout, persisted to the iPad's `hs.workflows.v1` key); the cable math is the iPad's exact
+horizontal-tangent cubic; cables are type-colored on the web-wins palette (text→accent / findings→ok /
+signal→info). Three presets switch the graph. Registered in pages.py + TopNav + AppLayout + the route
+pre-flight (swept, zero page errors). Screenshot-proven (default chain / a dragged node with cables
+following / the triage preset showing all three cable types). 7 passed. Next: HS-69-11 (port wiring +
+the inspector sheet).
+
+**2026-06-30 — HS-69-11 done (wiring + inspector + palette).** The canvas became a true builder: drag
+an output port → a live dashed cable follows the cursor → a compatible input port glows green (an
+incompatible one flashes danger) → a valid drop commits a new typed cable (proven 3→4). Tap a node →
+a premium right-drawer (the HS-69-05 sheet idiom) with in/out type chips + an editable prompt that
+updates the node live and persists. A palette adds free step nodes (4→5). A real bug fixed: the pan
+handler's blanket `setPointerCapture` stole clicks from the palette + inspector (now guarded). Route
+pre-flight + density guard = 7 passed. **The node-canvas epic (10+11) is complete. Remaining: HS-69-12
+(companion → desk) + the substrate flips (01/03/07) + closeout.**
+
+**2026-06-30 — HS-69-12 done (the Companion Agent Desk).** Per the owner-approved direction, `/companion`
+stopped being a static docs portal and became **The Agent Desk** — a living desk (Alpine `companionDesk()`
+over `/api/agents` + `/api/companion/status`, no backend change): a live link chip ("N need you"), a
+warn-spined "Needs you" zone for the coders awaiting you, an "Agents" zone of the real persona cards
+(avatar/role/tools/"Open on desk"), and a "How it connects" footer keeping the pairing + credential facts.
+Screenshot-proven (3 real agents + a route-mocked awaiting session). Route pre-flight (zero page errors) +
+density guard = 7 passed. **All 12 delivery stories are done. Remaining: flip the already-built substrate
+(01 egress badge / 03 gradient tokens / 07 Queue HUD) + the closeout (full suite + final summary).**

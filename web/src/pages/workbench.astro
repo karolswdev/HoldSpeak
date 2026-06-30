@@ -1,0 +1,403 @@
+---
+// HS-69-10: the Workbench — a node-graph builder over the canonical linear
+// `Workflow` shape. A pannable/zoomable dot-grid world with typed, draggable
+// Signal node cards joined by type-colored bezier cables (the foundation; wiring
+// + inspector land in HS-69-11). Pure-vanilla canvas (canvas.js) over the model
+// (model.js); the page chrome is light.
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="Workbench" current="workbench">
+  <div class="wb-shell">
+    <header class="wb-head">
+      <div class="wb-head-lead">
+        <span class="wb-eyebrow">Build</span>
+        <h1 class="wb-title">Workbench</h1>
+        <p class="wb-sub">Wire primitives into a run. Drag to arrange; pan and zoom the canvas.</p>
+      </div>
+      <div class="wb-head-actions">
+        <div class="wb-presets" data-wb-presets role="group" aria-label="Workflow presets"></div>
+        <button type="button" class="btn btn--secondary btn--sm" data-wb-fit>Fit</button>
+      </div>
+    </header>
+
+    <div class="wb-canvas" data-wb-canvas tabindex="0" aria-label="Workflow canvas">
+      <div class="wb-world" data-wb-world>
+        <svg class="wb-cables" data-wb-cables aria-hidden="true"></svg>
+      </div>
+
+      {/* the palette — add a free step node, then wire it up */}
+      <div class="wb-palette signal-card" data-wb-palette role="group" aria-label="Add a node">
+        <span class="wb-palette-label">Add</span>
+      </div>
+
+      {/* the inspector — tap a node to edit it (premium sheet) */}
+      <aside class="wb-inspector signal-card" data-wb-inspector aria-label="Node inspector" hidden>
+        <div class="wb-insp-grab" aria-hidden="true"></div>
+        <header class="wb-insp-head">
+          <span class="wb-insp-glyph glyph-chip" data-wb-insp-glyph aria-hidden="true"></span>
+          <h2 class="wb-insp-title" data-wb-insp-title></h2>
+          <button type="button" class="wb-insp-x" data-wb-insp-close aria-label="Close">✕</button>
+        </header>
+        <div class="wb-insp-types" data-wb-insp-types></div>
+        <label class="wb-insp-field">
+          <span class="wb-insp-field-label">Prompt</span>
+          <textarea class="wb-insp-prompt" data-wb-insp-prompt rows="3"
+            placeholder="What this step should do…"></textarea>
+        </label>
+      </aside>
+
+      <span class="wb-hint" data-wb-hint>drag a node · drag a port to wire · scroll to zoom</span>
+    </div>
+  </div>
+</AppLayout>
+
+<script>
+  import { mountWorkbench } from "../scripts/workbench/canvas.js";
+  import { PRESETS, STEP_KINDS, PORT_TYPE } from "../scripts/workbench/model.js";
+
+  function boot() {
+    const root = document.querySelector(".wb-shell");
+    if (!root) return;
+    const q = (s) => root.querySelector(s);
+    const world = q("[data-wb-world]");
+    const svg = q("[data-wb-cables]");
+    const presetsEl = q("[data-wb-presets]");
+    const paletteEl = q("[data-wb-palette]");
+    const fitBtn = q("[data-wb-fit]");
+    const insp = q("[data-wb-inspector]");
+    const inspTitle = q("[data-wb-insp-title]");
+    const inspGlyph = q("[data-wb-insp-glyph]");
+    const inspTypes = q("[data-wb-insp-types]");
+    const inspPrompt = q("[data-wb-insp-prompt]");
+    let api = null;
+    let current = null;
+
+    inspGlyph.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+      'stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/>' +
+      '<path d="M14 5l3 3"/></svg>';
+
+    function typeChip(label, type) {
+      if (!type) return "";
+      const t = PORT_TYPE[type] || PORT_TYPE.text;
+      return `<span class="wb-type-chip" style="color:${t.color};border-color:${t.color}">` +
+        `${label} · ${t.label}</span>`;
+    }
+    function openInspector(node) {
+      current = node;
+      inspTitle.textContent = node.title;
+      inspTypes.innerHTML = typeChip("in", node.inType) + typeChip("out", node.outType);
+      inspPrompt.value = node.subtitle || "";
+      inspPrompt.disabled = node.role === "source" || node.role === "output";
+      insp.hidden = false;
+      requestAnimationFrame(() => insp.classList.add("is-open"));
+    }
+    function closeInspector() { insp.classList.remove("is-open"); current = null; }
+    q("[data-wb-insp-close]").addEventListener("click", closeInspector);
+    inspPrompt.addEventListener("input", () => {
+      if (current && api) api.updatePrompt(current.id, inspPrompt.value);
+    });
+
+    function clearWorld() {
+      svg.replaceChildren();
+      for (const n of [...world.querySelectorAll(".wb-node")]) n.remove();
+    }
+    function mount(preset) {
+      closeInspector();
+      clearWorld();
+      api = mountWorkbench(root, preset);
+      if (api) api.onSelect(openInspector);
+      presetsEl.querySelectorAll("button").forEach((b) =>
+        b.classList.toggle("is-active", b.dataset.presetId === preset.id));
+    }
+
+    Object.entries(STEP_KINDS).forEach(([kind, meta]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "wb-palette-chip";
+      b.textContent = meta.title;
+      b.addEventListener("click", () => api && api.addNode(kind));
+      paletteEl.appendChild(b);
+    });
+
+    PRESETS.forEach((p) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "wb-preset-btn";
+      b.dataset.presetId = p.id;
+      b.textContent = p.name;
+      b.addEventListener("click", () => mount(p));
+      presetsEl.appendChild(b);
+    });
+
+    if (fitBtn) fitBtn.addEventListener("click", () => api && api.fit());
+    mount(PRESETS[0]);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+</script>
+
+<style is:global>
+  /* Page chrome can be scoped, but the canvas/world/node/cable styles are
+     is:global because the nodes + cables are JS-rendered into the world. */
+  .wb-shell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    height: calc(100vh - 120px);
+    min-height: 520px;
+    padding: var(--space-5);
+    max-width: 100rem;
+    margin: 0 auto;
+  }
+  .wb-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .wb-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--accent);
+  }
+  .wb-title { margin: 0; font-size: var(--font-size-3xl); font-family: var(--font-display); }
+  .wb-sub { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .wb-head-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+  .wb-presets { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .wb-preset-btn {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text-muted);
+    border-radius: var(--radius-pill);
+    padding: 0.3rem var(--space-3);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: color var(--duration-short) var(--ease-standard),
+                border-color var(--duration-short) var(--ease-standard);
+  }
+  .wb-preset-btn:hover { color: var(--text); border-color: var(--border-strong); }
+  .wb-preset-btn.is-active {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface-1));
+  }
+
+  /* the canvas viewport: the dot grid lives here (synced to pan/zoom in JS) */
+  .wb-canvas {
+    position: relative;
+    flex: 1 1 auto;
+    overflow: hidden;
+    border-radius: var(--radius-5);
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg);
+    background-image: radial-gradient(circle, color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 1.4px);
+    background-size: 34px 34px;
+    cursor: grab;
+    touch-action: none;
+  }
+  .wb-canvas.is-panning { cursor: grabbing; }
+
+  .wb-world {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    transform-origin: 0 0;
+  }
+  .wb-cables {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .wb-cable {
+    stroke-width: 2;
+    opacity: 0.85;
+    stroke-linecap: round;
+  }
+
+  .wb-node {
+    position: absolute;
+    width: 210px;
+    --signal-card-surface: var(--surface-2);
+    padding: var(--space-3);
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .wb-node.is-dragging { cursor: grabbing; box-shadow: var(--elev-3); z-index: 5; }
+  .wb-node.role-source { --signal-card-surface: color-mix(in srgb, var(--accent) 8%, var(--surface-2)); }
+  .wb-node.role-output { --signal-card-surface: color-mix(in srgb, var(--ok) 8%, var(--surface-2)); }
+  .wb-node-head { display: flex; align-items: center; gap: var(--space-2); }
+  .wb-node-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    color: var(--text);
+  }
+  .wb-node-sub {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .wb-port {
+    position: absolute;
+    top: 50%;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+    transform: translateY(-50%);
+  }
+  .wb-port-in { left: -6px; }
+  .wb-port-out { right: -6px; }
+
+  .wb-hint {
+    position: absolute;
+    left: var(--space-3);
+    bottom: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-faint);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    padding: 0.15rem var(--space-2);
+    border-radius: var(--radius-2);
+    pointer-events: none;
+  }
+
+  /* HS-69-11: port wiring states */
+  .wb-port.is-wirable { cursor: crosshair; }
+  .wb-port-out:hover { transform: translateY(-50%) scale(1.3); }
+  .wb-port.is-compat {
+    transform: translateY(-50%) scale(1.5);
+    box-shadow: 0 0 10px var(--ok);
+  }
+  .wb-port.is-incompat {
+    transform: translateY(-50%) scale(1.3);
+    box-shadow: 0 0 10px var(--danger);
+    background: var(--danger) !important;
+  }
+  .wb-cable-live { opacity: 0.7; stroke-dasharray: 6 5; }
+
+  /* HS-69-11: the palette (add a node) */
+  .wb-palette {
+    --signal-card-surface: var(--surface-2);
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    max-width: 60%;
+    padding: var(--space-2) var(--space-3);
+  }
+  .wb-palette-label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--text-faint);
+  }
+  .wb-palette-chip {
+    appearance: none;
+    border: 1px dashed var(--border-strong);
+    background: var(--surface-1);
+    color: var(--text-muted);
+    border-radius: var(--radius-pill);
+    padding: 0.18rem var(--space-2);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+  }
+  .wb-palette-chip:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* HS-69-11: the inspector (a premium right drawer) */
+  .wb-inspector {
+    --signal-card-surface: var(--surface-2);
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    bottom: var(--space-3);
+    width: 300px;
+    max-width: calc(100% - 2 * var(--space-3));
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4) var(--space-4);
+    transform: translateX(calc(100% + var(--space-3)));
+    transition: transform var(--duration-medium) var(--ease-standard);
+  }
+  .wb-inspector.is-open { transform: translateX(0); }
+  .wb-insp-grab {
+    width: 36px;
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--line-strong);
+    margin: var(--space-1) auto 0;
+  }
+  .wb-insp-head { display: flex; align-items: center; gap: var(--space-2); }
+  .wb-insp-glyph { --chip-size: 30px; }
+  .wb-insp-title {
+    margin: 0;
+    flex: 1 1 auto;
+    font-family: var(--font-display);
+    font-size: var(--font-size-md);
+    font-weight: 600;
+  }
+  .wb-insp-x {
+    appearance: none;
+    border: none;
+    background: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    font-size: var(--font-size-md);
+  }
+  .wb-insp-x:hover { color: var(--text); }
+  .wb-insp-types { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .wb-type-chip {
+    font-size: var(--font-size-xs);
+    border: 1px solid;
+    border-radius: var(--radius-pill);
+    padding: 0.1rem var(--space-2);
+    background: color-mix(in srgb, currentColor 10%, transparent);
+  }
+  .wb-insp-field { display: flex; flex-direction: column; gap: var(--space-1); }
+  .wb-insp-field-label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--text-faint);
+  }
+  .wb-insp-prompt {
+    width: 100%;
+    resize: vertical;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-3);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    padding: var(--space-2);
+  }
+  .wb-insp-prompt:disabled { opacity: 0.5; }
+  .wb-insp-prompt:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: 1px;
+  }
+</style>

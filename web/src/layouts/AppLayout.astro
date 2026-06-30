@@ -15,8 +15,11 @@ import TopNav from "../components/TopNav.astro";
 import TrustChip from "../components/TrustChip.astro";
 import ConfirmDialog from "../components/ConfirmDialog.astro";
 import QueueHud from "../components/QueueHud.astro";
+import Qlippy from "../components/Qlippy.astro";
+import Waveform from "../components/Waveform.astro";
+import GenerationTheater from "../components/GenerationTheater.astro";
 
-type Route = "runtime" | "desk" | "activity" | "history" | "dictation" | "companion" | "commands" | "profiles";
+type Route = "runtime" | "desk" | "workbench" | "activity" | "history" | "dictation" | "companion" | "commands" | "profiles";
 
 interface Props {
   title: string;
@@ -64,6 +67,19 @@ const hasSecondary = Astro.slots.has("secondary");
         the shared runtime-bus. Rides every route from the shell; starts hidden
         and reveals only when there is a live job. */}
     <QueueHud />
+
+    {/* HS-69-06: Qlippy — the presence dock + actionable cards, off /presence
+        and into the cockpit. Double-gated (presence.enabled + presence.mascot);
+        renders nothing when off. Bottom-right; the Queue HUD is top-center. */}
+    <Qlippy />
+
+    {/* HS-69-08: the reactive mic waveform — reacts to the server's additive
+        audio_level frame during capture; hidden at rest, floats bottom-center. */}
+    <Waveform />
+
+    {/* HS-69-09: the generation theater — the orb + constellation set-piece,
+        revealed while meeting intelligence streams; non-blocking, auto-hides. */}
+    <GenerationTheater />
 
     <ConfirmDialog />
 
