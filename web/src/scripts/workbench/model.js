@@ -124,21 +124,37 @@ export function graphFromWorkflow(wf, layout) {
 
 const LS_KEY = "hs.workflows.v1"; // the iPad's exact key
 
-export function loadLayout(workflowId) {
+// The per-workflow persisted state: { layout: {id:{x,y}}, edges: [...],
+// prompts: {nodeId: text} }. One read/merge/write keeps node positions, any
+// re-wired cables (HS-69-11), and inspector prompt edits together.
+export function loadState(workflowId) {
   try {
     const all = JSON.parse(window.localStorage.getItem(LS_KEY) || "{}");
-    return (all[workflowId] && all[workflowId].layout) || null;
+    return all[workflowId] || {};
   } catch (_e) {
-    return null;
+    return {};
   }
 }
 
-export function saveLayout(workflowId, layout) {
+export function saveState(workflowId, partial) {
   try {
     const all = JSON.parse(window.localStorage.getItem(LS_KEY) || "{}");
-    all[workflowId] = { ...(all[workflowId] || {}), layout };
+    all[workflowId] = { ...(all[workflowId] || {}), ...partial };
     window.localStorage.setItem(LS_KEY, JSON.stringify(all));
   } catch (_e) {
-    /* localStorage may be unavailable; layout is non-critical */
+    /* localStorage may be unavailable; persistence is non-critical */
   }
+}
+
+// back-compat thin wrappers (canvas.js layout path)
+export function loadLayout(workflowId) {
+  return loadState(workflowId).layout || null;
+}
+export function saveLayout(workflowId, layout) {
+  saveState(workflowId, { layout });
+}
+
+// Two ports are compatible when their data types match (the iPad PortType rule).
+export function portsCompatible(outType, inType) {
+  return String(outType) === String(inType);
 }

@@ -83,7 +83,7 @@ high-impact first; the heavy node-canvas epic last.
 | HS-69-08 | Reactive mic waveform | MED | **done** (additive throttled `audio_level` broadcast wired into dictation + meeting recorders; floating canvas meter in AppLayout reacts + peak-glows + idle-hides; backend 4 tests + frontend screenshots; see [evidence](./evidence-story-08.md)) | server `audio_level` frame |
 | HS-69-09 | Generation theater (orb + constellation) | MED | **done** (iPad orb reused; theater in AppLayout driven by intel_status/token/complete frames; UI screenshots + **real-metal `.43` snapshot** lighting summary/actions/topics; see [evidence](./evidence-story-09.md)) | HS-69-02 + a web `theaterorb` |
 | HS-69-10 | Node canvas — foundation | HIGH (heavy) | **done** (new `/workbench`: pure-vanilla pannable/zoomable dot-grid world; `Workflow`-shaped model; draggable signal-card nodes + type-colored bezier cables (text/findings/signal); preset switching; route swept; see [evidence](./evidence-story-10.md)) | HS-68-03 |
-| HS-69-11 | Node canvas — wiring + inspector | HIGH (heavy) | backlog | HS-69-10, HS-69-05 |
+| HS-69-11 | Node canvas — wiring + inspector | HIGH (heavy) | **done** (drag-to-wire with type-compat highlight (green/danger) + commit; premium inspector drawer with type chips + live prompt edit; palette add-node; pan-steals-clicks bug fixed; see [evidence](./evidence-story-11.md)) | HS-69-10, HS-69-05 |
 | HS-69-12 | Web `/companion` → the Agent Desk | MED | backlog | HS-69-02 |
 
 ## Where we are
@@ -177,3 +177,12 @@ signal→info). Three presets switch the graph. Registered in pages.py + TopNav 
 pre-flight (swept, zero page errors). Screenshot-proven (default chain / a dragged node with cables
 following / the triage preset showing all three cable types). 7 passed. Next: HS-69-11 (port wiring +
 the inspector sheet).
+
+**2026-06-30 — HS-69-11 done (wiring + inspector + palette).** The canvas became a true builder: drag
+an output port → a live dashed cable follows the cursor → a compatible input port glows green (an
+incompatible one flashes danger) → a valid drop commits a new typed cable (proven 3→4). Tap a node →
+a premium right-drawer (the HS-69-05 sheet idiom) with in/out type chips + an editable prompt that
+updates the node live and persists. A palette adds free step nodes (4→5). A real bug fixed: the pan
+handler's blanket `setPointerCapture` stole clicks from the palette + inspector (now guarded). Route
+pre-flight + density guard = 7 passed. **The node-canvas epic (10+11) is complete. Remaining: HS-69-12
+(companion → desk) + the substrate flips (01/03/07) + closeout.**

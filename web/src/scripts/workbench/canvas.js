@@ -5,7 +5,9 @@
 // nodes never desync. The dot grid is a CSS background on the viewport, synced
 // to pan/zoom in JS (no per-dot DOM).
 
-import { PORT_TYPE, graphFromWorkflow, loadLayout, saveLayout } from "./model.js";
+import {
+  PORT_TYPE, STEP_KINDS, graphFromWorkflow, loadState, saveState, saveLayout, portsCompatible,
+} from "./model.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const GLYPHS = {
@@ -49,11 +51,36 @@ export function mountWorkbench(root, workflow) {
   if (!viewport || !world || !svg) return null;
 
   const state = { panX: 60, panY: 20, z: 1 };
-  const layout = loadLayout(workflow.id) || {};
+  const saved = loadState(workflow.id);
+  const layout = saved.layout || {};
   const { nodes, edges } = graphFromWorkflow(workflow, layout);
+  // apply saved inspector prompt edits to the node subtitles
+  if (saved.prompts) {
+    for (const n of nodes) if (saved.prompts[n.id] != null) n.subtitle = saved.prompts[n.id];
+  }
+  // re-create any palette-added free nodes from a previous session
+  if (Array.isArray(saved.nodes)) {
+    for (const n of saved.nodes) if (!nodes.find((x) => x.id === n.id)) nodes.push({ ...n });
+  }
+  // apply any re-wired cables persisted from a previous session
+  if (Array.isArray(saved.edges)) {
+    for (const e of saved.edges) {
+      if (!edges.find((x) => x.id === e.id)) edges.push(e);
+    }
+  }
+  let customSeq = (saved.nodes || []).length;
   const nodeEls = new Map();
   const edgeEls = new Map();
   let onSelect = null;
+
+  const persistEdges = () =>
+    saveState(workflow.id, { edges: edges.filter((e) => e.custom) });
+  const persistNodes = () =>
+    saveState(workflow.id, { nodes: nodes.filter((n) => n.custom) });
+  const persistPrompt = (nodeId, text) => {
+    const prompts = { ...(loadState(workflow.id).prompts || {}), [nodeId]: text };
+    saveState(workflow.id, { prompts });
+  };
 
   function applyTransform() {
     world.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.z})`;
@@ -115,13 +142,20 @@ export function mountWorkbench(root, workflow) {
       const inDot = document.createElement("span");
       inDot.className = "wb-port wb-port-in";
       inDot.style.background = (PORT_TYPE[node.inType] || PORT_TYPE.text).color;
+      inDot.dataset.portNode = node.id;
+      inDot.dataset.portSide = "in";
+      inDot.dataset.portType = node.inType || "text";
       el.appendChild(inDot);
     }
     if (node.role !== "output") {
       const outDot = document.createElement("span");
       outDot.className = "wb-port wb-port-out";
       outDot.style.background = (PORT_TYPE[node.outType] || PORT_TYPE.text).color;
+      outDot.dataset.portNode = node.id;
+      outDot.dataset.portSide = "out";
+      outDot.dataset.portType = node.outType || "text";
       el.appendChild(outDot);
+      wirePort(node, outDot);
     }
 
     el.style.left = `${node.x}px`;
@@ -184,6 +218,117 @@ export function mountWorkbench(root, workflow) {
     });
   }
 
+  function screenToWorld(clientX, clientY) {
+    const rect = viewport.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left - state.panX) / state.z,
+      y: (clientY - rect.top - state.panY) / state.z,
+    };
+  }
+
+  function inputPortAt(clientX, clientY) {
+    const el = document.elementFromPoint(clientX, clientY);
+    return el && el.classList && el.classList.contains("wb-port-in") ? el : null;
+  }
+  function clearHighlights() {
+    for (const p of world.querySelectorAll(".wb-port.is-compat, .wb-port.is-incompat")) {
+      p.classList.remove("is-compat", "is-incompat");
+    }
+  }
+  function commitEdge(fromNode, toId) {
+    const id = `e-wire-${fromNode.id}-${toId}`;
+    if (edges.find((e) => e.id === id)) return;
+    const edge = { id, from: fromNode.id, to: toId, type: fromNode.outType, custom: true };
+    edges.push(edge);
+    renderEdge(edge);
+    layoutCable(edge);
+    persistEdges();
+  }
+
+  // HS-69-11: drag from an output port → a live cable follows the cursor; drop
+  // on a TYPE-COMPATIBLE input port commits a new cable (incompatible flashes).
+  let liveWire = null;
+  function wirePort(node, portEl) {
+    portEl.classList.add("is-wirable");
+    portEl.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      e.stopPropagation(); // not a node drag / pan
+      const start = portPos(node, "out");
+      liveWire = document.createElementNS(SVG_NS, "path");
+      liveWire.setAttribute("class", "wb-cable wb-cable-live");
+      liveWire.setAttribute("stroke", (PORT_TYPE[node.outType] || PORT_TYPE.text).color);
+      liveWire.setAttribute("fill", "none");
+      svg.appendChild(liveWire);
+      try { portEl.setPointerCapture(e.pointerId); } catch (_e) { /* ignore */ }
+
+      const move = (ev) => {
+        const w = screenToWorld(ev.clientX, ev.clientY);
+        liveWire.setAttribute("d", cablePath(start.x, start.y, w.x, w.y));
+        clearHighlights();
+        const target = inputPortAt(ev.clientX, ev.clientY);
+        if (target && target.dataset.portNode !== node.id) {
+          const ok = portsCompatible(node.outType, target.dataset.portType);
+          target.classList.add(ok ? "is-compat" : "is-incompat");
+        }
+      };
+      const up = (ev) => {
+        portEl.removeEventListener("pointermove", move);
+        portEl.removeEventListener("pointerup", up);
+        try { portEl.releasePointerCapture(ev.pointerId); } catch (_e) { /* ignore */ }
+        const target = inputPortAt(ev.clientX, ev.clientY);
+        clearHighlights();
+        if (liveWire) { liveWire.remove(); liveWire = null; }
+        if (target && target.dataset.portNode !== node.id) {
+          if (portsCompatible(node.outType, target.dataset.portType)) {
+            commitEdge(node, target.dataset.portNode);
+          } else {
+            target.classList.add("is-incompat");
+            window.setTimeout(() => target.classList.remove("is-incompat"), 480);
+          }
+        }
+      };
+      portEl.addEventListener("pointermove", move);
+      portEl.addEventListener("pointerup", up);
+    });
+  }
+
+  // HS-69-11: the inspector edits a step node's prompt → updates the subtitle +
+  // persists. Exposed on the returned api.
+  function updatePrompt(nodeId, text) {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+    node.subtitle = text;
+    const el = nodeEls.get(nodeId);
+    if (el) {
+      let sub = el.querySelector(".wb-node-sub");
+      if (!sub && text) {
+        sub = document.createElement("p");
+        sub.className = "wb-node-sub";
+        el.appendChild(sub);
+      }
+      if (sub) sub.textContent = text;
+      layoutCablesFor(nodeId);
+    }
+    persistPrompt(nodeId, text);
+  }
+
+  // HS-69-11: the palette adds a free step node near the current view; wire it up.
+  function addNode(kind) {
+    const meta = STEP_KINDS[kind] || { title: kind, glyph: "spark", out: "text" };
+    const id = `custom-${customSeq++}-${kind}`;
+    const node = {
+      id, role: "step", kind, title: meta.title, glyph: meta.glyph, subtitle: "",
+      inType: "text", outType: meta.out, custom: true,
+      x: (-state.panX + 120) / state.z + customSeq * 14,
+      y: (-state.panY + 360) / state.z + customSeq * 10,
+    };
+    nodes.push(node);
+    renderNode(node);
+    persistNodes();
+    if (onSelect) onSelect(node);
+    return node;
+  }
+
   function wirePan() {
     let panning = false;
     let sx = 0;
@@ -192,6 +337,9 @@ export function mountWorkbench(root, workflow) {
     let opy = 0;
     viewport.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
+      // only pan from empty canvas — never steal pointers from the palette,
+      // inspector, nodes, or ports (their setPointerCapture must win).
+      if (e.target.closest(".wb-palette, .wb-inspector, .wb-node")) return;
       panning = true;
       sx = e.clientX;
       sy = e.clientY;
@@ -252,6 +400,8 @@ export function mountWorkbench(root, workflow) {
   return {
     fit,
     onSelect: (fn) => { onSelect = fn; },
+    updatePrompt,
+    addNode,
     state,
     nodes,
   };
