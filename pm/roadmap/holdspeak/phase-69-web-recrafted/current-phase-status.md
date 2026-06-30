@@ -78,7 +78,7 @@ high-impact first; the heavy node-canvas epic last.
 | HS-69-04 | Materialize + stagger motion | HIGH | **done** (on the keyed `/activity` nudge list + dashboard recent-cards; `animation-name: hs-materialize` probed on seeded DOM; reduced-motion double-gated; see [evidence](./evidence-story-04.md)) | HS-69-02 |
 | HS-69-01 | Egress badge → the cockpit | HIGH | **built** (`egress-badge.js` module + global `.egress-badge`; on the dashboard live-intel card; build green) — history/proposal cards intentionally skipped (no egress data; backend field needed) | — |
 | HS-69-05 | Premium sheets / modals uplift | MED | **done** (ConfirmDialog: grab handle + contextual glyph chip + top-lit hairline + tinted-glow backdrop + accent "Done" pill; screenshot-proven danger + affirmative; see [evidence](./evidence-story-05.md)) | HS-69-02 |
-| HS-69-06 | Qlippy dock into the cockpit | MED | backlog | HS-69-01, HS-69-02 |
+| HS-69-06 | Qlippy dock into the cockpit | MED | **done** (extracted to shared `Qlippy.astro`, mounted in AppLayout; dock + cards in the cockpit with the egress badge; native HUD proven non-regressive; shell locks retargeted; see [evidence](./evidence-story-06.md)) | HS-69-01, HS-69-02 |
 | HS-69-07 | The Queue HUD (shell + store) | **built** (`runtime-bus.js` + `queue-hud.js` + `QueueHud.astro` in AppLayout; derives jobs from `intel_status`/`runtime_activity` WS frames; pill→ledger; build green; **caught live** — the "1 working" pill rendered the seeded meeting's queued intel) — honest gaps: indeterminate progress bar (no per-job % in frames), 2 concurrent jobs derivable | HS-69-02 |
 | HS-69-08 | Reactive mic waveform | MED | backlog | server `audio_level` frame |
 | HS-69-09 | Generation theater (orb + constellation) | MED | backlog | HS-69-02 + a web `theaterorb` |
@@ -137,3 +137,11 @@ shares via `window.holdspeakConfirm`) gained the iPad sheet craft — grab handl
 chip (accent check ↔ danger alert), the top-lit gradient hairline, a tinted-glow backdrop, and accent
 "Done" pills — screenshot-proven in both the destructive and affirmative states, behaviour untouched.
 Next: HS-69-06 (bring the Qlippy dock + cards off `/presence` into the main cockpit).
+
+**2026-06-29 — HS-69-06 done.** Qlippy's dock + cards were extracted out of `presence.astro` into a
+shared `components/Qlippy.astro` (one source) and mounted in `AppLayout`, so the presence enhancer now
+rides every cockpit route (bottom-right; the Queue HUD is top-center — no collision). Proven both ways:
+a "DECISION NEEDED" card with the ⌂ Local badge + Approve/Decline/Later on `/history`, and the native
+HUD `/presence` still rendering the same shell (☁ github result card) — the extraction is
+non-regressive. Shell-lock test retargeted to the component; 49 passed across the presence/web slices.
+Next: HS-69-08 (the reactive mic waveform).

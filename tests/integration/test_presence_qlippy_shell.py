@@ -12,7 +12,14 @@ _REPO = Path(__file__).resolve().parents[2]
 
 
 def _page() -> str:
-    return (_REPO / "web" / "src" / "pages" / "presence.astro").read_text()
+    # HS-69-06: the Qlippy dock + card shell was lifted out of presence.astro
+    # into the shared web/src/components/Qlippy.astro (so the SAME enhancer
+    # rides both the native HUD and the cockpit). Read both so the shell locks
+    # hold wherever the markers now live.
+    return (
+        (_REPO / "web" / "src" / "pages" / "presence.astro").read_text()
+        + (_REPO / "web" / "src" / "components" / "Qlippy.astro").read_text()
+    )
 
 
 def _qlippy_js() -> str:
