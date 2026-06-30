@@ -19,7 +19,7 @@
 import AppMark from "./AppMark.astro";
 import TrustChip from "./TrustChip.astro";
 
-type Route = "runtime" | "desk" | "activity" | "history" | "dictation" | "companion" | "commands" | "profiles";
+type Route = "runtime" | "desk" | "workbench" | "activity" | "history" | "dictation" | "companion" | "commands" | "profiles";
 
 interface Props {
   current?: Route;
@@ -33,6 +33,7 @@ const groups: { label: string; routes: { slug: Route; label: string; href: strin
     routes: [
       { slug: "runtime", label: "Runtime", href: "/" },
       { slug: "desk", label: "Desk", href: "/desk" },
+      { slug: "workbench", label: "Workbench", href: "/workbench" },
     ],
   },
   {

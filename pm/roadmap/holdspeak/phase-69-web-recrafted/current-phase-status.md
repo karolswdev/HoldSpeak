@@ -82,7 +82,7 @@ high-impact first; the heavy node-canvas epic last.
 | HS-69-07 | The Queue HUD (shell + store) | **built** (`runtime-bus.js` + `queue-hud.js` + `QueueHud.astro` in AppLayout; derives jobs from `intel_status`/`runtime_activity` WS frames; pill→ledger; build green; **caught live** — the "1 working" pill rendered the seeded meeting's queued intel) — honest gaps: indeterminate progress bar (no per-job % in frames), 2 concurrent jobs derivable | HS-69-02 |
 | HS-69-08 | Reactive mic waveform | MED | **done** (additive throttled `audio_level` broadcast wired into dictation + meeting recorders; floating canvas meter in AppLayout reacts + peak-glows + idle-hides; backend 4 tests + frontend screenshots; see [evidence](./evidence-story-08.md)) | server `audio_level` frame |
 | HS-69-09 | Generation theater (orb + constellation) | MED | **done** (iPad orb reused; theater in AppLayout driven by intel_status/token/complete frames; UI screenshots + **real-metal `.43` snapshot** lighting summary/actions/topics; see [evidence](./evidence-story-09.md)) | HS-69-02 + a web `theaterorb` |
-| HS-69-10 | Node canvas — foundation | HIGH (heavy) | backlog | HS-68-03 |
+| HS-69-10 | Node canvas — foundation | HIGH (heavy) | **done** (new `/workbench`: pure-vanilla pannable/zoomable dot-grid world; `Workflow`-shaped model; draggable signal-card nodes + type-colored bezier cables (text/findings/signal); preset switching; route swept; see [evidence](./evidence-story-10.md)) | HS-68-03 |
 | HS-69-11 | Node canvas — wiring + inspector | HIGH (heavy) | backlog | HS-69-10, HS-69-05 |
 | HS-69-12 | Web `/companion` → the Agent Desk | MED | backlog | HS-69-02 |
 
@@ -166,3 +166,14 @@ snapshot (summary + 2 actions + 4 topics) lighting three nodes — the `intel_co
 real metal; `.43` returned buffered (0 token chunks) so the token-pulse waits on `.13` (ready script
 ships). 7 passed. **Remaining: HS-69-10/11 (the full node canvas epic) + HS-69-12 (companion → desk).**
 Next: HS-69-10.
+
+**2026-06-30 — HS-69-10 done (the node canvas foundation).** A new `/workbench` route renders the
+canonical linear `Workflow` (`source → steps → output`, byte-compatible with the iPad's Codable form)
+as a node graph — pure-vanilla per the Phase-68 design: SVG bezier cables + HTML signal-card nodes in
+one transformed world layer, no graph lib. Pan + zoom (about the cursor) + node drag (live cable
+re-layout, persisted to the iPad's `hs.workflows.v1` key); the cable math is the iPad's exact
+horizontal-tangent cubic; cables are type-colored on the web-wins palette (text→accent / findings→ok /
+signal→info). Three presets switch the graph. Registered in pages.py + TopNav + AppLayout + the route
+pre-flight (swept, zero page errors). Screenshot-proven (default chain / a dragged node with cables
+following / the triage preset showing all three cable types). 7 passed. Next: HS-69-11 (port wiring +
+the inspector sheet).

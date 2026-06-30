@@ -38,6 +38,7 @@ PAGE_ROUTES = [
     "/welcome",
     "/setup",
     "/desk",
+    "/workbench",
     "/history",
     "/settings",
     "/activity",

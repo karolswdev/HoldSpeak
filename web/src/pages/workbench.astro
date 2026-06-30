@@ -1,0 +1,221 @@
+---
+// HS-69-10: the Workbench — a node-graph builder over the canonical linear
+// `Workflow` shape. A pannable/zoomable dot-grid world with typed, draggable
+// Signal node cards joined by type-colored bezier cables (the foundation; wiring
+// + inspector land in HS-69-11). Pure-vanilla canvas (canvas.js) over the model
+// (model.js); the page chrome is light.
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="Workbench" current="workbench">
+  <div class="wb-shell">
+    <header class="wb-head">
+      <div class="wb-head-lead">
+        <span class="wb-eyebrow">Build</span>
+        <h1 class="wb-title">Workbench</h1>
+        <p class="wb-sub">Wire primitives into a run. Drag to arrange; pan and zoom the canvas.</p>
+      </div>
+      <div class="wb-head-actions">
+        <div class="wb-presets" data-wb-presets role="group" aria-label="Workflow presets"></div>
+        <button type="button" class="btn btn--secondary btn--sm" data-wb-fit>Fit</button>
+      </div>
+    </header>
+
+    <div class="wb-canvas" data-wb-canvas tabindex="0" aria-label="Workflow canvas">
+      <div class="wb-world" data-wb-world>
+        <svg class="wb-cables" data-wb-cables aria-hidden="true"></svg>
+      </div>
+      <span class="wb-hint" data-wb-hint>drag a node · scroll to zoom · drag canvas to pan</span>
+    </div>
+  </div>
+</AppLayout>
+
+<script>
+  import { mountWorkbench } from "../scripts/workbench/canvas.js";
+  import { PRESETS } from "../scripts/workbench/model.js";
+
+  function boot() {
+    const root = document.querySelector(".wb-shell");
+    if (!root) return;
+    const world = root.querySelector("[data-wb-world]");
+    const svg = root.querySelector("[data-wb-cables]");
+    const presetsEl = root.querySelector("[data-wb-presets]");
+    const fitBtn = root.querySelector("[data-wb-fit]");
+    let api = null;
+
+    function clearWorld() {
+      // keep the svg layer; drop its paths + every node card
+      svg.replaceChildren();
+      for (const n of [...world.querySelectorAll(".wb-node")]) n.remove();
+    }
+
+    function mount(preset) {
+      clearWorld();
+      api = mountWorkbench(root, preset);
+      if (api) api.onSelect((node) => {
+        const hint = root.querySelector("[data-wb-hint]");
+        if (hint) hint.textContent = `${node.title}${node.subtitle ? " — " + node.subtitle : ""}`;
+      });
+      presetsEl.querySelectorAll("button").forEach((b) =>
+        b.classList.toggle("is-active", b.dataset.presetId === preset.id));
+    }
+
+    PRESETS.forEach((p) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "wb-preset-btn";
+      b.dataset.presetId = p.id;
+      b.textContent = p.name;
+      b.addEventListener("click", () => mount(p));
+      presetsEl.appendChild(b);
+    });
+
+    if (fitBtn) fitBtn.addEventListener("click", () => api && api.fit());
+    mount(PRESETS[0]);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+</script>
+
+<style is:global>
+  /* Page chrome can be scoped, but the canvas/world/node/cable styles are
+     is:global because the nodes + cables are JS-rendered into the world. */
+  .wb-shell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    height: calc(100vh - 120px);
+    min-height: 520px;
+    padding: var(--space-5);
+    max-width: 100rem;
+    margin: 0 auto;
+  }
+  .wb-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .wb-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    color: var(--accent);
+  }
+  .wb-title { margin: 0; font-size: var(--font-size-3xl); font-family: var(--font-display); }
+  .wb-sub { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--font-size-sm); }
+  .wb-head-actions { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+  .wb-presets { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .wb-preset-btn {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text-muted);
+    border-radius: var(--radius-pill);
+    padding: 0.3rem var(--space-3);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: color var(--duration-short) var(--ease-standard),
+                border-color var(--duration-short) var(--ease-standard);
+  }
+  .wb-preset-btn:hover { color: var(--text); border-color: var(--border-strong); }
+  .wb-preset-btn.is-active {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface-1));
+  }
+
+  /* the canvas viewport: the dot grid lives here (synced to pan/zoom in JS) */
+  .wb-canvas {
+    position: relative;
+    flex: 1 1 auto;
+    overflow: hidden;
+    border-radius: var(--radius-5);
+    border: 1px solid var(--border-subtle);
+    background-color: var(--bg);
+    background-image: radial-gradient(circle, color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 1.4px);
+    background-size: 34px 34px;
+    cursor: grab;
+    touch-action: none;
+  }
+  .wb-canvas.is-panning { cursor: grabbing; }
+
+  .wb-world {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    transform-origin: 0 0;
+  }
+  .wb-cables {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .wb-cable {
+    stroke-width: 2;
+    opacity: 0.85;
+    stroke-linecap: round;
+  }
+
+  .wb-node {
+    position: absolute;
+    width: 210px;
+    --signal-card-surface: var(--surface-2);
+    padding: var(--space-3);
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .wb-node.is-dragging { cursor: grabbing; box-shadow: var(--elev-3); z-index: 5; }
+  .wb-node.role-source { --signal-card-surface: color-mix(in srgb, var(--accent) 8%, var(--surface-2)); }
+  .wb-node.role-output { --signal-card-surface: color-mix(in srgb, var(--ok) 8%, var(--surface-2)); }
+  .wb-node-head { display: flex; align-items: center; gap: var(--space-2); }
+  .wb-node-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    color: var(--text);
+  }
+  .wb-node-sub {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-normal);
+    overflow-wrap: anywhere;
+  }
+  .wb-port {
+    position: absolute;
+    top: 50%;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+    transform: translateY(-50%);
+  }
+  .wb-port-in { left: -6px; }
+  .wb-port-out { right: -6px; }
+
+  .wb-hint {
+    position: absolute;
+    left: var(--space-3);
+    bottom: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-faint);
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    padding: 0.15rem var(--space-2);
+    border-radius: var(--radius-2);
+    pointer-events: none;
+  }
+</style>

@@ -246,6 +246,25 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/workbench")
+    async def workbench_page() -> Any:
+        """Serve the Workbench (the node-graph builder over the linear Workflow
+        shape, HS-69-10), read from the Astro-built _built/workbench/index.html.
+        The TopNav links here, so it needs a real route. Pure-vanilla canvas."""
+        page = _HOLDSPEAK_DIR / "static" / "_built" / "workbench" / "index.html"
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built workbench page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak Workbench</title></head>"
+                "<body><h1>The Workbench</h1>"
+                "<p>Workbench UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     @router.get("/profiles")
     async def profiles_page() -> Any:
         """Serve the Runtime Profiles surface (HSM-24-05), read from the
