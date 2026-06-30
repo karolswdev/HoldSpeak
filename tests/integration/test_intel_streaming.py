@@ -264,6 +264,7 @@ class TestMeetingIntelStreamingIntegration:
             with patch.object(MeetingIntel, "_ensure_model_loaded"):
                 intel = MeetingIntel()
                 intel._llm = mock_llm
+                intel._active_provider = "local"  # the real loader sets this
 
                 stream = intel.analyze("Test transcript", stream=True)
                 items = list(stream)
@@ -284,6 +285,7 @@ class TestMeetingIntelStreamingIntegration:
             with patch.object(MeetingIntel, "_ensure_model_loaded"):
                 intel = MeetingIntel()
                 intel._llm = mock_llm
+                intel._active_provider = "local"  # the real loader sets this
 
                 stream = intel.analyze("Test", stream=True)
                 items = list(stream)
@@ -291,6 +293,42 @@ class TestMeetingIntelStreamingIntegration:
                 assert len(items) == 1
                 assert isinstance(items[0], IntelResult)
                 assert "ERROR" in items[0].raw_response
+
+    def test_cloud_stream_forwards_endpoint_deltas(self):
+        """The cloud/endpoint path streams: it forwards the OpenAI-compatible
+        endpoint's SSE deltas as intel_token chunks (not one buffered call), so
+        the generation theater's pulse + the Queue HUD heartbeat light up for
+        endpoint users too."""
+        def make_chunk(content):
+            chunk = MagicMock()
+            delta = MagicMock()
+            delta.content = content
+            choice = MagicMock()
+            choice.delta = delta
+            chunk.choices = [choice]
+            return chunk
+
+        pieces = ['{"topics":', ' ["Rate"],', ' "action_items": [],', ' "summary": "OK"}']
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = MagicMock(
+            return_value=iter([make_chunk(p) for p in pieces])
+        )
+
+        with patch.object(MeetingIntel, "_ensure_model_loaded"):
+            intel = MeetingIntel(provider="cloud", cloud_base_url="http://example/v1")
+            intel._active_provider = "cloud"
+            intel._openai_client = mock_client
+
+            items = list(intel.analyze("Test transcript", stream=True))
+            tokens = [i for i in items if isinstance(i, str)]
+            results = [i for i in items if isinstance(i, IntelResult)]
+
+            assert tokens == pieces  # per-token streaming, not a single buffered yield
+            assert len(results) == 1
+            assert results[0].summary == "OK"
+            # the request was made with stream=True
+            _, kwargs = mock_client.chat.completions.create.call_args
+            assert kwargs.get("stream") is True
 
 
 # ============================================================
@@ -846,6 +884,7 @@ class TestEmptyTranscriptHandling:
             with patch.object(MeetingIntel, "_ensure_model_loaded"):
                 intel = MeetingIntel()
                 intel._llm = mock_llm
+                intel._active_provider = "local"  # the real loader sets this
 
                 stream = intel.analyze("", stream=True)
                 items = list(stream)

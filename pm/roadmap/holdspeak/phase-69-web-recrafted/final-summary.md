@@ -55,9 +55,11 @@ gate with screenshot — and, for the LLM-shaped theater, real-metal — proof.
 
 ## Honest follow-ups (surfaced, not dropped)
 
-- The mic waveform's real-mic e2e (the metal test is excluded); the theater's
-  token-pulse on real metal awaits the streaming `.13` endpoint (down this
-  session; `.43` returned buffered).
+- The mic waveform's real-mic e2e (the metal test is excluded).
+- ~~The theater's token-pulse awaits the streaming `.13` endpoint~~ — **resolved
+  in the `cloud-intel-streaming` follow-up**: that 0-token result was an engine
+  limitation (the cloud intel path buffered; only local GGUF streamed), now
+  fixed, and the pulse is proven on real `.43` metal (125 streamed chunks).
 - The egress badge on history/proposal cards needs a backend egress field.
 - The deeper iPad CompanionBoard live-session interactions (select/pin/inject).
 
