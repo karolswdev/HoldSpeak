@@ -12,15 +12,20 @@ import SwiftUI
 enum DeskSprites {
     /// Every sprite a kind can wear, in display order (first = the classic default).
     static func variants(_ kind: PrimitiveKind) -> [String] {
-        // Only list sprites that actually ship as <name>.png (a missing one renders a placeholder).
-        // New art generated for a kind gets appended here the moment its png is bundled.
+        // Counts must match the shipped art (`<base>.png` + `<base>2.png`…`<base>N.png`); a gap renders
+        // DeskSprite's placeholder. Bump N when more variety art is bundled.
         switch kind {
-        case .meeting:   return ["cassette", "cassette2", "cassette3", "cassette4", "cassette5"]
-        case .note:      return ["note", "note2", "note3", "note4"]
-        case .kb:        return ["crystal", "crystal2", "crystal3", "crystal4"]
+        case .meeting:   return numbered("cassette", 17)
+        case .note:      return numbered("note", 16)
+        case .kb:        return numbered("crystal", 16)
         case .model:     return ["cartridge"]
         default:         return [kind.glyph]
         }
+    }
+
+    /// ["cassette", "cassette2", … "cassetteN"] — the first asset has no numeric suffix.
+    private static func numbered(_ base: String, _ count: Int) -> [String] {
+        count <= 1 ? [base] : [base] + (2...count).map { "\(base)\($0)" }
     }
 
     /// A stable hash (djb2) — UNLIKE `String.hashValue`, which is seeded per process launch and would

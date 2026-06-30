@@ -58,13 +58,17 @@ staged.each { |p| target.add_file_references([group.new_reference(p)]) }
 # craft surfaces. All optional — the UI falls back to SF Symbols if a file is missing — but
 # bundling them lights up the craft.
 res_group = project.new_group('Resources', File.join(ROOT, 'App'))
-%w[mermaid.min.js qlippy.png pushpin.png waveorb.png theaterorb.png crystal.png crystal2.png crystal3.png crystal4.png cassette.png cassette2.png cassette3.png cassette4.png cassette5.png cartridge.png mic.png folder.png note.png note2.png note3.png note4.png robot.png lightdesk.scn plant.scn books.scn mug.scn keyboard.scn lightdesk_tex.png plant_tex.png books_tex.png keyboard_tex.png paper.png].each do |name|
+%w[mermaid.min.js qlippy.png pushpin.png waveorb.png theaterorb.png cartridge.png mic.png folder.png robot.png lightdesk.scn plant.scn books.scn mug.scn keyboard.scn lightdesk_tex.png plant_tex.png books_tex.png keyboard_tex.png paper.png].each do |name|
   path = File.join(ROOT, 'App', name)
   target.add_resources([res_group.new_reference(path)]) if File.exist?(path)
 end
 # HSM-14 — bundled PixelLab pixel-art: tailored-agent avatars (agent_*), diarized-speaker
-# portraits (speaker_*), and the Arkanoid desk-game sprites (ark_*).
+# portraits (speaker_*), the Arkanoid desk-game sprites (ark_*), and the primitive sprite
+# library (cassette*/note*/crystal* — globbed so new variety art bundles automatically).
 Dir[File.join(ROOT, 'App', '{agent,speaker,ark,game}_*.png')].sort.each do |p|
+  target.add_resources([res_group.new_reference(p)])
+end
+Dir[File.join(ROOT, 'App', '{cassette,note,crystal}*.png')].sort.each do |p|
   target.add_resources([res_group.new_reference(p)])
 end
 
