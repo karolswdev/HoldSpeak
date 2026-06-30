@@ -1,6 +1,6 @@
 # Phase 69 — Web, Re-crafted (the convergence delivery)
 
-**Status:** in-progress (opened 2026-06-22)
+**Status:** CLOSED (12/12) — 2026-06-30. See [`final-summary.md`](./final-summary.md). PR [#202](https://github.com/karolswdev/HoldSpeak/pull/202).
 
 **Last updated:** 2026-06-29 (**cadence reconciled; full-sweep delivery underway.** The substrate
 (HS-69-02/03/04/01/07) is confirmed present in `web/src/` — but it had landed inside a mixed mobile
