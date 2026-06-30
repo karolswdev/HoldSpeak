@@ -2,11 +2,14 @@
 
 **Status:** in-progress (opened 2026-06-22)
 
-**Last updated:** 2026-06-22 (**opened + Wave 3 building.** The delivery half of the convergence:
-bring the iPad's shipped Signal craft onto the web cockpit, **substrate-first**, per the Phase-68
-parity map. Generated directly from `pm/roadmap/holdspeak/phase-68-web-convergence/parity-map.md`
-(the ordered backlog) + `web-technical-design.md` (the how) + `design-pattern-catalog.md` (the what).
-Wave 3 dispatched: the Signal-card substrate (HS-69-02/03/04).)
+**Last updated:** 2026-06-29 (**cadence reconciled; full-sweep delivery underway.** The substrate
+(HS-69-02/03/04/01/07) is confirmed present in `web/src/` — but it had landed inside a mixed mobile
+checkpoint commit (`f64d80d HSM-14-19`) with no per-story evidence, and the desktop README still
+pointed "Current phase" at Phase 67. This update fixes both: the README now points here, and the
+program is resumed under the PMO gate. Owner direction (2026-06-29): deliver the **full sweep in
+sequence** through the **full node canvas** (1:1 with the iPad Workbench) and the `/companion`→Agent
+Desk — true two-way felt parity, multi-session. Prior: **opened + Wave 3** — the Signal-card substrate
+(HS-69-02/03/04) was built.)
 
 ## The thesis
 
@@ -30,6 +33,18 @@ high-impact first; the heavy node-canvas epic last.
 - **Companion portal direction (owner-approved):** the web `/companion` **becomes the Agent Desk** —
   the same desk surface as the iPad (HSM-15-08), not a plainer control panel. Added as **HS-69-12**.
 - **iPad-is-a-full-peer** principle stands (this phase is desktop/web; it does not weaken on-device).
+
+### Owner direction (2026-06-29) — the program for the rest of Phase 69
+
+- **Full sweep, in order.** Deliver every remaining story cheapest-high-impact-first, all the way
+  through the heavy node-canvas epic and the `/companion`→Agent-Desk. Multi-session; true full parity
+  over a fast partial.
+- **Full node canvas (not a lighter pipeline view).** HS-69-10/11 build the pannable dot-grid canvas
+  with draggable typed nodes, type-colored bezier cables, palette, and inspector — 1:1 with the iPad
+  Workbench. The §1c owner-confirm the parity map asked for is **answered: build the full canvas.**
+- **PMO discipline resumed.** Every commit through the contract gate (7 `[x]`), one story-flip per
+  commit with its `evidence-story-NN.md`, PR-per-slice merged on green CI, screenshot proof per story
+  and real-metal proof for the LLM-shaped ones (the generation theater especially).
 
 ## Scope
 
@@ -91,3 +106,16 @@ a raised signal-card** (top-lit hairline + elevation), confirmed. The dashboard 
 and history meeting-cards + the `hs-materialize` arrival couldn't be shown on this fresh runtime
 (empty DB → `/` redirects to onboarding; history has no meetings) — they need seeded data to screenshot
 (a quick follow-up). Substrate is shipped + working; next: HS-69-01 (egress badge → cockpit).
+
+**2026-06-29 — cadence reconciled; full-sweep program resumed (Wave A).** A grounding pass confirmed the
+true state: HS-69-02/03/04/01/07 are all present in `web/src/` (the `.signal-card` primitive +
+gradient/hairline tokens in `tokens.css`/`global.css`, `egress-badge.js`, `runtime-bus.js` +
+`queue-hud.js` + `QueueHud.astro`), but they had been committed inside a **mixed mobile checkpoint**
+(`f64d80d HSM-14-19`) — a PMO-gate violation (multiple phases in one commit, no per-story evidence) that
+is already merged, so it is recorded here as paid-down debt rather than re-litigated. The desktop
+README "Current phase" pointer (stale at Phase 67) and "Last updated" line are corrected to point here.
+A web-flagship polish audit (this session) confirmed the substrate is **under-applied**: `.signal-card`
+rides only 5 pages; `/desk`, `/dictation`, and `/activity` lack it, and `/activity` still ships verbatim
+legacy vanilla JS. That becomes Wave B. The remaining seven stories (05 sheets, 06 Qlippy dock, 08
+waveform, 09 theater, 10/11 node canvas, 12 companion→desk) run in sequence per the owner direction
+above, on branch `phase-69-web-recrafted`.
