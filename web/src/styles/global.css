@@ -123,7 +123,13 @@ pre {
  * ============================================================ */
 .signal-card {
   position: relative;
-  background: var(--surface-1);
+  /* Composable surface: defaults to surface-1 (the original behaviour for
+   * cards sitting directly on the canvas — dashboard, settings, history).
+   * Cards nested inside an already-raised surface (e.g. the desk's
+   * surface-1 zone columns) set `--signal-card-surface: var(--surface-2)`
+   * so they keep their contrast against the parent while still gaining the
+   * top-lit hairline + elevation. HS-69-02 broadening (Wave B). */
+  background: var(--signal-card-surface, var(--surface-1));
   border: 1px solid transparent;     /* the visible edge is the ::before hairline */
   border-radius: var(--radius-5);
   box-shadow: var(--elev-2);

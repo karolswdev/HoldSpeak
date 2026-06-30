@@ -131,7 +131,7 @@ const GROUPS = [
                 {/* meeting card */}
                 {kind === "meeting" && (
                   <template x-for={`item in items.meeting`} {...{ ":key": "item.id" }}>
-                    <article class="card card--info">
+                    <article class="card card--info signal-card">
                       <div class="card-type"><span class="dot"></span><span>meeting</span></div>
                       <h3 class="card-title" x-text="item.title">Meeting</h3>
                       <p class="card-sub"><span x-text="relTime(item.startedAt)"></span><span x-show="item.segmentCount" x-cloak> · <span x-text="item.segmentCount"></span> segs</span><span x-show="item.actionItemCount" x-cloak> · <span x-text="item.actionItemCount"></span> actions</span></p>
@@ -152,7 +152,7 @@ const GROUPS = [
                 {/* artifact card */}
                 {kind === "artifact" && (
                   <template x-for={`item in items.artifact`} {...{ ":key": "item.id" }}>
-                    <article class="card card--accent">
+                    <article class="card card--accent signal-card">
                       <div class="card-type"><span class="dot"></span><span x-text="item.artifactType || 'artifact'"></span></div>
                       <h3 class="card-title" x-text="item.title">Artifact</h3>
                       <p class="card-body" x-text="(item.bodyMarkdown || '').slice(0, 160)"></p>
@@ -181,7 +181,7 @@ const GROUPS = [
                 {/* note card */}
                 {kind === "note" && (
                   <template x-for={`item in items.note`} {...{ ":key": "item.id" }}>
-                    <article class="card card--ok">
+                    <article class="card card--ok signal-card">
                       <div class="card-type"><span class="dot"></span><span>note</span></div>
                       <h3 class="card-title" x-text="item.title">Note</h3>
                       <p class="card-body" x-text="(item.bodyMarkdown || '').slice(0, 160)"></p>
@@ -202,7 +202,7 @@ const GROUPS = [
                 {/* agent card — with a live Run affordance */}
                 {kind === "agent" && (
                   <template x-for={`item in items.agent`} {...{ ":key": "item.id" }}>
-                    <article class="card card--accent agent-card">
+                    <article class="card card--accent agent-card signal-card">
                       <div class="agent-top">
                         <span class="agent-avatar" x-text="item.avatar">🤖</span>
                         <div class="agent-id">
@@ -235,7 +235,7 @@ const GROUPS = [
                 {/* chain card */}
                 {kind === "chain" && (
                   <template x-for={`item in items.chain`} {...{ ":key": "item.id" }}>
-                    <article class="card card--violet">
+                    <article class="card card--violet signal-card">
                       <div class="card-type"><span class="dot"></span><span>chain</span></div>
                       <h3 class="card-title" x-text="item.name">Chain</h3>
                       <p class="card-sub"><span x-text="item.steps.length"></span> step<span x-show="item.steps.length !== 1">s</span></p>
@@ -263,7 +263,7 @@ const GROUPS = [
                 {/* workflow card */}
                 {kind === "workflow" && (
                   <template x-for={`item in items.workflow`} {...{ ":key": "item.id" }}>
-                    <article class="card card--info">
+                    <article class="card card--info signal-card">
                       <div class="card-type"><span class="dot"></span><span>workflow</span></div>
                       <h3 class="card-title" x-text="item.name">Workflow</h3>
                       <p class="card-body" x-show="item.prompt" x-cloak x-text="item.prompt"></p>
@@ -290,7 +290,7 @@ const GROUPS = [
                 {/* directory card — a folder that holds filed primitives */}
                 {kind === "directory" && (
                   <template x-for={`item in items.directory`} {...{ ":key": "item.id" }}>
-                    <article class="card card--folder dir-card">
+                    <article class="card card--folder dir-card signal-card">
                       <div class="dir-top">
                         <span class="dir-folder-icon" aria-hidden="true">
                           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
@@ -321,7 +321,7 @@ const GROUPS = [
                 {/* kb card */}
                 {kind === "kb" && (
                   <template x-for={`item in items.kb`} {...{ ":key": "item.id" }}>
-                    <article class="card card--warn">
+                    <article class="card card--warn signal-card">
                       <div class="card-type"><span class="dot"></span><span>kb</span></div>
                       <h3 class="card-title" x-text="item.name">Knowledge base</h3>
                       <p class="card-sub"><span x-text="item.memberIds.length"></span> member<span x-show="item.memberIds.length !== 1">s</span></p>
@@ -1020,13 +1020,18 @@ const GROUPS = [
 
   /* ── cards grid ── */
   .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: var(--space-3); }
+  /* HS-69-02 broadening (Wave B): the card is now the shared `.signal-card`
+     primitive (surface + top-lit gradient hairline + radius-5 + elevation),
+     so this rule keeps only layout + the per-kind hover accent. The cards sit
+     inside surface-1 zone columns, so the primitive's surface is overridden to
+     surface-2 to preserve the depth hierarchy. */
   .card {
     display: flex; flex-direction: column; gap: var(--space-2);
-    padding: var(--space-4); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-    background: var(--surface-2);
-    transition: transform var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
+    padding: var(--space-4);
+    --signal-card-surface: var(--surface-2);
+    transition: transform var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
   }
-  .card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--ck, var(--border-strong)) 45%, var(--border)); box-shadow: var(--elev-2); }
+  .card:hover { transform: translateY(-2px); box-shadow: var(--elev-3), 0 0 0 1px color-mix(in srgb, var(--ck, var(--border-strong)) 40%, transparent); }
   .card--info   { --ck: var(--info); }
   .card--accent { --ck: var(--accent); }
   .card--ok     { --ck: var(--ok); }

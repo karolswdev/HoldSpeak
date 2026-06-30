@@ -128,8 +128,8 @@ import CommandPreview from "../components/CommandPreview.astro";
             </div>
 
             <div class="nudge-list" x-show="!loading && nudges.length > 0" x-cloak>
-              <template x-for="nudge in nudges" :key="nudge?.key">
-                <article class="nudge-card" :class="{ 'is-selected': isSelected(nudge) }">
+              <template x-for="(nudge, idx) in nudges" :key="nudge?.key">
+                <article class="nudge-card signal-card hs-materialize" :class="{ 'is-selected': isSelected(nudge) }" :style="`--i: ${idx}`">
                   <header class="nudge-head">
                     <div class="nudge-head-left">
                       <span class="nudge-kind" x-text="(nudge?.kind || 'nudge')"></span>
@@ -725,13 +725,15 @@ import CommandPreview from "../components/CommandPreview.astro";
 
   .nudge-list { display: flex; flex-direction: column; gap: var(--space-3); }
 
+  /* HS-69-02 broadening (Wave B): the base surface (fill + top-lit gradient
+     hairline + radius + elevation) now comes from the global `.signal-card`
+     primitive — which, being global, also reaches the JS-injected rule cards
+     that this page's Astro-scoped styles never could. This rule keeps only
+     layout + the left accent spine + the selected state. */
   .nudge-card {
     display: flex; flex-direction: column; gap: var(--space-3);
     padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
-    background: var(--surface-2);
-    border: 1px solid var(--border);
     border-left: 3px solid var(--line-strong);
-    border-radius: var(--radius-2);
     transition: border-color var(--duration-short) var(--ease-standard),
                 background var(--duration-short) var(--ease-standard);
   }

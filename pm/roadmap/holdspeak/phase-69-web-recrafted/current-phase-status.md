@@ -73,7 +73,7 @@ high-impact first; the heavy node-canvas epic last.
 
 | Story | Title | Priority | Status | Depends on |
 |-------|-------|----------|--------|------------|
-| HS-69-02 | The shared Signal card primitive | HIGH | **built + visually verified** (settings panel = raised signal-card; global-scoped; build green) | — |
+| HS-69-02 | The shared Signal card primitive | HIGH | **done** (composable `--signal-card-surface`; broadened to `/desk` (8 cards) + `/activity` (nudge + 4 rule cards, repairing a latent Astro-scope-on-JS-DOM gap); computed-style probes + screenshots; see [evidence](./evidence-story-02.md)) | — |
 | HS-69-03 | Gradient + hairline tokens | HIGH | **built** (`--accent-gradient`/`--bg-gradient`; gradient consumed by `.glyph-chip`) | — |
 | HS-69-04 | Materialize + stagger motion | HIGH | **built; visual pending** (needs seeded meetings to show the card-arrival on dashboard/history) | HS-69-02 |
 | HS-69-01 | Egress badge → the cockpit | HIGH | **built** (`egress-badge.js` module + global `.egress-badge`; on the dashboard live-intel card; build green) — history/proposal cards intentionally skipped (no egress data; backend field needed) | — |
@@ -119,3 +119,14 @@ rides only 5 pages; `/desk`, `/dictation`, and `/activity` lack it, and `/activi
 legacy vanilla JS. That becomes Wave B. The remaining seven stories (05 sheets, 06 Qlippy dock, 08
 waveform, 09 theater, 10/11 node canvas, 12 companion→desk) run in sequence per the owner direction
 above, on branch `phase-69-web-recrafted`.
+
+**2026-06-29 — Wave B: the substrate broadened (HS-69-02 done).** The primitive became composable
+(`--signal-card-surface`, default unchanged) and now rides the two surfaces the audit flagged as
+under-applied: `/desk` (all 8 primitive cards, surface-2 override to keep contrast inside the zones)
+and `/activity` (the Alpine nudge card + the 4 JS-injected rule cards). Applying the global primitive
+to `/activity` **repaired a latent bug** — Astro's default attribute-scoping meant the page's own
+`.rule-item` styles never reached its `innerHTML`-injected cards; the global primitive is what styles
+them now. Proven on the live seeded DOM with computed-style probes (`--elev-2` shadow, 18px radius, the
+correct surface, the `::before` hairline, and `animation-name: hs-materialize` on nudge cards) plus
+full-page screenshots, via `scripts/screenshot_phase69_substrate.py`. Slice green (65 passed) + route
+pre-flight (2 passed). Next: HS-69-04 (flip the materialize story on this proof), then HS-69-05.

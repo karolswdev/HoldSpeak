@@ -93,7 +93,7 @@
       function renderRules() {
         $("rules").innerHTML = state.rules.length
           ? state.rules.map((rule) => `
-              <article class="rule-item">
+              <article class="rule-item signal-card">
                 <div class="record-top">
                   <div>
                     <div class="record-title">${escapeHtml(rule.name || rule.pattern)}</div>
@@ -136,7 +136,7 @@
         const previews = state.candidatePreviews || [];
         $("candidate-preview").innerHTML = previews.length
           ? previews.map((candidate, index) => `
-              <article class="rule-item candidate-preview-item">
+              <article class="rule-item candidate-preview-item signal-card">
                 <div class="record-top">
                   <div>
                     <div class="record-title">${escapeHtml(candidate.title)}</div>
@@ -161,7 +161,7 @@
         const filterLabel = state.candidateStatusFilter || "all";
         $("meeting-candidates").innerHTML = candidates.length
           ? candidates.map((candidate) => `
-              <article class="rule-item candidate-saved-item">
+              <article class="rule-item candidate-saved-item signal-card">
                 <div class="record-top">
                   <div>
                     <div class="record-title">${escapeHtml(candidate.title)}</div>
@@ -223,7 +223,7 @@
       function renderPreview(matches) {
         $("rule-preview").innerHTML = matches.length
           ? matches.slice(0, 8).map((record) => `
-              <article class="rule-item">
+              <article class="rule-item signal-card">
                 <div class="record-title">${escapeHtml(record.title || record.url)}</div>
                 <div class="record-meta">${escapeHtml(record.entity_id || record.domain)} · ${escapeHtml(record.url)}</div>
               </article>
