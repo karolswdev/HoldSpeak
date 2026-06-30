@@ -77,7 +77,7 @@ high-impact first; the heavy node-canvas epic last.
 | HS-69-03 | Gradient + hairline tokens | HIGH | **built** (`--accent-gradient`/`--bg-gradient`; gradient consumed by `.glyph-chip`) | — |
 | HS-69-04 | Materialize + stagger motion | HIGH | **done** (on the keyed `/activity` nudge list + dashboard recent-cards; `animation-name: hs-materialize` probed on seeded DOM; reduced-motion double-gated; see [evidence](./evidence-story-04.md)) | HS-69-02 |
 | HS-69-01 | Egress badge → the cockpit | HIGH | **built** (`egress-badge.js` module + global `.egress-badge`; on the dashboard live-intel card; build green) — history/proposal cards intentionally skipped (no egress data; backend field needed) | — |
-| HS-69-05 | Premium sheets / modals uplift | MED | backlog | HS-69-02 |
+| HS-69-05 | Premium sheets / modals uplift | MED | **done** (ConfirmDialog: grab handle + contextual glyph chip + top-lit hairline + tinted-glow backdrop + accent "Done" pill; screenshot-proven danger + affirmative; see [evidence](./evidence-story-05.md)) | HS-69-02 |
 | HS-69-06 | Qlippy dock into the cockpit | MED | backlog | HS-69-01, HS-69-02 |
 | HS-69-07 | The Queue HUD (shell + store) | **built** (`runtime-bus.js` + `queue-hud.js` + `QueueHud.astro` in AppLayout; derives jobs from `intel_status`/`runtime_activity` WS frames; pill→ledger; build green; **caught live** — the "1 working" pill rendered the seeded meeting's queued intel) — honest gaps: indeterminate progress bar (no per-job % in frames), 2 concurrent jobs derivable | HS-69-02 |
 | HS-69-08 | Reactive mic waveform | MED | backlog | server `audio_level` frame |
@@ -130,3 +130,10 @@ them now. Proven on the live seeded DOM with computed-style probes (`--elev-2` s
 correct surface, the `::before` hairline, and `animation-name: hs-materialize` on nudge cards) plus
 full-page screenshots, via `scripts/screenshot_phase69_substrate.py`. Slice green (65 passed) + route
 pre-flight (2 passed). Next: HS-69-04 (flip the materialize story on this proof), then HS-69-05.
+
+**2026-06-29 — HS-69-04 + HS-69-05 done.** Materialize flipped to done on the seeded-DOM probe
+(`animation-name: hs-materialize`). Then the premium sheet: `ConfirmDialog` (the one modal every page
+shares via `window.holdspeakConfirm`) gained the iPad sheet craft — grab handle, a contextual glyph
+chip (accent check ↔ danger alert), the top-lit gradient hairline, a tinted-glow backdrop, and accent
+"Done" pills — screenshot-proven in both the destructive and affirmative states, behaviour untouched.
+Next: HS-69-06 (bring the Qlippy dock + cards off `/presence` into the main cockpit).
