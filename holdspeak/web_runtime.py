@@ -186,6 +186,10 @@ class WebRuntime(
 
         self.hotkey_listener: Optional[HotkeyListener] = None
         self.recorder: Optional[AudioRecorder] = None
+        # HS-69-08: throttle the additive `audio_level` WS frame. The level
+        # callbacks fire on the PortAudio thread at chunk rate; the meter only
+        # needs ~15 Hz, and `broadcast` schedules a coroutine per call.
+        self._last_audio_level_ts = 0.0
         self.transcriber: Optional[Transcriber] = None
         # HS-63-06: serializes transcriber construction. The boot-time warmup
         # thread and the first dictation/meeting both call
@@ -312,6 +316,28 @@ class WebRuntime(
         # rotation. ``-1`` means "advance to view 0 on the next double-tap".
         # Reset whenever a meeting ends so each new meeting starts at view 0.
         self.device_stats_cycle: dict[str, int] = {}
+
+    def _emit_audio_level(self, level: float, source: str) -> None:
+        """Broadcast the additive `audio_level` WS frame, throttled to ~15 Hz.
+
+        HS-69-08: the reactive mic waveform's source. The 0..1 level is already
+        computed by the recorders (AudioRecorder.on_level / MeetingSession's
+        on_mic_level / on_system_level); this just throttles + broadcasts it.
+        Runs on the audio thread, so it stays cheap and never raises.
+        """
+        if self.server is None:
+            return
+        now = time.monotonic()
+        if now - self._last_audio_level_ts < 0.066:  # ~15 Hz cap
+            return
+        self._last_audio_level_ts = now
+        try:
+            self.server.broadcast(
+                "audio_level",
+                {"level": max(0.0, min(1.0, float(level))), "source": source},
+            )
+        except Exception:  # pragma: no cover - a meter frame must never break capture
+            pass
 
     def _apply_updated_config(self, updated_config: Config) -> None:
         previous_model = self.config.model.name
@@ -499,7 +525,7 @@ class WebRuntime(
         try:
             self.recorder = AudioRecorder(
                 device=self.config.meeting.mic_device,
-                on_level=lambda _level: None,
+                on_level=lambda level: self._emit_audio_level(level, "dictation"),
             )
             self.hotkey_listener = HotkeyListener(
                 on_press=self._on_hotkey_press,

@@ -1,0 +1,70 @@
+---
+// HS-69-08: the reactive mic waveform — a floating perceptual level meter that
+// reacts to the server's additive `audio_level` WS frame during capture (the
+// web port of the iPad meter, MeetingCaptureApp.swift:3438-3466). Mounted in
+// AppLayout so it rides every route; hidden at rest, reveals (`.is-active`)
+// bottom-centre when frames arrive, settles flat + hides on silence.
+//
+// Source is the server frame, never an in-browser mic (the Phase-69 decision).
+// The canvas is drawn by waveform.js subscribing to the shared runtime-bus.
+---
+
+<div class="hs-waveform signal-card" data-waveform role="status" aria-hidden="true">
+  <span class="hs-waveform-glyph" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+  </span>
+  <canvas class="hs-waveform-canvas"></canvas>
+</div>
+
+<script src="../scripts/waveform.js"></script>
+
+<style is:global>
+  /* Authored is:global: the canvas is sized + drawn by waveform.js and the
+     reveal class (.is-active) is toggled at runtime. Floating, bottom-centre;
+     the Queue HUD is top-centre and Qlippy bottom-right, so no collision. */
+  .hs-waveform {
+    position: fixed;
+    bottom: var(--space-4);
+    left: 50%;
+    z-index: calc(var(--z-overlay) - 1);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: min(360px, calc(100vw - 2 * var(--space-4)));
+    height: 56px;
+    padding: 0 var(--space-3) 0 var(--space-3);
+    /* hidden at rest: faded + nudged down + non-interactive */
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(12px) scale(0.96);
+    transition:
+      opacity var(--duration-medium) var(--ease-standard),
+      transform var(--duration-medium) var(--ease-standard);
+  }
+  .hs-waveform.is-active {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  .hs-waveform-glyph {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    color: var(--accent);
+  }
+  .hs-waveform-glyph svg { width: 18px; height: 18px; }
+  .hs-waveform-canvas {
+    display: block;
+    flex: 1 1 auto;
+    height: 40px;
+    min-width: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hs-waveform {
+      transition: opacity var(--duration-short) var(--ease-standard);
+      transform: translateX(-50%);
+    }
+    .hs-waveform.is-active { transform: translateX(-50%); }
+  }
+</style>

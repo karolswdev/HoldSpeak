@@ -80,7 +80,7 @@ high-impact first; the heavy node-canvas epic last.
 | HS-69-05 | Premium sheets / modals uplift | MED | **done** (ConfirmDialog: grab handle + contextual glyph chip + top-lit hairline + tinted-glow backdrop + accent "Done" pill; screenshot-proven danger + affirmative; see [evidence](./evidence-story-05.md)) | HS-69-02 |
 | HS-69-06 | Qlippy dock into the cockpit | MED | **done** (extracted to shared `Qlippy.astro`, mounted in AppLayout; dock + cards in the cockpit with the egress badge; native HUD proven non-regressive; shell locks retargeted; see [evidence](./evidence-story-06.md)) | HS-69-01, HS-69-02 |
 | HS-69-07 | The Queue HUD (shell + store) | **built** (`runtime-bus.js` + `queue-hud.js` + `QueueHud.astro` in AppLayout; derives jobs from `intel_status`/`runtime_activity` WS frames; pill→ledger; build green; **caught live** — the "1 working" pill rendered the seeded meeting's queued intel) — honest gaps: indeterminate progress bar (no per-job % in frames), 2 concurrent jobs derivable | HS-69-02 |
-| HS-69-08 | Reactive mic waveform | MED | backlog | server `audio_level` frame |
+| HS-69-08 | Reactive mic waveform | MED | **done** (additive throttled `audio_level` broadcast wired into dictation + meeting recorders; floating canvas meter in AppLayout reacts + peak-glows + idle-hides; backend 4 tests + frontend screenshots; see [evidence](./evidence-story-08.md)) | server `audio_level` frame |
 | HS-69-09 | Generation theater (orb + constellation) | MED | backlog | HS-69-02 + a web `theaterorb` |
 | HS-69-10 | Node canvas — foundation | HIGH (heavy) | backlog | HS-68-03 |
 | HS-69-11 | Node canvas — wiring + inspector | HIGH (heavy) | backlog | HS-69-10, HS-69-05 |
@@ -145,3 +145,13 @@ a "DECISION NEEDED" card with the ⌂ Local badge + Approve/Decline/Later on `/h
 HUD `/presence` still rendering the same shell (☁ github result card) — the extraction is
 non-regressive. Shell-lock test retargeted to the component; 49 passed across the presence/web slices.
 Next: HS-69-08 (the reactive mic waveform).
+
+**2026-06-30 — HS-69-08 done.** The reactive mic waveform, source = a small **additive** server
+`audio_level` WS frame (the Phase-68 decision), not an in-browser mic. The recorders already computed
+a 0..1 level per chunk (discarded by stub lambdas); `_emit_audio_level` now throttles (~15 Hz) + clamps
++ broadcasts it, wired into the dictation recorder + both meeting channels. A floating Signal meter
+(`Waveform.astro` + `waveform.js`) in AppLayout subscribes on the shared bus and renders gamma-expanded
+mirrored bars with an accent peak glow, revealing during capture and hiding on silence. Proven both
+ends: 4 backend unit tests (shape/throttle/clamp/no-server) + frontend screenshots (active meter +
+cropped detail) + the idle auto-hide. 24 passed across the slices. Next: HS-69-09 (the generation
+theater — proven on real metal).
