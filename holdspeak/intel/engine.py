@@ -220,6 +220,89 @@ class MeetingIntel:
         raw = response.choices[0].message.content if response.choices else ""
         return _extract_openai_message_text(raw)
 
+    def _chat_completion_stream(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        temperature: float,
+        max_tokens: int,
+    ) -> Iterator[str]:
+        """Stream text deltas from the active provider (local GGUF OR cloud).
+
+        The streaming twin of `_chat_completion_text`. The cloud branch forwards
+        the OpenAI-compatible endpoint's SSE deltas (`.43`/llama.cpp, Ollama,
+        vLLM, a real API), so endpoint intel streams token-by-token like the
+        local model — which is what lights the generation theater's "thinking"
+        pulse and the Queue HUD heartbeat for endpoint users.
+        """
+        self._ensure_model_loaded()
+
+        if self._active_provider == "local":
+            assert self._llm is not None
+            stream_iter = self._llm.create_chat_completion(
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=True,
+            )
+            for chunk in stream_iter:
+                try:
+                    choice0 = (chunk.get("choices") or [{}])[0]
+                    delta = choice0.get("delta") or {}
+                    piece = delta.get("content")
+                    if piece is None:
+                        piece = choice0.get("text")
+                except Exception:
+                    continue
+                if piece:
+                    yield str(piece)
+            return
+
+        assert self._openai_client is not None
+        base_kwargs: dict[str, object] = {
+            "model": self.cloud_model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "extra_body": {"thinking": False},
+            "stream": True,
+        }
+        if self.cloud_reasoning_effort:
+            base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
+        if self.cloud_store:
+            base_kwargs["store"] = True
+
+        try:
+            try:
+                stream_iter = self._openai_client.chat.completions.create(**base_kwargs)
+            except TypeError as exc:
+                if "max_tokens" not in str(exc):
+                    raise
+                fallback_kwargs = dict(base_kwargs)
+                fallback_kwargs.pop("max_tokens", None)
+                fallback_kwargs["max_completion_tokens"] = max_tokens
+                stream_iter = self._openai_client.chat.completions.create(**fallback_kwargs)
+        except Exception as exc:
+            raise MeetingIntelError(
+                _describe_cloud_exception(
+                    exc,
+                    model=self.cloud_model,
+                    base_url=self.cloud_base_url,
+                )
+            ) from exc
+
+        for chunk in stream_iter:
+            try:
+                choices = getattr(chunk, "choices", None) or []
+                if not choices:
+                    continue
+                delta = getattr(choices[0], "delta", None)
+                piece = getattr(delta, "content", None) if delta is not None else None
+            except Exception:
+                continue
+            if piece:
+                yield str(piece)
+
     def run_prompt(
         self,
         *,
@@ -315,74 +398,23 @@ class MeetingIntel:
         return self._analyze_stream(transcript)
 
     def _analyze_stream(self, transcript: str) -> Iterator[Union[str, IntelResult]]:
-        """Stream analysis when available.
+        """Stream analysis token-by-token, then a final parsed IntelResult.
 
-        Cloud mode currently emits only the final IntelResult.
+        Both providers stream now: the local GGUF and the cloud/endpoint path
+        (the latter forwards the endpoint's SSE deltas via
+        `_chat_completion_stream`). So the live meeting intel broadcasts
+        `intel_token` for endpoint users too — lighting the generation theater's
+        "thinking" pulse and the Queue HUD heartbeat, not only for local models.
         """
         raw_parts: list[str] = []
+        messages = _json_only_messages(transcript)
 
         try:
-            self._ensure_model_loaded()
-        except Exception as exc:
-            log.error(f"Intel analyze(stream=True) failed to start: {exc}", exc_info=True)
-            yield IntelResult(
-                topics=[],
-                action_items=[],
-                summary="",
-                raw_response=f"ERROR: {exc}",
-                error=str(exc),
-            )
-            return
-
-        if self._active_provider == "cloud":
-            try:
-                yield self._analyze_once(transcript)
-            except Exception as exc:
-                yield IntelResult(
-                    topics=[],
-                    action_items=[],
-                    summary="",
-                    raw_response=f"ERROR: {exc}",
-                    error=str(exc),
-                )
-            return
-
-        try:
-            assert self._llm is not None
-            messages = _json_only_messages(transcript)
-            stream_iter = self._llm.create_chat_completion(
-                messages=messages,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                stream=True,
-            )
-        except Exception as exc:
-            log.error(f"Intel analyze(stream=True) failed to start: {exc}", exc_info=True)
-            yield IntelResult(
-                topics=[],
-                action_items=[],
-                summary="",
-                raw_response=f"ERROR: {exc}",
-                error=str(exc),
-            )
-            return
-
-        try:
-            for chunk in stream_iter:
-                try:
-                    choice0 = (chunk.get("choices") or [{}])[0]
-                    delta = choice0.get("delta") or {}
-                    piece = delta.get("content")
-                    if piece is None:
-                        piece = choice0.get("text")
-                    if not piece:
-                        continue
-                    text_piece = str(piece)
-                except Exception:
-                    continue
-
-                raw_parts.append(text_piece)
-                yield text_piece
+            for piece in self._chat_completion_stream(
+                messages, temperature=self.temperature, max_tokens=self.max_tokens
+            ):
+                raw_parts.append(piece)
+                yield piece
         except Exception as exc:
             log.error(f"Intel streaming failed: {exc}", exc_info=True)
             yield IntelResult(
