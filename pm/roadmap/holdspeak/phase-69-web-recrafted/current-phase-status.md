@@ -84,7 +84,7 @@ high-impact first; the heavy node-canvas epic last.
 | HS-69-09 | Generation theater (orb + constellation) | MED | **done** (iPad orb reused; theater in AppLayout driven by intel_status/token/complete frames; UI screenshots + **real-metal `.43` snapshot** lighting summary/actions/topics; see [evidence](./evidence-story-09.md)) | HS-69-02 + a web `theaterorb` |
 | HS-69-10 | Node canvas — foundation | HIGH (heavy) | **done** (new `/workbench`: pure-vanilla pannable/zoomable dot-grid world; `Workflow`-shaped model; draggable signal-card nodes + type-colored bezier cables (text/findings/signal); preset switching; route swept; see [evidence](./evidence-story-10.md)) | HS-68-03 |
 | HS-69-11 | Node canvas — wiring + inspector | HIGH (heavy) | **done** (drag-to-wire with type-compat highlight (green/danger) + commit; premium inspector drawer with type chips + live prompt edit; palette add-node; pan-steals-clicks bug fixed; see [evidence](./evidence-story-11.md)) | HS-69-10, HS-69-05 |
-| HS-69-12 | Web `/companion` → the Agent Desk | MED | backlog | HS-69-02 |
+| HS-69-12 | Web `/companion` → the Agent Desk | MED | **done** (the static docs portal became a living Agent Desk: real agents (`/api/agents`) as desk cards + the live companion link + the awaiting coders (`/api/companion/status`); pairing folded into a footer; see [evidence](./evidence-story-12.md)) | HS-69-02 |
 
 ## Where we are
 
@@ -186,3 +186,12 @@ updates the node live and persists. A palette adds free step nodes (4→5). A re
 handler's blanket `setPointerCapture` stole clicks from the palette + inspector (now guarded). Route
 pre-flight + density guard = 7 passed. **The node-canvas epic (10+11) is complete. Remaining: HS-69-12
 (companion → desk) + the substrate flips (01/03/07) + closeout.**
+
+**2026-06-30 — HS-69-12 done (the Companion Agent Desk).** Per the owner-approved direction, `/companion`
+stopped being a static docs portal and became **The Agent Desk** — a living desk (Alpine `companionDesk()`
+over `/api/agents` + `/api/companion/status`, no backend change): a live link chip ("N need you"), a
+warn-spined "Needs you" zone for the coders awaiting you, an "Agents" zone of the real persona cards
+(avatar/role/tools/"Open on desk"), and a "How it connects" footer keeping the pairing + credential facts.
+Screenshot-proven (3 real agents + a route-mocked awaiting session). Route pre-flight (zero page errors) +
+density guard = 7 passed. **All 12 delivery stories are done. Remaining: flip the already-built substrate
+(01 egress badge / 03 gradient tokens / 07 Queue HUD) + the closeout (full suite + final summary).**
