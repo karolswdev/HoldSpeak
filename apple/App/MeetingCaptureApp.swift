@@ -1583,6 +1583,14 @@ struct MeetingDetailView: View {
     @ObservedObject private var workflows = WorkflowStore.shared
     private let links: [TranscriptLink]
     @State private var openDoc: OpenDoc?
+    @State private var tab: EditorTab = .intelligence
+
+    enum EditorTab: String, CaseIterable {
+        case intelligence = "Intelligence", transcript = "Transcript", notes = "Notes"
+        var icon: String {
+            switch self { case .intelligence: "sparkles"; case .transcript: "text.alignleft"; case .notes: "hand.draw" }
+        }
+    }
 
     init(meeting: Meeting) {
         self.meeting = meeting
@@ -1594,50 +1602,25 @@ struct MeetingDetailView: View {
     var body: some View {
         ZStack {
             Sig.bg.ignoresSafeArea()
-            ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text(meeting.title ?? "Meeting").font(.largeTitle.bold()).foregroundStyle(Sig.text)
-                    Text(meeting.startedAt.formatted(date: .complete, time: .shortened))
-                        .font(.caption).foregroundStyle(Sig.faint)
-
-                    if !links.isEmpty {
-                        Text("MARKED MOMENTS").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.local).padding(.top, 4)
-                        ForEach(Array(links.enumerated()), id: \.offset) { _, link in
-                            Button {
-                                if let i = TranscriptLinker.segmentIndex(for: link.anchorTime, in: meeting.segments) {
-                                    withAnimation { proxy.scrollTo(i, anchor: .center) }
-                                }
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: link.isMark ? "star.fill" : "pencil.line").foregroundStyle(Sig.local)
-                                    Text(link.label ?? (link.isMark ? "Marked moment" : "Note"))
-                                        .font(.subheadline).foregroundStyle(Sig.text)
-                                    Spacer()
-                                    Text(String(format: "%.0fs", link.anchorTime)).font(.caption.monospaced()).foregroundStyle(Sig.faint)
-                                    Image(systemName: "arrow.down.right").font(.caption2).foregroundStyle(Sig.faint)
-                                }
-                                .padding(11).background(Sig.local.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
-                            }.buttonStyle(.plain)
+            VStack(spacing: 0) {
+                header
+                segmentBar
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        Group {
+                            switch tab {
+                            case .intelligence: artifactsSection
+                            case .transcript: transcriptPane(proxy)
+                            case .notes: notesPane
+                            }
                         }
+                        .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 28)
+                        .frame(maxWidth: 760).frame(maxWidth: .infinity)
+                        .transition(.opacity)
                     }
-
-                    artifactsSection
-
-                    Text("TRANSCRIPT").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.faint).padding(.top, 4)
-                    TranscriptView(segments: meeting.segments, meetingID: meeting.id).id(0)
-
-                    Text("NOTES").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.local).padding(.top, 8)
-                    // Reloads the meeting's PencilKit pages + pulled-in transcript cards; editable
-                    // so notes can be added after, and a card can be promoted into the review.
-                    NotebookView(model: notes, editable: true,
-                                 onPromote: { card, type in review.promoteNote(card.text, type: type) })
                 }
-                .padding(20).frame(maxWidth: 760).frame(maxWidth: .infinity)
-            }
             }
         }
-        .topBack { dismiss() }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(item: $openDoc) { doc in
             ArtifactDetailView(artifact: doc.artifact, ink: doc.ink, onCorrect: { spoken in
@@ -1647,18 +1630,106 @@ struct MeetingDetailView: View {
         }
     }
 
+    // MARK: - the editor shell (premium header + focused tabs, not one endless scroll)
+
+    private var meetingMeta: String {
+        let spk = Set(meeting.segments.map(\.speaker)).count
+        let dur = meeting.formattedDuration ?? (meeting.duration.map { "\(Int($0 / 60)) min" } ?? "")
+        return [meeting.startedAt.formatted(date: .abbreviated, time: .shortened),
+                dur.isEmpty ? nil : dur,
+                meeting.segments.isEmpty ? nil : "\(spk) speaker\(spk == 1 ? "" : "s")"].compactMap { $0 }.joined(separator: "  ·  ")
+    }
+
+    private var header: some View {
+        // Back + egress on their OWN row, ABOVE the title — so nothing overlaps the back control
+        // (the chevron used to land on top of the title).
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Button { dismiss() } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left").font(.system(size: 14, weight: .black))
+                        Text("Desk").font(.system(size: 15, weight: .heavy))
+                    }.foregroundStyle(Sig.muted)
+                }.buttonStyle(.plain)
+                Spacer()
+                egressBadge
+            }
+            HStack(alignment: .center, spacing: 13) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 13, style: .continuous).fill(Sig.accent.opacity(0.16))
+                        .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).stroke(Sig.accent.opacity(0.4), lineWidth: 1))
+                    Image(systemName: "waveform").font(.system(size: 20, weight: .bold)).foregroundStyle(Sig.accent)
+                }.frame(width: 46, height: 46)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(meeting.title ?? "Meeting").font(.system(size: 22, weight: .bold)).foregroundStyle(Sig.text).lineLimit(2)
+                    Text(meetingMeta).font(.system(size: 12, weight: .semibold)).foregroundStyle(Sig.faint)
+                }
+                Spacer(minLength: 6)
+            }
+        }
+        .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 14)
+    }
+
+    private var segmentBar: some View {
+        HStack(spacing: 7) {
+            ForEach(EditorTab.allCases, id: \.self) { t in
+                let sel = tab == t
+                Button {
+                    tactile(); withAnimation(.spring(response: 0.38, dampingFraction: 0.8)) { tab = t }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: t.icon).font(.system(size: 12, weight: .bold))
+                        Text(t.rawValue).font(.system(size: 13.5, weight: .heavy))
+                    }
+                    .foregroundStyle(sel ? .black : Sig.muted)
+                    .frame(maxWidth: .infinity).padding(.vertical, 9)
+                    .background(sel ? Sig.accent : Sig.s2, in: Capsule())
+                    .overlay(Capsule().stroke(sel ? Color.clear : Sig.line, lineWidth: 1))
+                }.buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 20)
+    }
+
+    @ViewBuilder private func transcriptPane(_ proxy: ScrollViewProxy) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if !links.isEmpty {
+                Text("MARKED MOMENTS").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.local)
+                ForEach(Array(links.enumerated()), id: \.offset) { _, link in
+                    Button {
+                        if let i = TranscriptLinker.segmentIndex(for: link.anchorTime, in: meeting.segments) {
+                            withAnimation { proxy.scrollTo(i, anchor: .center) }
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: link.isMark ? "star.fill" : "pencil.line").foregroundStyle(Sig.local)
+                            Text(link.label ?? (link.isMark ? "Marked moment" : "Note")).font(.subheadline).foregroundStyle(Sig.text)
+                            Spacer()
+                            Text(String(format: "%.0fs", link.anchorTime)).font(.caption.monospaced()).foregroundStyle(Sig.faint)
+                            Image(systemName: "arrow.down.right").font(.caption2).foregroundStyle(Sig.faint)
+                        }
+                        .padding(11).background(Sig.local.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                    }.buttonStyle(.plain)
+                }
+            }
+            TranscriptView(segments: meeting.segments, meetingID: meeting.id).id(0)
+        }
+    }
+
+    private var notesPane: some View {
+        // Reloads the meeting's PencilKit pages + pulled-in transcript cards; editable so notes can be
+        // added after, and a card can be promoted into the review.
+        NotebookView(model: notes, editable: true,
+                     onPromote: { card, type in review.promoteNote(card.text, type: type) })
+    }
+
     // MARK: artifact review (HSM-8-04)
 
     @ViewBuilder private var artifactsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Text("INTELLIGENCE").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.accent)
-                Spacer()
-                egressBadge
-            }
-            // HSM-14 — the LENS, not a sort toggle. It picks which intelligence to surface first
-            // and drives what gets generated. Each lens names what it emphasizes, so changing it
-            // is never a mystery: the blurb explains it and the type chips preview its focus.
+            Text("LENS").font(.caption2.weight(.bold)).tracking(1.5).foregroundStyle(Sig.accent)
+            // HSM-14 — the LENS, not a sort toggle. It picks which intelligence to surface first and
+            // drives what gets generated. The type chips below preview its focus (no paragraph needed).
             VStack(alignment: .leading, spacing: 9) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -1683,10 +1754,6 @@ struct MeetingDetailView: View {
                     }
                     .padding(.horizontal, 1).padding(.vertical, 1)
                 }
-                Text(profileBlurb(review.profile))
-                    .font(.system(size: 12.5)).foregroundStyle(Sig.muted)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .transition(.opacity).id(review.profile)
                 // The types this lens leads with — a live preview of its focus.
                 HStack(spacing: 6) {
                     ForEach(MIRRouter.baseEmphasis[review.profile] ?? [], id: \.self) { t in
@@ -1715,8 +1782,7 @@ struct MeetingDetailView: View {
             // Whatever's been produced so far — generated artifacts and/or handwritten
             // notes — streams in here.
             if review.artifacts.isEmpty && !review.generating {
-                Text("Generate decisions, actions, and risks.")
-                    .font(.caption).foregroundStyle(Sig.faint)
+                Text("Nothing generated yet.").font(.caption).foregroundStyle(Sig.faint)
             } else {
                 ForEach(review.groups, id: \.type) { group in
                     ForEach(Array(group.items.enumerated()), id: \.element.id) { idx, a in

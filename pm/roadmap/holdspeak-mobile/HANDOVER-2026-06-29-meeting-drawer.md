@@ -58,3 +58,18 @@ Both shipped together (one instinct: only content + things you invoke earn a per
   desk spreads + shrinks to a legible floor instead of piling into a cramped middle strip. Past the
   floor, columns keep spreading (no illegible confetti); hierarchy (drawers/zones) is the real scale.
   Sim-verified: lane "All" without tools; 12 notes on iPad → clean 4×3 grid at ~0.70 scale.
+
+## PR 3 — the full editor redesign (DONE)
+
+`MeetingDetailView` (MeetingCaptureApp.swift) was one endless scroll (title → marked moments →
+intelligence → transcript → notes) with verbose prose and a back button that overlapped the title.
+Redesigned into a **premium segmented editor**:
+- A header with its own row for "‹ Desk" + the egress badge (so nothing overlaps the back control),
+  then a glyph + title + meta row (date · duration · N speakers).
+- A segment bar — **Intelligence / Transcript / Notes** — each a focused pane (no more endless scroll).
+  Intelligence = lens picker + type chips + generate + artifact cards; Transcript = marked moments +
+  the speaker-coloured `TranscriptView`; Notes = the PencilKit `NotebookView`.
+- Prose trimmed: dropped the redundant inner "INTELLIGENCE"+egress header, the lens paragraph blurb,
+  and softened the empty hint to "Nothing generated yet."
+`ArtifactDetailView` was already clean (styled markdown + "Fix it by voice" + copy/share) — left as is.
+Sim-verified all three tabs on the real app (no overlap, focused panes).
