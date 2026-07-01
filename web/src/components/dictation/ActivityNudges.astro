@@ -18,13 +18,17 @@
       <h2 class="an-title">Pick up where you left off</h2>
       <p class="an-lede">A quiet read of what you touched recently — every line cites the record on <code>/activity</code>.</p>
     </div>
-    <span class="an-trust" aria-label="Local and source-cited">
-      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-        <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-          d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/>
-      </svg>
-      Local · source-cited
-    </span>
+    <div class="an-hero-aside">
+      <span class="an-trust" aria-label="Local and source-cited">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+          <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/>
+        </svg>
+        Local · source-cited
+      </span>
+      {/* HS-70-04: the activity ledger is a Dictation sub-view now. */}
+      <a class="an-manage" href="/activity">Manage activity →</a>
+    </div>
   </header>
   <div id="activity-nudges-list" class="an-list" aria-live="polite"></div>
   <div id="activity-nudges-pin" class="an-pin" role="status" aria-live="polite" hidden>
@@ -106,6 +110,26 @@
     white-space: nowrap;
   }
   .an-trust svg { color: var(--accent); flex: none; }
+
+  .an-hero-aside {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-2);
+  }
+  .an-manage {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color var(--duration-short) var(--ease-standard);
+  }
+  .an-manage:hover { color: var(--text); }
+  .an-manage:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
 
   .an-list {
     display: grid;

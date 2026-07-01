@@ -1,9 +1,9 @@
 # HS-70-04 — Dictation mode, made whole
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED
 - **Depends on:** HS-70-01
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-04.md](./evidence-story-04.md)
 
 ## Goal
 
@@ -38,4 +38,12 @@ Screenshots of Dictation showing all its parts reachable within the one mode
 
 ## Done
 
-_(filled at close)_
+Shipped and screenshot-proven. The pre-briefing nudges were already in the
+cockpit (`ActivityNudges`); this story removed Activity from the top-level
+(Studio) nav and reframed `/activity` as a Dictation sub-view (`current=
+"dictation"`, a "← Dictation" back link, retitled "Activity ledger"), with a
+"Manage activity →" link from the cockpit. Decision recorded: reframe over
+redirect/port (the 825-line Alpine ledger would be lost or risk a paradigm-mixing
+rewrite) — Activity is now part of Dictation with zero loss. Test ripple: the
+retitle + nav-list retargeted in three tests. Full suite 3045 passed. See
+[evidence-story-04.md](./evidence-story-04.md).

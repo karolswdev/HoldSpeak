@@ -20,13 +20,17 @@ import AppLayout from "../layouts/AppLayout.astro";
 import CommandPreview from "../components/CommandPreview.astro";
 ---
 
-<AppLayout title="HoldSpeak Activity" current="activity">
+<AppLayout title="HoldSpeak Activity" current="dictation">
   <div class="activity">
+    {/* HS-70-04: Activity folded into Dictation. This ledger sits behind the
+        cockpit's pre-briefing nudges; it is a Dictation sub-view (the nav shows
+        Dictation active), not a top-level door. */}
+    <a class="activity-back" href="/dictation">← Dictation</a>
     <header class="page-head">
       <div>
-        <h1>Local activity</h1>
+        <h1>Activity ledger</h1>
         <p class="sub">
-          Private browser-history metadata used as plugin context.
+          The local browser-history metadata behind your dictation pre-briefing.
           Local-only, inspectable, pausable, deletable.
         </p>
       </div>
@@ -325,6 +329,14 @@ import CommandPreview from "../components/CommandPreview.astro";
     gap: var(--space-5);
   }
 
+  .activity-back {
+    display: inline-flex; align-items: center; gap: var(--space-1);
+    margin-bottom: var(--space-3);
+    color: var(--text-muted); font-size: var(--font-size-sm); text-decoration: none;
+    transition: color var(--duration-short) var(--ease-standard);
+  }
+  .activity-back:hover { color: var(--text); }
+  .activity-back:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
   .page-head {
     display: flex; align-items: flex-start; justify-content: space-between;
     gap: var(--space-4); flex-wrap: wrap;

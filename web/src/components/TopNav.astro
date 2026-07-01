@@ -8,7 +8,7 @@
 //   Dictation  → /dictation   the voice-typing mode (folds /activity in HS-70-04)
 //   Meetings   → /history      the meeting mode (route→Meetings in HS-70-05)
 //   Studio ▾   → a collapsed advanced tier (Workbench, Desk, Agent Desk,
-//                Activity, Cadence, Commands, Profiles)
+//                Cadence, Commands, Profiles)
 //
 // Right cluster: a status slot (default LocalPill/TrustChip) + a Settings
 // (⚙) link to /settings.
@@ -21,10 +21,11 @@
 // Responsive: below the nav breakpoint the whole strip collapses behind the
 // menu toggle ([data-nav-toggle]); the Studio panel renders inline (static).
 //
-// Transitional notes: Activity is parked in Studio here; HS-70-04 folds it
-// into the Dictation surface and drops it from this tier. Presence is a
-// nav-less HUD overlay reached from Settings, so it is intentionally not a
-// Studio nav item (the HS-70-06 Studio index may still card it).
+// Notes: Activity folded into Dictation (HS-70-04) — /activity is now a
+// Dictation sub-view (current="dictation"), reached from the cockpit's
+// pre-briefing section, not a top-level door. Presence is a nav-less HUD
+// overlay reached from Settings, so it is intentionally not a Studio nav item
+// (the HS-70-06 Studio index may still card it).
 
 import AppMark from "./AppMark.astro";
 import TrustChip from "./TrustChip.astro";
@@ -57,7 +58,6 @@ const studio: { slug: Route; label: string; href: string }[] = [
   { slug: "workbench", label: "Workbench", href: "/workbench" },
   { slug: "desk", label: "Desk", href: "/desk" },
   { slug: "companion", label: "Agent Desk", href: "/companion" },
-  { slug: "activity", label: "Activity", href: "/activity" },
   { slug: "cadence", label: "Cadence", href: "/cadence" },
   { slug: "commands", label: "Commands", href: "/commands" },
   { slug: "profiles", label: "Profiles", href: "/profiles" },

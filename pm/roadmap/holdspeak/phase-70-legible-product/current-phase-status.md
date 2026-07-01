@@ -1,6 +1,6 @@
 # Phase 70 — The Legible Product (Out-of-the-Box)
 
-**Status:** IN PROGRESS (3/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (4/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-06-30 (**opened + scaffolded** on owner direction, in the owner's own words:
 *"I literally am confused myself about the product, and IMO, that's a VERY, very bad sign."* Phase 69
@@ -80,7 +80,7 @@ Four primary destinations + Settings, not fourteen. Per-route disposition is in 
 | HS-70-01 | The IA spine: nav reframe to two modes + Studio | HIGH | **done** (TopNav → `Home · Dictation · Meetings · Studio▾`; Studio is a native `<details>` tier of the 7 browsable advanced surfaces, auto-open on an active route; `Route` union + 4 page slugs updated; Activity parked in Studio, Presence excluded as a nav-less overlay; 4 nav states screenshot-proven, route pre-flight 2 passed; see [evidence](./evidence-story-01.md)) | owner A+B |
 | HS-70-02 | Home: "what is this + your next action" | HIGH | **done** (`/` reframed from the meeting-runtime dashboard into an orientation Home: identity + a `/api/setup/status`-fed next-action band + the two modes as co-equal cards with guiding subtitles + a quiet Studio link; the 1378-line live dashboard moved to `/live`; empty + seeded screenshot-proven; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-70-03 | One arrival: consolidate the three first-run surfaces | HIGH | **done** (`/welcome` is the single arrival — guard + CLI nudge route new users there, it teaches both modes and lands on Home; `/setup` demoted from a second "Welcome" to the "Setup & health" surface and surfaced from Settings; screenshot-proven; 13 tests + full suite green; see [evidence](./evidence-story-03.md)) | 01, 02 |
-| HS-70-04 | Dictation mode, made whole (folds `/activity`) | MED | **todo** | 01 |
+| HS-70-04 | Dictation mode, made whole (folds `/activity`) | MED | **done** (pre-briefing nudges already in the cockpit; Activity removed from the Studio nav and `/activity` reframed as a Dictation sub-view — `current="dictation"`, "← Dictation" back link, retitled "Activity ledger", "Manage activity →" from the cockpit; reframe over port/redirect so nothing lost; screenshot-proven; full suite green; see [evidence](./evidence-story-04.md)) | 01 |
 | HS-70-05 | Meetings mode, made whole (`/history` → Meetings) | MED | **todo** | 01 |
 | HS-70-06 | The Studio tier: power features framed + contained | MED | **todo** | 01 |
 | HS-70-07 | Guiding empty states everywhere (no scary blanks) | MED | **todo** | 02 |
@@ -92,6 +92,19 @@ that fixes the confusion outright) → **04 → 05 → 06** (each mode/tier made
 states) → **08** (docs/naming lock) → **09** (closeout). 04/05/06 are parallelizable after 01.
 
 ## Where we are
+
+**2026-06-30 — HS-70-04 done (Dictation made whole).** The dictation-relevant Activity (the pre-briefing
+nudges) was already in the cockpit (`ActivityNudges`, HS-53-04). This story finished the fold: Activity
+removed from the top-level Studio nav (Studio is now six tools), and `/activity` reframed as a Dictation
+sub-view — `current="activity"` → `current="dictation"` (nav shows Dictation), a "← Dictation" back link,
+retitled "Local activity" → "Activity ledger", and a "Manage activity →" link added to the cockpit
+banner. Decision: reframe over redirect/port — the `/activity` ledger is 825 lines of `?raw`-loaded
+Alpine; porting it into the ES-module cockpit or redirecting `/activity` would lose the ledger UI or risk
+a paradigm-mixing rewrite. Reframing achieves "Activity is part of Dictation" with zero loss. Test ripple:
+the retitle retargeted in `test_web_activity_api` + `test_web_built_mount`, and the nav route list updated
+(Activity dropped, a Studio item asserted) in `test_topnav_renders_with_aria_current`. Screenshot-proven
+(`activity-ledger` shows Dictation-active nav + back link + intact ledger; `studio-no-activity` shows the
+6-tool dropdown). Full suite 3045 passed, 37 skipped. Next: HS-70-05 (Meetings made whole).
 
 **2026-06-30 — HS-70-03 done (one arrival).** Three first-run surfaces became one arrival. `/welcome` is
 the single canonical first-run surface: the HS-70-02 guard sends every first-run user there, and the CLI

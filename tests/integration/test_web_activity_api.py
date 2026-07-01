@@ -52,8 +52,8 @@ def test_activity_page_serves_browser_surface(test_client: TestClient) -> None:
     assert response.status_code == 200
     body = response.text
 
-    # New page title + DOM contracts JS depends on.
-    assert "Local activity" in body
+    # HS-70-04: retitled "Activity ledger" (a Dictation sub-view).
+    assert "Activity ledger" in body
     assert 'id="enabled-pill"' in body
     assert 'id="candidate-status-filter"' in body
     assert 'id="candidates-message"' in body

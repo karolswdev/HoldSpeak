@@ -64,9 +64,11 @@ def test_topnav_renders_with_aria_current(test_client: TestClient) -> None:
     assert 'aria-current="page"' in body
     # Exactly one nav link is current.
     assert body.count('aria-current="page"') == 1
-    # All four primary routes are present in the nav.
-    for href in ('href="/"', 'href="/activity"', 'href="/history"', 'href="/dictation"'):
+    # HS-70-01/04: the two-mode primaries (Home/Dictation/Meetings) + Studio.
+    # Activity folded into Dictation (HS-70-04), so it is no longer a nav item.
+    for href in ('href="/"', 'href="/history"', 'href="/dictation"'):
         assert href in body, href
+    assert 'href="/workbench"' in body  # a Studio-tier item is present
 
 
 @pytest.mark.skipif(
@@ -144,7 +146,7 @@ def test_legacy_routes_still_serve(test_client: TestClient) -> None:
     # /docs/dictation-runtime (HS-10-09).
     for path, marker in [
         ("/", "HoldSpeak"),
-        ("/activity", "Local activity"),
+        ("/activity", "Activity ledger"),
         ("/history", "HoldSpeak History"),
         ("/settings", "Every global HoldSpeak setting"),
         ("/dictation", "HoldSpeak Dictation"),
