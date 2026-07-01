@@ -1,6 +1,6 @@
 # Phase 70 — The Legible Product (Out-of-the-Box)
 
-**Status:** IN PROGRESS (5/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (6/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-06-30 (**opened + scaffolded** on owner direction, in the owner's own words:
 *"I literally am confused myself about the product, and IMO, that's a VERY, very bad sign."* Phase 69
@@ -82,7 +82,7 @@ Four primary destinations + Settings, not fourteen. Per-route disposition is in 
 | HS-70-03 | One arrival: consolidate the three first-run surfaces | HIGH | **done** (`/welcome` is the single arrival — guard + CLI nudge route new users there, it teaches both modes and lands on Home; `/setup` demoted from a second "Welcome" to the "Setup & health" surface and surfaced from Settings; screenshot-proven; 13 tests + full suite green; see [evidence](./evidence-story-03.md)) | 01, 02 |
 | HS-70-04 | Dictation mode, made whole (folds `/activity`) | MED | **done** (pre-briefing nudges already in the cockpit; Activity removed from the Studio nav and `/activity` reframed as a Dictation sub-view — `current="dictation"`, "← Dictation" back link, retitled "Activity ledger", "Manage activity →" from the cockpit; reframe over port/redirect so nothing lost; screenshot-proven; full suite green; see [evidence](./evidence-story-04.md)) | 01 |
 | HS-70-05 | Meetings mode, made whole (`/history` → Meetings) | MED | **done** (`/history` retitled "Meetings"; hero entry actions promoted — "Start a meeting" → `/live` + "Import a recording or transcript" opens the panel; archive/facets/aftercare beneath; `/meetings`→`/history` redirect; screenshot-proven; suite green; empty-state copy deferred to 07; see [evidence](./evidence-story-05.md)) | 01 |
-| HS-70-06 | The Studio tier: power features framed + contained | MED | **todo** | 01 |
+| HS-70-06 | The Studio tier: power features framed + contained | MED | **done** (new `/studio` index frames the 6 tools as clearly-secondary cards — glyph + one-line purpose + "Open →", Cadence tagged "Off by default"; the dropdown "ADVANCED" eyebrow links to it; tools keep their routes; screenshot-proven; suite green; see [evidence](./evidence-story-06.md)) | 01 |
 | HS-70-07 | Guiding empty states everywhere (no scary blanks) | MED | **todo** | 02 |
 | HS-70-08 | Naming + positioning coherence (the docs story) | MED | **todo** | 01–07 |
 | HS-70-09 | Closeout: no dead doors, one clean arrival, proven | HIGH | **todo** | 01–08 |
@@ -92,6 +92,18 @@ that fixes the confusion outright) → **04 → 05 → 06** (each mode/tier made
 states) → **08** (docs/naming lock) → **09** (closeout). 04/05/06 are parallelizable after 01.
 
 ## Where we are
+
+**2026-06-30 — HS-70-06 done (the Studio tier).** The six power tools got one coherent, clearly-secondary
+home: a new `/studio` index framing Workbench, Desk, Agent Desk, Cadence, Commands, and Profiles as
+`.signal-card`s (glyph + one-line purpose + "Open →"), with an honest "Off by default" chip on Cadence.
+The nav dropdown's "ADVANCED" eyebrow became a link to `/studio` and `studioActive` now lights the summary
+on `/studio` too; the `studio` slug was added to the `Route` union (TopNav + AppLayout). The tools keep
+their own routes and behaviour (Decision B: framed, not re-implemented). A first-run user never lands here
+(HS-70-03 routes them to `/welcome` → Home; Home's Studio link is a dashed, secondary affordance).
+Registered in pages.py + PAGE_ROUTES. Screenshot-proven (`studio-index` shows the six framed cards +
+Cadence "Off by default"; `studio-dropdown` shows the "ADVANCED →" link). Route pre-flight 2 passed; full
+suite 3045 passed, 37 skipped; build now 18 pages. Next: HS-70-07 (guiding empty states app-wide,
+including the Meetings "Runtime" copy).
 
 **2026-06-30 — HS-70-05 done (Meetings made whole).** `/history` stopped reading as an oddly-named
 "History" archive and became the **Meetings** front door: eyebrow + h1 retitled to "Meetings", the page

@@ -1,0 +1,164 @@
+---
+// HS-70-06: the Studio index — the collapsed advanced tier's landing.
+//
+// Frames the six power tools as clearly-secondary cards so a first-run user is
+// never dumped into Workbench or Cadence and left asking "what is this". Each
+// card states what the tool is for in one line + its state where relevant.
+// The tools keep their own routes and behaviour (Decision B: grouped + framed,
+// not re-implemented). Static markup -> scoped CSS is fine (no injected DOM).
+
+import AppLayout from "../layouts/AppLayout.astro";
+
+const tools = [
+  {
+    href: "/workbench",
+    name: "Workbench",
+    what: "Wire primitives into a runnable workflow on a node canvas.",
+    glyph: '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="12" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8.2 7.2 15.8 11M8.2 16.8 15.8 13"/>',
+  },
+  {
+    href: "/desk",
+    name: "Desk",
+    what: "Author meetings, notes, agents and more on a spatial desk.",
+    glyph: '<rect x="3" y="4" width="8" height="6" rx="1.5"/><rect x="13" y="4" width="8" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><rect x="13" y="14" width="8" height="6" rx="1.5"/>',
+  },
+  {
+    href: "/companion",
+    name: "Agent Desk",
+    what: "Your coding agents, and the ones waiting on you.",
+    glyph: '<rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 3v4M15 3v4M9 13h.01M15 13h.01M9 16h6"/>',
+  },
+  {
+    href: "/cadence",
+    name: "Cadence",
+    what: "A background chief-of-staff that pushes with receipts.",
+    state: "Off by default",
+    glyph: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M12 2h0M9 2h6"/>',
+  },
+  {
+    href: "/commands",
+    name: "Commands",
+    what: "Map a spoken keyword to an action.",
+    glyph: '<path d="M9 3H5a2 2 0 0 0-2 2v4M15 3h4a2 2 0 0 1 2 2v4M9 21H5a2 2 0 0 1-2-2v-4M15 21h4a2 2 0 0 0 2-2v-4"/>',
+  },
+  {
+    href: "/profiles",
+    name: "Profiles",
+    what: "Runtime and model profiles, assignable per agent.",
+    glyph: '<path d="M4 6h10M4 12h16M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="18" r="2"/>',
+  },
+];
+---
+
+<AppLayout title="HoldSpeak — Studio" current="studio">
+  <div class="studio">
+    <header class="studio-head">
+      <p class="studio-eyebrow">Advanced</p>
+      <h1 class="studio-title">Studio</h1>
+      <p class="studio-lede">Power tools for when you want them. Optional; the two modes need none of this.</p>
+    </header>
+
+    <div class="studio-grid">
+      {tools.map((t) => (
+        <a class="studio-card signal-card" href={t.href}>
+          <span class="studio-card-glyph glyph-chip" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" set:html={t.glyph} />
+          </span>
+          <span class="studio-card-top">
+            <span class="studio-card-name">{t.name}</span>
+            {t.state && <span class="studio-card-state">{t.state}</span>}
+          </span>
+          <span class="studio-card-what">{t.what}</span>
+          <span class="studio-card-go" aria-hidden="true">Open →</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</AppLayout>
+
+<style>
+  .studio {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: var(--space-7) var(--space-5) var(--space-8);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+  .studio-head { display: flex; flex-direction: column; gap: var(--space-2); }
+  .studio-eyebrow {
+    margin: 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .studio-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .studio-lede { margin: 0; color: var(--text-muted); font-size: var(--font-size-md); }
+
+  .studio-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+  }
+  .studio-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-5);
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--duration-short) var(--ease-standard);
+  }
+  .studio-card:hover { transform: translateY(-2px); }
+  .studio-card:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .studio-card-glyph { margin-bottom: var(--space-2); }
+  .studio-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .studio-card-name {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .studio-card-state {
+    flex: none;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-faint);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+  }
+  .studio-card-what {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    flex: 1 1 auto;
+  }
+  .studio-card-go {
+    margin-top: var(--space-2);
+    color: var(--accent);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+  }
+
+  @media (max-width: 860px) { .studio-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .studio-grid { grid-template-columns: 1fr; } }
+</style>

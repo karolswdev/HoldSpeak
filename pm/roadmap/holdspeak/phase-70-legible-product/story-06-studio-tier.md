@@ -1,9 +1,9 @@
 # HS-70-06 — The Studio tier: the power features, framed and contained
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED
 - **Depends on:** HS-70-01
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-06.md](./evidence-story-06.md)
 
 ## Goal
 
@@ -37,4 +37,11 @@ first-run user's path never lands here (verified against HS-70-03).
 
 ## Done
 
-_(filled at close)_
+Shipped and screenshot-proven. A new `/studio` index frames the six power tools
+(Workbench, Desk, Agent Desk, Cadence, Commands, Profiles) as clearly-secondary
+`.signal-card`s — glyph + one-line purpose + "Open →", with an honest "Off by
+default" chip on Cadence. The nav dropdown's "ADVANCED" eyebrow became a link to
+`/studio`; `studioActive` lights the summary on `/studio`; the tools keep their
+own routes (framed, not re-implemented). Registered in pages.py + PAGE_ROUTES;
+route pre-flight 2 passed; full suite 3045 passed. See
+[evidence-story-06.md](./evidence-story-06.md).

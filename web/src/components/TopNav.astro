@@ -34,6 +34,7 @@ type Route =
   | "home"
   | "dictation"
   | "meetings"
+  | "studio"
   | "workbench"
   | "desk"
   | "companion"
@@ -63,7 +64,7 @@ const studio: { slug: Route; label: string; href: string }[] = [
   { slug: "profiles", label: "Profiles", href: "/profiles" },
 ];
 
-const studioActive = studio.some((s) => s.slug === current);
+const studioActive = current === "studio" || studio.some((s) => s.slug === current);
 ---
 
 <header class="topnav" role="banner">
@@ -119,7 +120,14 @@ const studioActive = studio.some((s) => s.slug === current);
         </svg>
       </summary>
       <div class="topnav-studio-panel">
-        <span class="topnav-studio-eyebrow">Advanced</span>
+        <a
+          href="/studio"
+          class:list={["topnav-studio-index", current === "studio" && "is-current"]}
+          aria-current={current === "studio" ? "page" : undefined}
+        >
+          <span class="topnav-studio-eyebrow">Advanced</span>
+          <span class="topnav-studio-index-arrow" aria-hidden="true">→</span>
+        </a>
         {studio.map((r) => (
           <a
             href={r.href}
@@ -262,14 +270,35 @@ const studioActive = studio.some((s) => s.slug === current);
     border-radius: var(--radius-md);
     box-shadow: var(--elev-2);
   }
-  .topnav-studio-eyebrow {
+  .topnav-studio-index {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: var(--space-1) var(--space-2) var(--space-2);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+  }
+  .topnav-studio-index:hover .topnav-studio-eyebrow,
+  .topnav-studio-index:hover .topnav-studio-index-arrow { color: var(--accent); }
+  .topnav-studio-index.is-current .topnav-studio-eyebrow { color: var(--accent); }
+  .topnav-studio-index:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .topnav-studio-index-arrow {
+    color: var(--text-faint);
+    font-size: var(--font-size-sm);
+    transition: color var(--duration-short) var(--ease-standard);
+  }
+  .topnav-studio-eyebrow {
+    padding: 0;
     font-size: 0.6875rem;
     font-weight: 600;
     letter-spacing: var(--letter-spacing-eyebrow);
     text-transform: uppercase;
     color: var(--text-faint);
     user-select: none;
+    transition: color var(--duration-short) var(--ease-standard);
   }
   .topnav-studio-item {
     padding: var(--space-2) var(--space-3);

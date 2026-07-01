@@ -274,6 +274,24 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/studio")
+    async def studio_index() -> Any:
+        """Serve the Studio index (HS-70-06): the advanced tier's landing that
+        frames the six power tools, read from _built/studio/index.html."""
+        page = _HOLDSPEAK_DIR / "static" / "_built" / "studio" / "index.html"
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built studio page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak — Studio</title></head>"
+                "<body><h1>Studio</h1>"
+                "<p>Studio UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     @router.get("/workbench")
     async def workbench_page() -> Any:
         """Serve the Workbench (the node-graph builder over the linear Workflow
