@@ -1,6 +1,6 @@
 # Phase 71 — The Desk, as a World (the web diorama)
 
-**Status:** IN PROGRESS (4/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (5/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-07-01 (**opened + scaffolded** on owner direction. After Phase 70 shipped
 (legible surface, four doors), the owner said the web still feels "nowhere near the look and feel of the
@@ -74,7 +74,7 @@ cockpits (Home / Dictation / Meetings) stay clean, fast dashboards (owner call).
 | HS-71-02 | The sprite pipeline: hand-drawn objects on the web | HIGH | **done** (67 pixel-art PNGs copied from `apple/App/` to `web/public/desk/sprites/` + a djb2 stable-hash picker `sprites.js` matching `SpriteStore.swift`, on `window.__deskSprites`; sprite sheet crisp, picker stable + spread; suite green; see [evidence](./evidence-story-02.md)) | — |
 | HS-71-03 | Objects that float (the diorama's heartbeat) | HIGH | **done** (`/desk` renders every primitive as a floating pixel-art object — `worldObjects()` + `objStyle` auto-layout + per-object float/glow/detached-shadow via CSS keyframes; card-list preserved under a collapsed "Browse as a list"; 12-object mixed desk proven; zero page errors; suite green; see [evidence](./evidence-story-03.md)) | 01, 02 |
 | HS-71-04 | Free placement + the layout store | MED | **done** (drag-to-arrange with unit-space `positions` persisted to `localStorage["hs.diorama.pos"]` (local-only, never synced); `looseHome` density-aware auto-layout for untouched; a "Tidy" reset; objects enlarged; drag persists across reload (Playwright); suite green; see [evidence](./evidence-story-04.md)) | 03 |
-| HS-71-05 | Zones as shelves: file and dive | MED | **todo** | 04 |
+| HS-71-05 | Zones as shelves: file and dive | MED | **done** (directories become painted shelf-zones; drag an object onto one to file via real `PUT /api/directories/{id}/members/{pid}`; click to dive in (filter to members) with a back control + empty state; robustness fix for mid-drag layout shift; Playwright drop→1 item, dive→1 member; suite green; see [evidence](./evidence-story-05.md)) | 04 |
 | HS-71-06 | In-world Qlippy, the create beat, open-an-object | MED | **todo** | 03 |
 | HS-71-07 | Docs + the nav decision (the docs story) | MED | **todo** | 01–06 |
 | HS-71-08 | Closeout: the side-by-side, proven | HIGH | **todo** | 01–07 |
@@ -83,6 +83,20 @@ Build order (foundation-first): **01 → 02 → 03** (the moment it becomes a wo
 organize) → **06** (life + open) → **07** (docs/nav) → **08** (closeout). 06 can run in parallel after 03.
 
 ## Where we are
+
+**2026-07-01 — HS-71-05 done (zones — file + dive).** The desk is a place to organize now. Directories
+are excluded from the floating objects and rendered as painted **shelf-zones** (`worldZones` + `zoneStyle`,
+laid across the top); dragging an object onto a zone **files** it via the real add-only
+`PUT /api/directories/{id}/members/{pid}` (`fileIntoDir`, the same write the iPad uses), the drag handler
+now hit-tests the live `.desk-zone` rects at drop; clicking a zone **dives** in (`diveInto` -> `worldObjects`
+filters to that zone's members; zones hidden) with a "← All primitives" breadcrumb (`surface`) + an
+empty-dive guide. A real robustness bug was found and fixed on the way: a mid-drag layout shift (the "Tidy"
+button appearing) desynced the delta-from-start math and the `elementsFromPoint` hit-test - the drag now
+tracks the pointer using a FRESH world rect each move, and the drop hit-tests fresh zone rects. Proven with
+Playwright: dropping an object on "Q3 release" fired the PUT and the zone read "1 item"; diving in showed
+exactly that 1 member with the back control (`05-zones`, `05-dived`). Route pre-flight 2 passed (zero page
+errors); full suite 3045 passed, 37 skipped. Next: HS-71-06 (in-world Qlippy + the create beat +
+tap-to-open).
 
 **2026-07-01 — HS-71-04 done (free placement).** The desk is hand-arrangeable now. `desk-app.js` gained
 `positions` (unit-space `{x,y}` per id) persisted to `localStorage["hs.diorama.pos"]` (local-only, never

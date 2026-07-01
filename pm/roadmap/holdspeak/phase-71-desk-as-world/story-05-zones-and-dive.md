@@ -1,9 +1,9 @@
 # HS-71-05 — Zones as shelves: file and dive
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED
 - **Depends on:** HS-71-04
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-05.md](./evidence-story-05.md)
 
 ## Goal
 
@@ -34,4 +34,11 @@ call, not a local-only fake.
 
 ## Done
 
-_(filled at close)_
+Shipped and proven. Directories render as painted shelf-zones (excluded from the
+floating objects); dragging an object onto a zone files it via the real add-only
+`PUT /api/directories/{id}/members/{pid}`; clicking a zone dives in (filters to
+its members) with a "← All primitives" back control; empty-dive guides. A
+robustness fix: the drag now tracks the pointer via a fresh world rect each move
++ hit-tests live zone rects at drop (a mid-drag layout shift used to desync it).
+Playwright: drop → "1 item", dive → 1 member. Suite green. See
+[evidence-story-05.md](./evidence-story-05.md).

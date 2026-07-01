@@ -63,6 +63,7 @@ function DeskApp() {
     // Local-only, never synced (matches the iPad contract). ──
     positions: {},
     _drag: null, // { id, moved } while dragging an object
+    divedZone: null, // HS-71-05: the directory we've "dived" into (null = top desk)
 
     // ── runtime profiles (Phase 24) ──
     // The named "where intelligence runs" targets an agent can be pointed at.
@@ -209,9 +210,11 @@ function DeskApp() {
     },
 
     // ── HS-71-03: the world (floating pixel-art objects) ───────────────────
-    /** Every primitive as a flat, stably-ordered list of stage objects. */
+    /** Every primitive (except directories, which are zones) as a flat,
+     * stably-ordered list of stage objects. Filtered to a zone's members when
+     * dived (HS-71-05). */
     worldObjects() {
-      const order = ["meeting", "note", "kb", "agent", "artifact", "chain", "workflow", "directory", "coder"];
+      const order = ["meeting", "note", "kb", "agent", "artifact", "chain", "workflow", "coder"];
       const out = [];
       for (const kind of order) {
         for (const it of this.items[kind] || []) {
@@ -219,7 +222,20 @@ function DeskApp() {
           out.push({ kind, id, title: it.title || it.name || id || kind, ref: it });
         }
       }
+      if (this.divedZone) {
+        const dir = (this.items.directory || []).find((d) => d.id === this.divedZone);
+        const members = new Set((dir && dir.memberIds) || []);
+        return out.filter((o) => members.has(o.id));
+      }
       return out;
+    },
+    /** Directories rendered as shelf-zones (HS-71-05). Hidden while dived in. */
+    worldZones() {
+      if (this.divedZone) return [];
+      return (this.items.directory || []).map((d) => ({
+        id: d.id, title: d.title || d.name || "Directory",
+        count: (d.memberIds || []).length, ref: d,
+      }));
     },
     /** A tiny stable 0..1 hash for per-object layout jitter + float phase. */
     _oh(s) {
@@ -278,27 +294,44 @@ function DeskApp() {
       if (ev.button != null && ev.button !== 0) return;
       const world = ev.currentTarget.closest(".desk-world");
       if (!world) return;
-      const rect = world.getBoundingClientRect();
-      const start = this.objUnit(o, i, n);
       this._drag = { id: o.id, moved: false };
       const origin = { x: ev.clientX, y: ev.clientY };
+      // Position the object center directly under the pointer, using a FRESH
+      // world rect each move so a mid-drag layout shift can't desync it.
       const move = (e) => {
-        const dx = (e.clientX - origin.x) / rect.width;
-        const dy = (e.clientY - origin.y) / rect.height;
+        const r = world.getBoundingClientRect();
         if (Math.abs(e.clientX - origin.x) + Math.abs(e.clientY - origin.y) > 4) this._drag.moved = true;
         this.positions = {
           ...this.positions,
           [o.id]: {
-            x: Math.min(0.96, Math.max(0.04, start.x + dx)),
-            y: Math.min(0.96, Math.max(0.04, start.y + dy)),
+            x: Math.min(0.96, Math.max(0.04, (e.clientX - r.left) / r.width)),
+            y: Math.min(0.96, Math.max(0.04, (e.clientY - r.top) / r.height)),
           },
         };
       };
-      const up = () => {
+      const up = (e) => {
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
-        if (this._drag && this._drag.moved) this.savePositions();
-        // keep _drag.moved readable for the click handler this tick, then clear
+        // HS-71-05: dropped onto a zone? file it there (and forget its free pos).
+        // Fresh rects (robust against the drag's re-renders / layout shifts).
+        let zoneId = null;
+        if (this._drag && this._drag.moved && e) {
+          for (const el of document.querySelectorAll(".desk-zone")) {
+            const r = el.getBoundingClientRect();
+            if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+              zoneId = el.dataset.zoneId;
+              break;
+            }
+          }
+        }
+        if (zoneId) {
+          const { [o.id]: _dropped, ...rest } = this.positions;
+          this.positions = rest;
+          this.savePositions();
+          this.fileIntoDir(o.id, zoneId);
+        } else if (this._drag && this._drag.moved) {
+          this.savePositions();
+        }
         setTimeout(() => { this._drag = null; }, 0);
       };
       window.addEventListener("pointermove", move);
@@ -311,6 +344,39 @@ function DeskApp() {
     tidyDesk() {
       this.positions = {};
       this.savePositions();
+    },
+
+    // ── HS-71-05: zones (directories) — layout, file, dive ─────────────────
+    /** Shelf-zones auto-laid across the top of the stage (draggable-free for
+     * now; a saved position wins if one exists). */
+    zoneStyle(z, i, n) {
+      const saved = this.positions["zone:" + z.id];
+      const cols = Math.max(1, Math.min(4, n));
+      const wPct = Math.min(30, 84 / cols);
+      const x = saved ? saved.x * 100 : (((i % cols) + 0.5) / cols) * 100;
+      const y = saved ? saved.y * 100 : 12;
+      return `left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;width:${wPct}%;--zk:${this.objGlow("directory")}`;
+    },
+    /** File a primitive into a directory (add-only PUT). */
+    async fileIntoDir(pid, dirId) {
+      if (this.isFiledIn(pid, dirId)) return;
+      const url = `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(pid)}`;
+      try {
+        await this.fetchJson(url, { method: "PUT", headers: { "content-type": "application/json" } });
+        const d = this.items.directory.find((x) => x.id === dirId);
+        if (d) d.memberIds = [...(d.memberIds || []), pid];
+      } catch (e) {
+        this.error = `File: ${e.message}`;
+      }
+    },
+    diveInto(zoneId) {
+      if (this._drag && this._drag.moved) return; // a drag ended here, not a click
+      this.divedZone = zoneId;
+    },
+    surface() { this.divedZone = null; },
+    divedZoneName() {
+      const d = (this.items.directory || []).find((x) => x.id === this.divedZone);
+      return d ? (d.title || d.name || "Directory") : "";
     },
     /** Height for the world so the auto-laid rows have room. */
     worldRows() {
