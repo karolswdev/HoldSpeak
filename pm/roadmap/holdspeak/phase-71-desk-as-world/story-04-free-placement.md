@@ -1,9 +1,9 @@
 # HS-71-04 — Free placement + the layout store
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED
 - **Depends on:** HS-71-03
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-04.md](./evidence-story-04.md)
 
 ## Goal
 
@@ -31,4 +31,10 @@ hand-arranged desk; a screenshot of a dense desk auto-spreading + shrinking.
 
 ## Done
 
-_(filled at close)_
+Shipped and proven. `positions` (unit-space `{x,y}` per id) persist to
+`localStorage["hs.diorama.pos"]` (local-only, never synced); `objUnit` uses a
+saved position or `looseHome` (density-aware); `startObjDrag` is a pointer drag
+(clamped, persists on release, movement threshold so a click still opens);
+`tidyDesk` + a header "Tidy" button reset it. Objects enlarged for presence.
+Playwright: a drag saved `{m0:{x,y}}` and persisted across reload. Route
+pre-flight 2 passed; suite green. See [evidence-story-04.md](./evidence-story-04.md).

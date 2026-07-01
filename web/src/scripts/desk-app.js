@@ -58,6 +58,12 @@ function DeskApp() {
     // Per-kind reachability: "live" | "unreachable" (undefined until loaded).
     status: {},
 
+    // ── HS-71-04: per-device desk layout (the web analog of the iPad's local
+    // `positions`/`hs.diorama.pos`). Unit-space {x,y} in 0..1 per object id.
+    // Local-only, never synced (matches the iPad contract). ──
+    positions: {},
+    _drag: null, // { id, moved } while dragging an object
+
     // ── runtime profiles (Phase 24) ──
     // The named "where intelligence runs" targets an agent can be pointed at.
     // Authored on /profiles; here they populate the agent editor's "Runs on"
@@ -108,6 +114,7 @@ function DeskApp() {
     workflowSteps: null, // [{ nodeId, kind, output, provider }] | null (graph trail)
 
     async init() {
+      this.loadPositions();
       await this.loadAll();
       this.loading = false;
       this.loadSetup();
@@ -231,22 +238,79 @@ function DeskApp() {
         directory: "#E0A458", coder: "#FF6B35",
       })[kind] || "#FF6B35";
     },
-    /** Auto-layout: a loose density-aware grid with per-object jitter (the
-     * HS-71-04 drag/looseHome upgrade replaces this with a saved position). */
-    objStyle(o, i, n) {
+    /** The object's unit position: a saved drag position, else `looseHome`. */
+    objUnit(o, i, n) {
+      const saved = this.positions[o.id];
+      if (saved && typeof saved.x === "number") return saved;
+      // looseHome: a density-aware grid (more items -> more columns) with
+      // per-object jitter, spread across a usable band.
       const cols = Math.max(2, Math.min(6, Math.ceil(Math.sqrt(Math.max(1, n) * 1.25))));
       const rows = Math.max(1, Math.ceil(n / cols));
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const jx = (this._oh(o.id + "x") - 0.5) * (70 / cols);
-      const jy = (this._oh(o.id + "y") - 0.5) * (60 / rows);
-      const left = ((col + 0.5) / cols) * 100 + jx;
-      const top = ((row + 0.5) / rows) * 100 + jy;
+      const jx = (this._oh(o.id + "x") - 0.5) * (0.7 / cols);
+      const jy = (this._oh(o.id + "y") - 0.5) * (0.6 / rows);
+      const x = Math.min(0.94, Math.max(0.06, (col + 0.5) / cols + jx));
+      const y = Math.min(0.94, Math.max(0.06, (row + 0.5) / rows + jy));
+      return { x, y };
+    },
+    objStyle(o, i, n) {
+      const u = this.objUnit(o, i, n);
       const phase = -(this._oh(o.id) * 4.5).toFixed(2);
       const tilt = ((this._oh(o.id + "t") - 0.5) * 5).toFixed(2);
       const scale = (0.92 + this._oh(o.id + "s") * 0.16).toFixed(3);
-      return `left:${left.toFixed(2)}%;top:${top.toFixed(2)}%;` +
-             `--phase:${phase}s;--tilt:${tilt}deg;--oscale:${scale};--k:${this.objGlow(o.kind)}`;
+      const dragging = this._drag && this._drag.id === o.id ? ";z-index:20" : "";
+      return `left:${(u.x * 100).toFixed(2)}%;top:${(u.y * 100).toFixed(2)}%;` +
+             `--phase:${phase}s;--tilt:${tilt}deg;--oscale:${scale};--k:${this.objGlow(o.kind)}${dragging}`;
+    },
+
+    // ── HS-71-04: drag-to-arrange + persistence ────────────────────────────
+    loadPositions() {
+      try { this.positions = JSON.parse(localStorage.getItem("hs.diorama.pos") || "{}") || {}; }
+      catch { this.positions = {}; }
+    },
+    savePositions() {
+      try { localStorage.setItem("hs.diorama.pos", JSON.stringify(this.positions)); } catch (_e) {}
+    },
+    /** Pointer-drag an object; sets its unit position live, persists on release.
+     * Tracks movement so a plain click (open, HS-71-06) is not swallowed. */
+    startObjDrag(o, i, n, ev) {
+      if (ev.button != null && ev.button !== 0) return;
+      const world = ev.currentTarget.closest(".desk-world");
+      if (!world) return;
+      const rect = world.getBoundingClientRect();
+      const start = this.objUnit(o, i, n);
+      this._drag = { id: o.id, moved: false };
+      const origin = { x: ev.clientX, y: ev.clientY };
+      const move = (e) => {
+        const dx = (e.clientX - origin.x) / rect.width;
+        const dy = (e.clientY - origin.y) / rect.height;
+        if (Math.abs(e.clientX - origin.x) + Math.abs(e.clientY - origin.y) > 4) this._drag.moved = true;
+        this.positions = {
+          ...this.positions,
+          [o.id]: {
+            x: Math.min(0.96, Math.max(0.04, start.x + dx)),
+            y: Math.min(0.96, Math.max(0.04, start.y + dy)),
+          },
+        };
+      };
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        if (this._drag && this._drag.moved) this.savePositions();
+        // keep _drag.moved readable for the click handler this tick, then clear
+        setTimeout(() => { this._drag = null; }, 0);
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+    },
+    /** True if the last interaction on this object was a drag (suppress open). */
+    justDragged(o) {
+      return !!(this._drag && this._drag.id === o.id && this._drag.moved);
+    },
+    tidyDesk() {
+      this.positions = {};
+      this.savePositions();
     },
     /** Height for the world so the auto-laid rows have room. */
     worldRows() {

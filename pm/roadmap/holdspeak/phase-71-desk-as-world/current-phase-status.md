@@ -1,6 +1,6 @@
 # Phase 71 — The Desk, as a World (the web diorama)
 
-**Status:** IN PROGRESS (3/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (4/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-07-01 (**opened + scaffolded** on owner direction. After Phase 70 shipped
 (legible surface, four doors), the owner said the web still feels "nowhere near the look and feel of the
@@ -73,7 +73,7 @@ cockpits (Home / Dictation / Meetings) stay clean, fast dashboards (owner call).
 | HS-71-01 | The room: the warm atmospheric stage | HIGH | **done** (`/desk` gained a fixed `.desk-stage`: DioPal gradient + an animated warm radial spotlight + a canvas of rising dust motes; reduced-motion-safe; content still on top; zero page errors; suite green; see [evidence](./evidence-story-01.md)) | — |
 | HS-71-02 | The sprite pipeline: hand-drawn objects on the web | HIGH | **done** (67 pixel-art PNGs copied from `apple/App/` to `web/public/desk/sprites/` + a djb2 stable-hash picker `sprites.js` matching `SpriteStore.swift`, on `window.__deskSprites`; sprite sheet crisp, picker stable + spread; suite green; see [evidence](./evidence-story-02.md)) | — |
 | HS-71-03 | Objects that float (the diorama's heartbeat) | HIGH | **done** (`/desk` renders every primitive as a floating pixel-art object — `worldObjects()` + `objStyle` auto-layout + per-object float/glow/detached-shadow via CSS keyframes; card-list preserved under a collapsed "Browse as a list"; 12-object mixed desk proven; zero page errors; suite green; see [evidence](./evidence-story-03.md)) | 01, 02 |
-| HS-71-04 | Free placement + the layout store | MED | **todo** | 03 |
+| HS-71-04 | Free placement + the layout store | MED | **done** (drag-to-arrange with unit-space `positions` persisted to `localStorage["hs.diorama.pos"]` (local-only, never synced); `looseHome` density-aware auto-layout for untouched; a "Tidy" reset; objects enlarged; drag persists across reload (Playwright); suite green; see [evidence](./evidence-story-04.md)) | 03 |
 | HS-71-05 | Zones as shelves: file and dive | MED | **todo** | 04 |
 | HS-71-06 | In-world Qlippy, the create beat, open-an-object | MED | **todo** | 03 |
 | HS-71-07 | Docs + the nav decision (the docs story) | MED | **todo** | 01–06 |
@@ -83,6 +83,18 @@ Build order (foundation-first): **01 → 02 → 03** (the moment it becomes a wo
 organize) → **06** (life + open) → **07** (docs/nav) → **08** (closeout). 06 can run in parallel after 03.
 
 ## Where we are
+
+**2026-07-01 — HS-71-04 done (free placement).** The desk is hand-arrangeable now. `desk-app.js` gained
+`positions` (unit-space `{x,y}` per id) persisted to `localStorage["hs.diorama.pos"]` (local-only, never
+synced - matches the iPad contract, no API), `objUnit` (a saved drag position or the `looseHome`
+density-aware grid), `startObjDrag` (a pointer drag: delta / stage rect, clamped `0.04..0.96`, persists on
+release, a >4px movement threshold so a plain click still opens the object), and `tidyDesk`. `desk.astro`
+wires `@pointerdown` on each object + a grab/grabbing cursor (the float freezes while dragging), a
+touch-action:none for touch, and a header "Tidy" button (shown only when positions exist). Objects were
+enlarged for presence (sprite 76->88, lift 84->96, footprint 112->128) on owner feedback that they read
+small. Proven: a Playwright drag saved `{"m0":{"x":0.31,"y":0.29}}` and it persisted across a full reload;
+the drag did not open the object. Route pre-flight 2 passed (zero page errors); full suite 3045 passed, 37
+skipped. Next: HS-71-05 (zones as shelves - file + dive).
 
 **2026-07-01 — HS-71-03 done (objects that float) — the world moment.** `/desk` stopped being a
 document. `desk-app.js` gained `worldObjects()` (flattens `items[kind]` across every kind), `objSprite`

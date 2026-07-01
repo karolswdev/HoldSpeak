@@ -69,6 +69,11 @@ const GROUPS = [
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></svg>
           New agent
         </button>
+        {/* HS-71-04: reset hand-arranged positions to the auto-layout. */}
+        <button type="button" class="btn ghost" @click="tidyDesk()" x-show="Object.keys(positions).length > 0" x-cloak title="Reset the desk layout">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 6V4h10v2M6 6l1 14h10l1-14" /></svg>
+          Tidy
+        </button>
         <button type="button" class="btn ghost icon-btn" @click="refresh()" :disabled="loading" :aria-busy="loading" aria-label="Refresh from hub" title="Refresh from hub">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" :class="loading ? 'spin' : ''"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v5h-5" /></svg>
         </button>
@@ -103,7 +108,9 @@ const GROUPS = [
     {/* ── HS-71-03: the world — every primitive as a floating pixel-art object ── */}
     <div class="desk-world" :style="`--rows:${worldRows()}`" x-show="total() > 0" x-cloak>
       <template x-for="(o, i) in worldObjects()" {...{ ":key": "o.kind + '-' + o.id" }}>
-        <div class="desk-obj" :style="objStyle(o, i, worldObjects().length)" :title="o.title">
+        <div class="desk-obj" :style="objStyle(o, i, worldObjects().length)" :title="o.title"
+             :class="{ dragging: _drag && _drag.id === o.id }"
+             @pointerdown="startObjDrag(o, i, worldObjects().length, $event)">
           <div class="desk-obj-shadow" aria-hidden="true"></div>
           <div class="desk-obj-lift">
             <div class="desk-obj-glow" aria-hidden="true"></div>
@@ -1510,24 +1517,28 @@ const GROUPS = [
   .desk-world {
     position: relative;
     width: 100%;
-    min-height: calc(180px + var(--rows, 3) * 130px);
+    min-height: calc(200px + var(--rows, 3) * 150px);
     margin-top: var(--space-2);
   }
   .desk-obj {
     position: absolute;
     transform: translate(-50%, -50%) scale(var(--oscale, 1));
-    width: 112px;
+    width: 128px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    cursor: pointer;
+    cursor: grab;
     user-select: none;
+    touch-action: none;
   }
+  .desk-obj.dragging { cursor: grabbing; }
+  .desk-obj.dragging .desk-obj-lift,
+  .desk-obj.dragging .desk-obj-shadow { animation: none; }
   .desk-obj-lift {
     position: relative;
-    width: 84px;
-    height: 84px;
+    width: 96px;
+    height: 96px;
     display: grid;
     place-items: center;
     animation: desk-bob 4.6s ease-in-out infinite;
@@ -1537,10 +1548,10 @@ const GROUPS = [
   .desk-obj-sprite {
     position: relative;
     z-index: 1;
-    width: 76px;
-    height: 76px;
+    width: 88px;
+    height: 88px;
     image-rendering: pixelated;
-    filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.55));
+    filter: drop-shadow(0 11px 15px rgba(0, 0, 0, 0.55));
     transition: filter var(--duration-short) var(--ease-standard);
   }
   .desk-obj-glow {
@@ -1557,9 +1568,9 @@ const GROUPS = [
   .desk-obj-shadow {
     position: absolute;
     left: 50%;
-    top: 78px;
-    width: 60px;
-    height: 15px;
+    top: 90px;
+    width: 70px;
+    height: 16px;
     transform: translateX(-50%);
     background: radial-gradient(closest-side, rgba(0, 0, 0, 0.62), transparent 78%);
     filter: blur(2px);
