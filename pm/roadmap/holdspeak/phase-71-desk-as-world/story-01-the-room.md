@@ -1,9 +1,9 @@
 # HS-71-01 — The room: the warm atmospheric stage
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the foundation + the cheapest huge felt win)
 - **Depends on:** —
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-01.md](./evidence-story-01.md)
 
 ## Goal
 
@@ -32,4 +32,11 @@ verified. Build green.
 
 ## Done
 
-_(filled at close)_
+Shipped and screenshot-proven. `/desk` gained a `.desk-stage` layer (`z-index:
+-1`, behind content): the DioPal gradient (#0B0D12→#16111F→#090A0E), an animated
+warm radial spotlight (orange core + violet undertone + low warm floor, plus-
+lighter, 7s pulse), and a `<canvas>` of ~18 rising dust motes on one rAF loop.
+Reduced-motion freezes the spotlight + motes. The existing card-list still
+renders on top (becomes floating sprites in HS-71-03). Route pre-flight 2 passed
+(zero page errors); full suite 3045 passed. See
+[evidence-story-01.md](./evidence-story-01.md).

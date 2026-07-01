@@ -1,6 +1,6 @@
 # Phase 71 — The Desk, as a World (the web diorama)
 
-**Status:** SCAFFOLDED (0/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (1/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-07-01 (**opened + scaffolded** on owner direction. After Phase 70 shipped
 (legible surface, four doors), the owner said the web still feels "nowhere near the look and feel of the
@@ -70,7 +70,7 @@ cockpits (Home / Dictation / Meetings) stay clean, fast dashboards (owner call).
 
 | Story | Title | Priority | Status | Depends on |
 |-------|-------|----------|--------|------------|
-| HS-71-01 | The room: the warm atmospheric stage | HIGH | **todo** | — |
+| HS-71-01 | The room: the warm atmospheric stage | HIGH | **done** (`/desk` gained a fixed `.desk-stage`: DioPal gradient + an animated warm radial spotlight + a canvas of rising dust motes; reduced-motion-safe; content still on top; zero page errors; suite green; see [evidence](./evidence-story-01.md)) | — |
 | HS-71-02 | The sprite pipeline: hand-drawn objects on the web | HIGH | **todo** | — |
 | HS-71-03 | Objects that float (the diorama's heartbeat) | HIGH | **todo** | 01, 02 |
 | HS-71-04 | Free placement + the layout store | MED | **todo** | 03 |
@@ -83,6 +83,18 @@ Build order (foundation-first): **01 → 02 → 03** (the moment it becomes a wo
 organize) → **06** (life + open) → **07** (docs/nav) → **08** (closeout). 06 can run in parallel after 03.
 
 ## Where we are
+
+**2026-07-01 — HS-71-01 done (the room).** `/desk` stopped loading as flat black. A full-bleed fixed
+`.desk-stage` (`z-index: -1`, behind the content) now holds the diorama atmosphere: the DioPal vertical
+gradient (#0B0D12 → #16111F → #090A0E), an animated warm radial spotlight (an orange core high at
+`50% 34%` + a violet undertone + a low warm floor, `plus-lighter`, a 7s opacity/rise pulse — the port of
+the iPad's `sin`-driven radial), and a `<canvas>` of ~18 rising dust motes on one cheap rAF loop
+(the DioMotes port). Reduced-motion freezes the spotlight and motes. The existing card-list still renders
+on top unchanged — content becomes floating sprites in HS-71-03, which will reveal the room across the
+whole stage. It is static Astro markup, so scoped CSS applies (no `is:global` needed until the objects
+are Alpine-injected). Screenshot-proven (`01-room-atmosphere`); route pre-flight 2 passed (zero page
+errors — the new canvas + script are clean); full suite 3045 passed, 37 skipped. Next: HS-71-02 (the
+sprite pipeline).
 
 **2026-07-01 — opened + scaffolded.** Authored from the owner's "nowhere near the look and feel of the
 iOS app" + the side-by-side (iPad diorama vs. web flat card-list) + the owner's choice to port the
