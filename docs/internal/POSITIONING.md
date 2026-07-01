@@ -93,6 +93,13 @@ primary destinations, not a flat list of pages:
   not a third pillar, and a first-run user is never dropped into it.
 - **Settings** is the one place for global configuration.
 
+**The Desk** (`/desk`) is the spatial expression of the Primitive Framework: a
+warm 2.5D diorama where every primitive (meetings, notes, KBs, agents, and the
+rest) is a hand-drawn object you arrange by hand, file into shelf-zones, and
+dive through. It matches the iPad DeskOS look and feel and reuses the same
+`/api/*` primitive data. It lives in the Studio tier and is celebrated with an
+entry on Home; the two modes stay the front door.
+
 First-run arrival is a single surface (the `/welcome` wizard), which teaches
 the two modes and lands on Home. The rule for future work: the surface stays
 legible. A new capability joins one of the two modes or the Studio tier; it

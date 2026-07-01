@@ -81,6 +81,9 @@ tier for the advanced tools. Four destinations, not a flat list of pages.
 
 ## Extend: build on it
 
+- **[The Desk](./WEB_DESK.md)**: the spatial home for every primitive (meetings,
+  notes, KBs, agents, chains, workflows). Arrange objects by hand, file them into
+  shelf-zones, and dive through, all from your local hub.
 - **[Plugin Authoring](./PLUGIN_AUTHORING.md)**: write a meeting-intel plugin. The
   `HostPlugin` contract, prompt to LLM to structured output, rendering, chains, and
   the actuator propose/approve/execute flow.

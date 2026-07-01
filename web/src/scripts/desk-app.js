@@ -58,6 +58,15 @@ function DeskApp() {
     // Per-kind reachability: "live" | "unreachable" (undefined until loaded).
     status: {},
 
+    // ── HS-71-04: per-device desk layout (the web analog of the iPad's local
+    // `positions`/`hs.diorama.pos`). Unit-space {x,y} in 0..1 per object id.
+    // Local-only, never synced (matches the iPad contract). ──
+    positions: {},
+    _drag: null, // { id, moved } while dragging an object
+    divedZone: null, // HS-71-05: the directory we've "dived" into (null = top desk)
+    mascot: false, // HS-71-06: Qlippy in the corner (config.presence.mascot; default off)
+    newIds: [], // HS-71-06: objects mid "just-created" beat
+
     // ── runtime profiles (Phase 24) ──
     // The named "where intelligence runs" targets an agent can be pointed at.
     // Authored on /profiles; here they populate the agent editor's "Runs on"
@@ -108,6 +117,8 @@ function DeskApp() {
     workflowSteps: null, // [{ nodeId, kind, output, provider }] | null (graph trail)
 
     async init() {
+      this.loadPositions();
+      this.loadMascot();
       await this.loadAll();
       this.loading = false;
       this.loadSetup();
@@ -199,6 +210,209 @@ function DeskApp() {
     },
     total() {
       return Object.values(this.items).reduce((n, l) => n + l.length, 0);
+    },
+
+    // ── HS-71-03: the world (floating pixel-art objects) ───────────────────
+    /** Every primitive (except directories, which are zones) as a flat,
+     * stably-ordered list of stage objects. Filtered to a zone's members when
+     * dived (HS-71-05). */
+    worldObjects() {
+      const order = ["meeting", "note", "kb", "agent", "artifact", "chain", "workflow", "coder"];
+      const out = [];
+      for (const kind of order) {
+        for (const it of this.items[kind] || []) {
+          const id = it.id || it.sessionId || it.title || "";
+          out.push({ kind, id, title: it.title || it.name || id || kind, ref: it });
+        }
+      }
+      if (this.divedZone) {
+        const dir = (this.items.directory || []).find((d) => d.id === this.divedZone);
+        const members = new Set((dir && dir.memberIds) || []);
+        return out.filter((o) => members.has(o.id));
+      }
+      return out;
+    },
+    /** Directories rendered as shelf-zones (HS-71-05). Hidden while dived in. */
+    worldZones() {
+      if (this.divedZone) return [];
+      return (this.items.directory || []).map((d) => ({
+        id: d.id, title: d.title || d.name || "Directory",
+        count: (d.memberIds || []).length, ref: d,
+      }));
+    },
+    /** A tiny stable 0..1 hash for per-object layout jitter + float phase. */
+    _oh(s) {
+      let h = 2166136261;
+      const str = String(s || "");
+      for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return ((h >>> 0) % 10000) / 10000;
+    },
+    objSprite(o) {
+      return window.__deskSprites ? window.__deskSprites.spriteUrl(o.kind, o.id) : "";
+    },
+    objGlow(kind) {
+      return ({
+        meeting: "#56C7F5", note: "#34D399", kb: "#FBBF24", agent: "#FF6B35",
+        artifact: "#FF9E64", chain: "#A78BFA", workflow: "#56C7F5",
+        directory: "#E0A458", coder: "#FF6B35",
+      })[kind] || "#FF6B35";
+    },
+    /** The object's unit position: a saved drag position, else `looseHome`. */
+    objUnit(o, i, n) {
+      const saved = this.positions[o.id];
+      if (saved && typeof saved.x === "number") return saved;
+      // looseHome: a density-aware grid (more items -> more columns) with
+      // per-object jitter, spread across a usable band.
+      const cols = Math.max(2, Math.min(6, Math.ceil(Math.sqrt(Math.max(1, n) * 1.25))));
+      const rows = Math.max(1, Math.ceil(n / cols));
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const jx = (this._oh(o.id + "x") - 0.5) * (0.7 / cols);
+      const jy = (this._oh(o.id + "y") - 0.5) * (0.6 / rows);
+      const x = Math.min(0.94, Math.max(0.06, (col + 0.5) / cols + jx));
+      const y = Math.min(0.94, Math.max(0.06, (row + 0.5) / rows + jy));
+      return { x, y };
+    },
+    objStyle(o, i, n) {
+      const u = this.objUnit(o, i, n);
+      const phase = -(this._oh(o.id) * 4.5).toFixed(2);
+      const tilt = ((this._oh(o.id + "t") - 0.5) * 5).toFixed(2);
+      const scale = (0.92 + this._oh(o.id + "s") * 0.16).toFixed(3);
+      const dragging = this._drag && this._drag.id === o.id ? ";z-index:20" : "";
+      return `left:${(u.x * 100).toFixed(2)}%;top:${(u.y * 100).toFixed(2)}%;` +
+             `--phase:${phase}s;--tilt:${tilt}deg;--oscale:${scale};--k:${this.objGlow(o.kind)}${dragging}`;
+    },
+
+    // ── HS-71-04: drag-to-arrange + persistence ────────────────────────────
+    loadPositions() {
+      try { this.positions = JSON.parse(localStorage.getItem("hs.diorama.pos") || "{}") || {}; }
+      catch { this.positions = {}; }
+    },
+    savePositions() {
+      try { localStorage.setItem("hs.diorama.pos", JSON.stringify(this.positions)); } catch (_e) {}
+    },
+    /** Pointer-drag an object; sets its unit position live, persists on release.
+     * Tracks movement so a plain click (open, HS-71-06) is not swallowed. */
+    startObjDrag(o, i, n, ev) {
+      if (ev.button != null && ev.button !== 0) return;
+      const world = ev.currentTarget.closest(".desk-world");
+      if (!world) return;
+      this._drag = { id: o.id, moved: false };
+      const origin = { x: ev.clientX, y: ev.clientY };
+      // Position the object center directly under the pointer, using a FRESH
+      // world rect each move so a mid-drag layout shift can't desync it.
+      const move = (e) => {
+        const r = world.getBoundingClientRect();
+        if (Math.abs(e.clientX - origin.x) + Math.abs(e.clientY - origin.y) > 4) this._drag.moved = true;
+        this.positions = {
+          ...this.positions,
+          [o.id]: {
+            x: Math.min(0.96, Math.max(0.04, (e.clientX - r.left) / r.width)),
+            y: Math.min(0.96, Math.max(0.04, (e.clientY - r.top) / r.height)),
+          },
+        };
+      };
+      const up = (e) => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        // HS-71-05: dropped onto a zone? file it there (and forget its free pos).
+        // Fresh rects (robust against the drag's re-renders / layout shifts).
+        let zoneId = null;
+        if (this._drag && this._drag.moved && e) {
+          for (const el of document.querySelectorAll(".desk-zone")) {
+            const r = el.getBoundingClientRect();
+            if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+              zoneId = el.dataset.zoneId;
+              break;
+            }
+          }
+        }
+        if (zoneId) {
+          const { [o.id]: _dropped, ...rest } = this.positions;
+          this.positions = rest;
+          this.savePositions();
+          this.fileIntoDir(o.id, zoneId);
+        } else if (this._drag && this._drag.moved) {
+          this.savePositions();
+        }
+        setTimeout(() => { this._drag = null; }, 0);
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+    },
+    /** True if the last interaction on this object was a drag (suppress open). */
+    justDragged(o) {
+      return !!(this._drag && this._drag.id === o.id && this._drag.moved);
+    },
+    tidyDesk() {
+      this.positions = {};
+      this.savePositions();
+    },
+
+    // ── HS-71-05: zones (directories) — layout, file, dive ─────────────────
+    /** Shelf-zones auto-laid across the top of the stage (draggable-free for
+     * now; a saved position wins if one exists). */
+    zoneStyle(z, i, n) {
+      const saved = this.positions["zone:" + z.id];
+      const cols = Math.max(1, Math.min(4, n));
+      const wPct = Math.min(30, 84 / cols);
+      const x = saved ? saved.x * 100 : (((i % cols) + 0.5) / cols) * 100;
+      const y = saved ? saved.y * 100 : 12;
+      return `left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;width:${wPct}%;--zk:${this.objGlow("directory")}`;
+    },
+    /** File a primitive into a directory (add-only PUT). */
+    async fileIntoDir(pid, dirId) {
+      if (this.isFiledIn(pid, dirId)) return;
+      const url = `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(pid)}`;
+      try {
+        await this.fetchJson(url, { method: "PUT", headers: { "content-type": "application/json" } });
+        const d = this.items.directory.find((x) => x.id === dirId);
+        if (d) d.memberIds = [...(d.memberIds || []), pid];
+      } catch (e) {
+        this.error = `File: ${e.message}`;
+      }
+    },
+    diveInto(zoneId) {
+      if (this._drag && this._drag.moved) return; // a drag ended here, not a click
+      this.divedZone = zoneId;
+    },
+    surface() { this.divedZone = null; },
+    divedZoneName() {
+      const d = (this.items.directory || []).find((x) => x.id === this.divedZone);
+      return d ? (d.title || d.name || "Directory") : "";
+    },
+
+    // ── HS-71-06: in-world Qlippy + the create beat + open-an-object ────────
+    async loadMascot() {
+      try {
+        const cfg = await this.fetchJson("/api/settings");
+        this.mascot = !!(cfg && cfg.presence && cfg.presence.mascot);
+      } catch (_e) { /* leave off */ }
+    },
+    /** Flag a freshly-created object for the "NEW" arrival flourish. */
+    markNew(id) {
+      if (!id) return;
+      this.newIds = [...this.newIds, id];
+      setTimeout(() => { this.newIds = this.newIds.filter((x) => x !== id); }, 4500);
+    },
+    isNew(o) { return this.newIds.includes(o.id); },
+    /** Open a primitive (distinct from a drag, per the movement threshold). */
+    openObject(o) {
+      if (this.justDragged(o)) return;
+      if (o.kind === "meeting") {
+        window.location.href = `/history?meeting=${encodeURIComponent(o.id)}`;
+        return;
+      }
+      // No standalone detail route for the other kinds — reveal the full card
+      // (with its actions) in the list.
+      const list = document.querySelector(".desk-list");
+      if (list) { list.open = true; list.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    },
+    /** Height for the world so the auto-laid rows have room. */
+    worldRows() {
+      const n = this.worldObjects().length;
+      const cols = Math.max(2, Math.min(6, Math.ceil(Math.sqrt(Math.max(1, n) * 1.25))));
+      return Math.max(1, Math.ceil(n / cols));
     },
     /** The hub could not be reached for this kind. */
     isUnreachable(kind) {
@@ -770,7 +984,8 @@ function DeskApp() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify(payload),
         });
-        this.items.note.unshift(this.fromWireNote(data.note || data));
+        const _n = this.fromWireNote(data.note || data);
+        this.items.note.unshift(_n); this.markNew(_n.id);
         this.status.note = "live";
         this.noteForm = { title: "", body: "", tags: "" };
         this.closeCreate();
@@ -805,7 +1020,8 @@ function DeskApp() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify(payload),
         });
-        this.items.agent.unshift(this.fromWireAgent(data.agent || data));
+        const _a = this.fromWireAgent(data.agent || data);
+        this.items.agent.unshift(_a); this.markNew(_a.id);
         this.status.agent = "live";
         this.agentForm = {
           name: "", avatar: "🤖", role: "", systemPrompt: "",
@@ -837,7 +1053,8 @@ function DeskApp() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify(payload),
         });
-        this.items.kb.unshift(this.fromWireKb(data.kb || data));
+        const _k = this.fromWireKb(data.kb || data);
+        this.items.kb.unshift(_k); this.markNew(_k.id);
         this.status.kb = "live";
         this.kbForm = { name: "", memberIds: "" };
         this.closeCreate();
