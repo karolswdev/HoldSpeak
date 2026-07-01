@@ -41,6 +41,7 @@ PAGE_ROUTES = [
     "/desk",
     "/workbench",
     "/history",
+    "/meetings",
     "/settings",
     "/activity",
     "/dictation",

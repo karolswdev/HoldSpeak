@@ -1,9 +1,9 @@
 # HS-70-05 — Meetings mode, made whole
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED
 - **Depends on:** HS-70-01
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-05.md](./evidence-story-05.md)
 
 ## Goal
 
@@ -38,4 +38,11 @@ aftercare still function.
 
 ## Done
 
-_(filled at close)_
+Shipped and screenshot-proven. `/history` retitled to **Meetings** (nav +
+page), with the mode's entry actions promoted to the hero — "Start a meeting"
+(→ `/live`) and "Import a recording or transcript" (opens the HS-55/57 import
+panel and scrolls to it) — over the archive + facets + aftercare. A `/meetings`
+route redirects to `/history` (307) so the canonical name resolves without a
+risky route rename. Empty-state copy polish ("Runtime" → live) is deferred to
+HS-70-07. Route pre-flight 2 passed; full suite 3045 passed. See
+[evidence-story-05.md](./evidence-story-05.md).

@@ -26,18 +26,26 @@
 import AppLayout from "../layouts/AppLayout.astro";
 ---
 
-<AppLayout title="HoldSpeak History" current="meetings">
+<AppLayout title="HoldSpeak — Meetings" current="meetings">
   <div class="shell" x-data="historyApp()" x-init="init()">
 
     <header class="hero">
       <div>
-        <p class="eyebrow">Meeting Archive</p>
-        <h1>HoldSpeak History</h1>
+        <p class="eyebrow">Meetings</p>
+        <h1>Meetings</h1>
         <p class="hero-copy">
-          Search prior meetings, review action items across sessions,
-          and see whether meeting intelligence is ready, queued, or
-          unavailable for each archive entry.
+          Capture or import a meeting, then browse the archive: decisions,
+          action items, and aftercare, searchable across every session.
         </p>
+        {/* HS-70-05: the whole mode's entry actions, up top — not buried. */}
+        <div class="hero-actions">
+          <a class="btn primary hero-start" href="/live">Start a meeting</a>
+          <button
+            type="button"
+            class="btn hero-import"
+            @click="importPanelOpen = true; $nextTick(() => document.querySelector('.import-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' }))"
+          >Import a recording or transcript</button>
+        </div>
       </div>
       <div class="hero-side">
         <div class="metric-grid">
@@ -1427,6 +1435,21 @@ import AppLayout from "../layouts/AppLayout.astro";
     margin: 0;
     color: var(--text-muted);
     line-height: var(--line-height-relaxed);
+  }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+  }
+  .hero-import {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .hero-import:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-hover);
   }
   @media (max-width: 900px) {
     .hero { grid-template-columns: 1fr; }

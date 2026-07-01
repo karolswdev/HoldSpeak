@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from ...logging_config import get_logger
 from ..context import WebContext
@@ -109,6 +109,14 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
                 "in <code>web/</code>.</p></body></html>"
             )
         return HTMLResponse(html)
+
+    @router.get("/meetings")
+    async def meetings_alias() -> Any:
+        """HS-70-05: `/meetings` is the canonical name for the Meetings mode; it
+        redirects to the archive route `/history` (which the page now titles
+        "Meetings"). Keeps the label and the URL in step without a risky
+        route rename."""
+        return RedirectResponse("/history", status_code=307)
 
     @router.get("/history")
     async def history_dashboard() -> Any:

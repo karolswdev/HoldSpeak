@@ -1,6 +1,6 @@
 # Phase 70 — The Legible Product (Out-of-the-Box)
 
-**Status:** IN PROGRESS (4/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (5/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-06-30 (**opened + scaffolded** on owner direction, in the owner's own words:
 *"I literally am confused myself about the product, and IMO, that's a VERY, very bad sign."* Phase 69
@@ -81,7 +81,7 @@ Four primary destinations + Settings, not fourteen. Per-route disposition is in 
 | HS-70-02 | Home: "what is this + your next action" | HIGH | **done** (`/` reframed from the meeting-runtime dashboard into an orientation Home: identity + a `/api/setup/status`-fed next-action band + the two modes as co-equal cards with guiding subtitles + a quiet Studio link; the 1378-line live dashboard moved to `/live`; empty + seeded screenshot-proven; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-70-03 | One arrival: consolidate the three first-run surfaces | HIGH | **done** (`/welcome` is the single arrival — guard + CLI nudge route new users there, it teaches both modes and lands on Home; `/setup` demoted from a second "Welcome" to the "Setup & health" surface and surfaced from Settings; screenshot-proven; 13 tests + full suite green; see [evidence](./evidence-story-03.md)) | 01, 02 |
 | HS-70-04 | Dictation mode, made whole (folds `/activity`) | MED | **done** (pre-briefing nudges already in the cockpit; Activity removed from the Studio nav and `/activity` reframed as a Dictation sub-view — `current="dictation"`, "← Dictation" back link, retitled "Activity ledger", "Manage activity →" from the cockpit; reframe over port/redirect so nothing lost; screenshot-proven; full suite green; see [evidence](./evidence-story-04.md)) | 01 |
-| HS-70-05 | Meetings mode, made whole (`/history` → Meetings) | MED | **todo** | 01 |
+| HS-70-05 | Meetings mode, made whole (`/history` → Meetings) | MED | **done** (`/history` retitled "Meetings"; hero entry actions promoted — "Start a meeting" → `/live` + "Import a recording or transcript" opens the panel; archive/facets/aftercare beneath; `/meetings`→`/history` redirect; screenshot-proven; suite green; empty-state copy deferred to 07; see [evidence](./evidence-story-05.md)) | 01 |
 | HS-70-06 | The Studio tier: power features framed + contained | MED | **todo** | 01 |
 | HS-70-07 | Guiding empty states everywhere (no scary blanks) | MED | **todo** | 02 |
 | HS-70-08 | Naming + positioning coherence (the docs story) | MED | **todo** | 01–07 |
@@ -92,6 +92,18 @@ that fixes the confusion outright) → **04 → 05 → 06** (each mode/tier made
 states) → **08** (docs/naming lock) → **09** (closeout). 04/05/06 are parallelizable after 01.
 
 ## Where we are
+
+**2026-06-30 — HS-70-05 done (Meetings made whole).** `/history` stopped reading as an oddly-named
+"History" archive and became the **Meetings** front door: eyebrow + h1 retitled to "Meetings", the page
+`<title>` to "HoldSpeak — Meetings", the hero copy reframed to name the whole mode, and the mode's entry
+actions promoted to the hero — "Start a meeting" (→ `/live`, the live-capture surface HS-70-02 carved
+out) and "Import a recording or transcript" (opens the existing HS-55/57 import panel and scrolls to it)
+— over the archive + faceted search + aftercare (unchanged beneath). A `/meetings` route redirects to
+`/history` (307) so the canonical name resolves without a risky route rename (added to PAGE_ROUTES). The
+archive empty-state copy still says "Runtime" (the retired dashboard name); that is fixed app-wide in
+HS-70-07 and is noted, not silently left. Screenshot-proven (`meetings-empty` shows the retitle + hero
+actions + faceted archive; `meetings-import` shows the import panel opened from the hero). Route
+pre-flight 2 passed; full suite 3045 passed, 37 skipped. Next: HS-70-06 (the Studio tier index).
 
 **2026-06-30 — HS-70-04 done (Dictation made whole).** The dictation-relevant Activity (the pre-briefing
 nudges) was already in the cockpit (`ActivityNudges`, HS-53-04). This story finished the fold: Activity

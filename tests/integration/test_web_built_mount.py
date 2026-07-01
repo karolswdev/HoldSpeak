@@ -147,7 +147,7 @@ def test_legacy_routes_still_serve(test_client: TestClient) -> None:
     for path, marker in [
         ("/", "HoldSpeak"),
         ("/activity", "Activity ledger"),
-        ("/history", "HoldSpeak History"),
+        ("/history", "Meetings"),  # HS-70-05: retitled from "HoldSpeak History"
         ("/settings", "Every global HoldSpeak setting"),
         ("/dictation", "HoldSpeak Dictation"),
         ("/docs/dictation-runtime", "Dictation runtime setup"),
