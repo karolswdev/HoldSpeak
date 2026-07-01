@@ -1,25 +1,45 @@
 ---
-// HS-30-04 TopNav — "Signal" shell.
+// HS-70-01 TopNav — the two-mode IA spine (Phase 70, Legible Product).
 //
-// IA spec §1 (phase-30 evidence/ia-spec.md): the flat 5-link strip is
-// replaced by a grouped model that signals what each surface is *for*:
-//   Live      → Runtime          (the only real-time surface)
-//   Review    → History, Activity
-//   Configure → Dictation, Companion
+// The flat Live / Review / Configure groups (14 co-equal doors) are
+// replaced by the four-destination model that expresses the product's
+// own story — "one copilot, two modes":
+//   Home       → /            the orienting front door (HS-70-02 reframes it)
+//   Dictation  → /dictation   the voice-typing mode (folds /activity in HS-70-04)
+//   Meetings   → /history      the meeting mode (route→Meetings in HS-70-05)
+//   Studio ▾   → a collapsed advanced tier (Workbench, Desk, Agent Desk,
+//                Activity, Cadence, Commands, Profiles)
 //
-// Right cluster: a status slot (default LocalPill) + a Settings (⚙)
-// link to the global /settings route (HS-42-02 retired the interim drawer).
+// Right cluster: a status slot (default LocalPill/TrustChip) + a Settings
+// (⚙) link to /settings.
 //
-// Active route is DUAL-encoded (not colour-only, per skill ux/Color
-// Only): accent-tint fill + weight + an accent underbar + aria-current.
+// Studio is a native <details> disclosure: it collapses with zero JS, is
+// keyboard-accessible, and opens automatically when the active route lives
+// inside it. Active route is DUAL-encoded (accent-tint + weight + underbar +
+// aria-current), never colour-only.
 //
-// Responsive: below the nav breakpoint the groups collapse behind a
-// menu toggle ([data-nav-toggle]); no flex-wrap pile-up.
+// Responsive: below the nav breakpoint the whole strip collapses behind the
+// menu toggle ([data-nav-toggle]); the Studio panel renders inline (static).
+//
+// Transitional notes: Activity is parked in Studio here; HS-70-04 folds it
+// into the Dictation surface and drops it from this tier. Presence is a
+// nav-less HUD overlay reached from Settings, so it is intentionally not a
+// Studio nav item (the HS-70-06 Studio index may still card it).
 
 import AppMark from "./AppMark.astro";
 import TrustChip from "./TrustChip.astro";
 
-type Route = "runtime" | "desk" | "workbench" | "activity" | "history" | "dictation" | "companion" | "commands" | "profiles";
+type Route =
+  | "home"
+  | "dictation"
+  | "meetings"
+  | "workbench"
+  | "desk"
+  | "companion"
+  | "activity"
+  | "cadence"
+  | "commands"
+  | "profiles";
 
 interface Props {
   current?: Route;
@@ -27,32 +47,23 @@ interface Props {
 
 const { current } = Astro.props;
 
-const groups: { label: string; routes: { slug: Route; label: string; href: string }[] }[] = [
-  {
-    label: "Live",
-    routes: [
-      { slug: "runtime", label: "Runtime", href: "/" },
-      { slug: "desk", label: "Desk", href: "/desk" },
-      { slug: "workbench", label: "Workbench", href: "/workbench" },
-    ],
-  },
-  {
-    label: "Review",
-    routes: [
-      { slug: "history", label: "History", href: "/history" },
-      { slug: "activity", label: "Activity", href: "/activity" },
-    ],
-  },
-  {
-    label: "Configure",
-    routes: [
-      { slug: "dictation", label: "Dictation", href: "/dictation" },
-      { slug: "profiles", label: "Profiles", href: "/profiles" },
-      { slug: "commands", label: "Commands", href: "/commands" },
-      { slug: "companion", label: "Companion", href: "/companion" },
-    ],
-  },
+const primary: { slug: Route; label: string; href: string }[] = [
+  { slug: "home", label: "Home", href: "/" },
+  { slug: "dictation", label: "Dictation", href: "/dictation" },
+  { slug: "meetings", label: "Meetings", href: "/history" },
 ];
+
+const studio: { slug: Route; label: string; href: string }[] = [
+  { slug: "workbench", label: "Workbench", href: "/workbench" },
+  { slug: "desk", label: "Desk", href: "/desk" },
+  { slug: "companion", label: "Agent Desk", href: "/companion" },
+  { slug: "activity", label: "Activity", href: "/activity" },
+  { slug: "cadence", label: "Cadence", href: "/cadence" },
+  { slug: "commands", label: "Commands", href: "/commands" },
+  { slug: "profiles", label: "Profiles", href: "/profiles" },
+];
+
+const studioActive = studio.some((s) => s.slug === current);
 ---
 
 <header class="topnav" role="banner">
@@ -77,22 +88,49 @@ const groups: { label: string; routes: { slug: Route; label: string; href: strin
   </button>
 
   <nav class="topnav-nav" id="topnav-nav" aria-label="Primary">
-    {groups.map((g) => (
-      <div class="topnav-group">
-        <span class="topnav-group-label">{g.label}</span>
-        <div class="topnav-group-links">
-          {g.routes.map((r) => (
-            <a
-              href={r.href}
-              class:list={["topnav-link", current === r.slug && "is-current"]}
-              aria-current={current === r.slug ? "page" : undefined}
-            >
-              {r.label}
-            </a>
-          ))}
-        </div>
-      </div>
+    {primary.map((r) => (
+      <a
+        href={r.href}
+        class:list={["topnav-link", current === r.slug && "is-current"]}
+        aria-current={current === r.slug ? "page" : undefined}
+      >
+        {r.label}
+      </a>
     ))}
+
+    <details class="topnav-studio" open={studioActive ? true : undefined}>
+      <summary
+        class:list={["topnav-link", "topnav-studio-summary", studioActive && "has-active"]}
+      >
+        <span>Studio</span>
+        <svg
+          class="topnav-studio-caret"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </summary>
+      <div class="topnav-studio-panel">
+        <span class="topnav-studio-eyebrow">Advanced</span>
+        {studio.map((r) => (
+          <a
+            href={r.href}
+            class:list={["topnav-studio-item", current === r.slug && "is-current"]}
+            aria-current={current === r.slug ? "page" : undefined}
+          >
+            {r.label}
+          </a>
+        ))}
+      </div>
+    </details>
   </nav>
 
   <div class="topnav-tail">
@@ -171,23 +209,61 @@ const groups: { label: string; routes: { slug: Route; label: string; href: strin
     filter: drop-shadow(0 0 6px var(--accent-glow));
   }
 
-  /* Nav groups */
+  /* Nav: the two modes as inline links + a Studio disclosure. */
   .topnav-nav {
     display: flex;
     align-items: center;
-    gap: var(--space-5);
+    gap: var(--space-1);
     flex: 1 1 auto;
   }
-  .topnav-group {
-    display: flex;
+
+  /* Studio — a native <details> disclosure (zero-JS, keyboard-native). */
+  .topnav-studio {
+    position: relative;
+  }
+  .topnav-studio-summary {
+    display: inline-flex;
     align-items: center;
-    gap: var(--space-3);
+    gap: var(--space-1);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
   }
-  .topnav-group + .topnav-group {
-    padding-left: var(--space-5);
-    border-left: 1px solid var(--border-subtle);
+  .topnav-studio-summary::-webkit-details-marker {
+    display: none;
   }
-  .topnav-group-label {
+  .topnav-studio-summary::marker {
+    content: "";
+  }
+  /* "You are somewhere in Studio" — subtle tint, no page underbar. */
+  .topnav-studio-summary.has-active {
+    color: var(--text);
+    background: var(--accent-tint);
+  }
+  .topnav-studio-caret {
+    opacity: 0.7;
+    transition: transform var(--duration-short) var(--ease-standard);
+  }
+  .topnav-studio[open] .topnav-studio-caret {
+    transform: rotate(180deg);
+  }
+  .topnav-studio-panel {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    left: 0;
+    z-index: var(--z-overlay);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 190px;
+    padding: var(--space-2);
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--elev-2);
+  }
+  .topnav-studio-eyebrow {
+    padding: var(--space-1) var(--space-2) var(--space-2);
     font-size: 0.6875rem;
     font-weight: 600;
     letter-spacing: var(--letter-spacing-eyebrow);
@@ -195,10 +271,31 @@ const groups: { label: string; routes: { slug: Route; label: string; href: strin
     color: var(--text-faint);
     user-select: none;
   }
-  .topnav-group-links {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
+  .topnav-studio-item {
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-family: var(--font-ui);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    transition:
+      color var(--duration-short) var(--ease-standard),
+      background var(--duration-short) var(--ease-standard);
+  }
+  .topnav-studio-item:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+  }
+  .topnav-studio-item:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .topnav-studio-item.is-current {
+    color: var(--text);
+    font-weight: 600;
+    background: var(--accent-tint);
   }
 
   .topnav-link {
@@ -315,23 +412,26 @@ const groups: { label: string; routes: { slug: Route; label: string; href: strin
     .topnav[data-open] .topnav-nav {
       display: flex;
     }
-    .topnav-group {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: var(--space-1);
-    }
-    .topnav-group + .topnav-group {
-      padding-left: 0;
-      border-left: 0;
-      padding-top: var(--space-2);
-      border-top: 1px solid var(--border-subtle);
-    }
-    .topnav-group-links {
-      flex-direction: column;
-      align-items: stretch;
+    .topnav-link {
       width: 100%;
     }
-    .topnav-link {
+    .topnav-studio {
+      width: 100%;
+    }
+    .topnav-studio-summary {
+      width: 100%;
+      justify-content: space-between;
+    }
+    /* On mobile the Studio panel renders inline (static), never floating. */
+    .topnav-studio-panel {
+      position: static;
+      min-width: 0;
+      padding: var(--space-1) 0 var(--space-1) var(--space-3);
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+    .topnav-studio-item {
       width: 100%;
     }
   }

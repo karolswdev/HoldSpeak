@@ -19,7 +19,20 @@ import Qlippy from "../components/Qlippy.astro";
 import Waveform from "../components/Waveform.astro";
 import GenerationTheater from "../components/GenerationTheater.astro";
 
-type Route = "runtime" | "desk" | "workbench" | "activity" | "history" | "dictation" | "companion" | "commands" | "profiles";
+// HS-70-01: the two-mode IA (see TopNav.astro). `home` (was `runtime`) and
+// `meetings` (was `history`) are the renamed front-door slugs; the Studio
+// tier keeps its per-tool slugs.
+type Route =
+  | "home"
+  | "dictation"
+  | "meetings"
+  | "workbench"
+  | "desk"
+  | "companion"
+  | "activity"
+  | "cadence"
+  | "commands"
+  | "profiles";
 
 interface Props {
   title: string;
