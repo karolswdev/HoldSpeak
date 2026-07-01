@@ -35,6 +35,7 @@ pytestmark = [pytest.mark.requires_meeting]
 # guard until it is listed here (and thus swept).
 PAGE_ROUTES = [
     "/",
+    "/live",
     "/welcome",
     "/setup",
     "/desk",

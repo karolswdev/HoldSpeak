@@ -1,9 +1,9 @@
 # HS-70-02 — Home: "what is this + your next action"
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the anti-confusion centerpiece)
 - **Depends on:** HS-70-01
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-02.md](./evidence-story-02.md)
 
 ## Goal
 
@@ -41,4 +41,12 @@ read-test noted in evidence.
 
 ## Done
 
-_(filled at close)_
+Shipped and screenshot-proven (empty + seeded). `/` is now an orientation Home:
+identity (the positioning one-liner), a next-action band fed by
+`/api/setup/status` (`primary_action`, hidden once ready), the two modes as
+co-equal `.signal-card`s with guiding dynamic subtitles + action buttons, and a
+quiet Studio link. The 1378-line live-meeting runtime dashboard moved off `/` to
+`/live` (a `git mv`, behaviour unchanged, `current="meetings"`); `/live`
+registered in pages.py + PAGE_ROUTES. Empty-state subtitles guide instead of
+blanking. Route pre-flight 2 passed; full suite 3045 passed. See
+[evidence-story-02.md](./evidence-story-02.md).

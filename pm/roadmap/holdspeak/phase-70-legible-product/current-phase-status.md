@@ -1,6 +1,6 @@
 # Phase 70 — The Legible Product (Out-of-the-Box)
 
-**Status:** IN PROGRESS (1/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (2/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-06-30 (**opened + scaffolded** on owner direction, in the owner's own words:
 *"I literally am confused myself about the product, and IMO, that's a VERY, very bad sign."* Phase 69
@@ -78,7 +78,7 @@ Four primary destinations + Settings, not fourteen. Per-route disposition is in 
 | Story | Title | Priority | Status | Depends on |
 |-------|-------|----------|--------|------------|
 | HS-70-01 | The IA spine: nav reframe to two modes + Studio | HIGH | **done** (TopNav → `Home · Dictation · Meetings · Studio▾`; Studio is a native `<details>` tier of the 7 browsable advanced surfaces, auto-open on an active route; `Route` union + 4 page slugs updated; Activity parked in Studio, Presence excluded as a nav-less overlay; 4 nav states screenshot-proven, route pre-flight 2 passed; see [evidence](./evidence-story-01.md)) | owner A+B |
-| HS-70-02 | Home: "what is this + your next action" | HIGH | **todo** | 01 |
+| HS-70-02 | Home: "what is this + your next action" | HIGH | **done** (`/` reframed from the meeting-runtime dashboard into an orientation Home: identity + a `/api/setup/status`-fed next-action band + the two modes as co-equal cards with guiding subtitles + a quiet Studio link; the 1378-line live dashboard moved to `/live`; empty + seeded screenshot-proven; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-70-03 | One arrival: consolidate the three first-run surfaces | HIGH | **todo** | 01, 02 |
 | HS-70-04 | Dictation mode, made whole (folds `/activity`) | MED | **todo** | 01 |
 | HS-70-05 | Meetings mode, made whole (`/history` → Meetings) | MED | **todo** | 01 |
@@ -92,6 +92,20 @@ that fixes the confusion outright) → **04 → 05 → 06** (each mode/tier made
 states) → **08** (docs/naming lock) → **09** (closeout). 04/05/06 are parallelizable after 01.
 
 ## Where we are
+
+**2026-06-30 — HS-70-02 done (Home).** The front door now orients instead of dumping a dashboard. `/`
+was the 1378-line live-meeting runtime (Alpine hero + capture); it moved verbatim to `/live`
+(`current="meetings"`, registered in pages.py + PAGE_ROUTES) and `/` became a focused Home: the
+positioning one-liner as identity, a next-action band fed by `/api/setup/status` (surfaces the server's
+`primary_action` until the user is set up, hidden after), the two modes (Dictation / Meetings) as
+co-equal `.signal-card`s with white-on-gradient glyph chips, one-line what-it-does, dynamic subtitles,
+and action buttons, plus a quiet dashed Studio link that never outshouts the modes. Dynamic subtitles
+fill pre-rendered `textContent` only (no injected DOM → scoped CSS holds). Empty state guides ("Nothing
+yet. Hold your key and speak." / "…Capture or import your first meeting.") rather than blanking — a
+down payment on HS-70-07. Proven both ways: `home-empty.png` (fresh DB: NEXT band + guiding subtitles)
+and `home-seeded.png` (a seeded meeting + journal entry fill `Last: …`). Route pre-flight 2 passed
+(Home + `/live` swept); full suite 3045 passed, 37 skipped. Next: HS-70-03 (consolidate the three
+first-run surfaces into one arrival that lands on Home).
 
 **2026-06-30 — HS-70-01 done (the IA spine).** The nav now states the story: `TopNav.astro` went from
 three inline groups (Live / Review / Configure, ~14 co-equal doors) to `Home · Dictation · Meetings ·

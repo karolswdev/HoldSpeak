@@ -7,7 +7,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_runtime_presence_card_is_accessible_and_reduced_motion_safe() -> None:
-    page_source = (ROOT / "web/src/pages/index.astro").read_text()
+    # HS-70-02: the runtime dashboard (and its presence card) moved to /live.
+    page_source = (ROOT / "web/src/pages/live.astro").read_text()
 
     assert 'class="presence-card"' in page_source
     assert 'role="status"' in page_source

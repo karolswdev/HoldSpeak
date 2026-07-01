@@ -47,6 +47,26 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/live")
+    async def live_meeting() -> Any:
+        """Serve the live-meeting runtime dashboard (HS-70-02 moved it off `/`,
+        which is now Home). Read from the Astro-built _built/live/index.html.
+        Meetings-mode content; unified with the archive under Meetings in
+        HS-70-05."""
+        page = _HOLDSPEAK_DIR / "static" / "_built" / "live" / "index.html"
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built live page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak — Live Meeting</title></head>"
+                "<body><h1>Live Meeting</h1>"
+                "<p>Live UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     @router.get("/welcome")
     async def welcome_wizard() -> Any:
         """Serve the first-run wizard (HS-43-01) — a full-screen takeover, read
