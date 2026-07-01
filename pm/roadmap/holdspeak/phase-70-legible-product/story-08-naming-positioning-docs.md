@@ -1,9 +1,9 @@
 # HS-70-08 — Naming + positioning coherence (the docs story)
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED (the dedicated docs story — after the features, before closeout)
 - **Depends on:** HS-70-01 … HS-70-07
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-08.md](./evidence-story-08.md)
 
 ## Goal
 
@@ -37,4 +37,10 @@ committed.
 
 ## Done
 
-_(filled at close)_
+Shipped (docs-only). POSITIONING gains a "web surface (information
+architecture)" section + Home/Meetings/Studio canonical-name rows; Getting
+Started's surface map is updated to the new IA (returning users land on Home);
+the docs index carries a front-door note. Nav labels + page titles were already
+canonical from the feature stories; a docs sweep found no stale surface
+language. Voice/doc guard 15 passed; full suite 3045 passed. See
+[evidence-story-08.md](./evidence-story-08.md).

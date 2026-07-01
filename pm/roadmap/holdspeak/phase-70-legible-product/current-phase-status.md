@@ -1,6 +1,6 @@
 # Phase 70 — The Legible Product (Out-of-the-Box)
 
-**Status:** IN PROGRESS (7/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (8/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-06-30 (**opened + scaffolded** on owner direction, in the owner's own words:
 *"I literally am confused myself about the product, and IMO, that's a VERY, very bad sign."* Phase 69
@@ -84,7 +84,7 @@ Four primary destinations + Settings, not fourteen. Per-route disposition is in 
 | HS-70-05 | Meetings mode, made whole (`/history` → Meetings) | MED | **done** (`/history` retitled "Meetings"; hero entry actions promoted — "Start a meeting" → `/live` + "Import a recording or transcript" opens the panel; archive/facets/aftercare beneath; `/meetings`→`/history` redirect; screenshot-proven; suite green; empty-state copy deferred to 07; see [evidence](./evidence-story-05.md)) | 01 |
 | HS-70-06 | The Studio tier: power features framed + contained | MED | **done** (new `/studio` index frames the 6 tools as clearly-secondary cards — glyph + one-line purpose + "Open →", Cadence tagged "Off by default"; the dropdown "ADVANCED" eyebrow links to it; tools keep their routes; screenshot-proven; suite green; see [evidence](./evidence-story-06.md)) | 01 |
 | HS-70-07 | Guiding empty states everywhere (no scary blanks) | MED | **done** (shared `.empty-state` primitive in global.css; Meetings archive rebuilt on it in two guiding variants — no-match + first-run — fixing the stale "Runtime" copy; audit found Home/journal/context already guide; load-vs-empty-vs-no-match distinct; screenshot-proven; suite green; see [evidence](./evidence-story-07.md)) | 02 |
-| HS-70-08 | Naming + positioning coherence (the docs story) | MED | **todo** | 01–07 |
+| HS-70-08 | Naming + positioning coherence (the docs story) | MED | **done** (POSITIONING gains a web-IA section + Home/Meetings/Studio canonical names; Getting Started surface map updated to the new IA; docs index front-door note; nav labels/titles already canonical; no stale surface language; voice/doc guard 15 passed; suite green; see [evidence](./evidence-story-08.md)) | 01–07 |
 | HS-70-09 | Closeout: no dead doors, one clean arrival, proven | HIGH | **todo** | 01–08 |
 
 Suggested build order (cheapest-high-impact-first, spine early): **01 → 02 → 03** (the arrival trio
@@ -92,6 +92,18 @@ that fixes the confusion outright) → **04 → 05 → 06** (each mode/tier made
 states) → **08** (docs/naming lock) → **09** (closeout). 04/05/06 are parallelizable after 01.
 
 ## Where we are
+
+**2026-06-30 — HS-70-08 done (naming + positioning, the docs story).** The new front door is now canon.
+POSITIONING gains a "web surface (information architecture)" section (the four destinations as the surface
+expression of "one copilot, two modes"; Studio is the advanced tier below the two modes, not a third
+pillar; one first-run arrival; the standing rule that new capability joins a mode or Studio, not a new
+door) and three canonical-name rows (Home, Meetings, Studio). Getting Started's surface map is updated to
+the new IA (returning users land on Home; `/welcome` the single arrival; `/setup` "Setup and health") and
+the docs index carries a front-door note. Nav labels + page titles were already canonical from the feature
+stories (Home/Dictation/Meetings/Studio, the Meetings retitle, the Activity ledger), so this records them
+rather than renaming further; a `docs/*.md`+README sweep found no stale surface language. Docs-only, zero
+behavior change. Voice/doc guard 15 passed (incl. the dash-zero + canonical-name checks); full suite 3045
+passed, 37 skipped. Next: HS-70-09 (closeout — no dead doors + the arrival play-walk).
 
 **2026-06-30 — HS-70-07 done (guiding empty states).** A shared `.empty-state` primitive landed in
 global.css (glyph + title + one guiding line + one action; global so it paints on JS-injected DOM), and
