@@ -1,6 +1,6 @@
 # Phase 71 — The Desk, as a World (the web diorama)
 
-**Status:** IN PROGRESS (7/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** CLOSED (8/8) — 2026-07-01. See [`final-summary.md`](./final-summary.md).
 
 **Last updated:** 2026-07-01 (**opened + scaffolded** on owner direction. After Phase 70 shipped
 (legible surface, four doors), the owner said the web still feels "nowhere near the look and feel of the
@@ -77,12 +77,22 @@ cockpits (Home / Dictation / Meetings) stay clean, fast dashboards (owner call).
 | HS-71-05 | Zones as shelves: file and dive | MED | **done** (directories become painted shelf-zones; drag an object onto one to file via real `PUT /api/directories/{id}/members/{pid}`; click to dive in (filter to members) with a back control + empty state; robustness fix for mid-drag layout shift; Playwright drop→1 item, dive→1 member; suite green; see [evidence](./evidence-story-05.md)) | 04 |
 | HS-71-06 | In-world Qlippy, the create beat, open-an-object | MED | **done** (Qlippy in the corner gated on `presence.mascot`; create beat (glow+ring+NEW badge, wired into submitNote/agent/kb); tap-to-open (meeting->`/history`, others reveal the card), drag-guarded; Playwright-proven; suite green; see [evidence](./evidence-story-06.md)) | 03 |
 | HS-71-07 | Docs + the nav decision (the docs story) | MED | **done** (owner chose: celebrate the Desk on Home + keep in Studio; Home gains an accent "The Desk ->" entry; `docs/WEB_DESK.md` guide linked + a POSITIONING Desk paragraph; voice/doc guard + preflight 17 passed; suite green; see [evidence](./evidence-story-07.md)) | 01–06 |
-| HS-71-08 | Closeout: the side-by-side, proven | HIGH | **todo** | 01–07 |
+| HS-71-08 | Closeout: the side-by-side, proven | HIGH | **done** (the vibe test passes — web `08-web-desk-hero` reads as the same world as the iPad; full walk proven; route pre-flight green; suite 3045; sprites committed; `final-summary.md` written; see [evidence](./evidence-story-08.md)) | 01–07 |
 
 Build order (foundation-first): **01 → 02 → 03** (the moment it becomes a world) → **04 → 05** (arrange +
 organize) → **06** (life + open) → **07** (docs/nav) → **08** (closeout). 06 can run in parallel after 03.
 
 ## Where we are
+
+**2026-07-01 — HS-71-08 done -> PHASE 71 CLOSED (8/8).** The vibe test passes: the web `/desk`
+(`08-web-desk-hero` - 12 floating objects + the "Q3 release" shelf + Qlippy on the warm lit stage) reads as
+the same world as the iPad (`2001-ipad-wide`), from the same live `/api/*` data and the same sprite art. The
+full walk works end to end: atmosphere -> sprites -> floating objects -> drag-to-arrange (persists) ->
+drag-to-file onto a shelf (real PUT) -> dive + back -> Qlippy in the corner -> tap-to-open. No dead doors
+(route pre-flight 2 passed, zero page errors on `/desk`); the two-mode cockpits (Home/Dictation/Meetings)
+unchanged. Full suite 3045 passed, 37 skipped - CONSTANT across all eight stories (a pure rendering + asset
+addition; no backend touched). `web/public/desk/sprites` committed (67 PNGs); `_built` never committed.
+`final-summary.md` written. The web finally has the iPad's felt world.
 
 **2026-07-01 — HS-71-07 done (docs + the nav decision).** The one product question the build raised is
 resolved. Nav decision (put to the owner, three options): **celebrate the Desk on Home + keep it in

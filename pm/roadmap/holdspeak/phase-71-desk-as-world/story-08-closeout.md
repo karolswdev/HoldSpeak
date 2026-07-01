@@ -1,9 +1,9 @@
 # HS-71-08 — Closeout: the side-by-side, proven
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the gate)
 - **Depends on:** HS-71-01 … HS-71-07
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-08.md](./evidence-story-08.md)
 - **Phase-exit:** ships `evidence-story-08.md` **and** `final-summary.md`.
 
 ## Goal
@@ -37,4 +37,10 @@ page errors; full suite count; the final summary.
 
 ## Done
 
-_(filled at close)_
+The vibe test passes: the web `/desk` (`08-web-desk-hero`: 12 objects + 1 shelf +
+Qlippy on the lit stage) reads as the same world as the iPad `2001-ipad-wide`.
+The full walk works end to end (atmosphere -> sprites -> float -> drag -> file ->
+dive -> Qlippy -> tap-to-open). Route pre-flight 2 passed (zero page errors on
+`/desk`); the two-mode cockpits unchanged; full suite 3045 passed, 37 skipped;
+`web/public/desk/sprites` committed; `_built` never committed. `final-summary.md`
+written. See [evidence-story-08.md](./evidence-story-08.md).
