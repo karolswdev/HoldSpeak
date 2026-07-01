@@ -1,1378 +1,329 @@
 ---
-// HS-10-06: `/` runtime dashboard rebuilt on the design system.
+// HS-70-02: Home — the orientation front door.
 //
-// State machine + WebSocket + API behavior is preserved from the
-// legacy dashboard.html: the same Alpine `HoldSpeakDashboard()` factory
-// drives the page (imported from src/scripts/dashboard-app.js, served
-// alongside Alpine.js — both self-hosted, no CDN). All x-data /
-// x-text / x-show / @click bindings are preserved verbatim.
+// Answers the two questions a confused user (or the owner) has in the first
+// ten seconds: WHAT IS THIS (the positioning one-liner) and WHAT DO I DO NOW
+// (the two modes as co-equal cards + a single next-action from
+// /api/setup/status). This is NOT a data dashboard: the live-meeting runtime
+// that used to live at `/` moved to `/live` (Meetings-mode content).
 //
-// Astro components (Button, Pill, etc.) are intentionally NOT used
-// in this file: Astro silently drops non-prop attributes like
-// `x-show` / `:disabled` / `@click` on custom-component invocations,
-// which would break Alpine bindings. Instead this page renders raw
-// HTML using locally-scoped CSS that consumes the same design tokens.
+// Dynamic bits fill pre-rendered elements' textContent only — no
+// innerHTML-injected structural DOM — so the scoped CSS below stays valid
+// (the Astro/Alpine JS-DOM scoping trap does not apply).
 
 import AppLayout from "../layouts/AppLayout.astro";
-import HoldMark from "../components/HoldMark.astro";
 ---
 
-<AppLayout title="HoldSpeak Runtime" current="runtime">
-  <div class="runtime" x-data="HoldSpeakDashboard()" x-init="init()">
-
-    <!-- Hero -->
-    <section class="hero" :class="{
-      'state-idle': !meetingActive && !stopInProgress,
-      'state-active': meetingActive && !stopInProgress,
-      'state-stopping': stopInProgress,
-    }">
-      <div class="hero-id">
-        <div class="hero-pills">
-          <span class="pill pill--local"><span class="pill-dot"></span>local-only</span>
-          <span class="pill pill--info" x-show="meetingActive" x-cloak><span class="pill-dot is-live"></span>recording</span>
-          <span class="pill pill--warn" x-show="stopInProgress" x-cloak><span class="pill-dot is-live"></span>stopping</span>
-        </div>
-
-        {/* HS-12-03: hero h1 only renders when there is a real
-            meeting title; the bare "HoldSpeak" fallback duplicated
-            the TopNav brand at idle. */}
-        <div class="hero-title" x-show="meetingTitle" x-cloak>
-          <h1 x-text="meetingTitle"></h1>
-          <button type="button" class="title-edit" :disabled="!meetingActive" @click="openMetadataModal()" title="Edit meeting details">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4z"/>
-            </svg>
-            <span class="sr-only">Edit meeting details</span>
-          </button>
-        </div>
-
-        {/* HS-44-01: a warm idle headline so the home doesn't read empty. */}
-        <h1 class="hero-idle-h" x-show="!meetingActive && !stopInProgress" x-cloak>Ready when you are.</h1>
-
-        {/* The "...run locally on this machine" sentence used to
-            duplicate the side-rail message; trimmed to the
-            workspace summary only. */}
-        <p class="hero-copy">
-          Real-time transcript, live meeting intelligence, and export
-          controls in one focused workspace.
-        </p>
-
-        {/* Tags only shown when a meeting actually has tags;
-            "No tags yet" placeholder removed (idle redundancy). */}
-        <div class="hero-tags" x-show="meetingTags.length > 0" x-cloak>
-          <template x-for="tag in meetingTags" :key="tag">
-            <span class="tag-chip" x-text="tag"></span>
-          </template>
-        </div>
-      </div>
-
-      <div class="hero-action">
-        <div class="presence-card" :class="activityToneClass()" role="status" aria-live="polite">
-          <div class="presence-main">
-            <span class="presence-ring" :class="{ 'is-live': activityDotLive() }" aria-hidden="true"></span>
-            <div class="presence-copy">
-              <div class="presence-label" x-text="runtimeActivity.label"></div>
-              <div class="presence-detail" x-text="activityDetailLine()"></div>
-            </div>
-          </div>
-          <div class="presence-meta">
-            <span x-text="activitySourceLabel()"></span>
-            <span x-text="activityWindowLabel()"></span>
-          </div>
-        </div>
-
-        <div class="action-stage" x-show="!meetingActive && !stopInProgress" x-cloak>
-          <HoldMark size={72} ariaLabel="Hold to talk — runtime ready" />
-          <p class="action-hint">
-            Press start, then hold to talk. Audio, transcript, and intel
-            stay on this machine.
-          </p>
-        </div>
-
-        <button type="button" class="btn btn--primary btn--hero" x-show="!meetingActive" x-cloak :disabled="startInProgress" :class="{ 'is-loading': startInProgress }" @click="startMeeting()">
-          <span class="btn-spinner" x-show="startInProgress" x-cloak></span>
-          <span x-text="startInProgress ? 'Starting...' : 'Start meeting'"></span>
-        </button>
-        <button type="button" class="btn btn--danger btn--hero" x-show="meetingActive" x-cloak :disabled="stopInProgress" :class="{ 'is-loading': stopInProgress }" @click="stopMeeting()">
-          <span class="btn-spinner" x-show="stopInProgress" x-cloak></span>
-          <span x-text="stopInProgress ? 'Stopping...' : 'Stop meeting'"></span>
-        </button>
-
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-label">Connection</span>
-            <span class="stat-value">
-              <span class="conn-dot" :class="[connectionTone(), connectionTone() === 'connecting' && 'is-live']"></span>
-              <span x-text="connectionLabel()"></span>
-            </span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Duration</span>
-            <span class="stat-value mono" x-text="duration"></span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Segments</span>
-            <span class="stat-value mono" x-text="segments.length"></span>
-          </div>
-          <div class="stat">
-            <span class="stat-label">Open actions</span>
-            <span class="stat-value mono" x-text="activeActionItems().filter(i => i.status !== 'done').length"></span>
-          </div>
-          {/* HS-69-01: meeting-intel egress posture as the canonical
-              structured badge (the SAME chip /presence carries), not prose.
-              The full sentence stays only in the title tooltip. */}
-          <div class="stat" x-show="intelEgressBadge()" x-cloak>
-            <span class="stat-label">Privacy</span>
-            <span
-              class="egress-badge"
-              :class="`is-${intelEgressBadge()?.scope}`"
-              :title="intelEgress?.egress"
-              x-text="egressBadgeText()"
-            ></span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    {/* HS-44-01: idle "command center" home — warm daily-action cards (matching
-        the Phase-43 wizard), shown only when no meeting is live so the active
-        meeting view keeps the screen. */}
-    <section class="home-actions" x-show="!meetingActive && !stopInProgress" x-cloak aria-label="Quick actions">
-      <a class="home-card signal-card is-pressable" href="/dictation">
-        <span class="home-card-glyph glyph-chip" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg></span>
-        <span class="home-card-t">Dictation cockpit</span>
-        <span class="home-card-d">Tune the dictation pipeline — blocks, project context, runtime</span>
-        <span class="home-card-go" aria-hidden="true">→</span>
-      </a>
-      <a class="home-card signal-card is-pressable" href="/history">
-        <span class="home-card-glyph glyph-chip" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>
-        <span class="home-card-t">Meeting history</span>
-        <span class="home-card-d">Past meetings, transcripts, artifacts &amp; exports</span>
-        <span class="home-card-go" aria-hidden="true">→</span>
-      </a>
-      <a class="home-card signal-card is-pressable" href="/activity">
-        <span class="home-card-glyph glyph-chip" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
-        <span class="home-card-t">Local activity</span>
-        <span class="home-card-d">Your private work-context ledger &amp; connectors</span>
-        <span class="home-card-go" aria-hidden="true">→</span>
-      </a>
-      <a class="home-card signal-card is-pressable" href="/settings">
-        <span class="home-card-glyph glyph-chip" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
-        <span class="home-card-t">Settings</span>
-        <span class="home-card-d">Every global knob — sectioned &amp; searchable</span>
-        <span class="home-card-go" aria-hidden="true">→</span>
-      </a>
-    </section>
-
-    {/* HS-44-01: recent-meetings glance (idle only). */}
-    <section class="home-recent" x-show="!meetingActive && !stopInProgress && recentMeetings.length" x-cloak aria-label="Recent meetings">
-      <header class="home-recent-head">
-        <h2>Recent meetings</h2>
-        <a class="home-recent-all" href="/history">All history →</a>
-      </header>
-      <div class="recent-row">
-        <template x-for="(m, i) in recentMeetings" :key="m.id">
-          <a class="recent-card signal-card is-pressable hs-materialize" :href="`/history#meeting-${m.id}`" :style="`--i: ${i}`">
-            <span class="recent-title" x-text="m.title || 'Untitled meeting'"></span>
-            <span class="recent-date" x-text="formatDate(m.started_at)"></span>
-            <span class="recent-meta">
-              <span class="recent-stat" x-text="meetingDuration(m.duration_seconds)"></span>
-              <span class="recent-dot">·</span>
-              <span class="recent-stat" x-text="`${m.segment_count || 0} segs`"></span>
-              <span class="recent-dot" x-show="(m.action_item_count || 0) > 0" x-cloak>·</span>
-              <span class="recent-stat accent" x-show="(m.action_item_count || 0) > 0" x-cloak x-text="`${m.action_item_count} actions`"></span>
-            </span>
-          </a>
-        </template>
-      </div>
-    </section>
-
-    {/* HS-13-08: pre-meeting briefing surface. Renders the
-        meeting_context pipeline's deterministic markdown when a
-        briefing exists, and hides during active meetings so the
-        live transcript can take the screen. */}
-    <section class="panel panel--comfortable briefing" x-show="!meetingActive && briefingVisible()" x-cloak>
-      <header class="panel-header">
-        <div class="panel-title">Project briefing</div>
-        <div class="panel-toolbar">
-          <span class="pill" :class="briefingPillClass()" x-show="briefingState !== 'idle'" x-cloak>
-            <span class="pill-dot"></span>
-            <span x-text="briefingPillLabel()"></span>
-          </span>
-          <span class="briefing-meta mono" x-show="briefingLastRefreshed()" x-cloak x-text="briefingLastRefreshed()"></span>
-          <button type="button" class="btn btn--secondary btn--sm" :disabled="briefingRefreshing" @click="refreshBriefing()">
-            <span x-text="briefingRefreshing ? 'Refreshing…' : 'Refresh briefing'"></span>
-          </button>
-        </div>
-      </header>
-      <div class="panel-body">
-        <template x-if="briefing">
-          <div class="briefing-body" x-html="briefingHtml()"></div>
-        </template>
-        <template x-if="!briefing && !briefingRefreshing">
-          <div class="briefing-empty">
-            <p class="rail-title">No briefing yet.</p>
-            <p class="rail-muted">
-              Visit some PRs, tickets, or calendar events in the
-              browser, enable the gh / jira connectors on
-              <a href="/_built/activity">/activity</a>, then refresh.
-            </p>
-          </div>
-        </template>
-        <template x-if="briefingError">
-          <p class="briefing-error" x-text="briefingError"></p>
-        </template>
-      </div>
-    </section>
-
-    <!-- Two-column board -->
-    <div class="board">
-      <!-- Transcript -->
-      <section class="panel panel--comfortable">
-        <header class="panel-header">
-          <div class="panel-title">Transcript stream</div>
-          <div class="panel-toolbar">
-            <button type="button" class="btn btn--ghost btn--sm" @click="scrollTranscriptToBottom()">Jump to latest</button>
-          </div>
-        </header>
-        <div class="panel-body">
-          <div class="transcript-scroll" x-ref="transcriptScroll">
-            <template x-if="entries.length === 0">
-              <div class="transcript-empty">
-                <HoldMark size={56} pulse={false} ariaLabel="Idle" />
-                <h3 x-text="meetingActive ? 'Waiting for transcript' : 'Meeting idle'"></h3>
-                <p x-text="meetingActive
-                  ? 'Once audio arrives, segments stream in here with speaker chips, timestamps, and bookmark callouts.'
-                  : 'Start a meeting to begin recording, transcription, and live intelligence updates.'"></p>
-              </div>
-            </template>
-
-            <template x-for="entry in entries" :key="entry.id">
-              <div class="entry">
-                <template x-if="entry.kind === 'segment'">
-                  <article class="segment" :class="`tone-${speakerTone(entry.speaker)}`" tabindex="0" @click="copySegment(entry)" @keydown.enter="copySegment(entry)">
-                    <div class="segment-meta">
-                      <span class="speaker-pill" :class="`tone-${speakerTone(entry.speaker)}`">
-                        <span class="speaker-dot"></span>
-                        <span x-text="speakerLabel(entry.speaker)"></span>
-                      </span>
-                      <span class="ts mono" x-text="entry.start ? `[${entry.start}${entry.end ? `-${entry.end}` : ''}]` : 'live'"></span>
-                      <span class="copy-hint">Click to copy</span>
-                    </div>
-                    <p class="segment-text" x-text="entry.text"></p>
-                  </article>
-                </template>
-                <template x-if="entry.kind === 'bookmark'">
-                  <article class="bookmark">
-                    <div class="bookmark-meta">
-                      <span class="bookmark-flag">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M7 3h10v18l-5-3-5 3V3z"/></svg>
-                        <span>Bookmark</span>
-                      </span>
-                      <span class="ts mono" x-text="entry.timestamp ? `at ${entry.timestamp}` : 'live'"></span>
-                    </div>
-                    <p class="bookmark-text" x-text="entry.label"></p>
-                  </article>
-                </template>
-              </div>
-            </template>
-          </div>
-        </div>
-        <footer class="panel-footer">
-          <div class="dock">
-            <button type="button" class="btn btn--secondary btn--sm" :disabled="!meetingActive" @click="openBookmarkModal()">Bookmark</button>
-            <button type="button" class="btn btn--secondary btn--sm" @click="copyAll()">Copy all</button>
-            <div class="export-wrap">
-              <button type="button" class="btn btn--primary btn--sm" @click="exportOpen = !exportOpen">Export</button>
-              <div class="export-menu" x-show="exportOpen" x-cloak @click.outside="exportOpen = false">
-                <button type="button" class="export-item" @click="exportAs('md')"><span>Meeting notes</span><span class="mono">.md</span></button>
-                <button type="button" class="export-item" @click="exportAs('txt')"><span>Plain transcript</span><span class="mono">.txt</span></button>
-                <button type="button" class="export-item" @click="exportAs('json')"><span>Structured data</span><span class="mono">.json</span></button>
-              </div>
-            </div>
-          </div>
-        </footer>
-      </section>
-
-      <!-- Side rail -->
-      <aside class="rail">
-        <div class="rail-group-label">Intelligence</div>
-        <!-- Live intel -->
-        <section class="panel panel--dense" x-show="intelStreaming" x-cloak>
-          <header class="panel-header">
-            <div class="panel-title">
-              <span class="pill pill--info"><span class="pill-dot is-live"></span>analyzing</span>
-            </div>
-          </header>
-          <div class="panel-body">
-            <p class="streaming-text"><span x-text="intelBuffer"></span><span class="caret"></span></p>
-          </div>
-        </section>
-
-        <!-- Intelligence -->
-        <section class="panel panel--dense">
-          <header class="panel-header"><div class="panel-title">Intelligence</div></header>
-          <div class="panel-body">
-            <p class="rail-title" x-text="intelStatusTitle()"></p>
-            <p class="rail-muted" x-text="intelStatusCopy()"></p>
-          </div>
-        </section>
-
-        <!-- HS-38-04: live actuator proposals — surfaced as the pipeline produces
-             them, approve/reject on the spot. The broadcast carries no egress
-             payload; approving only records a decision (nothing runs without it). -->
-        <section class="panel panel--dense proposals-panel" x-show="pendingProposals.length" x-cloak>
-          <header class="panel-header">
-            <div class="panel-title">Pending actions</div>
-            <div class="panel-toolbar">
-              <span class="rail-faint" x-text="`${pendingProposals.length} awaiting`"></span>
-            </div>
-          </header>
-          <div class="panel-body">
-            <p class="rail-muted">An actuator proposed an external action. Review the preview, then approve or reject.</p>
-            <ul class="proposal-list">
-              <template x-for="p in pendingProposals" :key="p.id">
-                <li class="proposal-item" :class="`accent-${proposalAccent(p)}`">
-                  <div class="proposal-head">
-                    <span class="proposal-icon" aria-hidden="true" x-text="proposalIcon(p)"></span>
-                    <div class="proposal-headings">
-                      <p class="proposal-title" x-text="`${p.action} → ${p.target}`"></p>
-                      <div class="proposal-meta">
-                        <span class="meta-chip status" :class="`proposal-${p.status}`" x-text="proposalStatusLabel(p.status)"></span>
-                        <span class="meta-chip" x-text="p.reversible ? 'reversible' : 'irreversible'"></span>
-                        <span class="meta-chip" x-show="p.decided_by" x-cloak x-text="`by ${p.decided_by}`"></span>
-                      </div>
-                    </div>
-                  </div>
-                  <p class="proposal-preview-line" x-show="p.preview" x-cloak x-text="p.preview"></p>
-                  <div class="proposal-controls" x-show="p.status === 'proposed'" x-cloak>
-                    <button type="button" class="btn btn--sm proposal-approve" @click="decideLiveProposal(p, 'approved')">Approve</button>
-                    <button type="button" class="btn btn--secondary btn--sm" @click="decideLiveProposal(p, 'rejected')">Reject</button>
-                  </div>
-                  <p class="proposal-guard rail-faint" x-show="p.status === 'proposed'" x-cloak
-                     x-text="p.target === 'slack'
-                       ? 'Approving sends this message to Slack.'
-                       : 'Approving records the decision; execution is a separate step.'"></p>
-                  <p class="proposal-decided rail-faint" x-show="p.status !== 'proposed'" x-cloak
-                     x-text="proposalStatusLabel(p.status) + (p.decided_by ? ` · ${p.decided_by}` : '')"></p>
-                </li>
-              </template>
-            </ul>
-          </div>
-        </section>
-
-        <!-- Devices -->
-        <section class="panel panel--dense" x-show="devices.length > 0" x-cloak>
-          <header class="panel-header"><div class="panel-title">Devices</div></header>
-          <div class="panel-body">
-            <ul class="device-list">
-              <template x-for="device in devices" :key="device.id">
-                <li class="device-item">
-                  <div class="device-main">
-                    <span class="device-label" x-text="device.label || device.id"></span>
-                    <span class="device-id mono" x-text="device.id"></span>
-                  </div>
-                  <div class="device-health" x-show="hasDeviceHealth(device)" x-cloak :class="{ 'is-stale': deviceHealthStale(device) }">
-                    <span class="meta-chip mono" x-show="deviceBatteryLabel(device)" x-cloak x-text="deviceBatteryLabel(device)"></span>
-                    <span class="meta-chip mono" x-show="deviceRssiLabel(device)" x-cloak x-text="deviceRssiLabel(device)"></span>
-                    <span class="rail-faint" x-show="deviceHealthStale(device)" x-cloak>stale</span>
-                  </div>
-                </li>
-              </template>
-            </ul>
-          </div>
-        </section>
-
-        <!-- Topics -->
-        <section class="panel panel--dense">
-          <header class="panel-header"><div class="panel-title">Topics</div></header>
-          <div class="panel-body">
-            <template x-if="intel.topics.length === 0">
-              <p class="rail-muted">Topics will appear once enough transcript has accumulated.</p>
-            </template>
-            <div class="topics" x-show="intel.topics.length > 0" x-cloak>
-              <template x-for="topic in intel.topics" :key="topic">
-                <span class="topic-pill" x-text="topic"></span>
-              </template>
-            </div>
-          </div>
-        </section>
-
-        <!-- Summary -->
-        <section class="panel panel--dense">
-          <header class="panel-header"><div class="panel-title">Summary</div></header>
-          <div class="panel-body">
-            <template x-if="!intel.summary">
-              <p class="rail-muted">No summary yet.</p>
-            </template>
-            <p class="summary-text" x-show="intel.summary" x-cloak x-text="intel.summary"></p>
-          </div>
-        </section>
-
-        <div class="rail-group-label">Work</div>
-        <!-- Action items -->
-        <section class="panel panel--dense">
-          <header class="panel-header">
-            <div class="panel-title">Action items</div>
-            <div class="panel-toolbar">
-              <span class="rail-faint" x-text="meetingActive ? 'Live' : 'Read-only while idle'"></span>
-            </div>
-          </header>
-          <div class="panel-body">
-            <template x-if="activeActionItems().length === 0">
-              <p class="rail-muted" x-text="meetingActive ? 'No action items yet.' : 'No active action items loaded for this session yet.'"></p>
-            </template>
-            <ul class="action-list" x-show="activeActionItems().length > 0" x-cloak>
-              <template x-for="(item, idx) in activeActionItems()" :key="item.id || `${idx}-${item.task}`">
-                <li class="action-item" :class="{ 'is-done': item.status === 'done' }">
-                  <button type="button" class="check" :disabled="!meetingActive" @click="toggleActionItemStatus(item)" :title="item.status === 'done' ? 'Mark pending' : 'Mark done'">
-                    <svg x-show="item.status === 'done'" x-cloak viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    <span class="sr-only">Toggle status</span>
-                  </button>
-                  <div class="action-body">
-                    <p class="action-task" x-text="item.task || 'Action item'"></p>
-                    <div class="action-meta">
-                      <span class="meta-chip" x-show="item.owner" x-cloak x-text="`Owner ${item.owner}`"></span>
-                      <span class="meta-chip" x-show="item.due" x-cloak x-text="`Due ${item.due}`"></span>
-                      <span class="meta-chip status" :class="statusClass(item.status)" x-text="statusLabel(item.status)"></span>
-                      <span class="meta-chip status" :class="reviewStatusClass(item.review_state)" x-text="reviewStatusLabel(item.review_state)"></span>
-                    </div>
-                    <div class="action-controls">
-                      <button type="button" class="btn btn--ghost btn--sm" :disabled="!meetingActive || item.review_state === 'accepted'" @click="acceptActionItem(item)">Accept</button>
-                      <button type="button" class="btn btn--secondary btn--sm" :disabled="!meetingActive" @click="editActionItem(item)">Edit</button>
-                    </div>
-                  </div>
-                  <button type="button" class="dismiss" :disabled="!meetingActive" @click="dismissActionItem(item)" title="Dismiss">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>
-                    <span class="sr-only">Dismiss</span>
-                  </button>
-                </li>
-              </template>
-            </ul>
-            <p class="rail-faint" x-show="dismissedCount() > 0" x-cloak x-text="`${dismissedCount()} dismissed item${dismissedCount() === 1 ? '' : 's'}`"></p>
-          </div>
-        </section>
-
-        <div class="rail-group-label">Operations</div>
-        <!-- Plugin jobs -->
-        <section class="panel panel--dense">
-          <header class="panel-header"><div class="panel-title">Deferred plugin jobs</div></header>
-          <div class="panel-body">
-            <div class="topics">
-              <span class="topic-pill" x-text="`Total ${pluginJobSummary?.total_jobs ?? 0}`"></span>
-              <span class="topic-pill" x-text="`Queued ${pluginJobSummary?.queued_jobs ?? 0}`"></span>
-              <span class="topic-pill" x-text="`Running ${pluginJobSummary?.running_jobs ?? 0}`"></span>
-              <span class="topic-pill" x-text="`Failed ${pluginJobSummary?.failed_jobs ?? 0}`"></span>
-              <span class="topic-pill" x-text="`Failure ${pluginQueueFailureRateLabel()}`"></span>
-            </div>
-            <p class="rail-muted" x-text="pluginQueueNextRetryLabel()"></p>
-            <div class="jobs-controls">
-              <select class="rail-input" x-model="pluginJobStatusFilter" @change="loadPluginJobs()">
-                <option value="all">All jobs</option>
-                <option value="queued">Queued</option>
-                <option value="running">Running</option>
-                <option value="failed">Failed</option>
-              </select>
-              <input class="rail-input rail-input--sm" type="number" min="1" x-model.number="pluginJobLimit" placeholder="Limit"/>
-              <button type="button" class="btn btn--secondary btn--sm" :disabled="loadingPluginJobs" @click="loadPluginJobs()">Refresh</button>
-              <button type="button" class="btn btn--primary btn--sm" :disabled="processingPluginJobs" @click="processPluginJobs('respect_backoff')">Process due</button>
-              <button type="button" class="btn btn--ghost btn--sm" :disabled="processingPluginJobs" @click="processPluginJobs('retry_now')">Retry scheduled</button>
-            </div>
-            <template x-if="loadingPluginJobs">
-              <p class="rail-muted">Loading deferred plugin jobs...</p>
-            </template>
-            <template x-if="!loadingPluginJobs && pluginJobs.length === 0">
-              <p class="rail-muted">No deferred plugin jobs match this filter.</p>
-            </template>
-            <ul class="action-list" x-show="!loadingPluginJobs && pluginJobs.length > 0" x-cloak>
-              <template x-for="job in pluginJobs" :key="job.id">
-                <li class="action-item">
-                  <span class="meta-chip status" :class="statusClass(job.status)" x-text="job.status"></span>
-                  <div class="action-body">
-                    <p class="action-task" x-text="job.plugin_id"></p>
-                    <div class="action-meta">
-                      <span class="meta-chip mono" x-text="job.meeting_id"></span>
-                      <span class="meta-chip mono" x-text="job.window_id"></span>
-                      <span class="meta-chip" x-text="`Attempts ${job.attempts}`"></span>
-                      <span class="meta-chip" x-show="job.retry_scheduled" x-cloak x-text="pluginJobScheduleLabel(job)"></span>
-                    </div>
-                    <p class="rail-muted" x-show="job.last_error" x-cloak x-text="job.last_error"></p>
-                    <div class="action-controls">
-                      <button type="button" class="btn btn--primary btn--sm" :disabled="processingPluginJobs || job.status === 'running'" @click="retryPluginJob(job.id)">Retry now</button>
-                      <button type="button" class="btn btn--ghost btn--sm" :disabled="processingPluginJobs || job.status === 'running'" @click="cancelPluginJob(job.id)">Cancel</button>
-                    </div>
-                  </div>
-                </li>
-              </template>
-            </ul>
-          </div>
-        </section>
-
-        <!-- Intent routing -->
-        <section class="panel panel--dense" x-show="intentControls.enabled" x-cloak>
-          <header class="panel-header"><div class="panel-title">Intent routing</div></header>
-          <div class="panel-body">
-            <p class="rail-muted">Profile and override controls for deterministic MIR preview routing.</p>
-            <label class="rail-label" for="routing-profile">Profile</label>
-            <select id="routing-profile" class="rail-input" x-model="intentProfile" :disabled="intentControlSaving">
-              <template x-for="profile in intentControls.available_profiles" :key="profile">
-                <option :value="profile" x-text="profile"></option>
-              </template>
-            </select>
-            <label class="rail-label" for="routing-override">Override</label>
-            <input id="routing-override" class="rail-input" type="text" x-model="intentOverrideInput" placeholder="architecture, delivery"/>
-            <div class="jobs-controls">
-              <button type="button" class="btn btn--secondary btn--sm" :disabled="intentControlSaving" @click="saveIntentProfile()">Save profile</button>
-              <button type="button" class="btn btn--secondary btn--sm" :disabled="intentControlSaving" @click="saveIntentOverride()">Save override</button>
-              <button type="button" class="btn btn--primary btn--sm" :disabled="routePreviewLoading" @click="previewIntentRoute()">
-                <span x-text="routePreviewLoading ? 'Previewing...' : 'Preview route'"></span>
-              </button>
-            </div>
-            <p class="rail-muted" x-show="routePreview && routePreview.active_intents" x-cloak>
-              <strong>Active intents:</strong> <span x-text="(routePreview?.active_intents || []).join(', ') || 'none'"></span>
-            </p>
-            <p class="rail-muted" x-show="routePreview && routePreview.plugin_chain" x-cloak>
-              <strong>Plugin chain:</strong> <span x-text="(routePreview?.plugin_chain || []).join(' -> ') || 'none'"></span>
-            </p>
-          </div>
-        </section>
-      </aside>
-    </div>
-
-    <!-- Toasts -->
-    <div class="toast-stack" aria-live="polite">
-      <template x-for="note in notifications" :key="note.id">
-        <div class="toast"><p x-text="note.message"></p></div>
-      </template>
-    </div>
-
-    <!-- Bookmark modal -->
-    <div class="modal" x-show="bookmarkModalOpen" x-cloak @keydown.escape.window="bookmarkModalOpen = false">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bm-title">
-        <h3 id="bm-title">Add bookmark</h3>
-        <p class="rail-muted">Leave the label blank for a generic marker, or add a short reason so the moment is easy to spot later.</p>
-        <label class="rail-label" for="bookmark-label">Label</label>
-        <input id="bookmark-label" x-ref="bookmarkInput" class="rail-input" type="text" x-model="bookmarkLabel" placeholder="Decision on rollout window" @keydown.enter.prevent="submitBookmark()"/>
-        <div class="modal-actions">
-          <button type="button" class="btn btn--ghost btn--sm" @click="bookmarkModalOpen = false">Cancel</button>
-          <button type="button" class="btn btn--primary btn--sm" @click="submitBookmark()">Save bookmark</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Metadata modal -->
-    <div class="modal" x-show="metadataModalOpen" x-cloak @keydown.escape.window="metadataModalOpen = false">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="md-title">
-        <h3 id="md-title">Edit meeting details</h3>
-        <p class="rail-muted">Update the title and comma-separated tags while the meeting is in progress.</p>
-        <label class="rail-label" for="meeting-title">Title</label>
-        <input id="meeting-title" x-ref="titleInput" class="rail-input" type="text" x-model="editingTitle" placeholder="Engineering review"/>
-        <label class="rail-label" for="meeting-tags">Tags</label>
-        <input id="meeting-tags" class="rail-input" type="text" x-model="editingTags" placeholder="planning, roadmap, follow-up" @keydown.enter.prevent="saveMetadata()"/>
-        <div class="modal-actions">
-          <button type="button" class="btn btn--ghost btn--sm" @click="metadataModalOpen = false">Cancel</button>
-          <button type="button" class="btn btn--primary btn--sm" @click="saveMetadata()">Save details</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {/* HS-42-03 / HS-43-06: first-run guard. A brand-new user (never dictated) is
-      sent to the /welcome WIZARD; a returning-but-hard-blocked runtime goes to
-      the /setup status surface; a healthy returning user stays on the dashboard
-      (no nag — a mere WARN does NOT redirect). Best-effort; never blocks the
-      dashboard. */}
+<AppLayout title="HoldSpeak" current="home">
+  {/* HS-70-02/03: the first-run guard on the front door. A first-run user
+      (no successful dictation yet) goes to the /welcome wizard; a hard-blocked
+      user goes to /setup; everyone else stays on Home. Inline so it runs early
+      and its intent is visible in the served HTML. */}
   <script is:inline>
     (async () => {
       try {
-        const res = await fetch("/api/setup/status");
-        if (!res.ok) return;
-        const s = await res.json();
-        if (s && s.first_run) {
-          location.replace("/welcome");
-        } else if (s && s.overall === "blocked") {
-          location.replace("/setup");
-        }
-      } catch (_e) {
-        /* never block the dashboard on the setup check */
-      }
+        const r = await fetch("/api/setup/status");
+        if (!r.ok) return;
+        const s = await r.json();
+        if (s && s.first_run) { window.location.replace("/welcome"); return; }
+        if (s && s.overall === "blocked") { window.location.replace("/setup"); return; }
+      } catch (_e) {}
     })();
   </script>
 
-  <script>
-    import Alpine from "alpinejs";
-    import factorySource from "../scripts/dashboard-app.js?raw";
-    import briefingMdSource from "../scripts/briefing-markdown.js?raw";
-    import egressBadgeSource from "../scripts/egress-badge.js?raw";
+  <div class="home">
+    <header class="home-hero">
+      <p class="home-eyebrow">Your local voice copilot</p>
+      <h1 class="home-title">One copilot, two modes.</h1>
+      <p class="home-lede">
+        Dictation that types anywhere and learns how you work, and meetings
+        that end with decisions, actions, and follow-ups instead of a recording.
+      </p>
+    </header>
 
-    // The factory is evaluated via `new Function`, so ES module
-    // imports don't reach inside it. Concatenating the shared
-    // briefing renderer (HS-13-08 + HS-13-09) + the HS-69-01 egress
-    // badge helpers before the factory gives the factory those
-    // definitions without turning it into an ES module.
-    const stripExports = (src) =>
-      src.replace(/^\s*export\s+(function|const|let|var)/gm, "$1");
-    const sharedSource =
-      stripExports(briefingMdSource) + "\n" + stripExports(egressBadgeSource);
-    const fn = new Function(
-      sharedSource + "\n" + factorySource + "; return HoldSpeakDashboard;"
-    );
-    window.HoldSpeakDashboard = fn();
+    <a id="home-next" class="home-next" href="#" hidden>
+      <span class="home-next-eyebrow">Next</span>
+      <span id="home-next-label" class="home-next-label"></span>
+      <span class="home-next-arrow" aria-hidden="true">→</span>
+    </a>
 
-    window.Alpine = Alpine;
-    Alpine.start();
-  </script>
+    <div class="home-modes">
+      <div class="home-mode signal-card">
+        <span class="home-mode-glyph glyph-chip" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" />
+          </svg>
+        </span>
+        <h2 class="home-mode-name">Dictation</h2>
+        <p class="home-mode-what">Hold a key, speak, and it types. It learns your corrections.</p>
+        <p id="home-dictation-sub" class="home-mode-sub">Loading recent activity.</p>
+        <div class="home-mode-actions">
+          <a href="/dictation" class="home-mode-go">Open Dictation</a>
+        </div>
+      </div>
+
+      <div class="home-mode signal-card">
+        <span class="home-mode-glyph glyph-chip" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 8h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2" />
+            <path d="M9 12h6M9 16h4M12 3v5M9 6l3-3 3 3" />
+          </svg>
+        </span>
+        <h2 class="home-mode-name">Meetings</h2>
+        <p class="home-mode-what">Capture or import a meeting. It ends with decisions, actions, and follow-ups.</p>
+        <p id="home-meetings-sub" class="home-mode-sub">Loading recent activity.</p>
+        <div class="home-mode-actions">
+          <a href="/live" class="home-mode-go">Start a meeting</a>
+          <a href="/history" class="home-mode-go home-mode-go--ghost">Browse the archive</a>
+        </div>
+      </div>
+    </div>
+
+    <a class="home-studio" href="/workbench">
+      <span class="home-studio-label">Studio</span>
+      <span class="home-studio-hint">Workbench, Agent Desk, Cadence, and more</span>
+      <span class="home-studio-arrow" aria-hidden="true">→</span>
+    </a>
+  </div>
 </AppLayout>
 
+<script>
+  (async () => {
+    const j = async (url) => {
+      try {
+        const r = await fetch(url);
+        if (!r.ok) return null;
+        return await r.json();
+      } catch {
+        return null;
+      }
+    };
+    const arr = (v, ...keys) => {
+      if (Array.isArray(v)) return v;
+      for (const k of keys) if (v && Array.isArray(v[k])) return v[k];
+      return [];
+    };
+
+    // Next action — surface the setup primary action until the user is set up.
+    const s = await j("/api/setup/status");
+    if (s && (s.first_run || s.overall !== "ready") && s.primary_action) {
+      const el = document.getElementById("home-next");
+      document.getElementById("home-next-label").textContent =
+        s.primary_action.label || "Finish setting up";
+      el.setAttribute("href", s.primary_action.route || "/setup");
+      el.hidden = false;
+    }
+
+    // Dictation subtitle — latest, or the one guiding move when empty.
+    const jn = await j("/api/dictation/journal?limit=1");
+    const dItems = arr(jn, "items", "entries", "journal");
+    const dSub = document.getElementById("home-dictation-sub");
+    if (dItems.length) {
+      const t = String(dItems[0].transcript || dItems[0].typed || "").trim().slice(0, 64);
+      dSub.textContent = t ? `Last: “${t}”` : "You have recent dictations.";
+    } else {
+      dSub.textContent = "Nothing yet. Hold your key and speak.";
+    }
+
+    // Meetings subtitle — latest, or the one guiding move when empty.
+    const mn = await j("/api/meetings?limit=1");
+    const mItems = arr(mn, "meetings", "items");
+    const mSub = document.getElementById("home-meetings-sub");
+    if (mItems.length) {
+      mSub.textContent = `Last: ${String(mItems[0].title || "Untitled meeting").trim()}`;
+    } else {
+      mSub.textContent = "Nothing yet. Capture or import your first meeting.";
+    }
+  })();
+</script>
+
 <style>
-  /* All values flow from tokens.css; no raw hex / radius / duration. */
-
-  .runtime {
-    max-width: 88rem;
+  .home {
+    max-width: 960px;
     margin: 0 auto;
-    padding: var(--space-5);
+    padding: var(--space-7) var(--space-5) var(--space-8);
     display: flex;
     flex-direction: column;
-    gap: var(--space-5);
+    gap: var(--space-6);
   }
 
-  /* HS-44-01: a subtle accent glow behind the home, matching the wizard. */
-  .runtime::before {
-    content: "";
-    position: fixed;
-    inset: 0 0 auto 0;
-    height: 360px;
-    pointer-events: none;
-    z-index: -1;
-    background: radial-gradient(60% 100% at 50% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 70%);
-  }
-
-  /* HS-44-01: idle "command center" home cards. */
-  .home-actions {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-3);
-  }
-  /* HS-69-02: surface / radius / top-lit hairline / shadow now come from
-     the shared `.signal-card` primitive (global.css). This rule keeps
-     only layout + the hover lift. */
-  .home-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    padding: var(--space-4) var(--space-4) var(--space-5);
-    text-decoration: none;
-    overflow: hidden;
-    transition: border-color var(--duration-short) var(--ease-standard),
-      transform var(--duration-short) var(--ease-standard),
-      box-shadow var(--duration-short) var(--ease-standard);
-  }
-  .home-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--elev-2), 0 12px 28px color-mix(in srgb, var(--accent) 16%, transparent);
-  }
-  .home-card:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
-  }
-  /* HS-69-02: the glyph now uses the shared `.glyph-chip` (gradient fill +
-     soft shadow). Only the cockpit-specific 38px size + spacing remain. */
-  .home-card-glyph {
-    --chip-size: 38px;
-    margin-bottom: var(--space-2);
-  }
-  .home-card-t { font-family: var(--font-display); font-weight: 600; color: var(--text); font-size: var(--font-size-md); }
-  .home-card-d { color: var(--text-muted); font-size: var(--font-size-xs); line-height: var(--line-height-relaxed); }
-  .home-card-go {
-    position: absolute; top: var(--space-4); right: var(--space-4);
-    color: var(--text-faint); font-size: var(--font-size-lg);
-    transition: transform var(--duration-short) var(--ease-standard), color var(--duration-short) var(--ease-standard);
-  }
-  .home-card:hover .home-card-go { color: var(--accent); transform: translateX(3px); }
-  @media (prefers-reduced-motion: reduce) {
-    .home-card:hover { transform: none; }
-    .home-card:hover .home-card-go { transform: none; }
-  }
-  @media (max-width: 900px) { .home-actions { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 520px) { .home-actions { grid-template-columns: 1fr; } }
-
-  /* HS-44-01: idle hero headline. */
-  .hero-idle-h {
-    font-family: var(--font-display);
-    font-size: clamp(var(--font-size-2xl), 3.4vw, var(--font-size-3xl));
-    font-weight: 700; letter-spacing: -0.02em; line-height: 1.05;
-    color: var(--text); margin: var(--space-1) 0 var(--space-2);
-  }
-
-  /* HS-44-01: recent-meetings glance. */
-  .home-recent { display: flex; flex-direction: column; gap: var(--space-3); }
-  .home-recent-head { display: flex; align-items: baseline; justify-content: space-between; }
-  .home-recent-head h2 { font-family: var(--font-display); font-size: var(--font-size-lg); font-weight: 600; color: var(--text); margin: 0; }
-  .home-recent-all { color: var(--accent); font-size: var(--font-size-sm); text-decoration: none; }
-  .home-recent-all:hover { text-decoration: underline; }
-  .recent-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
-  /* HS-69-02: surface / radius / hairline / shadow from `.signal-card`.
-     The accent left-bar identity is kept as a scoped override; the
-     primitive's ::before hairline layers over the other three edges. */
-  .recent-card {
-    display: flex; flex-direction: column; gap: var(--space-1);
-    padding: var(--space-4);
-    border-left: 3px solid var(--accent);
-    text-decoration: none;
-    transition: transform var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
-  }
-  .recent-card:hover { transform: translateY(-2px); box-shadow: var(--elev-3); }
-  .recent-card:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
-  @media (prefers-reduced-motion: reduce) { .recent-card:hover { transform: none; } }
-  .recent-title { font-weight: 600; color: var(--text); font-size: var(--font-size-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .recent-date { color: var(--text-faint); font-size: var(--font-size-xs); font-family: var(--font-mono); }
-  .recent-meta { display: flex; align-items: center; gap: var(--space-1); margin-top: var(--space-2); color: var(--text-muted); font-size: var(--font-size-xs); }
-  .recent-stat.accent { color: var(--accent); }
-  .recent-dot { color: var(--text-faint); }
-  @media (max-width: 900px) { .recent-row { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 520px) { .recent-row { grid-template-columns: 1fr; } }
-
-  /* === Hero =============================================== */
-  /* HS-12-02 hero: tighter density, Workbench window grammar
-   * (black border, blue title strip would be redundant with
-   * TopNav, so we keep the hero as a single white surface but
-   * trim the cavernous padding that read as "lazy SaaS" in
-   * phase 10). */
-  .hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-    gap: var(--space-4);
-    padding: var(--space-5);
-    background: var(--surface-1);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--elev-1);
-    transition:
-      border-color var(--duration-medium) var(--ease-standard),
-      box-shadow var(--duration-medium) var(--ease-standard);
-  }
-  .hero.state-active { border-color: var(--accent); box-shadow: var(--glow-accent); }
-  .hero.state-stopping { border-color: var(--warn); }
-
-  .hero-id { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
-  .hero-pills { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-
-  .hero-title { display: flex; align-items: center; gap: var(--space-2); }
-  .hero-title h1 {
-    margin: 0;
-    /* HS-12-02: meeting title is a Workbench display moment;
-     * scaled down from 3xl to xl since the wordmark duplicated
-     * the TopNav brand. Real meeting titles read as the page's
-     * primary identity. */
-    font-family: var(--font-display);
-    font-size: var(--font-size-xl);
-    letter-spacing: 0.02em;
-    line-height: 1.1;
-    word-break: break-word;
-  }
-  .title-edit {
-    background: transparent; border: 1px solid transparent;
-    color: var(--text-muted); padding: var(--space-1);
-    border-radius: var(--radius-1); cursor: pointer;
-  }
-  .title-edit:hover { color: var(--text); border-color: var(--line); }
-  .title-edit:disabled { opacity: 0.4; cursor: not-allowed; }
-  .title-edit:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
-  }
-
-  .hero-copy {
-    margin: 0; color: var(--text-muted);
-    line-height: var(--line-height-relaxed); max-width: 60ch;
-  }
-
-  .hero-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-  .tag-chip, .tag-chip-faint {
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-pill);
-    font-size: var(--font-size-xs);
-    font-family: var(--font-mono);
-    border: 1px solid var(--line);
-  }
-  .tag-chip { background: var(--canvas); color: var(--text-muted); }
-  .tag-chip-faint { color: var(--text-faint); border-style: dashed; }
-
-  .hero-action { display: flex; flex-direction: column; gap: var(--space-3); }
-
-  .presence-card {
+  /* Identity */
+  .home-hero {
+    text-align: center;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
-    min-height: 92px;
-    padding: var(--space-3);
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-3);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
   }
-  .presence-main {
-    display: grid;
-    grid-template-columns: 32px minmax(0, 1fr);
-    gap: var(--space-3);
-    align-items: center;
-    min-width: 0;
+  .home-eyebrow {
+    margin: 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--accent);
   }
-  .presence-ring {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 2px solid currentColor;
-    box-shadow: 0 0 0 6px color-mix(in srgb, currentColor 13%, transparent);
-    color: var(--text-faint);
-  }
-  .presence-ring.is-live {
-    animation: hs-pulse 1.6s var(--ease-standard) infinite;
-  }
-  .presence-copy { min-width: 0; }
-  .presence-label {
-    color: var(--text);
+  .home-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
     font-weight: 700;
-    font-size: var(--font-size-md);
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    letter-spacing: -0.02em;
+    color: var(--text);
   }
-  .presence-detail {
-    margin-top: var(--space-1);
+  .home-lede {
+    margin: 0 auto;
+    max-width: 620px;
+    color: var(--text-muted);
+    font-size: var(--font-size-md);
+    line-height: 1.55;
+  }
+
+  /* Next action */
+  .home-next {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    background: var(--accent-tint);
+    text-decoration: none;
+    transition: background var(--duration-short) var(--ease-standard);
+  }
+  .home-next:hover {
+    background: var(--accent-tint-strong, var(--accent-tint));
+  }
+  .home-next:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .home-next-eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: var(--letter-spacing-eyebrow);
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .home-next-label {
+    flex: 1 1 auto;
+    color: var(--text);
+    font-weight: 600;
+  }
+  .home-next-arrow {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* The two modes */
+  .home-modes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+  .home-mode {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-5);
+  }
+  .home-mode-glyph {
+    margin-bottom: var(--space-2);
+  }
+  .home-mode-name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .home-mode-what {
+    margin: 0;
     color: var(--text-muted);
     font-size: var(--font-size-sm);
-    line-height: var(--line-height-normal);
-    min-height: 2.6em;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    line-height: 1.5;
   }
-  .presence-meta {
+  .home-mode-sub {
+    margin: var(--space-1) 0 0;
+    color: var(--text-faint);
+    font-size: var(--font-size-sm);
+    font-style: italic;
+    min-height: 1.4em;
+  }
+  .home-mode-actions {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
-    color: var(--text-faint);
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
+    margin-top: var(--space-3);
   }
-  .presence-card.tone-recording .presence-ring { color: var(--accent); }
-  .presence-card.tone-working .presence-ring { color: var(--info); }
-  .presence-card.tone-complete .presence-ring { color: var(--success); }
-  .presence-card.tone-error {
-    border-color: var(--danger);
-    background: var(--danger-soft);
+  .home-mode-go {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: var(--accent-contrast, #06121f);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    text-decoration: none;
+    transition: filter var(--duration-short) var(--ease-standard);
   }
-  .presence-card.tone-error .presence-ring { color: var(--danger); }
-  .presence-card.tone-idle .presence-ring { color: var(--text-faint); }
+  .home-mode-go:hover {
+    filter: brightness(1.08);
+  }
+  .home-mode-go:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .home-mode-go--ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .home-mode-go--ghost:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+    filter: none;
+  }
 
-  @media (prefers-reduced-motion: reduce) {
-    .presence-ring.is-live { animation: none; }
-  }
-
-  .action-stage {
-    display: flex; flex-direction: column; align-items: center;
-    text-align: center; gap: var(--space-3);
-    padding: var(--space-4);
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-3);
-  }
-  .action-hint {
-    margin: 0; color: var(--text-muted);
-    font-size: var(--font-size-sm); line-height: var(--line-height-relaxed);
-  }
-
-  .stats {
-    display: grid; grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-2); padding: var(--space-3);
-    background: var(--canvas); border: 1px solid var(--line);
-    border-radius: var(--radius-2);
-  }
-  .stat { display: flex; flex-direction: column; gap: var(--space-1); }
-  .stat-label {
-    color: var(--text-faint); font-size: var(--font-size-xs);
-    text-transform: uppercase; letter-spacing: var(--letter-spacing-loose);
-  }
-  .stat-value {
-    color: var(--text); font-size: var(--font-size-md);
-    display: inline-flex; align-items: center; gap: var(--space-2);
-  }
-  .stat-value.mono { font-family: var(--font-mono); }
-  .conn-dot { width: var(--space-2); height: var(--space-2); border-radius: 50%; background: var(--text-faint); }
-  .conn-dot.connected { background: var(--success); }
-  .conn-dot.connecting { background: var(--warn); }
-  .conn-dot.error { background: var(--danger); }
-
-  /* === Buttons (mirrors components/Button.astro) ========== */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    gap: var(--space-2); padding: var(--space-3) var(--space-4);
-    font-family: var(--font-ui); font-weight: 500; font-size: var(--font-size-md);
-    line-height: 1; letter-spacing: var(--letter-spacing-loose);
-    border: 1px solid transparent; border-radius: var(--radius-2);
-    cursor: pointer; user-select: none;
+  /* Quiet Studio */
+  .home-studio {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--text-muted);
     transition:
-      background var(--duration-short) var(--ease-standard),
       border-color var(--duration-short) var(--ease-standard),
       color var(--duration-short) var(--ease-standard);
   }
-  .btn:focus-visible {
+  .home-studio:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+  .home-studio:focus-visible {
     outline: var(--focus-outline-width) solid var(--accent);
     outline-offset: var(--focus-outline-offset);
   }
-  .btn:disabled { cursor: not-allowed; opacity: 0.55; }
-  .btn--sm { padding: var(--space-2) var(--space-3); font-size: var(--font-size-sm); }
-  .btn--hero { width: 100%; padding: var(--space-4) var(--space-5); font-size: var(--font-size-lg); }
-  .btn--primary { background: var(--accent); color: var(--accent-on); border-color: var(--accent); box-shadow: var(--glow-accent); }
-  .btn--primary:not(:disabled):hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-  .btn--secondary { background: var(--surface-2); color: var(--text); border-color: var(--border); }
-  .btn--secondary:not(:disabled):hover { border-color: var(--border-strong); background: var(--surface-3); }
-  .btn--danger { background: var(--danger-fill); color: #fff; border-color: var(--danger-fill); }
-  .btn--danger:not(:disabled):hover { background: var(--danger-strong); border-color: var(--danger-strong); }
-  .btn--ghost { background: transparent; color: var(--text-muted); border-color: transparent; }
-  .btn--ghost:not(:disabled):hover { color: var(--text); background: var(--surface-hover); }
-  .btn-spinner {
-    width: var(--space-3); height: var(--space-3); border-radius: 50%;
-    border: 2px solid currentColor; border-right-color: transparent;
-    animation: btn-spin var(--duration-long) linear infinite;
-  }
-  @keyframes btn-spin { to { transform: rotate(360deg); } }
-
-  /* === Pills (mirrors components/Pill.astro) ============= */
-  .pill {
-    display: inline-flex; align-items: center; gap: var(--space-2);
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-pill);
-    font-size: var(--font-size-xs); font-weight: 500;
-    letter-spacing: var(--letter-spacing-loose);
-    border: 1px solid transparent; line-height: 1.4;
-    background: var(--canvas-raised); color: var(--text-muted);
-    border-color: var(--line);
-  }
-  .pill-dot { width: var(--space-2); height: var(--space-2); border-radius: 50%; background: currentColor; flex-shrink: 0; }
-  .pill--info { color: var(--accent); background: var(--accent-soft); border-color: transparent; }
-  .pill--success { color: var(--success); background: var(--success-soft); border-color: transparent; }
-  .pill--warn { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
-  .pill--danger { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
-  .pill--local { color: var(--local); background: var(--local-soft); border-color: transparent; }
-
-  /* === Panels (mirrors components/Panel.astro — Signal: raised
-   * dark surface, real depth + radius, uppercase-eyebrow title). */
-  .panel {
-    background: var(--surface-1);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--elev-1);
-    overflow: hidden;
-  }
-  .panel-header {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: var(--space-3);
-    background: var(--surface-2);
-    color: var(--text);
-    border-bottom: 1px solid var(--border-subtle);
-    padding: var(--space-3) var(--space-4);
-  }
-  .panel--dense .panel-header { padding: var(--space-2) var(--space-3); }
-  .panel-title {
-    font-family: var(--font-ui);
-    font-size: var(--font-size-xs);
+  .home-studio-label {
     font-weight: 600;
     color: var(--text);
-    letter-spacing: var(--letter-spacing-eyebrow);
-    text-transform: uppercase;
-    line-height: 1.3;
   }
-  .panel-toolbar { display: flex; align-items: center; gap: var(--space-2); }
-  .panel-body { padding: var(--space-4); }
-  .panel--dense .panel-body { padding: var(--space-3); }
-  .panel-footer { border-top: 1px solid var(--border-subtle); color: var(--text-muted); font-size: var(--font-size-sm); background: var(--surface-2); }
-  .panel--comfortable .panel-footer { padding: var(--space-2) var(--space-4); }
-
-  /* === Board ============================================= */
-  .board {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
-    gap: var(--space-5);
-    align-items: start;
-  }
-
-  /* Rail group labels (eyebrow) — group the panels into Intelligence
-   * / Work / Operations per the IA spec; the rail stays subordinate
-   * to the dominant transcript column. */
-  .rail-group-label {
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    letter-spacing: var(--letter-spacing-eyebrow);
-    text-transform: uppercase;
-    color: var(--text-faint);
-    padding: 0 var(--space-1);
-  }
-  .rail-group-label:not(:first-child) {
-    margin-top: var(--space-3);
-    padding-top: var(--space-3);
-    border-top: 1px solid var(--border-subtle);
-  }
-
-  /* === Transcript ======================================== */
-  .transcript-scroll {
-    max-height: 70vh; overflow-y: auto;
-    display: flex; flex-direction: column; gap: var(--space-3);
-  }
-  .transcript-empty {
-    display: flex; flex-direction: column; align-items: center;
-    text-align: center; gap: var(--space-3);
-    padding: var(--space-6); color: var(--text-muted);
-  }
-  .transcript-empty h3 {
-    margin: 0; color: var(--text);
-    font-size: var(--font-size-lg); letter-spacing: var(--letter-spacing-tight);
-  }
-  .transcript-empty p { margin: 0; max-width: 52ch; line-height: var(--line-height-relaxed); }
-
-  .segment, .bookmark {
-    display: block; padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--line); border-radius: var(--radius-2);
-    background: var(--canvas); cursor: pointer;
-    transition: border-color var(--duration-short) var(--ease-standard);
-  }
-  .segment:hover, .bookmark:hover { border-color: var(--line-strong); }
-  .segment:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
-  }
-  .segment-meta, .bookmark-meta {
-    display: flex; flex-wrap: wrap; align-items: center;
-    gap: var(--space-2); margin-bottom: var(--space-2);
-    font-size: var(--font-size-xs);
-  }
-  .speaker-pill {
-    display: inline-flex; align-items: center; gap: var(--space-1);
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-pill);
-    background: var(--canvas-raised); border: 1px solid var(--line);
-    color: var(--text-muted);
-  }
-  .speaker-dot { width: var(--space-1); height: var(--space-1); border-radius: 50%; background: currentColor; }
-  .speaker-pill.tone-accent { color: var(--accent); }
-  .speaker-pill.tone-warm { color: var(--warm); }
-  .speaker-pill.tone-success { color: var(--success); }
-  .ts { color: var(--text-faint); }
-  .copy-hint { color: var(--text-faint); margin-left: auto; }
-  .segment-text, .bookmark-text { margin: 0; color: var(--text); line-height: var(--line-height-relaxed); }
-  .bookmark { background: var(--accent-soft); border-color: var(--accent); }
-  .bookmark-flag { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--accent); font-weight: 500; }
-
-  .dock { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
-  .export-wrap { position: relative; margin-left: auto; }
-  .export-menu {
-    position: absolute; bottom: 100%; right: 0;
-    margin-bottom: var(--space-2);
-    background: var(--canvas-elevated);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-2);
-    padding: var(--space-1);
-    min-width: 16rem; box-shadow: var(--elev-3);
-    z-index: var(--z-overlay);
-  }
-  .export-item {
-    display: flex; align-items: center; justify-content: space-between;
-    width: 100%; background: transparent; border: 0;
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-1); color: var(--text);
-    font-family: var(--font-ui); font-size: var(--font-size-sm);
-    text-align: left; cursor: pointer;
-  }
-  .export-item:hover { background: var(--accent-soft); }
-  .export-item:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
-  }
-  .export-item .mono { font-family: var(--font-mono); color: var(--text-faint); }
-
-  /* === Rail ============================================== */
-  .rail { display: flex; flex-direction: column; gap: var(--space-3); }
-  .rail-title { margin: 0 0 var(--space-1); color: var(--text); font-weight: 500; }
-  .rail-muted {
-    margin: var(--space-2) 0 0;
-    color: var(--text-muted); font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-  }
-  .rail-faint { color: var(--text-faint); font-size: var(--font-size-xs); }
-  .rail-label {
-    display: block; color: var(--text-muted);
-    font-size: var(--font-size-xs);
-    text-transform: uppercase; letter-spacing: var(--letter-spacing-loose);
-    margin: var(--space-3) 0 var(--space-1);
-  }
-  .rail-input {
-    width: 100%; padding: var(--space-2) var(--space-3);
-    background: var(--canvas); border: 1px solid var(--line);
-    border-radius: var(--radius-2); color: var(--text);
-    font-family: var(--font-ui); font-size: var(--font-size-sm);
-  }
-  .rail-input--sm { width: auto; min-width: 6rem; }
-  .rail-input:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
-  }
-  .topics { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-2) 0; }
-  .topic-pill {
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-pill);
-    background: var(--canvas); border: 1px solid var(--line);
-    color: var(--text-muted); font-size: var(--font-size-xs);
-    font-family: var(--font-mono);
-  }
-  .device-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-  .device-item {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    padding: var(--space-3);
-    background: var(--canvas);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-2);
-  }
-  .device-main {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--space-2);
-  }
-  .device-label {
-    color: var(--text);
-    font-weight: 500;
-  }
-  .device-id {
-    color: var(--text-faint);
-    font-size: var(--font-size-xs);
-  }
-  .device-health {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-1);
-  }
-  .device-health.is-stale {
-    opacity: 0.7;
-  }
-  .summary-text {
-    margin: 0; color: var(--text);
-    line-height: var(--line-height-relaxed); font-size: var(--font-size-sm);
-  }
-  .streaming-text {
-    margin: 0; color: var(--text);
-    font-family: var(--font-mono); font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-  }
-  .caret {
-    display: inline-block; width: 1ch; background: var(--accent);
-    margin-left: 2px;
-    animation: caret var(--duration-long) steps(1) infinite;
-  }
-  @keyframes caret { 50% { background: transparent; } }
-
-  /* === Action items ====================================== */
-  .action-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-  .action-item {
-    display: grid; grid-template-columns: auto 1fr auto;
-    gap: var(--space-3); padding: var(--space-3);
-    border: 1px solid var(--line); border-radius: var(--radius-2);
-    background: var(--canvas); align-items: start;
-  }
-  .action-item.is-done .action-task { color: var(--text-muted); text-decoration: line-through; }
-  .action-body { min-width: 0; }
-  .action-task { margin: 0; color: var(--text); line-height: var(--line-height-normal); overflow-wrap: anywhere; }
-  .action-meta { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
-  .meta-chip {
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-pill);
-    background: var(--canvas-raised); border: 1px solid var(--line);
-    color: var(--text-muted); font-size: var(--font-size-xs);
-  }
-  .meta-chip.mono { font-family: var(--font-mono); }
-  .meta-chip.status.success { color: var(--success); border-color: transparent; background: var(--success-soft); }
-  .meta-chip.status.warn { color: var(--warn); border-color: transparent; background: var(--warn-soft); }
-  .meta-chip.status.danger { color: var(--danger); border-color: transparent; background: var(--danger-soft); }
-  .meta-chip.status.info { color: var(--accent); border-color: transparent; background: var(--accent-soft); }
-  .action-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
-  .check, .dismiss {
-    background: transparent; border: 1px solid var(--line);
-    border-radius: var(--radius-1); color: var(--text-muted);
-    width: var(--space-5); height: var(--space-5);
-    display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
-  }
-  .check:hover, .dismiss:hover { border-color: var(--line-strong); color: var(--text); }
-  .check:disabled, .dismiss:disabled { opacity: 0.45; cursor: not-allowed; }
-  .check:focus-visible, .dismiss:focus-visible {
-    outline: var(--focus-outline-width) solid var(--accent);
-    outline-offset: var(--focus-outline-offset);
-  }
-  .jobs-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); align-items: center; }
-
-  /* === Toasts + modals =================================== */
-  .toast-stack {
-    position: fixed; bottom: var(--space-5); right: var(--space-5);
-    display: flex; flex-direction: column; gap: var(--space-2);
-    z-index: var(--z-toast);
-  }
-  .toast {
-    background: var(--canvas-elevated); color: var(--text);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-2);
-    padding: var(--space-3) var(--space-4);
-    box-shadow: var(--elev-3);
-  }
-  .toast p { margin: 0; }
-
-  .modal {
-    position: fixed; inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    display: grid; place-items: center;
-    padding: var(--space-4);
-    z-index: var(--z-dialog);
-  }
-  .modal-card {
-    width: min(36rem, 100%);
-    background: var(--canvas-elevated);
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-3);
-    padding: var(--space-5);
-    box-shadow: var(--elev-4);
-    display: flex; flex-direction: column; gap: var(--space-3);
-  }
-  .modal-card h3 { margin: 0; font-size: var(--font-size-xl); letter-spacing: var(--letter-spacing-tight); }
-  .modal-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-3); }
-
-  .sr-only {
-    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
-  }
-
-  @media (max-width: 960px) {
-    .hero { grid-template-columns: 1fr; }
-    .board { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 640px) {
-    .runtime { padding: var(--space-3); gap: var(--space-3); }
-    .hero { padding: var(--space-4); }
-    .stats { grid-template-columns: 1fr 1fr; }
-  }
-
-  /* HS-13-08: pre-meeting briefing panel. */
-  .briefing .briefing-meta {
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
-  }
-  .briefing-body {
-    font-size: var(--font-size-md);
-    line-height: 1.5;
-    color: var(--text);
-  }
-  .briefing-body h1 {
-    font-family: var(--font-display);
-    font-size: var(--font-size-lg);
-    margin: 0 0 var(--space-2);
-    letter-spacing: 0.04em;
-  }
-  .briefing-body h2 {
-    font-family: var(--font-display);
-    font-size: var(--font-size-md);
-    margin: var(--space-3) 0 var(--space-1);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--accent);
-  }
-  .briefing-body ul {
-    list-style: square inside;
-    margin: 0 0 var(--space-2);
-    padding: 0;
-  }
-  .briefing-body li {
-    margin-bottom: var(--space-1);
-  }
-  .briefing-body strong { font-weight: 700; }
-  .briefing-body a {
-    color: var(--accent);
-    text-decoration: underline;
-  }
-  .briefing-empty .rail-title {
-    font-family: var(--font-display);
-    margin: 0 0 var(--space-2);
-  }
-  .briefing-error {
-    color: var(--danger);
-    font-family: var(--font-mono);
+  .home-studio-hint {
+    flex: 1 1 auto;
     font-size: var(--font-size-sm);
-    margin: var(--space-2) 0 0;
+    color: var(--text-faint);
+  }
+  .home-studio-arrow {
+    color: var(--text-muted);
   }
 
-  /* HS-38-04: live actuator-proposal panel. A "do this now?" surface — a left
-   * accent edge keyed to the lifecycle state, the human preview, and approve/
-   * reject. The broadcast never carries the egress payload. */
-  .proposals-panel { border-color: var(--warn); }
-  .proposal-list {
-    list-style: none;
-    margin: var(--space-3) 0 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
+  @media (max-width: 720px) {
+    .home-modes {
+      grid-template-columns: 1fr;
+    }
   }
-  .proposal-item {
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--border-strong);
-    border-radius: var(--radius-md, 8px);
-    background: var(--surface-2);
-    padding: var(--space-3);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-  }
-  .proposal-item.accent-warn { border-left-color: var(--warn); }
-  .proposal-item.accent-info { border-left-color: var(--accent); }
-  .proposal-item.accent-ok { border-left-color: var(--success); }
-  .proposal-item.accent-danger { border-left-color: var(--danger); }
-  .proposal-item.accent-default { border-left-color: var(--border-strong); opacity: 0.85; }
-  .proposal-head { display: flex; align-items: flex-start; gap: var(--space-2); }
-  .proposal-icon { font-size: 1.1rem; line-height: 1.2; }
-  .proposal-headings { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
-  .proposal-title {
-    margin: 0;
-    font-weight: 600;
-    color: var(--text);
-    word-break: break-word;
-  }
-  .proposal-meta { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-  .meta-chip.status.proposal-proposed { color: var(--warn); border-color: transparent; background: var(--warn-soft); }
-  .meta-chip.status.proposal-approved { color: var(--accent); border-color: transparent; background: var(--accent-soft); }
-  .meta-chip.status.proposal-executed { color: var(--success); border-color: transparent; background: var(--success-soft); }
-  .meta-chip.status.proposal-failed { color: var(--danger); border-color: transparent; background: var(--danger-soft); }
-  .meta-chip.status.proposal-rejected { color: var(--text-muted); border-color: transparent; background: var(--surface-3); }
-  .proposal-preview-line {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-    word-break: break-word;
-  }
-  .proposal-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-  .proposal-approve {
-    background: var(--accent);
-    color: var(--accent-on);
-    border-color: var(--accent);
-    box-shadow: var(--glow-accent);
-  }
-  .proposal-approve:not(:disabled):hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-  .proposal-guard, .proposal-decided { margin: 0; }
 </style>

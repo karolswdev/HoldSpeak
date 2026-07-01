@@ -137,7 +137,7 @@ def test_history_buttons_are_gated_on_the_flag():
 def test_proposal_guard_copy_tells_the_per_target_truth():
     # The guard copy tells the per-target truth, in one short line each
     # (HS-62-02 swept the "Nothing runs without your approval" preamble).
-    for page_name in ("history.astro", "index.astro"):
+    for page_name in ("history.astro", "live.astro"):
         page = (_REPO / "web" / "src" / "pages" / page_name).read_text()
         assert "Approving sends this message to Slack." in page, page_name
         assert "Approving records the decision; execution is a separate step." in page, page_name

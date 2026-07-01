@@ -1,0 +1,220 @@
+# Phase 70 — The Legible Product (Out-of-the-Box)
+
+**Status:** CLOSED (9/9) — 2026-06-30. See [`final-summary.md`](./final-summary.md). PR [#205](https://github.com/karolswdev/HoldSpeak/pull/205).
+
+**Last updated:** 2026-06-30 (**opened + scaffolded** on owner direction, in the owner's own words:
+*"I literally am confused myself about the product, and IMO, that's a VERY, very bad sign."* Phase 69
+brought the web flagship to the iPad's felt craft; Phase 70 fixes what craft can't: the surface has
+sprawled to **16 top-level pages** presented as ~14 co-equal doors, while the story is two sentences
+("one copilot, two modes"). The two load-bearing calls are owner-confirmed at scaffold: **A — bold
+reorg + consolidate** (not an additive front-door), **B — tuck the power features into a "Studio" tier**
+(not a third pillar, not hidden). Nine stories authored; branch `phase-70-legible-product` on open.)
+
+## The thesis
+
+The confusion the owner feels is the **information architecture diverging from the story.** The story
+is settled and crisp (POSITIONING: *one local copilot, two modes — dictation and meetings*). The web
+surface is a flat list of fourteen destinations with visible redundancy (three first-run surfaces,
+three canvas surfaces, two ambient surfaces). Phase 70 reconciles the surface to the story so a
+first-time user — and the person who built it — can say what HoldSpeak is and what to do first, in one
+breath, within ten seconds. This is not craft (Phase 69 did that) and not features; it is arrival,
+organization, and naming.
+
+## The target information architecture (owner-confirmed)
+
+```
+HoldSpeak
+├─ Home        what is this + your next action
+├─ Dictation   voice typing + the journal + the learning digest + pre-briefing
+├─ Meetings    capture / import + the archive + aftercare
+└─ Studio ▾    (collapsed, advanced) Workbench · Agent Desk · Cadence · Commands · Profiles · Presence
+   Settings
+```
+
+Four primary destinations + Settings, not fourteen. Per-route disposition is in the AGENT-BRIEF §3 map.
+
+## Decisions carried in (owner, 2026-06-30)
+
+- **A — Bold reorg + consolidate.** Restructure the nav to the two modes; merge/retire the redundant
+  surfaces (three first-run pages → one; dictation + journal/learning/nudges made whole; meetings +
+  import + archive + aftercare made whole). Pages get demoted or absorbed, not preserved for their own
+  sake. (Rejected: an additive guided front-door that leaves the sprawl underneath.)
+- **B — Tuck the power features into a "Studio" tier.** Workbench, Agent Desk, Cadence, Commands,
+  Profiles, Presence stay fully built but collapse behind one Studio group so a first-run user is not
+  confronted by them. "Two modes" stays canon; Studio is the advanced tier below it. (Rejected:
+  elevating them to a third pillar / changing the positioning canon; hiding them entirely behind a flag.)
+
+## Scope
+
+- **In:** the nav reframe (spine), a Home that orients, one consolidated first-run, Dictation and
+  Meetings each made whole, the Studio tier, guiding empty states, naming + positioning coherence, and
+  a closeout that proves no dead doors + a clean arrival.
+- **Out:** new product features (no new mode/connector/plugin); a re-theme (Phase 69 did the craft);
+  porting the iPad DeskOS/Primitive-Framework paradigm to web (a distinct, larger phase if ever — a
+  flagged follow-up, not smuggled in); re-implementing any Studio tool (they are grouped and framed,
+  not rebuilt). Behavior is byte-identical except where a consolidation deliberately changes it.
+
+## Exit criteria (evidence required)
+
+- [ ] Nav is Home · Dictation · Meetings · Studio▾ · Settings, everywhere; Studio collapsed by default
+      (HS-70-01).
+- [ ] Home answers "what is this + your next action"; it is not a data dashboard; both mode cards are
+      co-equal and unmistakable (HS-70-02).
+- [ ] Exactly one first-run arrival surface (no user meets three); it teaches the two modes and lands
+      the first win on Home; retired first-run routes redirect (HS-70-03).
+- [ ] Dictation contains typing + journal + learning + corrections + pre-briefing; `/activity` folds in
+      (HS-70-04). Meetings contains capture/import + archive + aftercare with entry actions promoted
+      (HS-70-05).
+- [ ] Studio is one collapsed, clearly-secondary tier; off-by-default tools shown off; a first-run user
+      never lands there (HS-70-06).
+- [ ] Every primary surface has a guiding empty state; load-vs-empty distinct; no-prose copy (HS-70-07).
+- [ ] Naming canonical; POSITIONING records the IA + the "Studio" name; README/index/Getting Started
+      reflect the new front door; voice guard green (HS-70-08).
+- [ ] No route 404s (redirects for everything moved); full suite green; the launch→Home→first-win
+      play-walk screenshot-proven; the 10-second legibility read-test recorded (HS-70-09).
+
+## Stories
+
+| Story | Title | Priority | Status | Depends on |
+|-------|-------|----------|--------|------------|
+| HS-70-01 | The IA spine: nav reframe to two modes + Studio | HIGH | **done** (TopNav → `Home · Dictation · Meetings · Studio▾`; Studio is a native `<details>` tier of the 7 browsable advanced surfaces, auto-open on an active route; `Route` union + 4 page slugs updated; Activity parked in Studio, Presence excluded as a nav-less overlay; 4 nav states screenshot-proven, route pre-flight 2 passed; see [evidence](./evidence-story-01.md)) | owner A+B |
+| HS-70-02 | Home: "what is this + your next action" | HIGH | **done** (`/` reframed from the meeting-runtime dashboard into an orientation Home: identity + a `/api/setup/status`-fed next-action band + the two modes as co-equal cards with guiding subtitles + a quiet Studio link; the 1378-line live dashboard moved to `/live`; empty + seeded screenshot-proven; see [evidence](./evidence-story-02.md)) | 01 |
+| HS-70-03 | One arrival: consolidate the three first-run surfaces | HIGH | **done** (`/welcome` is the single arrival — guard + CLI nudge route new users there, it teaches both modes and lands on Home; `/setup` demoted from a second "Welcome" to the "Setup & health" surface and surfaced from Settings; screenshot-proven; 13 tests + full suite green; see [evidence](./evidence-story-03.md)) | 01, 02 |
+| HS-70-04 | Dictation mode, made whole (folds `/activity`) | MED | **done** (pre-briefing nudges already in the cockpit; Activity removed from the Studio nav and `/activity` reframed as a Dictation sub-view — `current="dictation"`, "← Dictation" back link, retitled "Activity ledger", "Manage activity →" from the cockpit; reframe over port/redirect so nothing lost; screenshot-proven; full suite green; see [evidence](./evidence-story-04.md)) | 01 |
+| HS-70-05 | Meetings mode, made whole (`/history` → Meetings) | MED | **done** (`/history` retitled "Meetings"; hero entry actions promoted — "Start a meeting" → `/live` + "Import a recording or transcript" opens the panel; archive/facets/aftercare beneath; `/meetings`→`/history` redirect; screenshot-proven; suite green; empty-state copy deferred to 07; see [evidence](./evidence-story-05.md)) | 01 |
+| HS-70-06 | The Studio tier: power features framed + contained | MED | **done** (new `/studio` index frames the 6 tools as clearly-secondary cards — glyph + one-line purpose + "Open →", Cadence tagged "Off by default"; the dropdown "ADVANCED" eyebrow links to it; tools keep their routes; screenshot-proven; suite green; see [evidence](./evidence-story-06.md)) | 01 |
+| HS-70-07 | Guiding empty states everywhere (no scary blanks) | MED | **done** (shared `.empty-state` primitive in global.css; Meetings archive rebuilt on it in two guiding variants — no-match + first-run — fixing the stale "Runtime" copy; audit found Home/journal/context already guide; load-vs-empty-vs-no-match distinct; screenshot-proven; suite green; see [evidence](./evidence-story-07.md)) | 02 |
+| HS-70-08 | Naming + positioning coherence (the docs story) | MED | **done** (POSITIONING gains a web-IA section + Home/Meetings/Studio canonical names; Getting Started surface map updated to the new IA; docs index front-door note; nav labels/titles already canonical; no stale surface language; voice/doc guard 15 passed; suite green; see [evidence](./evidence-story-08.md)) | 01–07 |
+| HS-70-09 | Closeout: no dead doors, one clean arrival, proven | HIGH | **done** (18/18 routes resolve 200; first-run `/`→`/welcome`, set-up `/` stays Home with nav [Home, Dictation, Meetings, Studio]; legibility read-test recorded; suite 3045 green; `final-summary.md` written; see [evidence](./evidence-story-09.md)) | 01–08 |
+
+Suggested build order (cheapest-high-impact-first, spine early): **01 → 02 → 03** (the arrival trio
+that fixes the confusion outright) → **04 → 05 → 06** (each mode/tier made whole) → **07** (empty
+states) → **08** (docs/naming lock) → **09** (closeout). 04/05/06 are parallelizable after 01.
+
+## Where we are
+
+**2026-06-30 — HS-70-09 done → PHASE 70 CLOSED (9/9).** The closeout proves the thesis end to end:
+`scripts/phase70_closeout.py` sweeps all 18 routes → 18/18 resolve 200 (no dead doors, redirects
+followed: `/meetings`→`/history`, plus the new `/live`/`/studio` and the reframed `/setup`/`/activity`);
+a first-run `/` is guarded to the single arrival `/welcome`; a set-up `/` stays on Home with nav
+primaries `['Home', 'Dictation', 'Meetings', 'Studio']`. The legibility read-test is recorded against
+`home-empty.png` (identity → two modes → first action, within ten seconds; Studio a quiet dashed link).
+Full suite 3045 passed, 37 skipped (unchanged across the phase — every ripple retargeted, never
+silenced); build green (18 pages); `_built/` never committed. `final-summary.md` written. The web is now
+four doors not fourteen, one arrival not three, a framed advanced tier, guiding empty states, and canon
+that records it. PR #205 is the owner's to merge on green CI.
+
+**2026-06-30 — HS-70-08 done (naming + positioning, the docs story).** The new front door is now canon.
+POSITIONING gains a "web surface (information architecture)" section (the four destinations as the surface
+expression of "one copilot, two modes"; Studio is the advanced tier below the two modes, not a third
+pillar; one first-run arrival; the standing rule that new capability joins a mode or Studio, not a new
+door) and three canonical-name rows (Home, Meetings, Studio). Getting Started's surface map is updated to
+the new IA (returning users land on Home; `/welcome` the single arrival; `/setup` "Setup and health") and
+the docs index carries a front-door note. Nav labels + page titles were already canonical from the feature
+stories (Home/Dictation/Meetings/Studio, the Meetings retitle, the Activity ledger), so this records them
+rather than renaming further; a `docs/*.md`+README sweep found no stale surface language. Docs-only, zero
+behavior change. Voice/doc guard 15 passed (incl. the dash-zero + canonical-name checks); full suite 3045
+passed, 37 skipped. Next: HS-70-09 (closeout — no dead doors + the arrival play-walk).
+
+**2026-06-30 — HS-70-07 done (guiding empty states).** A shared `.empty-state` primitive landed in
+global.css (glyph + title + one guiding line + one action; global so it paints on JS-injected DOM), and
+the one scary/stale surface was fixed: the Meetings archive empty was rebuilt on it in two guiding
+variants — a no-match state ("No meetings match these filters" + Clear filters) and a first-run state
+("No meetings yet" + Start a meeting/Import) — replacing the HS-70-05 follow-up wart (the old copy said
+"Finish a meeting on Runtime …", a retired dashboard name, and linked `/`+`/activity`). An audit found the
+other primary surfaces already guide: Home's subtitles (HS-70-02), the Dictation journal's empty + its
+no-match variant, and ContextSection's teaching empty; Studio never empties. Load vs empty vs no-match are
+distinct on every surface. The already-correct empties were left as-is (retrofitting them to the new class
+is churn/risk for no user gain). Screenshot-proven (`empty-state-meetings`). Full suite 3045 passed, 37
+skipped. Next: HS-70-08 (naming + positioning coherence, the docs story).
+
+**2026-06-30 — HS-70-06 done (the Studio tier).** The six power tools got one coherent, clearly-secondary
+home: a new `/studio` index framing Workbench, Desk, Agent Desk, Cadence, Commands, and Profiles as
+`.signal-card`s (glyph + one-line purpose + "Open →"), with an honest "Off by default" chip on Cadence.
+The nav dropdown's "ADVANCED" eyebrow became a link to `/studio` and `studioActive` now lights the summary
+on `/studio` too; the `studio` slug was added to the `Route` union (TopNav + AppLayout). The tools keep
+their own routes and behaviour (Decision B: framed, not re-implemented). A first-run user never lands here
+(HS-70-03 routes them to `/welcome` → Home; Home's Studio link is a dashed, secondary affordance).
+Registered in pages.py + PAGE_ROUTES. Screenshot-proven (`studio-index` shows the six framed cards +
+Cadence "Off by default"; `studio-dropdown` shows the "ADVANCED →" link). Route pre-flight 2 passed; full
+suite 3045 passed, 37 skipped; build now 18 pages. Next: HS-70-07 (guiding empty states app-wide,
+including the Meetings "Runtime" copy).
+
+**2026-06-30 — HS-70-05 done (Meetings made whole).** `/history` stopped reading as an oddly-named
+"History" archive and became the **Meetings** front door: eyebrow + h1 retitled to "Meetings", the page
+`<title>` to "HoldSpeak — Meetings", the hero copy reframed to name the whole mode, and the mode's entry
+actions promoted to the hero — "Start a meeting" (→ `/live`, the live-capture surface HS-70-02 carved
+out) and "Import a recording or transcript" (opens the existing HS-55/57 import panel and scrolls to it)
+— over the archive + faceted search + aftercare (unchanged beneath). A `/meetings` route redirects to
+`/history` (307) so the canonical name resolves without a risky route rename (added to PAGE_ROUTES). The
+archive empty-state copy still says "Runtime" (the retired dashboard name); that is fixed app-wide in
+HS-70-07 and is noted, not silently left. Screenshot-proven (`meetings-empty` shows the retitle + hero
+actions + faceted archive; `meetings-import` shows the import panel opened from the hero). Route
+pre-flight 2 passed; full suite 3045 passed, 37 skipped. Next: HS-70-06 (the Studio tier index).
+
+**2026-06-30 — HS-70-04 done (Dictation made whole).** The dictation-relevant Activity (the pre-briefing
+nudges) was already in the cockpit (`ActivityNudges`, HS-53-04). This story finished the fold: Activity
+removed from the top-level Studio nav (Studio is now six tools), and `/activity` reframed as a Dictation
+sub-view — `current="activity"` → `current="dictation"` (nav shows Dictation), a "← Dictation" back link,
+retitled "Local activity" → "Activity ledger", and a "Manage activity →" link added to the cockpit
+banner. Decision: reframe over redirect/port — the `/activity` ledger is 825 lines of `?raw`-loaded
+Alpine; porting it into the ES-module cockpit or redirecting `/activity` would lose the ledger UI or risk
+a paradigm-mixing rewrite. Reframing achieves "Activity is part of Dictation" with zero loss. Test ripple:
+the retitle retargeted in `test_web_activity_api` + `test_web_built_mount`, and the nav route list updated
+(Activity dropped, a Studio item asserted) in `test_topnav_renders_with_aria_current`. Screenshot-proven
+(`activity-ledger` shows Dictation-active nav + back link + intact ledger; `studio-no-activity` shows the
+6-tool dropdown). Full suite 3045 passed, 37 skipped. Next: HS-70-05 (Meetings made whole).
+
+**2026-06-30 — HS-70-03 done (one arrival).** Three first-run surfaces became one arrival. `/welcome` is
+the single canonical first-run surface: the HS-70-02 guard sends every first-run user there, and the CLI
+launch nudge already did (`test_cli_nudge_points_first_run_user_at_the_wizard`); verified it already
+teaches both modes (hero + the Done step's "Dictate anywhere" / "Run a meeting" cards) and lands on Home
+(`href="/"`), so the wizard needed no change. `/setup` was the confusing part — a second "Welcome to
+HoldSpeak" cockpit. Its hero eyebrow was retitled to "Setup & health", demoting it to the returning-user
+health/fix-it surface, and a "Setup & health check →" link was added to the Settings aside so it is
+discoverable from Settings. Decision recorded: demote-and-retitle over delete/redirect, because many
+returning-user paths (Home's next-action band, the Desk readiness chip, the CLI nudge, the wizard's
+troubleshoot link) rely on `/setup` as a calm fix-it cockpit — redirecting them into the full-screen
+wizard would degrade that. The arrival is genuinely one surface; `/setup` is no longer an arrival.
+Screenshot-proven (`welcome-arrival` / `setup-health` / `settings-health-link`); setup + welcome +
+preflight 13 passed; full suite 3045 passed, 37 skipped. Next: HS-70-04 (Dictation mode made whole —
+fold `/activity` in).
+
+**2026-06-30 — HS-70-02 done (Home).** The front door now orients instead of dumping a dashboard. `/`
+was the 1378-line live-meeting runtime (Alpine hero + capture); it moved verbatim to `/live`
+(`current="meetings"`, registered in pages.py + PAGE_ROUTES) and `/` became a focused Home: the
+positioning one-liner as identity, a next-action band fed by `/api/setup/status` (surfaces the server's
+`primary_action` until the user is set up, hidden after), the two modes (Dictation / Meetings) as
+co-equal `.signal-card`s with white-on-gradient glyph chips, one-line what-it-does, dynamic subtitles,
+and action buttons, plus a quiet dashed Studio link that never outshouts the modes. Dynamic subtitles
+fill pre-rendered `textContent` only (no injected DOM → scoped CSS holds). Empty state guides ("Nothing
+yet. Hold your key and speak." / "…Capture or import your first meeting.") rather than blanking — a
+down payment on HS-70-07. Proven both ways: `home-empty.png` (fresh DB: NEXT band + guiding subtitles)
+and `home-seeded.png` (a seeded meeting + journal entry fill `Last: …`). Route pre-flight 2 passed
+(Home + `/live` swept); full suite 3045 passed, 37 skipped. Next: HS-70-03 (consolidate the three
+first-run surfaces into one arrival that lands on Home).
+
+**2026-06-30 — HS-70-01 done (the IA spine).** The nav now states the story: `TopNav.astro` went from
+three inline groups (Live / Review / Configure, ~14 co-equal doors) to `Home · Dictation · Meetings ·
+Studio ▾ · Settings`. Studio is a native `<details>` disclosure (zero JS, keyboard-native) holding the
+seven browsable advanced surfaces (Workbench, Desk, Agent Desk, Activity, Cadence, Commands, Profiles)
+behind an "ADVANCED" eyebrow; it auto-opens when the active route lives inside it, and the summary
+carries a subtle "you are here" tint. The `Route` union moved in lockstep (AppLayout + TopNav;
+`runtime`→`home`, `history`→`meetings`, `+cadence`) and four page `current=` slugs were retargeted
+(`index`, `history`, `design/check`, `cadence` — the last previously had no `current`, so its nav item
+never lit). Two transitional calls recorded: Activity is parked in Studio pending its HS-70-04 fold into
+Dictation; Presence is excluded from the nav (a nav-less HUD overlay would be a dead-end) and stays in
+Settings, with the HS-70-06 Studio index free to card it. No routes moved or added. Proven: `npm run
+build` green (17 pages), route pre-flight 2 passed (every route served/listed/swept for zero page errors
+under the new nav), and four nav states screenshot-verified (wide collapsed / wide expanded /
+`/workbench` auto-open+active / mobile inline) — not just class-in-bundle. Next: HS-70-02 (reframe `/`
+into a Home that answers "what is this + your next action").
+
+**2026-06-30 — opened + scaffolded.** Authored from the Phase-69 web handover's "what is NOT done"
+(§6) plus the owner's confusion signal. Grounding pass confirmed the real surface: 16 pages in
+`web/src/pages/`, a flat `TopNav.astro`, three overlapping first-run surfaces (`/welcome` + `/setup` +
+the `/` guard), two ambient surfaces (`/activity` + `/cadence`), three canvas surfaces (`/desk` +
+`/workbench` + `/companion`). POSITIONING is the fixed story to reconcile to. The two load-bearing
+calls (reorg-aggression + power-feature disposition) were put to the owner and answered (A + B above),
+so every story is grounded, not speculative. Next: an agent starts HS-70-01 (the nav spine) on branch
+`phase-70-legible-product` under the PMO gate.

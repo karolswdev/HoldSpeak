@@ -75,6 +75,29 @@ does not ship.
    *Proof points:* `holdspeak doctor`, the schema policy + backup/restore
    (`docs/RELEASING.md`), the honest-copy locks in the test suite.
 
+## The web surface (information architecture)
+
+The web flagship expresses "one copilot, two modes" in its own shape (Phase
+70). A first-time user, and the owner, should be able to say what HoldSpeak is
+and what to do first within ten seconds of the screen. The surface is four
+primary destinations, not a flat list of pages:
+
+- **Home** answers "what is this" (the one-liner) and "what do I do now" (the
+  two modes as co-equal cards plus a single next action).
+- **Dictation** holds the whole voice-typing mode: voice typing, the dictation
+  journal, the learning digest and corrections, and activity pre-briefing.
+- **Meetings** holds the whole meeting mode: live capture, import, the archive
+  with facets, and aftercare.
+- **Studio** is a collapsed advanced tier for the power tools (Workbench, Desk,
+  Agent Desk, Cadence, Commands, Profiles). It sits below the two modes; it is
+  not a third pillar, and a first-run user is never dropped into it.
+- **Settings** is the one place for global configuration.
+
+First-run arrival is a single surface (the `/welcome` wizard), which teaches
+the two modes and lands on Home. The rule for future work: the surface stays
+legible. A new capability joins one of the two modes or the Studio tier; it
+does not become a new top-level door by default.
+
 ## The competitive frame (as of mid-2026; architecture-level on purpose)
 
 Feature lists churn; architecture does not. Comparisons stay at the level
@@ -101,6 +124,9 @@ left column is the name; do not alternate with the synonyms.
 
 | Canonical name | Not |
 |---|---|
+| Home | "the dashboard", "the runtime page" |
+| Meetings (the mode + its nav label) | "History", "the history tab" |
+| Studio (the advanced tier) | "the advanced panel", "power tools" |
 | voice typing | "basic dictation", "simple mode" |
 | the dictation pipeline | "intelligent typing", "DIR" (user-facing), "smart dictation" |
 | target profiles | "destinations", "apps" |

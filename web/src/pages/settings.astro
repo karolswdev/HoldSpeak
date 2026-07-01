@@ -145,6 +145,9 @@ const WHISPER_LANGUAGES = [
             <span>Show advanced</span>
           </label>
           <span class="local-chip" aria-hidden="true"><span class="dot"></span> Local · 127.0.0.1</span>
+          {/* HS-70-03: the returning-user health surface, surfaced from Settings
+              (the /welcome wizard is the first-run arrival). */}
+          <a class="set-health-link" href="/setup">Setup &amp; health check →</a>
         </aside>
 
         <!-- panel -->
@@ -374,6 +377,9 @@ const WHISPER_LANGUAGES = [
   .set-adv-toggle { display: flex; align-items: center; gap: var(--space-2); color: var(--text-muted); font-size: var(--font-size-sm); cursor: pointer; padding-left: var(--space-3); }
   .set-adv-toggle input { accent-color: var(--accent); }
   .local-chip { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--local-soft, var(--surface-2)); color: var(--local, var(--text-muted)); font-family: var(--font-mono); font-size: var(--font-size-xs); width: fit-content; }
+  .set-health-link { display: inline-flex; align-items: center; margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--text-muted); font-size: var(--font-size-sm); text-decoration: none; transition: color var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard); }
+  .set-health-link:hover { color: var(--text); border-color: var(--border-strong); }
+  .set-health-link:focus-visible { outline: var(--focus-outline-width) solid var(--accent); outline-offset: var(--focus-outline-offset); }
   .local-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--local, var(--ok)); box-shadow: 0 0 8px var(--local, var(--ok)); }
 
   /* HS-69-02: the form is now a raised `.signal-card` (surface + top-lit

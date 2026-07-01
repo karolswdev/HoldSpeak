@@ -84,20 +84,26 @@ takes you from install to your first words, **no file editing**:
 
 *The `/welcome` wizard on a fresh install. It takes you from a fresh clone to a verified first dictation, with no file editing.*
 
-A returning user lands on the dashboard instead (the wizard never nags). If
-something later needs attention, **`/setup`** is the calm status surface, and the
+A returning user lands on **Home** instead (the wizard never nags). Home says
+what HoldSpeak is and offers your next action. If something later needs
+attention, **`/setup`** is the calm Setup and health surface, and the
 **Privacy** chip in the header always shows what can leave your machine.
+
+The web surface is four primary destinations, not a flat list of pages: **Home**,
+the two modes (**Dictation**, **Meetings**), and **Studio** for the advanced
+tools. Everything else nests under one of those.
 
 Useful routes:
 
 | Route | Purpose |
 | --- | --- |
-| `/welcome` | The first-run wizard (opens on a fresh install) |
-| `/setup` | The status surface: readiness + the single next step |
-| `/` | Runtime dashboard |
-| `/settings` | Global settings (sectioned + searchable; open from the ⚙) |
-| `/dictation` | Dictation readiness, blocks, project context, runtime, dry-run |
-| `/history` | Meeting history and artifacts |
+| `/welcome` | The first-run wizard: the single arrival on a fresh install |
+| `/` | Home: what HoldSpeak is, and your next action |
+| `/dictation` | Dictation mode: voice typing, the journal, learning, pre-briefing |
+| `/history` | Meetings mode: capture or import, the archive, aftercare |
+| `/studio` | Studio: the advanced tier (Workbench, Cadence, Commands, and more) |
+| `/settings` | Global settings (sectioned and searchable; open from the ⚙) |
+| `/setup` | Setup and health: readiness plus the single next step |
 
 ## 5. Try Basic Voice Typing
 

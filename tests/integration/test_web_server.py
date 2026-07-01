@@ -267,17 +267,17 @@ def test_client(web_server):
 
 @pytest.mark.integration
 class TestDashboardEndpoint:
-    """Tests for GET / dashboard endpoint."""
+    """Tests for GET /live dashboard endpoint (moved off `/` in HS-70-02)."""
 
     def test_returns_html(self, test_client):
         """Dashboard should return HTML response."""
-        response = test_client.get("/")
+        response = test_client.get("/live")
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
     def test_contains_holdspeak(self, test_client):
         """Dashboard HTML should contain HoldSpeak."""
-        response = test_client.get("/")
+        response = test_client.get("/live")
         assert "HoldSpeak" in response.text or "holdspeak" in response.text.lower()
 
     def _bundled_runtime_js(self, test_client) -> str:
@@ -287,7 +287,7 @@ class TestDashboardEndpoint:
         regardless of the hash."""
         import re
 
-        html = test_client.get("/").text
+        html = test_client.get("/live").text
         match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', html)
         if not match:
             return ""
@@ -299,7 +299,7 @@ class TestDashboardEndpoint:
         control endpoints. The endpoint strings live in the bundled
         Astro chunk (HS-10-06: import factorySource from
         scripts/dashboard-app.js?raw)."""
-        response = test_client.get("/")
+        response = test_client.get("/live")
         assert response.status_code == 200
         html = response.text
         # UI labels visible in the rendered page.
@@ -308,7 +308,7 @@ class TestDashboardEndpoint:
         assert "Deferred plugin jobs" in html
         # API endpoints live in the bundled runtime JS.
         js = self._bundled_runtime_js(test_client)
-        assert js, "expected bundled /_built/_astro/*.js to be referenced from /"
+        assert js, "expected bundled /_built/_astro/*.js to be referenced from /live"
         assert "/api/runtime/status" in js
         assert "/api/meeting/start" in js
         assert "/api/meeting/stop" in js
@@ -327,7 +327,7 @@ class TestDashboardEndpoint:
         server-rendered shell and bundled runtime helpers that drive
         battery/RSSI visibility and stale-state rendering.
         """
-        response = test_client.get("/")
+        response = test_client.get("/live")
         assert response.status_code == 200
         html = response.text
         assert "Devices" in html
@@ -336,7 +336,7 @@ class TestDashboardEndpoint:
         assert "deviceHealthStale(device)" in html
 
         js = self._bundled_runtime_js(test_client)
-        assert js, "expected bundled /_built/_astro/*.js to be referenced from /"
+        assert js, "expected bundled /_built/_astro/*.js to be referenced from /live"
         assert "devices: []" in js
         assert "upsertDevice" in js
         assert "hasDeviceHealth" in js
@@ -350,7 +350,7 @@ class TestDashboardEndpoint:
         badge a canonical STRUCTURED chip (`egress-badge` / `egressBadgeText()`),
         replacing the prose `egressLabel()` in the rendered shell.
         """
-        response = test_client.get("/")
+        response = test_client.get("/live")
         assert response.status_code == 200
         html = response.text
         assert "Privacy" in html
@@ -358,7 +358,7 @@ class TestDashboardEndpoint:
         assert "egressBadgeText()" in html
 
         js = self._bundled_runtime_js(test_client)
-        assert js, "expected bundled /_built/_astro/*.js to be referenced from /"
+        assert js, "expected bundled /_built/_astro/*.js to be referenced from /live"
         assert "intelEgress" in js
         assert "egressLabel" in js
         assert "deviceBatteryLabel" in js
@@ -371,7 +371,7 @@ class TestDashboardEndpoint:
         live state. The exact wording was simplified in HS-10-06; what
         matters is that idle and read-only-while-idle guidance is
         present so users understand why controls are disabled."""
-        response = test_client.get("/")
+        response = test_client.get("/live")
         assert response.status_code == 200
         html = response.text
         assert "Press start, then hold to talk" in html
@@ -382,7 +382,7 @@ class TestDashboardEndpoint:
         """The runtime-status payload is still preferred at bootstrap.
         The factory function lives in the bundled chunk (HS-10-06)."""
         js = self._bundled_runtime_js(test_client)
-        assert js, "expected bundled /_built/_astro/*.js to be referenced from /"
+        assert js, "expected bundled /_built/_astro/*.js to be referenced from /live"
         assert "fetchRuntimeStatus" in js
         assert "fetchInitialState" in js
 

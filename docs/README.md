@@ -5,6 +5,10 @@ app and learns how you work, and meetings that end with decisions, actions,
 and follow-ups instead of a recording. Everything runs on your machine,
 including the LLM. This page is the map. Pick a journey.
 
+The web app opens on **Home** (what HoldSpeak is, and your next action), with
+the two modes (**Dictation**, **Meetings**) as the front door and a **Studio**
+tier for the advanced tools. Four destinations, not a flat list of pages.
+
 > New here? Start with the [main README](../README.md) for the pitch and a
 > quickstart, then follow **Start here** below.
 

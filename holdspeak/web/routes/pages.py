@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from ...logging_config import get_logger
 from ..context import WebContext
@@ -44,6 +44,26 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
                 "<p>Runtime UI missing — run "
                 "<code>cd web && npm run build</code>.</p>"
                 "</body></html>"
+            )
+        return HTMLResponse(html)
+
+    @router.get("/live")
+    async def live_meeting() -> Any:
+        """Serve the live-meeting runtime dashboard (HS-70-02 moved it off `/`,
+        which is now Home). Read from the Astro-built _built/live/index.html.
+        Meetings-mode content; unified with the archive under Meetings in
+        HS-70-05."""
+        page = _HOLDSPEAK_DIR / "static" / "_built" / "live" / "index.html"
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built live page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak — Live Meeting</title></head>"
+                "<body><h1>Live Meeting</h1>"
+                "<p>Live UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
             )
         return HTMLResponse(html)
 
@@ -89,6 +109,14 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
                 "in <code>web/</code>.</p></body></html>"
             )
         return HTMLResponse(html)
+
+    @router.get("/meetings")
+    async def meetings_alias() -> Any:
+        """HS-70-05: `/meetings` is the canonical name for the Meetings mode; it
+        redirects to the archive route `/history` (which the page now titles
+        "Meetings"). Keeps the label and the URL in step without a risky
+        route rename."""
+        return RedirectResponse("/history", status_code=307)
 
     @router.get("/history")
     async def history_dashboard() -> Any:
@@ -242,6 +270,24 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
                 "<title>HoldSpeak Desk</title></head>"
                 "<body><h1>The Desk</h1>"
                 "<p>Desk UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
+    @router.get("/studio")
+    async def studio_index() -> Any:
+        """Serve the Studio index (HS-70-06): the advanced tier's landing that
+        frames the six power tools, read from _built/studio/index.html."""
+        page = _HOLDSPEAK_DIR / "static" / "_built" / "studio" / "index.html"
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built studio page: {e}")
+            html = (
+                "<!doctype html><html><head><meta charset='utf-8'/>"
+                "<title>HoldSpeak — Studio</title></head>"
+                "<body><h1>Studio</h1>"
+                "<p>Studio UI not built. Run <code>npm run build</code> "
                 "in <code>web/</code>.</p></body></html>"
             )
         return HTMLResponse(html)
