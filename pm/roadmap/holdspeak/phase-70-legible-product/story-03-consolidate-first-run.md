@@ -1,9 +1,9 @@
 # HS-70-03 — One arrival: consolidate the three first-run surfaces
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH
 - **Depends on:** HS-70-01, HS-70-02
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-03.md](./evidence-story-03.md)
 
 ## Goal
 
@@ -40,4 +40,14 @@ healthy user goes straight to Home (no nag). Reuse/adapt the existing
 
 ## Done
 
-_(filled at close)_
+Shipped and screenshot-proven. `/welcome` is the single arrival (the HS-70-02
+guard + the CLI nudge both route first-run users here; verified it already
+teaches both modes and lands on Home). `/setup` was demoted from a second
+"Welcome to HoldSpeak" to the returning-user "Setup & health" surface (eyebrow
+retitled) and surfaced from the Settings aside via a "Setup & health check →"
+link. Decision recorded: demote-and-retitle rather than delete/redirect, because
+`/setup` is the calm fix-it cockpit many returning-user paths rely on
+(redirecting them into the full-screen wizard would degrade that) — the arrival
+is genuinely consolidated to one surface without breaking a link. Tests: setup +
+welcome + preflight 13 passed; full suite 3045 passed. See
+[evidence-story-03.md](./evidence-story-03.md).

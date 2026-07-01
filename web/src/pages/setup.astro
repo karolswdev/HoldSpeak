@@ -20,7 +20,10 @@ import AppLayout from "../layouts/AppLayout.astro";
         <header class="setup-hero" :class="`is-${overall}`">
           <img class="setup-mark" src="/_built/holdspeak-mark.png" alt="" width="72" height="72" />
           <div class="setup-hero-text">
-            <p class="eyebrow">Welcome to HoldSpeak</p>
+            {/* HS-70-03: demoted from a second "Welcome" (that role is the
+                /welcome wizard's, the single arrival) to the returning-user
+                setup & health surface. */}
+            <p class="eyebrow">Setup &amp; health</p>
             <h1 x-text="headline"></h1>
             <p class="lead" x-text="subhead"></p>
             <div class="setup-progress" role="img" :aria-label="`${passCount} of ${total} checks ready`">

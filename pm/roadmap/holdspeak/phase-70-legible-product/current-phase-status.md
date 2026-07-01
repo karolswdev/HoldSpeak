@@ -1,6 +1,6 @@
 # Phase 70 — The Legible Product (Out-of-the-Box)
 
-**Status:** IN PROGRESS (2/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (3/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-06-30 (**opened + scaffolded** on owner direction, in the owner's own words:
 *"I literally am confused myself about the product, and IMO, that's a VERY, very bad sign."* Phase 69
@@ -79,7 +79,7 @@ Four primary destinations + Settings, not fourteen. Per-route disposition is in 
 |-------|-------|----------|--------|------------|
 | HS-70-01 | The IA spine: nav reframe to two modes + Studio | HIGH | **done** (TopNav → `Home · Dictation · Meetings · Studio▾`; Studio is a native `<details>` tier of the 7 browsable advanced surfaces, auto-open on an active route; `Route` union + 4 page slugs updated; Activity parked in Studio, Presence excluded as a nav-less overlay; 4 nav states screenshot-proven, route pre-flight 2 passed; see [evidence](./evidence-story-01.md)) | owner A+B |
 | HS-70-02 | Home: "what is this + your next action" | HIGH | **done** (`/` reframed from the meeting-runtime dashboard into an orientation Home: identity + a `/api/setup/status`-fed next-action band + the two modes as co-equal cards with guiding subtitles + a quiet Studio link; the 1378-line live dashboard moved to `/live`; empty + seeded screenshot-proven; see [evidence](./evidence-story-02.md)) | 01 |
-| HS-70-03 | One arrival: consolidate the three first-run surfaces | HIGH | **todo** | 01, 02 |
+| HS-70-03 | One arrival: consolidate the three first-run surfaces | HIGH | **done** (`/welcome` is the single arrival — guard + CLI nudge route new users there, it teaches both modes and lands on Home; `/setup` demoted from a second "Welcome" to the "Setup & health" surface and surfaced from Settings; screenshot-proven; 13 tests + full suite green; see [evidence](./evidence-story-03.md)) | 01, 02 |
 | HS-70-04 | Dictation mode, made whole (folds `/activity`) | MED | **todo** | 01 |
 | HS-70-05 | Meetings mode, made whole (`/history` → Meetings) | MED | **todo** | 01 |
 | HS-70-06 | The Studio tier: power features framed + contained | MED | **todo** | 01 |
@@ -92,6 +92,21 @@ that fixes the confusion outright) → **04 → 05 → 06** (each mode/tier made
 states) → **08** (docs/naming lock) → **09** (closeout). 04/05/06 are parallelizable after 01.
 
 ## Where we are
+
+**2026-06-30 — HS-70-03 done (one arrival).** Three first-run surfaces became one arrival. `/welcome` is
+the single canonical first-run surface: the HS-70-02 guard sends every first-run user there, and the CLI
+launch nudge already did (`test_cli_nudge_points_first_run_user_at_the_wizard`); verified it already
+teaches both modes (hero + the Done step's "Dictate anywhere" / "Run a meeting" cards) and lands on Home
+(`href="/"`), so the wizard needed no change. `/setup` was the confusing part — a second "Welcome to
+HoldSpeak" cockpit. Its hero eyebrow was retitled to "Setup & health", demoting it to the returning-user
+health/fix-it surface, and a "Setup & health check →" link was added to the Settings aside so it is
+discoverable from Settings. Decision recorded: demote-and-retitle over delete/redirect, because many
+returning-user paths (Home's next-action band, the Desk readiness chip, the CLI nudge, the wizard's
+troubleshoot link) rely on `/setup` as a calm fix-it cockpit — redirecting them into the full-screen
+wizard would degrade that. The arrival is genuinely one surface; `/setup` is no longer an arrival.
+Screenshot-proven (`welcome-arrival` / `setup-health` / `settings-health-link`); setup + welcome +
+preflight 13 passed; full suite 3045 passed, 37 skipped. Next: HS-70-04 (Dictation mode made whole —
+fold `/activity` in).
 
 **2026-06-30 — HS-70-02 done (Home).** The front door now orients instead of dumping a dashboard. `/`
 was the 1378-line live-meeting runtime (Alpine hero + capture); it moved verbatim to `/live`
