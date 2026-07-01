@@ -128,12 +128,15 @@ const GROUPS = [
       {/* the floating objects */}
       <template x-for="(o, i) in worldObjects()" {...{ ":key": "o.kind + '-' + o.id" }}>
         <div class="desk-obj" :style="objStyle(o, i, worldObjects().length)" :title="o.title"
-             :class="{ dragging: _drag && _drag.id === o.id }"
-             @pointerdown="startObjDrag(o, i, worldObjects().length, $event)">
+             :class="{ dragging: _drag && _drag.id === o.id, 'is-new': isNew(o) }"
+             @pointerdown="startObjDrag(o, i, worldObjects().length, $event)"
+             @click="openObject(o)">
           <div class="desk-obj-shadow" aria-hidden="true"></div>
           <div class="desk-obj-lift">
             <div class="desk-obj-glow" aria-hidden="true"></div>
+            <div class="desk-obj-ring" aria-hidden="true"></div>
             <img class="desk-obj-sprite" :src="objSprite(o)" :alt="o.kind" draggable="false" />
+            <span class="desk-obj-new" x-show="isNew(o)" x-cloak>NEW</span>
           </div>
           <div class="desk-obj-label" x-text="o.title"></div>
         </div>
@@ -143,6 +146,12 @@ const GROUPS = [
       <div class="desk-dive-empty" x-show="divedZone && worldObjects().length === 0" x-cloak>
         Nothing filed here yet. Drag an object onto this shelf from the desk.
       </div>
+    </div>
+
+    {/* HS-71-06: Qlippy living in the corner (config.presence.mascot; off by default) */}
+    <div class="desk-qlippy" x-show="mascot" x-cloak aria-hidden="true">
+      <img class="desk-qlippy-sprite" src="/_built/qlippy/qlippy.png" alt="" draggable="false" />
+      <div class="desk-qlippy-shadow"></div>
     </div>
 
     {/* ── the full list + authoring surfaces (the world's detail view) ── */}
@@ -1668,7 +1677,56 @@ const GROUPS = [
     color: var(--text-muted); font-size: var(--font-size-sm);
   }
 
+  /* HS-71-06: the create beat */
+  .desk-obj-ring {
+    position: absolute; inset: 2px; z-index: 2;
+    border-radius: 50%;
+    border: 2px solid var(--accent, #FF6B35);
+    opacity: 0; pointer-events: none;
+  }
+  .desk-obj.is-new .desk-obj-ring { animation: desk-new-ring 1.1s ease-out 3; }
+  .desk-obj.is-new .desk-obj-glow {
+    opacity: 0.95;
+    background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--accent, #FF6B35) 72%, transparent), transparent 68%);
+  }
+  .desk-obj-new {
+    position: absolute; top: -4px; right: -6px; z-index: 3;
+    padding: 1px 6px; border-radius: var(--radius-pill);
+    background: var(--accent, #FF6B35); color: var(--text-on-accent, #06121f);
+    font-size: 9px; font-weight: 800; letter-spacing: 0.06em;
+    box-shadow: 0 2px 8px var(--accent-glow, rgba(255, 107, 53, 0.5));
+  }
+  @keyframes desk-new-ring {
+    0% { opacity: 0.85; transform: scale(0.7); }
+    100% { opacity: 0; transform: scale(1.55); }
+  }
+
+  /* HS-71-06: Qlippy in the corner */
+  .desk-qlippy { position: fixed; right: 26px; bottom: 26px; z-index: 5; width: 88px; height: 100px; pointer-events: none; }
+  .desk-qlippy-sprite {
+    width: 88px; height: 88px; image-rendering: pixelated;
+    filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.5));
+    transform-origin: 50% 90%;
+    animation: desk-qlippy-sway 5.2s ease-in-out infinite;
+  }
+  .desk-qlippy-shadow {
+    position: absolute; left: 50%; bottom: 2px; width: 58px; height: 12px;
+    transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent 78%);
+    filter: blur(2px);
+    animation: desk-qlippy-shadow 5.2s ease-in-out infinite;
+  }
+  @keyframes desk-qlippy-sway {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-7px) rotate(2deg); }
+  }
+  @keyframes desk-qlippy-shadow {
+    0%, 100% { transform: translateX(-50%) scaleX(1); opacity: 0.55; }
+    50% { transform: translateX(-50%) scaleX(0.82); opacity: 0.38; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .desk-obj-lift, .desk-obj-shadow { animation: none; }
+    .desk-obj-lift, .desk-obj-shadow, .desk-qlippy-sprite, .desk-qlippy-shadow { animation: none; }
+    .desk-obj.is-new .desk-obj-ring { animation: none; }
   }
 </style>

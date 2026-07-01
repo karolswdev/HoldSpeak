@@ -1,9 +1,9 @@
 # HS-71-06 — In-world Qlippy, the create beat, and open-an-object
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED
 - **Depends on:** HS-71-03
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-06.md](./evidence-story-06.md)
 
 ## Goal
 
@@ -33,4 +33,12 @@ no Qlippy). Tap vs. drag disambiguation proven.
 
 ## Done
 
-_(filled at close)_
+Shipped and proven. Qlippy (`web/public/qlippy/qlippy.png`) lives fixed in the
+bottom-right corner with sway/bob + a ground shadow, gated on `config.presence.
+mascot` (default off, read from `/api/settings`). The create beat (`markNew`/
+`isNew`) gives a freshly-created object an accent glow + a pulsing ring + a NEW
+badge for 4.5s (wired into submitNote/agent/kb). `openObject` opens on tap
+(guarded by the drag threshold): meetings -> `/history?meeting=id`, others reveal
+their card in the list. Reduced-motion-safe. Playwright: Qlippy shown, NEW badge
+visible, tap a meeting -> `/history?meeting=m0`. Suite green. See
+[evidence-story-06.md](./evidence-story-06.md).

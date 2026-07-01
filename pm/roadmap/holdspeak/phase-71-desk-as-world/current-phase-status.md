@@ -1,6 +1,6 @@
 # Phase 71 — The Desk, as a World (the web diorama)
 
-**Status:** IN PROGRESS (5/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (6/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-07-01 (**opened + scaffolded** on owner direction. After Phase 70 shipped
 (legible surface, four doors), the owner said the web still feels "nowhere near the look and feel of the
@@ -75,7 +75,7 @@ cockpits (Home / Dictation / Meetings) stay clean, fast dashboards (owner call).
 | HS-71-03 | Objects that float (the diorama's heartbeat) | HIGH | **done** (`/desk` renders every primitive as a floating pixel-art object — `worldObjects()` + `objStyle` auto-layout + per-object float/glow/detached-shadow via CSS keyframes; card-list preserved under a collapsed "Browse as a list"; 12-object mixed desk proven; zero page errors; suite green; see [evidence](./evidence-story-03.md)) | 01, 02 |
 | HS-71-04 | Free placement + the layout store | MED | **done** (drag-to-arrange with unit-space `positions` persisted to `localStorage["hs.diorama.pos"]` (local-only, never synced); `looseHome` density-aware auto-layout for untouched; a "Tidy" reset; objects enlarged; drag persists across reload (Playwright); suite green; see [evidence](./evidence-story-04.md)) | 03 |
 | HS-71-05 | Zones as shelves: file and dive | MED | **done** (directories become painted shelf-zones; drag an object onto one to file via real `PUT /api/directories/{id}/members/{pid}`; click to dive in (filter to members) with a back control + empty state; robustness fix for mid-drag layout shift; Playwright drop→1 item, dive→1 member; suite green; see [evidence](./evidence-story-05.md)) | 04 |
-| HS-71-06 | In-world Qlippy, the create beat, open-an-object | MED | **todo** | 03 |
+| HS-71-06 | In-world Qlippy, the create beat, open-an-object | MED | **done** (Qlippy in the corner gated on `presence.mascot`; create beat (glow+ring+NEW badge, wired into submitNote/agent/kb); tap-to-open (meeting->`/history`, others reveal the card), drag-guarded; Playwright-proven; suite green; see [evidence](./evidence-story-06.md)) | 03 |
 | HS-71-07 | Docs + the nav decision (the docs story) | MED | **todo** | 01–06 |
 | HS-71-08 | Closeout: the side-by-side, proven | HIGH | **todo** | 01–07 |
 
@@ -83,6 +83,19 @@ Build order (foundation-first): **01 → 02 → 03** (the moment it becomes a wo
 organize) → **06** (life + open) → **07** (docs/nav) → **08** (closeout). 06 can run in parallel after 03.
 
 ## Where we are
+
+**2026-07-01 — HS-71-06 done (life + open).** The desk is inhabited and usable. Qlippy
+(`web/public/qlippy/qlippy.png`, already web-ready) lives fixed in the bottom-right corner with a gentle
+sway/bob + its own ground shadow, decorative and pointer-events-none, **gated on the mascot toggle**
+(`loadMascot` reads `config.presence.mascot` from `/api/settings`, default off - not forced on). The create
+beat (`markNew`/`isNew`) gives a freshly-created object an accent glow + a 3-pulse ring + a short NEW badge
+that settles after 4.5s, wired into the real create flows (submitNote/agent/kb). `openObject` opens on a
+tap (distinct from a drag via the HS-71-04 movement threshold, `justDragged`-guarded): meetings navigate to
+their detail (`/history?meeting=id`), the other kinds reveal their full card in the "Browse as a list"
+detail (no new detail UI). Reduced-motion freezes Qlippy + the ring. Proven with Playwright (mascot enabled
+in the seeded config): Qlippy shown True, NEW badge visible True, clicking a meeting object navigated to
+`/history?meeting=m0` (`06-qlippy-newbeat`). Route pre-flight 2 passed (zero page errors); full suite 3045
+passed, 37 skipped. Next: HS-71-07 (docs + the nav decision).
 
 **2026-07-01 — HS-71-05 done (zones — file + dive).** The desk is a place to organize now. Directories
 are excluded from the floating objects and rendered as painted **shelf-zones** (`worldZones` + `zoneStyle`,

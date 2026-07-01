@@ -64,6 +64,8 @@ function DeskApp() {
     positions: {},
     _drag: null, // { id, moved } while dragging an object
     divedZone: null, // HS-71-05: the directory we've "dived" into (null = top desk)
+    mascot: false, // HS-71-06: Qlippy in the corner (config.presence.mascot; default off)
+    newIds: [], // HS-71-06: objects mid "just-created" beat
 
     // ── runtime profiles (Phase 24) ──
     // The named "where intelligence runs" targets an agent can be pointed at.
@@ -116,6 +118,7 @@ function DeskApp() {
 
     async init() {
       this.loadPositions();
+      this.loadMascot();
       await this.loadAll();
       this.loading = false;
       this.loadSetup();
@@ -377,6 +380,33 @@ function DeskApp() {
     divedZoneName() {
       const d = (this.items.directory || []).find((x) => x.id === this.divedZone);
       return d ? (d.title || d.name || "Directory") : "";
+    },
+
+    // ── HS-71-06: in-world Qlippy + the create beat + open-an-object ────────
+    async loadMascot() {
+      try {
+        const cfg = await this.fetchJson("/api/settings");
+        this.mascot = !!(cfg && cfg.presence && cfg.presence.mascot);
+      } catch (_e) { /* leave off */ }
+    },
+    /** Flag a freshly-created object for the "NEW" arrival flourish. */
+    markNew(id) {
+      if (!id) return;
+      this.newIds = [...this.newIds, id];
+      setTimeout(() => { this.newIds = this.newIds.filter((x) => x !== id); }, 4500);
+    },
+    isNew(o) { return this.newIds.includes(o.id); },
+    /** Open a primitive (distinct from a drag, per the movement threshold). */
+    openObject(o) {
+      if (this.justDragged(o)) return;
+      if (o.kind === "meeting") {
+        window.location.href = `/history?meeting=${encodeURIComponent(o.id)}`;
+        return;
+      }
+      // No standalone detail route for the other kinds — reveal the full card
+      // (with its actions) in the list.
+      const list = document.querySelector(".desk-list");
+      if (list) { list.open = true; list.scrollIntoView({ behavior: "smooth", block: "start" }); }
     },
     /** Height for the world so the auto-laid rows have room. */
     worldRows() {
@@ -954,7 +984,8 @@ function DeskApp() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify(payload),
         });
-        this.items.note.unshift(this.fromWireNote(data.note || data));
+        const _n = this.fromWireNote(data.note || data);
+        this.items.note.unshift(_n); this.markNew(_n.id);
         this.status.note = "live";
         this.noteForm = { title: "", body: "", tags: "" };
         this.closeCreate();
@@ -989,7 +1020,8 @@ function DeskApp() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify(payload),
         });
-        this.items.agent.unshift(this.fromWireAgent(data.agent || data));
+        const _a = this.fromWireAgent(data.agent || data);
+        this.items.agent.unshift(_a); this.markNew(_a.id);
         this.status.agent = "live";
         this.agentForm = {
           name: "", avatar: "🤖", role: "", systemPrompt: "",
@@ -1021,7 +1053,8 @@ function DeskApp() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify(payload),
         });
-        this.items.kb.unshift(this.fromWireKb(data.kb || data));
+        const _k = this.fromWireKb(data.kb || data);
+        this.items.kb.unshift(_k); this.markNew(_k.id);
         this.status.kb = "live";
         this.kbForm = { name: "", memberIds: "" };
         this.closeCreate();
