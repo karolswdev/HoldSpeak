@@ -841,6 +841,10 @@ const GROUPS = [
   <script>
     import Alpine from "alpinejs";
     import factorySource from "../scripts/desk-app.js?raw";
+    // HS-71-02: the sprite picker on window so the ?raw-loaded DeskApp factory
+    // (and HS-71-03's object render) can pick each primitive's pixel-art sprite.
+    import * as deskSprites from "../scripts/desk/sprites.js";
+    window.__deskSprites = deskSprites;
 
     const fn = new Function(factorySource + "; return DeskApp;");
     window.DeskApp = fn();

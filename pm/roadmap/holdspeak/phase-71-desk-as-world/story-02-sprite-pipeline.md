@@ -1,9 +1,9 @@
 # HS-71-02 — The sprite pipeline: hand-drawn objects on the web
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the art layer — objects can't float without art)
 - **Depends on:** —
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-02.md](./evidence-story-02.md)
 
 ## Goal
 
@@ -39,4 +39,10 @@ ids spread across the pool). The PNGs committed under `web/public/desk/sprites/`
 
 ## Done
 
-_(filled at close)_
+Shipped and proven. 67 primitive PNGs copied verbatim from `apple/App/` into
+`web/public/desk/sprites/` (cassette/note/crystal/cartridge/agent_o/paper) + a
+provenance README; `web/src/scripts/desk/sprites.js` is the picker (djb2 with
+exact 64-bit wrap matching `SpriteStore.swift`, the `VARIANTS` pools, `spriteUrl`
+via Astro `BASE_URL`), attached to `window.__deskSprites`. Sprite sheet renders
+crisp; picker stable per id + 8/8 spread on the pooled kinds. Route pre-flight 2
+passed; full suite 3045 passed. See [evidence-story-02.md](./evidence-story-02.md).
