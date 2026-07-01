@@ -1,9 +1,9 @@
 # HS-70-09 — Closeout: no dead doors, one clean arrival, proven
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the gate)
 - **Depends on:** HS-70-01 … HS-70-08
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-09.md](./evidence-story-09.md)
 - **Phase-exit:** ships `evidence-story-09.md` **and** `final-summary.md`.
 
 ## Goal
@@ -38,4 +38,9 @@ green; the legibility read-test recorded; full suite count; the final summary.
 
 ## Done
 
-_(filled at close)_
+`scripts/phase70_closeout.py` proves 18/18 routes resolve 200 (no dead doors),
+first-run `/` → `/welcome` (single arrival), and a set-up `/` stays Home with
+nav = [Home, Dictation, Meetings, Studio]. Route pre-flight 2 passed; the
+legibility read-test recorded against `home-empty.png`; full suite 3045 passed,
+37 skipped; build green (18 pages). `final-summary.md` written. See
+[evidence-story-09.md](./evidence-story-09.md).

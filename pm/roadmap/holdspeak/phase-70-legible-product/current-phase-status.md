@@ -1,6 +1,6 @@
 # Phase 70 — The Legible Product (Out-of-the-Box)
 
-**Status:** IN PROGRESS (8/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** CLOSED (9/9) — 2026-06-30. See [`final-summary.md`](./final-summary.md). PR [#205](https://github.com/karolswdev/HoldSpeak/pull/205).
 
 **Last updated:** 2026-06-30 (**opened + scaffolded** on owner direction, in the owner's own words:
 *"I literally am confused myself about the product, and IMO, that's a VERY, very bad sign."* Phase 69
@@ -85,13 +85,24 @@ Four primary destinations + Settings, not fourteen. Per-route disposition is in 
 | HS-70-06 | The Studio tier: power features framed + contained | MED | **done** (new `/studio` index frames the 6 tools as clearly-secondary cards — glyph + one-line purpose + "Open →", Cadence tagged "Off by default"; the dropdown "ADVANCED" eyebrow links to it; tools keep their routes; screenshot-proven; suite green; see [evidence](./evidence-story-06.md)) | 01 |
 | HS-70-07 | Guiding empty states everywhere (no scary blanks) | MED | **done** (shared `.empty-state` primitive in global.css; Meetings archive rebuilt on it in two guiding variants — no-match + first-run — fixing the stale "Runtime" copy; audit found Home/journal/context already guide; load-vs-empty-vs-no-match distinct; screenshot-proven; suite green; see [evidence](./evidence-story-07.md)) | 02 |
 | HS-70-08 | Naming + positioning coherence (the docs story) | MED | **done** (POSITIONING gains a web-IA section + Home/Meetings/Studio canonical names; Getting Started surface map updated to the new IA; docs index front-door note; nav labels/titles already canonical; no stale surface language; voice/doc guard 15 passed; suite green; see [evidence](./evidence-story-08.md)) | 01–07 |
-| HS-70-09 | Closeout: no dead doors, one clean arrival, proven | HIGH | **todo** | 01–08 |
+| HS-70-09 | Closeout: no dead doors, one clean arrival, proven | HIGH | **done** (18/18 routes resolve 200; first-run `/`→`/welcome`, set-up `/` stays Home with nav [Home, Dictation, Meetings, Studio]; legibility read-test recorded; suite 3045 green; `final-summary.md` written; see [evidence](./evidence-story-09.md)) | 01–08 |
 
 Suggested build order (cheapest-high-impact-first, spine early): **01 → 02 → 03** (the arrival trio
 that fixes the confusion outright) → **04 → 05 → 06** (each mode/tier made whole) → **07** (empty
 states) → **08** (docs/naming lock) → **09** (closeout). 04/05/06 are parallelizable after 01.
 
 ## Where we are
+
+**2026-06-30 — HS-70-09 done → PHASE 70 CLOSED (9/9).** The closeout proves the thesis end to end:
+`scripts/phase70_closeout.py` sweeps all 18 routes → 18/18 resolve 200 (no dead doors, redirects
+followed: `/meetings`→`/history`, plus the new `/live`/`/studio` and the reframed `/setup`/`/activity`);
+a first-run `/` is guarded to the single arrival `/welcome`; a set-up `/` stays on Home with nav
+primaries `['Home', 'Dictation', 'Meetings', 'Studio']`. The legibility read-test is recorded against
+`home-empty.png` (identity → two modes → first action, within ten seconds; Studio a quiet dashed link).
+Full suite 3045 passed, 37 skipped (unchanged across the phase — every ripple retargeted, never
+silenced); build green (18 pages); `_built/` never committed. `final-summary.md` written. The web is now
+four doors not fourteen, one arrival not three, a framed advanced tier, guiding empty states, and canon
+that records it. PR #205 is the owner's to merge on green CI.
 
 **2026-06-30 — HS-70-08 done (naming + positioning, the docs story).** The new front door is now canon.
 POSITIONING gains a "web surface (information architecture)" section (the four destinations as the surface
