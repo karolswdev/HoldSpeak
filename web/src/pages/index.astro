@@ -80,11 +80,27 @@ import AppLayout from "../layouts/AppLayout.astro";
       </div>
     </div>
 
-    <a class="home-studio" href="/workbench">
-      <span class="home-studio-label">Studio</span>
-      <span class="home-studio-hint">Workbench, Agent Desk, Cadence, and more</span>
-      <span class="home-studio-arrow" aria-hidden="true">→</span>
-    </a>
+    {/* HS-71-07: celebrate the Desk (the spatial world) as a front-door entry,
+        while the two modes stay the primary path and the Desk also lives in Studio. */}
+    <div class="home-secondary">
+      <a class="home-desk" href="/desk">
+        <span class="home-desk-glyph glyph-chip" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="7" height="6" rx="1.5" /><rect x="14" y="4" width="7" height="6" rx="1.5" /><rect x="3" y="14" width="7" height="6" rx="1.5" /><rect x="14" y="14" width="7" height="6" rx="1.5" />
+          </svg>
+        </span>
+        <span class="home-desk-text">
+          <span class="home-desk-label">The Desk</span>
+          <span class="home-desk-hint">Your primitives as a spatial world.</span>
+        </span>
+        <span class="home-desk-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="home-studio" href="/studio">
+        <span class="home-studio-label">Studio</span>
+        <span class="home-studio-hint">Workbench, Agent Desk, Cadence, and more</span>
+        <span class="home-studio-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
   </div>
 </AppLayout>
 
@@ -286,6 +302,42 @@ import AppLayout from "../layouts/AppLayout.astro";
     filter: none;
   }
 
+  /* HS-71-07: the Desk (celebrated) + the quiet Studio, side by side */
+  .home-secondary {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: var(--space-3);
+  }
+  .home-desk {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+    text-decoration: none;
+    color: var(--text);
+    transition:
+      border-color var(--duration-short) var(--ease-standard),
+      background var(--duration-short) var(--ease-standard),
+      transform var(--duration-short) var(--ease-standard);
+  }
+  .home-desk:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    transform: translateY(-1px);
+  }
+  .home-desk:focus-visible {
+    outline: var(--focus-outline-width) solid var(--accent);
+    outline-offset: var(--focus-outline-offset);
+  }
+  .home-desk-glyph { width: 40px; height: 40px; flex: none; }
+  .home-desk-text { display: flex; flex-direction: column; flex: 1 1 auto; }
+  .home-desk-label { font-family: var(--font-display); font-weight: 700; color: var(--text); }
+  .home-desk-hint { font-size: var(--font-size-sm); color: var(--text-muted); }
+  .home-desk-arrow { color: var(--accent); font-weight: 700; }
+
   /* Quiet Studio */
   .home-studio {
     display: flex;
@@ -299,6 +351,9 @@ import AppLayout from "../layouts/AppLayout.astro";
     transition:
       border-color var(--duration-short) var(--ease-standard),
       color var(--duration-short) var(--ease-standard);
+  }
+  @media (max-width: 720px) {
+    .home-secondary { grid-template-columns: 1fr; }
   }
   .home-studio:hover {
     border-color: var(--border-strong);

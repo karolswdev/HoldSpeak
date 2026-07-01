@@ -1,9 +1,9 @@
 # HS-71-07 — Docs + the nav decision (the docs story)
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED (the dedicated docs story — after the build, before closeout)
 - **Depends on:** HS-71-01 … HS-71-06
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-07.md](./evidence-story-07.md)
 
 ## Goal
 
@@ -34,4 +34,10 @@ line added; voice/doc guard green; re-shot screenshots committed.
 
 ## Done
 
-_(filled at close)_
+Shipped. Nav decision (owner-chosen): celebrate the Desk on Home + keep it in
+Studio (the four-door nav is unchanged). Home gains a prominent accent-edged
+"The Desk -> Your primitives as a spatial world" entry beside the quiet Studio
+link (now pointing at `/studio`). Docs: a short `docs/WEB_DESK.md` guide (arrange,
+file, dive, Qlippy) linked from the index, and a Desk paragraph in POSITIONING's
+web-surface section. Voice/doc guard + preflight 17 passed (dash-free); suite
+green. See [evidence-story-07.md](./evidence-story-07.md).

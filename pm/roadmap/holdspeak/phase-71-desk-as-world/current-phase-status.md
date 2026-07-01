@@ -1,6 +1,6 @@
 # Phase 71 — The Desk, as a World (the web diorama)
 
-**Status:** IN PROGRESS (6/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (7/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-07-01 (**opened + scaffolded** on owner direction. After Phase 70 shipped
 (legible surface, four doors), the owner said the web still feels "nowhere near the look and feel of the
@@ -76,13 +76,26 @@ cockpits (Home / Dictation / Meetings) stay clean, fast dashboards (owner call).
 | HS-71-04 | Free placement + the layout store | MED | **done** (drag-to-arrange with unit-space `positions` persisted to `localStorage["hs.diorama.pos"]` (local-only, never synced); `looseHome` density-aware auto-layout for untouched; a "Tidy" reset; objects enlarged; drag persists across reload (Playwright); suite green; see [evidence](./evidence-story-04.md)) | 03 |
 | HS-71-05 | Zones as shelves: file and dive | MED | **done** (directories become painted shelf-zones; drag an object onto one to file via real `PUT /api/directories/{id}/members/{pid}`; click to dive in (filter to members) with a back control + empty state; robustness fix for mid-drag layout shift; Playwright drop→1 item, dive→1 member; suite green; see [evidence](./evidence-story-05.md)) | 04 |
 | HS-71-06 | In-world Qlippy, the create beat, open-an-object | MED | **done** (Qlippy in the corner gated on `presence.mascot`; create beat (glow+ring+NEW badge, wired into submitNote/agent/kb); tap-to-open (meeting->`/history`, others reveal the card), drag-guarded; Playwright-proven; suite green; see [evidence](./evidence-story-06.md)) | 03 |
-| HS-71-07 | Docs + the nav decision (the docs story) | MED | **todo** | 01–06 |
+| HS-71-07 | Docs + the nav decision (the docs story) | MED | **done** (owner chose: celebrate the Desk on Home + keep in Studio; Home gains an accent "The Desk ->" entry; `docs/WEB_DESK.md` guide linked + a POSITIONING Desk paragraph; voice/doc guard + preflight 17 passed; suite green; see [evidence](./evidence-story-07.md)) | 01–06 |
 | HS-71-08 | Closeout: the side-by-side, proven | HIGH | **todo** | 01–07 |
 
 Build order (foundation-first): **01 → 02 → 03** (the moment it becomes a world) → **04 → 05** (arrange +
 organize) → **06** (life + open) → **07** (docs/nav) → **08** (closeout). 06 can run in parallel after 03.
 
 ## Where we are
+
+**2026-07-01 — HS-71-07 done (docs + the nav decision).** The one product question the build raised is
+resolved. Nav decision (put to the owner, three options): **celebrate the Desk on Home + keep it in
+Studio** - so the four-door nav Phase 70 won stays intact. Home gains a prominent accent-edged "The Desk ->
+Your primitives as a spatial world" entry (diorama glyph) beside the existing quiet Studio link (which now
+correctly points at the `/studio` index); the two modes stay the front door and the Desk is one click away;
+`/desk` stays a Studio-tier surface (no nav change). Docs: `docs/WEB_DESK.md` (a short guide - the objects
+per kind, arrange + Tidy, directories as shelves for file + dive, open an object, Qlippy off by default),
+linked from the docs index under "Extend"; and a Desk paragraph in POSITIONING's web-surface section (the
+spatial expression of the Primitive Framework, matching the iPad DeskOS, reusing the same `/api/*` data).
+All dash-free / canonical. Proven: `07-home-desk-entry` (the celebrated entry + the unchanged four-door
+nav); voice/doc guard + route pre-flight 17 passed; full suite 3045 passed, 37 skipped. Next: HS-71-08
+(closeout - the side-by-side vibe test).
 
 **2026-07-01 — HS-71-06 done (life + open).** The desk is inhabited and usable. Qlippy
 (`web/public/qlippy/qlippy.png`, already web-ready) lives fixed in the bottom-right corner with a gentle
