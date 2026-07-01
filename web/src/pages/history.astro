@@ -183,8 +183,27 @@ import AppLayout from "../layouts/AppLayout.astro";
 
             <div x-show="loading" class="loading">Loading meetings…</div>
 
-            <div x-show="!loading && meetings.length === 0" class="empty">
-              <p>No meetings yet. Finish a meeting on <a href="/">Runtime</a> or save a candidate from <a href="/activity">Activity</a> and it will appear here.</p>
+            {/* HS-70-07: guiding empty states — a no-match variant and a
+                first-run variant, never a scary blank or a stale link. */}
+            <div x-show="!loading && meetings.length === 0 && facetsActive()" x-cloak class="empty-state">
+              <span class="empty-state-glyph" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              </span>
+              <p class="empty-state-title">No meetings match these filters</p>
+              <p class="empty-state-text">Widen the date range, speaker, or tag.</p>
+              <div class="empty-state-actions"><button type="button" class="btn" @click="clearFacets">Clear filters</button></div>
+            </div>
+
+            <div x-show="!loading && meetings.length === 0 && !facetsActive()" x-cloak class="empty-state">
+              <span class="empty-state-glyph" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2"/><path d="M9 12h6M12 3v5M9 6l3-3 3 3"/></svg>
+              </span>
+              <p class="empty-state-title">No meetings yet</p>
+              <p class="empty-state-text">Start a live meeting or import a recording or transcript.</p>
+              <div class="empty-state-actions">
+                <a class="btn primary" href="/live">Start a meeting</a>
+                <button type="button" class="btn" @click="importPanelOpen = true; $nextTick(() => document.querySelector('.import-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' }))">Import</button>
+              </div>
             </div>
 
             <div class="grid" x-show="!loading && meetings.length > 0">

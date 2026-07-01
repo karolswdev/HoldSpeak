@@ -1,9 +1,9 @@
 # HS-70-07 — Guiding empty states everywhere (no scary blanks)
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED
 - **Depends on:** HS-70-02
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-07.md](./evidence-story-07.md)
 
 ## Goal
 
@@ -34,4 +34,11 @@ load); copy audited against the no-prose rule.
 
 ## Done
 
-_(filled at close)_
+Shipped and screenshot-proven. A shared `.empty-state` primitive (glyph + title
++ one guiding line + one action) landed in global.css; the Meetings archive
+empty was rebuilt on it in two guiding variants (no-match → Clear filters;
+first-run → Start a meeting / Import), fixing the stale "Runtime" copy from
+HS-70-05. An audit found the other primary surfaces already guide (Home
+subtitles, the Dictation journal + no-match variant, ContextSection's teaching
+empty); Studio never empties. Load vs empty vs no-match are distinct. Full suite
+3045 passed. See [evidence-story-07.md](./evidence-story-07.md).

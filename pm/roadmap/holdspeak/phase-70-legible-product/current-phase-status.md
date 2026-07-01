@@ -1,6 +1,6 @@
 # Phase 70 — The Legible Product (Out-of-the-Box)
 
-**Status:** IN PROGRESS (6/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (7/9) — 2026-06-30. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-06-30 (**opened + scaffolded** on owner direction, in the owner's own words:
 *"I literally am confused myself about the product, and IMO, that's a VERY, very bad sign."* Phase 69
@@ -83,7 +83,7 @@ Four primary destinations + Settings, not fourteen. Per-route disposition is in 
 | HS-70-04 | Dictation mode, made whole (folds `/activity`) | MED | **done** (pre-briefing nudges already in the cockpit; Activity removed from the Studio nav and `/activity` reframed as a Dictation sub-view — `current="dictation"`, "← Dictation" back link, retitled "Activity ledger", "Manage activity →" from the cockpit; reframe over port/redirect so nothing lost; screenshot-proven; full suite green; see [evidence](./evidence-story-04.md)) | 01 |
 | HS-70-05 | Meetings mode, made whole (`/history` → Meetings) | MED | **done** (`/history` retitled "Meetings"; hero entry actions promoted — "Start a meeting" → `/live` + "Import a recording or transcript" opens the panel; archive/facets/aftercare beneath; `/meetings`→`/history` redirect; screenshot-proven; suite green; empty-state copy deferred to 07; see [evidence](./evidence-story-05.md)) | 01 |
 | HS-70-06 | The Studio tier: power features framed + contained | MED | **done** (new `/studio` index frames the 6 tools as clearly-secondary cards — glyph + one-line purpose + "Open →", Cadence tagged "Off by default"; the dropdown "ADVANCED" eyebrow links to it; tools keep their routes; screenshot-proven; suite green; see [evidence](./evidence-story-06.md)) | 01 |
-| HS-70-07 | Guiding empty states everywhere (no scary blanks) | MED | **todo** | 02 |
+| HS-70-07 | Guiding empty states everywhere (no scary blanks) | MED | **done** (shared `.empty-state` primitive in global.css; Meetings archive rebuilt on it in two guiding variants — no-match + first-run — fixing the stale "Runtime" copy; audit found Home/journal/context already guide; load-vs-empty-vs-no-match distinct; screenshot-proven; suite green; see [evidence](./evidence-story-07.md)) | 02 |
 | HS-70-08 | Naming + positioning coherence (the docs story) | MED | **todo** | 01–07 |
 | HS-70-09 | Closeout: no dead doors, one clean arrival, proven | HIGH | **todo** | 01–08 |
 
@@ -92,6 +92,18 @@ that fixes the confusion outright) → **04 → 05 → 06** (each mode/tier made
 states) → **08** (docs/naming lock) → **09** (closeout). 04/05/06 are parallelizable after 01.
 
 ## Where we are
+
+**2026-06-30 — HS-70-07 done (guiding empty states).** A shared `.empty-state` primitive landed in
+global.css (glyph + title + one guiding line + one action; global so it paints on JS-injected DOM), and
+the one scary/stale surface was fixed: the Meetings archive empty was rebuilt on it in two guiding
+variants — a no-match state ("No meetings match these filters" + Clear filters) and a first-run state
+("No meetings yet" + Start a meeting/Import) — replacing the HS-70-05 follow-up wart (the old copy said
+"Finish a meeting on Runtime …", a retired dashboard name, and linked `/`+`/activity`). An audit found the
+other primary surfaces already guide: Home's subtitles (HS-70-02), the Dictation journal's empty + its
+no-match variant, and ContextSection's teaching empty; Studio never empties. Load vs empty vs no-match are
+distinct on every surface. The already-correct empties were left as-is (retrofitting them to the new class
+is churn/risk for no user gain). Screenshot-proven (`empty-state-meetings`). Full suite 3045 passed, 37
+skipped. Next: HS-70-08 (naming + positioning coherence, the docs story).
 
 **2026-06-30 — HS-70-06 done (the Studio tier).** The six power tools got one coherent, clearly-secondary
 home: a new `/studio` index framing Workbench, Desk, Agent Desk, Cadence, Commands, and Profiles as
