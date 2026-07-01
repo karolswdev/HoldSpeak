@@ -200,6 +200,60 @@ function DeskApp() {
     total() {
       return Object.values(this.items).reduce((n, l) => n + l.length, 0);
     },
+
+    // ── HS-71-03: the world (floating pixel-art objects) ───────────────────
+    /** Every primitive as a flat, stably-ordered list of stage objects. */
+    worldObjects() {
+      const order = ["meeting", "note", "kb", "agent", "artifact", "chain", "workflow", "directory", "coder"];
+      const out = [];
+      for (const kind of order) {
+        for (const it of this.items[kind] || []) {
+          const id = it.id || it.sessionId || it.title || "";
+          out.push({ kind, id, title: it.title || it.name || id || kind, ref: it });
+        }
+      }
+      return out;
+    },
+    /** A tiny stable 0..1 hash for per-object layout jitter + float phase. */
+    _oh(s) {
+      let h = 2166136261;
+      const str = String(s || "");
+      for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return ((h >>> 0) % 10000) / 10000;
+    },
+    objSprite(o) {
+      return window.__deskSprites ? window.__deskSprites.spriteUrl(o.kind, o.id) : "";
+    },
+    objGlow(kind) {
+      return ({
+        meeting: "#56C7F5", note: "#34D399", kb: "#FBBF24", agent: "#FF6B35",
+        artifact: "#FF9E64", chain: "#A78BFA", workflow: "#56C7F5",
+        directory: "#E0A458", coder: "#FF6B35",
+      })[kind] || "#FF6B35";
+    },
+    /** Auto-layout: a loose density-aware grid with per-object jitter (the
+     * HS-71-04 drag/looseHome upgrade replaces this with a saved position). */
+    objStyle(o, i, n) {
+      const cols = Math.max(2, Math.min(6, Math.ceil(Math.sqrt(Math.max(1, n) * 1.25))));
+      const rows = Math.max(1, Math.ceil(n / cols));
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const jx = (this._oh(o.id + "x") - 0.5) * (70 / cols);
+      const jy = (this._oh(o.id + "y") - 0.5) * (60 / rows);
+      const left = ((col + 0.5) / cols) * 100 + jx;
+      const top = ((row + 0.5) / rows) * 100 + jy;
+      const phase = -(this._oh(o.id) * 4.5).toFixed(2);
+      const tilt = ((this._oh(o.id + "t") - 0.5) * 5).toFixed(2);
+      const scale = (0.92 + this._oh(o.id + "s") * 0.16).toFixed(3);
+      return `left:${left.toFixed(2)}%;top:${top.toFixed(2)}%;` +
+             `--phase:${phase}s;--tilt:${tilt}deg;--oscale:${scale};--k:${this.objGlow(o.kind)}`;
+    },
+    /** Height for the world so the auto-laid rows have room. */
+    worldRows() {
+      const n = this.worldObjects().length;
+      const cols = Math.max(2, Math.min(6, Math.ceil(Math.sqrt(Math.max(1, n) * 1.25))));
+      return Math.max(1, Math.ceil(n / cols));
+    },
     /** The hub could not be reached for this kind. */
     isUnreachable(kind) {
       return this.status[kind] === "unreachable";

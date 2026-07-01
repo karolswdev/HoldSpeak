@@ -100,6 +100,23 @@ const GROUPS = [
       <span class="hub-error" x-show="error" x-cloak x-text="error"></span>
     </div>
 
+    {/* ── HS-71-03: the world — every primitive as a floating pixel-art object ── */}
+    <div class="desk-world" :style="`--rows:${worldRows()}`" x-show="total() > 0" x-cloak>
+      <template x-for="(o, i) in worldObjects()" {...{ ":key": "o.kind + '-' + o.id" }}>
+        <div class="desk-obj" :style="objStyle(o, i, worldObjects().length)" :title="o.title">
+          <div class="desk-obj-shadow" aria-hidden="true"></div>
+          <div class="desk-obj-lift">
+            <div class="desk-obj-glow" aria-hidden="true"></div>
+            <img class="desk-obj-sprite" :src="objSprite(o)" :alt="o.kind" draggable="false" />
+          </div>
+          <div class="desk-obj-label" x-text="o.title"></div>
+        </div>
+      </template>
+    </div>
+
+    {/* ── the full list + authoring surfaces (the world's detail view) ── */}
+    <details class="desk-list">
+      <summary class="desk-list-toggle">Browse as a list</summary>
     {/* ── primitive sections, grouped by sync class ── */}
     {GROUPS.map((group) => (
       <section class="group" aria-label={group.label}>
@@ -369,6 +386,7 @@ const GROUPS = [
         </div>
       </section>
     ))}
+    </details>
 
     {/* ── the Coder lane (live presence stream) ── */}
     <section class="group coder-lane" aria-label="Live coder sessions">
@@ -914,6 +932,15 @@ const GROUPS = [
     max-width: 1320px;
     margin: 0 auto;
   }
+  .desk-list { margin-top: var(--space-4); border-top: 1px solid var(--border-subtle); padding-top: var(--space-3); }
+  .desk-list-toggle {
+    cursor: pointer; color: var(--text-muted); font-size: var(--font-size-sm);
+    padding: var(--space-2) 0; list-style: none; user-select: none;
+  }
+  .desk-list-toggle::-webkit-details-marker { display: none; }
+  .desk-list-toggle::before { content: "▸ "; color: var(--text-faint); }
+  .desk-list[open] .desk-list-toggle::before { content: "▾ "; }
+  .desk-list-toggle:hover { color: var(--text); }
 
   /* ── HS-71-01: the diorama room (DioPal atmosphere) ── */
   .desk-stage {
@@ -1474,5 +1501,99 @@ const GROUPS = [
     .desk-head { flex-direction: column; }
     .field-row { flex-direction: column; }
     .hub-error { max-width: 100%; white-space: normal; }
+  }
+</style>
+
+<style is:global>
+  /* HS-71-03: the world — floating pixel-art objects. Global because Alpine
+     injects them (scoped attribute selectors would not match). */
+  .desk-world {
+    position: relative;
+    width: 100%;
+    min-height: calc(180px + var(--rows, 3) * 130px);
+    margin-top: var(--space-2);
+  }
+  .desk-obj {
+    position: absolute;
+    transform: translate(-50%, -50%) scale(var(--oscale, 1));
+    width: 112px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .desk-obj-lift {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    display: grid;
+    place-items: center;
+    animation: desk-bob 4.6s ease-in-out infinite;
+    animation-delay: var(--phase, 0s);
+    transform: rotate(var(--tilt, 0deg));
+  }
+  .desk-obj-sprite {
+    position: relative;
+    z-index: 1;
+    width: 76px;
+    height: 76px;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.55));
+    transition: filter var(--duration-short) var(--ease-standard);
+  }
+  .desk-obj-glow {
+    position: absolute;
+    inset: 6px;
+    z-index: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--k, #FF6B35) 55%, transparent), transparent 68%);
+    filter: blur(7px);
+    opacity: 0.5;
+    transition: opacity var(--duration-short) var(--ease-standard);
+  }
+  /* the DETACHED ground shadow — stays on the floor, softens as the object lifts */
+  .desk-obj-shadow {
+    position: absolute;
+    left: 50%;
+    top: 78px;
+    width: 60px;
+    height: 15px;
+    transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(0, 0, 0, 0.62), transparent 78%);
+    filter: blur(2px);
+    animation: desk-obj-shadow 4.6s ease-in-out infinite;
+    animation-delay: var(--phase, 0s);
+  }
+  .desk-obj-label {
+    max-width: 118px;
+    margin-top: 2px;
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  }
+  .desk-obj:hover .desk-obj-sprite {
+    filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.6)) brightness(1.08);
+  }
+  .desk-obj:hover .desk-obj-glow { opacity: 0.82; }
+
+  @keyframes desk-bob {
+    0%, 100% { transform: rotate(var(--tilt, 0deg)) translateY(0); }
+    50%      { transform: rotate(calc(var(--tilt, 0deg) * -1)) translateY(-9px); }
+  }
+  @keyframes desk-obj-shadow {
+    0%, 100% { transform: translateX(-50%) scaleX(1);   opacity: 0.5; }
+    50%      { transform: translateX(-50%) scaleX(0.8); opacity: 0.3; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .desk-obj-lift, .desk-obj-shadow { animation: none; }
   }
 </style>

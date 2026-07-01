@@ -1,6 +1,6 @@
 # Phase 71 — The Desk, as a World (the web diorama)
 
-**Status:** IN PROGRESS (2/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
+**Status:** IN PROGRESS (3/8) — 2026-07-01. Read [`AGENT-BRIEF.md`](./AGENT-BRIEF.md) first.
 
 **Last updated:** 2026-07-01 (**opened + scaffolded** on owner direction. After Phase 70 shipped
 (legible surface, four doors), the owner said the web still feels "nowhere near the look and feel of the
@@ -72,7 +72,7 @@ cockpits (Home / Dictation / Meetings) stay clean, fast dashboards (owner call).
 |-------|-------|----------|--------|------------|
 | HS-71-01 | The room: the warm atmospheric stage | HIGH | **done** (`/desk` gained a fixed `.desk-stage`: DioPal gradient + an animated warm radial spotlight + a canvas of rising dust motes; reduced-motion-safe; content still on top; zero page errors; suite green; see [evidence](./evidence-story-01.md)) | — |
 | HS-71-02 | The sprite pipeline: hand-drawn objects on the web | HIGH | **done** (67 pixel-art PNGs copied from `apple/App/` to `web/public/desk/sprites/` + a djb2 stable-hash picker `sprites.js` matching `SpriteStore.swift`, on `window.__deskSprites`; sprite sheet crisp, picker stable + spread; suite green; see [evidence](./evidence-story-02.md)) | — |
-| HS-71-03 | Objects that float (the diorama's heartbeat) | HIGH | **todo** | 01, 02 |
+| HS-71-03 | Objects that float (the diorama's heartbeat) | HIGH | **done** (`/desk` renders every primitive as a floating pixel-art object — `worldObjects()` + `objStyle` auto-layout + per-object float/glow/detached-shadow via CSS keyframes; card-list preserved under a collapsed "Browse as a list"; 12-object mixed desk proven; zero page errors; suite green; see [evidence](./evidence-story-03.md)) | 01, 02 |
 | HS-71-04 | Free placement + the layout store | MED | **todo** | 03 |
 | HS-71-05 | Zones as shelves: file and dive | MED | **todo** | 04 |
 | HS-71-06 | In-world Qlippy, the create beat, open-an-object | MED | **todo** | 03 |
@@ -83,6 +83,21 @@ Build order (foundation-first): **01 → 02 → 03** (the moment it becomes a wo
 organize) → **06** (life + open) → **07** (docs/nav) → **08** (closeout). 06 can run in parallel after 03.
 
 ## Where we are
+
+**2026-07-01 — HS-71-03 done (objects that float) — the world moment.** `/desk` stopped being a
+document. `desk-app.js` gained `worldObjects()` (flattens `items[kind]` across every kind), `objSprite`
+(the HS-71-02 picker), `objGlow` (per-kind tint), and `objStyle` (a loose density-aware auto-layout +
+per-object jitter that sets `--phase`/`--tilt`/`--oscale`/`--k`). `desk.astro` renders each primitive as a
+`.desk-obj` that floats (`desk-bob` CSS keyframes, delayed by `--phase` so they don't bob in sync) with a
+pixel-crisp sprite, a per-kind glow pool, and a **detached ground shadow** that stays on the floor and
+softens/narrows as the object lifts (the counter-animated "floating above a surface" cue) — all
+`<style is:global>` since Alpine injects them. The old grouped card-list + authoring UI is preserved under
+a collapsed "Browse as a list" `<details>` beneath the world (nothing lost; the world is the star).
+Reduced-motion freezes the float. Performance stays cheap — pure CSS keyframes with a per-object phase, no
+rAF over N objects. Proven with a 12-object mixed desk (4 meetings + 3 notes + 2 KBs + 2 agents + 1
+directory, seeded via the real `/api/*` POSTs): cassettes, notepads, crystals, avatars, and paper floating
+on the warm room (`03-world`). Route pre-flight 2 passed (zero page errors); full suite 3045 passed, 37
+skipped. Next: HS-71-04 (free drag-to-arrange + the density-aware `looseHome` layout + persistence).
 
 **2026-07-01 — HS-71-02 done (the sprite pipeline).** The iPad's pixel-art primitive sprites are on the
 web. 67 PNGs (128x128 RGBA) copied verbatim from `apple/App/` into `web/public/desk/sprites/` (cassette 17

@@ -1,9 +1,9 @@
 # HS-71-03 — Objects that float (the diorama's heartbeat)
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the moment it becomes a world)
 - **Depends on:** HS-71-01, HS-71-02
-- **Evidence:** _(added at close)_
+- **Evidence:** [evidence-story-03.md](./evidence-story-03.md)
 
 ## Goal
 
@@ -38,4 +38,12 @@ Performance sane with ~20+ objects (CSS-driven, no rAF).
 
 ## Done
 
-_(filled at close)_
+Shipped and screenshot-proven. `/desk` now renders every primitive as a floating
+pixel-art object: `worldObjects()` flattens all kinds, `objStyle` auto-lays-them
+out with per-object float phase/tilt/scale + glow tint, and each `.desk-obj`
+floats (`desk-bob` CSS keyframes, no rAF) with a per-kind glow and a DETACHED
+ground shadow that softens as it lifts. The old card-list + authoring UI is
+preserved under a collapsed "Browse as a list" `<details>`. A 12-object mixed
+desk (meetings/notes/kbs/agents/directory, seeded via real `/api/*` POSTs)
+proves it. `is:global` CSS; reduced-motion-safe; zero page errors; suite green.
+See [evidence-story-03.md](./evidence-story-03.md).
