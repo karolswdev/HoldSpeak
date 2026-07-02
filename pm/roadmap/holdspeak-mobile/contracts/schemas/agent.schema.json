@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/agent.schema.json",
+  "title": "Agent",
+  "description": "An Agent persona (capability/synced) — DISTINCT from a coder (live session). Canonical hub emission: AgentRecord.to_dict(). KNOWN LOSSY FIELDS (locked, follow-up to fix): the iPad encodes manual_context and use_zone_context, but the hub neither persists nor re-emits them — they are LOST through hub sync today. They are allowed here (optional) so an iPad push validates; the loss is the finding, recorded in Phase 72 HS-72-01 evidence.",
+  "x-sync-kind": "agent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "avatar", "role", "system_prompt", "user_template", "tools", "created_at"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "avatar": { "type": "string" },
+    "role": { "type": "string" },
+    "system_prompt": { "type": "string" },
+    "user_template": { "type": "string" },
+    "tools": { "type": "array", "items": { "type": "string" } },
+    "kb_id": { "type": ["string", "null"] },
+    "profile_id": { "type": ["string", "null"] },
+    "manual_context": { "type": "string", "description": "iPad-authored; NOT persisted by the hub (lossy)" },
+    "use_zone_context": { "type": "boolean", "description": "iPad-authored per-device hint; NOT persisted by the hub (lossy)" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "last_modified": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" }
+  }
+}

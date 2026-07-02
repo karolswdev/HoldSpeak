@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/directory-membership.schema.json",
+  "title": "DirectoryMembership",
+  "description": "A filing edge (organization/synced): primitive_id → directory_id, at most one home directory per primitive. The record's synced id (meta.id) is the primitive_id. directory_id '' means filed at root. Canonical hub emission: DirectoryMembershipRecord.to_dict().",
+  "x-sync-kind": "directory_membership",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["primitive_id", "directory_id"],
+  "properties": {
+    "primitive_id": { "type": "string", "minLength": 1 },
+    "directory_id": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "last_modified": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" }
+  }
+}

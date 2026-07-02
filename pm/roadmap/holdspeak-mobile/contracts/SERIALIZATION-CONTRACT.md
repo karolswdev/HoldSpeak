@@ -184,6 +184,36 @@ existing schemas (meeting/artifact). The **JSON Schema for the envelope + the
 Python-side mirror** land with the transport story (HSM-10-02), which introduces the
 desktop sync API; HSM-10-01 is the Swift object model + engine, host-proven.
 
+## §12 — Enforcement (HS-72-01): the contract is machine-checked
+
+The rules above stopped being prose on 2026-07-02. Every sync kind now has a
+JSON Schema in `schemas/` (`note`, `kb`, `agent`, `chain`, `workflow`,
+`directory`, `directory-membership`, `profile`, plus the `changeset` envelope
+alongside the existing meeting-domain schemas), each tagged `x-sync-kind`, and
+three guards consume them:
+
+- **Hub (pytest, CI):** `tests/unit/test_primitive_contract.py` validates a
+  REAL `/api/sync/pull` body (one row per kind + a tombstone) against the
+  schemas + the envelope, pins the hub's emission superset, and locks the kind
+  set three ways — `sync.py SYNC_KINDS` == the schemas' `x-sync-kind` set ==
+  Swift `SyncKind` raw values (parsed from `Sync.swift`). It also asserts the
+  web's `primitives.ts` desk interfaces never *require* a field the contract
+  lacks.
+- **Swift (`swift test`):** `ContractsTests/PrimitiveContractFixtureTests`
+  decodes the shared golden fixture (`fixtures/primitives-sample.json` — the
+  hub's canonical emissions) through `HoldSpeakContracts` and round-trips it.
+- **Standalone:** `validate.py` covers the same fixture + the
+  key-never-syncs negative (a `profile` carrying `api_key` must fail).
+
+Locked findings from the first enforcement pass: a tombstone carries NO
+payload (the hub was emitting full values on tombstones — fixed); the hub
+emits no `updated_at` for kb/agent/chain/workflow/directory/membership/profile
+(Swift decodes tolerantly, defaulting to `created_at`; `meta.last_modified`
+stays the LWW key); `Agent.manual_context`/`use_zone_context` are iPad-authored
+and **lossy through hub sync** (schema-documented; fix is a follow-up);
+`RuntimeProfile.baseURL` could never decode off the wire under
+`convertFromSnakeCase` (fixed with an explicit coding key).
+
 ## Decisions locked here (carried to the phase status)
 
 1. Wire = desktop `to_dict()` snake_case; Swift maps via key strategy (§1).

@@ -1,8 +1,13 @@
 # Phase 72 — One Spine (cross-surface cohesion)
 
-**Status:** open — scaffolded 2026-07-02, 0/11.
+**Status:** open — 1/10 (HS-72-01 done 2026-07-02; HS-72-07 cut; 10 live
+stories).
 
-**Last updated:** 2026-07-02 (**opened + scaffolded** from a deep architectural
+**Last updated:** 2026-07-02 (**HS-72-01 done** — the primitive contract is
+machine-checked: 8 kind schemas + the ChangeSet envelope + one golden fixture,
+three guards (hub pytest / Swift fixture round-trip / validate.py), the
+three-way kind-set lock, four real drifts caught on the first pass. See
+"Where we are". Earlier same day: **opened + scaffolded** from a deep architectural
 analysis of all three surfaces, run 2026-07-02 against the post-Phase-71 tree:
 the Python hub (~63k lines, 13 routers), the web flagship (19 pages), and the
 Apple app (4-layer SPM package + the 34-file `App/MeetingCapture` module).
@@ -71,9 +76,10 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 
 ## Exit criteria (evidence required)
 
-- [ ] JSON Schemas exist for all 10 sync kinds + the ChangeSet envelope, and
+- [x] JSON Schemas exist for all 10 sync kinds + the ChangeSet envelope, and
       all three surfaces validate against them in their own test suites; a
-      deliberate one-surface drift fails the guard (HS-72-01).
+      deliberate one-surface drift fails the guard (HS-72-01 — proven red
+      both ways, outputs in the evidence).
 - [ ] A committed, generated API-surface manifest with per-route consumers;
       snapshot tests fail on undeclared routes and on Swift calls to
       undeclared paths (HS-72-02).
@@ -86,8 +92,10 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
       pre-flight green (HS-72-05).
 - [ ] `meetings.py` split under the module budget with a byte-identical route
       table (HS-72-06).
-- [ ] `/history` decomposed to the Phase-54 pattern, density guard extended,
-      screenshots prove no unstyled JS DOM (HS-72-07).
+- [x] ~~`/history` decomposed to the Phase-54 pattern~~ (HS-72-07 **cut** —
+      superseded by the 2026-07-02 owner decision to migrate interactive
+      surfaces to React; decomposing the Astro monolith in place is wasted
+      motion. Discharged, not done.)
 - [ ] One `/ws` consumer on the web; the second socket is gone; every shell
       widget still fires (HS-72-08).
 - [ ] The iPad's desk records embed the `Contracts` types (bridges deleted);
@@ -102,13 +110,13 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 
 | Story | Title | Priority | Status | Depends on |
 |-------|-------|----------|--------|------------|
-| HS-72-01 | The primitive contract, machine-checked | HIGH | todo | — |
+| HS-72-01 | The primitive contract, machine-checked | HIGH | **done** (8 kind schemas + ChangeSet envelope + golden fixture; three guards — pytest over a real pull, Swift fixture round-trip, validate.py; three-way kind-set lock; 4 real drifts caught: tombstone payloads (fixed), missing updated_at (tolerant decoders), lossy agent fields (locked, follow-up), the baseURL decode bug (fixed); drift proven red both ways; see [evidence](./evidence-story-01.md)) | — |
 | HS-72-02 | The API surface, declared | HIGH | todo | — |
 | HS-72-03 | One name per concept: untangle "companion" | HIGH | todo | 02 |
 | HS-72-04 | One actuator lifecycle | HIGH | todo | 03 |
 | HS-72-05 | Retire the shadows | MED | todo | — |
 | HS-72-06 | Split the meetings god-module | MED | todo | 03, 04 |
-| HS-72-07 | The meetings archive, decomposed | MED | todo | — |
+| HS-72-07 | The meetings archive, decomposed | MED | **cut** (superseded by the 2026-07-02 web stack decision — `/history` migrates to React in a later phase instead of being decomposed in place; see the story file) | — |
 | HS-72-08 | One live bus on the web | MED | todo | — |
 | HS-72-09 | The iPad speaks Contracts natively | HIGH | todo | 01 |
 | HS-72-10 | Docs: the honest map (the docs story) | MED | todo | 01–09 |
@@ -120,6 +128,26 @@ Build order: **01 → 02** (the contract, then the declared surface) → **03 �
 **11** (closeout).
 
 ## Where we are
+
+**2026-07-02 — HS-72-01 done (1/10).** The primitive contract is machine-checked.
+Eight kind schemas + the ChangeSet envelope landed beside the existing
+meeting-domain schemas, with one shared golden fixture consumed by all three
+guards: the hub pytest validates a REAL `/api/sync/pull` (one row per kind +
+a tombstone) against the schemas and locks the kind set three ways (hub
+`SYNC_KINDS` == the schemas' `x-sync-kind` set == Swift `SyncKind`, parsed
+from source); `swift test` decodes + round-trips the fixture through the
+canonical coder; `validate.py` adds the key-never-syncs negative. The first
+enforcement pass caught four real drifts — the hub emitting full values on
+tombstones (fixed, one line, against its own documented rule), Swift
+requiring an `updated_at` the hub never emits for seven kinds (a hub-pulled
+KB could never have decoded; tolerant decoders added), `Agent.manual_context`/
+`use_zone_context` silently lossy through hub sync (locked in the schema,
+follow-up filed), and `RuntimeProfile.baseURL` unable to decode off the wire
+at all under `convertFromSnakeCase` (explicit coding key). Deliberate drift
+proven red in both directions and reverted. validate.py 20/20; contract+sync
+pytest 21 passed; full `swift test` 394 passed / 0 failures; full python
+suite 3051 passed, 38 skipped. SERIALIZATION-CONTRACT gained §12 (enforcement). Next:
+HS-72-02 (the API surface, declared).
 
 **2026-07-02 — opened + scaffolded.** Authored from a four-track architectural
 analysis (hub / web / Apple / PMO state) run against the post-Phase-71 tree.
@@ -166,6 +194,8 @@ under the PMO gate.
   admin into Settings).
 - `desk.astro` (1,732 lines) decomposition — fresh Phase-71 code; becomes a
   watch item with a density-guard ceiling, not a story.
-- Consolidating the two JS-loading conventions (`?raw`+`new Function` vs ES
-  modules) beyond the pages HS-72-07/08 already touch — recorded as a
-  direction ("new/touched surfaces use ES modules"), not a sweep.
+- ~~Consolidating the two JS-loading conventions~~ — **resolved by the
+  2026-07-02 owner decision** (Phase 73 re-scaffold): interactive surfaces
+  are React + Vite islands; document pages stay Astro; no new Alpine. The
+  `?raw`+`new Function` pattern dies with each surface's migration, desk
+  first.

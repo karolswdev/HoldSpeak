@@ -1,8 +1,9 @@
 # HS-72-01 — The primitive contract, machine-checked
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the keystone — every other cross-surface guarantee stands on it)
 - **Depends on:** —
+- **Evidence:** [evidence-story-01.md](./evidence-story-01.md)
 
 ## Goal
 
@@ -59,3 +60,21 @@ The validator run green on all three surfaces (pytest output, `swift test`
 output, the web check output); the deliberate-drift run red (captured output);
 the schemas + fixtures committed; `SERIALIZATION-CONTRACT.md` updated to point
 at the schemas as the enforcement mechanism. Full suite green.
+
+## Done
+
+Shipped. 8 kind schemas + the ChangeSet envelope (all `x-sync-kind`-tagged)
+with the shared golden fixture; three guards consume them (pytest over a REAL
+`/api/sync/pull`, the Swift fixture round-trip via `HoldSpeakContracts`,
+`validate.py` incl. the key-never-syncs negative). The three-way kind-set lock
+(hub `SYNC_KINDS` == schemas == Swift `SyncKind`) replaces the lockstep
+comment; the web check asserts `primitives.ts` never requires a field the
+contract lacks. **Four real drifts caught and fixed/locked on the first
+pass:** the hub emitted full values on tombstones (fixed — the contract says
+a tombstone carries no payload); Swift required an `updated_at` the hub never
+emits for 7 kinds (tolerant decoders added); `Agent.manual_context`/
+`use_zone_context` are lossy through hub sync (schema-documented, follow-up);
+`RuntimeProfile.baseURL` could never decode off the wire (explicit coding key).
+Proofs: validate.py 20/20; contract+sync pytest 21 passed; `swift test` 394
+passed / 0 failures; both deliberate-drift runs red then reverted; full python
+suite 3051 passed, 38 skipped. See [evidence-story-01.md](./evidence-story-01.md).

@@ -48,6 +48,19 @@ INTEL_JOB = "https://holdspeak.dev/contracts/v0/intel-job.schema.json"
 ACTUATOR = "https://holdspeak.dev/contracts/v0/actuator-proposal.schema.json"
 INTENT_WINDOW = "https://holdspeak.dev/contracts/v0/intent-window.schema.json"
 
+# HS-72-01 — the Primitive Framework sync kinds + the ChangeSet envelope.
+CHANGESET = "https://holdspeak.dev/contracts/v0/changeset.schema.json"
+PRIMITIVE_SCHEMAS = {
+    "note": "https://holdspeak.dev/contracts/v0/note.schema.json",
+    "kb": "https://holdspeak.dev/contracts/v0/kb.schema.json",
+    "agent": "https://holdspeak.dev/contracts/v0/agent.schema.json",
+    "chain": "https://holdspeak.dev/contracts/v0/chain.schema.json",
+    "workflow": "https://holdspeak.dev/contracts/v0/workflow.schema.json",
+    "directory": "https://holdspeak.dev/contracts/v0/directory.schema.json",
+    "directory_membership": "https://holdspeak.dev/contracts/v0/directory-membership.schema.json",
+    "profile": "https://holdspeak.dev/contracts/v0/profile.schema.json",
+}
+
 
 def _registry() -> Registry:
     resources = []
@@ -96,8 +109,38 @@ def main() -> int:
         else:
             print(f"PASS  {name}: validates against its schema (0 errors)")
 
+    # HS-72-01 — the primitive kinds + the ChangeSet envelope (the sync wire).
+    primitives = json.loads((FIXTURE_DIR / "primitives-sample.json").read_text())
+    for kind, schema_id in PRIMITIVE_SCHEMAS.items():
+        errs = _errors(_validator(schema_id, registry), primitives[kind])
+        if errs:
+            ok = False
+            print(f"FAIL  {kind}: {len(errs)} error(s)")
+            for e in errs:
+                print(f"        - {e}")
+        else:
+            print(f"PASS  {kind}: validates against its schema (0 errors)")
+    cs_errs = _errors(_validator(CHANGESET, registry), primitives["changeset"])
+    if cs_errs:
+        ok = False
+        print(f"FAIL  changeset: {len(cs_errs)} error(s)")
+        for e in cs_errs:
+            print(f"        - {e}")
+    else:
+        print("PASS  changeset: envelope (incl. a tombstone) validates (0 errors)")
+
+    # Negative (security invariant): a profile smuggling an api key MUST fail.
+    leaky = dict(primitives["profile"])
+    leaky["api_key"] = "sk-should-never-sync"
+    leak_errs = _errors(_validator(PRIMITIVE_SCHEMAS["profile"], registry), leaky)
+    if leak_errs:
+        print(f"PASS  negative: profile with api_key rejected ({len(leak_errs)} error(s), as expected)")
+    else:
+        ok = False
+        print("FAIL  negative: a profile carrying api_key passed validation (key-never-syncs broken)")
+
     # Timestamps: every instant must be UTC Z-terminated (HSM-0-03 §2).
-    tz_bad = _utc_z_violations(fixture) + _utc_z_violations(mir)
+    tz_bad = _utc_z_violations(fixture) + _utc_z_violations(mir) + _utc_z_violations(primitives)
     if tz_bad:
         ok = False
         print(f"FAIL  utc-z: {len(tz_bad)} non-UTC-Z instant(s)")
@@ -110,7 +153,7 @@ def main() -> int:
     # on-disk), so committed fixtures don't drift. The typed Swift Codable
     # round-trip is Phase 1's job; this is the JSON-canonical-form guard.
     rt_ok = True
-    for fname in ("meeting-sample.json", "mir-and-actuator-sample.json"):
+    for fname in ("meeting-sample.json", "mir-and-actuator-sample.json", "primitives-sample.json"):
         raw = (FIXTURE_DIR / fname).read_text()
         canonical = json.dumps(json.loads(raw), indent=2) + "\n"
         if raw != canonical:

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/directory.schema.json",
+  "title": "Directory",
+  "description": "A Directory (organization/synced) — the iPad 'zone'. What syncs is identity + nesting only ({id, name, parent_id}); geometry/paint is per-device layout and NEVER on the wire. Membership is the separate directory_membership edge. Canonical hub emission: DirectoryRecord.to_dict(). NOTE: web primitives.ts Directory carries a view-composed memberIds — that is an in-app join over membership edges, not a wire field.",
+  "x-sync-kind": "directory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "created_at"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "parent_id": { "type": ["string", "null"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "last_modified": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" }
+  }
+}

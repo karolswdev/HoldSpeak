@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/note.schema.json",
+  "title": "Note",
+  "description": "A desk Note (content/synced). Canonical hub emission: holdspeak/db/models.py NoteRecord.to_dict(). Required = what EVERY surface must send; the hub's pull emission additionally always carries updated_at/last_modified/deleted (pinned by tests/unit/test_primitive_contract.py, not by this schema, so an iPad push without sync-plumbing fields still validates).",
+  "x-sync-kind": "note",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "body_markdown", "tags", "created_at"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string" },
+    "body_markdown": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "last_modified": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" }
+  }
+}

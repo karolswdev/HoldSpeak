@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/kb.schema.json",
+  "title": "KB",
+  "description": "A desk Knowledge Base (organization/synced). Canonical hub emission: KBRecord.to_dict(). NOTE a locked deviation: the hub emits NO updated_at for KBs (the row has none); Swift's KB.updatedAt decodes tolerantly (defaults to created_at). The LWW key is meta.last_modified, never a value field.",
+  "x-sync-kind": "kb",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "member_ids", "created_at"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "member_ids": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "last_modified": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" }
+  }
+}
