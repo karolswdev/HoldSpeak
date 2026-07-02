@@ -256,23 +256,11 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/desk")
     async def desk_page() -> Any:
-        """Serve the Web Desk (Primitive Framework authoring port), read from the
-        Astro-built _built/desk/index.html. The TopNav links here, so it needs a
-        real route (it was previously reachable only at /_built/desk/, a dead nav
-        link). Driven client-side by the /api/* primitive routes."""
-        page = _HOLDSPEAK_DIR / "static" / "_built" / "desk" / "index.html"
-        try:
-            html = page.read_text(encoding="utf-8")
-        except Exception as e:
-            log.error(f"Failed to read built desk page: {e}")
-            html = (
-                "<!doctype html><html><head><meta charset='utf-8'/>"
-                "<title>HoldSpeak Desk</title></head>"
-                "<body><h1>The Desk</h1>"
-                "<p>Desk UI not built. Run <code>npm run build</code> "
-                "in <code>web/</code>.</p></body></html>"
-            )
-        return HTMLResponse(html)
+        """The Desk IS the front door now (HS-73-02) — old links land there."""
+        from fastapi.responses import RedirectResponse
+
+        return RedirectResponse(url="/", status_code=307)
+
 
     @router.get("/studio")
     async def studio_index() -> Any:
