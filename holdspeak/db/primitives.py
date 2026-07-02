@@ -269,6 +269,8 @@ class AgentRepository(BaseRepository):
         tools: Optional[list[str]] = None,
         kb_id: Optional[str] = None,
         profile_id: Optional[str] = None,
+        manual_context: str = "",
+        use_zone_context: bool = False,
         last_modified: Optional[str] = None,
         deleted: bool = False,
         created_at: Optional[str] = None,
@@ -285,8 +287,9 @@ class AgentRepository(BaseRepository):
             conn.execute(
                 """
                 INSERT INTO agents (id, name, avatar, role, system_prompt, user_template,
-                                    tools_json, kb_id, profile_id, created_at, last_modified, deleted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                    tools_json, kb_id, profile_id, manual_context,
+                                    use_zone_context, created_at, last_modified, deleted)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     avatar = excluded.avatar,
@@ -296,6 +299,8 @@ class AgentRepository(BaseRepository):
                     tools_json = excluded.tools_json,
                     kb_id = excluded.kb_id,
                     profile_id = excluded.profile_id,
+                    manual_context = excluded.manual_context,
+                    use_zone_context = excluded.use_zone_context,
                     last_modified = excluded.last_modified,
                     deleted = excluded.deleted
                 """,
@@ -309,6 +314,8 @@ class AgentRepository(BaseRepository):
                     self._json_dumps(tools or [], fallback="[]"),
                     str(kb_id).strip() if kb_id else None,
                     str(profile_id).strip() if profile_id else None,
+                    str(manual_context or ""),
+                    1 if use_zone_context else 0,
                     created,
                     last_modified or now,
                     1 if deleted else 0,
@@ -369,6 +376,8 @@ class AgentRepository(BaseRepository):
             tools=self._json_loads_list(row["tools_json"]),
             kb_id=row["kb_id"],
             profile_id=row["profile_id"] if "profile_id" in row.keys() else None,
+            manual_context=str(row["manual_context"] or "") if "manual_context" in row.keys() else "",
+            use_zone_context=bool(row["use_zone_context"]) if "use_zone_context" in row.keys() else False,
             created_at=row["created_at"],
             last_modified=row["last_modified"],
             deleted=bool(row["deleted"]),

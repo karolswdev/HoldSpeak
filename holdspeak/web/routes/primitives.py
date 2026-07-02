@@ -333,6 +333,8 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
             "tools": list(pick("tools", existing.tools if existing else [])),
             "kb_id": (pick("kb_id", existing.kb_id if existing else None) or None),
             "profile_id": (pick("profile_id", existing.profile_id if existing else None) or None),
+            "manual_context": str(pick("manual_context", existing.manual_context if existing else "")),
+            "use_zone_context": bool(pick("use_zone_context", existing.use_zone_context if existing else False)),
         }
 
     @router.get("/api/agents")

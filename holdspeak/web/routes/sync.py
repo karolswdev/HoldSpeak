@@ -56,6 +56,8 @@ _MERGEABLE: dict[str, tuple[str, str, dict[str, str]]] = {
         "name": "name", "avatar": "avatar", "role": "role",
         "system_prompt": "system_prompt", "user_template": "user_template",
         "tools": "tools", "kb_id": "kb_id", "profile_id": "profile_id",
+        # v7 (Phase 77): the pinned context rides the wire both ways now.
+        "manual_context": "manual_context", "use_zone_context": "use_zone_context",
     }),
     # Runtime profiles (Phase 24) — SHAPE ONLY; no api key field crosses the wire.
     "profiles": ("profiles", "profile_id", {
