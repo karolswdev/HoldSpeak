@@ -27,7 +27,7 @@ byte-identical.
 
 | ID | Story | Sev | Status | Depends |
 |---|---|---|---|---|
-| HS-75-01 | The hub fork: arm, don't type (opt-in) | HIGH | todo | — |
+| HS-75-01 | The hub fork: arm, don't type (opt-in) | HIGH | **done** (knob default-off locked byte-identical; one one-shot preview; routes on the wake contract; agent replies immediate; milestone on delivery; 7/7; see [evidence](./evidence-story-01.md)) | — |
 | HS-75-02 | Type it / Discard on the cockpit and the desk | HIGH | todo | 01 |
 | HS-75-03 | The settings knob (cockpit config) | MED | todo | 01 |
 | HS-75-04 | Docs: the preview story | MED | todo | 01–03 |
@@ -35,9 +35,9 @@ byte-identical.
 
 ## Exit criteria
 
-- [ ] With the knob OFF (default), dictation behavior is byte-identical —
+- [x] With the knob OFF (default), dictation behavior is byte-identical —
       locked by test, not by claim (HS-75-01).
-- [ ] With the knob ON, a finished dictation journals normally, arms ONE
+- [x] With the knob ON, a finished dictation journals normally, arms ONE
       one-shot preview (token + `dictation_preview` broadcast), and types
       NOTHING until `/api/dictation/preview/type` consumes it; discard
       burns it (HS-75-01).
@@ -52,6 +52,12 @@ byte-identical.
       real-metal leg, recorded).
 
 ## Where we are
+
+**2026-07-02 — HS-75-01 done (1/5).** The hub fork is in: the knob
+(default off, locked byte-identical), the one-shot arm with the
+broadcast, the consume/discard verbs on the wake security contract, the
+agent-reply exclusion, and the milestone-on-delivery rule — 7/7 on the
+real mixin methods. Next: the surfaces (HS-75-02).
 
 **2026-07-02 — scaffolded (0/5).** Seam verified; the P60 pattern
 generalizes without new architecture.
