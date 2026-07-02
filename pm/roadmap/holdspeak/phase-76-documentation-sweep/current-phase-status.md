@@ -40,13 +40,19 @@ doc of its own**.
       mermaid render guard green; the trust boundary still equals
       SECURITY's egress rows (HS-76-03; the mirror check rides 05 after
       SECURITY's own fix).
-- [ ] docs/THE_DESK.md documents the flagship (the verbs, zones, the orb,
-      the rail, the preview card, the egress badge, keyboard paths) in
-      label voice, linked from the entry points (HS-76-04).
+- [x] The flagship documented (the existing WEB_DESK.md rewritten rather
+      than a new file: the verbs, zones, the orb, the rail, the preview
+      card, the egress badge) in label voice, linked from the entry
+      points (HS-76-04).
 - [ ] All doc guards green; a coherence read-through recorded; PR merged
       on a conclusion-checked green (HS-76-05).
 
 ## Where we are
+
+**2026-07-02 — HS-76-04 done (4/5).** The flagship has a truthful doc:
+WEB_DESK.md rewritten from the inverted pre-73 framing to the shipped
+front door, verb by verb. One story left: 05 (SECURITY's egress table
+first, then the tail and the mirror check).
 
 **2026-07-02 — HS-76-03 done (3/5).** The map tells the truth: the Desk
 box, the one runtime bus with live-frame edges, the capability-run
