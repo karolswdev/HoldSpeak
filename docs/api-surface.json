@@ -464,7 +464,8 @@
       ],
       "module": "web.routes.primitives",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -672,7 +673,8 @@
       ],
       "module": "web.routes.primitives",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -2014,7 +2016,9 @@
         "POST"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/cadence",

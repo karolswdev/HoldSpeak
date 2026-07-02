@@ -190,7 +190,7 @@ class PluginArtifactRepository(BaseRepository):
             window_id = str(row["window_id"])
             windows.append(
                 IntentWindowSummary(
-                    meeting_id=str(row["meeting_id"]),
+                    meeting_id=str(row["meeting_id"] or ""),
                     window_id=window_id,
                     start_seconds=float(row["start_seconds"]),
                     end_seconds=float(row["end_seconds"]),
@@ -357,7 +357,7 @@ class PluginArtifactRepository(BaseRepository):
             output.append(
                 PluginRunSummary(
                     id=int(row["id"]),
-                    meeting_id=str(row["meeting_id"]),
+                    meeting_id=str(row["meeting_id"] or ""),
                     window_id=str(row["window_id"]),
                     plugin_id=str(row["plugin_id"]),
                     plugin_version=str(row["plugin_version"] or "unknown"),
@@ -377,7 +377,7 @@ class PluginArtifactRepository(BaseRepository):
         context = self._json_loads_dict(row["context_json"])
         return PluginRunJob(
             id=int(row["id"]),
-            meeting_id=str(row["meeting_id"]),
+            meeting_id=str(row["meeting_id"] or ""),
             window_id=str(row["window_id"]),
             plugin_id=str(row["plugin_id"]),
             plugin_version=str(row["plugin_version"] or "unknown"),
@@ -686,8 +686,9 @@ class PluginArtifactRepository(BaseRepository):
         clean_plugin_version = str(plugin_version).strip() or "unknown"
         if not clean_artifact_id:
             raise ValueError("artifact_id is required")
-        if not clean_meeting_id:
-            raise ValueError("meeting_id is required")
+        # v6 (Phase 74): a run-born artifact has no meeting anchor — its anchor
+        # is the capability lineage. Empty meeting_id stores NULL, origin='run'.
+        origin = "meeting" if clean_meeting_id else "run"
         if clean_status not in {"draft", "needs_review", "accepted", "rejected"}:
             raise ValueError(f"Invalid artifact status: {clean_status!r}")
 
@@ -710,12 +711,13 @@ class PluginArtifactRepository(BaseRepository):
             conn.execute(
                 """
                 INSERT INTO artifacts (
-                    id, meeting_id, artifact_type, title, body_markdown, structured_json,
+                    id, meeting_id, origin, artifact_type, title, body_markdown, structured_json,
                     confidence, status, plugin_id, plugin_version, created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     meeting_id = excluded.meeting_id,
+                    origin = excluded.origin,
                     artifact_type = excluded.artifact_type,
                     title = excluded.title,
                     body_markdown = excluded.body_markdown,
@@ -728,7 +730,8 @@ class PluginArtifactRepository(BaseRepository):
                 """,
                 (
                     clean_artifact_id,
-                    clean_meeting_id,
+                    clean_meeting_id or None,
+                    origin,
                     clean_type,
                     clean_title,
                     clean_body,
@@ -785,7 +788,7 @@ class PluginArtifactRepository(BaseRepository):
         ]
         return ArtifactSummary(
             id=str(row["id"]),
-            meeting_id=str(row["meeting_id"]),
+            meeting_id=str(row["meeting_id"] or ""),
             artifact_type=str(row["artifact_type"]),
             title=str(row["title"]),
             body_markdown=str(row["body_markdown"] or ""),
@@ -811,6 +814,72 @@ class PluginArtifactRepository(BaseRepository):
         with self._connection() as conn:
             result = conn.execute("DELETE FROM artifacts WHERE id = ?", (clean_id,))
             return result.rowcount > 0
+
+    def _sources_for(
+        self, conn, artifact_ids: list[str]
+    ) -> dict[str, list[dict[str, str]]]:
+        """Lineage refs for a batch of artifacts, keyed by artifact id."""
+        if not artifact_ids:
+            return {}
+        placeholders = ",".join("?" for _ in artifact_ids)
+        source_rows = conn.execute(
+            f"""
+            SELECT artifact_id, source_type, source_ref
+            FROM artifact_sources
+            WHERE artifact_id IN ({placeholders})
+            ORDER BY source_type ASC, source_ref ASC
+            """,
+            artifact_ids,
+        ).fetchall()
+        by_artifact: dict[str, list[dict[str, str]]] = {}
+        for row in source_rows:
+            by_artifact.setdefault(str(row["artifact_id"]), []).append(
+                {
+                    "source_type": str(row["source_type"]),
+                    "source_ref": str(row["source_ref"]),
+                }
+            )
+        return by_artifact
+
+    def _artifact_summary(self, row, sources: list[dict[str, str]]) -> ArtifactSummary:
+        return ArtifactSummary(
+            id=str(row["id"]),
+            meeting_id=str(row["meeting_id"] or ""),
+            artifact_type=str(row["artifact_type"]),
+            title=str(row["title"]),
+            body_markdown=str(row["body_markdown"] or ""),
+            structured_json=self._json_loads_dict(row["structured_json"]),
+            confidence=float(row["confidence"] if row["confidence"] is not None else 0.0),
+            status=str(row["status"] or "draft"),
+            plugin_id=str(row["plugin_id"] or "unknown"),
+            plugin_version=str(row["plugin_version"] or "unknown"),
+            sources=sources,
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
+    def list_run_artifacts(self, *, limit: int = 200) -> list[ArtifactSummary]:
+        """List run-born artifacts (origin='run'; no meeting anchor), with
+        lineage refs — the sync pull's second artifact lane (v6, Phase 74)."""
+        bounded_limit = max(1, min(int(limit), 2000))
+        with self._connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT *
+                FROM artifacts
+                WHERE origin = 'run'
+                ORDER BY created_at DESC, id DESC
+                LIMIT ?
+                """,
+                (bounded_limit,),
+            ).fetchall()
+            if not rows:
+                return []
+            sources_by_artifact = self._sources_for(conn, [str(r["id"]) for r in rows])
+        return [
+            self._artifact_summary(row, sources_by_artifact.get(str(row["id"]), []))
+            for row in rows
+        ]
 
     def list_artifacts(
         self,
@@ -863,7 +932,7 @@ class PluginArtifactRepository(BaseRepository):
             output.append(
                 ArtifactSummary(
                     id=str(row["id"]),
-                    meeting_id=str(row["meeting_id"]),
+                    meeting_id=str(row["meeting_id"] or ""),
                     artifact_type=str(row["artifact_type"]),
                     title=str(row["title"]),
                     body_markdown=str(row["body_markdown"] or ""),

@@ -107,6 +107,9 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
     resp = client.post(f"/api/agents/{aid}/run", json={"input": "hello"})
     assert resp.status_code == 200
     body = resp.json()
+    # HS-74-01: the run persists as a run-born artifact; the id is minted.
+    artifact_id = body.pop("artifact_id")
+    assert artifact_id
     assert body == {
         "agent_id": aid,
         "output": "ANSWER",
@@ -435,6 +438,8 @@ def test_run_workflow_prompt(client: TestClient, monkeypatch) -> None:
     resp = client.post(f"/api/workflows/{wid}/run", json={"input": "the thing"})
     assert resp.status_code == 200
     body = resp.json()
+    # HS-74-01: the run persists as a run-born artifact; the id is minted.
+    assert body.pop("artifact_id")
     assert body == {
         "workflow_id": wid,
         "output": "WF-OUT",

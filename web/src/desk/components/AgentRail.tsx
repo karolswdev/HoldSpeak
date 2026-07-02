@@ -33,19 +33,9 @@ export function AgentRail() {
     setBusyId(id);
     setOutput("");
     setCopied(false);
-    try {
-      const res = await fetch(`/api/agents/${encodeURIComponent(id)}/run`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input }),
-      });
-      const data = await res.json().catch(() => ({}));
-      setOutput(String(data.output || data.error || `HTTP ${res.status}`));
-    } catch (e: any) {
-      setOutput(String(e?.message || e));
-    } finally {
-      setBusyId(null);
-    }
+    const result = await useDesk.getState().runCapability("agent", id, input);
+    setOutput(result.output);
+    setBusyId(null);
   };
 
   const copy = async () => {

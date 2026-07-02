@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 228 (plus static mounts). iOS-consumed: 44. Web-consumed: 157.
+Routes: 228 (plus static mounts). iOS-consumed: 44. Web-consumed: 160.
 
 ## device_audio_ws
 
@@ -313,13 +313,13 @@ Routes: 228 (plus static mounts). iOS-consumed: 44. Web-consumed: 157.
 | DELETE | `/api/agents/{agent_id}` | web |
 | GET | `/api/agents/{agent_id}` | web |
 | PUT | `/api/agents/{agent_id}` | web |
-| POST | `/api/agents/{agent_id}/run` | ios |
+| POST | `/api/agents/{agent_id}/run` | ios, web |
 | GET | `/api/chains` | web |
 | POST | `/api/chains` | web |
 | DELETE | `/api/chains/{chain_id}` | server only |
 | GET | `/api/chains/{chain_id}` | server only |
 | PUT | `/api/chains/{chain_id}` | server only |
-| POST | `/api/chains/{chain_id}/run` | ios |
+| POST | `/api/chains/{chain_id}/run` | ios, web |
 | GET | `/api/directories` | web |
 | POST | `/api/directories` | web |
 | DELETE | `/api/directories/{directory_id}` | web |
@@ -348,7 +348,7 @@ Routes: 228 (plus static mounts). iOS-consumed: 44. Web-consumed: 157.
 | DELETE | `/api/workflows/{workflow_id}` | server only |
 | GET | `/api/workflows/{workflow_id}` | server only |
 | PUT | `/api/workflows/{workflow_id}` | server only |
-| POST | `/api/workflows/{workflow_id}/run` | server only |
+| POST | `/api/workflows/{workflow_id}/run` | web |
 
 ## web.routes.projects
 

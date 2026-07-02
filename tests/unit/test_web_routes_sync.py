@@ -77,6 +77,7 @@ def _fake_db(tmp_path, *, meetings=(), artifacts=None):
         ),
         plugins=types.SimpleNamespace(
             list_artifacts=lambda mid: artifacts.get(mid, []),
+            list_run_artifacts=lambda limit=200: [],
             get_artifact=lambda aid: None,
             delete_artifact=lambda aid: True,
             record_artifact=lambda **kw: recorded_artifacts.append(kw),

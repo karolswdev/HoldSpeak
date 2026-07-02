@@ -714,7 +714,11 @@
               return;
             }
             if (type === "intel_status") {
-              if (data && typeof data === "object") this.intelStatus = data;
+              // Run frames (scope "run", HS-74-02) belong to the theater and
+              // the Queue HUD; this panel is the MEETING's intel status.
+              if (data && typeof data === "object" && data.scope !== "run") {
+                this.intelStatus = data;
+              }
               return;
             }
             if (type === "intel_token") {

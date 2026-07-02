@@ -76,6 +76,13 @@ interface DeskState {
   removeFromDir(pid: string, dirId: string): Promise<void>;
   /** Select a coder session as the dictation target (answerCoder parity). */
   answerCoder(agent: string, sessionId: string): Promise<boolean>;
+  /** Run a capability through the real route; the persisted result
+   * MATERIALIZES on the desk (HS-74-03: refresh + the NEW beat). */
+  runCapability(
+    kind: "agent" | "chain" | "workflow",
+    id: string,
+    input: string,
+  ): Promise<{ ok: boolean; output: string; artifactId: string | null }>;
   setPosition(id: string, pos: UnitPos): void;
   persistPositions(): void;
   clearPosition(id: string): void;
@@ -267,6 +274,33 @@ export const useDesk = create<DeskState>((set, get) => ({
       return res.ok;
     } catch {
       return false;
+    }
+  },
+
+  async runCapability(kind, id, input) {
+    const routes = {
+      agent: `/api/agents/${encodeURIComponent(id)}/run`,
+      chain: `/api/chains/${encodeURIComponent(id)}/run`,
+      workflow: `/api/workflows/${encodeURIComponent(id)}/run`,
+    };
+    try {
+      const res = await fetch(routes[kind], {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const output = String(data.output || data.error || `HTTP ${res.status}`);
+      const artifactId = res.ok ? String(data.artifact_id || "") || null : null;
+      if (artifactId) {
+        // The result is a REAL artifact now — it lands on the desk in
+        // front of you, wearing the beat (the HS-73-06 grammar).
+        await get().refresh();
+        get().markNew(artifactId);
+      }
+      return { ok: res.ok, output, artifactId };
+    } catch (e) {
+      return { ok: false, output: String(e), artifactId: null };
     }
   },
 

@@ -175,6 +175,76 @@ def _render_user_prompt(template: str, variables: dict[str, Any], user_input: st
         return f"{template}\n\n{user_input}".strip()
 
 
+def _run_frame(
+    ctx: "WebContext",
+    state: str,
+    *,
+    kind: str,
+    ref: str,
+    name: str,
+    error: str | None = None,
+) -> None:
+    """Broadcast one honest run frame (HS-74-02).
+
+    Runs ride the SAME `intel_status` vocabulary the theater and the Queue
+    HUD already consume (`running` reveals, `ready`/`error` settle), tagged
+    `scope: "run"` so meeting-scoped consumers (the /live intel panel) can
+    ignore them. The engine call is synchronous — there are no token frames
+    to fake.
+    """
+    if ctx.broadcast is None:
+        return
+    try:
+        frame: dict[str, Any] = {
+            "state": state,
+            "scope": "run",
+            "capability": {"kind": kind, "id": ref, "name": name},
+        }
+        if error:
+            frame["error"] = error
+        ctx.broadcast("intel_status", frame)
+    except Exception as exc:
+        log.debug(f"run frame dropped: {exc}")
+
+
+def _persist_run_artifact(
+    *,
+    kind: str,
+    name: str,
+    user_input: str,
+    output: str,
+    sources: list[dict[str, str]],
+) -> Optional[str]:
+    """Persist a run's output as a run-born artifact (v6, Phase 74).
+
+    The result enters the ONE artifact store — it syncs, lands on the desk,
+    and shows in the iPad's artifact review — instead of evaporating with
+    the HTTP response. A persistence failure never eats a successful run:
+    log and return None.
+    """
+    try:
+        from ...db import get_database
+
+        artifact_id = _new_id("artifact")
+        head = " ".join(user_input.split())[:48]
+        title = f"{name}: {head}" if head else f"{name} run"
+        get_database().plugins.record_artifact(
+            artifact_id=artifact_id,
+            meeting_id="",
+            artifact_type="run_output",
+            title=title,
+            body_markdown=str(output or ""),
+            status="draft",
+            plugin_id=f"{kind}_run",
+            plugin_version="1",
+            sources=sources,
+        )
+        return artifact_id
+    except Exception as exc:
+        log.error(f"Failed to persist run artifact: {exc}")
+        return None
+
+
 def build_primitives_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -380,6 +450,7 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                     intel = build_configured_meeting_intel()
             else:
                 intel = build_configured_meeting_intel()
+            _run_frame(ctx, "running", kind="agent", ref=agent_id, name=agent.name or agent_id)
             try:
                 output = intel.run_prompt(
                     system_prompt=agent.system_prompt,
@@ -388,9 +459,12 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                     max_tokens=int(max_tokens) if max_tokens is not None else None,
                 )
             except MeetingIntelError as exc:
+                _run_frame(ctx, "error", kind="agent", ref=agent_id,
+                           name=agent.name or agent_id, error=str(exc))
                 return JSONResponse(
                     {"error": str(exc), "agent_id": agent_id}, status_code=502
                 )
+            _run_frame(ctx, "ready", kind="agent", ref=agent_id, name=agent.name or agent_id)
 
             # Provenance: what produced this output, so a surface that keeps the
             # result as an Artifact can attach lineage ("from <agent>").
@@ -408,12 +482,17 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                 )
                 sources.append({"source_type": input_type, "source_ref": provided_ref})
 
+            artifact_id = _persist_run_artifact(
+                kind="agent", name=agent.name or agent_id,
+                user_input=user_input, output=output, sources=sources,
+            )
             return JSONResponse({
                 "agent_id": agent_id,
                 "output": output,
                 "provider": intel.active_provider,
                 "profile_id": ran_profile_id,
                 "sources": sources,
+                "artifact_id": artifact_id,
             })
         except Exception as exc:
             return error_500(exc, log, "Failed to run agent")
@@ -687,6 +766,7 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
 
             intel = build_configured_meeting_intel()
 
+            _run_frame(ctx, "running", kind="chain", ref=chain_id, name=chain.name or chain_id)
             current_input = str(body.get("input") or "")
             run_steps: list[dict[str, Any]] = []
             for agent in agents:
@@ -713,6 +793,8 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                         max_tokens=int(max_tokens) if max_tokens is not None else None,
                     )
                 except MeetingIntelError as exc:
+                    _run_frame(ctx, "error", kind="chain", ref=chain_id,
+                               name=chain.name or chain_id, error=str(exc))
                     return JSONResponse(
                         {"error": str(exc), "chain_id": chain_id, "agent_id": agent.id},
                         status_code=502,
@@ -738,12 +820,20 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                     {"source_type": "agent", "source_ref": str(step["agent_id"])}
                 )
 
+            _run_frame(ctx, "ready", kind="chain", ref=chain_id, name=chain.name or chain_id)
+            artifact_id = _persist_run_artifact(
+                kind="chain", name=chain.name or chain_id,
+                user_input=str(body.get("input") or ""),
+                output=run_steps[-1]["output"] if run_steps else "",
+                sources=sources,
+            )
             return JSONResponse({
                 "chain_id": chain_id,
                 "steps": run_steps,
                 "output": run_steps[-1]["output"] if run_steps else "",
                 "provider": top_provider,
                 "sources": sources,
+                "artifact_id": artifact_id,
             })
         except Exception as exc:
             return error_500(exc, log, "Failed to run chain")
@@ -895,6 +985,8 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
             sources: list[dict[str, str]] = [
                 {"source_type": "workflow", "source_ref": workflow_id}
             ]
+            wf_name = workflow.name or workflow_id
+            _run_frame(ctx, "running", kind="workflow", ref=workflow_id, name=wf_name)
 
             # ── 1) Try the linear graph runner ─────────────────────────────
             warning: Optional[str] = None
@@ -923,6 +1015,9 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                             # continue; `retryThenQueue` / unset surface the error.
                             handled = on_node_error(gnode, current)
                             if handled is None:
+                                _run_frame(ctx, "error", kind="workflow",
+                                           ref=workflow_id, name=wf_name,
+                                           error=str(exc))
                                 return JSONResponse(
                                     {"error": str(exc), "workflow_id": workflow_id,
                                      "node_id": gnode.id,
@@ -981,12 +1076,19 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                         status_code=400,
                     )
 
+                _run_frame(ctx, "ready", kind="workflow", ref=workflow_id, name=wf_name)
+                artifact_id = _persist_run_artifact(
+                    kind="workflow", name=workflow.name or workflow_id,
+                    user_input=str(body.get("input") or ""),
+                    output=str(current or ""), sources=sources,
+                )
                 return JSONResponse({
                     "workflow_id": workflow_id,
                     "output": current,
                     "provider": intel.active_provider if ran_a_model_op else None,
                     "steps": run_steps,
                     "sources": sources,
+                    "artifact_id": artifact_id,
                 })
 
             # ── 2/3) Prompt path (+ honest warning if a graph was refused) ──
@@ -1020,15 +1122,23 @@ def build_primitives_router(ctx: WebContext) -> APIRouter:
                     max_tokens=int(max_tokens) if max_tokens is not None else None,
                 )
             except MeetingIntelError as exc:
+                _run_frame(ctx, "error", kind="workflow", ref=workflow_id,
+                           name=wf_name, error=str(exc))
                 return JSONResponse(
                     {"error": str(exc), "workflow_id": workflow_id}, status_code=502
                 )
 
+            _run_frame(ctx, "ready", kind="workflow", ref=workflow_id, name=wf_name)
             result: dict[str, Any] = {
                 "workflow_id": workflow_id,
                 "output": output,
                 "provider": intel.active_provider,
                 "sources": sources,
+                "artifact_id": _persist_run_artifact(
+                    kind="workflow", name=workflow.name or workflow_id,
+                    user_input=str(body.get("input") or ""),
+                    output=output, sources=sources,
+                ),
             }
             if warning:
                 result["warning"] = warning

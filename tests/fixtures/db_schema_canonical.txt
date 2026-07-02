@@ -240,7 +240,12 @@ table artifact_sources: CREATE TABLE artifact_sources (
 )
 table artifacts: CREATE TABLE artifacts (
     id TEXT PRIMARY KEY,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    -- v6 (Phase 74): an artifact is owner-typed like a proposal (v5).
+    -- origin='meeting' rows carry a real meeting_id; origin='run' rows (a
+    -- persona/chain/workflow run's output) carry NULL — their anchor is the
+    -- capability lineage in artifact_sources.
+    meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE,
+    origin TEXT NOT NULL DEFAULT 'meeting' CHECK (origin IN ('meeting', 'run')),
     artifact_type TEXT NOT NULL,
     title TEXT NOT NULL,
     body_markdown TEXT NOT NULL DEFAULT '',

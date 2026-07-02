@@ -1,0 +1,89 @@
+# Phase 74 — The Run Story, Completed
+
+**Status:** **CLOSED — 5/5 (2026-07-02).** See [final-summary.md](./final-summary.md).
+**Owner call that opened it:** "Let's keep going" on the recommended
+follow-up after Phase 73: complete the desk's run story — the two recorded
+hub follow-ups from [phase-73](../phase-73-desk-inhabited/final-summary.md).
+
+## Why
+
+Phase 73 put every desk verb in the world, but a persona/chain/workflow
+run is still a dead end: the hub returns output text and forgets it (no
+artifact, no lineage, no sync to the iPad), and the run emits no frames
+(the GenerationTheater stays dark; the rail fakes nothing and so shows
+only its own pulse). The iPad's Track-I artifact review and the desk's
+materialize beat are both READY consumers — the hub is the missing half.
+
+## Stories
+
+| ID | Story | Sev | Status | Depends |
+|---|---|---|---|---|
+| HS-74-01 | Run results persist as artifacts (hub) | HIGH | **done** (schema v6: owner-typed artifacts per the v5 precedent; all three routes persist + artifact_id; sync's run-born lane, wire shape unchanged; 5/5 incl. the facsimile upgrade; see [evidence](./evidence-story-01.md)) | — |
+| HS-74-02 | Run frames: the theater's heartbeat (hub) | MED | **done** (intel_status scope=run frames: running→ready|error with capability identity; one bracket per chain; workflow both paths; /live panel scope-guarded; no-token lock; 4/4 captured on the real app; see [evidence](./evidence-story-02.md)) | — |
+| HS-74-03 | The result lands on the desk (web) | HIGH | **done** (runCapability: refresh + NEW beat on artifact_id; both surfaces; theater plays with zero client wiring; REAL .43 proof — 'landed' materialized, frames [running, ready] captured, via-Owl lineage; see [evidence](./evidence-story-03.md)) | 01, 02 |
+| HS-74-04 | Docs: the run story end to end | MED | **done** (GETTING_STARTED speaks the loop; README/ARCHITECTURE verified unchanged; the voice guard caught my own dash; 85 green; see [evidence](./evidence-story-04.md)) | 01–03 |
+| HS-74-05 | Closeout: the run walk | HIGH | **done** (real-metal walk: ask → frames → materialize → lineage → filed; one pathname; see [evidence](./evidence-story-05.md)) | 01–04 |
+
+## Exit criteria
+
+- [x] A persona/chain/workflow run persists its output as a REAL artifact
+      (the one plugin-artifact store; run-born artifacts carry no meeting
+      anchor) with capability lineage, and it rides `/api/sync/pull`
+      unchanged in shape (HS-74-01 — landed as schema v6, the v5 recipe).
+- [x] The run routes broadcast honest `intel_status` frames (running →
+      ready | error); no fake tokens (HS-74-02 — locked by test).
+- [x] A run from the rail/pull-out materializes the artifact on the desk
+      with the NEW beat and `via <capability>` lineage; proven on the
+      `.43` endpoint (HS-74-03).
+- [x] Entry-point docs speak the completed loop (HS-74-04).
+- [x] The run walk: ask → theater → the artifact object → open → lineage,
+      one session, pathname never leaves `/` (HS-74-05 — plus the filed
+      ending).
+
+## Where we are
+
+**2026-07-02 — PHASE CLOSED (5/5).** The run story is complete on real
+metal: the .43 model's answer persisted as a run-born artifact,
+materialized on the stage with the beat, carried [running, ready] frames
+through the one bus, opened to via-Owl lineage, and filed into a zone —
+one session, one pathname. final-summary.md has the ledger, numbers
+(suite 3080/37; three real-metal runs), and the findings (the wire's ""
+rule; the iPad materialize candidate).
+
+**2026-07-02 — HS-74-04 done (4/5).** The docs speak the loop. One story
+left: the run walk closeout.
+
+**2026-07-02 — HS-74-03 done (3/5).** The loop is CLOSED on real metal:
+ask the Owl from the rail, the .43 model answers, the answer persists as
+a run-born artifact and MATERIALIZES on the stage wearing the beat, the
+run frames ride the one bus (captured [running, ready] on the page), and
+the opened object shows the model's words with via-Owl lineage. The
+theater needed zero client wiring — the one-bus architecture held.
+Remaining: HS-74-04 (docs) + HS-74-05 (the run walk closeout).
+
+**2026-07-02 — HS-74-02 done (2/5).** The hub half is complete: runs
+persist as artifacts AND broadcast honest frames. The frame design keeps
+ONE vocabulary (intel_status, which the theater and Queue HUD already
+speak) with a scope tag so the meeting panel ignores run frames; chains
+emit one bracket, not per-step noise; the no-fabricated-tokens rule is a
+test. Next: HS-74-03 — the desk closes the loop (the theater plays and
+the artifact materializes with the beat; real-metal .43 proof).
+
+**2026-07-02 — HS-74-01 done (1/5).** Run outputs are real artifacts now.
+The DDL forced the honest version of the story: artifacts.meeting_id was
+NOT NULL with an enforced FK, so the "empty string" plan became schema v6
+— owner-typed artifacts exactly like v5's proposals (nullable meeting_id,
+origin meeting|run, the standard rebuild, ids verbatim, backup-then-apply
+proven by a facsimile-upgrade test). All three run routes persist through
+one helper and answer with artifact_id; the sync pull gains the run-born
+lane while the wire keeps meeting_id a plain string so the iPad decode is
+unmoved; the merge path accepts pushed run-born artifacts. Next: HS-74-02
+(the frames).
+
+**2026-07-02 — scaffolded (0/5).** Seams verified before scaffolding:
+`ctx.broadcast` exists on WebContext; the theater consumes
+`intel_status {state}` (running reveals, ready settles); artifacts sync
+through the plugin-artifact store (`record_artifact` currently REQUIRES a
+meeting anchor — 01 loosens it for run-born artifacts only); the desk's
+materialize beat (Phase 73's markNew) and the iPad's artifact review are
+ready consumers.
