@@ -30,7 +30,7 @@ byte-identical.
 | HS-75-01 | The hub fork: arm, don't type (opt-in) | HIGH | **done** (knob default-off locked byte-identical; one one-shot preview; routes on the wake contract; agent replies immediate; milestone on delivery; 7/7; see [evidence](./evidence-story-01.md)) | — |
 | HS-75-02 | Type it / Discard on the cockpit and the desk | HIGH | **done** (ONE shell surface on every route — the QueueHud idiom; keyboard-first; proven on / and /dictation with real broadcasts; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-75-03 | The settings knob (cockpit config) | MED | **done** (cockpit toggle + boundary + the loader fix the round-trip test caught — the knob would have reverted every restart; see [evidence](./evidence-story-03.md)) | 01 |
-| HS-75-04 | Docs: the preview story | MED | todo | 01–03 |
+| HS-75-04 | Docs: the preview story | MED | **done** (GETTING_STARTED + DICTATION_COPILOT; guards 85 green; see [evidence](./evidence-story-04.md)) | 01–03 |
 | HS-75-05 | Closeout: the preview walk | HIGH | todo | 01–04 |
 
 ## Exit criteria
@@ -46,13 +46,16 @@ byte-identical.
       surface, every route).
 - [x] The knob lives in the cockpit's settings with honest copy
       (HS-75-03 — plus the loader fix its round-trip test caught).
-- [ ] Entry-point docs speak the mode (HS-75-04).
+- [x] Entry-point docs speak the mode (HS-75-04).
 - [ ] The preview walk: a real pipeline pass with a capturing typer —
       nothing typed while armed, Type-it delivers the exact text, discard
       delivers nothing (HS-75-05; the mic-in-hand pass is the owner's
       real-metal leg, recorded).
 
 ## Where we are
+
+**2026-07-02 — HS-75-04 done (4/5).** Docs speak the mode. One story
+left: the preview walk.
 
 **2026-07-02 — HS-75-03 done (3/5).** The knob is real: the cockpit
 toggle, the boundary, and a loader fix the round-trip test caught (the
