@@ -1,6 +1,6 @@
 # Phase 73 — The Desk, Inhabited (on the React foundation)
 
-**Status:** open — 4/10 (HS-73-01..04 done 2026-07-02).
+**Status:** open — 5/10 (HS-73-01..05 done 2026-07-02).
 
 **Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
 the same day, before any story executed: (1) **the Desk is the main surface**
@@ -61,7 +61,7 @@ so the pivot is free **now** and never again.
 - [ ] Tapping any object opens an in-world pull-out; meetings show
       lineage-grouped derivatives; "Open full" is the only navigation
       (HS-73-04).
-- [ ] Zones are painted member-thumbnail trays; drag files via the real
+- [x] Zones are painted member-thumbnail trays; drag files via the real
       `PUT`; dive/back is a camera move (HS-73-05).
 - [ ] The Record orb starts/stops the hub recorder; the finished meeting
       materializes as an object; external state honestly reflected
@@ -85,7 +85,7 @@ so the pivot is free **now** and never again.
 | HS-73-02 | The arrival: the Desk is the front door | HIGH | **done** (/ = the island, immersive AppLayout, guard proven both ways, guiding empty state, mark+menu+hub-dot+egress chrome, chips wired to instant-create, /desk→/ + /desk-legacy, nav Desk-first; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-73-03 | Create in-world (no modals, ever) | HIGH | **done** (instant POST → spawn at center + NEW beat + focused in-world editor; vignette not scrim; autosave PUTs + optimistic merge; agent More in-card; zone rename-in-place; tap≠drag fixed; DB round-trip proven; see [evidence](./evidence-story-03.md)) | 01 |
 | HS-73-04 | Open in-world: the pull-out | HIGH | **done** (tap opens on the stage for every kind; the meeting drawer + one-deep artifact stack + back; lineage ported drift-tolerant; Edit swaps the editor; Move-to files via the real PUT; Open full = the one navigation; location asserted unchanged; see [evidence](./evidence-story-04.md)) | 01 |
-| HS-73-05 | Zones as landmarks: file and dive | MED | todo | 01 |
+| HS-73-05 | Zones as landmarks: file and dive | MED | **done** (stable tints + member mini-sprites + empty hint; drop-ready lift mid-drag; drop files via the real PUT with live thumbs; dive/back camera; + Zone focuses rename; DB rows asserted; see [evidence](./evidence-story-05.md)) | 01 |
 | HS-73-06 | The Record orb (the live verb) | HIGH | todo | 02 |
 | HS-73-07 | The agent rail: run from the world | MED | todo | 01, 04 |
 | HS-73-08 | The cutover: the Alpine desk dies | HIGH | todo | 02–07 |
@@ -96,6 +96,17 @@ Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in paralle
 **08** (cutover) → **09** → **10**.
 
 ## Where we are
+
+**2026-07-02 — HS-73-05 done (5/10).** Zones are the desk's geography.
+Trays wear a stable per-zone tint (the sprite picker's hash family — a
+zone keeps its color forever), member mini-sprites with overflow and a
+bare count, and the whispered empty hint. The drag lights the hovered tray
+mid-move (fresh rects each move, the HS-71-05 rule) and the drop files
+through the real membership PUT — the thumbnail and count arrive without
+a reload. Dive is a camera move onto the zone's members with a floating
+← All to surface; + Zone arrives with its rename focused. All proven with
+DB rows asserted and three screenshots. Next: HS-73-06 (the Record orb)
+and HS-73-07 (the rail) — the last verbs before the cutover.
 
 **2026-07-02 — HS-73-04 done (4/10).** The bounce-out is dead. Tapping any
 object opens its pull-out ON the stage — a motion spring with the kind's

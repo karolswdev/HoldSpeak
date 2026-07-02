@@ -20,7 +20,7 @@ export function DeskObject({
   const draggingId = useDesk((s) => s.draggingId);
   const newIds = useDesk((s) => s.newIds);
   const editingId = useDesk((s) => s.editingId);
-  const { setPosition, persistPositions, setDragging, openPullout } = useDesk.getState();
+  const { setPosition, persistPositions, setDragging, openPullout, setHoverZone, fileIntoDir } = useDesk.getState();
 
   const u = objUnit(o, i, n, positions);
   const m = objMotion(o);
@@ -45,20 +45,40 @@ export function DeskObject({
       if (moved && event && "clientX" in event) {
         // A FRESH world rect each move, so a mid-drag layout shift can't
         // desync the position (the HS-71-05 robustness fix).
+        const px = (event as PointerEvent).clientX;
+        const py = (event as PointerEvent).clientY;
         const r = (world as HTMLElement).getBoundingClientRect();
         setPosition(o.id, {
-          x: Math.min(0.96, Math.max(0.04, ((event as PointerEvent).clientX - r.left) / r.width)),
-          y: Math.min(0.96, Math.max(0.04, ((event as PointerEvent).clientY - r.top) / r.height)),
+          x: Math.min(0.96, Math.max(0.04, (px - r.left) / r.width)),
+          y: Math.min(0.96, Math.max(0.04, (py - r.top) / r.height)),
         });
+        // The drop affordance: hit-test FRESH zone rects each move.
+        let over: string | null = null;
+        document.querySelectorAll(".desk-zone").forEach((el) => {
+          const zr = el.getBoundingClientRect();
+          if (px >= zr.left && px <= zr.right && py >= zr.top && py <= zr.bottom) {
+            over = (el as HTMLElement).dataset.zoneId || null;
+          }
+        });
+        setHoverZone(over);
       }
       if (last) {
         if (moved) {
-          persistPositions();
+          // Dropped onto a zone? File it there (the real PUT) and forget
+          // the free position — the object lives on the shelf now.
+          const over = useDesk.getState().hoverZoneId;
+          setHoverZone(null);
+          if (over) {
+            void fileIntoDir(o.id, over);
+          } else {
+            persistPositions();
+          }
           // Cleared next tick: the click event fires first and reads the
           // still-set drag state (a real drag never opens — HS-71-06).
           setTimeout(() => setDragging(null), 0);
         } else {
-          // A plain tap: clear NOW so the click opens the editor.
+          setHoverZone(null);
+          // A plain tap: clear NOW so the click opens the pull-out.
           setDragging(null);
         }
       }

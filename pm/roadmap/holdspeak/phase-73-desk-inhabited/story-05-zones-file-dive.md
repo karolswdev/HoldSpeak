@@ -1,8 +1,9 @@
 # HS-73-05 — Zones as landmarks: file and dive
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED (zones are the desk's geography; flat trays make a flat world)
 - **Depends on:** HS-73-01
+- **Evidence:** [evidence-story-05.md](./evidence-story-05.md)
 
 ## Goal
 
@@ -51,3 +52,17 @@ empty hint, mid-dive and dived states. Playwright: drop → the `PUT` fires →
 tray updates without reload; dive → back restores positions.
 Reduced-motion verified. Route pre-flight + full suite + `npm run build`
 green.
+
+## Done
+
+Shipped. Trays are landmarks: stable per-zone tint (the sprite picker's
+hash family), member mini-sprites + overflow + count, and the whispered
+empty hint. The drag hit-tests fresh tray rects each move and lifts the
+hovered tray; the drop fires the real membership PUT, forgets the free
+position, and the tray's thumbnails update live. Dive is a camera move
+(zones hidden, members take the stage, ← All surfaces; reduced-motion
+instant), and + Zone arrives with its rename focused. Proven end-to-end
+with the DB rows asserted and three screenshots; zero page errors;
+api-surface + pre-flight 7 passed; full suite 3066 passed, 37 skipped. One recorded drop (the fly-into-tray flourish — the lift +
+instant thumbnail is the same beat). See
+[evidence-story-05.md](./evidence-story-05.md).

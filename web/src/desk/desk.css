@@ -485,3 +485,39 @@
   border-top: 1px solid var(--border);
 }
 .desk-next .desk-pullout-file { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ── HS-73-05: zones as landmarks ── */
+.desk-next .desk-zone-thumbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.desk-next .desk-zone-thumbs img {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+.desk-next .desk-zone-more { font-size: var(--font-size-xs); color: var(--text-muted); }
+.desk-next .desk-zone-thumbs .desk-zone-count { margin-left: auto; }
+.desk-next .desk-zone.drop-ready {
+  transform: translateX(-50%) translateY(-4px) scale(1.04);
+  border-color: color-mix(in srgb, var(--zk, #E0A458) 80%, var(--border));
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55), 0 0 0 3px color-mix(in srgb, var(--zk, #E0A458) 40%, transparent);
+}
+
+/* the dive camera: the world scales in as the zone's members take the stage */
+.desk-next .desk-world { transition: opacity 0.28s var(--ease-standard), transform 0.28s var(--ease-standard); }
+.desk-next .desk-world.dived { animation: desk-next-dive 0.34s var(--ease-standard); }
+@keyframes desk-next-dive {
+  0% { opacity: 0; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.desk-next .desk-surface {
+  position: fixed;
+  top: 60px;
+  left: 18px;
+  z-index: 30;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-world,
+  .desk-next .desk-world.dived { transition: none; animation: none; }
+}

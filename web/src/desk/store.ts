@@ -49,6 +49,10 @@ interface DeskState {
   /** The object whose pull-out is open, + one level of back (HS-73-04). */
   pulloutId: string | null;
   pulloutBackId: string | null;
+  /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
+  hoverZoneId: string | null;
+  /** The freshly-created zone whose rename is focused. */
+  renamingZoneId: string | null;
 
   refresh(): Promise<void>;
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
@@ -62,6 +66,10 @@ interface DeskState {
   renameZone(id: string, name: string): Promise<void>;
   openPullout(id: string): void;
   closePullout(): void;
+  setHoverZone(id: string | null): void;
+  setRenamingZone(id: string | null): void;
+  diveInto(zoneId: string): void;
+  surface(): void;
   /** File a primitive into a directory (the real add-only PUT). */
   fileIntoDir(pid: string, dirId: string): Promise<void>;
   setPosition(id: string, pos: UnitPos): void;
@@ -86,6 +94,8 @@ export const useDesk = create<DeskState>((set, get) => ({
   editingId: null,
   pulloutId: null,
   pulloutBackId: null,
+  hoverZoneId: null,
+  renamingZoneId: null,
 
   async refresh() {
     set({ loading: true, error: "" });
@@ -126,7 +136,8 @@ export const useDesk = create<DeskState>((set, get) => ({
     await get().refresh();
     if (createdId) {
       get().markNew(createdId);
-      if (kind !== "zone") get().openEditor(createdId);
+      if (kind === "zone") get().setRenamingZone(createdId);
+      else get().openEditor(createdId);
     }
   },
 
@@ -187,6 +198,19 @@ export const useDesk = create<DeskState>((set, get) => ({
     } catch {
       /* saves are on-change; the next one retries — the hub dot reports */
     }
+  },
+
+  setHoverZone(id) {
+    if (get().hoverZoneId !== id) set({ hoverZoneId: id });
+  },
+  setRenamingZone(id) {
+    set({ renamingZoneId: id });
+  },
+  diveInto(zoneId) {
+    set({ divedZone: zoneId, pulloutId: null, pulloutBackId: null, editingId: null });
+  },
+  surface() {
+    set({ divedZone: null });
   },
 
   openPullout(id) {

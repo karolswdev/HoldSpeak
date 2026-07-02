@@ -8,6 +8,13 @@ import {
 import { DeskObject } from "./DeskObject";
 import { InlineEditor } from "./InlineEditor";
 import { Pullout } from "./Pullout";
+// @ts-ignore — shared ESM module (see ../sprites.d.ts)
+import { spriteUrl, variantIndex } from "../../scripts/desk/sprites.js";
+import { resolveRef } from "../lineage";
+
+// Per-zone stable tints (variantIndex over the id keeps a zone's color
+// forever — the same stable-hash family the sprite picker uses).
+const ZONE_TINTS = ["#E0A458", "#56C7F5", "#34D399", "#A78BFA", "#FF9E64", "#FBBF24"];
 
 export function World() {
   const items = useDesk((s) => s.items);
@@ -23,11 +30,17 @@ export function World() {
     ? worldObjects(items, null).find((x) => x.id === pulloutId) || null
     : null;
 
+  const { surface } = useDesk.getState();
   return (
     <div
-      className="desk-world"
+      className={"desk-world" + (divedZone ? " dived" : "")}
       style={{ "--rows": worldRows(objects.length) } as React.CSSProperties}
     >
+      {divedZone && (
+        <button type="button" className="desk-chip desk-surface" onClick={surface}>
+          ← All
+        </button>
+      )}
       {zones.map((z, i) => {
         const cols = Math.max(1, Math.min(4, zones.length));
         const wPct = Math.min(30, 84 / cols);
@@ -56,41 +69,70 @@ export function World() {
 }
 
 
-/** A zone tray with rename-in-place (HS-73-03; HS-73-05 makes it a landmark). */
+/** A landmark zone tray (HS-73-05): stable tint, member mini-sprites,
+ * drop affordance, dive on click, rename-in-place, an empty hint. */
 function ZoneTray({ z, style }: { z: ReturnType<typeof worldZones>[number]; style: React.CSSProperties }) {
-  const { renameZone } = useDesk.getState();
+  const items = useDesk((s) => s.items);
+  const hoverZoneId = useDesk((s) => s.hoverZoneId);
+  const renamingZoneId = useDesk((s) => s.renamingZoneId);
+  const { renameZone, diveInto, setRenamingZone } = useDesk.getState();
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(z.title);
+  const focusRename = renamingZoneId === z.id;
+  const memberIds = ((z.ref as any).memberIds as string[]) || [];
+  const thumbs = memberIds.slice(0, 4).map((mid) => {
+    const r = resolveRef(items, mid);
+    return { id: mid, kind: r.kind || "note" };
+  });
   const commit = () => {
     setRenaming(false);
+    setRenamingZone(null);
     const clean = name.trim();
     if (clean && clean !== z.title) void renameZone(z.id, clean);
   };
+  const tint = ZONE_TINTS[variantIndex(z.id, ZONE_TINTS.length)];
   return (
-    <div className="desk-zone" data-zone-id={z.id} style={style}>
-      {renaming ? (
+    <div
+      className={"desk-zone" + (hoverZoneId === z.id ? " drop-ready" : "")}
+      data-zone-id={z.id}
+      style={{ ...style, "--zk": tint } as React.CSSProperties}
+      onClick={() => {
+        if (!renaming && !focusRename) diveInto(z.id);
+      }}
+    >
+      {renaming || focusRename ? (
         <input
           className="desk-zone-rename"
-          value={name}
+          value={focusRename && !renaming ? z.title : name}
           autoFocus
+          onFocus={() => { setName(z.title); setRenaming(true); }}
           onChange={(e) => setName(e.target.value)}
           onBlur={commit}
+          onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => {
             if (e.key === "Enter") commit();
-            if (e.key === "Escape") { setName(z.title); setRenaming(false); }
+            if (e.key === "Escape") { setName(z.title); setRenaming(false); setRenamingZone(null); }
           }}
         />
       ) : (
         <span
           className="desk-zone-title"
-          onClick={() => { setName(z.title); setRenaming(true); }}
+          onClick={(e) => { e.stopPropagation(); setName(z.title); setRenaming(true); }}
         >
           {z.title}
         </span>
       )}
-      <span className="desk-zone-count">
-        {z.count === 1 ? "1 item" : `${z.count} items`}
-      </span>
+      {thumbs.length > 0 ? (
+        <span className="desk-zone-thumbs">
+          {thumbs.map((t) => (
+            <img key={t.id} src={spriteUrl(t.kind, t.id)} alt="" width={22} height={22} />
+          ))}
+          {memberIds.length > 4 && <span className="desk-zone-more">+{memberIds.length - 4}</span>}
+          <span className="desk-zone-count">{memberIds.length === 1 ? "1 item" : `${memberIds.length} items`}</span>
+        </span>
+      ) : (
+        <span className="desk-zone-count">drop things here</span>
+      )}
     </div>
   );
 }
