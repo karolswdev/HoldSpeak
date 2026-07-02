@@ -19,7 +19,7 @@ materialize beat are both READY consumers — the hub is the missing half.
 | ID | Story | Sev | Status | Depends |
 |---|---|---|---|---|
 | HS-74-01 | Run results persist as artifacts (hub) | HIGH | **done** (schema v6: owner-typed artifacts per the v5 precedent; all three routes persist + artifact_id; sync's run-born lane, wire shape unchanged; 5/5 incl. the facsimile upgrade; see [evidence](./evidence-story-01.md)) | — |
-| HS-74-02 | Run frames: the theater's heartbeat (hub) | MED | todo | — |
+| HS-74-02 | Run frames: the theater's heartbeat (hub) | MED | **done** (intel_status scope=run frames: running→ready|error with capability identity; one bracket per chain; workflow both paths; /live panel scope-guarded; no-token lock; 4/4 captured on the real app; see [evidence](./evidence-story-02.md)) | — |
 | HS-74-03 | The result lands on the desk (web) | HIGH | todo | 01, 02 |
 | HS-74-04 | Docs: the run story end to end | MED | todo | 01–03 |
 | HS-74-05 | Closeout: the run walk | HIGH | todo | 01–04 |
@@ -30,8 +30,8 @@ materialize beat are both READY consumers — the hub is the missing half.
       (the one plugin-artifact store; run-born artifacts carry no meeting
       anchor) with capability lineage, and it rides `/api/sync/pull`
       unchanged in shape (HS-74-01 — landed as schema v6, the v5 recipe).
-- [ ] The run routes broadcast honest `intel_status` frames (running →
-      ready | error); no fake tokens (HS-74-02).
+- [x] The run routes broadcast honest `intel_status` frames (running →
+      ready | error); no fake tokens (HS-74-02 — locked by test).
 - [ ] A run from the rail/pull-out materializes the artifact on the desk
       with the NEW beat and `via <capability>` lineage; proven on the
       `.43` endpoint (HS-74-03).
@@ -40,6 +40,14 @@ materialize beat are both READY consumers — the hub is the missing half.
       one session, pathname never leaves `/` (HS-74-05).
 
 ## Where we are
+
+**2026-07-02 — HS-74-02 done (2/5).** The hub half is complete: runs
+persist as artifacts AND broadcast honest frames. The frame design keeps
+ONE vocabulary (intel_status, which the theater and Queue HUD already
+speak) with a scope tag so the meeting panel ignores run frames; chains
+emit one bracket, not per-step noise; the no-fabricated-tokens rule is a
+test. Next: HS-74-03 — the desk closes the loop (the theater plays and
+the artifact materializes with the beat; real-metal .43 proof).
 
 **2026-07-02 — HS-74-01 done (1/5).** Run outputs are real artifacts now.
 The DDL forced the honest version of the story: artifacts.meeting_id was
