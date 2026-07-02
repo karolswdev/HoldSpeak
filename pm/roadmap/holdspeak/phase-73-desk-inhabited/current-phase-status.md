@@ -1,6 +1,6 @@
 # Phase 73 — The Desk, Inhabited (on the React foundation)
 
-**Status:** open — 8/10 (HS-73-01..08 done 2026-07-02).
+**Status:** open — 9/10 (HS-73-01..09 done 2026-07-02).
 
 **Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
 the same day, before any story executed: (1) **the Desk is the main surface**
@@ -90,13 +90,23 @@ so the pivot is free **now** and never again.
 | HS-73-06 | The Record orb (the live verb) | HIGH | **done** (bottom-center; /live's calls verbatim, no getUserMedia; state honest via the one bus — external meetings flip it with the whisper, tap = stop only; stop materializes the meeting with the beat; see [evidence](./evidence-story-06.md)) | 02 |
 | HS-73-07 | The agent rail: run from the world | MED | **done** (personas-only rail + egress dots; anchored ask; the REAL .43 run from the rail UI answered the instruction; copy affordance; the honest theater finding recorded; see [evidence](./evidence-story-07.md)) | 01, 04 |
 | HS-73-08 | The cutover: the Alpine desk dies | HIGH | **done** (the verb inventory caught 2 real gaps — toggle-off + answerCoder — closed BEFORE deletion; one conscious drop recorded (workflow authoring → Workbench); the Alpine desk deleted, /desk-legacy 404s, /desk → /, sprites.js survives; see [evidence](./evidence-story-08.md)) | 02–07 |
-| HS-73-09 | Docs + the locks (the docs story) | MED | todo | 01–08 |
+| HS-73-09 | Docs + the locks (the docs story) | MED | **done** (GETTING_STARTED speaks the Desk; 5 mechanical locks in tests/unit/test_desk_locks.py — no-modal/no-mic/no-narration/positions-contract/front-door-guard; doc guards 85 green; see [evidence](./evidence-story-09.md)) | 01–08 |
 | HS-73-10 | Closeout: the inhabited walk | HIGH | todo | 01–09 |
 
 Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in parallel →
 **08** (cutover) → **09** → **10**.
 
 ## Where we are
+
+**2026-07-02 — HS-73-09 done (9/10).** The docs tell the truth and the
+rules are tests. GETTING_STARTED's arrival + route table speak the Desk
+(README/welcome/ARCHITECTURE checked — already true); and
+tests/unit/test_desk_locks.py turns the phase's owner-ratified rules into
+five instant greps: no dialog takeovers on the desk tree, no browser
+microphone, no privacy narration outside the canonical badge strings, the
+bare hs.diorama.pos contract (persist middleware banned), and the Desk as
+the front door with the inline first-run guard. One story left: the
+closeout walk.
 
 **2026-07-02 — HS-73-08 done (8/10).** One desk. The zero-loss verb
 inventory gated the deletion and earned its keep: it caught the legacy

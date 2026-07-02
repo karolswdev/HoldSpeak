@@ -84,21 +84,24 @@ takes you from install to your first words, **no file editing**:
 
 *The `/welcome` wizard on a fresh install. It takes you from a fresh clone to a verified first dictation, with no file editing.*
 
-A returning user lands on **Home** instead (the wizard never nags). Home says
-what HoldSpeak is and offers your next action. If something later needs
-attention, **`/setup`** is the calm Setup and health surface, and the
-**Privacy** chip in the header always shows what can leave your machine.
+A returning user lands on **the Desk** instead (the wizard never nags): your
+meetings, notes, knowledge bases, and agents as objects in a spatial world.
+Tap an object to open it in place, drag it onto a zone to file it, press the
+orb to record, and ask an agent from the rail. A fresh desk says what
+HoldSpeak is and offers your next action. If something later needs
+attention, **`/setup`** is the calm Setup and health surface, and the egress
+badge in the Desk's corner always shows what can leave your machine.
 
-The web surface is four primary destinations, not a flat list of pages: **Home**,
-the two modes (**Dictation**, **Meetings**), and **Studio** for the advanced
-tools. Everything else nests under one of those.
+The web surface is the Desk plus three rooms reached from its menu: the two
+modes (**Dictation**, **Meetings**) and **Studio** for the advanced tools.
+Everything else nests under one of those.
 
 Useful routes:
 
 | Route | Purpose |
 | --- | --- |
 | `/welcome` | The first-run wizard: the single arrival on a fresh install |
-| `/` | Home: what HoldSpeak is, and your next action |
+| `/` | The Desk: your primitives as a spatial world (record, create, open, file, run) |
 | `/dictation` | Dictation mode: voice typing, the journal, learning, pre-briefing |
 | `/history` | Meetings mode: capture or import, the archive, aftercare |
 | `/studio` | Studio: the advanced tier (Workbench, Cadence, Commands, and more) |

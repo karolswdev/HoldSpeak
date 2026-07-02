@@ -1,8 +1,9 @@
 # HS-73-09 — Docs + the locks (the docs story)
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED (the phase's dedicated docs story — after features, before closeout)
 - **Depends on:** HS-73-01 … HS-73-08
+- **Evidence:** [evidence-story-09.md](./evidence-story-09.md)
 
 ## Goal
 
@@ -55,3 +56,16 @@ because nothing mechanical stopped it; after this story, something does.
 Voice/doc/mermaid guards green; both locks green AND proven red on the old
 copy (captured output); the docs diffs; refreshed screenshots committed;
 full suite green.
+
+## Done
+
+Shipped. GETTING_STARTED's arrival section and route table speak the Desk
+(the Phase-64 entry-point lesson applied; README/welcome/ARCHITECTURE
+checked and already true). The rules are tests now:
+tests/unit/test_desk_locks.py locks no-dialog-takeovers, no-browser-mic,
+no-privacy-narration (setup.ts the single badge-string home), the bare
+hs.diorama.pos contract (persist middleware banned), and the
+Desk-as-front-door with the inline guard. Locks 5/5; doc guards 85 passed
+on the updated prose; full suite 3071 passed (3066 + the 5 locks), 37
+skipped. See
+[evidence-story-09.md](./evidence-story-09.md).
