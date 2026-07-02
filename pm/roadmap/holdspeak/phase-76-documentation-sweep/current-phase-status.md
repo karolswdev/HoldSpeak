@@ -20,7 +20,7 @@ doc of its own**.
 
 | ID | Story | Sev | Status | Depends |
 |---|---|---|---|---|
-| HS-76-01 | The truth audit (the drift ledger) | HIGH | todo | — |
+| HS-76-01 | The truth audit (the drift ledger) | HIGH | **done** (22 docs verified with file:line evidence; 5 HIGH + 2 MED targets routed to stories; 7 docs verified current; 6 dead strays surfaced for the owner; a shipped P75 UI bug caught + fixed; see [evidence](./evidence-story-01.md)) | — |
 | HS-76-02 | README: the Desk era front door | HIGH | todo | 01 |
 | HS-76-03 | ARCHITECTURE catches up | HIGH | todo | 01 |
 | HS-76-04 | THE_DESK.md: the flagship documented | HIGH | todo | 01 |
@@ -28,7 +28,7 @@ doc of its own**.
 
 ## Exit criteria
 
-- [ ] Every user-facing doc's claims read against shipped reality; the
+- [x] Every user-facing doc's claims read against shipped reality; the
       drift ledger ships as evidence (fix-here vs verified-true vs
       out-of-scope-with-reason) (HS-76-01).
 - [ ] README presents the Desk as the main surface with a REAL current
@@ -47,6 +47,16 @@ doc of its own**.
 
 ## Where we are
 
-**2026-07-02 — scaffolded (0/5).** The audit leads; screenshots are shot
-fresh from a seeded hub (the Phase-73 harness pattern), committed under
-docs/assets/screenshots/.
+**2026-07-02 — HS-76-01 done (1/5).** The ledger is in: the systemic
+drift is the front-door move (README/ARCHITECTURE/the index/WEB_DESK all
+predate the Desk-as-`/`), and the sharpest single finding is SECURITY's
+egress table missing three shipped egress doors (the desk webhook, the
+GitHub issue write, the desk Slack relay). Seven docs verified current —
+the per-phase docs stories did their job. Bonus: the screenshot pass
+caught a SHIPPED P75 bug (the empty PreviewCard visible on every route;
+`display: flex` beat `[hidden]`) — fixed. Six dead root strays surfaced
+as an owner decision. Next: 02 (README) / 03 (ARCHITECTURE) / 04
+(WEB_DESK) / 05 (SECURITY + the tail).
+
+**2026-07-02 — scaffolded (0/5).** The audit led; screenshots shot fresh
+from a seeded hub, committed under docs/assets/screenshots/.
