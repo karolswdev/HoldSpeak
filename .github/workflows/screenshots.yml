@@ -27,7 +27,9 @@ jobs:
 
       - name: Install deps (incl. Chrome for Puppeteer)
         working-directory: web
-        run: npm ci
+        run: |
+          npm install -g npm@11
+          npm ci
 
       - name: Capture route screenshots
         working-directory: web

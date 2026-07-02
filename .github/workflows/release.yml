@@ -41,6 +41,7 @@ jobs:
       - name: Build the web bundle
         working-directory: web
         run: |
+          npm install -g npm@11
           npm ci
           npm run build
 
