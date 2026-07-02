@@ -1,6 +1,12 @@
 # HS-72-07 — The meetings archive, decomposed
 
-- **Status:** todo
+- **Status:** cut — superseded by the web stack decision (2026-07-02). The
+  owner decided interactive web surfaces migrate to React + Vite (see
+  Phase 73's re-scaffold); decomposing the `history.astro` Astro/Alpine
+  monolith **in place** would be wasted motion on code now scheduled for
+  migration. `/history`'s React migration is future-phase work; until
+  then the monolith is frozen for feature work by the "no new Alpine"
+  standing rule. The ID is retired, never reused.
 - **Priority:** MED (the largest file in the product, on its most-used archive surface)
 - **Depends on:** —
 

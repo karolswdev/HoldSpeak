@@ -1,6 +1,7 @@
 # Phase 72 — One Spine (cross-surface cohesion)
 
-**Status:** open — scaffolded 2026-07-02, 0/11.
+**Status:** open — scaffolded 2026-07-02, 0/10 (HS-72-07 cut same day;
+10 live stories).
 
 **Last updated:** 2026-07-02 (**opened + scaffolded** from a deep architectural
 analysis of all three surfaces, run 2026-07-02 against the post-Phase-71 tree:
@@ -86,8 +87,10 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
       pre-flight green (HS-72-05).
 - [ ] `meetings.py` split under the module budget with a byte-identical route
       table (HS-72-06).
-- [ ] `/history` decomposed to the Phase-54 pattern, density guard extended,
-      screenshots prove no unstyled JS DOM (HS-72-07).
+- [x] ~~`/history` decomposed to the Phase-54 pattern~~ (HS-72-07 **cut** —
+      superseded by the 2026-07-02 owner decision to migrate interactive
+      surfaces to React; decomposing the Astro monolith in place is wasted
+      motion. Discharged, not done.)
 - [ ] One `/ws` consumer on the web; the second socket is gone; every shell
       widget still fires (HS-72-08).
 - [ ] The iPad's desk records embed the `Contracts` types (bridges deleted);
@@ -108,7 +111,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 | HS-72-04 | One actuator lifecycle | HIGH | todo | 03 |
 | HS-72-05 | Retire the shadows | MED | todo | — |
 | HS-72-06 | Split the meetings god-module | MED | todo | 03, 04 |
-| HS-72-07 | The meetings archive, decomposed | MED | todo | — |
+| HS-72-07 | The meetings archive, decomposed | MED | **cut** (superseded by the 2026-07-02 web stack decision — `/history` migrates to React in a later phase instead of being decomposed in place; see the story file) | — |
 | HS-72-08 | One live bus on the web | MED | todo | — |
 | HS-72-09 | The iPad speaks Contracts natively | HIGH | todo | 01 |
 | HS-72-10 | Docs: the honest map (the docs story) | MED | todo | 01–09 |
@@ -166,6 +169,8 @@ under the PMO gate.
   admin into Settings).
 - `desk.astro` (1,732 lines) decomposition — fresh Phase-71 code; becomes a
   watch item with a density-guard ceiling, not a story.
-- Consolidating the two JS-loading conventions (`?raw`+`new Function` vs ES
-  modules) beyond the pages HS-72-07/08 already touch — recorded as a
-  direction ("new/touched surfaces use ES modules"), not a sweep.
+- ~~Consolidating the two JS-loading conventions~~ — **resolved by the
+  2026-07-02 owner decision** (Phase 73 re-scaffold): interactive surfaces
+  are React + Vite islands; document pages stay Astro; no new Alpine. The
+  `?raw`+`new Function` pattern dies with each surface's migration, desk
+  first.
