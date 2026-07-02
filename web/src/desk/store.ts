@@ -42,10 +42,21 @@ interface DeskState {
   /** id of the object being dragged (render z-lift; float pauses). */
   draggingId: string | null;
   setup: SetupStatus | null;
+  /** Freshly-created ids wearing the NEW beat (settles after ~4.5s). */
+  newIds: string[];
+  /** The world object id whose in-world editor is open (one at a time). */
+  editingId: string | null;
 
   refresh(): Promise<void>;
-  /** Instant create (HS-73-02; HS-73-03 adds the in-world editor + beat). */
+  /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
+   * editor open. The object IS the editor — no modal, ever. */
   createPrimitive(kind: "note" | "kb" | "agent" | "zone"): Promise<void>;
+  markNew(id: string): void;
+  openEditor(id: string): void;
+  closeEditor(): void;
+  /** Autosaving field update through the real PUT routes. */
+  updatePrimitive(kind: string, id: string, patch: Record<string, unknown>): Promise<void>;
+  renameZone(id: string, name: string): Promise<void>;
   setPosition(id: string, pos: UnitPos): void;
   persistPositions(): void;
   clearPosition(id: string): void;
@@ -64,6 +75,8 @@ export const useDesk = create<DeskState>((set, get) => ({
   divedZone: null,
   draggingId: null,
   setup: null,
+  newIds: [],
+  editingId: null,
 
   async refresh() {
     set({ loading: true, error: "" });
@@ -75,23 +88,110 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
 
   async createPrimitive(kind) {
-    const posts: Record<string, [string, Record<string, unknown>]> = {
-      note: ["/api/notes", { title: "New note", body_markdown: "" }],
-      kb: ["/api/kbs", { name: "New KB" }],
-      agent: ["/api/agents", { name: "New agent", avatar: "🤖" }],
-      zone: ["/api/directories", { name: "New zone" }],
+    const posts: Record<string, [string, string, Record<string, unknown>]> = {
+      note: ["/api/notes", "note", { title: "New note", body_markdown: "" }],
+      kb: ["/api/kbs", "kb", { name: "New KB" }],
+      agent: ["/api/agents", "agent", { name: "New agent", avatar: "🤖" }],
+      zone: ["/api/directories", "directory", { name: "New zone" }],
     };
-    const [url, body] = posts[kind];
+    const [url, wireKey, body] = posts[kind];
+    let createdId: string | null = null;
     try {
-      await fetch(url, {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+      const data = await res.json().catch(() => ({}));
+      createdId = data?.[wireKey]?.id || null;
     } catch {
       /* the refresh below reports reachability honestly */
     }
+    if (createdId && kind !== "zone") {
+      // Spawn at stage center (the iPad grammar): the new object appears in
+      // front of you and you drag it away.
+      const positions = { ...get().positions, [createdId]: { x: 0.5, y: 0.55 } };
+      set({ positions });
+      savePositions(positions);
+    }
     await get().refresh();
+    if (createdId) {
+      get().markNew(createdId);
+      if (kind !== "zone") get().openEditor(createdId);
+    }
+  },
+
+  markNew(id) {
+    set({ newIds: [...get().newIds, id] });
+    // The beat settles (glow + ring + badge fade) — the HS-71-06 timing.
+    setTimeout(() => {
+      set({ newIds: get().newIds.filter((x) => x !== id) });
+    }, 4500);
+  },
+
+  openEditor(id) {
+    set({ editingId: id });
+  },
+  closeEditor() {
+    set({ editingId: null });
+    void get().refresh(); // settle the world to the saved truth
+  },
+
+  async updatePrimitive(kind, id, patch) {
+    const urls: Record<string, string> = {
+      note: `/api/notes/${encodeURIComponent(id)}`,
+      kb: `/api/kbs/${encodeURIComponent(id)}`,
+      agent: `/api/agents/${encodeURIComponent(id)}`,
+      directory: `/api/directories/${encodeURIComponent(id)}`,
+    };
+    const url = urls[kind];
+    if (!url) return;
+    // Optimistic local merge so the world's labels track typing.
+    const camel: Record<string, string> = {
+      title: "title", name: "name", body_markdown: "bodyMarkdown", tags: "tags",
+      role: "role", system_prompt: "systemPrompt", user_template: "userTemplate",
+      tools: "tools", kb_id: "kbId", profile_id: "profileId",
+    };
+    const itemsKind = kind === "directory" ? "directory" : (kind as keyof Items);
+    const items = get().items;
+    if (items[itemsKind]) {
+      set({
+        items: {
+          ...items,
+          [itemsKind]: items[itemsKind].map((it) => {
+            if (it.id !== id) return it;
+            const next = { ...it };
+            for (const [w, v] of Object.entries(patch)) {
+              if (camel[w]) (next as any)[camel[w]] = v;
+            }
+            return next;
+          }),
+        },
+      });
+    }
+    try {
+      await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+    } catch {
+      /* saves are on-change; the next one retries — the hub dot reports */
+    }
+  },
+
+  async renameZone(id, name) {
+    // Optimistic local rename; the PUT persists it.
+    const items = get().items;
+    set({
+      items: {
+        ...items,
+        directory: items.directory.map((d) =>
+          d.id === id ? { ...d, name, title: name } : d,
+        ),
+      },
+    });
+    await get().updatePrimitive("directory", id, { name });
   },
 
   setPosition(id, pos) {

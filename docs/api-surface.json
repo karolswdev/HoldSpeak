@@ -441,7 +441,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/agents/{agent_id}",
@@ -449,7 +451,9 @@
         "GET"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/agents/{agent_id}",
@@ -457,7 +461,9 @@
         "PUT"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/agents/{agent_id}/run",
@@ -1193,7 +1199,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/directories/{directory_id}",
@@ -1201,7 +1209,9 @@
         "GET"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/directories/{directory_id}",
@@ -1209,7 +1219,9 @@
         "PUT"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/directories/{directory_id}/members",
@@ -1345,7 +1357,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/kbs/{kb_id}",
@@ -1353,7 +1367,9 @@
         "GET"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/kbs/{kb_id}",
@@ -1361,7 +1377,9 @@
         "PUT"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/meeting",
@@ -1596,7 +1614,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/notes/{note_id}",
@@ -1604,7 +1624,9 @@
         "GET"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/notes/{note_id}",
@@ -1612,7 +1634,9 @@
         "PUT"
       ],
       "module": "web.routes.primitives",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/plugin-jobs",

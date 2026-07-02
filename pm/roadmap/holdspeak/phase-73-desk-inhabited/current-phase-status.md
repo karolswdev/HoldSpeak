@@ -1,6 +1,6 @@
 # Phase 73 — The Desk, Inhabited (on the React foundation)
 
-**Status:** open — 2/10 (HS-73-01..02 done 2026-07-02).
+**Status:** open — 3/10 (HS-73-01..03 done 2026-07-02).
 
 **Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
 the same day, before any story executed: (1) **the Desk is the main surface**
@@ -55,8 +55,9 @@ so the pivot is free **now** and never again.
 - [x] `/` is the Desk: full-bleed, immersive chrome, the first-run guard
       preserved, a guiding empty state that answers "what is this"
       (HS-73-02 — the guard proven both ways against the real milestone).
-- [ ] Note/KB/agent/zone creation is instant and edited in place; zero
-      modal patterns in the desk tree (HS-73-03).
+- [x] Note/KB/agent/zone creation is instant and edited in place; zero
+      modal patterns in the desk tree (HS-73-03 — the DB round-trip proven,
+      tags included).
 - [ ] Tapping any object opens an in-world pull-out; meetings show
       lineage-grouped derivatives; "Open full" is the only navigation
       (HS-73-04).
@@ -82,7 +83,7 @@ so the pivot is free **now** and never again.
 |-------|-------|----------|--------|------------|
 | HS-73-01 | The React foundation: the world, ported | HIGH | **done** (the island at render parity on /desk-next: same sprites/layout/positions contract, drag+Tidy proven, vitest 9/9, side-by-side committed, zero page errors; Alpine /desk frozen; see [evidence](./evidence-story-01.md)) | — |
 | HS-73-02 | The arrival: the Desk is the front door | HIGH | **done** (/ = the island, immersive AppLayout, guard proven both ways, guiding empty state, mark+menu+hub-dot+egress chrome, chips wired to instant-create, /desk→/ + /desk-legacy, nav Desk-first; see [evidence](./evidence-story-02.md)) | 01 |
-| HS-73-03 | Create in-world (no modals, ever) | HIGH | todo | 01 |
+| HS-73-03 | Create in-world (no modals, ever) | HIGH | **done** (instant POST → spawn at center + NEW beat + focused in-world editor; vignette not scrim; autosave PUTs + optimistic merge; agent More in-card; zone rename-in-place; tap≠drag fixed; DB round-trip proven; see [evidence](./evidence-story-03.md)) | 01 |
 | HS-73-04 | Open in-world: the pull-out | HIGH | todo | 01 |
 | HS-73-05 | Zones as landmarks: file and dive | MED | todo | 01 |
 | HS-73-06 | The Record orb (the live verb) | HIGH | todo | 02 |
@@ -95,6 +96,23 @@ Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in paralle
 **08** (cutover) → **09** → **10**.
 
 ## Where we are
+
+**2026-07-02 — HS-73-03 done (3/10).** Creation lives in the world. The
+chips POST instantly, the object spawns at stage center wearing the
+HS-71-06 beat plus a materialize entrance, and the editor opens focused ON
+the stage — the DioInlineNoteCard grammar: the world dims AROUND the
+object via a radial vignette (which doubles as the click-away catcher),
+the float settles while editing, and every keystroke autosaves through the
+real PUT routes (450ms debounce, optimistic local merge so labels track
+typing). Agent's advanced fields expand inside the same card; zones rename
+in place on the tray. The role="dialog" era of desk creation is over — the
+grep is zero across the tree. A real interaction bug was caught by the
+proof run itself: the first tap-vs-drag pass suppressed plain taps (drag
+state set on press, cleared next-tick); fixed so a moved gesture
+suppresses and a tap opens. Proofs: the Playwright ritual end-to-end with
+the DB row asserted (title AND tags), Escape/click-outside/tap-reopen,
+zone rename in the DB, two screenshots; zero page errors. Next: HS-73-04
+(the pull-out).
 
 **2026-07-02 — HS-73-02 done (2/10).** The Desk is the front door. `/`
 mounts the island under a new `immersive` AppLayout prop (no TopNav — the

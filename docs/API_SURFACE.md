@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 229 (plus static mounts). iOS-consumed: 44. Web-consumed: 148.
+Routes: 229 (plus static mounts). iOS-consumed: 44. Web-consumed: 160.
 
 ## device_audio_ws
 
@@ -317,9 +317,9 @@ Routes: 229 (plus static mounts). iOS-consumed: 44. Web-consumed: 148.
 |---|---|---|
 | GET | `/api/agents` | web |
 | POST | `/api/agents` | web |
-| DELETE | `/api/agents/{agent_id}` | server only |
-| GET | `/api/agents/{agent_id}` | server only |
-| PUT | `/api/agents/{agent_id}` | server only |
+| DELETE | `/api/agents/{agent_id}` | web |
+| GET | `/api/agents/{agent_id}` | web |
+| PUT | `/api/agents/{agent_id}` | web |
 | POST | `/api/agents/{agent_id}/run` | ios, web |
 | GET | `/api/chains` | web |
 | POST | `/api/chains` | web |
@@ -329,22 +329,22 @@ Routes: 229 (plus static mounts). iOS-consumed: 44. Web-consumed: 148.
 | POST | `/api/chains/{chain_id}/run` | ios, web |
 | GET | `/api/directories` | web |
 | POST | `/api/directories` | web |
-| DELETE | `/api/directories/{directory_id}` | server only |
-| GET | `/api/directories/{directory_id}` | server only |
-| PUT | `/api/directories/{directory_id}` | server only |
+| DELETE | `/api/directories/{directory_id}` | web |
+| GET | `/api/directories/{directory_id}` | web |
+| PUT | `/api/directories/{directory_id}` | web |
 | GET | `/api/directories/{directory_id}/members` | server only |
 | DELETE | `/api/directories/{directory_id}/members/{primitive_id}` | web |
 | PUT | `/api/directories/{directory_id}/members/{primitive_id}` | web |
 | GET | `/api/kbs` | web |
 | POST | `/api/kbs` | web |
-| DELETE | `/api/kbs/{kb_id}` | server only |
-| GET | `/api/kbs/{kb_id}` | server only |
-| PUT | `/api/kbs/{kb_id}` | server only |
+| DELETE | `/api/kbs/{kb_id}` | web |
+| GET | `/api/kbs/{kb_id}` | web |
+| PUT | `/api/kbs/{kb_id}` | web |
 | GET | `/api/notes` | web |
 | POST | `/api/notes` | web |
-| DELETE | `/api/notes/{note_id}` | server only |
-| GET | `/api/notes/{note_id}` | server only |
-| PUT | `/api/notes/{note_id}` | server only |
+| DELETE | `/api/notes/{note_id}` | web |
+| GET | `/api/notes/{note_id}` | web |
+| PUT | `/api/notes/{note_id}` | web |
 | GET | `/api/profiles` | web |
 | POST | `/api/profiles` | web |
 | DELETE | `/api/profiles/{profile_id}` | web |

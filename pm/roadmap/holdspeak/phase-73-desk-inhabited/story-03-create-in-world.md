@@ -1,8 +1,9 @@
 # HS-73-03 — Create in-world (no modals, ever)
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the no-modals rule, finally enforced on the web)
 - **Depends on:** HS-73-01
+- **Evidence:** [evidence-story-03.md](./evidence-story-03.md)
 
 ## Goal
 
@@ -53,3 +54,23 @@ persisted (real API round-trip). Same for agent and zone rename. Grep: zero
 `role="dialog"` / `aria-modal` under `web/src/desk/`. Keyboard walk
 (create, type, Escape, reopen). Route pre-flight + full suite +
 `npm run build` green.
+
+## Done
+
+Shipped. Create is instant and in-world: the chips POST first, the object
+spawns at stage center wearing the HS-71-06 beat (values verbatim) plus a
+materialize entrance, and its editor opens focused. The object IS the
+editor — anchored to its free side, the world dimmed AROUND it by a radial
+vignette that doubles as the click-away catcher, the float settled while
+editing, saves on-change through the real PUT routes with an optimistic
+local merge. Note (title/body/tags), KB (name), Agent (essentials + More
+expanding in the same card), and zones renaming in place on the tray. The
+tap-vs-drag discrimination was fixed properly (a moved gesture suppresses
+the click; a plain tap opens) — the proof run caught the first
+implementation suppressing taps. Proofs: the full Playwright ritual
+(create → type → reload → DB row carries title AND tags; Escape +
+click-outside close; tap reopens; zone renamed in the DB; agent More
+in-card) + two screenshots; zero modal patterns in the tree; zero page
+errors; vitest 9/9; suite 3065 passed with exactly one failure — the
+manifest guard catching the new island call sites (regenerated, 5/5). See
+[evidence-story-03.md](./evidence-story-03.md).
