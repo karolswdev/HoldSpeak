@@ -219,6 +219,8 @@ import "../styles/global.css";
 
     <script>
       import Alpine from "alpinejs";
+      // Phase 72: the ONE runtime bus (window.__hsBus) for live feedback.
+      import "../scripts/runtime-bus.js";
       import factorySource from "../scripts/welcome-app.js?raw";
       const fn = new Function(factorySource + "; return welcomeApp;");
       window.welcomeApp = fn();

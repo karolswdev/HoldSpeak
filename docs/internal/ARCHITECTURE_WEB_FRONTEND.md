@@ -146,6 +146,38 @@ Static markup that lives in a partial's own template can use normal scoped
 - `holdspeak/static/_built/` is gitignored: edit `web/src`, build, commit
   source only.
 
+## The one live bus (`runtime-bus.js`)
+
+Every live consumer on the web rides ONE `/ws` connection, owned by
+`web/src/scripts/runtime-bus.js`. The dashboard's private socket, the
+presence HUD's socket, and the setup/welcome first-dictation sockets are
+gone (the unification finished what the additive HS-69-07 bus started); a
+page opens exactly one runtime socket, lazily, on the first subscription.
+
+The vocabulary, in one place:
+
+- **Wire frames** (server broadcasts, `{type, data}`): `runtime_activity`,
+  `intel_status`, `intel_token`, `intel_complete`, `intel`, `segment`,
+  `duration`, `bookmark_added`, `actuator_proposed`, `actuator_result`,
+  `aftercare_ready`, `learning_digest`, and friends. Subscribe by type or
+  `"*"`.
+- **Synthetic bus events** (never on the wire): `bus_status` —
+  `{state: connecting|connected|reconnecting, reconnectAt}` on connection
+  transitions. The `/live` connection pill maps from this.
+- **DOM re-dispatch** for listeners outside the module graph (qlippy.js,
+  eval'd Alpine factories): `hs-activity` (a `runtime_activity` frame's
+  data) and `hs-broadcast` (every full frame). `seedState()` runs through
+  the same delivery pipeline, so DOM listeners see the seed too.
+
+Consumers in the module graph import `subscribe`/`seedState`; the
+`new Function`-evaluated Alpine factories (live/setup/welcome) reach the
+same singleton via `window.__hsBus` — their page loader imports the bus
+module first so the global exists before Alpine starts. The bus carries the
+keepalive ping (15s) and exponential backoff with jitter that the dashboard
+pioneered; consumers inherit reconnection for free and must NOT open their
+own `/ws`. (`/api/devices/audio` is a different socket with its own PSK
+handshake — out of scope here.)
+
 ## Follow-ups
 
 `history.astro` and `index.astro` (plus their app scripts) still use the

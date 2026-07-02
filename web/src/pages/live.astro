@@ -606,6 +606,9 @@ import HoldMark from "../components/HoldMark.astro";
 
   <script>
     import Alpine from "alpinejs";
+    // Phase 72: the ONE runtime bus — imported (side effect: window.__hsBus)
+    // before the eval'd factory runs, so connect() finds it.
+    import "../scripts/runtime-bus.js";
     import factorySource from "../scripts/dashboard-app.js?raw";
     import briefingMdSource from "../scripts/briefing-markdown.js?raw";
     import egressBadgeSource from "../scripts/egress-badge.js?raw";

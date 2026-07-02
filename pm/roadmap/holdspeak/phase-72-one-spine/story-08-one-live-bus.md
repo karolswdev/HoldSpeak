@@ -1,8 +1,9 @@
 # HS-72-08 — One live bus on the web
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED (two sockets, two dispatch vocabularies, one set of widgets)
 - **Depends on:** —
+- **Evidence:** [evidence-story-08.md](./evidence-story-08.md)
 
 ## Goal
 
@@ -48,3 +49,23 @@ vocabulary, and every consumer subscribes.
 One WebSocket connection per page in devtools (screenshot); the widget walk
 screenshots; the reconnect capture; zero page errors on `/live`, `/presence`,
 `/dictation`; full suite + web build green.
+
+## Done
+
+Shipped — and the inventory found FOUR private sockets, not two
+(`setup-app.js` + `welcome-app.js` also owned one each). `runtime-bus.js`
+is the sole `/ws` owner with the dashboard's robustness folded in (15s
+ping, exponential backoff + jitter, the synthetic `bus_status` event the
+/live connection pill maps from); one `deliver()` pipeline serves frames
+AND the seed (DOM listeners now see the seed — previously bypassed);
+`window.__hsBus` feeds the eval'd Alpine factories, whose loaders import
+the bus first. The dashboard subscribes ("*" → its untouched router),
+presence subscribes + seeds (its duplicate DOM dispatches gone — /presence
+used to double-fire `hs-activity`), setup/welcome subscribe. The
+vocabulary is documented once (ARCHITECTURE_WEB_FRONTEND "The one live
+bus"). Proofs (`tests/e2e/test_live_bus.py`, real app + Playwright):
+exactly one socket on /live, /dictation, /presence, /setup with zero page
+errors; a real server broadcast rendering on the presence card with the
+`hs-activity` re-dispatch pinned; reconnect proven against a full server
+restart with a live post-restart broadcast — 3 passed. Full suite 3066
+passed, 37 skipped. See [evidence-story-08.md](./evidence-story-08.md).

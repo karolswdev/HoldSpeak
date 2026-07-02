@@ -1,9 +1,13 @@
 // HS-41-03: minimal runtime-presence HUD driver.
 //
-// Connects to /ws, renders the Signal presence card from `runtime_activity`
-// messages, and hides the card when the activity window policy says hidden
-// (idle). Seeds from /api/state on load, and auto-reconnects. No framework —
-// this is loaded in a small native webview, so it stays tiny.
+// Renders the Signal presence card from `runtime_activity` frames and hides
+// the card when the activity window policy says hidden (idle). Phase 72: the
+// frames arrive over the ONE runtime bus (runtime-bus.js — it owns the /ws
+// socket, the reconnects, the seed, and the hs-activity/hs-broadcast DOM
+// dispatch that qlippy.js rides). No framework — this is loaded in a small
+// native webview, so it stays tiny.
+
+import { seedState, subscribe } from "./runtime-bus.js";
 
 const card = document.getElementById("presence-card");
 const ring = document.getElementById("presence-ring");
@@ -47,8 +51,7 @@ function isLive(state) {
 
 function applyActivity(activity) {
   if (!activity || typeof activity !== "object") return;
-  // HS-56-02: let the mascot layer (qlippy.js) follow the same stream.
-  document.dispatchEvent(new CustomEvent("hs-activity", { detail: activity }));
+  // (The bus dispatches hs-activity/hs-broadcast for the mascot layer.)
   const state = String(activity.state || "idle").trim().toLowerCase() || "idle";
   const policy = activity.window && typeof activity.window === "object" ? activity.window : {};
   const visible = policy.visible !== undefined ? Boolean(policy.visible) : state !== "idle";
@@ -66,35 +69,7 @@ function applyActivity(activity) {
   sourceEl.textContent = SOURCES[source] || source || "Runtime";
 }
 
-// Seed from the current runtime state so the HUD reflects reality immediately.
-fetch("/api/state")
-  .then((r) => r.json())
-  .then((state) => {
-    const activity =
-      (state && state.activity) || (state && state.runtime && state.runtime.activity);
-    if (activity) applyActivity(activity);
-  })
-  .catch(() => {});
-
-function connect() {
-  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const ws = new WebSocket(`${proto}//${window.location.host}/ws`);
-  ws.onmessage = (event) => {
-    let msg = null;
-    try {
-      msg = JSON.parse(event.data);
-    } catch (_e) {
-      return;
-    }
-    if (msg && msg.type === "runtime_activity") applyActivity(msg.data);
-    // HS-56-02: re-dispatch every broadcast as a DOM event so the mascot's
-    // card stories (actuator / learning / aftercare) ride the same socket.
-    if (msg && msg.type) {
-      document.dispatchEvent(new CustomEvent("hs-broadcast", { detail: msg }));
-    }
-  };
-  ws.onclose = () => window.setTimeout(connect, 1500);
-  ws.onerror = () => {};
-}
-
-connect();
+// The bus seeds from /api/state (through the same delivery pipeline as wire
+// frames, so qlippy sees the seed too) and keeps the card live from there.
+subscribe("runtime_activity", (data) => applyActivity(data));
+seedState();

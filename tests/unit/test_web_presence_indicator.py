@@ -42,12 +42,21 @@ def test_presence_hud_page_is_standalone_and_token_styled() -> None:
 
 
 def test_presence_hud_driver_consumes_runtime_activity() -> None:
+    # Phase 72: the HUD rides the ONE runtime bus (runtime-bus.js owns the
+    # socket, the reconnects, and the /api/state seed) instead of a private
+    # websocket. Pin the subscription + seed, and that no private socket
+    # crept back in.
     script_source = (ROOT / "web/src/scripts/presence-app.js").read_text()
-    assert 'msg.type === "runtime_activity"' in script_source
-    assert "applyActivity(msg.data)" in script_source
-    assert "/api/state" in script_source          # seeds from current state
-    assert "/ws" in script_source                  # live websocket
-    assert "setTimeout(connect" in script_source   # auto-reconnect
+    assert 'subscribe("runtime_activity"' in script_source
+    assert "applyActivity(data)" in script_source
+    assert "seedState()" in script_source          # seeds via the bus
+    assert "runtime-bus" in script_source          # the one socket owner
+    assert "new WebSocket" not in script_source    # no private socket
+
+    bus_source = (ROOT / "web/src/scripts/runtime-bus.js").read_text()
+    assert "/ws" in bus_source                     # the live websocket
+    assert "scheduleReconnect" in bus_source       # auto-reconnect
+    assert "/api/state" in bus_source              # the seed
 
 
 def test_presence_route_serves_the_hud() -> None:

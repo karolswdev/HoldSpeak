@@ -1,9 +1,11 @@
 # Phase 72 — One Spine (cross-surface cohesion)
 
-**Status:** open — 6/10 (HS-72-01..06 done 2026-07-02; HS-72-07 cut;
+**Status:** open — 7/10 (HS-72-01..06 + 08 done 2026-07-02; HS-72-07 cut;
 10 live stories).
 
-**Last updated:** 2026-07-02 (**HS-72-06 done** — the meetings god-module
+**Last updated:** 2026-07-02 (**HS-72-08 done** — one live bus: four
+private sockets converted, robustness folded into the bus, one-socket-per-
+page + broadcast + reconnect proven e2e. Earlier: **HS-72-06 done** — the meetings god-module
 is a seven-module package under budget, route table byte-identical per the
 manifest guard; a latent production NameError in the intel aftercare
 callback surfaced, fixed, regression-locked. Earlier: **HS-72-05 done** — the shadow modules
@@ -116,8 +118,9 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
       superseded by the 2026-07-02 owner decision to migrate interactive
       surfaces to React; decomposing the Astro monolith in place is wasted
       motion. Discharged, not done.)
-- [ ] One `/ws` consumer on the web; the second socket is gone; every shell
-      widget still fires (HS-72-08).
+- [x] One `/ws` consumer on the web; the second socket is gone; every shell
+      widget still fires (HS-72-08 — four private sockets found and
+      converted; one-socket-per-page + broadcast + reconnect proven e2e).
 - [ ] The iPad's desk records embed the `Contracts` types (bridges deleted);
       golden fixtures round-trip in Swift tests; Simulator proof (HS-72-09).
 - [ ] `docs/ARCHITECTURE.md` matches the measured reality; API surface doc
@@ -137,7 +140,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 | HS-72-05 | Retire the shadows | MED | **done** (meeting.py→meeting_recorder.py, runtime_activity.py→activity_tracker.py, all importers; wire/API names untouched — the frame tests caught the too-broad first sweep; logger fixed; companion-app.js + /design/check deleted; /activity on Studio; 97+8 tests, 18 pages; see [evidence](./evidence-story-05.md)) | — |
 | HS-72-06 | Split the meetings god-module | MED | **done** (meetings/ package: 7 route modules + 44-line façade, all ≤650; manifest diff = module fields only; a REAL latent NameError in the intel aftercare callback surfaced + fixed + regression-locked; see [evidence](./evidence-story-06.md)) | 03, 04 |
 | HS-72-07 | The meetings archive, decomposed | MED | **cut** (superseded by the 2026-07-02 web stack decision — `/history` migrates to React in a later phase instead of being decomposed in place; see the story file) | — |
-| HS-72-08 | One live bus on the web | MED | todo | — |
+| HS-72-08 | One live bus on the web | MED | **done** (FOUR private sockets found + converted, not two; runtime-bus sole /ws owner w/ ping+backoff+bus_status; deliver() serves frames AND seed; window.__hsBus for eval'd factories; e2e: 1 socket/page, real broadcast on the presence card, reconnect after restart; see [evidence](./evidence-story-08.md)) | — |
 | HS-72-09 | The iPad speaks Contracts natively | HIGH | todo | 01 |
 | HS-72-10 | Docs: the honest map (the docs story) | MED | todo | 01–09 |
 | HS-72-11 | Closeout: the one-spine proof | HIGH | todo | 01–10 |
@@ -148,6 +151,29 @@ Build order: **01 → 02** (the contract, then the declared surface) → **03 �
 **11** (closeout).
 
 ## Where we are
+
+**2026-07-02 — HS-72-08 done (7/10).** The web has ONE live socket. The
+sweep found four private `/ws` owners, not the scaffold's two — the /live
+dashboard, /presence, AND the /setup + /welcome first-dictation listeners —
+all converted. `runtime-bus.js` owns the socket with the dashboard's
+hard-won robustness folded in (15s keepalive, exponential backoff with
+jitter, and a synthetic `bus_status` event the /live connection pill and
+its two toasts map from); one `deliver()` pipeline serves wire frames AND
+`seedState()`, fixing a subtle gap where DOM listeners (qlippy) never saw
+the seed, and ending /presence's double-fired `hs-activity`. Eval'd Alpine
+factories reach the singleton via `window.__hsBus` (their page loaders
+import the bus first — module-instance dedup makes it the same socket the
+shell widgets ride). The vocabulary is documented once in
+ARCHITECTURE_WEB_FRONTEND. Proven e2e against the real app
+(`tests/e2e/test_live_bus.py`): exactly one runtime socket on /live,
+/dictation, /presence and /setup with zero page errors; a real
+`server.broadcast` rendering on the presence card with the `hs-activity`
+re-dispatch pinned by a pre-armed listener; and reconnect proven against a
+full server stop/restart with a live post-restart broadcast. (A test-authoring
+trap worth recording: an `evaluate()` whose expression value is the armed
+promise awaits itself — arrow-body form required.) Full suite 3066 passed,
+37 skipped. Next: HS-72-09 (the iPad speaks Contracts natively) — the last build
+story.
 
 **2026-07-02 — HS-72-06 done (6/10).** The meetings god-module is a package:
 `routes/meetings/` with seven route modules (live, crud, speakers,
