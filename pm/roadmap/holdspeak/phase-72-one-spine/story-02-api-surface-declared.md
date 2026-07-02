@@ -1,8 +1,9 @@
 # HS-72-02 — The API surface, declared
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the map every later rename/split is proven against)
 - **Depends on:** —
+- **Evidence:** [evidence-story-02.md](./evidence-story-02.md)
 
 ## Goal
 
@@ -51,3 +52,18 @@ from the app, consumers are declared per route, and drift fails a test.
 `docs/API_SURFACE.md` + `docs/api-surface.json` committed and readable; the
 snapshot test green; a deliberate unregistered-route scratch run red (captured
 output); the manifest diff for the prefix conversion empty; full suite green.
+
+## Done
+
+Shipped. The surface is a committed, generated artifact: 229 routes (incl.
+both WebSocket routes and the static mount) with per-route consumers
+extracted from the real call sites — **44 iOS-consumed, 151 web-consumed**,
+the rest honestly server-only. Five snapshot tests keep it true (manifest ==
+live app, markdown == manifest, clients-only-call-served-routes, non-vacuity
+pins, extractor canary), and both drift directions were proven red and
+reverted (an undeclared scratch route; a Swift call to an unserved path).
+The generated markdown passes the full doc-drift guard; full suite 3056
+passed, 38 skipped. Deviation recorded:
+the cosmetic `APIRouter(prefix=...)` conversion was skipped (the manifest
+makes it moot; HS-72-06 adopts the style where it rewrites anyway). See
+[evidence-story-02.md](./evidence-story-02.md).

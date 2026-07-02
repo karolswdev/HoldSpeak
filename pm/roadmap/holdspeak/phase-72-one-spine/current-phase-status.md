@@ -1,9 +1,12 @@
 # Phase 72 — One Spine (cross-surface cohesion)
 
-**Status:** open — 1/10 (HS-72-01 done 2026-07-02; HS-72-07 cut; 10 live
-stories).
+**Status:** open — 2/10 (HS-72-01, HS-72-02 done 2026-07-02; HS-72-07 cut;
+10 live stories).
 
-**Last updated:** 2026-07-02 (**HS-72-01 done** — the primitive contract is
+**Last updated:** 2026-07-02 (**HS-72-02 done** — the API surface is a
+declared, committed artifact: 229 routes with call-site-derived consumers
+(44 iOS / 151 web), five snapshot tests, both drift directions proven red.
+Earlier: **HS-72-01 done** — the primitive contract is
 machine-checked: 8 kind schemas + the ChangeSet envelope + one golden fixture,
 three guards (hub pytest / Swift fixture round-trip / validate.py), the
 three-way kind-set lock, four real drifts caught on the first pass. See
@@ -80,9 +83,10 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
       all three surfaces validate against them in their own test suites; a
       deliberate one-surface drift fails the guard (HS-72-01 — proven red
       both ways, outputs in the evidence).
-- [ ] A committed, generated API-surface manifest with per-route consumers;
+- [x] A committed, generated API-surface manifest with per-route consumers;
       snapshot tests fail on undeclared routes and on Swift calls to
-      undeclared paths (HS-72-02).
+      undeclared paths (HS-72-02 — both directions proven red, outputs in
+      the evidence).
 - [ ] "Companion" means exactly one thing; the coder picker and the desk
       actuator relay live on their own prefixes, with the Swift client and
       web callers moved in the same story (HS-72-03).
@@ -111,7 +115,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 | Story | Title | Priority | Status | Depends on |
 |-------|-------|----------|--------|------------|
 | HS-72-01 | The primitive contract, machine-checked | HIGH | **done** (8 kind schemas + ChangeSet envelope + golden fixture; three guards — pytest over a real pull, Swift fixture round-trip, validate.py; three-way kind-set lock; 4 real drifts caught: tombstone payloads (fixed), missing updated_at (tolerant decoders), lossy agent fields (locked, follow-up), the baseURL decode bug (fixed); drift proven red both ways; see [evidence](./evidence-story-01.md)) | — |
-| HS-72-02 | The API surface, declared | HIGH | todo | — |
+| HS-72-02 | The API surface, declared | HIGH | **done** (generated manifest `docs/api-surface.json` + `docs/API_SURFACE.md`: 229 routes, consumers from real call sites — 44 iOS / 151 web; 5 snapshot tests incl. clients-only-call-served-routes; both drift directions proven red; doc guards green; see [evidence](./evidence-story-02.md)) | — |
 | HS-72-03 | One name per concept: untangle "companion" | HIGH | todo | 02 |
 | HS-72-04 | One actuator lifecycle | HIGH | todo | 03 |
 | HS-72-05 | Retire the shadows | MED | todo | — |
@@ -128,6 +132,26 @@ Build order: **01 → 02** (the contract, then the declared surface) → **03 �
 **11** (closeout).
 
 ## Where we are
+
+**2026-07-02 — HS-72-02 done (2/10).** The API surface is a declared,
+committed artifact. `scripts/gen_api_surface.py` enumerates the REAL
+assembled app (the pre-flight's own construction, so nothing hides) and tags
+every route with its consumers, extracted from the real call sites
+(`apple/Sources` + `apple/App` Swift literals with `\(…)`-interpolation
+wildcards; `web/src` js/ts/astro literals with `${…}` wildcards and
+truncated-interpolation prefix fragments). The measured surface:
+**229 routes — 44 iOS-consumed, 151 web-consumed** (the hand-written
+ARCHITECTURE description undercounts the iPad by half; HS-72-10 will link
+the artifact instead). Five snapshot tests hold it: committed manifest ==
+live app, committed markdown == manifest, clients-only-call-served-routes,
+non-vacuity pins, and an extractor canary. Calibration caught real
+generator traps (FastAPI's WS class is `APIWebSocketRoute` — a naive check
+silently dropped `/ws`; Swift log strings leaking as paths). Both drift
+directions proven red and reverted. Doc-drift guard 15/15 over the
+generated markdown; api-surface tests 5/5; full suite green at ship.
+Deviation: the cosmetic `APIRouter(prefix=…)` conversion skipped (recorded
+in the evidence). Next: HS-72-03 (untangle "companion") — its rename proof
+is now a manifest diff showing exactly the moved routes.
 
 **2026-07-02 — HS-72-01 done (1/10).** The primitive contract is machine-checked.
 Eight kind schemas + the ChangeSet envelope landed beside the existing
