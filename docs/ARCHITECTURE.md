@@ -58,13 +58,16 @@ flowchart TB
     DR["Dictation pipeline<br/>(dictation_runner.py)"]
     MS["Meeting session<br/>(meeting_session/)"]
     PH["Plugin host + router<br/>(plugins/host.py, router.py)"]
+    RUN["Capability runs<br/>(web/routes/primitives.py)"]
     AX["Actuator executor<br/>(plugins/actuator_executor.py)"]
     SRV["Web server + API<br/>(web_server.py, web/routes/*)"]
   end
 
   subgraph out["Outputs"]
     TY["Keyboard inject<br/>(typer.py)"]
-    UI["Web UI + presence<br/>(web/, desktop_presence.py)"]
+    DESK["The Desk, the web front door<br/>(web/src/desk/, React island at /)"]
+    UI["The rooms + presence<br/>(web/src/pages/, desktop_presence.py)"]
+    BUS["Runtime bus, the one /ws per page<br/>(web/src/scripts/runtime-bus.js)"]
     CN["Gated connectors<br/>(plugins/gated_connector.py)"]
   end
 
@@ -89,7 +92,13 @@ flowchart TB
   PH --> AX
   AX --> CN
   CN -. "approved egress" .-> EXT(["GitHub / Slack / webhooks"])
+  SRV --> DESK
   SRV --> UI
+  SRV -. "live frames" .-> BUS
+  BUS --> DESK
+  BUS --> UI
+  RUN -. "prompt" .-> LLM
+  RUN --> DB
   runtime <--> DB
   SRV -. "WebSocket" .-> DEV
   HC -. "meeting / dictation / proposal routes, LAN, Bearer token" .-> SRV
@@ -116,10 +125,11 @@ flowchart TD
   VC -- no --> PIPE{"Dictation pipeline enabled?"}
   PIPE -- "off, the default" --> FORK
   PIPE -- "on" --> STAGES["Stages, in order:<br/>intent-router, project-rewriter, kb-enricher<br/>(project-rewriter calls your LLM)"]
-  STAGES --> FORK{"Entered by wake word?"}
-  FORK -- "hotkey or device" --> TYPE["Type into the focused app<br/>(typer.py)"]
-  FORK -- "wake, preview by default" --> PREVIEW["Preview card, nothing typed yet"]
+  STAGES --> FORK{"Preview first?"}
+  FORK -- "no, the default for hotkey and device" --> TYPE["Type into the focused app<br/>(typer.py)"]
+  FORK -- "wake word (its default), or the opt-in<br/>dictation.preview_before_type" --> PREVIEW["Preview card, nothing typed yet<br/>(one-shot server token)"]
   PREVIEW -. "you tap Type it" .-> TYPE
+  PREVIEW -. "Discard burns the token" .-> J
   TYPE --> J[("Journal the run<br/>db/journal.py")]
 ```
 
@@ -242,6 +252,7 @@ flowchart TD
   HOST["Plugin host runs the chain<br/>(plugins/host.py)"]
   HOST -. "intel" .-> LLM(["LLM backend"])
   HOST --> ART["Typed artifacts:<br/>decisions, action items, ADRs, risk registers, and more"]
+  RUNB["A persona / chain / workflow run<br/>(web/routes/primitives.py)"] -- "run-born artifact,<br/>lineage names the capability" --> ART
   ART --> AFT["Aftercare digest:<br/>open, decided, changed since last time<br/>(meeting_aftercare.py)"]
   AFT --> ISSUE["An accepted action becomes<br/>a GitHub issue proposal"]
   AFT --> SLACK["The digest or draft becomes<br/>a Send to Slack proposal (slack_export.py)"]
@@ -268,6 +279,8 @@ flowchart LR
   RT -->|"loopback by default; token required off-loopback"| WEB(["Browser and API clients"])
   RT -->|"only when intel provider is cloud or auto; transcript text"| CLOUD(["Cloud LLM endpoint"])
   RT -->|"approved proposal only; to the configured host"| SK(["Slack webhook"])
+  RT -->|"approved proposal only; to the one configured endpoint"| WHK(["Companion webhook<br/>(Discord, Zapier, any URL you set)"])
+  RT -->|"approved proposal only; via your own gh"| GH(["GitHub issue create"])
   RT -->|"opt-in pack; entity IDs via your own CLIs"| CLI(["gh, jira, to their services"])
   RT -->|"opt-in; queue stats only, no transcript"| OPS(["Ops alert webhook"])
   RT -->|"one-time inbound fetch, about 7 MB"| WM(["Wake models, GitHub releases"])

@@ -151,9 +151,9 @@ meeting data is persisted on stop.
 
 ## Web Interfaces
 
-When a meeting starts, HoldSpeak launches a local-only web server on `127.0.0.1` with two browser experiences.
+The always-on local web runtime (`127.0.0.1`) carries two meeting experiences.
 
-### 1) Live Dashboard (`/`)
+### 1) Live Dashboard (`/live`)
 
 Use this during an active meeting for real-time operations:
 - Live transcript with speaker labels and timestamps

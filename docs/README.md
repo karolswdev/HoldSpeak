@@ -5,9 +5,10 @@ app and learns how you work, and meetings that end with decisions, actions,
 and follow-ups instead of a recording. Everything runs on your machine,
 including the LLM. This page is the map. Pick a journey.
 
-The web app opens on **Home** (what HoldSpeak is, and your next action), with
-the two modes (**Dictation**, **Meetings**) as the front door and a **Studio**
-tier for the advanced tools. Four destinations, not a flat list of pages.
+The web app opens on **the Desk**: everything the two modes produce, living
+as objects in one spatial world (record from the orb, ask an agent from the
+rail, file things into zones). The rooms hang off its menu: the two modes
+(**Dictation**, **Meetings**) and a **Studio** tier for the advanced tools.
 
 > New here? Start with the [main README](../README.md) for the pitch and a
 > quickstart, then follow **Start here** below.
@@ -16,6 +17,8 @@ tier for the advanced tools. Four destinations, not a flat list of pages.
 
 - **[Getting Started](./GETTING_STARTED.md)**: install, grant permissions, and land
   your first hold-to-talk dictation in another app.
+- **[The Desk](./WEB_DESK.md)**: the front door itself. The world, its
+  objects, and every verb (create, open, file, record, ask, preview).
 
 ## Understand the system
 
@@ -84,7 +87,7 @@ tier for the advanced tools. Four destinations, not a flat list of pages.
 
 ## Extend: build on it
 
-- **[The Desk](./WEB_DESK.md)**: the spatial home for every primitive (meetings,
+ (meetings,
   notes, KBs, agents, chains, workflows). Arrange objects by hand, file them into
   shelf-zones, and dive through, all from your local hub.
 - **[Plugin Authoring](./PLUGIN_AUTHORING.md)**: write a meeting-intel plugin. The
