@@ -21,7 +21,7 @@ materialize beat are both READY consumers — the hub is the missing half.
 | HS-74-01 | Run results persist as artifacts (hub) | HIGH | **done** (schema v6: owner-typed artifacts per the v5 precedent; all three routes persist + artifact_id; sync's run-born lane, wire shape unchanged; 5/5 incl. the facsimile upgrade; see [evidence](./evidence-story-01.md)) | — |
 | HS-74-02 | Run frames: the theater's heartbeat (hub) | MED | **done** (intel_status scope=run frames: running→ready|error with capability identity; one bracket per chain; workflow both paths; /live panel scope-guarded; no-token lock; 4/4 captured on the real app; see [evidence](./evidence-story-02.md)) | — |
 | HS-74-03 | The result lands on the desk (web) | HIGH | **done** (runCapability: refresh + NEW beat on artifact_id; both surfaces; theater plays with zero client wiring; REAL .43 proof — 'landed' materialized, frames [running, ready] captured, via-Owl lineage; see [evidence](./evidence-story-03.md)) | 01, 02 |
-| HS-74-04 | Docs: the run story end to end | MED | todo | 01–03 |
+| HS-74-04 | Docs: the run story end to end | MED | **done** (GETTING_STARTED speaks the loop; README/ARCHITECTURE verified unchanged; the voice guard caught my own dash; 85 green; see [evidence](./evidence-story-04.md)) | 01–03 |
 | HS-74-05 | Closeout: the run walk | HIGH | todo | 01–04 |
 
 ## Exit criteria
@@ -35,11 +35,14 @@ materialize beat are both READY consumers — the hub is the missing half.
 - [x] A run from the rail/pull-out materializes the artifact on the desk
       with the NEW beat and `via <capability>` lineage; proven on the
       `.43` endpoint (HS-74-03).
-- [ ] Entry-point docs speak the completed loop (HS-74-04).
+- [x] Entry-point docs speak the completed loop (HS-74-04).
 - [ ] The run walk: ask → theater → the artifact object → open → lineage,
       one session, pathname never leaves `/` (HS-74-05).
 
 ## Where we are
+
+**2026-07-02 — HS-74-04 done (4/5).** The docs speak the loop. One story
+left: the run walk closeout.
 
 **2026-07-02 — HS-74-03 done (3/5).** The loop is CLOSED on real metal:
 ask the Owl from the rail, the .43 model answers, the answer persists as
