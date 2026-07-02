@@ -193,7 +193,11 @@ table actuator_proposal_audit: CREATE TABLE actuator_proposal_audit (
 )
 table actuator_proposals: CREATE TABLE actuator_proposals (
     id TEXT PRIMARY KEY,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    -- v5 (Phase 72): a proposal is owner-typed. origin='meeting' rows carry a
+    -- real meeting_id; origin='desk' rows (the iPad desk relay) carry NULL —
+    -- the old hidden 'companion' sentinel meeting is gone.
+    meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE,
+    origin TEXT NOT NULL DEFAULT 'meeting' CHECK (origin IN ('meeting', 'desk')),
     window_id TEXT NOT NULL DEFAULT '',
     plugin_id TEXT NOT NULL,
     plugin_version TEXT NOT NULL DEFAULT 'unknown',

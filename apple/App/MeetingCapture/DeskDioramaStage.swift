@@ -302,64 +302,11 @@ struct DioMenuItem: Identifiable { let id = UUID(); let label: String; let icon:
 
 // A zone is a resizable, free-placed AREA: a path (recursion), a colour, a unit-centre (cx,cy) and a size
 // (w,h in points). Drag to arrange (tetris), corner-grip to resize. Persisted in hs.diorama.zones.
-struct ZoneRec: Equatable {
-    var path: String; var color: Int; var cx: Double; var cy: Double; var w: Double; var h: Double
-    // style (all optional, default to the old look): a zone is now paintable
-    var borderW: Double = 1.5
-    var borderStyle: Int = 0    // 0 solid · 1 dashed · 2 dotted
-    var fillStyle: Int = 0      // 0 gradient · 1 solid · 2 hatch · 3 dots · 4 grid
-    var fillOpacity: Double = 0.12
-    var glow: Bool = false
-    var hex: Int = 0            // 0 ⇒ use the palette colour; else a fully custom colour
+// The ZoneRec itself lives in Sources/RuntimeCore/Desk/DeskRecords.swift (HS-72-09), embedding the
+// canonical `Directory` contract (identity + nesting); geometry/paint stays local. Only its SwiftUI
+// paint resolution lives here.
+extension ZoneRec {
     var tint: Color { DioPal.zoneColor(color, hex) }
-
-    // Explicit memberwise init — restored because the `init(directory:)` bridge below
-    // suppresses Swift's synthesized memberwise initializer (all existing call sites use this).
-    init(path: String, color: Int, cx: Double, cy: Double, w: Double, h: Double,
-         borderW: Double = 1.5, borderStyle: Int = 0, fillStyle: Int = 0,
-         fillOpacity: Double = 0.12, glow: Bool = false, hex: Int = 0) {
-        self.path = path; self.color = color; self.cx = cx; self.cy = cy; self.w = w; self.h = h
-        self.borderW = borderW; self.borderStyle = borderStyle; self.fillStyle = fillStyle
-        self.fillOpacity = fillOpacity; self.glow = glow; self.hex = hex
-    }
-
-    // MARK: - CANONICAL BRIDGE (wave 4) — a ZoneRec IS the contract `Directory`.
-    //
-    // THE SPLIT: only identity + nesting cross the wire. The directory `id` is the zone's
-    // `path`; `parentId` is the parent path (a top-level zone → nil); `name` is the path's
-    // last segment. Geometry (cx/cy/w/h) + paint (color/border/fill/glow) are PER-DEVICE
-    // layout and are deliberately NOT carried — they stay on this ZoneRec only.
-    static func directoryId(forPath path: String) -> String { path }
-    static func parentId(forPath path: String) -> String? {
-        var c = path.split(separator: "/").map(String.init)
-        if !c.isEmpty { c.removeLast() }
-        let p = c.joined(separator: "/")
-        return p.isEmpty ? nil : p
-    }
-    func toDirectory(now: Date = Date()) -> Directory {
-        Directory(id: ZoneRec.directoryId(forPath: path),
-                  name: path.split(separator: "/").last.map(String.init) ?? path,
-                  parentId: ZoneRec.parentId(forPath: path),
-                  createdAt: now, updatedAt: now)
-    }
-    func synced(at: Date = Date()) -> Synced<Directory> {
-        .live(toDirectory(now: at), id: path, kind: .directory, modifiedAt: at)
-    }
-
-    // INVERSE BRIDGE — build a ZoneRec from an incoming `Directory` with DEFAULT geometry
-    // (the directory carried none). `index` spreads fresh zones across the canvas so a
-    // batch of pulled directories don't stack on one spot. The path-as-id round-trips
-    // back into the desk's slash-nested `path` model unchanged.
-    init(directory d: Directory, index: Int = 0) {
-        self.path = d.id
-        self.color = index
-        // a tidy default grid placement; the user can re-arrange + paint locally afterward
-        let col = index % 3, row = (index / 3) % 3
-        self.cx = 0.27 + 0.23 * Double(col)
-        self.cy = 0.20 + 0.18 * Double(row)
-        self.w = 168
-        self.h = 104
-    }
 }
 
 // the resolved look handed to the tray renderer
@@ -2729,7 +2676,7 @@ struct DioActSheet: View {
 
 // The link to the paired Mac (host PC). Connectors route THROUGH it: the iPad proposes + approves; the host
 // executes with the Slack credential joined in memory ON THE MAC — the iPad never holds it. Grounded in the
-// HoldSpeak actuator framework (propose→approve→execute, Phase 37/38/61) via /api/companion/slack/*.
+// HoldSpeak actuator framework (propose→approve→execute, Phase 37/38/61) via /api/desk/actuators/slack/*.
 struct DeskHostLink {
     let host: String; let port: Int
     // The hub's web auth token. A LAN/non-loopback bind REQUIRES it, so every authed request rides
@@ -2752,14 +2699,14 @@ struct DeskHostLink {
     func propose(target: String, title: String, text: String) async throws -> (id: String, preview: String) {
         var body: [String: Any] = ["text": text]
         if !title.isEmpty { body["title"] = title }
-        let (data, resp) = try await post("api/companion/\(target)/propose", body)
+        let (data, resp) = try await post("api/desk/actuators/\(target)/propose", body)
         try Self.check(data, resp, "Your desktop refused the send.")
         let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]
         return (p?["id"] as? String ?? "", p?["preview"] as? String ?? text)
     }
     /// Approve (→ execute) or reject the proposal on the host → (status, error?).
     func decide(target: String, id: String, approved: Bool) async throws -> (status: String, error: String?) {
-        let (data, resp) = try await post("api/companion/\(target)/\(id)/decision",
+        let (data, resp) = try await post("api/desk/actuators/\(target)/\(id)/decision",
                                           ["decision": approved ? "approved" : "rejected", "decided_by": "ipad-desk"])
         try Self.check(data, resp, "Your desktop refused the decision.")
         let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]

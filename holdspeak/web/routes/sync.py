@@ -125,16 +125,22 @@ def _artifact_value(artifact: Any) -> dict[str, Any]:
 
 
 def _primitive_record(rec: Any, kind: str) -> dict[str, Any]:
-    """A primitive dataclass → a `{meta, value}` sync record."""
-    value = rec.to_dict()
+    """A primitive dataclass → a `{meta, value}` sync record.
+
+    A tombstone carries NO payload (`value` is null exactly when
+    `meta.deleted`) — the contract rule Sync.swift documents and the
+    ChangeSet schema enforces (HS-72-01 caught the hub emitting full values
+    on tombstones, violating its own contract).
+    """
+    deleted = bool(rec.deleted)
     return {
         "meta": {
             "id": rec.id,
             "kind": kind,
             "last_modified": rec.last_modified,
-            "deleted": bool(rec.deleted),
+            "deleted": deleted,
         },
-        "value": value,
+        "value": None if deleted else rec.to_dict(),
     }
 
 

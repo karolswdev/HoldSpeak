@@ -14,7 +14,7 @@
  *   Workflows— GET/POST /api/workflows           (LIVE read + author)
  *   Meetings — GET /api/meetings                 (LIVE read)
  *   Artifacts— GET /api/sync/pull                (LIVE read — synthesized)
- *   Coder    — GET /api/companion/status         (LIVE presence, 4s poll)
+ *   Coder    — GET /api/coders/status         (LIVE presence, 4s poll)
  *
  * Honesty model (no fake data):
  *   - reachable + has route → live cards (no badge).
@@ -884,7 +884,7 @@ function DeskApp() {
     // ── coder lane (live presence stream) ──
     async refreshCoders() {
       try {
-        const data = await this.fetchJson("/api/companion/status");
+        const data = await this.fetchJson("/api/coders/status");
         const items = this.coderSessionItems(data);
         this.items.coder = items.map((item, i) => {
           const s = item.session || item;
@@ -944,7 +944,7 @@ function DeskApp() {
 
     async answerCoder(coder) {
       try {
-        await this.fetchJson("/api/companion/select", {
+        await this.fetchJson("/api/coders/select", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ agent: coder.agent, session_id: coder.sessionId }),

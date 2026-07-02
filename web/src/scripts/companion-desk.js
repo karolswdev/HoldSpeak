@@ -3,7 +3,7 @@
 // the real agents + the live companion link (awaiting coding sessions), Signal-
 // crafted, fed by the existing HTTP API (no backend change):
 //   • /api/agents              — the agent personas (desk cards)
-//   • /api/companion/status    — the device link + the coders awaiting you
+//   • /api/coders/status    — the device link + the coders awaiting you
 //
 // Framework-free where it can be; this is the page's Alpine factory (the desk
 // is read-and-arrange, like /desk). Exposed on window for x-data.
@@ -37,7 +37,7 @@ function companionDesk() {
     },
     async loadStatus() {
       try {
-        const r = await fetch("/api/companion/status");
+        const r = await fetch("/api/coders/status");
         this.status = await r.json();
       } catch (_e) {
         this.status = null;

@@ -38,7 +38,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 4   # v4 (Phase 24): runtime profiles table + agents.profile_id
+SCHEMA_VERSION = 5   # v5 (Phase 72): actuator_proposals.origin + nullable meeting_id (the sentinel dies)
 
 
 class SchemaVersionError(RuntimeError):
@@ -416,7 +416,11 @@ CREATE INDEX IF NOT EXISTS idx_artifact_sources_ref ON artifact_sources(source_t
 -- actuator_proposal_audit so "no silent egress" is provable after the fact.
 CREATE TABLE IF NOT EXISTS actuator_proposals (
     id TEXT PRIMARY KEY,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    -- v5 (Phase 72): a proposal is owner-typed. origin='meeting' rows carry a
+    -- real meeting_id; origin='desk' rows (the iPad desk relay) carry NULL —
+    -- the old hidden 'companion' sentinel meeting is gone.
+    meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE,
+    origin TEXT NOT NULL DEFAULT 'meeting' CHECK (origin IN ('meeting', 'desk')),
     window_id TEXT NOT NULL DEFAULT '',
     plugin_id TEXT NOT NULL,
     plugin_version TEXT NOT NULL DEFAULT 'unknown',
@@ -1014,6 +1018,66 @@ class Database:
         agent_cols = {row[1] for row in conn.execute("PRAGMA table_info(agents)").fetchall()}
         if "profile_id" not in agent_cols:
             conn.execute("ALTER TABLE agents ADD COLUMN profile_id TEXT")
+        # v5 (Phase 72, HS-72-04): actuator proposals become owner-typed. The old
+        # table pinned meeting_id NOT NULL, forcing desk sends through a hidden
+        # 'companion' sentinel meeting. SQLite cannot drop NOT NULL in place, so an
+        # upgraded (backed-up) v<=4 database gets the standard rebuild: copy into
+        # the new shape (sentinel rows become origin='desk' with NULL meeting_id),
+        # swap, and delete the sentinel meeting. FKs are suspended for the swap
+        # (the documented SQLite rebuild recipe) — audit rows keep their proposal
+        # ids and the ids are preserved verbatim. Fresh DBs skip this entirely.
+        proposal_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(actuator_proposals)").fetchall()
+        }
+        if proposal_cols and "origin" not in proposal_cols:
+            conn.execute("PRAGMA foreign_keys = OFF")
+            conn.executescript(
+                """
+                CREATE TABLE actuator_proposals_v5 (
+                    id TEXT PRIMARY KEY,
+                    meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE,
+                    origin TEXT NOT NULL DEFAULT 'meeting' CHECK (origin IN ('meeting', 'desk')),
+                    window_id TEXT NOT NULL DEFAULT '',
+                    plugin_id TEXT NOT NULL,
+                    plugin_version TEXT NOT NULL DEFAULT 'unknown',
+                    idempotency_key TEXT NOT NULL UNIQUE,
+                    status TEXT NOT NULL DEFAULT 'proposed',
+                    target TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    preview TEXT NOT NULL,
+                    payload_json TEXT NOT NULL DEFAULT '{}',
+                    reversible INTEGER NOT NULL DEFAULT 0,
+                    required_capabilities_json TEXT NOT NULL DEFAULT '[]',
+                    decided_by TEXT,
+                    result_json TEXT,
+                    error TEXT,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    decided_at TEXT,
+                    executed_at TEXT,
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+                INSERT INTO actuator_proposals_v5 (
+                    id, meeting_id, origin, window_id, plugin_id, plugin_version,
+                    idempotency_key, status, target, action, preview, payload_json,
+                    reversible, required_capabilities_json, decided_by, result_json,
+                    error, created_at, decided_at, executed_at, updated_at)
+                SELECT
+                    id,
+                    CASE WHEN meeting_id = 'companion' THEN NULL ELSE meeting_id END,
+                    CASE WHEN meeting_id = 'companion' THEN 'desk' ELSE 'meeting' END,
+                    window_id, plugin_id, plugin_version, idempotency_key, status,
+                    target, action, preview, payload_json, reversible,
+                    required_capabilities_json, decided_by, result_json, error,
+                    created_at, decided_at, executed_at, updated_at
+                FROM actuator_proposals;
+                DROP TABLE actuator_proposals;
+                ALTER TABLE actuator_proposals_v5 RENAME TO actuator_proposals;
+                CREATE INDEX IF NOT EXISTS idx_actuator_proposals_meeting ON actuator_proposals(meeting_id, created_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_actuator_proposals_status ON actuator_proposals(status, created_at DESC);
+                DELETE FROM meetings WHERE id = 'companion';
+                """
+            )
+            conn.execute("PRAGMA foreign_keys = ON")
         conn.execute(
             """
             INSERT OR IGNORE INTO activity_privacy_settings

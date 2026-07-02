@@ -41,10 +41,6 @@
         };
 
         return {
-          ws: null,
-          pingTimer: null,
-          reconnectTimer: null,
-          reconnectAttempt: 0,
           reconnectAt: null,
           closedByUser: false,
           connectionState: "connecting",
@@ -133,21 +129,14 @@
           },
 
           cleanup() {
-            if (this.reconnectTimer) window.clearTimeout(this.reconnectTimer);
-            this.reconnectTimer = null;
-            if (this.pingTimer) window.clearInterval(this.pingTimer);
-            this.pingTimer = null;
-            if (this.ws) {
-              try {
-                this.ws.close();
-              } catch {}
+            // Phase 72: unsubscribe from the shared bus (the socket belongs
+            // to the shell now; the page never closes it).
+            if (this._busSubs) {
+              for (const unsub of this._busSubs) {
+                try { unsub(); } catch {}
+              }
+              this._busSubs = null;
             }
-            this.ws = null;
-          },
-
-          wsUrl() {
-            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-            return `${protocol}//${window.location.host}/ws`;
           },
 
           connectionLabel() {
@@ -670,74 +659,39 @@
           },
 
           connect() {
-            if (this.closedByUser) return;
-            if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) return;
-
-            this.connectionState = this.reconnectAttempt ? "reconnecting" : "connecting";
-            this.reconnectAt = null;
-
-            try {
-              this.ws = new WebSocket(this.wsUrl());
-            } catch {
-              this.scheduleReconnect("ws_create_failed");
+            // Phase 72: the dashboard rides the ONE runtime bus
+            // (runtime-bus.js) instead of owning a private /ws socket. The
+            // bus carries the keepalive ping + backoff this page pioneered;
+            // the connection pill maps from its bus_status events.
+            if (this.closedByUser || this._busSubs) return;
+            const bus = window.__hsBus;
+            if (!bus) {
+              this.connectionState = "disconnected";
               return;
             }
-
-            this.ws.onopen = () => {
-              this.connectionState = "connected";
-              this.reconnectAttempt = 0;
-              this.reconnectAt = null;
-              this.startPing();
-              this.toast("Connected to meeting stream.");
-            };
-
-            this.ws.onmessage = (event) => {
-              const msg = typeof event.data === "string" ? safeJsonParse(event.data) : null;
-              if (!msg || typeof msg.type !== "string") return;
-              this.handleMessage(msg);
-            };
-
-            this.ws.onerror = () => {};
-
-            this.ws.onclose = () => {
-              this.connectionState = "disconnected";
-              this.stopPing();
-              this.ws = null;
-              if (!this.closedByUser) this.scheduleReconnect("ws_closed");
-            };
-          },
-
-          startPing() {
-            this.stopPing();
-            this.pingTimer = window.setInterval(() => {
-              if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-              try {
-                this.ws.send("ping");
-              } catch {}
-            }, 15000);
-          },
-
-          stopPing() {
-            if (this.pingTimer) window.clearInterval(this.pingTimer);
-            this.pingTimer = null;
-          },
-
-          scheduleReconnect(reason) {
-            if (this.closedByUser) return;
-            if (this.reconnectTimer) return;
-
-            this.reconnectAttempt = Math.min(this.reconnectAttempt + 1, 8);
-            const base = 500 * Math.pow(2, this.reconnectAttempt - 1);
-            const delay = Math.min(12000, base + Math.floor(Math.random() * 400));
-            this.connectionState = "reconnecting";
-            this.reconnectAt = Date.now() + delay;
-
-            this.reconnectTimer = window.setTimeout(() => {
-              this.reconnectTimer = null;
-              this.connect();
-            }, delay);
-
-            if (reason) this.toast("Connection lost. Reconnecting...");
+            this.connectionState = "connecting";
+            this._busSubs = [
+              bus.subscribe("*", (_data, msg) => {
+                if (!msg || typeof msg.type !== "string" || msg.type === "bus_status") return;
+                this.handleMessage(msg);
+              }),
+              bus.subscribe("bus_status", (data) => {
+                const state = data && data.state;
+                if (state === "connected") {
+                  const was = this.connectionState;
+                  this.connectionState = "connected";
+                  this.reconnectAt = null;
+                  if (was !== "connected") this.toast("Connected to meeting stream.");
+                } else if (state === "reconnecting") {
+                  const was = this.connectionState;
+                  this.connectionState = "reconnecting";
+                  this.reconnectAt = data.reconnectAt || null;
+                  if (was === "connected") this.toast("Connection lost. Reconnecting...");
+                } else if (state === "connecting" && this.connectionState !== "connected") {
+                  this.connectionState = "connecting";
+                }
+              }),
+            ];
           },
 
           handleMessage(msg) {

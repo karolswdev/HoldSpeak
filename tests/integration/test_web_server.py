@@ -516,7 +516,7 @@ class TestCompanionStatusEndpoint:
                  )
         client = TestClient(server.app)
 
-        response = client.get("/api/companion/status")
+        response = client.get("/api/coders/status")
 
         assert response.status_code == 200
         payload = response.json()
@@ -610,7 +610,7 @@ class TestCompanionStatusEndpoint:
                  )
         client = TestClient(server.app)
 
-        response = client.get("/api/companion/status")
+        response = client.get("/api/coders/status")
 
         assert response.status_code == 200
         payload = response.json()
@@ -662,7 +662,7 @@ class TestCompanionStatusEndpoint:
                  )
         client = TestClient(server.app)
 
-        response = client.get("/api/companion/status")
+        response = client.get("/api/coders/status")
 
         assert response.status_code == 200
         payload = response.json()
@@ -725,7 +725,7 @@ class TestCompanionControlEndpoints:
         )
 
     def _status_items(self, client):
-        payload = client.get("/api/companion/status").json()
+        payload = client.get("/api/coders/status").json()
         return payload["agent"]["sessions"]["items"]
 
     def test_select_sets_active_target(self, companion):
@@ -733,7 +733,7 @@ class TestCompanionControlEndpoints:
         companion.ingest("newer", "Newer?")
 
         response = companion.client.post(
-            "/api/companion/select",
+            "/api/coders/select",
             json={"agent": "codex", "session_id": "older"},
         )
         assert response.status_code == 200
@@ -749,7 +749,7 @@ class TestCompanionControlEndpoints:
         assert len(self._status_items(companion.client)) == 1
 
         response = companion.client.post(
-            "/api/companion/dismiss",
+            "/api/coders/dismiss",
             json={"agent": "claude", "session_id": "abc"},
         )
         assert response.status_code == 200
@@ -761,7 +761,7 @@ class TestCompanionControlEndpoints:
         companion.ingest("kept", "Kept?")
 
         pin = companion.client.post(
-            "/api/companion/pin",
+            "/api/coders/pin",
             json={"agent": "codex", "session_id": "kept", "pinned": True},
         )
         assert pin.status_code == 200
@@ -779,10 +779,10 @@ class TestCompanionControlEndpoints:
         for session_id in ("stale", "kept"):
             companion.ingest(session_id, "again?", now=companion.old)
         companion.client.post(
-            "/api/companion/pin",
+            "/api/coders/pin",
             json={"agent": "codex", "session_id": "kept", "pinned": True},
         )
-        clear = companion.client.post("/api/companion/clear-stale", json={})
+        clear = companion.client.post("/api/coders/clear-stale", json={})
         assert clear.status_code == 200
         assert clear.json() == {"success": True, "cleared": 1, "max_age_seconds": 120}
 
@@ -797,10 +797,10 @@ class TestCompanionControlEndpoints:
     def test_unpin_via_pin_false(self, companion):
         companion.ingest("abc", "Proceed?")
         companion.client.post(
-            "/api/companion/pin", json={"agent": "codex", "session_id": "abc", "pinned": True}
+            "/api/coders/pin", json={"agent": "codex", "session_id": "abc", "pinned": True}
         )
         response = companion.client.post(
-            "/api/companion/pin",
+            "/api/coders/pin",
             json={"agent": "codex", "session_id": "abc", "pinned": False},
         )
         assert response.status_code == 200
@@ -808,23 +808,23 @@ class TestCompanionControlEndpoints:
 
     def test_select_unknown_session_returns_404(self, companion):
         response = companion.client.post(
-            "/api/companion/select",
+            "/api/coders/select",
             json={"agent": "codex", "session_id": "ghost"},
         )
         assert response.status_code == 404
         assert response.json()["error"] == "unknown_session"
 
     def test_missing_fields_return_400(self, companion):
-        assert companion.client.post("/api/companion/select", json={}).status_code == 400
+        assert companion.client.post("/api/coders/select", json={}).status_code == 400
         assert (
             companion.client.post(
-                "/api/companion/pin", json={"agent": "codex"}
+                "/api/coders/pin", json={"agent": "codex"}
             ).status_code
             == 400
         )
         assert (
             companion.client.post(
-                "/api/companion/clear-stale", json={"max_age_seconds": "soon"}
+                "/api/coders/clear-stale", json={"max_age_seconds": "soon"}
             ).status_code
             == 400
         )
@@ -1836,7 +1836,7 @@ class TestCompanionUiSmoke:
 
     Since HS-69-12, /companion is the **Agent Desk** — a live desk of the real
     agents + the companion link (Alpine `companionDesk()` over /api/agents +
-    /api/companion/status), not the old static docs portal. This smoke check
+    /api/coders/status), not the old static docs portal. This smoke check
     asserts the desk's stable structure + the preserved connection/credential
     facts in the "How it connects" footer.
     """

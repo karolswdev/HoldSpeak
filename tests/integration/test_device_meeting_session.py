@@ -22,7 +22,7 @@ pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
 from holdspeak.device_audio import DeviceDescriptor, DeviceRegistry
-from holdspeak.meeting import AudioChunk
+from holdspeak.meeting_recorder import AudioChunk
 from holdspeak.meeting_session import (
     MeetingSession,
     MeetingState,

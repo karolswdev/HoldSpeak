@@ -46,7 +46,7 @@ Goal: meeting mode can record “what you hear” reliably on Linux (with clear 
 
 Deliverables:
 - `holdspeak/audio_devices.py` discovers the default sink monitor source via `pactl` when available.
-- `holdspeak/meeting.py` can capture system audio via:
+- `holdspeak/meeting_recorder.py` can capture system audio via:
   - a PortAudio input device (if visible to `sounddevice`), or
   - `ffmpeg -f pulse -i <source>.monitor` fallback when PortAudio can’t see monitor sources.
 - `holdspeak meeting --setup` prints Linux-appropriate instructions and a detected monitor source when possible.

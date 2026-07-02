@@ -24,7 +24,7 @@ pytestmark = [pytest.mark.requires_meeting]
 _BUILT_ROOT = (
     Path(__file__).resolve().parents[2] / "holdspeak" / "static" / "_built"
 )
-_BUILT_INDEX = _BUILT_ROOT / "design" / "check" / "index.html"
+_BUILT_INDEX = _BUILT_ROOT / "design" / "components" / "index.html"
 _GALLERY_INDEX = _BUILT_ROOT / "design" / "components" / "index.html"
 
 
@@ -44,10 +44,10 @@ def test_client() -> TestClient:
     not _BUILT_INDEX.is_file(),
     reason="run `cd web && npm run build` to populate holdspeak/static/_built/",
 )
-def test_built_design_check_page_is_served(test_client: TestClient) -> None:
-    response = test_client.get("/_built/design/check/")
+def test_built_design_components_page_is_served(test_client: TestClient) -> None:
+    response = test_client.get("/_built/design/components/")
     assert response.status_code == 200
-    assert "Design system online" in response.text
+    assert "Component gallery" in response.text
     assert "/_built/_astro/" in response.text
 
 
@@ -56,9 +56,11 @@ def test_built_design_check_page_is_served(test_client: TestClient) -> None:
     reason="run `cd web && npm run build` to populate holdspeak/static/_built/",
 )
 def test_topnav_renders_with_aria_current(test_client: TestClient) -> None:
-    """HS-10-04: design-check passes current=runtime; the matching nav
-    link must carry aria-current=page and the visual selected class."""
-    response = test_client.get("/_built/design/check/")
+    """HS-10-04: a page passing `current` to AppLayout must render the
+    matching nav link with aria-current=page and the selected class.
+    (/dictation sets current="dictation"; the old design/check probe page
+    was removed in the Phase-72 shadow sweep.)"""
+    response = test_client.get("/_built/dictation/")
     body = response.text
     assert "Skip to content" in body
     assert 'aria-current="page"' in body
@@ -116,7 +118,7 @@ def test_identity_layer_assets_serve(test_client: TestClient) -> None:
     """HS-10-05 / HS-42-05: app mark SVG inlines in TopNav, favicon +
     apple-touch-icon are referenced + served, and the shell privacy signal (now
     the ambient TrustChip, HS-42-05) renders."""
-    response = test_client.get("/_built/design/check/")
+    response = test_client.get("/_built/design/components/")
     body = response.text
     # Favicon refs in <head>.
     assert 'href="/_built/favicon.svg"' in body

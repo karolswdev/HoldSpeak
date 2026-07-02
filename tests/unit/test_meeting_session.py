@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import holdspeak.db as db_module
 
-from holdspeak.meeting import AudioChunk
+from holdspeak.meeting_recorder import AudioChunk
 from holdspeak.meeting_session import MeetingSession, MeetingState, TranscriptSegment
 
 

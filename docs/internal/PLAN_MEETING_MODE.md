@@ -43,7 +43,7 @@ Setup: Create Multi-Output Device in Audio MIDI Setup that sends to both speaker
 ## Implementation Steps
 
 ### Phase 1: Core Infrastructure
-1. **Create `MeetingRecorder` class** (`holdspeak/meeting.py`)
+1. **Create `MeetingRecorder` class** (`holdspeak/meeting_recorder.py`)
    - Dual-stream audio capture (mic + system)
    - Synchronized buffers with timestamps
    - Chunk-based processing for continuous recording
@@ -100,7 +100,7 @@ Setup: Create Multi-Output Device in Audio MIDI Setup that sends to both speaker
 ## File Changes Required
 
 ### New Files
-- `holdspeak/meeting.py` - MeetingRecorder class
+- `holdspeak/meeting_recorder.py` - MeetingRecorder class
 - `holdspeak/audio_devices.py` - Device discovery & BlackHole detection
 
 ### Modified Files
@@ -181,6 +181,6 @@ tail -f ~/.local/share/holdspeak/holdspeak.log
 
 ## Implementation Order
 1. Start with `audio_devices.py` - device discovery
-2. Then `meeting.py` - dual capture (can test without TUI)
+2. Then `meeting_recorder.py` - dual capture (can test without TUI)
 3. Add CLI `holdspeak meeting` for testing
 4. Finally integrate into TUI

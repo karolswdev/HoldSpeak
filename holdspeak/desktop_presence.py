@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Optional, Protocol
 
 from .logging_config import get_logger
-from .runtime_activity import desktop_window_policy, normalize_activity_state
+from .activity_tracker import desktop_window_policy, normalize_activity_state
 
 log = get_logger("desktop_presence")
 

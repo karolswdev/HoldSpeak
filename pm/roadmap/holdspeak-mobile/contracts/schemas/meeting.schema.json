@@ -3,46 +3,128 @@
   "$id": "https://holdspeak.dev/contracts/v0/meeting.schema.json",
   "title": "Meeting",
   "description": "A meeting and its transcript/intel. Source: holdspeak/meeting_session/models.py MeetingState.to_dict(). Note: mir_profile is NOT serialized here (it is config-level); a profile field is an HSM-0-03 contract addition for HSM-7-03.",
+  "x-sync-kind": "meeting",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "started_at", "title", "tags", "segments", "bookmarks", "intel_status", "mic_label", "remote_label"],
+  "required": [
+    "id",
+    "started_at",
+    "title",
+    "tags",
+    "segments",
+    "bookmarks",
+    "intel_status",
+    "mic_label",
+    "remote_label"
+  ],
   "properties": {
-    "id": { "type": "string" },
-    "started_at": { "type": "string", "format": "date-time" },
-    "ended_at": { "type": ["string", "null"], "format": "date-time" },
-    "duration": { "type": "number", "description": "Derived (seconds); to_dict adds it" },
-    "formatted_duration": { "type": "string", "description": "Derived (MM:SS / HH:MM:SS)" },
-    "title": { "type": ["string", "null"] },
-    "tags": { "type": "array", "items": { "type": "string" } },
+    "id": {
+      "type": "string"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "duration": {
+      "type": "number",
+      "description": "Derived (seconds); to_dict adds it"
+    },
+    "formatted_duration": {
+      "type": "string",
+      "description": "Derived (MM:SS / HH:MM:SS)"
+    },
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "segments": {
       "type": "array",
-      "items": { "$ref": "https://holdspeak.dev/contracts/v0/segment.schema.json" }
+      "items": {
+        "$ref": "https://holdspeak.dev/contracts/v0/segment.schema.json"
+      }
     },
     "bookmarks": {
       "type": "array",
-      "items": { "$ref": "https://holdspeak.dev/contracts/v0/bookmark.schema.json" }
+      "items": {
+        "$ref": "https://holdspeak.dev/contracts/v0/bookmark.schema.json"
+      }
     },
     "intel": {
       "oneOf": [
-        { "type": "null" },
-        { "$ref": "https://holdspeak.dev/contracts/v0/intel-snapshot.schema.json" }
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "https://holdspeak.dev/contracts/v0/intel-snapshot.schema.json"
+        }
       ]
     },
     "intel_status": {
       "type": "object",
       "description": "Serialized nested (NOT the flat in-memory string).",
       "additionalProperties": false,
-      "required": ["state"],
+      "required": [
+        "state"
+      ],
       "properties": {
-        "state": { "type": "string", "description": "disabled/requested/running/ready/failed family" },
-        "detail": { "type": ["string", "null"] },
-        "requested_at": { "type": ["string", "null"], "format": "date-time" },
-        "completed_at": { "type": ["string", "null"], "format": "date-time" }
+        "state": {
+          "type": "string",
+          "description": "disabled/requested/running/ready/failed family"
+        },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "requested_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
       }
     },
-    "mic_label": { "type": "string" },
-    "remote_label": { "type": "string" },
-    "web_url": { "type": ["string", "null"] },
-    "devices": { "type": "array", "items": { "type": "object" } }
+    "mic_label": {
+      "type": "string"
+    },
+    "remote_label": {
+      "type": "string"
+    },
+    "web_url": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "devices": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
   }
 }

@@ -64,6 +64,9 @@ test = [
     "pytest-mock>=3.12",
     "pytest-timeout>=2.2",
     "httpx>=0.26",
+    # HS-72-01: the primitive-contract drift guard validates real wire payloads
+    # against the JSON Schemas in pm/roadmap/holdspeak-mobile/contracts/schemas.
+    "jsonschema>=4.21",
 ]
 meeting = [
     "llama-cpp-python>=0.2.0",
@@ -108,6 +111,7 @@ dev = [
     "pytest-mock>=3.12",
     "pytest-timeout>=2.2",
     "httpx>=0.26",
+    "jsonschema>=4.21",  # HS-72-01: primitive-contract schema validation
     "ruff>=0.1.0",
     "scipy>=1.10.0",  # For reading WAV files in metal tests
 ]

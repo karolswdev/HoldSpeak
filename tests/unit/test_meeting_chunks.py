@@ -6,7 +6,7 @@ import threading
 import numpy as np
 import pytest
 
-from holdspeak.meeting import AudioChunk, DualStreamBuffer, concatenate_chunks
+from holdspeak.meeting_recorder import AudioChunk, DualStreamBuffer, concatenate_chunks
 
 
 class TestAudioChunk:

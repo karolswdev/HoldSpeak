@@ -359,7 +359,8 @@ class ActuatorProposalRecord:
     """
 
     id: str
-    meeting_id: str
+    meeting_id: Optional[str]   # None for origin='desk' (v5 — no sentinel meeting)
+    origin: str                 # 'meeting' | 'desk' (v5, Phase 72)
     window_id: str
     plugin_id: str
     plugin_version: str

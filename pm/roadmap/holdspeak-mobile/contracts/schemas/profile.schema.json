@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/profile.schema.json",
+  "title": "RuntimeProfile",
+  "description": "A RuntimeProfile (capability/synced, Phase 24): a named 'where intelligence runs' target. SECURITY INVARIANT (load-bearing): the API key is NEVER a wire field — additionalProperties:false makes any key-shaped field a validation failure. The key lives in each surface's custodian (iPad Keychain / hub HOLDSPEAK_PROFILE_<id>_KEY) and is joined at request time. Canonical hub emission: ProfileRecord.to_dict().",
+  "x-sync-kind": "profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "kind", "created_at"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "kind": { "enum": ["onDevice", "openAICompatible"] },
+    "model_file": { "type": "string" },
+    "base_url": { "type": "string" },
+    "model": { "type": "string" },
+    "context_limit": { "type": "integer", "minimum": 0 },
+    "requires_key": { "type": "boolean" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "last_modified": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" }
+  }
+}

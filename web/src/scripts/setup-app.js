@@ -52,23 +52,11 @@ function setupApp() {
 
     // ── Live dictation feedback over the runtime_activity websocket ──────
     connectActivity() {
-      const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-      let ws;
-      try {
-        ws = new WebSocket(`${proto}//${window.location.host}/ws`);
-      } catch (_e) {
-        return; // no live feedback; the page still works from /api/setup/status
-      }
-      ws.onmessage = (event) => {
-        let msg;
-        try {
-          msg = JSON.parse(event.data);
-        } catch (_e) {
-          return;
-        }
-        if (msg && msg.type === "runtime_activity") this.onActivity(msg.data || {});
-      };
-      ws.onclose = () => setTimeout(() => this.connectActivity(), 2000);
+      // Phase 72: live feedback rides the ONE runtime bus (runtime-bus.js,
+      // imported by this page's loader script — reconnects included).
+      const bus = window.__hsBus;
+      if (!bus) return; // no live feedback; the page still works from polling
+      bus.subscribe("runtime_activity", (data) => this.onActivity(data || {}));
     },
 
     async onActivity(data) {

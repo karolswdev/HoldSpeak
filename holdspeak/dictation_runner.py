@@ -25,7 +25,7 @@ from typing import Any, Callable, Optional
 
 from .logging_config import get_logger
 
-log = get_logger("dictation_runtime")
+log = get_logger("dictation_runner")
 
 
 @dataclass

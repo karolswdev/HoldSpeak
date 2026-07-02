@@ -50,7 +50,7 @@ from ..plugins.host import PluginHost, build_idempotency_key
 from ..plugins.project_detector import ProjectDetectorPlugin
 from ..plugins.queue import drain_plugin_run_queue, process_next_plugin_run_job
 from ..plugins.signals import extract_intent_signals
-from ..runtime_activity import RuntimeActivityTracker
+from ..activity_tracker import RuntimeActivityTracker
 from ..text_processor import TextProcessor
 from ..transcribe import Transcriber
 from ..typer import TextTyper

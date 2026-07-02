@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/workflow.schema.json",
+  "title": "Workflow",
+  "description": "A WorkflowDefinition (capability/synced): a saved Ask (prompt) or a Workbench graph (graph_json, reserved until the graph bridge — HSM 22). Canonical hub emission: WorkflowRecord.to_dict() (always emits prompt + graph_json, possibly empty); the iPad omits nil fields, so neither is required. KNOWN TYPE DRIFT (locked, HSM-22 territory): web primitives.ts types graphJson as string while the hub emits an object.",
+  "x-sync-kind": "workflow",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "created_at"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "name": { "type": "string" },
+    "prompt": { "type": ["string", "null"] },
+    "graph_json": { "type": ["object", "null"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "last_modified": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" }
+  }
+}

@@ -68,6 +68,17 @@ public struct Directory: Codable, Equatable, Sendable, Identifiable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
+
+    // HS-72-01 tolerant decode: the hub emits no updated_at for directories.
+    private enum CodingKeys: String, CodingKey { case id, name, parentId, createdAt, updatedAt }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        parentId = try c.decodeIfPresent(String.self, forKey: .parentId)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
+    }
 }
 
 // MARK: - Membership (organization / synced) — a primitive's home directory edge
@@ -92,6 +103,22 @@ public struct Membership: Codable, Equatable, Sendable, Identifiable {
         self.directoryId = directoryId
         self.updatedAt = updatedAt
     }
+
+    // HS-72-01 tolerant decode: the hub emits created_at/last_modified but no
+    // updated_at for membership edges — fall back created_at, then distantPast
+    // (the Synced meta's last_modified stays the LWW key either way).
+    // `CodingKeys` (property-only) keeps the synthesized encode; the decode
+    // reads the extra created_at through its own key set.
+    private enum CodingKeys: String, CodingKey { case primitiveId, directoryId, updatedAt }
+    private enum LenientKeys: String, CodingKey { case primitiveId, directoryId, createdAt, updatedAt }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: LenientKeys.self)
+        primitiveId = try c.decode(String.self, forKey: .primitiveId)
+        directoryId = try c.decode(String.self, forKey: .directoryId)
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt)
+            ?? c.decodeIfPresent(Date.self, forKey: .createdAt)
+            ?? .distantPast
+    }
 }
 
 // MARK: - KB (organization / synced) — a named container of member primitive refs
@@ -110,6 +137,20 @@ public struct KB: Codable, Equatable, Sendable, Identifiable {
         self.memberIds = memberIds
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+    }
+
+    // HS-72-01 tolerant decode: the hub's canonical KB emission carries NO
+    // updated_at (KBRecord has none) — the LWW key is the Synced meta's
+    // last_modified. Default updatedAt to createdAt instead of failing the
+    // whole ChangeSet decode. Encoding stays synthesized (all keys out).
+    private enum CodingKeys: String, CodingKey { case id, name, memberIds, createdAt, updatedAt }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        memberIds = try c.decodeIfPresent([String].self, forKey: .memberIds) ?? []
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
     }
 }
 
@@ -148,6 +189,31 @@ public struct Agent: Codable, Equatable, Sendable, Identifiable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
+
+    // HS-72-01 tolerant decode: the hub's canonical Agent emission carries no
+    // updated_at, manual_context or use_zone_context (the latter two are
+    // iPad-authored and LOSSY through hub sync today — recorded in the agent
+    // schema + Phase 72 evidence). Default them instead of failing decode.
+    private enum CodingKeys: String, CodingKey {
+        case id, name, avatar, role, systemPrompt, userTemplate, tools, kbId
+        case manualContext, useZoneContext, profileId, createdAt, updatedAt
+    }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        avatar = try c.decodeIfPresent(String.self, forKey: .avatar) ?? ""
+        role = try c.decodeIfPresent(String.self, forKey: .role) ?? ""
+        systemPrompt = try c.decodeIfPresent(String.self, forKey: .systemPrompt) ?? ""
+        userTemplate = try c.decodeIfPresent(String.self, forKey: .userTemplate) ?? ""
+        tools = try c.decodeIfPresent([String].self, forKey: .tools) ?? []
+        kbId = try c.decodeIfPresent(String.self, forKey: .kbId)
+        manualContext = try c.decodeIfPresent(String.self, forKey: .manualContext) ?? ""
+        useZoneContext = try c.decodeIfPresent(Bool.self, forKey: .useZoneContext) ?? false
+        profileId = try c.decodeIfPresent(String.self, forKey: .profileId)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
+    }
 }
 
 // MARK: - Chain (capability / synced) — an ordered crew of agents
@@ -166,6 +232,17 @@ public struct Chain: Codable, Equatable, Sendable, Identifiable {
         self.steps = steps
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+    }
+
+    // HS-72-01 tolerant decode: the hub emits no updated_at for chains.
+    private enum CodingKeys: String, CodingKey { case id, name, steps, createdAt, updatedAt }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        steps = try c.decodeIfPresent([String].self, forKey: .steps) ?? []
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
     }
 }
 
@@ -196,6 +273,27 @@ public struct RuntimeProfile: Codable, Equatable, Sendable, Identifiable {
         self.id = id; self.name = name; self.kind = kind; self.modelFile = modelFile
         self.baseURL = baseURL; self.model = model; self.contextLimit = contextLimit
         self.requiresKey = requiresKey; self.createdAt = createdAt; self.updatedAt = updatedAt
+    }
+
+    // HS-72-01 tolerant decode: the hub emits no updated_at for profiles. The
+    // API key is NEVER a field here — decoding ignores unknown keys, and the
+    // schema (profile.schema.json) rejects any key-shaped field on the wire.
+    private enum CodingKeys: String, CodingKey {
+        case id, name, kind, modelFile, baseURL = "baseUrl", model, contextLimit, requiresKey
+        case createdAt, updatedAt
+    }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        kind = try c.decode(Kind.self, forKey: .kind)
+        modelFile = try c.decodeIfPresent(String.self, forKey: .modelFile) ?? ""
+        baseURL = try c.decodeIfPresent(String.self, forKey: .baseURL) ?? ""
+        model = try c.decodeIfPresent(String.self, forKey: .model) ?? ""
+        contextLimit = try c.decodeIfPresent(Int.self, forKey: .contextLimit) ?? 16_384
+        requiresKey = try c.decodeIfPresent(Bool.self, forKey: .requiresKey) ?? false
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
     }
 
     public var isLocal: Bool { kind == .onDevice }
@@ -263,5 +361,17 @@ public struct WorkflowDefinition: Codable, Equatable, Sendable, Identifiable {
         self.graphJson = graphJson
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+    }
+
+    // HS-72-01 tolerant decode: the hub emits no updated_at for workflows.
+    private enum CodingKeys: String, CodingKey { case id, name, prompt, graphJson, createdAt, updatedAt }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        prompt = try c.decodeIfPresent(String.self, forKey: .prompt)
+        graphJson = try c.decodeIfPresent(JSONValue.self, forKey: .graphJson)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
     }
 }

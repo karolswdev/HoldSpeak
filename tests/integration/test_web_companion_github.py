@@ -26,14 +26,14 @@ from fastapi.testclient import TestClient
 pytestmark = [pytest.mark.requires_meeting]
 
 import holdspeak.config as config_module
-import holdspeak.web.routes.meetings as meetings_module
+import holdspeak.web.routes.actuator_shared as actuator_shared
 from holdspeak.config import Config
 from holdspeak.db import Database, get_database, reset_database
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 REPO = "acme/app"
 ISSUE_URL = "https://github.com/acme/app/issues/42"
-PROPOSE = "/api/companion/github/propose"
+PROPOSE = "/api/desk/actuators/github/propose"
 
 
 class _FakeGh:
@@ -93,12 +93,12 @@ def client(server, settings_path) -> TestClient:
 def gh(monkeypatch):
     """Inject the fake `gh` runner the route's GitHub connector uses."""
     fake = _FakeGh()
-    monkeypatch.setattr(meetings_module, "_GITHUB_RUNNER", fake)
+    monkeypatch.setattr(actuator_shared, "_GITHUB_RUNNER", fake)
     return fake
 
 
 def _decide(client, pid, decision, by="karol"):
-    return client.post(f"/api/companion/github/{pid}/decision", json={"decision": decision, "decided_by": by})
+    return client.post(f"/api/desk/actuators/github/{pid}/decision", json={"decision": decision, "decided_by": by})
 
 
 @pytest.mark.integration
@@ -190,12 +190,12 @@ def test_github_decision_is_target_scoped(client, db, settings_path, gh):
     _configure(settings_path)
     pid = client.post(PROPOSE, json={"text": "ship it"}).json()["proposal"]["id"]
     # a github proposal cannot be decided on the slack or webhook routes
-    assert client.post(f"/api/companion/slack/{pid}/decision", json={"decision": "approved"}).status_code == 404
-    assert client.post(f"/api/companion/webhook/{pid}/decision", json={"decision": "approved"}).status_code == 404
+    assert client.post(f"/api/desk/actuators/slack/{pid}/decision", json={"decision": "approved"}).status_code == 404
+    assert client.post(f"/api/desk/actuators/webhook/{pid}/decision", json={"decision": "approved"}).status_code == 404
 
 
 @pytest.mark.integration
 def test_companion_status_reports_github_configured(client, db, settings_path):
-    assert client.get("/api/companion/status").json()["connectors"]["github_configured"] is False
+    assert client.get("/api/coders/status").json()["connectors"]["github_configured"] is False
     _configure(settings_path)
-    assert client.get("/api/companion/status").json()["connectors"]["github_configured"] is True
+    assert client.get("/api/coders/status").json()["connectors"]["github_configured"] is True

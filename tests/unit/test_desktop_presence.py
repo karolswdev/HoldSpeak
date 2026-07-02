@@ -12,7 +12,7 @@ from holdspeak.desktop_presence import (
     desktop_presence_enabled,
     detect_presence_platform,
 )
-from holdspeak.runtime_activity import RuntimeActivityTracker
+from holdspeak.activity_tracker import RuntimeActivityTracker
 
 
 class FakeRenderer:
