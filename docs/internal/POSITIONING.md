@@ -157,6 +157,9 @@ left column is the name; do not alternate with the synonyms.
 | the armed window | "listening window", "wake session" |
 | Send to Slack | "Slack integration", "Slack connector" (user-facing), "Slack export" |
 | AIPI-Lite | "the companion device" after first use |
+| agents (tailored personas you author) | "bots", "assistants" |
+| coders (live coding sessions awaiting you) | "agents" for this concept, "companions" (the word is retired: an agent is a persona you author; a coder is a live Claude or Codex session) |
+| the iPad app | "the companion", "the companion app" |
 
 ## Voice rules (the editing standard for every user-facing doc)
 

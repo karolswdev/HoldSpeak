@@ -19,6 +19,9 @@ tier for the advanced tools. Four destinations, not a flat list of pages.
 
 ## Understand the system
 
+- **[API surface](./API_SURFACE.md)**: every HTTP route the runtime serves,
+  generated from the app with per-route consumers. Regenerate with
+  `uv run python scripts/gen_api_surface.py` after any route change.
 - **[Architecture](./ARCHITECTURE.md)**: how the pieces fit and how a single
   utterance flows through them, with diagrams. The map to read before the code.
 

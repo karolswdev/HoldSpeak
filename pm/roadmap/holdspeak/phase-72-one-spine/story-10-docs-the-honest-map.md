@@ -1,8 +1,9 @@
 # HS-72-10 — Docs: the honest map (the docs story)
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED (the phase's dedicated docs story — after features, before closeout)
 - **Depends on:** HS-72-01 … HS-72-09
+- **Evidence:** [evidence-story-10.md](./evidence-story-10.md)
 
 ## Goal
 
@@ -47,3 +48,17 @@ written.
 Doc slice + voice guard + mermaid guard green; the ARCHITECTURE diff showing
 generated-artifact links replacing hand lists; a grep showing no stale
 `api/companion` references in `docs/`; full suite green.
+
+## Done
+
+Shipped. `docs/ARCHITECTURE.md`'s iPad section tells the measured truth:
+the five-extension hand list (the half-undercount) is replaced by the real
+client shape (one base + nine extensions, verified against the tree) and a
+link to the generated API_SURFACE with the measured 44 iOS-consumed routes.
+"iPad companion" → "the iPad app" across prose + both affected Mermaid
+diagrams + USER_GUIDE; POSITIONING's canonical-names table gains the
+agents/coders/iPad-app rows with the companion-retirement note; the docs
+index points at the generated surface with the regenerate command. Guards:
+doc-drift 15 passed (it caught two em dashes in this story's own first
+draft), mermaid render 2 passed; every edited claim verified against the
+tree. See [evidence-story-10.md](./evidence-story-10.md).

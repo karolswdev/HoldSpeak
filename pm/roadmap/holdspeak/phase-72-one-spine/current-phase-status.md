@@ -1,9 +1,11 @@
 # Phase 72 — One Spine (cross-surface cohesion)
 
-**Status:** open — 8/10 (HS-72-01..06 + 08 + 09 done 2026-07-02; HS-72-07
-cut; 10 live stories).
+**Status:** open — 9/10 (only HS-72-11 remains; HS-72-07 cut; 10 live
+stories).
 
-**Last updated:** 2026-07-02 (**HS-72-09 done** — seven desk records embed
+**Last updated:** 2026-07-02 (**HS-72-10 done** — the docs tell the
+measured truth: the generated API_SURFACE linked, the naming canon closed.
+Earlier: **HS-72-09 done** — seven desk records embed
 Contracts natively, bridges deleted, seven lossy-bridge fidelity bugs
 fixed, swift test 413/0 + sim build green. Earlier: **HS-72-08 done** — one live bus: four
 private sockets converted, robustness folded into the bus, one-socket-per-
@@ -127,7 +129,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
       golden fixtures round-trip in Swift tests; Simulator proof (HS-72-09 —
       sim BUILD SUCCEEDED; the interactive walk folds into the closeout's
       owner walk).
-- [ ] `docs/ARCHITECTURE.md` matches the measured reality; API surface doc
+- [x] `docs/ARCHITECTURE.md` matches the measured reality; API surface doc
       linked; voice + mermaid guards green (HS-72-10).
 - [ ] Full python suite, web build, Swift build + tests, tri-surface contract
       validation, route manifest, route pre-flight — all green in one closeout
@@ -146,7 +148,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 | HS-72-07 | The meetings archive, decomposed | MED | **cut** (superseded by the 2026-07-02 web stack decision — `/history` migrates to React in a later phase instead of being decomposed in place; see the story file) | — |
 | HS-72-08 | One live bus on the web | MED | **done** (FOUR private sockets found + converted, not two; runtime-bus sole /ws owner w/ ping+backoff+bus_status; deliver() serves frames AND seed; window.__hsBus for eval'd factories; e2e: 1 socket/page, real broadcast on the presence card, reconnect after restart; see [evidence](./evidence-story-08.md)) | — |
 | HS-72-09 | The iPad speaks Contracts natively | HIGH | **done** (7 records embed Contracts in RuntimeCore/Desk; bridges deleted; dual-shape Codable migrates legacy @AppStorage JSON; SEVEN lossy-bridge bugs fixed incl. artifact identity loss + graphJson drained; swift test 413/0, sim BUILD SUCCEEDED, both re-verified first-party; see [evidence](./evidence-story-09.md)) | 01 |
-| HS-72-10 | Docs: the honest map (the docs story) | MED | todo | 01–09 |
+| HS-72-10 | Docs: the honest map (the docs story) | MED | **done** (ARCHITECTURE's iPad section = the measured truth + API_SURFACE link; companion→coders/iPad-app naming across canon + POSITIONING rows; doc-drift 15 + mermaid 2 green; see [evidence](./evidence-story-10.md)) | 01–09 |
 | HS-72-11 | Closeout: the one-spine proof | HIGH | todo | 01–10 |
 
 Build order: **01 → 02** (the contract, then the declared surface) → **03 →
@@ -155,6 +157,20 @@ Build order: **01 → 02** (the contract, then the declared surface) → **03 �
 **11** (closeout).
 
 ## Where we are
+
+**2026-07-02 — HS-72-10 done (9/10).** The docs tell the measured truth.
+ARCHITECTURE's iPad section replaces the five-extension hand list (the
+half-undercount the phase opened on) with the real client shape and a link
+to the generated API_SURFACE, quoting the measured 44 iOS-consumed routes —
+the consumer detail is a generated artifact now, not prose that can rot.
+The companion loop closes in the naming canon: "the iPad app" everywhere
+(prose + the component-map and trust-boundary diagrams + USER_GUIDE), and
+POSITIONING's canonical-names table gains agents / coders / the-iPad-app
+rows with the retirement note. The docs index points at the generated
+surface with its regenerate command. The doc-drift guard caught two em
+dashes in this story's own first draft — fixed; the guard works on its
+author. Guards: doc-drift 15, mermaid render 2, all green. Next:
+HS-72-11, the closeout.
 
 **2026-07-02 — HS-72-09 done (8/10).** The fourth hand-mirrored shape is
 dead. All seven desk records (Note, KB, Output/Artifact, Workflow, Agent,

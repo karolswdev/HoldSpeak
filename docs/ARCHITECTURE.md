@@ -31,7 +31,7 @@ approval, and the network crossings are enumerated in the
 [trust boundary](#the-trust-boundary) below and in
 [`SECURITY.md`](SECURITY.md).
 
-An iPad companion can join over your own network. It is a typed client of
+The iPad app can join over your own network. It is a typed client of
 the same FastAPI routes the web UI calls, not a second runtime: it reads
 meetings, artifacts, aftercare, and faceted search, decides proposals, and
 sends dictation back to a focused app or a waiting coding agent. The desktop
@@ -68,7 +68,7 @@ flowchart TB
     CN["Gated connectors<br/>(plugins/gated_connector.py)"]
   end
 
-  subgraph ipad["iPad companion (apple/Sources/Providers/)"]
+  subgraph ipad["iPad app (apple/Sources/Providers/)"]
     HC["Typed hub client<br/>(Desktop/HTTPDesktopClient*.swift)"]
     LS[("On-device SQLite<br/>(Storage/SQLiteStorage.swift)")]
   end
@@ -162,27 +162,29 @@ sequenceDiagram
   end
 ```
 
-### The iPad companion
+### The iPad app
 
 The iPad joins the same hub over your own network (LAN or Tailscale, no
 hosted relay). It is a typed client of the FastAPI routes, built around one
 HTTP client (`apple/Sources/Providers/Desktop/HTTPDesktopClient.swift`)
-split into focused extensions, one per surface it reads or drives:
+split into one base client (meeting control, the coder board, remote
+dictation delivery) plus nine focused extensions (aftercare, facets,
+artifacts, proposals, dictation, dictation blocks, activity, learning,
+meeting import); the sync transport rides its own provider on the same
+pairing.
 
-- `HTTPDesktopClient+Aftercare.swift` reads the aftercare digest and files an
-  accepted action as a GitHub issue proposal (`GET .../aftercare`,
-  `POST .../aftercare/file-issue`).
-- `HTTPDesktopClient+Facets.swift` lists and searches meetings with the
-  server-side facets (`GET api/meetings/facets`, `GET api/meetings`).
-- `HTTPDesktopClient+Artifacts.swift` reads a meeting's typed artifacts
-  (`GET api/meetings/{id}/artifacts`).
-- `HTTPDesktopClient+Proposals.swift` reads pending proposals and submits an
-  approve or reject decision (`GET`/`POST .../proposals`); the executor still
-  runs on the hub, so the iPad approves but never acts on its own.
-- `HTTPDesktopClient+Dictation.swift` previews the dictation pipeline and
-  reports readiness (`POST api/dictation/dry-run`,
-  `GET api/dictation/readiness`); the base client sends the dictation itself
-  to a focused app or a waiting coding agent (`POST api/dictation/remote`).
+The full surface it consumes is generated, not hand-listed: see
+[API_SURFACE.md](API_SURFACE.md), where every route the app serves carries
+its consumers as extracted from the real call sites. As of the last
+generation the iPad consumes 44 routes, spanning meetings (list, facets,
+detail, artifacts, aftercare, file-issue, proposals + decisions, start,
+stop, import), dictation (dry-run, readiness, remote delivery, journal,
+blocks + templates, learning digest, project context), activity (briefing,
+nudges, select, dismiss), capability runs (agents, chains), the coder board
+(`api/coders/*`: which live coding session receives a spoken answer), the
+desk actuator relay (`api/desk/actuators/*`: a desk card becomes a hub
+proposal; the executor still runs on the hub, so the iPad proposes and
+approves but never acts on its own), and sync (`api/sync/pull`, `push`).
 
 Every request carries the desktop's Bearer token, joined at call time and
 never stored in a payload. The hub is the only place state changes; the iPad
@@ -190,7 +192,7 @@ is an authoring port onto it.
 
 ```mermaid
 sequenceDiagram
-  participant IP as iPad companion
+  participant IP as iPad app
   participant HC as Typed hub client
   participant SRV as Web server + API
   participant RT as WebRuntime
@@ -270,5 +272,5 @@ flowchart LR
   RT -->|"opt-in; queue stats only, no transcript"| OPS(["Ops alert webhook"])
   RT -->|"one-time inbound fetch, about 7 MB"| WM(["Wake models, GitHub releases"])
   DEVCE(["Paired device, same LAN, PSK"]) -->|"audio in, status out"| RT
-  IPAD(["iPad companion, same LAN / Tailscale, Bearer token"]) -->|"meeting / dictation / proposal route calls"| RT
+  IPAD(["iPad app, same LAN / Tailscale, Bearer token"]) -->|"meeting / dictation / proposal route calls"| RT
 ```
