@@ -213,7 +213,7 @@ Routes: 228 (plus static mounts). iOS-consumed: 44. Web-consumed: 148.
 |---|---|---|
 | POST | `/api/meetings/import` | ios, web |
 
-## web.routes.meetings
+## web.routes.meetings.action_items
 
 | Method | Path | Consumers |
 |---|---|---|
@@ -224,32 +224,62 @@ Routes: 228 (plus static mounts). iOS-consumed: 44. Web-consumed: 148.
 | PATCH | `/api/all-action-items/{item_id}` | web |
 | PATCH | `/api/all-action-items/{item_id}/edit` | web |
 | PATCH | `/api/all-action-items/{item_id}/review` | web |
-| POST | `/api/bookmark` | web |
-| GET | `/api/intel/jobs` | web |
-| POST | `/api/intel/process` | web |
-| POST | `/api/intel/retry/{meeting_id}` | web |
-| GET | `/api/intel/summary` | web |
-| PATCH | `/api/meeting` | web |
-| POST | `/api/meeting/start` | ios, web |
-| POST | `/api/meeting/stop` | ios, web |
+
+## web.routes.meetings.aftercare
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/meetings/{meeting_id}/aftercare` | ios, web |
+| POST | `/api/meetings/{meeting_id}/aftercare/file-issue` | ios, web |
+| POST | `/api/meetings/{meeting_id}/export/slack` | web |
+| GET | `/api/meetings/{meeting_id}/followup-draft` | web |
+| GET | `/api/meetings/{meeting_id}/proposals` | ios, web |
+| POST | `/api/meetings/{meeting_id}/proposals/{proposal_id}/decision` | ios, web |
+
+## web.routes.meetings.crud
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/meetings` | ios, web |
 | GET | `/api/meetings/facets` | ios, web |
 | DELETE | `/api/meetings/{meeting_id}` | ios, web |
 | GET | `/api/meetings/{meeting_id}` | ios, web |
-| GET | `/api/meetings/{meeting_id}/aftercare` | ios, web |
-| POST | `/api/meetings/{meeting_id}/aftercare/file-issue` | ios, web |
-| GET | `/api/meetings/{meeting_id}/artifacts` | web |
 | GET | `/api/meetings/{meeting_id}/export` | web |
-| POST | `/api/meetings/{meeting_id}/export/slack` | web |
-| GET | `/api/meetings/{meeting_id}/followup-draft` | web |
+
+## web.routes.meetings.insights
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/meetings/{meeting_id}/artifacts` | web |
 | GET | `/api/meetings/{meeting_id}/intent-timeline` | web |
 | GET | `/api/meetings/{meeting_id}/plugin-runs` | web |
-| GET | `/api/meetings/{meeting_id}/proposals` | ios, web |
-| POST | `/api/meetings/{meeting_id}/proposals/{proposal_id}/decision` | ios, web |
+
+## web.routes.meetings.intel
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/intel/jobs` | web |
+| POST | `/api/intel/process` | web |
+| POST | `/api/intel/retry/{meeting_id}` | web |
+| GET | `/api/intel/summary` | web |
+
+## web.routes.meetings.live
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/bookmark` | web |
+| PATCH | `/api/meeting` | web |
+| POST | `/api/meeting/start` | ios, web |
+| POST | `/api/meeting/stop` | ios, web |
+| POST | `/api/stop` | server only |
+
+## web.routes.meetings.speakers
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/speakers` | web |
 | GET | `/api/speakers/{speaker_id}` | web |
 | PATCH | `/api/speakers/{speaker_id}` | web |
-| POST | `/api/stop` | server only |
 
 ## web.routes.mesh
 

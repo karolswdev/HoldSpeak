@@ -1,9 +1,12 @@
 # Phase 72 — One Spine (cross-surface cohesion)
 
-**Status:** open — 5/10 (HS-72-01..05 done 2026-07-02; HS-72-07 cut;
+**Status:** open — 6/10 (HS-72-01..06 done 2026-07-02; HS-72-07 cut;
 10 live stories).
 
-**Last updated:** 2026-07-02 (**HS-72-05 done** — the shadow modules
+**Last updated:** 2026-07-02 (**HS-72-06 done** — the meetings god-module
+is a seven-module package under budget, route table byte-identical per the
+manifest guard; a latent production NameError in the intel aftercare
+callback surfaced, fixed, regression-locked. Earlier: **HS-72-05 done** — the shadow modules
 renamed (recorder + tracker), wire names kept, orphans deleted, /activity
 on Studio. Earlier: **HS-72-04 done** — one actuator lifecycle:
 schema v5 owner-typed proposals, the sentinel meeting dead, the rebuild
@@ -106,8 +109,9 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 - [x] The shadow modules/orphans are renamed or removed; suite + route
       pre-flight green (HS-72-05 — the wire frame names deliberately kept;
       proven by the web-runtime frame assertions).
-- [ ] `meetings.py` split under the module budget with a byte-identical route
-      table (HS-72-06).
+- [x] `meetings.py` split under the module budget with a byte-identical route
+      table (HS-72-06 — manifest diff = module fields only; plus a latent
+      production NameError surfaced, fixed, regression-locked).
 - [x] ~~`/history` decomposed to the Phase-54 pattern~~ (HS-72-07 **cut** —
       superseded by the 2026-07-02 owner decision to migrate interactive
       surfaces to React; decomposing the Astro monolith in place is wasted
@@ -131,7 +135,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 | HS-72-03 | One name per concept: untangle "companion" | HIGH | **done** (picker → `/api/coders/*`; relay → `/api/desk/actuators/*` in new `desk_actuators.py`; shared lifecycle helpers promoted to `actuator_shared.py`; `meetings.py` 1,855→1,460; all Swift/web/test callers moved same commit; manifest diff = exactly the 11 routes; suites 128+16, swift 394/0, sim BUILD SUCCEEDED (patched toolchain), pre-flight green, full suite 3058; see [evidence](./evidence-story-03.md)) | 02 |
 | HS-72-04 | One actuator lifecycle | HIGH | **done** (schema v5: owner-typed `origin` + nullable `meeting_id`; the sentinel meeting dead in code+data+queries; rebuild migration proven against a real v4 DB with backup asserted; `decide_proposal` = the ONE lifecycle, 4 routes thin; wire schema+fixture updated; 123+99 affected tests green; see [evidence](./evidence-story-04.md)) | 03 |
 | HS-72-05 | Retire the shadows | MED | **done** (meeting.py→meeting_recorder.py, runtime_activity.py→activity_tracker.py, all importers; wire/API names untouched — the frame tests caught the too-broad first sweep; logger fixed; companion-app.js + /design/check deleted; /activity on Studio; 97+8 tests, 18 pages; see [evidence](./evidence-story-05.md)) | — |
-| HS-72-06 | Split the meetings god-module | MED | todo | 03, 04 |
+| HS-72-06 | Split the meetings god-module | MED | **done** (meetings/ package: 7 route modules + 44-line façade, all ≤650; manifest diff = module fields only; a REAL latent NameError in the intel aftercare callback surfaced + fixed + regression-locked; see [evidence](./evidence-story-06.md)) | 03, 04 |
 | HS-72-07 | The meetings archive, decomposed | MED | **cut** (superseded by the 2026-07-02 web stack decision — `/history` migrates to React in a later phase instead of being decomposed in place; see the story file) | — |
 | HS-72-08 | One live bus on the web | MED | todo | — |
 | HS-72-09 | The iPad speaks Contracts natively | HIGH | todo | 01 |
@@ -144,6 +148,25 @@ Build order: **01 → 02** (the contract, then the declared surface) → **03 �
 **11** (closeout).
 
 ## Where we are
+
+**2026-07-02 — HS-72-06 done (6/10).** The meetings god-module is a package:
+`routes/meetings/` with seven route modules (live, crud, speakers,
+insights, aftercare, action_items, intel) + `_shared.py` + a 44-line
+façade — every file under the ≤650 budget, `routes/__init__.py` and
+`web_server.py` untouched. Identity proven the Phase-72 way: the
+regenerated manifest diff contains ONLY `module` fields (all 33 routes,
+paths/methods/consumers byte-identical) — the HS-72-02 guard as the
+refactor's proof harness. The split surfaced a REAL latent production bug:
+`api_process_intel_jobs`'s `_on_meeting_ready` callback (HS-56-04's
+aftercare_ready broadcast) referenced `get_database` with no import in
+scope — it NameError'd on every real invocation, so the aftercare-ready
+event never fired through the intel-process path; fixed with the
+function-scoped import and locked by a regression test that drives the
+callback through the real route. Two dead bindings orphaned by 04's
+decision-route rewrite were removed with grep proof. The mechanical
+extraction was delegated under exact rules and verified first-party.
+Full suite 3063 passed, 37 skipped. Next: HS-72-08 (one live bus) or HS-72-09 (the
+iPad speaks Contracts natively).
 
 **2026-07-02 — HS-72-05 done (5/10).** The shadows are gone.
 `holdspeak/meeting.py` (the live recorder, not dead code) is

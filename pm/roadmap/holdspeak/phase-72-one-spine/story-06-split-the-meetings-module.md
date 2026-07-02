@@ -1,8 +1,9 @@
 # HS-72-06 — Split the meetings god-module
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED (the named watch item, now 330 lines past its warning)
 - **Depends on:** HS-72-03, HS-72-04
+- **Evidence:** [evidence-story-06.md](./evidence-story-06.md)
 
 ## Goal
 
@@ -41,3 +42,17 @@ package pattern `dictation/` and `activity/` already use.
 Empty manifest diff; `wc -l` table for the new submodules (all under budget)
 in the evidence; full suite green with no test edited except patch-target
 paths; docs updated in the same commit.
+
+## Done
+
+Shipped. `meetings.py` (1,855 at phase open; 1,424 after 03/04) is a
+package of seven route modules + a 44-line façade, every file ≤650. The
+route table is byte-identical — the regenerated manifest diff contains only
+`module` fields (all 33 routes, redistributed exactly). The split surfaced
+a REAL latent bug: the intel-process aftercare callback (HS-56-04)
+referenced `get_database` with no import in scope and NameError'd on every
+real invocation — fixed and regression-locked
+(`test_intel_process_aftercare_callback.py`); two dead bindings orphaned by
+04's rewrite were removed with grep proof. Proofs: split verification 118
+passed, post-fix slice 26 passed, full suite 3063 passed / 37 skipped. See
+[evidence-story-06.md](./evidence-story-06.md).

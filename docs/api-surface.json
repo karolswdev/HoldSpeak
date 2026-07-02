@@ -30,7 +30,7 @@
       "methods": [
         "PATCH"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.action_items",
       "consumers": [
         "web"
       ]
@@ -40,7 +40,7 @@
       "methods": [
         "PATCH"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.action_items",
       "consumers": [
         "web"
       ]
@@ -50,7 +50,7 @@
       "methods": [
         "PATCH"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.action_items",
       "consumers": [
         "web"
       ]
@@ -475,7 +475,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.action_items",
       "consumers": [
         "web"
       ]
@@ -485,7 +485,7 @@
       "methods": [
         "PATCH"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.action_items",
       "consumers": [
         "web"
       ]
@@ -495,7 +495,7 @@
       "methods": [
         "PATCH"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.action_items",
       "consumers": [
         "web"
       ]
@@ -505,7 +505,7 @@
       "methods": [
         "PATCH"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.action_items",
       "consumers": [
         "web"
       ]
@@ -515,7 +515,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.live",
       "consumers": [
         "web"
       ]
@@ -1244,7 +1244,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.intel",
       "consumers": [
         "web"
       ]
@@ -1254,7 +1254,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.intel",
       "consumers": [
         "web"
       ]
@@ -1264,7 +1264,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.intel",
       "consumers": [
         "web"
       ]
@@ -1274,7 +1274,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.intel",
       "consumers": [
         "web"
       ]
@@ -1368,7 +1368,7 @@
       "methods": [
         "PATCH"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.live",
       "consumers": [
         "web"
       ]
@@ -1378,7 +1378,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.live",
       "consumers": [
         "ios",
         "web"
@@ -1389,7 +1389,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.live",
       "consumers": [
         "ios",
         "web"
@@ -1400,7 +1400,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.crud",
       "consumers": [
         "ios",
         "web"
@@ -1411,7 +1411,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.crud",
       "consumers": [
         "ios",
         "web"
@@ -1433,7 +1433,7 @@
       "methods": [
         "DELETE"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.crud",
       "consumers": [
         "ios",
         "web"
@@ -1444,7 +1444,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.crud",
       "consumers": [
         "ios",
         "web"
@@ -1455,7 +1455,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.aftercare",
       "consumers": [
         "ios",
         "web"
@@ -1466,7 +1466,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.aftercare",
       "consumers": [
         "ios",
         "web"
@@ -1477,7 +1477,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.insights",
       "consumers": [
         "web"
       ]
@@ -1487,7 +1487,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.crud",
       "consumers": [
         "web"
       ]
@@ -1497,7 +1497,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.aftercare",
       "consumers": [
         "web"
       ]
@@ -1507,7 +1507,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.aftercare",
       "consumers": [
         "web"
       ]
@@ -1517,7 +1517,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.insights",
       "consumers": [
         "web"
       ]
@@ -1527,7 +1527,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.insights",
       "consumers": [
         "web"
       ]
@@ -1545,7 +1545,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.aftercare",
       "consumers": [
         "ios",
         "web"
@@ -1556,7 +1556,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.aftercare",
       "consumers": [
         "ios",
         "web"
@@ -1886,7 +1886,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.speakers",
       "consumers": [
         "web"
       ]
@@ -1896,7 +1896,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.speakers",
       "consumers": [
         "web"
       ]
@@ -1906,7 +1906,7 @@
       "methods": [
         "PATCH"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.speakers",
       "consumers": [
         "web"
       ]
@@ -1926,7 +1926,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.meetings.live",
       "consumers": []
     },
     {
