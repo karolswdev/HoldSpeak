@@ -1,6 +1,6 @@
 # Phase 73 — The Desk, Inhabited (on the React foundation)
 
-**Status:** open — 6/10 (HS-73-01..06 done 2026-07-02).
+**Status:** open — 7/10 (HS-73-01..07 done 2026-07-02).
 
 **Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
 the same day, before any story executed: (1) **the Desk is the main surface**
@@ -88,7 +88,7 @@ so the pivot is free **now** and never again.
 | HS-73-04 | Open in-world: the pull-out | HIGH | **done** (tap opens on the stage for every kind; the meeting drawer + one-deep artifact stack + back; lineage ported drift-tolerant; Edit swaps the editor; Move-to files via the real PUT; Open full = the one navigation; location asserted unchanged; see [evidence](./evidence-story-04.md)) | 01 |
 | HS-73-05 | Zones as landmarks: file and dive | MED | **done** (stable tints + member mini-sprites + empty hint; drop-ready lift mid-drag; drop files via the real PUT with live thumbs; dive/back camera; + Zone focuses rename; DB rows asserted; see [evidence](./evidence-story-05.md)) | 01 |
 | HS-73-06 | The Record orb (the live verb) | HIGH | **done** (bottom-center; /live's calls verbatim, no getUserMedia; state honest via the one bus — external meetings flip it with the whisper, tap = stop only; stop materializes the meeting with the beat; see [evidence](./evidence-story-06.md)) | 02 |
-| HS-73-07 | The agent rail: run from the world | MED | todo | 01, 04 |
+| HS-73-07 | The agent rail: run from the world | MED | **done** (personas-only rail + egress dots; anchored ask; the REAL .43 run from the rail UI answered the instruction; copy affordance; the honest theater finding recorded; see [evidence](./evidence-story-07.md)) | 01, 04 |
 | HS-73-08 | The cutover: the Alpine desk dies | HIGH | todo | 02–07 |
 | HS-73-09 | Docs + the locks (the docs story) | MED | todo | 01–08 |
 | HS-73-10 | Closeout: the inhabited walk | HIGH | todo | 01–09 |
@@ -97,6 +97,20 @@ Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in paralle
 **08** (cutover) → **09** → **10**.
 
 ## Where we are
+
+**2026-07-02 — HS-73-07 done (7/10).** Personas run from the world. The
+right-edge rail holds exactly the agents (a coder is a live session,
+never railed), each wearing its profile-derived egress dot; tap opens an
+anchored ask; Run fires the real route with a pulsing working state and
+the result lands in place with Copy. The crux was proven on real metal:
+from the rail UI in a real browser, the ask went through the hub's
+configured engine to the .43 endpoint and the REAL model answered
+'desk' to "Say the word 'desk' and nothing else" — instruction followed,
+prompt demonstrably delivered (the Phase-53 lesson). One honest finding:
+the persona-run route emits no intel frames, so the shell theater cannot
+fire for rail runs — recorded as a hub follow-up instead of faking frames
+client-side. All the world's verbs are now in. Next: HS-73-08, the
+cutover.
 
 **2026-07-02 — HS-73-06 done (6/10).** The world has its live verb. The
 Record orb sits bottom-center (the DioAmbientRecorder position) driving

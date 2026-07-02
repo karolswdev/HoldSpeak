@@ -1,8 +1,9 @@
 # HS-73-07 — The agent rail: run from the world
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED (the intelligence verb, in-world)
 - **Depends on:** HS-73-01, HS-73-04
+- **Evidence:** [evidence-story-07.md](./evidence-story-07.md)
 
 ## Goal
 
@@ -51,3 +52,19 @@ against the `.43` endpoint (real-metal, per the standing rule for
 LLM-shaped features) → theater → the result lands in-world. The
 persona/coder boundary asserted: no coder session appears in the rail.
 Route pre-flight + full suite + `npm run build` green.
+
+## Done
+
+Shipped. The rail holds exactly the personas (coders never railed), each
+avatar wearing its profile-derived egress dot. Tap opens an anchored ask
+(no modal, focused input, Escape closes); Run fires the real
+/api/agents/{id}/run with a pulsing working state and the result renders
+in place with a Copy affordance. THE CRUX PROVEN ON REAL METAL: from the
+rail UI in a real browser, "Say the word 'desk' and nothing else." went
+through the hub's configured engine to the .43 endpoint and the real
+model answered 'desk' — the instruction was followed, so the prompt
+demonstrably reached the model. The honest theater finding recorded: the
+persona-run route emits no intel frames today, so the shell theater
+cannot fire for rail runs — the rail carries its own working state and
+the frame-broadcast is a recorded hub follow-up (no client-side fakery).
+See [evidence-story-07.md](./evidence-story-07.md).
