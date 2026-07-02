@@ -1,0 +1,154 @@
+# Phase 73 — The Desk, Inhabited (on the React foundation)
+
+**Status:** open — scaffolded 2026-07-02, re-scaffolded same day (0/10).
+
+**Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
+the same day, before any story executed: (1) **the Desk is the main surface**
+— "not a shadow of a doubt" — so it becomes the web front door `/`,
+formally superseding Phase 70's four-door IA; (2) **React + Vite replaces
+the Alpine investment** for interactive surfaces — the Desk is built as a
+React island in the existing Astro build, and the `?raw` + `new Function`
+pattern is retired. Nine stories became ten: a foundation story leads, the
+appendix deletion became the cutover story, and the IA change joined the
+arrival story. No story had begun, so IDs were reassigned in place —
+nothing shipped under the old numbering.)
+
+## The thesis
+
+Unchanged from open: Phase 71 ported the iPad desk's **renderer** to the
+web; every **verb** still lives in the old page paradigm — banned selling
+prose in the header (`desk.astro:53`), `role="dialog"` create drawers
+(`desk.astro:488+`), no in-world editing, `openObject` (`desk-app.js:400`)
+bouncing meetings to `/history` and everything else into the "Browse as a
+list" admin appendix (`desk.astro:158–429`), flat text-count zones, no live
+verb. The result is the owner's verdict: "a primitive copy, an uninviting
+mess."
+
+What changed at re-scaffold is the foundation and the stakes. The Desk is
+now the product's web front door, which means the surface must carry years
+of future verbs — and the Alpine factory (1,472 lines, string-eval loading,
+no component model) was already at its ceiling before the pull-out, inline
+editors, orb, and rail were added. Executing the inhabitation in Alpine and
+migrating later would pay for the same surface twice; the phase is at 0/N,
+so the pivot is free **now** and never again.
+
+## Scope
+
+- **In:** the ten stories below. `web/` only, plus docs and guards:
+  the `@astrojs/react` integration, a `web/src/desk/` React+TS app
+  (Zustand, `motion`, `@use-gesture/react`), the desk at `/`, in-world
+  create/edit/open, zones, the Record orb, the agent rail, the Alpine-desk
+  cutover, mechanical no-prose/no-modal locks, the walk.
+- **Out:** the iPad app (reference, not target); new backend routes (every
+  verb maps to an existing endpoint); browser-microphone capture (the orb
+  drives the hub recorder via `POST /api/meeting/start` — the `/live`
+  pattern; a browser-mic path is new plumbing + a new egress story);
+  migrating `/history`, `/live`, or any other page to React (a later phase;
+  HS-72-07 was cut in favor of it); coder presence beyond what the desk
+  already shows (`agent` ≠ `coder`); SSR or any node runtime (the bundle
+  stays static, served by FastAPI).
+
+## Exit criteria (evidence required)
+
+- [ ] The React island builds in the one existing pipeline and renders the
+      world at parity with the Alpine desk (side-by-side proof) (HS-73-01).
+- [ ] `/` is the Desk: full-bleed, immersive chrome, the first-run guard
+      preserved, a guiding empty state that answers "what is this"
+      (HS-73-02).
+- [ ] Note/KB/agent/zone creation is instant and edited in place; zero
+      modal patterns in the desk tree (HS-73-03).
+- [ ] Tapping any object opens an in-world pull-out; meetings show
+      lineage-grouped derivatives; "Open full" is the only navigation
+      (HS-73-04).
+- [ ] Zones are painted member-thumbnail trays; drag files via the real
+      `PUT`; dive/back is a camera move (HS-73-05).
+- [ ] The Record orb starts/stops the hub recorder; the finished meeting
+      materializes as an object; external state honestly reflected
+      (HS-73-06).
+- [ ] The agent rail runs a persona with the generation theater; the result
+      lands in the world (HS-73-07).
+- [ ] The Alpine desk is deleted behind a zero-loss verb inventory; no
+      `?raw`-loaded factory remains on the desk; density guard caps the new
+      tree (HS-73-08).
+- [ ] Docs record the stack decision + desk-first IA; the no-prose and
+      no-modal locks exist and are proven red on the old copy (HS-73-09).
+- [ ] The inhabited walk passes with zero route changes (committed
+      Playwright); the per-verb table shows every web verb in-world; suite
+      + route pre-flight green (HS-73-10).
+
+## Stories
+
+| Story | Title | Priority | Status | Depends on |
+|-------|-------|----------|--------|------------|
+| HS-73-01 | The React foundation: the world, ported | HIGH | todo | — |
+| HS-73-02 | The arrival: the Desk is the front door | HIGH | todo | 01 |
+| HS-73-03 | Create in-world (no modals, ever) | HIGH | todo | 01 |
+| HS-73-04 | Open in-world: the pull-out | HIGH | todo | 01 |
+| HS-73-05 | Zones as landmarks: file and dive | MED | todo | 01 |
+| HS-73-06 | The Record orb (the live verb) | HIGH | todo | 02 |
+| HS-73-07 | The agent rail: run from the world | MED | todo | 01, 04 |
+| HS-73-08 | The cutover: the Alpine desk dies | HIGH | todo | 02–07 |
+| HS-73-09 | Docs + the locks (the docs story) | MED | todo | 01–08 |
+| HS-73-10 | Closeout: the inhabited walk | HIGH | todo | 01–09 |
+
+Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in parallel →
+**08** (cutover) → **09** → **10**.
+
+## Where we are
+
+**2026-07-02 — re-scaffolded (0/10).** The owner resolved the two questions
+the original scaffold had left open or wrong: the Desk's role (main
+surface, front door — supersedes Phase 70's IA) and the foundation (React +
+Vite via `@astrojs/react`; Alpine retired for interactive surfaces; Astro
+stays as the document shell). Nine stories re-authored as ten on the new
+foundation; the original scaffold's diagnosis, verb inventory, and iPad
+reference map carry over intact (see AGENT-BRIEF §2–3). Consequences
+recorded in Phase 72: HS-72-07 (decompose `history.astro` in place) is cut
+— decomposing an Astro monolith the stack decision now schedules for
+migration is wasted motion. Next: an agent starts HS-73-01 on branch
+`phase-73-desk-inhabited` under the PMO gate.
+
+**2026-07-02 — opened + scaffolded (superseded same day).** The original
+nine-story Alpine-based scaffold; diagnosis unchanged, foundation changed.
+
+## Active risks
+
+| Risk | Mitigation | Stop signal |
+|------|------------|-------------|
+| The island doesn't reach render parity and the phase stalls in framework plumbing | HS-73-01 is scoped to parity of the EXISTING world (no new verbs); the Alpine desk stays live at `/desk` until the cutover, so nothing regresses mid-phase | HS-73-01 open >3 working sessions, or any user-visible desk regression before HS-73-08 |
+| Two desks drift during the phase (Alpine at `/desk`, React growing beside it) | The Alpine desk is frozen (bugfix-only) at re-scaffold; all new verbs land in React only | Any feature commit touching `desk-app.js` after HS-73-01 merges |
+| `/` takeover breaks first-run or the route pre-flight | HS-73-02 ports the `index.astro` guard first and updates the pre-flight in the same commit | A fresh-profile arrival that does not land on `/welcome`, or pre-flight red |
+| The React bundle bloats the local app | It's a localhost-served desktop product — size is a non-goal; still, one island, no component-library dependency, tokens reused | Any UI component library (MUI etc.) appearing in `package.json` |
+| Double-start / dishonest orb state | Orb state derives from `GET /api/state` + `hs-*` events, never local assumption; reuse `/live`'s calls verbatim | Two concurrent `POST /api/meeting/start`, or orb idle while the hub records |
+| Deleting the Alpine desk loses a verb | HS-73-08's zero-loss inventory: every control in `desk.astro` (incl. the 158–429 appendix: `openCreate`, "Move to…" `openFile`, `openRun`) mapped to its React home BEFORE deletion | Any legacy `@click` handler with no mapped equivalent at HS-73-08 review |
+| Scope magnetism: migrating other pages "while we're at it" | Out list names them; HS-72-07's cut note schedules them for a later phase | Any diff touching `history.astro`/`live.astro` beyond link updates |
+
+## Decisions made
+
+- **The Desk is the web front door** (`/`) — owner call, verbatim quote in
+  the brief; supersedes Phase 70's four-door IA. The cockpits remain as
+  rooms reached from the world's chrome.
+- **React + Vite + TypeScript** for interactive surfaces, as an island in
+  the existing Astro build (`@astrojs/react`, `client:only`); Zustand +
+  `motion` + `@use-gesture/react`; Signal tokens reused untouched. Astro
+  stays for document pages. **No new Alpine, ever** (standing rule, docs'd
+  in HS-73-09).
+- **The Record orb drives the hub recorder** — no browser mic (no new
+  egress, no new plumbing).
+- **The rail is personas only** (`agent` ≠ `coder`).
+- **HS-72-07 is cut** (recorded in Phase 72's status doc) — `/history`
+  migrates to React in a later phase instead of being decomposed in place.
+- **Same-day ID reassignment** is legitimate here: no story had started,
+  no evidence existed; the cut-IDs-never-reused rule protects executed
+  history, of which there was none.
+
+## Decisions deferred
+
+- When `/history` and `/live` migrate to React (a later phase; the standing
+  rule forbids new Alpine meanwhile).
+- Whether `/companion` (the coder board) merges into the desk as a lane —
+  owner call once the rail exists.
+- What happens to the old Home's orientation content beyond the guiding
+  empty state (HS-73-02 retires the page; if anything proves missed, it
+  returns as in-world guidance, not a page).
+- Sprite icon-picker parity (`DioIconPicker`) — backlog candidate.
