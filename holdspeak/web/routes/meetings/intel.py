@@ -157,6 +157,15 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
                 include_scheduled=include_scheduled,
                 max_jobs=max_jobs,
             )
+
+            # HS-77-02: the queue changed — broadcast the real truth.
+            try:
+                from ....db import get_database
+                from ....intel_queue import build_runtime_queue_frame
+
+                ctx.broadcast("runtime_queue", build_runtime_queue_frame(get_database()))
+            except Exception as exc:
+                log.debug(f"runtime_queue frame dropped: {exc}")
             return JSONResponse(
                 {
                     "success": True,

@@ -10,8 +10,11 @@
 // CSS live in `QueueHud.astro`; this module owns the tiny reactive store and
 // the DOM render.
 //
-// ── How jobs are DERIVED (honest mapping) ────────────────────────────────
-// The web has no `runtime_queue` feed, so jobs are synthesized from the frames
+// ── Where jobs come FROM ─────────────────────────────────────────────────
+// The deferred-intel queue arrives REAL on the `runtime_queue` frame
+// (HS-77-02): listable jobs with meeting titles, statuses, and retry
+// telemetry, broadcast on every queue transition. Live non-queue activity
+// (a recording, a dictation in flight) is still synthesized from the frames
 // that already flow (web-technical-design §2 "derive-first, no backend change"):
 //
 //   • `intel_status` → the meeting-intelligence job (a single job id "intel").
@@ -353,10 +356,45 @@ function render() {
   }
 }
 
+// The REAL queue feed (HS-77-02): reconcile the deferred-intel rows —
+// upsert every job in the frame, drop the intelq: rows that left it
+// (they completed). Statuses map to the HUD's own vocabulary.
+function fromRuntimeQueue(data) {
+  if (!data || !Array.isArray(data.jobs)) return;
+  const seen = new Set();
+  for (const job of data.jobs) {
+    if (!job || !job.id) continue;
+    seen.add(job.id);
+    const status =
+      job.status === "running" ? "working"
+      : job.status === "failed" ? "blocked"
+      : "queued";
+    upsert(job.id, {
+      label: job.label || job.meeting_id || "Deferred intelligence",
+      target: "intel",
+      status,
+      note: job.attempts > 1 ? `attempt ${job.attempts}` : "",
+      indeterminate: status === "working",
+    });
+  }
+  for (const id of [...jobs.keys()]) {
+    if (id.startsWith("intelq:") && !seen.has(id)) {
+      // The job left the queue = it resolved. Show the resolution briefly
+      // (the HUD's own linger grammar), then prune.
+      upsert(id, { status: "done", note: "", indeterminate: false });
+      schedulePrune(id, 4000);
+    }
+  }
+}
+
 // ── boot ─────────────────────────────────────────────────────────────────
 export function mountQueueHud() {
   if (!document.querySelector("[data-queue-hud]")) return;
   ensureEls();
+  subscribe("runtime_queue", (data) => {
+    fromRuntimeQueue(data);
+    render();
+  });
   subscribe("intel_status", (data) => {
     fromIntelStatus(data);
     render();

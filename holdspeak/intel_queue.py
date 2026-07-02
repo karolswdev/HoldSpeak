@@ -23,6 +23,36 @@ RETRY_FAILURE_HYSTERESIS_MINUTES = 5.0
 RETRY_FAILURE_WEBHOOK_TIMEOUT_SECONDS = 5.0
 
 
+def build_runtime_queue_frame(db) -> dict:
+    """The REAL queue truth for the web's Queue HUD (HS-77-02).
+
+    Composes the deferred-intel queue's listable jobs + aggregate summary
+    into one `runtime_queue` frame. This is the feed the HUD's header
+    comment said did not exist; live non-queue activity (a recording, a
+    dictation) stays derived from `runtime_activity`/`intel_status`.
+    """
+    summary = db.intel.get_intel_queue_summary()
+    jobs = []
+    for job in db.intel.list_intel_jobs(limit=20):
+        jobs.append({
+            "id": f"intelq:{job.meeting_id}",
+            "meeting_id": job.meeting_id,
+            "label": getattr(job, "meeting_title", "") or job.meeting_id,
+            "status": job.status,
+            "attempts": int(getattr(job, "attempts", 0) or 0),
+        })
+    return {
+        "jobs": jobs,
+        "queued": int(summary.queued_jobs or 0),
+        "running": int(summary.running_jobs or 0),
+        "failed": int(summary.failed_jobs or 0),
+        "scheduled_retries": int(summary.scheduled_retry_jobs or 0),
+        "next_retry_at": (
+            summary.next_retry_at.isoformat() if summary.next_retry_at else None
+        ),
+    }
+
+
 def _compute_retry_delay_seconds(
     attempt: int,
     *,

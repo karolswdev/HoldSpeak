@@ -20,7 +20,7 @@ are hub-side and fully provable headless.
 | ID | Story | Sev | Status | Depends |
 |---|---|---|---|---|
 | HS-77-01 | The agent's pinned context survives the hub | HIGH | **done** (schema v7; all five hub layers; byte-faithful sync round trip; the v6 upgrade proven; Swift comment updated; see [evidence](./evidence-story-01.md)) | — |
-| HS-77-02 | A real `runtime_queue` frame for the Queue HUD | MED | todo | — |
+| HS-77-02 | A real `runtime_queue` frame for the Queue HUD | MED | **done** (the builder + 3 broadcast sites + the HUD's primary feed with linger-honoring resolution; see [evidence](./evidence-story-02.md)) | — |
 | HS-77-03 | The coders-status conflation dies | MED | todo | — |
 | HS-77-04 | Docs + closeout | MED | todo | 01–03 |
 
@@ -30,7 +30,7 @@ are hub-side and fully provable headless.
       the guarded-ALTER precedent), ride the agent wire both ways, and a
       pushed iPad agent pulls back byte-faithful; the Swift tolerant-decode
       comment updated to say the loss ended (HS-77-01).
-- [ ] The hub broadcasts a real `runtime_queue` frame on queue
+- [x] The hub broadcasts a real `runtime_queue` frame on queue
       transitions and the Queue HUD consumes it as its primary source
       (HS-77-02).
 - [ ] `/api/coders/status` reports coder sessions only; the desk
@@ -40,6 +40,11 @@ are hub-side and fully provable headless.
       green; PR merged on a conclusion-checked green (HS-77-04).
 
 ## Where we are
+
+**2026-07-02 — HS-77-02 done (2/4).** The HUD renders truth: the
+deferred-intel queue broadcasts its real jobs on every transition, and a
+resolved row leaves through the ledger's own linger. Next: the
+coders-status conflation (03).
 
 **2026-07-02 — HS-77-01 done (1/4).** The pinned context survives: v7
 adds the columns additively, every hub layer speaks them, and the exact

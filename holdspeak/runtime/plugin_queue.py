@@ -55,6 +55,20 @@ class PluginQueueMixin:
 
         return {"queued_jobs": queued_jobs, "error": flush_error}
 
+    def _broadcast_runtime_queue(self) -> None:
+        """HS-77-02: the queue changed — broadcast the real truth."""
+        if self.server is None:
+            return
+        try:
+            from ..db import get_database
+            from ..intel_queue import build_runtime_queue_frame
+
+            self.server.broadcast(
+                "runtime_queue", build_runtime_queue_frame(get_database())
+            )
+        except Exception as exc:
+            log.debug(f"runtime_queue frame dropped: {exc}")
+
     def _process_deferred_plugin_queue_once(self, *, include_scheduled: bool = False) -> bool:
         """Run one deferred MIR queue job if available."""
         if self._active_meeting_session() is not None:
@@ -63,11 +77,14 @@ class PluginQueueMixin:
             from ..db import get_database
 
             db = get_database()
-            return process_next_plugin_run_job(
+            processed = process_next_plugin_run_job(
                 host=self.plugin_host,
                 db=db,
                 include_scheduled=include_scheduled,
             )
+            if processed:
+                self._broadcast_runtime_queue()
+            return processed
         except Exception as exc:
             log.error(f"Deferred MIR queue processing failed: {exc}")
             return False
@@ -118,6 +135,7 @@ class PluginQueueMixin:
             max_jobs=max_jobs,
             include_scheduled=include_scheduled,
         )
+        self._broadcast_runtime_queue()
         return {
             "processed": int(queue_result.get("processed") or 0),
             "skipped_active_meeting": bool(queue_result.get("skipped_active_meeting")),
