@@ -172,7 +172,7 @@ public struct HTTPDesktopClient: IDesktopClient {
     // MARK: - The Companion board (HSM-13-03)
 
     public func companionStatus() async throws -> CompanionBoardState {
-        let data = try await send(makeRequest(path: "api/companion/status"))
+        let data = try await send(makeRequest(path: "api/coders/status"))
         guard let dto = try? HoldSpeakContracts.decoder().decode(CompanionStatusDTO.self, from: data) else {
             throw DesktopClientError.malformed
         }
@@ -180,19 +180,19 @@ public struct HTTPDesktopClient: IDesktopClient {
     }
 
     public func selectCompanionTarget(agent: String, sessionID: String) async throws {
-        _ = try await send(makeJSONRequest(path: "api/companion/select",
+        _ = try await send(makeJSONRequest(path: "api/coders/select",
                                            body: ["agent": agent, "session_id": sessionID]))
     }
 
     public func dismissCompanionTarget(agent: String, sessionID: String) async throws {
-        _ = try await send(makeJSONRequest(path: "api/companion/dismiss",
+        _ = try await send(makeJSONRequest(path: "api/coders/dismiss",
                                            body: ["agent": agent, "session_id": sessionID]))
     }
 
     public func pinCompanionTarget(agent: String, sessionID: String, pinned: Bool) async throws {
         // `pinned` MUST ride as a JSON bool — the desktop does `bool(body.get("pinned"))`,
         // and a string "false" would read truthy. makeJSONRequest keeps it a real bool.
-        _ = try await send(makeJSONRequest(path: "api/companion/pin",
+        _ = try await send(makeJSONRequest(path: "api/coders/pin",
                                            body: ["agent": agent, "session_id": sessionID, "pinned": pinned]))
     }
 
@@ -219,7 +219,7 @@ public struct HTTPDesktopClient: IDesktopClient {
 
     struct MeetingsEnvelope: Decodable { var meetings: [MeetingSummary] }
 
-    /// Loose decode of `/api/companion/status` — only what the board needs, every
+    /// Loose decode of `/api/coders/status` — only what the board needs, every
     /// field optional so the client tolerates the rich payload evolving. Keys arrive
     /// snake_case and convert via the shared decoder.
     struct CompanionStatusDTO: Decodable {

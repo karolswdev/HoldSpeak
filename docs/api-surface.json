@@ -680,7 +680,7 @@
       ]
     },
     {
-      "path": "/api/commands/test",
+      "path": "/api/coders/clear-stale",
       "methods": [
         "POST"
       ],
@@ -690,17 +690,7 @@
       ]
     },
     {
-      "path": "/api/companion/clear-stale",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.system",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/companion/dismiss",
+      "path": "/api/coders/dismiss",
       "methods": [
         "POST"
       ],
@@ -711,27 +701,7 @@
       ]
     },
     {
-      "path": "/api/companion/github/propose",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.meetings",
-      "consumers": [
-        "ios"
-      ]
-    },
-    {
-      "path": "/api/companion/github/{proposal_id}/decision",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.meetings",
-      "consumers": [
-        "ios"
-      ]
-    },
-    {
-      "path": "/api/companion/pin",
+      "path": "/api/coders/pin",
       "methods": [
         "POST"
       ],
@@ -742,7 +712,7 @@
       ]
     },
     {
-      "path": "/api/companion/select",
+      "path": "/api/coders/select",
       "methods": [
         "POST"
       ],
@@ -753,27 +723,7 @@
       ]
     },
     {
-      "path": "/api/companion/slack/propose",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.meetings",
-      "consumers": [
-        "ios"
-      ]
-    },
-    {
-      "path": "/api/companion/slack/{proposal_id}/decision",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.meetings",
-      "consumers": [
-        "ios"
-      ]
-    },
-    {
-      "path": "/api/companion/status",
+      "path": "/api/coders/status",
       "methods": [
         "GET"
       ],
@@ -784,21 +734,71 @@
       ]
     },
     {
-      "path": "/api/companion/webhook/propose",
+      "path": "/api/commands/test",
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.system",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/desk/actuators/github/propose",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_actuators",
       "consumers": [
         "ios"
       ]
     },
     {
-      "path": "/api/companion/webhook/{proposal_id}/decision",
+      "path": "/api/desk/actuators/github/{proposal_id}/decision",
       "methods": [
         "POST"
       ],
-      "module": "web.routes.meetings",
+      "module": "web.routes.desk_actuators",
+      "consumers": [
+        "ios"
+      ]
+    },
+    {
+      "path": "/api/desk/actuators/slack/propose",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_actuators",
+      "consumers": [
+        "ios"
+      ]
+    },
+    {
+      "path": "/api/desk/actuators/slack/{proposal_id}/decision",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_actuators",
+      "consumers": [
+        "ios"
+      ]
+    },
+    {
+      "path": "/api/desk/actuators/webhook/propose",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_actuators",
+      "consumers": [
+        "ios"
+      ]
+    },
+    {
+      "path": "/api/desk/actuators/webhook/{proposal_id}/decision",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_actuators",
       "consumers": [
         "ios"
       ]

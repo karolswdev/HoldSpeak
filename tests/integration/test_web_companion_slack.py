@@ -1,10 +1,10 @@
 """HSM-14 — the iPad desk connector sends through the HOST's actuator framework.
 
 The conditions under test: a companion (the iPad desk) proposes arbitrary text
-to Slack via `/api/companion/slack/propose`; it carries NO credential and the
+to Slack via `/api/desk/actuators/slack/propose`; it carries NO credential and the
 host refuses honestly when Slack is unconfigured or the text is empty; the
 preview is byte-equal to the wire body; nothing egresses before approval;
-approving via `/api/companion/slack/{id}/decision` executes through the real
+approving via `/api/desk/actuators/slack/{id}/decision` executes through the real
 gated connector stack (transport faked at the lowest seam) with the webhook URL
 joined in memory only — never on the proposal, in a response, or a broadcast;
 and the companion status reports `slack_configured` without leaking the URL so
@@ -36,7 +36,7 @@ from holdspeak.slack_export import build_slack_connector
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 URL = "https://hooks.slack.com/services/T0/B0/secret-credential"
-PROPOSE = "/api/companion/slack/propose"
+PROPOSE = "/api/desk/actuators/slack/propose"
 
 
 @pytest.fixture
@@ -114,7 +114,7 @@ def posts(monkeypatch):
 
 def _decide(client, pid, decision, by="karol"):
     return client.post(
-        f"/api/companion/slack/{pid}/decision",
+        f"/api/desk/actuators/slack/{pid}/decision",
         json={"decision": decision, "decided_by": by},
     )
 
@@ -272,11 +272,11 @@ def test_the_wire_events_ride_for_qlippy(client, db, settings_path, posts, broad
 
 @pytest.mark.integration
 def test_companion_status_reports_slack_configured_without_the_url(client, db, settings_path):
-    off = client.get("/api/companion/status")
+    off = client.get("/api/coders/status")
     assert off.status_code == 200
     assert off.json()["connectors"]["slack_configured"] is False
 
     _configure_slack(settings_path)
-    on = client.get("/api/companion/status")
+    on = client.get("/api/coders/status")
     assert on.json()["connectors"]["slack_configured"] is True
     assert "secret-credential" not in on.text

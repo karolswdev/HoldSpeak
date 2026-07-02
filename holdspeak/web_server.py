@@ -505,6 +505,7 @@ class MeetingWebServer:
             build_cadence_router,
             build_core_router,
             build_dictation_router,
+            build_desk_actuators_router,
             build_meeting_import_router,
             build_meetings_router,
             build_mesh_router,
@@ -557,6 +558,7 @@ class MeetingWebServer:
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_cadence_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))
+        app.include_router(build_desk_actuators_router(web_ctx))
         app.include_router(build_meeting_import_router(web_ctx))
         app.include_router(build_mesh_router(web_ctx))
         app.include_router(build_dictation_router(web_ctx))

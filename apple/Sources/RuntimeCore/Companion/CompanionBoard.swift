@@ -19,7 +19,7 @@ public struct CompanionBoard: Sendable {
         self.client = client
     }
 
-    /// Load the current board (`GET /api/companion/status`).
+    /// Load the current board (`GET /api/coders/status`).
     public func load() async -> Result<CompanionBoardState, Error> {
         await wrap { try await self.client.companionStatus() }
     }

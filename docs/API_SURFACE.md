@@ -129,6 +129,17 @@ Routes: 228 (plus static mounts). iOS-consumed: 44. Web-consumed: 151.
 | GET | `/api/state` | web |
 | GET | `/health` | ios |
 
+## web.routes.desk_actuators
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/desk/actuators/github/propose` | ios |
+| POST | `/api/desk/actuators/github/{proposal_id}/decision` | ios |
+| POST | `/api/desk/actuators/slack/propose` | ios |
+| POST | `/api/desk/actuators/slack/{proposal_id}/decision` | ios |
+| POST | `/api/desk/actuators/webhook/propose` | ios |
+| POST | `/api/desk/actuators/webhook/{proposal_id}/decision` | ios |
+
 ## web.routes.dictation.agent
 
 | Method | Path | Consumers |
@@ -214,12 +225,6 @@ Routes: 228 (plus static mounts). iOS-consumed: 44. Web-consumed: 151.
 | PATCH | `/api/all-action-items/{item_id}/edit` | web |
 | PATCH | `/api/all-action-items/{item_id}/review` | web |
 | POST | `/api/bookmark` | web |
-| POST | `/api/companion/github/propose` | ios |
-| POST | `/api/companion/github/{proposal_id}/decision` | ios |
-| POST | `/api/companion/slack/propose` | ios |
-| POST | `/api/companion/slack/{proposal_id}/decision` | ios |
-| POST | `/api/companion/webhook/propose` | ios |
-| POST | `/api/companion/webhook/{proposal_id}/decision` | ios |
 | GET | `/api/intel/jobs` | web |
 | POST | `/api/intel/process` | web |
 | POST | `/api/intel/retry/{meeting_id}` | web |
@@ -357,12 +362,12 @@ Routes: 228 (plus static mounts). iOS-consumed: 44. Web-consumed: 151.
 
 | Method | Path | Consumers |
 |---|---|---|
+| POST | `/api/coders/clear-stale` | web |
+| POST | `/api/coders/dismiss` | ios, web |
+| POST | `/api/coders/pin` | ios, web |
+| POST | `/api/coders/select` | ios, web |
+| GET | `/api/coders/status` | ios, web |
 | POST | `/api/commands/test` | web |
-| POST | `/api/companion/clear-stale` | web |
-| POST | `/api/companion/dismiss` | ios, web |
-| POST | `/api/companion/pin` | ios, web |
-| POST | `/api/companion/select` | ios, web |
-| GET | `/api/companion/status` | ios, web |
 | GET | `/api/devices/health` | server only |
 | POST | `/api/dictation/wake/type` | web |
 | GET | `/api/runtime/status` | ios, web |

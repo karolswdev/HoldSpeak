@@ -92,15 +92,15 @@ public protocol IDesktopClient: Sendable {
 
     // MARK: The Companion board (HSM-13-03)
 
-    /// The AI PI companion state (`GET /api/companion/status`): which coder sessions
+    /// The AI PI companion state (`GET /api/coders/status`): which coder sessions
     /// are waiting, which is the selected reply target, confidence + blockers.
     func companionStatus() async throws -> CompanionBoardState
-    /// Make a waiting session the active reply target (`POST /api/companion/select`),
+    /// Make a waiting session the active reply target (`POST /api/coders/select`),
     /// so the next answer (HSM-13-01/02) delivers to it — no silent default.
     func selectCompanionTarget(agent: String, sessionID: String) async throws
-    /// Clear a waiting session's captured question (`POST /api/companion/dismiss`).
+    /// Clear a waiting session's captured question (`POST /api/coders/dismiss`).
     func dismissCompanionTarget(agent: String, sessionID: String) async throws
-    /// Pin/unpin a waiting session as the sticky target (`POST /api/companion/pin`).
+    /// Pin/unpin a waiting session as the sticky target (`POST /api/coders/pin`).
     func pinCompanionTarget(agent: String, sessionID: String, pinned: Bool) async throws
 
     // MARK: Run on the hub (HSM-15-xx — the Mesh "RUNS ON: your Mac")
@@ -173,7 +173,7 @@ public struct RemoteDictationResult: Sendable, Equatable, Decodable {
 }
 
 /// One waiting coder session as the Companion board shows it (HSM-13-03) — a row in
-/// the AI PI overview (`/api/companion/status` → `agent.sessions.items[]`). The board
+/// the AI PI overview (`/api/coders/status` → `agent.sessions.items[]`). The board
 /// makes the *selected* target unmistakable before any answer is sent.
 public struct CompanionTarget: Sendable, Equatable, Identifiable {
     public var agent: String           // "claude" / "codex"
@@ -195,7 +195,7 @@ public struct CompanionTarget: Sendable, Equatable, Identifiable {
 }
 
 /// The Companion board's view of the AI PI loop (HSM-13-03), decoded from
-/// `GET /api/companion/status`. Honest by construction: an empty `targets` with
+/// `GET /api/coders/status`. Honest by construction: an empty `targets` with
 /// `awaiting == false` means *nothing is waiting* — never a manufactured target.
 public struct CompanionBoardState: Sendable, Equatable {
     public var readyForReply: Bool     // the desktop can deliver an answer right now

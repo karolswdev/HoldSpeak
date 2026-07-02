@@ -1,8 +1,9 @@
 # HS-72-03 — One name per concept: untangle "companion"
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the worst naming collision in the product)
 - **Depends on:** HS-72-02
+- **Evidence:** [evidence-story-03.md](./evidence-story-03.md)
 
 ## Goal
 
@@ -55,3 +56,22 @@ outside the roadmap/history docs; Simulator screenshot of the coder board
 working against the renamed routes (live hub on LAN or seeded); web
 `/companion` and Qlippy card approve path walked with screenshots; full suite
 green; Swift build green.
+
+## Done
+
+Shipped. "Companion" no longer names an API concept: the coder picker is
+`/api/coders/*` (renamed in place in `system.py`), the desk actuator relay
+is `/api/desk/actuators/*` (extracted to `desk_actuators.py`; `meetings.py`
+shrank 1,855 → 1,460), and the shared propose→approve→execute helpers moved
+to module level in `actuator_shared.py` — the seam HS-72-04 builds on. All
+callers moved in the same commit: the Swift client (including
+`DeskHostLink`'s relay calls — the scaffold's claim that Swift never called
+the relay was wrong), the web scripts, the docs path, and all tests (incl.
+the `_GITHUB_RUNNER` patch target). Proofs: manifest diff = exactly the 11
+moved routes (consumer tags on the new paths re-extracted from the real
+call sites); rename-affected suites 128+16 passed; `swift test` 394/0;
+Simulator app BUILD SUCCEEDED via the documented toolchain workaround
+(`patch-llm-macro.sh` + `-disableAutomaticPackageResolution`); web build +
+route pre-flight green; full suite 3058 passed, 37 skipped. Deviation: the interactive Simulator walk was replaced by
+compile+tests+manifest-extraction proofs, recorded in the evidence. See
+[evidence-story-03.md](./evidence-story-03.md).

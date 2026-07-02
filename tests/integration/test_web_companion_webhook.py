@@ -31,7 +31,7 @@ from holdspeak.db import Database, get_database, reset_database
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 URL = "https://hooks.example.com/services/secret-hook"
-PROPOSE = "/api/companion/webhook/propose"
+PROPOSE = "/api/desk/actuators/webhook/propose"
 
 
 @pytest.fixture
@@ -103,7 +103,7 @@ def posts(monkeypatch):
 
 
 def _decide(client, pid, decision, by="karol"):
-    return client.post(f"/api/companion/webhook/{pid}/decision", json={"decision": decision, "decided_by": by})
+    return client.post(f"/api/desk/actuators/webhook/{pid}/decision", json={"decision": decision, "decided_by": by})
 
 
 @pytest.mark.integration
@@ -176,9 +176,9 @@ def test_the_url_never_rides_a_response_or_broadcast(client, db, settings_path, 
 
 @pytest.mark.integration
 def test_companion_status_reports_webhook_configured(client, db, settings_path):
-    assert client.get("/api/companion/status").json()["connectors"]["webhook_configured"] is False
+    assert client.get("/api/coders/status").json()["connectors"]["webhook_configured"] is False
     _configure(settings_path)
-    on = client.get("/api/companion/status").json()
+    on = client.get("/api/coders/status").json()
     assert on["connectors"]["webhook_configured"] is True
 
 
@@ -187,5 +187,5 @@ def test_slack_and_webhook_decisions_do_not_cross(client, db, settings_path):
     # a webhook proposal cannot be decided on the slack route, and vice-versa
     _configure(settings_path)
     pid = client.post(PROPOSE, json={"text": "ping"}).json()["proposal"]["id"]
-    crossed = client.post(f"/api/companion/slack/{pid}/decision", json={"decision": "approved"})
+    crossed = client.post(f"/api/desk/actuators/slack/{pid}/decision", json={"decision": "approved"})
     assert crossed.status_code == 404

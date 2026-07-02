@@ -1,12 +1,16 @@
 # Phase 72 — One Spine (cross-surface cohesion)
 
-**Status:** open — 2/10 (HS-72-01, HS-72-02 done 2026-07-02; HS-72-07 cut;
+**Status:** open — 3/10 (HS-72-01..03 done 2026-07-02; HS-72-07 cut;
 10 live stories).
 
-**Last updated:** 2026-07-02 (**HS-72-02 done** — the API surface is a
-declared, committed artifact: 229 routes with call-site-derived consumers
-(44 iOS / 151 web), five snapshot tests, both drift directions proven red.
-Earlier: **HS-72-01 done** — the primitive contract is
+**Last updated:** 2026-07-02 (**HS-72-03 done** — "companion" untangled:
+the coder picker at `/api/coders/*`, the desk relay at
+`/api/desk/actuators/*` in its own router, the shared lifecycle helpers in
+`actuator_shared.py`, all callers moved in the same commit; the manifest
+diff is exactly the eleven routes. Earlier: **HS-72-02 done** — the API
+surface is a declared, committed artifact: 229 routes with
+call-site-derived consumers (44 iOS / 151 web), five snapshot tests, both
+drift directions proven red. Earlier: **HS-72-01 done** — the primitive contract is
 machine-checked: 8 kind schemas + the ChangeSet envelope + one golden fixture,
 three guards (hub pytest / Swift fixture round-trip / validate.py), the
 three-way kind-set lock, four real drifts caught on the first pass. See
@@ -87,9 +91,10 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
       snapshot tests fail on undeclared routes and on Swift calls to
       undeclared paths (HS-72-02 — both directions proven red, outputs in
       the evidence).
-- [ ] "Companion" means exactly one thing; the coder picker and the desk
+- [x] "Companion" means exactly one thing; the coder picker and the desk
       actuator relay live on their own prefixes, with the Swift client and
-      web callers moved in the same story (HS-72-03).
+      web callers moved in the same story (HS-72-03 — manifest diff =
+      exactly the eleven moved routes; zero stale grep hits).
 - [ ] One propose→approve→execute implementation; the sentinel meeting row is
       gone; proposals carry an owner-typed origin (HS-72-04).
 - [ ] The shadow modules/orphans are renamed or removed; suite + route
@@ -116,7 +121,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 |-------|-------|----------|--------|------------|
 | HS-72-01 | The primitive contract, machine-checked | HIGH | **done** (8 kind schemas + ChangeSet envelope + golden fixture; three guards — pytest over a real pull, Swift fixture round-trip, validate.py; three-way kind-set lock; 4 real drifts caught: tombstone payloads (fixed), missing updated_at (tolerant decoders), lossy agent fields (locked, follow-up), the baseURL decode bug (fixed); drift proven red both ways; see [evidence](./evidence-story-01.md)) | — |
 | HS-72-02 | The API surface, declared | HIGH | **done** (generated manifest `docs/api-surface.json` + `docs/API_SURFACE.md`: 229 routes, consumers from real call sites — 44 iOS / 151 web; 5 snapshot tests incl. clients-only-call-served-routes; both drift directions proven red; doc guards green; see [evidence](./evidence-story-02.md)) | — |
-| HS-72-03 | One name per concept: untangle "companion" | HIGH | todo | 02 |
+| HS-72-03 | One name per concept: untangle "companion" | HIGH | **done** (picker → `/api/coders/*`; relay → `/api/desk/actuators/*` in new `desk_actuators.py`; shared lifecycle helpers promoted to `actuator_shared.py`; `meetings.py` 1,855→1,460; all Swift/web/test callers moved same commit; manifest diff = exactly the 11 routes; suites 128+16, swift 394/0, sim BUILD SUCCEEDED (patched toolchain), pre-flight green, full suite 3058; see [evidence](./evidence-story-03.md)) | 02 |
 | HS-72-04 | One actuator lifecycle | HIGH | todo | 03 |
 | HS-72-05 | Retire the shadows | MED | todo | — |
 | HS-72-06 | Split the meetings god-module | MED | todo | 03, 04 |
@@ -132,6 +137,33 @@ Build order: **01 → 02** (the contract, then the declared surface) → **03 �
 **11** (closeout).
 
 ## Where we are
+
+**2026-07-02 — HS-72-03 done (3/10).** "Companion" no longer names an API
+concept. The coder session picker lives at `/api/coders/*` (renamed in
+place in `system.py`); the desk actuator relay lives at
+`/api/desk/actuators/{slack,webhook,github}/*` in the new
+`desk_actuators.py` (extracted from `meetings.py`, which shrank
+**1,855 → 1,460 lines**); and the shared propose→approve→execute helpers —
+previously closures inside `build_meetings_router` — are module-level in
+`actuator_shared.py`, called by both routers (the exact seam HS-72-04
+extends into the one lifecycle service). Every caller moved in the same
+commit: the Swift client (including `DeskHostLink`'s relay calls — the
+scaffold's belief that Swift never called the relay was wrong), the web
+scripts, the docs path, and every test (incl. the `_GITHUB_RUNNER` patch
+target, now on `actuator_shared` per the Phase-63 rule). Proofs: the
+regenerated manifest diff is exactly the eleven moved routes with consumer
+tags re-extracted from the real call sites (cross-surface proof the
+clients call the new paths); rename-affected suites 128+16 passed;
+`swift test` 394/0; the Simulator app BUILD SUCCEEDED via the full documented toolchain
+workaround (`patch-llm-macro.sh` severs the LLM.swift macro, then
+`-derivedDataPath` + `-disableAutomaticPackageResolution` +
+`-skipMacroValidation` — flag-only attempts still die on the swift-syntax
+break); web build + route pre-flight green (Playwright was found
+missing from the venv after the earlier extras churn and restored — the
+`dev` extras group carries it). Residual finding recorded: the coders
+status payload still reports desk connector config (`connectors.*`) — a
+conflation inside the payload, noted for 04/10. Next: HS-72-04 (one
+actuator lifecycle — kill the sentinel meeting).
 
 **2026-07-02 — HS-72-02 done (2/10).** The API surface is a declared,
 committed artifact. `scripts/gen_api_surface.py` enumerates the REAL

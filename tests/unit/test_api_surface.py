@@ -92,7 +92,7 @@ def test_extractors_see_the_real_call_sites() -> None:
     """A moved/emptied source tree must fail loudly, not pass vacuously."""
     ios = gen.extract_ios_calls()
     web = gen.extract_web_calls()
-    assert "/api/companion/status" in ios or "/api/coders/status" in ios, (
+    assert "/api/coders/status" in ios, (
         "iOS extraction lost the coder-board calls — did the client move?")
     assert any(c.startswith("/api/dictation/") for c in web)
     assert len(ios) >= 15 and len(web) >= 60

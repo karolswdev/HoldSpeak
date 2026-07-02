@@ -259,7 +259,7 @@ normal text insertion path.
 With HoldSpeak running, open:
 
 ```text
-/api/companion/status
+/api/coders/status
 ```
 
 Expected ready shape:

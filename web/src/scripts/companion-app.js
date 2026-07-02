@@ -56,21 +56,21 @@ function CompanionApp() {
     },
 
     select(item) {
-      return this.control("/api/companion/select", {
+      return this.control("/api/coders/select", {
         agent: item?.session?.agent,
         session_id: item?.session?.session_id,
       }, item);
     },
 
     dismiss(item) {
-      return this.control("/api/companion/dismiss", {
+      return this.control("/api/coders/dismiss", {
         agent: item?.session?.agent,
         session_id: item?.session?.session_id,
       }, item);
     },
 
     togglePin(item) {
-      return this.control("/api/companion/pin", {
+      return this.control("/api/coders/pin", {
         agent: item?.session?.agent,
         session_id: item?.session?.session_id,
         pinned: !this.isPinned(item),
@@ -78,7 +78,7 @@ function CompanionApp() {
     },
 
     clearStale() {
-      return this.control("/api/companion/clear-stale", {}, null);
+      return this.control("/api/coders/clear-stale", {}, null);
     },
 
     staleCount() {
@@ -87,7 +87,7 @@ function CompanionApp() {
 
     async refresh() {
       try {
-        const response = await fetch("/api/companion/status", {
+        const response = await fetch("/api/coders/status", {
           headers: { accept: "application/json" },
         });
         const payload = await response.json().catch(() => ({}));

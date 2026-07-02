@@ -2729,7 +2729,7 @@ struct DioActSheet: View {
 
 // The link to the paired Mac (host PC). Connectors route THROUGH it: the iPad proposes + approves; the host
 // executes with the Slack credential joined in memory ON THE MAC — the iPad never holds it. Grounded in the
-// HoldSpeak actuator framework (propose→approve→execute, Phase 37/38/61) via /api/companion/slack/*.
+// HoldSpeak actuator framework (propose→approve→execute, Phase 37/38/61) via /api/desk/actuators/slack/*.
 struct DeskHostLink {
     let host: String; let port: Int
     // The hub's web auth token. A LAN/non-loopback bind REQUIRES it, so every authed request rides
@@ -2752,14 +2752,14 @@ struct DeskHostLink {
     func propose(target: String, title: String, text: String) async throws -> (id: String, preview: String) {
         var body: [String: Any] = ["text": text]
         if !title.isEmpty { body["title"] = title }
-        let (data, resp) = try await post("api/companion/\(target)/propose", body)
+        let (data, resp) = try await post("api/desk/actuators/\(target)/propose", body)
         try Self.check(data, resp, "Your desktop refused the send.")
         let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]
         return (p?["id"] as? String ?? "", p?["preview"] as? String ?? text)
     }
     /// Approve (→ execute) or reject the proposal on the host → (status, error?).
     func decide(target: String, id: String, approved: Bool) async throws -> (status: String, error: String?) {
-        let (data, resp) = try await post("api/companion/\(target)/\(id)/decision",
+        let (data, resp) = try await post("api/desk/actuators/\(target)/\(id)/decision",
                                           ["decision": approved ? "approved" : "rejected", "decided_by": "ipad-desk"])
         try Self.check(data, resp, "Your desktop refused the decision.")
         let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]

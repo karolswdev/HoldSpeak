@@ -148,7 +148,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
 
         return JSONResponse(_normalize_runtime_status_payload({}, state))
 
-    @router.get("/api/companion/status")
+    @router.get("/api/coders/status")
     async def api_companion_status() -> Any:
         """Return one debug snapshot for the AIPI agent companion loop."""
         from ...agent_context import (
@@ -385,7 +385,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "session_id is required"}, status_code=400)
         return agent, session_id
 
-    @router.post("/api/companion/select")
+    @router.post("/api/coders/select")
     async def api_companion_select(payload: Optional[dict[str, Any]] = None) -> Any:
         """Select a specific waiting session as AI PI's active reply target."""
         from ...agent_context import select_awaiting_agent_session
@@ -402,7 +402,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             )
         return JSONResponse({"success": True, "session": session.to_dict()})
 
-    @router.post("/api/companion/dismiss")
+    @router.post("/api/coders/dismiss")
     async def api_companion_dismiss(payload: Optional[dict[str, Any]] = None) -> Any:
         """Clear a waiting session's captured response (non-destructive)."""
         from ...agent_context import clear_agent_session_response
@@ -419,7 +419,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             }
         )
 
-    @router.post("/api/companion/pin")
+    @router.post("/api/coders/pin")
     async def api_companion_pin(payload: Optional[dict[str, Any]] = None) -> Any:
         """Pin or unpin a waiting session as the sticky reply target."""
         from ...agent_context import pin_agent_session
@@ -438,7 +438,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             )
         return JSONResponse({"success": True, "session": session.to_dict()})
 
-    @router.post("/api/companion/clear-stale")
+    @router.post("/api/coders/clear-stale")
     async def api_companion_clear_stale(payload: Optional[dict[str, Any]] = None) -> Any:
         """Clear all non-pinned waiting sessions older than the threshold."""
         from ...agent_context import (
