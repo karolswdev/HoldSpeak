@@ -62,26 +62,13 @@ export function Pullout({ o }: { o: WorldObject }) {
   }, [o.kind, o.id]);
 
   const run = async () => {
-    const routes: Record<string, string> = {
-      agent: `/api/agents/${encodeURIComponent(o.id)}/run`,
-      chain: `/api/chains/${encodeURIComponent(o.id)}/run`,
-      workflow: `/api/workflows/${encodeURIComponent(o.id)}/run`,
-    };
     setRunBusy(true);
     setRunOut("");
-    try {
-      const res = await fetch(routes[o.kind], {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: runInput }),
-      });
-      const data = await res.json().catch(() => ({}));
-      setRunOut(String(data.output || data.error || `HTTP ${res.status}`));
-    } catch (e: any) {
-      setRunOut(String(e?.message || e));
-    } finally {
-      setRunBusy(false);
-    }
+    const result = await useDesk
+      .getState()
+      .runCapability(o.kind as "agent" | "chain" | "workflow", o.id, runInput);
+    setRunOut(result.output);
+    setRunBusy(false);
   };
 
   const ir = o.ref as any;
