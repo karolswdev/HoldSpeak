@@ -9,6 +9,31 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 > holdspeak`). APIs, config, and defaults can still change while it is pre-1.0;
 > upgrades are safe by default (your database is backed up first).
 
+## [Unreleased]
+
+### Added
+- **The Desk is the web front door.** Opening HoldSpeak lands on a spatial
+  world at `/`: meetings, notes, knowledge bases, agents, and artifacts as
+  objects you create, open, file, and arrange in place. The Record orb
+  drives the hub recorder; the agent rail runs personas. (`/desk`
+  redirects home; the previous orientation Home is retired.)
+- **Run results persist.** An agent, chain, or workflow run saves its
+  output as an artifact with lineage naming the capability that made it;
+  the artifact lands on the Desk and syncs like any other. Runs also
+  report honest progress frames to the UI. (Database schema v6; upgrades
+  back the database up first, as always.)
+- **Preview before it types** (Settings, Voice; off by default): a
+  finished dictation shows its text on a card first, on every page. Type
+  it commits; Discard drops it.
+
+### Fixed
+- The preview card no longer renders as an empty box on pages with no
+  armed preview.
+- The settings loader no longer silently drops the preview toggle on
+  restart.
+- The `/api/settings` boundary, the artifacts store, and the sync pull
+  gained coverage for all of the above.
+
 ## [0.3.1] - 2026-06-13
 
 Documentation. No runtime change from 0.3.0.

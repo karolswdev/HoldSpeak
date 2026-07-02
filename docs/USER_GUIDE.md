@@ -112,6 +112,10 @@ It is off by default, and what happens after it hears you is the safety
 decision the feature is built around:
 
 - **Preview first (the default).** Nothing is typed. The result appears as
+
+(Separately from the wake word, `dictation.preview_before_type` in
+Settings, Voice, applies the same card to every hold-key dictation;
+that one is off by default.)
   a card with the transcript, the pipeline output, and a **Type it**
   button. Typing happens only when you press it, and the server types only
   the exact previewed text. Dismissing the card is always safe.

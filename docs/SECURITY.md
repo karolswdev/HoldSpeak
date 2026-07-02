@@ -33,7 +33,7 @@ beaconing** anywhere in the codebase.
 
 ## 2. Storage & at-rest posture
 
-- The database (`holdspeak/db.py`, `DEFAULT_DB_PATH = ~/.local/share/holdspeak/holdspeak.db`)
+- The database (`holdspeak/db/`; `DEFAULT_DB_PATH = ~/.local/share/holdspeak/holdspeak.db` in `db/core.py`)
   and the config (`~/.config/holdspeak/config.json`) are **plaintext on disk**,
   protected by filesystem permissions only.
 - Browser-history reads operate on **temporary snapshot copies** of the
@@ -89,10 +89,13 @@ SQLCipher) becomes warranted and should be its own story.
 
 | Egress | Trigger | What leaves | Gate |
 |---|---|---|---|
-| **Cloud meeting intel** (`intel.py` → OpenAI client) | `intel_provider` = `cloud`, or `auto` falling back | Transcript text (no audio, no embeddings, no activity) | Explicit provider choice. `provider="local"` (default) **never** egresses, locked by `tests/unit/test_intel_egress_invariant.py`; surfaced by `doctor` + `intel_egress` in the runtime status. |
-| **Deferred-intel failure webhook** (`intel_queue.py:345`) | User configures `intel_retry_failure_webhook_url` | Queue statistics only (counts, rates), **no transcript** | Opt-in (URL must be set). |
+| **Cloud meeting intel** (`intel/providers.py` → OpenAI-compatible client) | `intel_provider` = `cloud`, or `auto` falling back | Transcript text (no audio, no embeddings, no activity) | Explicit provider choice. `provider="local"` (default) **never** egresses, locked by `tests/unit/test_intel_egress_invariant.py`; surfaced by `doctor` + `intel_egress` in the runtime status. |
+| **Deferred-intel failure webhook** (`intel_queue.py`, the `urlopen` send) | User configures `intel_retry_failure_webhook_url` | Queue statistics only (counts, rates), **no transcript** | Opt-in (URL must be set). |
 | **Wake-model download** (`wake_word.py`, first enable) | `wake_word.enabled` flipped on with models absent | Nothing leaves: an inbound fetch of the detection models (~7 MB) from the openWakeWord GitHub releases, once, cached locally | Opt-in (the feature is off by default); stated in the settings copy. Detection itself runs locally and no audio ever egresses. |
 | **Send to Slack** (`slack_export.py` → the gated webhook connector) | User configures `meeting.slack_webhook_url` AND approves one specific send | The meeting digest or follow-up draft, exactly as previewed on the proposal (plain text; no transcript, no audio) | Double opt-in: the URL must be set (consent for exactly its host; the connector refuses any other host before egress) and every send is a separate per-action approval. The webhook URL is treated as a credential: never in proposals, broadcasts, or API responses. |
+| **Desk Slack relay** (`web/routes/desk_actuators.py` → the same gated webhook connector) | A desk or companion card proposes a Slack send AND you approve it | The proposed text, exactly as previewed (plain text) | The same double opt-in as Send to Slack: `meeting.slack_webhook_url` must be set and every send is a separate approval; the URL never rides a payload. |
+| **Desk webhook connector** (`web/routes/desk_actuators.py` → `actuator_shared.execute_webhook_proposal`) | `meeting.companion_webhook_url` is configured AND you approve one specific send | The proposed text, exactly as previewed, to that one configured endpoint (Discord, Zapier, n8n, or any URL you set) | Double opt-in: the URL must be set (consent for exactly its host) and every send is a separate per-action approval. The URL is a credential: never in proposals, broadcasts, or API responses. |
+| **Desk GitHub issue** (`web/routes/desk_actuators.py` → `gh issue create`) | The GitHub connector is enabled AND you approve one specific proposal | The issue title and body, exactly as previewed, through your own `gh` CLI | Opt-in + per-action approval; runs your authenticated `gh`, never a stored token of ours. Distinct from the read-only enrichment row below. |
 | **Connector CLI enrichment** (`gh`, `jira` via subprocess) | User enables the connector pack | Entity IDs (PR/issue/ticket numbers) to the user's own CLI tools, which call their services | Opt-in + manifest permissions (`shell:exec`, `network:outbound`). |
 | **Web runtime responses** | A client requests data | Whatever the API returns (transcripts, action items, etc.) | Loopback by default; token-gated off-loopback. |
 | **Device audio link** | A paired device streams audio | Audio in; status/LCD text out | PSK; same-LAN today. |

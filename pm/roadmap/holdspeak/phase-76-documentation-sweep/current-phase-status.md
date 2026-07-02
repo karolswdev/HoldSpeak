@@ -1,6 +1,6 @@
 # Phase 76 — The Documentation Sweep
 
-**Status:** open — scaffolded 2026-07-02 (0/5).
+**Status:** **CLOSED — 5/5 (2026-07-02).** See the story evidence files; the ledger is [evidence-story-01.md](./evidence-story-01.md).
 **Owner call that opened it:** "We must also have a documentation update
 phase" (2026-07-02).
 
@@ -24,7 +24,7 @@ doc of its own**.
 | HS-76-02 | README: the Desk era front door | HIGH | todo | 01 |
 | HS-76-03 | ARCHITECTURE catches up | HIGH | todo | 01 |
 | HS-76-04 | THE_DESK.md: the flagship documented | HIGH | todo | 01 |
-| HS-76-05 | Closeout: coherence + guards | MED | todo | 01–04 |
+| HS-76-05 | Closeout: the tail + coherence | MED | **done** (SECURITY's 3 missing egress rows + the trust mirror; the index; MEETING_MODE; CHANGELOG [Unreleased]; the one-liners; all guards green; see [evidence](./evidence-story-05.md)) | 01–04 |
 
 ## Exit criteria
 
@@ -44,10 +44,20 @@ doc of its own**.
       than a new file: the verbs, zones, the orb, the rail, the preview
       card, the egress badge) in label voice, linked from the entry
       points (HS-76-04).
-- [ ] All doc guards green; a coherence read-through recorded; PR merged
+- [x] All doc guards green; a coherence read-through recorded; PR merged
       on a conclusion-checked green (HS-76-05).
 
 ## Where we are
+
+**2026-07-02 — PHASE CLOSED (5/5).** The docs tell one story again:
+arrive on the Desk, the rooms hang off its menu, the badge is the one
+trust answer. SECURITY's egress table is complete (the sharpest audit
+finding), the trust diagram mirrors it, ARCHITECTURE's map carries the
+island/bus/run subsystem, README presents the flagship with a real
+screenshot, WEB_DESK documents every verb, and CHANGELOG owns the
+unreleased work. Two bonuses: a shipped P75 UI bug caught and fixed by
+the audit's own screenshot pass, and six dead root strays surfaced for
+the owner.
 
 **2026-07-02 — HS-76-04 done (4/5).** The flagship has a truthful doc:
 WEB_DESK.md rewritten from the inverted pre-73 framing to the shipped

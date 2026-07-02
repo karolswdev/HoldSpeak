@@ -279,6 +279,8 @@ flowchart LR
   RT -->|"loopback by default; token required off-loopback"| WEB(["Browser and API clients"])
   RT -->|"only when intel provider is cloud or auto; transcript text"| CLOUD(["Cloud LLM endpoint"])
   RT -->|"approved proposal only; to the configured host"| SK(["Slack webhook"])
+  RT -->|"approved proposal only; to the one configured endpoint"| WHK(["Companion webhook<br/>(Discord, Zapier, any URL you set)"])
+  RT -->|"approved proposal only; via your own gh"| GH(["GitHub issue create"])
   RT -->|"opt-in pack; entity IDs via your own CLIs"| CLI(["gh, jira, to their services"])
   RT -->|"opt-in; queue stats only, no transcript"| OPS(["Ops alert webhook"])
   RT -->|"one-time inbound fetch, about 7 MB"| WM(["Wake models, GitHub releases"])

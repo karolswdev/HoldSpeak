@@ -21,6 +21,10 @@ The intelligent-typing loop is:
 speech -> Whisper transcript -> punctuation cleanup -> dictation pipeline -> typed text
 ```
 
+(An optional last gate sits after all of this: `dictation.preview_before_type`
+in Settings, Voice, shows the finished text on a card first. Type it commits,
+Discard drops it. Off by default.)
+
 The pipeline can:
 
 - classify an utterance against dictation blocks;
