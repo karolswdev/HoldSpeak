@@ -50,14 +50,13 @@ interface Props {
 const { current } = Astro.props;
 
 const primary: { slug: Route; label: string; href: string }[] = [
-  { slug: "home", label: "Home", href: "/" },
+  { slug: "home", label: "Desk", href: "/" },
   { slug: "dictation", label: "Dictation", href: "/dictation" },
   { slug: "meetings", label: "Meetings", href: "/history" },
 ];
 
 const studio: { slug: Route; label: string; href: string }[] = [
   { slug: "workbench", label: "Workbench", href: "/workbench" },
-  { slug: "desk", label: "Desk", href: "/desk" },
   { slug: "companion", label: "Agent Desk", href: "/companion" },
   { slug: "cadence", label: "Cadence", href: "/cadence" },
   { slug: "commands", label: "Commands", href: "/commands" },

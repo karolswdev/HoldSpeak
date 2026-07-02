@@ -150,14 +150,118 @@
 .desk-next .desk-zone-title { font-weight: 600; font-size: var(--font-size-sm); }
 .desk-next .desk-zone-count { font-size: var(--font-size-xs); color: var(--text-muted); }
 
-/* ── minimal island chrome (HS-73-02 replaces this with the arrival) ── */
-.desk-next .desk-toolbar {
+/* ── the arrival chrome (HS-73-02): floating clusters, no header stack ── */
+.desk-next { min-height: 100vh; }
+.desk-next .desk-world { min-height: calc(100vh - 40px); margin-top: 0; }
+.desk-next .desk-chrome {
+  position: fixed;
+  z-index: 30;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) 0;
+  gap: var(--space-2);
 }
-.desk-next .desk-toolbar .spacer { flex: 1; }
+.desk-next .desk-chrome-tl { top: 14px; left: 18px; }
+.desk-next .desk-chrome-tr { top: 14px; right: 18px; flex-wrap: wrap; justify-content: flex-end; }
+.desk-next .desk-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(12, 10, 18, 0.62);
+  color: var(--text);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.desk-next .desk-mark-glyph { color: var(--accent); }
+.desk-next .desk-menu-wrap { position: relative; }
+.desk-next .desk-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(14, 12, 20, 0.94);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+}
+.desk-next .desk-menu a {
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-menu a:hover { background: rgba(255, 107, 53, 0.12); }
+.desk-next .desk-hub-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+.desk-next .desk-hub-dot.is-live { background: var(--success, #34D399); box-shadow: 0 0 8px rgba(52, 211, 153, 0.6); }
+.desk-next .desk-hub-dot.is-degraded { background: var(--danger, #F87171); }
+.desk-next .desk-chip {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(12, 10, 18, 0.62);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  text-decoration: none;
+  backdrop-filter: blur(6px);
+  transition: border-color var(--duration-short) var(--ease-standard),
+    background var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-chip:hover { border-color: var(--accent); background: rgba(255, 107, 53, 0.10); }
+.desk-next .desk-chip.quiet { color: var(--text-muted); }
+.desk-next .desk-hint {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  font-size: var(--font-size-xs);
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* ── the guiding empty state (a world being empty, not a page of copy) ── */
+.desk-next .desk-empty {
+  min-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+.desk-next .desk-empty-mark {
+  font-size: 44px;
+  color: var(--accent);
+  filter: drop-shadow(0 0 18px rgba(255, 107, 53, 0.45));
+}
+.desk-next .desk-empty-word {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: var(--font-size-2xl, 2rem);
+  color: var(--text);
+}
+.desk-next .desk-empty-line {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-md);
+}
+.desk-next .desk-empty-next { display: flex; gap: var(--space-3); margin-top: var(--space-2); }
 
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-stage-glow { animation: none; opacity: 0.85; }

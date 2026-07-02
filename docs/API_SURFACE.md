@@ -297,7 +297,7 @@ Routes: 229 (plus static mounts). iOS-consumed: 44. Web-consumed: 148.
 | GET | `/commands` | server only |
 | GET | `/companion` | server only |
 | GET | `/desk` | server only |
-| GET | `/desk-next` | server only |
+| GET | `/desk-legacy` | server only |
 | GET | `/dictation` | server only |
 | GET | `/docs/dictation-runtime` | server only |
 | GET | `/history` | server only |

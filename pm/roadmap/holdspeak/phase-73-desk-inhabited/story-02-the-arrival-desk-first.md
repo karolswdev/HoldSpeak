@@ -1,8 +1,9 @@
 # HS-73-02 — The arrival: the Desk is the front door
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the owner's IA decision, landed; plus half the felt gap)
 - **Depends on:** HS-73-01
+- **Evidence:** [evidence-story-02.md](./evidence-story-02.md)
 
 ## Goal
 
@@ -66,3 +67,23 @@ profile lands in the world at `/`. Screenshots: the arrival (populated),
 the empty state (fresh), the revealed nav, keyboard-only navigation out of
 `/`. Route pre-flight updated + green (including the `/desk` redirect);
 zero page errors; full suite green; `npm run build` green.
+
+## Done
+
+Shipped. `/` IS the Desk: the island mounts under a new `immersive`
+AppLayout prop (no TopNav; full-bleed main; shell widgets intact), with the
+first-run guard ported verbatim and proven both ways (fresh profile →
+/welcome; milestone set → the world). The chrome is the iPad's arrival
+grammar: the mark opening a compact rooms menu, the hub dot, the canonical
+egress badge (the Alpine port over setup trust), the create chips (wired to
+instant-create — HS-73-03's strict subset), Tidy/Refresh, and one whispered
+hint. A fresh desk shows the guiding empty state with the POSITIONING
+short form and two next-action chips. `/desk` 307-redirects home; the
+frozen Alpine desk lives at `/desk-legacy` until the cutover; nav's first
+door is Desk and Studio's separate row is gone. Proofs: the Playwright
+arrival run (guard both ways, empty state, 4 objects + tray, menu = 4
+rooms, redirect, legacy, zero page errors) + two screenshots; 18 pages;
+manifest + pre-flight 7 passed; full suite 3066 passed, 37 skipped. Deviations: a compact
+always-visible mark+menu instead of an auto-hiding TopNav (simpler,
+keyboard-honest, closer to the iPad); chips wired, not disabled. See
+[evidence-story-02.md](./evidence-story-02.md).

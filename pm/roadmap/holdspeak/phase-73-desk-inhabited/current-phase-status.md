@@ -1,6 +1,6 @@
 # Phase 73 — The Desk, Inhabited (on the React foundation)
 
-**Status:** open — 1/10 (HS-73-01 done 2026-07-02).
+**Status:** open — 2/10 (HS-73-01..02 done 2026-07-02).
 
 **Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
 the same day, before any story executed: (1) **the Desk is the main surface**
@@ -52,9 +52,9 @@ so the pivot is free **now** and never again.
 
 - [x] The React island builds in the one existing pipeline and renders the
       world at parity with the Alpine desk (side-by-side proof) (HS-73-01).
-- [ ] `/` is the Desk: full-bleed, immersive chrome, the first-run guard
+- [x] `/` is the Desk: full-bleed, immersive chrome, the first-run guard
       preserved, a guiding empty state that answers "what is this"
-      (HS-73-02).
+      (HS-73-02 — the guard proven both ways against the real milestone).
 - [ ] Note/KB/agent/zone creation is instant and edited in place; zero
       modal patterns in the desk tree (HS-73-03).
 - [ ] Tapping any object opens an in-world pull-out; meetings show
@@ -81,7 +81,7 @@ so the pivot is free **now** and never again.
 | Story | Title | Priority | Status | Depends on |
 |-------|-------|----------|--------|------------|
 | HS-73-01 | The React foundation: the world, ported | HIGH | **done** (the island at render parity on /desk-next: same sprites/layout/positions contract, drag+Tidy proven, vitest 9/9, side-by-side committed, zero page errors; Alpine /desk frozen; see [evidence](./evidence-story-01.md)) | — |
-| HS-73-02 | The arrival: the Desk is the front door | HIGH | todo | 01 |
+| HS-73-02 | The arrival: the Desk is the front door | HIGH | **done** (/ = the island, immersive AppLayout, guard proven both ways, guiding empty state, mark+menu+hub-dot+egress chrome, chips wired to instant-create, /desk→/ + /desk-legacy, nav Desk-first; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-73-03 | Create in-world (no modals, ever) | HIGH | todo | 01 |
 | HS-73-04 | Open in-world: the pull-out | HIGH | todo | 01 |
 | HS-73-05 | Zones as landmarks: file and dive | MED | todo | 01 |
@@ -95,6 +95,23 @@ Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in paralle
 **08** (cutover) → **09** → **10**.
 
 ## Where we are
+
+**2026-07-02 — HS-73-02 done (2/10).** The Desk is the front door. `/`
+mounts the island under a new `immersive` AppLayout prop (no TopNav — the
+island's chrome is the iPad's arrival grammar: the mark opening a compact
+rooms menu, the hub dot, the canonical egress badge ported from the Alpine
+desk, the create chips wired to instant-create, and one whispered hint),
+with Phase 70's first-run guard ported VERBATIM and proven both ways
+against the real milestone (fresh profile → /welcome; marked → the world).
+A fresh desk shows the guiding empty state: the wordmark, the POSITIONING
+short form (no privacy sentence — the badge is the answer), two
+next-action chips. `/desk` 307-redirects home, the frozen Alpine desk
+lives at `/desk-legacy` until the cutover, and the nav's first door reads
+Desk. Owner-decision framing honored: Phase 70's four-door IA is formally
+superseded on the front door while the other pages keep their nav. Two
+deviations recorded (compact always-visible mark+menu over auto-hide;
+chips wired not disabled). Next: HS-73-03 (create in-world) and HS-73-04
+(the pull-out).
 
 **2026-07-02 — HS-73-01 done (1/10).** The foundation stands. The Desk is a
 React 19 island (`@astrojs/react`, one build, still a static bundle) at the

@@ -39,9 +39,12 @@ interface Props {
   title: string;
   description?: string;
   current?: Route;
+  /** HS-73-02: the Desk front door — no TopNav (the island renders its own
+   * compact chrome), full-bleed main. Shell widgets still mount. */
+  immersive?: boolean;
 }
 
-const { title, description, current } = Astro.props;
+const { title, description, current, immersive = false } = Astro.props;
 const hasSecondary = Astro.slots.has("secondary");
 ---
 
@@ -55,17 +58,19 @@ const hasSecondary = Astro.slots.has("secondary");
     <link rel="icon" type="image/svg+xml" href="/_built/favicon.svg" />
     <link rel="apple-touch-icon" href="/_built/apple-touch-icon.png" />
   </head>
-  <body>
-    <TopNav current={current}>
-      {Astro.slots.has("status") ? (
-        <Fragment slot="status"><slot name="status" /></Fragment>
-      ) : (
-        <TrustChip slot="status" />
-      )}
-      {Astro.slots.has("topnav-overflow") && (
-        <Fragment slot="overflow"><slot name="topnav-overflow" /></Fragment>
-      )}
-    </TopNav>
+  <body class={immersive ? "app-immersive" : undefined}>
+    {!immersive && (
+      <TopNav current={current}>
+        {Astro.slots.has("status") ? (
+          <Fragment slot="status"><slot name="status" /></Fragment>
+        ) : (
+          <TrustChip slot="status" />
+        )}
+        {Astro.slots.has("topnav-overflow") && (
+          <Fragment slot="overflow"><slot name="topnav-overflow" /></Fragment>
+        )}
+      </TopNav>
+    )}
 
     {hasSecondary && (
       <div class="app-secondary" role="region" aria-label="Page actions">

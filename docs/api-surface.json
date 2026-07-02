@@ -2037,7 +2037,7 @@
       "consumers": []
     },
     {
-      "path": "/desk-next",
+      "path": "/desk-legacy",
       "methods": [
         "GET"
       ],

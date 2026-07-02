@@ -8,6 +8,7 @@ import {
   EMPTY_ITEMS, loadAll,
   type Items, type Status,
 } from "./api";
+import { loadSetup, type SetupStatus } from "./setup";
 
 export interface UnitPos { x: number; y: number }
 
@@ -40,8 +41,11 @@ interface DeskState {
   divedZone: string | null;
   /** id of the object being dragged (render z-lift; float pauses). */
   draggingId: string | null;
+  setup: SetupStatus | null;
 
   refresh(): Promise<void>;
+  /** Instant create (HS-73-02; HS-73-03 adds the in-world editor + beat). */
+  createPrimitive(kind: "note" | "kb" | "agent" | "zone"): Promise<void>;
   setPosition(id: string, pos: UnitPos): void;
   persistPositions(): void;
   clearPosition(id: string): void;
@@ -59,11 +63,35 @@ export const useDesk = create<DeskState>((set, get) => ({
   positions: loadPositions(),
   divedZone: null,
   draggingId: null,
+  setup: null,
 
   async refresh() {
     set({ loading: true, error: "" });
-    const { items, profiles, status, error } = await loadAll();
-    set({ items, profiles, status, error, loading: false, updatedAt: Date.now() });
+    const [{ items, profiles, status, error }, setup] = await Promise.all([
+      loadAll(),
+      loadSetup(),
+    ]);
+    set({ items, profiles, status, error, setup, loading: false, updatedAt: Date.now() });
+  },
+
+  async createPrimitive(kind) {
+    const posts: Record<string, [string, Record<string, unknown>]> = {
+      note: ["/api/notes", { title: "New note", body_markdown: "" }],
+      kb: ["/api/kbs", { name: "New KB" }],
+      agent: ["/api/agents", { name: "New agent", avatar: "🤖" }],
+      zone: ["/api/directories", { name: "New zone" }],
+    };
+    const [url, body] = posts[kind];
+    try {
+      await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    } catch {
+      /* the refresh below reports reachability honestly */
+    }
+    await get().refresh();
   },
 
   setPosition(id, pos) {

@@ -1,50 +1,34 @@
-// The Desk island (HS-73-01: the foundation at render parity).
+// The Desk island — the web app's front door (HS-73-02).
 //
-// React + Vite inside the existing Astro build — the owner's 2026-07-02 stack
-// decision. This story renders the EXISTING world (atmosphere, sprites,
-// float, drag-to-arrange, Tidy) from the same /api/* data the Alpine desk
-// reads; the inhabitation verbs land in the following stories. The legacy
-// desk stays frozen at /desk until the cutover story deletes it.
+// React + Vite inside the existing Astro build (the owner's 2026-07-02 stack
+// decision). Full-bleed: the world owns the viewport; chrome is the floating
+// minimal cluster (DeskChrome); a fresh desk shows the guiding empty state.
+// The first-run guard runs INLINE on index.astro before this island mounts,
+// so a brand-new user never sees the desk before /welcome.
 import { useEffect } from "react";
 import { useDesk } from "./store";
 import { Stage } from "./components/Stage";
 import { World } from "./components/World";
+import { DeskChrome } from "./components/DeskChrome";
+import { EmptyDesk } from "./components/EmptyDesk";
 import "./desk.css";
 
 export default function DeskApp() {
-  const loading = useDesk((s) => s.loading);
-  const error = useDesk((s) => s.error);
-  const positions = useDesk((s) => s.positions);
-  const { refresh, tidyDesk } = useDesk.getState();
+  const items = useDesk((s) => s.items);
+  const updatedAt = useDesk((s) => s.updatedAt);
+  const { refresh } = useDesk.getState();
 
   useEffect(() => {
     void refresh();
   }, []);
 
+  const total = Object.values(items).reduce((n, l) => n + l.length, 0);
+
   return (
     <div className="desk-next">
       <Stage />
-      <div className="desk-toolbar">
-        <span className="pill" data-testid="desk-next-marker">The Desk</span>
-        <span className="spacer" />
-        {Object.keys(positions).length > 0 && (
-          <button type="button" className="btn ghost" onClick={tidyDesk} title="Reset the desk layout">
-            Tidy
-          </button>
-        )}
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={() => void refresh()}
-          disabled={loading}
-          aria-busy={loading}
-          title="Refresh from hub"
-        >
-          Refresh
-        </button>
-      </div>
-      {error ? <p className="inline-message">{error}</p> : null}
-      <World />
+      <DeskChrome />
+      {updatedAt !== null && total === 0 ? <EmptyDesk /> : <World />}
     </div>
   );
 }
