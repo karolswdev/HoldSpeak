@@ -28,7 +28,7 @@ byte-identical.
 | ID | Story | Sev | Status | Depends |
 |---|---|---|---|---|
 | HS-75-01 | The hub fork: arm, don't type (opt-in) | HIGH | **done** (knob default-off locked byte-identical; one one-shot preview; routes on the wake contract; agent replies immediate; milestone on delivery; 7/7; see [evidence](./evidence-story-01.md)) | — |
-| HS-75-02 | Type it / Discard on the cockpit and the desk | HIGH | todo | 01 |
+| HS-75-02 | Type it / Discard on the cockpit and the desk | HIGH | **done** (ONE shell surface on every route — the QueueHud idiom; keyboard-first; proven on / and /dictation with real broadcasts; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-75-03 | The settings knob (cockpit config) | MED | todo | 01 |
 | HS-75-04 | Docs: the preview story | MED | todo | 01–03 |
 | HS-75-05 | Closeout: the preview walk | HIGH | todo | 01–04 |
@@ -41,8 +41,9 @@ byte-identical.
       one-shot preview (token + `dictation_preview` broadcast), and types
       NOTHING until `/api/dictation/preview/type` consumes it; discard
       burns it (HS-75-01).
-- [ ] Type it / Discard render on the dictation cockpit AND the desk
-      front door (the one bus; no modal, no prose) (HS-75-02).
+- [x] Type it / Discard render on the dictation cockpit AND the desk
+      front door (the one bus; no modal, no prose) (HS-75-02 — one shell
+      surface, every route).
 - [ ] The knob lives in the cockpit's settings with honest copy
       (HS-75-03).
 - [ ] Entry-point docs speak the mode (HS-75-04).
@@ -52,6 +53,11 @@ byte-identical.
       real-metal leg, recorded).
 
 ## Where we are
+
+**2026-07-02 — HS-75-02 done (2/5).** One shell card covers every route
+(the QueueHud idiom) — the desk, the cockpit, everywhere — keyboard-first
+with the P60 badge label and honest failure states. Next: the settings
+knob (HS-75-03).
 
 **2026-07-02 — HS-75-01 done (1/5).** The hub fork is in: the knob
 (default off, locked byte-identical), the one-shot arm with the

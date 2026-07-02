@@ -15,6 +15,7 @@ import TopNav from "../components/TopNav.astro";
 import TrustChip from "../components/TrustChip.astro";
 import ConfirmDialog from "../components/ConfirmDialog.astro";
 import QueueHud from "../components/QueueHud.astro";
+import PreviewCard from "../components/PreviewCard.astro";
 import Qlippy from "../components/Qlippy.astro";
 import Waveform from "../components/Waveform.astro";
 import GenerationTheater from "../components/GenerationTheater.astro";
@@ -86,6 +87,7 @@ const hasSecondary = Astro.slots.has("secondary");
         the shared runtime-bus. Rides every route from the shell; starts hidden
         and reveals only when there is a live job. */}
     <QueueHud />
+    <PreviewCard />
 
     {/* HS-69-06: Qlippy — the presence dock + actionable cards, off /presence
         and into the cockpit. Double-gated (presence.enabled + presence.mascot);

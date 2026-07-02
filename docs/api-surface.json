@@ -1039,7 +1039,9 @@
         "POST"
       ],
       "module": "web.routes.system",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/dictation/preview/type",
@@ -1047,7 +1049,9 @@
         "POST"
       ],
       "module": "web.routes.system",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/dictation/project-context",
