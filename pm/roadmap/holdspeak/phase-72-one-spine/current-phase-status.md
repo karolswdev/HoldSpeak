@@ -1,9 +1,13 @@
 # Phase 72 — One Spine (cross-surface cohesion)
 
-**Status:** open — 9/10 (only HS-72-11 remains; HS-72-07 cut; 10 live
-stories).
+**Status:** CLOSED (10/10 live stories) — 2026-07-02. See
+[`final-summary.md`](./final-summary.md).
 
-**Last updated:** 2026-07-02 (**HS-72-10 done** — the docs tell the
+**Last updated:** 2026-07-02 (**HS-72-11 done → PHASE 72 CLOSED.** The
+matrix one-run green; the live web→hub→wire walk schema-validated; drift
+guards red one last time; fourteen real bugs harvested across the phase;
+the owner's real-metal iPad walk is the standing follow-up. Earlier:
+**HS-72-10 done** — the docs tell the
 measured truth: the generated API_SURFACE linked, the naming canon closed.
 Earlier: **HS-72-09 done** — seven desk records embed
 Contracts natively, bridges deleted, seven lossy-bridge fidelity bugs
@@ -131,7 +135,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
       owner walk).
 - [x] `docs/ARCHITECTURE.md` matches the measured reality; API surface doc
       linked; voice + mermaid guards green (HS-72-10).
-- [ ] Full python suite, web build, Swift build + tests, tri-surface contract
+- [x] Full python suite, web build, Swift build + tests, tri-surface contract
       validation, route manifest, route pre-flight — all green in one closeout
       run; `final-summary.md` written (HS-72-11).
 
@@ -149,7 +153,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 | HS-72-08 | One live bus on the web | MED | **done** (FOUR private sockets found + converted, not two; runtime-bus sole /ws owner w/ ping+backoff+bus_status; deliver() serves frames AND seed; window.__hsBus for eval'd factories; e2e: 1 socket/page, real broadcast on the presence card, reconnect after restart; see [evidence](./evidence-story-08.md)) | — |
 | HS-72-09 | The iPad speaks Contracts natively | HIGH | **done** (7 records embed Contracts in RuntimeCore/Desk; bridges deleted; dual-shape Codable migrates legacy @AppStorage JSON; SEVEN lossy-bridge bugs fixed incl. artifact identity loss + graphJson drained; swift test 413/0, sim BUILD SUCCEEDED, both re-verified first-party; see [evidence](./evidence-story-09.md)) | 01 |
 | HS-72-10 | Docs: the honest map (the docs story) | MED | **done** (ARCHITECTURE's iPad section = the measured truth + API_SURFACE link; companion→coders/iPad-app naming across canon + POSITIONING rows; doc-drift 15 + mermaid 2 green; see [evidence](./evidence-story-10.md)) | 01–09 |
-| HS-72-11 | Closeout: the one-spine proof | HIGH | todo | 01–10 |
+| HS-72-11 | Closeout: the one-spine proof | HIGH | **done** (matrix one-run green: 3066/37 py, 7 e2e, validate, 413/0 swift, sim build; the live web→hub→wire walk schema-validated; drift guards red one last time; owner iPad walk = the standing follow-up; see [evidence](./evidence-story-11.md)) | 01–10 |
 
 Build order: **01 → 02** (the contract, then the declared surface) → **03 →
 04 → 06** (the hub chain: names → lifecycle → split) with **05** any time and
@@ -157,6 +161,24 @@ Build order: **01 → 02** (the contract, then the declared surface) → **03 �
 **11** (closeout).
 
 ## Where we are
+
+**2026-07-02 — HS-72-11 done → PHASE 72 CLOSED (10/10).** The spine holds
+as one system. The matrix, one run: python 3066 passed / 37 skipped
+(carrying the tri-surface contract validation, the manifest snapshot, the
+migration matrix, and the doc/density guards); route pre-flight + mermaid
++ live-bus e2e 7 passed; validate.py all green; swift test 413/0; the
+Simulator app BUILD SUCCEEDED. The live cross-surface walk ran against a
+real hub: a note created through the actual web desk UI persisted with
+tags intact and its sync wire validated against both the note schema and
+the ChangeSet envelope (screenshot committed). Both drift guards were
+proven red one final time and reverted. The phase's ledger: ten stories,
+one commit each through the PMO gate, and FOURTEEN real bugs found by
+replacing prose seams with machine checks — five production-severity
+(the undecodable KB pull, the broken profile sync, the artifact identity
+loss, the drained graphJson, the dead aftercare callback). The owner's
+real-metal iPad walk (legacy @AppStorage decode in anger + the renamed
+routes) is the standing follow-up, per the closeout rule. final-summary
+written; PR opened on green per the phase-close cadence.
 
 **2026-07-02 — HS-72-10 done (9/10).** The docs tell the measured truth.
 ARCHITECTURE's iPad section replaces the five-extension hand list (the

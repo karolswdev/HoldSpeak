@@ -1,8 +1,9 @@
 # HS-72-11 — Closeout: the one-spine proof
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (a cohesion phase that is not proven whole shipped nothing)
 - **Depends on:** HS-72-01 … HS-72-10
+- **Evidence:** [evidence-story-11.md](./evidence-story-11.md)
 
 ## Goal
 
@@ -45,3 +46,16 @@ and writes the final summary.
 Every matrix output pasted or linked in the evidence file; the walk
 screenshots (web desk, Simulator desk, the landed dictation); the two red
 drift-guard captures; `final-summary.md` written; PR merged on green.
+
+## Done
+
+Shipped — PHASE 72 CLOSED (10/10 live stories). The matrix, one run:
+python 3066 passed / 37 skipped; pre-flight + mermaid + live-bus e2e 7
+passed; validate.py all green; swift test 413/0; sim BUILD SUCCEEDED. The
+live cross-surface walk: a note created through the real web desk UI →
+hub row with tags intact → the sync wire validated against the note
+schema and the ChangeSet envelope (screenshot committed). Both drift
+guards proven red one last time and reverted. final-summary written; the
+owner's real-metal iPad walk flagged as the standing follow-up per the
+story's rule. See [evidence-story-11.md](./evidence-story-11.md) and
+[final-summary.md](./final-summary.md).
