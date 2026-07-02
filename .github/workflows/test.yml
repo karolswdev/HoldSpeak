@@ -80,8 +80,7 @@ jobs:
         # holdspeak/static/_built/ (gitignored), so it must be built here.
         working-directory: web
         run: |
-          npm install -g npm@11
-          npm ci
+          npm install --no-audit --no-fund
           npm run build
 
       - name: Run integration tests with coverage

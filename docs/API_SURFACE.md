@@ -26,12 +26,6 @@ Routes: 228 (plus static mounts). iOS-consumed: 44. Web-consumed: 157.
 | GET | `/openapi.json` | server only |
 | GET | `/redoc` | server only |
 
-## static
-
-| Method | Path | Consumers |
-|---|---|---|
-| MOUNT | `/_built` | server only |
-
 ## web.routes.activity.candidates
 
 | Method | Path | Consumers |

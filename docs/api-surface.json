@@ -10,14 +10,6 @@
       "consumers": []
     },
     {
-      "path": "/_built",
-      "methods": [
-        "MOUNT"
-      ],
-      "module": "static",
-      "consumers": []
-    },
-    {
       "path": "/activity",
       "methods": [
         "GET"

@@ -63,7 +63,9 @@ def build_app_routes() -> list[dict[str, Any]]:
         methods = sorted((getattr(route, "methods", set()) or set()) - {"HEAD", "OPTIONS"})
         kind = type(route).__name__
         if kind == "Mount":
-            routes.append({"path": path, "methods": ["MOUNT"], "module": "static"})
+            # Static mounts are environment-dependent (the /_built dir is a
+            # gitignored build product, absent on a fresh clone), so they
+            # cannot live in a manifest that must match every environment.
             continue
         if kind.endswith("WebSocketRoute"):
             routes.append({"path": path, "methods": ["WS"], "module": _short(module)})

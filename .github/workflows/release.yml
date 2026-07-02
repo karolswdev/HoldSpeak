@@ -41,8 +41,7 @@ jobs:
       - name: Build the web bundle
         working-directory: web
         run: |
-          npm install -g npm@11
-          npm ci
+          npm install --no-audit --no-fund
           npm run build
 
       - name: Set up uv
