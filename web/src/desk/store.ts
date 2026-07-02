@@ -72,6 +72,10 @@ interface DeskState {
   surface(): void;
   /** File a primitive into a directory (the real add-only PUT). */
   fileIntoDir(pid: string, dirId: string): Promise<void>;
+  /** The toggle-off half (the legacy toggleFile parity). */
+  removeFromDir(pid: string, dirId: string): Promise<void>;
+  /** Select a coder session as the dictation target (answerCoder parity). */
+  answerCoder(agent: string, sessionId: string): Promise<boolean>;
   setPosition(id: string, pos: UnitPos): void;
   persistPositions(): void;
   clearPosition(id: string): void;
@@ -239,6 +243,31 @@ export const useDesk = create<DeskState>((set, get) => ({
     // Filing forgets a free position (the object lives on the shelf now).
     get().clearPosition(pid);
     await get().refresh();
+  },
+
+  async removeFromDir(pid, dirId) {
+    try {
+      await fetch(
+        `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(pid)}`,
+        { method: "DELETE" },
+      );
+    } catch {
+      /* the refresh reports reachability */
+    }
+    await get().refresh();
+  },
+
+  async answerCoder(agent, sessionId) {
+    try {
+      const res = await fetch("/api/coders/select", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ agent, session_id: sessionId }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   },
 
   async renameZone(id, name) {

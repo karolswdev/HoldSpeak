@@ -40,7 +40,6 @@ PAGE_ROUTES = [
     "/setup",
     "/studio",
     "/desk",
-    "/desk-legacy",
     "/workbench",
     "/history",
     "/meetings",

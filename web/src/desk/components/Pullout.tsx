@@ -23,7 +23,7 @@ export function Pullout({ o }: { o: WorldObject }) {
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
   const backId = useDesk((s) => s.pulloutBackId);
-  const { closePullout, openPullout, openEditor, fileIntoDir } = useDesk.getState();
+  const { closePullout, openPullout, openEditor, fileIntoDir, removeFromDir, answerCoder } = useDesk.getState();
   const ref = useRef<HTMLDivElement | null>(null);
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [artifacts, setArtifacts] = useState<any[]>([]);
@@ -31,6 +31,7 @@ export function Pullout({ o }: { o: WorldObject }) {
   const [runBusy, setRunBusy] = useState(false);
   const [runOut, setRunOut] = useState("");
   const [filing, setFiling] = useState(false);
+  const [answered, setAnswered] = useState<"selected" | "failed" | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -131,6 +132,11 @@ export function Pullout({ o }: { o: WorldObject }) {
             Open full
           </a>
         )}
+        {o.kind === "workflow" && (
+          <a className="desk-chip quiet" href="/workbench">
+            Open full
+          </a>
+        )}
         <button type="button" className="desk-pullout-close" onClick={closePullout} aria-label="Close">
           ✕
         </button>
@@ -226,6 +232,17 @@ export function Pullout({ o }: { o: WorldObject }) {
           <section>
             <p className="quiet">{String(ir.model || "")} · {String(ir.state || "")}</p>
             {ir.question ? <pre className="desk-pullout-md">{String(ir.question)}</pre> : null}
+            <button
+              type="button"
+              className="desk-chip"
+              onClick={() => {
+                void answerCoder(String(ir.agent || "claude"), String(ir.sessionId || o.id)).then(
+                  (ok) => setAnswered(ok ? "selected" : "failed"),
+                );
+              }}
+            >
+              {answered === "selected" ? "Dictation target" : answered === "failed" ? "Retry" : "Answer with voice"}
+            </button>
           </section>
         )}
 
@@ -258,19 +275,22 @@ export function Pullout({ o }: { o: WorldObject }) {
               Move to…
             </button>
             {filing &&
-              zones.map((z) => (
-                <button
-                  key={String(z.id)}
-                  type="button"
-                  className="desk-chip quiet"
-                  onClick={() => {
-                    setFiling(false);
-                    void fileIntoDir(o.id, String(z.id));
-                  }}
-                >
-                  {String(z.name || z.id)}
-                </button>
-              ))}
+              zones.map((z) => {
+                const inZone = (((z as any).memberIds as string[]) || []).includes(o.id);
+                return (
+                  <button
+                    key={String(z.id)}
+                    type="button"
+                    className={"desk-chip quiet" + (inZone ? " in-zone" : "")}
+                    onClick={() => {
+                      setFiling(false);
+                      void (inZone ? removeFromDir(o.id, String(z.id)) : fileIntoDir(o.id, String(z.id)));
+                    }}
+                  >
+                    {inZone ? "✓ " : ""}{String(z.name || z.id)}
+                  </button>
+                );
+              })}
           </div>
         )}
       </footer>

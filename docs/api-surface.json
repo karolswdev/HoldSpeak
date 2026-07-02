@@ -472,8 +472,7 @@
       ],
       "module": "web.routes.primitives",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -681,8 +680,7 @@
       ],
       "module": "web.routes.primitives",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -2024,9 +2022,7 @@
         "POST"
       ],
       "module": "web.routes.primitives",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/cadence",
@@ -2054,14 +2050,6 @@
     },
     {
       "path": "/desk",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.pages",
-      "consumers": []
-    },
-    {
-      "path": "/desk-legacy",
       "methods": [
         "GET"
       ],

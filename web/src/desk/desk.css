@@ -651,3 +651,5 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-rail-avatar.working { animation: none; box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.5); }
 }
+
+.desk-next .desk-chip.in-zone { border-color: color-mix(in srgb, var(--zk, #E0A458) 60%, var(--border)); }

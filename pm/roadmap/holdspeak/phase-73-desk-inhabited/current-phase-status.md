@@ -1,6 +1,6 @@
 # Phase 73 — The Desk, Inhabited (on the React foundation)
 
-**Status:** open — 7/10 (HS-73-01..07 done 2026-07-02).
+**Status:** open — 8/10 (HS-73-01..08 done 2026-07-02).
 
 **Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
 the same day, before any story executed: (1) **the Desk is the main surface**
@@ -69,9 +69,9 @@ so the pivot is free **now** and never again.
       mic-in-hand run is the owner's closeout leg).
 - [ ] The agent rail runs a persona with the generation theater; the result
       lands in the world (HS-73-07).
-- [ ] The Alpine desk is deleted behind a zero-loss verb inventory; no
-      `?raw`-loaded factory remains on the desk; density guard caps the new
-      tree (HS-73-08).
+- [x] The Alpine desk is deleted behind a zero-loss verb inventory
+      (HS-73-08 — the inventory caught two real gaps and both were closed
+      before the deletion landed).
 - [ ] Docs record the stack decision + desk-first IA; the no-prose and
       no-modal locks exist and are proven red on the old copy (HS-73-09).
 - [ ] The inhabited walk passes with zero route changes (committed
@@ -89,7 +89,7 @@ so the pivot is free **now** and never again.
 | HS-73-05 | Zones as landmarks: file and dive | MED | **done** (stable tints + member mini-sprites + empty hint; drop-ready lift mid-drag; drop files via the real PUT with live thumbs; dive/back camera; + Zone focuses rename; DB rows asserted; see [evidence](./evidence-story-05.md)) | 01 |
 | HS-73-06 | The Record orb (the live verb) | HIGH | **done** (bottom-center; /live's calls verbatim, no getUserMedia; state honest via the one bus — external meetings flip it with the whisper, tap = stop only; stop materializes the meeting with the beat; see [evidence](./evidence-story-06.md)) | 02 |
 | HS-73-07 | The agent rail: run from the world | MED | **done** (personas-only rail + egress dots; anchored ask; the REAL .43 run from the rail UI answered the instruction; copy affordance; the honest theater finding recorded; see [evidence](./evidence-story-07.md)) | 01, 04 |
-| HS-73-08 | The cutover: the Alpine desk dies | HIGH | todo | 02–07 |
+| HS-73-08 | The cutover: the Alpine desk dies | HIGH | **done** (the verb inventory caught 2 real gaps — toggle-off + answerCoder — closed BEFORE deletion; one conscious drop recorded (workflow authoring → Workbench); the Alpine desk deleted, /desk-legacy 404s, /desk → /, sprites.js survives; see [evidence](./evidence-story-08.md)) | 02–07 |
 | HS-73-09 | Docs + the locks (the docs story) | MED | todo | 01–08 |
 | HS-73-10 | Closeout: the inhabited walk | HIGH | todo | 01–09 |
 
@@ -97,6 +97,19 @@ Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in paralle
 **08** (cutover) → **09** → **10**.
 
 ## Where we are
+
+**2026-07-02 — HS-73-08 done (8/10).** One desk. The zero-loss verb
+inventory gated the deletion and earned its keep: it caught the legacy
+toggleFile's toggle-OFF half (Move-to now marks the containing zone and
+clicking removes via the real membership DELETE) and answerCoder (the
+coder pull-out gains "Answer with voice" on the same POST
+/api/coders/select) — both closed BEFORE anything was deleted. One
+conscious drop recorded: the drawer's chain/workflow authoring form
+(capability graphs belong to Workbench; the workflow pull-out links
+there). Then desk-legacy.astro, desk-app.js, and the /desk-legacy route
+died; /desk keeps landing home; the shared sprite picker survives. 17
+pages; the scoped stop-signal greps are clean on the desk tree. Next:
+HS-73-09 (docs + the mechanical locks), then the closeout walk.
 
 **2026-07-02 — HS-73-07 done (7/10).** Personas run from the world. The
 right-edge rail holds exactly the agents (a coder is a live session,

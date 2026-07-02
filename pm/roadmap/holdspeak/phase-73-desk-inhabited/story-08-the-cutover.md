@@ -1,8 +1,9 @@
 # HS-73-08 — The cutover: the Alpine desk dies
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (one paradigm, one implementation; the deletion is trivial, the inventory is the story)
 - **Depends on:** HS-73-02 … HS-73-07
+- **Evidence:** [evidence-story-08.md](./evidence-story-08.md)
 
 ## Goal
 
@@ -58,3 +59,21 @@ pre-flight green with the final route set; density guard green with the
 new caps; full suite + `npm run build` green; a screenshot confirming the
 world is byte-identical in behavior after the deletion (the walk's steps
 still pass).
+
+## Done
+
+Shipped. The zero-loss verb inventory gated the deletion and EARNED ITS
+KEEP: it caught two real gaps — the legacy toggleFile's toggle-OFF half
+(Move-to now marks the containing zone and clicking it removes via the
+real membership DELETE, DB tombstone asserted) and answerCoder (the coder
+pull-out gains "Answer with voice" firing the same POST
+/api/coders/select, honest Retry on failure) — both closed BEFORE the
+deletion landed. One conscious drop recorded: the drawer's chain/workflow
+authoring form (capability-graph authoring belongs to Workbench per the
+owner's Blueprints direction; the workflow pull-out gains Open full →
+/workbench). Then the Alpine desk died: desk-legacy.astro, desk-app.js,
+the /desk-legacy route + pre-flight entry — while /desk keeps landing on /
+and the shared sprite picker survives. Proofs: 404 asserted, the
+toggle-off DB assertion, scoped stop-signal greps clean on web/src/desk,
+17 pages, vitest 9/9; full suite 3066 passed, 37 skipped. See
+[evidence-story-08.md](./evidence-story-08.md).

@@ -261,23 +261,6 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
 
         return RedirectResponse(url="/", status_code=307)
 
-    @router.get("/desk-legacy")
-    async def desk_legacy_page() -> Any:
-        """The frozen Alpine desk (bugfix-only), kept beside the React front
-        door until the cutover story deletes it. Out of nav on purpose."""
-        page = _HOLDSPEAK_DIR / "static" / "_built" / "desk-legacy" / "index.html"
-        try:
-            html = page.read_text(encoding="utf-8")
-        except Exception as e:
-            log.error(f"Failed to read built desk-legacy page: {e}")
-            html = (
-                "<!DOCTYPE html><html><head><meta charset='utf-8'>"
-                "<title>Desk</title></head>"
-                "<body><h1>Desk</h1>"
-                "<p>Desk UI not built. Run <code>npm run build</code> "
-                "in <code>web/</code>.</p></body></html>"
-            )
-        return HTMLResponse(html)
 
     @router.get("/studio")
     async def studio_index() -> Any:
