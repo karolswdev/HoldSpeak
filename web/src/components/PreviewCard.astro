@@ -30,6 +30,9 @@
 </div>
 
 <style is:global>
+  /* The class's display beats the `hidden` attribute's UA default —
+     restate it or the empty card renders on every page. */
+  .preview-card[hidden] { display: none; }
   .preview-card {
     position: fixed;
     bottom: 110px;
