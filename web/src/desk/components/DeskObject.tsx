@@ -9,8 +9,6 @@ import { spriteUrl } from "../../scripts/desk/sprites.js";
 import { objGlow, objMotion, objUnit, type WorldObject } from "../world";
 import { useDesk } from "../store";
 
-const EDITABLE = new Set(["note", "kb", "agent"]);
-
 export function DeskObject({
   o, i, n,
 }: {
@@ -22,7 +20,7 @@ export function DeskObject({
   const draggingId = useDesk((s) => s.draggingId);
   const newIds = useDesk((s) => s.newIds);
   const editingId = useDesk((s) => s.editingId);
-  const { setPosition, persistPositions, setDragging, openEditor } = useDesk.getState();
+  const { setPosition, persistPositions, setDragging, openPullout } = useDesk.getState();
 
   const u = objUnit(o, i, n, positions);
   const m = objMotion(o);
@@ -34,7 +32,7 @@ export function DeskObject({
     // A completed drag never opens (the HS-71-06 discrimination: the drag
     // state clears next-tick, so a real drag still reads as dragging here).
     if (useDesk.getState().draggingId === o.id) return;
-    if (EDITABLE.has(o.kind)) openEditor(o.id);
+    openPullout(o.id);
   };
 
   const bind = useDrag(

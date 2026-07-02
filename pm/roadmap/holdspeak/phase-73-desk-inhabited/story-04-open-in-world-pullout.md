@@ -1,8 +1,9 @@
 # HS-73-04 — Open in-world: the pull-out
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (kills the bounce-out — the single worst touch on the old surface)
 - **Depends on:** HS-73-01
+- **Evidence:** [evidence-story-04.md](./evidence-story-04.md)
 
 ## Goal
 
@@ -57,3 +58,19 @@ Playwright: tap a meeting → pull-out with grouped derivatives →
 navigates (the one sanctioned exit). Screenshots of each kind's pull-out on
 a seeded desk. Drag still arranges/files without opening. Route pre-flight
 + full suite + `npm run build` green.
+
+## Done
+
+Shipped. The bounce-out is dead: tapping any object opens its pull-out ON
+the stage (a motion spring, kind-tinted edge, the world alive behind it);
+"Open full" is the ONE navigation (meetings → /history, header only). The
+meeting drawer fetches the real detail + artifacts (Summary / Actions with
+the wire's `task` key — the proof run corrected the renderer to the actual
+shape / Artifacts, one-deep stack with ←); artifacts carry the faithfully
+ported lineage chips (drift-tolerant, via/from split, resolved refs open in
+place); note/kb Edit swaps the HS-73-03 editor; agents show the profile
+egress badge; Run is minimally wired through the real /run routes
+(HS-73-07 adds the choreography); Move to… files via the real membership
+PUT and lands in the DB. Proofs: the full Playwright ritual with location
+asserted unchanged throughout, two screenshots, zero page errors;
+api-surface + pre-flight 7 passed; full suite 3066 passed, 37 skipped. See [evidence-story-04.md](./evidence-story-04.md).

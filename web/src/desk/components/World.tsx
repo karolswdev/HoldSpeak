@@ -7,6 +7,7 @@ import {
 } from "../world";
 import { DeskObject } from "./DeskObject";
 import { InlineEditor } from "./InlineEditor";
+import { Pullout } from "./Pullout";
 
 export function World() {
   const items = useDesk((s) => s.items);
@@ -17,6 +18,10 @@ export function World() {
   const zones = worldZones(items, divedZone);
   const editingIdx = objects.findIndex((o) => o.id === editingId);
   const editing = editingIdx >= 0 ? objects[editingIdx] : null;
+  const pulloutId = useDesk((s) => s.pulloutId);
+  const pullout = pulloutId
+    ? worldObjects(items, null).find((x) => x.id === pulloutId) || null
+    : null;
 
   return (
     <div
@@ -45,6 +50,7 @@ export function World() {
           u={objUnit(editing, editingIdx, objects.length, positions)}
         />
       )}
+      {pullout && <Pullout key={pullout.id} o={pullout} />}
     </div>
   );
 }

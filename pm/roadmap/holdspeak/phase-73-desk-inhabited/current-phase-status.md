@@ -1,6 +1,6 @@
 # Phase 73 — The Desk, Inhabited (on the React foundation)
 
-**Status:** open — 3/10 (HS-73-01..03 done 2026-07-02).
+**Status:** open — 4/10 (HS-73-01..04 done 2026-07-02).
 
 **Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
 the same day, before any story executed: (1) **the Desk is the main surface**
@@ -84,7 +84,7 @@ so the pivot is free **now** and never again.
 | HS-73-01 | The React foundation: the world, ported | HIGH | **done** (the island at render parity on /desk-next: same sprites/layout/positions contract, drag+Tidy proven, vitest 9/9, side-by-side committed, zero page errors; Alpine /desk frozen; see [evidence](./evidence-story-01.md)) | — |
 | HS-73-02 | The arrival: the Desk is the front door | HIGH | **done** (/ = the island, immersive AppLayout, guard proven both ways, guiding empty state, mark+menu+hub-dot+egress chrome, chips wired to instant-create, /desk→/ + /desk-legacy, nav Desk-first; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-73-03 | Create in-world (no modals, ever) | HIGH | **done** (instant POST → spawn at center + NEW beat + focused in-world editor; vignette not scrim; autosave PUTs + optimistic merge; agent More in-card; zone rename-in-place; tap≠drag fixed; DB round-trip proven; see [evidence](./evidence-story-03.md)) | 01 |
-| HS-73-04 | Open in-world: the pull-out | HIGH | todo | 01 |
+| HS-73-04 | Open in-world: the pull-out | HIGH | **done** (tap opens on the stage for every kind; the meeting drawer + one-deep artifact stack + back; lineage ported drift-tolerant; Edit swaps the editor; Move-to files via the real PUT; Open full = the one navigation; location asserted unchanged; see [evidence](./evidence-story-04.md)) | 01 |
 | HS-73-05 | Zones as landmarks: file and dive | MED | todo | 01 |
 | HS-73-06 | The Record orb (the live verb) | HIGH | todo | 02 |
 | HS-73-07 | The agent rail: run from the world | MED | todo | 01, 04 |
@@ -96,6 +96,21 @@ Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in paralle
 **08** (cutover) → **09** → **10**.
 
 ## Where we are
+
+**2026-07-02 — HS-73-04 done (4/10).** The bounce-out is dead. Tapping any
+object opens its pull-out ON the stage — a motion spring with the kind's
+tint, the world alive behind it — and "Open full" (meetings → /history,
+header only) is the ONE navigation left on the desk. The meeting drawer
+shows the real persisted intelligence (Summary / Actions — the proof run
+caught the renderer reading `text` where the wire says `task` / Artifacts)
+with the one-deep artifact stack and ← back; artifacts wear the faithfully
+ported lineage chips (drift-tolerant, via/from split, resolved refs open in
+place); note/kb Edit swaps in the HS-73-03 inline editor; agents carry the
+profile egress badge in the drawer header; Run is minimally wired through
+the real /run routes; and Move to… — the no-drag filing path — writes the
+real membership PUT (the DB row asserted). Location asserted unchanged
+through the entire Playwright ritual; zero page errors. Next: HS-73-05
+(zones as landmarks) / HS-73-06 (the Record orb).
 
 **2026-07-02 — HS-73-03 done (3/10).** Creation lives in the world. The
 chips POST instantly, the object spawns at stage center wearing the

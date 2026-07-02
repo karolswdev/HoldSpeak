@@ -46,6 +46,9 @@ interface DeskState {
   newIds: string[];
   /** The world object id whose in-world editor is open (one at a time). */
   editingId: string | null;
+  /** The object whose pull-out is open, + one level of back (HS-73-04). */
+  pulloutId: string | null;
+  pulloutBackId: string | null;
 
   refresh(): Promise<void>;
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
@@ -57,6 +60,10 @@ interface DeskState {
   /** Autosaving field update through the real PUT routes. */
   updatePrimitive(kind: string, id: string, patch: Record<string, unknown>): Promise<void>;
   renameZone(id: string, name: string): Promise<void>;
+  openPullout(id: string): void;
+  closePullout(): void;
+  /** File a primitive into a directory (the real add-only PUT). */
+  fileIntoDir(pid: string, dirId: string): Promise<void>;
   setPosition(id: string, pos: UnitPos): void;
   persistPositions(): void;
   clearPosition(id: string): void;
@@ -77,6 +84,8 @@ export const useDesk = create<DeskState>((set, get) => ({
   setup: null,
   newIds: [],
   editingId: null,
+  pulloutId: null,
+  pulloutBackId: null,
 
   async refresh() {
     set({ loading: true, error: "" });
@@ -130,7 +139,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
 
   openEditor(id) {
-    set({ editingId: id });
+    set({ editingId: id, pulloutId: null, pulloutBackId: null });
   },
   closeEditor() {
     set({ editingId: null });
@@ -178,6 +187,34 @@ export const useDesk = create<DeskState>((set, get) => ({
     } catch {
       /* saves are on-change; the next one retries — the hub dot reports */
     }
+  },
+
+  openPullout(id) {
+    const current = get().pulloutId;
+    set({
+      pulloutId: id,
+      // One-deep stack: opening from inside a pull-out remembers where to
+      // go back to (an artifact row inside a meeting's drawer).
+      pulloutBackId: current && current !== id ? current : null,
+      editingId: null,
+    });
+  },
+  closePullout() {
+    set({ pulloutId: null, pulloutBackId: null });
+  },
+
+  async fileIntoDir(pid, dirId) {
+    try {
+      await fetch(
+        `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(pid)}`,
+        { method: "PUT" },
+      );
+    } catch {
+      /* the refresh reports reachability */
+    }
+    // Filing forgets a free position (the object lives on the shelf now).
+    get().clearPosition(pid);
+    await get().refresh();
   },
 
   async renameZone(id, name) {
