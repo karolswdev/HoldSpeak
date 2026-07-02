@@ -788,6 +788,9 @@ class Config:
                 ),
                 macros=_coerce(MacrosConfig, macros_data, section="dictation.macros"),
                 spoken_symbols=dictation_data.get("spoken_symbols", []) or [],
+                preview_before_type=bool(
+                    dictation_data.get("preview_before_type", False)
+                ),
             )
 
             return cls(

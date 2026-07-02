@@ -164,3 +164,31 @@ def test_the_routes_enforce_the_one_shot_contract() -> None:
     assert client.post(
         "/api/dictation/preview/discard", json={"token": "gone"}
     ).status_code == 404
+
+
+def test_settings_round_trip_carries_the_knob(tmp_path, monkeypatch) -> None:
+    """HS-75-03: /api/settings persists dictation.preview_before_type."""
+    from fastapi.testclient import TestClient
+
+    import holdspeak.config as config_mod
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    cfg_path = tmp_path / "config.json"
+    monkeypatch.setattr(config_mod, "CONFIG_FILE", cfg_path)
+
+    server = MeetingWebServer(WebRuntimeCallbacks(
+        on_bookmark=lambda *a, **k: None, on_stop=lambda *a, **k: None,
+        get_state=lambda: {"activity": {"state": "idle"}},
+    ), host="127.0.0.1")
+    client = TestClient(server.app)
+
+    before = client.get("/api/settings").json()
+    assert before["dictation"]["preview_before_type"] is False, "default must be off"
+
+    payload = {"dictation": {"preview_before_type": True}}
+    resp = client.put("/api/settings", json=payload)
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["settings"]["dictation"]["preview_before_type"] is True
+
+    again = client.get("/api/settings").json()
+    assert again["dictation"]["preview_before_type"] is True, "must persist"

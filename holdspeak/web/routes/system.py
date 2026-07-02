@@ -1182,6 +1182,14 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                     runtime=LLMRuntimeConfig(**runtime_data),
                     macros=macros_cfg,
                     spoken_symbols=dictation_data.get("spoken_symbols", []) or [],
+                    # HS-75-03: the preview-before-type knob rides the same
+                    # boundary (a plain bool; absent falls back to current).
+                    preview_before_type=bool(
+                        dictation_data.get(
+                            "preview_before_type",
+                            current.dictation.preview_before_type,
+                        )
+                    ),
                 )
             except DictationConfigError as exc:
                 return JSONResponse(
