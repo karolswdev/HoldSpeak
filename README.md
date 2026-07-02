@@ -29,7 +29,7 @@ one you run or point at. No cloud, no account, no telemetry.
 | Dictate | Meet |
 | --- | --- |
 | ![Pixel art microphone with hold-to-talk waves](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/pixellab/meeting-intelligence-notebook.png) |
-| Hold the hotkey, speak, release: the text goes into the active app. Turn on the dictation pipeline and rough speech is routed by intent, enriched with your project's context, and rewritten for its target (Codex, Claude, the terminal, the browser, your editor). Every run lands in the dictation journal; one tap on a wrong result teaches the correction memory. Voice commands map a spoken keyword to a real action (open a URL, launch an app, run a command). Say the wake phrase and it listens hands-free, with the result previewed, never typed, until you confirm. The spoken language setting pins any of Whisper's 99 languages, and the spoken-symbol dictionary types your own vocabulary ("double colon" becomes `::`). Activity pre-briefing offers what you touched recently as dictation context, source-cited. | Capture mic and system audio live with speaker labels, or import a recording or a transcript file you already have (vtt and srt keep their real timestamps and speaker names). 14 built-in plugins call your LLM to pull typed artifacts out of the transcript: decisions, action items, ADRs, risk registers, incident timelines. Meeting aftercare then shows what is open, decided, and changed since last time; an accepted action can become a filed issue, and the digest or follow-up draft can go to your team through Send to Slack, all on a propose, approve, execute flow that never acts without you. The archive is searchable and filterable by date, speaker, tag, and open actions. |
+| Hold the hotkey, speak, release: the text goes into the active app. Turn on the dictation pipeline and rough speech is routed by intent, enriched with your project's context, and rewritten for its target (Codex, Claude, the terminal, the browser, your editor). Every run lands in the dictation journal; one tap on a wrong result teaches the correction memory. Voice commands map a spoken keyword to a real action (open a URL, launch an app, run a command). Say the wake phrase and it listens hands-free, with the result previewed, never typed, until you confirm; an optional preview mode does the same for every dictation (the card shows the text first, Type it commits, Discard drops it). The spoken language setting pins any of Whisper's 99 languages, and the spoken-symbol dictionary types your own vocabulary ("double colon" becomes `::`). Activity pre-briefing offers what you touched recently as dictation context, source-cited. | Capture mic and system audio live with speaker labels, or import a recording or a transcript file you already have (vtt and srt keep their real timestamps and speaker names). 14 built-in plugins call your LLM to pull typed artifacts out of the transcript: decisions, action items, ADRs, risk registers, incident timelines. Meeting aftercare then shows what is open, decided, and changed since last time; an accepted action can become a filed issue, and the digest or follow-up draft can go to your team through Send to Slack, all on a propose, approve, execute flow that never acts without you. The archive is searchable and filterable by date, speaker, tag, and open actions. |
 
 This is what they look like in the product, not in pixel art. A saved meeting
 comes back as typed, reviewable artifacts:
@@ -38,6 +38,25 @@ comes back as typed, reviewable artifacts:
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/history.png" alt="A saved meeting open at /history: the transcript on the left, and on the right a stack of artifact cards (a Risk register table with impact, likelihood, mitigation, and owner; Decisions and open questions; typed Requirements), each with a confidence score and a copy button." width="760">
 </p>
 <p align="center"><em>A meeting after intelligence ran: a risk register, decisions, and requirements, each extracted by an LLM-backed plugin and rendered read-only at /history.</em></p>
+
+## The Desk
+
+Launch `holdspeak` and the browser opens on the Desk: everything the two
+modes produce, living as objects in one spatial world. Meetings, notes,
+knowledge bases, agents, and their artifacts float on the stage; zones are
+shelves you drag things onto; tap anything and it opens in place.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects (meetings as cassettes, notes, a knowledge-base plant, an artifact page) floating on a warm dark stage; a Q3 release zone tray holding one filed meeting; agent avatars on a right-edge rail; a record orb bottom-center; a compact HoldSpeak menu and an egress badge top-left." width="760">
+</p>
+<p align="center"><em>The front door: the world your voice work lives in. The orb records, the rail asks, the tray files.</em></p>
+
+The Desk is where the loops close. Press the orb and the hub records a
+meeting; when it ends, the meeting lands on the stage as an object. Ask an
+agent from the rail and its answer persists as an artifact you can open,
+trace (the lineage chip names the agent that made it), and file into a
+zone. The egress badge in the corner is the one trust answer: local, or
+exactly which endpoint. See [The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md).
 
 ## Why it's different
 
@@ -145,7 +164,7 @@ Install from PyPI, check your setup, and launch the web runtime:
 ```bash
 pip install holdspeak
 holdspeak doctor   # check mic permissions and backends
-holdspeak          # launch the web runtime
+holdspeak          # launch the web runtime (the browser opens on the Desk)
 ```
 
 Prefer [`uv`](https://docs.astral.sh/uv/)? `uv pip install holdspeak`.
@@ -267,6 +286,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 | Understand how it works, with diagrams | [Architecture](https://github.com/karolswdev/HoldSpeak/blob/main/docs/ARCHITECTURE.md) |
 | Get it running and verify my setup | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
 | Choose / configure a model | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
+| Live on the Desk (the web front door) | [The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md) |
 | See speech become a project-grounded task | [The Dictation Copilot](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_COPILOT.md) |
 | Set up the dictation pipeline for Codex / Claude | [Dictation Pipeline Setup](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_PIPELINE_GUIDE.md) |
 | Review, correct, and replay past dictations | [The dictation journal & replay](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_PIPELINE_GUIDE.md#12-dictation-journal-corrections--replay) |

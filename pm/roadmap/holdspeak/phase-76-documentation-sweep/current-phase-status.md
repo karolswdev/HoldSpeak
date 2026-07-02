@@ -31,7 +31,7 @@ doc of its own**.
 - [x] Every user-facing doc's claims read against shipped reality; the
       drift ledger ships as evidence (fix-here vs verified-true vs
       out-of-scope-with-reason) (HS-76-01).
-- [ ] README presents the Desk as the main surface with a REAL current
+- [x] README presents the Desk as the main surface with a REAL current
       screenshot; the tour is desk-first without breaking the POSITIONING
       voice; preview + run-story capabilities appear where they belong
       (HS-76-02).
@@ -46,6 +46,12 @@ doc of its own**.
       on a conclusion-checked green (HS-76-05).
 
 ## Where we are
+
+**2026-07-02 — HS-76-02 done (2/5).** README presents the Desk: a new
+section after the two-modes proof with the real-hub screenshot and the
+closed loops (orb → meeting object; rail ask → artifact with lineage;
+the badge as the one trust answer), the wake/preview conflation fixed,
+and the go-next table pointing at WEB_DESK. Next: 03 ARCHITECTURE.
 
 **2026-07-02 — HS-76-01 done (1/5).** The ledger is in: the systemic
 drift is the front-door move (README/ARCHITECTURE/the index/WEB_DESK all
