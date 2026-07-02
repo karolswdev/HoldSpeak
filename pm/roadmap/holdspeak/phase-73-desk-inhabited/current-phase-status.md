@@ -1,6 +1,6 @@
 # Phase 73 — The Desk, Inhabited (on the React foundation)
 
-**Status:** open — 9/10 (HS-73-01..09 done 2026-07-02).
+**Status:** **CLOSED — 10/10 (2026-07-02).** See [final-summary.md](./final-summary.md).
 
 **Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
 the same day, before any story executed: (1) **the Desk is the main surface**
@@ -91,12 +91,24 @@ so the pivot is free **now** and never again.
 | HS-73-07 | The agent rail: run from the world | MED | **done** (personas-only rail + egress dots; anchored ask; the REAL .43 run from the rail UI answered the instruction; copy affordance; the honest theater finding recorded; see [evidence](./evidence-story-07.md)) | 01, 04 |
 | HS-73-08 | The cutover: the Alpine desk dies | HIGH | **done** (the verb inventory caught 2 real gaps — toggle-off + answerCoder — closed BEFORE deletion; one conscious drop recorded (workflow authoring → Workbench); the Alpine desk deleted, /desk-legacy 404s, /desk → /, sprites.js survives; see [evidence](./evidence-story-08.md)) | 02–07 |
 | HS-73-09 | Docs + the locks (the docs story) | MED | **done** (GETTING_STARTED speaks the Desk; 5 mechanical locks in tests/unit/test_desk_locks.py — no-modal/no-mic/no-narration/positions-contract/front-door-guard; doc guards 85 green; see [evidence](./evidence-story-09.md)) | 01–08 |
-| HS-73-10 | Closeout: the inhabited walk | HIGH | todo | 01–09 |
+| HS-73-10 | Closeout: the inhabited walk | HIGH | **done** (8 beats in one session, pathname never left /, the real .43 model answered inside the walk, zero page errors; final-summary.md ships; see [evidence](./evidence-story-10.md)) | 01–09 |
 
 Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in parallel →
 **08** (cutover) → **09** → **10**.
 
 ## Where we are
+
+**2026-07-02 — PHASE CLOSED (10/10).** The walk sealed it: one continuous
+session — arrive, create+edit, arrange, zone+file by drag, dive/open/
+edit/surface, the meeting drawer and artifact stack, the rail ask (the
+REAL .43 model answered "inhabited"), the orb flipping on a real external
+frame — with location.pathname asserted `/` after every one of the 8
+beats and zero page errors. final-summary.md carries the ledger, the
+numbers (suite 3071/37; 17 pages; −3,265 legacy lines), and the findings
+(the /run frame-broadcast hub follow-up; run results not persisted; the
+owner's mic-in-hand + feel pass outstanding by design). The web desk the
+owner called "a primitive copy, an uninviting mess" is now the inhabited
+front door on the decided stack.
 
 **2026-07-02 — HS-73-09 done (9/10).** The docs tell the truth and the
 rules are tests. GETTING_STARTED's arrival + route table speak the Desk

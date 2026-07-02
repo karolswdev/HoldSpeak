@@ -1,8 +1,9 @@
 # HS-73-10 — Closeout: the inhabited walk
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the phase's bar is behavioral; only a walk can prove it)
 - **Depends on:** HS-73-01 … HS-73-09
+- **Evidence:** [evidence-story-10.md](./evidence-story-10.md)
 
 ## Goal
 
@@ -66,3 +67,15 @@ The Playwright walk green in CI (committed, not a one-off); the real-metal
 screenshot sequence; the per-verb table with every web row in-world; the
 side-by-side pair; the matrix outputs; `final-summary.md`; the merged PR;
 the owner walk recorded as done or as the standing follow-up.
+
+## Done
+
+Shipped — the phase's exit ritual walked in ONE continuous browser
+session on one seeded hub: arrive → create+edit a note → arrange → a zone
+arriving in rename → file by drag → dive → open → edit → surface → the
+meeting drawer → the artifact stack → back → the rail ask (the REAL .43
+model answered "inhabited") → the orb flipping on a real external live
+frame and settling. location.pathname asserted `/` after every one of the
+8 beats; zero page errors; the final world committed as
+10-the-inhabited-desk.png. Phase closed 10/10 with final-summary.md. See
+[evidence-story-10.md](./evidence-story-10.md).
