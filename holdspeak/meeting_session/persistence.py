@@ -16,7 +16,7 @@ import json
 
 import numpy as np
 
-from ..meeting import MeetingRecorder, concatenate_chunks, AudioChunk
+from ..meeting_recorder import MeetingRecorder, concatenate_chunks, AudioChunk
 from ..transcribe import Transcriber
 from ..logging_config import get_logger
 

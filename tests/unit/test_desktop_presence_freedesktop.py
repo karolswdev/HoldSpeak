@@ -12,7 +12,7 @@ from holdspeak.desktop_presence_freedesktop import (
     FreedesktopPresenceRenderer,
     notification_for_view,
 )
-from holdspeak.runtime_activity import RuntimeActivityTracker
+from holdspeak.activity_tracker import RuntimeActivityTracker
 
 
 class FakeNotifier:

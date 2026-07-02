@@ -436,7 +436,7 @@ def _run_meeting_mode(args):
     import time
 
     from .audio_devices import check_blackhole_setup, list_devices_formatted
-    from .meeting import MeetingRecorder, concatenate_chunks
+    from .meeting_recorder import MeetingRecorder, concatenate_chunks
 
     # Handle --list-devices
     if args.list_devices:

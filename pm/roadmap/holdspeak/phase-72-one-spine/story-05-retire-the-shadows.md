@@ -1,8 +1,9 @@
 # HS-72-05 — Retire the shadows
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** MED (each item is small; together they are why newcomers mis-patch)
 - **Depends on:** —
+- **Evidence:** [evidence-story-05.md](./evidence-story-05.md)
 
 ## Goal
 
@@ -49,3 +50,18 @@ traps are gone.
 Zero grep hits for the old module paths outside git history; full suite
 green; web build + route pre-flight green; a screenshot of the Studio index
 showing the activity entry; the docs diff removing the obsoleted warnings.
+
+## Done
+
+Shipped. `meeting.py` → `meeting_recorder.py` and `runtime_activity.py` →
+`activity_tracker.py` with every importer/patch-target/doc reference moved;
+the wire/API names (`runtime_activity` frame, `_set_runtime_activity`)
+deliberately untouched — the web-runtime frame tests caught the first
+too-broad sweep and the API names were reverted, exactly their job. The
+`dictation_runner` logger stops calling itself `dictation_runtime`. Orphans
+deleted: `companion-app.js`, `/design/check` (built-mount probes repointed
+to the kept gallery + `/dictation`). `/activity` gains its Studio card.
+Proofs: rename slice 97 passed; web build 18 pages; built-mount +
+pre-flight 8 passed; full suite 3061 passed with exactly ONE failure — the
+HS-72-02 manifest guard catching the page deletion (regenerated, 5/5). See
+[evidence-story-05.md](./evidence-story-05.md).

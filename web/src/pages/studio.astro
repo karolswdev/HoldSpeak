@@ -1,7 +1,7 @@
 ---
 // HS-70-06: the Studio index — the collapsed advanced tier's landing.
 //
-// Frames the six power tools as clearly-secondary cards so a first-run user is
+// Frames the power tools as clearly-secondary cards so a first-run user is
 // never dumped into Workbench or Cadence and left asking "what is this". Each
 // card states what the tool is for in one line + its state where relevant.
 // The tools keep their own routes and behaviour (Decision B: grouped + framed,
@@ -46,6 +46,12 @@ const tools = [
     name: "Profiles",
     what: "Runtime and model profiles, assignable per agent.",
     glyph: '<path d="M4 6h10M4 12h16M4 18h7"/><circle cx="18" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="18" r="2"/>',
+  },
+  {
+    href: "/activity",
+    name: "Activity",
+    what: "Local work context: sources, rules, and records.",
+    glyph: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
   },
 ];
 ---

@@ -685,9 +685,7 @@
         "POST"
       ],
       "module": "web.routes.system",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/coders/dismiss",
@@ -696,8 +694,7 @@
       ],
       "module": "web.routes.system",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -707,8 +704,7 @@
       ],
       "module": "web.routes.system",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {

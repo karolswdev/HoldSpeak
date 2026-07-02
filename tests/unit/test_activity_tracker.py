@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from holdspeak.runtime_activity import RuntimeActivityTracker, desktop_window_policy, normalize_activity_state
+from holdspeak.activity_tracker import RuntimeActivityTracker, desktop_window_policy, normalize_activity_state
 
 
 def test_desktop_window_policy_is_transient() -> None:
@@ -31,7 +31,7 @@ def test_desktop_window_policy_is_transient() -> None:
     assert typed["linger_ms"] > 0
 
 
-def test_runtime_activity_tracker_updates_snapshot_and_window_policy() -> None:
+def test_activity_tracker_tracker_updates_snapshot_and_window_policy() -> None:
     stamps = iter(
         [
             "2026-06-05T10:00:00",
