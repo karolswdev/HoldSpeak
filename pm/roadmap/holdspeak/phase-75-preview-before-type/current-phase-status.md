@@ -1,6 +1,6 @@
 # Phase 75 — Preview Before It Types (backlog candidate M)
 
-**Status:** open — scaffolded 2026-07-02 (0/5).
+**Status:** **CLOSED — 5/5 (2026-07-02).** See [final-summary.md](./final-summary.md).
 **Owner call that opened it:** "Let's keep going" with the owner unable to
 test; candidate M is the last live backlog row (owner-sourced, parked not
 rejected) and is fully provable headless.
@@ -31,7 +31,7 @@ byte-identical.
 | HS-75-02 | Type it / Discard on the cockpit and the desk | HIGH | **done** (ONE shell surface on every route — the QueueHud idiom; keyboard-first; proven on / and /dictation with real broadcasts; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-75-03 | The settings knob (cockpit config) | MED | **done** (cockpit toggle + boundary + the loader fix the round-trip test caught — the knob would have reverted every restart; see [evidence](./evidence-story-03.md)) | 01 |
 | HS-75-04 | Docs: the preview story | MED | **done** (GETTING_STARTED + DICTATION_COPILOT; guards 85 green; see [evidence](./evidence-story-04.md)) | 01–03 |
-| HS-75-05 | Closeout: the preview walk | HIGH | todo | 01–04 |
+| HS-75-05 | Closeout: the preview walk | HIGH | **done** (real verbs behind the routes + a capturing typer: armed→Type it→exact text; discard→nothing; see [evidence](./evidence-story-05.md)) | 01–04 |
 
 ## Exit criteria
 
@@ -47,12 +47,18 @@ byte-identical.
 - [x] The knob lives in the cockpit's settings with honest copy
       (HS-75-03 — plus the loader fix its round-trip test caught).
 - [x] Entry-point docs speak the mode (HS-75-04).
-- [ ] The preview walk: a real pipeline pass with a capturing typer —
+- [x] The preview walk: a real pipeline pass with a capturing typer —
       nothing typed while armed, Type-it delivers the exact text, discard
       delivers nothing (HS-75-05; the mic-in-hand pass is the owner's
       real-metal leg, recorded).
 
 ## Where we are
+
+**2026-07-02 — PHASE CLOSED (5/5).** The walk sealed it: real verbs
+behind the routes, a capturing typer, nothing typed while armed, the
+exact text on commit, nothing on discard. Two real bugs caught by the
+phase's own tests (the loader dropping the knob; the manifest guard).
+The mic-in-hand pass is the owner's leg.
 
 **2026-07-02 — HS-75-04 done (4/5).** Docs speak the mode. One story
 left: the preview walk.
