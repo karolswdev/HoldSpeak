@@ -2037,6 +2037,14 @@
       "consumers": []
     },
     {
+      "path": "/desk-next",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.pages",
+      "consumers": []
+    },
+    {
       "path": "/dictation",
       "methods": [
         "GET"

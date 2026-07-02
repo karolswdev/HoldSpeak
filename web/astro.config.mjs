@@ -1,5 +1,7 @@
 import { defineConfig } from "astro/config";
 
+import react from "@astrojs/react";
+
 // HS-10-01: build into holdspeak/static/_built/ so the FastAPI runtime
 // can serve the built output via a /_built mount, while the five legacy
 // pages at holdspeak/static/*.html stay untouched. Each route rebuild
@@ -10,14 +12,17 @@ export default defineConfig({
   outDir: "../holdspeak/static/_built",
   base: "/_built",
   trailingSlash: "always",
+
   build: {
     format: "directory",
     assets: "_astro",
   },
+
   server: {
     host: "127.0.0.1",
     port: 4321,
   },
+
   vite: {
     plugins: [
       {
@@ -39,4 +44,6 @@ export default defineConfig({
       },
     ],
   },
+
+  integrations: [react()],
 });

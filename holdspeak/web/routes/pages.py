@@ -254,6 +254,26 @@ def build_pages_router(ctx: WebContext) -> APIRouter:
             )
         return HTMLResponse(html)
 
+    @router.get("/desk-next")
+    async def desk_next_page() -> Any:
+        """Serve the React desk island's coexistence page (the Phase-73
+        foundation): the world at render parity beside the frozen Alpine
+        /desk. The arrival story promotes the island to the front door and
+        retires this route."""
+        page = _HOLDSPEAK_DIR / "static" / "_built" / "desk-next" / "index.html"
+        try:
+            html = page.read_text(encoding="utf-8")
+        except Exception as e:
+            log.error(f"Failed to read built desk-next page: {e}")
+            html = (
+                "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+                "<title>Desk</title></head>"
+                "<body><h1>Desk</h1>"
+                "<p>Desk UI not built. Run <code>npm run build</code> "
+                "in <code>web/</code>.</p></body></html>"
+            )
+        return HTMLResponse(html)
+
     @router.get("/desk")
     async def desk_page() -> Any:
         """Serve the Web Desk (Primitive Framework authoring port), read from the

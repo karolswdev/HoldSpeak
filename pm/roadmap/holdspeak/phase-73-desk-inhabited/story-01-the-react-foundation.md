@@ -1,8 +1,9 @@
 # HS-73-01 — The React foundation: the world, ported
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (everything else in the phase stands on it)
 - **Depends on:** —
+- **Evidence:** [evidence-story-01.md](./evidence-story-01.md)
 
 ## Goal
 
@@ -69,3 +70,21 @@ same seeded data — same sprites per id (hash parity asserted in a test),
 same layout class, floats alive. Drag persists across reload
 (Playwright, same localStorage key). `npm run build` green; route
 pre-flight green (the temporary page registered); full suite green.
+
+## Done
+
+Shipped. The Desk island stands: React 19 via `@astrojs/react` in the one
+existing build (still a static bundle), `web/src/desk/` with a Zustand
+store keeping the EXACT legacy positions contract, a faithful typed port of
+`loadAll` + every normalizer, bit-faithful `looseHome`/glow/float math, the
+HS-71 CSS values verbatim, and the SAME sprite-picker module imported
+directly (parity by construction). Drag replicates HS-71-04's semantics via
+`@use-gesture` (fresh rect per move, clamp, >4px threshold). Mounted at the
+coexistence route `/desk-next`; the Alpine `/desk` is frozen. Proofs:
+vitest 9/9 (hash parity, normalizers, layout math); the side-by-side on one
+seeded hub — 11 objects + 1 zone, screenshots committed; a real drag
+persisted across reload under the legacy key and Tidy cleared it; zero page
+errors; 19 pages built; pre-flight 2 passed; full suite 3066 passed, 37
+skipped. Deviations
+recorded (CSS float kept over N motion springs; zones parity-only until
+05). See [evidence-story-01.md](./evidence-story-01.md).

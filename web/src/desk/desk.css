@@ -1,0 +1,166 @@
+/* HS-73-01 — the desk island's CSS: the HS-71 world, values verbatim (the
+   atmosphere, the floating objects, the flat zone trays). Imported by the
+   React island; plain global CSS on purpose (the island renders at runtime,
+   and these classes are the same visual contract the Alpine desk proved). */
+
+/* ── the diorama room (DioPal atmosphere, HS-71-01 values) ── */
+.desk-next .desk-stage {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background: linear-gradient(178deg, #0B0D12 0%, #16111F 52%, #090A0E 100%);
+}
+.desk-next .desk-stage-glow {
+  position: absolute;
+  inset: -20% -10% 0 -10%;
+  background:
+    radial-gradient(58% 46% at 50% 34%, rgba(255, 122, 64, 0.22), rgba(255, 107, 53, 0.06) 44%, transparent 72%),
+    radial-gradient(72% 62% at 50% 26%, rgba(140, 104, 255, 0.13), transparent 64%),
+    radial-gradient(90% 55% at 50% 108%, rgba(120, 60, 40, 0.14), transparent 60%);
+  mix-blend-mode: plus-lighter;
+  animation: desk-next-spotlight 7s var(--ease-standard, ease-in-out) infinite;
+  will-change: opacity, transform;
+}
+@keyframes desk-next-spotlight {
+  0%, 100% { opacity: 0.72; transform: translateY(0) scale(1); }
+  50%      { opacity: 1;    transform: translateY(-1.5%) scale(1.04); }
+}
+.desk-next .desk-stage-motes { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* ── the world (HS-71-03/04 values) ── */
+.desk-next .desk-world {
+  position: relative;
+  width: 100%;
+  min-height: calc(200px + var(--rows, 3) * 150px);
+  margin-top: var(--space-2);
+}
+.desk-next .desk-obj {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(var(--oscale, 1));
+  width: 128px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.desk-next .desk-obj.dragging { cursor: grabbing; z-index: 20; }
+.desk-next .desk-obj.dragging .desk-obj-lift,
+.desk-next .desk-obj.dragging .desk-obj-shadow { animation: none; }
+.desk-next .desk-obj-lift {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  animation: desk-next-bob 4.6s ease-in-out infinite;
+  animation-delay: var(--phase, 0s);
+  transform: rotate(var(--tilt, 0deg));
+}
+.desk-next .desk-obj-sprite {
+  position: relative;
+  z-index: 1;
+  width: 88px;
+  height: 88px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 11px 15px rgba(0, 0, 0, 0.55));
+  transition: filter var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-obj-glow {
+  position: absolute;
+  inset: 6px;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--k, #FF6B35) 55%, transparent), transparent 68%);
+  filter: blur(7px);
+  opacity: 0.5;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-obj-shadow {
+  position: absolute;
+  left: 50%;
+  top: 90px;
+  width: 70px;
+  height: 16px;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.62), transparent 78%);
+  filter: blur(2px);
+  animation: desk-next-obj-shadow 4.6s ease-in-out infinite;
+  animation-delay: var(--phase, 0s);
+}
+.desk-next .desk-obj-label {
+  max-width: 118px;
+  margin-top: 2px;
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+.desk-next .desk-obj:hover .desk-obj-sprite {
+  filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.6)) brightness(1.08);
+}
+.desk-next .desk-obj:hover .desk-obj-glow { opacity: 0.82; }
+
+@keyframes desk-next-bob {
+  0%, 100% { transform: rotate(var(--tilt, 0deg)) translateY(0); }
+  50%      { transform: rotate(calc(var(--tilt, 0deg) * -1)) translateY(-9px); }
+}
+@keyframes desk-next-obj-shadow {
+  0%, 100% { transform: translateX(-50%) scaleX(1);   opacity: 0.5; }
+  50%      { transform: translateX(-50%) scaleX(0.8); opacity: 0.3; }
+}
+
+/* ── the flat zone trays (parity level; HS-73-05 makes them landmarks) ── */
+.desk-next .desk-zone {
+  position: absolute;
+  transform: translateX(-50%);
+  z-index: 2;
+  min-width: 148px;
+  max-width: 260px;
+  padding: 13px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--zk, #E0A458) 15%, rgba(18, 14, 24, 0.55)), rgba(10, 9, 14, 0.6));
+  border: 1px solid color-mix(in srgb, var(--zk, #E0A458) 34%, var(--border));
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42), inset 0 1px 0 color-mix(in srgb, var(--zk, #E0A458) 30%, transparent);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    transform var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-zone:hover {
+  transform: translateX(-50%) translateY(-2px);
+  border-color: color-mix(in srgb, var(--zk, #E0A458) 58%, var(--border));
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.5), 0 0 0 2px color-mix(in srgb, var(--zk, #E0A458) 28%, transparent);
+}
+.desk-next .desk-zone-title { font-weight: 600; font-size: var(--font-size-sm); }
+.desk-next .desk-zone-count { font-size: var(--font-size-xs); color: var(--text-muted); }
+
+/* ── minimal island chrome (HS-73-02 replaces this with the arrival) ── */
+.desk-next .desk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+}
+.desk-next .desk-toolbar .spacer { flex: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-stage-glow { animation: none; opacity: 0.85; }
+  .desk-next .desk-obj-lift,
+  .desk-next .desk-obj-shadow { animation: none; }
+}

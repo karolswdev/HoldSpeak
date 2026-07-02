@@ -1,6 +1,6 @@
 # Phase 73 — The Desk, Inhabited (on the React foundation)
 
-**Status:** open — scaffolded 2026-07-02, re-scaffolded same day (0/10).
+**Status:** open — 1/10 (HS-73-01 done 2026-07-02).
 
 **Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
 the same day, before any story executed: (1) **the Desk is the main surface**
@@ -50,7 +50,7 @@ so the pivot is free **now** and never again.
 
 ## Exit criteria (evidence required)
 
-- [ ] The React island builds in the one existing pipeline and renders the
+- [x] The React island builds in the one existing pipeline and renders the
       world at parity with the Alpine desk (side-by-side proof) (HS-73-01).
 - [ ] `/` is the Desk: full-bleed, immersive chrome, the first-run guard
       preserved, a guiding empty state that answers "what is this"
@@ -80,7 +80,7 @@ so the pivot is free **now** and never again.
 
 | Story | Title | Priority | Status | Depends on |
 |-------|-------|----------|--------|------------|
-| HS-73-01 | The React foundation: the world, ported | HIGH | todo | — |
+| HS-73-01 | The React foundation: the world, ported | HIGH | **done** (the island at render parity on /desk-next: same sprites/layout/positions contract, drag+Tidy proven, vitest 9/9, side-by-side committed, zero page errors; Alpine /desk frozen; see [evidence](./evidence-story-01.md)) | — |
 | HS-73-02 | The arrival: the Desk is the front door | HIGH | todo | 01 |
 | HS-73-03 | Create in-world (no modals, ever) | HIGH | todo | 01 |
 | HS-73-04 | Open in-world: the pull-out | HIGH | todo | 01 |
@@ -95,6 +95,21 @@ Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in paralle
 **08** (cutover) → **09** → **10**.
 
 ## Where we are
+
+**2026-07-02 — HS-73-01 done (1/10).** The foundation stands. The Desk is a
+React 19 island (`@astrojs/react`, one build, still a static bundle) at the
+coexistence route `/desk-next`, rendering the world at parity with the
+frozen Alpine `/desk`: the SAME sprite-picker module imported directly
+(parity by construction), bit-faithful `looseHome`/glow/float math, the
+HS-71 CSS values verbatim, and the exact legacy `hs.diorama.pos` contract
+(no persist-middleware envelope) so hand-arranged desks survive the
+cutover. Drag replicates HS-71-04 via `@use-gesture`. Proofs: vitest 9/9;
+the seeded side-by-side (11 objects + 1 zone) committed; a real drag
+persisted across reload and Tidy cleared it; zero page errors; 19 pages;
+pre-flight 2 passed; full suite 3066 passed, 37 skipped. Two deliberate calls recorded: the float stays on
+the proven CSS keyframes (`motion` enters with the interaction
+choreography), and zones are parity-only until HS-73-05. Next: HS-73-02
+(the arrival — the Desk becomes `/`).
 
 **2026-07-02 — re-scaffolded (0/10).** The owner resolved the two questions
 the original scaffold had left open or wrong: the Desk's role (main
