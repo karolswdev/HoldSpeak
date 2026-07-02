@@ -80,6 +80,13 @@ flows through an **opt-in, ordered pipeline** before it's typed. Each stage
 fails open: if it errors or the LLM is unreachable, your plain transcript is
 what gets typed.
 
+An optional last gate, **preview before it types** (Settings, Voice
+section; off by default): the finished text shows on a card everywhere in
+the web app instead of typing. **Type it** commits through the normal
+typing path, **Discard** drops it, and the token behind the card is
+server-minted and one-shot (the same contract as the wake word's
+preview).
+
 ```mermaid
 flowchart LR
     A["🎙️ hold &amp; speak"] --> B["Whisper<br/>transcribe"]

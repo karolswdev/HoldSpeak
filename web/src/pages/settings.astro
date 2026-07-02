@@ -190,6 +190,7 @@ const WHISPER_LANGUAGES = [
               <p class="hint">Pins transcription for dictation, meetings, and import. Auto-detect works well for longer speech; pin your language if short utterances get misdetected.</p>
             </div>
             <label class="check field full" x-show="fieldVisible('voice','common','warm whisper startup preload')" x-cloak><input type="checkbox" x-model="settings.model.warm_on_start" /> <span>Warm Whisper on web startup <em>— preloads transcription so the first utterance isn't slow.</em></span></label>
+            <label class="check field full" x-show="fieldVisible('voice','common','preview before it types review commit dictation hold key')" x-cloak><input type="checkbox" x-model="settings.dictation.preview_before_type" /> <span>Preview before it types <em>— a finished dictation shows a card first; Type it commits, Discard drops it.</em></span></label>
 
             <div class="field full sym-dict" x-show="fieldVisible('voice','common','spoken symbol dictionary tilde arrow custom vocabulary')" x-cloak>
               <label>Spoken-symbol dictionary</label>

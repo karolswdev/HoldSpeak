@@ -505,6 +505,54 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             )
         return {"success": True, "typed": typed}
 
+    @router.post("/api/dictation/preview/type")
+    async def api_preview_type(payload: dict[str, Any]) -> Any:
+        """HS-75-01: type a stored hold-key preview, exactly once.
+
+        The token was minted server-side when the preview armed; the
+        runtime types ONLY its own stored text and burns the token. Client
+        text is never accepted here (the wake/type contract).
+        """
+        if ctx.on_preview_type is None:
+            return JSONResponse(
+                {"success": False, "error": "Preview typing is unavailable in this runtime."},
+                status_code=503,
+            )
+        token = str((payload or {}).get("token", "")).strip()
+        if not token:
+            return JSONResponse(
+                {"success": False, "error": "A preview token is required."},
+                status_code=400,
+            )
+        typed = ctx.on_preview_type(token)
+        if typed is None:
+            return JSONResponse(
+                {"success": False, "error": "Unknown or already used preview token."},
+                status_code=404,
+            )
+        return {"success": True, "typed": typed}
+
+    @router.post("/api/dictation/preview/discard")
+    async def api_preview_discard(payload: dict[str, Any]) -> Any:
+        """HS-75-01: burn a stored preview without typing."""
+        if ctx.on_preview_discard is None:
+            return JSONResponse(
+                {"success": False, "error": "Preview discard is unavailable in this runtime."},
+                status_code=503,
+            )
+        token = str((payload or {}).get("token", "")).strip()
+        if not token:
+            return JSONResponse(
+                {"success": False, "error": "A preview token is required."},
+                status_code=400,
+            )
+        if not ctx.on_preview_discard(token):
+            return JSONResponse(
+                {"success": False, "error": "Unknown or already used preview token."},
+                status_code=404,
+            )
+        return {"success": True}
+
     @router.post("/api/commands/test")
     async def api_test_voice_command(payload: dict[str, Any]) -> Any:
         """HS-52-05: fire one voice command action from the board, to verify it.
@@ -1134,6 +1182,14 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                     runtime=LLMRuntimeConfig(**runtime_data),
                     macros=macros_cfg,
                     spoken_symbols=dictation_data.get("spoken_symbols", []) or [],
+                    # HS-75-03: the preview-before-type knob rides the same
+                    # boundary (a plain bool; absent falls back to current).
+                    preview_before_type=bool(
+                        dictation_data.get(
+                            "preview_before_type",
+                            current.dictation.preview_before_type,
+                        )
+                    ),
                 )
             except DictationConfigError as exc:
                 return JSONResponse(

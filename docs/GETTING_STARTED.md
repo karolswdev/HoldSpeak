@@ -103,7 +103,7 @@ Useful routes:
 | --- | --- |
 | `/welcome` | The first-run wizard: the single arrival on a fresh install |
 | `/` | The Desk: your primitives as a spatial world (record, create, open, file, run) |
-| `/dictation` | Dictation mode: voice typing, the journal, learning, pre-briefing |
+| `/dictation` | Dictation mode: voice typing, the journal, learning, pre-briefing. An optional preview mode (Settings, Voice) shows each dictation on a card first: Type it commits, Discard drops it. |
 | `/history` | Meetings mode: capture or import, the archive, aftercare |
 | `/studio` | Studio: the advanced tier (Workbench, Cadence, Commands, and more) |
 | `/settings` | Global settings (sectioned and searchable; open from the ⚙) |

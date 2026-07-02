@@ -1034,6 +1034,26 @@
       ]
     },
     {
+      "path": "/api/dictation/preview/discard",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/dictation/preview/type",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/dictation/project-context",
       "methods": [
         "GET"

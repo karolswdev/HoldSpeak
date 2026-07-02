@@ -215,6 +215,9 @@ class WebRuntime(
         self._wake_stream: Any = None
         self._wake_queue: Any = None
         self.wake_previews: dict[str, dict[str, Any]] = {}
+        # HS-75-01: the hold-key preview store (one active at a time), the
+        # same one-shot grammar as wake_previews.
+        self.dictation_previews: dict[str, dict[str, Any]] = {}
         self.desktop_presence: Optional[DesktopPresenceHost] = build_desktop_presence_host(
             url_provider=lambda: self.runtime_url,
             config_enabled=self._presence_config_enabled(),
@@ -470,6 +473,8 @@ class WebRuntime(
                     on_settings_applied=self._apply_updated_config,
                 on_remote_dictation=self._deliver_remote_dictation,
                 on_wake_type=self._type_wake_preview,
+                on_preview_type=self.type_dictation_preview,
+                on_preview_discard=self.discard_dictation_preview,
                     project_detector=self.project_detector,
                     device_registry=self.device_registry,
                     device_psk_provider=lambda: ensure_device_psk(self.config),

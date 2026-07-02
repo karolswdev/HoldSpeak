@@ -596,6 +596,11 @@ class DictationConfig:
     # entries merged over the built-in punctuation table (user wins).
     # Default empty = byte-identical typing.
     spoken_symbols: list = field(default_factory=list)
+    # HS-75-01: preview before it types (backlog candidate M). When on, a
+    # finished dictation arms a one-shot preview (the P60 wake grammar)
+    # instead of typing; /api/dictation/preview/type commits it. Off by
+    # default = today's behavior, byte-identical.
+    preview_before_type: bool = False
 
     def __post_init__(self) -> None:
         self.spoken_symbols = validate_spoken_symbols(self.spoken_symbols)
@@ -783,6 +788,9 @@ class Config:
                 ),
                 macros=_coerce(MacrosConfig, macros_data, section="dictation.macros"),
                 spoken_symbols=dictation_data.get("spoken_symbols", []) or [],
+                preview_before_type=bool(
+                    dictation_data.get("preview_before_type", False)
+                ),
             )
 
             return cls(

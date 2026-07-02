@@ -149,6 +149,19 @@ class DictationCaptureMixin:
                     self.runtime_status["last_transcription"] = text
                     self.runtime_status["last_error"] = ""
                 print(f"-> {text}")
+                # HS-75-01: preview before it types (opt-in; the P60 wake
+                # grammar on hold-key dictation). An agent-reply session is
+                # never previewed — answering the coder is an explicit,
+                # targeted act (the companion flow stays immediate). Off by
+                # default this block is inert: byte-identical typing.
+                if (
+                    agent_reply_session is None
+                    and getattr(self.config.dictation, "preview_before_type", False)
+                ):
+                    self._arm_dictation_preview(text)
+                    if on_complete is not None:
+                        on_complete(text)
+                    return
                 delivered = self._try_tmux_agent_reply(text, agent_reply_session)
                 if delivered:
                     self._set_runtime_activity(
@@ -215,6 +228,83 @@ class DictationCaptureMixin:
                 on_complete(completed_text)
             except Exception as exc:
                 log.warning(f"on_complete hook raised: {exc}")
+
+    def _arm_dictation_preview(self, text: str) -> None:
+        """Arm ONE one-shot preview instead of typing (HS-75-01).
+
+        The token is minted server-side; `/api/dictation/preview/type`
+        consumes it (the runtime types only its own stored text) and
+        `/api/dictation/preview/discard` burns it. One active preview at a
+        time, the P60 rule.
+        """
+        import uuid as uuid_mod
+
+        token = uuid_mod.uuid4().hex
+        self.dictation_previews.clear()
+        self.dictation_previews[token] = {
+            "text": text,
+            "created_at": datetime.now().isoformat(),
+        }
+        if self.server is not None:
+            try:
+                self.server.broadcast(
+                    "dictation_preview", {"token": token, "text": text}
+                )
+            except Exception:
+                pass
+        self._set_runtime_activity(
+            "complete",
+            source="dictation",
+            label="Preview ready",
+            detail=text[:120],
+            last_event="dictation_preview",
+            last_error="",
+        )
+
+    def consume_dictation_preview(self, token: str) -> Optional[str]:
+        """One-shot: return the stored preview text and burn the token."""
+        entry = self.dictation_previews.pop(str(token or ""), None)
+        return None if entry is None else str(entry.get("text", ""))
+
+    def type_dictation_preview(self, token: str) -> Optional[str]:
+        """Consume a preview and deliver it through the normal typing path."""
+        text = self.consume_dictation_preview(token)
+        if text is None:
+            return None
+        if self.typer is not None:
+            self._set_runtime_activity(
+                "typing",
+                source="dictation",
+                detail="Typing dictated text.",
+                last_event="dictation_typing",
+                last_error="",
+            )
+            self.typer.type_text(text)
+        self._set_runtime_activity(
+            "complete",
+            source="dictation",
+            label="Typed",
+            detail="Dictated text was inserted.",
+            last_event="dictation_typed",
+            last_error="",
+        )
+        self._mark_first_dictation()
+        return text
+
+    def discard_dictation_preview(self, token: str) -> bool:
+        """Burn a preview without typing (HS-75-01)."""
+        text = self.consume_dictation_preview(token)
+        if text is None:
+            return False
+        self._set_runtime_activity(
+            "complete",
+            source="dictation",
+            label="Discarded",
+            detail="",
+            last_event="dictation_preview_discarded",
+            last_error="",
+        )
+        return True
 
     def _kick_off_transcribe(
         self,
