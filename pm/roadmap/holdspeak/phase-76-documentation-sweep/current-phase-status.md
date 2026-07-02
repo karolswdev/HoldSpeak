@@ -35,10 +35,11 @@ doc of its own**.
       screenshot; the tour is desk-first without breaking the POSITIONING
       voice; preview + run-story capabilities appear where they belong
       (HS-76-02).
-- [ ] ARCHITECTURE's component map + diagrams include the desk island,
+- [x] ARCHITECTURE's component map + diagrams include the desk island,
       the one runtime bus, run-born artifacts, and the preview gate; the
       mermaid render guard green; the trust boundary still equals
-      SECURITY's egress rows (HS-76-03).
+      SECURITY's egress rows (HS-76-03; the mirror check rides 05 after
+      SECURITY's own fix).
 - [ ] docs/THE_DESK.md documents the flagship (the verbs, zones, the orb,
       the rail, the preview card, the egress badge, keyboard paths) in
       label voice, linked from the entry points (HS-76-04).
@@ -46,6 +47,12 @@ doc of its own**.
       on a conclusion-checked green (HS-76-05).
 
 ## Where we are
+
+**2026-07-02 — HS-76-03 done (3/5).** The map tells the truth: the Desk
+box, the one runtime bus with live-frame edges, the capability-run
+subsystem, the honest two-mechanism preview fork, and the run-born
+artifact lane. All diagrams still render. Next: 04 (the WEB_DESK
+rewrite), then 05 (SECURITY first, the tail, the mirror check).
 
 **2026-07-02 — HS-76-02 done (2/5).** README presents the Desk: a new
 section after the two-modes proof with the real-hub screenshot and the
