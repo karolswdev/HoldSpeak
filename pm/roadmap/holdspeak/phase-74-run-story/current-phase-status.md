@@ -1,6 +1,6 @@
 # Phase 74 — The Run Story, Completed
 
-**Status:** open — scaffolded 2026-07-02 (0/5).
+**Status:** **CLOSED — 5/5 (2026-07-02).** See [final-summary.md](./final-summary.md).
 **Owner call that opened it:** "Let's keep going" on the recommended
 follow-up after Phase 73: complete the desk's run story — the two recorded
 hub follow-ups from [phase-73](../phase-73-desk-inhabited/final-summary.md).
@@ -22,7 +22,7 @@ materialize beat are both READY consumers — the hub is the missing half.
 | HS-74-02 | Run frames: the theater's heartbeat (hub) | MED | **done** (intel_status scope=run frames: running→ready|error with capability identity; one bracket per chain; workflow both paths; /live panel scope-guarded; no-token lock; 4/4 captured on the real app; see [evidence](./evidence-story-02.md)) | — |
 | HS-74-03 | The result lands on the desk (web) | HIGH | **done** (runCapability: refresh + NEW beat on artifact_id; both surfaces; theater plays with zero client wiring; REAL .43 proof — 'landed' materialized, frames [running, ready] captured, via-Owl lineage; see [evidence](./evidence-story-03.md)) | 01, 02 |
 | HS-74-04 | Docs: the run story end to end | MED | **done** (GETTING_STARTED speaks the loop; README/ARCHITECTURE verified unchanged; the voice guard caught my own dash; 85 green; see [evidence](./evidence-story-04.md)) | 01–03 |
-| HS-74-05 | Closeout: the run walk | HIGH | todo | 01–04 |
+| HS-74-05 | Closeout: the run walk | HIGH | **done** (real-metal walk: ask → frames → materialize → lineage → filed; one pathname; see [evidence](./evidence-story-05.md)) | 01–04 |
 
 ## Exit criteria
 
@@ -36,10 +36,19 @@ materialize beat are both READY consumers — the hub is the missing half.
       with the NEW beat and `via <capability>` lineage; proven on the
       `.43` endpoint (HS-74-03).
 - [x] Entry-point docs speak the completed loop (HS-74-04).
-- [ ] The run walk: ask → theater → the artifact object → open → lineage,
-      one session, pathname never leaves `/` (HS-74-05).
+- [x] The run walk: ask → theater → the artifact object → open → lineage,
+      one session, pathname never leaves `/` (HS-74-05 — plus the filed
+      ending).
 
 ## Where we are
+
+**2026-07-02 — PHASE CLOSED (5/5).** The run story is complete on real
+metal: the .43 model's answer persisted as a run-born artifact,
+materialized on the stage with the beat, carried [running, ready] frames
+through the one bus, opened to via-Owl lineage, and filed into a zone —
+one session, one pathname. final-summary.md has the ledger, numbers
+(suite 3080/37; three real-metal runs), and the findings (the wire's ""
+rule; the iPad materialize candidate).
 
 **2026-07-02 — HS-74-04 done (4/5).** The docs speak the loop. One story
 left: the run walk closeout.
