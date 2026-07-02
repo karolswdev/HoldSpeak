@@ -38,7 +38,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 5   # v5 (Phase 72): actuator_proposals.origin + nullable meeting_id (the sentinel dies)
+SCHEMA_VERSION = 6   # v6 (Phase 74): artifacts.origin + nullable meeting_id (run-born artifacts)
 
 
 class SchemaVersionError(RuntimeError):
@@ -382,7 +382,12 @@ CREATE INDEX IF NOT EXISTS idx_plugin_run_jobs_meeting ON plugin_run_jobs(meetin
 -- Synthesized artifacts
 CREATE TABLE IF NOT EXISTS artifacts (
     id TEXT PRIMARY KEY,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    -- v6 (Phase 74): an artifact is owner-typed like a proposal (v5).
+    -- origin='meeting' rows carry a real meeting_id; origin='run' rows (a
+    -- persona/chain/workflow run's output) carry NULL — their anchor is the
+    -- capability lineage in artifact_sources.
+    meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE,
+    origin TEXT NOT NULL DEFAULT 'meeting' CHECK (origin IN ('meeting', 'run')),
     artifact_type TEXT NOT NULL,
     title TEXT NOT NULL,
     body_markdown TEXT NOT NULL DEFAULT '',
@@ -1075,6 +1080,50 @@ class Database:
                 CREATE INDEX IF NOT EXISTS idx_actuator_proposals_meeting ON actuator_proposals(meeting_id, created_at DESC);
                 CREATE INDEX IF NOT EXISTS idx_actuator_proposals_status ON actuator_proposals(status, created_at DESC);
                 DELETE FROM meetings WHERE id = 'companion';
+                """
+            )
+            conn.execute("PRAGMA foreign_keys = ON")
+        # v6 (Phase 74, HS-74-01): artifacts become owner-typed the same way
+        # proposals did in v5 — a run's output persists as an artifact with no
+        # meeting anchor (origin='run', NULL meeting_id; lineage is the anchor).
+        # SQLite cannot drop NOT NULL in place: the standard rebuild, FKs
+        # suspended for the swap, ids preserved verbatim, existing rows all
+        # origin='meeting'. Fresh DBs skip this entirely.
+        artifact_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(artifacts)").fetchall()
+        }
+        if artifact_cols and "origin" not in artifact_cols:
+            conn.execute("PRAGMA foreign_keys = OFF")
+            conn.executescript(
+                """
+                CREATE TABLE artifacts_v6 (
+                    id TEXT PRIMARY KEY,
+                    meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE,
+                    origin TEXT NOT NULL DEFAULT 'meeting' CHECK (origin IN ('meeting', 'run')),
+                    artifact_type TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    body_markdown TEXT NOT NULL DEFAULT '',
+                    structured_json TEXT NOT NULL DEFAULT '{}',
+                    confidence REAL NOT NULL DEFAULT 0,
+                    status TEXT NOT NULL DEFAULT 'draft',
+                    plugin_id TEXT NOT NULL DEFAULT 'unknown',
+                    plugin_version TEXT NOT NULL DEFAULT 'unknown',
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+                INSERT INTO artifacts_v6 (
+                    id, meeting_id, origin, artifact_type, title, body_markdown,
+                    structured_json, confidence, status, plugin_id, plugin_version,
+                    created_at, updated_at)
+                SELECT
+                    id, meeting_id, 'meeting', artifact_type, title, body_markdown,
+                    structured_json, confidence, status, plugin_id, plugin_version,
+                    created_at, updated_at
+                FROM artifacts;
+                DROP TABLE artifacts;
+                ALTER TABLE artifacts_v6 RENAME TO artifacts;
+                CREATE INDEX IF NOT EXISTS idx_artifacts_meeting ON artifacts(meeting_id, created_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_artifacts_type ON artifacts(artifact_type, created_at DESC);
                 """
             )
             conn.execute("PRAGMA foreign_keys = ON")

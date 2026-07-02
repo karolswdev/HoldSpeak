@@ -18,7 +18,7 @@ materialize beat are both READY consumers — the hub is the missing half.
 
 | ID | Story | Sev | Status | Depends |
 |---|---|---|---|---|
-| HS-74-01 | Run results persist as artifacts (hub) | HIGH | todo | — |
+| HS-74-01 | Run results persist as artifacts (hub) | HIGH | **done** (schema v6: owner-typed artifacts per the v5 precedent; all three routes persist + artifact_id; sync's run-born lane, wire shape unchanged; 5/5 incl. the facsimile upgrade; see [evidence](./evidence-story-01.md)) | — |
 | HS-74-02 | Run frames: the theater's heartbeat (hub) | MED | todo | — |
 | HS-74-03 | The result lands on the desk (web) | HIGH | todo | 01, 02 |
 | HS-74-04 | Docs: the run story end to end | MED | todo | 01–03 |
@@ -26,10 +26,10 @@ materialize beat are both READY consumers — the hub is the missing half.
 
 ## Exit criteria
 
-- [ ] A persona/chain/workflow run persists its output as a REAL artifact
+- [x] A persona/chain/workflow run persists its output as a REAL artifact
       (the one plugin-artifact store; run-born artifacts carry no meeting
       anchor) with capability lineage, and it rides `/api/sync/pull`
-      unchanged in shape (HS-74-01).
+      unchanged in shape (HS-74-01 — landed as schema v6, the v5 recipe).
 - [ ] The run routes broadcast honest `intel_status` frames (running →
       ready | error); no fake tokens (HS-74-02).
 - [ ] A run from the rail/pull-out materializes the artifact on the desk
@@ -40,6 +40,17 @@ materialize beat are both READY consumers — the hub is the missing half.
       one session, pathname never leaves `/` (HS-74-05).
 
 ## Where we are
+
+**2026-07-02 — HS-74-01 done (1/5).** Run outputs are real artifacts now.
+The DDL forced the honest version of the story: artifacts.meeting_id was
+NOT NULL with an enforced FK, so the "empty string" plan became schema v6
+— owner-typed artifacts exactly like v5's proposals (nullable meeting_id,
+origin meeting|run, the standard rebuild, ids verbatim, backup-then-apply
+proven by a facsimile-upgrade test). All three run routes persist through
+one helper and answer with artifact_id; the sync pull gains the run-born
+lane while the wire keeps meeting_id a plain string so the iPad decode is
+unmoved; the merge path accepts pushed run-born artifacts. Next: HS-74-02
+(the frames).
 
 **2026-07-02 — scaffolded (0/5).** Seams verified before scaffolding:
 `ctx.broadcast` exists on WebContext; the theater consumes

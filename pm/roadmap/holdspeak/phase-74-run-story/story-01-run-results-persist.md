@@ -1,8 +1,9 @@
 # HS-74-01 — Run results persist as artifacts (hub)
 
-- **Status:** todo
+- **Status:** done
 - **Severity:** HIGH
 - **Depends on:** —
+- **Evidence:** [evidence-story-01.md](./evidence-story-01.md)
 
 ## What
 
@@ -35,3 +36,20 @@ iPad's artifact review — instead of evaporating with the HTTP response.
   source; the response carries `artifact_id`; `/api/sync/pull` includes
   it with the unchanged value shape.
 - The serialization-contract suite stays green untouched.
+
+## Done
+
+Shipped — as a REAL schema migration, not the planned empty-string loosen:
+the artifacts table's NOT NULL + FK made run-born rows impossible without
+v6, so v6 follows the repo's own v5 precedent verbatim (owner-typed:
+nullable meeting_id + origin IN ('meeting','run'); the standard rebuild
+with ids kept; Phase-50 backup-then-apply proven by test). record_artifact
+takes empty meeting_id → NULL + origin='run'; list_run_artifacts is the
+sync pull's second lane; the wire keeps meeting_id a plain string ("" for
+run-born) so the iPad's non-optional decode is unmoved, and the merge path
+accepts pushed run-born artifacts. All three run routes persist via one
+helper (workflow on both paths) and respond with artifact_id; persistence
+failure never eats a successful run. tests/unit/test_run_artifacts.py 5/5
+(incl. the v5→v6 facsimile upgrade with the pre-migration backup
+asserted); the schema snapshot + sync stub guards fired and were updated
+in-commit. See [evidence-story-01.md](./evidence-story-01.md).

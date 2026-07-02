@@ -111,7 +111,9 @@ def _artifact_value(artifact: Any) -> dict[str, Any]:
     """An `ArtifactSummary` → the Phase-0 `Artifact` contract dict."""
     return {
         "id": artifact.id,
-        "meeting_id": artifact.meeting_id,
+        # Run-born artifacts store NULL; the wire keeps a plain string ("") so
+        # every decoder (the iPad's non-optional meetingId included) is unmoved.
+        "meeting_id": artifact.meeting_id or "",
         "artifact_type": artifact.artifact_type,
         "title": artifact.title,
         "body_markdown": artifact.body_markdown,
@@ -313,10 +315,9 @@ def _merge_artifacts(db: Any, records: list[dict[str, Any]]) -> int:
         value = rec.get("value") or {}
         if not isinstance(value, dict):
             continue
+        # v6 (Phase 74): empty meeting_id = a run-born artifact (origin='run',
+        # NULL anchor) — a first-class citizen now, not a skip.
         meeting_id = str(value.get("meeting_id") or "").strip()
-        if not meeting_id:
-            # An artifact with no meeting can't be filed (FK to meetings); skip.
-            continue
         db.plugins.record_artifact(
             artifact_id=rec_id,
             meeting_id=meeting_id,
@@ -370,6 +371,17 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
                     },
                     "value": _artifact_value(art),
                 })
+
+        # v6 (Phase 74): the run-born lane — artifacts with no meeting anchor
+        # (a persona/chain/workflow run's output; lineage is the anchor).
+        for art in db.plugins.list_run_artifacts(limit=bounded):
+            artifacts.append({
+                "meta": {
+                    "id": art.id, "kind": "artifact",
+                    "last_modified": _iso(art.updated_at), "deleted": False,
+                },
+                "value": _artifact_value(art),
+            })
 
         # The Primitive Framework desk primitives. `include_deleted=True` so
         # tombstones propagate to the other surfaces, just like a real sync.
