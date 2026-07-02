@@ -2,6 +2,7 @@
   "_note": "Real holdspeak serialization (asdict) for the beyond-charter 'keep' entities; timestamps normalized to the contract UTC-Z form. Two intent windows demonstrate the MIR profile dimension (balanced vs architect). HSM-0-04 fixture.",
   "actuator_proposal": {
     "id": "prop_001",
+    "origin": "meeting",
     "meeting_id": "mtg_001",
     "window_id": "win_002",
     "plugin_id": "github_issue_actuator",

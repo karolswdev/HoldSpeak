@@ -1,9 +1,12 @@
 # Phase 72 — One Spine (cross-surface cohesion)
 
-**Status:** open — 3/10 (HS-72-01..03 done 2026-07-02; HS-72-07 cut;
+**Status:** open — 4/10 (HS-72-01..04 done 2026-07-02; HS-72-07 cut;
 10 live stories).
 
-**Last updated:** 2026-07-02 (**HS-72-03 done** — "companion" untangled:
+**Last updated:** 2026-07-02 (**HS-72-04 done** — one actuator lifecycle:
+schema v5 owner-typed proposals, the sentinel meeting dead, the rebuild
+migration proven against a real v4 DB, `decide_proposal` the single
+decision path with four thin route callers. Earlier: **HS-72-03 done** — "companion" untangled:
 the coder picker at `/api/coders/*`, the desk relay at
 `/api/desk/actuators/*` in its own router, the shared lifecycle helpers in
 `actuator_shared.py`, all callers moved in the same commit; the manifest
@@ -95,8 +98,9 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
       actuator relay live on their own prefixes, with the Swift client and
       web callers moved in the same story (HS-72-03 — manifest diff =
       exactly the eleven moved routes; zero stale grep hits).
-- [ ] One propose→approve→execute implementation; the sentinel meeting row is
-      gone; proposals carry an owner-typed origin (HS-72-04).
+- [x] One propose→approve→execute implementation; the sentinel meeting row is
+      gone; proposals carry an owner-typed origin (HS-72-04 — the v4→v5
+      rebuild proven against a real old-shape DB, backup asserted).
 - [ ] The shadow modules/orphans are renamed or removed; suite + route
       pre-flight green (HS-72-05).
 - [ ] `meetings.py` split under the module budget with a byte-identical route
@@ -122,7 +126,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 | HS-72-01 | The primitive contract, machine-checked | HIGH | **done** (8 kind schemas + ChangeSet envelope + golden fixture; three guards — pytest over a real pull, Swift fixture round-trip, validate.py; three-way kind-set lock; 4 real drifts caught: tombstone payloads (fixed), missing updated_at (tolerant decoders), lossy agent fields (locked, follow-up), the baseURL decode bug (fixed); drift proven red both ways; see [evidence](./evidence-story-01.md)) | — |
 | HS-72-02 | The API surface, declared | HIGH | **done** (generated manifest `docs/api-surface.json` + `docs/API_SURFACE.md`: 229 routes, consumers from real call sites — 44 iOS / 151 web; 5 snapshot tests incl. clients-only-call-served-routes; both drift directions proven red; doc guards green; see [evidence](./evidence-story-02.md)) | — |
 | HS-72-03 | One name per concept: untangle "companion" | HIGH | **done** (picker → `/api/coders/*`; relay → `/api/desk/actuators/*` in new `desk_actuators.py`; shared lifecycle helpers promoted to `actuator_shared.py`; `meetings.py` 1,855→1,460; all Swift/web/test callers moved same commit; manifest diff = exactly the 11 routes; suites 128+16, swift 394/0, sim BUILD SUCCEEDED (patched toolchain), pre-flight green, full suite 3058; see [evidence](./evidence-story-03.md)) | 02 |
-| HS-72-04 | One actuator lifecycle | HIGH | todo | 03 |
+| HS-72-04 | One actuator lifecycle | HIGH | **done** (schema v5: owner-typed `origin` + nullable `meeting_id`; the sentinel meeting dead in code+data+queries; rebuild migration proven against a real v4 DB with backup asserted; `decide_proposal` = the ONE lifecycle, 4 routes thin; wire schema+fixture updated; 123+99 affected tests green; see [evidence](./evidence-story-04.md)) | 03 |
 | HS-72-05 | Retire the shadows | MED | todo | — |
 | HS-72-06 | Split the meetings god-module | MED | todo | 03, 04 |
 | HS-72-07 | The meetings archive, decomposed | MED | **cut** (superseded by the 2026-07-02 web stack decision — `/history` migrates to React in a later phase instead of being decomposed in place; see the story file) | — |
@@ -137,6 +141,30 @@ Build order: **01 → 02** (the contract, then the declared surface) → **03 �
 **11** (closeout).
 
 ## Where we are
+
+**2026-07-02 — HS-72-04 done (4/10).** The actuator lifecycle is ONE
+implementation and the sentinel meeting is dead. Schema v5 makes proposals
+owner-typed (`origin` meeting|desk, CHECK-constrained; `meeting_id` null
+exactly when desk); the v≤4 upgrade runs the documented SQLite rebuild
+inside the Phase-50 backup-then-apply path — sentinel-attached rows
+re-typed to `origin='desk'` with NULL meeting_id (ids preserved, audit
+intact), the fake `companion` meeting deleted, the `list_meetings`
+exclusion removed — proven end-to-end against a real v4-shaped database in
+the new `test_db_actuator_origin.py` (backup file asserted; the facsimile
+initially read as v5 because `INSERT OR REPLACE` on the version PK adds a
+second row — the test now clears the table first, a trap worth knowing).
+`actuator_shared.decide_proposal` is the single decision lifecycle; the
+meeting route and the three desk routes are thin callers, with Slack's
+approve-executes-inline consent model expressed as an `executors` entry
+rather than an inline branch. The wire gains `origin` (additive); the
+proposal schema's `additionalProperties: false` caught it immediately —
+the HS-72-01 guard working in anger — and the schema + fixture were
+updated deliberately. Snapshot regenerated with the identical no-op
+normalizer. Proofs: affected slice 123 passed; all actuator/proposal/
+qlippy files 99 passed; validate.py green; full suite 3062 passed, 37
+skipped.
+Next: HS-72-05 (retire the shadows) or HS-72-06 (split the meetings
+god-module) — 06 is now much smaller after 03/04.
 
 **2026-07-02 — HS-72-03 done (3/10).** "Companion" no longer names an API
 concept. The coder session picker lives at `/api/coders/*` (renamed in

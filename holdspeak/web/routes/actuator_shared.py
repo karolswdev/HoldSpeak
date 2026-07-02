@@ -23,6 +23,7 @@ _GITHUB_RUNNER = None
 def proposal_to_dict(proposal: Any) -> dict[str, Any]:
     return {
         "id": proposal.id,
+        "origin": getattr(proposal, "origin", "meeting"),
         "meeting_id": proposal.meeting_id,
         "window_id": proposal.window_id,
         "plugin_id": proposal.plugin_id,
@@ -56,6 +57,57 @@ def actuator_result_event(proposal: Any) -> dict[str, Any]:
         "reversible": bool(getattr(proposal, "reversible", False)),
         "error": getattr(proposal, "error", None),
     }
+
+
+def decide_proposal(
+    ctx: WebContext,
+    db: Any,
+    proposal_id: str,
+    *,
+    decision: str,
+    actor: str,
+    belongs: Any,
+    executors: dict[str, Any],
+) -> tuple[Any, str | None, int]:
+    """ONE propose→approve→execute decision lifecycle (Phase 72).
+
+    The four decision routes (the meeting proposal route and the three desk
+    relay routes) used to carry four copies of the same skeleton: validate
+    the decision → fetch + scope-check → transition (audited) → broadcast a
+    terminal rejection → execute-on-approve for the targets whose approval
+    IS the send. This is that skeleton, once.
+
+    - ``belongs(existing) -> bool`` is the caller's scoping rule (the meeting
+      route checks the meeting id; the desk routes check origin + target).
+    - ``executors`` maps a target to its execute leg
+      (``fn(ctx, db, proposal, *, actor)``); targets absent from the map keep
+      the Phase-37 behavior — approval flips state only.
+
+    Returns ``(proposal, error, http_status)`` — exactly one of
+    proposal/error is set.
+    """
+    clean = str(decision or "").strip().lower()
+    if clean not in ("approved", "rejected"):
+        return None, f"Invalid decision: {decision!r}", 400
+    existing = db.actuators.get_proposal(proposal_id)
+    if existing is None or not belongs(existing):
+        return None, "Proposal not found", 404
+    try:
+        updated = db.actuators.transition_proposal(
+            proposal_id, to_status=clean, actor=actor
+        )
+    except ValueError as ve:
+        # Illegal lifecycle transition (e.g. already executed/rejected).
+        return None, str(ve), 400
+    if clean == "rejected":
+        # A rejection is a terminal result presence can reflect (HS-56-03).
+        # Wire-safe: preview only, never the machine payload.
+        ctx.broadcast("actuator_result", actuator_result_event(updated))
+    if clean == "approved":
+        execute = executors.get(updated.target)
+        if execute is not None:
+            updated = execute(ctx, db, updated, actor=actor)
+    return updated, None, 200
 
 
 def execute_slack_proposal(ctx: WebContext, db: Any, proposal: Any, *, actor: str) -> Any:

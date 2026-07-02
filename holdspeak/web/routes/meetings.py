@@ -825,59 +825,23 @@ def build_meetings_router(ctx: WebContext) -> APIRouter:
         is terminal. Illegal decisions (e.g. on an already-executed proposal)
         return 400.
         """
-        decision = str(payload.decision or "").strip().lower()
-        if decision not in ("approved", "rejected"):
-            return JSONResponse(
-                {"success": False, "error": f"Invalid decision: {decision!r}"},
-                status_code=400,
-            )
         try:
             from ...db import get_database
 
-            db = get_database()
-            existing = db.actuators.get_proposal(proposal_id)
-            if existing is None or existing.meeting_id != meeting_id:
-                return JSONResponse(
-                    {"success": False, "error": "Proposal not found"},
-                    status_code=404,
-                )
-            try:
-                updated = db.actuators.transition_proposal(
-                    proposal_id,
-                    to_status=decision,
-                    actor=(payload.decided_by or "web-user").strip() or "web-user",
-                )
-            except ValueError as ve:
-                # Illegal lifecycle transition (e.g. already executed/rejected).
-                return JSONResponse(
-                    {"success": False, "error": str(ve)}, status_code=400
-                )
-            if decision == "rejected":
-                # HS-56-03: a rejection is a terminal result the presence
-                # mascot can reflect. Wire-safe: preview only, never the
-                # machine payload.
-                ctx.broadcast(
-                    "actuator_result",
-                    {
-                        "id": updated.id,
-                        "meeting_id": updated.meeting_id,
-                        "status": "rejected",
-                        "target": updated.target,
-                        "action": updated.action,
-                        "preview": updated.preview,
-                        "reversible": bool(updated.reversible),
-                        "error": None,
-                    },
-                )
-            if decision == "approved" and updated.target == "slack":
-                # HS-61-01: a Send-to-Slack approval executes immediately —
-                # see _execute_slack_proposal for the consent reasoning. Other
-                # targets keep today's behavior (approval flips state only).
-                updated = _execute_slack_proposal(
-                    db,
-                    updated,
-                    actor=(payload.decided_by or "web-user").strip() or "web-user",
-                )
+            # Phase 72: the ONE decision lifecycle (validate -> scope-check ->
+            # audited transition -> terminal-rejection broadcast -> execute-on-
+            # approve). Slack executes on approval (HS-61-01 consent reasoning,
+            # see actuator_shared.execute_slack_proposal); other targets keep
+            # the Phase-37 behavior (approval flips state only).
+            updated, err, status = actuator_shared.decide_proposal(
+                ctx, get_database(), proposal_id,
+                decision=payload.decision,
+                actor=(payload.decided_by or "web-user").strip() or "web-user",
+                belongs=lambda p: p.origin == "meeting" and p.meeting_id == meeting_id,
+                executors={"slack": actuator_shared.execute_slack_proposal},
+            )
+            if err is not None:
+                return JSONResponse({"success": False, "error": err}, status_code=status)
             return JSONResponse({"success": True, "proposal": _proposal_to_dict(updated)})
         except Exception as e:
             return error_500(e, log, "Failed to decide meeting proposal")

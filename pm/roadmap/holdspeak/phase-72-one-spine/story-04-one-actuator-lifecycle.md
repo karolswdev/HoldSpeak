@@ -1,8 +1,9 @@
 # HS-72-04 — One actuator lifecycle
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (a trust-critical path implemented twice is a trust bug waiting)
 - **Depends on:** HS-72-03
+- **Evidence:** [evidence-story-04.md](./evidence-story-04.md)
 
 ## Goal
 
@@ -52,3 +53,22 @@ Migration matrix tests green including the new version hop; zero references
 to the sentinel id; both callers' end-to-end tests green with one engine
 (diff shows the duplicate logic deleted, not moved); the audit-parity test
 (card approve ≡ dashboard approve, Phase 56) still green; full suite green.
+
+## Done
+
+Shipped. Schema v5: proposals are owner-typed (`origin` meeting|desk,
+CHECK-constrained; `meeting_id` null exactly when desk) and the
+`_COMPANION_MEETING_ID` sentinel is dead — code, data, and the
+`list_meetings` exclusion. The v≤4 upgrade runs the documented SQLite
+rebuild inside the Phase-50 backup-then-apply path, re-typing sentinel rows
+and deleting the fake meeting, proven against a real v4-shaped database in
+`test_db_actuator_origin.py` (backup file asserted). One decision lifecycle:
+`actuator_shared.decide_proposal` (validate → scope → audited transition →
+wire-safe rejection broadcast → execute-on-approve) with all four decision
+routes as thin callers — four skeleton copies became one, Slack's
+approve-executes-inline consent model preserved as an `executors` entry.
+Wire: `proposal_to_dict` emits `origin`; the proposal schema + fixture
+updated (the HS-72-01 guard caught the new field, as designed). Proofs:
+affected slice 123 passed; every actuator/proposal/qlippy file 99 passed;
+validate.py all green; snapshot regenerated with the identical normalizer;
+full suite 3062 passed, 37 skipped. See [evidence-story-04.md](./evidence-story-04.md).

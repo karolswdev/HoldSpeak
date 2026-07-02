@@ -45,7 +45,7 @@ class ActuatorRepository(BaseRepository):
     def record_proposal(
         self,
         *,
-        meeting_id: str,
+        meeting_id: Optional[str],
         window_id: str,
         plugin_id: str,
         plugin_version: str,
@@ -56,21 +56,31 @@ class ActuatorRepository(BaseRepository):
         payload: Optional[dict[str, Any]] = None,
         reversible: bool = False,
         required_capabilities: Optional[list[str]] = None,
+        origin: str = "meeting",
     ) -> ActuatorProposalRecord:
         """Persist a `proposed` proposal (idempotent on `idempotency_key`).
 
         Re-proposing the same action for the same meeting/window returns the
         existing row unchanged (no duplicate, no extra audit entry). A fresh
         insert writes the opening `-> proposed` audit entry.
+
+        A proposal is owner-typed (v5, Phase 72): `origin='meeting'` requires
+        a real `meeting_id`; `origin='desk'` (the iPad desk relay) carries
+        `meeting_id=None` — the old hidden sentinel meeting is gone.
         """
-        clean_meeting_id = str(meeting_id).strip()
+        clean_origin = str(origin or "meeting").strip().lower()
+        if clean_origin not in ("meeting", "desk"):
+            raise ValueError(f"invalid proposal origin: {origin!r}")
+        clean_meeting_id = str(meeting_id).strip() if meeting_id is not None else None
         clean_plugin_id = str(plugin_id).strip()
         clean_key = str(idempotency_key).strip()
         clean_target = str(target).strip()
         clean_action = str(action).strip()
         clean_preview = str(preview).strip()
-        if not clean_meeting_id:
-            raise ValueError("meeting_id is required")
+        if clean_origin == "meeting" and not clean_meeting_id:
+            raise ValueError("meeting_id is required for origin='meeting'")
+        if clean_origin == "desk":
+            clean_meeting_id = None
         if not clean_plugin_id:
             raise ValueError("plugin_id is required")
         if not clean_key:
@@ -94,17 +104,18 @@ class ActuatorRepository(BaseRepository):
             cursor = conn.execute(
                 """
                 INSERT INTO actuator_proposals (
-                    id, meeting_id, window_id, plugin_id, plugin_version,
+                    id, meeting_id, origin, window_id, plugin_id, plugin_version,
                     idempotency_key, status, target, action, preview,
                     payload_json, reversible, required_capabilities_json,
                     created_at, updated_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, 'proposed', ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'proposed', ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(idempotency_key) DO NOTHING
                 """,
                 (
                     proposal_id,
                     clean_meeting_id,
+                    clean_origin,
                     str(window_id).strip(),
                     clean_plugin_id,
                     str(plugin_version).strip() or "unknown",
@@ -273,6 +284,7 @@ class ActuatorRepository(BaseRepository):
         return ActuatorProposalRecord(
             id=row["id"],
             meeting_id=row["meeting_id"],
+            origin=row["origin"] if "origin" in row.keys() else "meeting",
             window_id=row["window_id"],
             plugin_id=row["plugin_id"],
             plugin_version=row["plugin_version"],

@@ -149,7 +149,9 @@ def test_propose_records_a_proposal_whose_preview_is_the_wire_body(client, db, s
     assert proposal["status"] == "proposed"            # nothing executed
     assert proposal["target"] == "slack"
     assert proposal["action"] == "post_message"
-    assert proposal["meeting_id"] == "companion"
+    # v5 (Phase 72): desk proposals are owner-typed — no sentinel meeting.
+    assert proposal["origin"] == "desk"
+    assert proposal["meeting_id"] is None
     assert proposal["payload"]["body"]["text"] == proposal["preview"]
     assert "the risks list" in proposal["preview"]
 

@@ -11,9 +11,10 @@ picker lives at ``/api/coders/*``, this relay lives here, and "companion" as
 a concept name is retired from the API surface). Handler behavior is
 byte-identical to the moved routes.
 
-The `_COMPANION_MEETING_ID` sentinel row (a fake meeting satisfying the
-proposals FK) moves along unchanged — killing it is the one-actuator-
-lifecycle story's job, not this rename's.
+Desk proposals are owner-typed (v5, Phase 72): `origin='desk'` with
+`meeting_id=NULL`. The old `_COMPANION_MEETING_ID` sentinel meeting (a fake
+row that satisfied the proposals FK) is gone; the v5 migration re-types the
+old rows and deletes the sentinel.
 """
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ from ...web_requests import _CompanionSlackRequest, _ProposalDecisionRequest
 from ..context import WebContext
 from ..runtime_support import error_500
 from .actuator_shared import (
-    actuator_result_event,
+    decide_proposal,
     execute_github_proposal,
     execute_slack_proposal,
     execute_webhook_proposal,
@@ -38,28 +39,10 @@ from .actuator_shared import (
 log = get_logger("web.routes.desk_actuators")
 
 _COMPANION_GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
-_COMPANION_MEETING_ID = "companion"
 
 
 def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-
-    def _ensure_sentinel_meeting(db: Any) -> None:
-        # actuator_proposals.meeting_id is a NOT NULL FK to meetings(id); a
-        # desk send isn't tied to a meeting, so it hangs off one hidden
-        # sentinel row (excluded from list_meetings). Created on demand.
-        from datetime import datetime
-
-        from ...meeting_session import MeetingState
-
-        if db.meetings.get_meeting(_COMPANION_MEETING_ID) is None:
-            db.meetings.save_meeting(
-                MeetingState(
-                    id=_COMPANION_MEETING_ID,
-                    started_at=datetime.now(),
-                    title="Desk · companion sends",
-                )
-            )
 
     @router.post("/api/desk/actuators/slack/propose")
     async def api_desk_slack_propose(payload: _CompanionSlackRequest) -> Any:
@@ -88,11 +71,11 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
             from ...plugins.builtin.webhook_post_actuator import WebhookPostActuator
 
             db = get_database()
-            _ensure_sentinel_meeting(db)
             body = f"*{payload.title.strip()}*\n{text}" if (payload.title or "").strip() else text
             content_key = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
             proposal = db.actuators.record_proposal(
-                meeting_id=_COMPANION_MEETING_ID,
+                meeting_id=None,
+                origin="desk",
                 window_id="companion:slack",
                 plugin_id=WebhookPostActuator.id,
                 plugin_version=WebhookPostActuator.version,
@@ -133,30 +116,18 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
         with the webhook URL injected in memory by the connector — never on the
         proposal, never returned.
         """
-        decision = str(payload.decision or "").strip().lower()
-        if decision not in ("approved", "rejected"):
-            return JSONResponse({"success": False, "error": f"Invalid decision: {decision!r}"}, status_code=400)
         try:
             from ...db import get_database
 
-            db = get_database()
-            existing = db.actuators.get_proposal(proposal_id)
-            if existing is None or existing.meeting_id != _COMPANION_MEETING_ID or existing.target != "slack":
-                return JSONResponse({"success": False, "error": "Proposal not found"}, status_code=404)
-            try:
-                updated = db.actuators.transition_proposal(
-                    proposal_id,
-                    to_status=decision,
-                    actor=(payload.decided_by or "companion").strip() or "companion",
-                )
-            except ValueError as ve:
-                return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
-            if decision == "rejected":
-                ctx.broadcast("actuator_result", actuator_result_event(updated))
-            if decision == "approved" and updated.target == "slack":
-                updated = execute_slack_proposal(
-                    ctx, db, updated, actor=(payload.decided_by or "companion").strip() or "companion"
-                )
+            updated, err, status = decide_proposal(
+                ctx, get_database(), proposal_id,
+                decision=payload.decision,
+                actor=(payload.decided_by or "companion").strip() or "companion",
+                belongs=lambda p: p.origin == "desk" and p.target == "slack",
+                executors={"slack": execute_slack_proposal},
+            )
+            if err is not None:
+                return JSONResponse({"success": False, "error": err}, status_code=status)
             return JSONResponse({"success": True, "proposal": proposal_to_dict(updated)})
         except Exception as e:
             return error_500(e, log, "Failed to decide desk Slack proposal")
@@ -185,11 +156,10 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
             from ...plugins.builtin.webhook_post_actuator import WebhookPostActuator
 
             db = get_database()
-            _ensure_sentinel_meeting(db)
             body = f"*{payload.title.strip()}*\n{text}" if (payload.title or "").strip() else text
             content_key = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
             proposal = db.actuators.record_proposal(
-                meeting_id=_COMPANION_MEETING_ID, window_id="companion:webhook",
+                meeting_id=None, origin="desk", window_id="companion:webhook",
                 plugin_id=WebhookPostActuator.id, plugin_version=WebhookPostActuator.version,
                 idempotency_key=f"companion-webhook:{content_key}",
                 target="webhook", action="post_message", preview=body,
@@ -207,25 +177,18 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/desk/actuators/webhook/{proposal_id}/decision")
     async def api_decide_desk_webhook(proposal_id: str, payload: _ProposalDecisionRequest) -> Any:
         """Approve (→ execute) or reject a desk Webhook proposal (HSM-14)."""
-        decision = str(payload.decision or "").strip().lower()
-        if decision not in ("approved", "rejected"):
-            return JSONResponse({"success": False, "error": f"Invalid decision: {decision!r}"}, status_code=400)
         try:
             from ...db import get_database
 
-            db = get_database()
-            existing = db.actuators.get_proposal(proposal_id)
-            if existing is None or existing.meeting_id != _COMPANION_MEETING_ID or existing.target != "webhook":
-                return JSONResponse({"success": False, "error": "Proposal not found"}, status_code=404)
-            try:
-                updated = db.actuators.transition_proposal(
-                    proposal_id, to_status=decision, actor=(payload.decided_by or "companion").strip() or "companion")
-            except ValueError as ve:
-                return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
-            if decision == "rejected":
-                ctx.broadcast("actuator_result", actuator_result_event(updated))
-            if decision == "approved" and updated.target == "webhook":
-                updated = execute_webhook_proposal(ctx, db, updated, actor=(payload.decided_by or "companion").strip() or "companion")
+            updated, err, status = decide_proposal(
+                ctx, get_database(), proposal_id,
+                decision=payload.decision,
+                actor=(payload.decided_by or "companion").strip() or "companion",
+                belongs=lambda p: p.origin == "desk" and p.target == "webhook",
+                executors={"webhook": execute_webhook_proposal},
+            )
+            if err is not None:
+                return JSONResponse({"success": False, "error": err}, status_code=status)
             return JSONResponse({"success": True, "proposal": proposal_to_dict(updated)})
         except Exception as e:
             return error_500(e, log, "Failed to decide desk webhook proposal")
@@ -261,12 +224,11 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
             from ...plugins.builtin.github_issue_actuator import GithubIssueActuator
 
             db = get_database()
-            _ensure_sentinel_meeting(db)
             title = str(payload.title or "").strip() or (text.splitlines()[0][:72] if text else "Desk issue")
             preview = f"Open a GitHub issue in {repo}: “{title}”"
             content_key = hashlib.sha256(f"{repo}|{title}|{text}".encode("utf-8")).hexdigest()[:16]
             proposal = db.actuators.record_proposal(
-                meeting_id=_COMPANION_MEETING_ID, window_id="companion:github",
+                meeting_id=None, origin="desk", window_id="companion:github",
                 plugin_id=GithubIssueActuator.id, plugin_version=GithubIssueActuator.version,
                 idempotency_key=f"companion-github:{content_key}",
                 target="github", action="create_issue", preview=preview,
@@ -285,25 +247,18 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/desk/actuators/github/{proposal_id}/decision")
     async def api_decide_desk_github(proposal_id: str, payload: _ProposalDecisionRequest) -> Any:
         """Approve (→ file the issue) or reject a desk GitHub proposal (HSM-14)."""
-        decision = str(payload.decision or "").strip().lower()
-        if decision not in ("approved", "rejected"):
-            return JSONResponse({"success": False, "error": f"Invalid decision: {decision!r}"}, status_code=400)
         try:
             from ...db import get_database
 
-            db = get_database()
-            existing = db.actuators.get_proposal(proposal_id)
-            if existing is None or existing.meeting_id != _COMPANION_MEETING_ID or existing.target != "github":
-                return JSONResponse({"success": False, "error": "Proposal not found"}, status_code=404)
-            try:
-                updated = db.actuators.transition_proposal(
-                    proposal_id, to_status=decision, actor=(payload.decided_by or "companion").strip() or "companion")
-            except ValueError as ve:
-                return JSONResponse({"success": False, "error": str(ve)}, status_code=400)
-            if decision == "rejected":
-                ctx.broadcast("actuator_result", actuator_result_event(updated))
-            if decision == "approved" and updated.target == "github":
-                updated = execute_github_proposal(ctx, db, updated, actor=(payload.decided_by or "companion").strip() or "companion")
+            updated, err, status = decide_proposal(
+                ctx, get_database(), proposal_id,
+                decision=payload.decision,
+                actor=(payload.decided_by or "companion").strip() or "companion",
+                belongs=lambda p: p.origin == "desk" and p.target == "github",
+                executors={"github": execute_github_proposal},
+            )
+            if err is not None:
+                return JSONResponse({"success": False, "error": err}, status_code=status)
             return JSONResponse({"success": True, "proposal": proposal_to_dict(updated)})
         except Exception as e:
             return error_500(e, log, "Failed to decide desk GitHub proposal")
