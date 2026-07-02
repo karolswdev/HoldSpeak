@@ -167,30 +167,9 @@ struct ModelPrimitive: DeskPrimitive {
 }
 
 // A KNOWLEDGE BASE — a typed container you ground answers in. Now a full desk primitive (stable id,
-// placeable, filable into zones, rename/delete on-desk). Persisted as a KBRecord; `items` is how many
-// cards have been routed into it.
-struct KBRecord: Codable, Identifiable, Equatable {
-    var id: String; var name: String; var path: String; var items: Int
-
-    // CANONICAL BRIDGE — a KBRecord IS the contract `KB` (organization/synced). The
-    // desk tracks `items` as a count; the contract carries `memberIds` (the Membership
-    // edges). v0 ships the count-only shape with empty members until membership lands.
-    func toContract(now: Date = Date(), memberIds: [String] = []) -> KB {
-        KB(id: id, name: name, memberIds: memberIds, createdAt: now, updatedAt: now)
-    }
-    // INVERSE BRIDGE — rebuild a desk KBRecord from an incoming synced `KB`. `path`
-    // (per-device layout) is never on the wire, so it defaults to root; `items` is the
-    // member count (v0: memberIds is the synced truth, the count is derived).
-    init(contract k: KB, path: String = "") {
-        self.id = k.id; self.name = k.name; self.path = path; self.items = k.memberIds.count
-    }
-    init(id: String, name: String, path: String, items: Int) {
-        self.id = id; self.name = name; self.path = path; self.items = items
-    }
-    func synced(at: Date = Date(), memberIds: [String] = []) -> Synced<KB> {
-        .live(toContract(now: at, memberIds: memberIds), id: id, kind: .kb, modifiedAt: at)
-    }
-}
+// placeable, filable into zones, rename/delete on-desk). Persisted as a KBRecord (HS-72-09: lives in
+// Sources/RuntimeCore/Desk/DeskRecords.swift, embedding the canonical `KB` contract); `items` is how
+// many cards have been routed into it.
 struct KBPrimitive: DeskPrimitive {
     let rec: KBRecord
     var id: String { "kb:\(rec.id)" }
@@ -235,96 +214,10 @@ struct GamePrimitive: DeskPrimitive {
     var emits: [PrimitiveKind] { [.artifact] }
 }
 
-// LINEAGE — where a generated output came from. Records the input card it was made from
-// (id + human title) and what produced it (the agent/chain that ran). Carried into the
-// synced `Artifact.sources`, so web reads the same provenance the iPad shows.
-struct RunProvenance: Codable, Equatable {
-    var sourceCardId: String      // the routed primitive's id (the input)
-    var sourceCardTitle: String   // its human title (what the lineage line names)
-    var viaId: String             // the agent/chain id that produced this
-    var viaName: String           // its name ("Scout", a crew name)
-    var viaKind: String           // "agent" | "chain"
-
-    // A tasteful one-line summary for the card: "from <source card> · via Scout".
-    var line: String {
-        let from = sourceCardTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        let via = viaName.trimmingCharacters(in: .whitespacesAndNewlines)
-        if from.isEmpty && via.isEmpty { return "" }
-        if via.isEmpty { return "from \(from)" }
-        if from.isEmpty { return "via \(via)" }
-        return "from \(from) · via \(via)"
-    }
-}
-
 // A generated output — the result of routing a primitive through the AI core. It's a first-class primitive
-// itself, so you can route it AGAIN (every output is also an input). Persisted as an OutputRecord.
-struct OutputRecord: Codable, Identifiable, Equatable {
-    var id: String; var title: String; var body: String; var source: String; var lens: String; var path: String
-    // Provenance — populated when this output came from a routed run (agent/chain). nil for
-    // direct lens routes / live captures / harvested scores (their `source` is the lineage).
-    var provenance: RunProvenance? = nil
-
-    // The lineage line shown on the printed/kept card + the Output pull-out. Prefers the rich
-    // run provenance ("from <card> · via Scout"); falls back to the legacy `from <source>`.
-    var lineageLine: String {
-        if let p = provenance, !p.line.isEmpty { return p.line }
-        return source.isEmpty ? "" : "from \(source)"
-    }
-
-    // CANONICAL BRIDGE — a desk OutputRecord IS the contract `Artifact` (content/synced).
-    // A desk-authored artifact has no parent meeting (meetingId ""), the iPad desk is its
-    // plugin source, and the lens/source ride in `structuredJson` so they survive sync.
-    // Run provenance rides BOTH in `sources` (the canonical provenance array web reads) and
-    // in `structuredJson` (so the inverse bridge can rebuild the typed `RunProvenance`).
-    func toContract(now: Date = Date()) -> Artifact {
-        var sources: [ArtifactSource] = [ArtifactSource(sourceType: "desk", sourceRef: source)]
-        var structured: [String: JSONValue] = ["lens": .string(lens), "source": .string(source)]
-        if let p = provenance {
-            sources = [
-                ArtifactSource(sourceType: "card", sourceRef: p.sourceCardTitle),
-                ArtifactSource(sourceType: p.viaKind, sourceRef: p.viaName),
-            ]
-            structured["provenance"] = .object([
-                "source_card_id": .string(p.sourceCardId),
-                "source_card_title": .string(p.sourceCardTitle),
-                "via_id": .string(p.viaId),
-                "via_name": .string(p.viaName),
-                "via_kind": .string(p.viaKind),
-            ])
-        }
-        return Artifact(id: id, meetingId: "", artifactType: .pluginOutput, title: title,
-                 bodyMarkdown: body, structuredJson: .object(structured),
-                 confidence: 1.0, status: .draft, pluginId: "ipad.desk", pluginVersion: "0",
-                 sources: sources, createdAt: now, updatedAt: now)
-    }
-    func synced(at: Date = Date()) -> Synced<Artifact> {
-        .live(toContract(now: at), id: id, kind: .artifact, modifiedAt: at)
-    }
-    // INVERSE BRIDGE — rebuild a desk OutputRecord from an incoming `Artifact`. The
-    // lens/source we stashed in `structuredJson` survive the round-trip; a meeting-born
-    // artifact (no desk metadata) falls back to its type/title. `path` is per-device.
-    init(contract a: Artifact, path: String = "") {
-        self.id = a.id; self.title = a.title; self.body = a.bodyMarkdown; self.path = path
-        if case let .object(o) = a.structuredJson,
-           case let .string(lens)? = o["lens"], case let .string(src)? = o["source"] {
-            self.lens = lens; self.source = src
-        } else {
-            self.lens = a.artifactType.rawValue
-            self.source = a.meetingId.isEmpty ? "synced" : "meeting"
-        }
-        if case let .object(o) = a.structuredJson, case let .object(p)? = o["provenance"],
-           case let .string(scid)? = p["source_card_id"], case let .string(sct)? = p["source_card_title"],
-           case let .string(vid)? = p["via_id"], case let .string(vn)? = p["via_name"],
-           case let .string(vk)? = p["via_kind"] {
-            self.provenance = RunProvenance(sourceCardId: scid, sourceCardTitle: sct, viaId: vid, viaName: vn, viaKind: vk)
-        }
-    }
-    init(id: String, title: String, body: String, source: String, lens: String, path: String,
-         provenance: RunProvenance? = nil) {
-        self.id = id; self.title = title; self.body = body; self.source = source; self.lens = lens; self.path = path
-        self.provenance = provenance
-    }
-}
+// itself, so you can route it AGAIN (every output is also an input). Persisted as an OutputRecord
+// (HS-72-09: lives in Sources/RuntimeCore/Desk/DeskRecords.swift, embedding the canonical `Artifact`
+// contract; its `RunProvenance` lineage moved with it).
 struct OutputPrimitive: DeskPrimitive {
     let rec: OutputRecord
     var id: String { "out:\(rec.id)" }
@@ -345,26 +238,8 @@ struct OutputPrimitive: DeskPrimitive {
 
 // A NOTE — a first-class jotting you write and place on the desk yourself (vs an Output, which the AI
 // generates). It files into zones, routes through the AI core, and deletes — like everything else.
-// Persisted as a NoteRecord; its zone lives on `path` (same model as OutputRecord).
-struct NoteRecord: Codable, Identifiable, Equatable {
-    var id: String; var title: String; var body: String; var path: String
-
-    // CANONICAL BRIDGE — a NoteRecord IS the contract `Note` (its `path` is per-device
-    // layout, which the contract correctly omits). `now` is the lastModified instant.
-    func toContract(now: Date = Date()) -> Note {
-        Note(id: id, title: title, bodyMarkdown: body, tags: [], createdAt: now, updatedAt: now)
-    }
-    init(contract n: Note, path: String = "") {
-        self.id = n.id; self.title = n.title; self.body = n.bodyMarkdown; self.path = path
-    }
-    init(id: String, title: String, body: String, path: String) {
-        self.id = id; self.title = title; self.body = body; self.path = path
-    }
-    // sync-ready envelope (carried by ChangeSet.notes)
-    func synced(at: Date = Date()) -> Synced<Note> {
-        .live(toContract(now: at), id: id, kind: .note, modifiedAt: at)
-    }
-}
+// Persisted as a NoteRecord (HS-72-09: lives in Sources/RuntimeCore/Desk/DeskRecords.swift, embedding
+// the canonical `Note` contract); its zone lives on `path` (same model as OutputRecord).
 struct NotePrimitive: DeskPrimitive {
     let rec: NoteRecord
     var id: String { "note:\(rec.id)" }
@@ -411,28 +286,9 @@ struct ConnectorPrimitive: DeskPrimitive {
 
 // A WORKFLOW — a saved Ask, turned into a reusable tool on the desk. Drop a meeting/output on it and it runs
 // the saved prompt through the AI core (no sheet). The desk becomes a place where you BUILD tools, not just
-// one-shot asks. Persisted as a WorkflowRecord; every output it makes is itself a routable primitive.
-struct WorkflowRecord: Codable, Identifiable, Equatable {
-    var id: String; var name: String; var prompt: String
-
-    // CANONICAL BRIDGE — a WorkflowRecord (a saved Ask) IS the contract
-    // `WorkflowDefinition` (capability/synced); the prompt is the v0 carrier.
-    func toContract(now: Date = Date()) -> WorkflowDefinition {
-        WorkflowDefinition(id: id, name: name, prompt: prompt, createdAt: now, updatedAt: now)
-    }
-    // INVERSE BRIDGE — rebuild a desk WorkflowRecord from an incoming `WorkflowDefinition`.
-    // The desk's v0 carrier is the saved-Ask `prompt`; a graph-only workflow (no prompt)
-    // lands with an empty prompt until the Workbench graph carrier is reconciled.
-    init(contract w: WorkflowDefinition) {
-        self.id = w.id; self.name = w.name; self.prompt = w.prompt ?? ""
-    }
-    init(id: String, name: String, prompt: String) {
-        self.id = id; self.name = name; self.prompt = prompt
-    }
-    func synced(at: Date = Date()) -> Synced<WorkflowDefinition> {
-        .live(toContract(now: at), id: id, kind: .workflow, modifiedAt: at)
-    }
-}
+// one-shot asks. Persisted as a WorkflowRecord (HS-72-09: lives in
+// Sources/RuntimeCore/Desk/DeskRecords.swift, embedding the canonical `WorkflowDefinition`
+// contract); every output it makes is itself a routable primitive.
 struct WorkflowPrimitive: DeskPrimitive {
     let rec: WorkflowRecord
     var id: String { "wf:\(rec.id)" }

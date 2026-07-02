@@ -1,8 +1,9 @@
 # HS-72-09 — The iPad speaks Contracts natively
 
-- **Status:** todo
+- **Status:** done
 - **Priority:** HIGH (the fourth hand-mirrored shape is the one that drifts on device)
 - **Depends on:** HS-72-01
+- **Evidence:** [evidence-story-09.md](./evidence-story-09.md)
 
 ## Goal
 
@@ -53,3 +54,21 @@ record layer); `swift test` green including the fixture round-trips; full
 `xcodebuild` green; Simulator screenshots of the walk; a sync push captured
 and validated against the schemas; the old-JSON migration test green. Owner
 device walk flagged for closeout (Simulator is the floor, not the bar).
+
+## Done
+
+Shipped. All seven desk records embed their `Contracts` type in
+`Sources/RuntimeCore/Desk/DeskRecords.swift` (package-level, so `swift test`
+covers them); every `toContract()` bridge is deleted; per-device extras
+(path, zone geometry/paint) stay local and never enter the wire
+(test-locked). Compatibility computed properties + preserved constructor
+signatures kept the App blast radius to exactly TWO extension moves; the
+legacy flat `@AppStorage` shapes decode via dual-shape Codable (the one
+compat path the story allows — device-data migration). The port surfaced
+and fixed **seven lossy-bridge fidelity bugs**, including artifact identity
+destroyed through iPad edits (meetingId/type/confidence/status/sources all
+re-derived away), KB members wiped on every push, and `graphJson` silently
+drained (the HSM-22 carrier). Gates re-verified first-party: `swift test`
+413 passed / 0 failures (incl. the 19 new record tests); gen + sim
+xcodebuild BUILD SUCCEEDED; zero `toContract` in the tree. See
+[evidence-story-09.md](./evidence-story-09.md).

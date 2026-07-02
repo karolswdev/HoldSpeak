@@ -1,9 +1,11 @@
 # Phase 72 — One Spine (cross-surface cohesion)
 
-**Status:** open — 7/10 (HS-72-01..06 + 08 done 2026-07-02; HS-72-07 cut;
-10 live stories).
+**Status:** open — 8/10 (HS-72-01..06 + 08 + 09 done 2026-07-02; HS-72-07
+cut; 10 live stories).
 
-**Last updated:** 2026-07-02 (**HS-72-08 done** — one live bus: four
+**Last updated:** 2026-07-02 (**HS-72-09 done** — seven desk records embed
+Contracts natively, bridges deleted, seven lossy-bridge fidelity bugs
+fixed, swift test 413/0 + sim build green. Earlier: **HS-72-08 done** — one live bus: four
 private sockets converted, robustness folded into the bus, one-socket-per-
 page + broadcast + reconnect proven e2e. Earlier: **HS-72-06 done** — the meetings god-module
 is a seven-module package under budget, route table byte-identical per the
@@ -121,8 +123,10 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 - [x] One `/ws` consumer on the web; the second socket is gone; every shell
       widget still fires (HS-72-08 — four private sockets found and
       converted; one-socket-per-page + broadcast + reconnect proven e2e).
-- [ ] The iPad's desk records embed the `Contracts` types (bridges deleted);
-      golden fixtures round-trip in Swift tests; Simulator proof (HS-72-09).
+- [x] The iPad's desk records embed the `Contracts` types (bridges deleted);
+      golden fixtures round-trip in Swift tests; Simulator proof (HS-72-09 —
+      sim BUILD SUCCEEDED; the interactive walk folds into the closeout's
+      owner walk).
 - [ ] `docs/ARCHITECTURE.md` matches the measured reality; API surface doc
       linked; voice + mermaid guards green (HS-72-10).
 - [ ] Full python suite, web build, Swift build + tests, tri-surface contract
@@ -141,7 +145,7 @@ and deliberately owns **none** of Equilibrium's feature gaps (see Scope Out).
 | HS-72-06 | Split the meetings god-module | MED | **done** (meetings/ package: 7 route modules + 44-line façade, all ≤650; manifest diff = module fields only; a REAL latent NameError in the intel aftercare callback surfaced + fixed + regression-locked; see [evidence](./evidence-story-06.md)) | 03, 04 |
 | HS-72-07 | The meetings archive, decomposed | MED | **cut** (superseded by the 2026-07-02 web stack decision — `/history` migrates to React in a later phase instead of being decomposed in place; see the story file) | — |
 | HS-72-08 | One live bus on the web | MED | **done** (FOUR private sockets found + converted, not two; runtime-bus sole /ws owner w/ ping+backoff+bus_status; deliver() serves frames AND seed; window.__hsBus for eval'd factories; e2e: 1 socket/page, real broadcast on the presence card, reconnect after restart; see [evidence](./evidence-story-08.md)) | — |
-| HS-72-09 | The iPad speaks Contracts natively | HIGH | todo | 01 |
+| HS-72-09 | The iPad speaks Contracts natively | HIGH | **done** (7 records embed Contracts in RuntimeCore/Desk; bridges deleted; dual-shape Codable migrates legacy @AppStorage JSON; SEVEN lossy-bridge bugs fixed incl. artifact identity loss + graphJson drained; swift test 413/0, sim BUILD SUCCEEDED, both re-verified first-party; see [evidence](./evidence-story-09.md)) | 01 |
 | HS-72-10 | Docs: the honest map (the docs story) | MED | todo | 01–09 |
 | HS-72-11 | Closeout: the one-spine proof | HIGH | todo | 01–10 |
 
@@ -151,6 +155,29 @@ Build order: **01 → 02** (the contract, then the declared surface) → **03 �
 **11** (closeout).
 
 ## Where we are
+
+**2026-07-02 — HS-72-09 done (8/10).** The fourth hand-mirrored shape is
+dead. All seven desk records (Note, KB, Output/Artifact, Workflow, Agent,
+Chain, Zone/Directory) embed their `Contracts` type in
+`Sources/RuntimeCore/Desk/DeskRecords.swift` — package-level so
+`swift test` covers them — and every `toContract()` bridge is deleted.
+Compatibility computed properties (get+set, so SwiftUI `$record.field`
+bindings survive) plus preserved constructor signatures kept the App blast
+radius to exactly two extension moves in 24k lines of desk UI. The legacy
+flat `@AppStorage` device shapes decode via dual-shape Codable. The
+headline: the bridges were not duplication but LOSSY RE-DERIVATION — the
+port surfaced and fixed **seven fidelity bugs**, on every iPad push: note
+tags wiped + createdAt re-minted (the known HS-72-01 finding), KB members
+wiped, artifact identity destroyed on iPad edits (meetingId, type,
+confidence, status, plugin, sources, createdAt all lost), workflow
+`graphJson` silently drained (the HSM-22 carrier — that bridge now starts
+from a working wire), agent tools wiped, chain + directory timestamps
+re-minted. All test-locked in the new 19-test `DeskRecordsTests` (round
+trips, legacy decodes, fidelity locks, golden-fixture wraps). Gates run by
+the delegated port agent and re-verified first-party: `swift test` 413
+passed / 0 failures; gen + sim xcodebuild BUILD SUCCEEDED; zero
+`toContract` anywhere. Next: HS-72-10 (docs — already drafted and
+guard-green) then HS-72-11 (closeout).
 
 **2026-07-02 — HS-72-08 done (7/10).** The web has ONE live socket. The
 sweep found four private `/ws` owners, not the scaffold's two — the /live

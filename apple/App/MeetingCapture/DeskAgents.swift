@@ -11,66 +11,13 @@ import UIKit
 
 // MARK: - the persisted record
 
-struct AgentRecord: Codable, Identifiable, Equatable {
-    var id: String
-    var name: String
-    var avatar: String              // an AgentAvatars id (drives the glyph + hue)
-    var role: String                // a one-line tagline shown on the chip / card
-    var systemPrompt: String        // how it behaves
-    var userTemplate: String        // what to ask — "{input}" is replaced by the question / routed card
-    var manualContext: String       // always-on context the user pins
-    var useZoneContext: Bool        // also feed the current zone's meetings
-    var kb: String                  // an optional knowledge-base name ("" = none)
-    var profileId: String = ""      // Phase 24 — the RuntimeProfile this agent runs on ("" = active default)
-
-    // Tolerant decode: persisted agents predate `profileId` (and earlier fields), so absent keys
-    // default rather than fail — a missing field must never wipe a user's saved agents.
-    private enum CodingKeys: String, CodingKey { case id, name, avatar, role, systemPrompt, userTemplate, manualContext, useZoneContext, kb, profileId }
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decode(String.self, forKey: .id)
-        name = try c.decode(String.self, forKey: .name)
-        avatar = try c.decode(String.self, forKey: .avatar)
-        role = try c.decode(String.self, forKey: .role)
-        systemPrompt = try c.decode(String.self, forKey: .systemPrompt)
-        userTemplate = try c.decode(String.self, forKey: .userTemplate)
-        manualContext = try c.decodeIfPresent(String.self, forKey: .manualContext) ?? ""
-        useZoneContext = try c.decodeIfPresent(Bool.self, forKey: .useZoneContext) ?? false
-        kb = try c.decodeIfPresent(String.self, forKey: .kb) ?? ""
-        profileId = try c.decodeIfPresent(String.self, forKey: .profileId) ?? ""
-    }
-
+// The persisted AgentRecord lives in Sources/RuntimeCore/Desk/DeskRecords.swift (HS-72-09),
+// embedding the canonical `Agent` contract. Only the App-flavoured convenience lives here:
+// a blank draft picks its avatar from the App's `AgentAvatars` gallery.
+extension AgentRecord {
     static func blank() -> AgentRecord {
         AgentRecord(id: UUID().uuidString, name: "", avatar: AgentAvatars.all.first!.id, role: "",
                     systemPrompt: "", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: "")
-    }
-
-    // CANONICAL BRIDGE — an AgentRecord IS the contract `Agent` persona (a synced
-    // capability primitive, not an @AppStorage local). The desk's `kb` is a KB *name*
-    // today; it rides through as `kbId` (reconcile name→id with the KB primitive later).
-    func toContract(now: Date = Date()) -> Agent {
-        Agent(id: id, name: name, avatar: avatar, role: role, systemPrompt: systemPrompt,
-              userTemplate: userTemplate, tools: [], kbId: kb.isEmpty ? nil : kb,
-              manualContext: manualContext, useZoneContext: useZoneContext,
-              profileId: profileId.isEmpty ? nil : profileId,
-              createdAt: now, updatedAt: now)
-    }
-    init(contract a: Agent) {
-        self.id = a.id; self.name = a.name; self.avatar = a.avatar; self.role = a.role
-        self.systemPrompt = a.systemPrompt; self.userTemplate = a.userTemplate
-        self.manualContext = a.manualContext; self.useZoneContext = a.useZoneContext
-        self.kb = a.kbId ?? ""; self.profileId = a.profileId ?? ""
-    }
-    init(id: String, name: String, avatar: String, role: String, systemPrompt: String,
-         userTemplate: String, manualContext: String, useZoneContext: Bool, kb: String, profileId: String = "") {
-        self.id = id; self.name = name; self.avatar = avatar; self.role = role
-        self.systemPrompt = systemPrompt; self.userTemplate = userTemplate
-        self.manualContext = manualContext; self.useZoneContext = useZoneContext; self.kb = kb
-        self.profileId = profileId
-    }
-    // sync-ready envelope (carried by ChangeSet.agents)
-    func synced(at: Date = Date()) -> Synced<Agent> {
-        .live(toContract(now: at), id: id, kind: .agent, modifiedAt: at)
     }
 }
 
@@ -929,26 +876,9 @@ struct DioAgentChat: View {
 }
 
 // MARK: - AGENT CHAINS (crews) — Scout → Critic → Editor, one tap. Each agent's output feeds the next.
-
-struct ChainRecord: Codable, Identifiable, Equatable {
-    var id: String; var name: String; var steps: [String]   // ordered AgentRecord ids
-    static func blank() -> ChainRecord { ChainRecord(id: UUID().uuidString, name: "", steps: []) }
-
-    // CANONICAL BRIDGE — a ChainRecord IS the contract `Chain` (capability/synced).
-    func toContract(now: Date = Date()) -> Chain {
-        Chain(id: id, name: name, steps: steps, createdAt: now, updatedAt: now)
-    }
-    // INVERSE BRIDGE — rebuild a desk ChainRecord from an incoming `Chain`.
-    init(contract c: Chain) {
-        self.id = c.id; self.name = c.name; self.steps = c.steps
-    }
-    init(id: String, name: String, steps: [String]) {
-        self.id = id; self.name = name; self.steps = steps
-    }
-    func synced(at: Date = Date()) -> Synced<Chain> {
-        .live(toContract(now: at), id: id, kind: .chain, modifiedAt: at)
-    }
-}
+//
+// The persisted ChainRecord lives in Sources/RuntimeCore/Desk/DeskRecords.swift (HS-72-09),
+// embedding the canonical `Chain` contract.
 
 // A chain as a routable primitive (route a card → run it through the crew).
 struct ChainPrimitive: DeskPrimitive {
