@@ -11,6 +11,7 @@ import { Stage } from "./components/Stage";
 import { World } from "./components/World";
 import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
+import { RecordOrb } from "./components/RecordOrb";
 import "./desk.css";
 
 export default function DeskApp() {
@@ -29,6 +30,7 @@ export default function DeskApp() {
       <Stage />
       <DeskChrome />
       {updatedAt !== null && total === 0 ? <EmptyDesk /> : <World />}
+      <RecordOrb />
     </div>
   );
 }

@@ -521,3 +521,58 @@
   .desk-next .desk-world,
   .desk-next .desk-world.dived { transition: none; animation: none; }
 }
+
+/* ── HS-73-06: the Record orb (the live verb, bottom-center) ── */
+.desk-next .desk-orb-wrap {
+  position: fixed;
+  bottom: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.desk-next .desk-orb {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent, #FF6B35) 55%, transparent);
+  background: radial-gradient(circle at 50% 42%, rgba(255, 122, 64, 0.5), rgba(120, 40, 20, 0.5) 70%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 24px rgba(255, 107, 53, 0.35);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-orb:hover { transform: scale(1.06); }
+.desk-next .desk-orb-core {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent, #FF6B35);
+  box-shadow: 0 0 14px rgba(255, 107, 53, 0.8);
+  transition: border-radius var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-orb.is-recording { animation: desk-next-orb-pulse 1.6s ease-in-out infinite; }
+.desk-next .desk-orb.is-recording .desk-orb-core { border-radius: 5px; }
+.desk-next .desk-orb.is-busy { opacity: 0.6; cursor: default; }
+@keyframes desk-next-orb-pulse {
+  0%, 100% { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 22px rgba(255, 107, 53, 0.4); }
+  50%      { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 42px rgba(255, 107, 53, 0.85); }
+}
+.desk-next .desk-orb-elapsed {
+  font-size: var(--font-size-xs);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+.desk-next .desk-orb-note {
+  font-size: var(--font-size-xs);
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-orb.is-recording { animation: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 3px rgba(255,107,53,0.6); }
+}

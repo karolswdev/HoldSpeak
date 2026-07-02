@@ -1,6 +1,6 @@
 # Phase 73 — The Desk, Inhabited (on the React foundation)
 
-**Status:** open — 5/10 (HS-73-01..05 done 2026-07-02).
+**Status:** open — 6/10 (HS-73-01..06 done 2026-07-02).
 
 **Last updated:** 2026-07-02 (**re-scaffolded** on two owner decisions made
 the same day, before any story executed: (1) **the Desk is the main surface**
@@ -63,9 +63,10 @@ so the pivot is free **now** and never again.
       (HS-73-04).
 - [x] Zones are painted member-thumbnail trays; drag files via the real
       `PUT`; dive/back is a camera move (HS-73-05).
-- [ ] The Record orb starts/stops the hub recorder; the finished meeting
+- [x] The Record orb starts/stops the hub recorder; the finished meeting
       materializes as an object; external state honestly reflected
-      (HS-73-06).
+      (HS-73-06 — the external case driven by real broadcasts; the
+      mic-in-hand run is the owner's closeout leg).
 - [ ] The agent rail runs a persona with the generation theater; the result
       lands in the world (HS-73-07).
 - [ ] The Alpine desk is deleted behind a zero-loss verb inventory; no
@@ -86,7 +87,7 @@ so the pivot is free **now** and never again.
 | HS-73-03 | Create in-world (no modals, ever) | HIGH | **done** (instant POST → spawn at center + NEW beat + focused in-world editor; vignette not scrim; autosave PUTs + optimistic merge; agent More in-card; zone rename-in-place; tap≠drag fixed; DB round-trip proven; see [evidence](./evidence-story-03.md)) | 01 |
 | HS-73-04 | Open in-world: the pull-out | HIGH | **done** (tap opens on the stage for every kind; the meeting drawer + one-deep artifact stack + back; lineage ported drift-tolerant; Edit swaps the editor; Move-to files via the real PUT; Open full = the one navigation; location asserted unchanged; see [evidence](./evidence-story-04.md)) | 01 |
 | HS-73-05 | Zones as landmarks: file and dive | MED | **done** (stable tints + member mini-sprites + empty hint; drop-ready lift mid-drag; drop files via the real PUT with live thumbs; dive/back camera; + Zone focuses rename; DB rows asserted; see [evidence](./evidence-story-05.md)) | 01 |
-| HS-73-06 | The Record orb (the live verb) | HIGH | todo | 02 |
+| HS-73-06 | The Record orb (the live verb) | HIGH | **done** (bottom-center; /live's calls verbatim, no getUserMedia; state honest via the one bus — external meetings flip it with the whisper, tap = stop only; stop materializes the meeting with the beat; see [evidence](./evidence-story-06.md)) | 02 |
 | HS-73-07 | The agent rail: run from the world | MED | todo | 01, 04 |
 | HS-73-08 | The cutover: the Alpine desk dies | HIGH | todo | 02–07 |
 | HS-73-09 | Docs + the locks (the docs story) | MED | todo | 01–08 |
@@ -96,6 +97,19 @@ Build order: **01 → 02** → **03 / 04** → **05** → **06 / 07** in paralle
 **08** (cutover) → **09** → **10**.
 
 ## Where we are
+
+**2026-07-02 — HS-73-06 done (6/10).** The world has its live verb. The
+Record orb sits bottom-center (the DioAmbientRecorder position) driving
+the HUB's recorder with /live's exact calls — never a browser microphone.
+State is honest by construction: the island subscribes to the one runtime
+bus, so a meeting started anywhere (the /live page, the CLI, the iPad)
+flips the orb to recording with the `live elsewhere` whisper, and its tap
+is a stop — a second start is structurally unreachable. Stopping
+materializes the finished meeting with the NEW beat in front of you, its
+pull-out one tap away. Proven with real server broadcasts (the
+external-truth case and the settle) and the materialize assertion; the
+mic-in-hand lifecycle is the owner's real-metal leg of the closeout walk.
+Next: HS-73-07 (the rail), then the cutover.
 
 **2026-07-02 — HS-73-05 done (5/10).** Zones are the desk's geography.
 Trays wear a stable per-zone tint (the sprite picker's hash family — a
