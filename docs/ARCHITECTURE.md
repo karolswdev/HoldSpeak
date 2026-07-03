@@ -58,7 +58,7 @@ flowchart TB
     DR["Dictation pipeline<br/>(dictation_runner.py)"]
     MS["Meeting session<br/>(meeting_session/)"]
     PH["Plugin host + router<br/>(plugins/host.py, router.py)"]
-    RUN["Capability runs<br/>(web/routes/primitives.py)"]
+    RUN["Capability runs<br/>(web/routes/primitives/)"]
     AX["Actuator executor<br/>(plugins/actuator_executor.py)"]
     SRV["Web server + API<br/>(web_server.py, web/routes/*)"]
   end
@@ -253,7 +253,7 @@ flowchart TD
   HOST["Plugin host runs the chain<br/>(plugins/host.py)"]
   HOST -. "intel" .-> LLM(["LLM backend"])
   HOST --> ART["Typed artifacts:<br/>decisions, action items, ADRs, risk registers, and more"]
-  RUNB["A persona / chain / workflow run<br/>(web/routes/primitives.py)"] -- "run-born artifact,<br/>lineage names the capability" --> ART
+  RUNB["A persona / chain / workflow run<br/>(web/routes/primitives/)"] -- "run-born artifact,<br/>lineage names the capability" --> ART
   ART --> AFT["Aftercare digest:<br/>open, decided, changed since last time<br/>(meeting_aftercare.py)"]
   AFT --> ISSUE["An accepted action becomes<br/>a GitHub issue proposal"]
   AFT --> SLACK["The digest or draft becomes<br/>a Send to Slack proposal (slack_export.py)"]

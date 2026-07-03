@@ -412,7 +412,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.agents",
       "consumers": [
         "web"
       ]
@@ -422,7 +422,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.agents",
       "consumers": [
         "web"
       ]
@@ -432,7 +432,7 @@
       "methods": [
         "DELETE"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.agents",
       "consumers": [
         "web"
       ]
@@ -442,7 +442,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.agents",
       "consumers": [
         "web"
       ]
@@ -452,7 +452,7 @@
       "methods": [
         "PUT"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.agents",
       "consumers": [
         "web"
       ]
@@ -462,7 +462,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.agents",
       "consumers": [
         "ios",
         "web"
@@ -627,7 +627,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.chains",
       "consumers": [
         "web"
       ]
@@ -637,7 +637,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.chains",
       "consumers": [
         "web"
       ]
@@ -647,7 +647,7 @@
       "methods": [
         "DELETE"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.chains",
       "consumers": []
     },
     {
@@ -655,7 +655,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.chains",
       "consumers": []
     },
     {
@@ -663,7 +663,7 @@
       "methods": [
         "PUT"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.chains",
       "consumers": []
     },
     {
@@ -671,7 +671,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.chains",
       "consumers": [
         "ios",
         "web"
@@ -682,7 +682,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.coders",
       "consumers": []
     },
     {
@@ -690,7 +690,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.coders",
       "consumers": [
         "ios"
       ]
@@ -700,7 +700,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.coders",
       "consumers": [
         "ios"
       ]
@@ -710,7 +710,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.coders",
       "consumers": [
         "ios",
         "web"
@@ -721,7 +721,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.coders",
       "consumers": [
         "ios",
         "web"
@@ -732,7 +732,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.voice",
       "consumers": [
         "ios",
         "web"
@@ -819,7 +819,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.health",
       "consumers": []
     },
     {
@@ -1047,7 +1047,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.voice",
       "consumers": [
         "web"
       ]
@@ -1057,7 +1057,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.voice",
       "consumers": [
         "web"
       ]
@@ -1190,7 +1190,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.voice",
       "consumers": [
         "web"
       ]
@@ -1200,7 +1200,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.voice",
       "consumers": [
         "web"
       ]
@@ -1210,7 +1210,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.directories",
       "consumers": [
         "web"
       ]
@@ -1220,7 +1220,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.directories",
       "consumers": [
         "web"
       ]
@@ -1230,7 +1230,7 @@
       "methods": [
         "DELETE"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.directories",
       "consumers": [
         "web"
       ]
@@ -1240,7 +1240,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.directories",
       "consumers": [
         "web"
       ]
@@ -1250,7 +1250,7 @@
       "methods": [
         "PUT"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.directories",
       "consumers": [
         "web"
       ]
@@ -1260,7 +1260,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.directories",
       "consumers": []
     },
     {
@@ -1268,7 +1268,7 @@
       "methods": [
         "DELETE"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.directories",
       "consumers": [
         "web"
       ]
@@ -1278,7 +1278,7 @@
       "methods": [
         "PUT"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.directories",
       "consumers": [
         "web"
       ]
@@ -1368,7 +1368,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.kbs",
       "consumers": [
         "web"
       ]
@@ -1378,7 +1378,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.kbs",
       "consumers": [
         "web"
       ]
@@ -1388,7 +1388,7 @@
       "methods": [
         "DELETE"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.kbs",
       "consumers": [
         "web"
       ]
@@ -1398,7 +1398,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.kbs",
       "consumers": [
         "web"
       ]
@@ -1408,7 +1408,7 @@
       "methods": [
         "PUT"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.kbs",
       "consumers": [
         "web"
       ]
@@ -1625,7 +1625,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.notes",
       "consumers": [
         "web"
       ]
@@ -1635,7 +1635,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.notes",
       "consumers": [
         "web"
       ]
@@ -1645,7 +1645,7 @@
       "methods": [
         "DELETE"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.notes",
       "consumers": [
         "web"
       ]
@@ -1655,7 +1655,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.notes",
       "consumers": [
         "web"
       ]
@@ -1665,7 +1665,7 @@
       "methods": [
         "PUT"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.notes",
       "consumers": [
         "web"
       ]
@@ -1725,7 +1725,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.profiles",
       "consumers": [
         "web"
       ]
@@ -1735,7 +1735,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.profiles",
       "consumers": [
         "web"
       ]
@@ -1745,7 +1745,7 @@
       "methods": [
         "DELETE"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.profiles",
       "consumers": [
         "web"
       ]
@@ -1755,7 +1755,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.profiles",
       "consumers": [
         "web"
       ]
@@ -1765,7 +1765,7 @@
       "methods": [
         "PUT"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.profiles",
       "consumers": [
         "web"
       ]
@@ -1891,7 +1891,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.health",
       "consumers": [
         "ios",
         "web"
@@ -1902,7 +1902,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.settings",
       "consumers": [
         "ios",
         "web"
@@ -1913,7 +1913,7 @@
       "methods": [
         "PUT"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.settings",
       "consumers": [
         "ios",
         "web"
@@ -2013,7 +2013,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.workflows",
       "consumers": [
         "web"
       ]
@@ -2023,7 +2023,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.workflows",
       "consumers": [
         "web"
       ]
@@ -2033,7 +2033,7 @@
       "methods": [
         "DELETE"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.workflows",
       "consumers": []
     },
     {
@@ -2041,7 +2041,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.workflows",
       "consumers": []
     },
     {
@@ -2049,7 +2049,7 @@
       "methods": [
         "PUT"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.workflows",
       "consumers": []
     },
     {
@@ -2057,7 +2057,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.primitives",
+      "module": "web.routes.primitives.workflows",
       "consumers": [
         "web"
       ]
@@ -2237,7 +2237,7 @@
       "methods": [
         "WS"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.ws",
       "consumers": [
         "web"
       ]

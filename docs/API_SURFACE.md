@@ -305,7 +305,7 @@ Routes: 232 (plus static mounts). iOS-consumed: 47. Web-consumed: 164.
 | GET | `/welcome` | server only |
 | GET | `/workbench` | server only |
 
-## web.routes.primitives
+## web.routes.primitives.agents
 
 | Method | Path | Consumers |
 |---|---|---|
@@ -315,12 +315,22 @@ Routes: 232 (plus static mounts). iOS-consumed: 47. Web-consumed: 164.
 | GET | `/api/agents/{agent_id}` | web |
 | PUT | `/api/agents/{agent_id}` | web |
 | POST | `/api/agents/{agent_id}/run` | ios, web |
+
+## web.routes.primitives.chains
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/chains` | web |
 | POST | `/api/chains` | web |
 | DELETE | `/api/chains/{chain_id}` | server only |
 | GET | `/api/chains/{chain_id}` | server only |
 | PUT | `/api/chains/{chain_id}` | server only |
 | POST | `/api/chains/{chain_id}/run` | ios, web |
+
+## web.routes.primitives.directories
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/directories` | web |
 | POST | `/api/directories` | web |
 | DELETE | `/api/directories/{directory_id}` | web |
@@ -329,21 +339,41 @@ Routes: 232 (plus static mounts). iOS-consumed: 47. Web-consumed: 164.
 | GET | `/api/directories/{directory_id}/members` | server only |
 | DELETE | `/api/directories/{directory_id}/members/{primitive_id}` | web |
 | PUT | `/api/directories/{directory_id}/members/{primitive_id}` | web |
+
+## web.routes.primitives.kbs
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/kbs` | web |
 | POST | `/api/kbs` | web |
 | DELETE | `/api/kbs/{kb_id}` | web |
 | GET | `/api/kbs/{kb_id}` | web |
 | PUT | `/api/kbs/{kb_id}` | web |
+
+## web.routes.primitives.notes
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/notes` | web |
 | POST | `/api/notes` | web |
 | DELETE | `/api/notes/{note_id}` | web |
 | GET | `/api/notes/{note_id}` | web |
 | PUT | `/api/notes/{note_id}` | web |
+
+## web.routes.primitives.profiles
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/profiles` | web |
 | POST | `/api/profiles` | web |
 | DELETE | `/api/profiles/{profile_id}` | web |
 | GET | `/api/profiles/{profile_id}` | web |
 | PUT | `/api/profiles/{profile_id}` | web |
+
+## web.routes.primitives.workflows
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/workflows` | web |
 | POST | `/api/workflows` | web |
 | DELETE | `/api/workflows/{workflow_id}` | server only |
@@ -383,7 +413,7 @@ Routes: 232 (plus static mounts). iOS-consumed: 47. Web-consumed: 164.
 | GET | `/api/sync/pull` | ios, web |
 | POST | `/api/sync/push` | ios |
 
-## web.routes.system
+## web.routes.system.coders
 
 | Method | Path | Consumers |
 |---|---|---|
@@ -392,13 +422,33 @@ Routes: 232 (plus static mounts). iOS-consumed: 47. Web-consumed: 164.
 | POST | `/api/coders/pin` | ios |
 | POST | `/api/coders/select` | ios, web |
 | GET | `/api/coders/status` | ios, web |
-| POST | `/api/commands/test` | ios, web |
+
+## web.routes.system.health
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/devices/health` | server only |
+| GET | `/api/runtime/status` | ios, web |
+
+## web.routes.system.settings
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/settings` | ios, web |
+| PUT | `/api/settings` | ios, web |
+
+## web.routes.system.voice
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/commands/test` | ios, web |
 | POST | `/api/dictation/preview/discard` | web |
 | POST | `/api/dictation/preview/type` | web |
 | POST | `/api/dictation/transcribe` | web |
 | POST | `/api/dictation/wake/type` | web |
-| GET | `/api/runtime/status` | ios, web |
-| GET | `/api/settings` | ios, web |
-| PUT | `/api/settings` | ios, web |
+
+## web.routes.system.ws
+
+| Method | Path | Consumers |
+|---|---|---|
 | WS | `/ws` | web |

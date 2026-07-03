@@ -15,10 +15,15 @@ be split along the same seams — a new mixin in `holdspeak/runtime/` or
 is a deliberate, reviewed decision, not a reflex (see
 docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md).
 
-Named watch item (deliberately NOT guarded here): `holdspeak/web/routes/
-meetings.py` sits at ~1,5xx lines. It is a route module from the Phase-26
-carve, a different shape with a different budget conversation; if it keeps
-growing it earns its own phase, not a silent bump into this guard.
+Phase 79 (HS-79-04) extended the lock to the three packages that phase
+carved: `db/activity/` (six concern mixins over BaseRepository),
+`web/routes/system/` (five routers + shared helpers), and
+`web/routes/primitives/` (seven family routers + shared run helpers).
+The old watch item — `web/routes/meetings.py` — was resolved by Phase 72's
+split. The new named watch item (deliberately NOT guarded here):
+`holdspeak/db/core.py` (~1,266 lines) is the schema DDL + migration matrix,
+pinned by the schema snapshot test — a different budget conversation; if it
+keeps growing it earns its own phase, not a silent bump into this guard.
 """
 
 from __future__ import annotations
@@ -92,3 +97,51 @@ def test_guard_would_catch_a_regrown_module(tmp_path: Path) -> None:
     lean = tmp_path / "lean.py"
     lean.write_text("x = 1\n")
     assert _lines(lean) <= _MODULE_BUDGET
+
+
+# Phase 79 (HS-79-04): the three packages that phase carved. Composed
+# __init__ files stay composition-only; every concern module stays under the
+# shared budget. settings.py is ONE concern (the settings PUT validation
+# matrix, shipped at 701) and carries its own named budget — raising it is a
+# reviewed decision, not a reflex.
+_INIT_BUDGET = 90
+_SETTINGS_ROUTER_BUDGET = 800
+
+_P79_PACKAGES = (
+    _HS / "db" / "activity",
+    _HS / "web" / "routes" / "system",
+    _HS / "web" / "routes" / "primitives",
+)
+
+
+def test_phase79_package_inits_stay_composition_only() -> None:
+    offenders = []
+    for pkg in _P79_PACKAGES:
+        n = _lines(pkg / "__init__.py")
+        if n > _INIT_BUDGET:
+            offenders.append(f"{(pkg / '__init__.py').relative_to(_REPO)}: {n} lines")
+    assert not offenders, (
+        f"package __init__ files over the {_INIT_BUDGET}-line budget — an "
+        "__init__ composes and re-exports; behavior belongs in a concern "
+        "module:\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_phase79_package_modules_stay_single_concern() -> None:
+    offenders = []
+    for pkg in _P79_PACKAGES:
+        for path in sorted(pkg.glob("*.py")):
+            if path.name == "__init__.py":
+                continue
+            budget = (
+                _SETTINGS_ROUTER_BUDGET
+                if path == _HS / "web" / "routes" / "system" / "settings.py"
+                else _MODULE_BUDGET
+            )
+            n = _lines(path)
+            if n > budget:
+                offenders.append(f"{path.relative_to(_REPO)}: {n} lines (budget {budget})")
+    assert not offenders, (
+        "Phase-79 package modules over budget — carve a new concern module, "
+        "don't grow one:\n  " + "\n  ".join(offenders)
+    )
