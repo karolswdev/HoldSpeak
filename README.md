@@ -260,8 +260,16 @@ types (an opt-in receipt: what you approve is exactly what lands, verbatim),
 authors the voice command board itself (every action still runs on the Mac,
 and the board says so), pins your spoken language and your spoken-symbol
 dictionary on that dictation path, reads a meeting back with its artifacts,
-confidence, and sources, keeps proposing an action separate from approving it
-(the human gate stays its own step), reads the faceted archive, and pulls
+confidence, and sources, closes the meeting's loop from the aftercare digest
+(an accepted action item becomes a GitHub issue proposal, typed against a
+repo you name inline), reviews every pending proposal for a meeting wherever
+it was created (the human gate stays its own step, and approving a Slack
+send carries the cloud mark because that approval executes), searches and
+filters the archive with the same facets the web has (narrowed on the hub,
+never a stale page filtered locally), imports a recording or transcript file
+into the hub's full intelligence pipeline (the new meeting appears
+immediately, honestly marked importing), reads the learning digest and the
+dictation journal with their real "learned from N similar" reach, and pulls
 activity pre-briefing nudges whose "Dictate with this" grounds the next
 utterance in the cited record. Its on-device storage is schema safe the same
 way the desktop is: it backs an older database up before migrating, and

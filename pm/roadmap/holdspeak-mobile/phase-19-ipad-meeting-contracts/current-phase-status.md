@@ -53,7 +53,7 @@ autonomous.
 | HSM-19-04 | Artifact provenance — confidence ring + sources | done — [`evidence-story-04.md`](./evidence-story-04.md) (shipped #151/#159; verified today, metal joins the 19-07 walk) |
 | HSM-19-05 | The proposals review queue (the split, made visible) | done — [`evidence-story-05.md`](./evidence-story-05.md) (live-hub proven with 19-01; `decided_by` audit fix; the tap rides the walk W5) |
 | HSM-19-06 | The learning-loop reader (read-first) | done — [`evidence-story-06.md`](./evidence-story-06.md) (live-hub proven; read-only by shape) |
-| HSM-19-07 | Docs + the staged metal walk | todo |
+| HSM-19-07 | Docs + the staged metal walk | in-progress — docs half done; [`HSM-19-07-WALK.md`](./HSM-19-07-WALK.md) staged (W1–W6, joins the 18-06 couch session); the walk is the owner's |
 
 ## Where we are
 
@@ -71,6 +71,9 @@ digest chips, week/all, correction reach, the journal with per-entry learning si
 live-hub proven on real repository rows (scratch config; the honest no-reach edge
 rendered). **19-03 followed** (6/7): the Import file picker + honest states; the running
 app itself uploaded a .vtt end to end (202 → parsed segments → the file's speakers feeding
-the 19-02 facets live). Only **19-07** (docs + the staged walk) remains. The metal gate (19-07's walk) is
-staged press-play so it can join the owner's 18-06 couch session. The `SpokenSymbols` port
-(18-04) is reused for any meeting-side symbol application — do not re-implement it.
+the 19-02 facets live). **19-07's docs half is done and the gate is STAGED** — README
+carries the six new abilities (voice guard green), ARCHITECTURE verified current, and
+[`HSM-19-07-WALK.md`](./HSM-19-07-WALK.md) is press-play (W1–W6 with controls, sharing the
+owner's 18-06 couch session). **The phase now mirrors Phase 18: 6/7 with the gate staged —
+what closes it is the owner's device walk.** The `SpokenSymbols` port (18-04) is reused for
+any meeting-side symbol application — do not re-implement it.
