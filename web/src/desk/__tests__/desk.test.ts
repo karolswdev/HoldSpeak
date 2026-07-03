@@ -65,7 +65,10 @@ describe("world math", () => {
     coder: [],
   };
   it("flattens in the canonical order and filters on dive", () => {
-    expect(worldObjects(items, null).map((o) => o.id)).toEqual(["m1", "n1"]);
+    // m1 is FILED into z: the root stage shows only the unfiled note (the
+    // iPad grammar — a filed object lives on its shelf; owner feedback
+    // 2026-07-02); diving shows the member.
+    expect(worldObjects(items, null).map((o) => o.id)).toEqual(["n1"]);
     expect(worldObjects(items, "z").map((o) => o.id)).toEqual(["m1"]);
   });
   it("looseHome is deterministic and clamped", () => {
