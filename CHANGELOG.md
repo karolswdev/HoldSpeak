@@ -16,6 +16,12 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   can turn an accepted action item into a GitHub-issue proposal (repo
   typed inline, remembered for the session). Filing only records a
   proposal you approve separately — same consent model as the web.
+- **Review proposals from the iPad.** A meeting's actuator proposals —
+  wherever they were created — show as a queue on the companion with
+  Approve/Reject on pending ones and honest decided/executed/failed
+  states. Approving a Slack send executes immediately, so that control
+  carries the cloud mark. iPad decisions are now attributed as
+  `ipad-companion` in the actuator audit.
 - **The Desk is the web front door.** Opening HoldSpeak lands on a spatial
   world at `/`: meetings, notes, knowledge bases, agents, and artifacts as
   objects you create, open, file, and arrange in place. The Record orb

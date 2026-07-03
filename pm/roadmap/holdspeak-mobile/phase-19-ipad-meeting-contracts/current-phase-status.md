@@ -51,18 +51,19 @@ autonomous.
 | HSM-19-02 | The faceted archive — search + facet chips over the shipped clients | todo (client merged, EQ-W3) |
 | HSM-19-03 | Meeting import on the iPad — the picker over the multipart client | todo (client merged, `013c7d0`) |
 | HSM-19-04 | Artifact provenance — confidence ring + sources | done — [`evidence-story-04.md`](./evidence-story-04.md) (shipped #151/#159; verified today, metal joins the 19-07 walk) |
-| HSM-19-05 | The proposals review queue (the split, made visible) | todo (clients merged, EQ-W3) |
+| HSM-19-05 | The proposals review queue (the split, made visible) | done — [`evidence-story-05.md`](./evidence-story-05.md) (live-hub proven with 19-01; `decided_by` audit fix; the tap rides the walk W5) |
 | HSM-19-06 | The learning-loop reader (read-first) | todo (clients merged, `8f65657`) |
 | HSM-19-07 | Docs + the staged metal walk | todo |
 
 ## Where we are
 
-Opened 2026-07-03; **2/7** — 19-04 flipped on verified evidence the same hour (`swift test`
-425 green + the shell simulator build; the code shipped pre-open via #151/#159), then
-**19-01 closed the loop**: the accepted-only File issue action + inline repo row + honest
-proposed pill, live-hub proven (proposed / idempotent / 400 / the filed proposal visible in
-the 19-05 queue — the handshake the next story renders). Next: **19-05** (the review queue,
-while the filed proposal is fresh), then 19-02 / 19-03 / 19-06. The metal gate (19-07's
-walk) is staged press-play so it can join the owner's 18-06 couch session. The
-`SpokenSymbols` port (18-04) is reused for any meeting-side symbol application — do not
-re-implement it.
+Opened 2026-07-03; **3/7** — 19-04 flipped on verified evidence the same hour (the code
+shipped pre-open via #151/#159); **19-01 closed the loop** (accepted-only File issue +
+inline repo row + honest proposed pill, live-hub proven); **19-05 made the split visible**
+(the four-state queue card, Approve/Reject on `proposed` only, the slack cloud mark) —
+proven END TO END with 19-01 on one live hub: file → the proposal appears in the queue →
+decide → the illegal-transition 400. The proof surfaced a real audit gap (an iPad decision
+read as `web-user`) — fixed, `decided_by: "ipad-companion"` test-locked. Next: 19-02
+(facets) / 19-03 (import) / 19-06 (learning), then 19-07. The metal gate (19-07's walk) is
+staged press-play so it can join the owner's 18-06 couch session. The `SpokenSymbols` port
+(18-04) is reused for any meeting-side symbol application — do not re-implement it.

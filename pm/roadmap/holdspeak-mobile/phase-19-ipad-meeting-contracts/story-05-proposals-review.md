@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 19
-- **Status:** todo (the clients are merged — EQ-W3, PR #151)
+- **Status:** done — see [`evidence-story-05.md`](./evidence-story-05.md). The queue card
+  (honest four-state render, Approve/Reject on `proposed` only, the slack cloud mark),
+  live-hub proven end to end with 19-01 (file → queue → decide → illegal-transition 400);
+  the proof surfaced and fixed the audit-trail gap (`decided_by: "ipad-companion"`,
+  test-locked). The on-device tap rides the 19-07 walk (W5).
 - **Depends on:** `HTTPDesktopClient+Proposals.swift` (`meetingProposals(meetingId:)`,
   `decideProposal(meetingId:proposalId:approved:)`); hub routes in
   `holdspeak/web/routes/meetings/aftercare.py:101,128`. Pairs with HSM-19-01 (a filed

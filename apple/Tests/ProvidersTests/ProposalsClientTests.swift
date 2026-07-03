@@ -224,10 +224,12 @@ final class ProposalsClientTests: XCTestCase {
         XCTAssertEqual(StubProtocol.lastMethod, "POST")
         XCTAssertEqual(StubProtocol.lastPath, "/api/meetings/m-42/proposals/p-1/decision")
 
-        // The body must carry decision:"approved" (approved=true → the hub string).
+        // The body must carry decision:"approved" (approved=true → the hub string) and
+        // name this surface in the audit trail (HSM-19-05 — never the "web-user" default).
         let body = try XCTUnwrap(StubProtocol.lastBody)
         let obj = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: String])
         XCTAssertEqual(obj["decision"], "approved")
+        XCTAssertEqual(obj["decided_by"], "ipad-companion")
     }
 
     func testDecideProposalRejectMapsToRejectedString() async throws {
@@ -249,6 +251,7 @@ final class ProposalsClientTests: XCTestCase {
         let body = try XCTUnwrap(StubProtocol.lastBody)
         let obj = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: String])
         XCTAssertEqual(obj["decision"], "rejected")
+        XCTAssertEqual(obj["decided_by"], "ipad-companion")
     }
 
     func testNon2xxThrowsHTTPError() async {
