@@ -826,3 +826,73 @@ def test_default_dictation_pipeline_disabled():
     cfg = DictationConfig()
     assert cfg.pipeline.enabled is False
     assert cfg.runtime.backend == "auto"
+
+
+# ---------------------------------------------------------------------------
+# _validate_output / _schema_hint — the classify output contract
+# ---------------------------------------------------------------------------
+
+
+def test_validate_output_unwraps_extras_nested_under_block_id():
+    """A faithful model mirrors the per-block reference table back
+    (``extras: {"<block_id>": {...}}``). That shape validates now — the exact
+    0/5 failure a live Qwythos-9B run produced against the flat-only validator."""
+    from holdspeak.plugins.dictation.runtime_openai_compatible import _validate_output
+
+    data = {
+        "matched": True,
+        "block_id": "ai_prompt_buildout",
+        "confidence": 0.9,
+        "extras": {"ai_prompt_buildout": {"stage": "buildout"}},
+    }
+    out = _validate_output(data, _schema())
+    assert out["extras"] == {"stage": "buildout"}   # unwrapped, flat
+
+
+def test_validate_output_flat_extras_unchanged_and_bad_keys_still_reject():
+    from holdspeak.plugins.dictation.runtime_openai_compatible import _validate_output
+
+    flat = {
+        "matched": True,
+        "block_id": "ai_prompt_buildout",
+        "confidence": 0.5,
+        "extras": {"stage": "refinement"},
+    }
+    assert _validate_output(flat, _schema())["extras"] == {"stage": "refinement"}
+
+    # A nested key that is NOT the chosen block id is still an honest rejection.
+    wrong = dict(flat, extras={"documentation_exercise": {"stage": "buildout"}})
+    with pytest.raises(RuntimeError, match="not allowed"):
+        _validate_output(wrong, _schema())
+
+
+def test_schema_hint_names_the_flat_extras_shape():
+    """The hint's ONLY example of extras used to be the nested per-block table —
+    the ambiguity that taught models the wrong shape. It now states the flat
+    output contract explicitly."""
+    from holdspeak.plugins.dictation.runtime_openai_compatible import _schema_hint
+
+    hint = json.loads(_schema_hint(_schema()))
+    assert "FLAT" in hint["extras"]
+    assert "ai_prompt_buildout" in hint["extras_allowed_per_block"]
+
+
+def test_validate_output_accepts_the_honest_no_match():
+    """An unconstrained model expresses "none of these blocks" as matched=false
+    with a null block_id (the grammar runtimes are forced to name one anyway).
+    The router's normalizer accepts that shape; the runtime validator now does
+    too, instead of turning honesty into a classify failure."""
+    from holdspeak.plugins.dictation.runtime_openai_compatible import _validate_output
+
+    out = _validate_output(
+        {"matched": False, "block_id": None, "confidence": 0.2, "extras": {}},
+        _schema(),
+    )
+    assert out == {"matched": False, "block_id": None, "confidence": 0.0, "extras": {}}
+
+    # matched=true with a null/unknown block stays an honest rejection.
+    with pytest.raises(RuntimeError, match="not in allowed set"):
+        _validate_output(
+            {"matched": True, "block_id": None, "confidence": 0.9, "extras": {}},
+            _schema(),
+        )

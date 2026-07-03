@@ -200,12 +200,22 @@ def _response_format_unsupported(exc: Exception) -> bool:
 
 
 def _schema_hint(schema: StructuredOutputSchema) -> str:
+    # The hint shows the EXPECTED OUTPUT OBJECT itself: `extras` is a flat object
+    # whose allowed keys depend on the chosen block_id (listed in the reference
+    # table). The previous hint's only example of extras was the nested
+    # `extras_per_block` table, and a faithful model mirrored that nesting back
+    # (`extras: {"<block_id>": {...}}`) and was rejected — the shape the
+    # validator's unwrap now also tolerates.
     return json.dumps(
         {
             "matched": "boolean",
             "block_id": list(schema.block_ids),
             "confidence": "number between 0 and 1",
-            "extras_per_block": {
+            "extras": (
+                "a FLAT object; only keys allowed for the chosen block_id "
+                "(see extras_allowed_per_block), or {}"
+            ),
+            "extras_allowed_per_block": {
                 block_id: {key: list(values) for key, values in extras.items()}
                 for block_id, extras in schema.extras_per_block.items()
             },
@@ -254,17 +264,31 @@ def _parse_json_object(text: str) -> dict[str, Any]:
 
 
 def _validate_output(data: dict[str, Any], schema: StructuredOutputSchema) -> dict[str, Any]:
+    if not isinstance(data.get("matched"), bool):
+        raise RuntimeError("matched must be a boolean")
     block_id = data.get("block_id")
+    # An honest no-match: an unconstrained model says `matched: false` with a
+    # null block_id where the grammar-constrained runtimes are forced to name a
+    # block anyway. The router's own normalizer (`intent_router._to_intent_tag`)
+    # already accepts exactly this; rejecting it here turned honesty into a
+    # classify failure. Normalize to the no-match shape and skip block checks.
+    if data["matched"] is False and block_id is None:
+        return {"matched": False, "block_id": None, "confidence": 0.0, "extras": {}}
     if block_id not in schema.block_ids:
         raise RuntimeError(f"block_id {block_id!r} is not in allowed set {schema.block_ids!r}")
     confidence = data.get("confidence")
     if not isinstance(confidence, (int, float)) or not 0.0 <= float(confidence) <= 1.0:
         raise RuntimeError(f"confidence must be a number in [0, 1], got {confidence!r}")
-    if not isinstance(data.get("matched"), bool):
-        raise RuntimeError("matched must be a boolean")
     extras = data.get("extras")
     if not isinstance(extras, dict):
         raise RuntimeError("extras must be an object")
+    # Tolerate the nested reading: a model that mirrors the per-block reference
+    # table returns `extras: {"<chosen block_id>": {...}}`. Unwrap exactly that
+    # shape (one key, equal to block_id, dict value) before validating flat.
+    if len(extras) == 1 and str(block_id) in extras and isinstance(extras[str(block_id)], dict):
+        extras = extras[str(block_id)]
+        data = dict(data)
+        data["extras"] = extras
     allowed_extras = schema.extras_per_block.get(str(block_id), {})
     for key, value in extras.items():
         allowed_values = allowed_extras.get(str(key))
