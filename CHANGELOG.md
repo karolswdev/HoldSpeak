@@ -12,6 +12,11 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 ## [Unreleased]
 
 ### Added
+- **One egress badge grammar on the iPad.** Every desk primitive now
+  carries its real posture (a connector wears `Cloud · slack`, a live
+  coder session `Local + your desktop`, a note `On device`), and the
+  companion's chips use the same three words — a mixed posture is never
+  dressed as local.
 - **File an issue from the iPad.** The companion's meeting aftercare card
   can turn an accepted action item into a GitHub-issue proposal (repo
   typed inline, remembered for the session). Filing only records a

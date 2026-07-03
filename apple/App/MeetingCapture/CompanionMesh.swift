@@ -390,7 +390,9 @@ private struct AgentDeskCard: View {
     private let meter = LevelMeter()
     private var levelTicker: Task<Void, Never>?
 
-    var egressLabel: String { "local mesh → \(peers.displayName)" }
+    // HSM-21-01: the one grammar — on-device hearing, the words cross the LAN to the
+    // named Mac. A mixed posture, from the Contracts EgressScope.
+    var egressScope: EgressScope { .mixed(peers.displayName) }
     var isPaired: Bool { peers.isPaired }
     var macName: String { peers.displayName }
 
@@ -744,17 +746,19 @@ struct DictateView: View {
         .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 10)
     }
 
-    /// The egress reality, one badge (POSITIONING canon): on-device hearing, the words cross the LAN.
+    /// The egress reality, one badge (POSITIONING canon; HSM-21-01: the words + symbol +
+    /// honest tint come from the Contracts EgressScope — a mixed posture never dresses local).
     private var egressBadge: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "lock.fill").font(.system(size: 9, weight: .black))
-            Text("ON-DEVICE · ").font(.system(size: 10, weight: .heavy)).tracking(1.0)
-            + Text(model.egressLabel.uppercased()).font(.system(size: 10, weight: .heavy)).tracking(1.0)
+        let scope = model.egressScope
+        let tint: Color = scope.leavesDevice ? Sig.warn : Sig.local
+        return HStack(spacing: 6) {
+            Image(systemName: scope.symbolName).font(.system(size: 9, weight: .black))
+            Text(scope.label.uppercased()).font(.system(size: 10, weight: .heavy)).tracking(1.0)
         }
-        .foregroundStyle(Sig.local)
+        .foregroundStyle(tint)
         .padding(.horizontal, 10).padding(.vertical, 5)
-        .background(Sig.local.opacity(0.12), in: Capsule())
-        .overlay(Capsule().strokeBorder(Sig.local.opacity(0.25), lineWidth: 1))
+        .background(tint.opacity(0.12), in: Capsule())
+        .overlay(Capsule().strokeBorder(tint.opacity(0.25), lineWidth: 1))
     }
 
     /// First-class reachability: a tight chip, never an error wall. Unpaired invites pairing.

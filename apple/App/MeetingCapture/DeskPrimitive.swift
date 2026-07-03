@@ -76,6 +76,10 @@ protocol DeskPrimitive {
     var color: Color { get }
     var base: CGFloat { get }                 // canvas sprite size
     var isSymbol: Bool { get }                // glyph is an SF Symbol (a tool/connector), not a pixel sprite
+    // HSM-21-01 — the primitive's honest egress posture (drives the pull-out badge). A protocol
+    // requirement for the same dynamic-dispatch reason as glyph above: extension-only would
+    // statically render every connector "On device" — the exact bug this kills.
+    var egress: EgressScope { get }
 }
 
 // Derived defaults so a primitive only declares what's distinctive.
@@ -91,6 +95,7 @@ extension DeskPrimitive {
     var accepts: [PrimitiveKind] { [] }
     func canReceive(_ other: DeskPrimitive) -> Bool { accepts.contains(other.kind) }
     var isSymbol: Bool { false }              // glyph is an SF Symbol (a tool/connector), not a pixel sprite
+    var egress: EgressScope { .local }        // honest default; Mac-backed primitives override
 
     // The text you feed to an LLM when this primitive is routed — derived from its sections, generically.
     var routableText: String {
@@ -282,6 +287,9 @@ struct ConnectorPrimitive: DeskPrimitive {
         [PrimitiveAction(label: configured ? "Your desktop ·\(detail)" : "Pair your desktop", icon: "desktopcomputer", role: .custom("connect"))]
     }
     var accepts: [PrimitiveKind] { configured ? [.artifact, .summary, .actions, .topics, .meeting] : [] }
+    // A connector's whole purpose is egress: the send leaves via the paired desktop to the
+    // named target. It must never wear the local badge (HSM-21-01).
+    var egress: EgressScope { .cloud(name.lowercased()) }
 }
 
 // A WORKFLOW — a saved Ask, turned into a reusable tool on the desk. Drop a meeting/output on it and it runs

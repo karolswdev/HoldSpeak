@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 21
-- **Status:** todo
+- **Status:** done — see [`evidence-story-01.md`](./evidence-story-01.md). `EgressScope` in
+  Contracts (test-locked grammar + honest tint split), `DeskPrimitive.egress` (protocol
+  requirement; connector=.cloud, coder session=.mixed), every surface consuming it — the
+  hard-coded pull-out capsule, the mesh text, and both shell chips are gone. Sim-proven
+  three ways (connector Cloud, local-note control, the shell's amber mixed chip).
 - **Depends on:** the 18/19 surfaces (they carry the drift this story kills); the canon
   rule [[feedback_no_privacy_novels]] (one badge: local / local+cloud / cloud+target).
 - **Unblocks:** every current and future iPad surface inherits an honest badge; 21-02's

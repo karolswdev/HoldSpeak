@@ -126,6 +126,8 @@ struct AgentSessionPrimitive: DeskPrimitive {
         return a
     }
     var accepts: [PrimitiveKind] { session.state == .waiting ? [.meeting, .artifact, .summary, .actions, .topics, .note] : [] }
+    // A live coding session runs on the paired Mac; answers you drop here cross the LAN (HSM-21-01).
+    var egress: EgressScope { .mixed("your desktop") }
 }
 
 // MARK: - the live session feed (the "running coder" window)
