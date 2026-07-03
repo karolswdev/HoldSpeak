@@ -2,7 +2,12 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 18
-- **Status:** todo — **leads the phase.** Stands up the client surface the rest hangs off.
+- **Status:** done — see [`evidence-story-01.md`](./evidence-story-01.md). The client spine
+  + typed shell teleprompter landed in earlier increments; this closes it: the voice
+  teleprompter gains the readiness strip + opt-in "Preview first" receipt (off by default),
+  the hub gains `raw` verbatim delivery so the previewed receipt types byte-identically
+  (fixing a latent double-rewrite in the landed shell Send), proven against a LIVE hub from
+  the simulator. The on-device spoken-word walk rides the 18-06 gate.
 - **Depends on:** `HTTPDesktopClient` / `DeskHostLink` (the authed desktop seam,
   `apple/App/MeetingCapture/`), the hub dictation routes (`holdspeak/web/routes/dictation/`).
 - **Unblocks:** 18-02 (macros ride the same relay/board), 18-05 (nudges feed the same

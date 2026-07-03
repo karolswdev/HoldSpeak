@@ -191,3 +191,63 @@ def test_no_macro_match_falls_through_to_dictation():
     assert "fired" not in body
     assert body["final_text"] == "[corrected] ship it friday"
     assert delivered == ["[corrected] ship it friday"]
+
+
+def test_raw_delivers_verbatim_no_pipeline():
+    """HSM-18-01 — ``raw: true`` types EXACTLY the given text. A client holding a
+    dry-run receipt sends the previewed ``final_text``; re-running the pipeline would
+    make the receipt a lie (the rewrite is not idempotent)."""
+    delivered: list = []
+    ctx = _ctx(on_remote_dictation=lambda t: delivered.append(t))
+    r = _client(ctx).post(
+        "/api/dictation/remote", json={"text": "[corrected] ship it", "raw": True}
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["success"] is True
+    assert body["delivered"] is True
+    assert body["final_text"] == "[corrected] ship it"   # verbatim, NOT re-corrected
+    assert delivered == ["[corrected] ship it"]
+
+
+def test_raw_skips_macro_dispatch(monkeypatch):
+    """A raw send never fires a macro — the receipt's words type as words even if one
+    of them is a configured keyword."""
+    from holdspeak.config import Config, MacrosConfig, VoiceMacro, VoiceMacroAction
+
+    cfg = Config()
+    cfg.dictation.macros = MacrosConfig(
+        enabled=True, items=[VoiceMacro("standup", VoiceMacroAction("type_text", "## Standup"))]
+    )
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls: cfg))
+
+    delivered: list = []
+    ctx = _ctx(on_remote_dictation=lambda t: delivered.append(t))
+    r = _client(ctx).post("/api/dictation/remote", json={"text": "standup", "raw": True})
+    assert r.status_code == 200
+    body = r.json()
+    assert "fired" not in body
+    assert body["final_text"] == "standup"
+    assert delivered == ["standup"]
+
+
+def test_raw_threads_focused_target_mode():
+    """raw + target_mode="focused" free-types the verbatim text into the focused app."""
+    typed: list = []
+    ctx = _ctx(on_remote_dictation=lambda t, *, target="agent": typed.append((t, target)))
+    r = _client(ctx).post(
+        "/api/dictation/remote",
+        json={"text": "exact words", "raw": True, "target_mode": "focused"},
+    )
+    assert r.status_code == 200
+    assert typed == [("exact words", "focused")]
+
+
+def test_raw_absent_stays_byte_identical():
+    """No ``raw`` key -> the pre-18-01 pipeline path, unchanged."""
+    delivered: list = []
+    ctx = _ctx(on_remote_dictation=lambda t: delivered.append(t))
+    r = _client(ctx).post("/api/dictation/remote", json={"text": "ship it"})
+    assert r.status_code == 200
+    assert r.json()["final_text"] == "[corrected] ship it"
+    assert delivered == ["[corrected] ship it"]

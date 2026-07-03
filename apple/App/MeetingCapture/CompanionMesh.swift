@@ -369,6 +369,17 @@ private struct AgentDeskCard: View {
     @Published var lines: [Line] = []        // the finalized read-back (newest last)
     @Published var reach: Reach = .unknown
     @Published var lastDelivered = false     // the quiet confirmation tick
+    // HSM-18-01 — the dictation-pipeline contract, surfaced:
+    @Published var readiness: DictationReadiness?   // the hub's own verdict for the strip
+    @Published var pending: DictationDryRun?        // the armed receipt awaiting Send
+    @Published var previewing = false               // dry-run in flight
+
+    /// Opt-in preview: release arms a receipt instead of typing (off = the historical
+    /// direct flow — preview is never the default story). Persisted across launches.
+    var previewMode: Bool {
+        get { UserDefaults.standard.bool(forKey: "hs.dictate.preview") }
+        set { objectWillChange.send(); UserDefaults.standard.set(newValue, forKey: "hs.dictate.preview") }
+    }
 
     private let peers = DictatePeerStore.shared
     private let capture = AudioCaptureService()
@@ -381,11 +392,14 @@ private struct AgentDeskCard: View {
     var macName: String { peers.displayName }
 
     /// Probe the Mac so the surface opens honest. Never throws — maps to a rendered Reach.
+    /// A reachable hub also yields the dictation readiness snapshot for the strip
+    /// (`GET /api/dictation/readiness`, HSM-18-01) — absence renders as no strip, never an error.
     func probe() async {
         guard peers.isPaired else { reach = .unpaired; return }
         guard let client = peers.client() else { reach = .asleep; return }
         let c = await client.handshake()
         reach = c.reachable ? .reachable : .asleep
+        readiness = c.reachable ? (try? await client.dictationReadiness()) : nil
     }
 
     /// Push-to-talk down / hands-free arm: open the mic and start sampling the level.
@@ -418,19 +432,49 @@ private struct AgentDeskCard: View {
             said = segs.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
         } catch { return }
         guard !said.isEmpty else { return }
-        await deliver(said)
+        // HSM-18-01 — preview mode arms a receipt instead of typing: the dry-run shows
+        // exactly what would land BEFORE a keystroke leaves the iPad.
+        if previewMode { await preview(said) } else { await deliver(said) }
     }
+
+    /// Run the utterance through the hub's dry-run and arm the receipt. If the hub can't
+    /// preview (unreachable mid-flight), fall back to the exact non-preview lane — the
+    /// words are never lost, and that lane already renders failure honestly (an
+    /// un-ticked line + Reach.asleep).
+    func preview(_ text: String) async {
+        guard let client = peers.client() else { reach = .asleep; return }
+        previewing = true; defer { previewing = false }
+        do {
+            let receipt = try await client.dictationDryRun(utterance: text)
+            if receipt.finalText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                // An empty receipt is a broken receipt — never arm (or send) nothing.
+                await deliver(text)
+            } else {
+                pending = receipt
+            }
+        } catch { await deliver(text) }
+    }
+
+    /// Commit the armed receipt: the hub types it VERBATIM (`raw: true`) — what
+    /// previewed is exactly what lands, no second trip through the pipeline.
+    func sendPending() async {
+        guard let receipt = pending else { return }
+        pending = nil
+        await deliver(receipt.finalText, raw: true)
+    }
+
+    func discardPending() { pending = nil }
 
     /// Deliver a finalized utterance to the focused Mac app. Appends to the read-back optimistically,
     /// then flips its tick from the desktop's `RemoteDictationResult.delivered`. Unreachable → the
     /// line stays (un-ticked) and Reach goes `.asleep`; never a thrown error at the user.
-    func deliver(_ text: String) async {
+    func deliver(_ text: String, raw: Bool = false) async {
         var line = Line(text: text, delivered: false)
         lines.append(line)
         if lines.count > 6 { lines.removeFirst(lines.count - 6) }
         guard let client = peers.client() else { reach = .asleep; return }
         do {
-            let result = try await client.sendRemoteDictation(text: text, target: .focused)
+            let result = try await client.sendRemoteDictation(text: text, target: .focused, raw: raw)
             line.delivered = result.delivered
             if let i = lines.firstIndex(where: { $0.id == line.id }) { lines[i].delivered = result.delivered }
             lastDelivered = result.delivered
@@ -443,7 +487,7 @@ private struct AgentDeskCard: View {
     #if targetEnvironment(simulator)
     /// Simulator-only: stage a live-looking session for the design screenshot — connected, an active
     /// mic level (so the waveform leaps), a trailing partial, and a read-back with one line in flight.
-    func seedDemo() {
+    func seedDemo(preview: Bool = false) {
         reach = .reachable
         level = 0.72
         partial = "and bump the retry budget to five attempts"
@@ -452,6 +496,17 @@ private struct AgentDeskCard: View {
             Line(text: "Add a regression test for the asleep-peer first-class state.", delivered: true),
             Line(text: "Wire the egress badge to the live peer name.", delivered: false),
         ]
+        // HSM-18-01 — the readiness strip + (optionally) an armed receipt for the shot.
+        readiness = DictationReadiness(
+            ready: true,
+            runtime: DictationRuntimeReadiness(status: "available", resolvedBackend: "mlx"))
+        if preview {
+            UserDefaults.standard.set(true, forKey: "hs.dictate.preview")
+            level = 0; partial = ""
+            pending = DictationDryRun(
+                finalText: "Refactor the dictation runner so the focused-app path doesn't gate on a coder session.",
+                totalElapsedMs: 412, blocksCount: 2)
+        }
     }
     #endif
 }
@@ -483,7 +538,9 @@ struct DictateView: View {
             withAnimation(reduceMotion ? nil : .spring(response: 0.6, dampingFraction: 0.85)) { appeared = true }
             if !reduceMotion { ring = true }
             #if targetEnvironment(simulator)
-            if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] == "1" { model.seedDemo(); return }
+            if let d = ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"], d == "1" || d == "preview" {
+                model.seedDemo(preview: d == "preview"); return
+            }
             #endif
             Task { await model.probe() }
         }
@@ -495,12 +552,15 @@ struct DictateView: View {
             VStack(alignment: .leading, spacing: 18) {
                 header
                 reachChip
+                readinessStrip
                 waveformHero
                 talkControls
+                if let receipt = model.pending { receiptCard(receipt) }
                 readBack
             }
             .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.82), value: model.pending)
     }
 
     // MARK: - The iPhone hold-bar teleprompter (HSM-20-04)
@@ -514,17 +574,23 @@ struct DictateView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     header
                     reachChip
+                    readinessStrip
                     readBack
                 }
                 .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 180)
                 .frame(maxWidth: .infinity)
             }
-            if model.listening || !model.partial.isEmpty {
+            if let receipt = model.pending {
+                receiptCard(receipt)
+                    .padding(.horizontal, 14).padding(.bottom, 92)   // sits just above the hold bar
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            } else if model.listening || !model.partial.isEmpty {
                 teleprompter.transition(.move(edge: .bottom).combined(with: .opacity))
             }
             holdBar
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.82), value: model.listening)
+        .animation(.spring(response: 0.4, dampingFraction: 0.82), value: model.pending)
     }
 
     /// The bottom-up teleprompter that rises from the hold bar while you talk: a destination + egress
@@ -669,6 +735,87 @@ struct DictateView: View {
         .opacity(appeared ? 1 : 0)
     }
 
+    /// HSM-18-01 — the hub's own dictation-pipeline verdict as chips. No snapshot = no strip.
+    @ViewBuilder private var readinessStrip: some View {
+        if model.reach == .reachable, let r = model.readiness {
+            HStack(spacing: 8) {
+                miniChip(r.ready == true ? "checkmark.seal.fill" : "xmark.seal.fill",
+                         r.ready == true ? "Pipeline ready" : "Pipeline not ready",
+                         r.ready == true ? Sig.ok : Sig.warn)
+                if let backend = r.runtime?.resolvedBackend ?? r.runtime?.requestedBackend {
+                    miniChip("cpu", backend, Sig.muted)
+                }
+                if let t = r.target?.displayLabel { miniChip("arrow.right", t, Sig.muted) }
+                Spacer(minLength: 0)
+            }
+            .opacity(appeared ? 1 : 0)
+        }
+    }
+
+    private func miniChip(_ glyph: String, _ text: String, _ color: Color) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: glyph).font(.system(size: 10, weight: .black))
+            Text(text).font(.system(size: 11, weight: .heavy))
+        }
+        .foregroundStyle(color)
+        .padding(.horizontal, 9).padding(.vertical, 5)
+        .background(color.opacity(0.1), in: Capsule())
+        .overlay(Capsule().strokeBorder(color.opacity(0.22), lineWidth: 1))
+    }
+
+    /// HSM-18-01 — the armed receipt: exactly what will type, shown before it types.
+    /// Send commits it verbatim (`raw`); Discard drops it. The receipt IS the contract.
+    private func receiptCard(_ receipt: DictationDryRun) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 7) {
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.local)
+                Text(receipt.target?.displayLabel.map { "Types into \($0)" } ?? "Types into the focused app")
+                    .font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.muted)
+                Spacer(minLength: 8)
+                if let ms = receipt.totalElapsedMs { miniChip("bolt.fill", "\(Int(ms)) ms", Sig.faint) }
+                if let b = receipt.blocksCount, b > 0 { miniChip("square.stack.3d.up.fill", "\(b)", Sig.faint) }
+            }
+            Text(receipt.finalText)
+                .font(.system(size: 19, weight: .semibold)).foregroundStyle(Sig.text)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            if let warnings = receipt.warnings, !warnings.isEmpty {
+                miniChip("exclamationmark.triangle.fill",
+                         "\(warnings.count) warning\(warnings.count == 1 ? "" : "s")", Sig.warn)
+            }
+            HStack(spacing: 10) {
+                Button {
+                    tactile(.light); model.discardPending()
+                } label: {
+                    Text("Discard").font(.system(size: 15, weight: .heavy)).foregroundStyle(Sig.muted)
+                        .frame(maxWidth: .infinity).padding(.vertical, 13)
+                        .background(Sig.s2, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Sig.line, lineWidth: 1))
+                }
+                .buttonStyle(PressableCard())
+                Button {
+                    tactile(.heavy); Task { await model.sendPending() }
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "paperplane.fill").font(.system(size: 14, weight: .bold))
+                        Text("Send to \(model.macName)").font(.system(size: 15, weight: .heavy))
+                    }
+                    .foregroundStyle(.black)
+                    .frame(maxWidth: .infinity).padding(.vertical, 13)
+                    .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.2), lineWidth: 1))
+                }
+                .buttonStyle(PressableCard())
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Sig.s1.opacity(0.97), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Sig.local.opacity(0.45), lineWidth: 1.5))
+        .shadow(color: .black.opacity(0.4), radius: 20, y: -4)
+    }
+
     /// The hero: the reactive waveform that leaps with your voice, on a deep Signal stage. The
     /// trailing partial caption shows what's being heard right now.
     private var waveformHero: some View {
@@ -735,26 +882,46 @@ struct DictateView: View {
             Text(model.handsFree ? "Hands-free · tap to stop" : "Press and hold to talk")
                 .font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.faint)
 
-            // Hands-free toggle: arms the mic open between utterances; tap again to stop + deliver.
-            Button {
-                guard model.isPaired else { tactile(.medium); pairing = true; return }
-                tactile(.medium)
-                model.handsFree.toggle()
-                if model.handsFree { Task { await model.startListening() } }
-                else if model.listening { Task { await model.stopAndDeliver() } }
-            } label: {
-                HStack(spacing: 9) {
-                    Image(systemName: model.handsFree ? "infinity.circle.fill" : "infinity")
-                        .font(.system(size: 16, weight: .bold))
-                    Text(model.handsFree ? "Hands-free ON" : "Hands-free")
-                        .font(.system(size: 15, weight: .heavy))
+            // Hands-free keeps the mic open between utterances; Preview first (HSM-18-01)
+            // arms a receipt on release instead of typing straight through.
+            HStack(spacing: 10) {
+                Button {
+                    guard model.isPaired else { tactile(.medium); pairing = true; return }
+                    tactile(.medium)
+                    model.handsFree.toggle()
+                    if model.handsFree { Task { await model.startListening() } }
+                    else if model.listening { Task { await model.stopAndDeliver() } }
+                } label: {
+                    HStack(spacing: 9) {
+                        Image(systemName: model.handsFree ? "infinity.circle.fill" : "infinity")
+                            .font(.system(size: 16, weight: .bold))
+                        Text(model.handsFree ? "Hands-free ON" : "Hands-free")
+                            .font(.system(size: 15, weight: .heavy))
+                    }
+                    .foregroundStyle(model.handsFree ? .black : Sig.muted)
+                    .padding(.horizontal, 18).padding(.vertical, 11)
+                    .background(model.handsFree ? AnyShapeStyle(Sig.accent) : AnyShapeStyle(Sig.s2), in: Capsule())
+                    .overlay(Capsule().strokeBorder(model.handsFree ? Color.clear : Sig.line, lineWidth: 1))
                 }
-                .foregroundStyle(model.handsFree ? .black : Sig.muted)
-                .padding(.horizontal, 18).padding(.vertical, 11)
-                .background(model.handsFree ? AnyShapeStyle(Sig.accent) : AnyShapeStyle(Sig.s2), in: Capsule())
-                .overlay(Capsule().strokeBorder(model.handsFree ? Color.clear : Sig.line, lineWidth: 1))
+                .buttonStyle(PressableCard())
+
+                Button {
+                    tactile(.medium)
+                    model.previewMode.toggle()
+                } label: {
+                    HStack(spacing: 9) {
+                        Image(systemName: model.previewMode ? "doc.text.magnifyingglass" : "doc.text")
+                            .font(.system(size: 16, weight: .bold))
+                        Text(model.previewMode ? "Preview first ON" : "Preview first")
+                            .font(.system(size: 15, weight: .heavy))
+                    }
+                    .foregroundStyle(model.previewMode ? .black : Sig.muted)
+                    .padding(.horizontal, 18).padding(.vertical, 11)
+                    .background(model.previewMode ? AnyShapeStyle(Sig.local) : AnyShapeStyle(Sig.s2), in: Capsule())
+                    .overlay(Capsule().strokeBorder(model.previewMode ? Color.clear : Sig.line, lineWidth: 1))
+                }
+                .buttonStyle(PressableCard())
             }
-            .buttonStyle(PressableCard())
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)

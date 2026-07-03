@@ -148,11 +148,13 @@ final class ShellModel: ObservableObject {
     }
 
     /// Commit the previewed text: free-type the rewritten result into the focused desktop app.
+    /// `raw: true` (HSM-18-01) — the receipt already went through the pipeline; the hub
+    /// types it VERBATIM, so what previewed is exactly what lands.
     func sendDictation() async {
         guard let c = client(), let preview = dictatePreview else { return }
         dictating = true; dictateError = ""; defer { dictating = false }
         do {
-            _ = try await c.sendRemoteDictation(text: preview.finalText, target: .focused)
+            _ = try await c.sendRemoteDictation(text: preview.finalText, target: .focused, raw: true)
             dictateSent = true; dictatePreview = nil; dictateText = ""
         } catch { dictateError = "Send failed. Is a desktop app focused?" }
     }

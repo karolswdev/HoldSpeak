@@ -18,9 +18,24 @@ final class DesktopClientTests: XCTestCase {
         nonisolated(unsafe) static var failEverything = false
         override class func canInit(with request: URLRequest) -> Bool { true }
         override class func canonicalRequest(for r: URLRequest) -> URLRequest { r }
+        nonisolated(unsafe) static var lastBody: Data?
         override func startLoading() {
             StubProtocol.lastAuth = request.value(forHTTPHeaderField: "Authorization")
             StubProtocol.lastMethod = request.httpMethod
+            if let stream = request.httpBodyStream {
+                stream.open(); defer { stream.close() }
+                var data = Data()
+                let buf = UnsafeMutablePointer<UInt8>.allocate(capacity: 1024)
+                defer { buf.deallocate() }
+                while stream.hasBytesAvailable {
+                    let n = stream.read(buf, maxLength: 1024)
+                    if n <= 0 { break }
+                    data.append(buf, count: n)
+                }
+                StubProtocol.lastBody = data
+            } else {
+                StubProtocol.lastBody = request.httpBody
+            }
             let path = request.url?.path ?? ""
             if StubProtocol.failEverything || StubProtocol.routes[path] == nil {
                 client?.urlProtocol(self, didFailWithError: URLError(.cannotConnectToHost))
@@ -220,6 +235,25 @@ final class DesktopClientTests: XCTestCase {
         do { _ = try await client().sendRemoteDictation(text: "hi"); XCTFail("expected throw") }
         catch HTTPDesktopClient.DesktopClientError.http(let code) { XCTAssertEqual(code, 401) }
         catch { XCTFail("wrong error: \(error)") }
+    }
+
+    // MARK: raw (verbatim) delivery for a previewed receipt (HSM-18-01)
+
+    func testRawRidesTheWireOnlyWhenTrue() async throws {
+        StubProtocol.routes = ["/api/dictation/remote": (200,
+            Data(#"{"success":true,"final_text":"exact words","delivered":true}"#.utf8))]
+
+        _ = try await client().sendRemoteDictation(text: "exact words", target: .focused, raw: true)
+        var body = try XCTUnwrap(JSONSerialization.jsonObject(
+            with: XCTUnwrap(StubProtocol.lastBody)) as? [String: Any])
+        XCTAssertEqual(body["raw"] as? Bool, true)
+        XCTAssertEqual(body["target_mode"] as? String, "focused")
+
+        // Default path: no `raw` key at all — the pre-18-01 payload, byte-identical.
+        _ = try await client().sendRemoteDictation(text: "hi", target: .focused)
+        body = try XCTUnwrap(JSONSerialization.jsonObject(
+            with: XCTUnwrap(StubProtocol.lastBody)) as? [String: Any])
+        XCTAssertNil(body["raw"])
     }
 
     // MARK: hub runs return the run-born artifact id (HSM-18-07)
