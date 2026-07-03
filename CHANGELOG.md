@@ -26,6 +26,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   states. Approving a Slack send executes immediately, so that control
   carries the cloud mark. iPad decisions are now attributed as
   `ipad-companion` in the actuator audit.
+- **Import a meeting from the iPad.** The companion can hand a recording
+  or transcript file (audio, `.vtt`/`.srt`/`.txt`) to the desktop's full
+  intelligence pipeline; the new meeting appears immediately in a visible
+  importing state, and a failed import stays honestly labeled.
 - **See what HoldSpeak learned, from the iPad.** The companion's Dictate
   tab shows the learning digest (corrections made, dictations corrected,
   real per-correction reach) and the recent dictation journal with its

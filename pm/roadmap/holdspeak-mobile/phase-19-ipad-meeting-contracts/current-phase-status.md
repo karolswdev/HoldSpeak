@@ -49,7 +49,7 @@ autonomous.
 |----|-------|--------|
 | HSM-19-01 | Meeting aftercare — the file-issue action closes the loop — **leads** | done — [`evidence-story-01.md`](./evidence-story-01.md) (live-hub proven; the tap rides the walk W1) |
 | HSM-19-02 | The faceted archive — search + facet chips over the shipped clients | done — [`evidence-story-02.md`](./evidence-story-02.md) (live-hub proven; the tap rides the walk W2) |
-| HSM-19-03 | Meeting import on the iPad — the picker over the multipart client | todo (client merged, `013c7d0`) |
+| HSM-19-03 | Meeting import on the iPad — the picker over the multipart client | done — [`evidence-story-03.md`](./evidence-story-03.md) (the app uploaded end to end live; the pick + real audio ride the walk W3) |
 | HSM-19-04 | Artifact provenance — confidence ring + sources | done — [`evidence-story-04.md`](./evidence-story-04.md) (shipped #151/#159; verified today, metal joins the 19-07 walk) |
 | HSM-19-05 | The proposals review queue (the split, made visible) | done — [`evidence-story-05.md`](./evidence-story-05.md) (live-hub proven with 19-01; `decided_by` audit fix; the tap rides the walk W5) |
 | HSM-19-06 | The learning-loop reader (read-first) | done — [`evidence-story-06.md`](./evidence-story-06.md) (live-hub proven; read-only by shape) |
@@ -69,6 +69,8 @@ live-hub proven with a REAL narrowed render (`HS_SHELL_FACET_SPEAKER` drives the
 path the chips call). **19-06 followed** (5/7): the learning card on the Dictate tab —
 digest chips, week/all, correction reach, the journal with per-entry learning signals —
 live-hub proven on real repository rows (scratch config; the honest no-reach edge
-rendered). Next: 19-03 (import), then 19-07. The metal gate (19-07's walk) is
+rendered). **19-03 followed** (6/7): the Import file picker + honest states; the running
+app itself uploaded a .vtt end to end (202 → parsed segments → the file's speakers feeding
+the 19-02 facets live). Only **19-07** (docs + the staged walk) remains. The metal gate (19-07's walk) is
 staged press-play so it can join the owner's 18-06 couch session. The `SpokenSymbols` port
 (18-04) is reused for any meeting-side symbol application — do not re-implement it.
