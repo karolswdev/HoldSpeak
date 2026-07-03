@@ -6,9 +6,11 @@ rewriter endpoint. Budget: ~30 minutes once the endpoint answers.
 
 ## 0. Pre-flight — the rewriter endpoint: use `.43` (verified 2026-07-03)
 
-`.43` is the pick. The June "forced grammar" note is stale (probed: free-form
-output), and the two real classify blockers were HUB bugs, both fixed and
-test-locked: the schema hint taught models the nested extras shape the validator
+`.43` is the pick. The "forced grammar" is per launch script, not the box:
+`~/run-qwythos-intel.sh` pins the `{"line"}` grammar (that script would still
+break the classify — keep it off), while `~/run-qwythos-vision.sh` runs
+grammar-free and is the one active today (probed: free-form output). The two
+real classify blockers were HUB bugs, both fixed and test-locked: the schema hint taught models the nested extras shape the validator
 rejected, and an honest no-match (`matched: false, block_id: null`) was refused.
 After the fix, a five-utterance live probe against `.43` (Qwythos-9B) ran
 **5/5 clean** at ~500-700 ms per dry-run, with real block enrichment.
