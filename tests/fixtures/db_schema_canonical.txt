@@ -227,6 +227,10 @@ table agents: CREATE TABLE agents (
     tools_json TEXT NOT NULL DEFAULT '[]',
     kb_id TEXT,
     profile_id TEXT,
+    -- v7 (Phase 77): the iPad-authored pinned context persists on the hub
+    -- (ends the loss HS-72-01 documented in the Swift tolerant decode).
+    manual_context TEXT NOT NULL DEFAULT '',
+    use_zone_context INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0

@@ -38,7 +38,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 6   # v6 (Phase 74): artifacts.origin + nullable meeting_id (run-born artifacts)
+SCHEMA_VERSION = 7   # v7 (Phase 77): agents.manual_context + use_zone_context (the iPad's pinned context persists)
 
 
 class SchemaVersionError(RuntimeError):
@@ -756,6 +756,10 @@ CREATE TABLE IF NOT EXISTS agents (
     tools_json TEXT NOT NULL DEFAULT '[]',
     kb_id TEXT,
     profile_id TEXT,
+    -- v7 (Phase 77): the iPad-authored pinned context persists on the hub
+    -- (ends the loss HS-72-01 documented in the Swift tolerant decode).
+    manual_context TEXT NOT NULL DEFAULT '',
+    use_zone_context INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0
@@ -1023,6 +1027,15 @@ class Database:
         agent_cols = {row[1] for row in conn.execute("PRAGMA table_info(agents)").fetchall()}
         if "profile_id" not in agent_cols:
             conn.execute("ALTER TABLE agents ADD COLUMN profile_id TEXT")
+        # v7 (Phase 77): the pinned-context columns, additive (the v4 recipe).
+        if "manual_context" not in agent_cols:
+            conn.execute(
+                "ALTER TABLE agents ADD COLUMN manual_context TEXT NOT NULL DEFAULT ''"
+            )
+        if "use_zone_context" not in agent_cols:
+            conn.execute(
+                "ALTER TABLE agents ADD COLUMN use_zone_context INTEGER NOT NULL DEFAULT 0"
+            )
         # v5 (Phase 72, HS-72-04): actuator proposals become owner-typed. The old
         # table pinned meeting_id NOT NULL, forcing desk sends through a hidden
         # 'companion' sentinel meeting. SQLite cannot drop NOT NULL in place, so an

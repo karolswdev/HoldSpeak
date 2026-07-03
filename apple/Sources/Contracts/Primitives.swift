@@ -190,10 +190,10 @@ public struct Agent: Codable, Equatable, Sendable, Identifiable {
         self.updatedAt = updatedAt
     }
 
-    // HS-72-01 tolerant decode: the hub's canonical Agent emission carries no
-    // updated_at, manual_context or use_zone_context (the latter two are
-    // iPad-authored and LOSSY through hub sync today — recorded in the agent
-    // schema + Phase 72 evidence). Default them instead of failing decode.
+    // HS-72-01 tolerant decode, updated HS-77-01: the hub persists and emits
+    // manual_context/use_zone_context since schema v7 (the Phase-72 loss
+    // ended); updated_at still never rides the hub's agent emission. Defaults
+    // keep decoding pre-v7 hubs.
     private enum CodingKeys: String, CodingKey {
         case id, name, avatar, role, systemPrompt, userTemplate, tools, kbId
         case manualContext, useZoneContext, profileId, createdAt, updatedAt

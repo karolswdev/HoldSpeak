@@ -495,6 +495,9 @@ class AgentRecord:
     tools: list[str] = field(default_factory=list)
     kb_id: Optional[str] = None
     profile_id: Optional[str] = None   # Phase 24 — the RuntimeProfile this agent runs on
+    # Phase 77 — the iPad-authored pinned context, first-class on the hub.
+    manual_context: str = ""
+    use_zone_context: bool = False
     created_at: str = ""
     last_modified: str = ""
     deleted: bool = False
@@ -510,6 +513,8 @@ class AgentRecord:
             "tools": list(self.tools),
             "kb_id": self.kb_id,
             "profile_id": self.profile_id,
+            "manual_context": self.manual_context,
+            "use_zone_context": self.use_zone_context,
             "created_at": self.created_at,
             "last_modified": self.last_modified,
             "deleted": self.deleted,
