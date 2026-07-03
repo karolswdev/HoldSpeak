@@ -1,6 +1,6 @@
 # Phase 79 — Backend Decomposition II
 
-**Status:** in-progress (opened 2026-07-03, owner-picked: "Let's do the backend decomp").
+**Status:** CLOSED (6/6, 2026-07-03) — see [final-summary.md](./final-summary.md).
 
 **Last updated:** 2026-07-03 (scaffolded; survey corrected the handover's target list —
 `routes/meetings.py` was already split by Phase 72; today's three are `db/activity.py`
@@ -24,11 +24,11 @@ guard-locked so nothing regrows.
 | HS-79-03 | `routes/primitives.py` → the primitives package (per family + shared run helpers) | **done** ([evidence](./evidence-story-03.md): 1,294 → seven families + _shared, largest 333; zero body drift; vocab re-exported; 2407 + 685 green) |
 | HS-79-04 | The density guard locks the new shapes | **done** ([evidence](./evidence-story-04.md): two package checks, settings.py named budget 800, red-proven; unit 2409) |
 | HS-79-05 | The docs story (internal backend map) | **done** ([evidence](./evidence-story-05.md): the map covers both phases; diagram paths updated, render guard green) |
-| HS-79-06 | Closeout (full suite + web build + swift test + manifest stability + final-summary) | todo |
+| HS-79-06 | Closeout (full suite + web build + swift test + manifest stability + final-summary) | **done** ([final-summary](./final-summary.md): 3,113 / 17 pages / 425 / manifest stable) |
 
 ## Where we are
 
-**01–05 done.** Next: 06 (closeout: full suite + web build + swift test + manifest stability + final-summary + the PR) (largest first; all three independent), then
+**CLOSED 6/6.** The three carves, the guard, the docs, and the closeout bars all landed in one day; the PR merges on conclusion-checked green. (largest first; all three independent), then
 the guard, docs, closeout. One PR on `phase-79-backend-decomposition-ii`, merged on
 conclusion-checked green.
 

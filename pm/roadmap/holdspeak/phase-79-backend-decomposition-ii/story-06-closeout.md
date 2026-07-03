@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak
 - **Phase:** 79
-- **Status:** todo — the gate.
+- **Status:** done — see [`final-summary.md`](./final-summary.md). Full suite 3,113
+  (one non-reproducing flake recorded); web build 17 pages; swift test 425; manifest
+  byte-stable on regen.
 - **Depends on:** 01–05.
 
 ## The bar
