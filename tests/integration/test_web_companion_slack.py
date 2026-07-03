@@ -274,11 +274,11 @@ def test_the_wire_events_ride_for_qlippy(client, db, settings_path, posts, broad
 
 @pytest.mark.integration
 def test_companion_status_reports_slack_configured_without_the_url(client, db, settings_path):
-    off = client.get("/api/coders/status")
+    off = client.get("/api/desk/actuators/status")
     assert off.status_code == 200
-    assert off.json()["connectors"]["slack_configured"] is False
+    assert off.json()["slack_configured"] is False
 
     _configure_slack(settings_path)
-    on = client.get("/api/coders/status")
-    assert on.json()["connectors"]["slack_configured"] is True
+    on = client.get("/api/desk/actuators/status")
+    assert on.json()["slack_configured"] is True
     assert "secret-credential" not in on.text

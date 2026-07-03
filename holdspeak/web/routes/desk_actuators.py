@@ -44,6 +44,31 @@ _COMPANION_GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
 def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
+    @router.get("/api/desk/actuators/status")
+    async def api_desk_actuators_status() -> Any:
+        """Which desk connectors are configured (HS-77-03).
+
+        Booleans only — the URLs are credentials and never ride a payload.
+        This lived on /api/coders/status as a residual conflation (a coder
+        is a live coding session; connector config is the actuator
+        domain's); the domain owns its own status now.
+        """
+        try:
+            from ...config import Config
+
+            mc = Config.load().meeting
+            return {
+                "slack_configured": bool(mc.slack_webhook_url),
+                "webhook_configured": bool(mc.companion_webhook_url),
+                "github_configured": bool(mc.companion_github_repo),
+            }
+        except Exception:
+            return {
+                "slack_configured": False,
+                "webhook_configured": False,
+                "github_configured": False,
+            }
+
     @router.post("/api/desk/actuators/slack/propose")
     async def api_desk_slack_propose(payload: _CompanionSlackRequest) -> Any:
         """Propose sending arbitrary desk text to Slack (HSM-14).

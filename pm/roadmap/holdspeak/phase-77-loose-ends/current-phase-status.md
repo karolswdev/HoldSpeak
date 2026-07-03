@@ -21,7 +21,7 @@ are hub-side and fully provable headless.
 |---|---|---|---|---|
 | HS-77-01 | The agent's pinned context survives the hub | HIGH | **done** (schema v7; all five hub layers; byte-faithful sync round trip; the v6 upgrade proven; Swift comment updated; see [evidence](./evidence-story-01.md)) | — |
 | HS-77-02 | A real `runtime_queue` frame for the Queue HUD | MED | **done** (the builder + 3 broadcast sites + the HUD's primary feed with linger-honoring resolution; see [evidence](./evidence-story-02.md)) | — |
-| HS-77-03 | The coders-status conflation dies | MED | todo | — |
+| HS-77-03 | The coders-status conflation dies | MED | **done** (consumers verified first; the flags own their domain at /api/desk/actuators/status; coders-status is sessions-only; see [evidence](./evidence-story-03.md)) | — |
 | HS-77-04 | Docs + closeout | MED | todo | 01–03 |
 
 ## Exit criteria
@@ -33,13 +33,17 @@ are hub-side and fully provable headless.
 - [x] The hub broadcasts a real `runtime_queue` frame on queue
       transitions and the Queue HUD consumes it as its primary source
       (HS-77-02).
-- [ ] `/api/coders/status` reports coder sessions only; the desk
+- [x] `/api/coders/status` reports coder sessions only; the desk
       connector config leaves the payload (its consumers verified first)
       (HS-77-03).
 - [ ] Entry-point docs touched where they speak; guards + full suite
       green; PR merged on a conclusion-checked green (HS-77-04).
 
 ## Where we are
+
+**2026-07-02 — HS-77-03 done (3/4).** The conflation is dead: the
+connector flags live in their own domain and coders-status speaks only
+of coder sessions. One story left: docs + closeout.
 
 **2026-07-02 — HS-77-02 done (2/4).** The HUD renders truth: the
 deferred-intel queue broadcasts its real jobs on every transition, and a

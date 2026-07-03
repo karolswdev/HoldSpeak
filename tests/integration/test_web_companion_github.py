@@ -196,6 +196,6 @@ def test_github_decision_is_target_scoped(client, db, settings_path, gh):
 
 @pytest.mark.integration
 def test_companion_status_reports_github_configured(client, db, settings_path):
-    assert client.get("/api/coders/status").json()["connectors"]["github_configured"] is False
+    assert client.get("/api/desk/actuators/status").json()["github_configured"] is False
     _configure(settings_path)
-    assert client.get("/api/coders/status").json()["connectors"]["github_configured"] is True
+    assert client.get("/api/desk/actuators/status").json()["github_configured"] is True

@@ -176,10 +176,10 @@ def test_the_url_never_rides_a_response_or_broadcast(client, db, settings_path, 
 
 @pytest.mark.integration
 def test_companion_status_reports_webhook_configured(client, db, settings_path):
-    assert client.get("/api/coders/status").json()["connectors"]["webhook_configured"] is False
+    assert client.get("/api/desk/actuators/status").json()["webhook_configured"] is False
     _configure(settings_path)
-    on = client.get("/api/coders/status").json()
-    assert on["connectors"]["webhook_configured"] is True
+    on = client.get("/api/desk/actuators/status").json()
+    assert on["webhook_configured"] is True
 
 
 @pytest.mark.integration

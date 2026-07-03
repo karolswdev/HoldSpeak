@@ -778,6 +778,14 @@
       ]
     },
     {
+      "path": "/api/desk/actuators/status",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.desk_actuators",
+      "consumers": []
+    },
+    {
       "path": "/api/desk/actuators/webhook/propose",
       "methods": [
         "POST"
