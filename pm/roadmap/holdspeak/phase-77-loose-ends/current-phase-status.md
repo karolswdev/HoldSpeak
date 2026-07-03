@@ -1,6 +1,6 @@
 # Phase 77 — Loose Ends (the Phase-72 follow-ups)
 
-**Status:** open — scaffolded 2026-07-02 (0/4).
+**Status:** **CLOSED — 4/4 (2026-07-02).** See [final-summary.md](./final-summary.md).
 **Owner call that opened it:** picked from the three offered next-phase
 candidates ("P72 loose ends + small fixes") while owner testing is
 unavailable.
@@ -22,7 +22,7 @@ are hub-side and fully provable headless.
 | HS-77-01 | The agent's pinned context survives the hub | HIGH | **done** (schema v7; all five hub layers; byte-faithful sync round trip; the v6 upgrade proven; Swift comment updated; see [evidence](./evidence-story-01.md)) | — |
 | HS-77-02 | A real `runtime_queue` frame for the Queue HUD | MED | **done** (the builder + 3 broadcast sites + the HUD's primary feed with linger-honoring resolution; see [evidence](./evidence-story-02.md)) | — |
 | HS-77-03 | The coders-status conflation dies | MED | **done** (consumers verified first; the flags own their domain at /api/desk/actuators/status; coders-status is sessions-only; see [evidence](./evidence-story-03.md)) | — |
-| HS-77-04 | Docs + closeout | MED | todo | 01–03 |
+| HS-77-04 | Docs + closeout | MED | **done** (entry points verified silent; final-summary ships; see [final-summary.md](./final-summary.md)) | 01–03 |
 
 ## Exit criteria
 
@@ -36,10 +36,16 @@ are hub-side and fully provable headless.
 - [x] `/api/coders/status` reports coder sessions only; the desk
       connector config leaves the payload (its consumers verified first)
       (HS-77-03).
-- [ ] Entry-point docs touched where they speak; guards + full suite
-      green; PR merged on a conclusion-checked green (HS-77-04).
+- [x] Entry-point docs touched where they speak (verified silent — none
+      spoke of the changed surfaces); guards + full suite green; PR
+      merged on a conclusion-checked green (HS-77-04).
 
 ## Where we are
+
+**2026-07-02 — PHASE CLOSED (4/4).** All three Phase-72 follow-ups are
+paid: the pinned context survives (v7, byte-faithful round trip), the
+HUD renders queue truth (with the linger grammar honored), and the
+conflation is dead with the flags in their own domain. Suite 3095/37.
 
 **2026-07-02 — HS-77-03 done (3/4).** The conflation is dead: the
 connector flags live in their own domain and coders-status speaks only
