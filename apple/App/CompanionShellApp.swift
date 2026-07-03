@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 // HSM-12-03 — the unified Companion shell. One native app that presents BOTH the iPad's
 // own on-device runtime AND the desktop/homelab server it is pointed at, web-app-
@@ -202,6 +203,46 @@ final class ShellModel: ObservableObject {
         } catch { dictateError = "Send failed. Is a desktop app focused?" }
     }
 
+    // MARK: Meeting import (HSM-19-03) — hand an on-device recording or transcript to the
+    // hub's full intel pipeline. The hub answers 202 immediately (the meeting row appears
+    // in a visible `importing` state) and runs Whisper/parse in the background.
+    @Published var showImporter = false
+    @Published var importBusy = false
+    @Published var importNote = ""
+
+    func importFile(url: URL) async {
+        guard let c = client() else { return }
+        importBusy = true; importNote = ""; defer { importBusy = false }
+        // Files-app picks are security-scoped; the real filename must ride the part —
+        // the hub validates by suffix and titles the meeting from the stem.
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        do {
+            _ = try await c.importMeeting(
+                fileURL: url, filename: url.lastPathComponent, mimeType: Self.mime(for: url))
+            importNote = "Importing on your desktop"
+            await load()   // the new row appears, wearing its importing state
+        } catch HTTPDesktopClient.DesktopClientError.http(let code) {
+            importNote = code == 400
+                ? "The desktop refused the file (format or empty)."
+                : "The desktop refused (\(code))."
+        } catch { importNote = "Couldn't reach your desktop." }
+    }
+
+    static func mime(for url: URL) -> String {
+        switch url.pathExtension.lowercased() {
+        case "wav": return "audio/wav"
+        case "mp3": return "audio/mpeg"
+        case "m4a", "mp4": return "audio/mp4"
+        case "flac": return "audio/flac"
+        case "ogg": return "audio/ogg"
+        case "vtt": return "text/vtt"
+        case "srt": return "application/x-subrip"
+        case "txt": return "text/plain"
+        default: return "application/octet-stream"
+        }
+    }
+
     // MARK: Learning loop (HSM-19-06) — READ-ONLY: the hub's "what HoldSpeak learned"
     // digest + the dictation journal. No write affordances by shape (corrections CRUD and
     // on-device journaling are deliberately out — Phase 9 owns them).
@@ -364,6 +405,12 @@ struct ShellView: View {
                 }
                 if let t = ProcessInfo.processInfo.environment["HS_SHELL_FACET_TAG"] {
                     await model.toggleTag(t)
+                }
+                // HS_SHELL_IMPORT_FILE uploads a file on launch through the SAME
+                // importFile path the picker calls — a real end-to-end proof without a
+                // headless tap on the Files sheet.
+                if let path = ProcessInfo.processInfo.environment["HS_SHELL_IMPORT_FILE"] {
+                    await model.importFile(url: URL(fileURLWithPath: path))
                 }
             }
         }
@@ -837,9 +884,25 @@ struct ShellView: View {
                     Button { Task { await model.stopMeeting() } } label: {
                         label("Stop", "stop.circle", filled: false)
                     }
+                    // HSM-19-03 — a recording or transcript on this iPad becomes a real
+                    // meeting on the desktop (the full intel pipeline).
+                    Button { model.showImporter = true } label: {
+                        label("Import file", "square.and.arrow.down", filled: false)
+                    }
+                    .disabled(model.importBusy)
                     if !model.busy.isEmpty {
                         ProgressView().tint(Sig.accent); Text(model.busy).font(.caption).foregroundStyle(Sig.faint)
                     }
+                }
+                if model.importBusy {
+                    HStack(spacing: 7) {
+                        ProgressView().controlSize(.mini).tint(Sig.accent)
+                        Text("Uploading…").font(.caption2).foregroundStyle(Sig.faint)
+                    }
+                }
+                if !model.importNote.isEmpty {
+                    Text(model.importNote).font(.caption)
+                        .foregroundStyle(model.importNote.hasPrefix("Importing") ? Sig.ok : Sig.warn)
                 }
             } else {
                 rowNote("Desktop not reachable. Your iPad runtime stays live.")
@@ -847,6 +910,21 @@ struct ShellView: View {
             }
         }
         .cardChrome(border: connected ? Sig.line : Sig.warn.opacity(0.35))
+        .fileImporter(isPresented: $model.showImporter,
+                      allowedContentTypes: importTypes,
+                      allowsMultipleSelection: false) { result in
+            if case .success(let urls) = result, let url = urls.first {
+                Task { await model.importFile(url: url) }
+            }
+        }
+    }
+
+    /// Audio plus the transcript formats the hub parses (.vtt/.srt/.txt).
+    private var importTypes: [UTType] {
+        var types: [UTType] = [.audio, .plainText]
+        if let vtt = UTType(filenameExtension: "vtt") { types.append(vtt) }
+        if let srt = UTType(filenameExtension: "srt") { types.append(srt) }
+        return types
     }
 
     // MARK: Dictate — nav slot (on-device)
@@ -1156,6 +1234,15 @@ struct ShellView: View {
             Image(systemName: "waveform").font(.caption).foregroundStyle(tint)
             Text(m.title ?? m.id).font(.subheadline).foregroundStyle(Sig.text).lineLimit(1)
             Spacer()
+            // HSM-19-03 — an import in flight (or failed) wears its honest state.
+            if m.intelStatus == "importing" {
+                HStack(spacing: 4) {
+                    ProgressView().controlSize(.mini).tint(Sig.warn)
+                    Text("importing").font(.caption2.weight(.semibold)).foregroundStyle(Sig.warn)
+                }
+            } else if m.intelStatus == "import_failed" {
+                Text("import failed").font(.caption2.weight(.semibold)).foregroundStyle(Sig.bad)
+            }
             if let n = m.actionItemCount, n > 0 {
                 Text("\(n) actions").font(.caption2).foregroundStyle(Sig.faint)
             }

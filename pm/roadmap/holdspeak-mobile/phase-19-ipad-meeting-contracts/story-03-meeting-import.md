@@ -2,7 +2,12 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 19
-- **Status:** todo (the client half is merged — commit `013c7d0`)
+- **Status:** done — see [`evidence-story-03.md`](./evidence-story-03.md). The Import file
+  picker (audio + .vtt/.srt/.txt, security-scoped, real filename on the part), honest
+  uploading/importing/failed states incl. the row-level `importing`/`import_failed` marks;
+  live-hub proven — the running app itself uploaded a .vtt end to end and the parsed
+  speakers fed the 19-02 facets on the same screen. The Files-sheet tap + a real-audio
+  import ride the 19-07 walk (W3).
 - **Depends on:** `HTTPDesktopClient+MeetingImport.swift` (`importMeeting(fileURL:filename:mimeType:)`);
   hub route `POST /api/meetings/import` (`holdspeak/web/routes/meeting_import.py:146` —
   one multipart field `file`, suffix-validated, returns `202 {meeting_id, status:"importing"}`).
