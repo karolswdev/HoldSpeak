@@ -251,3 +251,65 @@ def test_raw_absent_stays_byte_identical():
     assert r.status_code == 200
     assert r.json()["final_text"] == "[corrected] ship it"
     assert delivered == ["[corrected] ship it"]
+
+
+def test_selection_pin_grounds_the_remote_dictation(monkeypatch):
+    """HSM-18-05 — the pre-briefing loop closes on the remote lane. A pending
+    "Dictate with this" pin is consumed (one-shot) and its activity context is
+    threaded into the pipeline call, exactly as the local runner does (HS-53-07)."""
+    import holdspeak.web.routes.dictation.pipeline as pipeline_mod
+    from holdspeak.dictation_selection import clear_selected_record, set_selected_record
+
+    seen: dict = {}
+
+    def capture(text, *a, **k):
+        seen["activity_context"] = k.get("activity_context")
+        return {"final_text": f"[corrected] {text}"}
+
+    monkeypatch.setattr(PIPELINE, capture)
+
+    class _Ctx:
+        records = [{"id": 42, "title": "the PR"}]
+        selected_record_id = 42
+
+        def to_dict(self):
+            return {"records": self.records, "selected_record_id": 42}
+
+    captured_build: dict = {}
+
+    def fake_build(*, limit, refresh, selected_record_id):
+        captured_build["selected_record_id"] = selected_record_id
+        return _Ctx()
+
+    import holdspeak.activity_context as activity_mod
+
+    monkeypatch.setattr(activity_mod, "build_activity_context", fake_build)
+
+    set_selected_record(42)
+    try:
+        r = _client(_ctx()).post("/api/dictation/remote", json={"text": "reply to that"})
+        assert r.status_code == 200
+        assert captured_build["selected_record_id"] == 42
+        assert seen["activity_context"] == {"records": [{"id": 42, "title": "the PR"}],
+                                            "selected_record_id": 42}
+
+        # The pin is one-shot: a second remote dictation gets no grounding.
+        seen.clear()
+        r = _client(_ctx()).post("/api/dictation/remote", json={"text": "and again"})
+        assert r.status_code == 200
+        assert seen["activity_context"] is None
+    finally:
+        clear_selected_record()
+
+
+def test_no_pin_keeps_remote_dictation_byte_identical():
+    """No pending pin -> activity_context is None -> the pre-18-05 call, unchanged."""
+    from holdspeak.dictation_selection import clear_selected_record
+
+    clear_selected_record()
+    delivered: list = []
+    ctx = _ctx(on_remote_dictation=lambda t: delivered.append(t))
+    r = _client(ctx).post("/api/dictation/remote", json={"text": "plain words"})
+    assert r.status_code == 200
+    assert r.json()["final_text"] == "[corrected] plain words"
+    assert delivered == ["[corrected] plain words"]

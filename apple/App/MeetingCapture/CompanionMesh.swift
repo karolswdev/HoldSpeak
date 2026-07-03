@@ -373,6 +373,9 @@ private struct AgentDeskCard: View {
     @Published var readiness: DictationReadiness?   // the hub's own verdict for the strip
     @Published var pending: DictationDryRun?        // the armed receipt awaiting Send
     @Published var previewing = false               // dry-run in flight
+    // HSM-18-05 — the source-cited pre-briefing nudges + the armed grounding:
+    @Published var nudges: [ActivityNudge] = []
+    @Published var groundedNudge: ActivityNudge?    // "Dictate with this" parked this record
 
     /// Opt-in preview: release arms a receipt instead of typing (off = the historical
     /// direct flow — preview is never the default story). Persisted across launches.
@@ -400,6 +403,25 @@ private struct AgentDeskCard: View {
         let c = await client.handshake()
         reach = c.reachable ? .reachable : .asleep
         readiness = c.reachable ? (try? await client.dictationReadiness()) : nil
+        // HSM-18-05 — the source-cited nudges ride the same probe; absence is quiet.
+        nudges = c.reachable ? ((try? await client.activityNudges(limit: 3)) ?? []) : []
+    }
+
+    /// HSM-18-05 — park the nudge's record on the hub (one-shot, recency-bounded):
+    /// the NEXT dictation grounds in it, spoken here or at the desk. The chip shows
+    /// what's armed; delivery clears it (the hub consumed the pin).
+    func dictateWith(_ nudge: ActivityNudge) async {
+        guard let client = peers.client() else { reach = .asleep; return }
+        guard let recordId = nudge.citations.first?.recordId else { return }
+        do { try await client.selectNudge(recordId: recordId); groundedNudge = nudge }
+        catch { reach = .asleep }
+    }
+
+    func dismissNudge(_ nudge: ActivityNudge) async {
+        nudges.removeAll { $0.key == nudge.key }
+        if groundedNudge?.key == nudge.key { groundedNudge = nil }
+        guard let client = peers.client() else { return }
+        try? await client.dismissNudge(id: nudge.key)
     }
 
     /// Push-to-talk down / hands-free arm: open the mic and start sampling the level.
@@ -479,6 +501,8 @@ private struct AgentDeskCard: View {
             if let i = lines.firstIndex(where: { $0.id == line.id }) { lines[i].delivered = result.delivered }
             lastDelivered = result.delivered
             reach = .reachable
+            // The hub consumed the one-shot pin with this dictation (HSM-18-05).
+            groundedNudge = nil
         } catch {
             reach = .asleep
         }
@@ -500,6 +524,23 @@ private struct AgentDeskCard: View {
         readiness = DictationReadiness(
             ready: true,
             runtime: DictationRuntimeReadiness(status: "available", resolvedBackend: "mlx"))
+        // HSM-18-05 — two source-cited nudges: a record nudge (armed) + a window nudge.
+        nudges = [
+            ActivityNudge(
+                key: "record:42", kind: "record",
+                title: "You reviewed PR #216 minutes ago",
+                body: "The dictation teleprompter — readiness strip, Preview first receipt, raw verbatim delivery.",
+                score: 0.9,
+                citations: [NudgeCitation(recordId: 42, sourceBrowser: "safari", sourceProfile: "default",
+                                          domain: "github.com", title: "PR #216 · HoldSpeak",
+                                          url: "https://github.com/karolswdev/HoldSpeak/pull/216", visitCount: 4)]),
+            ActivityNudge(
+                key: "window:2026-07-03T11:00:00", kind: "window",
+                title: "9 pages touched since your last dictation",
+                body: "Mostly github.com and the HoldSpeak docs.",
+                score: 0.6, citations: [], windowRecordCount: 9),
+        ]
+        groundedNudge = nudges.first
         if preview {
             UserDefaults.standard.set(true, forKey: "hs.dictate.preview")
             level = 0; partial = ""
@@ -553,6 +594,7 @@ struct DictateView: View {
                 header
                 reachChip
                 readinessStrip
+                nudgeCards
                 waveformHero
                 talkControls
                 if let receipt = model.pending { receiptCard(receipt) }
@@ -575,6 +617,7 @@ struct DictateView: View {
                     header
                     reachChip
                     readinessStrip
+                    nudgeCards
                     readBack
                 }
                 .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 180)
@@ -761,6 +804,66 @@ struct DictateView: View {
         .padding(.horizontal, 9).padding(.vertical, 5)
         .background(color.opacity(0.1), in: Capsule())
         .overlay(Capsule().strokeBorder(color.opacity(0.22), lineWidth: 1))
+    }
+
+    /// HSM-18-05 — the source-cited pre-briefing nudges. Each card names its sources;
+    /// "Dictate with this" arms the next utterance with the record. Quiet when empty.
+    @ViewBuilder private var nudgeCards: some View {
+        if model.reach == .reachable, !model.nudges.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(model.nudges, id: \.key) { nudge in nudgeCard(nudge) }
+            }
+            .opacity(appeared ? 1 : 0)
+        }
+    }
+
+    private func nudgeCard(_ nudge: ActivityNudge) -> some View {
+        let grounded = model.groundedNudge?.key == nudge.key
+        return VStack(alignment: .leading, spacing: 9) {
+            Text(nudge.title).font(.system(size: 15, weight: .heavy)).foregroundStyle(Sig.text)
+            if !nudge.body.isEmpty {
+                Text(nudge.body).font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted)
+                    .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+            }
+            if !nudge.citations.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(Array(nudge.citations.prefix(3).enumerated()), id: \.offset) { _, c in
+                        miniChip("link", c.title ?? c.domain, Sig.faint)
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+            HStack(spacing: 10) {
+                Button { tactile(.light); Task { await model.dismissNudge(nudge) } } label: {
+                    Text("Dismiss").font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.faint)
+                        .padding(.horizontal, 14).padding(.vertical, 8)
+                        .background(Sig.s2, in: Capsule())
+                        .overlay(Capsule().strokeBorder(Sig.line, lineWidth: 1))
+                }
+                .buttonStyle(PressableCard())
+                if nudge.citations.first != nil {
+                    Button { tactile(.medium); Task { await model.dictateWith(nudge) } } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: grounded ? "checkmark.circle.fill" : "mic.badge.plus")
+                                .font(.system(size: 12, weight: .bold))
+                            Text(grounded ? "Armed" : "Dictate with this")
+                                .font(.system(size: 13, weight: .heavy))
+                        }
+                        .foregroundStyle(grounded ? .black : Sig.accent)
+                        .padding(.horizontal, 14).padding(.vertical, 8)
+                        .background(grounded ? AnyShapeStyle(Sig.accent) : AnyShapeStyle(Sig.accent.opacity(0.12)), in: Capsule())
+                        .overlay(Capsule().strokeBorder(Sig.accent.opacity(grounded ? 0 : 0.3), lineWidth: 1))
+                    }
+                    .buttonStyle(PressableCard())
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .strokeBorder(grounded ? Sig.accent.opacity(0.5) : Sig.line, lineWidth: 1))
     }
 
     /// HSM-18-01 — the armed receipt: exactly what will type, shown before it types.

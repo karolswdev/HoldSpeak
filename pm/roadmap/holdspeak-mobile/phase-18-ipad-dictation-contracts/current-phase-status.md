@@ -75,7 +75,7 @@ reuses three proven seams:
 | HSM-18-02 | Voice command macros fire on the remote relay + the iPad CommandsBoard | in-progress (hub half landed; iPad board todo) |
 | HSM-18-03 | Spoken language at every WhisperKit call site | in-progress (main app done; harness apps + metal proof remain) |
 | HSM-18-04 | The spoken-symbol dictionary, ported to Swift | in-progress (built-ins ported + tested + on the dictation path; user-symbol editor + metal proof remain) |
-| HSM-18-05 | Activity pre-briefing — the source-cited nudge client | todo |
+| HSM-18-05 | Activity pre-briefing — the source-cited nudge client | **done** ([evidence](./evidence-story-05.md): nudge cards + "Dictate with this"→Armed on the dictate surface, live-hub proven on a real ledger; the remote lane now consumes the Phase-53 pin — the third silent relay hole, fixed + test-locked) |
 | HSM-18-06 | The real-metal proof + entry-point docs | todo |
 | HSM-18-07 | The Desk-Era rider: run-born artifacts on the iPad desk + the route-surface lock | **done** ([evidence](./evidence-story-07.md): `origin` explicit on every serialized surface + schema + Swift models; `HubRunResult.artifactId` shared identity kills a real duplicate-on-sync bug; the kept run result fires the arrival beat, Simulator-proven; the route-surface lock verified already shipped as HS-72-02) |
 
@@ -89,10 +89,14 @@ duplicating, the kept run result materializes with the arrival beat —
 hero: the voice teleprompter's readiness strip + opt-in "Preview first" receipt, the hub's
 `raw` verbatim delivery making the receipt true, live-hub proof from the simulator —
 [evidence-story-01.md](./evidence-story-01.md)). HSM-18-02's hub half is done + tested (the
-macro relay; see the 2026-06-27 update). Remaining: 18-02's iPad CommandsBoard;
-18-03/18-04 follow-ups (aux app targets; the user-symbol editor); 18-05 (activity nudges,
-now unblocked — the dictate path exists); 18-06 (the real-metal gate, which also carries
-18-01's on-device spoken-word walk). The audit supplies every story's starting
+macro relay; see the 2026-06-27 update). **18-05 is done** (nudge cards + "Dictate with
+this"→Armed, live-hub proven on a real ledger; the remote lane now consumes the Phase-53
+pin — [evidence-story-05.md](./evidence-story-05.md)). Remaining: 18-02's iPad
+CommandsBoard; 18-03/18-04 follow-ups (aux app targets; the user-symbol editor); 18-06 (the
+real-metal gate, which also carries 18-01's on-device spoken-word walk and the
+grounding-changes-the-model re-proof — both need the owner's rewriter endpoint call: the
+configured 127.0.0.1:8082 llama-server is down and .43's forced grammar breaks the
+classifier). The audit supplies every story's starting
 `file:symbol` evidence. The owner's Phase-72 iPad device walk stays owner-gated and outside
 this phase (tracked in `pm/roadmap/holdspeak/HANDOVER-2026-07-03-desk-era.md`).
 
