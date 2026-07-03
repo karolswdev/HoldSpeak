@@ -1318,10 +1318,9 @@ struct DioPullout: View {
                     Text(prim.subtitle).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                HStack(spacing: 5) {
-                    Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold))
-                    Text("On device").font(.system(size: 10, weight: .heavy, design: .rounded))
-                }.foregroundStyle(DioPal.mint).padding(.horizontal, 9).frame(height: 26).background(Capsule().fill(DioPal.mint.opacity(0.14)))
+                // HSM-21-01: the primitive's REAL posture (was a hard-coded "On device"
+                // capsule — a connector wore the local badge while existing to egress).
+                EgressBadge(scope: prim.egress)
                 Button(action: onClose) {
                     Image(systemName: "xmark").font(.system(size: 14, weight: .black)).foregroundStyle(DioPal.text)
                         .frame(width: 36, height: 36).background(Circle().fill(.white.opacity(0.10)))
@@ -1963,8 +1962,11 @@ struct DioAmbientRecorder: View {
                     Text(model.transcribing ? "WEAVING" : (isDesktop ? "DICTATING" : "REC")).font(.system(size: 10, weight: .heavy, design: .rounded)).tracking(2).foregroundStyle(DioPal.text)
                     Text(timeString(model.elapsedSeconds)).font(.system(size: 11, weight: .heavy, design: .rounded).monospacedDigit()).foregroundStyle(DioPal.muted)
                 }
-                HStack(spacing: 4) { Image(systemName: isDesktop ? "desktopcomputer" : "lock.fill").font(.system(size: 8, weight: .bold)); Text(isDesktop ? "to your desktop" : "on device").font(.system(size: 9, weight: .heavy, design: .rounded)) }
-                    .foregroundStyle(isDesktop ? DioPal.cobalt : DioPal.mint)
+                // HSM-21-01: the one grammar — dictation heard on-device, the text lands
+                // on the desktop = a mixed posture, never dressed local.
+                let scope: EgressScope = isDesktop ? .mixed("your desktop") : .local
+                HStack(spacing: 4) { Image(systemName: scope.symbolName).font(.system(size: 8, weight: .bold)); Text(scope.label).font(.system(size: 9, weight: .heavy, design: .rounded)) }
+                    .foregroundStyle(scope.leavesDevice ? Color(hex: 0xF5A524) : DioPal.mint)
             }
         }
     }
@@ -2290,7 +2292,7 @@ struct DioRunTargetSheet: View {
         .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.74)) { shown = true } }
     }
     @ViewBuilder private func runRow(icon: String, tint: Color, name: String, sub: String,
-                                     egress: EgressBadge.Scope, enabled: Bool, isDefault: Bool = false,
+                                     egress: EgressScope, enabled: Bool, isDefault: Bool = false,
                                      action: @escaping () -> Void) -> some View {
         // The remembered/sensible choice is pre-highlighted (a brighter ring + glow + a small
         // "Default" cue) so the user can fire it without re-deciding — the override is just the
@@ -2429,7 +2431,7 @@ struct DioRoutingTheater: View {
 
 // THE PRINTED CARD — the new primitive that just came out of the core. Keep it (lands on the desk) or bin it.
 struct DioPrintedCard: View {
-    let rec: OutputRecord; let egress: EgressBadge.Scope; let onKeep: () -> Void; let onBin: () -> Void
+    let rec: OutputRecord; let egress: EgressScope; let onKeep: () -> Void; let onBin: () -> Void
     @State private var shown = false
     // honest provenance: a hub run reads "fresh from your desktop", anything else "from the AI core".
     private var freshLine: String {
@@ -2537,19 +2539,15 @@ struct RouteArc: View {
 }
 
 // The ONE egress badge (POSITIONING canon): local / local+cloud / cloud+target. No privacy prose.
+// HSM-21-01: the words + symbol + honest tint split come from the Contracts `EgressScope`
+// grammar; only the chrome is this app's.
 struct EgressBadge: View {
-    enum Scope { case local; case cloud(String) }
-    let scope: Scope
+    let scope: EgressScope
     var body: some View {
-        let (icon, label, tint): (String, String, Color) = {
-            switch scope {
-            case .local: return ("lock.fill", "On device", DioPal.mint)
-            case .cloud(let t): return ("arrow.up.forward.app.fill", "Cloud · \(t)", Color(hex: 0xF5A524))
-            }
-        }()
+        let tint: Color = scope.leavesDevice ? Color(hex: 0xF5A524) : DioPal.mint
         HStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 9, weight: .bold))
-            Text(label).font(.system(size: 10, weight: .heavy, design: .rounded))
+            Image(systemName: scope.symbolName).font(.system(size: 9, weight: .bold))
+            Text(scope.label).font(.system(size: 10, weight: .heavy, design: .rounded))
         }.foregroundStyle(tint).padding(.horizontal, 9).frame(height: 26).background(Capsule().fill(tint.opacity(0.14)))
     }
 }
@@ -2657,7 +2655,7 @@ struct DioActSheet: View {
             .padding(.horizontal, 18)
         }
     }
-    @ViewBuilder private func actRow(symbol: String, tint: Color, name: String, sub: String, egress: EgressBadge.Scope) -> some View {
+    @ViewBuilder private func actRow(symbol: String, tint: Color, name: String, sub: String, egress: EgressScope) -> some View {
         HStack(spacing: 11) {
             Image(systemName: symbol).font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
                 .frame(width: 34, height: 34).background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(tint.opacity(0.9)))
@@ -2894,7 +2892,7 @@ struct DioStage: View {
     @State private var printed: OutputRecord? = nil
     // the egress of the CURRENT printed card — on-device routes are .local; a hub run is
     // .cloud("your desktop"). Drives the printed card's honest egress badge (POSITIONING canon).
-    @State private var printedEgress: EgressBadge.Scope = .local
+    @State private var printedEgress: EgressScope = .local
     @State private var routeError: String? = nil
     // connectors (the integrations half: drop an output on Slack → approve → the MAC sends).
     // Routed through the paired host PC — the iPad holds no credential. Reuses the desk's Mac pairing.
@@ -3746,6 +3744,12 @@ struct DioStage: View {
                                             body: "Shipped the egress badge; review the dock by Friday.\n\nOwner: Karol · Due: Fri",
                                             source: "Standup", lens: "Note", path: "")]
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { select("out:demoOpen") }
+                }
+                // HS_DESK_OPEN=connector → open a connector's pull-out (HSM-21-01: the header
+                // badge must wear the connector's REAL cloud posture, never "On device").
+                if ProcessInfo.processInfo.environment["HS_DESK_OPEN"] == "connector" {
+                    peerHost = peerHost.isEmpty ? "192.168.1.13" : peerHost
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { select("conn:slack") }
                 }
                 // THE SYNC STATUS demo — show the desk wearing each sync state + a pull-arrival.
                 // `synced` (calm, with a "just now") · `syncing` (breathing) · `offline` (queued) ·

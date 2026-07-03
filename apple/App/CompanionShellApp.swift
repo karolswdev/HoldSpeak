@@ -562,7 +562,7 @@ struct ShellView: View {
                         Text("\(p.target) · \(p.action.replacingOccurrences(of: "_", with: " "))")
                             .font(.caption.weight(.semibold)).foregroundStyle(Sig.text)
                         Spacer(minLength: 6)
-                        if p.target == "slack" { cloudChip("Cloud · slack") }
+                        if p.target == "slack" { egressChip(.cloud("slack")) }
                         statusPill(p.status.rawValue)
                     }
                     Text(p.preview).font(.callout).foregroundStyle(Sig.muted)
@@ -602,16 +602,17 @@ struct ShellView: View {
         .cardChrome(border: Sig.accent.opacity(0.3))
     }
 
-    // The egress mark for a control whose approval leaves the machine (the desk's
-    // EgressBadge grammar: a label, never a sentence).
-    private func cloudChip(_ label: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: "arrow.up.forward.app.fill").font(.system(size: 8, weight: .bold))
-            Text(label).font(.caption2.weight(.semibold))
+    // The one egress chip (HSM-21-01): words + symbol + honest tint split come from the
+    // Contracts EgressScope grammar — a mixed or cloud posture never dresses local.
+    private func egressChip(_ scope: EgressScope) -> some View {
+        let tint: Color = scope.leavesDevice ? Sig.warn : Sig.local
+        return HStack(spacing: 4) {
+            Image(systemName: scope.symbolName).font(.system(size: 8, weight: .bold))
+            Text(scope.label).font(.caption2.weight(.semibold))
         }
-        .foregroundStyle(Sig.warn)
+        .foregroundStyle(tint)
         .padding(.horizontal, 7).padding(.vertical, 3)
-        .background(Sig.warn.opacity(0.12), in: Capsule())
+        .background(tint.opacity(0.12), in: Capsule())
     }
 
     // MARK: The filter row (HSM-19-02) — search + the hub's facet chips. A lit chip is the
@@ -967,7 +968,9 @@ struct ShellView: View {
                             Text(destination.map { "Types into \($0)" } ?? "Types into the focused desktop app")
                                 .font(.caption.weight(.semibold)).foregroundStyle(Sig.muted)
                             Spacer()
-                            egressChip("Local + \(model.host.isEmpty ? "your desktop" : model.host)")
+                            // HSM-21-01: a mixed posture, honestly amber (this chip used to
+                            // render "Local + host" in the local treatment).
+                            egressChip(.mixed(model.host.isEmpty ? "your desktop" : model.host))
                         }
                         Text(preview.finalText).font(.title3.weight(.semibold)).foregroundStyle(Sig.text)
                             .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
@@ -1102,16 +1105,6 @@ struct ShellView: View {
         .buttonStyle(.plain)
     }
 
-    // An honest compact egress chip (a label, never a reassurance sentence) for where text goes.
-    private func egressChip(_ label: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: "house.fill").font(.system(size: 8, weight: .bold))
-            Text(label).font(.caption2.weight(.semibold))
-        }
-        .foregroundStyle(Sig.local)
-        .padding(.horizontal, 7).padding(.vertical, 3)
-        .background(Sig.local.opacity(0.12), in: Capsule())
-    }
 
     private func metaChip(_ text: String, _ icon: String, _ tint: Color) -> some View {
         HStack(spacing: 4) {
