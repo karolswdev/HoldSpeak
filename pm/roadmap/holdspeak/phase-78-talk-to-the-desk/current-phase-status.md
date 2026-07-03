@@ -33,7 +33,7 @@ session waiting and being answered — never appears in demos.
 |---|---|---|---|---|
 | HS-78-01 | The transcribe route (local Whisper, no egress) | HIGH | **done** (the runtime verb + seam + the strict WAV route; 5/5; see [evidence](./evidence-story-01.md)) | — |
 | HS-78-02 | Speak-to-fill on every desk input | HIGH | **done** (hold-to-talk mics on ask/editor/rename; the REAL proof: the fixture spoke as the browser mic and real Whisper filled the input; the orb lock re-scoped + strengthened; see [evidence](./evidence-story-02.md)) | 01 |
-| HS-78-03 | Talk to the waiting coder | HIGH | todo | 01 |
+| HS-78-03 | Talk to the waiting coder | HIGH | **done** (Hold to answer → select + the HSM-13 inject; the question-never-rendered bug fixed; the REAL marquee proof; see [evidence](./evidence-story-03.md)) | 01 |
 | HS-78-04 | The re-recorded demo + docs + closeout | MED | todo | 01–03 |
 
 ## Exit criteria
@@ -47,14 +47,21 @@ session waiting and being answered — never appears in demos.
       zone rename) carries a speak-to-fill mic: press, talk, release,
       the text lands in the field — no confirm step (HS-78-02 — proven
       with real speech through the real transcriber).
-- [ ] The coder pull-out's answer is spoken: mic → transcribe → inject
+- [x] The coder pull-out's answer is spoken: mic → transcribe → inject
       through the existing `/api/dictation/remote` seam; proven against
-      a seeded waiting session (HS-78-03).
+      a seeded waiting session (HS-78-03 — plus the latent
+      question-never-rendered bug fixed).
 - [ ] The demo re-records with every lane seeded (the waiting coder
       included) and the voice fills on camera; docs speak the mic;
       guards green; PR merged on a conclusion-checked green (HS-78-04).
 
 ## Where we are
+
+**2026-07-02 — HS-78-03 done (3/4).** The marquee moment is real: a
+waiting Claude's question stands on the desk (a latent mapper bug had
+kept it invisible — fixed) and holding the mic answers it, real speech
+through real Whisper into the real inject seam. One story left: the
+re-recorded demo.
 
 **2026-07-02 — HS-78-02 done (2/4).** You can talk to the desk. Real
 recorded speech, played as the browser microphone, rode the whole chain

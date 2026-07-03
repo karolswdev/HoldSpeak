@@ -119,6 +119,7 @@ export const fromCoderStatus = (data: any): DeskItem[] =>
       state: s.state || (s.awaiting_response ? "waiting" : "running"),
       question:
         identity.question || s.question || s.last_question ||
+        s.last_assistant_text ||
         (s.awaiting_response ? identity.prompt || null : null),
       selected: Boolean(item.selected),
       pinned: Boolean(item.pinned ?? s.pinned),

@@ -684,3 +684,7 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-mic.is-listening { animation: none; box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.5); }
 }
+
+/* ── HS-78-03: hold to answer the coder ── */
+.desk-next .desk-coder-answer { display: flex; align-items: center; gap: 10px; }
+.desk-next .desk-coder-answer-state { font-size: var(--font-size-xs); }

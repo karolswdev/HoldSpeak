@@ -1180,7 +1180,8 @@
       ],
       "module": "web.routes.dictation.pipeline",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
