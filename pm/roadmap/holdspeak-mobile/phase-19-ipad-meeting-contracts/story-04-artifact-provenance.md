@@ -2,10 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 19
-- **Status:** in-progress — **built, wired, and sim-proven** (PR #159: `ConfidenceRing` +
-  the artifacts card in `CompanionShellApp.swift`, over `meetingArtifacts(meetingId:)` from
-  PR #151/`3544fc1`; screenshot `screenshots/confidence-ring-ipad.png`). Remaining: the
-  evidence trail + the story flip.
+- **Status:** done — see [`evidence-story-04.md`](./evidence-story-04.md). Built, wired,
+  and sim-proven (PR #159: `ConfidenceRing` + the artifacts card in
+  `CompanionShellApp.swift`, over `meetingArtifacts(meetingId:)` from PR #151/`3544fc1`);
+  verified today: `swift test` 425 green + the shell simulator build. Real-metal
+  verification rides the 19-07 walk (W4).
 - **Depends on:** `HTTPDesktopClient+Artifacts.swift`; hub route
   `GET /api/meetings/{id}/artifacts` (`holdspeak/web/routes/meetings/insights.py:117`).
 - **Unblocks:** Phase 20's compact pass and Phase 21's honesty work both build on this

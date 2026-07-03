@@ -50,15 +50,16 @@ autonomous.
 | HSM-19-01 | Meeting aftercare — the file-issue action closes the loop — **leads** | in-progress (client + read card merged #155; the action UI remains) |
 | HSM-19-02 | The faceted archive — search + facet chips over the shipped clients | todo (client merged, EQ-W3) |
 | HSM-19-03 | Meeting import on the iPad — the picker over the multipart client | todo (client merged, `013c7d0`) |
-| HSM-19-04 | Artifact provenance — confidence ring + sources | in-progress (fully wired + sim-proven #159; evidence + flip) |
+| HSM-19-04 | Artifact provenance — confidence ring + sources | done — [`evidence-story-04.md`](./evidence-story-04.md) (shipped #151/#159; verified today, metal joins the 19-07 walk) |
 | HSM-19-05 | The proposals review queue (the split, made visible) | todo (clients merged, EQ-W3) |
 | HSM-19-06 | The learning-loop reader (read-first) | todo (clients merged, `8f65657`) |
 | HSM-19-07 | Docs + the staged metal walk | todo |
 
 ## Where we are
 
-Opened 2026-07-03. **19-01 leads** (the file-issue action is the highest-severity remaining
-hole and it feeds the 19-05 queue). 19-04 flips first on evidence. The metal gate (19-07's
-walk) is staged press-play so it can join the owner's 18-06 couch session. The
-`SpokenSymbols` port (18-04) is reused for any meeting-side symbol application — do not
-re-implement it.
+Opened 2026-07-03; **1/7** — 19-04 flipped on verified evidence the same hour (`swift test`
+425 green + the shell simulator build; the code shipped pre-open via #151/#159).
+**19-01 leads the build** (the file-issue action is the highest-severity remaining hole and
+it feeds the 19-05 queue). The metal gate (19-07's walk) is staged press-play so it can join
+the owner's 18-06 couch session. The `SpokenSymbols` port (18-04) is reused for any
+meeting-side symbol application — do not re-implement it.
