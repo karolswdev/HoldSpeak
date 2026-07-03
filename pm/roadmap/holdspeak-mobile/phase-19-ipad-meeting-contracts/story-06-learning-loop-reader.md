@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 19
-- **Status:** todo (the clients are merged — commit `8f65657`)
+- **Status:** done — see [`evidence-story-06.md`](./evidence-story-06.md). The learning
+  card on the Dictate tab (digest chips + week/all toggle + correction reach + the
+  journal with per-entry learning signals), read-only by shape; live-hub proven with real
+  repository rows and the honest no-reach edge rendered. The tap rides the 19-07 walk.
 - **Depends on:** `HTTPDesktopClient+Learning.swift` (`journalEntries(limit:source:)`,
   `learningDigest(window:)`); hub routes `GET /api/dictation/journal` +
   `GET /api/dictation/learning-digest` (`holdspeak/web/routes/dictation/pipeline.py:478`).

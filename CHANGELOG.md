@@ -26,6 +26,11 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   states. Approving a Slack send executes immediately, so that control
   carries the cloud mark. iPad decisions are now attributed as
   `ipad-companion` in the actuator audit.
+- **See what HoldSpeak learned, from the iPad.** The companion's Dictate
+  tab shows the learning digest (corrections made, dictations corrected,
+  real per-correction reach) and the recent dictation journal with its
+  inline "learned from N similar" signals. Read-only; corrections are
+  still made on the desktop.
 - **The Desk is the web front door.** Opening HoldSpeak lands on a spatial
   world at `/`: meetings, notes, knowledge bases, agents, and artifacts as
   objects you create, open, file, and arrange in place. The Record orb
