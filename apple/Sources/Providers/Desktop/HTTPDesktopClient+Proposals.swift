@@ -48,7 +48,10 @@ extension HTTPDesktopClient {
     public func decideProposal(
         meetingId: String, proposalId: String, approved: Bool
     ) async throws -> ProposalDecision {
-        let body = ["decision": approved ? "approved" : "rejected"]
+        // `decided_by` names this surface in the actuator audit trail (HSM-19-05) —
+        // without it the hub defaults to "web-user" and an iPad decision reads as the web.
+        let body = ["decision": approved ? "approved" : "rejected",
+                    "decided_by": "ipad-companion"]
         let request = proposalsRequest(
             path: "api/meetings/\(escape(meetingId))/proposals/\(escape(proposalId))/decision",
             method: "POST", jsonBody: body)

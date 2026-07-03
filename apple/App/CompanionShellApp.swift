@@ -208,6 +208,38 @@ final class ShellModel: ObservableObject {
         guard let c = client() else { return }
         artifacts = (try? await c.meetingArtifacts(meetingId: meetingId)) ?? []
     }
+
+    // MARK: Proposals review (HSM-19-05) — the queue of actuator proposals for this meeting,
+    // wherever they were created (the web, live in-meeting, a 19-01 file-issue). Approve is
+    // the separate human gate; a slack target executes immediately on approval (the hub's
+    // consent model), which is why its control wears the cloud mark.
+    @Published var proposals: [MeetingProposal] = []
+    @Published var decidingIds: Set<String> = []
+    @Published var proposalsError = ""
+
+    func loadProposals(meetingId: String) async {
+        guard let c = client() else { return }
+        proposals = (try? await c.meetingProposals(meetingId: meetingId)) ?? []
+        proposalsError = ""
+    }
+
+    func decideProposal(_ p: MeetingProposal, approved: Bool) async {
+        guard let c = client() else { return }
+        decidingIds.insert(p.id); proposalsError = ""; defer { decidingIds.remove(p.id) }
+        do {
+            let result = try await c.decideProposal(
+                meetingId: p.meetingId, proposalId: p.id, approved: approved)
+            if result.success, let updated = result.proposal {
+                if let i = proposals.firstIndex(where: { $0.id == updated.id }) {
+                    proposals[i] = updated
+                }
+            } else {
+                proposalsError = result.error ?? "The desktop refused the decision."
+            }
+        } catch HTTPDesktopClient.DesktopClientError.http(let code) {
+            proposalsError = "The desktop refused (\(code))."
+        } catch { proposalsError = "Couldn't reach your desktop." }
+    }
 }
 
 // MARK: - Shell
@@ -260,6 +292,7 @@ struct ShellView: View {
                 if let mid = ProcessInfo.processInfo.environment["HS_SHELL_OPEN_MEETING"] {
                     await model.loadAftercare(meetingId: mid)
                     await model.loadArtifacts(meetingId: mid)
+                    await model.loadProposals(meetingId: mid)
                 }
             }
         }
@@ -309,6 +342,28 @@ struct ShellView: View {
                     model.filingItemId = "a1"
                     model.fileIssueRepo = "karolswdev/HoldSpeak"
                 }
+            }
+            // HS_SHELL_DEMO=proposals seeds the review queue in all four states (HSM-19-05).
+            if demo == "proposals" {
+                model.host = model.host.isEmpty ? "192.168.1.13" : model.host
+                model.proposals = [
+                    MeetingProposal(id: "pr1", meetingId: "m1", status: .proposed,
+                        target: "github", action: "create_issue",
+                        preview: "Create issue in karolswdev/HoldSpeak: \"Wire the file-issue action\" (owner: Karol)",
+                        reversible: false),
+                    MeetingProposal(id: "pr2", meetingId: "m1", status: .proposed,
+                        target: "slack", action: "send_message",
+                        preview: "Post the aftercare digest for \"Q3 kickoff\" to #team-holdspeak",
+                        reversible: false),
+                    MeetingProposal(id: "pr3", meetingId: "m1", status: .executed,
+                        target: "slack", action: "send_message",
+                        preview: "Post the follow-up draft to #team-holdspeak",
+                        reversible: false),
+                    MeetingProposal(id: "pr4", meetingId: "m1", status: .failed,
+                        target: "webhook", action: "post",
+                        preview: "POST the decisions digest to the team webhook",
+                        reversible: false, error: "Connector not configured on the desktop"),
+                ]
             }
             // HS_SHELL_DEMO=artifacts seeds artifacts of varied confidence to show the ring banding.
             if ProcessInfo.processInfo.environment["HS_SHELL_DEMO"] == "artifacts" {
@@ -368,8 +423,77 @@ struct ShellView: View {
             thisIPadCard
             desktopCard
             if !model.artifacts.isEmpty { artifactsCard(model.artifacts) }
+            if !model.proposals.isEmpty { proposalsCard(model.proposals) }
             if let a = model.aftercare, !a.isEmpty { aftercareCard(a) }
         }
+    }
+
+    // MARK: Proposals card (HSM-19-05) — the review queue: every actuator proposal for the
+    // meeting, wherever it was created. Approve/Reject only on `proposed`; decided ones
+    // render their state (and error) honestly. A slack approve executes immediately, so it
+    // wears the cloud mark.
+    private func proposalsCard(_ props: [MeetingProposal]) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            peerHeader("PROPOSALS", "You approve every send", Sig.accent,
+                       live: props.contains { $0.status == .proposed })
+            ForEach(props, id: \.id) { p in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: p.target == "slack" ? "paperplane.fill" : "arrow.up.right.square")
+                            .font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.accent)
+                        Text("\(p.target) · \(p.action.replacingOccurrences(of: "_", with: " "))")
+                            .font(.caption.weight(.semibold)).foregroundStyle(Sig.text)
+                        Spacer(minLength: 6)
+                        if p.target == "slack" { cloudChip("Cloud · slack") }
+                        statusPill(p.status.rawValue)
+                    }
+                    Text(p.preview).font(.callout).foregroundStyle(Sig.muted)
+                        .lineLimit(4).fixedSize(horizontal: false, vertical: true)
+                    if let err = p.error, !err.isEmpty {
+                        Text(err).font(.caption2).foregroundStyle(Sig.bad)
+                    }
+                    if p.status == .proposed {
+                        HStack(spacing: 10) {
+                            Button { Task { await model.decideProposal(p, approved: true) } } label: {
+                                HStack(spacing: 5) {
+                                    if model.decidingIds.contains(p.id) { ProgressView().controlSize(.mini).tint(.black) }
+                                    else { Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)) }
+                                    Text("Approve").font(.caption.weight(.bold))
+                                }
+                                .foregroundStyle(.black)
+                                .padding(.horizontal, 14).padding(.vertical, 8)
+                                .background(Sig.ok, in: Capsule())
+                            }.buttonStyle(.plain)
+                            Button { Task { await model.decideProposal(p, approved: false) } } label: {
+                                Text("Reject").font(.caption.weight(.bold)).foregroundStyle(Sig.muted)
+                                    .padding(.horizontal, 14).padding(.vertical, 8)
+                                    .background(Sig.s3, in: Capsule())
+                            }.buttonStyle(.plain)
+                        }
+                        .disabled(model.decidingIds.contains(p.id))
+                    }
+                }
+                .padding(11).background(Sig.s2, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12)
+                    .stroke(p.status == .proposed ? Sig.warn.opacity(0.4) : Sig.line, lineWidth: 1))
+            }
+            if !model.proposalsError.isEmpty {
+                Text(model.proposalsError).font(.caption2).foregroundStyle(Sig.warn)
+            }
+        }
+        .cardChrome(border: Sig.accent.opacity(0.3))
+    }
+
+    // The egress mark for a control whose approval leaves the machine (the desk's
+    // EgressBadge grammar: a label, never a sentence).
+    private func cloudChip(_ label: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "arrow.up.forward.app.fill").font(.system(size: 8, weight: .bold))
+            Text(label).font(.caption2.weight(.semibold))
+        }
+        .foregroundStyle(Sig.warn)
+        .padding(.horizontal, 7).padding(.vertical, 3)
+        .background(Sig.warn.opacity(0.12), in: Capsule())
     }
 
     // MARK: Artifacts card (HSM-19-04) — the confidence-ring moment: every artifact wears
@@ -409,9 +533,10 @@ struct ShellView: View {
     private func statusPill(_ s: String) -> some View {
         let (label, tint): (String, Color) = {
             switch s {
-            case "accepted": return ("accepted", Sig.ok)
+            case "accepted", "approved", "executed": return (s, Sig.ok)
             case "needs_review": return ("needs review", Sig.warn)
-            case "rejected": return ("rejected", Sig.bad)
+            case "proposed": return ("proposed", Sig.warn)
+            case "rejected", "failed": return (s, Sig.bad)
             default: return (s.replacingOccurrences(of: "_", with: " "), Sig.faint)
             }
         }()
@@ -568,7 +693,11 @@ struct ShellView: View {
                         .font(.caption2).foregroundStyle(Sig.faint)
                     ForEach(meetings) { m in
                         Button {
-                            Task { await model.loadAftercare(meetingId: m.id); await model.loadArtifacts(meetingId: m.id) }
+                            Task {
+                                await model.loadAftercare(meetingId: m.id)
+                                await model.loadArtifacts(meetingId: m.id)
+                                await model.loadProposals(meetingId: m.id)
+                            }
                         } label: { meetingRow(m, tint: Sig.accent) }
                         .buttonStyle(.plain)
                     }
