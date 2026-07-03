@@ -16,7 +16,10 @@ const ORDER: Kind[] = [
   "meeting", "note", "kb", "agent", "artifact", "chain", "workflow", "coder",
 ];
 
-export function worldObjects(items: Items, divedZone: string | null): WorldObject[] {
+/** Every primitive as a world object, unfiltered — the lookup surface for
+ * pull-outs/editors (a FILED object still opens; it just doesn't float on
+ * the root stage). */
+export function allObjects(items: Items): WorldObject[] {
   const out: WorldObject[] = [];
   for (const kind of ORDER) {
     for (const it of items[kind] || []) {
@@ -29,12 +32,25 @@ export function worldObjects(items: Items, divedZone: string | null): WorldObjec
       });
     }
   }
+  return out;
+}
+
+export function worldObjects(items: Items, divedZone: string | null): WorldObject[] {
+  const out = allObjects(items);
   if (divedZone) {
     const dir = (items.directory || []).find((d) => d.id === divedZone);
     const members = new Set(((dir as any)?.memberIds as string[]) || []);
     return out.filter((o) => members.has(o.id));
   }
-  return out;
+  // The iPad grammar (owner feedback, 2026-07-02): a filed object lives on
+  // its shelf, not on the open desk — the root stage shows only unfiled
+  // objects; dive to see a zone's members. (Live coder sessions are never
+  // filed and always show.)
+  const filed = new Set<string>();
+  for (const d of items.directory || []) {
+    for (const mid of (((d as any).memberIds as string[]) || [])) filed.add(mid);
+  }
+  return out.filter((o) => o.kind === "coder" || !filed.has(o.id));
 }
 
 export interface WorldZone {

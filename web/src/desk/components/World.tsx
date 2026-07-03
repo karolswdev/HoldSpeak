@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useDesk } from "../store";
 import {
-  objGlow, objUnit, worldObjects, worldRows, worldZones,
+  allObjects, objGlow, objUnit, worldObjects, worldRows, worldZones,
 } from "../world";
 import { DeskObject } from "./DeskObject";
 import { InlineEditor } from "./InlineEditor";
@@ -27,7 +27,7 @@ export function World() {
   const editing = editingIdx >= 0 ? objects[editingIdx] : null;
   const pulloutId = useDesk((s) => s.pulloutId);
   const pullout = pulloutId
-    ? worldObjects(items, null).find((x) => x.id === pulloutId) || null
+    ? allObjects(items).find((x) => x.id === pulloutId) || null
     : null;
 
   const { surface } = useDesk.getState();
