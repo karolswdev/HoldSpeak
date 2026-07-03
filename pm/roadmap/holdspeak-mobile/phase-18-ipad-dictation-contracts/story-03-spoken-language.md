@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 18
-- **Status:** todo — independent on-device port; can run parallel to 18-01/02/04.
+- **Status:** done — see [`evidence-story-03.md`](./evidence-story-03.md). The main app
+  landed 2026-06-27 (knob + picker + meeting-capture wiring); the closeout extracted the
+  ONE resolver (`WhisperLanguage.configuredCode()`) and wired the two aux call sites
+  (CompanionAnswerApp, SpeakHarnessApp) onto it. Real non-English speech through the aux
+  apps rides 18-06.
 - **Depends on:** the WhisperKit transcribe path; `InferenceConfigStore`; the existing
   `WhisperLanguage` registry under `apple/Sources/Providers/`.
 - **Unblocks:** correct non-English dictation + meetings on every Apple capture surface.
