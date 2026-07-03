@@ -69,13 +69,17 @@ public struct MeetingArtifact: Codable, Equatable, Sendable {
     /// route always sends both, but optional keeps the read model tolerant.
     public var createdAt: String?
     public var updatedAt: String?
+    /// v6 (Phase 74): "meeting" | "run" as a raw wire string; optional so an
+    /// origin-less payload (an older hub) still decodes. On this route it is
+    /// always "meeting" today (the route lists a meeting's own artifacts).
+    public var origin: String?
 
     public init(
         id: String, meetingId: String, artifactType: String,
         title: String, bodyMarkdown: String, structuredJson: JSONValue? = nil,
         confidence: Double? = nil, status: String, pluginId: String? = nil,
         pluginVersion: String? = nil, sources: [MeetingArtifactSource] = [],
-        createdAt: String? = nil, updatedAt: String? = nil
+        createdAt: String? = nil, updatedAt: String? = nil, origin: String? = nil
     ) {
         self.id = id
         self.meetingId = meetingId
@@ -90,6 +94,7 @@ public struct MeetingArtifact: Codable, Equatable, Sendable {
         self.sources = sources
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.origin = origin
     }
 }
 

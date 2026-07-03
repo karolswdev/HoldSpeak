@@ -43,6 +43,7 @@ def _artifact(aid: str, mid: str):
         id=aid, meeting_id=mid, artifact_type="decisions", title="t",
         body_markdown="b", structured_json={}, confidence=0.8, status="draft",
         plugin_id="p", plugin_version="1", sources=[], updated_at=datetime(2026, 1, 2),
+        origin="meeting" if mid else "run",
     )
 
 

@@ -166,13 +166,23 @@ public struct Artifact: Codable, Equatable, Sendable {
     public var updatedAt: Date?
     // Reserved optional egress scope (contract §8); unpopulated in v0.
     public var egress: JSONValue?
+    /// v6 (Phase 74): "meeting" | "run". Raw wire string kept optional so an
+    /// origin-less payload (an older hub, a client push) still decodes.
+    public var origin: String?
+
+    /// The effective origin — the hub's own derivation (`plugins.py`:
+    /// no meeting anchor ⇒ run-born) applied when the wire omits `origin`.
+    public var isRunBorn: Bool {
+        (origin ?? (meetingId.isEmpty ? "run" : "meeting")) == "run"
+    }
 
     public init(
         id: String, meetingId: String, artifactType: ArtifactType,
         title: String, bodyMarkdown: String, structuredJson: JSONValue,
         confidence: Double, status: ArtifactStatus, pluginId: String,
         pluginVersion: String, sources: [ArtifactSource] = [],
-        createdAt: Date? = nil, updatedAt: Date? = nil, egress: JSONValue? = nil
+        createdAt: Date? = nil, updatedAt: Date? = nil, egress: JSONValue? = nil,
+        origin: String? = nil
     ) {
         self.id = id
         self.meetingId = meetingId
@@ -188,6 +198,7 @@ public struct Artifact: Codable, Equatable, Sendable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.egress = egress
+        self.origin = origin
     }
 }
 

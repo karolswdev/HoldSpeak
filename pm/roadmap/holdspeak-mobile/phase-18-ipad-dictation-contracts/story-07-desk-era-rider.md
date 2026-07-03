@@ -2,7 +2,12 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 18
-- **Status:** todo — the Desk-Era catch-up rider (owner-scoped into this phase, 2026-07-03).
+- **Status:** in-progress — the contract half landed (`origin` on the wire + schema + both
+  Swift models, all suites green); the desk materialization remains. **Verified during
+  build:** design item 3 (the route-surface lock) already ships as HS-72-02
+  (`tests/unit/test_api_surface.py` + `scripts/gen_api_surface.py` sweep `apple/**/*.swift`;
+  `unmatched_calls` must be empty) — nothing to build, recorded here instead of duplicating
+  the guard.
 - **Depends on:** nothing in this phase (parallel-startable); hub schema v6 (run-born
   artifacts, Phase 74) and the Phase-72 route rename + `docs/api-surface.json` manifest,
   both already on `main`.

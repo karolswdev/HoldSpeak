@@ -77,7 +77,7 @@ reuses three proven seams:
 | HSM-18-04 | The spoken-symbol dictionary, ported to Swift | in-progress (built-ins ported + tested + on the dictation path; user-symbol editor + metal proof remain) |
 | HSM-18-05 | Activity pre-briefing — the source-cited nudge client | todo |
 | HSM-18-06 | The real-metal proof + entry-point docs | todo |
-| HSM-18-07 | The Desk-Era rider: run-born artifacts on the iPad desk + the route-surface lock | todo |
+| HSM-18-07 | The Desk-Era rider: run-born artifacts on the iPad desk + the route-surface lock | in-progress (contract half landed: `origin` on the wire + schema + Swift models; the route-surface lock verified already shipped as HS-72-02; desk materialization remains) |
 
 ## Where we are
 

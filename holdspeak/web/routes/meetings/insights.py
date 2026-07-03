@@ -150,6 +150,7 @@ def build_insights_router(ctx: WebContext) -> APIRouter:
                             "sources": artifact.sources,
                             "created_at": artifact.created_at.isoformat(),
                             "updated_at": artifact.updated_at.isoformat(),
+                            "origin": artifact.origin,
                         }
                         for artifact in artifacts
                     ],
