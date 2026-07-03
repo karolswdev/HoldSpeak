@@ -9,20 +9,21 @@
 > 🚀 **New agent (general):** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Current phase:** [Phase 19 — The iPad joins the meeting contracts](./phase-19-ipad-meeting-contracts/current-phase-status.md)
-— **OPENED AND BUILT TO 6/7 SAME-DAY (2026-07-03), the gate staged.** The open survey
-corrected the draft (the client layer already landed via Equilibrium Waves 3–6), so the
-phase was screens over shipped clients in `CompanionShellApp.swift`: the aftercare
-file-issue action, the four-state proposals review queue (with the `decided_by:
-ipad-companion` audit fix the live proof surfaced), search + facet chips, the Import file
-picker, and the learning reader — every story live-hub proven from the connected simulator.
-[`HSM-19-07-WALK.md`](./phase-19-ipad-meeting-contracts/HSM-19-07-WALK.md) (W1–W6) is
-press-play; the owner's device walk closes the phase.
-[Phase 18](./phase-18-ipad-dictation-contracts/current-phase-status.md) stands at **6/7 with
-the gate staged**: only the owner's device walk
-([`HSM-18-06-WALK.md`](./phase-18-ipad-dictation-contracts/HSM-18-06-WALK.md)) remains; the
-19-07 walk is staged to join that couch session. Phases 16/17 (web parity + mesh sync; agent
-sync) remain open in parallel.
+**Current phase:** [Phase 21 — Honest everywhere](./phase-21-honest-everywhere/current-phase-status.md)
+— **OPENED 2026-07-03**, the same evening 18/19 reached 6/7 (its precondition, "the iPad
+surfaces exist", was satisfied hours earlier). Survey-corrected: Wave 1 already shipped the
+web banned-copy scan + all-three connector configs, so the five re-grounded stories are the
+iPad half of honesty: the ONE `EgressScope` contract (`DeskPrimitive.egress` + `.mixed` —
+kills the hard-coded "On device" capsule on cloud connectors AND the mixed-as-local drift
+the survey caught in the shell's own new chips), the Swift reassurance-prose guard, GitHub
+readiness truth, the iPad trust chip, and docs + a walk rider.
+[Phase 18](./phase-18-ipad-dictation-contracts/current-phase-status.md) and
+[Phase 19](./phase-19-ipad-meeting-contracts/current-phase-status.md) both stand at
+**6/7 with gates staged**
+([`HSM-18-06-WALK.md`](./phase-18-ipad-dictation-contracts/HSM-18-06-WALK.md),
+[`HSM-19-07-WALK.md`](./phase-19-ipad-meeting-contracts/HSM-19-07-WALK.md)); one owner
+device session closes both. Phases 16/17 (web parity + mesh sync; agent sync) remain open
+in parallel.
 
 **📐 The program — THE EQUILIBRIUM:**
 [`EQUILIBRIUM.md`](./EQUILIBRIUM.md) — bringing every original HoldSpeak feature into full
@@ -33,7 +34,10 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-03 (**PHASE 19 OPENED AND BUILT TO 6/7 THE SAME EVENING — the
+**Last updated:** 2026-07-03 (**PHASE 21 — HONEST EVERYWHERE — OPENED**, survey-corrected
+(Wave 1 pre-paid the web halves; the survey also caught fresh mixed-as-local drift in the
+shell chips Phase 18/19 added, proving the case for the one `EgressScope` contract).
+Earlier the same evening: **PHASE 19 OPENED AND BUILT TO 6/7 — the
 iPad joins the meeting contracts; the gate is staged.** The handover's top headless pick,
 opened survey-corrected (the client layer had already merged in EQ Waves 3–6) and built as
 screens over shipped clients, each story proven against a live scratch hub from the
