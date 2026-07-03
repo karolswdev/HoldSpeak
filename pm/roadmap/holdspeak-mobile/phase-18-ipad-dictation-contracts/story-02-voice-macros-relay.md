@@ -2,8 +2,12 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 18
-- **Status:** todo — **the highest-value single fix in the phase** (a one-function hub hole
-  that switches the whole macro feature on for the iPad).
+- **Status:** done — see [`evidence-story-02.md`](./evidence-story-02.md). The hub half
+  landed on open day (the relay fires macros, tested); this closes the board: contracts +
+  client (deep-merge slice PUT, test-locked) + the CommandsBoard screen (four kinds, mic on
+  every field, the canonical preview lines, the "runs code on your Mac" mark, per-card
+  Test), live-hub proven with the config redirected to scratch. The spoken
+  macro-fires-as-an-object moment on real metal rides 18-06.
 - **Depends on:** the remote relay (`/api/dictation/remote`, `holdspeak/.../pipeline.py`);
   the macro dispatcher (`dispatch_voice_command`); the settings route (`PUT /api/settings`).
 - **Unblocks:** macro parity for every companion that dictates through the Mac.

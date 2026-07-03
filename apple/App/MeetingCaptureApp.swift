@@ -40,6 +40,13 @@ struct MeetingCaptureApp: App {
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_CAPTURE"] != nil {
                     // HSM-20-03 — the live capture canvas straight, for a compact-width screenshot run.
                     NavigationStack { CaptureView(model: CaptureModel(), done: {}) }
+                } else if ProcessInfo.processInfo.environment["HS_DEMO_COMMANDS"] != nil {
+                    // HSM-18-02 — the CommandsBoard straight, for the screenshot run.
+                    NavigationStack { CommandsBoard() }
+                        .onAppear {
+                            let peer = DictatePeerStore.shared
+                            if peer.name.isEmpty { peer.name = "Karol's Mac" }
+                        }
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] != nil {
                     // HSM-20-04 — the dictation surface straight (the iPhone hold-bar teleprompter).
                     // Inlined (not `DictateDemo()`, which is simulator-only) so this root entry

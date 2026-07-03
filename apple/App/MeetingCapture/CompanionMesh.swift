@@ -560,6 +560,7 @@ struct DictateView: View {
     @State private var appeared = false
     @State private var ring = false
     @State private var pairing = false
+    @State private var showCommands = false   // HSM-18-02 — the macro authoring board
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     // HSM-20-04 — on iPhone the dictation surface promotes to a bottom-edge HOLD BAR that reflows,
@@ -575,6 +576,7 @@ struct DictateView: View {
         .toolbar(.hidden, for: .navigationBar)
         .tint(Sig.accent)
         .sheet(isPresented: $pairing) { PairMacSheet() }
+        .navigationDestination(isPresented: $showCommands) { CommandsBoard() }
         .onAppear {
             withAnimation(reduceMotion ? nil : .spring(response: 0.6, dampingFraction: 0.85)) { appeared = true }
             if !reduceMotion { ring = true }
@@ -722,7 +724,21 @@ struct DictateView: View {
                 }
             }
             Spacer()
-            GlyphChip(system: "mic.fill", gradient: Sig.accentGradient, size: 50)
+            VStack(alignment: .trailing, spacing: 10) {
+                GlyphChip(system: "mic.fill", gradient: Sig.accentGradient, size: 50)
+                // HSM-18-02 — the macro authoring board rides the dictate surface.
+                Button { tactile(.light); showCommands = true } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "command").font(.system(size: 11, weight: .bold))
+                        Text("Commands").font(.system(size: 12, weight: .heavy))
+                    }
+                    .foregroundStyle(Sig.muted)
+                    .padding(.horizontal, 11).padding(.vertical, 7)
+                    .background(Sig.s2, in: Capsule())
+                    .overlay(Capsule().strokeBorder(Sig.line, lineWidth: 1))
+                }
+                .buttonStyle(PressableCard())
+            }
         }
         .padding(.top, 8)
         .opacity(appeared ? 1 : 0).offset(y: appeared ? 0 : 10)
