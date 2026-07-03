@@ -12,8 +12,9 @@ import Foundation
 /// user entries the output is byte-identical to the built-ins. Pure + testable.
 public struct SpokenSymbols: Sendable {
     /// A user-defined symbol. `attach` is "left" | "right" | "both" | "none" (default), matching
-    /// the hub's spoken-symbol dictionary shape.
-    public struct UserSymbol: Sendable, Equatable {
+    /// the hub's spoken-symbol dictionary shape. Codable so the editor persists the
+    /// list (HSM-18-04); the shape matches the hub's `spoken_symbols` entries.
+    public struct UserSymbol: Sendable, Equatable, Codable {
         public let spoken: String
         public let symbol: String
         public let attach: String
@@ -22,6 +23,25 @@ public struct SpokenSymbols: Sendable {
             self.symbol = symbol
             self.attach = attach
         }
+    }
+
+    /// The persisted user dictionary (HSM-18-04): plain JSON in UserDefaults under
+    /// `userSymbolsKey`, loaded at the dictation fill site so every speak-to-fill
+    /// pass honors the user's entries. Empty/absent = built-ins only, byte-identical.
+    public static let userSymbolsKey = "hs.dictate.usersymbols"
+
+    public static func loadUserSymbols(defaults: UserDefaults = .standard) -> [UserSymbol] {
+        guard let data = defaults.data(forKey: userSymbolsKey) else { return [] }
+        return (try? JSONDecoder().decode([UserSymbol].self, from: data)) ?? []
+    }
+
+    public static func saveUserSymbols(_ symbols: [UserSymbol], defaults: UserDefaults = .standard) {
+        defaults.set((try? JSONEncoder().encode(symbols)) ?? Data("[]".utf8), forKey: userSymbolsKey)
+    }
+
+    /// The configured processor: built-ins + the persisted user dictionary.
+    public static func configured(defaults: UserDefaults = .standard) -> SpokenSymbols {
+        SpokenSymbols(userSymbols: loadUserSymbols(defaults: defaults))
     }
 
     /// Removes the space BEFORE (attaches to the previous word): "hello period" -> "hello."

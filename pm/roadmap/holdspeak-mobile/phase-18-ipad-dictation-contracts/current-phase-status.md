@@ -73,8 +73,8 @@ reuses three proven seams:
 |----|-------|--------|
 | HSM-18-01 | The dictation pipeline client + authoring/preview screen — **leads** | **done** ([evidence](./evidence-story-01.md): the voice teleprompter's readiness strip + opt-in "Preview first" receipt; hub `raw` verbatim delivery makes the receipt true (a latent double-rewrite fixed); live-hub proof from the simulator; the device voice walk rides 18-06) |
 | HSM-18-02 | Voice command macros fire on the remote relay + the iPad CommandsBoard | **done** ([evidence](./evidence-story-02.md): the relay fix landed on open day; the CommandsBoard now ships — four kinds, mic on every field, canonical previews, the honesty mark, per-card Test — live-hub proven; the HS-72-02 route lock caught the manifest, regenerated) |
-| HSM-18-03 | Spoken language at every WhisperKit call site | in-progress (main app done; harness apps + metal proof remain) |
-| HSM-18-04 | The spoken-symbol dictionary, ported to Swift | in-progress (built-ins ported + tested + on the dictation path; user-symbol editor + metal proof remain) |
+| HSM-18-03 | Spoken language at every WhisperKit call site | **done** ([evidence](./evidence-story-03.md): the ONE resolver `WhisperLanguage.configuredCode()` + all three call sites wired; real non-English speech in the aux apps rides 18-06) |
+| HSM-18-04 | The spoken-symbol dictionary, ported to Swift | **done** ([evidence](./evidence-story-04.md): user symbols persist + apply at the fill site (user-wins test-proven) + the Settings editor with a mic on every field; the real-mic walk rides 18-06) |
 | HSM-18-05 | Activity pre-briefing — the source-cited nudge client | **done** ([evidence](./evidence-story-05.md): nudge cards + "Dictate with this"→Armed on the dictate surface, live-hub proven on a real ledger; the remote lane now consumes the Phase-53 pin — the third silent relay hole, fixed + test-locked) |
 | HSM-18-06 | The real-metal proof + entry-point docs | todo |
 | HSM-18-07 | The Desk-Era rider: run-born artifacts on the iPad desk + the route-surface lock | **done** ([evidence](./evidence-story-07.md): `origin` explicit on every serialized surface + schema + Swift models; `HubRunResult.artifactId` shared identity kills a real duplicate-on-sync bug; the kept run result fires the arrival beat, Simulator-proven; the route-surface lock verified already shipped as HS-72-02) |
@@ -92,8 +92,9 @@ hero: the voice teleprompter's readiness strip + opt-in "Preview first" receipt,
 macro relay; see the 2026-06-27 update). **18-05 is done** (nudge cards + "Dictate with
 this"→Armed, live-hub proven on a real ledger; the remote lane now consumes the Phase-53
 pin — [evidence-story-05.md](./evidence-story-05.md)). **18-02 is done** (the CommandsBoard
-closed the story — [evidence-story-02.md](./evidence-story-02.md)). Remaining: 18-03/18-04
-follow-ups (aux app targets; the user-symbol editor); 18-06 (the real-metal gate, which
+closed the story — [evidence-story-02.md](./evidence-story-02.md)). **18-03 and 18-04 are done** (the one language
+resolver at all three call sites; the user-symbol dictionary + editor). Remaining: ONLY
+18-06 (the real-metal gate, which
 carries 18-01's on-device spoken-word walk, the grounding-changes-the-model re-proof, and
 the spoken macro-fires moment — all need the owner's rewriter endpoint call: the configured
 127.0.0.1:8082 llama-server is down and .43's forced grammar breaks the classifier). The audit supplies every story's starting

@@ -105,7 +105,10 @@ final class SpeakModel: ObservableObject {
             // Load Whisper, transcribe, then release it BEFORE loading the 3GB LLM
             // so peak memory stays ~max(model), not the sum (8GB iPad).
             var whisper: WhisperKit? = try await WhisperKit(WhisperKitConfig(model: "base"))
-            let out = try await whisper!.transcribe(audioArray: floats)
+            // HSM-18-03 — the ONE language resolver; "auto"/absent -> nil, byte-identical.
+            var decodeOpts = DecodingOptions()
+            decodeOpts.language = WhisperLanguage.configuredCode()
+            let out = try await whisper!.transcribe(audioArray: floats, decodeOptions: decodeOpts)
             let segs = out.flatMap { $0.segments }
             transcript = segs.map { $0.text }.joined(separator: " ")
                 .trimmingCharacters(in: .whitespacesAndNewlines)

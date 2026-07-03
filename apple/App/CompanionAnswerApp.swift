@@ -41,7 +41,10 @@ final class WhisperKitTranscriber: ITranscriber, @unchecked Sendable {
         guard samples.count >= 16_000 / 4 else { return [] }   // < ~0.25s → nothing to say
         let floats = samples.map { Float($0) / 32768.0 }
         let whisper = try await WhisperKit(WhisperKitConfig(model: model))
-        let results = try await whisper.transcribe(audioArray: floats)
+        // HSM-18-03 — the ONE language resolver; "auto"/absent -> nil, byte-identical.
+        var opts = DecodingOptions()
+        opts.language = WhisperLanguage.configuredCode()
+        let results = try await whisper.transcribe(audioArray: floats, decodeOptions: opts)
         // WhisperKit's raw segment text carries special tokens — <|startoftranscript|>,
         // <|en|>, <|0.00|> timestamps, <|endoftext|>. `WhisperText.clean` strips them so
         // the coder receives clean prose, not control markup (a real-metal run caught

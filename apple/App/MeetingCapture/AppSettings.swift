@@ -18,6 +18,7 @@ struct SettingsView: View {
     @State private var localModels: [InstalledModel] = []     // installed on-device GGUF language models
     @State private var showModels = false                     // present the model manager (import/delete)
     @State private var showProfiles = false                   // present the runtime-profiles manager (Phase 24)
+    @State private var symbolRows: [SymbolRow] = []           // HSM-18-04 — the user symbol dictionary
     enum Field: Hashable { case url, key }
     enum FetchState: Equatable { case idle, loading, ok(Int), fail }
 
@@ -51,6 +52,8 @@ struct SettingsView: View {
                     label("TRANSCRIPTION")
                     whisperCard
                     languageCard
+                    label("SPOKEN SYMBOLS")
+                    symbolsCard
                     label("WHO'S TALKING")
                     diarizeCard
                 }
@@ -60,7 +63,7 @@ struct SettingsView: View {
         .toolbar(.hidden, for: .navigationBar)
         .tint(Sig.accent)
         .onTapGesture { focused = nil }
-        .onAppear { refreshLocalModels() }
+        .onAppear { refreshLocalModels(); loadSymbolRows() }
         .sheet(isPresented: $showModels, onDismiss: { refreshLocalModels() }) { NavigationStack { ModelsView() }.preferredColorScheme(.dark) }
         .sheet(isPresented: $showProfiles) { NavigationStack { ProfilesView() }.preferredColorScheme(.dark) }
     }
@@ -322,6 +325,101 @@ struct SettingsView: View {
                 .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
             }
+        }
+        .padding(15).background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+    }
+
+    // HSM-18-04 — the user spoken-symbol dictionary: your phrases, your symbols, user-wins
+    // over the built-ins, one longest-first pass at the speak-to-fill site. Persisted as
+    // plain JSON (`SpokenSymbols.userSymbolsKey`); empty = built-ins only, byte-identical.
+    struct SymbolRow: Identifiable {
+        let id = UUID()
+        var spoken = ""
+        var symbol = ""
+        var attach = "none"
+    }
+
+    private static let attachModes: [(mode: String, label: String)] = [
+        ("none", "Keep spaces"), ("left", "Attach left"),
+        ("right", "Attach right"), ("both", "Attach both"),
+    ]
+
+    private func loadSymbolRows() {
+        #if targetEnvironment(simulator)
+        if ProcessInfo.processInfo.environment["HS_DEMO_SYMBOLS"] == "1" {
+            symbolRows = [SymbolRow(spoken: "tilde", symbol: "~"),
+                          SymbolRow(spoken: "arrow", symbol: "→"),
+                          SymbolRow(spoken: "dash", symbol: "—", attach: "both")]
+            return
+        }
+        #endif
+        symbolRows = SpokenSymbols.loadUserSymbols().map {
+            SymbolRow(spoken: $0.spoken, symbol: $0.symbol, attach: $0.attach)
+        }
+    }
+
+    private func persistSymbolRows() {
+        SpokenSymbols.saveUserSymbols(symbolRows.compactMap { row in
+            let spoken = row.spoken.trimmingCharacters(in: .whitespaces)
+            guard !spoken.isEmpty, !row.symbol.isEmpty else { return nil }
+            return SpokenSymbols.UserSymbol(spoken: spoken, symbol: row.symbol, attach: row.attach)
+        })
+    }
+
+    private var symbolsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 14) {
+                GlyphChip(system: "character.textbox", gradient: Sig.localGradient, size: 50)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Your symbols").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                    Text("Say the phrase · it types the symbol").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                }
+                Spacer()
+            }
+            ForEach($symbolRows) { $row in
+                HStack(spacing: 8) {
+                    MicFillField(placeholder: "spoken phrase", text: $row.spoken)
+                    MicFillField(placeholder: "symbol", text: $row.symbol)
+                        .frame(maxWidth: 170)
+                    Menu {
+                        ForEach(Self.attachModes, id: \.mode) { m in
+                            Button { row.attach = m.mode; persistSymbolRows(); tactile() } label: {
+                                Label(m.label, systemImage: row.attach == m.mode ? "checkmark" : "arrow.left.and.right")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.left.and.right.square")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(row.attach == "none" ? Sig.faint : Sig.accent)
+                            .frame(width: 34, height: 34)
+                            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                    }
+                    Button {
+                        tactile(.light)
+                        symbolRows.removeAll { $0.id == row.id }
+                        persistSymbolRows()
+                    } label: {
+                        Image(systemName: "trash").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
+                            .frame(width: 34, height: 34)
+                            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .onChange(of: row.spoken) { _, _ in persistSymbolRows() }
+                .onChange(of: row.symbol) { _, _ in persistSymbolRows() }
+            }
+            Button { tactile(); withAnimation { symbolRows.append(SymbolRow()) } } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.circle.fill").font(.system(size: 13, weight: .bold))
+                    Text("Add a symbol").font(.system(size: 13, weight: .heavy))
+                }
+                .foregroundStyle(Sig.accent)
+                .padding(.horizontal, 13).padding(.vertical, 9)
+                .background(Sig.accent.opacity(0.1), in: Capsule())
+                .overlay(Capsule().strokeBorder(Sig.accent.opacity(0.3), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
         }
         .padding(15).background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))

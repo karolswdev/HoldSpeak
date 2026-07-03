@@ -19,15 +19,13 @@ final class WhisperKitTranscriber: ITranscriber, @unchecked Sendable {
     private let model: String
     init(chunks: [AudioChunk], model: String) { self.chunks = chunks; self.model = model }
 
-    /// HSM-18-03 — the user's chosen transcription language as WhisperKit decode options. Read at
-    /// transcribe time from the same UserDefaults key `InferenceConfigStore` writes (key ==
-    /// `InferenceConfigStore.whisperLangKey`, "hs.inf.whisperlang"; hard-coded here to stay off the
-    /// main actor). "auto"/unknown resolves to `nil` = Whisper's per-utterance detection, so the
-    /// default path is byte-identical to before this wiring.
+    /// HSM-18-03 — the user's chosen transcription language as WhisperKit decode options.
+    /// The key/normalize logic lives in `WhisperLanguage.configuredCode()` (the ONE
+    /// resolver every call site shares — the answer app and the speak harness wire the
+    /// same way). "auto"/unknown -> `nil` = per-utterance detection, byte-identical.
     static func decodeOptions() -> DecodingOptions {
         var opts = DecodingOptions()
-        let raw = UserDefaults.standard.string(forKey: "hs.inf.whisperlang") ?? "auto"
-        opts.language = (try? WhisperLanguage.normalize(raw)) ?? nil
+        opts.language = WhisperLanguage.configuredCode()
         return opts
     }
 

@@ -140,4 +140,16 @@ public enum WhisperLanguage {
             in: .whitespacesAndNewlines).lowercased() == "auto"
             || (value ?? "").isEmpty
     }
+
+    /// The UserDefaults key the app's language setting writes (`InferenceConfigStore`).
+    public static let settingKey = "hs.inf.whisperlang"
+
+    /// HSM-18-03 — the ONE resolver every WhisperKit call site uses: read the app's
+    /// configured language and normalize it to a Whisper code; `nil` = auto (Whisper's
+    /// per-utterance detection, byte-identical to the pre-knob behavior). Lives here —
+    /// this module never links WhisperKit, so each call site wraps the code in its own
+    /// `DecodingOptions(language:)`; the key/normalize logic never diverges.
+    public static func configuredCode(defaults: UserDefaults = .standard) -> String? {
+        (try? normalize(defaults.string(forKey: settingKey))) ?? nil
+    }
 }
