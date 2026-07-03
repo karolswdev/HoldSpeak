@@ -105,7 +105,10 @@ final class ShellModel: ObservableObject {
                                    localProvider: { summary })
         state = await shell.load()
         if case .success(let b) = await CompanionBoard(client: c).load() { board = b }
-        if state?.mode == .connected { facets = try? await c.listFacets() }
+        if state?.mode == .connected {
+            facets = try? await c.listFacets()
+            await loadLearning()
+        }
     }
 
     // MARK: Faceted archive (HSM-19-02) — narrow the desktop archive server-side. The chips
@@ -197,6 +200,26 @@ final class ShellModel: ObservableObject {
             _ = try await c.sendRemoteDictation(text: preview.finalText, target: .focused, raw: true)
             dictateSent = true; dictatePreview = nil; dictateText = ""
         } catch { dictateError = "Send failed. Is a desktop app focused?" }
+    }
+
+    // MARK: Learning loop (HSM-19-06) — READ-ONLY: the hub's "what HoldSpeak learned"
+    // digest + the dictation journal. No write affordances by shape (corrections CRUD and
+    // on-device journaling are deliberately out — Phase 9 owns them).
+    @Published var learningDigest: LearningDigest?
+    @Published var journal: JournalResponse?
+    @Published var learningWindow = "week"
+
+    func loadLearning() async {
+        guard let c = client() else { return }
+        learningDigest = try? await c.learningDigest(window: learningWindow)
+        journal = try? await c.journalEntries(limit: 12)
+    }
+
+    func setLearningWindow(_ window: String) async {
+        guard learningWindow != window else { return }
+        learningWindow = window
+        guard let c = client() else { return }
+        learningDigest = try? await c.learningDigest(window: window)
     }
 
     // MARK: Aftercare (HSM-19-01) — the close-the-loop digest for a meeting.
@@ -829,6 +852,13 @@ struct ShellView: View {
     // MARK: Dictate — nav slot (on-device)
 
     private var dictateScreen: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            teleprompterCard
+            learningCard
+        }
+    }
+
+    private var teleprompterCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             peerHeader("DICTATE", "Watch the rewrite resolve, then send to your desktop", Sig.local, live: true)
 
@@ -901,6 +931,97 @@ struct ShellView: View {
                 }
             }
             .cardChrome(border: Sig.local.opacity(0.35))
+    }
+
+    // MARK: Learning card (HSM-19-06) — dictation's afterlife, read-only: the digest's
+    // headline numbers with the week/all window, then the recent journal. Honest at N=0.
+    @ViewBuilder private var learningCard: some View {
+        if let digest = model.learningDigest {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 9) {
+                    peerHeader("LEARNED", digest.enabled ? "Corrections route into new dictations" : "Corrections are off on the desktop",
+                               Sig.accent, live: digest.enabled)
+                    HStack(spacing: 0) {
+                        windowButton("Week", value: "week")
+                        windowButton("All", value: "all")
+                    }
+                    .background(Sig.s2, in: Capsule())
+                    .overlay(Capsule().stroke(Sig.line, lineWidth: 1))
+                }
+                HStack(spacing: 8) {
+                    metaChip("\(digest.totals.correctionsMade) correction\(digest.totals.correctionsMade == 1 ? "" : "s")", "slider.horizontal.3", Sig.accent)
+                    metaChip("\(digest.totals.dictationsCorrected) corrected", "arrow.uturn.backward", Sig.faint)
+                    if digest.enabled && digest.totals.similarNudged > 0 {
+                        metaChip("\(digest.totals.similarNudged) similar nudged", "sparkles", Sig.ok)
+                    }
+                    metaChip("\(digest.totals.journalCount) journaled", "book.closed.fill", Sig.faint)
+                }
+                if !digest.corrections.isEmpty {
+                    ForEach(digest.corrections.prefix(4)) { row in
+                        HStack(spacing: 8) {
+                            Image(systemName: row.kind == "target" ? "scope" : "arrow.triangle.branch")
+                                .font(.system(size: 10, weight: .bold)).foregroundStyle(Sig.accent)
+                            Text(row.gist).font(.caption).foregroundStyle(Sig.muted).lineLimit(1)
+                            Image(systemName: "arrow.right").font(.system(size: 8, weight: .bold)).foregroundStyle(Sig.faint)
+                            Text(row.value).font(.caption.weight(.semibold)).foregroundStyle(Sig.text).lineLimit(1)
+                            Spacer(minLength: 6)
+                            if row.similar > 0 {
+                                Text("\(row.similar) similar").font(.caption2).foregroundStyle(Sig.ok)
+                            }
+                        }
+                        .padding(.horizontal, 11).padding(.vertical, 8)
+                        .background(Sig.s2, in: RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Sig.line, lineWidth: 1))
+                    }
+                }
+                if let journal = model.journal {
+                    Text(journal.count > 0 ? "JOURNAL · \(journal.count)" : "JOURNAL")
+                        .font(.caption2.weight(.bold)).tracking(1.2).foregroundStyle(Sig.faint)
+                    if !journal.enabled {
+                        rowNote("Journaling is off on the desktop.")
+                    } else if journal.items.isEmpty {
+                        rowNote("No dictations journaled yet.")
+                    } else {
+                        ForEach(journal.items.prefix(6)) { entry in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(entry.finalText).font(.callout).foregroundStyle(Sig.text)
+                                    .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                                HStack(spacing: 8) {
+                                    Text(entry.source == "dry_run" ? "dry run" : entry.source)
+                                        .font(.caption2.weight(.medium)).foregroundStyle(Sig.faint)
+                                    if let target = entry.targetProfile, !target.isEmpty {
+                                        Text(target).font(.caption2).foregroundStyle(Sig.muted)
+                                    }
+                                    if entry.corrected {
+                                        Text("corrected").font(.caption2.weight(.semibold)).foregroundStyle(Sig.accent)
+                                    }
+                                    if let learning = entry.learning, learning.matched, learning.similar > 0 {
+                                        Text("learned from \(learning.similar) similar")
+                                            .font(.caption2.weight(.semibold)).foregroundStyle(Sig.ok)
+                                    }
+                                    Spacer(minLength: 0)
+                                    if let ms = entry.totalMs { Text("\(Int(ms)) ms").font(.caption2).foregroundStyle(Sig.faint) }
+                                }
+                            }
+                            .padding(.horizontal, 11).padding(.vertical, 8)
+                            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Sig.line, lineWidth: 1))
+                        }
+                    }
+                }
+            }
+            .cardChrome(border: Sig.accent.opacity(0.3))
+        }
+    }
+
+    private func windowButton(_ label: String, value: String) -> some View {
+        Button { Task { await model.setLearningWindow(value) } } label: {
+            Text(label).font(.caption2.weight(.bold))
+                .foregroundStyle(model.learningWindow == value ? .black : Sig.muted)
+                .padding(.horizontal, 11).padding(.vertical, 6)
+                .background(model.learningWindow == value ? Sig.accent : .clear, in: Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     // An honest compact egress chip (a label, never a reassurance sentence) for where text goes.
