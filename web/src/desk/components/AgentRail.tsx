@@ -5,6 +5,7 @@
 // a coder is a live session, never railed (the Primitive Framework rule).
 import { useState } from "react";
 import { useDesk } from "../store";
+import { MicButton } from "./MicButton";
 
 export function AgentRail() {
   const agents = useDesk((s) => s.items.agent);
@@ -72,6 +73,7 @@ export function AgentRail() {
           {openId === a.id && (
             <div className="desk-rail-ask" onPointerDown={(e) => e.stopPropagation()}>
               <div className="desk-rail-ask-row">
+                <MicButton onText={(t) => setInput((v) => (v ? v + " " + t : t))} />
                 <input
                   autoFocus
                   value={input}

@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
 import type { WorldObject } from "../world";
 import type { UnitPos } from "../store";
+import { MicButton } from "./MicButton";
 
 function useDebouncedSave(kind: string, id: string) {
   const { updatePrimitive } = useDesk.getState();
@@ -173,6 +174,20 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
           </>
         )}
         <div className="desk-editor-foot">
+          <MicButton
+            onText={(t) => {
+              // Fill the primary text field for the kind: a note's body,
+              // otherwise the name/title.
+              if (o.kind === "note") {
+                set("body", "body_markdown", (f.body ? f.body + " " : "") + t);
+              } else if (o.kind === "kb") {
+                set("name", "name", (f.name ? f.name + " " : "") + t);
+              } else {
+                set("systemPrompt", "system_prompt", (f.systemPrompt ? f.systemPrompt + " " : "") + t);
+              }
+            }}
+          />
+          <span className="desk-editor-spacer" />
           <button type="button" className="desk-chip quiet" onClick={closeEditor}>
             Done
           </button>

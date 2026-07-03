@@ -1189,7 +1189,9 @@
         "POST"
       ],
       "module": "web.routes.system",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/dictation/wake/type",

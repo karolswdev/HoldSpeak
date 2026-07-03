@@ -32,7 +32,7 @@ session waiting and being answered — never appears in demos.
 | ID | Story | Sev | Status | Depends |
 |---|---|---|---|---|
 | HS-78-01 | The transcribe route (local Whisper, no egress) | HIGH | **done** (the runtime verb + seam + the strict WAV route; 5/5; see [evidence](./evidence-story-01.md)) | — |
-| HS-78-02 | Speak-to-fill on every desk input | HIGH | todo | 01 |
+| HS-78-02 | Speak-to-fill on every desk input | HIGH | **done** (hold-to-talk mics on ask/editor/rename; the REAL proof: the fixture spoke as the browser mic and real Whisper filled the input; the orb lock re-scoped + strengthened; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-78-03 | Talk to the waiting coder | HIGH | todo | 01 |
 | HS-78-04 | The re-recorded demo + docs + closeout | MED | todo | 01–03 |
 
@@ -43,9 +43,10 @@ session waiting and being answered — never appears in demos.
       runtime's OWN transcriber (the one model, the one lock), and
       returns `{text}`; audio is never persisted; nothing egresses
       (HS-78-01).
-- [ ] Every desk text input (the rail Ask, the note editor's fields, the
+- [x] Every desk text input (the rail Ask, the note editor's fields, the
       zone rename) carries a speak-to-fill mic: press, talk, release,
-      the text lands in the field — no confirm step (HS-78-02).
+      the text lands in the field — no confirm step (HS-78-02 — proven
+      with real speech through the real transcriber).
 - [ ] The coder pull-out's answer is spoken: mic → transcribe → inject
       through the existing `/api/dictation/remote` seam; proven against
       a seeded waiting session (HS-78-03).
@@ -54,6 +55,13 @@ session waiting and being answered — never appears in demos.
       guards green; PR merged on a conclusion-checked green (HS-78-04).
 
 ## Where we are
+
+**2026-07-02 — HS-78-02 done (2/4).** You can talk to the desk. Real
+recorded speech, played as the browser microphone, rode the whole chain
+(capture → browser-side WAV → the strict route → the REAL local Whisper
+→ the punctuation pass) and landed in the rail's ask input with no
+confirm step. The mics sit on every desk input; the orb's hub-recorder
+rule is locked both ways. Next: the coder (03), the demo (04).
 
 **2026-07-02 — HS-78-01 done (1/4).** The hub can hear the browser: the
 strict WAV route runs the runtime's own transcriber with the dictation
