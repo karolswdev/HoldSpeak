@@ -4,22 +4,24 @@ The owner's device session, prepared. Everything below was staged headless on
 2026-07-03; the walk itself needs the cabled iPad, a live hub, and a working
 rewriter endpoint. Budget: ~30 minutes once the endpoint answers.
 
-## 0. Pre-flight — the ONE decision: the rewriter endpoint
+## 0. Pre-flight — the rewriter endpoint: use `.43` (verified 2026-07-03)
 
-The dictation pipeline's configured runtime is `openai_compatible` at
-`http://127.0.0.1:8082/v1`, which is **down**. Three options, pick one:
+`.43` is the pick. The June "forced grammar" note is stale (probed: free-form
+output), and the two real classify blockers were HUB bugs, both fixed and
+test-locked: the schema hint taught models the nested extras shape the validator
+rejected, and an honest no-match (`matched: false, block_id: null`) was refused.
+After the fix, a five-utterance live probe against `.43` (Qwythos-9B) ran
+**5/5 clean** at ~500-700 ms per dry-run, with real block enrichment.
 
-- **(a) Stand up llama-server on this Mac at :8082** (matches the config as-is):
-  `llama-server -m ~/Models/gguf/Qwen3-4B-Instruct-2507-Q6_K.gguf --port 8082`
-  (the model file exists; `llama-server` is not installed — `brew install llama.cpp`).
-- **(b) Un-grammar `.43`**: its llama-server forces a constrained JSON grammar that
-  corrupts the intent-router's classify (`extra key 'ai_prompt_context'`). Restart it
-  without the grammar flag, then point `dictation.runtime.openai_compatible_base_url`
-  at `http://192.168.1.43:8080/v1`.
-- **(c) Any other OpenAI-compatible server** + the same config knob.
+Point the config at it (Settings, or `dictation.runtime` in the config):
+`openai_compatible_base_url = "http://192.168.1.43:8080/v1"`,
+`openai_compatible_model = "Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf"`.
 
-Do NOT use in-process `llama_cpp` — it segfaults (exit 139) loading the local
-Qwen3-4B-2507 GGUF on this machine.
+Fallbacks if `.43` is busy: llama-server on this Mac at :8082
+(`brew install llama.cpp`, then
+`llama-server -m ~/Models/gguf/Qwen3-4B-Instruct-2507-Q6_K.gguf --port 8082`),
+or any OpenAI-compatible server. Do NOT use in-process `llama_cpp` — it
+segfaults (exit 139) loading that GGUF on this machine.
 
 **Verify before walking** (a rewrite with no warnings):
 

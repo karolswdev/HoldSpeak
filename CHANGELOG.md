@@ -36,6 +36,13 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   route behaves exactly as before.
 
 ### Fixed
+- The dictation intent router works with more OpenAI-compatible models.
+  The classify prompt's only example of `extras` was a per-block table, so
+  a model that mirrored that nesting back was rejected, and a model that
+  honestly answered "no match" with a null block id was rejected too. The
+  hint now states the flat output shape, the validator unwraps the nested
+  reading, and an honest no-match passes through. Measured live: a model
+  that failed the classify five out of five times now runs five for five.
 - "Dictate with this" now grounds remote dictations too. The activity
   nudge's selected record was consumed by the local dictation path but
   silently ignored on `/api/dictation/remote`; the remote lane now folds
