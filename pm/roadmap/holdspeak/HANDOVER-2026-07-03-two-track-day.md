@@ -2,8 +2,8 @@
 
 One session, two tracks, owner-steered turn by turn: **Phase 18 (mobile,
 Equilibrium's lead) went 2/7 → 6/7 with the gate staged**, and **Phase 79
-(Backend Decomposition II) was opened, built, and closed same-day.** Eight PRs
-merged (#215–#221 and the earlier #220), one in CI at handover time (#222).
+(Backend Decomposition II) was opened, built, closed, and merged same-day.**
+Nine PRs merged (#215–#222, plus #220).
 This is the map: what shipped, what the owner decided, what remains, the traps.
 
 ## Where main stands
@@ -11,10 +11,9 @@ This is the map: what shipped, what the owner decided, what remains, the traps.
 - **Merged today:** #215 (HSM-18-07 rider), #216 (HSM-18-01 teleprompter),
   #217 (HSM-18-05 nudges), #218 (HSM-18-02 CommandsBoard), #219 (HSM-18-03+04),
   #220 (18-06 docs half + the walk), #221 (the dictation classify fix).
-- **In CI at handover:** #222 — Phase 79 CLOSED 6/6 (`phase-79-backend-
-  decomposition-ii`). Merge rule as always: `gh pr checks 222 --json bucket`
-  all `pass`, then `gh pr merge 222 --merge`. Everything phase-79 lives on
-  that branch until then.
+- **#222 — Phase 79 CLOSED 6/6 — MERGED** on conclusion-checked green minutes
+  after this handover was first written. Nine PRs merged total; main carries
+  everything.
 - **Suites at last full run:** 3,113 passed / 37 skipped
   (`uv run pytest -q --ignore=tests/e2e/test_metal.py`), web 17 pages,
   `swift test` 425. One recorded flake candidate:
