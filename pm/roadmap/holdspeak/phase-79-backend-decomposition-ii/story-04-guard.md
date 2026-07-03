@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 79
-- **Status:** todo
+- **Status:** done — see [`evidence-story-04.md`](./evidence-story-04.md). Two package
+  checks (init composition-only ≤ 90; modules ≤ 600 with settings.py's named 800),
+  red-proven on a fabricated fat module, docstring ledger updated (meetings watch item
+  resolved by P72; db/core.py is the new named watch item).
 - **Depends on:** 01–03.
 - **Unblocks:** the phase staying decomposed.
 

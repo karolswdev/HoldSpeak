@@ -22,13 +22,13 @@ guard-locked so nothing regrows.
 | HS-79-01 | `db/activity.py` → the activity package (concern mixins) | **done** ([evidence](./evidence-story-01.md): 1,596 → six mixins, largest 406; zero body drift; tests unmodified, 2407 + 685 green) |
 | HS-79-02 | `routes/system.py` → the system package (five routers) | **done** ([evidence](./evidence-story-02.md): 1,299 → five routers + _shared; zero body drift; manifest module-fields-only; 2407 + 685 green) |
 | HS-79-03 | `routes/primitives.py` → the primitives package (per family + shared run helpers) | **done** ([evidence](./evidence-story-03.md): 1,294 → seven families + _shared, largest 333; zero body drift; vocab re-exported; 2407 + 685 green) |
-| HS-79-04 | The density guard locks the new shapes | todo |
+| HS-79-04 | The density guard locks the new shapes | **done** ([evidence](./evidence-story-04.md): two package checks, settings.py named budget 800, red-proven; unit 2409) |
 | HS-79-05 | The docs story (internal backend map) | todo |
 | HS-79-06 | Closeout (full suite + web build + swift test + manifest stability + final-summary) | todo |
 
 ## Where we are
 
-**All three carves done** (activity, system, primitives). Next: 04 (the guard) (largest first; all three independent), then
+**Carves + guard done** (01–04). Next: 05 (docs) (largest first; all three independent), then
 the guard, docs, closeout. One PR on `phase-79-backend-decomposition-ii`, merged on
 conclusion-checked green.
 
