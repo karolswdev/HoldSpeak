@@ -20,7 +20,7 @@ guard-locked so nothing regrows.
 | ID | Title | Status |
 |----|-------|--------|
 | HS-79-01 | `db/activity.py` → the activity package (concern mixins) | **done** ([evidence](./evidence-story-01.md): 1,596 → six mixins, largest 406; zero body drift; tests unmodified, 2407 + 685 green) |
-| HS-79-02 | `routes/system.py` → the system package (five routers) | todo |
+| HS-79-02 | `routes/system.py` → the system package (five routers) | **done** ([evidence](./evidence-story-02.md): 1,299 → five routers + _shared; zero body drift; manifest module-fields-only; 2407 + 685 green) |
 | HS-79-03 | `routes/primitives.py` → the primitives package (per family + shared run helpers) | todo |
 | HS-79-04 | The density guard locks the new shapes | todo |
 | HS-79-05 | The docs story (internal backend map) | todo |
@@ -28,7 +28,7 @@ guard-locked so nothing regrows.
 
 ## Where we are
 
-**01 done** (the activity package). The carve order continues 02 → 03 (largest first; all three independent), then
+**01 and 02 done** (the activity and system packages). The carve order continues with 03 (largest first; all three independent), then
 the guard, docs, closeout. One PR on `phase-79-backend-decomposition-ii`, merged on
 conclusion-checked green.
 

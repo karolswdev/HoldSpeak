@@ -383,7 +383,7 @@ Routes: 232 (plus static mounts). iOS-consumed: 47. Web-consumed: 164.
 | GET | `/api/sync/pull` | ios, web |
 | POST | `/api/sync/push` | ios |
 
-## web.routes.system
+## web.routes.system.coders
 
 | Method | Path | Consumers |
 |---|---|---|
@@ -392,13 +392,33 @@ Routes: 232 (plus static mounts). iOS-consumed: 47. Web-consumed: 164.
 | POST | `/api/coders/pin` | ios |
 | POST | `/api/coders/select` | ios, web |
 | GET | `/api/coders/status` | ios, web |
-| POST | `/api/commands/test` | ios, web |
+
+## web.routes.system.health
+
+| Method | Path | Consumers |
+|---|---|---|
 | GET | `/api/devices/health` | server only |
+| GET | `/api/runtime/status` | ios, web |
+
+## web.routes.system.settings
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/settings` | ios, web |
+| PUT | `/api/settings` | ios, web |
+
+## web.routes.system.voice
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/commands/test` | ios, web |
 | POST | `/api/dictation/preview/discard` | web |
 | POST | `/api/dictation/preview/type` | web |
 | POST | `/api/dictation/transcribe` | web |
 | POST | `/api/dictation/wake/type` | web |
-| GET | `/api/runtime/status` | ios, web |
-| GET | `/api/settings` | ios, web |
-| PUT | `/api/settings` | ios, web |
+
+## web.routes.system.ws
+
+| Method | Path | Consumers |
+|---|---|---|
 | WS | `/ws` | web |

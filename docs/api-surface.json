@@ -682,7 +682,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.coders",
       "consumers": []
     },
     {
@@ -690,7 +690,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.coders",
       "consumers": [
         "ios"
       ]
@@ -700,7 +700,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.coders",
       "consumers": [
         "ios"
       ]
@@ -710,7 +710,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.coders",
       "consumers": [
         "ios",
         "web"
@@ -721,7 +721,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.coders",
       "consumers": [
         "ios",
         "web"
@@ -732,7 +732,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.voice",
       "consumers": [
         "ios",
         "web"
@@ -819,7 +819,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.health",
       "consumers": []
     },
     {
@@ -1047,7 +1047,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.voice",
       "consumers": [
         "web"
       ]
@@ -1057,7 +1057,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.voice",
       "consumers": [
         "web"
       ]
@@ -1190,7 +1190,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.voice",
       "consumers": [
         "web"
       ]
@@ -1200,7 +1200,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.voice",
       "consumers": [
         "web"
       ]
@@ -1891,7 +1891,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.health",
       "consumers": [
         "ios",
         "web"
@@ -1902,7 +1902,7 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.settings",
       "consumers": [
         "ios",
         "web"
@@ -1913,7 +1913,7 @@
       "methods": [
         "PUT"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.settings",
       "consumers": [
         "ios",
         "web"
@@ -2237,7 +2237,7 @@
       "methods": [
         "WS"
       ],
-      "module": "web.routes.system",
+      "module": "web.routes.system.ws",
       "consumers": [
         "web"
       ]

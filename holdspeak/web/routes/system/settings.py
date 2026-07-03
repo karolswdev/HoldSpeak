@@ -1,12 +1,7 @@
-"""System surface routes (HS-26-05): device health, runtime + companion status,
-settings, and the `/ws` broadcast socket.
+"""App settings, read and write (the deep-merged PUT).
 
-Handlers move verbatim (`self.` -> `ctx.`). The runtime-status normalizer and the
-settings validators are used only here, so they were relocated out of `web_server`.
-The device-audio WebSocket keeps its own PSK handshake in `device_audio_ws.py`
-(registered in `_create_app`) and is unaffected.
+Bodies moved verbatim from routes/system.py (HS-79-02, the Phase-63 discipline).
 """
-
 from __future__ import annotations
 
 import json
@@ -19,81 +14,17 @@ from urllib.parse import urlparse
 from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
-from ...logging_config import get_logger
-from ..context import WebContext
-from ..runtime_support import error_500
+from ....logging_config import get_logger
+from ...context import WebContext
+from ...runtime_support import error_500
 
 log = get_logger("web.routes.system")
+
 
 # Validates outbound webhook header names on the settings PUT path.
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
 # HSM-14: a GitHub `owner/name` slug for the companion GitHub connector.
 _GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
-
-# The active reply target stays fresh (matches the device path in web_runtime),
-# but the companion overview shows a wider window so the user can see — and
-# recover from — sessions that have gone stale.
-_COMPANION_TARGET_MAX_AGE_SECONDS = 120
-_COMPANION_OVERVIEW_MAX_AGE_SECONDS = 30 * 60
-
-
-def _session_age_seconds(stamp: Optional[str], now: datetime) -> Optional[int]:
-    """Seconds since an ISO-8601 session timestamp, or None if unparseable."""
-    if not isinstance(stamp, str) or not stamp.strip():
-        return None
-    try:
-        parsed = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return max(0, int((now - parsed).total_seconds()))
-
-
-def _meeting_active_from_state(state: dict[str, Any]) -> bool:
-    if isinstance(state.get("meeting_active"), bool):
-        return bool(state.get("meeting_active"))
-    return bool(state.get("started_at")) and not bool(state.get("ended_at"))
-
-
-def _meeting_summary_from_state(state: dict[str, Any]) -> Optional[dict[str, Any]]:
-    if not _meeting_active_from_state(state):
-        return None
-    meeting_id = state.get("id")
-    if not meeting_id:
-        return None
-    return {
-        "id": meeting_id,
-        "title": state.get("title"),
-        "tags": state.get("tags") if isinstance(state.get("tags"), list) else [],
-        "started_at": state.get("started_at"),
-        "ended_at": state.get("ended_at"),
-        "duration": state.get("duration"),
-        "formatted_duration": state.get("formatted_duration"),
-    }
-
-
-def _normalize_runtime_status_payload(raw_payload: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
-    payload = dict(raw_payload)
-    payload_state = payload.get("state")
-    if not isinstance(payload_state, dict):
-        payload_state = state
-    meeting_active = (
-        bool(payload.get("meeting_active"))
-        if isinstance(payload.get("meeting_active"), bool)
-        else _meeting_active_from_state(payload_state)
-    )
-    payload["status"] = payload.get("status") or "ok"
-    payload["mode"] = payload.get("mode") or "web"
-    payload["meeting_active"] = meeting_active
-    payload["state"] = payload_state
-    if "meeting_id" not in payload:
-        payload["meeting_id"] = payload_state.get("id") if meeting_active else None
-    if "meeting" not in payload:
-        payload["meeting"] = _meeting_summary_from_state(payload_state)
-    return payload
-
-
 def _validate_cloud_base_url(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
@@ -115,337 +46,16 @@ def _merge_dict(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:
     return dst
 
 
-def build_system_router(ctx: WebContext) -> APIRouter:
+
+
+def build_settings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
-
-    @router.get("/api/devices/health")
-    async def api_devices_health() -> Any:
-        from ...meeting_session import _device_descriptor_to_dict
-
-        devices = [
-            _device_descriptor_to_dict(descriptor)
-            for descriptor in ctx.device_registry.active()
-        ]
-        return JSONResponse({"devices": devices})
-
-    @router.get("/api/runtime/status")
-    async def api_runtime_status() -> Any:
-        try:
-            state = ctx.get_state() or {}
-        except Exception as e:
-            log.error(f"get_state failed: {e}")
-            state = {}
-
-        if ctx.on_get_status is not None:
-            try:
-                raw_payload = ctx.on_get_status()
-            except Exception as e:
-                log.error(f"on_get_status failed: {e}")
-                return JSONResponse({"success": False, "error": str(e)}, status_code=500)
-            if isinstance(raw_payload, dict):
-                return JSONResponse(_normalize_runtime_status_payload(raw_payload, state))
-            return JSONResponse({"status": "ok", "runtime_status": raw_payload})
-
-        return JSONResponse(_normalize_runtime_status_payload({}, state))
-
-    @router.get("/api/coders/status")
-    async def api_companion_status() -> Any:
-        """Return one debug snapshot for the AIPI agent companion loop."""
-        from ...agent_context import (
-            DEFAULT_STALE_AGENT_SESSION_SECONDS,
-            get_recent_awaiting_agent_session,
-            list_recent_awaiting_agent_sessions,
-        )
-        from ...agent_device import AGENT_QUERY_NAMES, build_agent_identity_payload
-        from ...config import Config
-        from ...meeting_session import _device_descriptor_to_dict
-
-        try:
-            state = ctx.get_state() or {}
-        except Exception as e:
-            log.error(f"get_state failed: {e}")
-            state = {}
-
-        runtime_error: str | None = None
-        if ctx.on_get_status is not None:
-            try:
-                raw_payload = ctx.on_get_status()
-                if isinstance(raw_payload, dict):
-                    runtime_payload = _normalize_runtime_status_payload(raw_payload, state)
-                else:
-                    runtime_payload = _normalize_runtime_status_payload(
-                        {"runtime_status": raw_payload},
-                        state,
-                    )
-            except Exception as e:
-                log.error(f"on_get_status failed: {e}")
-                runtime_error = str(e)
-                runtime_payload = _normalize_runtime_status_payload({}, state)
-        else:
-            runtime_payload = _normalize_runtime_status_payload({}, state)
-
-        devices = [
-            _device_descriptor_to_dict(descriptor)
-            for descriptor in ctx.device_registry.active()
-        ]
-        device_connected = bool(devices)
-
-        agent_error: str | None = None
-        try:
-            session = get_recent_awaiting_agent_session(
-                max_age_seconds=_COMPANION_TARGET_MAX_AGE_SECONDS
-            )
-            agent_sessions = list_recent_awaiting_agent_sessions(
-                max_age_seconds=_COMPANION_OVERVIEW_MAX_AGE_SECONDS,
-                limit=8,
-            )
-        except Exception as e:
-            log.error(f"agent companion status failed: {e}")
-            agent_error = str(e)
-            session = None
-            agent_sessions = []
-        agent_waiting = bool(session and session.awaiting_response)
-        tmux_reply_available = bool(
-            session
-            and session.awaiting_response
-            and getattr(session, "tmux_pane", None)
-        )
-
-        dictation_error: str | None = None
-        try:
-            dictation_cfg = Config.load().dictation
-            pipeline_enabled = bool(dictation_cfg.pipeline.enabled)
-            pipeline_stages = list(dictation_cfg.pipeline.stages)
-            target_profile_override = dictation_cfg.pipeline.target_profile_override
-            runtime_backend = dictation_cfg.runtime.backend
-        except Exception as e:
-            log.error(f"dictation config load failed: {e}")
-            dictation_error = str(e)
-            pipeline_enabled = False
-            pipeline_stages = []
-            target_profile_override = None
-            runtime_backend = None
-
-        text_injection_known = "text_injection_enabled" in runtime_payload
-        text_injection_enabled = (
-            bool(runtime_payload.get("text_injection_enabled"))
-            if text_injection_known
-            else None
-        )
-        agent_identity = build_agent_identity_payload(
-            session,
-            text_injection_enabled=text_injection_enabled,
-        )
-        if session is not None and not any(
-            item.agent == session.agent and item.session_id == session.session_id
-            for item in agent_sessions
-        ):
-            agent_sessions.insert(0, session)
-        selected_agent_key = (
-            (session.agent, session.session_id) if session is not None else None
-        )
-        agent_session_items = []
-        selected_index: int | None = None
-        status_now = datetime.now(timezone.utc)
-        for index, item in enumerate(agent_sessions):
-            item_key = (item.agent, item.session_id)
-            selected = item_key == selected_agent_key
-            if selected:
-                selected_index = index
-            age_seconds = _session_age_seconds(item.updated_at, status_now)
-            # Pinned sessions are intentionally kept; never badge them stale.
-            stale = (
-                not item.pinned
-                and age_seconds is not None
-                and age_seconds > DEFAULT_STALE_AGENT_SESSION_SECONDS
-            )
-            agent_session_items.append(
-                {
-                    "index": index,
-                    "selected": selected,
-                    "pinned": item.pinned,
-                    "stale": stale,
-                    "age_seconds": age_seconds,
-                    "session": item.to_dict(),
-                    "identity": build_agent_identity_payload(
-                        item,
-                        text_injection_enabled=text_injection_enabled,
-                    ),
-                }
-            )
-
-        blockers: list[str] = []
-        if not device_connected:
-            blockers.append("no_device_connected")
-        if not agent_waiting:
-            blockers.append("no_agent_waiting")
-        if not pipeline_enabled:
-            blockers.append("dictation_pipeline_disabled")
-        if text_injection_enabled is False and not tmux_reply_available:
-            blockers.append("text_injection_unavailable")
-        elif text_injection_enabled is None and not tmux_reply_available:
-            blockers.append("text_injection_status_unknown")
-        if agent_error:
-            blockers.append("agent_status_unavailable")
-        if dictation_error:
-            blockers.append("dictation_config_unavailable")
-        if runtime_error:
-            blockers.append("runtime_status_unavailable")
-
-        return JSONResponse(
-            {
-                "status": "ok",
-                "ready_for_agent_reply": not blockers,
-                "blockers": blockers,
-                "checks": {
-                    "device_connected": device_connected,
-                    "agent_waiting": agent_waiting,
-                    "dictation_pipeline_enabled": pipeline_enabled,
-                    "text_injection_enabled": text_injection_enabled,
-                    "tmux_reply_available": tmux_reply_available,
-                    "target_confidence": (
-                        agent_identity["target_confidence"] if agent_identity else None
-                    ),
-                },
-                "devices": {
-                    "connected": device_connected,
-                    "count": len(devices),
-                    "items": devices,
-                    "query_names": sorted(AGENT_QUERY_NAMES),
-                },
-                "agent": {
-                    "awaiting_response": agent_waiting,
-                    "session": session.to_dict() if session else None,
-                    "identity": agent_identity,
-                    "sessions": {
-                        "count": len(agent_session_items),
-                        "selected_index": selected_index,
-                        "items": agent_session_items,
-                    },
-                    "max_age_seconds": _COMPANION_TARGET_MAX_AGE_SECONDS,
-                    "overview_max_age_seconds": _COMPANION_OVERVIEW_MAX_AGE_SECONDS,
-                    "stale_threshold_seconds": DEFAULT_STALE_AGENT_SESSION_SECONDS,
-                    "error": agent_error,
-                },
-                "dictation": {
-                    "pipeline_enabled": pipeline_enabled,
-                    "stages": pipeline_stages,
-                    "target_profile_override": target_profile_override,
-                    "runtime_backend": runtime_backend,
-                    "error": dictation_error,
-                },
-                "runtime": {
-                    "status": runtime_payload.get("status"),
-                    "mode": runtime_payload.get("mode"),
-                    "meeting_active": runtime_payload.get("meeting_active"),
-                    "meeting_id": runtime_payload.get("meeting_id"),
-                    "voice_state": runtime_payload.get("voice_state"),
-                    "text_injection_enabled": text_injection_enabled,
-                    "text_injection_error": runtime_payload.get("text_injection_error"),
-                    "tmux_reply_available": tmux_reply_available,
-                    "target_transport": (
-                        agent_identity["target_transport"] if agent_identity else None
-                    ),
-                    "error": runtime_error,
-                },
-                "companion": {
-                    "query_names": sorted(AGENT_QUERY_NAMES),
-                    "voice_reply_max_age_seconds": _COMPANION_TARGET_MAX_AGE_SECONDS,
-                    "stale_threshold_seconds": DEFAULT_STALE_AGENT_SESSION_SECONDS,
-                },
-            }
-        )
-
-    def _companion_agent_target(payload: Optional[dict[str, Any]]) -> tuple[str, str] | JSONResponse:
-        """Pull a required (agent, session_id) pair from a control-route body."""
-        body = payload if isinstance(payload, dict) else {}
-        agent = body.get("agent")
-        session_id = body.get("session_id")
-        if not isinstance(agent, str) or not agent.strip():
-            return JSONResponse({"error": "agent is required"}, status_code=400)
-        if not isinstance(session_id, str) or not session_id.strip():
-            return JSONResponse({"error": "session_id is required"}, status_code=400)
-        return agent, session_id
-
-    @router.post("/api/coders/select")
-    async def api_companion_select(payload: Optional[dict[str, Any]] = None) -> Any:
-        """Select a specific waiting session as AI PI's active reply target."""
-        from ...agent_context import select_awaiting_agent_session
-
-        target = _companion_agent_target(payload)
-        if isinstance(target, JSONResponse):
-            return target
-        agent, session_id = target
-        session = select_awaiting_agent_session(agent, session_id)
-        if session is None:
-            return JSONResponse(
-                {"success": False, "error": "unknown_session", "session": None},
-                status_code=404,
-            )
-        return JSONResponse({"success": True, "session": session.to_dict()})
-
-    @router.post("/api/coders/dismiss")
-    async def api_companion_dismiss(payload: Optional[dict[str, Any]] = None) -> Any:
-        """Clear a waiting session's captured response (non-destructive)."""
-        from ...agent_context import clear_agent_session_response
-
-        target = _companion_agent_target(payload)
-        if isinstance(target, JSONResponse):
-            return target
-        agent, session_id = target
-        session = clear_agent_session_response(agent=agent, session_id=session_id)
-        return JSONResponse(
-            {
-                "success": session is not None,
-                "session": session.to_dict() if session else None,
-            }
-        )
-
-    @router.post("/api/coders/pin")
-    async def api_companion_pin(payload: Optional[dict[str, Any]] = None) -> Any:
-        """Pin or unpin a waiting session as the sticky reply target."""
-        from ...agent_context import pin_agent_session
-
-        target = _companion_agent_target(payload)
-        if isinstance(target, JSONResponse):
-            return target
-        agent, session_id = target
-        body = payload if isinstance(payload, dict) else {}
-        pinned = bool(body.get("pinned", True))
-        session = pin_agent_session(agent, session_id, pinned)
-        if session is None:
-            return JSONResponse(
-                {"success": False, "error": "unknown_session", "session": None},
-                status_code=404,
-            )
-        return JSONResponse({"success": True, "session": session.to_dict()})
-
-    @router.post("/api/coders/clear-stale")
-    async def api_companion_clear_stale(payload: Optional[dict[str, Any]] = None) -> Any:
-        """Clear all non-pinned waiting sessions older than the threshold."""
-        from ...agent_context import (
-            DEFAULT_STALE_AGENT_SESSION_SECONDS,
-            clear_stale_agent_sessions,
-        )
-
-        body = payload if isinstance(payload, dict) else {}
-        raw_age = body.get("max_age_seconds")
-        try:
-            max_age_seconds = int(raw_age) if raw_age is not None else DEFAULT_STALE_AGENT_SESSION_SECONDS
-        except (TypeError, ValueError):
-            return JSONResponse({"error": "max_age_seconds must be an integer"}, status_code=400)
-        if max_age_seconds < 0:
-            return JSONResponse({"error": "max_age_seconds must be >= 0"}, status_code=400)
-        cleared = clear_stale_agent_sessions(max_age_seconds=max_age_seconds)
-        return JSONResponse(
-            {"success": True, "cleared": cleared, "max_age_seconds": max_age_seconds}
-        )
 
     @router.get("/api/settings")
     async def api_get_settings() -> Any:
         try:
-            from ...config import Config
-            from ...plugins.dictation.runtime_counters import get_counters, get_session_status
+            from ....config import Config
+            from ....plugins.dictation.runtime_counters import get_counters, get_session_status
 
             config = Config.load()
             payload = config.to_dict()
@@ -460,185 +70,11 @@ def build_system_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500(e, log, "Failed to load settings")
 
-    @router.post("/api/dictation/wake/type")
-    async def api_wake_type(payload: dict[str, Any]) -> Any:
-        """HS-60: type a stored wake preview, exactly once.
-
-        The token was minted server-side when the preview was created; the
-        runtime types ONLY its own stored text and burns the token. Client
-        text is never accepted here.
-        """
-        if ctx.on_wake_type is None:
-            return JSONResponse(
-                {"success": False, "error": "Wake typing is unavailable in this runtime."},
-                status_code=503,
-            )
-        token = str((payload or {}).get("token", "")).strip()
-        if not token:
-            return JSONResponse(
-                {"success": False, "error": "A preview token is required."},
-                status_code=400,
-            )
-        typed = ctx.on_wake_type(token)
-        if typed is None:
-            return JSONResponse(
-                {"success": False, "error": "Unknown or already used preview token."},
-                status_code=404,
-            )
-        return {"success": True, "typed": typed}
-
-    @router.post("/api/dictation/transcribe")
-    async def api_transcribe(request: Request) -> Any:
-        """HS-78-01: speak-to-fill — browser-captured audio in, text out.
-
-        Accepts one WAV (16 kHz mono, 16-bit PCM) body and runs the
-        runtime's OWN transcriber (one model, one lock) + the dictation
-        punctuation pass. The audio is never persisted and nothing
-        egresses (local Whisper); the route rides the same
-        loopback/token posture as every other route. Size-capped.
-        """
-        if ctx.on_transcribe is None:
-            return JSONResponse(
-                {"success": False, "error": "Transcription is unavailable in this runtime."},
-                status_code=503,
-            )
-        raw = await request.body()
-        if not raw:
-            return JSONResponse(
-                {"success": False, "error": "An audio body is required."}, status_code=400
-            )
-        if len(raw) > 16_000_000:  # ~8 minutes of 16 kHz mono 16-bit
-            return JSONResponse(
-                {"success": False, "error": "Audio too large (cap: 16 MB)."}, status_code=413
-            )
-        try:
-            import io
-            import wave
-
-            import numpy as np
-
-            with wave.open(io.BytesIO(raw)) as wf:
-                if wf.getnchannels() != 1 or wf.getframerate() != 16000 or wf.getsampwidth() != 2:
-                    return JSONResponse(
-                        {
-                            "success": False,
-                            "error": "Expected WAV: 16 kHz, mono, 16-bit PCM.",
-                        },
-                        status_code=400,
-                    )
-                frames = wf.readframes(wf.getnframes())
-            audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
-        except Exception:
-            return JSONResponse(
-                {"success": False, "error": "Not a readable WAV body."}, status_code=400
-            )
-        try:
-            text = ctx.on_transcribe(audio)
-        except Exception as exc:
-            log.error(f"speak-to-fill transcription failed: {exc}")
-            return JSONResponse(
-                {"success": False, "error": "Transcription failed."}, status_code=502
-            )
-        return {"success": True, "text": text}
-
-    @router.post("/api/dictation/preview/type")
-    async def api_preview_type(payload: dict[str, Any]) -> Any:
-        """HS-75-01: type a stored hold-key preview, exactly once.
-
-        The token was minted server-side when the preview armed; the
-        runtime types ONLY its own stored text and burns the token. Client
-        text is never accepted here (the wake/type contract).
-        """
-        if ctx.on_preview_type is None:
-            return JSONResponse(
-                {"success": False, "error": "Preview typing is unavailable in this runtime."},
-                status_code=503,
-            )
-        token = str((payload or {}).get("token", "")).strip()
-        if not token:
-            return JSONResponse(
-                {"success": False, "error": "A preview token is required."},
-                status_code=400,
-            )
-        typed = ctx.on_preview_type(token)
-        if typed is None:
-            return JSONResponse(
-                {"success": False, "error": "Unknown or already used preview token."},
-                status_code=404,
-            )
-        return {"success": True, "typed": typed}
-
-    @router.post("/api/dictation/preview/discard")
-    async def api_preview_discard(payload: dict[str, Any]) -> Any:
-        """HS-75-01: burn a stored preview without typing."""
-        if ctx.on_preview_discard is None:
-            return JSONResponse(
-                {"success": False, "error": "Preview discard is unavailable in this runtime."},
-                status_code=503,
-            )
-        token = str((payload or {}).get("token", "")).strip()
-        if not token:
-            return JSONResponse(
-                {"success": False, "error": "A preview token is required."},
-                status_code=400,
-            )
-        if not ctx.on_preview_discard(token):
-            return JSONResponse(
-                {"success": False, "error": "Unknown or already used preview token."},
-                status_code=404,
-            )
-        return {"success": True}
-
-    @router.post("/api/commands/test")
-    async def api_test_voice_command(payload: dict[str, Any]) -> Any:
-        """HS-52-05: fire one voice command action from the board, to verify it.
-
-        Egress kinds (open_url / launch_app / shell) run on the host through the same
-        bounded connector the dispatcher uses (the browser cannot open a terminal). The
-        `type_text` kind types into whatever app has focus when the keyword is spoken, so
-        there is nothing to run here; it returns a preview instead of firing.
-        """
-        from ...config import VoiceMacroAction, VoiceMacroError
-
-        try:
-            action = VoiceMacroAction(
-                kind=str((payload or {}).get("kind", "")),
-                payload=str((payload or {}).get("payload", "")),
-            )
-        except VoiceMacroError as exc:
-            return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
-
-        if action.kind == "type_text":
-            return JSONResponse({
-                "ok": True,
-                "tested": False,
-                "preview": action.preview(),
-                "note": "types into the focused app",
-            })
-
-        from ...plugins.actuators import ActuatorProposal
-        from ...plugins.voice_macro_connector import build_voice_macro_connector
-
-        proposal = ActuatorProposal(
-            target="voice_macro",
-            action=action.kind,
-            preview=action.preview(),
-            payload={"kind": action.kind, "payload": action.payload},
-            reversible=False,
-            required_capabilities=(),
-        )
-        try:
-            connector = build_voice_macro_connector(action)
-            result = connector(proposal)
-            return JSONResponse({"ok": True, "tested": True, "result": result})
-        except Exception as exc:  # a failed command is reported inline, not as a 5xx
-            return JSONResponse({"ok": False, "error": f"{type(exc).__name__}: {exc}"})
-
     @router.put("/api/settings")
     async def api_update_settings(payload: dict[str, Any]) -> Any:
         """Persist app settings from web UI."""
         try:
-            from ...config import (
+            from ....config import (
                 Config,
                 DeviceConfig,
                 DictationConfig,
@@ -690,7 +126,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             # HS-59: validate the transcription language at the boundary so a
             # typo fails the settings write, not a dictation later. Store the
             # normalized code ("auto" for detection).
-            from ...languages import normalize_language
+            from ....languages import normalize_language
 
             raw_language = model_data.get("language", current.model.language)
             try:
@@ -801,7 +237,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 )
             meeting_data["intel_provider"] = intel_provider
 
-            from ...plugins.router import available_profiles
+            from ....plugins.router import available_profiles
 
             meeting_data["mir_enabled"] = bool(
                 meeting_data.get("mir_enabled", current.meeting.mir_enabled)
@@ -951,7 +387,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 or ""
             ).strip()
             if slack_url:
-                from ...slack_export import slack_webhook_host
+                from ....slack_export import slack_webhook_host
 
                 try:
                     slack_webhook_host(slack_url)
@@ -975,7 +411,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 or ""
             ).strip()
             if companion_webhook_url:
-                from ...slack_export import slack_webhook_host
+                from ....slack_export import slack_webhook_host
 
                 try:
                     slack_webhook_host(companion_webhook_url)
@@ -1261,39 +697,5 @@ def build_system_router(ctx: WebContext) -> APIRouter:
             log.error(f"Failed to update settings: {e}")
             return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
-    @router.websocket("/ws")
-    async def websocket_endpoint(websocket: WebSocket) -> None:
-        log.info(f"WebSocket connection attempt from {websocket.client}")
-        try:
-            await ctx.ws.connect(websocket)
-            log.info("WebSocket connected successfully")
-        except Exception as e:
-            log.error(f"WebSocket connect failed: {e}", exc_info=True)
-            return
-
-        try:
-            # Optional initial state push via REST endpoint; for WS we at
-            # least emit current duration immediately if available.
-            duration = ctx.current_formatted_duration()
-            if duration is not None:
-                await websocket.send_json({"type": "duration", "data": duration})
-
-            while True:
-                # Keep connection alive; ignore client messages for now.
-                message = await websocket.receive_text()
-                if message == "ping":
-                    await websocket.send_text("pong")
-                elif message.startswith("{"):
-                    # Accept JSON no-op messages without error.
-                    try:
-                        json.loads(message)
-                    except Exception:
-                        pass
-        except WebSocketDisconnect:
-            pass
-        except Exception as e:
-            log.debug(f"WebSocket error: {e}")
-        finally:
-            await ctx.ws.disconnect(websocket)
 
     return router

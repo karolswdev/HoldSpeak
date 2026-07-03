@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak
 - **Phase:** 79
-- **Status:** todo
+- **Status:** done — see [`evidence-story-02.md`](./evidence-story-02.md). Five routers +
+  a shared-helpers module under one unchanged `build_system_router`; zero non-import body
+  drift; manifest regenerated (module fields only); tests unmodified, 2407 + 685 green.
 - **Depends on:** nothing (parallel to 01).
 - **Unblocks:** HS-79-04.
 
