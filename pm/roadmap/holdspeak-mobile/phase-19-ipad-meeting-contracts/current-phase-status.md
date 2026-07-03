@@ -47,7 +47,7 @@ autonomous.
 
 | ID | Title | Status |
 |----|-------|--------|
-| HSM-19-01 | Meeting aftercare — the file-issue action closes the loop — **leads** | in-progress (client + read card merged #155; the action UI remains) |
+| HSM-19-01 | Meeting aftercare — the file-issue action closes the loop — **leads** | done — [`evidence-story-01.md`](./evidence-story-01.md) (live-hub proven; the tap rides the walk W1) |
 | HSM-19-02 | The faceted archive — search + facet chips over the shipped clients | todo (client merged, EQ-W3) |
 | HSM-19-03 | Meeting import on the iPad — the picker over the multipart client | todo (client merged, `013c7d0`) |
 | HSM-19-04 | Artifact provenance — confidence ring + sources | done — [`evidence-story-04.md`](./evidence-story-04.md) (shipped #151/#159; verified today, metal joins the 19-07 walk) |
@@ -57,9 +57,12 @@ autonomous.
 
 ## Where we are
 
-Opened 2026-07-03; **1/7** — 19-04 flipped on verified evidence the same hour (`swift test`
-425 green + the shell simulator build; the code shipped pre-open via #151/#159).
-**19-01 leads the build** (the file-issue action is the highest-severity remaining hole and
-it feeds the 19-05 queue). The metal gate (19-07's walk) is staged press-play so it can join
-the owner's 18-06 couch session. The `SpokenSymbols` port (18-04) is reused for any
-meeting-side symbol application — do not re-implement it.
+Opened 2026-07-03; **2/7** — 19-04 flipped on verified evidence the same hour (`swift test`
+425 green + the shell simulator build; the code shipped pre-open via #151/#159), then
+**19-01 closed the loop**: the accepted-only File issue action + inline repo row + honest
+proposed pill, live-hub proven (proposed / idempotent / 400 / the filed proposal visible in
+the 19-05 queue — the handshake the next story renders). Next: **19-05** (the review queue,
+while the filed proposal is fresh), then 19-02 / 19-03 / 19-06. The metal gate (19-07's
+walk) is staged press-play so it can join the owner's 18-06 couch session. The
+`SpokenSymbols` port (18-04) is reused for any meeting-side symbol application — do not
+re-implement it.

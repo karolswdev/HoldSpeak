@@ -12,6 +12,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 ## [Unreleased]
 
 ### Added
+- **File an issue from the iPad.** The companion's meeting aftercare card
+  can turn an accepted action item into a GitHub-issue proposal (repo
+  typed inline, remembered for the session). Filing only records a
+  proposal you approve separately — same consent model as the web.
 - **The Desk is the web front door.** Opening HoldSpeak lands on a spatial
   world at `/`: meetings, notes, knowledge bases, agents, and artifacts as
   objects you create, open, file, and arrange in place. The Record orb
