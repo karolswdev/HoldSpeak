@@ -16,6 +16,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   can turn an accepted action item into a GitHub-issue proposal (repo
   typed inline, remembered for the session). Filing only records a
   proposal you approve separately — same consent model as the web.
+- **Search and filter meetings from the iPad.** The companion's desktop
+  archive gains transcript search and the speaker/tag facet chips the web
+  has had since 0.2 — narrowing happens on the desktop, so the list is
+  never a stale page filtered locally.
 - **Review proposals from the iPad.** A meeting's actuator proposals —
   wherever they were created — show as a queue on the companion with
   Approve/Reject on pending ones and honest decided/executed/failed

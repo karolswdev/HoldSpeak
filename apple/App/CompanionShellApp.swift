@@ -105,6 +105,46 @@ final class ShellModel: ObservableObject {
                                    localProvider: { summary })
         state = await shell.load()
         if case .success(let b) = await CompanionBoard(client: c).load() { board = b }
+        if state?.mode == .connected { facets = try? await c.listFacets() }
+    }
+
+    // MARK: Faceted archive (HSM-19-02) — narrow the desktop archive server-side. The chips
+    // are the hub's distinct facet values (`/api/meetings/facets`); a selection or a search
+    // re-lists via `/api/meetings?search=&speaker=&tag=` — never a client-side filter of a
+    // stale page. Empty facets are a normal state (honest at N=0): no chip row renders.
+    @Published var facets: MeetingFacets?
+    @Published var searchQuery = ""
+    @Published var selectedSpeaker: String?
+    @Published var selectedTag: String?
+    @Published var searchResults: [MeetingSummary]?
+    @Published var searching = false
+
+    var filtersActive: Bool {
+        !searchQuery.trimmingCharacters(in: .whitespaces).isEmpty
+            || selectedSpeaker != nil || selectedTag != nil
+    }
+
+    func applyFilters() async {
+        guard let c = client() else { return }
+        guard filtersActive else { searchResults = nil; return }
+        let q = searchQuery.trimmingCharacters(in: .whitespaces)
+        searching = true; defer { searching = false }
+        searchResults = try? await c.searchMeetings(
+            query: q.isEmpty ? nil : q, speaker: selectedSpeaker, type: selectedTag)
+    }
+
+    func toggleSpeaker(_ s: String) async {
+        selectedSpeaker = selectedSpeaker == s ? nil : s
+        await applyFilters()
+    }
+
+    func toggleTag(_ t: String) async {
+        selectedTag = selectedTag == t ? nil : t
+        await applyFilters()
+    }
+
+    func clearFilters() {
+        searchQuery = ""; selectedSpeaker = nil; selectedTag = nil; searchResults = nil
     }
 
     func startMeeting() async {
@@ -293,6 +333,14 @@ struct ShellView: View {
                     await model.loadAftercare(meetingId: mid)
                     await model.loadArtifacts(meetingId: mid)
                     await model.loadProposals(meetingId: mid)
+                }
+                // HS_SHELL_FACET_SPEAKER/_TAG land a screenshot run on a narrowed archive
+                // (a REAL server-side search, not a seed — the HS_SHELL_TAB pattern).
+                if let s = ProcessInfo.processInfo.environment["HS_SHELL_FACET_SPEAKER"] {
+                    await model.toggleSpeaker(s)
+                }
+                if let t = ProcessInfo.processInfo.environment["HS_SHELL_FACET_TAG"] {
+                    await model.toggleTag(t)
                 }
             }
         }
@@ -496,6 +544,59 @@ struct ShellView: View {
         .background(Sig.warn.opacity(0.12), in: Capsule())
     }
 
+    // MARK: The filter row (HSM-19-02) — search + the hub's facet chips. A lit chip is the
+    // active filter; tapping it again clears it. Narrowing is server-side.
+    @ViewBuilder private var filterRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass").font(.system(size: 12, weight: .semibold)).foregroundStyle(Sig.faint)
+                TextField("Search transcripts", text: $model.searchQuery)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .font(.subheadline).foregroundStyle(Sig.text)
+                    .onSubmit { Task { await model.applyFilters() } }
+                if model.searching { ProgressView().controlSize(.mini).tint(Sig.accent) }
+                if model.filtersActive {
+                    Button { model.clearFilters() } label: {
+                        Image(systemName: "xmark.circle.fill").font(.system(size: 14)).foregroundStyle(Sig.faint)
+                    }.buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 11).padding(.vertical, 9)
+            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Sig.line, lineWidth: 1))
+
+            if let f = model.facets, !f.speakers.isEmpty || !f.tags.isEmpty {
+                FlowLayout(spacing: 8) {
+                    ForEach(f.speakers, id: \.self) { s in
+                        facetChip(s, icon: "person.fill", selected: model.selectedSpeaker == s) {
+                            Task { await model.toggleSpeaker(s) }
+                        }
+                    }
+                    ForEach(f.tags, id: \.self) { t in
+                        facetChip(t, icon: "tag.fill", selected: model.selectedTag == t) {
+                            Task { await model.toggleTag(t) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func facetChip(_ label: String, icon: String, selected: Bool,
+                           action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: icon).font(.system(size: 9, weight: .bold))
+                Text(label).font(.caption.weight(.medium))
+            }
+            .foregroundStyle(selected ? .black : Sig.accent)
+            .padding(.horizontal, 10).padding(.vertical, 6)
+            .background(selected ? Sig.accent : Sig.accent.opacity(0.12), in: Capsule())
+            .overlay(Capsule().stroke(Sig.accent.opacity(selected ? 0 : 0.3), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: Artifacts card (HSM-19-04) — the confidence-ring moment: every artifact wears
     // its synthesis confidence as an arc, and points at where it was synthesized from.
     private func artifactsCard(_ arts: [MeetingArtifact]) -> some View {
@@ -685,9 +786,10 @@ struct ShellView: View {
             peerHeader("DESKTOP", connected ? "The server you code against" : "Unreachable — working on-device",
                        connected ? Sig.ok : Sig.warn, live: connected)
             if connected {
-                let meetings = model.state?.serverMeetings ?? []
+                let meetings = model.searchResults ?? model.state?.serverMeetings ?? []
+                filterRow
                 if meetings.isEmpty {
-                    rowNote("No meetings on the desktop yet.")
+                    rowNote(model.filtersActive ? "No meetings match." : "No meetings on the desktop yet.")
                 } else {
                     Text("Tap a meeting for its digest")
                         .font(.caption2).foregroundStyle(Sig.faint)
