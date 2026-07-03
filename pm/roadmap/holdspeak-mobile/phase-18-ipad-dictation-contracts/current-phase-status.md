@@ -5,7 +5,15 @@
 [Experience Vision](../EXPERIENCE-VISION-2026-06-27.md) (the dictation teleprompter + the
 "macro fires as an object" signature moment).
 
-**Last updated:** 2026-06-27 (**OPENED + first fix landed.** HSM-18-02's hub half shipped:
+**Last updated:** 2026-07-03 (**RESUMED, owner-picked, + the Desk-Era rider added.** After
+the web/hub Desk Era closed (Phases 72–78, PRs #207–#214), the owner chose iPad parity as
+the next platform step and scoped it as *this phase as authored plus one rider*:
+**HSM-18-07** — run-born artifacts (hub schema v6, `origin='run'`) join the cross-surface
+artifact contract and materialize on the iPad desk, plus a guard locking
+`HTTPDesktopClient` paths against `docs/api-surface.json` (the durable form of verifying
+the Phase-72 route rename). Grounded findings: `artifact.schema.json` carries no `origin`
+field; Swift already calls `/api/coders/*` with zero stale `api/companion` literals but
+nothing locks it. Prior update, 2026-06-27: **OPENED + first fix landed.** HSM-18-02's hub half shipped:
 `api_dictation_remote` now fires voice-command macros on the remote relay (it never did, so a
 macro spoken from the iPad was silently dictated as prose). The macro fires through the same
 bounded/guarded connector as the local path; a `type_text` macro free-types into the focused
@@ -69,15 +77,19 @@ reuses three proven seams:
 | HSM-18-04 | The spoken-symbol dictionary, ported to Swift | in-progress (built-ins ported + tested + on the dictation path; user-symbol editor + metal proof remain) |
 | HSM-18-05 | Activity pre-briefing — the source-cited nudge client | todo |
 | HSM-18-06 | The real-metal proof + entry-point docs | todo |
+| HSM-18-07 | The Desk-Era rider: run-born artifacts on the iPad desk + the route-surface lock | todo |
 
 ## Where we are
 
-**Opened, with the first fix landed.** HSM-18-02's hub half is done + tested (the macro
+**Resumed 2026-07-03 as the owner-picked next platform step**, scoped to the six authored
+stories plus the Desk-Era rider (HSM-18-07). HSM-18-02's hub half is done + tested (the macro
 relay; see Last updated). Remaining: 18-02's iPad CommandsBoard; 18-01 (the dictation pipeline
 client + teleprompter preview screen, the phase's experience hero); 18-03/18-04 (the
 independent on-device language + symbol ports, parallel-startable); 18-05 (activity nudges,
-needs 18-01's dictate path); 18-06 (the real-metal gate). The audit supplies every story's
-starting `file:symbol` evidence.
+needs 18-01's dictate path); 18-07 (parallel-startable, contract-first); 18-06 (the
+real-metal gate). The audit supplies every story's starting `file:symbol` evidence. The
+owner's Phase-72 iPad device walk stays owner-gated and outside this phase (tracked in
+`pm/roadmap/holdspeak/HANDOVER-2026-07-03-desk-era.md`).
 
 ## Carried context
 
