@@ -9,16 +9,18 @@
 > 🚀 **New agent (general):** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Current phase:** [Phase 18 — The iPad joins the dictation contracts](./phase-18-ipad-dictation-contracts/current-phase-status.md)
-— **RESUMED 2026-07-03 as the owner-picked next platform step** after the web/hub Desk Era closed
-(Phases 72–78, PRs #207–#214): the six authored stories plus the new Desk-Era rider
-**HSM-18-07** (run-born artifacts join the artifact contract + materialize on the iPad desk; a
-guard locks `HTTPDesktopClient` paths against `docs/api-surface.json`). THE EQUILIBRIUM PROGRAM
-([`EQUILIBRIUM.md`](./EQUILIBRIUM.md)) continues, built against the
-[Experience Vision](./EXPERIENCE-VISION-2026-06-27.md). First fix landed 2026-06-27:
-voice-command macros now fire on the remote relay (HSM-18-02 hub half, tested), the backend
-behind the "macro fires as an object" signature moment. Phases 16/17 (web parity + mesh sync;
-agent sync) remain open in parallel.
+**Current phase:** [Phase 19 — The iPad joins the meeting contracts](./phase-19-ipad-meeting-contracts/current-phase-status.md)
+— **OPENED 2026-07-03**, the Equilibrium program's designed pair to Phase 18 (disjoint client
+surfaces: meetings vs dictation). Survey-corrected on open: the entire client layer already
+landed via Equilibrium Waves 3–6 (PRs #151/#155/#156/#159 + the import/learning commits), so
+the phase is **screens over shipped clients** in `CompanionShellApp.swift` — the file-issue
+action, the faceted archive, import, the proposals review queue, the learning reader — plus
+the staged metal walk.
+[Phase 18](./phase-18-ipad-dictation-contracts/current-phase-status.md) stands at **6/7 with
+the gate staged**: only the owner's device walk
+([`HSM-18-06-WALK.md`](./phase-18-ipad-dictation-contracts/HSM-18-06-WALK.md)) remains; the
+19-07 walk is staged to join that couch session. Phases 16/17 (web parity + mesh sync; agent
+sync) remain open in parallel.
 
 **📐 The program — THE EQUILIBRIUM:**
 [`EQUILIBRIUM.md`](./EQUILIBRIUM.md) — bringing every original HoldSpeak feature into full
@@ -29,7 +31,14 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-03 (**Phase 18 RESUMED + the Desk-Era rider HSM-18-07 authored** —
+**Last updated:** 2026-07-03 (**PHASE 19 OPENED — the iPad joins the meeting contracts.**
+After the two-track day closed Phase 18 to 6/7 (gate staged) and Phase 79 same-day, the
+handover's top headless pick opened: the meetings half of audit theme 2. The open survey
+corrected the 2026-06-27 draft — every story's client + contract type already merged
+(EQ Waves 3–6), 19-04 is fully wired and sim-proven, so the seven re-grounded stories are
+UI wiring: 19-01 the aftercare file-issue action leads, then facets / import / provenance
+evidence / the proposals review queue / the learning reader / docs + a press-play walk
+staged to join the owner's 18-06 couch session. Earlier: **Phase 18 RESUMED + the Desk-Era rider HSM-18-07 authored** —
 the owner picked iPad parity as the next platform step after the Desk Era; scope = the six
 authored stories + the rider. Prior, 2026-06-27: **PHASE 20 ON REAL METAL — the device pass began.** The whole iPhone
 size-class pass (20-01..04) is merged, and the app is now **built + installed + launched on a real
