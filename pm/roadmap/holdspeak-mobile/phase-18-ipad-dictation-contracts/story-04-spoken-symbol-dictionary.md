@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 18
-- **Status:** todo — independent on-device port; can run parallel to 18-01/02/03.
+- **Status:** done — see [`evidence-story-04.md`](./evidence-story-04.md). The faithful
+  one-pass port landed 2026-06-27; the closeout ships the user half: `UserSymbol` persists
+  (Codable, corrupt-safe), the speak-to-fill site applies `SpokenSymbols.configured()`
+  (user-wins proven in tests), and Settings gains the "Your symbols" editor — a mic on
+  every field. Device-local by scope; the real-mic walk rides 18-06.
 - **Depends on:** the hub `TextProcessor` / `text_processor.py` (the canonical spoken-symbol
   contract); `WhisperText.clean` (the current Swift post-transcribe step).
 - **Unblocks:** symbol parity ("open paren", "new line", user symbols) on Apple dictation.

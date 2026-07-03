@@ -562,9 +562,9 @@ final class VoiceCaptureState: ObservableObject {
             let said = segs.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
             // HSM-18-04 — this is the DICTATION (speak-to-fill) path, so spoken symbols apply here
             // ("new line" -> newline, "open paren" -> "("). Meeting capture (Stores.swift) stays
-            // verbatim and never runs this. Built-ins only for now; the user-symbol editor follows.
+            // verbatim and never runs this. Built-ins + the user's persisted symbols, user-wins.
             if said.isEmpty { self.error = "Didn't catch that — try again, or type it." }
-            else { text = SpokenSymbols().process(said) }
+            else { text = SpokenSymbols.configured().process(said) }
         } catch { self.error = "Couldn't transcribe: \(error)" }
     }
 }
