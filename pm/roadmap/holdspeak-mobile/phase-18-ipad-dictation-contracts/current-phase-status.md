@@ -76,7 +76,7 @@ reuses three proven seams:
 | HSM-18-03 | Spoken language at every WhisperKit call site | **done** ([evidence](./evidence-story-03.md): the ONE resolver `WhisperLanguage.configuredCode()` + all three call sites wired; real non-English speech in the aux apps rides 18-06) |
 | HSM-18-04 | The spoken-symbol dictionary, ported to Swift | **done** ([evidence](./evidence-story-04.md): user symbols persist + apply at the fill site (user-wins test-proven) + the Settings editor with a mic on every field; the real-mic walk rides 18-06) |
 | HSM-18-05 | Activity pre-briefing — the source-cited nudge client | **done** ([evidence](./evidence-story-05.md): nudge cards + "Dictate with this"→Armed on the dictate surface, live-hub proven on a real ledger; the remote lane now consumes the Phase-53 pin — the third silent relay hole, fixed + test-locked) |
-| HSM-18-06 | The real-metal proof + entry-point docs | todo |
+| HSM-18-06 | The real-metal proof + entry-point docs | in-progress (docs half landed: README iPad section current, ARCHITECTURE at ten extensions / 47 routes; [the walk protocol](./HSM-18-06-WALK.md) staged — five checks + controls + trace; remaining: the owner device walk, pre-flight = the rewriter endpoint decision) |
 | HSM-18-07 | The Desk-Era rider: run-born artifacts on the iPad desk + the route-surface lock | **done** ([evidence](./evidence-story-07.md): `origin` explicit on every serialized surface + schema + Swift models; `HubRunResult.artifactId` shared identity kills a real duplicate-on-sync bug; the kept run result fires the arrival beat, Simulator-proven; the route-surface lock verified already shipped as HS-72-02) |
 
 ## Where we are
