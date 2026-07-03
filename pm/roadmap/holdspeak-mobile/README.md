@@ -10,12 +10,14 @@
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
 **Current phase:** [Phase 19 — The iPad joins the meeting contracts](./phase-19-ipad-meeting-contracts/current-phase-status.md)
-— **OPENED 2026-07-03**, the Equilibrium program's designed pair to Phase 18 (disjoint client
-surfaces: meetings vs dictation). Survey-corrected on open: the entire client layer already
-landed via Equilibrium Waves 3–6 (PRs #151/#155/#156/#159 + the import/learning commits), so
-the phase is **screens over shipped clients** in `CompanionShellApp.swift` — the file-issue
-action, the faceted archive, import, the proposals review queue, the learning reader — plus
-the staged metal walk.
+— **OPENED AND BUILT TO 6/7 SAME-DAY (2026-07-03), the gate staged.** The open survey
+corrected the draft (the client layer already landed via Equilibrium Waves 3–6), so the
+phase was screens over shipped clients in `CompanionShellApp.swift`: the aftercare
+file-issue action, the four-state proposals review queue (with the `decided_by:
+ipad-companion` audit fix the live proof surfaced), search + facet chips, the Import file
+picker, and the learning reader — every story live-hub proven from the connected simulator.
+[`HSM-19-07-WALK.md`](./phase-19-ipad-meeting-contracts/HSM-19-07-WALK.md) (W1–W6) is
+press-play; the owner's device walk closes the phase.
 [Phase 18](./phase-18-ipad-dictation-contracts/current-phase-status.md) stands at **6/7 with
 the gate staged**: only the owner's device walk
 ([`HSM-18-06-WALK.md`](./phase-18-ipad-dictation-contracts/HSM-18-06-WALK.md)) remains; the
@@ -31,14 +33,23 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-03 (**PHASE 19 OPENED — the iPad joins the meeting contracts.**
-After the two-track day closed Phase 18 to 6/7 (gate staged) and Phase 79 same-day, the
-handover's top headless pick opened: the meetings half of audit theme 2. The open survey
-corrected the 2026-06-27 draft — every story's client + contract type already merged
-(EQ Waves 3–6), 19-04 is fully wired and sim-proven, so the seven re-grounded stories are
-UI wiring: 19-01 the aftercare file-issue action leads, then facets / import / provenance
-evidence / the proposals review queue / the learning reader / docs + a press-play walk
-staged to join the owner's 18-06 couch session. Earlier: **Phase 18 RESUMED + the Desk-Era rider HSM-18-07 authored** —
+**Last updated:** 2026-07-03 (**PHASE 19 OPENED AND BUILT TO 6/7 THE SAME EVENING — the
+iPad joins the meeting contracts; the gate is staged.** The handover's top headless pick,
+opened survey-corrected (the client layer had already merged in EQ Waves 3–6) and built as
+screens over shipped clients, each story proven against a live scratch hub from the
+connected simulator: **19-04** provenance flipped on verified evidence; **19-01** the
+accepted-only File issue action (inline repo row, honest proposed pill; live proof:
+proposed/idempotent/400); **19-05** the four-state proposals review queue with the slack
+cloud mark — its live proof surfaced a REAL audit gap (iPad decisions read as `web-user`),
+fixed as `decided_by: "ipad-companion"`, test-locked; **19-02** search + facet chips
+narrowing server-side (a real narrowed render, same code path as the chips); **19-06** the
+learning card (digest chips, correction reach, journal signals, honest no-reach edge);
+**19-03** Import file — the running app itself uploaded a .vtt end to end and the parsed
+speakers fed the facet chips on the same live screen. Docs half of **19-07** done (README's
+six new abilities, voice guard green) and
+[`HSM-19-07-WALK.md`](./phase-19-ipad-meeting-contracts/HSM-19-07-WALK.md) staged W1–W6 to
+join the 18-06 couch session. Both Phase 18 and 19 now sit at 6/7, closed by one device
+session. PRs #223–#229. Earlier: **Phase 18 RESUMED + the Desk-Era rider HSM-18-07 authored** —
 the owner picked iPad parity as the next platform step after the Desk Era; scope = the six
 authored stories + the rider. Prior, 2026-06-27: **PHASE 20 ON REAL METAL — the device pass began.** The whole iPhone
 size-class pass (20-01..04) is merged, and the app is now **built + installed + launched on a real

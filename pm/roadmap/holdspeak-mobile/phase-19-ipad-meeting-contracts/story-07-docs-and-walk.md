@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 19
-- **Status:** todo
+- **Status:** in-progress — the docs half is DONE (README companion section carries the
+  six new abilities, voice guard green; ARCHITECTURE's client-layer section verified
+  current) and the walk is STAGED press-play at [`HSM-19-07-WALK.md`](./HSM-19-07-WALK.md)
+  (six checks W1–W6 with controls, sharing the 18-06 couch session). What remains is the
+  owner's device walk; PASS×6 closes this story and the phase.
 - **Depends on:** 19-01…19-06 (documents what shipped; the walk exercises it).
 - **Unblocks:** phase close (the owner's device walk is the gate).
 - **Owner:** unassigned
