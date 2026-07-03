@@ -178,18 +178,19 @@ The iPad joins the same hub over your own network (LAN or Tailscale, no
 hosted relay). It is a typed client of the FastAPI routes, built around one
 HTTP client (`apple/Sources/Providers/Desktop/HTTPDesktopClient.swift`)
 split into one base client (meeting control, the coder board, remote
-dictation delivery) plus nine focused extensions (aftercare, facets,
-artifacts, proposals, dictation, dictation blocks, activity, learning,
-meeting import); the sync transport rides its own provider on the same
-pairing.
+dictation delivery) plus ten focused extensions (aftercare, facets,
+artifacts, proposals, dictation, dictation blocks, voice commands,
+activity, learning, meeting import); the sync transport rides its own
+provider on the same pairing.
 
 The full surface it consumes is generated, not hand-listed: see
 [API_SURFACE.md](API_SURFACE.md), where every route the app serves carries
 its consumers as extracted from the real call sites. As of the last
-generation the iPad consumes 44 routes, spanning meetings (list, facets,
+generation the iPad consumes 47 routes, spanning meetings (list, facets,
 detail, artifacts, aftercare, file-issue, proposals + decisions, start,
 stop, import), dictation (dry-run, readiness, remote delivery, journal,
-blocks + templates, learning digest, project context), activity (briefing,
+blocks + templates, learning digest, project context), the voice command
+board (settings read and write, test one action), activity (briefing,
 nudges, select, dismiss), capability runs (agents, chains), the coder board
 (`api/coders/*`: which live coding session receives a spoken answer), the
 desk actuator relay (`api/desk/actuators/*`: a desk card becomes a hub

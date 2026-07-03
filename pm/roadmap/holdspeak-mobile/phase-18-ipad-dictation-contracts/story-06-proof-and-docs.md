@@ -2,7 +2,13 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 18
-- **Status:** todo — the phase gate.
+- **Status:** in-progress — the docs half landed headless (README iPad section refreshed
+  to the shipped screens + the receipt; ARCHITECTURE's client map at ten extensions /
+  47 routes; guards green) and the walk is staged:
+  [`HSM-18-06-WALK.md`](./HSM-18-06-WALK.md) is the press-play protocol (five checks,
+  controls included, trace template). Remaining: the owner's device walk, gated on the
+  ONE pre-flight decision (the rewriter endpoint — options and exact commands in the
+  walk doc).
 - **Depends on:** 18-01 … 18-05.
 - **Unblocks:** closing Phase 18.
 - **Owner:** unassigned

@@ -255,14 +255,18 @@ The iPad is a first-class client of both modes, not a remote control for one.
 It talks to the hub through typed clients over the existing API: it dictates an
 answer into your desk (the hub runs that text through the full dictation
 pipeline, applying your corrections and routing, and types the result, and a
-matching voice command fires there too), pins your spoken language and your
-spoken-symbol dictionary on that dictation path, reads a meeting back with its
-artifacts, confidence, and sources, keeps proposing an action separate from
-approving it (the human gate stays its own step), reads the faceted archive, and
-pulls activity pre-briefing nudges. Its on-device storage is schema safe the
-same way the desktop is: it backs an older database up before migrating, and
-refuses to open one written by a newer build. The on-device screens for these
-are still coming together; the client layer they ride on is shipped and tested.
+matching voice command fires there too), previews the rewrite before anything
+types (an opt-in receipt: what you approve is exactly what lands, verbatim),
+authors the voice command board itself (every action still runs on the Mac,
+and the board says so), pins your spoken language and your spoken-symbol
+dictionary on that dictation path, reads a meeting back with its artifacts,
+confidence, and sources, keeps proposing an action separate from approving it
+(the human gate stays its own step), reads the faceted archive, and pulls
+activity pre-briefing nudges whose "Dictate with this" grounds the next
+utterance in the cited record. Its on-device storage is schema safe the same
+way the desktop is: it backs an older database up before migrating, and
+refuses to open one written by a newer build. The app itself is not released
+yet; the screens and the typed client layer they ride on are built and tested.
 
 ### AIPI-Lite
 
