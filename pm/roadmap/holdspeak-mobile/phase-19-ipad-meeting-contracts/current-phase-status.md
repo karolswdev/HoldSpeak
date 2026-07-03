@@ -48,7 +48,7 @@ autonomous.
 | ID | Title | Status |
 |----|-------|--------|
 | HSM-19-01 | Meeting aftercare — the file-issue action closes the loop — **leads** | done — [`evidence-story-01.md`](./evidence-story-01.md) (live-hub proven; the tap rides the walk W1) |
-| HSM-19-02 | The faceted archive — search + facet chips over the shipped clients | todo (client merged, EQ-W3) |
+| HSM-19-02 | The faceted archive — search + facet chips over the shipped clients | done — [`evidence-story-02.md`](./evidence-story-02.md) (live-hub proven; the tap rides the walk W2) |
 | HSM-19-03 | Meeting import on the iPad — the picker over the multipart client | todo (client merged, `013c7d0`) |
 | HSM-19-04 | Artifact provenance — confidence ring + sources | done — [`evidence-story-04.md`](./evidence-story-04.md) (shipped #151/#159; verified today, metal joins the 19-07 walk) |
 | HSM-19-05 | The proposals review queue (the split, made visible) | done — [`evidence-story-05.md`](./evidence-story-05.md) (live-hub proven with 19-01; `decided_by` audit fix; the tap rides the walk W5) |
@@ -63,7 +63,9 @@ inline repo row + honest proposed pill, live-hub proven); **19-05 made the split
 (the four-state queue card, Approve/Reject on `proposed` only, the slack cloud mark) —
 proven END TO END with 19-01 on one live hub: file → the proposal appears in the queue →
 decide → the illegal-transition 400. The proof surfaced a real audit gap (an iPad decision
-read as `web-user`) — fixed, `decided_by: "ipad-companion"` test-locked. Next: 19-02
-(facets) / 19-03 (import) / 19-06 (learning), then 19-07. The metal gate (19-07's walk) is
+read as `web-user`) — fixed, `decided_by: "ipad-companion"` test-locked. **19-02 followed**
+(4/7): search + facet chips over `listFacets`/`searchMeetings`, server-side narrowing,
+live-hub proven with a REAL narrowed render (`HS_SHELL_FACET_SPEAKER` drives the same code
+path the chips call). Next: 19-03 (import) / 19-06 (learning), then 19-07. The metal gate (19-07's walk) is
 staged press-play so it can join the owner's 18-06 couch session. The `SpokenSymbols` port
 (18-04) is reused for any meeting-side symbol application — do not re-implement it.

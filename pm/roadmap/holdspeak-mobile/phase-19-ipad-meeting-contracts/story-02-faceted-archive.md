@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 19
-- **Status:** todo (the client half is merged — EQ-W3, PR #151)
+- **Status:** done — see [`evidence-story-02.md`](./evidence-story-02.md). Search + facet
+  chips on the desktop card, server-side narrowing, honest empties; live-hub proven (real
+  facets from real segments/tags; a real narrowed render via the same code path the chips
+  call). The `date_*`/`has_open_actions` params stay a named follow-up. The tap rides the
+  19-07 walk (W2).
 - **Depends on:** `HTTPDesktopClient+Facets.swift` (`listFacets()`, `searchMeetings(query:speaker:type:)`);
   hub routes `GET /api/meetings` (`search/speaker/tag` params) + `GET /api/meetings/facets`
   (`holdspeak/web/routes/meetings/crud.py:24,90`).
