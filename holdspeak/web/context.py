@@ -79,6 +79,7 @@ class WebContext:
     on_wake_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_discard: Optional[Callable[[str], bool]] = None
+    on_transcribe: Optional[Callable[[Any], str]] = None
     current_formatted_duration: Optional[Callable[[], Optional[str]]] = None
 
     # HS-39-02: session dictation correction store (a `CorrectionStore`). The

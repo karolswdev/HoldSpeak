@@ -7,6 +7,7 @@ import { motion } from "motion/react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../../scripts/desk/sprites.js";
 import { useDesk } from "../store";
+import { MicButton } from "./MicButton";
 import { lineage } from "../lineage";
 import { objGlow, type WorldObject } from "../world";
 
@@ -23,7 +24,7 @@ export function Pullout({ o }: { o: WorldObject }) {
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
   const backId = useDesk((s) => s.pulloutBackId);
-  const { closePullout, openPullout, openEditor, fileIntoDir, removeFromDir, answerCoder } = useDesk.getState();
+  const { closePullout, openPullout, openEditor, fileIntoDir, removeFromDir, answerCoder, speakToCoder } = useDesk.getState();
   const ref = useRef<HTMLDivElement | null>(null);
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [artifacts, setArtifacts] = useState<any[]>([]);
@@ -31,7 +32,7 @@ export function Pullout({ o }: { o: WorldObject }) {
   const [runBusy, setRunBusy] = useState(false);
   const [runOut, setRunOut] = useState("");
   const [filing, setFiling] = useState(false);
-  const [answered, setAnswered] = useState<"selected" | "failed" | null>(null);
+  const [answered, setAnswered] = useState<"selected" | "sent" | "failed" | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -219,17 +220,33 @@ export function Pullout({ o }: { o: WorldObject }) {
           <section>
             <p className="quiet">{String(ir.model || "")} · {String(ir.state || "")}</p>
             {ir.question ? <pre className="desk-pullout-md">{String(ir.question)}</pre> : null}
-            <button
-              type="button"
-              className="desk-chip"
-              onClick={() => {
-                void answerCoder(String(ir.agent || "claude"), String(ir.sessionId || o.id)).then(
-                  (ok) => setAnswered(ok ? "selected" : "failed"),
-                );
-              }}
-            >
-              {answered === "selected" ? "Dictation target" : answered === "failed" ? "Retry" : "Answer with voice"}
-            </button>
+            <div className="desk-coder-answer">
+              <MicButton
+                label="Hold to answer"
+                onText={(t) => {
+                  setAnswered(null);
+                  void speakToCoder(
+                    String(ir.agent || "claude"),
+                    String(ir.sessionId || o.id),
+                    t,
+                  ).then((ok) => setAnswered(ok ? "sent" : "failed"));
+                }}
+              />
+              <span className="quiet desk-coder-answer-state">
+                {answered === "sent" ? "Sent" : answered === "failed" ? "Retry" : "Hold to answer"}
+              </span>
+              <button
+                type="button"
+                className="desk-chip quiet"
+                onClick={() => {
+                  void answerCoder(String(ir.agent || "claude"), String(ir.sessionId || o.id)).then(
+                    (ok) => setAnswered(ok ? "selected" : "failed"),
+                  );
+                }}
+              >
+                {answered === "selected" ? "Dictation target" : "Use the hotkey"}
+              </button>
+            </div>
           </section>
         )}
 

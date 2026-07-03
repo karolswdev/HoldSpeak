@@ -1180,7 +1180,18 @@
       ],
       "module": "web.routes.dictation.pipeline",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/dictation/transcribe",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system",
+      "consumers": [
+        "web"
       ]
     },
     {

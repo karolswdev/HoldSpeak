@@ -152,6 +152,8 @@ class WebRuntimeCallbacks:
     # HS-75-01: hold-key preview commit/discard (the wake seam generalized).
     on_preview_type: Optional[Callable[[str], Optional[str]]] = None
     on_preview_discard: Optional[Callable[[str], bool]] = None
+    # HS-78-01: speak-to-fill — browser audio in, the runtime's transcript out.
+    on_transcribe: Optional[Callable[[Any], str]] = None
     on_dictation_config_changed: Optional[Callable[[], None]] = None
     # HSM-13-04: deliver a companion-dictated answer (already pipeline-processed by the
     # route) into the waiting coder session via the SAME tmux/type path local dictation
@@ -244,6 +246,7 @@ class MeetingWebServer:
         self.on_wake_type = callbacks.on_wake_type
         self.on_preview_type = callbacks.on_preview_type
         self.on_preview_discard = callbacks.on_preview_discard
+        self.on_transcribe = callbacks.on_transcribe
         self.on_dictation_config_changed = callbacks.on_dictation_config_changed
         self.on_remote_dictation = callbacks.on_remote_dictation
         self._project_detector = callbacks.project_detector
@@ -554,6 +557,7 @@ class MeetingWebServer:
             on_wake_type=self.on_wake_type,
             on_preview_type=self.on_preview_type,
             on_preview_discard=self.on_preview_discard,
+            on_transcribe=self.on_transcribe,
             current_formatted_duration=self._current_formatted_duration,
             corrections=self.dictation_corrections,
             telemetry=self.dictation_telemetry,

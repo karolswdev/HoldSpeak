@@ -33,11 +33,22 @@ def test_no_dialog_takeovers_on_the_desk() -> None:
         assert 'role="dialog"' not in text, f"dialog takeover pattern in {name}"
 
 
-def test_no_browser_microphone_on_the_desk() -> None:
+def test_the_orb_never_uses_the_browser_microphone() -> None:
+    """The rule's real intent (re-scoped in HS-78-02, owner steer "just
+    talk to this stuff"): MEETING RECORDING always runs on the hub — the
+    orb must never reach for the browser mic. Speak-to-fill capture
+    (Phase 78) is exactly what the browser mic is for, and its shared
+    helper lives outside the desk tree (web/src/scripts/speak-to-fill.js);
+    desk components may import it but never call getUserMedia directly."""
     for name, text in _tree(DESK).items():
         assert "getUserMedia" not in text, (
-            f"browser mic in {name} — the orb drives the hub recorder"
+            f"direct browser-mic call in {name} — capture lives in the "
+            "shared speak-to-fill helper; the orb drives the hub recorder"
         )
+        if name.endswith("RecordOrb.tsx"):
+            assert "speak-to-fill" not in text and "speakToFill" not in text, (
+                "the orb records via the hub, never the browser mic"
+            )
 
 
 def test_no_privacy_narration_in_desk_ui() -> None:

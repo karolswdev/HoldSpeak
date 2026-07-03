@@ -8,6 +8,7 @@ import {
 import { DeskObject } from "./DeskObject";
 import { InlineEditor } from "./InlineEditor";
 import { Pullout } from "./Pullout";
+import { MicButton } from "./MicButton";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl, variantIndex } from "../../scripts/desk/sprites.js";
 import { resolveRef } from "../lineage";
@@ -101,19 +102,21 @@ function ZoneTray({ z, style }: { z: ReturnType<typeof worldZones>[number]; styl
       }}
     >
       {renaming || focusRename ? (
-        <input
-          className="desk-zone-rename"
-          value={focusRename && !renaming ? z.title : name}
-          autoFocus
-          onFocus={() => { setName(z.title); setRenaming(true); }}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={commit}
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commit();
-            if (e.key === "Escape") { setName(z.title); setRenaming(false); setRenamingZone(null); }
-          }}
-        />
+        <span className="desk-zone-rename-row" onClick={(e) => e.stopPropagation()}>
+          <input
+            className="desk-zone-rename"
+            value={focusRename && !renaming ? z.title : name}
+            autoFocus
+            onFocus={() => { setName(z.title); setRenaming(true); }}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commit();
+              if (e.key === "Escape") { setName(z.title); setRenaming(false); setRenamingZone(null); }
+            }}
+          />
+          <MicButton onText={(t) => setName(t)} />
+        </span>
       ) : (
         <span
           className="desk-zone-title"

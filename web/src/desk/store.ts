@@ -76,6 +76,9 @@ interface DeskState {
   removeFromDir(pid: string, dirId: string): Promise<void>;
   /** Select a coder session as the dictation target (answerCoder parity). */
   answerCoder(agent: string, sessionId: string): Promise<boolean>;
+  /** Speak straight into the waiting coder (HS-78-03): select the
+   * session, then inject the transcript through the remote seam. */
+  speakToCoder(agent: string, sessionId: string, text: string): Promise<boolean>;
   /** Run a capability through the real route; the persisted result
    * MATERIALIZES on the desk (HS-74-03: refresh + the NEW beat). */
   runCapability(
@@ -301,6 +304,25 @@ export const useDesk = create<DeskState>((set, get) => ({
       return { ok: res.ok, output, artifactId };
     } catch (e) {
       return { ok: false, output: String(e), artifactId: null };
+    }
+  },
+
+  async speakToCoder(agent, sessionId, text) {
+    if (!text.trim()) return false;
+    try {
+      await fetch("/api/coders/select", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ agent, session_id: sessionId }),
+      });
+      const res = await fetch("/api/dictation/remote", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text, target_mode: "agent" }),
+      });
+      return res.ok;
+    } catch {
+      return false;
     }
   },
 
