@@ -36,6 +36,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   route behaves exactly as before.
 
 ### Fixed
+- "Dictate with this" now grounds remote dictations too. The activity
+  nudge's selected record was consumed by the local dictation path but
+  silently ignored on `/api/dictation/remote`; the remote lane now folds
+  the selected record into the rewrite context the same way, one-shot.
 - The preview card no longer renders as an empty box on pages with no
   armed preview.
 - The settings loader no longer silently drops the preview toggle on

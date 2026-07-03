@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 18
-- **Status:** todo — depends on the dictate path (18-01) for the "Dictate with this" close.
+- **Status:** done — see [`evidence-story-05.md`](./evidence-story-05.md). The nudge cards
+  (citations, Dismiss, "Dictate with this" → Armed) on the dictate surface, proven against
+  a live hub computing real nudges from a real ledger; plus the hub hole the audit's
+  pattern predicted — the remote dictation lane never consumed the Phase-53 selection pin
+  (the local runner did) — fixed and test-locked, one-shot semantics preserved.
 - **Depends on:** 18-01 (the dictate input the nudge feeds); the hub activity routes
   (`/api/activity/*`, `holdspeak/web/routes/activity/`).
 - **Unblocks:** activity-nudge parity on the iPad.

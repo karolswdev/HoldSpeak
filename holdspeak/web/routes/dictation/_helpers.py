@@ -457,8 +457,16 @@ def _run_dictation_dry_run_text(
     dismissed_signatures: set[str] | None = None,
     telemetry: Any = None,
     journal: Any = None,
+    activity_context: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
-    """Execute the browser dry-run path for already-validated text."""
+    """Execute the browser dry-run path for already-validated text.
+
+    ``activity_context`` (HSM-18-05): a pre-built activity dict (the runner's
+    ``build_activity_context(...).to_dict()`` shape) folded into the utterance so
+    the rewrite can ground in a selected record — the remote relay passes it when
+    a "Dictate with this" pin is pending. ``None`` keeps the historical
+    target-only activity dict byte-identical.
+    """
     from ....config import Config
     from ....dictation_telemetry import summarize_dry_run
     from ....plugins.dictation.assembly import DEFAULT_GLOBAL_BLOCKS_PATH, build_pipeline
@@ -531,13 +539,15 @@ def _run_dictation_dry_run_text(
         enabled=bool(getattr(cfg.pipeline, "target_detect_llm_enabled", False)),
         below_confidence=float(getattr(cfg.pipeline, "target_detect_llm_below", 0.8)),
     )
+    activity = dict(activity_context) if activity_context else {}
+    activity["target"] = target_profile.to_dict()
     run = result.pipeline.run(
         Utterance(
             raw_text=text,
             audio_duration_s=0.0,
             transcribed_at=datetime.now(),
             project=project,
-            activity={"target": target_profile.to_dict()},
+            activity=activity,
         )
     )
     # HS-45-01: journal the dry-run as a side-channel (best-effort; never alters

@@ -391,6 +391,26 @@ def build_pipeline_router(
                 }
             )
 
+        # HSM-18-05 — the pre-briefing loop closes on the REMOTE lane too, exactly
+        # as it does in the local runner (HS-53-07): a "Dictate with this" tap
+        # parked a record id; consume it (one-shot, recency-bounded) and fold the
+        # activity context in so the rewrite grounds in the selected record. This
+        # was the third silent relay hole of the audit's pattern: the pin existed,
+        # the local path consumed it, and the remote path never did. No pending
+        # pin -> activity_context is None -> byte-identical to before this fix.
+        activity_context = None
+        try:
+            from ....activity_context import build_activity_context
+            from ....dictation_selection import consume_selected_record
+
+            selected_record_id = consume_selected_record()
+            if selected_record_id is not None:
+                activity_context = build_activity_context(
+                    limit=20, refresh=False, selected_record_id=selected_record_id
+                ).to_dict()
+        except Exception as exc:
+            log.warning(f"Remote dictation activity grounding unavailable: {exc}")
+
         # Reuse the exact rich-pipeline path the browser dry-run uses, so the same
         # corrections/blocks/plugins apply — the answer is as smart as one spoken at
         # the desk, not raw transcript.
@@ -404,6 +424,7 @@ def build_pipeline_router(
                 dismissed_signatures=dismissed_signatures,
                 telemetry=ctx.telemetry,
                 journal=ctx.journal,
+                activity_context=activity_context,
             )
         except Exception as exc:
             log.error(f"Remote dictation pipeline failed: {exc}")
