@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 21
-- **Status:** todo
+- **Status:** done — see [`evidence-story-02.md`](./evidence-story-02.md). Seven sites
+  fixed (the guard's first run caught a 7th the survey missed — the classic home header),
+  the guard scans Swift string literals for banned names + reassurance prose (comments
+  legal, the Qlippy docs-rule untouched), red-proven with seeded violations.
 - **Depends on:** 21-01 (the badge grammar the fixed labels adopt);
   `tests/unit/test_doc_drift_guard.py` (the guard this extends).
 - **Unblocks:** banned names and privacy prose cannot reappear on Apple surfaces.

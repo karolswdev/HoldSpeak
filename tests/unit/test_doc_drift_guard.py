@@ -397,3 +397,84 @@ def test_voice_guard_patterns_catch_seeded_violations() -> None:
     assert not _BANNED_NAMES.search("voice commands fire on keywords")
     assert not _BANNED_NAMES.search("Send to Slack creates a proposal")
     assert not _BANNED_NAMES.search("the configured Slack webhook")
+
+
+# ─── HSM-21-02: the Apple surfaces speak the same language ───────────────────
+#
+# Swift STRING LITERALS are product copy (labels a user reads on the iPad).
+# Two rules, mirroring the docs/web scans: no banned feature-name synonyms,
+# and no privacy-reassurance prose ("nothing leaves") — the egress badge IS
+# the privacy statement (POSITIONING quiet-trust rule). Only quoted strings
+# are scanned, so code comments and doc comments stay legal; the Qlippy DOC
+# test above (which REQUIRES the verbatim phrase in a doc) is a docs rule and
+# is untouched by this.
+
+_REASSURANCE_PROSE = re.compile(
+    r"nothing leaves|never leaves|stays on (?:this|your)",
+    re.IGNORECASE,
+)
+
+# A single-line Swift string literal (escapes tolerated). Multi-line `"""`
+# blocks are not matched per-line; UI label copy in this codebase is
+# single-line string literals.
+_SWIFT_STRING = re.compile(r'"(?:[^"\\]|\\.)*"')
+
+
+def _swift_user_facing() -> list[Path]:
+    """Product Swift under apple/App + apple/Sources (never the staged build/)."""
+    out: list[Path] = []
+    for root in (_REPO / "apple" / "App", _REPO / "apple" / "Sources"):
+        out.extend(root.rglob("*.swift"))
+    return sorted(p for p in out if "build" not in p.parts)
+
+
+def _swift_string_offenders(pattern: "re.Pattern[str]") -> list[str]:
+    offenders = []
+    for src in _swift_user_facing():
+        for lineno, line in enumerate(src.read_text(encoding="utf-8").split("\n"), 1):
+            for literal in _SWIFT_STRING.findall(line):
+                if pattern.search(literal):
+                    offenders.append(
+                        f"{src.relative_to(_REPO)}:{lineno}: {literal[:80]}"
+                    )
+    return offenders
+
+
+def test_no_swift_copy_uses_banned_feature_names() -> None:
+    offenders = _swift_string_offenders(_BANNED_NAMES)
+    assert not offenders, (
+        "Non-canonical feature names in Swift string literals (the canonical "
+        "table lives in docs/internal/POSITIONING.md):\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_no_swift_copy_narrates_privacy_reassurance() -> None:
+    """Labels state the posture; the badge is the privacy sentence. A Swift
+    string that says 'nothing leaves' is reassurance prose — use the
+    EgressScope grammar ('On device') instead."""
+    offenders = _swift_string_offenders(_REASSURANCE_PROSE)
+    assert not offenders, (
+        "Privacy-reassurance prose in Swift string literals (render the "
+        "EgressScope badge instead — POSITIONING quiet-trust rule):\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_swift_guard_scans_the_app_sources() -> None:
+    """Sanity: the scan reaches the real surfaces, flags a seeded violation in
+    a string literal, and spares the same words in a comment."""
+    srcs = _swift_user_facing()
+    assert len(srcs) > 50
+    names = {p.name for p in srcs}
+    assert {"CompanionShellApp.swift", "DeskDioramaStage.swift", "EgressScope.swift"} <= names
+
+    seeded_hit = 'Text("on-device · nothing leaves")'
+    assert any(
+        _REASSURANCE_PROSE.search(lit) for lit in _SWIFT_STRING.findall(seeded_hit)
+    ), "the reassurance pattern must flag the historical label"
+    seeded_comment = "// fully on-device; nothing leaves"
+    assert not _SWIFT_STRING.findall(seeded_comment), "comments stay legal"
+    seeded_name = 'Text("tune intelligent typing here")'
+    assert any(
+        _BANNED_NAMES.search(lit) for lit in _SWIFT_STRING.findall(seeded_name)
+    ), "the banned-name pattern must flag Swift copy"

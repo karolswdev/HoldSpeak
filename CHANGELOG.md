@@ -17,6 +17,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   coder session `Local + your desktop`, a note `On device`), and the
   companion's chips use the same three words — a mixed posture is never
   dressed as local.
+- The iPad's labels stopped narrating privacy. Every "nothing leaves"
+  string adopted the badge grammar, and a new guard keeps banned names
+  and reassurance prose out of Apple product copy the same way it
+  already does for docs and the web.
 - **File an issue from the iPad.** The companion's meeting aftercare card
   can turn an accepted action item into a GitHub-issue proposal (repo
   typed inline, remembered for the session). Filing only records a

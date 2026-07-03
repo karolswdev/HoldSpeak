@@ -28,7 +28,7 @@ public final class ReviewModel: @unchecked Sendable {
 
     /// Capture + intelligence are on-device; the badge says so (positioning canon — one
     /// badge, no privacy prose).
-    public var egressLabel: String { "on-device · nothing leaves" }
+    public var egressLabel: String { "on device" }
 
     /// Artifacts grouped by type, ordered by the MIR profile's emphasis first, then any
     /// remaining types. Empty groups are omitted — the review reflects the profile.

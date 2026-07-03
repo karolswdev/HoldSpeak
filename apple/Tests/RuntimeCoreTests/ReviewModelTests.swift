@@ -79,6 +79,6 @@ final class ReviewModelTests: XCTestCase {
     }
 
     func testEgressIsOnDevice() {
-        XCTAssertEqual(ReviewModel(artifacts: []).egressLabel, "on-device · nothing leaves")
+        XCTAssertEqual(ReviewModel(artifacts: []).egressLabel, "on device")
     }
 }

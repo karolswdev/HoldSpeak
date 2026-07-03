@@ -87,7 +87,7 @@ public final class MeetingCapture: @unchecked Sendable {
     public var currentID: String? { locked { meetingID } }
 
     /// Capture stays local; the egress badge says so plainly.
-    public var egressLabel: String { "on-device · nothing leaves" }
+    public var egressLabel: String { "on device" }
 
     /// HSM-14 — the live mic amplitude (0…~1), smoothed, updated on every captured buffer
     /// (~12×/s). Drives the audio-reactive waveform so the control plane visibly responds to

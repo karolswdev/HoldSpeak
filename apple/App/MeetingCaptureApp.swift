@@ -689,8 +689,8 @@ struct MeetingListView: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 7) {
-                    Image(systemName: "lock.fill").font(.system(size: 9, weight: .black))
-                    Text("ON-DEVICE · NOTHING LEAVES").font(.system(size: 10, weight: .heavy)).tracking(1.4)
+                    Image(systemName: EgressScope.local.symbolName).font(.system(size: 9, weight: .black))
+                    Text(EgressScope.local.label.uppercased()).font(.system(size: 10, weight: .heavy)).tracking(1.4)
                 }
                 .foregroundStyle(Sig.local)
                 .padding(.horizontal, 10).padding(.vertical, 5)

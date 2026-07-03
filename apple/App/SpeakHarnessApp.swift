@@ -269,7 +269,7 @@ struct SpeakView: View {
     private var egress: some View {
         HStack(spacing: 8) {
             Image(systemName: "lock.fill").foregroundStyle(Sig.ok)
-            Text("on-device · nothing leaves").font(.caption.monospaced()).foregroundStyle(Sig.muted)
+            Text("on device").font(.caption.monospaced()).foregroundStyle(Sig.muted)
         }
         .padding(.horizontal, 10).padding(.vertical, 8)
         .background(Sig.s3, in: RoundedRectangle(cornerRadius: 9))

@@ -53,17 +53,19 @@ sentence, per canon).
 | ID | Title | Status |
 |----|-------|--------|
 | HSM-21-01 | The one egress contract (`EgressScope` in Contracts + `DeskPrimitive.egress` + every surface consumes it) — **leads** | done — [`evidence-story-01.md`](./evidence-story-01.md) (sim-proven ×3; the hard-coded capsule is dead) |
-| HSM-21-02 | The Swift banned-copy + reassurance-prose guard (+ fix the 6 sites) | todo |
+| HSM-21-02 | The Swift banned-copy + reassurance-prose guard (+ fix the sites) | done — [`evidence-story-02.md`](./evidence-story-02.md) (7 sites; the guard caught the 7th itself) |
 | HSM-21-03 | GitHub-repo honesty: the tile's ready state tells the truth; the host-fallback path ratified | todo (web+backend halves shipped pre-open) |
 | HSM-21-04 | The ambient trust chip on the iPad + the web-chip posture audit | todo |
 | HSM-21-05 | Docs + the walk rider (honesty checks join the staged couch session) | todo |
 
 ## Where we are
 
-Opened 2026-07-03; **1/5 the same hour** — 21-01 landed: `EgressScope` is the one grammar,
+Opened 2026-07-03; **2/5 the same hour** — 21-01 landed: `EgressScope` is the one grammar,
 `DeskPrimitive.egress` drives the pull-out badge (connectors wear Cloud, a live coder
 session wears Local + your desktop, everything else stays honestly local), and the desk
 capsule / mesh text / shell chips all consume it — including fixing the mixed-as-local
-drift from tonight's own 18/19 chips. Next: 21-02 (the guard locks the words), then 21-03 /
-21-04 / 21-05. Artifact provenance rendering shipped in 19-04; this phase owns the audit
+drift from tonight's own 18/19 chips. **21-02 followed**: seven "nothing leaves" labels
+adopted the badge grammar (the new guard's FIRST RUN caught the 7th — the classic home
+header the survey missed) and the guard now scans Swift string literals for banned names +
+reassurance prose, red-proven. Next: 21-03 / 21-04 / 21-05. Artifact provenance rendering shipped in 19-04; this phase owns the audit
 that no surface fakes a posture.
