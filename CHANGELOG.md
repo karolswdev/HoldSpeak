@@ -29,6 +29,11 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   `origin` field (`meeting` or `run`) rides sync pull and the meeting
   artifacts route, so clients no longer infer a run's output from an
   empty meeting id.
+- Remote dictation can deliver verbatim: `raw: true` on
+  `/api/dictation/remote` types exactly the given text, skipping the
+  pipeline and macro dispatch. For companion clients that previewed a
+  dry-run receipt — what previewed is what types. Without the flag the
+  route behaves exactly as before.
 
 ### Fixed
 - The preview card no longer renders as an empty box on pages with no

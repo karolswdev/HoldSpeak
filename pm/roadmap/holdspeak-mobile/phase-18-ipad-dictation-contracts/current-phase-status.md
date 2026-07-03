@@ -71,7 +71,7 @@ reuses three proven seams:
 
 | ID | Title | Status |
 |----|-------|--------|
-| HSM-18-01 | The dictation pipeline client + authoring/preview screen — **leads** | in-progress (client spine + teleprompter screen landed, sim-proven; voice input + metal proof remain) |
+| HSM-18-01 | The dictation pipeline client + authoring/preview screen — **leads** | **done** ([evidence](./evidence-story-01.md): the voice teleprompter's readiness strip + opt-in "Preview first" receipt; hub `raw` verbatim delivery makes the receipt true (a latent double-rewrite fixed); live-hub proof from the simulator; the device voice walk rides 18-06) |
 | HSM-18-02 | Voice command macros fire on the remote relay + the iPad CommandsBoard | in-progress (hub half landed; iPad board todo) |
 | HSM-18-03 | Spoken language at every WhisperKit call site | in-progress (main app done; harness apps + metal proof remain) |
 | HSM-18-04 | The spoken-symbol dictionary, ported to Swift | in-progress (built-ins ported + tested + on the dictation path; user-symbol editor + metal proof remain) |
@@ -82,17 +82,19 @@ reuses three proven seams:
 ## Where we are
 
 **Resumed 2026-07-03 as the owner-picked next platform step**, scoped to the six authored
-stories plus the Desk-Era rider (HSM-18-07). **18-07 is done** (the rider closed same-day:
-`origin` explicit on every artifact surface, the hub's `artifact_id` reconciles instead of
-duplicating, the kept run result materializes with the arrival beat — evidence in
-[evidence-story-07.md](./evidence-story-07.md)). HSM-18-02's hub half is done + tested (the
-macro relay; see the 2026-06-27 update). Remaining: 18-02's iPad CommandsBoard; 18-01 (the
-dictation pipeline client + teleprompter preview screen, the phase's experience hero);
-18-03/18-04 (the independent on-device language + symbol ports, parallel-startable); 18-05
-(activity nudges, needs 18-01's dictate path); 18-06 (the real-metal gate). The audit
-supplies every story's starting `file:symbol` evidence. The owner's Phase-72 iPad device
-walk stays owner-gated and outside this phase (tracked in
-`pm/roadmap/holdspeak/HANDOVER-2026-07-03-desk-era.md`).
+stories plus the Desk-Era rider (HSM-18-07). **18-07 is done** (merged PR #215: `origin`
+explicit on every artifact surface, the hub's `artifact_id` reconciles instead of
+duplicating, the kept run result materializes with the arrival beat —
+[evidence-story-07.md](./evidence-story-07.md)). **18-01 is done** (the phase's experience
+hero: the voice teleprompter's readiness strip + opt-in "Preview first" receipt, the hub's
+`raw` verbatim delivery making the receipt true, live-hub proof from the simulator —
+[evidence-story-01.md](./evidence-story-01.md)). HSM-18-02's hub half is done + tested (the
+macro relay; see the 2026-06-27 update). Remaining: 18-02's iPad CommandsBoard;
+18-03/18-04 follow-ups (aux app targets; the user-symbol editor); 18-05 (activity nudges,
+now unblocked — the dictate path exists); 18-06 (the real-metal gate, which also carries
+18-01's on-device spoken-word walk). The audit supplies every story's starting
+`file:symbol` evidence. The owner's Phase-72 iPad device walk stays owner-gated and outside
+this phase (tracked in `pm/roadmap/holdspeak/HANDOVER-2026-07-03-desk-era.md`).
 
 ## Carried context
 

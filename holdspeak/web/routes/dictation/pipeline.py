@@ -329,6 +329,28 @@ def build_pipeline_router(
                 status_code=400,
             )
 
+        # HSM-18-01 — verbatim delivery for a client holding a dry-run receipt.
+        # A previewed `final_text` has already been through the pipeline; running
+        # it again would make the receipt a lie (the rewrite is not idempotent).
+        # `raw: true` types EXACTLY the given text: no pipeline, no macro
+        # dispatch. Absent/false -> the paths below run byte-identical.
+        if bool(payload.get("raw")):
+            delivered = False
+            if ctx.on_remote_dictation is not None:
+                try:
+                    if target_mode == "agent":
+                        ctx.on_remote_dictation(text)
+                    else:
+                        ctx.on_remote_dictation(text, target=target_mode)
+                    delivered = True
+                except Exception as exc:
+                    log.error(f"Remote dictation delivery failed: {exc}")
+                    return JSONResponse(
+                        {"error": f"delivery failed: {exc}", "final_text": text, "delivered": False},
+                        status_code=502,
+                    )
+            return JSONResponse({"success": True, "final_text": text, "delivered": delivered})
+
         # HSM-18-02 — voice command macros must fire on the remote relay too, exactly
         # as they do on the local dictation path (dictation_capture._maybe_dispatch_
         # voice_command). A configured, enabled macro keyword is NOT dictated as prose;

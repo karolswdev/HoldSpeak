@@ -88,7 +88,12 @@ public protocol IDesktopClient: Sendable {
     /// "answer the coder" call sites byte-identical) routes into the waiting coder
     /// session; `.focused` (HSM-15-01) free-types into whatever Mac app is focused,
     /// no awaiting session required.
-    func sendRemoteDictation(text: String, target: DictationTarget) async throws -> RemoteDictationResult
+    ///
+    /// `raw` (HSM-18-01): `true` delivers the text VERBATIM — no hub pipeline, no
+    /// macro dispatch. For a client holding a dry-run receipt: the previewed
+    /// `final_text` has already been through the pipeline, and re-running it would
+    /// make the receipt a lie. `false` is the historical processed path.
+    func sendRemoteDictation(text: String, target: DictationTarget, raw: Bool) async throws -> RemoteDictationResult
 
     // MARK: The Companion board (HSM-13-03)
 
@@ -149,7 +154,12 @@ public enum DictationTarget: String, Sendable, Equatable {
 /// stay byte-identical: they call `sendRemoteDictation(text:)` and route to the agent.
 public extension IDesktopClient {
     func sendRemoteDictation(text: String) async throws -> RemoteDictationResult {
-        try await sendRemoteDictation(text: text, target: .agent)
+        try await sendRemoteDictation(text: text, target: .agent, raw: false)
+    }
+
+    /// Processed-path convenience so pre-18-01 call sites stay source-identical.
+    func sendRemoteDictation(text: String, target: DictationTarget) async throws -> RemoteDictationResult {
+        try await sendRemoteDictation(text: text, target: target, raw: false)
     }
 
     /// Default hub-run stubs so non-HTTP conformers (test fakes) keep compiling without
