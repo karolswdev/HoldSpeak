@@ -45,6 +45,8 @@ final class RoundTripTests: XCTestCase {
         XCTAssertEqual(s.artifact.artifactType, .decisions)          // tagged-union discriminator
         XCTAssertEqual(s.artifact.status, .draft)
         XCTAssertNil(s.artifact.createdAt)                           // draft omits it
+        XCTAssertEqual(s.artifact.origin, "meeting")                 // v6, explicit on the wire
+        XCTAssertFalse(s.artifact.isRunBorn)
 
         XCTAssertEqual(s.intelJob.status, "ready")
         XCTAssertEqual(s.intelJob.attempts, 1)
@@ -88,6 +90,46 @@ final class RoundTripTests: XCTestCase {
         XCTAssertEqual(s.actuatorProposal.target, "github")
         XCTAssertEqual(s.actuatorProposal.requiredCapabilities, ["github:write"])
         XCTAssertFalse(s.actuatorProposal.reversible)
+    }
+
+    /// HSM-18-07: `origin` ("meeting" | "run", v6) decodes when present and the
+    /// run-born derivation matches the hub's own (`plugins.py`: no meeting
+    /// anchor ⇒ run-born) when the wire omits it — an older hub, a client push.
+    func testArtifactOriginDecodesAndDerivesRunBorn() throws {
+        let dec = HoldSpeakContracts.decoder()
+
+        func artifactJSON(meetingId: String, origin: String?) -> Data {
+            var fields = [
+                "\"id\":\"a1\"", "\"meeting_id\":\"\(meetingId)\"",
+                "\"artifact_type\":\"plugin_output\"", "\"title\":\"t\"",
+                "\"body_markdown\":\"b\"", "\"structured_json\":{}",
+                "\"confidence\":0.5", "\"status\":\"draft\"",
+                "\"plugin_id\":\"p\"", "\"plugin_version\":\"1\"", "\"sources\":[]",
+            ]
+            if let origin { fields.append("\"origin\":\"\(origin)\"") }
+            return Data("{\(fields.joined(separator: ","))}".utf8)
+        }
+
+        // Explicit on the wire — the hub always emits it now.
+        let run = try dec.decode(Artifact.self, from: artifactJSON(meetingId: "", origin: "run"))
+        XCTAssertEqual(run.origin, "run")
+        XCTAssertTrue(run.isRunBorn)
+
+        let anchored = try dec.decode(Artifact.self, from: artifactJSON(meetingId: "m1", origin: "meeting"))
+        XCTAssertFalse(anchored.isRunBorn)
+
+        // Absent — tolerated, derived from the meeting anchor.
+        let bareRun = try dec.decode(Artifact.self, from: artifactJSON(meetingId: "", origin: nil))
+        XCTAssertNil(bareRun.origin)
+        XCTAssertTrue(bareRun.isRunBorn)
+
+        let bareAnchored = try dec.decode(Artifact.self, from: artifactJSON(meetingId: "m1", origin: nil))
+        XCTAssertFalse(bareAnchored.isRunBorn)
+
+        // An unknown raw value never fails the decode (tolerant String?).
+        let odd = try dec.decode(Artifact.self, from: artifactJSON(meetingId: "m1", origin: "weird"))
+        XCTAssertEqual(odd.origin, "weird")
+        XCTAssertFalse(odd.isRunBorn)
     }
 
     /// LIVE SYNC (THE PRIMITIVE FRAMEWORK, wave 2): a full-kind `ChangeSet` — the exact

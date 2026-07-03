@@ -102,6 +102,13 @@
     "updated_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "origin": {
+      "description": "v6 (Phase 74). 'run' = run-born (a persona/chain/workflow run's output; no meeting anchor, meeting_id is the empty string). Optional: a client push may omit it and the hub derives it from meeting_id on merge; hub emissions always carry it.",
+      "enum": [
+        "meeting",
+        "run"
+      ]
     }
   }
 }

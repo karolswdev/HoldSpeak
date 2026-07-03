@@ -201,6 +201,9 @@ class ArtifactSummary:
     sources: list[dict[str, str]]
     created_at: datetime
     updated_at: datetime
+    # 'meeting' | 'run' (v6, Phase 74). Run-born rows have no meeting anchor:
+    # meeting_id stores NULL and reads back "" here.
+    origin: str = "meeting"
 
 
 @dataclass

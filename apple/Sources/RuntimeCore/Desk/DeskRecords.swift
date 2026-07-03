@@ -261,7 +261,11 @@ public struct OutputRecord: Codable, Identifiable, Equatable, Sendable {
         self.contract = Artifact(id: id, meetingId: "", artifactType: .pluginOutput, title: title,
                                  bodyMarkdown: body, structuredJson: .object(structured),
                                  confidence: 1.0, status: .draft, pluginId: "ipad.desk", pluginVersion: "0",
-                                 sources: sources, createdAt: now, updatedAt: now)
+                                 sources: sources, createdAt: now, updatedAt: now,
+                                 // Every desk-minted card is a run's output — say so
+                                 // explicitly (v6) instead of leaving the wire to infer
+                                 // it from the empty meeting anchor.
+                                 origin: "run")
         self.path = path
     }
 

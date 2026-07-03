@@ -1274,6 +1274,7 @@ class TestMirHistoryApiEndpoints:
                         ],
                         created_at=now,
                         updated_at=now,
+                        origin="meeting",
                     )
                 ]
 
@@ -1288,6 +1289,7 @@ class TestMirHistoryApiEndpoints:
         assert len(payload["artifacts"]) == 1
         artifact = payload["artifacts"][0]
         assert artifact["artifact_type"] == "requirements"
+        assert artifact["origin"] == "meeting"  # explicit since HSM-18-07
         assert artifact["confidence"] == pytest.approx(0.82)
         refs = {(source["source_type"], source["source_ref"]) for source in artifact["sources"]}
         assert ("intent_window", "m-001:w0001") in refs

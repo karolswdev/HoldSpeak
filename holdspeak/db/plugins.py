@@ -800,6 +800,7 @@ class PluginArtifactRepository(BaseRepository):
             sources=sources,
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),
+            origin=str(row["origin"] or "meeting"),
         )
 
     def delete_artifact(self, artifact_id: str) -> bool:
@@ -856,6 +857,7 @@ class PluginArtifactRepository(BaseRepository):
             sources=sources,
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),
+            origin=str(row["origin"] or "meeting"),
         )
 
     def list_run_artifacts(self, *, limit: int = 200) -> list[ArtifactSummary]:
@@ -944,6 +946,7 @@ class PluginArtifactRepository(BaseRepository):
                     sources=sources_by_artifact.get(str(row["id"]), []),
                     created_at=datetime.fromisoformat(row["created_at"]),
                     updated_at=datetime.fromisoformat(row["updated_at"]),
+                    origin=str(row["origin"] or "meeting"),
                 )
             )
         return output

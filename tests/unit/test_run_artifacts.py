@@ -118,6 +118,69 @@ def test_agent_run_persists_and_responds_with_artifact_id(db, monkeypatch) -> No
     value = arts[0]["value"]
     assert value["meeting_id"] == ""  # a plain string on the wire, never null
     assert value["body_markdown"] == "the run output"
+    assert value["origin"] == "run"  # explicit since HSM-18-07, not inferred
+
+
+def test_origin_explicit_on_every_serialized_surface(db) -> None:
+    """HSM-18-07 — `origin` rides the wire ('run' | 'meeting') on both artifact
+    surfaces (sync pull + the meeting artifacts route), and the emitted values
+    still validate against the cross-surface artifact contract schema — with
+    `origin` absent staying valid (a client push may omit it)."""
+    import json as jsonlib
+
+    jsonschema = pytest.importorskip("jsonschema")
+
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from holdspeak.meeting_session import MeetingState
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes import build_sync_router
+    from holdspeak.web.routes.sync import _artifact_value
+
+    db.meetings.save_meeting(
+        MeetingState(id="m1", started_at=datetime.now(), title="M")
+    )
+    db.plugins.record_artifact(
+        artifact_id="anchored-1", meeting_id="m1", artifact_type="decisions",
+        title="Anchored", body_markdown="b", status="draft",
+        plugin_id="decision_capture", plugin_version="1",
+    )
+    db.plugins.record_artifact(
+        artifact_id="run-1", meeting_id="", artifact_type="plugin_output",
+        title="Run-born", body_markdown="answer", status="draft",
+        plugin_id="agent_run", plugin_version="1",
+        sources=[{"source_type": "agent", "source_ref": "a-owl"}],
+    )
+
+    app = FastAPI()
+    app.include_router(build_sync_router(WebContext(get_state=lambda: {})))
+    pull = TestClient(app).get("/api/sync/pull?limit=50").json()
+    values = {r["meta"]["id"]: r["value"] for r in pull["artifacts"]}
+    assert values["anchored-1"]["origin"] == "meeting"
+    assert values["run-1"]["origin"] == "run"
+    assert values["run-1"]["meeting_id"] == ""
+
+    # The other serialized surface — a stored summary through the meetings
+    # route's dict shape (the route emits `artifact.origin` verbatim).
+    stored = db.plugins.get_artifact("anchored-1")
+    assert stored.origin == "meeting"
+    assert db.plugins.get_artifact("run-1").origin == "run"
+
+    # Both emitted values validate against the contract schema; an origin-less
+    # copy (a client push) stays valid too.
+    schema_path = (
+        Path(__file__).parents[2]
+        / "pm/roadmap/holdspeak-mobile/contracts/schemas/artifact.schema.json"
+    )
+    schema = jsonlib.loads(schema_path.read_text())
+    validator = jsonschema.Draft202012Validator(schema)
+    for aid in ("anchored-1", "run-1"):
+        validator.validate(values[aid])
+        originless = dict(values[aid])
+        originless.pop("origin")
+        validator.validate(originless)
+    assert _artifact_value(stored)["origin"] == "meeting"
 
 
 def test_v5_to_v6_upgrade_rebuilds_without_losing_rows(tmp_path) -> None:

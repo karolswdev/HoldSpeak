@@ -125,6 +125,9 @@ def _artifact_value(artifact: Any) -> dict[str, Any]:
         "plugin_id": artifact.plugin_id,
         "plugin_version": artifact.plugin_version,
         "sources": artifact.sources,
+        # 'meeting' | 'run' (v6). Explicit on the wire so a decoder never has
+        # to infer run-born from the empty meeting_id.
+        "origin": artifact.origin,
     }
 
 

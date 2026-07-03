@@ -3722,8 +3722,11 @@ struct DioStage: View {
                 if ProcessInfo.processInfo.environment["HS_DESK_ARRIVE"] == "1" {
                     let m = Meeting(id: "demoNew", startedAt: Date(), title: "Q3 kickoff", segments: [Segment(text: "Welcome to the kickoff.", speaker: "Speaker 1", startTime: 0, endTime: 2)])
                     model.meetings = [m] + model.meetings
-                    outputs = [OutputRecord(id: "delivNew", title: "Summary", body: "Shipping the desk to the web is the Q3 bet; Karol owns mesh sync and the approval contract; air-gapped proof due Friday.", source: "Q3 kickoff", lens: "Summary", path: "")]
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds = ["m:demoNew", "out:delivNew"]; flash = 0.5 }; withAnimation(.easeOut(duration: 0.9)) { flash = 0 } }
+                    outputs = [OutputRecord(id: "delivNew", title: "Summary", body: "Shipping the desk to the web is the Q3 bet; Karol owns mesh sync and the approval contract; air-gapped proof due Friday.", source: "Q3 kickoff", lens: "Summary", path: ""),
+                               // A run-born card (HSM-18-07): no meeting anchor, so it
+                               // sits loose on the desk instead of a meeting's drawer.
+                               OutputRecord(id: "runNew", title: "Scout: the mesh risks", body: "Top risk: the approval contract drifts between surfaces. Lock it with the parity guard before the air-gapped proof.", source: "your ask", lens: "Agent · your desktop", path: "")]
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds = ["m:demoNew", "out:delivNew", "out:runNew"]; flash = 0.5 }; withAnimation(.easeOut(duration: 0.9)) { flash = 0 } }
                 }
                 // IN-WORLD editing + pairing demos (layout checks for the device punch-list).
                 // HS_DESK_NOTE=1 → a fresh note, edited in place on the desk (no modal).
@@ -4898,7 +4901,10 @@ struct DioStage: View {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 #endif
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    printed = OutputRecord(id: UUID().uuidString,
+                    // The hub persisted this run as a run-born artifact (v6) —
+                    // the card shares its id so Keep reconciles on sync instead
+                    // of duplicating.
+                    printed = OutputRecord(id: result.artifactId ?? UUID().uuidString,
                                            title: title,
                                            body: clean.isEmpty ? "(your desktop returned nothing)" : clean,
                                            source: source,
@@ -5109,6 +5115,15 @@ struct DioStage: View {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         #endif
         withAnimation(focusSpring) { outputs.append(rec); printed = nil }
+        // The kept run result materializes on the stage with the same arrival
+        // beat woven deliverables and synced peers get (HSM-18-07).
+        withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+            arrivedIds.insert("out:\(rec.id)"); flash = 0.45
+        }
+        withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+            withAnimation { arrivedIds.subtract(["out:\(rec.id)"]) }
+        }
         routeSourceId = nil; persistOutputs(); stampSync(rec.id)
     }
     private func binPrinted() { haptic(.light); withAnimation { printed = nil }; routeSourceId = nil }

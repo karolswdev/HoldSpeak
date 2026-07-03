@@ -80,7 +80,8 @@
         "source_type": "segment",
         "source_ref": "seg_0"
       }
-    ]
+    ],
+    "origin": "meeting"
   },
   "intel_job": {
     "meeting_id": "mtg_001",
