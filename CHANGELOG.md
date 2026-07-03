@@ -25,6 +25,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 - **Preview before it types** (Settings, Voice; off by default): a
   finished dictation shows its text on a card first, on every page. Type
   it commits; Discard drops it.
+- Artifacts now say where they came from on every API surface: an
+  `origin` field (`meeting` or `run`) rides sync pull and the meeting
+  artifacts route, so clients no longer infer a run's output from an
+  empty meeting id.
 
 ### Fixed
 - The preview card no longer renders as an empty box on pages with no

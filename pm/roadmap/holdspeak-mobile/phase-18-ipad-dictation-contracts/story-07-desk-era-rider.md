@@ -2,12 +2,14 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 18
-- **Status:** in-progress — the contract half landed (`origin` on the wire + schema + both
-  Swift models, all suites green); the desk materialization remains. **Verified during
-  build:** design item 3 (the route-surface lock) already ships as HS-72-02
-  (`tests/unit/test_api_surface.py` + `scripts/gen_api_surface.py` sweep `apple/**/*.swift`;
-  `unmatched_calls` must be empty) — nothing to build, recorded here instead of duplicating
-  the guard.
+- **Status:** done — see [`evidence-story-07.md`](./evidence-story-07.md). The contract half
+  (`origin` on every serialized surface + schema + both Swift models) and the desk half
+  (`HubRunResult.artifactId` shared identity kills the duplicate-on-sync; `keepPrinted`
+  fires the arrival beat; desk-minted cards stamp `origin: "run"`), Simulator-proven.
+  **Verified during build:** design item 3 (the route-surface lock) already ships as
+  HS-72-02 (`tests/unit/test_api_surface.py` + `scripts/gen_api_surface.py` sweep
+  `apple/**/*.swift`; `unmatched_calls` must be empty) — recorded, not duplicated. The
+  on-device beat walk rides the phase gate (18-06).
 - **Depends on:** nothing in this phase (parallel-startable); hub schema v6 (run-born
   artifacts, Phase 74) and the Phase-72 route rename + `docs/api-surface.json` manifest,
   both already on `main`.

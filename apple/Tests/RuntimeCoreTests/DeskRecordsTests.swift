@@ -57,6 +57,10 @@ final class DeskRecordsTests: XCTestCase {
         XCTAssertEqual(back.provenance, prov)
         XCTAssertEqual(back.lineageLine, "from Q3 kickoff · via Scout")
         XCTAssertEqual(back.path, "Atlas")
+        // HSM-18-07: every desk-minted card is a run's output — origin is
+        // explicit on the embedded contract (v6), and the derivation agrees.
+        XCTAssertEqual(back.contract.origin, "run")
+        XCTAssertTrue(back.contract.isRunBorn)
     }
 
     func testWorkflowRecordRoundTrip() throws {

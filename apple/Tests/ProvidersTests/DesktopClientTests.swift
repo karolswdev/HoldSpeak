@@ -221,4 +221,28 @@ final class DesktopClientTests: XCTestCase {
         catch HTTPDesktopClient.DesktopClientError.http(let code) { XCTAssertEqual(code, 401) }
         catch { XCTFail("wrong error: \(error)") }
     }
+
+    // MARK: hub runs return the run-born artifact id (HSM-18-07)
+
+    func testRunAgentDecodesArtifactId() async throws {
+        // v6 (Phase 74): the hub persists the run's output as a run-born
+        // artifact and returns its id — the desk card must reuse it so a kept
+        // card reconciles with the hub's artifact on sync, never duplicates.
+        StubProtocol.routes = ["/api/agents/a-owl/run": (200,
+            Data(#"{"output":"the run output","artifact_id":"art_run_1"}"#.utf8))]
+        let result = try await client(token: "tok").runAgent(id: "a-owl", input: "say hi")
+        XCTAssertEqual(StubProtocol.lastMethod, "POST")
+        XCTAssertEqual(result.output, "the run output")
+        XCTAssertEqual(result.artifactId, "art_run_1")
+    }
+
+    func testRunChainWithoutArtifactIdStillDecodes() async throws {
+        // An older hub omits artifact_id — the decode stays tolerant.
+        StubProtocol.routes = ["/api/chains/c1/run": (200,
+            Data(#"{"output":"crew says hi","steps":["Scout: hi"]}"#.utf8))]
+        let result = try await client().runChain(id: "c1", input: "go")
+        XCTAssertEqual(result.output, "crew says hi")
+        XCTAssertEqual(result.steps, ["Scout: hi"])
+        XCTAssertNil(result.artifactId)
+    }
 }

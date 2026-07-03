@@ -123,9 +123,14 @@ public protocol IDesktopClient: Sendable {
 public struct HubRunResult: Sendable, Equatable, Decodable {
     public var output: String
     public var steps: [String]?
+    /// v6 (Phase 74): the hub persists the run's output as a run-born artifact
+    /// and returns its id. Optional so an older hub still decodes. The desk
+    /// card minted from this result must reuse it — a locally-invented id
+    /// would duplicate against the hub's own artifact on the next sync.
+    public var artifactId: String?
 
-    public init(output: String, steps: [String]? = nil) {
-        self.output = output; self.steps = steps
+    public init(output: String, steps: [String]? = nil, artifactId: String? = nil) {
+        self.output = output; self.steps = steps; self.artifactId = artifactId
     }
 }
 
