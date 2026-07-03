@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak
 - **Phase:** 79
-- **Status:** todo — leads the phase (the largest file, the cleanest seams).
+- **Status:** done — see [`evidence-story-01.md`](./evidence-story-01.md). Six concern
+  mixins (largest 406 lines), zero body-line drift (programmatically checked), zero
+  patch-target edits, suites unmodified and green.
 - **Depends on:** nothing.
 - **Unblocks:** HS-79-04 (the guard locks the new shape).
 
