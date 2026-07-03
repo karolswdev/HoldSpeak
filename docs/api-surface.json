@@ -734,6 +734,7 @@
       ],
       "module": "web.routes.system",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -1903,6 +1904,7 @@
       ],
       "module": "web.routes.system",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -1913,6 +1915,7 @@
       ],
       "module": "web.routes.system",
       "consumers": [
+        "ios",
         "web"
       ]
     },
