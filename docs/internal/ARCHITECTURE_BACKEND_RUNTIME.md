@@ -1,4 +1,4 @@
-# The backend runtime decomposition (Phase 63)
+# The backend runtime decomposition (Phases 63 and 79)
 
 The backend twin of [ARCHITECTURE_WEB_FRONTEND.md](./ARCHITECTURE_WEB_FRONTEND.md).
 Two god-objects paid down their debt the same way the dictation cockpit
@@ -77,7 +77,39 @@ package, so every existing import works)**:
 5. Stay under the module budget; if the concern wants more, it is two
    concerns.
 
+## The Phase 79 packages
+
+Phase 79 applied the same discipline to the next three monoliths. The same
+rules hold (verbatim moves, patch targets where the lookup happens,
+relative imports gain a dot, the guard locks the shape):
+
+**`holdspeak/db/activity/`** (was `db/activity.py`, 1,596): six concern
+mixins composed into `ActivityRepository` over `BaseRepository` —
+`records` (the ledger + its row mapper), `settings` (import checkpoints,
+privacy, nudge dismissals), `rules` (domain + project rules), `enrichment`
+(connectors + their run ledger), `annotations`, `candidates`.
+
+**`holdspeak/web/routes/system/`** (was `routes/system.py`, 1,299): five
+routers composed under the unchanged `build_system_router` — `health`,
+`coders`, `settings` (the PUT validation matrix, the one module with its
+own named budget), `voice` (wake type, transcribe, the preview one-shots,
+the command test), `ws`; `_shared` holds the state-shape helpers health
+and coders both consume.
+
+**`holdspeak/web/routes/primitives/`** (was `routes/primitives.py`,
+1,294): seven family routers under the unchanged
+`build_primitives_router` — `notes`, `agents`, `profiles`, `kbs`,
+`chains`, `workflows`, `directories`; `_shared` holds `_json_body`,
+`_new_id`, the source-type vocabulary (re-exported from the package
+root), and the ONE run frame/persist tail all three run endpoints call.
+
+Guard additions: package `__init__` files stay composition-only (≤ 90);
+concern modules stay ≤ 600; `system/settings.py` carries a named 800.
+
 ## Named watch items
 
-- `holdspeak/web/routes/meetings.py` (~1,525): a Phase-26 route module
-  with a different shape; if it keeps growing it earns its own phase.
+- `holdspeak/db/core.py` (~1,266): the schema DDL + migration matrix,
+  pinned by the schema snapshot test — a different budget conversation;
+  if it keeps growing it earns its own phase.
+- The old item, `web/routes/meetings.py`, was resolved by Phase 72's
+  split into the meetings package.

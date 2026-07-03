@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak
 - **Phase:** 79
-- **Status:** todo
+- **Status:** done — see [`evidence-story-05.md`](./evidence-story-05.md). The backend
+  map covers both phases; the ARCHITECTURE diagram paths updated (render-guard green);
+  the surface doc regenerated with per-submodule attribution.
 - **Depends on:** 01–04.
 - **Unblocks:** closeout.
 
