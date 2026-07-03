@@ -88,7 +88,9 @@ A returning user lands on **the Desk** instead (the wizard never nags): your
 meetings, notes, knowledge bases, and agents as objects in a spatial world.
 Tap an object to open it in place, drag it onto a zone to file it, press the
 orb to record, and ask an agent from the rail: its answer lands on the desk
-as an artifact you can open, trace (`via` the agent that made it), and file. A fresh desk says what
+as an artifact you can open, trace (`via` the agent that made it), and file.
+Every input takes speech: hold the mic, talk, release (the hub's own local
+Whisper transcribes; nothing leaves your machine's runtime). A fresh desk says what
 HoldSpeak is and offers your next action. If something later needs
 attention, **`/setup`** is the calm Setup and health surface, and the egress
 badge in the Desk's corner always shows what can leave your machine.

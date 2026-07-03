@@ -92,6 +92,19 @@ run it. The answer comes back in place with a copy button, and it also
 lineage chip naming the agent. File it, reopen it, or copy it like
 anything else.
 
+## Talk, don't type
+
+Every text input on the desk carries a mic: hold it, speak, release, and
+the words land in the field. Capture happens in your browser; the
+transcription is the hub's own local Whisper (nothing leaves, nothing is
+stored). The rail's ask, the note editor, and the zone rename all take
+speech.
+
+A waiting coder session takes speech too: its panel shows the agent's
+question, and **Hold to answer** sends your spoken reply straight into
+the session. **Use the hotkey** instead selects it as your dictation
+target for the held-key flow.
+
 ## The preview card
 
 If you turn on **Preview before it types** (Settings, Voice), every

@@ -1,6 +1,6 @@
 # Phase 78 — Talk to the Desk
 
-**Status:** open — scaffolded 2026-07-02 (0/4).
+**Status:** **CLOSED — 4/4 (2026-07-02/03).** See [final-summary.md](./final-summary.md).
 **Owner call that opened it:** the video review (2026-07-02): "why would
 we need to confirm the dictation? That's totally not user friendly. We
 need to be able to just talk to this stuff" + "I thought this demo would
@@ -34,7 +34,7 @@ session waiting and being answered — never appears in demos.
 | HS-78-01 | The transcribe route (local Whisper, no egress) | HIGH | **done** (the runtime verb + seam + the strict WAV route; 5/5; see [evidence](./evidence-story-01.md)) | — |
 | HS-78-02 | Speak-to-fill on every desk input | HIGH | **done** (hold-to-talk mics on ask/editor/rename; the REAL proof: the fixture spoke as the browser mic and real Whisper filled the input; the orb lock re-scoped + strengthened; see [evidence](./evidence-story-02.md)) | 01 |
 | HS-78-03 | Talk to the waiting coder | HIGH | **done** (Hold to answer → select + the HSM-13 inject; the question-never-rendered bug fixed; the REAL marquee proof; see [evidence](./evidence-story-03.md)) | 01 |
-| HS-78-04 | The re-recorded demo + docs + closeout | MED | todo | 01–03 |
+| HS-78-04 | The re-recorded demo + docs + closeout | MED | **done** (5 beats on camera: the marquee first, no staged friction; docs speak the mic; see [evidence](./evidence-story-04.md)) | 01–03 |
 
 ## Exit criteria
 
@@ -51,11 +51,17 @@ session waiting and being answered — never appears in demos.
       through the existing `/api/dictation/remote` seam; proven against
       a seeded waiting session (HS-78-03 — plus the latent
       question-never-rendered bug fixed).
-- [ ] The demo re-records with every lane seeded (the waiting coder
+- [x] The demo re-records with every lane seeded (the waiting coder
       included) and the voice fills on camera; docs speak the mic;
       guards green; PR merged on a conclusion-checked green (HS-78-04).
 
 ## Where we are
+
+**2026-07-03 — PHASE CLOSED (4/4).** The desk is talked to. The demo
+shows all three review answers on camera: the waiting Claude answered by
+voice first, the spoken note leaving the stage when filed, and no staged
+confirm friction anywhere. Real speech, real Whisper, the real inject
+seam, the real .43 answer.
 
 **2026-07-02 — HS-78-03 done (3/4).** The marquee moment is real: a
 waiting Claude's question stands on the desk (a latent mapper bug had
