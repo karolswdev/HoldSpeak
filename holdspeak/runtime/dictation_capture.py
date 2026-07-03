@@ -306,6 +306,20 @@ class DictationCaptureMixin:
         )
         return True
 
+    def transcribe_audio(self, audio) -> str:
+        """Transcribe browser-captured audio for speak-to-fill (HS-78-01).
+
+        The runtime's OWN transcriber (one model, one lock; the MLX thread
+        pinning lives inside it) + the same punctuation/spoken-symbol pass
+        dictation gets. No journaling (a speak-to-fill is the user typing
+        with their voice, not a dictation run), no persistence, no egress.
+        """
+        with self.transcription_lock:
+            text = self._ensure_transcriber_loaded().transcribe(audio)
+        if not text:
+            return ""
+        return self.text_processor.process(text)
+
     def _kick_off_transcribe(
         self,
         audio: np.ndarray,

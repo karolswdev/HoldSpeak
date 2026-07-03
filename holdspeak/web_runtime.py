@@ -475,6 +475,7 @@ class WebRuntime(
                 on_wake_type=self._type_wake_preview,
                 on_preview_type=self.type_dictation_preview,
                 on_preview_discard=self.discard_dictation_preview,
+                on_transcribe=self.transcribe_audio,
                     project_detector=self.project_detector,
                     device_registry=self.device_registry,
                     device_psk_provider=lambda: ensure_device_psk(self.config),

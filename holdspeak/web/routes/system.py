@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
 from ...logging_config import get_logger
@@ -486,6 +486,60 @@ def build_system_router(ctx: WebContext) -> APIRouter:
                 status_code=404,
             )
         return {"success": True, "typed": typed}
+
+    @router.post("/api/dictation/transcribe")
+    async def api_transcribe(request: Request) -> Any:
+        """HS-78-01: speak-to-fill — browser-captured audio in, text out.
+
+        Accepts one WAV (16 kHz mono, 16-bit PCM) body and runs the
+        runtime's OWN transcriber (one model, one lock) + the dictation
+        punctuation pass. The audio is never persisted and nothing
+        egresses (local Whisper); the route rides the same
+        loopback/token posture as every other route. Size-capped.
+        """
+        if ctx.on_transcribe is None:
+            return JSONResponse(
+                {"success": False, "error": "Transcription is unavailable in this runtime."},
+                status_code=503,
+            )
+        raw = await request.body()
+        if not raw:
+            return JSONResponse(
+                {"success": False, "error": "An audio body is required."}, status_code=400
+            )
+        if len(raw) > 16_000_000:  # ~8 minutes of 16 kHz mono 16-bit
+            return JSONResponse(
+                {"success": False, "error": "Audio too large (cap: 16 MB)."}, status_code=413
+            )
+        try:
+            import io
+            import wave
+
+            import numpy as np
+
+            with wave.open(io.BytesIO(raw)) as wf:
+                if wf.getnchannels() != 1 or wf.getframerate() != 16000 or wf.getsampwidth() != 2:
+                    return JSONResponse(
+                        {
+                            "success": False,
+                            "error": "Expected WAV: 16 kHz, mono, 16-bit PCM.",
+                        },
+                        status_code=400,
+                    )
+                frames = wf.readframes(wf.getnframes())
+            audio = np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
+        except Exception:
+            return JSONResponse(
+                {"success": False, "error": "Not a readable WAV body."}, status_code=400
+            )
+        try:
+            text = ctx.on_transcribe(audio)
+        except Exception as exc:
+            log.error(f"speak-to-fill transcription failed: {exc}")
+            return JSONResponse(
+                {"success": False, "error": "Transcription failed."}, status_code=502
+            )
+        return {"success": True, "text": text}
 
     @router.post("/api/dictation/preview/type")
     async def api_preview_type(payload: dict[str, Any]) -> Any:

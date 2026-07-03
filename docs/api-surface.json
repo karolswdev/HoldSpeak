@@ -1184,6 +1184,14 @@
       ]
     },
     {
+      "path": "/api/dictation/transcribe",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system",
+      "consumers": []
+    },
+    {
       "path": "/api/dictation/wake/type",
       "methods": [
         "POST"

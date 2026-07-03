@@ -31,14 +31,14 @@ session waiting and being answered — never appears in demos.
 
 | ID | Story | Sev | Status | Depends |
 |---|---|---|---|---|
-| HS-78-01 | The transcribe route (local Whisper, no egress) | HIGH | todo | — |
+| HS-78-01 | The transcribe route (local Whisper, no egress) | HIGH | **done** (the runtime verb + seam + the strict WAV route; 5/5; see [evidence](./evidence-story-01.md)) | — |
 | HS-78-02 | Speak-to-fill on every desk input | HIGH | todo | 01 |
 | HS-78-03 | Talk to the waiting coder | HIGH | todo | 01 |
 | HS-78-04 | The re-recorded demo + docs + closeout | MED | todo | 01–03 |
 
 ## Exit criteria
 
-- [ ] `POST /api/dictation/transcribe` accepts browser-captured 16 kHz
+- [x] `POST /api/dictation/transcribe` accepts browser-captured 16 kHz
       mono PCM (a size cap; loopback/token posture unchanged), runs the
       runtime's OWN transcriber (the one model, the one lock), and
       returns `{text}`; audio is never persisted; nothing egresses
@@ -54,5 +54,10 @@ session waiting and being answered — never appears in demos.
       guards green; PR merged on a conclusion-checked green (HS-78-04).
 
 ## Where we are
+
+**2026-07-02 — HS-78-01 done (1/4).** The hub can hear the browser: the
+strict WAV route runs the runtime's own transcriber with the dictation
+punctuation pass, honest refusals, no persistence, no egress. Next: the
+mics (02) and the coder (03).
 
 **2026-07-02 — scaffolded (0/4).**
