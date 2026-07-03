@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 79
-- **Status:** todo
+- **Status:** done — see [`evidence-story-03.md`](./evidence-story-03.md). Seven family
+  routers + _shared (the run-persist tail stays one function); zero code-body drift; the
+  package root re-exports the pinned wire vocabulary; manifest module-fields-only;
+  tests unmodified, 2407 + 685 green.
 - **Depends on:** nothing (parallel to 01/02).
 - **Unblocks:** HS-79-04.
 
