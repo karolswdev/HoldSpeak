@@ -167,6 +167,38 @@ final class ShellModel: ObservableObject {
         guard let c = client() else { return }
         aftercareLoading = true; defer { aftercareLoading = false }
         aftercare = try? await c.aftercare(meetingId: meetingId)
+        filingItemId = nil; filedItemIds = []; fileIssueError = ""
+    }
+
+    // MARK: Aftercare file-issue (HSM-19-01) — an accepted open item becomes a GitHub-issue
+    // actuator PROPOSAL (`proposed` state; the hub is idempotent per item). Approving it is a
+    // separate act — the review queue (19-05), never this button.
+    @Published var fileIssueRepo = ""            // "owner/name", remembered for the session
+    @Published var filingItemId: String?         // the item whose inline repo row is open
+    @Published var filingBusy = false
+    @Published var filedItemIds: Set<String> = []
+    @Published var fileIssueError = ""
+
+    func fileIssue(itemId: String) async {
+        guard let c = client(), let meetingId = aftercare?.meetingId else { return }
+        let repo = fileIssueRepo.trimmingCharacters(in: .whitespaces)
+        guard !repo.isEmpty else { return }
+        filingBusy = true; fileIssueError = ""; defer { filingBusy = false }
+        do {
+            let result = try await c.fileAftercareIssue(
+                meetingId: meetingId, actionItemId: itemId, repo: repo)
+            if result.success {
+                filedItemIds.insert(itemId); filingItemId = nil
+            } else {
+                fileIssueError = result.error ?? "The desktop refused the filing."
+            }
+        } catch HTTPDesktopClient.DesktopClientError.http(let code) {
+            // The hub 400s on a missing repo or an item that isn't accepted; the button is
+            // gated to accepted items, so name the repo shape as the likely miss.
+            fileIssueError = code == 400
+                ? "The desktop refused — repo must be owner/name and the item accepted."
+                : "The desktop refused (\(code))."
+        } catch { fileIssueError = "Couldn't reach your desktop." }
     }
 
     // MARK: Artifacts (HSM-19-04) — each meeting artifact wears its synthesis confidence.
@@ -220,7 +252,17 @@ struct ShellView: View {
             }
         }
         .tint(Sig.accent)
-        .task { if model.canConnect { await model.load() } }
+        .task {
+            if model.canConnect {
+                await model.load()
+                // HS_SHELL_OPEN_MEETING lets a screenshot run land on a meeting's digest
+                // without a tap (the HS_SHELL_TAB pattern).
+                if let mid = ProcessInfo.processInfo.environment["HS_SHELL_OPEN_MEETING"] {
+                    await model.loadAftercare(meetingId: mid)
+                    await model.loadArtifacts(meetingId: mid)
+                }
+            }
+        }
         .onAppear {
             #if targetEnvironment(simulator)
             // HS_SHELL_DEMO=teleprompter seeds a resolved dry-run so the Dictate screen's preview
@@ -234,14 +276,18 @@ struct ShellView: View {
                     warnings: [], totalElapsedMs: 380, blocksCount: 2,
                     project: DictationProject(name: "holdspeak"))
             }
-            // HS_SHELL_DEMO=aftercare seeds a close-the-loop digest on the Meetings screen.
-            if ProcessInfo.processInfo.environment["HS_SHELL_DEMO"] == "aftercare" {
+            // HS_SHELL_DEMO=aftercare seeds a close-the-loop digest on the Meetings screen;
+            // =aftercare-filing additionally opens the HSM-19-01 file-issue row on the
+            // accepted item (a layout proof for the inline repo field).
+            let demo = ProcessInfo.processInfo.environment["HS_SHELL_DEMO"]
+            if demo == "aftercare" || demo == "aftercare-filing" {
                 model.host = model.host.isEmpty ? "192.168.1.13" : model.host
                 model.aftercare = Aftercare(
                     meetingId: "m1", meetingTitle: "Q3 kickoff", meetingDate: "2026-06-27",
                     openItems: AftercareOpenItems(total: 3, byOwner: [
                         AftercareOwnerGroup(owner: "Karol", count: 2, items: [
-                            AftercareOpenItem(id: "a1", task: "Own the mesh-sync approval contract", owner: "Karol", due: "Fri"),
+                            AftercareOpenItem(id: "a1", task: "Own the mesh-sync approval contract", owner: "Karol", due: "Fri",
+                                              reviewState: "accepted"),
                             AftercareOpenItem(id: "a2", task: "Demo the air-gapped proof", owner: "Karol"),
                         ]),
                         AftercareOwnerGroup(owner: nil, count: 1, items: [
@@ -259,6 +305,10 @@ struct ShellView: View {
                         closedActions: [AftercareClosedAction(id: "c1", task: "Pick the on-device model", status: "done")],
                         changed: true),
                     isEmpty: false, slackConfigured: true)
+                if demo == "aftercare-filing" {
+                    model.filingItemId = "a1"
+                    model.fileIssueRepo = "karolswdev/HoldSpeak"
+                }
             }
             // HS_SHELL_DEMO=artifacts seeds artifacts of varied confidence to show the ring banding.
             if ProcessInfo.processInfo.environment["HS_SHELL_DEMO"] == "artifacts" {
@@ -394,11 +444,34 @@ struct ShellView: View {
                             Text("\(group.count)").font(.caption2).foregroundStyle(Sig.faint)
                         }
                         ForEach(group.items, id: \.id) { item in
-                            HStack(alignment: .top, spacing: 8) {
-                                Circle().fill(Sig.faint).frame(width: 5, height: 5).padding(.top, 6)
-                                Text(item.task).font(.callout).foregroundStyle(Sig.muted).fixedSize(horizontal: false, vertical: true)
-                                Spacer(minLength: 0)
-                                if let due = item.due { Text(due).font(.caption2).foregroundStyle(Sig.warn) }
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack(alignment: .top, spacing: 8) {
+                                    Circle().fill(Sig.faint).frame(width: 5, height: 5).padding(.top, 6)
+                                    Text(item.task).font(.callout).foregroundStyle(Sig.muted).fixedSize(horizontal: false, vertical: true)
+                                    Spacer(minLength: 0)
+                                    if let due = item.due { Text(due).font(.caption2).foregroundStyle(Sig.warn) }
+                                    // HSM-19-01 — only an accepted item can be filed (the hub 400s otherwise).
+                                    if item.reviewState == "accepted" {
+                                        if model.filedItemIds.contains(item.id) {
+                                            statusPill("proposed")
+                                        } else if model.filingItemId != item.id {
+                                            Button {
+                                                model.filingItemId = item.id; model.fileIssueError = ""
+                                            } label: {
+                                                HStack(spacing: 4) {
+                                                    Image(systemName: "arrow.up.right.square").font(.system(size: 9, weight: .bold))
+                                                    Text("File issue").font(.caption2.weight(.semibold))
+                                                }
+                                                .foregroundStyle(Sig.accent)
+                                                .padding(.horizontal, 8).padding(.vertical, 4)
+                                                .background(Sig.accent.opacity(0.12), in: Capsule())
+                                            }.buttonStyle(.plain)
+                                        }
+                                    }
+                                }
+                                if model.filingItemId == item.id, !model.filedItemIds.contains(item.id) {
+                                    fileIssueRow(itemId: item.id)
+                                }
                             }
                         }
                     }
@@ -417,9 +490,41 @@ struct ShellView: View {
                 }
             }
 
-            rowNote("Accepted actions become issue proposals you approve.")
         }
         .cardChrome(border: Sig.accent.opacity(0.3))
+    }
+
+    // HSM-19-01 — the inline repo row (no modal): type the target once, file, done. Filing
+    // records a PROPOSAL on the desktop; the approve lives in the review queue.
+    private func fileIssueRow(itemId: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                TextField("owner/name", text: $model.fileIssueRepo)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .font(.callout.monospaced()).foregroundStyle(Sig.text)
+                    .padding(.horizontal, 10).padding(.vertical, 8)
+                    .background(Sig.s3, in: RoundedRectangle(cornerRadius: 9))
+                    .overlay(RoundedRectangle(cornerRadius: 9).stroke(Sig.line, lineWidth: 1))
+                Button { Task { await model.fileIssue(itemId: itemId) } } label: {
+                    HStack(spacing: 5) {
+                        if model.filingBusy { ProgressView().controlSize(.mini).tint(.black) }
+                        Text("File").font(.caption.weight(.bold)).foregroundStyle(.black)
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 9)
+                    .background(Sig.accent, in: RoundedRectangle(cornerRadius: 9))
+                }
+                .buttonStyle(.plain)
+                .disabled(model.filingBusy || model.fileIssueRepo.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button { model.filingItemId = nil; model.fileIssueError = "" } label: {
+                    Image(systemName: "xmark").font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.faint)
+                        .padding(9).background(Sig.s3, in: Circle())
+                }.buttonStyle(.plain).disabled(model.filingBusy)
+            }
+            if !model.fileIssueError.isEmpty {
+                Text(model.fileIssueError).font(.caption2).foregroundStyle(Sig.warn)
+            }
+        }
+        .padding(.leading, 13)
     }
 
     private func diffChip(_ text: String, _ icon: String, _ tint: Color) -> some View {

@@ -2,9 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 19
-- **Status:** in-progress — the read half is merged and sim-proven (PR #155: `aftercare(meetingId:)`
-  client + the close-the-loop card in `CompanionShellApp.swift`, screenshot
-  `screenshots/aftercare-card-ipad.png`). This story finishes the loop: the file-issue action.
+- **Status:** done — see [`evidence-story-01.md`](./evidence-story-01.md). The accepted-item
+  File issue action + inline repo row + honest proposed pill, proven against a live hub
+  (proposed state, idempotency, the 400, and the filed proposal visible in the 19-05 queue);
+  the prose note replaced by the affordance. The read half merged pre-open (PR #155). The
+  on-device tap rides the 19-07 walk (W1).
 - **Depends on:** the shipped `HTTPDesktopClient+Aftercare.swift` (both verbs); the hub route
   `POST /api/meetings/{id}/aftercare/file-issue` (`holdspeak/web/routes/meetings/aftercare.py:162`).
 - **Unblocks:** HSM-19-05 (a filed issue is a proposal in the review queue — the full loop).
