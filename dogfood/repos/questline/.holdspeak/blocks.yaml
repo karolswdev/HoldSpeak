@@ -1,0 +1,20 @@
+version: 1
+default_match_confidence: 0.6
+blocks:
+  - id: feature_task_buildout
+    description: A product feature task dictated at a coding agent
+    match:
+      examples:
+        - "Add a shared quest banner to the home screen"
+        - "Build the guild invite link flow"
+      negative_examples:
+        - "What's for lunch"
+      threshold: 0.65
+    inject:
+      mode: replace
+      template: |
+        {raw_text}
+        ---
+        Repo: {project.name}
+        Stack: {project.kb.stack}
+        Ship rules: {project.kb.dod}

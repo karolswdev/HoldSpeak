@@ -97,7 +97,7 @@ else
   "dictation": {
     "pipeline": {
       "enabled": true,
-      "stages": ["intent-router", "kb-enricher"],
+      "stages": ["intent-router", "kb-enricher", "project-rewriter"],
       "max_total_latency_ms": 8000,
       "rewrite_passes": 2,
       "corrections_enabled": true,

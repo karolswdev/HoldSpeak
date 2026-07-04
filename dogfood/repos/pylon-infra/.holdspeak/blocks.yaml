@@ -1,0 +1,20 @@
+version: 1
+default_match_confidence: 0.6
+blocks:
+  - id: infra_change_buildout
+    description: An infrastructure change request dictated at a coding agent
+    match:
+      examples:
+        - "Roll the ingress controller to the new version"
+        - "Add a headroom alert for certificate expiry"
+      negative_examples:
+        - "Where is the coffee"
+      threshold: 0.65
+    inject:
+      mode: replace
+      template: |
+        {raw_text}
+        ---
+        Repo: {project.name}
+        Stack: {project.kb.stack}
+        Change rules: {project.kb.dod}
