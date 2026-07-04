@@ -1,0 +1,34 @@
+version: 1
+default_match_confidence: 0.6
+blocks:
+  - id: agent_task_buildout
+    description: A task brief dictated at a coding agent (build/refactor work)
+    match:
+      examples:
+        - "Claude, add idempotency to the charge endpoint"
+        - "Build a reconciliation report for last month's entries"
+        - "Refactor the posting engine to batch inserts"
+      negative_examples:
+        - "What time is the standup"
+      threshold: 0.65
+    inject:
+      mode: replace
+      template: |
+        {raw_text}
+        ---
+        Repo: {project.name}
+        Stack: {project.kb.stack}
+        Invariants: {project.kb.invariants}
+        Definition of done: {project.kb.dod}
+  - id: incident_note
+    description: An incident observation or remediation note
+    match:
+      examples:
+        - "The retry storm double-posted charges again"
+        - "Reconciliation drift alert fired at two pm"
+    inject:
+      mode: replace
+      template: |
+        {raw_text}
+        ---
+        SLO context: {project.kb.slo}

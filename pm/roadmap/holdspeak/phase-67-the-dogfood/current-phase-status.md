@@ -1,18 +1,22 @@
 # Phase 67 — The Dogfood
 
-**Status:** scaffolded. Opened 2026-06-14 on owner direction — build a thorough,
+**Status:** **CLOSED — 6/6 (2026-07-04).** The recorded run landed: `dogfood/results/2026-07-04.md` (63 checks, 40 PASS / 14 PARTIAL / 1 FAIL / 8 SKIP-for-glass, real `.43` metal; findings F-01..F-12, three harness gaps fixed in-run). Opened 2026-06-14 on owner direction — build a thorough,
 easy-to-fill dogfooding protocol that exercises literally all of HoldSpeak on
 believable data (mock repos with completed stages + `.hs/` files, meetings and
 dictation rendered through `say` voices, fed to the program, then verified).
-HS-67-01..04 are built; the phase stays open until a run is recorded (HS-67-06).
+All six stories are done; the run that closed it was driven headless with honest SKIPs where glass or a mic is required.
 
-**Last updated:** 2026-06-14 (**scaffolded + harness built** — `dogfood/` exists:
-the isolated runner + sandbox config (HS-67-01), the 3-repo mock fleet
-(HS-67-02), the 12-scenario library + `make_fixtures.py` + committed transcripts
-(HS-67-03), and the two-tier fillable `PROTOCOL.md` + results template
-(HS-67-04). Opt-in plumbing pytest `tests/e2e/test_dogfood_plumbing_e2e.py`
-green (20). Remaining: docs wiring (HS-67-05) and a recorded real-metal run
-(HS-67-06). The story rows below mark what is built vs. what awaits a commit.)
+**Last updated:** 2026-07-04 (**CLOSED — the run is on the record.** 63 checks driven
+against the real `.43` Qwythos endpoint: real Whisper on the `say` fixtures, real
+grounded rewriting (the LL-118 brief citing every `.hs/memory.md` invariant), a real
+actuator execute byte-equal into a local receiver, the learning loop taught live, the
+cadence tier 5/5. Score 40 PASS / 14 PARTIAL / 1 FAIL / 8 SKIP-for-glass. The findings
+ledger F-01..F-12 is the follow-on worklist — the headline is **F-05: imported meetings
+never receive typed plugin artifacts** (base intel only; the plugin host runs solely on
+live windows), a candidate phase of its own. Three harness gaps were found and fixed
+in-run: the missing repo `blocks.yaml` fixtures, the missing `project-rewriter` stage in
+`setup.sh`, and the stray uncommitted questline sources. Earlier: scaffolded + harness
+built, 2026-06-14.)
 
 ## The thesis — why this phase
 
@@ -59,20 +63,19 @@ guard so the fixtures can't silently rot.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-67-01 | The isolated harness scaffold | built (awaiting commit) | none |
-| HS-67-02 | The mock repo fleet | built (awaiting commit) | HS-67-01 |
-| HS-67-03 | Scenario library + fixture generator | built (awaiting commit) | HS-67-01, HS-67-02 |
-| HS-67-04 | The master protocol | built (awaiting commit) | HS-67-02, HS-67-03 |
-| HS-67-05 | Docs wiring | backlog | HS-67-01..04 |
-| HS-67-06 | Closeout: a recorded run | backlog | HS-67-01..05 |
+| HS-67-01 | The isolated harness scaffold | done (committed; exercised by the run: P-01/02, X-05 isolation proven) | none |
+| HS-67-02 | The mock repo fleet | done (committed; + this run added the missing `.holdspeak/blocks.yaml` ×3 and the stray questline `src/lib/` files) | HS-67-01 |
+| HS-67-03 | Scenario library + fixture generator | done (committed; P-04 rendered all 38 fixtures; every meeting + dictation scenario driven) | HS-67-01, HS-67-02 |
+| HS-67-04 | The master protocol | done (committed; driven end to end — wording drifts F-11/T1-16/X-02 noted for the next revision) | HS-67-02, HS-67-03 |
+| HS-67-05 | Docs wiring | done (CONTRIBUTING.md §Running the tests points at the harness + protocol) | HS-67-01..04 |
+| HS-67-06 | Closeout: a recorded run | done — [`dogfood/results/2026-07-04.md`](../../../dogfood/results/2026-07-04.md) (force-committed past the results gitignore as the phase's exit evidence) | HS-67-01..05 |
 
 ## Where we are
 
-The harness and protocol are written and self-verified: `make_fixtures.py`
-renders real `say` audio (checked a meeting clip at 16 kHz mono and a dictation
-clip), the three KBs parse, and the opt-in plumbing pytest is 20 green / clean
-skip. Nothing is committed yet — the story rows say "built (awaiting commit)" so
-a reviewer flips them to `done` with evidence when the work lands via PR. Next:
-wire the harness into the contributor docs (HS-67-05), then the owner drives
-`PROTOCOL.md` once on real metal and we record the run + findings (HS-67-06),
-which is what actually closes the phase.
+CLOSED. The recorded run is [`dogfood/results/2026-07-04.md`](../../../dogfood/results/2026-07-04.md)
+(force-committed as the exit evidence; future runs stay gitignored per the results
+convention). The protocol answered its one question honestly: the product works end to
+end — transcription, intel, routing controls, the queue, aftercare, the actuator gates,
+grounded dictation, languages, the learning loop, cadence, isolation — with one
+capability gap promoted to the worklist (F-05) and a dozen precise findings filed. The
+harness itself came out stronger (fixtures + stage config fixed). Re-run each release.

@@ -52,6 +52,14 @@ through them, with diagrams — start at
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the two docs above are the
 module-structure detail beneath it.
 
+Beyond the unit suites there is a whole-product exercise:
+[`dogfood/`](dogfood/README.md) is a self-contained harness (isolated sandbox,
+three mock repos with `.hs/` context, `say`-rendered meetings and dictation)
+with a fillable protocol ([`dogfood/PROTOCOL.md`](dogfood/PROTOCOL.md)) that
+walks every user-facing surface across a no-LLM tier and a real-metal tier.
+Run it before a release, or when you want to feel the product end to end the
+way a user does.
+
 ## Commit workflow
 
 This repo gates every commit on a small "commit contract" via a pre-commit hook
