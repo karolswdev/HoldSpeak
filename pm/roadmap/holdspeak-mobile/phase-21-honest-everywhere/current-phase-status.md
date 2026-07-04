@@ -4,7 +4,13 @@
 audit theme 4, the cheapest-to-fix, highest-trust-cost class, non-negotiable per
 POSITIONING canon.
 
-**Last updated:** 2026-07-03 (**OPENED, survey-corrected.** The 2026-06-27 draft partially
+**Last updated:** 2026-07-04 (**4/5, gate staged — and one process failure on the record.**
+PR #233 (21-03) was merged with RED checks: the HS-72-02 route-surface lock fired on the
+new `api/desk/actuators/status` consumer, and the merge was chained after the CI watch
+instead of gated on the conclusion — the exact trap the two-track handover names. Healed
+same-hour: the regenerated manifest (covering 21-03's and 21-04's consumers,
+`test_api_surface` 5/5) rides PR #234; noted on #233. The honesty phase gets an honest
+ledger. Earlier: **OPENED, survey-corrected.** The 2026-06-27 draft partially
 predates Wave 1 and Phase 19: the web banned-copy scan EXISTS
 (`test_doc_drift_guard.py` scans `web/src/**/*.astro`; zero "intelligent typing" left in
 product copy), web settings binds ALL THREE connectors and the system package persists
@@ -56,7 +62,7 @@ sentence, per canon).
 | HSM-21-02 | The Swift banned-copy + reassurance-prose guard (+ fix the sites) | done — [`evidence-story-02.md`](./evidence-story-02.md) (7 sites; the guard caught the 7th itself) |
 | HSM-21-03 | GitHub-repo honesty: the tile's ready state tells the truth; the host-fallback path ratified | done — [`evidence-story-03.md`](./evidence-story-03.md) (control-vs-treatment on one live hub) |
 | HSM-21-04 | The ambient trust chip on the iPad + the web-chip posture audit | done — [`evidence-story-04.md`](./evidence-story-04.md) (two surfaces, two postures, one live hub) |
-| HSM-21-05 | Docs + the walk rider (honesty checks join the staged couch session) | todo |
+| HSM-21-05 | Docs + the walk rider (honesty checks join the staged couch session) | in-progress — docs done; [`HSM-21-WALK-RIDER.md`](./HSM-21-WALK-RIDER.md) staged (H1–H3); the rider is the owner's |
 
 ## Where we are
 
@@ -74,5 +80,7 @@ live hub with the repo flipped mid-run. **21-04 followed** (4/5): the setup-stat
 client + the shared four-posture mapping (test-locked to the web chip's precedence) +
 the shell top-bar chip — proven on one live hub flipped local → writes-need-approval,
 with the real web TrustChip audited against the same hub (same words, both surfaces).
-Only **21-05** (docs + the walk rider) remains. Artifact provenance rendering shipped in 19-04; this phase owns the audit
+**21-05's docs half is done and the rider is STAGED** (H1–H3, ~5 minutes riding the
+18/19 couch session). **The phase now sits at 4/5 with the gate staged — the owner's
+device session closes Phases 18, 19, AND 21 in one sitting.** Artifact provenance rendering shipped in 19-04; this phase owns the audit
 that no surface fakes a posture.
