@@ -15,11 +15,14 @@ pre-paid by Equilibrium Wave 1 and is recorded done with a fresh 50-test green r
 the survey also KILLED a false memory (the "web authors a linear graph" Wave-2 claim
 has no code behind it: 22-03 stays genuinely todo) and caught a producer hole the
 audit missed (`BPNode` carries no `runs_on`, so the iPad cannot emit the policy the
-hub reads — folded into 22-01). **22-01 leads:** the Blueprint→`graph_json` lowering +
-Save + `DeskSync`, pinned by a Swift-ENCODED golden fixture fed byte-for-byte into
-`linearize()` (the HS-72-01 pattern applied to graphs). Then 22-03 (web linear builder
-+ the `primitives.ts` type fix + the dropped run `warning`) and 22-04 (the
-cross-surface proof + `runWorkflow` on the iPad hub path + docs/rider).
+hub reads — folded into 22-01). **22-01 LANDED the same day (2/4): THE GRAPH
+TRAVELS** — the shipping canvas saves a real linear Blueprint (per-node
+`failure_policy` + the new `runs_on`) into a desk `WorkflowRecord`; a live DeskSync
+pass ported it to a scratch hub whose own `linearize()` accepted it runnable, and the
+language boundary is golden-pinned (Swift-ENCODED fixtures fed byte-for-byte into the
+hub parser by a new pytest). Remaining: 22-03 (web linear builder + the
+`primitives.ts` type fix + the dropped run `warning`) and 22-04 (the cross-surface
+RUN + `runWorkflow` on the iPad hub path + docs/rider).
 [Phase 23 — Mesh-safe storage](./phase-23-mesh-safe-storage/current-phase-status.md)
 is **fully built and gate-staged, the same day it opened**: the Wave-4
 refuse-newer + backup-then-apply mechanism (23-01/02) is recorded done with fresh green
@@ -62,7 +65,12 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**PHASE 22 OPENED, survey-corrected — the LAST
+**Last updated:** 2026-07-04 (**HSM-22-01: THE GRAPH TRAVELS.** The shipping Workbench
+canvas saves a real linear Blueprint through the canonical coder (`BPNode.runsOn`
+closed the producer hole), the desk syncs it, and the hub's `linearize()` accepted the
+synced graph runnable — proven live on the connected sim; the Swift↔Python boundary is
+golden-pinned by Swift-encoded fixtures a new pytest feeds into the parser. Earlier:
+**PHASE 22 OPENED, survey-corrected — the LAST
 Equilibrium build phase.** 22-02 (the hub honors the graph) pre-paid by Wave 1,
 recorded done with a fresh 50-test run; the survey killed the false "web authors a
 graph" memory and caught the missing `BPNode.runs_on` producer hole; 22-01 (the

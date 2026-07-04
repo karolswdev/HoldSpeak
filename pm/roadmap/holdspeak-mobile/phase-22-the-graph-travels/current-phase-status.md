@@ -3,8 +3,16 @@
 **Status:** in-progress (opened 2026-07-04) — audit theme 5, the keystone the
 cross-surface workflow story waits on. Independent of the walk-gated phases.
 
-**Last updated:** 2026-07-04 (**OPENED, survey-corrected — the hub half was pre-paid,
-the authoring half was not.** The 2026-06-27 draft predates Equilibrium Wave 1 and
+**Last updated:** 2026-07-04 (**2/4 — 22-01 landed the day the phase opened: THE GRAPH
+TRAVELS.** The shipping canvas saves a real linear Blueprint (per-node
+`failure_policy` + the NEW `runs_on`) through the canonical coder into a desk
+`WorkflowRecord`; a live DeskSync pass ported it to a scratch hub whose own
+`linearize()` accepted it runnable — authored → saved → synced → parseable, proven
+end to end on the connected sim. The language boundary is golden-pinned the HS-72-01
+way: Swift-ENCODED fixtures (linear + branching) fed byte-for-byte into the hub
+parser by a new pytest. Full `swift test` 442/8-skip/0-fail; the pytest battery 71
+passed. Next: 22-03 (web) or 22-04 (the cross-surface run). Earlier: **OPENED,
+survey-corrected — the hub half was pre-paid, the authoring half was not.** The 2026-06-27 draft predates Equilibrium Wave 1 and
 Phase 23: **22-02 shipped in Wave 1** (`workflow_graph.py` linearizes the Swift
 tagged-union shape, carries AND applies per-node `failure_policy`, carries `runs_on`,
 refuses control flow honestly with a `warning`, and documents what it does not
@@ -50,7 +58,7 @@ ships a minimal linear builder emitting the same shape, or scopes its claim hone
 
 | ID | Title | Status |
 |----|-------|--------|
-| HSM-22-01 | The `graph_json` serializer on iPad (+ `runs_on` on `BPNode`, Save, `DeskSync`, the Swift-encoded golden fixture → `linearize()` conformance) — **leads** | todo |
+| HSM-22-01 | The `graph_json` serializer on iPad (+ `runs_on` on `BPNode`, Save, `DeskSync`, the Swift-encoded golden fixture → `linearize()` conformance) — **leads** | done — [`evidence-story-01.md`](./evidence-story-01.md) |
 | HSM-22-02 | The hub honors the graph (control flow / `failure_policy` / `runs_on`, or honest omission) | done (pre-paid, Wave 1) — [`evidence-story-02.md`](./evidence-story-02.md) |
 | HSM-22-03 | Web authors a linear graph (or honest scope) + the `primitives.ts` type fix + the run UI renders the hub's `warning` | todo |
 | HSM-22-04 | The cross-surface proof (authored → synced → run) + `runWorkflow` on the iPad hub path + docs | todo |
@@ -59,6 +67,10 @@ ships a minimal linear builder emitting the same shape, or scopes its claim hone
 
 Opened 2026-07-04, survey-corrected: **1/4 on open** — 22-02 shipped in Equilibrium
 Wave 1 (evidence recorded from the shipped code + a fresh 50-test green run). **22-01
-leads**: without serialization nothing travels, and the golden-fixture conformance is
-the one lock that makes every later story safe. 22-04 upgrades the 23-04 sync fixture
-to a linearizable graph and closes the iPad's missing run-workflow-on-hub path.
+landed the same day (2/4)** — the keystone: the Save on the shipping canvas, the
+canonical lowering (with `BPNode.runsOn` closing the producer hole), the desk-record
+sync wiring, and the Swift-encoded golden fixtures a new pytest feeds into
+`linearize()` — proven live (authored → saved → synced → the hub parses it
+runnable). Remaining: **22-03** (the web linear builder + `primitives.ts` type fix +
+the dropped run `warning`) and **22-04** (the cross-surface RUN + `runWorkflow` on
+the iPad hub path + the 23-04 sync-fixture upgrade + docs/rider).

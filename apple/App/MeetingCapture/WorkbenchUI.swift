@@ -26,6 +26,44 @@ import Foundation
     private func persist() { if let data = try? JSONEncoder().encode(saved) { d.set(data, forKey: key) } }
 }
 
+// MARK: - HSM-22-01 — the desk workflow library (Save writes what the desk syncs)
+
+/// Upserts a lowered workflow into the DESK's record store — the exact
+/// `@AppStorage`-backed keys `DeskDioramaStage` owns (`hs.diorama.workflows` +
+/// the `hs.diorama.synctimes` LWW stamp) with the exact same coders, so the next
+/// `DeskSyncDriver` pass pushes the graph to the hub like every other primitive.
+/// The Workbench and the desk stage are never alive at once (both are classic-home
+/// destinations), so the direct defaults write cannot race the stage's persistence.
+@MainActor enum DeskWorkflowLibrary {
+    static func upsert(_ record: WorkflowRecord) {
+        let defaults = UserDefaults.standard
+
+        var records: [WorkflowRecord] = []
+        if let s = defaults.string(forKey: "hs.diorama.workflows"), let data = s.data(using: .utf8),
+           let existing = try? JSONDecoder().decode([WorkflowRecord].self, from: data) {
+            records = existing
+        }
+        if let i = records.firstIndex(where: { $0.id == record.id }) { records[i] = record }
+        else { records.append(record) }
+        if let data = try? JSONEncoder().encode(records), let s = String(data: data, encoding: .utf8) {
+            defaults.set(s, forKey: "hs.diorama.workflows")
+        }
+
+        // Stamp modified-now (iso8601 — persistSyncMaps' coder) so LWW pushes it.
+        let enc = JSONEncoder(); enc.dateEncodingStrategy = .iso8601
+        let dec = JSONDecoder(); dec.dateDecodingStrategy = .iso8601
+        var times: [String: Date] = [:]
+        if let s = defaults.string(forKey: "hs.diorama.synctimes"), let data = s.data(using: .utf8),
+           let existing = try? dec.decode([String: Date].self, from: data) {
+            times = existing
+        }
+        times[record.id] = Date()
+        if let data = try? enc.encode(times), let s = String(data: data, encoding: .utf8) {
+            defaults.set(s, forKey: "hs.diorama.synctimes")
+        }
+    }
+}
+
 // MARK: - Workbench: the visual language (HSM-14-15)
 //
 // A node-based dataflow canvas. Typed primitives — "Transcription", "Decisions", "LLM call",
@@ -386,6 +424,81 @@ private func cablePoint(_ a: CGPoint, _ b: CGPoint, _ t: CGFloat) -> CGPoint {
         switch kind { case .slack: return .slack; case .note: return .note; default: return .artifacts }
     }
 
+    // MARK: - HSM-22-01 — lower the canvas to a travelling `Blueprint` (graph_json)
+
+    /// A stable id for THIS canvas session, so re-saving after an edit updates the same
+    /// synced workflow instead of minting a sibling every save.
+    let deskWorkflowID = UUID().uuidString.lowercased()
+
+    /// Walk the same primary source→…→output chain `lowerToWorkflow` runs, but produce
+    /// the syncable `Blueprint` — the graph_json wire the hub's linearizer parses.
+    /// Linear by construction (exactly the subset the hub runs); each model-op node
+    /// carries the inspector's `failure_policy` + `runs_on` so the provenance travels.
+    func lowerToBlueprint() -> Blueprint? {
+        guard let src = nodes.first(where: { $0.kind.cat == .source }) else { return nil }
+        var bpNodes: [BPNode] = [BPNode(id: "entry", kind: .entry),
+                                 BPNode(id: "source", kind: .source)]
+        var execEdges = [BPExecEdge(from: BPExecPin(node: "entry", name: "then"), to: "source")]
+        var prev: BPNodeID = "source"
+        var titles: [String] = []
+
+        func next(after id: UUID) -> GraphNode? {
+            guard let edge = edges.first(where: { $0.from.node == id }) else { return nil }
+            return node(edge.to.node)
+        }
+
+        var current = next(after: src.id)
+        var index = 0
+        var guardCount = 0
+        while let n = current, guardCount < nodes.count + 2 {
+            guardCount += 1
+            switch n.kind.cat {
+            case .source:
+                current = nil
+            case .intel, .transform:
+                if let kind = bpKind(for: n) {
+                    index += 1
+                    let id = "n\(index)"
+                    bpNodes.append(BPNode(
+                        id: id, kind: kind,
+                        failurePolicy: kind.isModelOp ? n.onFail : nil,
+                        runsOn: kind.isModelOp ? BPRunsOn(rawValue: n.modelPref.rawValue) : nil))
+                    execEdges.append(BPExecEdge(from: BPExecPin(node: prev, name: "then"), to: id))
+                    prev = id
+                    titles.append(n.kind.title)
+                }
+                current = next(after: n.id)
+            case .output:
+                current = nil
+            }
+        }
+        guard index > 0 else { return nil }   // nothing runnable wired yet
+        bpNodes.append(BPNode(id: "out", kind: .output))
+        execEdges.append(BPExecEdge(from: BPExecPin(node: prev, name: "then"), to: "out"))
+        let name = "Canvas · " + titles.prefix(3).joined(separator: " → ")
+        return Blueprint(name: name, entry: "entry", nodes: bpNodes, execEdges: execEdges)
+    }
+
+    /// The canvas vocabulary → the Blueprint vocabulary. `questions` has no curated
+    /// Blueprint node; it lowers to its intent (an open-questions llm call).
+    private func bpKind(for n: GraphNode) -> BPNodeKind? {
+        switch n.kind {
+        case .decisions:    return .extract(.decisions)
+        case .actions:      return .extract(.actionItems)
+        case .risks:        return .extract(.riskRegister)
+        case .requirements: return .extract(.requirements)
+        case .questions:    return .llm(name: "Open questions",
+                                        prompt: "From {input}, list the sharpest open questions a reviewer should ask. One per line.")
+        case .summarize:    return .summarize
+        case .rewrite:      return .rewrite(tone: n.tone)
+        case .filter:       return .keepIf(keyword: n.keyword)
+        case .llm:
+            let p = n.prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+            return .llm(name: n.kind.title, prompt: p.isEmpty ? "{input}" : p)
+        default:            return nil
+        }
+    }
+
     // MARK: Run-state drivers (set by the canvas run loop)
 
     func setRunState(_ id: UUID, _ s: NodeRunState) { if let i = idx(id) { nodes[i].runState = s } }
@@ -432,6 +545,7 @@ private struct GraphCanvasView: View {
     @State private var inspect: GraphNode?
     @State private var spin = false
     @State private var runTask: Task<Void, Never>?
+    @State private var saved = false          // HSM-22-01 — the Save button's settle beat
 
     var body: some View {
         ZStack {
@@ -454,6 +568,10 @@ private struct GraphCanvasView: View {
             if env["HS_DEMO_WB_EXEC"] == "1" {
                 RunQueueStore.shared.expanded = true
                 startRun()
+            }
+            // HSM-22-01 screenshot/proof affordance — the same save path the tap runs.
+            if env["HS_DEMO_WB_SAVE"] == "1" {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { saveToDesk() }
             }
             #endif
         }
@@ -501,10 +619,50 @@ private struct GraphCanvasView: View {
                 Text("Wire up intelligence").font(.system(size: 19, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
             }
             Spacer(minLength: 6)
+            saveButton
             runButton
         }
         .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 14)
         .background(LinearGradient(colors: [Sig.bg, Sig.bg.opacity(0)], startPoint: .top, endPoint: .bottom).ignoresSafeArea(edges: .top))
+    }
+
+    // HSM-22-01 — the graph travels: Save lowers the canvas to the canonical
+    // graph_json `WorkflowRecord` on the DESK, where the next sync pass ports it to
+    // the hub like every other primitive.
+    private var saveButton: some View {
+        Button {
+            tactile(.medium)
+            saveToDesk()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: saved ? "checkmark" : "square.and.arrow.down")
+                    .font(.system(size: 12, weight: .black))
+                Text(saved ? "Saved" : "Save").font(.system(size: 14, weight: .heavy))
+            }
+            .foregroundStyle(saved ? Sig.ok : Sig.text)
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().strokeBorder(
+                saved ? AnyShapeStyle(Sig.ok.opacity(0.5)) : AnyShapeStyle(Sig.topHairline),
+                lineWidth: 1))
+        }.buttonStyle(PressableCard())
+    }
+
+    private func saveToDesk() {
+        guard let blueprint = model.lowerToBlueprint() else {
+            print("[Workbench] save: nothing runnable wired source→… yet")
+            tactile(.heavy); return
+        }
+        guard let definition = try? blueprint.workflowDefinition(id: model.deskWorkflowID) else {
+            print("[Workbench] save: graph_json lowering failed for '\(blueprint.name)'")
+            tactile(.heavy); return
+        }
+        DeskWorkflowLibrary.upsert(WorkflowRecord(contract: definition))
+        print("[Workbench] save: '\(definition.name)' → desk workflow \(definition.id) (graph_json aboard)")
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { saved = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+            withAnimation { saved = false }
+        }
     }
 
     private var runButton: some View {
