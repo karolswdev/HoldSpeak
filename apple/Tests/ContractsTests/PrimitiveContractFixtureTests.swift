@@ -52,6 +52,10 @@ final class PrimitiveContractFixtureTests: XCTestCase {
         XCTAssertEqual(f.kb.memberIds, ["note-golden-1"])
         XCTAssertEqual(f.agent.kbId, "kb-golden-1")
         XCTAssertNil(f.agent.profileId)
+        // Phase 77: the hub persists + re-emits the pinned context — the wire
+        // fields must REACH the properties, not just decode tolerantly (HSM-23-04).
+        XCTAssertEqual(f.agent.manualContext, "Always consider the Q3 launch.")
+        XCTAssertTrue(f.agent.useZoneContext)
         XCTAssertEqual(f.chain.steps, ["agent-golden-1"])
         XCTAssertEqual(f.workflow.prompt, "Draft a stakeholder update")
         XCTAssertEqual(f.directory.parentId, "Atlas")

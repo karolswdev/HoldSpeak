@@ -1,52 +1,77 @@
 # Phase 23 — Mesh-safe storage (mobile schema safety)
 
-**Status:** planned — independent safety net; schedule before the mesh grows more
-newer-DB peers. Stories detailed on open.
+**Status:** in-progress (opened 2026-07-04) — audit theme 6, the safety net for everything
+sync touches, opened before the mesh grows more newer-DB peers.
 
-**Last updated:** 2026-06-27 (**authored** from the parity audit, theme 6 + the sync-integrity
-footnotes.)
+**Last updated:** 2026-07-04 (**3/4 — 23-04 landed the day the phase opened**: the
+chain/workflow matrix rows, §11 brought current, the manual_context truth corrected and
+fixture-pinned cross-language; see "Where we are". Earlier the same day: **OPENED,
+survey-corrected — half the phase was pre-paid.**
+The 2026-06-27 draft predates Wave 4 and Wave 1 of the Equilibrium build waves:
+**23-01 and 23-02 shipped in Wave 4** (`SQLiteStorage` reads `user_version` BEFORE
+migrate/stamp, refuses a newer-than-build DB with `StorageError.tooNew`, and snapshots a
+timestamped backup before the v1→v2 ALTERs — `SQLiteStorageSchemaSafetyTests`, re-run green
+on open), and **23-04's live-merge half shipped in Wave 1** (`POST /api/sync/push`
+live-merges meetings + artifacts into their real tables; the JSON inbox is an audit trail
+now, not the store). The wire pin also largely exists since HS-72-01 (the ChangeSet schema
++ the tri-guard). What actually remains: the readiness/doctor panel (23-03 — the safety
+mechanism has ZERO UI surface; `.tooNew` reaches the user as an undifferentiated "Store
+unavailable" string), and 23-04's integrity tail — chain/workflow are the two matrix rows
+with no push→pull round-trip lock, §11 of the serialization contract still describes a
+two-bucket wire, and the §12/agent-schema "manual_context is lossy" finding went stale the
+day Phase 77 fixed it. Stories re-grounded below.)
 
 ## Why this phase exists
 
 Audit theme 6: *mobile schema safety lags the desktop matrix.* The desktop earned a
 safe-by-default schema matrix (refuse-newer / backup-then-apply / no-op / create-fresh) in
-Phase 50. The iPad has none of it:
+Phase 50. When this phase was authored the iPad had none of it; Wave 4 built the mechanism,
+and this phase now finishes the job:
 
-- **The iPad store silently downgrade-stamps a newer DB.** `SQLiteStorage.swift:51-61`
-  migrates only `userVersion < 2`, then **unconditionally stamps `user_version = 2`** — the
-  exact data-loss case desktop refuses. As sync brings a newer-build peer's DB into reach,
-  this is a live data-loss risk.
-- **No backup-then-apply.** The v1→v2 ALTERs run in place with no timestamped backup.
-- **No doctor / readiness panel.** No view reports mic permission, model presence, store/schema
-  health, or app version — the iPad cannot tell you it is healthy.
-
-This phase also absorbs the audit's two **sync-integrity** footnotes (filed low-severity but
-real): `/api/sync/push` inboxes meetings/artifacts to a JSON inbox rather than merging them
-live; and the serialization contract (ID/timestamp/egress-field/`intel_status` nesting,
-`source_type` "card" vs "input") is unpinned. Per the EQUILIBRIUM rule, the desktop is audited
-here, not assumed.
+- **The mechanism is invisible.** Refuse-newer + backup-then-apply are provider-layer only.
+  No view reports store/schema health, `StorageError.tooNew` is not distinguished from any
+  other open failure (`MeetingCaptureApp.swift` renders a generic "Store unavailable"), and
+  three call sites `try?`-swallow open errors entirely (`DeskHome.swift:239`,
+  `ReviewUI.swift:38`, `MeetingCaptureApp.swift:406`). The iPad cannot tell you it is
+  healthy — or that it just refused a newer DB to protect it.
+- **The sync-integrity matrix has holes.** Chain and workflow ride the generic
+  `_MERGEABLE` push path with pull-serialization coverage but no push→pull round-trip /
+  LWW / tombstone lock of their own — the audit critic's per-primitive matrix lands here.
+- **The pinned contract drifted.** `SERIALIZATION-CONTRACT.md` §11 still describes
+  `change_set` as `{meetings, artifacts}` (the live wire carries 10 kinds; §12 knows, §11
+  was never back-updated), and §12 + `agent.schema.json` still call
+  `Agent.manual_context`/`use_zone_context` "lossy through hub sync" — Phase 77 (db v7)
+  fixed that, byte-faithful round-trip test-locked.
 
 ## The load-bearing design call
 
-**Mirror the desktop refuse-newer matrix on the iPad, back up before you migrate, and pin the
-wire.** Read `user_version` *before* migrate/stamp; throw `StorageError.tooNew` and refuse to
-open for writes when it exceeds `schemaVersion`. Copy the store to a timestamped backup before
-`migrateIfNeeded`. Add an honest readiness card. Then close the sync-integrity holes so content
-primitives round-trip on push and the wire shape is pinned across all four surfaces (the
-per-primitive matrix explosion the audit critic recommended lives here as the integrity check).
+**Mirror the desktop refuse-newer matrix on the iPad, back up before you migrate, and pin
+the wire.** The first two clauses are built (Wave 4). The rest: surface the mechanism
+honestly (a readiness panel that states store health, schema version, and the refuse-newer
+event when it fires — labels, never reassurance prose), close the chain/workflow rows of
+the per-primitive round-trip matrix, and make the serialization contract state the wire
+that actually ships (§11 current, the stale lossy-finding corrected).
 
 ## Stories
 
 | ID | Title | Status |
 |----|-------|--------|
-| HSM-23-01 | Refuse-newer on the iPad store — **leads** | todo |
-| HSM-23-02 | Backup-then-apply (timestamped) + minimal backup/restore | todo |
+| HSM-23-01 | Refuse-newer on the iPad store — **leads** | done (pre-paid, Wave 4) — [`evidence-story-01.md`](./evidence-story-01.md) |
+| HSM-23-02 | Backup-then-apply (timestamped) before migration | done (pre-paid, Wave 4) — [`evidence-story-02.md`](./evidence-story-02.md) |
 | HSM-23-03 | The readiness / doctor panel in Settings | todo |
-| HSM-23-04 | Sync integrity (push live-merge) + the serialization-contract pin | todo |
+| HSM-23-04 | Sync integrity: the per-primitive round-trip matrix + the serialization-contract pin | done — [`evidence-story-04.md`](./evidence-story-04.md) |
 
 ## Where we are
 
-Not started. **23-01 leads** (it is the data-loss stopper). 23-04 is where the audit critic's
-"explode the Primitive Framework into per-primitive CRUD/run/sync/egress rows" lands — as a
-sync-integrity conformance pass (Note / KB / Directory / Agent / Chain / Workflow each
-round-trip cleanly), not a new phase.
+Opened 2026-07-04, survey-corrected: **2/4 on open** — 23-01/23-02 shipped in Equilibrium
+Wave 4 (evidence recorded from the shipped code + a fresh green run of
+`SQLiteStorageSchemaSafetyTests` + `StorageTests`, 8/8). **23-04 landed the same day
+(3/4):** all 10 sync kinds now carry the per-primitive push→pull + LWW + tombstone lock
+(chain/workflow were the last two unlocked rows; the workflow lock proves the Phase-22
+`graph_json` survives the wire byte-faithful), §11 of the serialization contract states
+the shipping ten-bucket wire instead of the dead two-bucket one, and the stale "lossy
+manual_context" finding is corrected everywhere it lived — §12, `agent.schema.json`, and
+the golden fixture, which now pins the Phase-77 fields on BOTH sides of the wire
+(`PrimitiveContractFixtureTests` asserts the values reach the Swift properties). Suites:
+39 sync/contract pytest green, validate.py ALL PASS, full `swift test` 432/8-skip/0-fail.
+**Only 23-03 remains** — the readiness/doctor panel, the phase's one new UI surface.

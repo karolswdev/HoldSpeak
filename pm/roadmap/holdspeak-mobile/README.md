@@ -9,8 +9,16 @@
 > 🚀 **New agent (general):** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Current phase:** [Phase 21 — Honest everywhere](./phase-21-honest-everywhere/current-phase-status.md)
-— **OPENED AND BUILT TO 4/5 THE SAME NIGHT (2026-07-03), the gate staged.** The iPad half
+**Current phase:** [Phase 23 — Mesh-safe storage](./phase-23-mesh-safe-storage/current-phase-status.md)
+— **OPENED 2026-07-04, survey-corrected, and built to 3/4 the same day.** The Wave-4
+refuse-newer + backup-then-apply mechanism (23-01/02) is recorded done with fresh green
+runs; **23-04 (sync integrity) landed**: all 10 sync kinds now carry a per-primitive
+push→pull + LWW + tombstone lock, §11 of the serialization contract states the shipping
+ten-bucket wire, and the stale "lossy manual_context" finding is corrected + golden-pinned
+on both sides of the wire. Only the readiness/doctor panel (23-03) remains — the
+mechanism's one missing UI surface.
+[Phase 21 — Honest everywhere](./phase-21-honest-everywhere/current-phase-status.md)
+stands at **4/5, gate staged**: the iPad half
 of honesty, shipped: the ONE `EgressScope` contract (`DeskPrimitive.egress`; connectors
 wear Cloud, a live coder session Local + your desktop; the hard-coded "On device" capsule
 is dead, and the mixed-as-local drift in the evening's own shell chips fixed), the Swift
@@ -37,7 +45,20 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**PHASE 21 BUILT TO 4/5 OVERNIGHT — the gate staged.** Four
+**Last updated:** 2026-07-04 (**PHASE 23 BUILT TO 3/4 THE DAY IT OPENED — 23-04 sync
+integrity landed**: the chain/workflow rows complete the 10-kind per-primitive round-trip
+matrix (the workflow lock proves the Phase-22 `graph_json` travels byte-faithful), §11
+rewritten to the shipping wire, the stale "lossy manual_context" finding corrected in §12
++ `agent.schema.json` and PINNED cross-language (the golden fixture now carries the
+Phase-77 fields; Swift asserts they reach the properties). Earlier:
+**PHASE 23 OPENED, survey-corrected — half the phase was
+pre-paid.** 23-01/02 (refuse-newer + timestamped backup-then-apply on the iPad store)
+shipped in Equilibrium Wave 4 and are recorded done with a fresh 8/8 green run; 23-04's
+live-merge half shipped in Wave 1 and the HS-72-01 tri-guard pins the envelope. In
+progress: 23-04's tail — chain/workflow are the two per-primitive matrix rows without a
+push→pull lock, §11 of the serialization contract still describes the dead two-bucket
+wire, and the "manual_context is lossy" finding went stale when Phase 77 fixed it. Then
+23-03, the readiness/doctor panel. Earlier: **PHASE 21 BUILT TO 4/5 OVERNIGHT — the gate staged.** Four
 stories landed with live proofs (the EgressScope contract, the Swift prose guard that
 caught its own 7th site, GitHub readiness truth control-vs-treatment, the two-surface
 trust chip); the honesty rider joins the couch session, which now closes THREE phases.

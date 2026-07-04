@@ -163,26 +163,37 @@ no ambiguity — which is the HSM-0-03 acceptance bar.
 
 ---
 
-## §11 — Sync envelope (HSM-10-01)
+## §11 — Sync envelope (HSM-10-01; brought current HSM-23-04)
 
 Cross-device sync moves the **contract entities themselves**, never a parallel sync
 schema. The sync metadata a transport needs rides in a thin additive envelope; the
 entity structs are unchanged (no `last_modified`/`deleted` field bolted onto each
 entity — that was the escalation the story flagged, resolved this way):
 
-- `sync_metadata`: `{ id (string), kind ("meeting"|"artifact"), last_modified
+- `sync_metadata`: `{ id (string), kind (see the kind set below), last_modified
   (ISO-8601 UTC Z, §2), deleted (bool) }`. `deleted=true` is a **tombstone** — a
-  propagated delete that carries no payload.
+  propagated delete whose `value` is `null` (never a payload; the §12 rule).
 - `synced<T>`: `{ meta: sync_metadata, value: T|null }`; `value` is the unmodified
-  Phase-0 entity, and is `null` exactly when `meta.deleted`.
-- `change_set`: `{ meetings: synced<Meeting>[], artifacts: synced<Artifact>[] }`.
+  contract entity, and is `null` exactly when `meta.deleted`.
+- `change_set` — ten buckets, one per kind (all optional on the wire; decoders
+  tolerate absent buckets):
+  `{ meetings, artifacts, notes, kbs, agents, chains, workflows, profiles,
+  directories, directory_memberships }`, each `synced<T>[]`.
+- The `kind` enum matches the buckets one-to-one: `meeting`, `artifact`, `note`,
+  `kb`, `agent`, `chain`, `workflow`, `profile`, `directory`,
+  `directory_membership`. A `directory_membership` record's synced id is its
+  `primitive_id` (the filing-map key); its value carries the `directory_id` edge.
   Actions are not a top-level store entity (they live inside an Action-Items
-  artifact), so the store-backed sync set is Meetings + Artifacts.
+  artifact), so they do not sync as a kind.
 
-The envelope is the wire shape; the entities inside it validate against their
-existing schemas (meeting/artifact). The **JSON Schema for the envelope + the
-Python-side mirror** land with the transport story (HSM-10-02), which introduces the
-desktop sync API; HSM-10-01 is the Swift object model + engine, host-proven.
+History: HSM-10-01 shipped the envelope with `{meetings, artifacts}` only; the
+Primitive Framework (Phases 72–77) grew it to the ten kinds above, and HSM-23-04
+back-updated this section to the shipping wire. The envelope's JSON Schema is
+`schemas/changeset.schema.json` (`additionalProperties: false`, per-bucket `kind`
+const, tombstone ⇒ `value: null`); every kind's push→pull round-trip + LWW +
+tombstone behavior is locked per-primitive in
+`tests/unit/test_web_routes_sync_primitives.py` +
+`tests/integration/test_primitive_framework_sync.py`. Enforcement is §12.
 
 ## §12 — Enforcement (HS-72-01): the contract is machine-checked
 
@@ -209,8 +220,10 @@ Locked findings from the first enforcement pass: a tombstone carries NO
 payload (the hub was emitting full values on tombstones — fixed); the hub
 emits no `updated_at` for kb/agent/chain/workflow/directory/membership/profile
 (Swift decodes tolerantly, defaulting to `created_at`; `meta.last_modified`
-stays the LWW key); `Agent.manual_context`/`use_zone_context` are iPad-authored
-and **lossy through hub sync** (schema-documented; fix is a follow-up);
+stays the LWW key); `Agent.manual_context`/`use_zone_context` were iPad-authored
+and **lossy through hub sync** — **fixed by Phase 77** (db v7 persists both, the
+push route merges them, pull re-emits them; byte-faithful round-trip locked in
+`tests/unit/test_agent_pinned_context.py`);
 `RuntimeProfile.baseURL` could never decode off the wire under
 `convertFromSnakeCase` (fixed with an explicit coding key).
 
