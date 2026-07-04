@@ -37,7 +37,11 @@ def send_text_to_pane(
 
     _run_tmux(["tmux", "send-keys", "-t", target, "-l", message], timeout_s=timeout_s)
     if submit:
-        _run_tmux(["tmux", "send-keys", "-t", target, "Enter"], timeout_s=timeout_s)
+        # A LITERAL carriage return, not the named `Enter` key: current Claude
+        # Code TUIs (observed on 2.1.x) drop a lone named-Enter send-keys but
+        # submit on the raw \r byte. Found live by the HSM-17-04 inject proof --
+        # answers were "delivered" yet sat unsubmitted in the composer.
+        _run_tmux(["tmux", "send-keys", "-t", target, "-l", "\r"], timeout_s=timeout_s)
     return TmuxDelivery(pane=target, submitted=submit)
 
 

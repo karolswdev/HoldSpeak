@@ -26,7 +26,9 @@ def test_send_text_to_pane_sends_literal_text_then_enter(monkeypatch: pytest.Mon
     assert delivery.submitted is True
     assert calls == [
         ["tmux", "send-keys", "-t", "%42", "-l", "hello there"],
-        ["tmux", "send-keys", "-t", "%42", "Enter"],
+        # a literal \r, never the named Enter key -- the current Claude Code
+        # TUI drops a lone named-Enter but submits on the raw byte (HSM-17-04)
+        ["tmux", "send-keys", "-t", "%42", "-l", "\r"],
     ]
 
 
