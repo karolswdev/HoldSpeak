@@ -271,7 +271,15 @@ into the hub's full intelligence pipeline (the new meeting appears
 immediately, honestly marked importing), reads the learning digest and the
 dictation journal with their real "learned from N similar" reach, and pulls
 activity pre-briefing nudges whose "Dictate with this" grounds the next
-utterance in the cited record. Its trust surface is the same one badge the
+utterance in the cited record. Your live coding agents live on its desk too:
+with the hooks installed (one command, reversible), every running Claude Code
+or Codex session appears as an object that sits calm while the agent works
+and demands you when it blocks on a question. You answer from the couch by
+typing, by speaking, by dropping a meeting or note onto the agent so the
+reply is grounded in that record, or by letting the AI draft the reply for
+you (on device or on your configured endpoint, and the badge says which).
+Nothing sends itself: a draft lands editable, and only your explicit send
+delivers it into the live session on your Mac. Its trust surface is the same one badge the
 desktop wears: every desk object carries its real posture (a connector reads
 cloud with its target named, dictation to your desktop reads local plus that
 machine, a note reads on device), the app's header states the desktop's
@@ -317,6 +325,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 | Use meeting mode and configure AI intelligence | [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md) |
 | Drive HoldSpeak from another device | [Companions](#companions) |
 | Wire up the AIPI-Lite companion | [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AIPI_LITE_DEV_WORKFLOW.md) |
+| Put your coding agents on the desk | [Agent Hook Install](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
 | Install Claude / Codex agent hooks | [Agent Hook Install](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
 | Understand what's stored and what can leave my machine | [Security & Privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) |
 
