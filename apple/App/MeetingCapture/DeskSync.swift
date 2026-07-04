@@ -4,12 +4,12 @@ import Foundation
 //
 // This is the desk-backed sync store + driver: it moves a real `ChangeSet` between the
 // iPad desk and the desktop hub (the canonical store) over the existing transport
-// (`HTTPSyncProvider`, `/api/sync/push|pull`) so a Note/Agent/KB/Chain/Workflow/Output
+// (`HTTPSyncProvider`, `/api/sync/push|pull`) so a Note/Recipe/KB/Chain/Workflow/Output
 // authored on the iPad ports into the desktop and flows back out — and vice-versa.
 //
 // Design (why a desk-local store, not the SQLite `ISyncStore`):
 //   - The desk persists its primitives as `@AppStorage` JSON record arrays
-//     (hs.diorama.notes/.agents/.kbs/.outputs/.chains/.workflows), NOT in SQLite. So the
+//     (hs.diorama.notes/.recipes/.kbs/.outputs/.chains/.workflows), NOT in SQLite. So the
 //     desk gets its own store that builds/applies a full `ChangeSet` directly from those
 //     records via the canonical `synced()` / `init(contract:)` bridges.
 //   - It reuses the rest of the wave-1 transport untouched: `HTTPSyncProvider`,
@@ -33,7 +33,7 @@ import Foundation
 /// SwiftUI/@AppStorage coupling and is unit-testable in isolation.
 struct DeskRecords: Equatable {
     var notes: [NoteRecord] = []
-    var agents: [AgentRecord] = []
+    var recipes: [RecipeRecord] = []
     var kbs: [KBRecord] = []
     var outputs: [OutputRecord] = []
     var chains: [ChainRecord] = []
@@ -68,8 +68,8 @@ struct DeskSyncStore {
 
         let notes = r.notes.map { $0.synced(at: t($0.id)) }
             + tombstones(in: r, kind: .note) as [Synced<Note>]
-        let agents = r.agents.map { $0.synced(at: t($0.id)) }
-            + tombstones(in: r, kind: .agent) as [Synced<Agent>]
+        let recipes = r.recipes.map { $0.synced(at: t($0.id)) }
+            + tombstones(in: r, kind: .recipe) as [Synced<Recipe>]
         let kbs = r.kbs.map { $0.synced(at: t($0.id)) }
             + tombstones(in: r, kind: .kb) as [Synced<KB>]
         let artifacts = r.outputs.map { $0.synced(at: t($0.id)) }
@@ -95,7 +95,7 @@ struct DeskSyncStore {
 
         return ChangeSet(meetings: [], artifacts: artifacts, notes: notes, kbs: kbs,
                          directories: directories, directoryMemberships: memberships,
-                         agents: agents, chains: chains, workflows: workflows)
+                         recipes: recipes, chains: chains, workflows: workflows)
     }
 
     private func tombstones<V: Codable & Equatable & Sendable>(in r: DeskRecords, kind: SyncKind) -> [Synced<V>] {
@@ -121,14 +121,14 @@ struct DeskSyncStore {
                      },
                      remove: { recs in recs.notes.removeAll { $0.id == rec.meta.id } })
         }
-        for rec in cs.agents {
+        for rec in cs.recipes {
             mergeOne(&r, &report, meta: rec.meta, value: rec.value,
-                     find: { $0.agents.firstIndex { $0.id == rec.meta.id } },
+                     find: { $0.recipes.firstIndex { $0.id == rec.meta.id } },
                      upsert: { recs, v in
-                         let nr = AgentRecord(contract: v)
-                         if let i = recs.agents.firstIndex(where: { $0.id == v.id }) { recs.agents[i] = nr } else { recs.agents.append(nr) }
+                         let nr = RecipeRecord(contract: v)
+                         if let i = recs.recipes.firstIndex(where: { $0.id == v.id }) { recs.recipes[i] = nr } else { recs.recipes.append(nr) }
                      },
-                     remove: { recs in recs.agents.removeAll { $0.id == rec.meta.id } })
+                     remove: { recs in recs.recipes.removeAll { $0.id == rec.meta.id } })
         }
         for rec in cs.kbs {
             mergeOne(&r, &report, meta: rec.meta, value: rec.value,
@@ -256,7 +256,7 @@ extension DeskSyncStore {
         // Surface A authors a note + an agent + a kb, and tombstones an old note.
         var a = DeskRecords()
         a.notes = [NoteRecord(id: "n1", title: "Ship it", body: "the desk syncs", path: "/local")]
-        a.agents = [AgentRecord(id: "ag1", name: "Scout", avatar: "p1", role: "digs",
+        a.recipes = [RecipeRecord(id: "ag1", name: "Scout", avatar: "p1", role: "digs",
                                 systemPrompt: "research", userTemplate: "{input}",
                                 manualContext: "", useZoneContext: false, kb: "")]
         a.kbs = [KBRecord(id: "k1", name: "Knowledge", path: "/local", items: 0)]
@@ -281,7 +281,7 @@ extension DeskSyncStore {
         func check(_ cond: Bool, _ msg: String) { if !cond { ok = false; NSLog("HS_SYNC_SELFCHECK: FAIL — \(msg)") } }
         check(merged.notes.contains { $0.id == "n1" && $0.title == "Ship it" }, "note n1 not applied")
         check(merged.notes.first { $0.id == "n1" }?.path == "", "layout leaked into sync (path should be empty on apply)")
-        check(merged.agents.contains { $0.id == "ag1" && $0.name == "Scout" }, "agent ag1 not applied")
+        check(merged.recipes.contains { $0.id == "ag1" && $0.name == "Scout" }, "agent ag1 not applied")
         check(merged.kbs.contains { $0.id == "k1" }, "kb k1 not applied")
         check(merged.tombstones["note:nOld"] != nil, "tombstone not carried")
         // DIRECTORY: both zones land by path; nesting (parent_id) survives; default geometry

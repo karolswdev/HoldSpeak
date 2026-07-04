@@ -1921,7 +1921,7 @@ class TestCompanionUiSmoke:
             "Companion",
             "The Agent Desk",
             "Needs you",
-            "Agents",
+            "Recipes",
             "companionDesk()",
         ):
             assert marker in html, f"missing Agent Desk marker: {marker}"

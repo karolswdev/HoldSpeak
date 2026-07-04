@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 17
-- **Status:** todo — **leads the phase.** Everything else renders or feeds this contract.
+- **Status:** done (2026-07-04 — the transport shipped with 17-03; the persona collision resolved by
+  the owner-ratified RECIPE rename, executed atomically across hub/wire/Swift/web; the rich event
+  stream moved to the backlog as its own feature; see `evidence-story-01.md`).
 - **Depends on:** the sync object model (Phase 10 — `SyncKind` / `Synced<>` / `ChangeSet` in
   `apple/Sources/Contracts/Sync.swift`), the companion seam (`CompanionTarget` / `CompanionBoardState`
   in `apple/Sources/Providers/Providers.swift`, `/api/companion/*`), the desktop capture
@@ -56,15 +58,18 @@ agent-session as a real **contract** type and a real **synced primitive**, and r
 
 ## Acceptance criteria
 
-- [ ] `AgentSession` exists in `apple/Sources/Contracts` with a documented wire shape mirroring the
+- [x] `AgentSession` exists in `apple/Sources/Contracts` with a documented wire shape mirroring the
       desktop `AgentSession`/`CompanionTarget`; it round-trips through the contract coder.
-- [ ] Live sessions reach the iPad as typed `Contracts.AgentSession` (not a loose `CompanionTarget` DTO),
-      via the chosen transport, with `state` and `question` populated.
-- [ ] `AgentSessionPrimitive` conforms to `DeskPrimitive`, is built from the synced/streamed session, and
-      declares `accepts` for content kinds (for dropped-context answers).
-- [ ] `PrimitiveKind.agent` now means a coding session everywhere; the persona builder is renamed or
-      removed so the word is unambiguous. No code path treats `AgentRecord` as a `PrimitiveKind.agent`.
-- [ ] `swift test` green; the contract round-trip has a unit test.
+      (Delivered as `LiveCoderSession` in Providers — the codebase's home for live companion types;
+      deviation documented in the evidence. Decode pinned on the real proof-run payload.)
+- [x] Live sessions reach the iPad as typed sessions (not a loose `CompanionTarget` DTO),
+      via the chosen transport, with `state` and `question` populated. (17-03, live-hub proven.)
+- [x] `AgentSessionPrimitive` conforms to `DeskPrimitive`, is built from the synced/streamed session, and
+      declares `accepts` for content kinds (for dropped-context answers). (17-03/04.)
+- [x] The word is unambiguous: the persona is **Recipe** (`PrimitiveKind.recipe`, `SyncKind.recipe`,
+      the `recipes` table, `/api/recipes*`); the coding session stays `coder`; "agent" in prose means
+      a coding agent. No code path treats `RecipeRecord` as a coder. (The owner's call, executed.)
+- [x] `swift test` green; the contract round-trip has a unit test. (465/9/0; golden fixtures renamed.)
 
 ## Test plan
 

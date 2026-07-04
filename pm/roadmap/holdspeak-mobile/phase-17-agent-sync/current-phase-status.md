@@ -70,7 +70,7 @@ loose DTO seam into `Contracts`.
 
 | ID | Title | Status |
 |----|-------|--------|
-| HSM-17-01 | The agent-session as a synced primitive (the contract) — **leads** | in-progress (the transport call is DECIDED + shipped with 17-03: a typed polled presence endpoint — `LiveCoderSession` + `coderSessions()` — never the ChangeSet; remaining: the rich event stream, the `.agent` reclaim / persona rename owner call) |
+| HSM-17-01 | The agent-session as a synced primitive (the contract) — **leads** | **done** (2026-07-04: transport shipped with 17-03; the persona collision resolved by the owner-ratified RECIPE rename, atomic across hub/wire/Swift/web; the rich event stream filed as its own backlog feature) |
 | HSM-17-02 | Hooks: inject into the live Claude/Codex instances (capture) | **done** (2026-07-04, real-metal both agents) |
 | HSM-17-03 | The agent on the desk: a live session as a DeskOS primitive | **done** (2026-07-04, live-hub sim proof) |
 | HSM-17-04 | Answer the coder — spoken / typed / dropped-context | **done** (2026-07-04, live loop + transport bug fixed) |

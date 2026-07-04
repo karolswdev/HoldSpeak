@@ -306,3 +306,21 @@ def pytest_collection_modifyitems(config, items):
         # Skip macOS tests on other platforms
         if "requires_macos" in item.keywords and sys.platform != "darwin":
             item.add_marker(skip_macos)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_agent_session_registry(tmp_path_factory, monkeypatch):
+    """Point the coder-session registry at a per-test temp file, ALWAYS.
+
+    The agent hooks are a real product feature that developers run on their
+    own machines (HSM-17-02): a live Claude/Codex session writes
+    `~/.config/holdspeak/agent_sessions.json` continuously. Without this,
+    any test that touches `get_recent_agent_session` / project detection
+    reads the DEVELOPER'S live coding session and flakes (found the day the
+    hooks went live: the suite detected the session that was running it).
+    Tests that need a registry still monkeypatch their own path on top.
+    """
+    import holdspeak.agent_context as agent_context
+
+    registry = tmp_path_factory.mktemp("agent-registry") / "agent_sessions.json"
+    monkeypatch.setattr(agent_context, "AGENT_CONTEXT_FILE", registry)

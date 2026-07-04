@@ -214,11 +214,11 @@ public struct HTTPDesktopClient: IDesktopClient {
 
     // MARK: - Run on the hub (HSM-15-xx)
 
-    /// `POST /api/agents/{id}/run` body `{input}` → `{output}`. The big model runs on
+    /// `POST /api/recipes/{id}/run` body `{input}` → `{output}`. The big model runs on
     /// the Mac; a non-2xx (e.g. 502 no model loaded) throws `DesktopClientError.http`
     /// so the desk surfaces an honest failure, never a silent empty card.
-    public func runAgent(id: String, input: String) async throws -> HubRunResult {
-        let data = try await send(makeJSONRequest(path: "api/agents/\(id)/run", body: ["input": input]))
+    public func runRecipe(id: String, input: String) async throws -> HubRunResult {
+        let data = try await send(makeJSONRequest(path: "api/recipes/\(id)/run", body: ["input": input]))
         do { return try HoldSpeakContracts.decoder().decode(HubRunResult.self, from: data) }
         catch { throw DesktopClientError.malformed }
     }

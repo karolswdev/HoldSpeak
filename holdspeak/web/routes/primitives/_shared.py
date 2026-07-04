@@ -37,11 +37,13 @@ def _new_id(prefix: str) -> str:
 # synonym and fold it to the canonical "input" via `canonical_source_type` so
 # lineage from either surface lands on one stored vocabulary; nothing is rejected.
 CANONICAL_SOURCE_TYPES: frozenset[str] = frozenset(
-    {"agent", "input", "chain", "workflow"}
+    {"recipe", "input", "chain", "workflow"}
 )
 
 # iPad / authoring-port synonyms → the canonical hub value (additive, tolerant).
-_SOURCE_TYPE_ALIASES: dict[str, str] = {"card": "input"}
+# "agent" is the pre-rename word for a recipe (the v8 Recipe rename): older
+# clients that still emit it fold to the canonical value, nothing rejected.
+_SOURCE_TYPE_ALIASES: dict[str, str] = {"card": "input", "agent": "recipe"}
 
 
 def canonical_source_type(raw: Any) -> str:

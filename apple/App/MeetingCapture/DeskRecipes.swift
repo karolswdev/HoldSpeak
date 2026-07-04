@@ -3,7 +3,7 @@ import SwiftUI
 import UIKit
 #endif
 
-// HSM-14 — TAILORED AGENTS. A tailored agent is a DeskPrimitive you BUILD: an avatar + a name + how it
+// HSM-14 — RECIPES. A Recipe is a DeskPrimitive you BUILD: an avatar + a name + how it
 // behaves (system prompt) + what to ask (a user template) + the context it always carries (manual notes,
 // the current zone's meetings, a knowledge base). Once built it lives on the desk as a character you can
 // ASK a question, or ROUTE a card through (it answers grounded in its system prompt + context). The whole
@@ -11,19 +11,19 @@ import UIKit
 
 // MARK: - the persisted record
 
-// The persisted AgentRecord lives in Sources/RuntimeCore/Desk/DeskRecords.swift (HS-72-09),
-// embedding the canonical `Agent` contract. Only the App-flavoured convenience lives here:
-// a blank draft picks its avatar from the App's `AgentAvatars` gallery.
-extension AgentRecord {
-    static func blank() -> AgentRecord {
-        AgentRecord(id: UUID().uuidString, name: "", avatar: AgentAvatars.all.first!.id, role: "",
+// The persisted RecipeRecord lives in Sources/RuntimeCore/Desk/DeskRecords.swift (HS-72-09),
+// embedding the canonical `Recipe` contract. Only the App-flavoured convenience lives here:
+// a blank draft picks its avatar from the App's `RecipeAvatars` gallery.
+extension RecipeRecord {
+    static func blank() -> RecipeRecord {
+        RecipeRecord(id: UUID().uuidString, name: "", avatar: RecipeAvatars.all.first!.id, role: "",
                     systemPrompt: "", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: "")
     }
 }
 
-// One turn in a conversation with an agent. Threads are persisted per agent (hs.diorama.agentchats).
-struct AgentMessage: Codable, Identifiable, Equatable {
-    var id: String; var role: String /* "you" | "agent" */; var text: String
+// One turn in a conversation with a recipe. Threads are persisted per recipe (hs.diorama.recipechats).
+struct RecipeMessage: Codable, Identifiable, Equatable {
+    var id: String; var role: String /* "you" | "recipe" */; var text: String
     var isYou: Bool { role == "you" }
     var isError: Bool { text.hasPrefix("⚠️") }
 }
@@ -31,10 +31,10 @@ struct AgentMessage: Codable, Identifiable, Equatable {
 // MARK: - the avatar gallery (grouped — pick a group, then a face)
 
 enum AvatarArt: Equatable { case symbol(String); case pixel(String) }   // SF-symbol glyph OR a bundled pixel-art PNG
-struct AgentAvatar: Identifiable { let id: String; let art: AvatarArt; let hue: Double }
-struct AgentAvatarGroup: Identifiable { let id: String; let title: String; let avatars: [AgentAvatar] }
+struct RecipeAvatar: Identifiable { let id: String; let art: AvatarArt; let hue: Double }
+struct RecipeAvatarGroup: Identifiable { let id: String; let title: String; let avatars: [RecipeAvatar] }
 
-enum AgentAvatars {
+enum RecipeAvatars {
     // GROUP 1 "Glyphs" — each an SF-symbol face + a baked hue, so the set reads as distinct characters.
     static let symbols: [String] = [
         "brain.head.profile", "brain", "sparkles", "wand.and.stars", "bolt.fill", "flame.fill",
@@ -48,24 +48,24 @@ enum AgentAvatars {
         "bird.fill", "pawprint.fill", "ant.fill", "sailboat.fill",
     ]
     // GROUPS 2-4 — bespoke PixelLab pixel-art characters bundled as `agent_<prefix><N>.png` (see DeskSprite).
-    static let glyphs: [AgentAvatar] = symbols.enumerated().map { i, s in
-        AgentAvatar(id: "a\(i)", art: .symbol(s), hue: Double(i) / Double(symbols.count))
+    static let glyphs: [RecipeAvatar] = symbols.enumerated().map { i, s in
+        RecipeAvatar(id: "a\(i)", art: .symbol(s), hue: Double(i) / Double(symbols.count))
     }
-    private static func pixelSet(_ prefix: String, _ count: Int) -> [AgentAvatar] {
-        (0..<count).map { i in AgentAvatar(id: "\(prefix)\(i)", art: .pixel("agent_\(prefix)\(i)"), hue: Double(i) / Double(count)) }
+    private static func pixelSet(_ prefix: String, _ count: Int) -> [RecipeAvatar] {
+        (0..<count).map { i in RecipeAvatar(id: "\(prefix)\(i)", art: .pixel("agent_\(prefix)\(i)"), hue: Double(i) / Double(count)) }
     }
-    static let critters: [AgentAvatar] = pixelSet("p", 16)   // robot/owl/fox/wizard/dragon/…
-    static let objects: [AgentAvatar]  = pixelSet("o", 16)   // school bus/mug/lamp/… brought to life
-    static let snacks: [AgentAvatar]   = pixelSet("s", 16)   // donut/taco/avocado/… brought to life
-    static let groups: [AgentAvatarGroup] = [
+    static let critters: [RecipeAvatar] = pixelSet("p", 16)   // robot/owl/fox/wizard/dragon/…
+    static let objects: [RecipeAvatar]  = pixelSet("o", 16)   // school bus/mug/lamp/… brought to life
+    static let snacks: [RecipeAvatar]   = pixelSet("s", 16)   // donut/taco/avocado/… brought to life
+    static let groups: [RecipeAvatarGroup] = [
         .init(id: "glyph",   title: "Glyphs",   avatars: glyphs),
         .init(id: "critter", title: "Critters", avatars: critters),
         .init(id: "object",  title: "Objects",  avatars: objects),
         .init(id: "snack",   title: "Snacks",   avatars: snacks),
     ]
-    static let all: [AgentAvatar] = glyphs + critters + objects + snacks
+    static let all: [RecipeAvatar] = glyphs + critters + objects + snacks
 
-    static func avatar(_ id: String) -> AgentAvatar { all.first { $0.id == id } ?? glyphs[0] }
+    static func avatar(_ id: String) -> RecipeAvatar { all.first { $0.id == id } ?? glyphs[0] }
     static func symbol(_ id: String) -> String { if case .symbol(let s) = avatar(id).art { return s }; return "sparkles" }
     static func color(_ id: String) -> Color { Color(hue: avatar(id).hue, saturation: 0.66, brightness: 0.95) }
     static func deep(_ id: String) -> Color { Color(hue: avatar(id).hue, saturation: 0.74, brightness: 0.55) }
@@ -73,13 +73,13 @@ enum AgentAvatars {
 
 // One avatar badge — a premium gradient tile carrying either an SF symbol or a pixel-art sprite. Reused on
 // the chip, the gallery, the builder preview, and the cards.
-struct AgentAvatarView: View {
+struct RecipeAvatarView: View {
     let avatarId: String
     var size: CGFloat = 64
     var selected: Bool = false
     var body: some View {
-        let av = AgentAvatars.avatar(avatarId)
-        let c = AgentAvatars.color(avatarId), d = AgentAvatars.deep(avatarId)
+        let av = RecipeAvatars.avatar(avatarId)
+        let c = RecipeAvatars.color(avatarId), d = RecipeAvatars.deep(avatarId)
         ZStack {
             if selected {
                 RoundedRectangle(cornerRadius: size * 0.32, style: .continuous)
@@ -109,20 +109,20 @@ struct AgentAvatarView: View {
 
 // MARK: - the primitive (every desk concept is one declaration)
 
-struct AgentPrimitive: DeskPrimitive {
-    let rec: AgentRecord
-    var id: String { "agent:\(rec.id)" }
-    var kind: PrimitiveKind { .agent }
-    var glyph: String { AgentAvatars.symbol(rec.avatar) }
+struct RecipePrimitive: DeskPrimitive {
+    let rec: RecipeRecord
+    var id: String { "recipe:\(rec.id)" }
+    var kind: PrimitiveKind { .recipe }
+    var glyph: String { RecipeAvatars.symbol(rec.avatar) }
     var isSymbol: Bool { true }
-    var color: Color { AgentAvatars.color(rec.avatar) }
+    var color: Color { RecipeAvatars.color(rec.avatar) }
     var base: CGFloat { 104 }
-    var title: String { rec.name.isEmpty ? "Agent" : rec.name }
-    var subtitle: String { rec.role.isEmpty ? "your tailored agent" : rec.role }
+    var title: String { rec.name.isEmpty ? "Recipe" : rec.name }
+    var subtitle: String { rec.role.isEmpty ? "your recipe" : rec.role }
     var preview: String? { rec.role.isEmpty ? "tap to ask" : rec.role }
     var sections: [PrimitiveSection] {
         var out: [PrimitiveSection] = []
-        out.append(.init(label: "ROLE", tint: AgentAvatars.color(rec.avatar),
+        out.append(.init(label: "ROLE", tint: RecipeAvatars.color(rec.avatar),
                          body: .text(rec.systemPrompt.isEmpty ? "A general assistant." : rec.systemPrompt)))
         var ctx: [String] = []
         if !rec.manualContext.isEmpty { ctx.append("Pinned notes") }
@@ -135,11 +135,11 @@ struct AgentPrimitive: DeskPrimitive {
     var emits: [PrimitiveKind] { [.artifact] }
 }
 
-// MARK: - starter presets (one tap to a working agent — the "fun + easy" on-ramp)
+// MARK: - starter presets (one tap to a working recipe — the "fun + easy" on-ramp)
 
-struct AgentPreset { let name: String; let role: String; let avatar: String; let system: String; let template: String }
-enum AgentPresets {
-    static let all: [AgentPreset] = [
+struct RecipePreset { let name: String; let role: String; let avatar: String; let system: String; let template: String }
+enum RecipePresets {
+    static let all: [RecipePreset] = [
         .init(name: "Scout", role: "digs for the facts", avatar: "a21",
               system: "You are a sharp researcher. Pull out the concrete facts, names, numbers and open questions. Be precise; never invent details.",
               template: "{input}"),
@@ -163,9 +163,9 @@ enum AgentPresets {
 
 // MARK: - personality traits (tap to stack a behaviour clause — no blank-page prompt writing)
 
-struct AgentTrait { let label: String; let icon: String; let clause: String }
-enum AgentTraits {
-    static let all: [AgentTrait] = [
+struct RecipeTrait { let label: String; let icon: String; let clause: String }
+enum RecipeTraits {
+    static let all: [RecipeTrait] = [
         .init(label: "Concise", icon: "scissors", clause: "Keep answers short and to the point."),
         .init(label: "Warm", icon: "heart.fill", clause: "Be warm and encouraging."),
         .init(label: "Skeptical", icon: "exclamationmark.triangle.fill", clause: "Question assumptions and call out risks."),
@@ -181,18 +181,18 @@ enum AgentTraits {
 
 // MARK: - the desk roster rail (your characters, always to hand on the right edge)
 
-struct DioAgentRail: View {
-    let agents: [AgentRecord]; let chains: [ChainRecord]; let dimmed: Bool
-    let onOpen: (AgentRecord) -> Void; let onCreate: () -> Void
+struct DioRecipeRail: View {
+    let recipes: [RecipeRecord]; let chains: [ChainRecord]; let dimmed: Bool
+    let onOpen: (RecipeRecord) -> Void; let onCreate: () -> Void
     let onRunChain: (ChainRecord) -> Void; let onCreateChain: () -> Void
     let onPlay: (String) -> Void   // launch a game by id ("arkanoid" or a MiniGames id)
     let onPlace: (String) -> Void  // place a game on the desk as a primitive (long-press)
-    @State private var tab = 0   // 0 = agents · 1 = chains · 2 = play
+    @State private var tab = 0   // 0 = recipes · 1 = chains · 2 = play
     var body: some View {
         VStack(spacing: 11) {
-            // tiny tabs — Agents / Chains / Play
+            // tiny tabs — Recipes / Chains / Play
             HStack(spacing: 4) {
-                ForEach(Array(["Agents", "Chains", "Play"].enumerated()), id: \.offset) { i, t in
+                ForEach(Array(["Recipes", "Chains", "Play"].enumerated()), id: \.offset) { i, t in
                     Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.82)) { tab = i }; haptic() } label: {
                         Text(t).font(.system(size: 8.5, weight: .black, design: .rounded)).tracking(0.6)
                             .foregroundStyle(tab == i ? .white : DioPal.muted.opacity(0.8))
@@ -204,13 +204,13 @@ struct DioAgentRail: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 13) {
                     if tab == 0 {
-                        ForEach(agents) { a in Button { onOpen(a) } label: { DioAgentChip(agent: a) }.buttonStyle(.plain) }
+                        ForEach(recipes) { a in Button { onOpen(a) } label: { DioRecipeChip(recipe: a) }.buttonStyle(.plain) }
                         plusTile(onCreate)
                     } else if tab == 1 {
-                        ForEach(chains) { c in Button { onRunChain(c) } label: { DioChainChip(chain: c, agents: agents) }.buttonStyle(.plain) }
+                        ForEach(chains) { c in Button { onRunChain(c) } label: { DioChainChip(chain: c, recipes: recipes) }.buttonStyle(.plain) }
                         plusTile(onCreateChain)
                         if chains.isEmpty {
-                            Text("Build a\ncrew").font(.system(size: 9, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).multilineTextAlignment(.center)
+                            Text("Build a\nchain").font(.system(size: 9, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).multilineTextAlignment(.center)
                         }
                     } else {
                         // PLAY — every game lives here (tap to play, long-press to place on the desk)
@@ -254,16 +254,16 @@ struct DioAgentRail: View {
     }
 }
 
-struct DioAgentChip: View {
-    let agent: AgentRecord
+struct DioRecipeChip: View {
+    let recipe: RecipeRecord
     var body: some View {
         VStack(spacing: 4) {
             TimelineView(.animation) { tl in
                 let t = tl.date.timeIntervalSinceReferenceDate
-                let bob = CGFloat(sin(t * 1.1 + Double(abs(agent.id.hashValue % 7))) * 2)
-                AgentAvatarView(avatarId: agent.avatar, size: 54).offset(y: -bob)
+                let bob = CGFloat(sin(t * 1.1 + Double(abs(recipe.id.hashValue % 7))) * 2)
+                RecipeAvatarView(avatarId: recipe.avatar, size: 54).offset(y: -bob)
             }
-            Text(agent.name.isEmpty ? "Agent" : agent.name)
+            Text(recipe.name.isEmpty ? "Recipe" : recipe.name)
                 .font(.system(size: 9.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.9))
                 .lineLimit(1).frame(width: 60)
         }
@@ -288,16 +288,16 @@ struct DioGameChip: View {
 
 // MARK: - the builder (create / edit) — engaging, sectioned, with a live preview
 
-struct DioAgentBuilder: View {
-    @State var draft: AgentRecord
+struct DioRecipeBuilder: View {
+    @State var draft: RecipeRecord
     let knowledgeBases: [String]
-    let onSave: (AgentRecord) -> Void
+    let onSave: (RecipeRecord) -> Void
     let onCancel: () -> Void
     var isNew: Bool
     var contextLimit: Int = 16_384         // the chosen runtime's usable context (on-device budget)
     var zoneTokens: Int = 0                // est. tokens the current zone's meetings would add
 
-    /// Tokens the grounding context costs at rest — exactly what `agentRoleAndContext` assembles:
+    /// Tokens the grounding context costs at rest — exactly what `recipeRoleAndContext` assembles:
     /// the role (system prompt) + the notes + the zone's meetings (the KB injects only a hint today).
     private var groundingTokens: Int {
         OnDeviceBudget.estimateTokens(draft.systemPrompt)
@@ -314,7 +314,7 @@ struct DioAgentBuilder: View {
 
     private let cols = Array(repeating: GridItem(.flexible(), spacing: 12), count: 6)
     private let traitCols = [GridItem(.adaptive(minimum: 118), spacing: 8)]
-    private var tint: Color { AgentAvatars.color(draft.avatar) }
+    private var tint: Color { RecipeAvatars.color(draft.avatar) }
 
     var body: some View {
         ZStack {
@@ -335,7 +335,7 @@ struct DioAgentBuilder: View {
                 .overlay(RoundedRectangle(cornerRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
             .padding(.horizontal, 24).padding(.vertical, 36)
         }
-        .onAppear { avatarGroup = AgentAvatars.groups.firstIndex { $0.avatars.contains { $0.id == draft.avatar } } ?? 0 }
+        .onAppear { avatarGroup = RecipeAvatars.groups.firstIndex { $0.avatars.contains { $0.id == draft.avatar } } ?? 0 }
         .onChange(of: draft.avatar) { _ in pop = true; DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { pop = false } }
     }
 
@@ -362,7 +362,7 @@ struct DioAgentBuilder: View {
             }
             section("OR START FROM A RECIPE") {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
-                    ForEach(AgentPresets.all, id: \.name) { p in
+                    ForEach(RecipePresets.all, id: \.name) { p in
                         Button { applyPreset(p); advance() } label: { recipeCard(p) }.buttonStyle(.plain)
                     }
                 }
@@ -370,9 +370,9 @@ struct DioAgentBuilder: View {
         }
     }
 
-    private func recipeCard(_ p: AgentPreset) -> some View {
+    private func recipeCard(_ p: RecipePreset) -> some View {
         HStack(spacing: 10) {
-            AgentAvatarView(avatarId: p.avatar, size: 38)
+            RecipeAvatarView(avatarId: p.avatar, size: 38)
             VStack(alignment: .leading, spacing: 1) {
                 Text(p.name).font(.system(size: 14.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
                 Text(p.role).font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(2).multilineTextAlignment(.leading)
@@ -384,7 +384,7 @@ struct DioAgentBuilder: View {
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
     }
 
-    // The model this agent runs on (per-agent override of the active default). Empty = the active
+    // The model this recipe runs on (per-recipe override of the active default). Empty = the active
     // profile. The gauge below reads THIS profile's window — Scout on Claude vs a local 3B differ.
     private var runsOnSection: some View {
         section("RUNS ON") {
@@ -392,11 +392,11 @@ struct DioAgentBuilder: View {
         }
     }
 
-    /// The context window the gauge measures against: the agent's chosen profile's limit, or — when it
+    /// The context window the gauge measures against: the recipe's chosen profile's limit, or — when it
     /// uses the active default — the accurate RAM-aware budget the host passed in.
     private var effectiveLimit: Int {
         let cfg = InferenceConfigStore.shared
-        let p = cfg.resolveProfile(agentProfileId: draft.profileId.isEmpty ? nil : draft.profileId)
+        let p = cfg.resolveProfile(recipeProfileId: draft.profileId.isEmpty ? nil : draft.profileId)
         return p.id == cfg.activeProfile.id ? contextLimit : p.contextLimit
     }
 
@@ -418,13 +418,13 @@ struct DioAgentBuilder: View {
     // always carries, and optionally feed it the zone's meetings.
     private var knowsSection: some View {
         section("GROUNDING CONTEXT") {
-            Text("Stuff your agent always knows.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+            Text("Stuff your recipe always knows.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
             ContextGauge(used: groundingTokens, limit: effectiveLimit)
                 .padding(11)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.04)).overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
             Text("KNOWLEDGE BASE").font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted.opacity(0.8)).padding(.top, 2)
             if knowledgeBases.isEmpty {
-                Text("Make a knowledge base on the desk, then point this agent at it.")
+                Text("Make a knowledge base on the desk, then point this recipe at it.")
                     .font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8))
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -462,7 +462,7 @@ struct DioAgentBuilder: View {
         HStack(spacing: 14) {
             TimelineView(.animation) { tl in
                 let bob = CGFloat(sin(tl.date.timeIntervalSinceReferenceDate * 1.4) * 3)
-                AgentAvatarView(avatarId: draft.avatar, size: 64).offset(y: -bob)
+                RecipeAvatarView(avatarId: draft.avatar, size: 64).offset(y: -bob)
                     .scaleEffect(pop ? 1.18 : 1).animation(.spring(response: 0.3, dampingFraction: 0.5), value: pop)
             }
             .frame(width: 70, height: 70)
@@ -483,7 +483,7 @@ struct DioAgentBuilder: View {
         section("FACE") {
             Button { withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { showFaces.toggle() } } label: {
                 HStack(spacing: 11) {
-                    AgentAvatarView(avatarId: draft.avatar, size: 40)
+                    RecipeAvatarView(avatarId: draft.avatar, size: 40)
                     Text(showFaces ? "Hide faces" : "Change face").font(.system(size: 13.5, weight: .heavy, design: .rounded)).foregroundStyle(tint)
                     Spacer(minLength: 0)
                     Image(systemName: showFaces ? "chevron.up" : "chevron.down").font(.system(size: 12, weight: .black)).foregroundStyle(DioPal.muted)
@@ -494,7 +494,7 @@ struct DioAgentBuilder: View {
             if showFaces {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(Array(AgentAvatars.groups.enumerated()), id: \.element.id) { i, g in
+                        ForEach(Array(RecipeAvatars.groups.enumerated()), id: \.element.id) { i, g in
                             Button { withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { avatarGroup = i }; haptic() } label: {
                                 Text("\(g.title) · \(g.avatars.count)")
                                     .font(.system(size: 12.5, weight: .heavy, design: .rounded))
@@ -506,9 +506,9 @@ struct DioAgentBuilder: View {
                     }.padding(.horizontal, 2)
                 }
                 LazyVGrid(columns: cols, spacing: 12) {
-                    ForEach(AgentAvatars.groups[avatarGroup].avatars) { av in
+                    ForEach(RecipeAvatars.groups[avatarGroup].avatars) { av in
                         Button { draft.avatar = av.id; haptic() } label: {
-                            AgentAvatarView(avatarId: av.id, size: 44, selected: draft.avatar == av.id)
+                            RecipeAvatarView(avatarId: av.id, size: 44, selected: draft.avatar == av.id)
                         }.buttonStyle(.plain)
                     }
                 }
@@ -520,7 +520,7 @@ struct DioAgentBuilder: View {
     private var personality: some View {
         section("GIVE THEM A PERSONALITY") {
             LazyVGrid(columns: traitCols, spacing: 8) {
-                ForEach(AgentTraits.all, id: \.label) { t in
+                ForEach(RecipeTraits.all, id: \.label) { t in
                     let on = hasTrait(t)
                     Button { toggleTrait(t) } label: {
                         HStack(spacing: 6) {
@@ -578,7 +578,7 @@ struct DioAgentBuilder: View {
                 Button { advance() } label: {
                     HStack(spacing: 7) { Text("Next").font(.system(size: 15.5, weight: .heavy, design: .rounded)); Image(systemName: "arrow.right") }
                         .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
-                        .background(Capsule().fill(LinearGradient(colors: [tint, AgentAvatars.deep(draft.avatar)], startPoint: .top, endPoint: .bottom)))
+                        .background(Capsule().fill(LinearGradient(colors: [tint, RecipeAvatars.deep(draft.avatar)], startPoint: .top, endPoint: .bottom)))
                 }.buttonStyle(.plain)
             } else {
                 Button { withAnimation(.spring(response: 0.4, dampingFraction: 0.86)) { step = 0 } } label: {
@@ -591,7 +591,7 @@ struct DioAgentBuilder: View {
                         Text(isNew ? "Bring to life" : "Save").font(.system(size: 15.5, weight: .heavy, design: .rounded))
                     }
                     .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
-                    .background(Capsule().fill(LinearGradient(colors: [tint, AgentAvatars.deep(draft.avatar)], startPoint: .top, endPoint: .bottom)))
+                    .background(Capsule().fill(LinearGradient(colors: [tint, RecipeAvatars.deep(draft.avatar)], startPoint: .top, endPoint: .bottom)))
                     .opacity(canSave ? 1 : 0.45)
                 }.buttonStyle(.plain).disabled(!canSave)
             }
@@ -606,27 +606,27 @@ struct DioAgentBuilder: View {
 
     private var canSave: Bool { !draft.name.trimmingCharacters(in: .whitespaces).isEmpty }
     private func save() { guard canSave else { return }; haptic(.medium); onSave(draft) }
-    private func applyPreset(_ p: AgentPreset) {
+    private func applyPreset(_ p: RecipePreset) {
         haptic()
         if draft.name.trimmingCharacters(in: .whitespaces).isEmpty { draft.name = p.name }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
             draft.role = p.role; draft.avatar = p.avatar; draft.systemPrompt = p.system; draft.userTemplate = p.template
-            avatarGroup = AgentAvatars.groups.firstIndex { $0.avatars.contains { $0.id == p.avatar } } ?? avatarGroup
+            avatarGroup = RecipeAvatars.groups.firstIndex { $0.avatars.contains { $0.id == p.avatar } } ?? avatarGroup
         }
     }
     private func surprise() {
         haptic(.medium)
-        let p = AgentPresets.all.randomElement()!
-        let face = AgentAvatars.all.randomElement()!
+        let p = RecipePresets.all.randomElement()!
+        let face = RecipeAvatars.all.randomElement()!
         withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) {
             draft.avatar = face.id
             if draft.name.trimmingCharacters(in: .whitespaces).isEmpty { draft.name = p.name }
             draft.role = p.role; draft.systemPrompt = p.system
-            avatarGroup = AgentAvatars.groups.firstIndex { $0.avatars.contains { $0.id == face.id } } ?? avatarGroup
+            avatarGroup = RecipeAvatars.groups.firstIndex { $0.avatars.contains { $0.id == face.id } } ?? avatarGroup
         }
     }
-    private func hasTrait(_ t: AgentTrait) -> Bool { draft.systemPrompt.contains(t.clause) }
-    private func toggleTrait(_ t: AgentTrait) {
+    private func hasTrait(_ t: RecipeTrait) -> Bool { draft.systemPrompt.contains(t.clause) }
+    private func toggleTrait(_ t: RecipeTrait) {
         haptic()
         var s = draft.systemPrompt
         if let r = s.range(of: t.clause) {
@@ -673,7 +673,7 @@ struct DioAgentBuilder: View {
     }
 }
 
-// A ring gauge: how much of the agent's context its grounding eats before you even ask. Green under
+// A ring gauge: how much of the recipe's context its grounding eats before you even ask. Green under
 // 60%, amber to 85%, red past it — a live "this knowledge base alone fills it" signal.
 struct ContextGauge: View {
     let used: Int
@@ -699,13 +699,13 @@ struct ContextGauge: View {
     }
 }
 
-// MARK: - the agent's home — a LIVING CONVERSATION (multi-turn; the avatar emotes; harvest replies to the desk)
+// MARK: - the recipe's home — a LIVING CONVERSATION (multi-turn; the avatar emotes; harvest replies to the desk)
 
-struct DioAgentChat: View {
-    let agent: AgentRecord
-    @State var messages: [AgentMessage]
-    let onInfer: (_ history: [AgentMessage], _ question: String) async -> String   // assembles + calls the LLM
-    let onChange: ([AgentMessage]) -> Void        // persist the thread
+struct DioRecipeChat: View {
+    let recipe: RecipeRecord
+    @State var messages: [RecipeMessage]
+    let onInfer: (_ history: [RecipeMessage], _ question: String) async -> String   // assembles + calls the LLM
+    let onChange: ([RecipeMessage]) -> Void        // persist the thread
     let onSaveCard: (String) -> Void              // harvest a reply onto the desk
     let onEdit: () -> Void
     let onDelete: () -> Void
@@ -714,7 +714,7 @@ struct DioAgentChat: View {
     @State private var input = ""
     @State private var thinking = false
     @FocusState private var focused: Bool
-    private var tint: Color { AgentAvatars.color(agent.avatar) }
+    private var tint: Color { RecipeAvatars.color(recipe.avatar) }
 
     var body: some View {
         ZStack {
@@ -741,18 +741,18 @@ struct DioAgentChat: View {
                         Circle().strokeBorder(tint.opacity(0.7), lineWidth: 2).frame(width: 58 + 10 * r, height: 58 + 10 * r)
                     }
                 }
-                AgentAvatarView(avatarId: agent.avatar, size: 50)
+                RecipeAvatarView(avatarId: recipe.avatar, size: 50)
             }
             VStack(alignment: .leading, spacing: 1) {
-                Text(agent.name).font(.system(size: 18, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
-                Text(thinking ? "thinking…" : (agent.role.isEmpty ? "your tailored agent" : agent.role))
+                Text(recipe.name).font(.system(size: 18, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                Text(thinking ? "thinking…" : (recipe.role.isEmpty ? "your recipe" : recipe.role))
                     .font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(thinking ? tint : DioPal.muted)
             }
             Spacer(minLength: 0)
             Menu {
-                Button { onEdit() } label: { Label("Edit agent", systemImage: "slider.horizontal.3") }
+                Button { onEdit() } label: { Label("Edit recipe", systemImage: "slider.horizontal.3") }
                 if !messages.isEmpty { Button { clearChat() } label: { Label("Clear chat", systemImage: "eraser") } }
-                Button(role: .destructive) { onDelete() } label: { Label("Delete agent", systemImage: "trash") }
+                Button(role: .destructive) { onDelete() } label: { Label("Delete recipe", systemImage: "trash") }
             } label: { Image(systemName: "ellipsis.circle.fill").font(.system(size: 23)).foregroundStyle(DioPal.muted) }
             Button { onClose() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 23)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
         }
@@ -777,31 +777,31 @@ struct DioAgentChat: View {
 
     private var emptyState: some View {
         VStack(spacing: 11) {
-            AgentAvatarView(avatarId: agent.avatar, size: 66)
-            Text("Say hi to \(agent.name)").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+            RecipeAvatarView(avatarId: recipe.avatar, size: 66)
+            Text("Say hi to \(recipe.name)").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
             if hasContext {
                 HStack(spacing: 7) {
-                    if agent.useZoneContext { tag("This zone", "tray.full.fill") }
-                    if !agent.kb.isEmpty { tag(agent.kb, "crystal.fill") }
-                    if !agent.manualContext.isEmpty { tag("Pinned notes", "note.text") }
+                    if recipe.useZoneContext { tag("This zone", "tray.full.fill") }
+                    if !recipe.kb.isEmpty { tag(recipe.kb, "crystal.fill") }
+                    if !recipe.manualContext.isEmpty { tag("Pinned notes", "note.text") }
                 }
             }
-            Text("Long-press a desk card to use \(agent.name).")
+            Text("Long-press a desk card to use \(recipe.name).")
                 .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8)).multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity).padding(.top, 28)
     }
 
-    private func bubble(_ m: AgentMessage) -> some View {
+    private func bubble(_ m: RecipeMessage) -> some View {
         HStack(alignment: .bottom, spacing: 8) {
-            if m.isYou { Spacer(minLength: 44) } else { AgentAvatarView(avatarId: agent.avatar, size: 26) }
+            if m.isYou { Spacer(minLength: 44) } else { RecipeAvatarView(avatarId: recipe.avatar, size: 26) }
             VStack(alignment: m.isYou ? .trailing : .leading, spacing: 5) {
                 Text(m.text)
                     .font(.system(size: 14, weight: .medium, design: .rounded))
                     .foregroundStyle(m.isYou ? .white : (m.isError ? Color(hex: 0xFFB4A0) : DioPal.text))
                     .padding(.horizontal, 13).padding(.vertical, 10)
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(
-                        m.isYou ? AnyShapeStyle(LinearGradient(colors: [tint, AgentAvatars.deep(agent.avatar)], startPoint: .top, endPoint: .bottom))
+                        m.isYou ? AnyShapeStyle(LinearGradient(colors: [tint, RecipeAvatars.deep(recipe.avatar)], startPoint: .top, endPoint: .bottom))
                                 : AnyShapeStyle(Color.white.opacity(0.06))))
                 if !m.isYou && !m.isError {
                     Button { onSaveCard(m.text) } label: {
@@ -816,7 +816,7 @@ struct DioAgentChat: View {
 
     private var thinkingBubble: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            AgentAvatarView(avatarId: agent.avatar, size: 26)
+            RecipeAvatarView(avatarId: recipe.avatar, size: 26)
             TimelineView(.animation) { tl in
                 let t = tl.date.timeIntervalSinceReferenceDate
                 HStack(spacing: 5) {
@@ -831,7 +831,7 @@ struct DioAgentChat: View {
 
     private var inputBar: some View {
         HStack(spacing: 10) {
-            TextField("", text: $input, prompt: Text("Message \(agent.name)…").foregroundColor(DioPal.muted.opacity(0.7)), axis: .vertical)
+            TextField("", text: $input, prompt: Text("Message \(recipe.name)…").foregroundColor(DioPal.muted.opacity(0.7)), axis: .vertical)
                 .lineLimit(1...4)
                 .font(.system(size: 15, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text).focused($focused)
                 .padding(.horizontal, 14).padding(.vertical, 10)
@@ -846,19 +846,19 @@ struct DioAgentChat: View {
     }
 
     private var canSend: Bool { !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !thinking }
-    private var hasContext: Bool { agent.useZoneContext || !agent.kb.isEmpty || !agent.manualContext.isEmpty }
+    private var hasContext: Bool { recipe.useZoneContext || !recipe.kb.isEmpty || !recipe.manualContext.isEmpty }
     private func clearChat() { haptic(); messages = []; onChange(messages) }
     private func send() {
         let q = input.trimmingCharacters(in: .whitespacesAndNewlines); guard !q.isEmpty, !thinking else { return }
         haptic()
         let history = messages
-        messages.append(AgentMessage(id: UUID().uuidString, role: "you", text: q))
+        messages.append(RecipeMessage(id: UUID().uuidString, role: "you", text: q))
         onChange(messages); input = ""; thinking = true; focused = false
         Task {
             let reply = await onInfer(history, q)
             await MainActor.run {
                 thinking = false
-                messages.append(AgentMessage(id: UUID().uuidString, role: "agent", text: reply))
+                messages.append(RecipeMessage(id: UUID().uuidString, role: "recipe", text: reply))
                 onChange(messages)
             }
         }
@@ -875,12 +875,12 @@ struct DioAgentChat: View {
     }
 }
 
-// MARK: - AGENT CHAINS (crews) — Scout → Critic → Editor, one tap. Each agent's output feeds the next.
+// MARK: - RECIPE CHAINS — Scout → Critic → Editor, one tap. Each recipe's output feeds the next.
 //
 // The persisted ChainRecord lives in Sources/RuntimeCore/Desk/DeskRecords.swift (HS-72-09),
 // embedding the canonical `Chain` contract.
 
-// A chain as a routable primitive (route a card → run it through the crew).
+// A chain as a routable primitive (route a card → run it through the chain).
 struct ChainPrimitive: DeskPrimitive {
     let rec: ChainRecord
     var id: String { "chain:\(rec.id)" }
@@ -890,16 +890,16 @@ struct ChainPrimitive: DeskPrimitive {
     var color: Color { DioPal.accent }
     var base: CGFloat { 110 }
     var title: String { rec.name.isEmpty ? "Chain" : rec.name }
-    var subtitle: String { "\(rec.steps.count)-agent crew · drop to run" }
+    var subtitle: String { "\(rec.steps.count)-recipe chain · drop to run" }
     var preview: String? { "drop to run" }
     var accepts: [PrimitiveKind] { [.meeting, .summary, .actions, .topics, .transcript, .artifact, .note] }
     var emits: [PrimitiveKind] { [.artifact] }
 }
 
-// the rail chip — the crew's members overlapping like a team photo
+// the rail chip — the chain's members overlapping like a team photo
 struct DioChainChip: View {
-    let chain: ChainRecord; let agents: [AgentRecord]
-    private var members: [AgentRecord] { chain.steps.compactMap { sid in agents.first { $0.id == sid } } }
+    let chain: ChainRecord; let recipes: [RecipeRecord]
+    private var members: [RecipeRecord] { chain.steps.compactMap { sid in recipes.first { $0.id == sid } } }
     var body: some View {
         VStack(spacing: 4) {
             ZStack {
@@ -909,7 +909,7 @@ struct DioChainChip: View {
                         .overlay(Image(systemName: "arrow.triangle.branch").foregroundStyle(DioPal.muted))
                 } else {
                     ForEach(Array(show.enumerated()), id: \.offset) { i, a in
-                        AgentAvatarView(avatarId: a.avatar, size: 34)
+                        RecipeAvatarView(avatarId: a.avatar, size: 34)
                             .offset(x: CGFloat(i) * 14 - CGFloat(show.count - 1) * 7)
                             .zIndex(Double(show.count - i))
                     }
@@ -925,11 +925,11 @@ struct DioChainChip: View {
 
 // the run/manage sheet — see the flow, give it something to chew on, run it
 struct DioChainSheet: View {
-    let chain: ChainRecord; let agents: [AgentRecord]
+    let chain: ChainRecord; let recipes: [RecipeRecord]
     let onRun: (String) -> Void
     let onEdit: () -> Void; let onDelete: () -> Void; let onClose: () -> Void
     @State private var input = ""
-    private var members: [AgentRecord] { chain.steps.compactMap { sid in agents.first { $0.id == sid } } }
+    private var members: [RecipeRecord] { chain.steps.compactMap { sid in recipes.first { $0.id == sid } } }
     private var ready: Bool { !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !members.isEmpty }
     var body: some View {
         ZStack {
@@ -940,17 +940,17 @@ struct DioChainSheet: View {
                         .frame(width: 46, height: 46).background(RoundedRectangle(cornerRadius: 14).fill(DioPal.accent.opacity(0.16)))
                     VStack(alignment: .leading, spacing: 1) {
                         Text(chain.name).font(.system(size: 19, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
-                        Text("\(members.count)-agent crew · runs in order").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                        Text("\(members.count)-recipe chain · runs in order").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                     }
                     Spacer(minLength: 0)
                     Menu {
-                        Button { onEdit() } label: { Label("Edit crew", systemImage: "slider.horizontal.3") }
-                        Button(role: .destructive) { onDelete() } label: { Label("Delete crew", systemImage: "trash") }
+                        Button { onEdit() } label: { Label("Edit chain", systemImage: "slider.horizontal.3") }
+                        Button(role: .destructive) { onDelete() } label: { Label("Delete chain", systemImage: "trash") }
                     } label: { Image(systemName: "ellipsis.circle.fill").font(.system(size: 22)).foregroundStyle(DioPal.muted) }
                     Button { onClose() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 22)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
                 }
                 flowPreview
-                Text("WHAT SHOULD THE CREW WORK ON?").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted)
+                Text("WHAT SHOULD THE CHAIN WORK ON?").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted)
                 ZStack(alignment: .topLeading) {
                     if input.isEmpty { Text("e.g. our Q3 plan, the rough idea, the notes…").font(.system(size: 14, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.6)).padding(.horizontal, 16).padding(.top, 13).allowsHitTesting(false) }
                     TextEditor(text: $input).font(.system(size: 14, design: .rounded)).foregroundStyle(DioPal.text).scrollContentBackground(.hidden).padding(.horizontal, 11).padding(.vertical, 6).frame(height: 80)
@@ -973,7 +973,7 @@ struct DioChainSheet: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 ForEach(Array(members.enumerated()), id: \.offset) { i, a in
-                    VStack(spacing: 3) { AgentAvatarView(avatarId: a.avatar, size: 42); Text(a.name).font(.system(size: 9, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1).frame(width: 54) }
+                    VStack(spacing: 3) { RecipeAvatarView(avatarId: a.avatar, size: 42); Text(a.name).font(.system(size: 9, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1).frame(width: 54) }
                     if i < members.count - 1 { Image(systemName: "arrow.right").font(.system(size: 11, weight: .black)).foregroundStyle(DioPal.muted.opacity(0.7)) }
                 }
             }.padding(.vertical, 8).padding(.horizontal, 12)
@@ -982,10 +982,10 @@ struct DioChainSheet: View {
     }
 }
 
-// the builder — name the crew, stack agents in order
+// the builder — name the chain, stack recipes in order
 struct DioChainBuilder: View {
     @State var draft: ChainRecord
-    let agents: [AgentRecord]
+    let recipes: [RecipeRecord]
     let onSave: (ChainRecord) -> Void; let onCancel: () -> Void; var isNew: Bool
     var body: some View {
         ZStack {
@@ -994,8 +994,8 @@ struct DioChainBuilder: View {
                 HStack(spacing: 12) {
                     Image(systemName: "arrow.triangle.branch").font(.system(size: 20, weight: .bold)).foregroundStyle(DioPal.accent).frame(width: 46, height: 46).background(RoundedRectangle(cornerRadius: 14).fill(DioPal.accent.opacity(0.16)))
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(isNew ? "Build a crew" : "Edit crew").font(.system(size: 11.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.accent)
-                        Text(draft.name.isEmpty ? "Unnamed crew" : draft.name).font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text(isNew ? "Build a chain" : "Edit chain").font(.system(size: 11.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.accent)
+                        Text(draft.name.isEmpty ? "Unnamed chain" : draft.name).font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
                     }
                     Spacer(minLength: 0)
                     Button { onCancel() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 24)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
@@ -1005,13 +1005,13 @@ struct DioChainBuilder: View {
                         sec("NAME") { field($draft.name, "e.g. Refine") }
                         sec("THE PIPELINE · runs top to bottom") {
                             if draft.steps.isEmpty {
-                                Text("Add agents to the chain.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                                Text("Add recipes to the chain.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                             }
                             ForEach(Array(draft.steps.enumerated()), id: \.offset) { i, sid in
-                                if let a = agents.first(where: { $0.id == sid }) {
+                                if let a = recipes.first(where: { $0.id == sid }) {
                                     HStack(spacing: 10) {
                                         Text("\(i + 1)").font(.system(size: 12, weight: .black, design: .rounded)).foregroundStyle(.white).frame(width: 22, height: 22).background(Circle().fill(DioPal.accent.opacity(0.7)))
-                                        AgentAvatarView(avatarId: a.avatar, size: 34)
+                                        RecipeAvatarView(avatarId: a.avatar, size: 34)
                                         VStack(alignment: .leading, spacing: 0) { Text(a.name).font(.system(size: 13.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text); Text(a.role).font(.system(size: 9.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1) }
                                         Spacer(minLength: 0)
                                         Button { move(i, -1) } label: { Image(systemName: "chevron.up").font(.system(size: 12, weight: .black)).foregroundStyle(i == 0 ? DioPal.muted.opacity(0.3) : DioPal.muted) }.buttonStyle(.plain).disabled(i == 0)
@@ -1023,14 +1023,14 @@ struct DioChainBuilder: View {
                                 }
                             }
                         }
-                        sec("ADD AN AGENT") {
-                            if agents.isEmpty {
-                                Text("Create an agent first.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                        sec("ADD A RECIPE") {
+                            if recipes.isEmpty {
+                                Text("Create a recipe first.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                             } else {
                                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
-                                    ForEach(agents) { a in
+                                    ForEach(recipes) { a in
                                         Button { draft.steps.append(a.id); haptic() } label: {
-                                            HStack(spacing: 7) { AgentAvatarView(avatarId: a.avatar, size: 26); Text(a.name).font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text); Spacer(minLength: 0); Image(systemName: "plus").font(.system(size: 11, weight: .black)).foregroundStyle(DioPal.muted) }
+                                            HStack(spacing: 7) { RecipeAvatarView(avatarId: a.avatar, size: 26); Text(a.name).font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text); Spacer(minLength: 0); Image(systemName: "plus").font(.system(size: 11, weight: .black)).foregroundStyle(DioPal.muted) }
                                                 .padding(.horizontal, 10).frame(height: 40).background(Capsule().fill(.white.opacity(0.06)).overlay(Capsule().strokeBorder(.white.opacity(0.1), lineWidth: 1)))
                                         }.buttonStyle(.plain)
                                     }
@@ -1041,7 +1041,7 @@ struct DioChainBuilder: View {
                 }
                 HStack(spacing: 12) {
                     Button { onCancel() } label: { Text("Cancel").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
-                    Button { save() } label: { HStack(spacing: 7) { Image(systemName: "checkmark"); Text(isNew ? "Create crew" : "Save").font(.system(size: 15.5, weight: .heavy, design: .rounded)) }.foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom))).opacity(canSave ? 1 : 0.45) }.buttonStyle(.plain).disabled(!canSave)
+                    Button { save() } label: { HStack(spacing: 7) { Image(systemName: "checkmark"); Text(isNew ? "Create chain" : "Save").font(.system(size: 15.5, weight: .heavy, design: .rounded)) }.foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom))).opacity(canSave ? 1 : 0.45) }.buttonStyle(.plain).disabled(!canSave)
                 }.padding(.horizontal, 20).padding(.vertical, 14)
             }
             .frame(maxWidth: 560)
@@ -1066,12 +1066,12 @@ struct DioChainBuilder: View {
     }
 }
 
-// the relay — the gamified payoff: each agent lights up in turn, a checkmark drops, the baton passes down
+// the relay — the gamified payoff: each recipe lights up in turn, a checkmark drops, the baton passes down
 struct DioChainRelay: View {
-    let chain: ChainRecord; let agents: [AgentRecord]
+    let chain: ChainRecord; let recipes: [RecipeRecord]
     let step: Int               // current step (== count when finished)
     let results: [String]       // completed outputs so far
-    private var members: [AgentRecord] { chain.steps.compactMap { sid in agents.first { $0.id == sid } } }
+    private var members: [RecipeRecord] { chain.steps.compactMap { sid in recipes.first { $0.id == sid } } }
     var body: some View {
         ZStack {
             Color.black.opacity(0.8).ignoresSafeArea()
@@ -1082,15 +1082,15 @@ struct DioChainRelay: View {
                         HStack(spacing: 12) {
                             ZStack {
                                 if i == step {
-                                    TimelineView(.animation) { tl in let r = 0.5 + 0.5 * sin(tl.date.timeIntervalSinceReferenceDate * 5); Circle().strokeBorder(AgentAvatars.color(a.avatar).opacity(0.8), lineWidth: 2).frame(width: 50 + 10 * r, height: 50 + 10 * r) }
+                                    TimelineView(.animation) { tl in let r = 0.5 + 0.5 * sin(tl.date.timeIntervalSinceReferenceDate * 5); Circle().strokeBorder(RecipeAvatars.color(a.avatar).opacity(0.8), lineWidth: 2).frame(width: 50 + 10 * r, height: 50 + 10 * r) }
                                 }
-                                AgentAvatarView(avatarId: a.avatar, size: 46)
+                                RecipeAvatarView(avatarId: a.avatar, size: 46)
                                 if i < step { Circle().fill(DioPal.mint).frame(width: 18, height: 18).overlay(Image(systemName: "checkmark").font(.system(size: 10, weight: .black)).foregroundStyle(.white)).offset(x: 18, y: -18) }
                             }
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(a.name).font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
                                 Text(i < step ? String((i < results.count ? results[i] : "").prefix(64)) : (i == step ? "working…" : "waiting"))
-                                    .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(i == step ? AgentAvatars.color(a.avatar) : DioPal.muted).lineLimit(2)
+                                    .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(i == step ? RecipeAvatars.color(a.avatar) : DioPal.muted).lineLimit(2)
                             }
                             Spacer(minLength: 0)
                         }

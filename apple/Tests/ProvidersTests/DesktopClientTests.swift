@@ -262,9 +262,9 @@ final class DesktopClientTests: XCTestCase {
         // v6 (Phase 74): the hub persists the run's output as a run-born
         // artifact and returns its id — the desk card must reuse it so a kept
         // card reconciles with the hub's artifact on sync, never duplicates.
-        StubProtocol.routes = ["/api/agents/a-owl/run": (200,
+        StubProtocol.routes = ["/api/recipes/a-owl/run": (200,
             Data(#"{"output":"the run output","artifact_id":"art_run_1"}"#.utf8))]
-        let result = try await client(token: "tok").runAgent(id: "a-owl", input: "say hi")
+        let result = try await client(token: "tok").runRecipe(id: "a-owl", input: "say hi")
         XCTAssertEqual(StubProtocol.lastMethod, "POST")
         XCTAssertEqual(result.output, "the run output")
         XCTAssertEqual(result.artifactId, "art_run_1")

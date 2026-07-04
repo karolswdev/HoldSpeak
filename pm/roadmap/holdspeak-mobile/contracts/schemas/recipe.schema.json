@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/recipe.schema.json",
+  "title": "Recipe",
+  "description": "A Recipe: a user-authored persona (system prompt + avatar + grounding) you build on the desk and route cards through. DISTINCT from a coder (a live Claude/Codex coding session, which keeps the word 'agent' in its wire field).",
+  "x-sync-kind": "recipe",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "avatar",
+    "role",
+    "system_prompt",
+    "user_template",
+    "tools",
+    "created_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "avatar": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "system_prompt": {
+      "type": "string"
+    },
+    "user_template": {
+      "type": "string"
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "kb_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "profile_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "manual_context": {
+      "type": "string",
+      "description": "The pinned context; persisted + re-emitted by the hub since Phase 77 (db v7)"
+    },
+    "use_zone_context": {
+      "type": "boolean",
+      "description": "Per-device zone-context hint; persisted + re-emitted by the hub since Phase 77 (db v7)"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_modified": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deleted": {
+      "type": "boolean"
+    }
+  }
+}

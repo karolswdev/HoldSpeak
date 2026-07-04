@@ -30,7 +30,7 @@ struct MeetingCaptureApp: App {
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_ROUTE"] != nil {
                     ZStack { Sig.bgGradient.ignoresSafeArea(); DioRouteSheet(sourceTitle: "Q3 kickoff · meeting", onAsk: { _, _, _ in }, onCancel: {}, onSaveTool: { _ in }) }
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_AGENT"] != nil {
-                    DioAgentBuilder(draft: .blank(), knowledgeBases: ["Q3 Planning", "Customer calls"], onSave: { _ in }, onCancel: {}, isNew: true, contextLimit: 8192, zoneTokens: 1800)
+                    DioRecipeBuilder(draft: .blank(), knowledgeBases: ["Q3 Planning", "Customer calls"], onSave: { _ in }, onCancel: {}, isNew: true, contextLimit: 8192, zoneTokens: 1800)
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_README"] != nil {
                     NavigationStack { ModelReadmeView(repo: "unsloth/gemma-3n-E4B-it-GGUF", fileName: "gemma-3n-E4B-it-Q4_K_M.gguf", name: "Gemma 3n E4B") }
                 } else if ProcessInfo.processInfo.environment["HS_DEMO_MODELS"] != nil {

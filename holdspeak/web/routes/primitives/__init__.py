@@ -14,7 +14,7 @@ from ...context import WebContext
 # package root, as they did from the module): re-exported unchanged.
 from ._shared import CANONICAL_SOURCE_TYPES, canonical_source_type  # noqa: F401
 
-from .agents import build_agents_router
+from .recipes import build_recipes_router
 from .chains import build_chains_router
 from .directories import build_directories_router
 from .kbs import build_kbs_router
@@ -26,7 +26,7 @@ from .workflows import build_workflows_router
 def build_primitives_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     router.include_router(build_notes_router(ctx))
-    router.include_router(build_agents_router(ctx))
+    router.include_router(build_recipes_router(ctx))
     router.include_router(build_profiles_router(ctx))
     router.include_router(build_kbs_router(ctx))
     router.include_router(build_chains_router(ctx))

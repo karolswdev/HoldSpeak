@@ -32,12 +32,12 @@ def test_pull_includes_all_primitive_kinds(env) -> None:
     db, client = env
     db.notes.upsert(note_id="n1", title="N")
     db.kbs.upsert(kb_id="kb1", name="K")
-    db.agents.upsert(agent_id="a1", name="A")
+    db.recipes.upsert(recipe_id="a1", name="A")
     db.chains.upsert(chain_id="c1", name="C", steps=["a1"])
     db.workflows.upsert(workflow_id="w1", name="W", prompt="p")
 
     body = client.get("/api/sync/pull").json()
-    for bucket, kind in [("notes", "note"), ("kbs", "kb"), ("agents", "agent"),
+    for bucket, kind in [("notes", "note"), ("kbs", "kb"), ("recipes", "recipe"),
                          ("chains", "chain"), ("workflows", "workflow")]:
         assert len(body[bucket]) == 1, bucket
         rec = body[bucket][0]
@@ -55,8 +55,8 @@ def test_push_merges_primitives_into_store(env) -> None:
                      "last_modified": "2030-01-01T00:00:00Z", "deleted": False},
             "value": {"title": "Pushed", "body_markdown": "x", "tags": ["t"]},
         }],
-        "agents": [{
-            "meta": {"id": "a1", "kind": "agent",
+        "recipes": [{
+            "meta": {"id": "a1", "kind": "recipe",
                      "last_modified": "2030-01-01T00:00:00Z", "deleted": False},
             "value": {"name": "Persona", "system_prompt": "S", "user_template": "U"},
         }],
@@ -64,11 +64,11 @@ def test_push_merges_primitives_into_store(env) -> None:
     resp = client.post("/api/sync/push", json=changeset)
     assert resp.status_code == 200
     assert resp.json()["received"]["notes"] == 1
-    assert resp.json()["received"]["agents"] == 1
+    assert resp.json()["received"]["recipes"] == 1
 
     note = db.notes.get("n1")
     assert note is not None and note.title == "Pushed" and note.tags == ["t"]
-    agent = db.agents.get("a1")
+    agent = db.recipes.get("a1")
     assert agent is not None and agent.name == "Persona"
 
 
@@ -113,8 +113,8 @@ def test_push_then_pull_round_trip(env) -> None:
             "meta": {"id": "n1", "kind": "note", "last_modified": lm, "deleted": False},
             "value": {"title": "Roundtrip", "body_markdown": "B", "tags": ["x"]},
         }],
-        "agents": [{
-            "meta": {"id": "a1", "kind": "agent", "last_modified": lm, "deleted": False},
+        "recipes": [{
+            "meta": {"id": "a1", "kind": "recipe", "last_modified": lm, "deleted": False},
             "value": {"name": "Persona", "system_prompt": "S", "user_template": "U"},
         }],
         "kbs": [{
@@ -125,21 +125,21 @@ def test_push_then_pull_round_trip(env) -> None:
     push = client.post("/api/sync/push", json=changeset)
     assert push.status_code == 200
     rcv = push.json()["received"]
-    assert rcv["notes"] == 1 and rcv["agents"] == 1 and rcv["kbs"] == 1
+    assert rcv["notes"] == 1 and rcv["recipes"] == 1 and rcv["kbs"] == 1
 
     # Pull brings the three primitives back with correct meta.kind + last_modified.
     pulled = client.get("/api/sync/pull").json()
     by_kind = {
-        "note": pulled["notes"][0], "agent": pulled["agents"][0], "kb": pulled["kbs"][0],
+        "note": pulled["notes"][0], "recipe": pulled["recipes"][0], "kb": pulled["kbs"][0],
     }
     assert by_kind["note"]["meta"]["id"] == "n1"
     assert by_kind["note"]["meta"]["kind"] == "note"
     assert by_kind["note"]["meta"]["last_modified"] == lm
     assert by_kind["note"]["meta"]["deleted"] is False
     assert by_kind["note"]["value"]["title"] == "Roundtrip"
-    assert by_kind["agent"]["meta"]["kind"] == "agent"
-    assert by_kind["agent"]["meta"]["last_modified"] == lm
-    assert by_kind["agent"]["value"]["name"] == "Persona"
+    assert by_kind["recipe"]["meta"]["kind"] == "recipe"
+    assert by_kind["recipe"]["meta"]["last_modified"] == lm
+    assert by_kind["recipe"]["value"]["name"] == "Persona"
     assert by_kind["kb"]["meta"]["kind"] == "kb"
     assert by_kind["kb"]["meta"]["last_modified"] == lm
     assert by_kind["kb"]["value"]["member_ids"] == ["n1"]
@@ -149,7 +149,7 @@ def test_push_then_pull_round_trip(env) -> None:
     tomb = {
         "notes": [{"meta": {"id": "n1", "kind": "note", "last_modified": lm2,
                             "deleted": True}, "value": {"title": "Roundtrip"}}],
-        "agents": [{"meta": {"id": "a1", "kind": "agent", "last_modified": lm2,
+        "recipes": [{"meta": {"id": "a1", "kind": "recipe", "last_modified": lm2,
                              "deleted": True}, "value": {"name": "Persona"}}],
         "kbs": [{"meta": {"id": "kb1", "kind": "kb", "last_modified": lm2,
                           "deleted": True}, "value": {"name": "Bag"}}],
@@ -158,11 +158,11 @@ def test_push_then_pull_round_trip(env) -> None:
 
     # The live store hides them; the tombstone still rides the pull (deleted=True).
     assert db.notes.get("n1") is None
-    assert db.agents.get("a1") is None
+    assert db.recipes.get("a1") is None
     assert db.kbs.get("kb1") is None
     repulled = client.get("/api/sync/pull").json()
     assert repulled["notes"][0]["meta"]["deleted"] is True
-    assert repulled["agents"][0]["meta"]["deleted"] is True
+    assert repulled["recipes"][0]["meta"]["deleted"] is True
     assert repulled["kbs"][0]["meta"]["deleted"] is True
 
 

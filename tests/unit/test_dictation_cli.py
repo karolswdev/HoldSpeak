@@ -49,6 +49,10 @@ def tmp_blocks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     blocks_path.write_text(_VALID_BLOCKS_YAML, encoding="utf-8")
     monkeypatch.setattr(assembly, "DEFAULT_GLOBAL_BLOCKS_PATH", blocks_path)
     monkeypatch.setattr(cli, "Config", _ConfigStub)
+    # cwd isolation: blocks ls/show and dry-run cwd-detect the project, and a
+    # developer's repo can legitimately BE a project (a real .holdspeak/ landed
+    # the day the desk was dogfooded on this repo). Anchor-free cwd, always.
+    monkeypatch.chdir(tmp_path)
     return blocks_path
 
 
@@ -138,6 +142,7 @@ def test_blocks_ls_prints_loaded_block_ids(tmp_blocks):
 
 def test_blocks_ls_reports_empty_when_no_blocks_file(tmp_path, monkeypatch):
     monkeypatch.setattr(assembly, "DEFAULT_GLOBAL_BLOCKS_PATH", tmp_path / "missing.yaml")
+    monkeypatch.chdir(tmp_path)
     args = SimpleNamespace(dictation_action="blocks-ls", project=None)
     out = io.StringIO()
     rc = cli.run_dictation_command(args, stream=out)

@@ -34,13 +34,13 @@ def test_record_artifact_accepts_run_born(db) -> None:
     db.plugins.record_artifact(
         artifact_id="run-1", meeting_id="", artifact_type="run_output",
         title="Owl: hi", body_markdown="answer", status="draft",
-        plugin_id="agent_run", plugin_version="1",
-        sources=[{"source_type": "agent", "source_ref": "a-owl"}],
+        plugin_id="recipe_run", plugin_version="1",
+        sources=[{"source_type": "recipe", "source_ref": "a-owl"}],
     )
     got = db.plugins.get_artifact("run-1")
     assert got is not None
     assert got.meeting_id == ""  # NULL in the DB, a string on every surface
-    assert got.sources == [{"source_type": "agent", "source_ref": "a-owl"}]
+    assert got.sources == [{"source_type": "recipe", "source_ref": "a-owl"}]
 
 
 def test_artifact_id_still_required(db) -> None:
@@ -64,7 +64,7 @@ def test_meeting_scoped_listing_unaffected(db) -> None:
     db.plugins.record_artifact(
         artifact_id="run-art", meeting_id="", artifact_type="run_output",
         title="R", body_markdown="-", status="draft",
-        sources=[{"source_type": "agent", "source_ref": "a1"}],
+        sources=[{"source_type": "recipe", "source_ref": "a1"}],
     )
     meeting_side = db.plugins.list_artifacts("m1")
     assert [a.id for a in meeting_side] == ["meet-art"]
@@ -77,7 +77,7 @@ def test_agent_run_persists_and_responds_with_artifact_id(db, monkeypatch) -> No
 
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-    db.agents.upsert(agent_id="a-owl", name="Owl", avatar="🦉",
+    db.recipes.upsert(recipe_id="a-owl", name="Owl", avatar="🦉",
                      system_prompt="terse")
 
     class _StubIntel:
@@ -97,7 +97,7 @@ def test_agent_run_persists_and_responds_with_artifact_id(db, monkeypatch) -> No
     ), host="127.0.0.1")
     client = TestClient(server.app)
 
-    resp = client.post("/api/agents/a-owl/run", json={"input": "say hi"})
+    resp = client.post("/api/recipes/a-owl/run", json={"input": "say hi"})
     assert resp.status_code == 200, resp.text
     data = resp.json()
     assert data["output"] == "the run output"
@@ -107,8 +107,8 @@ def test_agent_run_persists_and_responds_with_artifact_id(db, monkeypatch) -> No
     stored = db.plugins.get_artifact(artifact_id)
     assert stored is not None
     assert stored.body_markdown == "the run output"
-    assert stored.plugin_id == "agent_run"
-    assert {"source_type": "agent", "source_ref": "a-owl"} in stored.sources
+    assert stored.plugin_id == "recipe_run"
+    assert {"source_type": "recipe", "source_ref": "a-owl"} in stored.sources
     assert stored.title == "Owl: say hi"
 
     # The run-born artifact rides the pull with the unchanged value shape.
@@ -149,8 +149,8 @@ def test_origin_explicit_on_every_serialized_surface(db) -> None:
     db.plugins.record_artifact(
         artifact_id="run-1", meeting_id="", artifact_type="plugin_output",
         title="Run-born", body_markdown="answer", status="draft",
-        plugin_id="agent_run", plugin_version="1",
-        sources=[{"source_type": "agent", "source_ref": "a-owl"}],
+        plugin_id="recipe_run", plugin_version="1",
+        sources=[{"source_type": "recipe", "source_ref": "a-owl"}],
     )
 
     app = FastAPI()
@@ -226,7 +226,7 @@ def test_v5_to_v6_upgrade_rebuilds_without_losing_rows(tmp_path) -> None:
     upgraded.plugins.record_artifact(
         artifact_id="run-after-upgrade", meeting_id="",
         artifact_type="run_output", title="R",
-        sources=[{"source_type": "agent", "source_ref": "a1"}],
+        sources=[{"source_type": "recipe", "source_ref": "a1"}],
     )
     assert upgraded.plugins.get_artifact("run-after-upgrade") is not None
     # A backup landed before the migration (the Phase-50 contract).
