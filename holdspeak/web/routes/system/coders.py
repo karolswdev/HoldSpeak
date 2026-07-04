@@ -262,6 +262,50 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "session_id is required"}, status_code=400)
         return agent, session_id
 
+    @router.get("/api/coders/sessions")
+    async def api_coders_sessions(
+        agent: Optional[str] = None, include_ended: bool = True
+    ) -> Any:
+        """The live coder set (HSM-17-02) in the HSM-17-01 shape.
+
+        Every session the hooks reported, newest first — not just the ones
+        waiting on a reply — each carrying its raw `lifecycle`, the pending
+        `question` (secret-filtered at ingest), and the decayed effective
+        `state` (working | waiting | idle | ended). Sessions past the dead
+        window fall out of the live set entirely; `include_ended=false` also
+        drops fresh tombstones.
+        """
+        from ....agent_context import (
+            DEFAULT_LIFECYCLE_DEAD_SECONDS,
+            LIFECYCLE_ENDED,
+            effective_state,
+            list_agent_sessions,
+        )
+        from ....agent_device import build_agent_identity_payload
+
+        try:
+            now = datetime.now(timezone.utc)
+            items: list[dict[str, Any]] = []
+            for session in list_agent_sessions(agent=agent):
+                age = _session_age_seconds(session.updated_at, now)
+                if age is not None and age > DEFAULT_LIFECYCLE_DEAD_SECONDS:
+                    continue
+                state = effective_state(session, now=now)
+                if state == LIFECYCLE_ENDED and not include_ended:
+                    continue
+                payload = session.to_dict()
+                payload["state"] = state
+                items.append(
+                    {
+                        "session": payload,
+                        "age_seconds": age,
+                        "identity": build_agent_identity_payload(session),
+                    }
+                )
+            return JSONResponse({"sessions": items, "count": len(items)})
+        except Exception as e:
+            return error_500("coders sessions", e, log)
+
     @router.post("/api/coders/select")
     async def api_companion_select(payload: Optional[dict[str, Any]] = None) -> Any:
         """Select a specific waiting session as AI PI's active reply target."""

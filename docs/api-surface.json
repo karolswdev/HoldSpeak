@@ -717,6 +717,14 @@
       ]
     },
     {
+      "path": "/api/coders/sessions",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coders",
+      "consumers": []
+    },
+    {
       "path": "/api/coders/status",
       "methods": [
         "GET"

@@ -33,6 +33,21 @@ DEFAULT_RECENT_MAX_AGE_SECONDS = 30 * 60
 DEFAULT_STALE_AGENT_SESSION_SECONDS = 120
 
 
+# HSM-17-02: the live-session lifecycle. `lifecycle` is the RAW state written
+# by the last hook event (working | waiting | ended); the *effective* state a
+# consumer sees (`effective_state`) additionally decays a session with no
+# heartbeat to `idle`, and a dead one to `ended`, at read time — no background
+# job ever rewrites the registry.
+LIFECYCLE_WORKING = "working"
+LIFECYCLE_WAITING = "waiting"
+LIFECYCLE_IDLE = "idle"
+LIFECYCLE_ENDED = "ended"
+
+DEFAULT_LIFECYCLE_IDLE_SECONDS = 30 * 60
+
+DEFAULT_LIFECYCLE_DEAD_SECONDS = 4 * 60 * 60
+
+
 DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS = 4_096
 
 
@@ -123,6 +138,10 @@ class AgentSession:
     created_at: Optional[str] = None
     event_count: int = 1
     pinned: bool = False
+    # HSM-17-02: the raw lifecycle from the last hook event and the pending
+    # question (secret-filtered at ingest) when the coder blocks on the human.
+    lifecycle: str = LIFECYCLE_WORKING
+    question: Optional[str] = None
 
     @classmethod
     def from_mapping(cls, raw: Mapping[str, Any]) -> "AgentSession":
@@ -152,6 +171,8 @@ class AgentSession:
             created_at=_optional_str(raw.get("created_at")),
             event_count=int(raw.get("event_count") or 1),
             pinned=bool(raw.get("pinned")),
+            lifecycle=_optional_str(raw.get("lifecycle")) or LIFECYCLE_WORKING,
+            question=_optional_str(raw.get("question")),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -181,4 +202,6 @@ class AgentSession:
             "created_at": self.created_at,
             "event_count": self.event_count,
             "pinned": self.pinned,
+            "lifecycle": self.lifecycle,
+            "question": self.question,
         }

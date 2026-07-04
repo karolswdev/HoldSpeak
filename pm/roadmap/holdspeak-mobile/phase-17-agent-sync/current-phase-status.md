@@ -5,7 +5,7 @@ by you... we inject ourselves by running our hooks on our Claude and Codex insta
 instances are showing on our DeskOS as primitives when the agent has a question, when we answer, and so
 on."*)
 
-**Last updated:** 2026-06-26 (**opened.** Authored directly from the instruction, grounded in a two-sided
+**Last updated:** 2026-07-04 (**HSM-17-02 done — the capture loop is LIVE on the owner's Mac.** `AgentSession` gained the raw `lifecycle` + secret-filtered `question`; `effective_state()` decays idle/dead at read time; the Claude template gained Notification/PostToolUse/SessionEnd (Codex Notification/SessionEnd); `holdspeak agent-hook install|uninstall` is the one-command, idempotent, reversible inject; `GET /api/coders/sessions` serves the FULL live set (not just awaiting) in the 17-01 shape. Real-metal proven end to end: a live Claude driven working → waiting(two real permission asks captured) → resumed(question cleared) → SessionEnd tombstone, plus a live Codex session captured (codex emits no SessionEnd; the decay window tombstones it — recorded honestly); the session that BUILT the story reported through its own hooks while proving it. 23 new tests. TRUTH-UP: the `desk-parity` branch the 2026-06-26 note below calls 'uncommitted' has since been MERGED to main via the Primitive Framework waves (`389d2b1`, `b5baaac` — PRs #140–142); `DeskCoder.swift` (CoderSession/CoderEvent/AgentSessionPrimitive) is in main. 17-01's remaining gap is the typed Contracts round-trip + the event-stream transport, not the Swift scaffolding. Earlier: opened. Authored directly from the instruction, grounded in a two-sided
 parity audit of the desktop server domain and the cross-device sync contract. Leads with **HSM-17-01 (the
 agent-session as a synced primitive)** — the canonical contract everything else is built on, which also
 **resolves the "agent" naming collision** in favour of the one true meaning: a live Claude/Codex coding
@@ -71,7 +71,7 @@ loose DTO seam into `Contracts`.
 | ID | Title | Status |
 |----|-------|--------|
 | HSM-17-01 | The agent-session as a synced primitive (the contract) — **leads** | in-progress |
-| HSM-17-02 | Hooks: inject into the live Claude/Codex instances (capture) | todo |
+| HSM-17-02 | Hooks: inject into the live Claude/Codex instances (capture) | **done** (2026-07-04, real-metal both agents) |
 | HSM-17-03 | The agent on the desk: a live session as a DeskOS primitive | in-progress |
 | HSM-17-04 | Answer the coder — spoken / typed / dropped-context | in-progress |
 | HSM-17-05 | AI-drafted answers (local or remote, approve-then-inject) | todo |
