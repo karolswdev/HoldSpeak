@@ -2871,6 +2871,7 @@ struct DioStage: View {
     @State private var placedGames: [GameRecord] = []
     @State private var coders: [CoderSession] = []             // HSM-17 live Claude/Codex sessions on the desk
     @State private var coderPoll: Task<Void, Never>? = nil     // HSM-17-03: the live-set poll (typed presence stream)
+    @State private var coderGrounding: CoderGrounding? = nil   // HSM-17-04: dropped-context for the open composer
     @State private var coderWasWaiting: Set<String> = []       // rising-edge memory: glare once per flip into waiting
     @State private var answeringCoder: CoderSession? = nil     // the answer composer is open on this session
     @State private var openCoderSession: CoderSession? = nil   // the live "running coder" feed is open
@@ -3664,8 +3665,9 @@ struct DioStage: View {
                 // the coder answer composer — reply into a live Claude/Codex session (HSM-17-04)
                 if let c = answeringCoder {
                     DioCoderAnswer(session: c, maxW: camera.cardWidth(400, in: w),
+                                   grounding: coderGrounding,
                                    onSend: { answerCoder(c, $0) },
-                                   onCancel: { withAnimation { answeringCoder = nil } })
+                                   onCancel: { withAnimation { answeringCoder = nil; coderGrounding = nil } })
                         .id(c.id).zIndex(150).transition(.opacity)
                 }
                 // THE IN-WORLD CONNECT CARD — pair the Mac from the desk. A transparent (no scrim)
@@ -4543,6 +4545,16 @@ struct DioStage: View {
         defer { dragHotZone = nil; dragHotObjectId = nil }
         // 1) dropped on a desk content target (a KB)?
         if let target = objectHit(end, contentMembers(), w, h, excluding: p.id), target.prim.accepts.contains(p.kind) {
+            // HSM-17-04: dropped onto a WAITING coder — answer *from this*. The dropped
+            // primitive's routableText becomes visible, trimmable grounding in the
+            // composer; nothing is sent until the human sends (the keystone routing
+            // gesture, pointed at an agent instead of the AI core).
+            if let coderTarget = target.prim as? AgentSessionPrimitive {
+                haptic(.medium)
+                coderGrounding = CoderGrounding(title: p.title, text: p.routableText)
+                withAnimation(focusSpring) { answeringCoder = coderTarget.session }
+                return
+            }
             routeFrom = start; routeTo = target.center            // the cable runs source → target
             beginRoute(sourceId: p.id, target: target.prim); return
         }
@@ -5136,12 +5148,7 @@ struct DioStage: View {
 
     @MainActor
     private func coderPollTick() async {
-        guard let link = hostLink,
-              let config = HTTPDesktopClient.Config(
-                  peer: DesktopPeer(host: link.host, port: link.port,
-                                    token: peerToken.isEmpty ? nil : peerToken))
-        else { return }
-        let client = HTTPDesktopClient(config: config)
+        guard let client = coderClient() else { return }
         guard let live = try? await client.coderSessions() else { return }  // unreachable = keep last truth
         let mapped = live.map(CoderSession.init(from:))
 
@@ -5369,24 +5376,68 @@ struct DioStage: View {
         withAnimation(focusSpring) { placedGames.removeAll { $0.gameId == raw }; if selected == id { selected = nil } }
         positions[id] = nil; persistGames(); persistPositions()
     }
-    // HSM-17-04 — send your reply back into the live coding session. This slice does the optimistic desk
-    // side (clears the question, returns the coder to working, toasts). The real inject over
-    // `/api/dictation/remote` (the proven Phase-13 path) + voice / dropped-context / AI-draft land next.
+    // HSM-17-04 — send your reply back into the live coding session, for real: select the
+    // exact session as the hub's reply target, then deliver over /api/dictation/remote
+    // (the proven Phase-13 inject). Explicit by construction — only the composer's Send
+    // reaches this. On failure the question STAYS on the desk; nothing silently lost.
     private func answerCoder(_ session: CoderSession, _ text: String) {
         let reply = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !reply.isEmpty else { return }
         haptic(.medium)
-        // TODO(HSM-17-04): inject via HTTPDesktopClient.sendRemoteDictation(target: session) on real metal.
-        resolveCoder(session, with: .userPrompt(reply))
-        answeringCoder = nil
-        toast("Sent to \(session.display)")
+        withAnimation { answeringCoder = nil; coderGrounding = nil }
+        // The seeded demo desk stays fully offline-drivable: optimistic resolve only.
+        if ProcessInfo.processInfo.environment["HS_DESK_CODER"] != nil {
+            resolveCoder(session, with: .userPrompt(reply)); toast("Sent to \(session.display)"); return
+        }
+        guard let client = coderClient() else { toast("Pair your desktop to answer"); return }
+        Task { @MainActor in
+            do {
+                let result = try await CoderAnswer.send(
+                    client, agent: session.agent, sessionID: session.sessionId, reply: reply)
+                if result.delivered {
+                    resolveCoder(session, with: .userPrompt(result.finalText))
+                    toast("Answer delivered · \(session.display)")
+                } else {
+                    toast("Processed, not delivered — question kept")
+                }
+            } catch {
+                toast("Desktop unreachable — question kept")
+            }
+        }
     }
     private func approveCoder(_ session: CoderSession) {
         haptic(.medium)
-        // TODO(HSM-17-04): send the approval down /api/dictation/remote (or the approve route) on real metal.
-        resolveCoder(session, with: .notification("You approved the request"))
-        openCoderSession = nil
-        toast("Approved · \(session.display) continues")
+        if ProcessInfo.processInfo.environment["HS_DESK_CODER"] != nil {
+            resolveCoder(session, with: .notification("You approved the request"))
+            openCoderSession = nil
+            toast("Approved · \(session.display) continues")
+            return
+        }
+        guard let client = coderClient() else { toast("Pair your desktop to approve"); return }
+        Task { @MainActor in
+            do {
+                let result = try await CoderAnswer.approve(
+                    client, agent: session.agent, sessionID: session.sessionId)
+                if result.delivered {
+                    resolveCoder(session, with: .notification("You approved the request"))
+                    withAnimation { openCoderSession = nil }
+                    toast("Approved · \(session.display) continues")
+                } else {
+                    toast("Not delivered — question kept")
+                }
+            } catch {
+                toast("Desktop unreachable — nothing sent")
+            }
+        }
+    }
+    /// The paired hub as a desktop client (HSM-17-03/04) — nil when unpaired.
+    private func coderClient() -> HTTPDesktopClient? {
+        guard let link = hostLink,
+              let config = HTTPDesktopClient.Config(
+                  peer: DesktopPeer(host: link.host, port: link.port,
+                                    token: peerToken.isEmpty ? nil : peerToken))
+        else { return nil }
+        return HTTPDesktopClient(config: config)
     }
     // optimistic desk side: clear the pending ask, append the resolving event, return the coder to working
     private func resolveCoder(_ session: CoderSession, with event: CoderEvent.Kind) {

@@ -357,15 +357,34 @@ struct DioCoderSession: View {
     }
 }
 
-// MARK: - the answer composer (typed → send; voice / dropped-context / AI-draft fold in here next)
+// MARK: - the answer composer (typed + spoken + dropped-context → one explicit send; AI-draft is 17-05)
+
+/// Dropped-context grounding for an answer (HSM-17-04): the `routableText` of a
+/// primitive dropped onto a waiting coder, cited by its source title. Visible
+/// and trimmable in the composer before anything is sent.
+struct CoderGrounding: Equatable {
+    var title: String
+    var text: String
+}
 
 struct DioCoderAnswer: View {
     let session: CoderSession
     var maxW: CGFloat = 400       // clamped by the caller's DeskCamera so it fits the lane (HSM-20-04)
-    let onSend: (String) -> Void
+    var grounding: CoderGrounding? = nil
+    let onSend: (String) -> Void  // receives the COMPOSED payload (reply + grounding)
     let onCancel: () -> Void
     @State private var text = ""
+    @State private var groundingText: String? = nil   // nil until edited; falls back to grounding.text
+    @State private var groundingRemoved = false
     @FocusState private var focused: Bool
+
+    private var effectiveGrounding: String { groundingRemoved ? "" : (groundingText ?? grounding?.text ?? "") }
+    private var payload: String {
+        CoderAnswer.compose(reply: text,
+                            groundingTitle: grounding?.title,
+                            grounding: effectiveGrounding)
+    }
+    private var sendable: Bool { !payload.isEmpty }
     var body: some View {
         ZStack {
             Color.black.opacity(0.78).ignoresSafeArea().onTapGesture { onCancel() }
@@ -389,28 +408,60 @@ struct DioCoderAnswer: View {
                 }
                 ZStack(alignment: .topLeading) {
                     if text.isEmpty {
-                        Text("Type your reply…").font(.system(size: 15, weight: .medium, design: .rounded))
+                        Text("Type or speak your reply…").font(.system(size: 15, weight: .medium, design: .rounded))
                             .foregroundStyle(DioPal.muted.opacity(0.7)).padding(.top, 8).padding(.leading, 5)
                     }
                     TextEditor(text: $text)
                         .font(.system(size: 15, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text)
                         .scrollContentBackground(.hidden).background(.clear).focused($focused)
                         .frame(minHeight: 120, maxHeight: 200)
+                    VStack { Spacer(minLength: 0); HStack { Spacer(minLength: 0)
+                        VoiceFillMic(text: $text, tint: DioPal.accent, size: 32, fill: .append)
+                    } }
                 }
                 .padding(13)
                 .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.05))
                     .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+                if grounding != nil && !groundingRemoved {
+                    VStack(alignment: .leading, spacing: 5) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "link").font(.system(size: 9, weight: .black))
+                            Text("CONTEXT · \(grounding?.title.uppercased() ?? "")")
+                                .font(.system(size: 9, weight: .black, design: .rounded)).tracking(1.2)
+                            Spacer(minLength: 0)
+                            Button { withAnimation { groundingRemoved = true } } label: {
+                                Image(systemName: "xmark.circle.fill").font(.system(size: 13))
+                                    .foregroundStyle(DioPal.muted)
+                            }.buttonStyle(.plain)
+                        }
+                        .foregroundStyle(DioPal.mint)
+                        TextEditor(text: Binding(
+                            get: { groundingText ?? grounding?.text ?? "" },
+                            set: { groundingText = $0 }
+                        ))
+                        .font(.system(size: 12.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85))
+                        .scrollContentBackground(.hidden).background(.clear)
+                        .frame(minHeight: 56, maxHeight: 110)
+                    }
+                    .padding(11)
+                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DioPal.mint.opacity(0.06))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(DioPal.mint.opacity(0.22), lineWidth: 1)))
+                }
+                HStack(spacing: 10) {
+                    EgressBadge(scope: AgentSessionPrimitive(session: session).egress)
+                    Spacer(minLength: 0)
+                }
                 HStack(spacing: 13) {
                     Button { onCancel() } label: {
                         Text("Cancel").font(.system(size: 15, weight: .heavy, design: .rounded))
                             .foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 54).background(Capsule().fill(.white.opacity(0.06)))
                     }.buttonStyle(.plain)
-                    Button { onSend(text) } label: {
+                    Button { if sendable { onSend(payload) } } label: {
                         HStack(spacing: 8) { Image(systemName: "paperplane.fill"); Text("Send").font(.system(size: 16.5, weight: .heavy, design: .rounded)) }
                             .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 54)
                             .background(Capsule().fill(LinearGradient(colors: [DioPal.accent, DioPal.accent.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
                             .shadow(color: DioPal.accent.opacity(0.45), radius: 10, y: 4)
-                    }.buttonStyle(.plain).opacity(text.trimmingCharacters(in: .whitespaces).isEmpty ? 0.5 : 1)
+                    }.buttonStyle(.plain).opacity(sendable ? 1 : 0.5)
                 }
             }
             .frame(width: maxW).padding(.vertical, 8)
