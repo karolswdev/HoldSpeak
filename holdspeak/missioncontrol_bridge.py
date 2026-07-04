@@ -168,6 +168,106 @@ def sessions_payload(
     return {"status": "live", "sessions": doc}
 
 
+ALLOWED_STORY_STATUSES = ("backlog", "ready", "in-progress", "blocked", "done")
+
+
+def build_story_preview(payload: dict[str, Any], story_title: str = "", from_status: str = "") -> str:
+    """The proposal preview — names the act and the standing truth."""
+    if payload.get("verb") == "status":
+        return (
+            f"Flip {payload['story']}"
+            + (f" ({story_title})" if story_title else "")
+            + (f" from [{from_status}]" if from_status else "")
+            + f" to [{payload['status']}] in {payload['project']} "
+            f"at {payload['repo']}. The dw gate still applies — a "
+            "done-flip without evidence will be refused."
+        )
+    return (
+        f"Create a new story {payload.get('title')!r} in "
+        f"{payload['project']} phase {payload['phase']} at {payload['repo']}."
+    )
+
+
+def build_dw_story_connector(repo: Path, *, runner: Optional[Runner] = None):
+    """The write half (HS-82-05): a gated connector admitting exactly
+    the two ``dw story`` argv shapes — the Phase-12 pack's manifest,
+    now native. argv is built here from the STORED payload at egress
+    time, never from anything the UI sent at approval time; a payload
+    naming a different repo refuses before planning completes; a dw
+    refusal (the gate's banner) rides back verbatim as the error."""
+    from .plugins.gated_connector import (
+        GatedOperation,
+        WriteConnectorManifest,
+        build_gated_connector,
+    )
+
+    base = dw_argv_base(repo)
+    if base is None:
+        raise ValueError(f"no dw CLI for {repo}")
+    manifest = WriteConnectorManifest(
+        connector_id="dw_story_writer",
+        permission="shell:exec",
+        label="Delivery Workbench story writer",
+        description="Runs the two allow-listed dw story verbs.",
+        allowed_argv_prefixes=(
+            (*base, "story", "status"),
+            (*base, "story", "create"),
+        ),
+    )
+
+    def plan(proposal) -> GatedOperation:
+        payload = dict(proposal.payload or {})
+        if str(payload.get("repo") or "") != str(repo):
+            raise ValueError(
+                f"proposal targets repo {payload.get('repo')!r}, connector "
+                f"is bound to {repo}"
+            )
+        verb = str(payload.get("verb") or "")
+        if verb == "status":
+            argv = [
+                *base, "story", "status",
+                str(payload["project"]), str(payload["phase"]),
+                str(payload["story"]), str(payload["status"]),
+            ]
+        elif verb == "create":
+            argv = [
+                *base, "story", "create",
+                str(payload["project"]), str(payload["phase"]),
+                str(payload["title"]),
+            ]
+        else:
+            # An unknown verb plans an argv the manifest cannot admit,
+            # so refusal happens at the gate rather than silently here.
+            argv = [*base, "story", verb]
+        return GatedOperation.subprocess(
+            argv,
+            capture_output=True,
+            text=True,
+            timeout=DW_TIMEOUT_SECONDS,
+            cwd=str(repo),
+        )
+
+    def interpret(raw, op) -> dict[str, Any]:
+        returncode = getattr(raw, "returncode", None)
+        stdout = (getattr(raw, "stdout", "") or "").strip()
+        stderr = (getattr(raw, "stderr", "") or "").strip()
+        if returncode != 0:
+            # The dw refusal banner rides stdout/stderr; keep it
+            # verbatim so the belt shows exactly what the rails said.
+            raise RuntimeError(
+                f"dw exited {returncode}: {stdout}\n{stderr}".strip()
+            )
+        return {"argv": list(op.argv), "stdout": stdout}
+
+    return build_gated_connector(
+        manifest,
+        plan=plan,
+        interpret=interpret,
+        gate=manifest.build_gate(),
+        runner=runner,
+    )
+
+
 def events_payload(
     project_map: dict[str, Any],
     tail: int = 20,

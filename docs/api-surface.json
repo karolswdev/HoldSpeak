@@ -1628,7 +1628,19 @@
         "GET"
       ],
       "module": "web.routes.missioncontrol",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/missioncontrol/proposals/{proposal_id}/decision",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/missioncontrol/sessions",
@@ -1636,7 +1648,9 @@
         "GET"
       ],
       "module": "web.routes.missioncontrol",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/missioncontrol/state",
@@ -1644,7 +1658,19 @@
         "GET"
       ],
       "module": "web.routes.missioncontrol",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/missioncontrol/story/propose",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/notes",

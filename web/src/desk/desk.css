@@ -813,3 +813,29 @@
 }
 .desk-next .desk-mc-event { color: var(--text-faint); font-size: 11px; white-space: nowrap; }
 .desk-next .desk-mc-event.refusal { color: var(--danger); }
+
+/* ── The approval leg (HS-82-05) ────────────────────────────────── */
+.desk-next .desk-mc-story { cursor: pointer; }
+.desk-next .desk-mc-story.picked { outline: 1px solid var(--text-muted); }
+.desk-next .desk-mc-flip {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
+.desk-next .desk-mc-flip-label { color: var(--text-faint); }
+.desk-next .desk-mc-btn {
+  padding: 1px 10px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--surface-3);
+  color: var(--text-muted); font-size: 11px; cursor: pointer;
+}
+.desk-next .desk-mc-btn.approve {
+  color: var(--accent); border-color: var(--accent);
+}
+.desk-next .desk-mc-proposal {
+  display: flex; align-items: center; gap: var(--space-2);
+  margin-top: var(--space-1); padding: var(--space-1) var(--space-2);
+  border: 1px dashed var(--surface-3); border-radius: 8px;
+}
+.desk-next .desk-mc-proposal.failed { border-color: color-mix(in srgb, var(--danger) 50%, transparent); }
+.desk-next .desk-mc-preview { color: var(--text); }
+.desk-next .desk-mc-refusal { color: var(--danger); }
+.desk-next .desk-mc-executed { color: var(--ok); }

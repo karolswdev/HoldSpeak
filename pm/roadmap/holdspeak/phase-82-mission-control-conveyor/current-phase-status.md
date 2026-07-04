@@ -1,14 +1,15 @@
 # Phase 82 — Mission Control (the Desk conveyor)
 
-**Status:** OPEN — 4/5.
+**Status:** OPEN — 5/5.
 
-**Last updated:** 2026-07-04 (HS-82-04 done: the live layer —
-on_story sessions pin to their story chips with awaiting-response
-pulsing loudest and stale dimmed never dropped; every other
-correlation bucket stays off the belt honestly; the event ticker
-renders gate refusals first-class with rule ids verbatim; 28 desk
-tests. HS-82-05 is the one story left: the approval leg + the
-joint proof.)
+**Last updated:** 2026-07-04 (HS-82-05 done — the phase is 5/5:
+the approval leg rides the native decide_proposal lifecycle into a
+two-argv-shape gated connector, path-allow-listed to the project
+map; the joint proof ran LIVE against the real delivery-workbench
+repo — feed on the belt, real correlation, an approved flip moving
+the rails and restored the same way, and the crown case refused by
+the dw gate with the banner rendered first-class on the Desk
+(screenshots/). Their WLA-13-05 exit exam cites this evidence.)
 pins the bridge, the belt, the 15 s single-flight poll, and the
 approval leg riding the native `decide_proposal` + gated-connector
 machinery; schema claims verified live against dw 1.9.0
@@ -70,7 +71,7 @@ guessing — the pack precedent, now in a second client.
 | HS-82-02 | The bridge: `/api/missioncontrol/*` relays the three documents | **done** ([evidence](./evidence-story-02.md): 11 route tests; unit tier 2422 green) | HS-82-01 |
 | HS-82-03 | The conveyor renders: phases as the belt, stories as the items | **done** ([evidence](./evidence-story-03.md): 25 desk tests; astro build clean) | HS-82-02 |
 | HS-82-04 | Sessions and events ride the belt | **done** ([evidence](./evidence-story-04.md): 28 desk tests; awaiting-response loudest, ambiguous never pinned) | HS-82-02 |
-| HS-82-05 | The approval leg and the joint proof | ready | HS-82-03, HS-82-04 |
+| HS-82-05 | The approval leg and the joint proof | **done** ([evidence](./evidence-story-05.md): 16 route tests; the four joint-proof legs live, screenshots in) | HS-82-03, HS-82-04 |
 
 ## Where we are
 

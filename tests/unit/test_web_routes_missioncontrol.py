@@ -214,3 +214,175 @@ class TestEventsRoute:
         )
         entry = client.get("/api/missioncontrol/events").json()["repos"][0]
         assert entry["status"] == "compatibility"
+
+
+# ── The approval leg (HS-82-05): propose → approve → execute ────────
+# The dw CLI is a fake runner; the db is real (temp file); the gate's
+# refusal banner is proven to ride back verbatim on the crown case.
+
+import holdspeak.db as db_module
+import holdspeak.web.routes.missioncontrol as mc_routes
+from holdspeak.db.core import Database
+
+
+def _propose_client(tmp_path, monkeypatch, dw_runner):
+    db = Database(tmp_path / "mc.db")
+    monkeypatch.setattr(db_module, "get_database", lambda db_path=None: db)
+    monkeypatch.setattr(mc_routes, "_DW_RUNNER", dw_runner)
+    broadcasts = []
+    app = FastAPI()
+    app.include_router(
+        build_missioncontrol_router(
+            WebContext(
+                get_state=lambda: {},
+                broadcast=lambda kind, data: broadcasts.append((kind, data)),
+            ),
+            runner=dw_runner,
+            map_path=_make_map(tmp_path),
+        )
+    )
+    return TestClient(app), db, broadcasts
+
+
+def _flip_body(story="DM-1-02", status="in-progress"):
+    return {
+        "repo": "demo", "verb": "status", "project": "demo",
+        "story": story, "status": status,
+    }
+
+
+FEED_WITH_STORIES = {
+    **FEED_DOC,
+    "projects": [
+        {
+            **FEED_DOC["projects"][0],
+            "phases": [
+                {"number": 1, "title": "Alpha", "status": "open",
+                 "stories_done": 1, "stories_total": 2},
+            ],
+            "stories": [
+                {"story_id": "DM-1-01", "title": "First", "status": "done",
+                 "phase": 1, "evidence_exists": True},
+                {"story_id": "DM-1-02", "title": "Second", "status": "in-progress",
+                 "phase": 1, "evidence_exists": False},
+            ],
+        }
+    ],
+}
+
+
+class TestApprovalLeg:
+    def test_propose_validates_against_the_live_feed(self, tmp_path, monkeypatch):
+        client, _db, _b = _propose_client(
+            tmp_path, monkeypatch, _runner_for({"state": FEED_WITH_STORIES})
+        )
+        for bad, why in [
+            ({**_flip_body(), "repo": "ghost"}, "project map"),
+            ({**_flip_body(), "project": "ghost"}, "not on the roadmap"),
+            ({**_flip_body(story="DM-9-99")}, "not on the demo roadmap"),
+            ({**_flip_body(status="shipped-it")}, "is not one of"),
+            ({**_flip_body(), "verb": "delete"}, "not an allow-listed"),
+        ]:
+            resp = client.post("/api/missioncontrol/story/propose", json=bad)
+            assert resp.status_code == 400, bad
+            assert why in resp.json()["error"]
+
+    def test_propose_then_approve_executes_the_allowed_argv(
+        self, tmp_path, monkeypatch
+    ):
+        argv_log = []
+
+        def runner(argv, cwd=None, **kwargs):
+            argv_log.append(list(argv))
+            if "state" in argv:
+                return SimpleNamespace(
+                    returncode=0, stdout=json.dumps(FEED_WITH_STORIES), stderr=""
+                )
+            return SimpleNamespace(returncode=0, stdout="DM-1-02\tblocked", stderr="")
+
+        client, _db, broadcasts = _propose_client(tmp_path, monkeypatch, runner)
+        resp = client.post(
+            "/api/missioncontrol/story/propose",
+            json=_flip_body(status="blocked"),
+        )
+        assert resp.status_code == 200
+        proposal = resp.json()["proposal"]
+        assert "The dw gate still applies" in proposal["preview"]
+        assert proposal["status"] == "proposed"
+
+        decided = client.post(
+            f"/api/missioncontrol/proposals/{proposal['id']}/decision",
+            json={"decision": "approved", "actor": "the-owner"},
+        )
+        assert decided.status_code == 200
+        final = decided.json()["proposal"]
+        assert final["status"] == "executed", final["error"]
+        story_argv = [a for a in argv_log if "story" in a]
+        assert story_argv and story_argv[-1][-4:] == ["demo", "1", "DM-1-02", "blocked"]
+
+    def test_crown_case_refusal_banner_rides_back_verbatim(
+        self, tmp_path, monkeypatch
+    ):
+        def runner(argv, cwd=None, **kwargs):
+            if "state" in argv:
+                return SimpleNamespace(
+                    returncode=0, stdout=json.dumps(FEED_WITH_STORIES), stderr=""
+                )
+            return SimpleNamespace(
+                returncode=1, stdout="",
+                stderr="refusing to mark story done without evidence; pass --evidence-body or --evidence-from-file",
+            )
+
+        client, _db, _b = _propose_client(tmp_path, monkeypatch, runner)
+        proposal = client.post(
+            "/api/missioncontrol/story/propose", json=_flip_body(status="done")
+        ).json()["proposal"]
+        final = client.post(
+            f"/api/missioncontrol/proposals/{proposal['id']}/decision",
+            json={"decision": "approved", "actor": "the-owner"},
+        ).json()["proposal"]
+        assert final["status"] == "failed"
+        assert "refusing to mark story done without evidence" in final["error"]
+
+    def test_reject_never_touches_the_cli(self, tmp_path, monkeypatch):
+        argv_log = []
+
+        def runner(argv, cwd=None, **kwargs):
+            argv_log.append(list(argv))
+            return SimpleNamespace(
+                returncode=0, stdout=json.dumps(FEED_WITH_STORIES), stderr=""
+            )
+
+        client, _db, _b = _propose_client(tmp_path, monkeypatch, runner)
+        proposal = client.post(
+            "/api/missioncontrol/story/propose", json=_flip_body(status="done")
+        ).json()["proposal"]
+        argv_before = len(argv_log)
+        final = client.post(
+            f"/api/missioncontrol/proposals/{proposal['id']}/decision",
+            json={"decision": "rejected", "actor": "the-owner"},
+        ).json()["proposal"]
+        assert final["status"] == "rejected"
+        assert argv_log[argv_before:] == []
+
+    def test_tampered_repo_fails_the_path_allow_list(self, tmp_path, monkeypatch):
+        client, db, _b = _propose_client(
+            tmp_path, monkeypatch, _runner_for({"state": FEED_WITH_STORIES})
+        )
+        rogue = db.actuators.record_proposal(
+            meeting_id=None, origin="desk", window_id="desk:missioncontrol",
+            plugin_id="missioncontrol_desk", plugin_version="0.1.0",
+            idempotency_key="mc-story:tampered",
+            target="delivery-workbench", action="dw_story_status",
+            preview="tampered", reversible=True,
+            payload={
+                "repo": "/somewhere/else", "verb": "status", "project": "demo",
+                "phase": "1", "story": "DM-1-02", "status": "done",
+            },
+        )
+        final = client.post(
+            f"/api/missioncontrol/proposals/{rogue.id}/decision",
+            json={"decision": "approved", "actor": "the-owner"},
+        ).json()["proposal"]
+        assert final["status"] == "failed"
+        assert "not in the operator's project map" in final["error"]

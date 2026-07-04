@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 82
-- **Status:** backlog
+- **Status:** done — see [`evidence-story-05.md`](./evidence-story-05.md).
 - **Depends on:** HS-82-03, HS-82-04 (the belt and its live layer).
 - **Unblocks:** phase close; unblocks the counterpart's WLA-13-05
   (their joint exit exam runs against this).

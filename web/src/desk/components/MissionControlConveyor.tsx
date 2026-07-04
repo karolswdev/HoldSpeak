@@ -9,7 +9,7 @@
 // unreachable or schema-drifted render their honest state — never
 // an empty belt pretending the rails are idle.
 // Design: docs/internal/MISSION_CONTROL_DESK.md §2–§3.
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   McProject,
   McRepo,
@@ -20,6 +20,14 @@ import {
   sessionsByStory,
   useMissionControl,
 } from "../missioncontrol";
+
+const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
+
+interface PickTarget {
+  repo: string;
+  project: string;
+  story: string;
+}
 
 function SessionPin({ session }: { session: McSession }) {
   return (
@@ -46,9 +54,15 @@ function SessionPin({ session }: { session: McSession }) {
 function PhaseBelt({
   project,
   pins,
+  repoName,
+  picked,
+  onPick,
 }: {
   project: McProject;
   pins: Record<string, McSession[]>;
+  repoName: string;
+  picked: PickTarget | null;
+  onPick: (t: PickTarget | null) => void;
 }) {
   const current = project.currentPhase;
   const beltStories = current
@@ -81,12 +95,21 @@ function PhaseBelt({
         {beltStories.map((s) => (
           <span
             key={s.storyId}
+            role="button"
             className={
               "desk-mc-story st-" +
               s.status.replace(/[^a-z-]/g, "") +
-              (s.storyId === project.nextStoryId ? " next" : "")
+              (s.storyId === project.nextStoryId ? " next" : "") +
+              (picked && picked.story === s.storyId ? " picked" : "")
             }
             title={`${s.title} [${s.status}]` + (s.evidenceExists ? " ·evidence" : "")}
+            onClick={() =>
+              onPick(
+                picked && picked.story === s.storyId
+                  ? null
+                  : { repo: repoName, project: project.slug, story: s.storyId },
+              )
+            }
           >
             {s.storyId}
             {s.evidenceExists ? " ✓" : ""}
@@ -103,9 +126,13 @@ function PhaseBelt({
 function RepoBlock({
   repo,
   pins,
+  picked,
+  onPick,
 }: {
   repo: McRepo;
   pins: Record<string, McSession[]>;
+  picked: PickTarget | null;
+  onPick: (t: PickTarget | null) => void;
 }) {
   if (repo.status !== "live") {
     return (
@@ -121,9 +148,62 @@ function RepoBlock({
   return (
     <>
       {repo.projects.map((p) => (
-        <PhaseBelt key={repo.name + p.slug} project={p} pins={pins} />
+        <PhaseBelt
+          key={repo.name + p.slug}
+          project={p}
+          pins={pins}
+          repoName={repo.name}
+          picked={picked}
+          onPick={onPick}
+        />
       ))}
     </>
+  );
+}
+
+function ProposalCard() {
+  const proposal = useMissionControl((s) => s.proposal);
+  const proposalError = useMissionControl((s) => s.proposalError);
+  const { decide, dismissProposal } = useMissionControl.getState();
+  if (proposalError) {
+    return (
+      <div className="desk-mc-proposal failed">
+        <span className="desk-mc-refusal">✕ {proposalError}</span>
+        <button className="desk-mc-btn" onClick={dismissProposal}>dismiss</button>
+      </div>
+    );
+  }
+  if (!proposal) return null;
+  if (proposal.status === "proposed") {
+    return (
+      <div className="desk-mc-proposal">
+        <span className="desk-mc-preview">{proposal.preview}</span>
+        <button className="desk-mc-btn approve" onClick={() => void decide("approved")}>
+          Approve
+        </button>
+        <button className="desk-mc-btn" onClick={() => void decide("rejected")}>
+          Reject
+        </button>
+      </div>
+    );
+  }
+  if (proposal.status === "failed") {
+    return (
+      <div className="desk-mc-proposal failed">
+        <span className="desk-mc-refusal">
+          ✕ the rails refused: {proposal.error}
+        </span>
+        <button className="desk-mc-btn" onClick={dismissProposal}>dismiss</button>
+      </div>
+    );
+  }
+  return (
+    <div className="desk-mc-proposal">
+      <span className="desk-mc-executed">
+        {proposal.status === "executed" ? "✓ executed" : proposal.status}
+      </span>
+      <button className="desk-mc-btn" onClick={dismissProposal}>dismiss</button>
+    </div>
   );
 }
 
@@ -134,6 +214,7 @@ export function MissionControlConveyor() {
   const updatedAt = useMissionControl((s) => s.updatedAt);
   const open = useMissionControl((s) => s.open);
   const { refresh, toggle } = useMissionControl.getState();
+  const [picked, setPicked] = useState<PickTarget | null>(null);
 
   useEffect(() => {
     void refresh();
@@ -165,8 +246,34 @@ export function MissionControlConveyor() {
         </button>
       </div>
       {repos.map((r) => (
-        <RepoBlock key={r.name} repo={r} pins={pins} />
+        <RepoBlock
+          key={r.name}
+          repo={r}
+          pins={pins}
+          picked={picked}
+          onPick={setPicked}
+        />
       ))}
+      {picked && (
+        <div className="desk-mc-flip">
+          <span className="desk-mc-flip-label">flip {picked.story} to</span>
+          {FLIP_STATUSES.map((st) => (
+            <button
+              key={st}
+              className="desk-mc-btn"
+              onClick={() => {
+                void useMissionControl
+                  .getState()
+                  .proposeFlip(picked.repo, picked.project, picked.story, st);
+                setPicked(null);
+              }}
+            >
+              {st}
+            </button>
+          ))}
+        </div>
+      )}
+      <ProposalCard />
       {offBelt.length > 0 && (
         <div className="desk-mc-sessions">
           {offBelt.map((s) => (

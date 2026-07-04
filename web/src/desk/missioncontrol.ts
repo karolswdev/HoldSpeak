@@ -151,14 +151,28 @@ export function formatEvent(e: McEvent): string {
   return [time, e.event, e.story || "", detail].filter(Boolean).join("  ");
 }
 
-async function fetchJson(url: string): Promise<any> {
-  const res = await fetch(url);
+async function fetchJson(url: string, opts?: RequestInit): Promise<any> {
+  const res = await fetch(url, opts);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.error || body.detail || `HTTP ${res.status}`);
   return body;
 }
 
 export const POLL_MS = 15_000; // the design's cadence, single-flight
+
+export interface McProposal {
+  id: string;
+  status: string;
+  preview: string;
+  error: string | null;
+}
+
+export const fromWireProposal = (p: any): McProposal => ({
+  id: p.id || "",
+  status: p.status || "",
+  preview: p.preview || "",
+  error: p.error || null,
+});
 
 interface McState {
   repos: McRepo[];
@@ -169,8 +183,13 @@ interface McState {
   updatedAt: number | null;
   inflight: boolean;
   open: boolean;
+  proposal: McProposal | null;
+  proposalError: string;
   toggle(): void;
   refresh(): Promise<void>;
+  proposeFlip(repo: string, project: string, story: string, status: string): Promise<void>;
+  decide(decision: "approved" | "rejected"): Promise<void>;
+  dismissProposal(): void;
 }
 
 export const useMissionControl = create<McState>((set, get) => ({
@@ -182,9 +201,50 @@ export const useMissionControl = create<McState>((set, get) => ({
   updatedAt: null,
   inflight: false,
   open: true,
+  proposal: null,
+  proposalError: "",
 
   toggle() {
     set({ open: !get().open });
+  },
+
+  async proposeFlip(repo, project, story, status) {
+    set({ proposalError: "" });
+    try {
+      const body = await fetchJson("/api/missioncontrol/story/propose", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repo, verb: "status", project, story, status }),
+      });
+      set({ proposal: fromWireProposal(body.proposal) });
+    } catch (e: any) {
+      set({ proposalError: e.message || "propose failed", proposal: null });
+    }
+  },
+
+  async decide(decision) {
+    const proposal = get().proposal;
+    if (!proposal) return;
+    try {
+      const body = await fetchJson(
+        `/api/missioncontrol/proposals/${proposal.id}/decision`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision, actor: "desk-owner" }),
+        },
+      );
+      set({ proposal: fromWireProposal(body.proposal) });
+      if (body.proposal && body.proposal.status === "executed") {
+        await get().refresh(); // the belt moves
+      }
+    } catch (e: any) {
+      set({ proposalError: e.message || "decision failed" });
+    }
+  },
+
+  dismissProposal() {
+    set({ proposal: null, proposalError: "" });
   },
 
   async refresh() {
