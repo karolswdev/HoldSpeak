@@ -58,3 +58,55 @@ public enum CoderAnswer {
         try await send(client, agent: agent, sessionID: sessionID, reply: "1", raw: true)
     }
 }
+
+// MARK: - HSM-17-05: AI-drafted answers (approve-then-inject)
+
+public extension CoderAnswer {
+
+    /// The draft prompt: the coder's question is the task, any dropped-context
+    /// grounding rides as `[CONTEXT]` (the desk's `[ROLE]/[CONTEXT]/[TASK]`
+    /// assembly convention). The model drafts AS the user — the human reviews,
+    /// edits, and only an explicit approve injects (the 17-04 path).
+    static func draftPrompt(
+        agent: String,
+        question: String,
+        groundingTitle: String? = nil,
+        grounding: String? = nil
+    ) -> String {
+        var blocks: [String] = [
+            """
+            [ROLE]
+            You draft a short reply for the user to review and send back to a \(agent) \
+            coding session that asked them a question. Write AS the user, first person, \
+            decisive and concise. Answer only what was asked. Return only the reply text — \
+            no preamble, no quotes, no markdown fences.
+            """
+        ]
+        let trimmedGrounding = (grounding ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedGrounding.isEmpty {
+            let source = (groundingTitle ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let head = source.isEmpty ? "[CONTEXT]" : "[CONTEXT — \(source)]"
+            blocks.append("\(head)\n\(String(trimmedGrounding.prefix(6_000)))")
+        }
+        blocks.append("[QUESTION FROM \(agent.uppercased())]\n\(question.trimmingCharacters(in: .whitespacesAndNewlines))")
+        blocks.append("[TASK]\nDraft the user's reply.")
+        return blocks.joined(separator: "\n\n")
+    }
+
+    /// One provider call → the draft. The provider is the RESOLVED engine
+    /// (on-device LlamaProvider or the endpoint — the caller resolves it fresh
+    /// per call, the Mode-A KV rule). This never touches the desktop client:
+    /// a draft is composed, never sent — only the human's approve injects.
+    static func draft(
+        _ provider: ILLMProvider,
+        agent: String,
+        question: String,
+        groundingTitle: String? = nil,
+        grounding: String? = nil
+    ) async throws -> String {
+        let prompt = draftPrompt(agent: agent, question: question,
+                                 groundingTitle: groundingTitle, grounding: grounding)
+        let raw = try await provider.complete(prompt: prompt)
+        return raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}

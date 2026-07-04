@@ -371,12 +371,40 @@ struct DioCoderAnswer: View {
     let session: CoderSession
     var maxW: CGFloat = 400       // clamped by the caller's DeskCamera so it fits the lane (HSM-20-04)
     var grounding: CoderGrounding? = nil
+    // HSM-17-05: the AI draft. The composer assembles the prompt (question +
+    // trimmable grounding) and hands it here; the stage runs it on the RESOLVED
+    // engine (on-device / endpoint). `draftEgress` is where THAT run happens —
+    // distinct from the send's Local + your desktop. nil = drafting unavailable.
+    var draftEgress: EgressScope? = nil
+    var onDraft: ((String) async -> Result<String, Error>)? = nil
     let onSend: (String) -> Void  // receives the COMPOSED payload (reply + grounding)
     let onCancel: () -> Void
     @State private var text = ""
     @State private var groundingText: String? = nil   // nil until edited; falls back to grounding.text
     @State private var groundingRemoved = false
+    @State private var drafting = false
+    @State private var draftError: String? = nil
     @FocusState private var focused: Bool
+
+    private func runDraft() {
+        guard let onDraft, let q = session.question, !drafting else { return }
+        drafting = true; draftError = nil
+        let prompt = CoderAnswer.draftPrompt(
+            agent: session.display,
+            question: q,
+            groundingTitle: groundingRemoved ? nil : grounding?.title,
+            grounding: effectiveGrounding)
+        Task { @MainActor in
+            let result = await onDraft(prompt)
+            drafting = false
+            switch result {
+            case .success(let draft):
+                withAnimation { text = draft.trimmingCharacters(in: .whitespacesAndNewlines) }
+            case .failure(let e):
+                draftError = e.localizedDescription
+            }
+        }
+    }
 
     private var effectiveGrounding: String { groundingRemoved ? "" : (groundingText ?? grounding?.text ?? "") }
     private var payload: String {
@@ -446,6 +474,27 @@ struct DioCoderAnswer: View {
                     .padding(11)
                     .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DioPal.mint.opacity(0.06))
                         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(DioPal.mint.opacity(0.22), lineWidth: 1)))
+                }
+                if onDraft != nil && session.question != nil {
+                    VStack(spacing: 6) {
+                        Button { runDraft() } label: {
+                            HStack(spacing: 8) {
+                                if drafting { ProgressView().controlSize(.small).tint(DioPal.violet) }
+                                else { Image(systemName: "wand.and.stars") }
+                                Text(drafting ? "Drafting…" : (text.isEmpty ? "Draft with AI" : "Re-draft"))
+                                    .font(.system(size: 14.5, weight: .heavy, design: .rounded))
+                                if let scope = draftEgress { EgressBadge(scope: scope) }
+                            }
+                            .foregroundStyle(DioPal.violet)
+                            .frame(maxWidth: .infinity).frame(height: 46)
+                            .background(Capsule().fill(DioPal.violet.opacity(0.12))
+                                .overlay(Capsule().strokeBorder(DioPal.violet.opacity(0.35), lineWidth: 1)))
+                        }.buttonStyle(.plain).disabled(drafting)
+                        if let err = draftError {
+                            Text(err).font(.system(size: 11.5, weight: .semibold, design: .rounded))
+                                .foregroundStyle(DioPal.accent).fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
                 }
                 HStack(spacing: 10) {
                     EgressBadge(scope: AgentSessionPrimitive(session: session).egress)

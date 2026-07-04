@@ -133,3 +133,78 @@ final class CoderAnswerTests: XCTestCase {
         XCTAssertEqual(desk.lastRaw, true)  // the hub pipeline must not rewrite a keystroke
     }
 }
+
+// MARK: - HSM-17-05: the AI draft
+
+extension CoderAnswerTests {
+
+    final class ScriptedLLM: ILLMProvider, @unchecked Sendable {
+        var prompts: [String] = []
+        var response = "Use the event-sourced approach; snapshots hourly."
+        var error: Error?
+        func complete(prompt: String) async throws -> String {
+            if let e = error { throw e }
+            prompts.append(prompt)
+            return "  \(response)\n"
+        }
+    }
+
+    func testDraftPromptCarriesRoleQuestionAndTask() {
+        let prompt = CoderAnswer.draftPrompt(agent: "claude", question: "Tabs or spaces for the generated files?")
+
+        XCTAssertTrue(prompt.hasPrefix("[ROLE]"))
+        XCTAssertTrue(prompt.contains("[QUESTION FROM CLAUDE]\nTabs or spaces for the generated files?"))
+        XCTAssertTrue(prompt.hasSuffix("[TASK]\nDraft the user's reply."))
+        XCTAssertFalse(prompt.contains("[CONTEXT"))  // no grounding -> no context block
+    }
+
+    func testDraftPromptGroundingRidesAsCitedContext() {
+        let prompt = CoderAnswer.draftPrompt(
+            agent: "codex", question: "Which store do we use?",
+            groundingTitle: "ADR 12", grounding: "Decision: SQLite, single writer."
+        )
+
+        XCTAssertTrue(prompt.contains("[CONTEXT — ADR 12]\nDecision: SQLite, single writer."))
+        XCTAssertTrue(prompt.contains("[QUESTION FROM CODEX]"))
+    }
+
+    func testDraftPromptBoundsRunawayGrounding() {
+        let prompt = CoderAnswer.draftPrompt(
+            agent: "claude", question: "q",
+            grounding: String(repeating: "x", count: 20_000)
+        )
+        XCTAssertLessThan(prompt.count, 8_000)
+    }
+
+    func testDraftCallsTheProviderOnceAndTrims() async throws {
+        let llm = ScriptedLLM()
+
+        let draft = try await CoderAnswer.draft(llm, agent: "claude", question: "Proceed?")
+
+        XCTAssertEqual(draft, "Use the event-sourced approach; snapshots hourly.")
+        XCTAssertEqual(llm.prompts.count, 1)
+    }
+
+    func testDraftNeverTouchesTheDesktopClient() async throws {
+        // The non-negotiable: drafting composes, only a human approve injects.
+        // The draft API cannot reach a client by construction — this pins the
+        // provider as its only collaborator.
+        let llm = ScriptedLLM()
+        let desk = RecordingDesktop()
+
+        _ = try await CoderAnswer.draft(llm, agent: "claude", question: "Send it?")
+
+        XCTAssertTrue(desk.calls.isEmpty)
+        XCTAssertNil(desk.lastText)
+    }
+
+    func testDraftFailureSurfaces() async {
+        let llm = ScriptedLLM()
+        llm.error = TestError.boom
+
+        do {
+            _ = try await CoderAnswer.draft(llm, agent: "claude", question: "q")
+            XCTFail("expected the provider failure to throw")
+        } catch { /* honest error, composer keeps the human's text */ }
+    }
+}
