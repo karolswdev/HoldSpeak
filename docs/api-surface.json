@@ -784,7 +784,9 @@
         "GET"
       ],
       "module": "web.routes.desk_actuators",
-      "consumers": []
+      "consumers": [
+        "ios"
+      ]
     },
     {
       "path": "/api/desk/actuators/webhook/propose",
@@ -1936,6 +1938,7 @@
       ],
       "module": "web.routes.setup",
       "consumers": [
+        "ios",
         "web"
       ]
     },
