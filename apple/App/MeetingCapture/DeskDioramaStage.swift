@@ -2870,6 +2870,8 @@ struct DioStage: View {
     @AppStorage("hs.diorama.games") private var gamesJSON = ""  // games placed on the desk as primitives
     @State private var placedGames: [GameRecord] = []
     @State private var coders: [CoderSession] = []             // HSM-17 live Claude/Codex sessions on the desk
+    @State private var coderPoll: Task<Void, Never>? = nil     // HSM-17-03: the live-set poll (typed presence stream)
+    @State private var coderWasWaiting: Set<String> = []       // rising-edge memory: glare once per flip into waiting
     @State private var answeringCoder: CoderSession? = nil     // the answer composer is open on this session
     @State private var openCoderSession: CoderSession? = nil   // the live "running coder" feed is open
     @State private var showSettings = false
@@ -3697,7 +3699,7 @@ struct DioStage: View {
                 }
             }
             .ignoresSafeArea()
-            .onAppear { landed = true; load(); model.refresh(); syncDesk(reason: "desk load")
+            .onAppear { landed = true; load(); model.refresh(); syncDesk(reason: "desk load"); startCoderPolling()
                 #if targetEnvironment(simulator)
                 if let s = ProcessInfo.processInfo.environment["HS_DESK_SETTINGS"], s == "1" || s == "local" {
                     if s == "local" { InferenceConfigStore.shared.mode = .local }
@@ -5112,6 +5114,56 @@ struct DioStage: View {
         persistZones(); persistFiled(); persistSyncMaps()
     }
     /// Run one real sync pass against the paired hub: push the local snapshot + pull/apply
+    // MARK: HSM-17-03 — live coders on the desk
+
+    /// Poll the hub's live coder set (`GET /api/coders/sessions`) and mirror it into
+    /// `coders`. Ephemeral presence, so it rides its own cadence (the PresenceStore
+    /// pattern), never DeskSync's durable pass. A session flipping INTO `waiting`
+    /// gets the glaring NEW-arrival treatment exactly once per flip; `ended`
+    /// sessions leave via the existing contentMembers() filter. The seeded
+    /// `HS_DESK_CODER` demo keeps the desk fully offline-drivable, so the poll
+    /// never runs under it.
+    private func startCoderPolling() {
+        guard ProcessInfo.processInfo.environment["HS_DESK_CODER"] == nil else { return }
+        coderPoll?.cancel()
+        coderPoll = Task { @MainActor in
+            while !Task.isCancelled {
+                await coderPollTick()
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+            }
+        }
+    }
+
+    @MainActor
+    private func coderPollTick() async {
+        guard let link = hostLink,
+              let config = HTTPDesktopClient.Config(
+                  peer: DesktopPeer(host: link.host, port: link.port,
+                                    token: peerToken.isEmpty ? nil : peerToken))
+        else { return }
+        let client = HTTPDesktopClient(config: config)
+        guard let live = try? await client.coderSessions() else { return }  // unreachable = keep last truth
+        let mapped = live.map(CoderSession.init(from:))
+
+        // rising edge into waiting → the glare (and only the rising edge:
+        // an already-glaring or answered session never re-pulses on a poll).
+        let nowWaiting = Set(mapped.filter { $0.state == .waiting }.map(\.id))
+        let fresh = nowWaiting.subtracting(coderWasWaiting)
+        coderWasWaiting = nowWaiting
+        if mapped != coders {
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { coders = mapped }
+        }
+        if !fresh.isEmpty {
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+                arrivedIds.formUnion(fresh); flash = 0.4
+            }
+            withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                withAnimation { arrivedIds.subtract(fresh) }
+            }
+        }
+    }
+
     /// remote changes (offline-safe; never on the author path). Triggered on desk load,
     /// after authoring a Note/Agent, and from the manual "Sync" affordance.
     private func syncDesk(reason: String) {

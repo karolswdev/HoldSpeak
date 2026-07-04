@@ -722,7 +722,9 @@
         "GET"
       ],
       "module": "web.routes.system.coders",
-      "consumers": []
+      "consumers": [
+        "ios"
+      ]
     },
     {
       "path": "/api/coders/status",

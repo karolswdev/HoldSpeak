@@ -89,6 +89,50 @@ struct CoderSession: Identifiable, Equatable {
         state = t.question != nil ? .waiting : (t.stale ? .idle : .working)
         events = t.question.map { [CoderEvent(id: "ask", ts: nil, kind: .approval(question: $0, command: nil))] } ?? []
     }
+
+    // the full live set (HSM-17-02, GET /api/coders/sessions) → a session with an
+    // honest minimal feed built from what the hub actually captured. The rich
+    // per-event stream is the 17-01 transport follow-on; nothing here is invented.
+    init(from live: LiveCoderSession) {
+        agent = live.agent
+        sessionId = live.sessionID
+        project = live.project ?? live.cwd.map { URL(fileURLWithPath: $0).lastPathComponent }
+        model = live.model
+        tokensUsed = nil
+        state = State(rawValue: live.state) ?? .working
+        var evts: [CoderEvent] = []
+        if let p = live.lastPrompt {
+            evts.append(CoderEvent(id: "prompt", ts: nil, kind: .userPrompt(p)))
+        }
+        if let t = live.lastTool, let tool = CoderTool(hookName: t) {
+            evts.append(CoderEvent(id: "tool", ts: nil, kind: .tool(tool, target: "", detail: nil)))
+        }
+        if state == .ended {
+            evts.append(CoderEvent(id: "end", ts: nil, kind: .ended))
+        }
+        // last, so pendingApproval (events.last matching .approval) finds it
+        if let q = live.question {
+            evts.append(CoderEvent(id: "ask", ts: nil, kind: .approval(question: q, command: nil)))
+        }
+        events = evts
+    }
+}
+
+extension CoderTool {
+    /// A hub hook tool name ("Bash", "Edit", "Write", "Task", "Read"…) → the desk's
+    /// tool vocabulary. Unknown names return nil (the feed simply omits the row).
+    init?(hookName: String) {
+        switch hookName.lowercased() {
+        case "read": self = .read
+        case "edit", "apply_patch", "multiedit": self = .edit
+        case "write": self = .write
+        case "bash", "shell": self = .bash
+        case "grep", "glob", "search": self = .search
+        case "webfetch", "websearch", "web": self = .web
+        case "task", "agent": self = .task
+        default: return nil
+        }
+    }
 }
 
 // MARK: - the desk primitive

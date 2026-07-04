@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 17
-- **Status:** todo
+- **Status:** done (2026-07-04 — seeded + LIVE-hub simulator proofs; the cabled-iPad walk stays 17-06; see `evidence-story-03.md`)
 - **Depends on:** HSM-17-01 (`AgentSessionPrimitive` + the synced session), HSM-17-02 (live sessions
   actually reporting). Reuses the desk's arrival/glaring treatment (`arrivedIds` / the NEW-arrival flash
   in `DeskDioramaStage.swift`) and the presence watcher pattern (`PresenceStore` / `PresenceWatcher`).
@@ -38,13 +38,16 @@ question."* This story is the rendering + the demand-your-attention behaviour.
 
 ## Acceptance criteria
 
-- [ ] Live Claude/Codex sessions appear as agent primitives on the desk with correct identity + state.
-- [ ] A session entering `waiting(question)` triggers the glaring NEW-arrival treatment; the pull-out
-      shows the full question text.
-- [ ] State changes propagate to the primitive without a manual refresh; an `ended` session is removed.
-- [ ] The agent primitive uses the canonical egress badge and the canon vocabulary (it is a coding
-      "agent"/session, never confused with Qlippy or a persona).
-- [ ] Simulator-proven for the visual states (seeded), then real-metal-proven in HSM-17-06.
+- [x] Live Claude/Codex sessions appear as agent primitives on the desk with correct identity + state.
+      (LIVE-proven: the desk rendered the Mac's real registry — three sessions, three states.)
+- [x] A session entering `waiting(question)` triggers the glaring NEW-arrival treatment; the pull-out
+      shows the full question text. (Rising-edge glare, once per flip, 6s auto-clear; NEEDS-YOU section.)
+- [x] State changes propagate to the primitive without a manual refresh; an `ended` session is removed.
+      (4s poll; the live run showed a decayed `idle` and the absent `ended` tombstone.)
+- [x] The agent primitive uses the canonical egress badge and the canon vocabulary (it is a coding
+      "agent"/session, never confused with Qlippy or a persona). (`.mixed("your desktop")`, unchanged.)
+- [x] Simulator-proven for the visual states (seeded) — and beyond the bar, LIVE-hub-proven in the
+      simulator against the real registry. Real metal on the cabled iPad remains HSM-17-06.
 
 ## Test plan
 
