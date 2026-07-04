@@ -561,6 +561,53 @@ def test_run_workflow_branching_graph_no_prompt_no_input_is_400(client: TestClie
     assert client.post(f"/api/workflows/{wid}/run", json={}).status_code == 400
 
 
+def test_run_workflow_web_authored_graph_runs(client: TestClient, monkeypatch) -> None:
+    """HSM-22-03 — the WEB desk builder's exact emission runs on the hub.
+
+    This graph mirrors `web/src/desk/graph.ts buildLinearGraph` byte-shape
+    (locked by its vitest, `graph.test.ts`): entry → source → summarize →
+    keep_if → out, nodes WITHOUT provenance keys (absent = inherit)."""
+    graph = {
+        "id": "wf-web-1", "name": "Web workflow", "entry": "entry",
+        "nodes": [
+            {"id": "entry", "kind": {"entry": {}}},
+            {"id": "source", "kind": {"source": {}}},
+            {"id": "n1", "kind": {"summarize": {}}},
+            {"id": "n2", "kind": {"keep_if": {"keyword": "risk"}}},
+            {"id": "out", "kind": {"output": {}}},
+        ],
+        "exec_edges": [
+            {"from": {"node": "entry", "name": "then"}, "to": "source"},
+            {"from": {"node": "source", "name": "then"}, "to": "n1"},
+            {"from": {"node": "n1", "name": "then"}, "to": "n2"},
+            {"from": {"node": "n2", "name": "then"}, "to": "out"},
+        ],
+        "data_edges": [],
+    }
+    wid = client.post(
+        "/api/workflows", json={"name": "Web workflow", "graph_json": graph}
+    ).json()["workflow"]["id"]
+
+    class _FakeIntel:
+        active_provider = "local"
+
+        def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
+            return "risk: the demo\nnothing else"
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+    )
+
+    resp = client.post(f"/api/workflows/{wid}/run", json={"input": "the meeting"})
+    assert resp.status_code == 200
+    body = resp.json()
+    # The model op + the pure transform both ran, in order, no warning.
+    assert [s["node_id"] for s in body["steps"]] == ["n1", "n2"]
+    assert [s["kind"] for s in body["steps"]] == ["summarize", "keep_if"]
+    assert body["output"] == "risk: the demo"   # keep_if kept the risk line
+    assert "warning" not in body
+
+
 def test_run_workflow_unknown_is_404(client: TestClient) -> None:
     assert client.post("/api/workflows/nope/run", json={"input": "x"}).status_code == 404
 

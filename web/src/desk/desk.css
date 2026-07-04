@@ -688,3 +688,19 @@
 /* ── HS-78-03: hold to answer the coder ── */
 .desk-next .desk-coder-answer { display: flex; align-items: center; gap: 10px; }
 .desk-next .desk-coder-answer-state { font-size: var(--font-size-xs); }
+
+/* ── HSM-22-03: the workflow's linear-step builder + the honest run warning ── */
+.desk-next .desk-wf-steps { display: flex; flex-direction: column; gap: 6px; }
+.desk-next .desk-wf-step { display: flex; align-items: center; gap: 6px; }
+.desk-next .desk-wf-step-label {
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  color: var(--text-2, #C9CFDB);
+}
+.desk-next .desk-wf-step input { flex: 1; min-width: 60px; }
+.desk-next .desk-wf-palette { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.desk-next .desk-run-warning {
+  color: var(--warn, #F2A33C);
+  font-size: var(--font-size-xs);
+  margin: 6px 0 0;
+}

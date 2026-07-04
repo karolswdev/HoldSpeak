@@ -145,12 +145,30 @@ export interface Chain {
   steps: string[]; // agentId[]
 }
 
+/** The canonical `graph_json` wire (HSM-22-01 golden fixtures): Swift
+ * tagged-union node kinds + the two edge sets, snake_case keys. An OBJECT on
+ * the wire — never a string (the HSM-22-03 type fix; the old
+ * `graphJson?: string` drifted from every producer and parser). */
+export interface WorkflowGraphJson {
+  id: string;
+  name: string;
+  entry: string;
+  nodes: Array<{
+    id: string;
+    kind: Record<string, Record<string, unknown>>;
+    failure_policy?: string | null;
+    runs_on?: string;
+  }>;
+  exec_edges: Array<{ from: { node: string; name: string }; to: string }>;
+  data_edges: unknown[];
+}
+
 export interface Workflow {
   kind: "workflow";
   id: string;
   name: string;
   prompt?: string;
-  graphJson?: string;
+  graphJson?: WorkflowGraphJson;
 }
 
 // ── presence / stream ──────────────────────────────────────────────────

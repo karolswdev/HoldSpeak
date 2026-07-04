@@ -20,9 +20,12 @@ TRAVELS** — the shipping canvas saves a real linear Blueprint (per-node
 `failure_policy` + the new `runs_on`) into a desk `WorkflowRecord`; a live DeskSync
 pass ported it to a scratch hub whose own `linearize()` accepted it runnable, and the
 language boundary is golden-pinned (Swift-ENCODED fixtures fed byte-for-byte into the
-hub parser by a new pytest). Remaining: 22-03 (web linear builder + the
-`primitives.ts` type fix + the dropped run `warning`) and 22-04 (the cross-surface
-RUN + `runWorkflow` on the iPad hub path + docs/rider).
+hub parser by a new pytest). **22-03 followed (3/4): the web desk is the SECOND
+producer of the one wire** — an in-world linear step builder live-proven in real
+Chromium (authored → persisted → the hub's `linearize()` accepts), the
+`primitives.ts` type fix, the hub's run `warning` finally rendered, and iPad
+provenance kept read-only rather than silently stripped. Remaining: 22-04 only (the
+cross-surface RUN + `runWorkflow` on the iPad hub path + docs/rider).
 [Phase 23 — Mesh-safe storage](./phase-23-mesh-safe-storage/current-phase-status.md)
 is **fully built and gate-staged, the same day it opened**: the Wave-4
 refuse-newer + backup-then-apply mechanism (23-01/02) is recorded done with fresh green
@@ -65,7 +68,10 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**HSM-22-01: THE GRAPH TRAVELS.** The shipping Workbench
+**Last updated:** 2026-07-04 (**HSM-22-03: the web is the second producer** — the desk
+authors a real linear graph in-world (step builder, one canonical wire), proven in real
+Chromium against a scratch hub; the run `warning` reaches the reader; iPad provenance
+stays read-only. Earlier: **HSM-22-01: THE GRAPH TRAVELS.** The shipping Workbench
 canvas saves a real linear Blueprint through the canonical coder (`BPNode.runsOn`
 closed the producer hole), the desk syncs it, and the hub's `linearize()` accepted the
 synced graph runnable — proven live on the connected sim; the Swift↔Python boundary is
