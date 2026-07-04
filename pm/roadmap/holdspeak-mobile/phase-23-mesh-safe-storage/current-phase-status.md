@@ -3,7 +3,17 @@
 **Status:** in-progress (opened 2026-07-04) — audit theme 6, the safety net for everything
 sync touches, opened before the mesh grows more newer-DB peers.
 
-**Last updated:** 2026-07-04 (**3/4 — 23-04 landed the day the phase opened**: the
+**Last updated:** 2026-07-04 (**4/5 — 23-03 landed the same day, and the standing
+docs-story rule added 23-05.** The readiness panel is live: `StoreHealthProbe`
+(ok/missing/refused-newer/failed + backup count, same open path as the app),
+`SetupStatus.sections` decoded (the hub's doctor block was being dropped; the old test
+stub had even drifted from the real wire), the two-card READINESS section in Settings,
+and the home banner naming `.tooNew` as protection. Proven live on the connected sim:
+the real hub's 23 doctor sections (incl. its genuine amber warn) + a REAL seeded
+`user_version=7` store rendering `newer than this app · v7 > v2` — and surviving
+byte-intact (still v7, future row + column present) after the app open and two probes.
+Full `swift test` 437/8-skip/0-fail. Only 23-05 (docs + rider) remains. Earlier:
+**23-04 landed the day the phase opened**: the
 chain/workflow matrix rows, §11 brought current, the manual_context truth corrected and
 fixture-pinned cross-language; see "Where we are". Earlier the same day: **OPENED,
 survey-corrected — half the phase was pre-paid.**
@@ -58,8 +68,9 @@ that actually ships (§11 current, the stale lossy-finding corrected).
 |----|-------|--------|
 | HSM-23-01 | Refuse-newer on the iPad store — **leads** | done (pre-paid, Wave 4) — [`evidence-story-01.md`](./evidence-story-01.md) |
 | HSM-23-02 | Backup-then-apply (timestamped) before migration | done (pre-paid, Wave 4) — [`evidence-story-02.md`](./evidence-story-02.md) |
-| HSM-23-03 | The readiness / doctor panel in Settings | todo |
+| HSM-23-03 | The readiness / doctor panel in Settings | done — [`evidence-story-03.md`](./evidence-story-03.md) |
 | HSM-23-04 | Sync integrity: the per-primitive round-trip matrix + the serialization-contract pin | done — [`evidence-story-04.md`](./evidence-story-04.md) |
+| HSM-23-05 | Docs + the walk rider (schema safety joins the entry points) | todo |
 
 ## Where we are
 
@@ -74,4 +85,8 @@ manual_context" finding is corrected everywhere it lived — §12, `agent.schema
 the golden fixture, which now pins the Phase-77 fields on BOTH sides of the wire
 (`PrimitiveContractFixtureTests` asserts the values reach the Swift properties). Suites:
 39 sync/contract pytest green, validate.py ALL PASS, full `swift test` 432/8-skip/0-fail.
-**Only 23-03 remains** — the readiness/doctor panel, the phase's one new UI surface.
+**23-03 followed the same day (4/5)** — the readiness/doctor panel in Settings (see
+"Last updated" above for the full account; per-story evidence + 3 screenshots). The
+standing docs-story rule ([[feedback_dedicated_docs_story]]) added **HSM-23-05** on
+this pass: entry-point docs + a ~2-minute walk rider joining the staged couch session.
+That rider is now the phase's only open item.

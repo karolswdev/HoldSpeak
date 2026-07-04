@@ -212,6 +212,12 @@ final class CaptureModel: ObservableObject {
     init() {
         let store: MeetingStore
         do { store = try SQLiteMeetingStore() }
+        // HSM-23-03 — the refuse-newer guard is protection, not a crash: name it.
+        // The readiness panel (Settings) states the same truth from the probe.
+        catch StorageError.tooNew(let stored, let build) {
+            self.error = "Store written by a newer HoldSpeak (v\(stored) > v\(build)), left unread"
+            return
+        }
         catch { self.error = "Store unavailable: \(error)"; return }
         mc = MeetingCapture(capture: AudioCaptureService(), store: store,
                             // read the chosen Whisper model from UserDefaults at call time (thread-safe; a

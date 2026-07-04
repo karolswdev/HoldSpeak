@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import AVFAudio
 
 // HSM-14-19 "The Desk" decomposition: the Settings surface (where intelligence runs — on-device vs
 // LAN endpoint, model/diarization knobs) lifted verbatim out of MeetingCaptureApp.swift. Same module.
@@ -19,14 +20,19 @@ struct SettingsView: View {
     @State private var showModels = false                     // present the model manager (import/delete)
     @State private var showProfiles = false                   // present the runtime-profiles manager (Phase 24)
     @State private var symbolRows: [SymbolRow] = []           // HSM-18-04 — the user symbol dictionary
+    @State private var storeHealth: StoreHealth?              // HSM-23-03 — the readiness panel
+    @State private var micPermission = ""
+    @State private var hubProbe: HubProbe = .idle
     enum Field: Hashable { case url, key }
     enum FetchState: Equatable { case idle, loading, ok(Int), fail }
+    enum HubProbe: Equatable { case idle, loading, ok(SetupStatus), fail }
 
     var body: some View {
         ZStack {
             Sig.bgGradient.ignoresSafeArea()
             Circle().fill(Sig.local.opacity(0.13)).frame(width: 400).blur(radius: 130)
                 .offset(x: -150, y: -300).ignoresSafeArea()
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     header
@@ -56,14 +62,29 @@ struct SettingsView: View {
                     symbolsCard
                     label("WHO'S TALKING")
                     diarizeCard
+                    label("READINESS").id("readiness")
+                    deviceReadinessCard
+                    desktopReadinessCard
                 }
                 .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
+            }
+            .onAppear {
+                // Screenshot-run affordance (sim only): jump to the readiness
+                // section — the same view the scroll gesture reaches.
+                #if targetEnvironment(simulator)
+                if ProcessInfo.processInfo.environment["HS_DEMO_READINESS"] == "1" {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        withAnimation { proxy.scrollTo("readiness", anchor: .top) }
+                    }
+                }
+                #endif
+            }
             }
         }
         .toolbar(.hidden, for: .navigationBar)
         .tint(Sig.accent)
         .onTapGesture { focused = nil }
-        .onAppear { refreshLocalModels(); loadSymbolRows() }
+        .onAppear { refreshLocalModels(); loadSymbolRows(); probeReadiness() }
         .sheet(isPresented: $showModels, onDismiss: { refreshLocalModels() }) { NavigationStack { ModelsView() }.preferredColorScheme(.dark) }
         .sheet(isPresented: $showProfiles) { NavigationStack { ProfilesView() }.preferredColorScheme(.dark) }
     }
@@ -452,6 +473,153 @@ struct SettingsView: View {
         .padding(.horizontal, 12).padding(.vertical, 8)
         .background((cfg.isLocal ? Sig.local : Sig.accent).opacity(0.12), in: Capsule())
         .padding(.top, 4)
+    }
+
+    // HSM-23-03 — the readiness panel. The Wave-4 schema safety (refuse-newer +
+    // backup-then-apply) finally gets a face: this iPad's half reads the REAL store
+    // (same open path the app uses), mic permission, and installed models; the
+    // desktop half renders the hub's own doctor sections off /api/setup/status when
+    // a peer is paired. Labels state the posture; nothing narrates.
+    private var deviceReadinessCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 14) {
+                GlyphChip(system: "checkmark.seal.fill", gradient: Sig.localGradient, size: 50)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("This \(DeviceLabel.current)").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                    Text("HoldSpeak \(appVersion())").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                }
+                Spacer()
+            }
+            readinessRow("Store") { storeChip }
+            readinessRow("Microphone") { micChip }
+            readinessRow("Models") { modelsChip }
+        }
+        .padding(15).background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+    }
+
+    private var desktopReadinessCard: some View {
+        let peer = DictatePeerStore.shared
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 14) {
+                GlyphChip(system: "desktopcomputer", gradient: Sig.accentGradient, size: 50)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(peer.isPaired ? peer.displayName : "Your desktop")
+                        .font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                    if case .ok(let s) = hubProbe, let v = s.version, !v.isEmpty {
+                        Text("HoldSpeak \(v)").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                    }
+                }
+                Spacer()
+                switch hubProbe {
+                case .idle: chip("not paired", "link", Sig.muted)
+                case .loading: ProgressView().controlSize(.small).tint(Sig.accent)
+                case .fail: chip("unreachable", "xmark", Sig.bad)
+                case .ok(let s): overallChip(s.overall ?? "")
+                }
+            }
+            if case .ok(let s) = hubProbe, let sections = s.sections, !sections.isEmpty {
+                ForEach(Array(sections.enumerated()), id: \.offset) { _, section in
+                    readinessRow(section.label ?? section.id ?? "check",
+                                 detail: section.detail ?? "") { sectionChip(section.status ?? "unknown") }
+                }
+            }
+        }
+        .padding(15).background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+    }
+
+    private func readinessRow(_ name: String, detail: String = "",
+                              @ViewBuilder trailing: () -> some View) -> some View {
+        HStack(spacing: 8) {
+            Text(name).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Sig.text)
+            Spacer()
+            if !detail.isEmpty {
+                Text(detail).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).lineLimit(1)
+            }
+            trailing()
+        }
+        .padding(.horizontal, 13).padding(.vertical, 10)
+        .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    @ViewBuilder private var storeChip: some View {
+        switch storeHealth?.state {
+        case .none:
+            ProgressView().controlSize(.small).tint(Sig.accent)
+        case .ok(let schema, let integrityOK):
+            if let n = storeHealth?.backupCount, n > 0 {
+                chip("\(n) backup\(n == 1 ? "" : "s")", "clock.arrow.circlepath", Sig.muted)
+            }
+            if integrityOK { chip("ok · schema v\(schema)", "checkmark", Sig.ok) }
+            else { chip("integrity failed · schema v\(schema)", "xmark", Sig.bad) }
+        case .missing:
+            chip("not created yet", "circle.dashed", Sig.muted)
+        case .refusedNewer(let stored, let build):
+            chip("newer than this app · v\(stored) > v\(build)", "exclamationmark.triangle.fill", Sig.warn)
+        case .failed:
+            chip("unavailable", "xmark", Sig.bad)
+        }
+    }
+
+    private var micChip: some View {
+        switch micPermission {
+        case "granted": chip("granted", "checkmark", Sig.ok)
+        case "denied": chip("denied", "xmark", Sig.bad)
+        default: chip("not asked yet", "questionmark", Sig.muted)
+        }
+    }
+
+    private var modelsChip: some View {
+        localModels.isEmpty
+            ? chip("none on device", "circle.dashed", Sig.muted)
+            : chip("\(localModels.count) on device", "checkmark", Sig.ok)
+    }
+
+    private func overallChip(_ overall: String) -> some View {
+        switch overall {
+        case "ready": chip("Ready", "checkmark", Sig.ok)
+        case "needs_attention": chip("Needs attention", "exclamationmark.triangle.fill", Sig.warn)
+        case "blocked": chip("Blocked", "xmark", Sig.bad)
+        default: chip(overall.isEmpty ? "unknown" : overall, "questionmark", Sig.muted)
+        }
+    }
+
+    private func sectionChip(_ status: String) -> some View {
+        switch status {
+        case "pass": chip("pass", "checkmark", Sig.ok)
+        case "warn": chip("warn", "exclamationmark.triangle.fill", Sig.warn)
+        case "fail": chip("fail", "xmark", Sig.bad)
+        default: chip("unknown", "questionmark", Sig.muted)
+        }
+    }
+
+    private func appVersion() -> String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+    }
+
+    private func probeReadiness() {
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let path = docs.appendingPathComponent("meetings.sqlite").path
+        Task.detached {
+            let health = StoreHealthProbe.probe(path: path)
+            await MainActor.run { withAnimation { storeHealth = health } }
+        }
+        switch AVAudioApplication.shared.recordPermission {
+        case .granted: micPermission = "granted"
+        case .denied: micPermission = "denied"
+        default: micPermission = ""
+        }
+        guard let client = DictatePeerStore.shared.client() else { hubProbe = .idle; return }
+        hubProbe = .loading
+        Task {
+            do {
+                let status = try await client.setupStatus()
+                await MainActor.run { withAnimation { hubProbe = .ok(status) } }
+            } catch {
+                await MainActor.run { withAnimation { hubProbe = .fail } }
+            }
+        }
     }
 
     private func fetchModels() {
