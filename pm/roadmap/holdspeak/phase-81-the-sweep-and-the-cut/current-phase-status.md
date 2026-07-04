@@ -1,8 +1,8 @@
 # Phase 81 — The Sweep and the Cut (dogfood small findings + the v0.4.0 prep)
 
-**Status:** OPEN — 1/6.
+**Status:** OPEN — 2/6.
 
-**Last updated:** 2026-07-04 (HS-81-01 done: the F-10 empty-input guard — `ProjectRewriter.run` no-ops (`reason="empty_input"`) before the model when the latest text is empty/whitespace, covering both an empty transcript and a prior stage that emptied it; 3 tests, the model provably never called (`runtime.calls == []`); dictation battery 310 unit + 179 integration green. Earlier: opened — the handover's ranked items 1 + 3 composed into one phase; the tag stays the owner's button, Phase-65 rule.)
+**Last updated:** 2026-07-04 (HS-81-02 done: the F-01 orb — `GenerationTheater.astro` now says `/_built/theater/theaterorb.png` (the Astro base), matching every other public asset; the sweep found no other un-prefixed asset (sprites/qlippy already use BASE_URL; root-relative hrefs are FastAPI page routes, correct). Proven live on a sandboxed server: the orb 200s (6,350B), the old path 404s, the dictation page references the new path; route preflight 2 green. Earlier: HS-81-01 done: the F-10 empty-input guard — `ProjectRewriter.run` no-ops (`reason="empty_input"`) before the model when the latest text is empty/whitespace, covering both an empty transcript and a prior stage that emptied it; 3 tests, the model provably never called (`runtime.calls == []`); dictation battery 310 unit + 179 integration green. Earlier: opened — the handover's ranked items 1 + 3 composed into one phase; the tag stays the owner's button, Phase-65 rule.)
 
 ## Why this phase exists
 
@@ -58,7 +58,7 @@ The survey (this open) grounded every finding in code:
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HS-81-01 | F-10: the empty-input guard in `ProjectRewriter` — **leads** | done (3 tests; model never called on empty) | none |
-| HS-81-02 | F-01: the theater orb 404 (`/_built` prefix) + un-prefixed asset sweep | todo | none |
+| HS-81-02 | F-01: the theater orb 404 (`/_built` prefix) + un-prefixed asset sweep | done (live-proven 200; sweep clean) | none |
 | HS-81-03 | CLI honesty: F-03 blocks cwd-detect · F-04 exit-code lock · F-12 srt export | todo | none |
 | HS-81-04 | F-07: the journal follows `journal_enabled` when the pipeline is off | todo | none |
 | HS-81-05 | Docs + harness + protocol truth (F-08, F-06, F-11) + the results addendum | todo | HS-81-01..04 |
@@ -66,5 +66,5 @@ The survey (this open) grounded every finding in code:
 
 ## Where we are
 
-The one MED is closed: an empty utterance can no longer be dressed up as a
-task by the rewriter. Next: the orb (HS-81-02) and the CLI honesty basket.
+The MED and the systemic 404 are closed. Next: the CLI honesty basket
+(HS-81-03), then the journal gate (HS-81-04).
