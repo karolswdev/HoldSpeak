@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 22
-- **Status:** todo
+- **Status:** done — see [`evidence-story-04.md`](./evidence-story-04.md). The
+  iPad-authored graph ran ON THE HUB with real .43 intel (the printed card wears
+  Cloud · your desktop; the run-born artifact's lineage names the workflow); the
+  crown test locks Swift-fixture → sync → run; the rider
+  ([`HSM-22-WALK-RIDER.md`](./HSM-22-WALK-RIDER.md)) is staged as the phase gate.
 - **Depends on:** 22-01 (the producer), 22-02 (the runner, shipped), 22-03 (the web
   leg).
 - **Unblocks:** phase closeout.

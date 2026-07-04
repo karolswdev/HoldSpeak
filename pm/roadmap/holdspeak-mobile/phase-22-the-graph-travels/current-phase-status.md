@@ -3,7 +3,19 @@
 **Status:** in-progress (opened 2026-07-04) — audit theme 5, the keystone the
 cross-surface workflow story waits on. Independent of the walk-gated phases.
 
-**Last updated:** 2026-07-04 (**3/4 — 22-03 followed: the web is the second producer.**
+**Last updated:** 2026-07-04 (**4/4 — FULLY BUILT, GATE STAGED, all in the day it
+opened. THE EQUILIBRIUM BUILD IS COMPLETE.** 22-04 closed the loop ON REAL METAL: the
+iPad-authored `Canvas · Decisions` graph (saved from the shipping canvas in 22-01,
+synced in the same pass) ran ON THE HUB against the real .43 Qwythos endpoint — the
+printed card wears Cloud · your desktop with the standup's actual decision extracted,
+and the hub's pull carries the run-born artifact whose lineage names the workflow.
+`runWorkflow` joined the iPad hub path (workflow drops with a graph aboard now offer
+the runs-on sheet; refusal warnings ride the card), the crown integration test locks
+Swift-fixture → sync → run, the 23-04 placeholder sync fixture upgraded to the real
+wire, ARCHITECTURE gained the graph-bridge node, and
+[`HSM-22-WALK-RIDER.md`](./HSM-22-WALK-RIDER.md) is staged (G1+G2, ~3 min) — **the
+couch session now closes FIVE phases: 18, 19, 21, 22, 23.** Earlier: **3/4 — 22-03
+followed: the web is the second producer.**
 The desk authors a real linear graph in-world (`+ Workflow` → the step builder;
 palette/params/reorder, debounced PUTs), emitting the ONE canonical wire — live-proven
 in real Chromium against a scratch hub (authored → persisted → the hub's `linearize()`
@@ -69,7 +81,7 @@ ships a minimal linear builder emitting the same shape, or scopes its claim hone
 | HSM-22-01 | The `graph_json` serializer on iPad (+ `runs_on` on `BPNode`, Save, `DeskSync`, the Swift-encoded golden fixture → `linearize()` conformance) — **leads** | done — [`evidence-story-01.md`](./evidence-story-01.md) |
 | HSM-22-02 | The hub honors the graph (control flow / `failure_policy` / `runs_on`, or honest omission) | done (pre-paid, Wave 1) — [`evidence-story-02.md`](./evidence-story-02.md) |
 | HSM-22-03 | Web authors a linear graph (or honest scope) + the `primitives.ts` type fix + the run UI renders the hub's `warning` | done — [`evidence-story-03.md`](./evidence-story-03.md) |
-| HSM-22-04 | The cross-surface proof (authored → synced → run) + `runWorkflow` on the iPad hub path + docs | todo |
+| HSM-22-04 | The cross-surface proof (authored → synced → run) + `runWorkflow` on the iPad hub path + docs | done — [`evidence-story-04.md`](./evidence-story-04.md); [`HSM-22-WALK-RIDER.md`](./HSM-22-WALK-RIDER.md) staged (G1+G2, ~3 min) |
 
 ## Where we are
 
@@ -80,6 +92,7 @@ canonical lowering (with `BPNode.runsOn` closing the producer hole), the desk-re
 sync wiring, and the Swift-encoded golden fixtures a new pytest feeds into
 `linearize()` — proven live (authored → saved → synced → the hub parses it
 runnable). **22-03 followed the same day (3/4)** — the web desk is the second
-producer of the one wire (see "Last updated"). Remaining: **22-04** only — the
-cross-surface RUN (+ `runWorkflow` on the iPad hub path, the 23-04 sync-fixture
-upgrade, docs/rider).
+producer of the one wire. **22-04 closed the phase (4/4)** — the cross-surface run
+proven on real metal, the crown test locked, the rider staged. **Every build story
+in the six-phase Equilibrium program is now done; the owner's one couch session
+(18-06 + 19-07 + the 21/22/23 riders) closes all five open phases on glass.**

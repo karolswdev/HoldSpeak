@@ -256,13 +256,22 @@ def test_directory_membership_push_pull_round_trip_and_tombstone(env) -> None:
 def test_chain_and_workflow_push_pull_round_trip_and_tombstone(env) -> None:
     db, client = env
     lm = "2030-06-26T12:00:00Z"
+    # HSM-22-04: a REAL canonical graph (the shape linearize() runs), not the old
+    # placeholder that only byte-survived — sync survival AND runnability are the
+    # same wire now.
     graph = {
+        "id": "wf-rt-1", "name": "Pipeline graph", "entry": "e1",
         "nodes": [
-            {"id": "n1", "kind": "input"},
-            {"id": "n2", "kind": "agent", "agent_id": "a1",
+            {"id": "e1", "kind": {"entry": {}}},
+            {"id": "n1", "kind": {"summarize": {}},
              "runs_on": "endpoint", "failure_policy": "skip"},
+            {"id": "out", "kind": {"output": {}}},
         ],
-        "edges": [{"from": "n1", "to": "n2"}],
+        "exec_edges": [
+            {"from": {"node": "e1", "name": "then"}, "to": "n1"},
+            {"from": {"node": "n1", "name": "then"}, "to": "out"},
+        ],
+        "data_edges": [],
     }
     changeset = {
         "chains": [{
