@@ -221,3 +221,7 @@ Type: **D**=design/research doc · **B**=build · **P**=proof · **X**=docs. Own
   FailurePolicy unify); (2) `holdspeak/` (free-typing dictation `target_mode`, mesh Bonjour+`/api/mesh/info`);
   (3) `web/` (Signal substrate, egress badge, Queue HUD); (4) `pm/roadmap/` (Phases 15/68/69 + master list).
   Awaiting the owner's word.
+- 2026-07-04 — holdspeak-mobile Phase 25 (Mission control in the pocket) OPENED 1/4: the iOS
+  conveyor. HSM-25-01 landed the Codable wire contract + HTTPDesktopClient+MissionControl
+  extension, golden-pinned against the backend's frozen /api/missioncontrol/* shapes
+  (swift test 473/0). Belt UI (02), live layer (03), on-device proof (04, blocked on PR #247).

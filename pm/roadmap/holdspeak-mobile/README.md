@@ -9,7 +9,7 @@
 > 🚀 **New agent (general):** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Current phase:** [Phase 22 — The graph travels](./phase-22-the-graph-travels/current-phase-status.md)
+**Current phase:** [Phase 25 — Mission control in the pocket](./phase-25-mission-control-in-the-pocket/current-phase-status.md) — **OPENED 2026-07-04, 1/4: the iOS conveyor.** 25-01 landed the mission-control Codable contract + client extension (`swift test` 473/0), golden-pinned against the backend's frozen `/api/missioncontrol/*` shapes; the belt UI, the live layer, and the on-device proof (blocked on backend PR #247) follow. Earlier: [Phase 22 — The graph travels](./phase-22-the-graph-travels/current-phase-status.md)
 — **OPENED 2026-07-04, survey-corrected: 1/4 on open.** The hub half (22-02) was
 pre-paid by Equilibrium Wave 1 and is recorded done with a fresh 50-test green run;
 the survey also KILLED a false memory (the "web authors a linear graph" Wave-2 claim
