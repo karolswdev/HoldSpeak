@@ -208,6 +208,28 @@ def _run_mir_route_command(
             tags=tags,
         )
         result_payload["persisted_window_id"] = window_id
+        # HS-80-03 — a reroute finally DOES something: execute the routed
+        # plugin chain against the recorded window (the Phase-67 F-05 fix).
+        # The window above carries the manual-override provenance; the seam
+        # executes + persists runs and re-synthesizes the artifacts.
+        try:
+            from ..meeting_plugins import run_meeting_plugin_chain
+
+            chain_summary = run_meeting_plugin_chain(
+                db,
+                meeting,
+                profile=route_payload.get("profile"),
+                override_intents=list(route_payload.get("override_intents") or []) or None,
+                threshold=route_payload.get("threshold"),
+                window_suffix="cli-reroute",
+                record_window=False,
+            )
+            result_payload["executed"] = True
+            result_payload["plugin_statuses"] = chain_summary.get("plugin_statuses")
+            result_payload["artifacts_saved"] = chain_summary.get("artifacts_saved")
+        except Exception as exc:
+            result_payload["executed"] = False
+            result_payload["execute_error"] = str(exc)
 
     print(json.dumps(result_payload, indent=2, sort_keys=True))
     return 0
