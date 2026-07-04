@@ -9,12 +9,13 @@ from typing import Any, Iterable, Literal
 
 from .meeting_session import MeetingState
 
-MeetingExportFormat = Literal["json", "markdown", "txt"]
+MeetingExportFormat = Literal["json", "markdown", "txt", "srt"]
 
 _EXPORT_EXTENSIONS: dict[MeetingExportFormat, str] = {
     "json": "json",
     "markdown": "md",
     "txt": "txt",
+    "srt": "srt",
 }
 
 
@@ -189,6 +190,37 @@ def _render_text(meeting: MeetingState) -> str:
     return "\n".join(lines)
 
 
+def _format_srt_timestamp(seconds: object) -> str:
+    try:
+        total_ms = max(0, int(round(float(seconds) * 1000)))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        total_ms = 0
+    milliseconds = total_ms % 1000
+    total = total_ms // 1000
+    hours, remainder = divmod(total, 3600)
+    minutes, secs = divmod(remainder, 60)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d},{milliseconds:03d}"
+
+
+def _render_srt(meeting: MeetingState) -> str:
+    """SubRip transcript. `Speaker: text` cue bodies round-trip through the
+    importer's `_name_prefix` convention, so an exported .srt re-imports with
+    the same speakers."""
+    blocks: list[str] = []
+    for index, segment in enumerate(meeting.segments, start=1):
+        start = _format_srt_timestamp(segment.start_time)
+        end_seconds = (
+            segment.end_time
+            if segment.end_time > segment.start_time
+            else segment.start_time + 0.01
+        )
+        end = _format_srt_timestamp(end_seconds)
+        speaker = str(segment.speaker or "").strip()
+        text = f"{speaker}: {segment.text}" if speaker else segment.text
+        blocks.append(f"{index}\n{start} --> {end}\n{text}")
+    return "\n\n".join(blocks) + ("\n" if blocks else "")
+
+
 def render_meeting_export(
     meeting: MeetingState,
     export_format: MeetingExportFormat,
@@ -205,6 +237,8 @@ def render_meeting_export(
         return _render_markdown(meeting, artifacts=artifacts)
     if export_format == "txt":
         return _render_text(meeting)
+    if export_format == "srt":
+        return _render_srt(meeting)
     raise ValueError(f"Unsupported export format: {export_format}")
 
 
