@@ -704,3 +704,80 @@
   font-size: var(--font-size-xs);
   margin: 6px 0 0;
 }
+
+/* ── Mission control conveyor (HS-82-03) ─────────────────────────
+   A fixture at the foot of the desk: belts of phases and stories
+   relayed from the Delivery Workbench rails. Signal tokens only;
+   the one --accent use is the next actionable story. */
+.desk-next .desk-mc {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 30;
+  padding: var(--space-2) var(--space-3);
+  background: color-mix(in srgb, var(--surface-1) 88%, transparent);
+  border: 1px solid var(--surface-3);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.desk-next .desk-mc-tab {
+  position: fixed;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 30;
+  padding: 2px 10px;
+  background: color-mix(in srgb, var(--surface-1) 88%, transparent);
+  border: 1px solid var(--surface-3);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.desk-next .desk-mc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-1);
+}
+.desk-next .desk-mc-title { color: var(--text); letter-spacing: 0.04em; }
+.desk-next .desk-mc-close {
+  background: none; border: none; color: var(--text-faint); cursor: pointer;
+}
+.desk-next .desk-mc-project { margin-top: var(--space-1); }
+.desk-next .desk-mc-phases {
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+}
+.desk-next .desk-mc-slug { color: var(--text); margin-right: var(--space-2); }
+.desk-next .desk-mc-phase {
+  min-width: 20px; text-align: center; padding: 0 4px;
+  border: 1px solid var(--surface-3); border-radius: 4px;
+  color: var(--text-faint);
+}
+.desk-next .desk-mc-phase.closed { opacity: 0.45; }
+.desk-next .desk-mc-phase.current {
+  color: var(--text); border-color: var(--text-muted);
+}
+.desk-next .desk-mc-belt {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin: 4px 0 2px calc(var(--space-2) + 8px);
+}
+.desk-next .desk-mc-story {
+  padding: 1px 8px; border-radius: 999px;
+  border: 1px solid var(--surface-3); color: var(--text-muted);
+}
+.desk-next .desk-mc-story.st-done { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.desk-next .desk-mc-story.st-in-progress { color: var(--text); }
+.desk-next .desk-mc-story.st-blocked { color: var(--danger); }
+.desk-next .desk-mc-story.next {
+  color: var(--accent); border-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow, rgba(255, 107, 53, 0.35));
+}
+.desk-next .desk-mc-warn { color: var(--warn); margin-left: var(--space-2); }
+.desk-next .desk-mc-honest { display: flex; gap: var(--space-2); align-items: baseline; margin-top: var(--space-1); }
+.desk-next .desk-mc-state { color: var(--danger); }
+.desk-next .desk-mc-state.compatibility { color: var(--warn); }
+.desk-next .desk-mc-detail { color: var(--text-faint); }

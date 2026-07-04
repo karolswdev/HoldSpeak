@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 82
-- **Status:** backlog
+- **Status:** done — see [`evidence-story-03.md`](./evidence-story-03.md).
 - **Depends on:** HS-82-02 (the bridge serves the feed).
 - **Unblocks:** HS-82-05.
 
