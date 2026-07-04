@@ -216,6 +216,36 @@ def process_next_intel_job(
         meeting.intel_status_detail = "Deferred meeting intelligence processed successfully."
         meeting.intel_completed_at = datetime.now()
         db.meetings.save_meeting(meeting)
+        # HS-80-02 — the archive gets its artifacts: after a successful base
+        # analyze, run the routed plugin chain over the saved transcript (the
+        # Phase-67 F-05 fix). Gated on the same knob that gates live routing;
+        # a chain failure never fails the job (base intel already landed) and
+        # the status detail stays honest either way.
+        from .config import Config
+
+        meeting_cfg = Config.load().meeting
+        if bool(getattr(meeting_cfg, "intent_router_enabled", False)):
+            try:
+                from .meeting_plugins import run_meeting_plugin_chain
+
+                chain_summary = run_meeting_plugin_chain(
+                    db, meeting, profile=getattr(meeting_cfg, "mir_profile", None)
+                )
+                meeting.intel_status_detail = (
+                    "Deferred meeting intelligence processed successfully; "
+                    f"{int(chain_summary.get('artifacts_saved') or 0)} artifact(s) "
+                    "from the routed plugin chain."
+                )
+                db.meetings.save_meeting(meeting)
+            except Exception as exc:
+                log.warning(
+                    f"Deferred plugin chain failed for meeting {job.meeting_id}: {exc}"
+                )
+                meeting.intel_status_detail = (
+                    "Deferred meeting intelligence processed successfully; "
+                    f"the plugin chain did not complete ({exc})."
+                )
+                db.meetings.save_meeting(meeting)
         db.intel.record_intel_job_attempt(
             job.meeting_id,
             attempt=int(job.attempts),

@@ -12,6 +12,15 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 ## [Unreleased]
 
 ### Added
+- **Imported meetings get typed artifacts.** The routed plugin chain (ADR
+  drafts, mermaid diagrams, incident timelines, milestone plans,
+  requirements, and the rest) now runs over imported and re-processed
+  meetings, not just live ones: the deferred-intel processor executes the
+  chain after a successful analyze (honoring the same routing knob and the
+  meeting's profile), and `holdspeak intel --reroute` actually executes the
+  rerouted chain instead of only recording the route. Unchanged reruns
+  dedup instead of duplicating; with routing off, imports stay exactly as
+  before. Found by the first recorded dogfood run (finding F-05).
 - **One egress badge grammar on the iPad.** Every desk primitive now
   carries its real posture (a connector wears `Cloud · slack`, a live
   coder session `Local + your desktop`, a note `On device`), and the
