@@ -2693,6 +2693,19 @@ struct DeskHostLink {
         if let (_, resp) = try? await URLSession.shared.data(for: r), (resp as? HTTPURLResponse)?.statusCode == 200 { return true }
         return false
     }
+    /// Which desk connectors the HOST actually has configured (HSM-21-03; booleans only —
+    /// GET /api/desk/actuators/status, HS-77-03: the URLs are credentials and never ride).
+    /// nil on any failure so the caller keeps its previous knowledge instead of guessing.
+    func connectorStatus() async -> [String: Bool]? {
+        guard let u = base?.appendingPathComponent("api/desk/actuators/status") else { return nil }
+        var r = URLRequest(url: u); r.timeoutInterval = 6; auth(&r)
+        guard let (data, resp) = try? await URLSession.shared.data(for: r),
+              (resp as? HTTPURLResponse)?.statusCode == 200,
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return ["slack": obj["slack_configured"] as? Bool ?? false,
+                "webhook": obj["webhook_configured"] as? Bool ?? false,
+                "github": obj["github_configured"] as? Bool ?? false]
+    }
     /// Propose an arbitrary-text send on the host for a target ("slack"/"webhook") → (proposalId, preview).
     func propose(target: String, title: String, text: String) async throws -> (id: String, preview: String) {
         var body: [String: Any] = ["text": text]
@@ -2907,6 +2920,10 @@ struct DioStage: View {
     @State private var sendSourceId: String? = nil
     @State private var sendTargetName = ""
     @State private var sendTargetConn = "slack"          // which host connector ("slack" / "webhook")
+    // HSM-21-03: the host's REAL per-connector config (GET /api/desk/actuators/status),
+    // refreshed on every sync. nil = not read yet (an older hub / no read) → the tile keeps
+    // the paired-only behavior rather than guessing in either direction.
+    @State private var connConfigured: [String: Bool]? = nil
     @State private var sendOverride: (title: String, text: String)? = nil   // act-on-item: send THIS, not a whole card
     @State private var actItem: (title: String, text: String, source: String)? = nil   // the row being acted on
     @State private var showActSheet = false
@@ -3014,11 +3031,14 @@ struct DioStage: View {
             out.append(ModelPrimitive(modelId: mdl.id, name: mdl.name.replacingOccurrences(of: ".gguf", with: "")))
         }
         out.append(ConnectorPrimitive(connId: "slack", name: "Slack", symbol: "number", tint: DioPal.violet,
-                                      configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
+                                      paired: hostLink != nil, configured: connReady("slack"),
+                                      detail: peerHost.isEmpty ? "" : peerHost))
         out.append(ConnectorPrimitive(connId: "webhook", name: "Webhook", symbol: "bolt.horizontal.fill", tint: DioPal.cobalt,
-                                      configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
+                                      paired: hostLink != nil, configured: connReady("webhook"),
+                                      detail: peerHost.isEmpty ? "" : peerHost))
         out.append(ConnectorPrimitive(connId: "github", name: "GitHub", symbol: "exclamationmark.bubble.fill", tint: DioPal.mint,
-                                      configured: hostLink != nil, detail: peerHost.isEmpty ? "" : peerHost))
+                                      paired: hostLink != nil, configured: connReady("github"),
+                                      detail: peerHost.isEmpty ? "" : peerHost))
         for wf in workflows { out.append(WorkflowPrimitive(rec: wf)) }
         return out
     }
@@ -3750,6 +3770,11 @@ struct DioStage: View {
                 if ProcessInfo.processInfo.environment["HS_DESK_OPEN"] == "connector" {
                     peerHost = peerHost.isEmpty ? "192.168.1.13" : peerHost
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { select("conn:slack") }
+                }
+                // HS_DESK_OPEN=connector-github → the GitHub pull-out, against the LIVE paired
+                // hub (HSM-21-03: ready must reflect the host's real companion_github_repo).
+                if ProcessInfo.processInfo.environment["HS_DESK_OPEN"] == "connector-github" {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { select("conn:github") }
                 }
                 // THE SYNC STATUS demo — show the desk wearing each sync state + a pull-arrival.
                 // `synced` (calm, with a "just now") · `syncing` (breathing) · `offline` (queued) ·
@@ -4618,10 +4643,20 @@ struct DioStage: View {
         actItem = (title: task, text: text, source: prim.title)
         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { showActSheet = true }
     }
+    /// True when a send through this connector can actually complete: paired AND the host
+    /// has it configured (HSM-21-03). An unread status (older hub) keeps the paired-only
+    /// behavior rather than presenting everything unconfigured.
+    private func connReady(_ connId: String) -> Bool {
+        guard hostLink != nil else { return false }
+        return connConfigured?[connId] ?? true
+    }
     private func actConnectors() -> [(connId: String, name: String, symbol: String, tint: Color)] {
+        // Only connectors whose send can complete — a GitHub row with no repo on the host
+        // was a guaranteed 400 at approve time (HSM-21-03).
         [("slack", "Slack", "number", DioPal.violet),
          ("github", "GitHub issue", "exclamationmark.bubble.fill", DioPal.mint),
          ("webhook", "Webhook", "bolt.horizontal.fill", DioPal.cobalt)]
+            .filter { connReady($0.0) }
     }
     private func actSend(connId: String, name: String) {
         guard let item = actItem else { return }
@@ -5035,6 +5070,12 @@ struct DioStage: View {
         guard !syncing, let link = hostLink,
               let driver = DeskSyncDriver.make(host: link.host, port: link.port, token: peerToken) else { return }
         syncing = true
+        // HSM-21-03: refresh which connectors the host REALLY has configured, so a
+        // GitHub tile with no repo on the host cannot present ready (nil keeps the
+        // last known truth — an unreachable status is not evidence of unconfigured).
+        Task { @MainActor in
+            if let status = await link.connectorStatus() { connConfigured = status }
+        }
         let snapshot = currentDeskRecords()
         // the desk's primitive ids BEFORE the pull → anything new afterward arrived from a peer
         let before = deskPrimitiveIds(snapshot)

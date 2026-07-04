@@ -54,7 +54,7 @@ sentence, per canon).
 |----|-------|--------|
 | HSM-21-01 | The one egress contract (`EgressScope` in Contracts + `DeskPrimitive.egress` + every surface consumes it) — **leads** | done — [`evidence-story-01.md`](./evidence-story-01.md) (sim-proven ×3; the hard-coded capsule is dead) |
 | HSM-21-02 | The Swift banned-copy + reassurance-prose guard (+ fix the sites) | done — [`evidence-story-02.md`](./evidence-story-02.md) (7 sites; the guard caught the 7th itself) |
-| HSM-21-03 | GitHub-repo honesty: the tile's ready state tells the truth; the host-fallback path ratified | todo (web+backend halves shipped pre-open) |
+| HSM-21-03 | GitHub-repo honesty: the tile's ready state tells the truth; the host-fallback path ratified | done — [`evidence-story-03.md`](./evidence-story-03.md) (control-vs-treatment on one live hub) |
 | HSM-21-04 | The ambient trust chip on the iPad + the web-chip posture audit | todo |
 | HSM-21-05 | Docs + the walk rider (honesty checks join the staged couch session) | todo |
 
@@ -67,5 +67,8 @@ capsule / mesh text / shell chips all consume it — including fixing the mixed-
 drift from tonight's own 18/19 chips. **21-02 followed**: seven "nothing leaves" labels
 adopted the badge grammar (the new guard's FIRST RUN caught the 7th — the classic home
 header the survey missed) and the guard now scans Swift string literals for banned names +
-reassurance prose, red-proven. Next: 21-03 / 21-04 / 21-05. Artifact provenance rendering shipped in 19-04; this phase owns the audit
+reassurance prose, red-proven. **21-03 followed** (3/5): the GitHub tile's ready state
+now derives from the live HS-77-03 status route (paired vs configured are separate
+truths; the act sheet lists only completable sends), proven control-vs-treatment on one
+live hub with the repo flipped mid-run. Next: 21-04 / 21-05. Artifact provenance rendering shipped in 19-04; this phase owns the audit
 that no surface fakes a posture.
