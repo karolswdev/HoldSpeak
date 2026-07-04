@@ -1,6 +1,6 @@
 # Phase 82 — Mission Control (the Desk conveyor)
 
-**Status:** OPEN — 5/5.
+**Status:** CLOSED (5/5, 2026-07-04) — see [final-summary.md](./final-summary.md).
 
 **Last updated:** 2026-07-04 (HS-82-05 done — the phase is 5/5:
 the approval leg rides the native decide_proposal lifecycle into a

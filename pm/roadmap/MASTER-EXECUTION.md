@@ -226,3 +226,6 @@ Type: **D**=design/research doc · **B**=build · **P**=proof · **X**=docs. Own
   Delivery Workbench counterpart phase (their Phase 13 substrate is shipped; their WLA-13-05
   joint exit exam waits on HS-82-05). Bridge → belt → live layer → approval leg, all consuming
   the three frozen documents per their docs/mission-control.md §5.
+- 2026-07-04 — holdspeak Phase 82 CLOSED 5/5, same day: the Desk conveyor is live —
+  bridge, belt, live layer, approval leg, and the joint proof run against the real
+  delivery-workbench repo (crown-case refusal rendered on the Desk, screenshots committed).
