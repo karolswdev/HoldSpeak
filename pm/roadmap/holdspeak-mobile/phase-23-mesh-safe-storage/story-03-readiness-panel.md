@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 23
-- **Status:** todo
+- **Status:** done — see [`evidence-story-03.md`](./evidence-story-03.md).
+  `StoreHealthProbe` + `SetupStatus.sections` + the READINESS section in Settings
+  (both halves proven live: the real hub's 23 doctor sections incl. its genuine warn,
+  and a real future-version store rendering the amber refusal); the home banner names
+  `.tooNew` instead of "Store unavailable".
 - **Depends on:** HSM-23-01/02 (the mechanism it surfaces); `SetupStatus` +
   `HTTPDesktopClient.setupStatus()` (HSM-21-04) for the hub half.
 - **Unblocks:** the iPad can finally tell you it is healthy — the audit's third theme-6

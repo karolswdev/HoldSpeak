@@ -54,7 +54,10 @@ final class SetupStatusClientTests: XCTestCase {
       "overall": "ready",
       "first_run": false,
       "primary_action": {"kind": "none"},
-      "sections": [{"id": "audio", "state": "ready"}],
+      "sections": [
+        {"id": "microphone", "label": "Microphone", "status": "pass", "detail": "Input device found", "fix": null},
+        {"id": "whisper-model", "label": "Whisper model", "status": "warn", "detail": "Not downloaded", "fix": "holdspeak setup"}
+      ],
       "trust": {
         "web_bind": "0.0.0.0",
         "auth_token_set": true,
@@ -79,6 +82,23 @@ final class SetupStatusClientTests: XCTestCase {
         XCTAssertEqual(status.trust?.authTokenSet, true)
         XCTAssertEqual(status.trust?.transcriptEgress, "possible")
         XCTAssertEqual(status.trust?.actuatorsEnabled, false)
+        // HSM-23-03 — the doctor sections reach the readiness panel (real
+        // `_section_from_check` shape: id/label/status/detail, status vocab
+        // pass|warn|fail|unknown; `fix` is not carried).
+        XCTAssertEqual(status.sections?.count, 2)
+        XCTAssertEqual(status.sections?[0].id, "microphone")
+        XCTAssertEqual(status.sections?[0].label, "Microphone")
+        XCTAssertEqual(status.sections?[0].status, "pass")
+        XCTAssertEqual(status.sections?[0].detail, "Input device found")
+        XCTAssertEqual(status.sections?[1].status, "warn")
+    }
+
+    func testMissingSectionsDecodeAsNil() throws {
+        // An older hub without a sections block must not fail the decode.
+        let bare = #"{"version": "0.3.0", "overall": "ready"}"#
+        let status = try HoldSpeakContracts.decoder().decode(SetupStatus.self, from: Data(bare.utf8))
+        XCTAssertNil(status.sections)
+        XCTAssertEqual(status.overall, "ready")
     }
 
     func testNon2xxThrows() async {

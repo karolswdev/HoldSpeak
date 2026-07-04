@@ -25,20 +25,43 @@ public struct SetupTrust: Codable, Equatable, Sendable {
     }
 }
 
-/// The setup-status envelope (the chip's slice; `sections`/`presence` are not carried).
+/// One doctor check off the hub's `sections` block (HSM-23-03 — the readiness panel
+/// reads the whole doctor, not just the trust slice). Wire: `{id, label, status,
+/// detail, fix}`; `status` is "pass" | "warn" | "fail" | "unknown" (setup_status.py
+/// `_section_from_check`). Every field optional (robust-decode posture).
+public struct SetupSection: Codable, Equatable, Sendable {
+    public var id: String?
+    public var label: String?
+    public var status: String?
+    public var detail: String?
+
+    public init(id: String? = nil, label: String? = nil,
+                status: String? = nil, detail: String? = nil) {
+        self.id = id
+        self.label = label
+        self.status = status
+        self.detail = detail
+    }
+}
+
+/// The setup-status envelope (`presence`/`primary_action` are not carried).
 public struct SetupStatus: Codable, Equatable, Sendable {
     public var version: String?
-    /// "ready" | "attention" | … — the doctor rollup.
+    /// "ready" | "needs_attention" | "blocked" — the doctor rollup.
     public var overall: String?
     public var firstRun: Bool?
     public var trust: SetupTrust?
+    /// The hub's per-check doctor sections (HSM-23-03; absent on older hubs).
+    public var sections: [SetupSection]?
 
     public init(version: String? = nil, overall: String? = nil,
-                firstRun: Bool? = nil, trust: SetupTrust? = nil) {
+                firstRun: Bool? = nil, trust: SetupTrust? = nil,
+                sections: [SetupSection]? = nil) {
         self.version = version
         self.overall = overall
         self.firstRun = firstRun
         self.trust = trust
+        self.sections = sections
     }
 
     /// The four-posture mapping the web chip uses (`trust-view.js trustPosture`) — the

@@ -10,13 +10,16 @@
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
 **Current phase:** [Phase 23 — Mesh-safe storage](./phase-23-mesh-safe-storage/current-phase-status.md)
-— **OPENED 2026-07-04, survey-corrected, and built to 3/4 the same day.** The Wave-4
+— **OPENED 2026-07-04, survey-corrected, and built to 4/5 the same day.** The Wave-4
 refuse-newer + backup-then-apply mechanism (23-01/02) is recorded done with fresh green
-runs; **23-04 (sync integrity) landed**: all 10 sync kinds now carry a per-primitive
-push→pull + LWW + tombstone lock, §11 of the serialization contract states the shipping
-ten-bucket wire, and the stale "lossy manual_context" finding is corrected + golden-pinned
-on both sides of the wire. Only the readiness/doctor panel (23-03) remains — the
-mechanism's one missing UI surface.
+runs; **23-04 (sync integrity) landed** (the 10-kind round-trip matrix complete, §11
+rewritten to the shipping wire, the stale "lossy manual_context" finding corrected +
+golden-pinned on both sides of the wire); **23-03 (the readiness panel) landed the same
+day** — Settings now states store health (`StoreHealthProbe`: ok / not created /
+refused-newer / failed + backups), mic, models, app version, AND the paired hub's full
+doctor (`SetupStatus.sections`, previously dropped), proven live against a real scratch
+hub and a real seeded newer-version store (refused, rendered amber, left byte-intact).
+Only 23-05 (docs + the ~2-minute walk rider) remains.
 [Phase 21 — Honest everywhere](./phase-21-honest-everywhere/current-phase-status.md)
 stands at **4/5, gate staged**: the iPad half
 of honesty, shipped: the ONE `EgressScope` contract (`DeskPrimitive.egress`; connectors
@@ -45,8 +48,15 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**PHASE 23 BUILT TO 3/4 THE DAY IT OPENED — 23-04 sync
-integrity landed**: the chain/workflow rows complete the 10-kind per-primitive round-trip
+**Last updated:** 2026-07-04 (**PHASE 23 BUILT TO 4/5 THE DAY IT OPENED.** 23-03: the
+readiness/doctor panel — `StoreHealthProbe` (the Wave-4 safety gets a face; refused-newer
+renders amber and the probe never stamps), `SetupStatus.sections` decoded (the hub's
+doctor block was dropped; the old test stub had drifted from the real wire), the
+two-card READINESS section in Settings + the home banner naming `.tooNew`; live-proven
+on the connected sim against a real scratch hub (23 real doctor sections, its genuine
+warn) and a REAL seeded v7 store left byte-intact. Full `swift test` 437/8-skip/0-fail.
+The standing docs-story rule added 23-05 (docs + rider), the phase's only open item.
+Earlier: **23-04 sync integrity landed**: the chain/workflow rows complete the 10-kind per-primitive round-trip
 matrix (the workflow lock proves the Phase-22 `graph_json` travels byte-faithful), §11
 rewritten to the shipping wire, the stale "lossy manual_context" finding corrected in §12
 + `agent.schema.json` and PINNED cross-language (the golden fixture now carries the
