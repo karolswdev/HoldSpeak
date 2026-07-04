@@ -124,6 +124,33 @@ export const fromWireMcEvents = (repoEntry: any): McEvent[] =>
       }))
     : [];
 
+/** Sessions keyed by the story they are on — the belt pins these. */
+export function sessionsByStory(sessions: McSession[]): Record<string, McSession[]> {
+  const map: Record<string, McSession[]> = {};
+  for (const s of sessions) {
+    if (s.correlation !== "on_story") continue;
+    for (const id of s.storyIds) (map[id] ||= []).push(s);
+  }
+  return map;
+}
+
+/** Sessions that cannot pin to a story, grouped in the correlation's
+ * own honest buckets (ambiguous lists candidates; nothing guessed). */
+export function offBeltSessions(sessions: McSession[]): McSession[] {
+  return sessions.filter((s) => s.correlation !== "on_story");
+}
+
+/** One ticker line per event; gate refusals carry their rule id
+ * verbatim — the rails' words, not ours. */
+export function formatEvent(e: McEvent): string {
+  const time = e.ts.includes("T") ? e.ts.split("T")[1].replace("Z", "") : e.ts;
+  const detail = Object.entries(e.detail || {})
+    .filter(([, v]) => v !== null && v !== undefined)
+    .map(([k, v]) => `${k}=${v}`)
+    .join(" ");
+  return [time, e.event, e.story || "", detail].filter(Boolean).join("  ");
+}
+
 async function fetchJson(url: string): Promise<any> {
   const res = await fetch(url);
   const body = await res.json().catch(() => ({}));

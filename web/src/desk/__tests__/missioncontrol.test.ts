@@ -4,9 +4,12 @@
 // belt renders. Honest statuses stay honest through normalization.
 import { describe, expect, it } from "vitest";
 import {
+  formatEvent,
   fromWireMcEvents,
   fromWireMcRepo,
   fromWireMcSession,
+  offBeltSessions,
+  sessionsByStory,
 } from "../missioncontrol";
 
 const LIVE_ENTRY = {
@@ -87,6 +90,39 @@ describe("fromWireMcSession", () => {
     const s = fromWireMcSession({ key: "k", agent: "codex", correlation: "off_rails" });
     expect(s.tmuxSession).toBeNull();
     expect(s.storyIds).toEqual([]);
+  });
+});
+
+describe("the belt's live layer (HS-82-04)", () => {
+  const onStory = fromWireMcSession({
+    key: "claude:s1", agent: "claude", correlation: "on_story",
+    stories: [{ story_id: "WLA-13-05" }], awaiting_response: true,
+  });
+  const offRails = fromWireMcSession({
+    key: "codex:s2", agent: "codex", correlation: "off_rails",
+  });
+  const ambiguous = fromWireMcSession({
+    key: "claude:s3", agent: "claude", correlation: "ambiguous",
+    stories: [{ story_id: "A-1-01" }, { story_id: "A-1-02" }],
+  });
+
+  it("pins on_story sessions to their stories", () => {
+    const pins = sessionsByStory([onStory, offRails, ambiguous]);
+    expect(Object.keys(pins)).toEqual(["WLA-13-05"]);
+    expect(pins["WLA-13-05"][0].awaitingResponse).toBe(true);
+  });
+
+  it("keeps ambiguous sessions off the belt — unknown beats guessed", () => {
+    const off = offBeltSessions([onStory, offRails, ambiguous]);
+    expect(off.map((s) => s.key)).toEqual(["codex:s2", "claude:s3"]);
+  });
+
+  it("formats a refusal with its rule id verbatim", () => {
+    const line = formatEvent({
+      ts: "2026-07-04T12:00:00Z", event: "gate_refusal",
+      story: "WLA-13-05", detail: { rule: "story-evidence" }, repo: "dw",
+    });
+    expect(line).toBe("12:00:00  gate_refusal  WLA-13-05  rule=story-evidence");
   });
 });
 

@@ -781,3 +781,35 @@
 .desk-next .desk-mc-state { color: var(--danger); }
 .desk-next .desk-mc-state.compatibility { color: var(--warn); }
 .desk-next .desk-mc-detail { color: var(--text-faint); }
+
+/* ── Sessions and events on the belt (HS-82-04) ────────────────── */
+.desk-next .desk-mc-pin {
+  display: inline-flex; align-items: center; gap: 2px;
+  margin-left: 6px; padding: 0 6px; border-radius: 999px;
+  background: var(--surface-2); color: var(--text-muted);
+  font-size: 11px;
+}
+.desk-next .desk-mc-pin.awaiting {
+  color: var(--warn);
+  animation: desk-mc-pulse 1.6s ease-in-out infinite;
+}
+.desk-next .desk-mc-pin.stale { opacity: 0.5; }
+@keyframes desk-mc-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 8px 0 color-mix(in srgb, var(--warn) 55%, transparent); }
+}
+.desk-next .desk-mc-sessions {
+  display: flex; gap: var(--space-2); flex-wrap: wrap;
+  margin-top: var(--space-1); padding-top: var(--space-1);
+  border-top: 1px dashed var(--surface-3);
+}
+.desk-next .desk-mc-offbelt { display: inline-flex; align-items: center; gap: 4px; }
+.desk-next .desk-mc-bucket { color: var(--text-faint); font-size: 11px; }
+.desk-next .desk-mc-ticker {
+  display: flex; flex-direction: column; gap: 1px;
+  margin-top: var(--space-1); padding-top: var(--space-1);
+  border-top: 1px dashed var(--surface-3);
+  max-height: 84px; overflow: hidden;
+}
+.desk-next .desk-mc-event { color: var(--text-faint); font-size: 11px; white-space: nowrap; }
+.desk-next .desk-mc-event.refusal { color: var(--danger); }

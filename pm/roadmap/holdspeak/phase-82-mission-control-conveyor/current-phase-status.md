@@ -1,13 +1,14 @@
 # Phase 82 — Mission Control (the Desk conveyor)
 
-**Status:** OPEN — 3/5.
+**Status:** OPEN — 4/5.
 
-**Last updated:** 2026-07-04 (HS-82-03 done: the belt renders —
-`MissionControlConveyor` at the foot of the desk, phases as
-segments, the current phase's stories as items, next-actionable in
-the desk's one accent, compatibility/unavailable rendered honestly;
-a self-contained store with the 15 s single-flight poll; 25 desk
-tests, astro build clean.)
+**Last updated:** 2026-07-04 (HS-82-04 done: the live layer —
+on_story sessions pin to their story chips with awaiting-response
+pulsing loudest and stale dimmed never dropped; every other
+correlation bucket stays off the belt honestly; the event ticker
+renders gate refusals first-class with rule ids verbatim; 28 desk
+tests. HS-82-05 is the one story left: the approval leg + the
+joint proof.)
 pins the bridge, the belt, the 15 s single-flight poll, and the
 approval leg riding the native `decide_proposal` + gated-connector
 machinery; schema claims verified live against dw 1.9.0
@@ -68,8 +69,8 @@ guessing — the pack precedent, now in a second client.
 | HS-82-01 | Design: the conveyor and its consumption seam — **leads** | **done** ([evidence](./evidence-story-01.md): doc + live schema verification) | none |
 | HS-82-02 | The bridge: `/api/missioncontrol/*` relays the three documents | **done** ([evidence](./evidence-story-02.md): 11 route tests; unit tier 2422 green) | HS-82-01 |
 | HS-82-03 | The conveyor renders: phases as the belt, stories as the items | **done** ([evidence](./evidence-story-03.md): 25 desk tests; astro build clean) | HS-82-02 |
-| HS-82-04 | Sessions and events ride the belt | ready | HS-82-02 |
-| HS-82-05 | The approval leg and the joint proof | backlog | HS-82-03, HS-82-04 |
+| HS-82-04 | Sessions and events ride the belt | **done** ([evidence](./evidence-story-04.md): 28 desk tests; awaiting-response loudest, ambiguous never pinned) | HS-82-02 |
+| HS-82-05 | The approval leg and the joint proof | ready | HS-82-03, HS-82-04 |
 
 ## Where we are
 
