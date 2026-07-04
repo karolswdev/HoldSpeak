@@ -191,6 +191,11 @@ class ProjectRewriter:
     def run(self, utt: Utterance, prior: list[StageResult]) -> StageResult:
         start = self._clock()
         text = _latest_text(prior, utt.raw_text)
+        # F-10: an empty utterance must never reach the model — with .hs
+        # context in the prompt it fabricates a plausible task from the
+        # project alone. Nothing dictated, nothing rewritten.
+        if not text.strip():
+            return self._noop(start, text, "empty_input", utt=utt)
         hs_context = _hs_prompt_context(utt)
         if not hs_context:
             return self._noop(start, text, "no_hs_context", utt=utt)
