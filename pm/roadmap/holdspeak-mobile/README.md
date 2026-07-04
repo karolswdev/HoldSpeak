@@ -9,8 +9,19 @@
 > 🚀 **New agent (general):** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Current phase:** [Phase 23 — Mesh-safe storage](./phase-23-mesh-safe-storage/current-phase-status.md)
-— **OPENED 2026-07-04, survey-corrected, and built to 4/5 the same day.** The Wave-4
+**Current phase:** [Phase 22 — The graph travels](./phase-22-the-graph-travels/current-phase-status.md)
+— **OPENED 2026-07-04, survey-corrected: 1/4 on open.** The hub half (22-02) was
+pre-paid by Equilibrium Wave 1 and is recorded done with a fresh 50-test green run;
+the survey also KILLED a false memory (the "web authors a linear graph" Wave-2 claim
+has no code behind it: 22-03 stays genuinely todo) and caught a producer hole the
+audit missed (`BPNode` carries no `runs_on`, so the iPad cannot emit the policy the
+hub reads — folded into 22-01). **22-01 leads:** the Blueprint→`graph_json` lowering +
+Save + `DeskSync`, pinned by a Swift-ENCODED golden fixture fed byte-for-byte into
+`linearize()` (the HS-72-01 pattern applied to graphs). Then 22-03 (web linear builder
++ the `primitives.ts` type fix + the dropped run `warning`) and 22-04 (the
+cross-surface proof + `runWorkflow` on the iPad hub path + docs/rider).
+[Phase 23 — Mesh-safe storage](./phase-23-mesh-safe-storage/current-phase-status.md)
+is **fully built and gate-staged, the same day it opened**: the Wave-4
 refuse-newer + backup-then-apply mechanism (23-01/02) is recorded done with fresh green
 runs; **23-04 (sync integrity) landed** (the 10-kind round-trip matrix complete, §11
 rewritten to the shipping wire, the stale "lossy manual_context" finding corrected +
@@ -51,7 +62,12 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**PHASE 23 FULLY BUILT AND GATE-STAGED THE DAY IT
+**Last updated:** 2026-07-04 (**PHASE 22 OPENED, survey-corrected — the LAST
+Equilibrium build phase.** 22-02 (the hub honors the graph) pre-paid by Wave 1,
+recorded done with a fresh 50-test run; the survey killed the false "web authors a
+graph" memory and caught the missing `BPNode.runs_on` producer hole; 22-01 (the
+Blueprint→`graph_json` lowering + the Swift-encoded golden pin against `linearize()`)
+leads. Earlier the same day: **PHASE 23 FULLY BUILT AND GATE-STAGED THE DAY IT
 OPENED.** 23-05's docs landed (README iPad section, ARCHITECTURE device path, the web
 companion page) and [`HSM-23-WALK-RIDER.md`](./phase-23-mesh-safe-storage/HSM-23-WALK-RIDER.md)
 is staged (R1 + optional R2, ~2 min) — the couch session now closes FOUR phases

@@ -1,50 +1,64 @@
 # Phase 22 — The graph travels (the Workbench bridge)
 
-**Status:** planned — independent of the iPad-client work; can run in parallel with 18/19.
-Stories detailed on open.
+**Status:** in-progress (opened 2026-07-04) — audit theme 5, the keystone the
+cross-surface workflow story waits on. Independent of the walk-gated phases.
 
-**Last updated:** 2026-06-27 (**authored** from the parity audit, theme 5.)
+**Last updated:** 2026-07-04 (**OPENED, survey-corrected — the hub half was pre-paid,
+the authoring half was not.** The 2026-06-27 draft predates Equilibrium Wave 1 and
+Phase 23: **22-02 shipped in Wave 1** (`workflow_graph.py` linearizes the Swift
+tagged-union shape, carries AND applies per-node `failure_policy`, carries `runs_on`,
+refuses control flow honestly with a `warning`, and documents what it does not
+enforce — 50 tests re-run green on open), and 23-04 locked `graph_json` surviving sync
+byte-faithful. But the survey KILLED a false memory: the Wave-2 "web authors a linear
+graph" claim is **not backed by code** (no `exec_edges` anywhere in `web/src`; the
+workbench page is localStorage-only; `primitives.ts:153` still types `graphJson` as a
+string) — 22-03 stays genuinely todo. And the audit itself missed a producer hole:
+**`BPNode` carries no `runs_on` at all**, so the iPad cannot emit the policy the hub
+already reads; 22-01 absorbs that fix. Stories re-grounded below.)
 
 ## Why this phase exists
 
-Audit theme 5: *the Workbench graph is authored richly on iPad but cannot travel.* The full
-Blueprint interpreter (two wires, control flow, typed edges, event stream) runs on device, but:
+Audit theme 5: *the Workbench graph is authored richly on iPad but cannot travel.* The
+full Blueprint interpreter (two wires, control flow, typed edges, event stream) runs on
+device, but the graph never leaves the canvas:
 
-- **It never serializes.** `GraphCanvasView` is disconnected from `graph_json`: no Save
-  button, no serializer; `startRun()` runs against demo text and never persists. An authored
-  graph runs once and is lost.
-- **The hub runs linear-only.** `workflow_graph.py:linearize` parses one straight pipeline and
-  **refuses** branch/loop/fan-out; the linearizer also drops per-node `failure_policy` and
-  `runs_on` (`GraphNode` holds only id/kind/payload) though the Swift model carries them.
-- **Web cannot author a graph.** `submitWorkflow` hardcodes `graph_json: {}` yet
-  `primitives.ts` marks workflow `authorable: true`; `primitives.ts:153` even type-drifts
+- **It never serializes.** Nothing encodes a `Blueprint` into
+  `WorkflowDefinition.graphJson` (still commented "reserved",
+  `Contracts/Primitives.swift:346`); the canvas has no Save; `startRun()` is
+  demo-gated; `WorkbenchLibrary` persists the engine model to UserDefaults only.
+- **The iPad cannot even express `runs_on`.** `BPNode` (`Blueprint.swift:162`) carries
+  `failurePolicy` but no per-node runs-on — the hub parses a field no producer emits.
+- **Web cannot author a graph.** No surface emits `nodes`/`exec_edges`;
+  `useDesk.createPrimitive` has no workflow case; `primitives.ts` type-drifts
   (`graphJson?: string` vs the object wire).
-
-The graph bridge is the keystone the cross-surface workflow story waits on.
+- **The language boundary is unproven.** The hub's conformance test runs a
+  hand-written Python dict in the Swift shape; no test feeds real Swift-ENCODER bytes
+  into `linearize()`. (The 23-04 sync fixture survives the wire but would not
+  linearize — a placeholder shape, worth upgrading.)
 
 ## The load-bearing design call
 
-**One `graph_json` wire shape, authored anywhere, run honestly.** Lower the iPad Blueprint to
-the canonical snake_case `graph_json`, persist it as a `WorkflowRecord`, and sync it via
-`DeskSync` — so a graph authored on the iPad survives, travels, and round-trips against
-`workflow_graph.linearize`. The hub either *honors* control flow / `failure_policy` / `runs_on`
-or **documents the omission honestly** (the audit filed these as low-severity desktop
-footnotes; this phase promotes them to first-class contract findings per the EQUILIBRIUM rule
-that desktop is audited, not assumed). Web ships a minimal linear-chain builder emitting the
-same shape, or scopes its claim honestly with a "graphed on iPad" affordance.
+**One `graph_json` wire shape, authored anywhere, run honestly.** Lower the iPad
+Blueprint to the canonical snake_case `graph_json` through the shared coder, persist it
+as a `WorkflowRecord`, and sync it via `DeskSync` — and pin the language boundary the
+HS-72-01 way: a golden fixture ENCODED BY SWIFT, committed, and fed byte-for-byte into
+`workflow_graph.linearize()` by pytest, so the two parsers can never drift again. The
+hub already honors the faithful subset and warns on the rest (22-02, shipped). Web
+ships a minimal linear builder emitting the same shape, or scopes its claim honestly.
 
 ## Stories
 
 | ID | Title | Status |
 |----|-------|--------|
-| HSM-22-01 | The `graph_json` serializer on iPad (+ Save + `DeskSync`) — **leads** | todo |
-| HSM-22-02 | The hub honors the graph (control flow / `failure_policy` / `runs_on`, or honest omission) | todo |
-| HSM-22-03 | Web authors a linear graph (or honest scope) + the `primitives.ts` type fix | todo |
-| HSM-22-04 | The cross-surface proof + docs | todo |
+| HSM-22-01 | The `graph_json` serializer on iPad (+ `runs_on` on `BPNode`, Save, `DeskSync`, the Swift-encoded golden fixture → `linearize()` conformance) — **leads** | todo |
+| HSM-22-02 | The hub honors the graph (control flow / `failure_policy` / `runs_on`, or honest omission) | done (pre-paid, Wave 1) — [`evidence-story-02.md`](./evidence-story-02.md) |
+| HSM-22-03 | Web authors a linear graph (or honest scope) + the `primitives.ts` type fix + the run UI renders the hub's `warning` | todo |
+| HSM-22-04 | The cross-surface proof (authored → synced → run) + `runWorkflow` on the iPad hub path + docs | todo |
 
 ## Where we are
 
-Not started. **22-01 leads** (without serialization, nothing travels). 22-02 is the desktop
-contract re-audit the program promised — the linearizer dropping `failure_policy`/`runs_on` is
-a real cross-surface hole, not a footnote. Round-trip the serializer against
-`workflow_graph.linearize` as the conformance test.
+Opened 2026-07-04, survey-corrected: **1/4 on open** — 22-02 shipped in Equilibrium
+Wave 1 (evidence recorded from the shipped code + a fresh 50-test green run). **22-01
+leads**: without serialization nothing travels, and the golden-fixture conformance is
+the one lock that makes every later story safe. 22-04 upgrades the 23-04 sync fixture
+to a linearizable graph and closes the iPad's missing run-workflow-on-hub path.
