@@ -231,7 +231,11 @@ before it touches anything: a database newer than the build is refused (it
 throws rather than rewrite your data), an older one is backed up to a
 timestamped sibling and then migrated forward, and a current one is a no-op.
 That mirrors the desktop store's safe-by-default posture on the mobile side,
-the same four-way schema matrix described below.
+the same four-way schema matrix described below. A readiness section in the
+iPad's Settings surfaces the matrix as a health readout: a probe on the same
+open path reports the stamped schema version, the integrity check, the count
+of backup siblings, and a refused newer database named with both versions,
+beside the hub's own doctor sections read from the setup-status route.
 
 The desktop schema matrix:
 

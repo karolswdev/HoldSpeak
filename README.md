@@ -279,7 +279,11 @@ posture in the web chip's own four words, and a guard holds Apple product
 copy to the same canonical names and no-privacy-prose rule as the docs and
 the web. Its on-device storage is schema safe the same
 way the desktop is: it backs an older database up before migrating, and
-refuses to open one written by a newer build. The app itself is not released
+refuses to open one written by a newer build. A readiness section in its
+Settings states that store's health (schema version, integrity, a refused
+newer database named as exactly that) beside your desktop's own doctor
+readout, section by section, so the iPad can tell you it is healthy without
+a trip to the Mac. The app itself is not released
 yet; the screens and the typed client layer they ride on are built and tested.
 
 ### AIPI-Lite

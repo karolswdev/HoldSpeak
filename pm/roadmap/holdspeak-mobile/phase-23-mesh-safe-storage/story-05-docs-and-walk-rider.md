@@ -2,7 +2,12 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 23
-- **Status:** todo
+- **Status:** in-progress — docs done, rider staged (evidence ships with the done
+  flip when the rider passes, the 21-05 pattern). README's iPad section,
+  ARCHITECTURE's device path, and the web companion page carry the readiness story
+  (drift guard 18 passed, web build green);
+  [`HSM-23-WALK-RIDER.md`](./HSM-23-WALK-RIDER.md) (R1 + optional R2, ~2 min) rides
+  the staged couch session — the rider is the owner's.
 - **Depends on:** 23-01..04 (the features it documents).
 - **Unblocks:** phase closeout; the standing rule that every phase carries its own
   documentation story ([[feedback_dedicated_docs_story]]), entry points included
