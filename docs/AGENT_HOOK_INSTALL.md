@@ -39,6 +39,39 @@ using your preferred tool, or create a stable symlink to this checkout's
 entry point. Hooks run from the agent process, so shell aliases are not a
 reliable install path.
 
+## One-Command Install
+
+The fastest path wires the hooks for you:
+
+```bash
+holdspeak agent-hook install
+```
+
+That merges the HoldSpeak hooks into `~/.claude/settings.json` and
+`~/.codex/hooks.json`, preserving any hooks you already have. It is
+idempotent (running it again converges instead of stacking duplicates) and
+reversible:
+
+```bash
+holdspeak agent-hook uninstall
+```
+
+Uninstall removes only the HoldSpeak entries and restores the rest of your
+settings exactly. Scope it with `--agent claude` or `--agent codex`, and add
+`--capture-messages` to enable capture mode (described below). Hooks take
+effect for new coder sessions, not ones already running. Codex asks you to
+review and trust changed hooks the next time it starts.
+
+With the hooks in, every live Claude Code or Codex session reports its
+lifecycle to your HoldSpeak hub: working, waiting on you (with the pending
+question), idle, or ended. That live set is what the iPad desk renders as
+coder objects, and what `GET /api/coders/sessions` serves. A session that
+stops reporting decays to idle and then to ended on its own; nothing ever
+rewrites your settings behind your back.
+
+If you prefer to paste configuration by hand, the template path below does
+the same thing manually.
+
 ## Choose Capture Mode
 
 Use the non-capture template when you only want project/session detection:
@@ -87,10 +120,15 @@ The generated Claude hooks listen for:
 - `SessionStart`
 - `CwdChanged`
 - `UserPromptSubmit`
+- `Notification`
+- `PostToolUse` (a bounded matcher: Bash, Edit, Write, Task)
 - `Stop`
+- `SessionEnd`
 
 `Stop` is the event that lets HoldSpeak capture the latest assistant question
-when `--capture-messages` is enabled.
+when `--capture-messages` is enabled. `Notification` carries the blocking ask
+(a permission prompt, or waiting for your input), `PostToolUse` is the working
+heartbeat, and `SessionEnd` marks the session ended.
 
 ## Install For Codex
 
@@ -125,10 +163,14 @@ The generated Codex hooks listen for:
 - `UserPromptSubmit`
 - `PreToolUse`
 - `PostToolUse`
+- `Notification`
 - `Stop`
+- `SessionEnd`
 
 `Stop` is the event that lets HoldSpeak capture the latest assistant question
-when `--capture-messages` is enabled.
+when `--capture-messages` is enabled. Codex versions that do not emit
+`SessionEnd` still age out on their own: a silent session decays to idle and
+then to ended.
 
 For AI PI bridge work, keep the HoldSpeak web runtime on the same port the
 bridge is configured to use:
@@ -342,7 +384,8 @@ Confirm HoldSpeak sees the expected project root and context files.
 ## Safety Model
 
 - Hooks are advisory context. Basic dictation still works without them.
-- HoldSpeak does not silently edit Claude/Codex settings.
+- Your Claude/Codex settings change only when you run the install command,
+  and `holdspeak agent-hook uninstall` restores them exactly.
 - Capture mode stores bounded local text only.
 - Captured assistant text is used to shape user-approved dictation, not to
   send autonomous replies.

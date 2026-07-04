@@ -274,6 +274,38 @@ flowchart TD
   APV -. "approved only" .-> EXT(["GitHub, Slack"])
 ```
 
+## The agent sync loop
+
+A live Claude Code or Codex session becomes an object on the iPad desk, and
+the answer travels back into it. Capture is hook driven; nothing in this loop
+acts on its own. The AI can draft a reply, but only an explicit human send
+delivers anything, and every crossing wears its badge.
+
+```mermaid
+flowchart LR
+  subgraph mac["Your Mac"]
+    CC(["Claude Code / Codex,<br/>HoldSpeak hooks installed"])
+    REG[("Session registry<br/>(lifecycle + question)")]
+    HUB["HoldSpeak hub"]
+    PANE(["The coder's tmux pane"])
+  end
+  subgraph ipad["The iPad desk"]
+    PRIM["Coder object<br/>(calm when working,<br/>glares when waiting)"]
+    COMP["Answer composer<br/>(type / speak / drop context /<br/>draft with AI)"]
+  end
+  CC -->|"every hook event"| REG
+  REG --> HUB
+  HUB -->|"the live session set, polled"| PRIM
+  PRIM -->|"tap Answer"| COMP
+  COMP -->|"explicit send only; badge: local + your desktop"| HUB
+  HUB -->|"selected session's pane"| PANE
+  PANE --> CC
+```
+
+The composer's draft runs on the engine you configured, on device or on your
+endpoint, and shows that as its own badge; where the draft runs is not where
+the answer goes. A failed delivery keeps the question on the desk.
+
 ## The trust boundary
 
 Everything inside the box runs on your machine. Every arrow leaving it is a

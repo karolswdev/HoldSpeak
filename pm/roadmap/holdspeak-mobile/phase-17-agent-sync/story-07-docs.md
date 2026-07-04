@@ -2,8 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 17
-- **Status:** todo — the dedicated docs story ([[feedback_dedicated_docs_story]]); after the features,
-  before closeout.
+- **Status:** done (2026-07-04 — all three entry points; both guards green; see `evidence-story-07.md`).
 - **Depends on:** HSM-17-01..06 (document the loop as actually shipped + proven).
 - **Owner:** unassigned
 
@@ -30,14 +29,17 @@ points** must learn it, not just an internal note.
 
 ## Acceptance criteria
 
-- [ ] The hook install is documented as a clear, reversible setup step.
-- [ ] The agent-sync loop is documented end-to-end with the never-autonomous + egress guarantees.
-- [ ] At least one entry point (README and/or the companion docs page) reflects agent sync; an
-      `ARCHITECTURE.md` diagram of the loop is added and renders.
-- [ ] No naming regression: "agent" = coding session; the persona layer (if kept) reads as its renamed
-      self everywhere in docs.
-- [ ] Voice guard passes on any `docs/*.md` touched (HS-IDs / dashes / AI-vocab rules —
-      [[project_phase58_front_door]]).
+- [x] The hook install is documented as a clear, reversible setup step. (The One-Command Install
+      section leads AGENT_HOOK_INSTALL.md; the manual template path kept.)
+- [x] The agent-sync loop is documented end-to-end with the never-autonomous + egress guarantees.
+      (ARCHITECTURE section + README companion paragraph + the install doc's lifecycle section.)
+- [x] At least one entry point (README and/or the companion docs page) reflects agent sync; an
+      `ARCHITECTURE.md` diagram of the loop is added and renders. (README + a Where-to-go-next row;
+      the mermaid guard passes.)
+- [x] No naming regression: "agent" = coding session; the persona layer (if kept) reads as its renamed
+      self everywhere in docs. (The persona builder is not referenced in any touched doc.)
+- [x] Voice guard passes on any `docs/*.md` touched (HS-IDs / dashes / AI-vocab rules —
+      [[project_phase58_front_door]]). (test_doc_drift_guard 18 passed.)
 
 ## Test plan
 
