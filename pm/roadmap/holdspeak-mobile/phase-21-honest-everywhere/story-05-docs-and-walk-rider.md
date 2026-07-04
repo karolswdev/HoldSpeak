@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 21
-- **Status:** todo
+- **Status:** in-progress — the docs half is DONE (README's companion paragraph carries
+  the one-badge trust surface; ARCHITECTURE names `EgressScope` + the shared posture
+  mapping; doc guard 18/18) and the rider is STAGED press-play at
+  [`HSM-21-WALK-RIDER.md`](./HSM-21-WALK-RIDER.md) (H1–H3, ~5 minutes on the staged couch
+  session). PASS×3 closes this story and the phase.
 - **Depends on:** 21-01…21-04 (documents what shipped; the rider verifies it).
 - **Unblocks:** phase close (the honesty checks ride the owner's staged couch session).
 - **Owner:** unassigned

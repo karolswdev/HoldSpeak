@@ -56,7 +56,7 @@ sentence, per canon).
 | HSM-21-02 | The Swift banned-copy + reassurance-prose guard (+ fix the sites) | done — [`evidence-story-02.md`](./evidence-story-02.md) (7 sites; the guard caught the 7th itself) |
 | HSM-21-03 | GitHub-repo honesty: the tile's ready state tells the truth; the host-fallback path ratified | done — [`evidence-story-03.md`](./evidence-story-03.md) (control-vs-treatment on one live hub) |
 | HSM-21-04 | The ambient trust chip on the iPad + the web-chip posture audit | done — [`evidence-story-04.md`](./evidence-story-04.md) (two surfaces, two postures, one live hub) |
-| HSM-21-05 | Docs + the walk rider (honesty checks join the staged couch session) | todo |
+| HSM-21-05 | Docs + the walk rider (honesty checks join the staged couch session) | in-progress — docs done; [`HSM-21-WALK-RIDER.md`](./HSM-21-WALK-RIDER.md) staged (H1–H3); the rider is the owner's |
 
 ## Where we are
 
@@ -74,5 +74,7 @@ live hub with the repo flipped mid-run. **21-04 followed** (4/5): the setup-stat
 client + the shared four-posture mapping (test-locked to the web chip's precedence) +
 the shell top-bar chip — proven on one live hub flipped local → writes-need-approval,
 with the real web TrustChip audited against the same hub (same words, both surfaces).
-Only **21-05** (docs + the walk rider) remains. Artifact provenance rendering shipped in 19-04; this phase owns the audit
+**21-05's docs half is done and the rider is STAGED** (H1–H3, ~5 minutes riding the
+18/19 couch session). **The phase now sits at 4/5 with the gate staged — the owner's
+device session closes Phases 18, 19, AND 21 in one sitting.** Artifact provenance rendering shipped in 19-04; this phase owns the audit
 that no surface fakes a posture.

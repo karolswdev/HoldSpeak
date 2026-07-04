@@ -201,6 +201,13 @@ Every request carries the desktop's Bearer token, joined at call time and
 never stored in a payload. The hub is the only place state changes; the iPad
 is an authoring port onto it.
 
+The iPad's trust surface uses one egress grammar, defined once in the
+contracts layer (`apple/Sources/Contracts/EgressScope.swift`: on device,
+local plus a named target, or cloud with the target named) and consumed by
+every badge and chip; a desk primitive carries its real posture, and the
+app header's trust chip reads the same `/api/setup/status` posture the web
+header chip does, mapped by the same four-state precedence.
+
 ```mermaid
 sequenceDiagram
   participant IP as iPad app

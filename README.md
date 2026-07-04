@@ -271,7 +271,13 @@ into the hub's full intelligence pipeline (the new meeting appears
 immediately, honestly marked importing), reads the learning digest and the
 dictation journal with their real "learned from N similar" reach, and pulls
 activity pre-briefing nudges whose "Dictate with this" grounds the next
-utterance in the cited record. Its on-device storage is schema safe the same
+utterance in the cited record. Its trust surface is the same one badge the
+desktop wears: every desk object carries its real posture (a connector reads
+cloud with its target named, dictation to your desktop reads local plus that
+machine, a note reads on device), the app's header states the desktop's
+posture in the web chip's own four words, and a guard holds Apple product
+copy to the same canonical names and no-privacy-prose rule as the docs and
+the web. Its on-device storage is schema safe the same
 way the desktop is: it backs an older database up before migrating, and
 refuses to open one written by a newer build. The app itself is not released
 yet; the screens and the typed client layer they ride on are built and tested.

@@ -10,19 +10,22 @@
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
 **Current phase:** [Phase 21 — Honest everywhere](./phase-21-honest-everywhere/current-phase-status.md)
-— **OPENED 2026-07-03**, the same evening 18/19 reached 6/7 (its precondition, "the iPad
-surfaces exist", was satisfied hours earlier). Survey-corrected: Wave 1 already shipped the
-web banned-copy scan + all-three connector configs, so the five re-grounded stories are the
-iPad half of honesty: the ONE `EgressScope` contract (`DeskPrimitive.egress` + `.mixed` —
-kills the hard-coded "On device" capsule on cloud connectors AND the mixed-as-local drift
-the survey caught in the shell's own new chips), the Swift reassurance-prose guard, GitHub
-readiness truth, the iPad trust chip, and docs + a walk rider.
+— **OPENED AND BUILT TO 4/5 THE SAME NIGHT (2026-07-03), the gate staged.** The iPad half
+of honesty, shipped: the ONE `EgressScope` contract (`DeskPrimitive.egress`; connectors
+wear Cloud, a live coder session Local + your desktop; the hard-coded "On device" capsule
+is dead, and the mixed-as-local drift in the evening's own shell chips fixed), the Swift
+reassurance-prose guard (its first run caught a 7th "nothing leaves" site the survey
+missed), GitHub readiness truth (paired vs configured are separate truths off the live
+HS-77-03 status route), and the ambient trust chip (two surfaces, two postures, one live
+hub — same words as the web chip, precedence test-locked).
+[`HSM-21-WALK-RIDER.md`](./phase-21-honest-everywhere/HSM-21-WALK-RIDER.md) (H1–H3, ~5
+minutes) rides the staged couch session.
 [Phase 18](./phase-18-ipad-dictation-contracts/current-phase-status.md) and
 [Phase 19](./phase-19-ipad-meeting-contracts/current-phase-status.md) both stand at
 **6/7 with gates staged**
 ([`HSM-18-06-WALK.md`](./phase-18-ipad-dictation-contracts/HSM-18-06-WALK.md),
-[`HSM-19-07-WALK.md`](./phase-19-ipad-meeting-contracts/HSM-19-07-WALK.md)); one owner
-device session closes both. Phases 16/17 (web parity + mesh sync; agent sync) remain open
+[`HSM-19-07-WALK.md`](./phase-19-ipad-meeting-contracts/HSM-19-07-WALK.md)); **one owner
+device session now closes Phases 18, 19, and 21.** Phases 16/17 (web parity + mesh sync; agent sync) remain open
 in parallel.
 
 **📐 The program — THE EQUILIBRIUM:**
@@ -34,7 +37,11 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-03 (**PHASE 21 — HONEST EVERYWHERE — OPENED**, survey-corrected
+**Last updated:** 2026-07-04 (**PHASE 21 BUILT TO 4/5 OVERNIGHT — the gate staged.** Four
+stories landed with live proofs (the EgressScope contract, the Swift prose guard that
+caught its own 7th site, GitHub readiness truth control-vs-treatment, the two-surface
+trust chip); the honesty rider joins the couch session, which now closes THREE phases.
+Earlier: **PHASE 21 OPENED**, survey-corrected
 (Wave 1 pre-paid the web halves; the survey also caught fresh mixed-as-local drift in the
 shell chips Phase 18/19 added, proving the case for the one `EgressScope` contract).
 Earlier the same evening: **PHASE 19 OPENED AND BUILT TO 6/7 — the
