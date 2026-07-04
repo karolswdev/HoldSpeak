@@ -216,8 +216,8 @@ pass bar; if reality disagrees, that's a `FAIL` and a finding.
 
 ### 2.5 Actuators — propose → approve → execute
 
-- [ ] **T2-13 · Off by default.** With `allow_actuators=false`, open a meeting's aftercare.
-  - Expect: proposals may be listed but **no execute buttons** are active.
+- [ ] **T2-13 · Approval is the gate.** With `allow_actuators=false`, open a meeting's aftercare.
+  - Expect: the dashboard/UI offers no un-gated execute affordance; nothing runs without an explicit approval. (Per the ratified aftercare design, approving a proposal IS the execution gate on that route — approval executing is correct, not a failure.)
   - Result: ___  · Note:
 
 - [ ] **T2-14 · GitHub issue actuator.** Set `allow_actuators=true`, `allowed_actuators=["github_issue_actuator"]`. From an accepted action item, propose → approve → `/aftercare/file-issue`.

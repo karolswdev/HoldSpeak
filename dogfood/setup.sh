@@ -8,7 +8,7 @@
 #
 # Endpoint overrides (tier 2):
 #   DOGFOOD_INTEL_BASE_URL=http://192.168.1.43:8080/v1
-#   DOGFOOD_INTEL_MODEL=Qwen3.5-9B-UD-Q6_K_XL.gguf
+#   DOGFOOD_INTEL_MODEL=Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -27,7 +27,7 @@ for arg in "$@"; do
 done
 
 INTEL_BASE_URL="${DOGFOOD_INTEL_BASE_URL:-http://192.168.1.43:8080/v1}"
-INTEL_MODEL="${DOGFOOD_INTEL_MODEL:-Qwen3.5-9B-UD-Q6_K_XL.gguf}"
+INTEL_MODEL="${DOGFOOD_INTEL_MODEL:-Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf}"
 
 echo "Dogfood sandbox HOME: $DOGFOOD_HOME"
 mkdir -p "$DOGFOOD_HOME/.config/holdspeak" \
