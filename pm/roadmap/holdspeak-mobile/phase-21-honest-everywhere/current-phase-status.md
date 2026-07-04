@@ -4,7 +4,13 @@
 audit theme 4, the cheapest-to-fix, highest-trust-cost class, non-negotiable per
 POSITIONING canon.
 
-**Last updated:** 2026-07-03 (**OPENED, survey-corrected.** The 2026-06-27 draft partially
+**Last updated:** 2026-07-04 (**4/5, gate staged — and one process failure on the record.**
+PR #233 (21-03) was merged with RED checks: the HS-72-02 route-surface lock fired on the
+new `api/desk/actuators/status` consumer, and the merge was chained after the CI watch
+instead of gated on the conclusion — the exact trap the two-track handover names. Healed
+same-hour: the regenerated manifest (covering 21-03's and 21-04's consumers,
+`test_api_surface` 5/5) rides PR #234; noted on #233. The honesty phase gets an honest
+ledger. Earlier: **OPENED, survey-corrected.** The 2026-06-27 draft partially
 predates Wave 1 and Phase 19: the web banned-copy scan EXISTS
 (`test_doc_drift_guard.py` scans `web/src/**/*.astro`; zero "intelligent typing" left in
 product copy), web settings binds ALL THREE connectors and the system package persists
