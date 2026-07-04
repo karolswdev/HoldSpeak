@@ -149,6 +149,6 @@ final class MeetingCaptureTests: XCTestCase {
     }
 
     func testEgressIsOnDevice() {
-        XCTAssertEqual(make(PushCapture(), MemStore()).egressLabel, "on-device · nothing leaves")
+        XCTAssertEqual(make(PushCapture(), MemStore()).egressLabel, "on device")
     }
 }

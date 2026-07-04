@@ -315,7 +315,7 @@ struct DeskHome: View {
             return ModelFiles.installed().map {
                 DeskCardData(id: "model:\($0.id)", title: $0.name.replacingOccurrences(of: ".gguf", with: ""),
                              sub: "loaded · on device", sprite: "cartridge", tintHex: 0x5B8DEF, mode: modeFor("model:\($0.id)"),
-                             snippet: "On-device model — meetings and dictation can run through it, nothing leaves.")
+                             snippet: "On-device model — meetings and dictation can run through it.")
             }
         }
         if activeUserFolder == nil, folder == .knowledge {

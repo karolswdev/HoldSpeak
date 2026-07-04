@@ -66,7 +66,7 @@ final class HarnessModel: ObservableObject {
     /// Honest egress descriptor (positioning: one badge, never a privacy novel).
     var egress: String {
         switch mode {
-        case .local: return "on-device · nothing leaves"
+        case .local: return "on device"
         case .homelab, .endpoint:
             let host = URL(string: endpoint)?.host ?? "endpoint"
             return "local + LAN → \(host)"
