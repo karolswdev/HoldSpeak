@@ -221,3 +221,8 @@ Type: **D**=design/research doc · **B**=build · **P**=proof · **X**=docs. Own
   FailurePolicy unify); (2) `holdspeak/` (free-typing dictation `target_mode`, mesh Bonjour+`/api/mesh/info`);
   (3) `web/` (Signal substrate, egress badge, Queue HUD); (4) `pm/roadmap/` (Phases 15/68/69 + master list).
   Awaiting the owner's word.
+
+- 2026-07-04 — holdspeak Phase 82 (Mission Control — the Desk conveyor) OPENED 0/5: the
+  Delivery Workbench counterpart phase (their Phase 13 substrate is shipped; their WLA-13-05
+  joint exit exam waits on HS-82-05). Bridge → belt → live layer → approval leg, all consuming
+  the three frozen documents per their docs/mission-control.md §5.
