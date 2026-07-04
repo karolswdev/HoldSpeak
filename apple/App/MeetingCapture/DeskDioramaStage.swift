@@ -3666,6 +3666,15 @@ struct DioStage: View {
                 if let c = answeringCoder {
                     DioCoderAnswer(session: c, maxW: camera.cardWidth(400, in: w),
                                    grounding: coderGrounding,
+                                   draftEgress: InferenceConfigStore.shared.isLocal ? .local : .cloud("endpoint"),
+                                   onDraft: { prompt in
+                                       // the seeded demo drafts offline so the flow is drivable without a model
+                                       if ProcessInfo.processInfo.environment["HS_DESK_CODER"] != nil {
+                                           try? await Task.sleep(nanoseconds: 700_000_000)
+                                           return .success("Yes — push with --force-with-lease. The mixin split was reviewed in the standup and the branch is mine alone; if the lease fails, stop and tell me.")
+                                       }
+                                       return await callLLM(prompt)
+                                   },
                                    onSend: { answerCoder(c, $0) },
                                    onCancel: { withAnimation { answeringCoder = nil; coderGrounding = nil } })
                         .id(c.id).zIndex(150).transition(.opacity)
