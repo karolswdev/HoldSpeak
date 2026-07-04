@@ -26,6 +26,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   shows "set up on your desktop" on that tile (and the act sheet only
   offers sends that can complete), driven by the desk actuator status
   route.
+- **The trust chip reaches the iPad.** The companion's header now states
+  the desktop's real posture in the web chip's four words (Local only ·
+  Configured endpoint · Writes need approval · Needs attention), read
+  from the same setup-status route.
 - **File an issue from the iPad.** The companion's meeting aftercare card
   can turn an accepted action item into a GitHub-issue proposal (repo
   typed inline, remembered for the session). Filing only records a
