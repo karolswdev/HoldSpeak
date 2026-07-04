@@ -77,6 +77,7 @@ loose DTO seam into `Contracts`.
 | HSM-17-05 | AI-drafted answers (local or remote, approve-then-inject) | **done** (2026-07-04, endpoint draft live-proven; on-device run = a 17-06 beat) |
 | HSM-17-06 | The real-metal proof (cabled iPad + a live coder on the Mac) | todo |
 | HSM-17-07 | Docs — the agent-sync loop, the hook install, entry points | **done** (2026-07-04, both guards green) |
+| HSM-17-08 | The first-class Recipe experience (in-world, no modals) — the rename's rider mandate | **done** (2026-07-04: DioAtelierPanel; all four surfaces off the scrim; the chain builder's live pipeline; web authoring filed as the next slice) |
 
 ## Where we are
 
