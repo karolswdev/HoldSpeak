@@ -1,0 +1,85 @@
+{
+  "data_edges" : [
+
+  ],
+  "entry" : "e1",
+  "exec_edges" : [
+    {
+      "from" : {
+        "name" : "then",
+        "node" : "e1"
+      },
+      "to" : "ask"
+    },
+    {
+      "from" : {
+        "name" : "then",
+        "node" : "ask"
+      },
+      "to" : "dec"
+    },
+    {
+      "from" : {
+        "name" : "then",
+        "node" : "dec"
+      },
+      "to" : "keep"
+    },
+    {
+      "from" : {
+        "name" : "then",
+        "node" : "keep"
+      },
+      "to" : "out"
+    }
+  ],
+  "id" : "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
+  "name" : "Golden linear",
+  "nodes" : [
+    {
+      "id" : "e1",
+      "kind" : {
+        "entry" : {
+
+        }
+      }
+    },
+    {
+      "failure_policy" : "fallbackOnDevice",
+      "id" : "ask",
+      "kind" : {
+        "llm" : {
+          "name" : "LLM call",
+          "prompt" : "From {input}, list the risks. One per line."
+        }
+      },
+      "runs_on" : "endpoint"
+    },
+    {
+      "failure_policy" : "skip",
+      "id" : "dec",
+      "kind" : {
+        "extract" : {
+          "_0" : "decisions"
+        }
+      },
+      "runs_on" : "onDevice"
+    },
+    {
+      "id" : "keep",
+      "kind" : {
+        "keep_if" : {
+          "keyword" : "risk"
+        }
+      }
+    },
+    {
+      "id" : "out",
+      "kind" : {
+        "output" : {
+
+        }
+      }
+    }
+  ]
+}

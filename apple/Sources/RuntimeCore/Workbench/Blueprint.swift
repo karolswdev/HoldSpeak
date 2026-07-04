@@ -158,6 +158,14 @@ public enum BPNodeKind: Codable, Sendable, Equatable {
     }
 }
 
+/// Where a model-op node prefers to run (HSM-22-01). The raw strings are the wire —
+/// the hub's `workflow_graph.py` `_RUN_TARGETS` accepts exactly these; `nil`/unset
+/// means inherit the run default ("auto", byte-identical to pre-provenance runs).
+/// The App's `ModelPref` UI enum shares these raw values.
+public enum BPRunsOn: String, Codable, Sendable, Equatable, CaseIterable {
+    case auto, onDevice, endpoint
+}
+
 /// One node in the Blueprint graph.
 public struct BPNode: Codable, Sendable, Equatable, Identifiable {
     public var id: BPNodeID
@@ -165,9 +173,14 @@ public struct BPNode: Codable, Sendable, Equatable, Identifiable {
     /// Per-node failure policy override (reuses `WorkflowRunner`'s `FailurePolicy`). `nil`
     /// inherits the run's default. Only meaningful on model ops.
     public var failurePolicy: FailurePolicy?
+    /// Per-node run target (HSM-22-01 — the field the hub parses that no producer could
+    /// emit before). `nil` inherits the run default. Only meaningful on model ops.
+    public var runsOn: BPRunsOn?
 
-    public init(id: BPNodeID, kind: BPNodeKind, failurePolicy: FailurePolicy? = nil) {
+    public init(id: BPNodeID, kind: BPNodeKind, failurePolicy: FailurePolicy? = nil,
+                runsOn: BPRunsOn? = nil) {
         self.id = id; self.kind = kind; self.failurePolicy = failurePolicy
+        self.runsOn = runsOn
     }
 
     /// A data-out pin reference for this node (name "out").

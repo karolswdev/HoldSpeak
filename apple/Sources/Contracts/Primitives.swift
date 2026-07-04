@@ -341,10 +341,12 @@ public enum RuntimeProfileMigration {
 //     the on-device runner actually runs. It is NOT synced as-is.
 //
 // They are kept apart ON PURPOSE so the contract layer never depends on the engine. The bridge is
-// one-directional + lossy by design: a Workbench `Workflow` serializes its graph into this type's
-// `graphJson` to travel, and the desk's saved-Ask carries `prompt`. A receiving surface rehydrates
-// a runnable `Workflow` from `graphJson` when (and only when) it has the engine. Until the
-// graph-bridge lands, `prompt` (the saved-Ask) is the v0 carrier and `graphJson` is reserved.
+// one-directional + lossy by design: a Workbench graph lowers into this type's `graphJson` to
+// travel (HSM-22-01: `Blueprint.graphJSONValue()` through the canonical coder — the exact shape
+// the hub's `workflow_graph.linearize()` parses, golden-pinned by `contracts/fixtures/`
+// `blueprint-*.json`), and the desk's saved-Ask carries `prompt` (also the hub's honest
+// fallback when it must refuse a non-linear graph). A receiving surface rehydrates a runnable
+// graph from `graphJson` when (and only when) it has the engine.
 public struct WorkflowDefinition: Codable, Equatable, Sendable, Identifiable {
     public var id: String
     public var name: String

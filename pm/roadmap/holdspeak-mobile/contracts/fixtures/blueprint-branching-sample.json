@@ -1,0 +1,69 @@
+{
+  "data_edges" : [
+
+  ],
+  "entry" : "e1",
+  "exec_edges" : [
+    {
+      "from" : {
+        "name" : "then",
+        "node" : "e1"
+      },
+      "to" : "br"
+    },
+    {
+      "from" : {
+        "name" : "true",
+        "node" : "br"
+      },
+      "to" : "a"
+    },
+    {
+      "from" : {
+        "name" : "false",
+        "node" : "br"
+      },
+      "to" : "b"
+    }
+  ],
+  "id" : "99999999-8888-7777-6666-555555555555",
+  "name" : "Golden branching",
+  "nodes" : [
+    {
+      "id" : "e1",
+      "kind" : {
+        "entry" : {
+
+        }
+      }
+    },
+    {
+      "id" : "br",
+      "kind" : {
+        "branch" : {
+          "condition" : {
+            "contains" : {
+              "keyword" : "risk"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id" : "a",
+      "kind" : {
+        "summarize" : {
+
+        }
+      }
+    },
+    {
+      "id" : "b",
+      "kind" : {
+        "rewrite" : {
+          "tone" : "Executive"
+        }
+      }
+    }
+  ]
+}

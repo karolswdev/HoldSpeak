@@ -2,7 +2,10 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 22
-- **Status:** todo
+- **Status:** done — see [`evidence-story-01.md`](./evidence-story-01.md). The graph
+  travels: canvas → Save (canonical lowering, `BPNode.runsOn` closed) → desk record →
+  DeskSync → the hub's `linearize()` accepts it runnable; the language boundary is
+  golden-pinned (Swift-encoded fixtures fed byte-for-byte into the hub parser).
 - **Depends on:** the Blueprint model + interpreter (Phase 14, shipped); the hub
   linearizer (HSM-22-02, shipped); `graph_json` sync survival (HSM-23-04, shipped).
 - **Unblocks:** 22-03 (the web consumes/authors the same shape), 22-04 (the
