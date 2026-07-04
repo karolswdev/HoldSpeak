@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 23
-- **Status:** in-progress
+- **Status:** done — see [`evidence-story-04.md`](./evidence-story-04.md). All 10 kinds
+  now carry the per-primitive push→pull + LWW + tombstone lock (chain/workflow were the
+  last two rows); §11 states the shipping ten-bucket wire; the stale "lossy
+  manual_context" finding is corrected in §12 + `agent.schema.json`, and the golden
+  fixture now pins the Phase-77 fields cross-language.
 - **Depends on:** the Wave-1 live-merge (`/api/sync/push` merges into the real stores) and
   the HS-72-01 tri-guard (ChangeSet schema + pytest + Swift golden fixture) — both
   shipped; this story finishes what they left open.

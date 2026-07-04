@@ -3,7 +3,10 @@
 **Status:** in-progress (opened 2026-07-04) — audit theme 6, the safety net for everything
 sync touches, opened before the mesh grows more newer-DB peers.
 
-**Last updated:** 2026-07-04 (**OPENED, survey-corrected — half the phase was pre-paid.**
+**Last updated:** 2026-07-04 (**3/4 — 23-04 landed the day the phase opened**: the
+chain/workflow matrix rows, §11 brought current, the manual_context truth corrected and
+fixture-pinned cross-language; see "Where we are". Earlier the same day: **OPENED,
+survey-corrected — half the phase was pre-paid.**
 The 2026-06-27 draft predates Wave 4 and Wave 1 of the Equilibrium build waves:
 **23-01 and 23-02 shipped in Wave 4** (`SQLiteStorage` reads `user_version` BEFORE
 migrate/stamp, refuses a newer-than-build DB with `StorageError.tooNew`, and snapshots a
@@ -56,13 +59,19 @@ that actually ships (§11 current, the stale lossy-finding corrected).
 | HSM-23-01 | Refuse-newer on the iPad store — **leads** | done (pre-paid, Wave 4) — [`evidence-story-01.md`](./evidence-story-01.md) |
 | HSM-23-02 | Backup-then-apply (timestamped) before migration | done (pre-paid, Wave 4) — [`evidence-story-02.md`](./evidence-story-02.md) |
 | HSM-23-03 | The readiness / doctor panel in Settings | todo |
-| HSM-23-04 | Sync integrity: the per-primitive round-trip matrix + the serialization-contract pin | in-progress |
+| HSM-23-04 | Sync integrity: the per-primitive round-trip matrix + the serialization-contract pin | done — [`evidence-story-04.md`](./evidence-story-04.md) |
 
 ## Where we are
 
 Opened 2026-07-04, survey-corrected: **2/4 on open** — 23-01/23-02 shipped in Equilibrium
 Wave 4 (evidence recorded from the shipped code + a fresh green run of
-`SQLiteStorageSchemaSafetyTests` + `StorageTests`, 8/8). 23-04 is in progress: the
-live-merge half shipped in Wave 1 and the HS-72-01 tri-guard pins the envelope; what lands
-now is the chain/workflow round-trip rows, the §11 refresh, and the manual_context truth
-correction. 23-03 (the doctor panel) follows — it is the phase's only new UI surface.
+`SQLiteStorageSchemaSafetyTests` + `StorageTests`, 8/8). **23-04 landed the same day
+(3/4):** all 10 sync kinds now carry the per-primitive push→pull + LWW + tombstone lock
+(chain/workflow were the last two unlocked rows; the workflow lock proves the Phase-22
+`graph_json` survives the wire byte-faithful), §11 of the serialization contract states
+the shipping ten-bucket wire instead of the dead two-bucket one, and the stale "lossy
+manual_context" finding is corrected everywhere it lived — §12, `agent.schema.json`, and
+the golden fixture, which now pins the Phase-77 fields on BOTH sides of the wire
+(`PrimitiveContractFixtureTests` asserts the values reach the Swift properties). Suites:
+39 sync/contract pytest green, validate.py ALL PASS, full `swift test` 432/8-skip/0-fail.
+**Only 23-03 remains** — the readiness/doctor panel, the phase's one new UI surface.

@@ -249,6 +249,98 @@ def test_directory_membership_push_pull_round_trip_and_tombstone(env) -> None:
     assert repulled["directory_memberships"][0]["meta"]["deleted"] is True
 
 
+# ── Chain + workflow sync (HSM-23-04: the last two matrix rows) ──────────────
+# Chain and workflow ride the generic _MERGEABLE push path; until Phase 23 they
+# were the only kinds with pull-serialization coverage but no push→pull lock of
+# their own. Same lock as every other kind: round-trip, LWW, tombstone.
+def test_chain_and_workflow_push_pull_round_trip_and_tombstone(env) -> None:
+    db, client = env
+    lm = "2030-06-26T12:00:00Z"
+    graph = {
+        "nodes": [
+            {"id": "n1", "kind": "input"},
+            {"id": "n2", "kind": "agent", "agent_id": "a1",
+             "runs_on": "endpoint", "failure_policy": "skip"},
+        ],
+        "edges": [{"from": "n1", "to": "n2"}],
+    }
+    changeset = {
+        "chains": [{
+            "meta": {"id": "c1", "kind": "chain", "last_modified": lm, "deleted": False},
+            "value": {"name": "Pipeline", "steps": ["a1", "a2"]},
+        }],
+        "workflows": [{
+            "meta": {"id": "w1", "kind": "workflow", "last_modified": lm, "deleted": False},
+            "value": {"name": "Blueprint", "prompt": "run it", "graph_json": graph},
+        }],
+    }
+    push = client.post("/api/sync/push", json=changeset)
+    assert push.status_code == 200
+    rcv = push.json()["received"]
+    assert rcv["chains"] == 1 and rcv["workflows"] == 1
+
+    # Merged into the live store, ordered steps + the graph intact.
+    chain = db.chains.get("c1")
+    assert chain is not None and chain.name == "Pipeline" and chain.steps == ["a1", "a2"]
+    wf = db.workflows.get("w1")
+    assert wf is not None and wf.prompt == "run it" and wf.graph_json == graph
+
+    # Pull brings them back with the right kind/last_modified, payloads faithful —
+    # the graph_json (the Phase-22 travelling graph) must survive byte-faithful.
+    pulled = client.get("/api/sync/pull").json()
+    crec = pulled["chains"][0]
+    assert crec["meta"] == {"id": "c1", "kind": "chain", "last_modified": lm, "deleted": False}
+    assert crec["value"]["steps"] == ["a1", "a2"]
+    wrec = pulled["workflows"][0]
+    assert wrec["meta"] == {"id": "w1", "kind": "workflow", "last_modified": lm, "deleted": False}
+    assert wrec["value"]["graph_json"] == graph
+
+    # A tombstone push (newer last_modified) hides both; the tombstones still ride
+    # a subsequent pull with no payload (the §12 rule: value is null when deleted).
+    lm2 = "2030-06-26T13:00:00Z"
+    tomb = {
+        "chains": [{"meta": {"id": "c1", "kind": "chain", "last_modified": lm2,
+                             "deleted": True}, "value": None}],
+        "workflows": [{"meta": {"id": "w1", "kind": "workflow", "last_modified": lm2,
+                                "deleted": True}, "value": None}],
+    }
+    assert client.post("/api/sync/push", json=tomb).status_code == 200
+    assert db.chains.get("c1") is None
+    assert db.workflows.get("w1") is None
+    repulled = client.get("/api/sync/pull").json()
+    assert repulled["chains"][0]["meta"]["deleted"] is True
+    assert repulled["chains"][0]["value"] is None
+    assert repulled["workflows"][0]["meta"]["deleted"] is True
+    assert repulled["workflows"][0]["value"] is None
+
+
+def test_chain_and_workflow_push_last_write_wins(env) -> None:
+    db, client = env
+    # Stored copies are newer than the incoming push.
+    db.chains.upsert(chain_id="c1", name="Newer", steps=["a9"],
+                     last_modified="2031-01-01T00:00:00Z")
+    db.workflows.upsert(workflow_id="w1", name="Newer", prompt="keep",
+                        last_modified="2031-01-01T00:00:00Z")
+    changeset = {
+        "chains": [{
+            "meta": {"id": "c1", "kind": "chain",
+                     "last_modified": "2030-01-01T00:00:00Z", "deleted": False},
+            "value": {"name": "Older", "steps": ["a1"]},
+        }],
+        "workflows": [{
+            "meta": {"id": "w1", "kind": "workflow",
+                     "last_modified": "2030-01-01T00:00:00Z", "deleted": False},
+            "value": {"name": "Older", "prompt": "clobber"},
+        }],
+    }
+    resp = client.post("/api/sync/push", json=changeset)
+    assert resp.status_code == 200
+    assert resp.json()["received"]["chains"] == 0
+    assert resp.json()["received"]["workflows"] == 0
+    assert db.chains.get("c1").name == "Newer" and db.chains.get("c1").steps == ["a9"]
+    assert db.workflows.get("w1").prompt == "keep"
+
+
 def test_directory_membership_push_last_write_wins(env) -> None:
     db, client = env
     # Stored copy is newer.

@@ -10,11 +10,13 @@
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
 **Current phase:** [Phase 23 — Mesh-safe storage](./phase-23-mesh-safe-storage/current-phase-status.md)
-— **OPENED 2026-07-04, survey-corrected: 2/4 on open.** The Wave-4 refuse-newer +
-backup-then-apply mechanism (23-01/02) is recorded done with fresh green runs; what
-remains is the sync-integrity tail (23-04, in progress: the chain/workflow round-trip
-matrix rows + the serialization-contract pin brought current) and the readiness/doctor
-panel (23-03) — the mechanism's only missing UI surface.
+— **OPENED 2026-07-04, survey-corrected, and built to 3/4 the same day.** The Wave-4
+refuse-newer + backup-then-apply mechanism (23-01/02) is recorded done with fresh green
+runs; **23-04 (sync integrity) landed**: all 10 sync kinds now carry a per-primitive
+push→pull + LWW + tombstone lock, §11 of the serialization contract states the shipping
+ten-bucket wire, and the stale "lossy manual_context" finding is corrected + golden-pinned
+on both sides of the wire. Only the readiness/doctor panel (23-03) remains — the
+mechanism's one missing UI surface.
 [Phase 21 — Honest everywhere](./phase-21-honest-everywhere/current-phase-status.md)
 stands at **4/5, gate staged**: the iPad half
 of honesty, shipped: the ONE `EgressScope` contract (`DeskPrimitive.egress`; connectors
@@ -43,7 +45,13 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**PHASE 23 OPENED, survey-corrected — half the phase was
+**Last updated:** 2026-07-04 (**PHASE 23 BUILT TO 3/4 THE DAY IT OPENED — 23-04 sync
+integrity landed**: the chain/workflow rows complete the 10-kind per-primitive round-trip
+matrix (the workflow lock proves the Phase-22 `graph_json` travels byte-faithful), §11
+rewritten to the shipping wire, the stale "lossy manual_context" finding corrected in §12
++ `agent.schema.json` and PINNED cross-language (the golden fixture now carries the
+Phase-77 fields; Swift asserts they reach the properties). Earlier:
+**PHASE 23 OPENED, survey-corrected — half the phase was
 pre-paid.** 23-01/02 (refuse-newer + timestamped backup-then-apply on the iPad store)
 shipped in Equilibrium Wave 4 and are recorded done with a fresh 8/8 green run; 23-04's
 live-merge half shipped in Wave 1 and the HS-72-01 tri-guard pins the envelope. In

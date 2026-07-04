@@ -32,6 +32,8 @@
     "tools": [],
     "kb_id": "kb-golden-1",
     "profile_id": null,
+    "manual_context": "Always consider the Q3 launch.",
+    "use_zone_context": true,
     "created_at": "2026-07-02T05:00:00Z",
     "last_modified": "2026-07-02T06:00:00Z",
     "deleted": false
