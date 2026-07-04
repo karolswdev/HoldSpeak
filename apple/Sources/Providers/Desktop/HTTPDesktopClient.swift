@@ -199,6 +199,19 @@ public struct HTTPDesktopClient: IDesktopClient {
                                            body: ["agent": agent, "session_id": sessionID, "pinned": pinned]))
     }
 
+    // MARK: - The live coder set (HSM-17-02/03)
+
+    /// `GET /api/coders/sessions` — the hub's full live coder set (every session
+    /// the hooks captured, with the decayed effective `state` and the pending
+    /// `question`). The desk polls this to render live coders as primitives.
+    public func coderSessions() async throws -> [LiveCoderSession] {
+        let data = try await send(makeRequest(path: "api/coders/sessions"))
+        guard let dto = try? HoldSpeakContracts.decoder().decode(CoderSessionsDTO.self, from: data) else {
+            throw DesktopClientError.malformed
+        }
+        return dto.toSessions()
+    }
+
     // MARK: - Run on the hub (HSM-15-xx)
 
     /// `POST /api/agents/{id}/run` body `{input}` → `{output}`. The big model runs on
@@ -261,6 +274,43 @@ public struct HTTPDesktopClient: IDesktopClient {
             return CompanionBoardState(
                 readyForReply: readyForAgentReply ?? false, blockers: blockers ?? [],
                 awaiting: agent?.awaitingResponse ?? false, targets: targets)
+        }
+    }
+
+    /// Loose decode of `/api/coders/sessions` (HSM-17-02) — the full live set.
+    /// Every field optional so the client tolerates the hub payload evolving;
+    /// keys arrive snake_case and convert via the shared decoder.
+    struct CoderSessionsDTO: Decodable {
+        var sessions: [Item]?
+
+        struct Item: Decodable {
+            var ageSeconds: Int?
+            var session: Session?
+            struct Session: Decodable {
+                var agent: String?
+                var sessionId: String?
+                var cwd: String?
+                var state: String?
+                var question: String?
+                var projectName: String?
+                var model: String?
+                var lastPrompt: String?
+                var lastToolName: String?
+                var eventCount: Int?
+                var pinned: Bool?
+            }
+        }
+
+        func toSessions() -> [LiveCoderSession] {
+            (sessions ?? []).compactMap { item -> LiveCoderSession? in
+                guard let s = item.session, let a = s.agent, let sid = s.sessionId else { return nil }
+                return LiveCoderSession(
+                    agent: a, sessionID: sid, state: s.state ?? "working",
+                    question: s.question, project: s.projectName, cwd: s.cwd, model: s.model,
+                    lastPrompt: s.lastPrompt, lastTool: s.lastToolName,
+                    eventCount: s.eventCount ?? 0, pinned: s.pinned ?? false,
+                    ageSeconds: item.ageSeconds)
+            }
         }
     }
 

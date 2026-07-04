@@ -108,6 +108,16 @@ public protocol IDesktopClient: Sendable {
     /// Pin/unpin a waiting session as the sticky target (`POST /api/coders/pin`).
     func pinCompanionTarget(agent: String, sessionID: String, pinned: Bool) async throws
 
+    // MARK: The live coder set (HSM-17-01/02/03)
+
+    /// The FULL live coder set (`GET /api/coders/sessions`) — every session the
+    /// hub's hooks captured, not just the waiting board: `state` is the hub's
+    /// decayed read (working | waiting | idle | ended), `question` the pending
+    /// blocking ask. This is the HSM-17-01 transport call made concrete: coder
+    /// presence is ephemeral, so it rides a typed polled endpoint — never the
+    /// durable ChangeSet.
+    func coderSessions() async throws -> [LiveCoderSession]
+
     // MARK: Run on the hub (HSM-15-xx — the Mesh "RUNS ON: your Mac")
 
     /// Run a synced Agent persona on the desktop hub's big model
@@ -171,6 +181,12 @@ public extension IDesktopClient {
     func runChain(id: String, input: String) async throws -> HubRunResult {
         throw HubRunUnsupported.notImplemented
     }
+
+    /// Default live-set stub (same posture as the hub-run stubs): a non-HTTP
+    /// conformer honestly reports "unsupported" instead of inventing sessions.
+    func coderSessions() async throws -> [LiveCoderSession] {
+        throw HubRunUnsupported.notImplemented
+    }
 }
 
 /// Thrown by the default hub-run stub when a client doesn't implement it.
@@ -204,6 +220,38 @@ public struct CompanionTarget: Sendable, Equatable, Identifiable {
                 selected: Bool = false, pinned: Bool = false, stale: Bool = false, confidence: String? = nil) {
         self.agent = agent; self.sessionID = sessionID; self.question = question; self.project = project
         self.selected = selected; self.pinned = pinned; self.stale = stale; self.confidence = confidence
+    }
+
+    public var id: String { "\(agent)/\(sessionID)" }
+}
+
+/// One live coder session as the desk shows it (HSM-17-02/03) — a row from
+/// `GET /api/coders/sessions`, the hub's full live set. Ephemeral presence, not
+/// durable content: it is polled and tombstoned (`state == "ended"`), never
+/// synced through the ChangeSet. `question` was secret-filtered at ingest on
+/// the hub, so it is safe to render.
+public struct LiveCoderSession: Sendable, Equatable, Identifiable {
+    public var agent: String          // "claude" / "codex"
+    public var sessionID: String
+    public var state: String          // working | waiting | idle | ended (hub-decayed)
+    public var question: String?      // the blocking ask when waiting
+    public var project: String?
+    public var cwd: String?
+    public var model: String?
+    public var lastPrompt: String?
+    public var lastTool: String?
+    public var eventCount: Int
+    public var pinned: Bool
+    public var ageSeconds: Int?
+
+    public init(agent: String, sessionID: String, state: String, question: String? = nil,
+                project: String? = nil, cwd: String? = nil, model: String? = nil,
+                lastPrompt: String? = nil, lastTool: String? = nil, eventCount: Int = 0,
+                pinned: Bool = false, ageSeconds: Int? = nil) {
+        self.agent = agent; self.sessionID = sessionID; self.state = state
+        self.question = question; self.project = project; self.cwd = cwd; self.model = model
+        self.lastPrompt = lastPrompt; self.lastTool = lastTool; self.eventCount = eventCount
+        self.pinned = pinned; self.ageSeconds = ageSeconds
     }
 
     public var id: String { "\(agent)/\(sessionID)" }
