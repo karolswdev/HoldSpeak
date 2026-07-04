@@ -3,8 +3,12 @@
 **Status:** in-progress (opened 2026-07-04) — audit theme 6, the safety net for everything
 sync touches, opened before the mesh grows more newer-DB peers.
 
-**Last updated:** 2026-07-04 (**4/5 — 23-03 landed the same day, and the standing
-docs-story rule added 23-05.** The readiness panel is live: `StoreHealthProbe`
+**Last updated:** 2026-07-04 (**4/5 with the gate STAGED — the whole phase built the
+day it opened.** 23-05's docs half is done (README iPad section, ARCHITECTURE device
+path, the web companion page) and [`HSM-23-WALK-RIDER.md`](./HSM-23-WALK-RIDER.md) is
+staged: R1 + optional R2, ~2 minutes riding the 18/19/21 couch session — **that one
+owner sitting now closes Phases 18, 19, 21, AND 23.** Earlier: **23-03 landed the same
+day, and the standing docs-story rule added 23-05.** The readiness panel is live: `StoreHealthProbe`
 (ok/missing/refused-newer/failed + backup count, same open path as the app),
 `SetupStatus.sections` decoded (the hub's doctor block was being dropped; the old test
 stub had even drifted from the real wire), the two-card READINESS section in Settings,
@@ -70,7 +74,7 @@ that actually ships (§11 current, the stale lossy-finding corrected).
 | HSM-23-02 | Backup-then-apply (timestamped) before migration | done (pre-paid, Wave 4) — [`evidence-story-02.md`](./evidence-story-02.md) |
 | HSM-23-03 | The readiness / doctor panel in Settings | done — [`evidence-story-03.md`](./evidence-story-03.md) |
 | HSM-23-04 | Sync integrity: the per-primitive round-trip matrix + the serialization-contract pin | done — [`evidence-story-04.md`](./evidence-story-04.md) |
-| HSM-23-05 | Docs + the walk rider (schema safety joins the entry points) | todo |
+| HSM-23-05 | Docs + the walk rider (schema safety joins the entry points) | in-progress — docs done; [`HSM-23-WALK-RIDER.md`](./HSM-23-WALK-RIDER.md) staged (R1 + optional R2, ~2 min); the rider is the owner's |
 
 ## Where we are
 
@@ -88,5 +92,6 @@ the golden fixture, which now pins the Phase-77 fields on BOTH sides of the wire
 **23-03 followed the same day (4/5)** — the readiness/doctor panel in Settings (see
 "Last updated" above for the full account; per-story evidence + 3 screenshots). The
 standing docs-story rule ([[feedback_dedicated_docs_story]]) added **HSM-23-05** on
-this pass: entry-point docs + a ~2-minute walk rider joining the staged couch session.
-That rider is now the phase's only open item.
+this pass; its docs half landed the same day and the rider is staged. **The owner's
+couch session is the phase's only open item** — it now closes four phases in one
+sitting (18, 19, 21, 23).

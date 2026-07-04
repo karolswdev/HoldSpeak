@@ -19,7 +19,10 @@ day** — Settings now states store health (`StoreHealthProbe`: ok / not created
 refused-newer / failed + backups), mic, models, app version, AND the paired hub's full
 doctor (`SetupStatus.sections`, previously dropped), proven live against a real scratch
 hub and a real seeded newer-version store (refused, rendered amber, left byte-intact).
-Only 23-05 (docs + the ~2-minute walk rider) remains.
+23-05's docs half is done (README, ARCHITECTURE, the web companion page) and
+[`HSM-23-WALK-RIDER.md`](./phase-23-mesh-safe-storage/HSM-23-WALK-RIDER.md) is staged
+(R1 + optional R2, ~2 min) — **the one owner couch session now closes Phases 18, 19,
+21, and 23.**
 [Phase 21 — Honest everywhere](./phase-21-honest-everywhere/current-phase-status.md)
 stands at **4/5, gate staged**: the iPad half
 of honesty, shipped: the ONE `EgressScope` contract (`DeskPrimitive.egress`; connectors
@@ -48,7 +51,11 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**PHASE 23 BUILT TO 4/5 THE DAY IT OPENED.** 23-03: the
+**Last updated:** 2026-07-04 (**PHASE 23 FULLY BUILT AND GATE-STAGED THE DAY IT
+OPENED.** 23-05's docs landed (README iPad section, ARCHITECTURE device path, the web
+companion page) and [`HSM-23-WALK-RIDER.md`](./phase-23-mesh-safe-storage/HSM-23-WALK-RIDER.md)
+is staged (R1 + optional R2, ~2 min) — the couch session now closes FOUR phases
+(18/19/21/23). Earlier the same day: 23-03: the
 readiness/doctor panel — `StoreHealthProbe` (the Wave-4 safety gets a face; refused-newer
 renders amber and the probe never stamps), `SetupStatus.sections` decoded (the hub's
 doctor block was dropped; the old test stub had drifted from the real wire), the
