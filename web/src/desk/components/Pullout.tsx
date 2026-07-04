@@ -7,12 +7,13 @@ import { motion } from "motion/react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../../scripts/desk/sprites.js";
 import { useDesk } from "../store";
+import { parseLinearGraph, stepLabel } from "../graph";
 import { MicButton } from "./MicButton";
 import { lineage } from "../lineage";
 import { objGlow, type WorldObject } from "../world";
 
 const FILABLE = new Set(["meeting", "artifact", "note", "agent", "chain", "workflow", "kb"]);
-const EDITABLE = new Set(["note", "kb", "agent"]);
+const EDITABLE = new Set(["note", "kb", "agent", "workflow"]);
 
 interface MeetingDetail {
   intel?: { summary?: string; action_items?: any[]; topics?: string[] } | null;
@@ -31,6 +32,7 @@ export function Pullout({ o }: { o: WorldObject }) {
   const [runInput, setRunInput] = useState("");
   const [runBusy, setRunBusy] = useState(false);
   const [runOut, setRunOut] = useState("");
+  const [runWarning, setRunWarning] = useState("");
   const [filing, setFiling] = useState(false);
   const [answered, setAnswered] = useState<"selected" | "sent" | "failed" | null>(null);
 
@@ -65,10 +67,14 @@ export function Pullout({ o }: { o: WorldObject }) {
   const run = async () => {
     setRunBusy(true);
     setRunOut("");
+    setRunWarning("");
     const result = await useDesk
       .getState()
       .runCapability(o.kind as "agent" | "chain" | "workflow", o.id, runInput);
     setRunOut(result.output);
+    // HSM-22-03 — the hub's honest refusal (graph ran as the prompt fallback)
+    // reaches the reader instead of being dropped.
+    setRunWarning(result.warning || "");
     setRunBusy(false);
   };
 
@@ -209,7 +215,13 @@ export function Pullout({ o }: { o: WorldObject }) {
           <section>
             <h3>Steps</h3>
             <ul>
-              {((ir.steps as string[]) || (ir.prompt ? [ir.prompt] : [])).map((st, i) => (
+              {(
+                (o.kind === "workflow" && ir.graphJson
+                  ? parseLinearGraph(ir.graphJson)?.map(stepLabel) ?? ["Graphed on iPad"]
+                  : null) ||
+                (ir.steps as string[]) ||
+                (ir.prompt ? [ir.prompt] : [])
+              ).map((st, i) => (
                 <li key={i}>{st}</li>
               ))}
             </ul>
@@ -262,6 +274,7 @@ export function Pullout({ o }: { o: WorldObject }) {
                 {runBusy ? "…" : "Run"}
               </button>
             </div>
+            {runWarning && <p className="desk-run-warning">⚠ {runWarning}</p>}
             {runOut && <pre className="desk-pullout-md">{runOut}</pre>}
           </section>
         )}

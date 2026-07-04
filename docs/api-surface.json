@@ -2037,7 +2037,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/workflows/{workflow_id}",
@@ -2045,7 +2047,9 @@
         "GET"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/workflows/{workflow_id}",
@@ -2053,7 +2057,9 @@
         "PUT"
       ],
       "module": "web.routes.primitives.workflows",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/workflows/{workflow_id}/run",

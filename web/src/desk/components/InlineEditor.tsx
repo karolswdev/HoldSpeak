@@ -8,6 +8,10 @@ import { useDesk } from "../store";
 import type { WorldObject } from "../world";
 import type { UnitPos } from "../store";
 import { MicButton } from "./MicButton";
+import {
+  buildLinearGraph, parseLinearGraph, stepLabel, STEP_PALETTE,
+  type LinearStep,
+} from "../graph";
 
 function useDebouncedSave(kind: string, id: string) {
   const { updatePrimitive } = useDesk.getState();
@@ -57,6 +61,22 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
         ? value.split(",").map((t) => t.trim()).filter(Boolean)
         : value,
     });
+  };
+
+  // HSM-22-03 — the workflow's linear-step builder. `null` = a graph this
+  // editor cannot faithfully re-emit (control flow / iPad provenance): shown
+  // read-only, never silently rewritten.
+  const [steps, setSteps] = useState<LinearStep[] | null>(() =>
+    o.kind === "workflow" ? parseLinearGraph((live as any).graphJson) : null,
+  );
+  const commitGraph = (next: LinearStep[], name?: string) => {
+    setSteps(next);
+    save({ graph_json: buildLinearGraph(o.id, name ?? (f.name || "Workflow"), next) });
+  };
+  const setStepParam = (i: number, patch: Partial<LinearStep>) => {
+    if (!steps) return;
+    const next = steps.map((s, j) => (j === i ? ({ ...s, ...patch } as LinearStep) : s));
+    commitGraph(next);
   };
 
   useEffect(() => {
@@ -111,6 +131,88 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
             placeholder="Name"
             onChange={(e) => set("name", "name", e.target.value)}
           />
+        )}
+        {o.kind === "workflow" && (
+          <>
+            <input
+              value={f.name}
+              placeholder="Name"
+              onChange={(e) => {
+                setF((prev) => ({ ...prev, name: e.target.value }));
+                if (steps) {
+                  save({ name: e.target.value,
+                         graph_json: buildLinearGraph(o.id, e.target.value || "Workflow", steps) });
+                } else {
+                  save({ name: e.target.value });
+                }
+              }}
+            />
+            {steps ? (
+              <div className="desk-wf-steps">
+                {steps.map((s, i) => (
+                  <div key={i} className="desk-wf-step">
+                    <span className="desk-wf-step-label">{stepLabel(s)}</span>
+                    {s.kind === "rewrite" && (
+                      <input
+                        value={s.tone}
+                        placeholder="Tone"
+                        onChange={(e) => setStepParam(i, { tone: e.target.value })}
+                      />
+                    )}
+                    {s.kind === "keepIf" && (
+                      <input
+                        value={s.keyword}
+                        placeholder="Keyword"
+                        onChange={(e) => setStepParam(i, { keyword: e.target.value })}
+                      />
+                    )}
+                    {s.kind === "llm" && (
+                      <input
+                        value={s.prompt}
+                        placeholder="Prompt ({input} substitutes)"
+                        onChange={(e) => setStepParam(i, { prompt: e.target.value })}
+                      />
+                    )}
+                    <button
+                      type="button"
+                      className="desk-chip quiet"
+                      aria-label="Move step up"
+                      disabled={i === 0}
+                      onClick={() => {
+                        const next = [...steps];
+                        [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                        commitGraph(next);
+                      }}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      className="desk-chip quiet"
+                      aria-label="Remove step"
+                      onClick={() => commitGraph(steps.filter((_, j) => j !== i))}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                <div className="desk-wf-palette">
+                  {STEP_PALETTE.map((p) => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      className="desk-chip quiet"
+                      onClick={() => commitGraph([...steps, p.make()])}
+                    >
+                      + {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="quiet">Graphed on iPad</p>
+            )}
+          </>
         )}
         {o.kind === "agent" && (
           <>

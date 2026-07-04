@@ -3,8 +3,16 @@
 **Status:** in-progress (opened 2026-07-04) — audit theme 5, the keystone the
 cross-surface workflow story waits on. Independent of the walk-gated phases.
 
-**Last updated:** 2026-07-04 (**2/4 — 22-01 landed the day the phase opened: THE GRAPH
-TRAVELS.** The shipping canvas saves a real linear Blueprint (per-node
+**Last updated:** 2026-07-04 (**3/4 — 22-03 followed: the web is the second producer.**
+The desk authors a real linear graph in-world (`+ Workflow` → the step builder;
+palette/params/reorder, debounced PUTs), emitting the ONE canonical wire — live-proven
+in real Chromium against a scratch hub (authored → persisted → the hub's `linearize()`
+accepts). `primitives.ts` types the object wire; the hub's honest run `warning`
+finally reaches the reader; and graphs the web cannot faithfully re-emit (control
+flow, iPad provenance) are read-only, never silently stripped. vitest 18, pytest 34,
+web build + real-Chromium preflight green. Only 22-04 remains (the cross-surface RUN
++ `runWorkflow` on the iPad hub path + docs/rider). Earlier: **2/4 — 22-01 landed the
+day the phase opened: THE GRAPH TRAVELS.** The shipping canvas saves a real linear Blueprint (per-node
 `failure_policy` + the NEW `runs_on`) through the canonical coder into a desk
 `WorkflowRecord`; a live DeskSync pass ported it to a scratch hub whose own
 `linearize()` accepted it runnable — authored → saved → synced → parseable, proven
@@ -60,7 +68,7 @@ ships a minimal linear builder emitting the same shape, or scopes its claim hone
 |----|-------|--------|
 | HSM-22-01 | The `graph_json` serializer on iPad (+ `runs_on` on `BPNode`, Save, `DeskSync`, the Swift-encoded golden fixture → `linearize()` conformance) — **leads** | done — [`evidence-story-01.md`](./evidence-story-01.md) |
 | HSM-22-02 | The hub honors the graph (control flow / `failure_policy` / `runs_on`, or honest omission) | done (pre-paid, Wave 1) — [`evidence-story-02.md`](./evidence-story-02.md) |
-| HSM-22-03 | Web authors a linear graph (or honest scope) + the `primitives.ts` type fix + the run UI renders the hub's `warning` | todo |
+| HSM-22-03 | Web authors a linear graph (or honest scope) + the `primitives.ts` type fix + the run UI renders the hub's `warning` | done — [`evidence-story-03.md`](./evidence-story-03.md) |
 | HSM-22-04 | The cross-surface proof (authored → synced → run) + `runWorkflow` on the iPad hub path + docs | todo |
 
 ## Where we are
@@ -71,6 +79,7 @@ landed the same day (2/4)** — the keystone: the Save on the shipping canvas, t
 canonical lowering (with `BPNode.runsOn` closing the producer hole), the desk-record
 sync wiring, and the Swift-encoded golden fixtures a new pytest feeds into
 `linearize()` — proven live (authored → saved → synced → the hub parses it
-runnable). Remaining: **22-03** (the web linear builder + `primitives.ts` type fix +
-the dropped run `warning`) and **22-04** (the cross-surface RUN + `runWorkflow` on
-the iPad hub path + the 23-04 sync-fixture upgrade + docs/rider).
+runnable). **22-03 followed the same day (3/4)** — the web desk is the second
+producer of the one wire (see "Last updated"). Remaining: **22-04** only — the
+cross-surface RUN (+ `runWorkflow` on the iPad hub path, the 23-04 sync-fixture
+upgrade, docs/rider).

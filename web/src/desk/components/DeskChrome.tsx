@@ -72,6 +72,9 @@ export function DeskChrome() {
         <button type="button" className="desk-chip" onClick={() => void createPrimitive("zone")}>
           + Zone
         </button>
+        <button type="button" className="desk-chip" onClick={() => void createPrimitive("workflow")}>
+          + Workflow
+        </button>
         {Object.keys(positions).length > 0 && (
           <button
             type="button"

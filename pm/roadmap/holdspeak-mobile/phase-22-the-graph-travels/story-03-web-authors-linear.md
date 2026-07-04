@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 22
-- **Status:** todo
+- **Status:** done — see [`evidence-story-03.md`](./evidence-story-03.md). The web
+  desk authors a real linear graph in the one canonical wire (in-world step builder,
+  live-proven in Chromium: authored → persisted → the hub's `linearize()` accepts);
+  the `primitives.ts` type fixed; the hub's run `warning` reaches the reader; iPad
+  provenance is never silently stripped (read-only).
 - **Depends on:** HSM-22-01 (the canonical authored shape to match).
 - **Unblocks:** 22-04's any-surface leg.
 - **Owner:** unassigned

@@ -8,6 +8,7 @@ import {
   EMPTY_ITEMS, loadAll,
   type Items, type Status,
 } from "./api";
+import { buildLinearGraph } from "./graph";
 import { loadSetup, type SetupStatus } from "./setup";
 
 export interface UnitPos { x: number; y: number }
@@ -57,7 +58,7 @@ interface DeskState {
   refresh(): Promise<void>;
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
    * editor open. The object IS the editor — no modal, ever. */
-  createPrimitive(kind: "note" | "kb" | "agent" | "zone"): Promise<void>;
+  createPrimitive(kind: "note" | "kb" | "agent" | "zone" | "workflow"): Promise<void>;
   markNew(id: string): void;
   openEditor(id: string): void;
   closeEditor(): void;
@@ -85,7 +86,7 @@ interface DeskState {
     kind: "agent" | "chain" | "workflow",
     id: string,
     input: string,
-  ): Promise<{ ok: boolean; output: string; artifactId: string | null }>;
+  ): Promise<{ ok: boolean; output: string; artifactId: string | null; warning: string | null }>;
   setPosition(id: string, pos: UnitPos): void;
   persistPositions(): void;
   clearPosition(id: string): void;
@@ -126,6 +127,14 @@ export const useDesk = create<DeskState>((set, get) => ({
       kb: ["/api/kbs", "kb", { name: "New KB" }],
       agent: ["/api/agents", "agent", { name: "New agent", avatar: "🤖" }],
       zone: ["/api/directories", "directory", { name: "New zone" }],
+      // HSM-22-03 — a workflow is born with a real one-step linear graph in
+      // the canonical wire shape (never an empty {} the run route must refuse).
+      workflow: ["/api/workflows", "workflow", {
+        name: "New workflow",
+        graph_json: buildLinearGraph(
+          crypto.randomUUID(), "New workflow", [{ kind: "summarize" }],
+        ) as unknown as Record<string, unknown>,
+      }],
     };
     const [url, wireKey, body] = posts[kind];
     let createdId: string | null = null;
@@ -177,6 +186,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       kb: `/api/kbs/${encodeURIComponent(id)}`,
       agent: `/api/agents/${encodeURIComponent(id)}`,
       directory: `/api/directories/${encodeURIComponent(id)}`,
+      workflow: `/api/workflows/${encodeURIComponent(id)}`,
     };
     const url = urls[kind];
     if (!url) return;
@@ -295,15 +305,18 @@ export const useDesk = create<DeskState>((set, get) => ({
       const data = await res.json().catch(() => ({}));
       const output = String(data.output || data.error || `HTTP ${res.status}`);
       const artifactId = res.ok ? String(data.artifact_id || "") || null : null;
+      // HSM-22-03 — the hub's honest refusal (a graph it ran as the prompt
+      // fallback) rides the response as `warning`; surface it, never drop it.
+      const warning = data.warning ? String(data.warning) : null;
       if (artifactId) {
         // The result is a REAL artifact now — it lands on the desk in
         // front of you, wearing the beat (the HS-73-06 grammar).
         await get().refresh();
         get().markNew(artifactId);
       }
-      return { ok: res.ok, output, artifactId };
+      return { ok: res.ok, output, artifactId, warning };
     } catch (e) {
-      return { ok: false, output: String(e), artifactId: null };
+      return { ok: false, output: String(e), artifactId: null, warning: null };
     }
   },
 
