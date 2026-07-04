@@ -2068,6 +2068,7 @@
       ],
       "module": "web.routes.primitives.workflows",
       "consumers": [
+        "ios",
         "web"
       ]
     },

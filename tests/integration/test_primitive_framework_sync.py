@@ -574,3 +574,63 @@ def test_profile_never_sync_holds_across_every_read_surface(env) -> None:
     # 3) The shape itself round-tripped intact (parity is real, not achieved by dropping data).
     assert got_x["base_url"] == "https://api.anthropic.com/v1" and got_x["context_limit"] == 200000
     assert got_y["model"] == "anthropic/claude-sonnet-4" and got_y["requires_key"] is True
+
+
+# ── HSM-22-04: the travelling graph — SYNCED in, RUN on the hub ──────────────
+
+def test_ipad_synced_graph_workflow_runs_on_the_hub(env, monkeypatch) -> None:
+    """The whole Phase-22 loop over the real app: the SWIFT-ENCODED golden
+    fixture (`blueprint-linear-sample.json`, the iPad Blueprint encoder's exact
+    bytes) rides `/api/sync/push` as a workflow's `graph_json`, then
+    `/api/workflows/{id}/run` executes the synced graph — threaded node order,
+    the per-node provenance surfaced in the steps, the run-born artifact minted.
+    Authored on one surface, synced, run on the hub: the graph travels."""
+    db, client = env
+
+    fixtures = (Path(__file__).resolve().parents[2]
+                / "pm" / "roadmap" / "holdspeak-mobile" / "contracts" / "fixtures")
+    graph = json.loads((fixtures / "blueprint-linear-sample.json").read_text(encoding="utf-8"))
+
+    lm = "2030-06-26T12:00:00Z"
+    push = client.post("/api/sync/push", json={"workflows": [{
+        "meta": {"id": "wf-golden", "kind": "workflow", "last_modified": lm, "deleted": False},
+        "value": {"name": graph["name"], "prompt": "fallback: {input}", "graph_json": graph},
+    }]})
+    assert push.status_code == 200
+    assert push.json()["received"]["workflows"] == 1
+
+    calls = []
+
+    class _FakeIntel:
+        active_provider = "local"
+
+        def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
+            calls.append(user_prompt)
+            return f"risk: finding {len(calls)}\nnoise line"
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
+    )
+
+    resp = client.post("/api/workflows/wf-golden/run", json={"input": "the standup"})
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+
+    # The graph ran (never the prompt fallback): llm → extract → keep_if in the
+    # fixture's exec order, with the iPad-authored provenance on the steps.
+    assert "warning" not in body
+    assert [s["node_id"] for s in body["steps"]] == ["ask", "dec", "keep"]
+    assert [s["kind"] for s in body["steps"]] == ["llm", "extract", "keep_if"]
+    by_id = {s["node_id"]: s for s in body["steps"]}
+    assert by_id["ask"]["failure_policy"] == "fallbackOnDevice"
+    assert by_id["ask"]["runs_on"] == "endpoint"
+    assert by_id["dec"]["failure_policy"] == "skip"
+    assert by_id["dec"]["runs_on"] == "onDevice"
+
+    # Two model ops fired; keep_if (pure) kept only the risk line of the last output.
+    assert len(calls) == 2
+    assert body["output"] == "risk: finding 2"
+
+    # The run persisted as a run-born artifact with the workflow as its lineage.
+    assert body["artifact_id"]
+    assert body["sources"] == [{"source_type": "workflow", "source_ref": "wf-golden"}]

@@ -265,6 +265,7 @@ flowchart TD
   HOST -. "intel" .-> LLM(["LLM backend"])
   HOST --> ART["Typed artifacts:<br/>decisions, action items, ADRs, risk registers, and more"]
   RUNB["A persona / chain / workflow run<br/>(web/routes/primitives/)"] -- "run-born artifact,<br/>lineage names the capability" --> ART
+  GRAPH["A Workbench graph, authored on the iPad canvas<br/>or the web desk, synced as graph_json"] -- "linear subset runs;<br/>control flow refused with a warning<br/>(web/routes/workflow_graph.py)" --> RUNB
   ART --> AFT["Aftercare digest:<br/>open, decided, changed since last time<br/>(meeting_aftercare.py)"]
   AFT --> ISSUE["An accepted action becomes<br/>a GitHub issue proposal"]
   AFT --> SLACK["The digest or draft becomes<br/>a Send to Slack proposal (slack_export.py)"]

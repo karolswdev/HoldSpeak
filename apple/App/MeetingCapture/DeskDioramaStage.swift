@@ -2219,18 +2219,23 @@ struct DioRecordOrb: View {
 enum DeskRunTarget: String { case device, mac }
 
 struct PendingHubRun: Identifiable, Equatable {
-    enum Kind: Equatable { case agent(AgentRecord); case chain(ChainRecord) }
+    // HSM-22-04: a workflow joins the runs-on choice — its graph travels, so the
+    // hub can finally run it (the linear subset; refusals ride back as a warning).
+    enum Kind: Equatable { case agent(AgentRecord); case chain(ChainRecord); case workflow(WorkflowRecord) }
     let id = UUID()
     let kind: Kind
     let input: String
     let inputId: String            // the routed primitive's id — the lineage's "from" card
     let inputTitle: String
     var name: String { switch kind { case .agent(let a): return a.name.isEmpty ? "Agent" : a.name
-                                      case .chain(let c): return c.name.isEmpty ? "Crew" : c.name } }
+                                      case .chain(let c): return c.name.isEmpty ? "Crew" : c.name
+                                      case .workflow(let w): return w.name.isEmpty ? "Workflow" : w.name } }
     var isChain: Bool { if case .chain = kind { return true }; return false }
+    var isWorkflow: Bool { if case .workflow = kind { return true }; return false }
     // The id + kind of what produced the run — carried into the output's provenance.
-    var viaId: String { switch kind { case .agent(let a): return a.id; case .chain(let c): return c.id } }
-    var viaKind: String { isChain ? "chain" : "agent" }
+    var viaId: String { switch kind { case .agent(let a): return a.id; case .chain(let c): return c.id
+                                       case .workflow(let w): return w.id } }
+    var viaKind: String { isChain ? "chain" : (isWorkflow ? "workflow" : "agent") }
     // The lineage record stamped onto the resulting OutputRecord.
     var provenance: RunProvenance {
         RunProvenance(sourceCardId: inputId, sourceCardTitle: inputTitle,
@@ -2257,7 +2262,8 @@ struct DioRunTargetSheet: View {
             Color.black.opacity(0.6).ignoresSafeArea().onTapGesture { onCancel() }
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 9) {
-                    Image(systemName: run.isChain ? "arrow.triangle.branch" : "person.crop.square.fill")
+                    Image(systemName: run.isChain ? "arrow.triangle.branch"
+                          : (run.isWorkflow ? "point.topleft.down.curvedto.point.bottomright.up" : "person.crop.square.fill"))
                         .font(.system(size: 15, weight: .bold)).foregroundStyle(.white)
                         .frame(width: 36, height: 36).background(Circle().fill(DioPal.accent))
                     VStack(alignment: .leading, spacing: 1) {
@@ -3776,6 +3782,17 @@ struct DioStage: View {
                 if ProcessInfo.processInfo.environment["HS_DESK_OPEN"] == "connector-github" {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { select("conn:github") }
                 }
+                // HSM-22-04 proof affordance — run the first SYNCED graph workflow on the
+                // paired hub with a fixed input: the exact runOnHub path the sheet's
+                // "your desktop" row fires (after the desk's own sync pass settles).
+                if ProcessInfo.processInfo.environment["HS_DESK_WF_HUB_RUN"] == "1" {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                        guard let wf = workflows.first(where: { $0.contract.graphJson != nil }) else { return }
+                        runOnHub(.init(kind: .workflow(wf),
+                                       input: "Standup: we shipped the graph bridge. Risk: the demo endpoint is slow. Decision: keep linear runs on the hub.",
+                                       inputId: "demo", inputTitle: "Standup"))
+                    }
+                }
                 // THE SYNC STATUS demo — show the desk wearing each sync state + a pull-arrival.
                 // `synced` (calm, with a "just now") · `syncing` (breathing) · `offline` (queued) ·
                 // `error` · `pull` (a note authored on the web lands with the NEW-arrival halo).
@@ -4611,10 +4628,19 @@ struct DioStage: View {
             sendSourceId = sourceId; sendTargetName = target.title
             sendTargetConn = (target as? ConnectorPrimitive)?.connId ?? "slack"
             withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showSendCard = true }
-        case .workflow:                                         // a saved tool → run its prompt, no sheet
-            guard let wf = target as? WorkflowPrimitive else { break }
-            routeSourceId = sourceId
-            runRoute(lens: wf.rec.name, prompt: wf.rec.prompt)
+        case .workflow:                                         // a saved tool / a travelling graph
+            guard let wf = target as? WorkflowPrimitive,
+                  let src = members().first(where: { $0.id == sourceId }) else { break }
+            // HSM-22-04: a workflow with a graph aboard offers WHERE it runs — the
+            // hub runs the synced graph. A prompt-only saved Ask keeps the old
+            // no-sheet local path (byte-identical).
+            if wf.rec.contract.graphJson != nil {
+                offerRunTarget(.init(kind: .workflow(wf.rec), input: src.routableText,
+                                     inputId: src.id, inputTitle: src.title))
+            } else {
+                routeSourceId = sourceId
+                runRoute(lens: wf.rec.name, prompt: wf.rec.prompt)
+            }
         case .agent:                                            // a tailored agent → answer grounded in the card
             guard let ap = target as? AgentPrimitive,
                   let src = members().first(where: { $0.id == sourceId }) else { break }
@@ -4907,6 +4933,11 @@ struct DioStage: View {
         switch run.kind {
         case .agent(let a): runAgent(a, input: run.input, inputTitle: run.inputTitle, provenance: run.provenance)
         case .chain(let c): runChain(c, input: run.input, inputTitle: run.inputTitle, provenance: run.provenance)
+        case .workflow(let w):
+            // On-device keeps the saved-Ask semantics: the prompt (or the input
+            // straight through) — the iPad engine does not run synced graphs yet.
+            routeSourceId = run.inputId
+            runRoute(lens: w.name, prompt: w.prompt)
         }
     }
 
@@ -4929,13 +4960,29 @@ struct DioStage: View {
         withAnimation { routing = true }
         Task { @MainActor in
             do {
-                let result: HubRunResult
+                let output: String
+                let artifactId: String?
+                var warning: String?
                 switch run.kind {
-                case .agent(let a): result = try await client.runAgent(id: a.id, input: input)
-                case .chain(let c): result = try await client.runChain(id: c.id, input: input)
+                case .agent(let a):
+                    let result = try await client.runAgent(id: a.id, input: input)
+                    output = result.output; artifactId = result.artifactId
+                case .chain(let c):
+                    let result = try await client.runChain(id: c.id, input: input)
+                    output = result.output; artifactId = result.artifactId
+                case .workflow(let w):
+                    // HSM-22-04 — the travelling graph runs where it synced to. A
+                    // refused graph's honest `warning` rides onto the card, never
+                    // dropped (the same truth the web run surface shows).
+                    let result = try await client.runWorkflow(id: w.id, input: input)
+                    output = result.output ?? ""; artifactId = result.artifactId
+                    warning = result.warning
                 }
                 withAnimation { routing = false }
-                let clean = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+                var clean = output.trimmingCharacters(in: .whitespacesAndNewlines)
+                if let warning, !warning.isEmpty {
+                    clean = "⚠ \(warning)\n\n\(clean)"
+                }
                 #if canImport(UIKit)
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 #endif
@@ -4943,11 +4990,12 @@ struct DioStage: View {
                     // The hub persisted this run as a run-born artifact (v6) —
                     // the card shares its id so Keep reconciles on sync instead
                     // of duplicating.
-                    printed = OutputRecord(id: result.artifactId ?? UUID().uuidString,
+                    printed = OutputRecord(id: artifactId ?? UUID().uuidString,
                                            title: title,
                                            body: clean.isEmpty ? "(your desktop returned nothing)" : clean,
                                            source: source,
-                                           lens: run.isChain ? "Chain · your desktop" : "Agent · your desktop",
+                                           lens: run.isChain ? "Chain · your desktop"
+                                               : (run.isWorkflow ? "Workflow · your desktop" : "Agent · your desktop"),
                                            path: zpath,
                                            provenance: run.provenance)
                     printedEgress = .cloud("your desktop")
@@ -4966,7 +5014,7 @@ struct DioStage: View {
         if let e = error as? HTTPDesktopClient.DesktopClientError {
             switch e {
             case .http(502), .http(503): return "Your desktop has no model loaded — start the desktop runtime and try again."
-            case .http(404): return "That agent or crew isn’t on your desktop yet — sync first, then run on the hub."
+            case .http(404): return "That agent, crew, or workflow isn’t on your desktop yet — sync first, then run on the hub."
             case .http(let code): return "Your desktop refused the run (status \(code))."
             case .malformed: return "Your desktop sent back something the desk couldn’t read."
             }
