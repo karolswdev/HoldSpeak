@@ -288,6 +288,37 @@ struct DioGameChip: View {
 
 // MARK: - the builder (create / edit) — engaging, sectioned, with a live preview
 
+// MARK: - the in-world panel (HSM-17-08, the first-class Recipe experience)
+
+/// The Recipe surfaces' presentation: the desk STAYS VISIBLE and alive behind a
+/// right-docked panel over a transparent tap-away catcher — never a dimming
+/// scrim (the no-modals law). Depth comes from shadow and hairline, not darkness.
+struct DioAtelierPanel<Content: View>: View {
+    var maxW: CGFloat = 600
+    var maxH: CGFloat? = nil
+    var dismissable: Bool = true
+    var dismiss: () -> Void
+    @ViewBuilder var content: () -> Content
+    var body: some View {
+        ZStack {
+            Color.clear.contentShape(Rectangle()).ignoresSafeArea()
+                .onTapGesture { if dismissable { dismiss() } }
+            content()
+                .frame(maxWidth: maxW, maxHeight: maxH)
+                .background(
+                    RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(hex: 0x14121B).opacity(0.98))
+                        .overlay(RoundedRectangle(cornerRadius: 30, style: .continuous)
+                            .strokeBorder(LinearGradient(colors: [.white.opacity(0.16), .white.opacity(0.05)],
+                                                         startPoint: .top, endPoint: .bottom), lineWidth: 1))
+                        .shadow(color: .black.opacity(0.55), radius: 34, x: -10, y: 14)
+                )
+                .padding(.vertical, 28).padding(.trailing, 16).padding(.leading, 12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+        }
+    }
+}
+
 struct DioRecipeBuilder: View {
     @State var draft: RecipeRecord
     let knowledgeBases: [String]
@@ -317,8 +348,7 @@ struct DioRecipeBuilder: View {
     private var tint: Color { RecipeAvatars.color(draft.avatar) }
 
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.62).ignoresSafeArea().onTapGesture { onCancel() }
+        DioAtelierPanel(maxW: 600, dismiss: onCancel) {
             VStack(spacing: 0) {
                 header
                 ScrollView(.vertical, showsIndicators: false) {
@@ -330,10 +360,6 @@ struct DioRecipeBuilder: View {
                 }
                 bottomBar
             }
-            .frame(maxWidth: 600)
-            .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(hex: 0x14121B))
-                .overlay(RoundedRectangle(cornerRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
-            .padding(.horizontal, 24).padding(.vertical, 36)
         }
         .onAppear { avatarGroup = RecipeAvatars.groups.firstIndex { $0.avatars.contains { $0.id == draft.avatar } } ?? 0 }
         .onChange(of: draft.avatar) { _ in pop = true; DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { pop = false } }
@@ -717,18 +743,13 @@ struct DioRecipeChat: View {
     private var tint: Color { RecipeAvatars.color(recipe.avatar) }
 
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.62).ignoresSafeArea().onTapGesture { if !thinking { onClose() } }
+        DioAtelierPanel(maxW: 560, maxH: 760, dismissable: !thinking, dismiss: onClose) {
             VStack(spacing: 0) {
                 header
                 Rectangle().fill(.white.opacity(0.06)).frame(height: 1)
                 transcript
                 inputBar
             }
-            .frame(maxWidth: 560, maxHeight: 740)
-            .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Color(hex: 0x14121B))
-                .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
-            .padding(.horizontal, 24).padding(.vertical, 40)
         }
     }
 
@@ -932,8 +953,7 @@ struct DioChainSheet: View {
     private var members: [RecipeRecord] { chain.steps.compactMap { sid in recipes.first { $0.id == sid } } }
     private var ready: Bool { !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !members.isEmpty }
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.62).ignoresSafeArea().onTapGesture { onClose() }
+        DioAtelierPanel(maxW: 520, dismiss: onClose) {
             VStack(alignment: .leading, spacing: 15) {
                 HStack(spacing: 12) {
                     Image(systemName: "arrow.triangle.branch").font(.system(size: 20, weight: .bold)).foregroundStyle(DioPal.accent)
@@ -964,9 +984,7 @@ struct DioChainSheet: View {
                 }.buttonStyle(.plain)
                 Text("Long-press a desk card to run this chain.").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8))
             }
-            .padding(20).frame(maxWidth: 520)
-            .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Color(hex: 0x14121B)).overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
-            .padding(.horizontal, 26)
+            .padding(20)
         }
     }
     private var flowPreview: some View {
@@ -988,8 +1006,7 @@ struct DioChainBuilder: View {
     let recipes: [RecipeRecord]
     let onSave: (ChainRecord) -> Void; let onCancel: () -> Void; var isNew: Bool
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.62).ignoresSafeArea().onTapGesture { onCancel() }
+        DioAtelierPanel(maxW: 560, dismiss: onCancel) {
             VStack(spacing: 0) {
                 HStack(spacing: 12) {
                     Image(systemName: "arrow.triangle.branch").font(.system(size: 20, weight: .bold)).foregroundStyle(DioPal.accent).frame(width: 46, height: 46).background(RoundedRectangle(cornerRadius: 14).fill(DioPal.accent.opacity(0.16)))
@@ -999,7 +1016,30 @@ struct DioChainBuilder: View {
                     }
                     Spacer(minLength: 0)
                     Button { onCancel() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 24)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
-                }.padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 12)
+                }.padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 8)
+                // the LIVE pipeline strip — the chain assembles under your fingers (HSM-17-08):
+                // avatars flow left-to-right with arrows as steps are added / reordered.
+                if !draft.steps.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(Array(draft.steps.enumerated()), id: \.offset) { i, sid in
+                                if let a = recipes.first(where: { $0.id == sid }) {
+                                    VStack(spacing: 3) {
+                                        RecipeAvatarView(avatarId: a.avatar, size: 38)
+                                        Text(a.name).font(.system(size: 8.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1).frame(width: 50)
+                                    }
+                                    if i < draft.steps.count - 1 {
+                                        Image(systemName: "arrow.right").font(.system(size: 10, weight: .black)).foregroundStyle(DioPal.accent.opacity(0.7))
+                                    }
+                                }
+                            }
+                        }.padding(.vertical, 7).padding(.horizontal, 12)
+                    }
+                    .background(RoundedRectangle(cornerRadius: 14).fill(DioPal.accent.opacity(0.05))
+                        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(DioPal.accent.opacity(0.14), lineWidth: 1)))
+                    .padding(.horizontal, 20).padding(.bottom, 10)
+                    .transition(.opacity)
+                }
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 18) {
                         sec("NAME") { field($draft.name, "e.g. Refine") }
@@ -1044,9 +1084,6 @@ struct DioChainBuilder: View {
                     Button { save() } label: { HStack(spacing: 7) { Image(systemName: "checkmark"); Text(isNew ? "Create chain" : "Save").font(.system(size: 15.5, weight: .heavy, design: .rounded)) }.foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50).background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom))).opacity(canSave ? 1 : 0.45) }.buttonStyle(.plain).disabled(!canSave)
                 }.padding(.horizontal, 20).padding(.vertical, 14)
             }
-            .frame(maxWidth: 560)
-            .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(hex: 0x14121B)).overlay(RoundedRectangle(cornerRadius: 30, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
-            .padding(.horizontal, 24).padding(.vertical, 40)
         }
     }
     private var canSave: Bool { !draft.name.trimmingCharacters(in: .whitespaces).isEmpty && !draft.steps.isEmpty }
