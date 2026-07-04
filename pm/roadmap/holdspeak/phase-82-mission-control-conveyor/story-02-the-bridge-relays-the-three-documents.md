@@ -2,10 +2,12 @@
 
 - **Project:** holdspeak
 - **Phase:** 82
-- **Status:** backlog
+- **Status:** done — see [`evidence-story-02.md`](./evidence-story-02.md).
 - **Depends on:** HS-82-01 (the design pins the routes, the argv
   allow-list, and the ingress schema checks).
 - **Unblocks:** HS-82-03, HS-82-04.
+
+*Re-pinned by HS-82-01 (2026-07-04): implement against [docs/internal/MISSION_CONTROL_DESK.md](../../../../docs/internal/MISSION_CONTROL_DESK.md) §1.*
 
 ## Problem
 

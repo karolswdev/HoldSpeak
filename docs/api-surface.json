@@ -1623,6 +1623,30 @@
       "consumers": []
     },
     {
+      "path": "/api/missioncontrol/events",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": []
+    },
+    {
+      "path": "/api/missioncontrol/sessions",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": []
+    },
+    {
+      "path": "/api/missioncontrol/state",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": []
+    },
+    {
       "path": "/api/notes",
       "methods": [
         "GET"

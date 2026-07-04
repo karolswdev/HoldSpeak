@@ -7,6 +7,8 @@
 - **Unblocks:** phase close; unblocks the counterpart's WLA-13-05
   (their joint exit exam runs against this).
 
+*Re-pinned by HS-82-01 (2026-07-04): implement against [docs/internal/MISSION_CONTROL_DESK.md](../../../../docs/internal/MISSION_CONTROL_DESK.md) §4+§5.*
+
 ## Problem
 
 Mission control that can only watch is a dashboard. The write path

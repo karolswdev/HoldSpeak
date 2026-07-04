@@ -6,6 +6,8 @@
 - **Depends on:** HS-82-02 (the bridge serves the feed).
 - **Unblocks:** HS-82-05.
 
+*Re-pinned by HS-82-01 (2026-07-04): implement against [docs/internal/MISSION_CONTROL_DESK.md](../../../../docs/internal/MISSION_CONTROL_DESK.md) §2.*
+
 ## Problem
 
 The feed's `phases` array was amended into the frozen schema

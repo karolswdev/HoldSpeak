@@ -18,6 +18,7 @@ from .dictation import build_dictation_router
 from .meeting_import import build_meeting_import_router
 from .meetings import build_meetings_router
 from .mesh import build_mesh_router
+from .missioncontrol import build_missioncontrol_router
 from .pages import build_pages_router
 from .primitives import build_primitives_router
 from .projects import build_projects_router
@@ -34,6 +35,7 @@ __all__ = [
     "build_meeting_import_router",
     "build_meetings_router",
     "build_mesh_router",
+    "build_missioncontrol_router",
     "build_pages_router",
     "build_primitives_router",
     "build_projects_router",

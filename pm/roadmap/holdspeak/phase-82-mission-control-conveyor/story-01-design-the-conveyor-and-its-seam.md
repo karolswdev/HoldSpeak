@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 82
-- **Status:** ready
+- **Status:** done — see [`evidence-story-01.md`](./evidence-story-01.md).
 - **Depends on:** nothing (the Delivery Workbench substrate is
   shipped and frozen: their Phase 13 stories 02–04).
 - **Unblocks:** HS-82-02..05.
@@ -29,7 +29,7 @@ story exists to prevent, and ours does too.
 ## The design
 
 Produce the phase's design section (this story amends
-`current-phase-status.md` and writes `docs/MISSION_CONTROL_DESK.md`)
+`current-phase-status.md` and writes `docs/internal/MISSION_CONTROL_DESK.md`)
 pinning, with the verified/cited/decided discipline:
 
 - **The bridge shape** — FastAPI router `/api/missioncontrol/`

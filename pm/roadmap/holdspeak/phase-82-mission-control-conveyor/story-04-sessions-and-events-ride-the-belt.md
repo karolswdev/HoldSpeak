@@ -6,6 +6,8 @@
 - **Depends on:** HS-82-02 (the bridge serves sessions and events).
 - **Unblocks:** HS-82-05.
 
+*Re-pinned by HS-82-01 (2026-07-04): implement against [docs/internal/MISSION_CONTROL_DESK.md](../../../../docs/internal/MISSION_CONTROL_DESK.md) §3.*
+
 ## Problem
 
 The belt without the live layer is a roadmap poster. The

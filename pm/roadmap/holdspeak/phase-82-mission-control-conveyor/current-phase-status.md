@@ -1,14 +1,19 @@
 # Phase 82 — Mission Control (the Desk conveyor)
 
-**Status:** OPEN — 0/5.
+**Status:** OPEN — 2/5.
 
-**Last updated:** 2026-07-04 (OPENED. The Delivery Workbench
-counterpart phase, specced against that repo's
-`docs/mission-control.md` §5: the Desk renders the rails — phases
-as the belt, stories as the items, live agent sessions pinned to
-the stories they're on, gate refusals as first-class moments — and
-steers them only through the Phase-12 actuator seam that already
-has a human approval and the dw gate in front of it.)
+**Last updated:** 2026-07-04 (HS-82-02 done: the bridge is live —
+`missioncontrol_bridge.py` + three `/api/missioncontrol/*` routes,
+documents relayed byte-honest with schema checks at the door and
+typed compatibility/unavailable statuses; 11 route tests, unit tier
+2422 green. Two repo guards earned their keep: the design doc moved
+to docs/internal (doc-drift guard) and the API-surface manifest
+regenerated with the three new reads.)
+pins the bridge, the belt, the 15 s single-flight poll, and the
+approval leg riding the native `decide_proposal` + gated-connector
+machinery; schema claims verified live against dw 1.9.0
+(feed_schema 1, sessions_schema 1); stories 02–05 re-pinned to
+their sections.)
 
 ## Why this phase exists
 
@@ -61,10 +66,10 @@ guessing — the pack precedent, now in a second client.
 
 | Story | Title | Status | Depends on |
 |---|---|---|---|
-| HS-82-01 | Design: the conveyor and its consumption seam — **leads** | ready | none |
-| HS-82-02 | The bridge: `/api/missioncontrol/*` relays the three documents | backlog | HS-82-01 |
-| HS-82-03 | The conveyor renders: phases as the belt, stories as the items | backlog | HS-82-02 |
-| HS-82-04 | Sessions and events ride the belt | backlog | HS-82-02 |
+| HS-82-01 | Design: the conveyor and its consumption seam — **leads** | **done** ([evidence](./evidence-story-01.md): doc + live schema verification) | none |
+| HS-82-02 | The bridge: `/api/missioncontrol/*` relays the three documents | **done** ([evidence](./evidence-story-02.md): 11 route tests; unit tier 2422 green) | HS-82-01 |
+| HS-82-03 | The conveyor renders: phases as the belt, stories as the items | ready | HS-82-02 |
+| HS-82-04 | Sessions and events ride the belt | ready | HS-82-02 |
 | HS-82-05 | The approval leg and the joint proof | backlog | HS-82-03, HS-82-04 |
 
 ## Where we are
