@@ -122,6 +122,31 @@ def dispatch_voice_command(
         )
 
 
+def _journal_passthrough(
+    text: str,
+    *,
+    server: Any,
+    pipeline_cfg: Any,
+    source: str,
+) -> None:
+    """Journal a pipeline-off dictation (F-07). Best-effort, never raises."""
+    try:
+        journal = getattr(server, "dictation_journal", None)
+        if journal is None:
+            return
+        from holdspeak.plugins.dictation.journal import passthrough_run
+
+        journal.record(
+            passthrough_run(text),
+            source=source,
+            transcript=text,
+            enabled=bool(getattr(pipeline_cfg, "journal_enabled", True)),
+            retention=int(getattr(pipeline_cfg, "journal_retention", 500)),
+        )
+    except Exception as exc:  # journaling must never break typing
+        log.debug(f"Passthrough journal write failed: {exc}")
+
+
 def run_dictation_pipeline(
     text: str,
     *,
@@ -142,6 +167,17 @@ def run_dictation_pipeline(
     dictation_cfg = getattr(config, "dictation", None)
     pipeline_cfg = getattr(dictation_cfg, "pipeline", None)
     if dictation_cfg is None or pipeline_cfg is None or not bool(getattr(pipeline_cfg, "enabled", False)):
+        # F-07: the journal follows `journal_enabled`, not the pipeline gate.
+        # A pipeline-off dictation records a passthrough row (no stages,
+        # final = transcript) so the review surface reflects real activity.
+        # Best-effort like every journal write; the typed text is untouched.
+        if pipeline_cfg is not None:
+            _journal_passthrough(
+                text,
+                server=server,
+                pipeline_cfg=pipeline_cfg,
+                source=journal_source,
+            )
         return text
 
     try:

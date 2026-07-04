@@ -204,3 +204,21 @@ def test_missing_file_and_speaker_label_override(tmp_path, db):
     )
     assert result.state.segments[0].speaker == "Quarterly review"
     assert result.state.title == "Q3 planning"
+
+
+def test_import_command_exits_nonzero_on_unsupported_format(tmp_path, capsys):
+    # F-04 lock: the recorded dogfood run claimed `hs import <bad>` exited 0;
+    # the survey could not reproduce it (exits 1). This pins the honest exit
+    # code so a regression is caught where the finding was filed.
+    from types import SimpleNamespace
+
+    from holdspeak.commands.import_recording import run_import_command
+
+    bad = tmp_path / "PROTOCOL.md"
+    bad.write_text("# not importable")
+    args = SimpleNamespace(file=str(bad), title=None, speaker=None, tag=[])
+
+    rc = run_import_command(args)
+
+    assert rc == 1
+    assert "Unsupported audio format" in capsys.readouterr().err

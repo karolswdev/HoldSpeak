@@ -29,6 +29,26 @@ VALID_SOURCES = ("dictation", "dry_run")
 _REDACTED = "[redacted: possible secret]"
 
 
+def passthrough_run(text: str) -> Any:
+    """A run-shaped record for a dictation the pipeline never touched (F-07).
+
+    With `pipeline.enabled=false` there is no `PipelineRun`, but
+    `journal_enabled` still promises the review surface a record. This carries
+    exactly what `DictationJournalRecorder.record` reads: no stages, no intent,
+    final text = the transcript, and a warning naming why the trace is empty.
+    """
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        final_text=str(text or ""),
+        stage_results=[],
+        total_elapsed_ms=0.0,
+        warnings=["dictation pipeline disabled"],
+        intent=None,
+        short_circuited=True,
+    )
+
+
 def filter_secret(text: str) -> str:
     """Redact the whole field if it trips the shared secret check.
 

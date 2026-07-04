@@ -259,3 +259,53 @@ def test_normalize_args_collapses_nested_subparsers():
     args3 = SimpleNamespace(dictation_action="blocks", dictation_blocks_action=None)
     cli.normalize_args(args3)
     assert args3.dictation_action is None
+
+
+def test_blocks_ls_detects_project_from_cwd(tmp_blocks, tmp_path, monkeypatch):
+    # F-03: inside a project, `blocks ls` resolves that project's blocks
+    # without --project, matching dry-run's cwd detection.
+    project = tmp_path / "repo"
+    (project / ".holdspeak").mkdir(parents=True)
+    (project / ".holdspeak" / "blocks.yaml").write_text(
+        _VALID_BLOCKS_YAML.replace("ai_prompt_buildout", "project_block"),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(project)
+
+    args = SimpleNamespace(dictation_action="blocks-ls", project=None)
+    out = io.StringIO()
+    rc = cli.run_dictation_command(args, stream=out)
+
+    assert rc == 0
+    assert "project_block" in out.getvalue()
+    assert str(project / ".holdspeak" / "blocks.yaml") in out.getvalue()
+
+
+def test_blocks_show_detects_project_from_cwd(tmp_blocks, tmp_path, monkeypatch):
+    project = tmp_path / "repo"
+    (project / ".holdspeak").mkdir(parents=True)
+    (project / ".holdspeak" / "blocks.yaml").write_text(
+        _VALID_BLOCKS_YAML.replace("ai_prompt_buildout", "project_block"),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(project)
+
+    args = SimpleNamespace(
+        dictation_action="blocks-show", project=None, block_id="project_block"
+    )
+    out = io.StringIO()
+    rc = cli.run_dictation_command(args, stream=out)
+
+    assert rc == 0
+    assert "id: project_block" in out.getvalue()
+
+
+def test_blocks_ls_outside_a_project_uses_global_file(tmp_blocks, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    args = SimpleNamespace(dictation_action="blocks-ls", project=None)
+    out = io.StringIO()
+    rc = cli.run_dictation_command(args, stream=out)
+
+    assert rc == 0
+    assert "ai_prompt_buildout" in out.getvalue()

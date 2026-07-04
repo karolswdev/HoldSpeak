@@ -496,6 +496,21 @@ def _run_dictation_dry_run_text(
 
     if not cfg.pipeline.enabled:
         warnings = ["dictation pipeline disabled"]
+        # F-07: the journal follows `journal_enabled`, not the pipeline gate —
+        # a pipeline-off dry-run records a passthrough row so the review
+        # surface reflects real activity. Best-effort like every journal write.
+        journal_id = None
+        if journal is not None:
+            from ....plugins.dictation.journal import passthrough_run
+
+            recorded = journal.record(
+                passthrough_run(text),
+                source="dry_run",
+                transcript=text,
+                enabled=bool(getattr(cfg.pipeline, "journal_enabled", True)),
+                retention=int(getattr(cfg.pipeline, "journal_retention", 500)),
+            )
+            journal_id = getattr(recorded, "id", None)
         return {
             "project": dict(project) if project else None,
             "runtime_status": "disabled",
@@ -505,6 +520,7 @@ def _run_dictation_dry_run_text(
             "final_text": text,
             "total_elapsed_ms": 0.0,
             "warnings": warnings,
+            "journal_id": journal_id,
             "learning": None,
             "telemetry": summarize_dry_run(
                 runtime_status="disabled",

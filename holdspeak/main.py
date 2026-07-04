@@ -139,7 +139,7 @@ Logs are written to: {LOG_FILE}
     )
     history_parser.add_argument(
         "--export",
-        choices=["json", "txt", "markdown"],
+        choices=["json", "txt", "markdown", "srt"],
         help="Export meeting to file",
     )
     history_parser.add_argument(

@@ -437,3 +437,42 @@ def test_project_rewriter_surfaces_novel_suggestion(tmp_path) -> None:
 
     assert result.metadata["project_doc_suggestion_status"] == "suggested"
     assert "Context preservation suggestion" in result.text
+
+
+def test_project_rewriter_empty_input_never_reaches_the_model() -> None:
+    # F-10: an empty utterance with .hs context present must be a no-op —
+    # the model, prompted with project context alone, fabricates a
+    # plausible task out of thin air.
+    runtime = _RewriteRuntime("Implement the questline save-slot migration.")
+    stage = ProjectRewriter(runtime)
+
+    result = stage.run(_utt(""), prior=[])
+
+    assert result.text == ""
+    assert result.metadata["reason"] == "empty_input"
+    assert result.metadata["changed"] is False
+    assert runtime.calls == []
+
+
+def test_project_rewriter_whitespace_input_never_reaches_the_model() -> None:
+    runtime = _RewriteRuntime()
+    stage = ProjectRewriter(runtime)
+
+    result = stage.run(_utt("  \n\t "), prior=[])
+
+    assert result.metadata["reason"] == "empty_input"
+    assert result.text == "  \n\t "
+    assert runtime.calls == []
+
+
+def test_project_rewriter_empty_prior_text_never_reaches_the_model() -> None:
+    # The guard applies to the *latest* text (a prior stage may have
+    # emptied the utterance), not just the raw transcript.
+    runtime = _RewriteRuntime()
+    stage = ProjectRewriter(runtime)
+    prior = [StageResult(stage_id="pre", text="", intent=None, elapsed_ms=0.0)]
+
+    result = stage.run(_utt("something was said"), prior=prior)
+
+    assert result.metadata["reason"] == "empty_input"
+    assert runtime.calls == []
