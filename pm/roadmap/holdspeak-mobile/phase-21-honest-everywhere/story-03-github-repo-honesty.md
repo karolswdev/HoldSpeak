@@ -2,9 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 21
-- **Status:** todo — the audited web+backend halves shipped pre-open (web settings binds
-  `companion_github_repo`, `system/settings.py:429` persists it, the propose route falls
-  back to it, `desk_actuators.py:236`).
+- **Status:** done — see [`evidence-story-03.md`](./evidence-story-03.md). The host-config
+  path ratified (no iPad repo field); the tile carries paired vs configured as separate
+  truths driven by the live HS-77-03 status route; the act sheet lists only connectors
+  whose send can complete. Live-hub proven control-vs-treatment (one hub, config flipped
+  mid-run, both tile states rendered). The web+backend halves had shipped pre-open.
 - **Depends on:** the hub's desk-actuator status surface (whatever feeds the tile's
   `configured` state today).
 - **Unblocks:** no dead-on-arrival GitHub sends from the desk.

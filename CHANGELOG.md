@@ -21,6 +21,11 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   string adopted the badge grammar, and a new guard keeps banned names
   and reassurance prose out of Apple product copy the same way it
   already does for docs and the web.
+- The desk's connector tiles stopped faking ready. A paired desktop with
+  no Slack webhook, companion webhook, or GitHub repo configured now
+  shows "set up on your desktop" on that tile (and the act sheet only
+  offers sends that can complete), driven by the desk actuator status
+  route.
 - **File an issue from the iPad.** The companion's meeting aftercare card
   can turn an accepted action item into a GitHub-issue proposal (repo
   typed inline, remembered for the session). Filing only records a

@@ -268,7 +268,10 @@ struct NotePrimitive: DeskPrimitive {
 // grammar as the AI core: drop a primitive on it → it `accepts` it → propose→approve→execute. Rendered from
 // an SF Symbol (it's a tool, not a recording). Configured by a webhook URL the user pastes.
 struct ConnectorPrimitive: DeskPrimitive {
-    let connId: String; let name: String; let symbol: String; let tint: Color; let configured: Bool; let detail: String
+    let connId: String; let name: String; let symbol: String; let tint: Color
+    // HSM-21-03: paired (a desktop is linked) and configured (the HOST really has this
+    // connector set up — webhook URL / repo) are different truths; the tile tells both.
+    let paired: Bool; let configured: Bool; let detail: String
     var id: String { "conn:\(connId)" }
     var kind: PrimitiveKind { .connector }
     var glyph: String { symbol }
@@ -276,15 +279,23 @@ struct ConnectorPrimitive: DeskPrimitive {
     var color: Color { tint }
     var base: CGFloat { 116 }
     var title: String { name }
-    var subtitle: String { configured ? "via your desktop · \(detail)" : "tap to pair your desktop" }
-    var preview: String? { configured ? "via your desktop" : "pair your desktop" }
+    var subtitle: String {
+        if configured { return "via your desktop · \(detail)" }
+        return paired ? "set up on your desktop" : "tap to pair your desktop"
+    }
+    var preview: String? {
+        if configured { return "via your desktop" }
+        return paired ? "set up on your desktop" : "pair your desktop"
+    }
     var sections: [PrimitiveSection] {
         [.init(label: "CONNECTOR", tint: tint, body: .text(configured
             ? "Sends to \(name) via your desktop (\(detail))."
-            : "Pair your desktop to send to \(name)."))]
+            : (paired ? "Set \(name) up on your desktop, then send from here."
+                      : "Pair your desktop to send to \(name).")))]
     }
     var actions: [PrimitiveAction] {
-        [PrimitiveAction(label: configured ? "Your desktop ·\(detail)" : "Pair your desktop", icon: "desktopcomputer", role: .custom("connect"))]
+        [PrimitiveAction(label: configured ? "Your desktop ·\(detail)" : (paired ? "Set up on your desktop" : "Pair your desktop"),
+                         icon: "desktopcomputer", role: .custom("connect"))]
     }
     var accepts: [PrimitiveKind] { configured ? [.artifact, .summary, .actions, .topics, .meeting] : [] }
     // A connector's whole purpose is egress: the send leaves via the paired desktop to the
