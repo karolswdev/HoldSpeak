@@ -55,7 +55,7 @@ sentence, per canon).
 | HSM-21-01 | The one egress contract (`EgressScope` in Contracts + `DeskPrimitive.egress` + every surface consumes it) — **leads** | done — [`evidence-story-01.md`](./evidence-story-01.md) (sim-proven ×3; the hard-coded capsule is dead) |
 | HSM-21-02 | The Swift banned-copy + reassurance-prose guard (+ fix the sites) | done — [`evidence-story-02.md`](./evidence-story-02.md) (7 sites; the guard caught the 7th itself) |
 | HSM-21-03 | GitHub-repo honesty: the tile's ready state tells the truth; the host-fallback path ratified | done — [`evidence-story-03.md`](./evidence-story-03.md) (control-vs-treatment on one live hub) |
-| HSM-21-04 | The ambient trust chip on the iPad + the web-chip posture audit | todo |
+| HSM-21-04 | The ambient trust chip on the iPad + the web-chip posture audit | done — [`evidence-story-04.md`](./evidence-story-04.md) (two surfaces, two postures, one live hub) |
 | HSM-21-05 | Docs + the walk rider (honesty checks join the staged couch session) | todo |
 
 ## Where we are
@@ -70,5 +70,9 @@ header the survey missed) and the guard now scans Swift string literals for bann
 reassurance prose, red-proven. **21-03 followed** (3/5): the GitHub tile's ready state
 now derives from the live HS-77-03 status route (paired vs configured are separate
 truths; the act sheet lists only completable sends), proven control-vs-treatment on one
-live hub with the repo flipped mid-run. Next: 21-04 / 21-05. Artifact provenance rendering shipped in 19-04; this phase owns the audit
+live hub with the repo flipped mid-run. **21-04 followed** (4/5): the setup-status
+client + the shared four-posture mapping (test-locked to the web chip's precedence) +
+the shell top-bar chip — proven on one live hub flipped local → writes-need-approval,
+with the real web TrustChip audited against the same hub (same words, both surfaces).
+Only **21-05** (docs + the walk rider) remains. Artifact provenance rendering shipped in 19-04; this phase owns the audit
 that no surface fakes a posture.

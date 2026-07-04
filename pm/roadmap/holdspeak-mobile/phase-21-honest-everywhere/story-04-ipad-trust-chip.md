@@ -2,7 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 21
-- **Status:** todo
+- **Status:** done — see [`evidence-story-04.md`](./evidence-story-04.md). The
+  setup-status client + the shared four-posture mapping (test-locked to the web chip's
+  precedence), the shell top-bar chip, and the two-surface live proof: one hub flipped
+  local → writes-need-approval, both chips (iPad + the real web TrustChip via
+  Playwright) stating the same truth in the same words.
 - **Depends on:** the web `TrustChip.astro` (HS-42-05) + `/api/setup/status`
   (`holdspeak/web/routes/setup.py:23`, `build_setup_status()`); 21-01's `EgressScope`
   grammar.

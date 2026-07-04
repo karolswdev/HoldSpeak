@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 232 (plus static mounts). iOS-consumed: 47. Web-consumed: 164.
+Routes: 232 (plus static mounts). iOS-consumed: 49. Web-consumed: 164.
 
 ## device_audio_ws
 
@@ -131,7 +131,7 @@ Routes: 232 (plus static mounts). iOS-consumed: 47. Web-consumed: 164.
 | POST | `/api/desk/actuators/github/{proposal_id}/decision` | ios |
 | POST | `/api/desk/actuators/slack/propose` | ios |
 | POST | `/api/desk/actuators/slack/{proposal_id}/decision` | ios |
-| GET | `/api/desk/actuators/status` | server only |
+| GET | `/api/desk/actuators/status` | ios |
 | POST | `/api/desk/actuators/webhook/propose` | ios |
 | POST | `/api/desk/actuators/webhook/{proposal_id}/decision` | ios |
 
@@ -404,7 +404,7 @@ Routes: 232 (plus static mounts). iOS-consumed: 47. Web-consumed: 164.
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/setup/runtime-test` | web |
-| GET | `/api/setup/status` | web |
+| GET | `/api/setup/status` | ios, web |
 
 ## web.routes.sync
 

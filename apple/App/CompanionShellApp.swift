@@ -109,8 +109,14 @@ final class ShellModel: ObservableObject {
         if state?.mode == .connected {
             facets = try? await c.listFacets()
             await loadLearning()
+            // HSM-21-04: the ambient posture line (the web TrustChip's four states).
+            setupStatus = try? await c.setupStatus()
         }
     }
+
+    // MARK: Trust chip (HSM-21-04) — the hub's real posture, ambiently. nil (unreachable /
+    // older hub) renders nothing: the connection chip already owns the unreachable story.
+    @Published var setupStatus: SetupStatus?
 
     // MARK: Faceted archive (HSM-19-02) — narrow the desktop archive server-side. The chips
     // are the hub's distinct facet values (`/api/meetings/facets`); a selection or a search
@@ -515,11 +521,31 @@ struct ShellView: View {
                 Text("Companion").font(.title2.bold()).foregroundStyle(Sig.text)
             }
             Spacer()
+            if let status = model.setupStatus { trustChip(status.posture) }
             connectionChip
         }
         .padding(.horizontal, 20).padding(.top, 16).padding(.bottom, 12)
         .background(Sig.bg)
         .overlay(Rectangle().fill(Sig.line).frame(height: 1), alignment: .bottom)
+    }
+
+    // HSM-21-04 — the ambient trust chip: the hub's posture in the web chip's four words.
+    private func trustChip(_ posture: TrustPosture) -> some View {
+        let (icon, tint): (String, Color) = {
+            switch posture {
+            case .attention: return ("exclamationmark.triangle.fill", Sig.bad)
+            case .writesNeedApproval: return ("checkmark.shield.fill", Sig.warn)
+            case .configuredEndpoint: return ("arrow.up.forward.app.fill", Sig.warn)
+            case .localOnly: return ("lock.fill", Sig.ok)
+            }
+        }()
+        return HStack(spacing: 6) {
+            Image(systemName: icon).font(.system(size: 9, weight: .bold))
+            Text(posture.label).font(.caption.weight(.medium))
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 11).padding(.vertical, 7)
+        .background(Sig.s2, in: Capsule()).overlay(Capsule().stroke(Sig.line, lineWidth: 1))
     }
 
     private var connectionChip: some View {
