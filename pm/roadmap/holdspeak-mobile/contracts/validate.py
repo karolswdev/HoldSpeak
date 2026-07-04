@@ -53,7 +53,7 @@ CHANGESET = "https://holdspeak.dev/contracts/v0/changeset.schema.json"
 PRIMITIVE_SCHEMAS = {
     "note": "https://holdspeak.dev/contracts/v0/note.schema.json",
     "kb": "https://holdspeak.dev/contracts/v0/kb.schema.json",
-    "agent": "https://holdspeak.dev/contracts/v0/agent.schema.json",
+    "recipe": "https://holdspeak.dev/contracts/v0/recipe.schema.json",
     "chain": "https://holdspeak.dev/contracts/v0/chain.schema.json",
     "workflow": "https://holdspeak.dev/contracts/v0/workflow.schema.json",
     "directory": "https://holdspeak.dev/contracts/v0/directory.schema.json",
