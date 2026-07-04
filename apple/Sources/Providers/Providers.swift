@@ -120,21 +120,21 @@ public protocol IDesktopClient: Sendable {
 
     // MARK: Run on the hub (HSM-15-xx — the Mesh "RUNS ON: your Mac")
 
-    /// Run a synced Agent persona on the desktop hub's big model
-    /// (`POST /api/agents/{id}/run` body `{input}`), returning the model's output.
+    /// Run a synced Recipe on the desktop hub's big model
+    /// (`POST /api/recipes/{id}/run` body `{input}`), returning the model's output.
     /// The card's `routableText` is the input; the work — and the egress — happens on
     /// the Mac, not on-device, so the result lands with a cloud/LAN egress badge.
     /// Throws on an unreachable hub or a 502 (no model loaded) — never silent.
-    func runAgent(id: String, input: String) async throws -> HubRunResult
+    func runRecipe(id: String, input: String) async throws -> HubRunResult
     /// Run a synced Chain (crew) on the desktop hub (`POST /api/chains/{id}/run` body
-    /// `{input}` → `{output, steps}`), threading the input through each agent on the
+    /// `{input}` → `{output, steps}`), threading the input through each recipe on the
     /// Mac. Returns the final output plus the per-step trail.
     func runChain(id: String, input: String) async throws -> HubRunResult
 }
 
 /// The desktop hub's response to running an Agent or Chain (`/api/agents/{id}/run`,
 /// `/api/chains/{id}/run`). Decoded loosely — only `output` is load-bearing; `steps`
-/// is the chain's per-agent trail when the hub returns it. Keys arrive snake_case.
+/// is the chain's per-recipe trail when the hub returns it. Keys arrive snake_case.
 public struct HubRunResult: Sendable, Equatable, Decodable {
     public var output: String
     public var steps: [String]?
@@ -175,7 +175,7 @@ public extension IDesktopClient {
     /// Default hub-run stubs so non-HTTP conformers (test fakes) keep compiling without
     /// claiming a capability they don't have. `HTTPDesktopClient` overrides both with
     /// the real routes; an unimplemented client honestly reports "unsupported".
-    func runAgent(id: String, input: String) async throws -> HubRunResult {
+    func runRecipe(id: String, input: String) async throws -> HubRunResult {
         throw HubRunUnsupported.notImplemented
     }
     func runChain(id: String, input: String) async throws -> HubRunResult {

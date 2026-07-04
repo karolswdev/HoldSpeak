@@ -1,8 +1,8 @@
 // HS-69-12: the Companion Agent Desk — the web /companion becomes the same desk
 // surface as the iPad (HSM-15-08), not a plainer control panel. A living desk of
-// the real agents + the live companion link (awaiting coding sessions), Signal-
+// the recipes + the live companion link (awaiting coding sessions), Signal-
 // crafted, fed by the existing HTTP API (no backend change):
-//   • /api/agents              — the agent personas (desk cards)
+//   • /api/recipes             — the recipes (desk cards)
 //   • /api/coders/status    — the device link + the coders awaiting you
 //
 // Framework-free where it can be; this is the page's Alpine factory (the desk
@@ -12,7 +12,7 @@
 // this is a plain declaration — no ES `export`.
 function companionDesk() {
   return {
-    agents: [],
+    recipes: [],
     status: null,
     loading: true,
     _poll: null,
@@ -28,11 +28,11 @@ function companionDesk() {
 
     async loadAgents() {
       try {
-        const r = await fetch("/api/agents");
+        const r = await fetch("/api/recipes");
         const d = await r.json();
-        this.agents = (d && d.agents) || [];
+        this.recipes = (d && d.recipes) || [];
       } catch (_e) {
-        this.agents = [];
+        this.recipes = [];
       }
     },
     async loadStatus() {

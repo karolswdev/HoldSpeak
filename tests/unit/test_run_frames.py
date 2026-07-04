@@ -65,24 +65,24 @@ def _run_frames(frames):
 
 def test_agent_run_frames_running_then_ready(rig, monkeypatch) -> None:
     client, db, frames = rig
-    db.agents.upsert(agent_id="a1", name="Owl", system_prompt="s")
+    db.recipes.upsert(recipe_id="a1", name="Owl", system_prompt="s")
     _stub_engine(monkeypatch)
 
-    resp = client.post("/api/agents/a1/run", json={"input": "hi"})
+    resp = client.post("/api/recipes/a1/run", json={"input": "hi"})
     assert resp.status_code == 200
 
     run = _run_frames(frames)
     assert [f["state"] for f in run] == ["running", "ready"]
-    assert run[0]["capability"] == {"kind": "agent", "id": "a1", "name": "Owl"}
+    assert run[0]["capability"] == {"kind": "recipe", "id": "a1", "name": "Owl"}
     assert "error" not in run[0] and "error" not in run[1]
 
 
 def test_agent_run_error_frame_on_502(rig, monkeypatch) -> None:
     client, db, frames = rig
-    db.agents.upsert(agent_id="a1", name="Owl", system_prompt="s")
+    db.recipes.upsert(recipe_id="a1", name="Owl", system_prompt="s")
     _stub_engine(monkeypatch, fail=True)
 
-    resp = client.post("/api/agents/a1/run", json={"input": "hi"})
+    resp = client.post("/api/recipes/a1/run", json={"input": "hi"})
     assert resp.status_code == 502
 
     run = _run_frames(frames)
@@ -92,7 +92,7 @@ def test_agent_run_error_frame_on_502(rig, monkeypatch) -> None:
 
 def test_chain_and_workflow_bracket_the_whole_run(rig, monkeypatch) -> None:
     client, db, frames = rig
-    db.agents.upsert(agent_id="a1", name="Owl", system_prompt="s",
+    db.recipes.upsert(recipe_id="a1", name="Owl", system_prompt="s",
                      user_template="{input}")
     db.chains.upsert(chain_id="c1", name="Pipeline", steps=["a1"])
     db.workflows.upsert(workflow_id="w1", name="Flow", prompt="Do: {input}")
@@ -112,9 +112,9 @@ def test_chain_and_workflow_bracket_the_whole_run(rig, monkeypatch) -> None:
 
 def test_no_token_frames_ever(rig, monkeypatch) -> None:
     client, db, frames = rig
-    db.agents.upsert(agent_id="a1", name="Owl", system_prompt="s")
+    db.recipes.upsert(recipe_id="a1", name="Owl", system_prompt="s")
     _stub_engine(monkeypatch)
-    client.post("/api/agents/a1/run", json={"input": "hi"})
+    client.post("/api/recipes/a1/run", json={"input": "hi"})
     assert not [t for (t, _d) in frames if t == "intel_token"], (
         "token frames must never be fabricated for a synchronous run"
     )

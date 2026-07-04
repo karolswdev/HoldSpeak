@@ -68,6 +68,9 @@ def _seed_global(path: Path, *blocks: dict) -> None:
 def global_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     target = tmp_path / "config" / "holdspeak" / "blocks.yaml"
     monkeypatch.setattr(assembly_module, "DEFAULT_GLOBAL_BLOCKS_PATH", target)
+    # cwd isolation: the dry-run path cwd-detects a project, and the developer's
+    # repo can legitimately BE one (a real .holdspeak/ landed with dogfooding).
+    monkeypatch.chdir(tmp_path)
     return target
 
 

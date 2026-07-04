@@ -12,7 +12,7 @@ import { World } from "./components/World";
 import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
 import { RecordOrb } from "./components/RecordOrb";
-import { AgentRail } from "./components/AgentRail";
+import { RecipeRail } from "./components/RecipeRail";
 import "./desk.css";
 
 export default function DeskApp() {
@@ -32,7 +32,7 @@ export default function DeskApp() {
       <DeskChrome />
       {updatedAt !== null && total === 0 ? <EmptyDesk /> : <World />}
       <RecordOrb />
-      <AgentRail />
+      <RecipeRail />
     </div>
   );
 }

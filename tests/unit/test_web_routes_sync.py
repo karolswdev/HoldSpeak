@@ -85,7 +85,7 @@ def _fake_db(tmp_path, *, meetings=(), artifacts=None):
         ),
         notes=_empty_primitive_repo(),
         kbs=_empty_primitive_repo(),
-        agents=_empty_primitive_repo(),
+        recipes=_empty_primitive_repo(),
         profiles=_empty_primitive_repo(),
         chains=_empty_primitive_repo(),
         workflows=_empty_primitive_repo(),

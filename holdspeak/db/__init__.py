@@ -16,7 +16,7 @@ from .cadence import CadenceRepository  # noqa: F401
 from .primitives import (  # noqa: F401
     NoteRepository,
     KBRepository,
-    AgentRepository,
+    RecipeRepository,
     ChainRepository,
     WorkflowRepository,
     DirectoryRepository,

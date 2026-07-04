@@ -22,7 +22,7 @@
     "last_modified": "2026-07-02T06:00:00Z",
     "deleted": false
   },
-  "agent": {
+  "recipe": {
     "id": "agent-golden-1",
     "name": "Golden Agent",
     "avatar": "sprout",

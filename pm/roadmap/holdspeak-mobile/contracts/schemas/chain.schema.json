@@ -2,18 +2,44 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://holdspeak.dev/contracts/v0/chain.schema.json",
   "title": "Chain",
-  "description": "A Chain (capability/synced): an ordered crew of agent ids. Canonical hub emission: ChainRecord.to_dict().",
+  "description": "A Chain (capability/synced): an ordered crew of recipe ids. Canonical hub emission: ChainRecord.to_dict().",
   "x-sync-kind": "chain",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "name", "steps", "created_at"],
+  "required": [
+    "id",
+    "name",
+    "steps",
+    "created_at"
+  ],
   "properties": {
-    "id": { "type": "string", "minLength": 1 },
-    "name": { "type": "string" },
-    "steps": { "type": "array", "items": { "type": "string" } },
-    "created_at": { "type": "string", "format": "date-time" },
-    "updated_at": { "type": "string", "format": "date-time" },
-    "last_modified": { "type": "string", "format": "date-time" },
-    "deleted": { "type": "boolean" }
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_modified": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deleted": {
+      "type": "boolean"
+    }
   }
 }

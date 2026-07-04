@@ -144,7 +144,7 @@ final class RoundTripTests: XCTestCase {
         let cs = ChangeSet(
             artifacts: [Synced<Artifact>.live(
                 Artifact(id: "a1", meetingId: "", artifactType: .pluginOutput, title: "Out",
-                         bodyMarkdown: "body", structuredJson: .object(["lens": .string("Agent")]),
+                         bodyMarkdown: "body", structuredJson: .object(["lens": .string("Recipe")]),
                          confidence: 1, status: .draft, pluginId: "ipad.desk", pluginVersion: "0",
                          sources: [], createdAt: now, updatedAt: now),
                 id: "a1", kind: .artifact, modifiedAt: now)],
@@ -153,9 +153,9 @@ final class RoundTripTests: XCTestCase {
                     Synced<Note>.tombstone(id: "n2", kind: .note, at: now)],
             kbs: [Synced<KB>.live(KB(id: "k1", name: "Knowledge", memberIds: ["n1"], createdAt: now, updatedAt: now),
                                   id: "k1", kind: .kb, modifiedAt: now)],
-            agents: [Synced<Agent>.live(Agent(id: "ag1", name: "Scout", avatar: "p1", role: "r",
+            recipes: [Synced<Recipe>.live(Recipe(id: "ag1", name: "Scout", avatar: "p1", role: "r",
                                               systemPrompt: "sp", userTemplate: "{input}", createdAt: now, updatedAt: now),
-                                        id: "ag1", kind: .agent, modifiedAt: now)],
+                                        id: "ag1", kind: .recipe, modifiedAt: now)],
             chains: [Synced<Chain>.live(Chain(id: "c1", name: "Crew", steps: ["ag1"], createdAt: now, updatedAt: now),
                                         id: "c1", kind: .chain, modifiedAt: now)],
             workflows: [Synced<WorkflowDefinition>.live(
@@ -172,7 +172,7 @@ final class RoundTripTests: XCTestCase {
         XCTAssertEqual(back, cs)                         // byte-stable round-trip
         XCTAssertEqual(back.count, 7)
         XCTAssertNil(back.notes.first { $0.meta.id == "n2" }?.value)   // tombstone carries no payload
-        XCTAssertEqual(back.agents.first?.value?.name, "Scout")
+        XCTAssertEqual(back.recipes.first?.value?.name, "Scout")
     }
 
     /// WAVE 4 (the Directory): a `ChangeSet` carrying directories (the iPad zone's identity +

@@ -14,7 +14,7 @@ NOTE on naming overlap (intentional, do not conflate):
 - `KBRecord` here is the desk's user-authored knowledge container. It is DISTINCT
   from the existing `project.yaml` kb-map and the `.hs/`/`.holdspeak/` context
   files (project-scoped dictation context).
-- `AgentRecord` here is the canonical persona. It is DISTINCT from
+- `RecipeRecord` here is the canonical persona. It is DISTINCT from
   `holdspeak.agent_context` AgentSession (a live claude/codex coding session).
 """
 from __future__ import annotations
@@ -25,7 +25,7 @@ from typing import Any, Optional
 from ..logging_config import get_logger
 from .base import BaseRepository
 from .models import (
-    AgentRecord,
+    RecipeRecord,
     ChainRecord,
     DirectoryMembershipRecord,
     DirectoryRecord,
@@ -251,7 +251,7 @@ class KBRepository(BaseRepository):
         )
 
 
-class AgentRepository(BaseRepository):
+class RecipeRepository(BaseRepository):
     """CRUD + sync access for Agent personas (capability/synced).
 
     The canonical persona — NOT agent_context.AgentSession (a live coding session).
@@ -260,7 +260,7 @@ class AgentRepository(BaseRepository):
     def upsert(
         self,
         *,
-        agent_id: str,
+        recipe_id: str,
         name: str = "",
         avatar: str = "",
         role: str = "",
@@ -274,19 +274,19 @@ class AgentRepository(BaseRepository):
         last_modified: Optional[str] = None,
         deleted: bool = False,
         created_at: Optional[str] = None,
-    ) -> AgentRecord:
-        clean_id = str(agent_id or "").strip()
+    ) -> RecipeRecord:
+        clean_id = str(recipe_id or "").strip()
         if not clean_id:
             raise ValueError("agent id is required")
         now = _now_iso()
         with self._connection() as conn:
             existing = conn.execute(
-                "SELECT created_at FROM agents WHERE id = ?", (clean_id,)
+                "SELECT created_at FROM recipes WHERE id = ?", (clean_id,)
             ).fetchone()
             created = created_at or (existing["created_at"] if existing else now)
             conn.execute(
                 """
-                INSERT INTO agents (id, name, avatar, role, system_prompt, user_template,
+                INSERT INTO recipes (id, name, avatar, role, system_prompt, user_template,
                                     tools_json, kb_id, profile_id, manual_context,
                                     use_zone_context, created_at, last_modified, deleted)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -323,50 +323,50 @@ class AgentRepository(BaseRepository):
             )
         return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
 
-    def get(self, agent_id: str, *, include_deleted: bool = False) -> Optional[AgentRecord]:
-        clean_id = str(agent_id or "").strip()
+    def get(self, recipe_id: str, *, include_deleted: bool = False) -> Optional[RecipeRecord]:
+        clean_id = str(recipe_id or "").strip()
         if not clean_id:
             return None
         with self._connection() as conn:
-            row = conn.execute("SELECT * FROM agents WHERE id = ?", (clean_id,)).fetchone()
+            row = conn.execute("SELECT * FROM recipes WHERE id = ?", (clean_id,)).fetchone()
         if not row:
             return None
         if row["deleted"] and not include_deleted:
             return None
         return self._row(row)
 
-    def list(self, *, include_deleted: bool = False, limit: int = 500) -> list[AgentRecord]:
+    def list(self, *, include_deleted: bool = False, limit: int = 500) -> list[RecipeRecord]:
         bounded = max(1, min(int(limit), 2000))
         with self._connection() as conn:
             if include_deleted:
                 rows = conn.execute(
-                    "SELECT * FROM agents ORDER BY name ASC LIMIT ?", (bounded,)
+                    "SELECT * FROM recipes ORDER BY name ASC LIMIT ?", (bounded,)
                 ).fetchall()
             else:
                 rows = conn.execute(
-                    "SELECT * FROM agents WHERE deleted = 0 ORDER BY name ASC LIMIT ?",
+                    "SELECT * FROM recipes WHERE deleted = 0 ORDER BY name ASC LIMIT ?",
                     (bounded,),
                 ).fetchall()
         return [self._row(r) for r in rows]
 
-    def delete(self, agent_id: str) -> bool:
-        clean_id = str(agent_id or "").strip()
+    def delete(self, recipe_id: str) -> bool:
+        clean_id = str(recipe_id or "").strip()
         if not clean_id:
             return False
         now = _now_iso()
         with self._connection() as conn:
             cur = conn.execute(
-                "UPDATE agents SET deleted = 1, last_modified = ? WHERE id = ? AND deleted = 0", (now, clean_id)
+                "UPDATE recipes SET deleted = 1, last_modified = ? WHERE id = ? AND deleted = 0", (now, clean_id)
             )
             return bool(cur.rowcount and cur.rowcount > 0)
 
-    def purge(self, agent_id: str) -> bool:
+    def purge(self, recipe_id: str) -> bool:
         with self._connection() as conn:
-            cur = conn.execute("DELETE FROM agents WHERE id = ?", (str(agent_id).strip(),))
+            cur = conn.execute("DELETE FROM recipes WHERE id = ?", (str(recipe_id).strip(),))
             return bool(cur.rowcount and cur.rowcount > 0)
 
-    def _row(self, row: Any) -> AgentRecord:
-        return AgentRecord(
+    def _row(self, row: Any) -> RecipeRecord:
+        return RecipeRecord(
             id=row["id"],
             name=row["name"],
             avatar=row["avatar"],

@@ -38,7 +38,7 @@ final class RuntimeProfileTests: XCTestCase {
 
     /// A payload from a surface that doesn't know `profiles` yet (the hub pre-24-04) must still decode.
     func testChangeSetDecodesWhenProfilesAbsent() throws {
-        let legacy = #"{"agents":[],"meetings":[]}"#.data(using: .utf8)!
+        let legacy = #"{"recipes":[],"meetings":[]}"#.data(using: .utf8)!
         let cs = try JSONDecoder().decode(ChangeSet.self, from: legacy)
         XCTAssertTrue(cs.profiles.isEmpty)
         XCTAssertTrue(cs.isEmpty)

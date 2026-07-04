@@ -58,7 +58,7 @@ interface DeskState {
   refresh(): Promise<void>;
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
    * editor open. The object IS the editor — no modal, ever. */
-  createPrimitive(kind: "note" | "kb" | "agent" | "zone" | "workflow"): Promise<void>;
+  createPrimitive(kind: "note" | "kb" | "recipe" | "zone" | "workflow"): Promise<void>;
   markNew(id: string): void;
   openEditor(id: string): void;
   closeEditor(): void;
@@ -83,7 +83,7 @@ interface DeskState {
   /** Run a capability through the real route; the persisted result
    * MATERIALIZES on the desk (HS-74-03: refresh + the NEW beat). */
   runCapability(
-    kind: "agent" | "chain" | "workflow",
+    kind: "recipe" | "chain" | "workflow",
     id: string,
     input: string,
   ): Promise<{ ok: boolean; output: string; artifactId: string | null; warning: string | null }>;
@@ -125,7 +125,7 @@ export const useDesk = create<DeskState>((set, get) => ({
     const posts: Record<string, [string, string, Record<string, unknown>]> = {
       note: ["/api/notes", "note", { title: "New note", body_markdown: "" }],
       kb: ["/api/kbs", "kb", { name: "New KB" }],
-      agent: ["/api/agents", "agent", { name: "New agent", avatar: "🤖" }],
+      recipe: ["/api/recipes", "recipe", { name: "New recipe", avatar: "🤖" }],
       zone: ["/api/directories", "directory", { name: "New zone" }],
       // HSM-22-03 — a workflow is born with a real one-step linear graph in
       // the canonical wire shape (never an empty {} the run route must refuse).
@@ -184,7 +184,7 @@ export const useDesk = create<DeskState>((set, get) => ({
     const urls: Record<string, string> = {
       note: `/api/notes/${encodeURIComponent(id)}`,
       kb: `/api/kbs/${encodeURIComponent(id)}`,
-      agent: `/api/agents/${encodeURIComponent(id)}`,
+      recipe: `/api/recipes/${encodeURIComponent(id)}`,
       directory: `/api/directories/${encodeURIComponent(id)}`,
       workflow: `/api/workflows/${encodeURIComponent(id)}`,
     };
@@ -292,7 +292,7 @@ export const useDesk = create<DeskState>((set, get) => ({
 
   async runCapability(kind, id, input) {
     const routes = {
-      agent: `/api/agents/${encodeURIComponent(id)}/run`,
+      recipe: `/api/recipes/${encodeURIComponent(id)}/run`,
       chain: `/api/chains/${encodeURIComponent(id)}/run`,
       workflow: `/api/workflows/${encodeURIComponent(id)}/run`,
     };

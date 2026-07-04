@@ -21,7 +21,7 @@ from .journal import DictationJournalRepository
 from .milestones import MilestoneRepository
 from .cadence import CadenceRepository
 from .primitives import (
-    AgentRepository,
+    RecipeRepository,
     ChainRepository,
     DirectoryMembershipRepository,
     DirectoryRepository,
@@ -38,7 +38,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 7   # v7 (Phase 77): agents.manual_context + use_zone_context (the iPad's pinned context persists)
+SCHEMA_VERSION = 8   # v8: the persona subsystem is named Recipe (agents table -> recipes; owner-ratified rename)
 
 
 class SchemaVersionError(RuntimeError):
@@ -744,9 +744,10 @@ CREATE TABLE IF NOT EXISTS kbs (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
--- Agent persona (capability/synced): the canonical, runnable persona. DISTINCT
--- from agent_context.AgentSession (a live claude/codex coding session).
-CREATE TABLE IF NOT EXISTS agents (
+-- Recipe (capability/synced): the canonical, runnable user-authored persona.
+-- DISTINCT from agent_context.AgentSession (a live claude/codex coding session,
+-- which keeps the word "agent").
+CREATE TABLE IF NOT EXISTS recipes (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL DEFAULT '',
     avatar TEXT NOT NULL DEFAULT '',
@@ -765,7 +766,7 @@ CREATE TABLE IF NOT EXISTS agents (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
--- Chain (capability/synced): an ordered run of agent personas.
+-- Chain (capability/synced): an ordered run of recipes.
 CREATE TABLE IF NOT EXISTS chains (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL DEFAULT '',
@@ -831,7 +832,7 @@ CREATE TABLE IF NOT EXISTS directory_memberships (
 
 CREATE INDEX IF NOT EXISTS idx_notes_modified ON notes(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_kbs_modified ON kbs(last_modified DESC);
-CREATE INDEX IF NOT EXISTS idx_agents_modified ON agents(last_modified DESC);
+CREATE INDEX IF NOT EXISTS idx_recipes_modified ON recipes(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_chains_modified ON chains(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_workflows_modified ON workflows(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_directories_modified ON directories(last_modified DESC);
@@ -938,7 +939,7 @@ class Database:
         # Primitive Framework: the desk's synced first-class primitives.
         self.notes = NoteRepository(self._connection, self)
         self.kbs = KBRepository(self._connection, self)
-        self.agents = AgentRepository(self._connection, self)
+        self.recipes = RecipeRepository(self._connection, self)
         self.profiles = ProfileRepository(self._connection, self)
         self.chains = ChainRepository(self._connection, self)
         self.workflows = WorkflowRepository(self._connection, self)
@@ -1001,7 +1002,28 @@ class Database:
             f"{SCHEMA_VERSION}. Backed up to {backup} before applying the schema."
         )
         with self._connection() as conn:
+            self._migrate_renames(conn, stored)
             self._apply_schema(conn)
+
+    @staticmethod
+    def _migrate_renames(conn: sqlite3.Connection, stored: int) -> None:
+        """Non-additive migrations the canonical DDL cannot express.
+
+        v8: the persona table `agents` became `recipes` (the owner-ratified
+        Recipe rename). A plain re-apply would create an EMPTY `recipes` table
+        beside the old data; the rename carries it. Runs after the backup, so
+        the pre-rename copy is always recoverable.
+        """
+        if stored < 8:
+            has_old = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='agents'"
+            ).fetchone()
+            has_new = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='recipes'"
+            ).fetchone()
+            if has_old and not has_new:
+                conn.execute("ALTER TABLE agents RENAME TO recipes")
+                conn.execute("DROP INDEX IF EXISTS idx_agents_modified")
 
     def _read_schema_version(self) -> Optional[int]:
         """Return the stored schema version, or None for a fresh/empty database."""
@@ -1018,23 +1040,25 @@ class Database:
         migration FROM an older version IS re-applying SCHEMA_SQL: bumping
         SCHEMA_VERSION routes an older DB through `_ensure_schema`'s backup-then-apply
         path, which lands the new tables. v2 (the Primitive Framework) added
-        notes/kbs/agents/chains/workflows/directories/directory_memberships this way.
+        notes/kbs/recipes/chains/workflows/directories/directory_memberships this way.
         """
         conn.executescript(SCHEMA_SQL)
         # Re-applying SCHEMA_SQL adds missing TABLES idempotently but not new COLUMNS on existing
-        # tables. v4 (Phase 24) adds agents.profile_id — apply it here, guarded, so an upgraded
+        # tables. v4 (Phase 24) added profile_id — apply it here, guarded, so an upgraded
         # (backed-up) v3 database gains the column. Fresh DBs already have it from SCHEMA_SQL.
-        agent_cols = {row[1] for row in conn.execute("PRAGMA table_info(agents)").fetchall()}
-        if "profile_id" not in agent_cols:
-            conn.execute("ALTER TABLE agents ADD COLUMN profile_id TEXT")
+        # (v8 renamed the table agents -> recipes; the rename runs BEFORE this in
+        # _migrate_renames, so both fresh and upgraded databases land here as `recipes`.)
+        recipe_cols = {row[1] for row in conn.execute("PRAGMA table_info(recipes)").fetchall()}
+        if "profile_id" not in recipe_cols:
+            conn.execute("ALTER TABLE recipes ADD COLUMN profile_id TEXT")
         # v7 (Phase 77): the pinned-context columns, additive (the v4 recipe).
-        if "manual_context" not in agent_cols:
+        if "manual_context" not in recipe_cols:
             conn.execute(
-                "ALTER TABLE agents ADD COLUMN manual_context TEXT NOT NULL DEFAULT ''"
+                "ALTER TABLE recipes ADD COLUMN manual_context TEXT NOT NULL DEFAULT ''"
             )
-        if "use_zone_context" not in agent_cols:
+        if "use_zone_context" not in recipe_cols:
             conn.execute(
-                "ALTER TABLE agents ADD COLUMN use_zone_context INTEGER NOT NULL DEFAULT 0"
+                "ALTER TABLE recipes ADD COLUMN use_zone_context INTEGER NOT NULL DEFAULT 0"
             )
         # v5 (Phase 72, HS-72-04): actuator proposals become owner-typed. The old
         # table pinned meeting_id NOT NULL, forcing desk sends through a hidden

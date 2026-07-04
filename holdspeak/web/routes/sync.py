@@ -7,7 +7,7 @@ runtime). Two routes on the user's own server:
   contract change-set: per kind a list of ``{meta:{id, kind, last_modified,
   deleted}, value}`` records. Covers meetings + artifacts (already shipped) and,
   as part of the Primitive Framework hub, the desk's new first-class primitives:
-  notes, kbs, agents, chains, workflows, directories and directory memberships
+  notes, kbs, recipes, chains, workflows, directories and directory memberships
   (the canonical filing map `primitive_id -> directory_id`). Read-only.
 - ``POST /api/sync/push`` — receive a pushed change-set. Every kind is *merged
   into the live store* with last-write-wins on ``last_modified`` and tombstone
@@ -40,7 +40,7 @@ log = get_logger("web.routes.sync")
 # the rest are the Primitive Framework desk primitives, each backed by a real
 # repository on the hub. Keep this in lockstep with the mobile/web SyncKind enum.
 SYNC_KINDS = frozenset(
-    {"meeting", "artifact", "note", "kb", "agent", "chain", "workflow",
+    {"meeting", "artifact", "note", "kb", "recipe", "chain", "workflow",
      "directory", "directory_membership", "profile"}
 )
 
@@ -52,7 +52,7 @@ _MERGEABLE: dict[str, tuple[str, str, dict[str, str]]] = {
         "title": "title", "body_markdown": "body_markdown", "tags": "tags",
     }),
     "kbs": ("kbs", "kb_id", {"name": "name", "member_ids": "member_ids"}),
-    "agents": ("agents", "agent_id", {
+    "recipes": ("recipes", "recipe_id", {
         "name": "name", "avatar": "avatar", "role": "role",
         "system_prompt": "system_prompt", "user_template": "user_template",
         "tools": "tools", "kb_id": "kb_id", "profile_id": "profile_id",
@@ -82,7 +82,7 @@ _MERGEABLE: dict[str, tuple[str, str, dict[str, str]]] = {
 # bucket name -> the kind string each record's meta must carry.
 _BUCKET_KIND = {
     "meetings": "meeting", "artifacts": "artifact", "notes": "note",
-    "kbs": "kb", "agents": "agent", "chains": "chain", "workflows": "workflow",
+    "kbs": "kb", "recipes": "recipe", "chains": "chain", "workflows": "workflow",
     "directories": "directory", "directory_memberships": "directory_membership",
     "profiles": "profile",
 }
@@ -394,8 +394,8 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
                  for n in db.notes.list(include_deleted=True, limit=bounded)]
         kbs = [_primitive_record(k, "kb")
                for k in db.kbs.list(include_deleted=True, limit=bounded)]
-        agents = [_primitive_record(a, "agent")
-                  for a in db.agents.list(include_deleted=True, limit=bounded)]
+        recipes = [_primitive_record(a, "recipe")
+                   for a in db.recipes.list(include_deleted=True, limit=bounded)]
         chains = [_primitive_record(c, "chain")
                   for c in db.chains.list(include_deleted=True, limit=bounded)]
         workflows = [_primitive_record(w, "workflow")
@@ -417,7 +417,7 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
             "artifacts": artifacts,
             "notes": notes,
             "kbs": kbs,
-            "agents": agents,
+            "recipes": recipes,
             "chains": chains,
             "workflows": workflows,
             "profiles": profiles,

@@ -4,7 +4,7 @@
  * shapes are the camelCase view shapes the world renders. */
 
 export type Kind =
-  | "meeting" | "artifact" | "note" | "agent" | "kb"
+  | "meeting" | "artifact" | "note" | "recipe" | "kb"
   | "directory" | "chain" | "workflow" | "coder";
 
 export interface DeskItem {
@@ -26,7 +26,7 @@ export interface LoadResult {
 }
 
 export const EMPTY_ITEMS: Items = {
-  meeting: [], artifact: [], note: [], agent: [], kb: [],
+  meeting: [], artifact: [], note: [], recipe: [], kb: [],
   directory: [], chain: [], workflow: [], coder: [],
 };
 
@@ -50,8 +50,8 @@ export const fromWireNote = (n: any): DeskItem => ({
   bodyMarkdown: n.body_markdown, tags: n.tags || [], createdAt: n.created_at,
 });
 
-export const fromWireAgent = (a: any): DeskItem => ({
-  kind: "agent", id: a.id, name: a.name, avatar: a.avatar || "🤖",
+export const fromWireRecipe = (a: any): DeskItem => ({
+  kind: "recipe", id: a.id, name: a.name, avatar: a.avatar || "🤖",
   role: a.role || "", systemPrompt: a.system_prompt || "",
   userTemplate: a.user_template || "", tools: a.tools || [],
   kbId: a.kb_id || null, profileId: a.profile_id || "",
@@ -148,9 +148,9 @@ export async function loadAll(): Promise<LoadResult> {
     fetchJson("/api/notes")
       .then((d) => { items.note = (d.notes || []).filter((n: any) => !n.deleted).map(fromWireNote); status.note = "live"; })
       .catch((e) => fail("note", "Notes", e)),
-    fetchJson("/api/agents")
-      .then((d) => { items.agent = (d.agents || []).filter((a: any) => !a.deleted).map(fromWireAgent); status.agent = "live"; })
-      .catch((e) => fail("agent", "Agents", e)),
+    fetchJson("/api/recipes")
+      .then((d) => { items.agent = (d.agents || []).filter((a: any) => !a.deleted).map(fromWireRecipe); status.agent = "live"; })
+      .catch((e) => fail("recipe", "Recipes", e)),
     fetchJson("/api/kbs")
       .then((d) => { items.kb = (d.kbs || []).filter((k: any) => !k.deleted).map(fromWireKb); status.kb = "live"; })
       .catch((e) => fail("kb", "KBs", e)),

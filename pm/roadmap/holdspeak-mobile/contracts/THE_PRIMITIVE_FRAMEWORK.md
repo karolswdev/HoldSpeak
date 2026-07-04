@@ -43,8 +43,8 @@ Priority (owner): **web is king, iPad is king×2, the desktop hub is the happy b
 | **Note** | `note` | content | `id, title, body_markdown, tags[], created_at, updated_at, last_modified, deleted` |
 | **Directory** | `directory` | organization (identity+membership) · layout (geometry) | `id, name, parent_id?, created_at, last_modified, deleted` — **the iPad "zone" is this** (its name/nesting/membership sync; its geometry does NOT) |
 | **KB** | `kb` | organization | `id, name, member_ids[], created_at, last_modified, deleted` |
-| **Agent (persona)** | `agent` | capability | `id, name, avatar, role, system_prompt, user_template, tools[], kb_id?, created_at, last_modified, deleted` |
-| **Chain (crew)** | `chain` | capability | `id, name, steps[] (agent_ids), last_modified, deleted` |
+| **Recipe** | `recipe` | capability | `id, name, avatar, role, system_prompt, user_template, tools[], kb_id?, created_at, last_modified, deleted` |
+| **Chain** | `chain` | capability | `id, name, steps[] (recipe_ids), last_modified, deleted` |
 | **Workflow** | `workflow` | capability | `id, name, prompt? , graph_json?, last_modified, deleted` |
 | **Coder session** | `coder` | presence | `agent ("claude"\|"codex"), session_id, project?, model?, tokens_used?, state (working\|waiting\|idle\|ended), events[]` — `CoderEvent` kinds: `user_prompt, assistant, tool(tool,target,detail), result(ok,summary,added,removed), command(cmd,exit,output), approval(question,command), notification, usage(tokens), ended` |
 | **Model** | `model` | capability (manifest) | `id, name, capabilities[]` — manifest syncs, binary device-local |
@@ -52,13 +52,14 @@ Priority (owner): **web is king, iPad is king×2, the desktop hub is the happy b
 | **Membership** | — | organization | which primitive is filed in which KB/zone |
 | **Game** | `game` | **local-only** | never syncs (the one honest exception) |
 
-### Two distinct first-class "agents" — do NOT merge them
-- **Agent (`agent`)** = a *user-authored persona* (system prompt + avatar + tools). The iPad
-  Tailored-Agents object, **promoted** to a canonical synced server domain object. First-class everywhere.
+### Recipe vs. Coder — do NOT merge them (the 2026-07-04 owner-ratified rename)
+- **Recipe (`recipe`)** = a *user-authored persona* (system prompt + avatar + tools). Formerly wore the
+  word "agent"; the owner ratified the rename so the word is unambiguous. First-class everywhere.
 - **Coder (`coder`)** = a *live Claude/Codex coding session* (Phase 17), captured by the desktop hooks
-  (`holdspeak/agent_context` + `agent_hook.py`). Presence-class.
-- They are different concepts. The desktop's existing `AgentSession` (agent_context) backs **Coder**, not
-  **Agent**.
+  (`holdspeak/agent_context` + `agent_hook.py`). Presence-class. Its wire field `agent`
+  ("claude"|"codex") names WHICH coding agent runs the session.
+- They are different concepts. The desktop's `AgentSession` (agent_context) backs **Coder**, not
+  **Recipe**. In prose, "agent" now always means a coding agent.
 
 ### Zones ARE Directories (the iPad's spatial skin of a shared primitive)
 - A desk **zone** = a **Directory** rendered spatially. Split it cleanly:
@@ -132,8 +133,8 @@ the full capability layer (declare-once primitives); web layout/desk polish to i
 
 ## Reconciliation rules (when the three ports land)
 
-1. **One name per concept**, matching the Kind column above. `OutputRecord`→`Artifact`. The persona stays
-   `agent`; the coding session stays `coder`. No surface invents a fourth word.
+1. **One name per concept**, matching the Kind column above. `OutputRecord`→`Artifact`. The persona is
+   `recipe`; the coding session stays `coder`. No surface invents a fourth word.
 2. **The hub's API routes are canonical.** The desktop agent reports the exact route paths + shapes; the
    iPad and web ports must call those. Where the hub route doesn't exist yet, the surface stubs a typed
    client + a TODO naming the exact route needed — I stitch them in wave 2.

@@ -50,7 +50,7 @@ PRIMITIVES_TS = REPO / "web/src/lib/primitives.ts"
 KIND_BUCKETS = {
     "note": "notes",
     "kb": "kbs",
-    "agent": "agents",
+    "recipe": "recipes",
     "chain": "chains",
     "workflow": "workflows",
     "directory": "directories",
@@ -101,7 +101,7 @@ def pull_body(tmp_path, monkeypatch):
 
     db.notes.upsert(note_id="n1", title="N", body_markdown="b", tags=["t"])
     db.kbs.upsert(kb_id="kb1", name="K", member_ids=["n1"])
-    db.agents.upsert(agent_id="a1", name="A", avatar="av", role="r",
+    db.recipes.upsert(recipe_id="a1", name="A", avatar="av", role="r",
                      system_prompt="s", user_template="u", kb_id="kb1")
     db.chains.upsert(chain_id="c1", name="C", steps=["a1"])
     db.workflows.upsert(workflow_id="w1", name="W", prompt="p")
@@ -197,7 +197,7 @@ class TestWebShapesCannotInventFields:
         "Note": "note",
         "Directory": "directory",
         "KB": "kb",
-        "Agent": "agent",
+        "Agent": "recipe",
         "Chain": "chain",
         "Workflow": "workflow",
     }

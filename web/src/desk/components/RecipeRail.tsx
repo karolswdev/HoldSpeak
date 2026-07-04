@@ -1,4 +1,4 @@
-// The agent rail (HS-73-07): personas run FROM the world and their results
+// The recipe rail (HS-73-07): personas run FROM the world and their results
 // land IN the world. A slim right-edge rail of avatars (the iPad's Agents
 // rail); tap → an anchored prompt (not a modal) → run through the real
 // route → the result renders with a copy affordance. Personas ONLY —
@@ -7,8 +7,8 @@ import { useState } from "react";
 import { useDesk } from "../store";
 import { MicButton } from "./MicButton";
 
-export function AgentRail() {
-  const agents = useDesk((s) => s.items.agent);
+export function RecipeRail() {
+  const agents = useDesk((s) => s.items.recipe);
   const profiles = useDesk((s) => s.profiles);
   const [openId, setOpenId] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -34,7 +34,7 @@ export function AgentRail() {
     setBusyId(id);
     setOutput("");
     setCopied(false);
-    const result = await useDesk.getState().runCapability("agent", id, input);
+    const result = await useDesk.getState().runCapability("recipe", id, input);
     setOutput(result.output);
     setBusyId(null);
   };

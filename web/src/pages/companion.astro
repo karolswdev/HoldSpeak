@@ -1,8 +1,8 @@
 ---
 // HS-69-12: /companion is now the Agent Desk — the same desk surface as the iPad
-// (HSM-15-08), not a plainer control panel. A living desk of the real agents +
+// (HSM-15-08), not a plainer control panel. A living desk of your recipes +
 // the live companion link (the coders awaiting you), fed by the existing HTTP
-// API (/api/agents, /api/coders/status). The pairing/credential facts stay,
+// API (/api/recipes, /api/coders/status). The pairing/credential facts stay,
 // folded into a "How it connects" footer.
 import AppLayout from "../layouts/AppLayout.astro";
 
@@ -20,7 +20,7 @@ const pairingSteps = [
       <div class="ad-head-lead">
         <p class="ad-eyebrow">Companion</p>
         <h1 class="ad-title">The Agent Desk</h1>
-        <p class="ad-sub">Your agents and the coders that need you — on the desk your iPad shares.</p>
+        <p class="ad-sub">Your recipes and the coders that need you — on the desk your iPad shares.</p>
       </div>
       <div class="ad-head-side">
         <span class="ad-link" :class="`is-${linkScope}`">
@@ -45,17 +45,17 @@ const pairingSteps = [
       </div>
     </section>
 
-    {/* the agents — the persona desk */}
+    {/* the recipes — the persona desk */}
     <section class="ad-zone">
-      <div class="ad-zone-head"><span class="ad-zone-spine"></span><h2>Agents</h2>
-        <span class="ad-count" x-text="agents.length" x-cloak></span></div>
+      <div class="ad-zone-head"><span class="ad-zone-spine"></span><h2>Recipes</h2>
+        <span class="ad-count" x-text="recipes.length" x-cloak></span></div>
 
-      <div class="ad-empty signal-card" x-show="!loading && !agents.length" x-cloak>
-        <p>No agents yet. Create one on the <a href="/desk">Desk</a> and it appears here.</p>
+      <div class="ad-empty signal-card" x-show="!loading && !recipes.length" x-cloak>
+        <p>No recipes yet. Create one on the <a href="/desk">Desk</a> and it appears here.</p>
       </div>
 
-      <div class="ad-grid" x-show="agents.length" x-cloak>
-        <template x-for="a in agents" {...{ ":key": "a.id" }}>
+      <div class="ad-grid" x-show="recipes.length" x-cloak>
+        <template x-for="a in recipes" {...{ ":key": "a.id" }}>
           <article class="signal-card ad-card is-pressable">
             <div class="ad-card-head">
               <span class="ad-avatar" x-text="a.avatar || '🤖'">🤖</span>

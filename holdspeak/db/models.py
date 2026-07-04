@@ -476,7 +476,7 @@ class KBRecord:
 
 
 @dataclass
-class AgentRecord:
+class RecipeRecord:
     """A first-class Agent persona — capability/synced primitive (Primitive Framework).
 
     The iPad's Tailored-Agents persona promoted to a canonical server object: a
@@ -562,7 +562,7 @@ class ProfileRecord:
 class ChainRecord:
     """A Chain — capability/synced primitive (Primitive Framework).
 
-    An ordered run of agent personas: `steps` is a list of agent ids executed in
+    An ordered run of recipes: `steps` is a list of agent ids executed in
     sequence. Synced like meetings/artifacts.
     """
 
