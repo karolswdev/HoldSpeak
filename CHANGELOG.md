@@ -11,7 +11,17 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.4.0] - 2026-07-04
+
 ### Added
+- Meetings export as SubRip: `holdspeak history <id> --export srt` renders
+  the transcript with per-segment timestamps and `Speaker:` labels, and an
+  exported file re-imports with the same speakers.
+- `holdspeak dictation blocks ls/show` detect the project from the current
+  directory, the same way `dictation dry-run` already did; `--project`
+  still overrides.
 - **Imported meetings get typed artifacts.** The routed plugin chain (ADR
   drafts, mermaid diagrams, incident timelines, milestone plans,
   requirements, and the rest) now runs over imported and re-processed
@@ -86,6 +96,16 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   route behaves exactly as before.
 
 ### Fixed
+- Dictating nothing types nothing. The project-aware rewriter, handed an
+  empty utterance in a repo with `.hs/` context, used to fabricate a
+  plausible task from the project alone; it now passes empty input
+  through untouched.
+- The dictation journal records activity even with the pipeline off.
+  With journaling on and the pipeline disabled, dictations and browser
+  dry-runs now land in the journal as passthrough rows (final text =
+  transcript) instead of vanishing; the typed output is unchanged.
+- The "generating intelligence" overlay's orb image loads again (its URL
+  missed the web bundle's base path and returned 404 on every page).
 - The dictation intent router works with more OpenAI-compatible models.
   The classify prompt's only example of `extras` was a per-block table, so
   a model that mirrored that nesting back was rejected, and a model that
