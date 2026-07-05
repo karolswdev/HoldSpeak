@@ -448,6 +448,26 @@
       ]
     },
     {
+      "path": "/api/ask",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.ask",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/ask/keep",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.ask",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/bookmark",
       "methods": [
         "POST"

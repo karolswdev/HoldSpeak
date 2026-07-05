@@ -1,12 +1,13 @@
 // HS-73-01 — the island's unit rig: sprite-hash parity with the shared
 // picker (per-id stability is what keeps a desk wearing the same art across
 // the Alpine→React cutover) and the wire normalizers.
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteName, stableHash, variantIndex } from "../../scripts/desk/sprites.js";
 import {
-  fromWireAgent, fromWireDirectory, fromWireNote, fromWireWorkflow, liveValues,
+  fromWireDirectory, fromWireNote, fromWireRecipe, fromWireWorkflow, liveValues, loadAll,
 } from "../api";
+import { lineage } from "../lineage";
 import { objUnit, worldObjects } from "../world";
 import { oh } from "../hash";
 import type { Items } from "../api";
@@ -32,9 +33,9 @@ describe("wire normalizers", () => {
       fromWireNote({ id: "n1", title: "T", body_markdown: "b", tags: ["x"], created_at: "c" }),
     ).toMatchObject({ kind: "note", id: "n1", title: "T", bodyMarkdown: "b", tags: ["x"] });
   });
-  it("agent defaults", () => {
-    expect(fromWireAgent({ id: "a1", name: "A" })).toMatchObject({
-      kind: "agent", avatar: "🤖", tools: [], kbId: null, profileId: "",
+  it("recipe defaults", () => {
+    expect(fromWireRecipe({ id: "a1", name: "A" })).toMatchObject({
+      kind: "recipe", avatar: "🤖", tools: [], kbId: null, profileId: "",
     });
   });
   it("directory members from either shape", () => {
@@ -56,11 +57,60 @@ describe("wire normalizers", () => {
   });
 });
 
+describe("the recipe wire (the v8 rename, hub-faithful)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("loadAll lands hub {recipes:[…]} under items.recipe", async () => {
+    // The regression this locks: the loader once read the pre-rename `agents`
+    // key into a nonexistent `items.agent` lane — recipes never reached the
+    // rail, the editor, or the world. The hub's key is `recipes`.
+    vi.stubGlobal("fetch", (url: string) => {
+      const body = String(url).startsWith("/api/recipes")
+        ? { recipes: [{ id: "r1", name: "Scout", avatar: "🦊" }, { id: "r2", name: "Gone", deleted: true }] }
+        : {};
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(body) });
+    });
+    const { items, status } = await loadAll();
+    expect(items.recipe.map((r) => r.id)).toEqual(["r1"]);
+    expect(items.recipe[0]).toMatchObject({ kind: "recipe", name: "Scout", avatar: "🦊" });
+    expect(status.recipe).toBe("live");
+  });
+});
+
+describe("lineage via detection", () => {
+  const items = {
+    meeting: [], note: [], kb: [], artifact: [], chain: [], workflow: [],
+    directory: [], coder: [],
+    recipe: [{ kind: "recipe", id: "r1", name: "Scout" }],
+  } as unknown as Items;
+
+  it("a canonical recipe row is the via", () => {
+    const l = lineage(items, [
+      { source_type: "recipe", source_ref: "r1" },
+      { source_type: "input", source_ref: "m1" },
+    ]);
+    expect(l.via?.ref).toBe("r1");
+    expect(l.from.map((f) => f.ref)).toEqual(["m1"]);
+  });
+  it("a pre-rename 'agent' row still reads as the via (older stored artifacts)", () => {
+    expect(lineage(items, [{ source_type: "agent", source_ref: "r1" }]).via?.ref).toBe("r1");
+  });
+  it("the Ask atom's via row (HSM-16-09 wire) reads as the via", () => {
+    const l = lineage(items, [
+      { source_type: "card", source_ref: "Q3 kickoff" },
+      { source_type: "card", source_ref: "Mesh sync owner" },
+      { source_type: "ask", source_ref: "Distill" },
+    ]);
+    expect(l.via?.label).toBe("Distill");
+    expect(l.from.map((f) => f.label)).toEqual(["Q3 kickoff", "Mesh sync owner"]);
+  });
+});
+
 describe("world math", () => {
   const items: Items = {
     meeting: [{ kind: "meeting", id: "m1", title: "M" }],
     note: [{ kind: "note", id: "n1", title: "N" }],
-    kb: [], agent: [], artifact: [], chain: [], workflow: [],
+    kb: [], recipe: [], artifact: [], chain: [], workflow: [],
     directory: [{ kind: "directory", id: "z", name: "Z", memberIds: ["m1"] } as any],
     coder: [],
   };

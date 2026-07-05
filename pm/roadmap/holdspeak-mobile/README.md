@@ -13,7 +13,22 @@
 > the build workaround args). Older loop/gotcha background: [`HANDOVER.md`](./HANDOVER.md).
 
 **Current phase:** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
-— **6/9: HSM-16-08 DONE the same evening — the mesh knows its models.** The `model` MANIFEST
+— **7/9: HSM-16-04 DONE — the desk runs on the web too.** The survey-corrected remaining
+slice shipped with its own truth-up: the "pre-paid" recipe layer was DEAD on the web (the
+Phase-17 rename half-landed — wrong loader keys, four stale kind checks, a crashing
+"+ Agent" chip, a red desk vitest suite no gate watched); resurrected, regression-locked,
+and brought to in-world authoring parity. The Ask AI atom crossed surfaces: a real lasso
+(or shift-click) → the bundle bar → the atelier composer (the iPad's five lenses, the
+speak-to-fill mic, a RUNS-ON pick with an honest egress chip) → the new hub `/api/ask`
+(grounds the run FROM THE CANONICAL STORE, persists nothing) → the printed card wearing
+where THIS run went (model · host) → Keep (`/api/ask/keep`) mints the byte-identical iPad
+artifact shape, test-locked, and the card materializes with the NEW beat. Two latent bugs
+fixed: a real hub never emitted its live `desktop:intel` manifest row (16-08's helper read
+the wrong Config level; tests had monkeypatched the helper), and the meeting theater
+popped on every desk run (`theater.js` missed the `scope:"run"` filter). Hub 2482 green,
+web vitest 39/39, validator ALL PASS, 6 live Playwright shots. **Next: 16-06** (the walk
+runbook — now also the web cross-surface beat) → 16-07 docs. Earlier:
+**6/9: HSM-16-08 DONE the same evening — the mesh knows its models.** The `model` MANIFEST
 ("this node has this model, with these capabilities") is the sync wire's **eleventh kind**:
 devices advertise installed GGUFs on push, the hub stores them + advertises its own model as a
 live `desktop:intel` row, and the iPad's "where should it run?" sheet now **names the actual
@@ -105,10 +120,16 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**HSM-16-08 DONE — the mesh knows its models.** The model
+**Last updated:** 2026-07-05 (**HSM-16-04 DONE — the desk runs on the web too.** The web
+recipe layer resurrected from its half-landed rename (a loud truth-up: the survey's
+"pre-paid" credit was false in practice) + in-world authoring parity; the Ask atom's full
+web arc over new hub `/api/ask` + `/api/ask/keep`, keep byte-identical to the iPad's kept
+Ask; two latent bugs fixed (the hub's own manifest row never emitted; the meeting theater
+popped on desk runs). Phase 16 is 7/9; next 16-06's runbook, then 16-07 docs. Earlier:
+**HSM-16-08 DONE — the mesh knows its models.** The model
 manifest joins the sync wire as its eleventh kind, availability-only with the no-binary
 invariant asserted on three layers; the iPad's run-target sheet names the hub's real model.
-Phase 16 is 6/9; next 16-04's web slice. Earlier:
+Earlier:
 **HSM-16-09 DONE — the Ask AI atom, honest to the bone.** A kept
 Ask now carries its full lineage (every card it read + the exact prompt) onto the synced
 Artifact; two egress lies fixed (the printed card + the theater now state the RUN's resolved

@@ -35,6 +35,9 @@ export const VARIANTS = {
   kb: numbered("crystal", 16),
   model: ["cartridge"],
   agent: Array.from({ length: 16 }, (_, i) => "agent_o" + i),
+  // "recipe" is the canonical kind since the v8 rename; the SAME pool as the
+  // pre-rename "agent", so a given id keeps wearing the exact same avatar.
+  recipe: Array.from({ length: 16 }, (_, i) => "agent_o" + i),
   coder: Array.from({ length: 16 }, (_, i) => "agent_o" + i),
   artifact: ["paper"],
   chain: ["cartridge"],

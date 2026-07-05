@@ -46,6 +46,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
     body: String((live as any).bodyMarkdown || ""),
     tags: (((live as any).tags as string[]) || []).join(", "),
     name: String((live as any).name || ""),
+    avatar: String((live as any).avatar || ""),
     role: String((live as any).role || ""),
     systemPrompt: String((live as any).systemPrompt || ""),
     userTemplate: String((live as any).userTemplate || ""),
@@ -214,13 +215,22 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
             )}
           </>
         )}
-        {o.kind === "agent" && (
+        {o.kind === "recipe" && (
           <>
-            <input
-              value={f.name}
-              placeholder="Name"
-              onChange={(e) => set("name", "name", e.target.value)}
-            />
+            <div className="desk-editor-row">
+              <input
+                className="desk-editor-avatar"
+                value={f.avatar}
+                placeholder="🤖"
+                aria-label="Avatar"
+                onChange={(e) => set("avatar", "avatar", e.target.value)}
+              />
+              <input
+                value={f.name}
+                placeholder="Name"
+                onChange={(e) => set("name", "name", e.target.value)}
+              />
+            </div>
             <input
               value={f.role}
               placeholder="Role"

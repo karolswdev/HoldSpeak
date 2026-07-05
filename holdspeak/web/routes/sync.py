@@ -351,18 +351,24 @@ def _merge_artifacts(db: Any, records: list[dict[str, Any]]) -> int:
 def _hub_model_name(ctx: WebContext) -> str:
     """The hub's own model, for its live manifest row: the cloud model id when
     intel targets an endpoint, else the local GGUF's stem. Never a path — the
-    manifest advertises availability, not location."""
+    manifest advertises availability, not location.
+
+    The intel knobs live on ``Config.meeting``, not the top-level ``Config`` —
+    reading them off the wrong level raised inside the ``except`` and the hub
+    silently never advertised its own model (the HSM-16-08 latent bug; the
+    guard test now exercises this body with a real ``Config``).
+    """
     try:
         from ...config import Config
 
-        cfg = Config.load()
-        if not cfg.intel_enabled:
+        meeting = Config.load().meeting
+        if not meeting.intel_enabled:
             return ""
-        if cfg.intel_provider == "cloud":
-            return str(cfg.intel_cloud_model or "")
+        if meeting.intel_provider == "cloud":
+            return str(meeting.intel_cloud_model or "")
         from pathlib import Path as _P
 
-        stem = _P(str(cfg.intel_realtime_model or "")).name
+        stem = _P(str(meeting.intel_realtime_model or "")).name
         return stem[:-5] if stem.lower().endswith(".gguf") else stem
     except Exception:
         return ""

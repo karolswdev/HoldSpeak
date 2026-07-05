@@ -447,3 +447,36 @@ def test_model_manifest_push_last_write_wins(env, monkeypatch) -> None:
     assert resp.status_code == 200
     assert resp.json()["received"]["models"] == 0
     assert db.model_manifests.get("iPad:m.gguf").name == "Newer"
+
+
+def test_hub_model_name_reads_the_real_config(monkeypatch) -> None:
+    """Exercise the REAL `_hub_model_name` body with a REAL `Config`.
+
+    The HSM-16-08 latent bug this locks: the intel knobs live on
+    `Config.meeting`, and reading them off the top-level `Config` raised
+    inside the helper's `except` — every earlier test monkeypatched the
+    helper itself, so a real hub silently never advertised its own model.
+    """
+    from holdspeak.config import Config, MeetingConfig
+    from holdspeak.web.routes.sync import _hub_model_name
+
+    def cfg(**kw):
+        c = Config()
+        c.meeting = MeetingConfig(**kw)
+        return c
+
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg(
+        intel_enabled=True, intel_provider="local",
+        intel_realtime_model="~/Models/gguf/Foo-9B-Q6_K.gguf",
+    )))
+    assert _hub_model_name(None) == "Foo-9B-Q6_K"
+
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg(
+        intel_enabled=True, intel_provider="cloud", intel_cloud_model="Bar-Cloud",
+    )))
+    assert _hub_model_name(None) == "Bar-Cloud"
+
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls, path=None: cfg(
+        intel_enabled=False,
+    )))
+    assert _hub_model_name(None) == ""

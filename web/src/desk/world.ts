@@ -13,7 +13,7 @@ export interface WorldObject {
 }
 
 const ORDER: Kind[] = [
-  "meeting", "note", "kb", "agent", "artifact", "chain", "workflow", "coder",
+  "meeting", "note", "kb", "recipe", "artifact", "chain", "workflow", "coder",
 ];
 
 /** Every primitive as a world object, unfiltered — the lookup surface for
@@ -73,7 +73,7 @@ export function worldZones(items: Items, divedZone: string | null): WorldZone[] 
 export function objGlow(kind: string): string {
   return (
     {
-      meeting: "#56C7F5", note: "#34D399", kb: "#FBBF24", agent: "#FF6B35",
+      meeting: "#56C7F5", note: "#34D399", kb: "#FBBF24", recipe: "#FF6B35",
       artifact: "#FF9E64", chain: "#A78BFA", workflow: "#56C7F5",
       directory: "#E0A458", coder: "#FF6B35",
     } as Record<string, string>

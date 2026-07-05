@@ -6,7 +6,20 @@ delivered and look for parity with the web client in Astro… and design for syn
 desktop. This is all a mesh system, so everything has to flow back and forth. Knowledge bases, stuff
 like that."*)
 
-**Last updated:** 2026-07-04 (**HSM-16-08 DONE — the mesh knows its models (6/9).** The `model`
+**Last updated:** 2026-07-05 (**HSM-16-04 DONE — the desk runs on the web too (7/9).**
+The survey-corrected remaining slice shipped: the recipe layer RESURRECTED (the Phase-17
+rename had left it dead on web — loader keys, world/lineage/editor/pull-out kind checks,
+a crashing "+ Agent" chip, a red vitest suite nobody saw) with in-world authoring at
+parity, and the Ask AI atom's full web arc (lasso/shift-click → bundle bar → atelier
+composer with the iPad's five lenses + mic + RUNS-ON → new hub `/api/ask` grounding from
+the canonical store → the printed card wearing the RUN's honest egress → Keep mints the
+byte-identical iPad artifact shape / Bin stores nothing). Two latent bugs found and fixed:
+the hub NEVER emitted its live `desktop:intel` manifest row (16-08's `_hub_model_name`
+read the wrong Config level; every test had monkeypatched the helper), and `theater.js`
+popped the meeting theater on every desk run (no `scope:"run"` filter). Hub 2482 green,
+web vitest 39/39, validator ALL PASS, 6 live Playwright shots. Next: 16-06 (the walk
+riders + web cross-surface beat), then 16-07 docs. Earlier:
+**HSM-16-08 DONE — the mesh knows its models (6/9).** The `model`
 manifest is the sync wire's eleventh kind (contract + schema + hub table/repo/route + iPad
 publish/consume); the run-target sheet names the hub's real model; the no-binary invariant is
 asserted on three layers; pre-pays and the P24 supersession recorded in the story. Swift
@@ -102,7 +115,7 @@ the user. It is the spine of the whole phase.
 | HSM-16-01 | The DeskObject parity & sync contract (inventory + spec) | **done** (pre-paid: [`THE_PRIMITIVE_FRAMEWORK.md`](../contracts/THE_PRIMITIVE_FRAMEWORK.md) IS this spec — the canonical primitive table, sync classes, wire shapes, per-surface parity inventory; authored 2026-06-26 on the owner's directive, kept current through wave 4 + the Phase-17 recipe rename) | the baseline both thrusts measure against |
 | HSM-16-02 | The organization sync model (design + contract additions) | **done** (pre-paid: `SyncKind.kb`/`.directory`/`.membership` live in `apple/Sources/Contracts/Sync.swift` with identity+membership syncing and geometry/paint per-device, exactly this story's design call; locked by the Phase-23-04 round-trip matrix) | sync (design-first) |
 | HSM-16-03 | The desktop hub surface for organization | **done** (pre-paid: `holdspeak/web/routes/primitives/` serves directories/kbs/notes/recipes/chains/workflows/profiles CRUD + `routes/sync.py`; fresh 66-test green run 2026-07-04) | sync (hub) |
-| HSM-16-04 | The web Astro Desk (parity build) | **in-progress, survey-corrected** (substantially pre-paid: the desk IS the web front door — `index.astro` mounts `DeskApp` with World/Stage/zones/pull-out/RecipeRail/InlineEditor/mic, and 22-03 made it a workflow producer; **remaining slice = web recipe/atelier authoring** — the 17-08 closeout filed it verbatim as "the next slice" — **+ the Ask-AI atom's web parity** once 16-09 lands) | parity (the big build) |
+| HSM-16-04 | The web Astro Desk (parity build) | **done** (2026-07-05 — the remaining slice: the recipe layer resurrected (the rename had left it DEAD on web — truth-up in the story) + in-world authoring, and the Ask atom's full web arc via new hub `/api/ask` + `/api/ask/keep` (keep mints the byte-identical iPad artifact shape, locked in tests); 6 live Playwright shots; 2 latent bugs fixed on the way (the hub's own manifest row never emitted; the meeting theater popped on desk runs)) | parity (the big build) |
 | HSM-16-05 | Wire the mesh — organization flows back and forth | **done** (pre-paid: the Phase-23-04 10-kind per-primitive push→pull round-trip matrix covers kb/directory/membership byte-faithful, golden-pinned on both sides of the wire; live merges proven in the 22-01/22-04 DeskSync passes) | sync (wire) |
 | HSM-16-09 | **The Ask AI atom** — lasso → ask → speak → print → keep/bin (on-device, no mesh needed) | **done** (2026-07-04, sim-proven; device beat rides 16-06. TRUTH-UP: the survey's "zero code exists" was wrong — the skeleton had shipped; this story built the missing substance: full Ask lineage on the wire, two egress-honesty fixes, composer + printed card off the scrim) | capability (the atom) |
 | HSM-16-08 | Capability objects — the model manifest | **done** (2026-07-04: the `model` manifest is the sync wire's ELEVENTH kind — devices advertise installed models, the hub stores + advertises its own live row, and the run-target sheet NAMES what "your desktop" would run; no-binary invariant asserted on schema/Swift/hub layers. Truth-ups: combine-to-run + cross-node runs were pre-paid (desk era + P22); drop-model-sets-RUNS-ON superseded by P24 profiles; manifest informs the user's pick, never silent auto-routing (the approval+egress contract)) | capability (combine/execute) |
@@ -114,7 +127,31 @@ the user. It is the spine of the whole phase.
 
 ## Where we are
 
-**16-08 DONE the same evening (6/9) — the mesh knows its models.** The survey-corrected
+**16-04 DONE (7/9) — the desk runs on the web too.** The story opened with its own
+truth-up: the "substantially pre-paid" recipe layer was dead on the web (the Phase-17
+rename half-landed — the loader read the pre-rename wire key into a nonexistent items
+lane, four components still checked a kind that no longer exists, the create chip was a
+live crash, and the desk's OWN vitest suite was already red on a renamed import with no
+gate watching). All of it fixed and regression-locked, and the in-world recipe editor
+reached authoring parity (avatar/role/prompt/template/tools/KB/profile, autosaving).
+Then the atom crossed surfaces: rope context with a real lasso (or shift-click), the
+bundle bar rises, the composer docks in the atelier posture with the iPad's five lenses
+and the speak-to-fill mic, a RUNS-ON pick whose egress chip is honest for the pick, and
+the new `/api/ask` grounds the run IN THE CANONICAL STORE (asserted in tests — the
+Phase-53 lesson) without persisting anything. The printed card wears where THIS run went
+(model · host, from the response); Keep calls `/api/ask/keep`, which mints an artifact
+byte-shaped like the iPad's kept Ask (`via_kind: "ask"`, every card + the exact prompt,
+ask keys only when present) — so 16-06's cross-surface proof has ONE shape to trust —
+and the card materializes on the desk wearing the NEW beat. Two latent bugs died on the
+way: a real hub never emitted its live `desktop:intel` manifest row (16-08's helper read
+the intel knobs off the wrong Config level; every test monkeypatched the helper — a new
+test now runs the real body), and the full-screen meeting theater popped on every desk
+capability run (`theater.js` lacked the `scope:"run"` filter the dashboard has). Suites:
+hub 2482, web 39/39 (was red), validator ALL PASS, api-surface at 240 routes, six live
+Playwright shots committed. **Next: 16-06** (the runbook now also carries the web Ask
+beat), then 16-07 docs.
+
+Earlier — **16-08 DONE the same evening (6/9) — the mesh knows its models.** The survey-corrected
 remaining half of the capability layer shipped: a synced `model` MANIFEST ("this node has this
 model") joins the wire as its eleventh kind — iPad pushes its installed GGUFs, the hub stores
 them and advertises its own model as a live `desktop:intel` row, and the iPad's "where should

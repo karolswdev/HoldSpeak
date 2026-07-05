@@ -54,7 +54,7 @@ export function DeskChrome() {
           )}
         </div>
         <span className={`desk-hub-dot is-${hubState}`} title={hubTitle} aria-label={hubTitle} />
-        <span className={`egress-badge egress-${badge.scope}`} title={badge.title}>
+        <span className={`egress-badge is-${badge.scope}`} title={badge.title}>
           {badge.text}
         </span>
       </div>
@@ -66,8 +66,8 @@ export function DeskChrome() {
         <button type="button" className="desk-chip" onClick={() => void createPrimitive("kb")}>
           + KB
         </button>
-        <button type="button" className="desk-chip" onClick={() => void createPrimitive("agent")}>
-          + Agent
+        <button type="button" className="desk-chip" onClick={() => void createPrimitive("recipe")}>
+          + Recipe
         </button>
         <button type="button" className="desk-chip" onClick={() => void createPrimitive("zone")}>
           + Zone

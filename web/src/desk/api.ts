@@ -149,7 +149,7 @@ export async function loadAll(): Promise<LoadResult> {
       .then((d) => { items.note = (d.notes || []).filter((n: any) => !n.deleted).map(fromWireNote); status.note = "live"; })
       .catch((e) => fail("note", "Notes", e)),
     fetchJson("/api/recipes")
-      .then((d) => { items.agent = (d.agents || []).filter((a: any) => !a.deleted).map(fromWireRecipe); status.agent = "live"; })
+      .then((d) => { items.recipe = (d.recipes || []).filter((a: any) => !a.deleted).map(fromWireRecipe); status.recipe = "live"; })
       .catch((e) => fail("recipe", "Recipes", e)),
     fetchJson("/api/kbs")
       .then((d) => { items.kb = (d.kbs || []).filter((k: any) => !k.deleted).map(fromWireKb); status.kb = "live"; })
