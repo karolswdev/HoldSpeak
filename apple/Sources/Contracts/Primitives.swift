@@ -301,6 +301,37 @@ public struct RuntimeProfile: Codable, Equatable, Sendable, Identifiable {
     public var egressHost: String? { kind == .openAICompatible ? URL(string: baseURL)?.host : nil }
 }
 
+/// A model MANIFEST (capability/synced, HSM-16-08): "this node has this model, with these
+/// capabilities." The manifest is the ONLY thing that crosses the mesh — the model binary
+/// never does (it stays device-local; the schema's additionalProperties:false makes any
+/// path/url/bytes-shaped field a validation failure). This is how a surface knows what
+/// "run it on your desktop" would actually run.
+public struct ModelManifest: Codable, Equatable, Sendable, Identifiable {
+    public var id: String               // "<node>:<file-or-model-id>" — rows from different nodes never collide
+    public var node: String             // the device holding it ("desktop", "iPad", "iPhone")
+    public var name: String             // the human/model name ("Qwen3.5-9B-Instruct-Q6_K")
+    public var capabilities: [String]   // e.g. ["language"], ["speech"]
+    public var createdAt: Date
+    public var updatedAt: Date
+
+    public init(id: String, node: String, name: String, capabilities: [String] = ["language"],
+                createdAt: Date, updatedAt: Date) {
+        self.id = id; self.node = node; self.name = name; self.capabilities = capabilities
+        self.createdAt = createdAt; self.updatedAt = updatedAt
+    }
+
+    private enum CodingKeys: String, CodingKey { case id, node, name, capabilities, createdAt, updatedAt }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        node = try c.decodeIfPresent(String.self, forKey: .node) ?? ""
+        name = try c.decode(String.self, forKey: .name)
+        capabilities = try c.decodeIfPresent([String].self, forKey: .capabilities) ?? []
+        createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? .distantPast
+        updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? .distantPast
+    }
+}
+
 /// Pure mapping from the legacy single inference config (one mode + one endpoint) to a profile list
 /// plus the active id. Deterministic (takes `now`) so the one-time app migration is testable. No key
 /// flows through here — `endpointHasKey` only signals the caller to move the key into the Keychain.

@@ -10,7 +10,19 @@
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
 **Current phase:** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
-— **5/9: HSM-16-09, the Ask AI atom, DONE the day the phase resumed** (sim-proven; the device
+— **6/9: HSM-16-08 DONE the same evening — the mesh knows its models.** The `model` MANIFEST
+("this node has this model, with these capabilities") is the sync wire's **eleventh kind**:
+devices advertise installed GGUFs on push, the hub stores them + advertises its own model as a
+live `desktop:intel` row, and the iPad's "where should it run?" sheet now **names the actual
+model** your desktop would run (was a vague "big model"). The binary never syncs — asserted
+independently by the schema (`additionalProperties:false` + a new validate.py negative), a
+Swift wire test, and a hub route test. Truth-ups in the story: combine-to-run + cross-node runs
+were pre-paid (desk era + P22); drop-model-sets-RUNS-ON superseded by P24 profiles; the
+manifest informs the user's pick, never silent egress auto-routing. Swift 467/9/0; hub 2474
+unit green + doc guard 18/18; validator ALL PASS; sim shot committed. **Next: 16-04's web
+slice** (atelier authoring + the Ask atom on web) → 16-06 proof (now carrying the manifest
+round-trip + both device beats) → 16-07 docs. Earlier the same day:
+**5/9: HSM-16-09, the Ask AI atom, DONE the day the phase resumed** (sim-proven; the device
 beat rides 16-06). The build TRUTHED-UP the resume survey: the atom's skeleton already existed
 (`askBundle` → `DioRouteSheet` → theater → `DioPrintedCard` — the survey's "zero Ask-AI code"
 claim was wrong), and the story's real substance was what the skeleton faked: **the full Ask
@@ -90,7 +102,11 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**HSM-16-09 DONE — the Ask AI atom, honest to the bone.** A kept
+**Last updated:** 2026-07-04 (**HSM-16-08 DONE — the mesh knows its models.** The model
+manifest joins the sync wire as its eleventh kind, availability-only with the no-binary
+invariant asserted on three layers; the iPad's run-target sheet names the hub's real model.
+Phase 16 is 6/9; next 16-04's web slice. Earlier:
+**HSM-16-09 DONE — the Ask AI atom, honest to the bone.** A kept
 Ask now carries its full lineage (every card it read + the exact prompt) onto the synced
 Artifact; two egress lies fixed (the printed card + the theater now state the RUN's resolved
 profile, never the app default); both Ask surfaces left the scrim — the composer is an atelier

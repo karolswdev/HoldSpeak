@@ -41,7 +41,7 @@ log = get_logger("web.routes.sync")
 # repository on the hub. Keep this in lockstep with the mobile/web SyncKind enum.
 SYNC_KINDS = frozenset(
     {"meeting", "artifact", "note", "kb", "recipe", "chain", "workflow",
-     "directory", "directory_membership", "profile"}
+     "directory", "directory_membership", "profile", "model"}
 )
 
 # Repository-backed primitives the push route merges into the live store (the key
@@ -77,6 +77,11 @@ _MERGEABLE: dict[str, tuple[str, str, dict[str, str]]] = {
     "directory_memberships": ("directory_memberships", "primitive_id", {
         "directory_id": "directory_id",
     }),
+    # Model MANIFESTS (HSM-16-08): availability only — id/node/name/capabilities.
+    # No path/url/bytes field exists on either side; the binary NEVER syncs.
+    "models": ("model_manifests", "manifest_id", {
+        "node": "node", "name": "name", "capabilities": "capabilities",
+    }),
 }
 
 # bucket name -> the kind string each record's meta must carry.
@@ -84,7 +89,7 @@ _BUCKET_KIND = {
     "meetings": "meeting", "artifacts": "artifact", "notes": "note",
     "kbs": "kb", "recipes": "recipe", "chains": "chain", "workflows": "workflow",
     "directories": "directory", "directory_memberships": "directory_membership",
-    "profiles": "profile",
+    "profiles": "profile", "models": "model",
 }
 
 
@@ -343,6 +348,26 @@ def _merge_artifacts(db: Any, records: list[dict[str, Any]]) -> int:
     return merged
 
 
+def _hub_model_name(ctx: WebContext) -> str:
+    """The hub's own model, for its live manifest row: the cloud model id when
+    intel targets an endpoint, else the local GGUF's stem. Never a path — the
+    manifest advertises availability, not location."""
+    try:
+        from ...config import Config
+
+        cfg = Config.load()
+        if not cfg.intel_enabled:
+            return ""
+        if cfg.intel_provider == "cloud":
+            return str(cfg.intel_cloud_model or "")
+        from pathlib import Path as _P
+
+        stem = _P(str(cfg.intel_realtime_model or "")).name
+        return stem[:-5] if stem.lower().endswith(".gguf") else stem
+    except Exception:
+        return ""
+
+
 def build_sync_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -412,6 +437,24 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
             for m in db.directory_memberships.list(include_deleted=True, limit=bounded)
         ]
 
+        # Model MANIFESTS (HSM-16-08): every node's pushed rows, PLUS the hub's own
+        # model as a live virtual row (computed from config, never stored) — so a
+        # companion knows what "run it on your desktop" would actually run. The
+        # binary never rides; a manifest is id/node/name/capabilities only.
+        models = [_primitive_record(m, "model")
+                  for m in db.model_manifests.list(include_deleted=True, limit=bounded)]
+        hub_model = _hub_model_name(ctx)
+        if hub_model:
+            from datetime import datetime, timezone
+            now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+            models.append({
+                "meta": {"id": "desktop:intel", "kind": "model",
+                         "last_modified": now, "deleted": False},
+                "value": {"id": "desktop:intel", "node": "desktop", "name": hub_model,
+                          "capabilities": ["language"], "created_at": now,
+                          "last_modified": now, "deleted": False},
+            })
+
         return JSONResponse({
             "meetings": meetings,
             "artifacts": artifacts,
@@ -423,6 +466,7 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
             "profiles": profiles,
             "directories": directories,
             "directory_memberships": directory_memberships,
+            "models": models,
         })
 
     @router.post("/api/sync/push")

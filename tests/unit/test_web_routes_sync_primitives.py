@@ -365,3 +365,85 @@ def test_directory_membership_push_last_write_wins(env) -> None:
     assert resp.status_code == 200
     assert resp.json()["received"]["directory_memberships"] == 0
     assert db.directory_memberships.get("note_1").directory_id == "d_new"
+
+
+# ---------------------------------------------------------------------------
+# HSM-16-08 — model MANIFESTS ride the wire (availability only, never the binary)
+# ---------------------------------------------------------------------------
+
+_MANIFEST_WIRE_KEYS = {"id", "node", "name", "capabilities",
+                       "created_at", "last_modified", "deleted"}
+
+
+def test_model_manifest_push_pull_round_trip_and_tombstone(env, monkeypatch) -> None:
+    db, client = env
+    # Pin the hub's own manifest deterministically (Config.load reads per request).
+    monkeypatch.setattr(
+        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
+    )
+    manifest = {
+        "id": "iPad:Qwen3-4B-Instruct-2507-Q6_K.gguf",
+        "node": "iPad",
+        "name": "Qwen3-4B-Instruct-2507-Q6_K",
+        "capabilities": ["language"],
+    }
+    changeset = {"models": [{
+        "meta": {"id": manifest["id"], "kind": "model",
+                 "last_modified": "2030-01-01T00:00:00Z", "deleted": False},
+        "value": manifest,
+    }]}
+    resp = client.post("/api/sync/push", json=changeset)
+    assert resp.status_code == 200
+    assert resp.json()["received"]["models"] == 1
+
+    stored = db.model_manifests.get(manifest["id"])
+    assert stored is not None
+    assert stored.node == "iPad"
+    assert stored.capabilities == ["language"]
+
+    body = client.get("/api/sync/pull").json()
+    rows = {r["meta"]["id"]: r for r in body["models"]}
+    # The pushed row comes back byte-faithful on the manifest fields...
+    back = rows[manifest["id"]]
+    assert back["meta"]["kind"] == "model"
+    assert back["value"]["name"] == manifest["name"]
+    assert back["value"]["capabilities"] == ["language"]
+    # ...and the hub advertises its OWN model as a live virtual row.
+    hub = rows["desktop:intel"]
+    assert hub["value"]["node"] == "desktop"
+    assert hub["value"]["name"] == "HubModel-9B"
+
+    # THE AVAILABILITY INVARIANT: a manifest is id/node/name/capabilities only —
+    # no path, url, or bytes-shaped field ever rides the wire (the binary stays put).
+    for row in body["models"]:
+        assert set(row["value"].keys()) <= _MANIFEST_WIRE_KEYS, row["value"].keys()
+
+    # Tombstone: the delete propagates like every other kind.
+    tomb = {"models": [{
+        "meta": {"id": manifest["id"], "kind": "model",
+                 "last_modified": "2031-01-01T00:00:00Z", "deleted": True},
+        "value": None,
+    }]}
+    assert client.post("/api/sync/push", json=tomb).status_code == 200
+    assert db.model_manifests.get(manifest["id"]) is None
+    assert db.model_manifests.get(manifest["id"], include_deleted=True).deleted is True
+
+
+def test_model_manifest_push_last_write_wins(env, monkeypatch) -> None:
+    db, client = env
+    monkeypatch.setattr(
+        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: ""
+    )
+    db.model_manifests.upsert(
+        manifest_id="iPad:m.gguf", node="iPad", name="Newer",
+        last_modified="2031-01-01T00:00:00Z",
+    )
+    changeset = {"models": [{
+        "meta": {"id": "iPad:m.gguf", "kind": "model",
+                 "last_modified": "2030-01-01T00:00:00Z", "deleted": False},
+        "value": {"node": "iPad", "name": "Older", "capabilities": []},
+    }]}
+    resp = client.post("/api/sync/push", json=changeset)
+    assert resp.status_code == 200
+    assert resp.json()["received"]["models"] == 0
+    assert db.model_manifests.get("iPad:m.gguf").name == "Newer"

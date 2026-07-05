@@ -2,7 +2,20 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 16
-- **Status:** todo
+- **Status:** done (2026-07-04 — the genuinely-open half built: **the model manifest is the sync
+  wire's eleventh kind**, published/stored/served on both sides, and the run-target sheet consumes
+  it (the "On your desktop" row NAMES the model it would run). Survey truth-ups recorded honestly:
+  (1) workflow/model desk kinds + combine-to-run (drop a workflow/recipe/chain on an input →
+  offerRunTarget → run) and the cross-node hub run were **pre-paid** by the desk era + Phase 22;
+  (2) "drop a model onto a workflow node sets RUNS-ON" was **superseded** by Phase 24 runtime
+  profiles + `BPNode.runsOn` (the owner-ratified "where intelligence runs" shape) — building a
+  second gesture for the same decision would be drift, not value; (3) the acceptance's "target
+  resolved from the synced manifest" ships as the manifest **informing the user's choice** in the
+  run-target sheet, not silent auto-routing — auto-resolving egress without the human would
+  violate the one approval+egress contract (Phase 15/21). The no-binary invariant is asserted on
+  every layer: schema negative (validate.py), Swift wire test, hub route test. The live
+  cross-device run rides 16-06 per this story's own test plan. Suites: Swift 467/9/0, hub 2474
+  unit green, validator ALL PASS, sim shot committed.)
 - **Depends on:** HSM-16-02 (workflow + modelManifest sync), HSM-16-03 (hub), HSM-16-05 (organization
   flows — the same transport carries capability), the Workbench (HSM-14-15/16, `Workflow.swift`,
   `generate(workflowTypes:)`), Phase-15 fluid compute (RUNS-ON / RuntimeMode A/B/C).

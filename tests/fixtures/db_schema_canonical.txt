@@ -464,6 +464,15 @@ table milestones: CREATE TABLE milestones (
     key TEXT PRIMARY KEY,
     achieved_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
+table model_manifests: CREATE TABLE model_manifests (
+    id TEXT PRIMARY KEY,
+    node TEXT NOT NULL DEFAULT '',
+    name TEXT NOT NULL DEFAULT '',
+    capabilities_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+)
 table notes: CREATE TABLE notes (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL DEFAULT '',

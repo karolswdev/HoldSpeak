@@ -525,6 +525,33 @@ class RecipeRecord:
 
 
 @dataclass
+class ModelManifestRecord:
+    """A model MANIFEST — capability/synced primitive (HSM-16-08): "this node has
+    this model, with these capabilities." Availability only — the model BINARY
+    never syncs and no path/url/bytes field exists here by design (the schema's
+    additionalProperties:false makes any such field a validation failure)."""
+
+    id: str                          # "<node>:<file-or-model-id>" — node-scoped, never collides
+    node: str = ""                   # the device holding it ("desktop", "iPad", "iPhone")
+    name: str = ""                   # the human/model name ("Qwen3.5-9B-Instruct-Q6_K")
+    capabilities: list[str] = field(default_factory=list)   # e.g. ["language"]
+    created_at: str = ""
+    last_modified: str = ""
+    deleted: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "node": self.node,
+            "name": self.name,
+            "capabilities": list(self.capabilities),
+            "created_at": self.created_at,
+            "last_modified": self.last_modified,
+            "deleted": self.deleted,
+        }
+
+
+@dataclass
 class ProfileRecord:
     """A RuntimeProfile — capability/synced primitive (Phase 24): a named "where
     intelligence runs" target. SHAPE ONLY — the API key never lives here and never

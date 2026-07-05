@@ -56,6 +56,7 @@ KIND_BUCKETS = {
     "directory": "directories",
     "directory_membership": "directory_memberships",
     "profile": "profiles",
+    "model": "models",
 }
 
 
@@ -109,6 +110,8 @@ def pull_body(tmp_path, monkeypatch):
     db.directory_memberships.upsert(primitive_id="n1", directory_id="Atlas/Q3")
     db.profiles.upsert(profile_id="p1", name="lan", kind="openAICompatible",
                        base_url="http://example.test/v1", model="m")
+    db.model_manifests.upsert(manifest_id="iPad:q.gguf", node="iPad", name="q",
+                              capabilities=["language"])
     # A tombstone so the envelope's deleted branch is exercised by real data.
     db.notes.upsert(note_id="n-gone", title="gone")
     db.notes.delete("n-gone")

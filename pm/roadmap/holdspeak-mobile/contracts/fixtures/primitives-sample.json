@@ -157,6 +157,47 @@
           "deleted": false
         }
       }
+    ],
+    "models": [
+      {
+        "meta": {
+          "id": "iPad:Qwen3-4B-Instruct-2507-Q6_K.gguf",
+          "kind": "model",
+          "last_modified": "2026-07-04T20:00:00Z",
+          "deleted": false
+        },
+        "value": {
+          "id": "iPad:Qwen3-4B-Instruct-2507-Q6_K.gguf",
+          "node": "iPad",
+          "name": "Qwen3-4B-Instruct-2507-Q6_K",
+          "capabilities": [
+            "language"
+          ],
+          "created_at": "2026-07-04T20:00:00Z",
+          "last_modified": "2026-07-04T20:00:00Z",
+          "deleted": false
+        }
+      },
+      {
+        "meta": {
+          "id": "iPad:old-model.gguf",
+          "kind": "model",
+          "last_modified": "2026-07-04T21:00:00Z",
+          "deleted": true
+        },
+        "value": null
+      }
     ]
+  },
+  "model": {
+    "id": "iPad:Qwen3-4B-Instruct-2507-Q6_K.gguf",
+    "node": "iPad",
+    "name": "Qwen3-4B-Instruct-2507-Q6_K",
+    "capabilities": [
+      "language"
+    ],
+    "created_at": "2026-07-04T20:00:00Z",
+    "last_modified": "2026-07-04T20:00:00Z",
+    "deleted": false
   }
 }

@@ -30,6 +30,7 @@ from .models import (
     DirectoryMembershipRecord,
     DirectoryRecord,
     KBRecord,
+    ModelManifestRecord,
     NoteRecord,
     ProfileRecord,
     WorkflowRecord,
@@ -492,6 +493,111 @@ class ProfileRepository(BaseRepository):
             model=row["model"],
             context_limit=int(row["context_limit"]),
             requires_key=bool(row["requires_key"]),
+            created_at=row["created_at"],
+            last_modified=row["last_modified"],
+            deleted=bool(row["deleted"]),
+        )
+
+
+class ModelManifestRepository(BaseRepository):
+    """CRUD + sync access for model MANIFESTS (capability/synced, HSM-16-08).
+
+    Availability only — "this node has this model, with these capabilities."
+    The model binary never syncs; no path/url/bytes column exists to leak it.
+    Mirrors the other primitive repos (soft-delete tombstones)."""
+
+    def upsert(
+        self,
+        *,
+        manifest_id: str,
+        node: str = "",
+        name: str = "",
+        capabilities: Optional[list[str]] = None,
+        last_modified: Optional[str] = None,
+        deleted: bool = False,
+        created_at: Optional[str] = None,
+    ) -> ModelManifestRecord:
+        clean_id = str(manifest_id or "").strip()
+        if not clean_id:
+            raise ValueError("model manifest id is required")
+        import json as _json
+        now = _now_iso()
+        with self._connection() as conn:
+            existing = conn.execute(
+                "SELECT created_at FROM model_manifests WHERE id = ?", (clean_id,)
+            ).fetchone()
+            created = created_at or (existing["created_at"] if existing else now)
+            conn.execute(
+                """
+                INSERT INTO model_manifests (id, node, name, capabilities_json,
+                                             created_at, last_modified, deleted)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    node = excluded.node,
+                    name = excluded.name,
+                    capabilities_json = excluded.capabilities_json,
+                    last_modified = excluded.last_modified,
+                    deleted = excluded.deleted
+                """,
+                (
+                    clean_id,
+                    str(node or ""),
+                    str(name or ""),
+                    _json.dumps([str(c) for c in (capabilities or [])]),
+                    created,
+                    last_modified or now,
+                    1 if deleted else 0,
+                ),
+            )
+        return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
+
+    def get(self, manifest_id: str, *, include_deleted: bool = False) -> Optional[ModelManifestRecord]:
+        clean_id = str(manifest_id or "").strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            row = conn.execute("SELECT * FROM model_manifests WHERE id = ?", (clean_id,)).fetchone()
+        if not row:
+            return None
+        if row["deleted"] and not include_deleted:
+            return None
+        return self._row(row)
+
+    def list(self, *, include_deleted: bool = False, limit: int = 500) -> list[ModelManifestRecord]:
+        bounded = max(1, min(int(limit), 2000))
+        with self._connection() as conn:
+            sql = "SELECT * FROM model_manifests" + ("" if include_deleted else " WHERE deleted = 0")
+            rows = conn.execute(sql + " ORDER BY node ASC, name ASC LIMIT ?", (bounded,)).fetchall()
+        return [self._row(r) for r in rows]
+
+    def delete(self, manifest_id: str) -> bool:
+        clean_id = str(manifest_id or "").strip()
+        if not clean_id:
+            return False
+        now = _now_iso()
+        with self._connection() as conn:
+            cur = conn.execute(
+                "UPDATE model_manifests SET deleted = 1, last_modified = ? WHERE id = ? AND deleted = 0",
+                (now, clean_id),
+            )
+            return bool(cur.rowcount and cur.rowcount > 0)
+
+    def purge(self, manifest_id: str) -> bool:
+        with self._connection() as conn:
+            cur = conn.execute("DELETE FROM model_manifests WHERE id = ?", (str(manifest_id).strip(),))
+            return bool(cur.rowcount and cur.rowcount > 0)
+
+    def _row(self, row: Any) -> ModelManifestRecord:
+        import json as _json
+        try:
+            caps = _json.loads(row["capabilities_json"] or "[]")
+        except (ValueError, TypeError):
+            caps = []
+        return ModelManifestRecord(
+            id=row["id"],
+            node=row["node"],
+            name=row["name"],
+            capabilities=[str(c) for c in caps] if isinstance(caps, list) else [],
             created_at=row["created_at"],
             last_modified=row["last_modified"],
             deleted=bool(row["deleted"]),
