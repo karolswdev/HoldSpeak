@@ -8,10 +8,27 @@ config should we run on the phone."
 
 ## The verdict (one line)
 
-**On-device today: Qwen3-4B-Instruct-2507, Q5_K_M (imatrix), 16K context, non-thinking —
-the best model the SHIPPED engine can load. Power lane: route a profile over Tailscale to
-your own Mac/`.43` hub (Qwen3.5-9B or a Qwen3.5 MoE) — private, powerful, already built.**
+**On-device today: Qwen3-4B-Instruct-2507, Q5_K_M (imatrix), 16K→32K context,
+non-thinking, extraction-tuned sampling. Power lane: a profile over Tailscale to your own
+Mac/`.43` hub. Engine upgrade to Gemma 4 / Qwen3.5 on-device is PROVEN and reproducible.**
 The full answer is HYBRID, not one model.
+
+## Status of the engine-work items (2026-07-05)
+
+- **DONE (shipped):** extraction-tuned sampling (`LlamaSampling.extraction`) + the 32K
+  context ceiling for the 12GB tier (PR #268).
+- **PROVEN + reproducible:** the engine ARCH upgrade. The bundled LLM.swift 2.1.0 carries a
+  2025-12 llama.cpp (no `gemma4`/`qwen35`). Building a current llama.cpp xcframework
+  (ggml-org @ `2da6686`, 2026-07-05) and swapping it in makes the app **build + link with
+  `gemma4`, `gemma4-assistant`, and `qwen35` present** (verified via `strings` on the
+  device slice). `apple/scripts/upgrade-llama-xcframework.sh <derived-data>` does this
+  reproducibly, pinned + cached (first run ~15 min, then instant). **Open decision:** how
+  to vendor the ~210MB iOS binary for CI/TestFlight (build-from-script vs git-lfs vs a
+  GitHub release asset). **Open verification:** load a Gemma-4-E4B / Qwen3.5-4B GGUF on the
+  real iPhone (device-gated).
+- After the upgrade lands durably: add Gemma 4 E4B + Qwen3.5-4B to the curated download
+  list (Settings → Models) — do NOT add them before, or a user downloads a model the
+  shipped binary can't load.
 
 ## The engine reality (this overrides generic model advice) — verified 2026-07-05
 
