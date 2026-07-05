@@ -2,10 +2,21 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 15
-- **Status:** backlog
+- **Status:** done (2026-07-05 — **pre-paid while the phase slept**; recorded by the resume
+  survey, receipts in `evidence-story-05.md`. The one genuinely-new delta this story named
+  in its own grounding — decouple the proposal ledger from `meeting_id` — shipped in the
+  one-spine phase as the owner-typed proposal `origin` (`meeting`|`desk`, the sentinel
+  meeting killed; `holdspeak/db/actuators.py`, locked by `test_db_actuator_origin.py`).
+  The shared egress model shipped in Phase 21 as the ONE `EgressScope` grammar
+  (`apple/Sources/Contracts/EgressScope.swift`) + the two-surface trust chip; approval
+  parity shipped across Qlippy card ≡ dashboard (Phase 56) and the iPad proposal decisions
+  (`decided_by: ipad-companion`, live-hub proven, Phase 19); air-gapped degradation to a
+  local draft + badge shipped with the coder-answer draft seam (17-05) and the desk ask's
+  honest On-device chip (16-09). The remaining approval surface — approve from the
+  QueueHUD — belongs to HSM-15-03 and stays there.)
 - **Depends on:** the desktop actuator path (propose→approve→execute, exists on the server);
   the mobile egress badge (POSITIONING canon); HSM-15-03 (approve-from-the-HUD).
-- **Owner:** unassigned
+- **Owner:** recorded by the resume survey (agent, Fable)
 
 ## Grounding (2026-06-22)
 
