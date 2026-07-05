@@ -47,11 +47,13 @@ final class MeetingReviewState: ObservableObject {
 
     /// Generate the meeting's artifacts ON-DEVICE (Mode A): the MIR profile picks the
     /// types, the local GGUF model drafts each, and they persist as proposals.
-    /// The on-device context CEILING — what we'd *like* (16K ≈ ~80 min of speech).
-    /// HSM-8-08 lowers it to what THIS device can actually afford (the KV-cache is RAM),
-    /// and HSM-8-07 chunks anything that still won't fit — so we never gamble on memory
-    /// regardless of meeting length.
-    private static let contextCeiling = 16_384
+    /// The on-device context CEILING — what we'd *like*. Raised to 32K for the
+    /// 12GB tier (iPhone 17 Pro/Air, recent iPads) now that the increased-memory
+    /// entitlement is live: ~2h of speech in one pass. HSM-8-08's budget still
+    /// LOWERS this to what THIS device can actually afford (the KV-cache is RAM,
+    /// clamped by `os_proc_available_memory()`), so a smaller device simply lands
+    /// below 32K — the ceiling never gambles, and HSM-8-07 chunks the rest.
+    private static let contextCeiling = 32_768
 
     /// Memory headroom before the iOS jetsam limit, with a conservative fallback.
     private static func availableMemoryBytes() -> Int {
