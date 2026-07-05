@@ -2,9 +2,11 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 16
-- **Status:** todo
+- **Status:** done (2026-07-05 — entry points caught up to the shipped phase; see
+  `evidence-story-07.md`. Written before the 16-06 walk by design: the docs describe what
+  is code-true and test-locked today; the walk verifies feel, not shape)
 - **Depends on:** HSM-16-01..06 (documents what shipped).
-- **Owner:** unassigned
+- **Owner:** agent (Fable)
 
 ## Problem
 
@@ -25,9 +27,17 @@ citizen — the architecture docs and the DeskObject convention must say so.
 
 ## Acceptance criteria
 
-- [ ] `docs/ARCHITECTURE.md` reflects organization sync across the three surfaces.
-- [ ] The DeskObject convention is linked from at least one entry-point doc.
-- [ ] The taxonomy + canonical-hub rule are documented where they belong; doc/voice guards pass.
+- [x] `docs/ARCHITECTURE.md` reflects organization sync across the three surfaces (new
+      "The desk across surfaces" section + a mermaid diagram of what flows vs what stays;
+      the model manifest's no-binary rule stated).
+- [x] The DeskObject convention is linked from at least one entry-point doc
+      (ARCHITECTURE.md links `THE_PRIMITIVE_FRAMEWORK.md` as the one contract).
+- [x] The taxonomy (content / organization / capability / layout) + the canonical-hub +
+      layout-is-local rules documented in the same section; `WEB_DESK.md` gained the
+      "Rope things together and Ask AI" walkthrough and caught up to the recipe rename
+      (chips, rail, editor); README's Desk section names the lasso arc. Doc drift guard
+      18/18, mermaid render guard 2/2, voice rules honoured (no dashes, no roadmap
+      vocabulary, canonical names).
 
 ## Test plan
 

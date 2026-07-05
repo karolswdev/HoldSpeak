@@ -6,7 +6,15 @@ delivered and look for parity with the web client in Astro… and design for syn
 desktop. This is all a mesh system, so everything has to flow back and forth. Knowledge bases, stuff
 like that."*)
 
-**Last updated:** 2026-07-05 (**HSM-16-04 DONE — the desk runs on the web too (7/9).**
+**Last updated:** 2026-07-05 (**HSM-16-07 DONE — the entry points caught up (8/9).**
+`docs/ARCHITECTURE.md` gained "The desk across surfaces" (one primitive convention,
+three surfaces; the four-class sync taxonomy with canonical-hub + layout-is-local; the
+manifest's no-binary rule; the Ask atom's cross-surface story; one new mermaid diagram),
+`docs/WEB_DESK.md` caught up to the recipe rename and gained the "Rope things together
+and Ask AI" walkthrough, README's Desk tour names the lasso arc. Doc drift guard 18/18,
+mermaid guard 2/2, voice rules clean. **Only 16-06 remains — the owner's walk**
+([`HSM-16-06-WALK.md`](./HSM-16-06-WALK.md), staged earlier today, couch queue). Earlier
+the same day: **HSM-16-04 DONE — the desk runs on the web too (7/9).**
 The survey-corrected remaining slice shipped: the recipe layer RESURRECTED (the Phase-17
 rename had left it dead on web — loader keys, world/lineage/editor/pull-out kind checks,
 a crashing "+ Agent" chip, a red vitest suite nobody saw) with in-world authoring at
@@ -120,14 +128,24 @@ the user. It is the spine of the whole phase.
 | HSM-16-09 | **The Ask AI atom** — lasso → ask → speak → print → keep/bin (on-device, no mesh needed) | **done** (2026-07-04, sim-proven; device beat rides 16-06. TRUTH-UP: the survey's "zero code exists" was wrong — the skeleton had shipped; this story built the missing substance: full Ask lineage on the wire, two egress-honesty fixes, composer + printed card off the scrim) | capability (the atom) |
 | HSM-16-08 | Capability objects — the model manifest | **done** (2026-07-04: the `model` manifest is the sync wire's ELEVENTH kind — devices advertise installed models, the hub stores + advertises its own live row, and the run-target sheet NAMES what "your desktop" would run; no-binary invariant asserted on schema/Swift/hub layers. Truth-ups: combine-to-run + cross-node runs were pre-paid (desk era + P22); drop-model-sets-RUNS-ON superseded by P24 profiles; manifest informs the user's pick, never silent auto-routing (the approval+egress contract)) | capability (combine/execute) |
 | HSM-16-06 | The cross-surface proof (author on one surface → felt on the other two, real metal) | todo, **walk staged** ([`HSM-16-06-WALK.md`](./HSM-16-06-WALK.md): C1 the Ask on glass, C2 the manifest names the hub's real model, C3 the org loop both directions, C4 one Ask on every surface; ~15 min, couch queue) | proof (real metal) |
-| HSM-16-07 | Docs catch-up (mesh + DeskObject across surfaces) | todo | docs |
+| HSM-16-07 | Docs catch-up (mesh + DeskObject across surfaces) | **done** (2026-07-05 — ARCHITECTURE "The desk across surfaces" section + diagram, WEB_DESK recipe-rename catch-up + the Ask walkthrough, README tour sentence; guards 18/18 + mermaid 2/2) | docs |
 
 *(The build order after the survey: **16-09 → 16-08 → 16-04's remaining slice → 16-06 → 16-07.**
 09 is the atom 08 generalizes; 09 needs no sync and leads.)*
 
 ## Where we are
 
-**16-04 DONE (7/9) — the desk runs on the web too.** The story opened with its own
+**16-07 DONE (8/9) — the entry points caught up; the phase is one owner walk from
+closing.** ARCHITECTURE.md now tells the phase's whole story in product tense ("The desk
+across surfaces": the one primitive convention linked as the contract, the four-class
+sync taxonomy, canonical-hub + layout-is-local, the manifest's no-binary rule, the Ask
+atom's cross-surface arc, one new rendered diagram); WEB_DESK.md speaks the recipe
+rename everywhere a user reads it and walks the lasso → Ask AI → keep/bin move;
+README's tour names it in one sentence. Guards: doc drift 18/18, mermaid 2/2. What
+remains is exactly one thing: **the 16-06 walk** ([`HSM-16-06-WALK.md`](./HSM-16-06-WALK.md),
+four checks, ~15 min on the couch queue) — PASS on all four closes the story and the phase.
+
+Earlier — **16-04 DONE (7/9) — the desk runs on the web too.** The story opened with its own
 truth-up: the "substantially pre-paid" recipe layer was dead on the web (the Phase-17
 rename half-landed — the loader read the pre-rename wire key into a nonexistent items
 lane, four components still checked a kind that no longer exists, the create chip was a
