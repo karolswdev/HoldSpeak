@@ -233,3 +233,29 @@ public struct MCEvent: Codable, Equatable, Sendable {
         self.detail = detail
     }
 }
+
+// -- the live-layer pinning kernel (HSM-25-02/03) --------------------
+
+/// The belt's live-layer decision, pure and testable: `on_story`
+/// sessions pin to their story ids; every other correlation outcome
+/// (ambiguous included — unknown beats guessed) stays off the belt.
+/// Mirrors the web workbench's server-side kernel
+/// (`mission_control_live_layer` in `dw_pmo/workbench.py`,
+/// WLA-15-02) so both clients make the same call from the same
+/// correlation document.
+public func pinMissionControlSessions(
+    _ sessions: [MCSession]
+) -> (pins: [String: [MCSession]], offBelt: [MCSession]) {
+    var pins: [String: [MCSession]] = [:]
+    var offBelt: [MCSession] = []
+    for session in sessions {
+        if session.correlation == "on_story", !session.stories.isEmpty {
+            for story in session.stories {
+                pins[story.storyId, default: []].append(session)
+            }
+        } else {
+            offBelt.append(session)
+        }
+    }
+    return (pins, offBelt)
+}

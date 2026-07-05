@@ -1,6 +1,6 @@
 # HSM-25-02 — The conveyor renders: phases as the belt, stories as the items
 
-- **Status:** backlog
+- **Status:** done (2026-07-04) — evidence: [evidence-story-02.md](./evidence-story-02.md). `swift test` 480/0 (+7). Honest scope note in evidence: the SwiftUI view (App/MeetingCapture) is unverifiable in this environment (no xcodegen/.xcodeproj); the pinning kernel was extracted into Contracts precisely so it could be proven here.
 - **Depends on:** HSM-25-01.
 
 ## Problem

@@ -1,14 +1,16 @@
 # Phase 25 — Mission control in the pocket (the iOS conveyor)
 
-**Status:** OPEN — 1/4.
+**Status:** OPEN — 2/4.
 
-**Last updated:** 2026-07-04 (OPENED + HSM-25-01 done, 1/4. The iOS
-leg deferred in the backend's Phase 82: the same mission-control feed
-the web Desk renders, now on the phone. 25-01 landed the Codable wire
-contract (`Sources/Contracts/MissionControl.swift`) + the client
-extension, golden-pinned against literal backend JSON — `swift test`
-473/0, the suite doubling as the drift guard against the FastAPI
-shapes.)
+**Last updated:** 2026-07-04 (HSM-25-02 done, 2/4: the conveyor
+screen (`MissionControlView` + `MissionControlModel`) and the
+shared pinning kernel (`pinMissionControlSessions` in Contracts,
+mirroring the web workbench's server-side rule) land; `swift test`
+480/0. Honest scope note: the SwiftUI view itself is unverifiable
+in this environment — no xcodegen/.xcodeproj to drive xcodebuild
+headlessly — so the testable pinning logic was extracted into
+Contracts and proven there; the view's real compilation is part of
+HSM-25-04's on-device leg.)
 
 ## Why this phase exists
 
@@ -39,8 +41,8 @@ a contract that is already trustworthy.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HSM-25-01 | The mission-control wire contract + the client extension — **leads** | **done** ([evidence](./evidence-story-01.md): swift test 473/0, +8) | none |
-| HSM-25-02 | The conveyor renders: phases as the belt, stories as the items | ready | HSM-25-01 |
-| HSM-25-03 | Sessions and events ride the belt | backlog | HSM-25-01 |
+| HSM-25-02 | The conveyor renders: phases as the belt, stories as the items | **done** ([evidence](./evidence-story-02.md): swift test 480/0, +7) | HSM-25-01 |
+| HSM-25-03 | Sessions and events ride the belt | ready | HSM-25-01, HSM-25-02 |
 | HSM-25-04 | The pocket, proven on device | backlog | HSM-25-02, HSM-25-03 |
 
 ## Where we are
