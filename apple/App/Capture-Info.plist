@@ -81,5 +81,26 @@
     <array>
         <string>_holdspeak._tcp</string>
     </array>
+    <!-- TestFlight/App Store uploads: only Apple-standard TLS is used (no custom
+         crypto), so the export-compliance answer is baked in and processing never
+         parks the build on a manual question. -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    <!-- Upload validation requires explicit orientations; all four = iPad
+         multitasking-ready (the app already lays out at every size, HSM-20). -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
 </dict>
 </plist>
