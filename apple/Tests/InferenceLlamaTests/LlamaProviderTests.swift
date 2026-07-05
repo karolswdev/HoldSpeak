@@ -52,4 +52,32 @@ final class LlamaProviderTests: XCTestCase {
         XCTAssertGreaterThan(artifacts.count, 0, "expected at least one artifact from the local model")
         XCTAssertTrue(artifacts.allSatisfy { $0.status == .draft })   // propose-only
     }
+
+    // MARK: - model-free locks (no GGUF needed)
+
+    /// The on-device sampling default is the faithful-extraction preset, not
+    /// LLM.swift's hot chat default (temp 0.8 / topK 40). This is the single
+    /// highest-leverage on-device quality knob — lock its values.
+    func testExtractionSamplingPresetValues() {
+        let s = LlamaSampling.extraction
+        XCTAssertEqual(s.temp, 0.4, "extraction runs faithful, not hot (LLM.swift default is 0.8)")
+        XCTAssertEqual(s.topP, 0.8)
+        XCTAssertEqual(s.topK, 20, "Qwen3 non-thinking guidance")
+        XCTAssertEqual(s.repeatPenalty, 1.1, "gentle — transcripts legitimately repeat terms")
+    }
+
+    /// A downloaded/imported model is prompted in ITS family's template, not a
+    /// one-size ChatML — verified by filename, no model load.
+    func testAutoTemplatePicksTheModelFamily() {
+        // Just assert distinct templates resolve per family (Template isn't
+        // Equatable, so compare stop sequences / identity via a smoke check that
+        // the picker doesn't collapse everyone to ChatML).
+        let qwen = LlamaProvider.autoTemplate(for: "Qwen3-4B-Instruct-2507-Q5_K_M.gguf")
+        let llama = LlamaProvider.autoTemplate(for: "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf")
+        let gemma = LlamaProvider.autoTemplate(for: "gemma-3n-E4B-it-Q4_K_M.gguf")
+        // Llama-3 uses the eot header format; Qwen/Gemma do not.
+        XCTAssertEqual(llama.stopSequence, "<|eot_id|>", "Llama-3 gets its header template")
+        XCTAssertNotEqual(qwen.stopSequence, "<|eot_id|>", "Qwen is ChatML, not Llama-3")
+        XCTAssertNotEqual(gemma.stopSequence, "<|eot_id|>", "Gemma is its own template")
+    }
 }

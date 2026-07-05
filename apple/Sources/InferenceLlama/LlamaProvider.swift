@@ -6,6 +6,29 @@ public enum LlamaProviderError: Error, Equatable {
     case modelLoadFailed(path: String)
 }
 
+/// On-device sampling for HoldSpeak's actual workload. Every local run here is
+/// extraction / summarization / dictation-rewriting — factual, structured,
+/// faithfulness-first — **not** open-ended chat. LLM.swift's stock temp 0.8 /
+/// topK 40 is tuned for chat and runs too hot for that: it invents, drifts, and
+/// reformats. These follow Qwen3's non-thinking guidance (topP 0.8, topK 20)
+/// with a low temperature for faithful extraction, and a gentle repeat penalty
+/// so a transcript's legitimately-repeated terms aren't punished. One preset,
+/// applied to every local provider — the single highest-leverage on-device
+/// quality knob, independent of which model is loaded.
+public struct LlamaSampling: Sendable, Equatable {
+    public var temp: Float
+    public var topP: Float
+    public var topK: Int32
+    public var repeatPenalty: Float
+
+    public init(temp: Float, topP: Float, topK: Int32, repeatPenalty: Float) {
+        self.temp = temp; self.topP = topP; self.topK = topK; self.repeatPenalty = repeatPenalty
+    }
+
+    /// HoldSpeak's on-device default: low-temperature, faithful extraction.
+    public static let extraction = LlamaSampling(temp: 0.4, topP: 0.8, topK: 20, repeatPenalty: 1.1)
+}
+
 /// HSM-5-02 — the on-device (charter Mode A) `ILLMProvider`, backed by llama.cpp
 /// through LLM.swift (the HSM-5-01 engine pick). Loads a GGUF by path and returns a
 /// completion with **no network** — the fully-local path.
@@ -28,23 +51,34 @@ public final class LlamaProvider: ILLMProvider, @unchecked Sendable {
     ///   - maxTokenCount: context budget (clamped to the model's trained context).
     public init(modelPath: String,
                 template: Template = .chatML(),
-                maxTokenCount: Int32 = 2048) throws {
+                maxTokenCount: Int32 = 2048,
+                sampling: LlamaSampling = .extraction) throws {
         guard let llm = LLM(from: URL(fileURLWithPath: modelPath),
                             template: template,
                             maxTokenCount: maxTokenCount) else {
             throw LlamaProviderError.modelLoadFailed(path: modelPath)
         }
+        // Apply the extraction-tuned sampling (LLM.swift's public setters push it
+        // to the sampler). Serial single-owner use means it lands before the
+        // first `getCompletion`, which is itself async and happens later.
+        llm.temp = sampling.temp
+        llm.topP = sampling.topP
+        llm.topK = sampling.topK
+        llm.repeatPenalty = sampling.repeatPenalty
         self.llm = llm
     }
 
     /// Build a provider that picks the model's chat template from its filename — so a
     /// downloaded/imported Gemma, Llama-3, Mistral or Qwen is prompted in its OWN format
     /// instead of a one-size-fits-all ChatML (wrong markers = degraded output). Prefer this
-    /// over the raw init at every call site that loads a user-chosen model.
-    public static func make(modelPath: String, maxTokenCount: Int32 = 2048) throws -> LlamaProvider {
+    /// over the raw init at every call site that loads a user-chosen model. Sampling
+    /// defaults to the on-device extraction preset.
+    public static func make(modelPath: String, maxTokenCount: Int32 = 2048,
+                            sampling: LlamaSampling = .extraction) throws -> LlamaProvider {
         try LlamaProvider(modelPath: modelPath,
                           template: autoTemplate(for: modelPath),
-                          maxTokenCount: maxTokenCount)
+                          maxTokenCount: maxTokenCount,
+                          sampling: sampling)
     }
 
     /// Map a GGUF filename to its chat template. Families are detected by the conventional
