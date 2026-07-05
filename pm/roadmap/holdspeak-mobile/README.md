@@ -6,8 +6,11 @@
 > the bar, the build/deploy/verify loop, the offscreen renderer (your eyes), the asset pipeline, known
 > issues, and the exact owner-prioritized next steps. **Read it before touching the desk.**
 >
-> 🚀 **New agent (general):** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
-> gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
+> 🚀 **New agent (general):** START at
+> [`HANDOVER-2026-07-05-phase16-atom-manifest.md`](./HANDOVER-2026-07-05-phase16-atom-manifest.md)
+> — Phase 16 at 6/9 (the Ask atom + the model manifest shipped), the ranked next work (16-04's
+> web slice leads), and this session's traps (the kind-add checklist, the desk demo env vars,
+> the build workaround args). Older loop/gotcha background: [`HANDOVER.md`](./HANDOVER.md).
 
 **Current phase:** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
 — **6/9: HSM-16-08 DONE the same evening — the mesh knows its models.** The `model` MANIFEST
