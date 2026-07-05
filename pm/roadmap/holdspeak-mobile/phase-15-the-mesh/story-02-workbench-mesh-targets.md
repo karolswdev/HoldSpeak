@@ -29,14 +29,17 @@ Pre-paid while the phase slept:
 
 Genuinely open (the story's remaining substance):
 
-1. **Per-STEP dispatch** (the heart, building now): `WorkflowRunner.dispatchToMac` is a
-   stubbed seam that THROWS `dispatchUnimplemented`; `run()` hard-codes `.onDevice` for
-   every step; per-node `modelPref` is honoured on the WIRE but ignored at RUN time; and
-   the Queue HUD's job "target" label reads the app-wide `isLocal`, not the node's pin —
-   the same class of egress lie 16-09 killed on the desk. The slice: a "Your Mac" per-node
-   target, the runner's injected dispatch handler (unreachable Mac rides the node's
-   IF-UNREACHABLE policy: retry → queue / fall back on-device / skip), honest per-step
-   `ranOn`, dispatch wired to the paired peer over `/api/ask`.
+1. **Per-STEP dispatch — DONE 2026-07-05 (the heart).** "Your Mac" joined the node
+   inspector's RUNS ON (`ModelPref.desktop`, glyph + honest hint) and `BPRunsOn.desktop`
+   joined the wire (the hub's `_RUN_TARGETS` recognises it and preserves the pin in the
+   run trail; an OLDER hub folds it to "auto" — same semantics, wire-safe by
+   construction). The runner dispatches a pinned step to the paired peer over
+   `POST /api/ask` under the SAME retry loop + IF-UNREACHABLE policy, `StepOutcome.ranOn`
+   is honest (a fallback reports on-device), and the HUD job label states the pin and
+   settles to where it actually ran. Proven end to end: the Simulator's pinned step
+   landed on a REAL local hub (prompt receipts) — see `evidence-story-04.md` (the runner
+   story closed with this slice) + `screenshots/hsm-15-02-mesh-run.png` /
+   `hsm-15-02-runson-inspector.png`. Suites: Swift 476/9/0, hub unit green.
 2. **Connector sinks from a canvas run** — a Slack/GitHub sink node still never routes
    through the desktop's propose→approve→execute from a run (reachable → propose via the
    desk relay; air-gapped → honest local draft + badge).
@@ -79,8 +82,10 @@ the iPad cannot do on its own. The visual language becomes a **mesh program**.
 
 ## Acceptance criteria
 
-- [ ] **RUNS ON: Your Mac** — `ModelPref.mesh` (peer-named) selectable in the node inspector; a
-      mesh-targeted node's intelligence executes on the desktop server. LAN-proven.
+- [x] **RUNS ON: Your Mac** — selectable in the node inspector (`ModelPref.desktop`; the HUD
+      label names the paired peer); a mesh-targeted node's intelligence executes on the
+      desktop server (proven against a real local hub; the cabled-iPad LAN beat joins the
+      phase's owner queue).
 - [ ] **Connector sinks** — a Slack/GitHub sink routes through the desktop's real
       propose→approve→execute path when the Mac is reachable; air-gapped → honest local draft +
       egress badge. LAN-proven + Simulator-shot.

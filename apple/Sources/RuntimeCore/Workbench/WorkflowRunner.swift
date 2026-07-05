@@ -11,8 +11,10 @@ import Providers
 ///
 /// Pure RuntimeCore: no SwiftUI, no App types, no `RunQueueStore`. The "queue/park"
 /// outcome is a *typed result the caller can enqueue* — the App layer owns the real queue.
-/// The "dispatch to the Mac" mesh target is a stubbed seam (`unimplemented`) until the
-/// desktop run-a-capability RPC (HSM-15-02) exists.
+/// The "dispatch to the Mac" mesh target runs through an injected `MeshDispatch` closure
+/// (HSM-15-02: the App wires it to the paired peer's `POST /api/ask`); with no handler
+/// wired (no paired desktop) a `.dispatchToMac` step rides the failure policy exactly
+/// like an unreachable endpoint — retry → queue, fall back on-device, or skip.
 
 // MARK: - Failure policy
 
@@ -54,14 +56,21 @@ public struct RunPolicy: Sendable {
 // MARK: - Run targets (the mesh seam)
 
 /// Where a step runs. The on-device / endpoint paths both go through the injected
-/// `ILLMProvider`; **`dispatchToMac` is the stubbed mesh seam** — building the desktop RPC
-/// is later work (HSM-15-02). A step that resolves to `.dispatchToMac` and has no dispatch
-/// handler wired throws `WorkflowRunError.dispatchUnimplemented`.
+/// `ILLMProvider`; `dispatchToMac` runs the step's fully-resolved prompt on the paired
+/// desktop through the injected `MeshDispatch`. A step that resolves to `.dispatchToMac`
+/// with no dispatch handler wired (no paired peer) fails with
+/// `WorkflowRunError.dispatchUnimplemented` and rides the failure policy.
 public enum RunTarget: String, Codable, Sendable, CaseIterable {
     case onDevice
     case endpoint
     case dispatchToMac
 }
+
+/// The mesh dispatch (HSM-15-02): run ONE step's fully-resolved prompt on the paired
+/// desktop and return its output. The App wires this to `HTTPDesktopClient.runStep`
+/// (`POST /api/ask` — the hub runs the prompt on its configured intel and persists
+/// nothing; a step result is intermediate). Injected so host tests pass a closure.
+public typealias MeshDispatch = @Sendable (_ prompt: String) async throws -> String
 
 // MARK: - Result types
 
@@ -83,11 +92,18 @@ public struct StepOutcome: Sendable, Equatable {
     public var output: String           // the threaded output after this step
     public var attempts: Int            // provider attempts made (0 for pure/no-model steps)
     public var error: String?           // the last error description, if any
+    /// Where the step's output actually came from (HSM-15-02 egress honesty): the
+    /// resolved target for an `ok`/`skipped`/`parked`/`failed` step, and `.onDevice`
+    /// for `.fellBack` (the fallback provider IS the on-device model). Pure transforms
+    /// report `.onDevice` (nothing ran anywhere else).
+    public var ranOn: RunTarget
 
     public init(index: Int, label: String, status: StepStatus, input: String,
-                output: String, attempts: Int, error: String? = nil) {
+                output: String, attempts: Int, error: String? = nil,
+                ranOn: RunTarget = .onDevice) {
         self.index = index; self.label = label; self.status = status
         self.input = input; self.output = output; self.attempts = attempts; self.error = error
+        self.ranOn = ranOn
     }
 }
 
@@ -128,7 +144,7 @@ public struct WorkflowRunResult: Sendable, Equatable {
 
 public enum WorkflowRunError: Error, Equatable {
     /// A step resolved to the `.dispatchToMac` mesh target but no dispatch handler is
-    /// wired — the desktop run-a-capability RPC is HSM-15-02, not yet built.
+    /// wired — no paired desktop. The step rides the failure policy (IF UNREACHABLE).
     case dispatchUnimplemented
 }
 
@@ -143,11 +159,17 @@ public struct WorkflowRunner: Sendable {
     /// The fallback provider used by `.fallbackOnDevice` (the on-device model). Injected;
     /// when `nil`, `.fallbackOnDevice` degrades to a failed step.
     private let fallback: ILLMProvider?
+    /// The mesh dispatch for `.dispatchToMac` steps (HSM-15-02). Injected by the App
+    /// (the paired peer's ask route); `nil` = no paired desktop, the step rides the
+    /// failure policy.
+    private let dispatch: MeshDispatch?
     private let policy: RunPolicy
 
-    public init(provider: ILLMProvider, fallback: ILLMProvider? = nil, policy: RunPolicy = RunPolicy()) {
+    public init(provider: ILLMProvider, fallback: ILLMProvider? = nil,
+                dispatch: MeshDispatch? = nil, policy: RunPolicy = RunPolicy()) {
         self.provider = provider
         self.fallback = fallback
+        self.dispatch = dispatch
         self.policy = policy
     }
 
@@ -155,10 +177,15 @@ public struct WorkflowRunner: Sendable {
     /// transcript / tacked moments / selection; the runner stays source-agnostic).
     /// Optionally resume from `resumeFrom` with `seedInput` already threaded (so a parked
     /// run never recomputes completed steps).
+    ///
+    /// `targets` is the per-step run target, index-aligned with `workflow.steps`
+    /// (HSM-15-02: the node inspector's pin). Missing / `nil` entries resolve to
+    /// `.onDevice` — an empty array is byte-identical to the pre-mesh behaviour.
     public func run(_ workflow: Workflow,
                     sourceText: String,
                     resumeFrom: Int = 0,
-                    seedInput: String? = nil) async -> WorkflowRunResult {
+                    seedInput: String? = nil,
+                    targets: [RunTarget?] = []) async -> WorkflowRunResult {
         var threaded = seedInput ?? sourceText
         var outcomes: [StepOutcome] = []
         // The "head input" the first *executed* step reads: the cached/carried value on a
@@ -182,15 +209,18 @@ public struct WorkflowRunner: Sendable {
                 continue
             }
 
-            // Model-backed step: build the prompt, run it under the failure policy.
+            // Model-backed step: build the prompt, resolve the step's target (the node
+            // inspector's pin; unset = on-device), run it under the failure policy.
+            let target = (index < targets.count ? targets[index] : nil) ?? .onDevice
             let prompt = buildPrompt(for: step, input: resolvedInput)
-            let attemptResult = await execute(prompt: prompt, target: .onDevice)
+            let attemptResult = await execute(prompt: prompt, target: target)
 
             switch attemptResult {
             case .success(let text, let attempts):
                 threaded = text
                 outcomes.append(StepOutcome(index: index, label: step.label, status: .ok,
-                                            input: resolvedInput, output: text, attempts: attempts))
+                                            input: resolvedInput, output: text, attempts: attempts,
+                                            ranOn: target))
 
             case .failure(let lastError, let attempts):
                 switch policy.failurePolicy {
@@ -198,7 +228,8 @@ public struct WorkflowRunner: Sendable {
                     // Carry the input through unchanged.
                     outcomes.append(StepOutcome(index: index, label: step.label, status: .skipped,
                                                 input: resolvedInput, output: resolvedInput,
-                                                attempts: attempts, error: describe(lastError)))
+                                                attempts: attempts, error: describe(lastError),
+                                                ranOn: target))
                     // `threaded` stays as resolvedInput's source — keep the carried value.
                     threaded = resolvedInput
 
@@ -208,21 +239,25 @@ public struct WorkflowRunner: Sendable {
                         switch fbResult {
                         case .success(let text, let fbAttempts):
                             threaded = text
+                            // The fallback IS the on-device model — the badge updates,
+                            // it didn't leave after all.
                             outcomes.append(StepOutcome(index: index, label: step.label, status: .fellBack,
                                                         input: resolvedInput, output: text,
-                                                        attempts: attempts + fbAttempts))
+                                                        attempts: attempts + fbAttempts,
+                                                        ranOn: .onDevice))
                         case .failure(let fbError, let fbAttempts):
                             outcomes.append(StepOutcome(index: index, label: step.label, status: .failed,
                                                         input: resolvedInput, output: resolvedInput,
                                                         attempts: attempts + fbAttempts,
-                                                        error: describe(fbError)))
+                                                        error: describe(fbError), ranOn: target))
                             return WorkflowRunResult(workflowID: workflow.id, finalText: resolvedInput,
                                                      steps: outcomes, failure: describe(fbError))
                         }
                     } else {
                         outcomes.append(StepOutcome(index: index, label: step.label, status: .failed,
                                                     input: resolvedInput, output: resolvedInput,
-                                                    attempts: attempts, error: "no fallback provider"))
+                                                    attempts: attempts, error: "no fallback provider",
+                                                    ranOn: target))
                         return WorkflowRunResult(workflowID: workflow.id, finalText: resolvedInput,
                                                  steps: outcomes, failure: "no fallback provider")
                     }
@@ -232,7 +267,7 @@ public struct WorkflowRunner: Sendable {
                     let reason = describe(lastError)
                     outcomes.append(StepOutcome(index: index, label: step.label, status: .parked,
                                                 input: resolvedInput, output: resolvedInput,
-                                                attempts: attempts, error: reason))
+                                                attempts: attempts, error: reason, ranOn: target))
                     let parked = ParkedRun(workflowID: workflow.id, resumeFromStep: index,
                                            carriedInput: resolvedInput, reason: reason)
                     return WorkflowRunResult(workflowID: workflow.id, finalText: resolvedInput,
@@ -310,26 +345,37 @@ public struct WorkflowRunner: Sendable {
     }
 
     /// Run a prompt against a target. On-device / endpoint go through the injected
-    /// provider; `.dispatchToMac` is the stubbed mesh seam (HSM-15-02).
+    /// provider; `.dispatchToMac` goes through the injected mesh dispatch (HSM-15-02),
+    /// under the SAME bounded retry loop — an unreachable Mac reads exactly like an
+    /// unreachable endpoint to the failure policy.
     private func execute(prompt: String, target: RunTarget) async -> AttemptResult {
         switch target {
         case .onDevice, .endpoint:
             return await attempt(prompt: prompt, on: provider)
         case .dispatchToMac:
-            // Seam: the desktop run-a-capability RPC is not built yet.
-            return .failure(error: WorkflowRunError.dispatchUnimplemented, attempts: 0)
+            guard let dispatch else {
+                // No paired desktop — the step rides the failure policy.
+                return .failure(error: WorkflowRunError.dispatchUnimplemented, attempts: 0)
+            }
+            return await attempt(prompt: prompt, complete: dispatch)
         }
     }
 
     /// One bounded retry loop against a provider. Backoff is injectable (no sleep in tests).
     private func attempt(prompt: String, on provider: ILLMProvider) async -> AttemptResult {
+        await attempt(prompt: prompt, complete: { try await provider.complete(prompt: $0) })
+    }
+
+    /// The retry loop itself, over any completion (a provider or the mesh dispatch).
+    private func attempt(prompt: String,
+                         complete: @Sendable (String) async throws -> String) async -> AttemptResult {
         var attempts = 0
         var lastError: Error = WorkflowRunError.dispatchUnimplemented
         let totalTries = max(1, policy.maxRetries + 1)
         for tryIndex in 0..<totalTries {
             attempts += 1
             do {
-                let text = try await provider.complete(prompt: prompt)
+                let text = try await complete(prompt)
                 return .success(text: text, attempts: attempts)
             } catch {
                 lastError = error

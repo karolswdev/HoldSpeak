@@ -181,15 +181,25 @@ private enum NodeKind: String, CaseIterable, Identifiable {
 /// Which model a model-backed node prefers to run on. `auto` follows the app's Settings; the others
 /// pin the node to a target regardless of the global default.
 private enum ModelPref: String, CaseIterable, Identifiable {
-    case auto, onDevice, endpoint
+    case auto, onDevice, endpoint, desktop
     var id: String { rawValue }
-    var label: String { switch self { case .auto: return "Auto"; case .onDevice: return "On-device"; case .endpoint: return "Endpoint" } }
-    var glyph: String { switch self { case .auto: return "wand.and.stars"; case .onDevice: return "ipad"; case .endpoint: return "network" } }
+    var label: String { switch self { case .auto: return "Auto"; case .onDevice: return "On-device"; case .endpoint: return "Endpoint"; case .desktop: return "Your Mac" } }
+    var glyph: String { switch self { case .auto: return "wand.and.stars"; case .onDevice: return "ipad"; case .endpoint: return "network"; case .desktop: return "desktopcomputer" } }
     var hint: String {
         switch self {
         case .auto: return "Follows Settings."
         case .onDevice: return "Always the on-device model. No network."
         case .endpoint: return "Always your configured endpoint."
+        case .desktop: return "Runs on your paired desktop."
+        }
+    }
+    /// The runner's per-step target for this pin (HSM-15-02). `auto` = nil (the run default).
+    var runTarget: RunTarget? {
+        switch self {
+        case .auto: return nil
+        case .onDevice: return .onDevice
+        case .endpoint: return .endpoint
+        case .desktop: return .dispatchToMac
         }
     }
 }
@@ -346,6 +356,7 @@ private func cablePoint(_ a: CGPoint, _ b: CGPoint, _ t: CGFloat) -> CGPoint {
         var workflow: Workflow
         var sourceNode: UUID
         var stepNodes: [UUID]        // one per `workflow.steps[i]`
+        var stepTargets: [RunTarget?] = []  // the node inspector's pin, per step (HSM-15-02)
         var outputNode: UUID?
     }
 
@@ -368,6 +379,7 @@ private func cablePoint(_ a: CGPoint, _ b: CGPoint, _ t: CGFloat) -> CGPoint {
 
         var steps: [WorkflowStep] = []
         var stepNodes: [UUID] = []
+        var stepTargets: [RunTarget?] = []
         var outputNode: UUID?
         var output: WorkflowOutput = .artifacts
 
@@ -387,7 +399,11 @@ private func cablePoint(_ a: CGPoint, _ b: CGPoint, _ t: CGFloat) -> CGPoint {
                 // A second source in the chain is meaningless to the linear model — stop.
                 current = nil
             case .intel, .transform:
-                if let step = step(for: n) { steps.append(step); stepNodes.append(n.id) }
+                if let step = step(for: n) {
+                    steps.append(step)
+                    stepNodes.append(n.id)
+                    stepTargets.append(n.modelPref.runTarget)
+                }
                 current = next(after: n.id)
             case .output:
                 output = workflowOutput(for: n.kind)
@@ -397,7 +413,8 @@ private func cablePoint(_ a: CGPoint, _ b: CGPoint, _ t: CGFloat) -> CGPoint {
         }
         guard !steps.isEmpty else { return nil }
         let wf = Workflow(name: name, source: source, steps: steps, output: output)
-        return LoweredGraph(workflow: wf, sourceNode: src.id, stepNodes: stepNodes, outputNode: outputNode)
+        return LoweredGraph(workflow: wf, sourceNode: src.id, stepNodes: stepNodes,
+                            stepTargets: stepTargets, outputNode: outputNode)
     }
 
     /// Map a single node to its `WorkflowStep`. Intel nodes lower to `.extract(type)`; the transforms
@@ -572,6 +589,16 @@ private struct GraphCanvasView: View {
             // HSM-22-01 screenshot/proof affordance — the same save path the tap runs.
             if env["HS_DEMO_WB_SAVE"] == "1" {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { saveToDesk() }
+            }
+            // HSM-15-02 — pin the first model-op node to the paired desktop and run:
+            // the SAME startRun the tap runs; with HS_DESKTOP_HOST set (a live local
+            // hub) the pinned step genuinely dispatches over /api/ask.
+            if env["HS_DEMO_WB_MESH"] == "1" {
+                if let i = model.nodes.firstIndex(where: { $0.kind.cat == .intel }) {
+                    model.nodes[i].modelPref = .desktop
+                }
+                RunQueueStore.shared.expanded = true
+                startRun()
             }
             #endif
         }
@@ -849,29 +876,51 @@ private struct GraphCanvasView: View {
         // The provider: REAL on-device/endpoint unless the model is absent — then the seeded fake so
         // the run is demonstrable. In the Simulator there is never a GGUF, so we use the fake.
         let provider: ILLMProvider = makeRunProvider()
-        let runner = WorkflowRunner(provider: provider,
+        // The mesh dispatch (HSM-15-02): a node pinned to "Your Mac" runs its prompt on the
+        // paired peer over the hub's ask route. No paired peer → nil, and the step rides its
+        // IF-UNREACHABLE policy exactly like an unreachable endpoint.
+        var dispatch: MeshDispatch?
+        if let client = await DictatePeerStore.shared.client() {
+            dispatch = { (prompt: String) async throws -> String in
+                let result = try await client.runStep(prompt: prompt)
+                guard let out = result.output, !out.isEmpty else {
+                    throw HTTPDesktopClient.DesktopClientError.malformed
+                }
+                return out
+            }
+        }
+        let runner = WorkflowRunner(provider: provider, dispatch: dispatch,
                                     policy: RunPolicy(maxRetries: 1, failurePolicy: .skip))
+        let peerName = await DictatePeerStore.shared.displayName
 
         var threaded = sourceText
         for (i, step) in lowered.workflow.steps.enumerated() {
             if Task.isCancelled { break }
             let nodeID = lowered.stepNodes[i]
-            let target = InferenceConfigStore.shared.isLocal ? "On-device" : "Endpoint"
+            // The job's target label states the STEP's resolved pin (HSM-15-02 — the
+            // app-wide default only when the node is unpinned), settled to where it
+            // ACTUALLY ran once the outcome lands.
+            let stepTarget = i < lowered.stepTargets.count ? lowered.stepTargets[i] : nil
+            let target = targetLabel(stepTarget, peerName: peerName)
 
             // Light the node + its outgoing cable; push a WORKING job.
             model.setRunState(nodeID, .working)
             model.activateOutgoing(of: nodeID)
-            let jobID = UUID()
+            // The job's REAL id (a fresh UUID here never matched the inserted job's
+            // self-generated id, so rows stayed "working" forever — found in the
+            // HSM-15-02 build; the settle below now actually lands).
+            let queued = QueuedJob(runName, model.node(nodeID)?.title ?? step.label,
+                                   target: target, status: .working, progress: 0.4)
+            let jobID = queued.id
             withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                queue.jobs.insert(QueuedJob(runName, model.node(nodeID)?.title ?? step.label,
-                                            target: target, status: .working, progress: 0.4), at: 0)
+                queue.jobs.insert(queued, at: 0)
             }
             tactile(.light)
 
             // A single-step workflow over the threaded value — REAL runner execution.
             let single = Workflow(name: runName, source: lowered.workflow.source, steps: [step],
                                   output: lowered.workflow.output)
-            let result = await runner.run(single, sourceText: threaded)
+            let result = await runner.run(single, sourceText: threaded, targets: [stepTarget])
 
             if Task.isCancelled { break }
             let outcome = result.steps.first
@@ -892,6 +941,11 @@ private struct GraphCanvasView: View {
                     queue.jobs[qi].status = job
                     queue.jobs[qi].progress = 1
                     queue.jobs[qi].note = outcome?.error
+                    // Settle the label to where the step ACTUALLY ran (a fallback
+                    // means it never left — the badge updates, HSM-15-02 honesty).
+                    if let ran = outcome?.ranOn {
+                        queue.jobs[qi].target = targetLabel(ran, peerName: peerName)
+                    }
                 }
             }
             // Hand the pulse to the next node's cables (or clear at the end).
@@ -921,6 +975,18 @@ private struct GraphCanvasView: View {
         }
         return SeededFakeProvider()
         #endif
+    }
+
+    /// The HUD job's target words for a step's pin (HSM-15-02). An unpinned step
+    /// (`nil`) states the app-wide default — the pre-mesh behaviour, now scoped to
+    /// exactly the steps that actually follow it.
+    private func targetLabel(_ target: RunTarget?, peerName: String) -> String {
+        switch target {
+        case .dispatchToMac: return peerName
+        case .onDevice:      return "On-device"
+        case .endpoint:      return "Endpoint"
+        case nil:            return InferenceConfigStore.shared.isLocal ? "On-device" : "Endpoint"
+        }
     }
 }
 

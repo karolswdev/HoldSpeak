@@ -2,14 +2,16 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 15
-- **Status:** in-progress — **the pure on-device/endpoint runner is BUILT + host-proven (2026-06-22),
-  and the canvas EXECUTES through it (HSM-14-15: `lowerToWorkflow()` → stepped runs lighting nodes +
-  real `StepOutcome` jobs in the Queue HUD, Simulator-proven).** The
-  `RunTarget.dispatchToMac` seam is **stubbed** (throws `dispatchUnimplemented`). 2026-07-05
-  survey notes: `run()` currently hard-codes `.onDevice` for every step (per-node `modelPref`
-  is lowered to the wire but ignored at run time), and the Queue HUD job's "target" label reads
-  the app-wide `isLocal` rather than the node's pin — both land with the dispatch build
-  (HSM-15-02's active slice). This story closes when the runner dispatches per RUNS-ON.
+- **Status:** done (2026-07-05 — **the runner dispatches per RUNS-ON**; see
+  `evidence-story-04.md`. The closing slice landed with HSM-15-02's build: an injected
+  `MeshDispatch` runs a `.dispatchToMac` step on the paired peer over `POST /api/ask`
+  under the SAME bounded retry loop, per-step `targets` resolve each node's pin (empty =
+  byte-identical legacy), `StepOutcome.ranOn` states where the output actually came from
+  (a fallback reports `.onDevice` — it never left), and no-paired-peer rides the failure
+  policy exactly like an unreachable endpoint. Proven end to end: the Simulator's pinned
+  step landed on a REAL local hub (prompt receipts) and the HUD job settled labeled with
+  the peer's name. Earlier: the pure runner host-proven 2026-06-22; the canvas execution
+  via HSM-14-15.)
 - **Depends on:** the existing RuntimeCore `Workflow` model (linear; the App graph→`Workflow` lowering
   is later); `InferenceConfigStore.makeProvider`; `HTTPDesktopClient` (for the dispatched-to-Mac seam);
   the `RunQueueStore`.
