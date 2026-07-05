@@ -15,18 +15,28 @@ glass. Budget: ~15 minutes. **Joins the standing couch queue** (17-06 + the
 - Intel: the hub's configured provider as-is (`.43` works; C2 names whatever
   the hub really runs — after the 16-04 fix it emits its live `desktop:intel`
   row from real config, no seeding).
-- Install the current MeetingCapture build (device UNLOCKED):
+- Install the current MeetingCapture build (device UNLOCKED). Signing is fully
+  headless now — the App Store Connect key at
+  `~/.appstoreconnect/private_keys/AuthKey_PUZZLQB758.p8` provisions with no
+  Xcode sign-in (recipe proven 2026-07-05; a signed build may already sit at
+  `apple/build/dd-device/Build/Products/Debug-iphoneos/HoldSpeakMobile.app`):
 
 ```bash
 cd apple && ruby scripts/gen-meeting-capture.rb
 scripts/patch-llm-macro.sh build/dd-capture-device build/HoldSpeakMeetingCapture.xcodeproj HoldSpeakMobile
 xcodebuild -project build/HoldSpeakMeetingCapture.xcodeproj -scheme HoldSpeakMobile \
-  -destination "platform=iOS,id=<UDID>" -derivedDataPath build/dd-capture-device \
+  -destination "generic/platform=iOS" -derivedDataPath build/dd-capture-device \
   -disableAutomaticPackageResolution -skipMacroValidation \
-  -allowProvisioningUpdates build
+  -allowProvisioningUpdates \
+  -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_PUZZLQB758.p8 \
+  -authenticationKeyID PUZZLQB758 \
+  -authenticationKeyIssuerID c1d852da-77ac-485c-aa95-2909cbb1bf0e build
 xcrun devicectl device install app --device <UDID> \
   build/dd-capture-device/Build/Products/Debug-iphoneos/HoldSpeakMobile.app
 ```
+
+Both `-authenticationKey*` id flags are required together; the key file is a
+credential — never print or commit it.
 
 (UDID list: `xcrun devicectl list devices`. Remember: `gen-meeting-capture.rb`
 COPIES sources — rerun it after any App/*.swift edit.)
