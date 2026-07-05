@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/model-manifest.schema.json",
+  "title": "ModelManifest",
+  "description": "A model MANIFEST (capability/synced, HSM-16-08): 'this node has this model, with these capabilities.' AVAILABILITY INVARIANT (load-bearing): the model binary NEVER syncs — additionalProperties:false makes any path/url/bytes-shaped field a validation failure. This is how a surface knows what 'run it on your desktop' would actually run. Canonical hub emission: ModelManifestRecord.to_dict().",
+  "x-sync-kind": "model",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "node", "name"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "node": { "type": "string" },
+    "name": { "type": "string" },
+    "capabilities": { "type": "array", "items": { "type": "string" } },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "last_modified": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" }
+  }
+}

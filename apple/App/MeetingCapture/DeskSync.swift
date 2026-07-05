@@ -321,6 +321,9 @@ extension DeskSyncStore {
 struct DeskSyncDriver {
     let provider: HTTPSyncProvider
     let queue: SyncQueue
+    /// This device's model MANIFESTS (HSM-16-08) — "this node has this model" rows that ride
+    /// the outbound change-set. Availability only; the binary never leaves the device.
+    var localModels: [Synced<ModelManifest>] = []
     let store = DeskSyncStore()
 
     struct Outcome: Equatable {
@@ -328,6 +331,9 @@ struct DeskSyncDriver {
         var pendingAfter = 0
         var applied = 0
         var reachedPeer = false
+        /// The mesh's model availability as pulled from the hub (its own model + every
+        /// node's pushed manifests) — what "run it on your desktop" would actually run.
+        var meshModels: [ModelManifest] = []
     }
 
     /// Build a driver pointed at the paired hub. Returns nil when no peer is paired.
@@ -346,8 +352,11 @@ struct DeskSyncDriver {
     /// One sync pass. Durable-first: the snapshot is queued before any network so nothing
     /// is lost if the peer is down. Returns the outcome + the (possibly) updated records.
     func syncNow(_ records: DeskRecords, now: Date = Date()) async -> (records: DeskRecords, outcome: Outcome) {
-        // 1. Record the outbound snapshot durably (offline-safe).
-        try? queue.enqueueNext(store.snapshot(records, now: now))
+        // 1. Record the outbound snapshot durably (offline-safe) — plus this node's
+        //    model manifests (derived device state, not desk records).
+        var snap = store.snapshot(records, now: now)
+        snap.models = localModels
+        try? queue.enqueueNext(snap)
 
         // 2. Flush the queue to the peer (never throws; leaves the rest if down).
         let pushed = await queue.flush(through: provider)
@@ -358,7 +367,8 @@ struct DeskSyncDriver {
             let incoming = try await provider.pull()
             let (merged, report) = store.apply(incoming, to: records)
             return (merged, Outcome(pushed: pushed, pendingAfter: pendingAfter,
-                                    applied: report.applied, reachedPeer: true))
+                                    applied: report.applied, reachedPeer: true,
+                                    meshModels: incoming.models.compactMap(\.value)))
         } catch {
             return (records, Outcome(pushed: pushed, pendingAfter: pendingAfter,
                                      applied: 0, reachedPeer: false))

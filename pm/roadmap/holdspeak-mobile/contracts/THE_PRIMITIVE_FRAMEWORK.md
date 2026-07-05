@@ -47,7 +47,7 @@ Priority (owner): **web is king, iPad is king×2, the desktop hub is the happy b
 | **Chain** | `chain` | capability | `id, name, steps[] (recipe_ids), last_modified, deleted` |
 | **Workflow** | `workflow` | capability | `id, name, prompt? , graph_json?, last_modified, deleted` |
 | **Coder session** | `coder` | presence | `agent ("claude"\|"codex"), session_id, project?, model?, tokens_used?, state (working\|waiting\|idle\|ended), events[]` — `CoderEvent` kinds: `user_prompt, assistant, tool(tool,target,detail), result(ok,summary,added,removed), command(cmd,exit,output), approval(question,command), notification, usage(tokens), ended` |
-| **Model** | `model` | capability (manifest) | `id, name, capabilities[]` — manifest syncs, binary device-local |
+| **Model** | `model` | capability (manifest) | `id ("<node>:<file>"), node, name, capabilities[]` — manifest syncs, binary device-local; LANDED HSM-16-08 (`node` added so availability is per-device; the hub also emits its own model as a live `desktop:intel` row) |
 | **Connector** | `connector` | config | integration target |
 | **Membership** | — | organization | which primitive is filed in which KB/zone |
 | **Game** | `game` | **local-only** | never syncs (the one honest exception) |

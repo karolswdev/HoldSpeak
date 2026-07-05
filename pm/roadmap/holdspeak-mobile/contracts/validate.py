@@ -59,6 +59,7 @@ PRIMITIVE_SCHEMAS = {
     "directory": "https://holdspeak.dev/contracts/v0/directory.schema.json",
     "directory_membership": "https://holdspeak.dev/contracts/v0/directory-membership.schema.json",
     "profile": "https://holdspeak.dev/contracts/v0/profile.schema.json",
+    "model": "https://holdspeak.dev/contracts/v0/model-manifest.schema.json",
 }
 
 
@@ -138,6 +139,17 @@ def main() -> int:
     else:
         ok = False
         print("FAIL  negative: a profile carrying api_key passed validation (key-never-syncs broken)")
+
+    # Negative (availability invariant): a model manifest smuggling a binary-shaped
+    # field (path/url) MUST fail — the manifest syncs, the binary never does (HSM-16-08).
+    smuggle = dict(primitives["model"])
+    smuggle["path"] = "/Users/x/Models/gguf/q.gguf"
+    smuggle_errs = _errors(_validator(PRIMITIVE_SCHEMAS["model"], registry), smuggle)
+    if smuggle_errs:
+        print(f"PASS  negative: model manifest with a path rejected ({len(smuggle_errs)} error(s), as expected)")
+    else:
+        ok = False
+        print("FAIL  negative: a model manifest carrying a path passed validation (binary-never-syncs broken)")
 
     # Timestamps: every instant must be UTC Z-terminated (HSM-0-03 §2).
     tz_bad = _utc_z_violations(fixture) + _utc_z_violations(mir) + _utc_z_violations(primitives)

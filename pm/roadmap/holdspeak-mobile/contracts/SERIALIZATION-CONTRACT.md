@@ -175,20 +175,28 @@ entity — that was the escalation the story flagged, resolved this way):
   propagated delete whose `value` is `null` (never a payload; the §12 rule).
 - `synced<T>`: `{ meta: sync_metadata, value: T|null }`; `value` is the unmodified
   contract entity, and is `null` exactly when `meta.deleted`.
-- `change_set` — ten buckets, one per kind (all optional on the wire; decoders
+- `change_set` — eleven buckets, one per kind (all optional on the wire; decoders
   tolerate absent buckets):
-  `{ meetings, artifacts, notes, kbs, agents, chains, workflows, profiles,
-  directories, directory_memberships }`, each `synced<T>[]`.
+  `{ meetings, artifacts, notes, kbs, recipes, chains, workflows, profiles,
+  directories, directory_memberships, models }`, each `synced<T>[]`. (The recipes
+  bucket wore the word "agents" before the Phase-17 owner-ratified rename; the
+  shipping wire is `recipes`/`recipe`.)
 - The `kind` enum matches the buckets one-to-one: `meeting`, `artifact`, `note`,
-  `kb`, `agent`, `chain`, `workflow`, `profile`, `directory`,
-  `directory_membership`. A `directory_membership` record's synced id is its
-  `primitive_id` (the filing-map key); its value carries the `directory_id` edge.
-  Actions are not a top-level store entity (they live inside an Action-Items
+  `kb`, `recipe`, `chain`, `workflow`, `profile`, `directory`,
+  `directory_membership`, `model`. A `directory_membership` record's synced id is
+  its `primitive_id` (the filing-map key); its value carries the `directory_id`
+  edge. Actions are not a top-level store entity (they live inside an Action-Items
   artifact), so they do not sync as a kind.
+- `model` is a **manifest**, never a binary (HSM-16-08): `{ id ("<node>:<file>"),
+  node, name, capabilities[] }` — availability only. The schema's
+  `additionalProperties: false` makes any path/url/bytes-shaped field a validation
+  failure, and the hub's pull additionally emits its OWN model as a live virtual
+  row (`desktop:intel`, computed from config, never stored).
 
 History: HSM-10-01 shipped the envelope with `{meetings, artifacts}` only; the
-Primitive Framework (Phases 72–77) grew it to the ten kinds above, and HSM-23-04
-back-updated this section to the shipping wire. The envelope's JSON Schema is
+Primitive Framework (Phases 72–77) grew it to ten kinds, HSM-23-04
+back-updated this section to the shipping wire, and HSM-16-08 added the
+eleventh kind (`model` manifests). The envelope's JSON Schema is
 `schemas/changeset.schema.json` (`additionalProperties: false`, per-bucket `kind`
 const, tombstone ⇒ `value: null`); every kind's push→pull round-trip + LWW +
 tombstone behavior is locked per-primitive in

@@ -26,6 +26,7 @@ from .primitives import (
     DirectoryMembershipRepository,
     DirectoryRepository,
     KBRepository,
+    ModelManifestRepository,
     NoteRepository,
     ProfileRepository,
     WorkflowRepository,
@@ -804,6 +805,19 @@ CREATE TABLE IF NOT EXISTS profiles (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
+-- Model manifest (capability/synced, HSM-16-08): "this node has this model" —
+-- availability only. The model BINARY never syncs; by design this table has no
+-- path/url/bytes column, so nothing binary-shaped can even be stored to leak.
+CREATE TABLE IF NOT EXISTS model_manifests (
+    id TEXT PRIMARY KEY,
+    node TEXT NOT NULL DEFAULT '',
+    name TEXT NOT NULL DEFAULT '',
+    capabilities_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+
 -- Directory (organization/synced): the canonical organization container; the
 -- iPad renders it spatially as a "zone". Only identity + nesting sync here
 -- (`id, name, parent_id`); the zone's geometry/paint is per-device layout and
@@ -945,6 +959,7 @@ class Database:
         self.workflows = WorkflowRepository(self._connection, self)
         self.directories = DirectoryRepository(self._connection, self)
         self.directory_memberships = DirectoryMembershipRepository(self._connection, self)
+        self.model_manifests = ModelManifestRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

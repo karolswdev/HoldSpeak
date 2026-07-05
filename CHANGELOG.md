@@ -12,6 +12,13 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 ## [Unreleased]
 
 ### Added
+- **The mesh knows its models.** A new synced `model` manifest ("this node has
+  this model, with these capabilities") joins the sync wire as its eleventh
+  kind: devices advertise their installed models on push, the hub stores them
+  and advertises its own, and the iPad's "where should it run?" sheet now names
+  the actual model your desktop would run instead of promising "big model".
+  Availability only — the model binary never syncs, and both the JSON Schema
+  and the wire tests reject any path-shaped field.
 - **The Ask AI atom carries its full lineage (iPad).** A kept Ask — lasso
   cards on the desk, speak or type an instruction, keep the printed answer —
   now persists as an artifact whose provenance names every card it read and

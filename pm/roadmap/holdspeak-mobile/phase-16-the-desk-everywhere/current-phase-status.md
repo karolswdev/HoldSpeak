@@ -6,7 +6,12 @@ delivered and look for parity with the web client in Astro… and design for syn
 desktop. This is all a mesh system, so everything has to flow back and forth. Knowledge bases, stuff
 like that."*)
 
-**Last updated:** 2026-07-04 (**HSM-16-09 DONE — the Ask AI atom, honest to the bone (5/9).** The
+**Last updated:** 2026-07-04 (**HSM-16-08 DONE — the mesh knows its models (6/9).** The `model`
+manifest is the sync wire's eleventh kind (contract + schema + hub table/repo/route + iPad
+publish/consume); the run-target sheet names the hub's real model; the no-binary invariant is
+asserted on three layers; pre-pays and the P24 supersession recorded in the story. Swift
+467/9/0, hub 2474 green, validator ALL PASS. Next: 16-04's web slice. Earlier:
+**HSM-16-09 DONE — the Ask AI atom, honest to the bone (5/9).** The
 kept Ask now carries its full lineage (every card read + the prompt) onto the synced Artifact;
 two egress lies fixed (card + theater now state the RUN's profile, not the app default); both Ask
 surfaces left the scrim — the composer is an atelier panel and the card prints from the core.
@@ -100,7 +105,7 @@ the user. It is the spine of the whole phase.
 | HSM-16-04 | The web Astro Desk (parity build) | **in-progress, survey-corrected** (substantially pre-paid: the desk IS the web front door — `index.astro` mounts `DeskApp` with World/Stage/zones/pull-out/RecipeRail/InlineEditor/mic, and 22-03 made it a workflow producer; **remaining slice = web recipe/atelier authoring** — the 17-08 closeout filed it verbatim as "the next slice" — **+ the Ask-AI atom's web parity** once 16-09 lands) | parity (the big build) |
 | HSM-16-05 | Wire the mesh — organization flows back and forth | **done** (pre-paid: the Phase-23-04 10-kind per-primitive push→pull round-trip matrix covers kb/directory/membership byte-faithful, golden-pinned on both sides of the wire; live merges proven in the 22-01/22-04 DeskSync passes) | sync (wire) |
 | HSM-16-09 | **The Ask AI atom** — lasso → ask → speak → print → keep/bin (on-device, no mesh needed) | **done** (2026-07-04, sim-proven; device beat rides 16-06. TRUTH-UP: the survey's "zero code exists" was wrong — the skeleton had shipped; this story built the missing substance: full Ask lineage on the wire, two egress-honesty fixes, composer + printed card off the scrim) | capability (the atom) |
-| HSM-16-08 | Capability objects — survey-corrected remaining scope: **generalize the atom** (save an Ask as a recipe/workflow you re-run by drop) + **model manifests** (`SyncKind` has no `model` kind yet — the framework table promises one) + the combine-by-drop gestures for recipes/chains | todo (partially pre-paid: workflows already sync + run on the hub, Phase 22; recipes/chains sync, schema v8) | capability (combine/execute) |
+| HSM-16-08 | Capability objects — the model manifest | **done** (2026-07-04: the `model` manifest is the sync wire's ELEVENTH kind — devices advertise installed models, the hub stores + advertises its own live row, and the run-target sheet NAMES what "your desktop" would run; no-binary invariant asserted on schema/Swift/hub layers. Truth-ups: combine-to-run + cross-node runs were pre-paid (desk era + P22); drop-model-sets-RUNS-ON superseded by P24 profiles; manifest informs the user's pick, never silent auto-routing (the approval+egress contract)) | capability (combine/execute) |
 | HSM-16-06 | The cross-surface proof (author on one surface → felt on the other two, real metal) | todo (rescoped to ride the atom: an Ask kept on the iPad appears file-able on the web desk + the hub; org edits round-trip live) | proof (real metal) |
 | HSM-16-07 | Docs catch-up (mesh + DeskObject across surfaces) | todo | docs |
 
@@ -109,7 +114,22 @@ the user. It is the spine of the whole phase.
 
 ## Where we are
 
-**16-09 DONE the day the phase resumed (5/9).** The build immediately truthed-up the resume
+**16-08 DONE the same evening (6/9) — the mesh knows its models.** The survey-corrected
+remaining half of the capability layer shipped: a synced `model` MANIFEST ("this node has this
+model") joins the wire as its eleventh kind — iPad pushes its installed GGUFs, the hub stores
+them and advertises its own model as a live `desktop:intel` row, and the iPad's "where should
+it run?" sheet now **names the actual model** your desktop would run (was "big model", a vague
+promise). The binary never syncs: the schema's `additionalProperties:false`, a Swift wire
+test, and a hub route test each assert it independently. Truth-ups recorded in the story:
+combine-to-run and cross-node runs were pre-paid (desk era + Phase 22), drop-model-sets-RUNS-ON
+was superseded by Phase-24 profiles, and manifest-driven "resolution" ships as informing the
+user's pick — silent egress auto-routing would violate the approval contract. Suites: Swift
+467/9/0, hub 2474 unit green + doc guard 18/18, validator ALL PASS (with a new no-binary
+negative), sim shot committed. **Next: 16-04's remaining web slice** (recipe/atelier authoring
+on the web + the Ask atom's web parity), then the 16-06 cross-surface proof (which now also
+carries the manifest round-trip + the Ask device beat), then 16-07 docs.
+
+Earlier — **16-09 DONE the day the phase resumed (5/9).** The build immediately truthed-up the resume
 survey: the atom's skeleton (`askBundle` → `DioRouteSheet` → theater → `DioPrintedCard`) had
 ALREADY shipped under other names — the survey's "zero Ask-AI code exists" was wrong, and the
 story's real substance was what the skeleton faked. Shipped: **the full Ask lineage** (a kept Ask

@@ -2251,6 +2251,8 @@ struct DioRunTargetSheet: View {
     let run: PendingHubRun
     let paired: Bool
     let peerLabel: String          // e.g. "192.168.1.43" — what the hub row names
+    // the hub's model, from the synced manifest (HSM-16-08) — nil until a sync has told us
+    var hubModel: String? = nil
     var preferred: DeskRunTarget = .device   // the remembered/sensible default — pre-highlighted
     var remembered: Bool = false         // true once the user has made an explicit pick
     let onDevice: () -> Void
@@ -2276,10 +2278,12 @@ struct DioRunTargetSheet: View {
                 runRow(icon: DeviceLabel.current == "iPhone" ? "iphone" : "ipad", tint: DioPal.mint, name: "On this \(DeviceLabel.current)",
                        sub: "private · no network", egress: .local, enabled: true,
                        isDefault: preferred == .device, action: onDevice)
-                // ON YOUR MAC — the hub's big model; LAN egress; disabled when unpaired.
+                // ON YOUR MAC — the hub's model, NAMED from the synced manifest when known
+                // ("Qwen3.5-9B · 192.168.1.43"), never a vague promise; LAN egress; disabled
+                // when unpaired.
                 runRow(icon: "desktopcomputer", tint: Color(hex: 0xF5A524),
                        name: "On your desktop",
-                       sub: paired ? "big model · \(peerLabel)" : "pair your desktop to use its big model",
+                       sub: paired ? "\(hubModel ?? "big model") · \(peerLabel)" : "pair your desktop to use its big model",
                        egress: .cloud("your desktop"), enabled: paired,
                        isDefault: paired && preferred == .mac, action: onHub)
                 Button(action: onCancel) {
@@ -2987,6 +2991,8 @@ struct DioStage: View {
     // offers running it on the desktop hub's big model instead of on-device. The choice
     // sheet captures the pending run; the hub run lands a printed card with a cloud egress.
     @State private var pendingHubRun: PendingHubRun? = nil  // the run/where-it-runs picker is open
+    // the mesh's model availability (other nodes' manifests, hub first) — cached from the last pull
+    @AppStorage("hs.desk.meshModels") private var meshModelsJSON = ""
     @State private var chainRelay: ChainRecord? = nil     // the live relay overlay
     @State private var chainStep = 0
     @State private var chainResults: [String] = []
@@ -3831,8 +3837,16 @@ struct DioStage: View {
                     if ag == "chainbuild" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { editingChain = ChainRecord(id: "newc", name: "Refine", steps: ["seed1", "seed3"]) } } }
                     if ag == "chainrun" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { runChainSheet = chains.first } } }
                     // the WHERE-IT-RUNS picker (on-device vs your desktop) — seeded paired so the hub row is live.
+                    // HSM-16-08: the paired variant also seeds a mesh manifest, so the hub row NAMES
+                    // the model it would run (the same cache a real pull fills).
                     if ag == "runtarget" || ag == "runtarget-unpaired" {
-                        if ag == "runtarget" { peerHost = "192.168.1.43"; peerPort = "8080" }
+                        if ag == "runtarget" {
+                            peerHost = "192.168.1.43"; peerPort = "8080"
+                            let hub = ModelManifest(id: "desktop:intel", node: "desktop",
+                                                    name: "Qwen3.5-9B-Instruct-Q6_K", capabilities: ["language"],
+                                                    createdAt: Date(), updatedAt: Date())
+                            if let d = try? JSONEncoder().encode([hub]) { meshModelsJSON = String(decoding: d, as: UTF8.self) }
+                        }
                         else { peerHost = ""; peerPort = "8000" }   // unpaired → hub row disabled with a cue
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                             withAnimation { pendingHubRun = PendingHubRun(kind: .recipe(recipes[0]),
@@ -3955,6 +3969,7 @@ struct DioStage: View {
     @ViewBuilder private func runTargetOverlay(_ run: PendingHubRun) -> some View {
         DioRunTargetSheet(run: run, paired: hostLink != nil,
                           peerLabel: peerHost.isEmpty ? "your desktop" : peerHost,
+                          hubModel: hubModelName(),
                           preferred: preferredRunTarget,
                           remembered: DeskRunTarget(rawValue: runTargetPref) != nil,
                           onDevice: { runOnDevice(run) },
@@ -5272,7 +5287,10 @@ struct DioStage: View {
     /// after authoring a Note/Agent, and from the manual "Sync" affordance.
     private func syncDesk(reason: String) {
         guard !syncing, let link = hostLink,
-              let driver = DeskSyncDriver.make(host: link.host, port: link.port, token: peerToken) else { return }
+              var driver = DeskSyncDriver.make(host: link.host, port: link.port, token: peerToken) else { return }
+        // HSM-16-08: this node's model MANIFESTS ride the push (availability only — never
+        // the binary), so the hub and every other surface know what THIS device can run.
+        driver.localModels = installedModelManifests()
         syncing = true
         // HSM-21-03: refresh which connectors the host REALLY has configured, so a
         // GitHub tile with no repo on the host cannot present ready (nil keeps the
@@ -5291,6 +5309,13 @@ struct DioStage: View {
             if outcome.reachedPeer {
                 lastSyncedAt = Date()
                 syncState = .synced
+                // Cache the mesh's model availability (other nodes' manifests — the hub's own
+                // model first among them). This is what makes the run-target sheet honest:
+                // "On your desktop" can NAME the model it would run.
+                let remote = outcome.meshModels.filter { $0.node != DeviceLabel.current }
+                if !remote.isEmpty, let data = try? JSONEncoder().encode(remote) {
+                    meshModelsJSON = String(decoding: data, as: UTF8.self)
+                }
                 // everything we just pushed/round-tripped is now canonical on the hub → mark it
                 // confirmed so the per-primitive cue can honestly read "synced".
                 syncConfirmed.formUnion(deskPrimitiveIds(merged))
@@ -5315,6 +5340,25 @@ struct DioStage: View {
             }
             if let s = lastSyncSummary { toast(s) }
         }
+    }
+    /// This device's model manifest rows — one per installed language model. Availability
+    /// only (id/node/name/capabilities); the GGUF itself never rides the wire.
+    private func installedModelManifests() -> [Synced<ModelManifest>] {
+        let now = Date()
+        return ModelFiles.installed().filter { $0.kind == .language }.map { f in
+            let m = ModelManifest(id: "\(DeviceLabel.current):\(f.id)", node: DeviceLabel.current,
+                                  name: f.name, capabilities: ["language"], createdAt: now, updatedAt: now)
+            return .live(m, id: m.id, kind: .model, modifiedAt: now)
+        }
+    }
+    /// The hub's model name from the cached mesh manifests (nil until a sync has told us).
+    /// Prefers the hub's own row ("desktop"); falls back to any non-local node.
+    private func hubModelName() -> String? {
+        guard let data = meshModelsJSON.data(using: .utf8),
+              let all = try? JSONDecoder().decode([ModelManifest].self, from: data), !all.isEmpty
+        else { return nil }
+        let row = all.first { $0.node == "desktop" } ?? all[0]
+        return row.name.isEmpty ? nil : row.name
     }
     /// The set of card-level primitive ids (the `kind:bare` desk ids) present in a record set —
     /// used to diff before/after a pull so freshly-pulled primitives get the arrival treatment.

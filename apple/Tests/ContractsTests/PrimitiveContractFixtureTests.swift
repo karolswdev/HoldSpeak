@@ -23,6 +23,7 @@ final class PrimitiveContractFixtureTests: XCTestCase {
         var directory: Directory
         var directoryMembership: Membership
         var profile: RuntimeProfile
+        var model: ModelManifest
         var changeset: ChangeSet
     }
 
@@ -63,6 +64,9 @@ final class PrimitiveContractFixtureTests: XCTestCase {
         XCTAssertEqual(f.profile.kind, .openAICompatible)
         // The latent baseURL key bug: wire base_url must reach the property.
         XCTAssertEqual(f.profile.baseURL, "http://192.168.1.43:8080/v1")
+        // HSM-16-08: the model manifest — availability only, node-scoped id.
+        XCTAssertEqual(f.model.node, "iPad")
+        XCTAssertEqual(f.model.capabilities, ["language"])
     }
 
     func testHubEmissionsWithoutUpdatedAtDecodeTolerantly() throws {
@@ -95,6 +99,7 @@ final class PrimitiveContractFixtureTests: XCTestCase {
         XCTAssertEqual(try dec.decode(Directory.self, from: enc.encode(f.directory)), f.directory)
         XCTAssertEqual(try dec.decode(Membership.self, from: enc.encode(f.directoryMembership)), f.directoryMembership)
         XCTAssertEqual(try dec.decode(RuntimeProfile.self, from: enc.encode(f.profile)), f.profile)
+        XCTAssertEqual(try dec.decode(ModelManifest.self, from: enc.encode(f.model)), f.model)
         XCTAssertEqual(try dec.decode(ChangeSet.self, from: enc.encode(f.changeset)), f.changeset)
     }
 
@@ -106,6 +111,11 @@ final class PrimitiveContractFixtureTests: XCTestCase {
         let profile = String(data: try HoldSpeakContracts.encoder().encode(f.profile), encoding: .utf8)!
         XCTAssertTrue(profile.contains("\"base_url\""))
         XCTAssertFalse(profile.contains("api_key"), "the key NEVER syncs")
+        // HSM-16-08 availability invariant: a manifest wire has no binary-shaped field.
+        let model = String(data: try HoldSpeakContracts.encoder().encode(f.model), encoding: .utf8)!
+        XCTAssertTrue(model.contains("\"capabilities\""))
+        XCTAssertFalse(model.contains("\"path\""), "the binary NEVER syncs")
+        XCTAssertFalse(model.contains("\"url\""), "the binary NEVER syncs")
     }
 
     // MARK: the envelope
@@ -121,6 +131,11 @@ final class PrimitiveContractFixtureTests: XCTestCase {
         XCTAssertNil(tomb.value, "a tombstone carries no payload")
         XCTAssertEqual(f.changeset.profiles.count, 1)
         XCTAssertEqual(f.changeset.directoryMemberships.count, 1)
+        // HSM-16-08: the models bucket rides the envelope — a live manifest + a tombstone.
+        XCTAssertEqual(f.changeset.models.count, 2)
+        XCTAssertEqual(f.changeset.models[0].value?.node, "iPad")
+        XCTAssertTrue(f.changeset.models[1].meta.deleted)
+        XCTAssertNil(f.changeset.models[1].value, "a tombstone carries no payload")
         // Buckets absent from the fixture decode to [] (the tolerant decode).
         XCTAssertTrue(f.changeset.meetings.isEmpty)
     }
