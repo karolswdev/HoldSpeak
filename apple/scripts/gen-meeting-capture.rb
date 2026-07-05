@@ -125,6 +125,12 @@ target.build_configurations.each do |config|
   s['DEVELOPMENT_TEAM'] = TEAM
   s['CODE_SIGN_IDENTITY'] = 'Apple Development'
   s['SDKROOT'] = 'iphoneos'
+  # HSM-5-02, enabled 2026-07-05: the increased-memory-limit entitlement raises the
+  # per-app RAM ceiling so bigger GGUFs aren't jetsam-killed. Automatic signing can
+  # register the capability on the App ID itself now that headless builds carry the
+  # App Store Connect auth key (the old blocker was Xcode having no account to talk
+  # to the portal with).
+  s['CODE_SIGN_ENTITLEMENTS'] = File.join(ROOT, 'App', 'Local.entitlements')
 end
 
 project.save
