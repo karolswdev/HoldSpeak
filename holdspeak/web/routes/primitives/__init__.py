@@ -1,8 +1,9 @@
 """The desk primitives routes, composed (HS-79-03).
 
 One public constructor, unchanged: ``build_primitives_router`` includes the
-seven family routers. Bodies moved verbatim from the 1,294-line
-routes/primitives.py; the run-persist tail stays ONE function in ``_shared``.
+family routers (plus the Ask atom's, HSM-16-04). Bodies moved verbatim from
+the 1,294-line routes/primitives.py; the run-persist tail stays ONE function
+in ``_shared``.
 """
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ from ...context import WebContext
 # package root, as they did from the module): re-exported unchanged.
 from ._shared import CANONICAL_SOURCE_TYPES, canonical_source_type  # noqa: F401
 
+from .ask import build_ask_router
 from .recipes import build_recipes_router
 from .chains import build_chains_router
 from .directories import build_directories_router
@@ -26,6 +28,7 @@ from .workflows import build_workflows_router
 def build_primitives_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     router.include_router(build_notes_router(ctx))
+    router.include_router(build_ask_router(ctx))
     router.include_router(build_recipes_router(ctx))
     router.include_router(build_profiles_router(ctx))
     router.include_router(build_kbs_router(ctx))

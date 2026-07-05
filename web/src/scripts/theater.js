@@ -85,6 +85,10 @@ function lightNodes(types) {
 }
 
 function onStatus(data) {
+  // Run frames (scope "run", HS-74-02) belong to the capability surfaces —
+  // the desk renders its own routing treatment. The theater is the MEETING
+  // organ; without this filter every desk recipe/ask run popped it.
+  if (data && typeof data === "object" && data.scope === "run") return;
   const state = String((data && data.state) || "").toLowerCase();
   if (GENERATING.has(state)) {
     reveal("Generating intelligence…");

@@ -12,8 +12,8 @@ import { MicButton } from "./MicButton";
 import { lineage } from "../lineage";
 import { objGlow, type WorldObject } from "../world";
 
-const FILABLE = new Set(["meeting", "artifact", "note", "agent", "chain", "workflow", "kb"]);
-const EDITABLE = new Set(["note", "kb", "agent", "workflow"]);
+const FILABLE = new Set(["meeting", "artifact", "note", "recipe", "chain", "workflow", "kb"]);
+const EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
 
 interface MeetingDetail {
   intel?: { summary?: string; action_items?: any[]; topics?: string[] } | null;
@@ -70,7 +70,7 @@ export function Pullout({ o }: { o: WorldObject }) {
     setRunWarning("");
     const result = await useDesk
       .getState()
-      .runCapability(o.kind as "agent" | "chain" | "workflow", o.id, runInput);
+      .runCapability(o.kind as "recipe" | "chain" | "workflow", o.id, runInput);
     setRunOut(result.output);
     // HSM-22-03 — the hub's honest refusal (graph ran as the prompt fallback)
     // reaches the reader instead of being dropped.
@@ -119,7 +119,7 @@ export function Pullout({ o }: { o: WorldObject }) {
         <img src={spriteUrl(o.kind, o.id)} alt="" width={30} height={30} />
         <span className="desk-pullout-title">{o.title}</span>
         {egress && (
-          <span className={`egress-badge egress-${egress.scope}`}>{egress.text}</span>
+          <span className={`egress-badge is-${egress.scope}`}>{egress.text}</span>
         )}
         {o.kind === "meeting" && (
           <a className="desk-chip quiet" href={`/history?meeting=${encodeURIComponent(o.id)}`}>
@@ -204,7 +204,7 @@ export function Pullout({ o }: { o: WorldObject }) {
           </section>
         )}
 
-        {o.kind === "agent" && (
+        {o.kind === "recipe" && (
           <section>
             <p className="quiet">{String(ir.role || "")}</p>
             <pre className="desk-pullout-md">{String(ir.systemPrompt || "")}</pre>
@@ -262,7 +262,7 @@ export function Pullout({ o }: { o: WorldObject }) {
           </section>
         )}
 
-        {["agent", "chain", "workflow"].includes(o.kind) && (
+        {["recipe", "chain", "workflow"].includes(o.kind) && (
           <section>
             <div className="desk-pullout-run">
               <input

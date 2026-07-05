@@ -54,6 +54,10 @@ interface DeskState {
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
   renamingZoneId: string | null;
+  /** The lasso'd/selected objects — the Ask atom's context (HSM-16-04). */
+  selectedIds: string[];
+  /** The Ask composer is open (in-world, desk visible — never a modal). */
+  askOpen: boolean;
 
   refresh(): Promise<void>;
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
@@ -87,6 +91,11 @@ interface DeskState {
     id: string,
     input: string,
   ): Promise<{ ok: boolean; output: string; artifactId: string | null; warning: string | null }>;
+  toggleSelected(id: string): void;
+  setSelected(ids: string[]): void;
+  clearSelection(): void;
+  openAsk(): void;
+  closeAsk(): void;
   setPosition(id: string, pos: UnitPos): void;
   persistPositions(): void;
   clearPosition(id: string): void;
@@ -111,6 +120,8 @@ export const useDesk = create<DeskState>((set, get) => ({
   pulloutBackId: null,
   hoverZoneId: null,
   renamingZoneId: null,
+  selectedIds: [],
+  askOpen: false,
 
   async refresh() {
     set({ loading: true, error: "" });
@@ -194,7 +205,7 @@ export const useDesk = create<DeskState>((set, get) => ({
     const camel: Record<string, string> = {
       title: "title", name: "name", body_markdown: "bodyMarkdown", tags: "tags",
       role: "role", system_prompt: "systemPrompt", user_template: "userTemplate",
-      tools: "tools", kb_id: "kbId", profile_id: "profileId",
+      tools: "tools", kb_id: "kbId", profile_id: "profileId", avatar: "avatar",
     };
     const itemsKind = kind === "directory" ? "directory" : (kind as keyof Items);
     const items = get().items;
@@ -353,6 +364,24 @@ export const useDesk = create<DeskState>((set, get) => ({
     await get().updatePrimitive("directory", id, { name });
   },
 
+  toggleSelected(id) {
+    const cur = get().selectedIds;
+    set({ selectedIds: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] });
+  },
+  setSelected(ids) {
+    set({ selectedIds: ids });
+  },
+  clearSelection() {
+    set({ selectedIds: [], askOpen: false });
+  },
+  openAsk() {
+    // The composer joins the desk (the 17-08 atelier posture): the pull-out
+    // and editor settle; the selection stays visible behind the panel.
+    set({ askOpen: true, pulloutId: null, pulloutBackId: null, editingId: null });
+  },
+  closeAsk() {
+    set({ askOpen: false });
+  },
   setPosition(id, pos) {
     set({ positions: { ...get().positions, [id]: pos } });
   },

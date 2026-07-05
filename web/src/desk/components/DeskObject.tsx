@@ -20,18 +20,26 @@ export function DeskObject({
   const draggingId = useDesk((s) => s.draggingId);
   const newIds = useDesk((s) => s.newIds);
   const editingId = useDesk((s) => s.editingId);
-  const { setPosition, persistPositions, setDragging, openPullout, setHoverZone, fileIntoDir } = useDesk.getState();
+  const selectedIds = useDesk((s) => s.selectedIds);
+  const { setPosition, persistPositions, setDragging, openPullout, setHoverZone, fileIntoDir, toggleSelected } = useDesk.getState();
 
   const u = objUnit(o, i, n, positions);
   const m = objMotion(o);
   const dragging = draggingId === o.id;
   const isNew = newIds.includes(o.id);
   const editing = editingId === o.id;
+  const selected = selectedIds.includes(o.id);
 
-  const onClick = () => {
+  const onClick = (e: React.MouseEvent) => {
     // A completed drag never opens (the HS-71-06 discrimination: the drag
     // state clears next-tick, so a real drag still reads as dragging here).
     if (useDesk.getState().draggingId === o.id) return;
+    // Shift/cmd-click ropes the object into the Ask context (HSM-16-04) —
+    // the pointer's word for the lasso's single-object case.
+    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+      toggleSelected(o.id);
+      return;
+    }
     openPullout(o.id);
   };
 
@@ -91,11 +99,13 @@ export function DeskObject({
     <div
       {...bind()}
       onClick={onClick}
+      data-obj-id={o.id}
       className={
         "desk-obj" +
         (dragging ? " dragging" : "") +
         (isNew ? " is-new materialize" : "") +
-        (editing ? " editing" : "")
+        (editing ? " editing" : "") +
+        (selected ? " selected" : "")
       }
       title={o.title}
       style={

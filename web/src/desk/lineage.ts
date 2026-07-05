@@ -5,7 +5,7 @@
 import type { Items, Kind } from "./api";
 
 const RESOLVE_ORDER: Kind[] = [
-  "meeting", "artifact", "note", "directory", "kb", "agent", "chain", "workflow",
+  "meeting", "artifact", "note", "directory", "kb", "recipe", "chain", "workflow",
 ];
 
 export interface ResolvedRef {
@@ -55,8 +55,10 @@ export function lineage(items: Items, sources: unknown): Lineage {
     if (!ref) continue;
     const r = resolveRef(items, ref);
     const entry: LineageEntry = { type, ref, ...r };
-    if (["agent", "chain", "workflow"].includes(type) ||
-        ["agent", "chain", "workflow"].includes(r.kind)) {
+    // "recipe" is canonical; "agent" is its pre-rename wire alias (older stored
+    // rows still carry it); "ask" is the Ask atom's own via row (HSM-16-09).
+    if (["recipe", "agent", "chain", "workflow", "ask"].includes(type) ||
+        ["recipe", "chain", "workflow"].includes(r.kind)) {
       if (!via) via = entry;
       else from.push(entry);
     } else {

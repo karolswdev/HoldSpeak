@@ -1,6 +1,8 @@
 // The world: every primitive as a floating object + the zone trays, laid out
-// by the ported looseHome math (HS-71-03/05 parity).
-import { useState } from "react";
+// by the ported looseHome math (HS-71-03/05 parity). The empty desk is also
+// the lasso surface (HSM-16-04): drag on the background to rope objects into
+// the Ask atom's context.
+import { useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
   allObjects, objGlow, objUnit, worldObjects, worldRows, worldZones,
@@ -8,6 +10,7 @@ import {
 import { DeskObject } from "./DeskObject";
 import { InlineEditor } from "./InlineEditor";
 import { Pullout } from "./Pullout";
+import { AskBar, AskPanel } from "./AskPanel";
 import { MicButton } from "./MicButton";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl, variantIndex } from "../../scripts/desk/sprites.js";
@@ -30,12 +33,66 @@ export function World() {
   const pullout = pulloutId
     ? allObjects(items).find((x) => x.id === pulloutId) || null
     : null;
+  const askOpen = useDesk((s) => s.askOpen);
+
+  // The lasso (HSM-16-09's gesture on pointer metal): press the empty desk,
+  // drag a rope, release — everything inside is the ask's context. A bare
+  // background click (no rope) clears the selection.
+  const [lasso, setLasso] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const lassoRef = useRef<typeof lasso>(null);
+  const worldRef = useRef<HTMLDivElement | null>(null);
+
+  const onLassoDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget || e.button !== 0) return;
+    const next = { x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY };
+    lassoRef.current = next;
+    setLasso(next);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onLassoMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!lassoRef.current) return;
+    const next = { ...lassoRef.current, x1: e.clientX, y1: e.clientY };
+    lassoRef.current = next;
+    setLasso(next);
+  };
+  const onLassoUp = () => {
+    const l = lassoRef.current;
+    lassoRef.current = null;
+    setLasso(null);
+    if (!l) return;
+    const left = Math.min(l.x0, l.x1);
+    const right = Math.max(l.x0, l.x1);
+    const top = Math.min(l.y0, l.y1);
+    const bottom = Math.max(l.y0, l.y1);
+    const { setSelected, clearSelection } = useDesk.getState();
+    if (right - left < 8 && bottom - top < 8) {
+      // A bare tap on the desk: the selection settles.
+      clearSelection();
+      return;
+    }
+    const roped: string[] = [];
+    worldRef.current?.querySelectorAll<HTMLElement>(".desk-obj").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      if (cx >= left && cx <= right && cy >= top && cy <= bottom) {
+        const id = el.dataset.objId;
+        if (id) roped.push(id);
+      }
+    });
+    if (roped.length) setSelected(roped);
+  };
 
   const { surface } = useDesk.getState();
   return (
     <div
+      ref={worldRef}
       className={"desk-world" + (divedZone ? " dived" : "")}
       style={{ "--rows": worldRows(objects.length) } as React.CSSProperties}
+      onPointerDown={onLassoDown}
+      onPointerMove={onLassoMove}
+      onPointerUp={onLassoUp}
+      onPointerCancel={onLassoUp}
     >
       {divedZone && (
         <button type="button" className="desk-chip desk-surface" onClick={surface}>
@@ -65,6 +122,19 @@ export function World() {
         />
       )}
       {pullout && <Pullout key={pullout.id} o={pullout} />}
+      {lasso && (
+        <div
+          className="desk-lasso"
+          style={{
+            left: Math.min(lasso.x0, lasso.x1) - (worldRef.current?.getBoundingClientRect().left || 0),
+            top: Math.min(lasso.y0, lasso.y1) - (worldRef.current?.getBoundingClientRect().top || 0),
+            width: Math.abs(lasso.x1 - lasso.x0),
+            height: Math.abs(lasso.y1 - lasso.y0),
+          }}
+        />
+      )}
+      <AskBar />
+      {askOpen && <AskPanel />}
     </div>
   );
 }
