@@ -81,11 +81,11 @@ target.build_configurations.each do |config|
   s['DEVELOPMENT_TEAM'] = TEAM
   s['CODE_SIGN_IDENTITY'] = 'Apple Development'
   s['SDKROOT'] = 'iphoneos'
-  # NOTE: com.apple.developer.kernel.increased-memory-limit (App/Local.entitlements)
-  # would raise the per-app RAM ceiling, but automatic dev signing can't add it —
-  # the App ID needs the "Increased Memory Limit" capability enabled in the developer
-  # portal first. Until then we run within the default ceiling, so keep the model at
-  # ~4B Q4 on an 8GB iPad. Re-enable CODE_SIGN_ENTITLEMENTS once the capability is on.
+  # The Increased Memory Limit capability is ON the App ID (2026-07-05, registered
+  # by automatic signing over the App Store Connect auth key; verified in the
+  # embedded profile). The entitlement raises the per-app RAM ceiling toward
+  # physical RAM — 7B/8B GGUFs stop being jetsam-killed on the 8GB iPad.
+  s['CODE_SIGN_ENTITLEMENTS'] = File.join(ROOT, 'App', 'Local.entitlements')
 end
 
 project.save
