@@ -9,8 +9,21 @@
 > 🚀 **New agent (general):** [`HANDOVER.md`](./HANDOVER.md) — the build→deploy→show loop,
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
-**Current phase:** [Phase 22 — The graph travels](./phase-22-the-graph-travels/current-phase-status.md)
-— **OPENED 2026-07-04, survey-corrected: 1/4 on open.** The hub half (22-02) was
+**Current phase:** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
+— **RESUMED 2026-07-04, survey-corrected: 4/9 pre-paid on resume.** The Primitive Framework +
+Phases 17/22/23 + the HS-73-02 front-door call delivered its parity + sync spine while it slept
+(16-01/02/03/05 recorded done on a fresh 66-test targeted run; 16-04/08 re-scoped to their
+genuinely-open slices). **HSM-16-09 — the Ask AI atom — LEADS**: lasso a pile of context on the
+desk → speak the ask on top of it → the answer prints from the shelf → keep (a real synced
+`Artifact` with provenance, instantly file-able) or bin. Zero Ask-AI code exists (grep-verified);
+every seam has since shipped (lasso 14-19, the `routableText` grounding grammar 17-04, the
+fresh-resolved-provider one-call draft 17-05, runtime profiles P24, the `EgressScope` chip 21-01,
+the materialize treatment 14-03, the speak-to-fill mic). Build order: 16-09 → 16-08 (generalize:
+save an Ask as a recipe/workflow; model manifests; combine-by-drop) → 16-04's remaining web slice
+(atelier authoring + the atom) → 16-06 cross-surface proof → 16-07 docs. **The owner couch session
+(17-06 + the 18/19/21/22/23 walk riders) stays the standing gate queue.** Prior current phase:
+[Phase 22 — The graph travels](./phase-22-the-graph-travels/current-phase-status.md)
+— **opened 2026-07-04, survey-corrected: 1/4 on open, CLOSED-BUILT 4/4 the same day.** The hub half (22-02) was
 pre-paid by Equilibrium Wave 1 and is recorded done with a fresh 50-test green run;
 the survey also KILLED a false memory (the "web authors a linear graph" Wave-2 claim
 has no code behind it: 22-03 stays genuinely todo) and caught a producer hole the
@@ -72,7 +85,15 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**THE EQUILIBRIUM BUILD IS COMPLETE.** HSM-22-04 closed
+**Last updated:** 2026-07-04 (**PHASE 16 RESUMED, SURVEY-CORRECTED — the next build phase.** With
+the Equilibrium build complete and every open gate waiting on the one owner couch session, the
+delivery framework's next buildable work is the only open build phase: Phase 16. The resume survey
+found 4/9 stories pre-paid (the Primitive Framework's waves, Phase 17's recipe atomicity, Phase 22's
+travelling workflows, Phase 23's round-trip matrix, and the desk-as-front-door call together
+delivered the parity + sync spine) and recorded them done on a fresh 66-test targeted green run.
+The genuinely-open value is the capability layer's felt core, and **HSM-16-09, the Ask AI atom,
+leads** — the desk's gamified essence, composed almost entirely from already-proven seams. Earlier:
+**THE EQUILIBRIUM BUILD IS COMPLETE.** HSM-22-04 closed
 the last build story on real metal: the iPad-authored graph ran ON THE HUB against the
 real .43 Qwythos endpoint, the card wearing Cloud · your desktop with the standup's
 actual decision extracted; the run-born artifact's lineage names the workflow;

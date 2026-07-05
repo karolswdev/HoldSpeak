@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 16
-- **Status:** todo
+- **Status:** done (2026-07-04 resume survey — pre-paid: `holdspeak/web/routes/primitives/` serves directories/kbs/notes/recipes/chains/workflows/profiles CRUD + `routes/sync.py` push/pull; fresh targeted run 66 passed)
 - **Depends on:** HSM-16-02 (the entities + policy).
 - **Unblocks:** HSM-16-05 (wire), HSM-16-04 (the web reads the same store).
 - **Owner:** unassigned

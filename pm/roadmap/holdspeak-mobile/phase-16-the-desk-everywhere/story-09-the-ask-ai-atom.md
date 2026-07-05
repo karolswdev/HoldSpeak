@@ -2,11 +2,35 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 16
-- **Status:** todo — **the highest-value atom; a strong candidate to lead the capability work** (it runs
-  on-device today and needs none of the mesh).
-- **Depends on:** the lasso/selection (HSM-14-19), the on-device/endpoint provider
-  (`InferenceConfigStore` / `generate`), Whisper dictation (Phase 3 / the wake-word stack), the egress
-  badge. [[story-20-the-desk-object-model]] for the kind + grammar.
+- **Status:** todo — **LEADS the phase** (ratified by the 2026-07-04 resume survey: zero Ask-AI code
+  exists anywhere — grep-verified — and every dependency has since shipped; it runs on-device today
+  and needs none of the mesh).
+- **Depends on:** the lasso/selection (HSM-14-19), **runtime profiles** (Phase 24 —
+  `resolveProfile`/`makeProvider(profile:)`, not the old raw `InferenceConfigStore` mode), the
+  speak-to-fill mic (`VoiceCaptureState`, [[feedback_voice_mic_every_input]]), the **`EgressScope`
+  grammar** (21-01 — the chip states where the ask RUNS), the materialize treatment (14-03).
+  [[story-20-the-desk-object-model]] for the kind + grammar.
+
+## Build plan (2026-07-04 resume — every seam already shipped)
+
+The atom is a composition, not a construction. Map each beat to its proven seam:
+
+1. **Context assembly** — the lasso'd primitives' `routableText`, cited per-source, is exactly the
+   17-04 dropped-context grounding block (`CoderAnswer`'s `[CONTEXT]` assembly). Reuse the grammar,
+   don't reinvent it.
+2. **The one model call** — the 17-05 pattern verbatim: one `ILLMProvider.complete` on a FRESH
+   resolved provider (the Mode-A KV rule), profile-resolved per Phase 24 so "where this ask runs" is
+   the user's named profile, key custody intact.
+3. **The print** — the 14-03 materialize treatment; the card slides from the shelf, in-world, no
+   modal ([[feedback_no_modals_in_world]]), wearing its `EgressScope` chip.
+4. **Keep** — persist as a real `Artifact` (`SyncKind.artifact`) with provenance = the context ids +
+   the prompt; it is instantly file-able (zones/KBs) and syncs to the hub + web with no new wire work
+   (the 23-04 matrix already carries artifacts). **Bin** — nothing is saved, honestly.
+5. **Voice** — the speak-to-fill mic on the prompt field; label microcopy only
+   ([[feedback_no_prose_in_ui]]).
+
+Pure flow logic lands host-tested in RuntimeCore (the house pattern); the device walk proves the
+felt moment ([[feedback_verify_on_device_not_seeded]]).
 - **Unblocks:** HSM-16-08 (a saved/chained sequence of Asks *is* a workflow — this is its atom).
 - **Owner:** unassigned
 

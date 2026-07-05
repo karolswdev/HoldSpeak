@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 16
-- **Status:** todo
+- **Status:** done (2026-07-04 resume survey — pre-paid: [`THE_PRIMITIVE_FRAMEWORK.md`](../contracts/THE_PRIMITIVE_FRAMEWORK.md) is this story's deliverable — the canonical primitive table, sync classes, wire shapes, and per-surface parity inventory, authored 2026-06-26 and kept current through wave 4 + the Phase-17 recipe rename)
 - **Depends on:** [[story-20-the-desk-object-model]] (the convention), Phase 10 sync model.
 - **Unblocks:** HSM-16-02 (sync), HSM-16-04 (web), HSM-16-05 (wire).
 - **Owner:** unassigned
