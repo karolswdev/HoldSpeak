@@ -214,10 +214,10 @@ contract, the LLM endpoints) is **reuse**, not new.
 |----|-------|--------|------------|----------|
 | HSM-15-01 | Dictation, into your Mac (first-class flagship mode) | in-progress (**01a desktop delta + 01b iPad SURFACE both BUILT + Simulator-proven**; live LAN trace owner-gated) | [story-01](./story-01-dictation-into-your-mac.md) | `DictateView` (reactive waveform + push-to-talk/hands-free + read-back ticks + pairing-aware reach chip + egress badge); `sendRemoteDictation(target:.focused)`; suite **250/6/0**; `dictate-surface.png` |
 | HSM-15-02 | The Workbench targets the mesh (RUNS ON: Your Mac + real connectors) | **in-progress — the HEART shipped 2026-07-05**: "Your Mac" in the node inspector (`ModelPref.desktop` + `BPRunsOn.desktop` on the wire, older hubs fold to auto — wire-safe), the runner dispatches the pinned step to the paired peer over `/api/ask`, honest `ranOn` + HUD label, IF-UNREACHABLE rides the policy. Proven sim → real local hub. Remaining: connector sinks from a run, the mesh source, workflow-level policy | [story-02](./story-02-workbench-mesh-targets.md) | slice record in the story · 2 screenshots |
-| HSM-15-03 | The mesh queue (desktop jobs + approvals in the QueueHUD) | backlog | [story-03](./story-03-the-mesh-queue.md) | — |
+| HSM-15-03 | The mesh queue (desktop jobs + approvals in the QueueHUD) | **done** (2026-07-05 — hub `GET /api/mesh/inbox` (both queues + pending proposals across origins, payload never rides) + the HUD's mesh lanes (peer-named hub jobs, approve/reject rows, unreachable = first-class blocked); proven LIVE sim → real scratch hub incl. an approve whose receipt reads `decided_by: ipad-companion`; the same commit wired `PresenceStore.startPolling` (the 15-08 finding)) | [story-03](./story-03-the-mesh-queue.md) | [evidence](./evidence-story-03.md) · 3 screenshots |
 | HSM-15-04 | One runner for the mesh (local or dispatched, policy-enforcing) | **done** (2026-07-05 — the runner DISPATCHES per RUNS-ON: injected `MeshDispatch` over `POST /api/ask`, per-step targets, honest `ranOn`, no-peer rides the failure policy; proven Simulator → REAL local hub with prompt receipts; 2 latent finds fixed — HUD jobs never settled (the jobID mismatch) + the target label read the app default) | [story-04](./story-04-one-mesh-runner.md) | [evidence](./evidence-story-04.md) · `screenshots/hsm-15-02-mesh-run.png` |
 | HSM-15-05 | One approval + egress contract (across surfaces) | **done** (2026-07-05, PRE-PAID: the `meeting_id` decoupling = the one-spine owner-typed proposal `origin` (locked by `test_db_actuator_origin.py`); one egress grammar = P21 `EgressScope` + two-surface trust chip; approval parity = Qlippy≡dashboard (P56) + iPad decisions (P19); air-gapped draft+badge = 17-05/16-09. Approve-from-the-HUD stays 15-03's) | [story-05](./story-05-one-approval-egress-contract.md) | [evidence](./evidence-story-05.md) |
-| HSM-15-08 | The Agent Desk — your live agents + the question each is asking | **built + Simulator-proven** (`AgentDeskView`/`AgentDeskCard`; waiting sorts first + pulses, tight question quote, Answer/pin/dismiss; `HS_DEMO_AGENTDESK` seed) — live `companionStatus()` poll + voice-answer are the wiring follow-up (**2026-07-05 survey: `PresenceStore.startPolling` exists but has NO call site — the live wiring is genuinely unwired**) | [story-08](./story-08-the-agent-desk.md) | `apple/build/agentdesk.png`; iPad build green (runner+desk; FailurePolicy unified into RuntimeCore) |
+| HSM-15-08 | The Agent Desk — your live agents + the question each is asking | **built + Simulator-proven** (`AgentDeskView`/`AgentDeskCard`; waiting sorts first + pulses, tight question quote, Answer/pin/dismiss; `HS_DEMO_AGENTDESK` seed) — **the live `companionStatus()` poll is WIRED as of the 15-03 build** (`startPolling` now called at the paired-peer call site in the app root; the survey had found it call-site-less); the device walk beat joins the owner queue | [story-08](./story-08-the-agent-desk.md) | `apple/build/agentdesk.png`; iPad build green (runner+desk; FailurePolicy unified into RuntimeCore) |
 | HSM-15-09 | Proactive agent presence — surface a waiting agent the moment it asks | **built + Simulator-proven** (`PresenceWatcher` pure rising-edge/debounce/quiet-mode, 7 host tests; HUD waiting-lane + the nudge card w/ Answer-by-voice; non-autonomous) — voice delivery reuses the desk composer (LAN proof owner-gated) | [story-09](./story-09-proactive-agent-presence.md) | 83 ProvidersTests green; `presence-hud-lane.png` |
 | HSM-15-10 | The Connect surface ("Your Computer" — discovery-first pairing) | **built end-to-end + Simulator-proven** (desktop advertises `_holdspeak._tcp` + unauth `/api/mesh/info`; iPad `ConnectView` browses via `NWBrowser`, discovered list by name + reach, tap-to-pair w/ token step + manual fallback, `DictatePeerStore.adopt/forget`; `NSBonjourServices` in plist + gen assertion) — real LAN discover+pair is the owner-at-iPad proof | [story-10](./story-10-the-connect-surface.md) | 12 mesh + 2205 desktop · iPad build green · `connect-surface.png` |
 | HSM-15-06 | The Proof — air-gapped value + the launch narrative | backlog | [story-06](./story-06-the-proof-and-narrative.md) | — |
@@ -225,7 +225,29 @@ contract, the LLM endpoints) is **reuse**, not new.
 
 ## Where we are
 
-**2026-07-05 (later) — the mesh dispatch is REAL: a Workbench node pinned to "Your Mac"
+**2026-07-05 (evening) — THE MESH QUEUE IS REAL: the hub's work and the hub's asks ride
+the pill in your hand, and approving there IS approving on the desktop.** 15-03 closed:
+the hub gained its one window (`GET /api/mesh/inbox` — the deferred intel queue + the
+MIR plugin queue in flight, plus every `proposed` actuator proposal across meeting AND
+desk origins via the new global pending-lister; the payload never rides), and the
+QueueHUD gained the mesh lanes: hub jobs origin-labeled with the peer's name, proposals
+as approve/reject rows in the HUD's own vocabulary, the pill wearing "N on <peer>" +
+"N to approve", and an unreachable peer as a FIRST-CLASS state (last-known rows degrade
+to `blocked · peer unreachable · auto-resumes`; never an error spinner). Proven live:
+the Simulator polled a REAL scratch hub, rendered its real jobs + both proposals, and an
+approve from the HUD transitioned the desk-origin row on the hub with
+`decided_by: ipad-companion` through the real guarded executor (no webhook configured →
+an honest `failed`, never a fake "sent"). One wire find died before shipping: a
+successful desk decision would have thrown `malformed` (the shared decision envelope
+requires a meeting id a desk row doesn't have) — the desk decode is now tolerant. The
+same commit **wired `PresenceStore.startPolling`** (the survey's 15-08 finding) at the
+one paired-peer call site. Suites: hub **2486**, Swift **479/9/0**, api-surface at 241
+routes, 3 committed screenshots. Remaining buildable: 15-02's leftover rows (connector
+sinks from a run / mesh source / workflow-level policy) + 15-07 docs; the owner's queue:
+15-06 (the air-gapped Proof) + the cabled-iPad beats (dispatch, inbox, presence, 15-01's
+live trace).
+
+Earlier the same day — **the mesh dispatch is REAL: a Workbench node pinned to "Your Mac"
 runs on your Mac.** The survey's active slice shipped the same day. The node inspector's
 RUNS ON grew "Your Mac" (with the IF-UNREACHABLE row doing exactly what its hints
 promise), `BPRunsOn.desktop` joined the wire (older hubs fold it to auto — same

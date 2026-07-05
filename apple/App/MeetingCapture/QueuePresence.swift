@@ -64,12 +64,27 @@ struct WaitingAgent: Identifiable, Equatable {
     @Published var waitingAgents: [WaitingAgent] = []
     @Published var expanded = false
 
+    // ── The mesh lane (HSM-15-03): the paired desktop's in-flight jobs + the
+    // proposals awaiting YOUR nod, polled from `GET /api/mesh/inbox`. One queue,
+    // every origin — the transparency + approval spine, on the glass in your hand.
+    @Published var meshJobs: [MeshInboxJob] = []
+    @Published var meshProposals: [MeshInboxProposal] = []
+    /// The peer can't be reached — a FIRST-CLASS state: the last-known rows stay,
+    /// degraded to blocked (`auto-resumes`), never an error spinner.
+    @Published var meshUnreachable = false
+    var meshPeerName = "your Mac"
+    private var meshPollTask: Task<Void, Never>?
+    private var meshClient: HTTPDesktopClient?
+
     var working: Int { jobs.filter { $0.status == .working }.count }
+    var meshWorking: Int { meshJobs.filter { $0.status == "running" }.count }
     var queued: Int { jobs.filter { $0.status == .queued }.count }
     var blocked: Int { jobs.filter { $0.status == .blocked }.count }
     var live: Int { working + queued + blocked }
-    /// The HUD is visible whenever there's a job OR an agent waiting on you.
-    var hasContent: Bool { !jobs.isEmpty || !waitingAgents.isEmpty }
+    /// The HUD is visible whenever there's a job, an agent waiting, or mesh content.
+    var hasContent: Bool {
+        !jobs.isEmpty || !waitingAgents.isEmpty || !meshJobs.isEmpty || !meshProposals.isEmpty
+    }
     /// Active jobs first (working → blocked → queued), then recently finished.
     var ordered: [QueuedJob] {
         let rank: [JobStatus: Int] = [.working: 0, .blocked: 1, .queued: 2, .done: 3, .failed: 4]
@@ -82,6 +97,50 @@ struct WaitingAgent: Identifiable, Equatable {
         if waitingAgents != agents { waitingAgents = agents }
     }
 
+    // MARK: mesh polling + decisions (HSM-15-03)
+
+    /// Begin polling the paired desktop's inbox. Off in Simulator demos (which seed
+    /// directly). A poll failure flips `meshUnreachable`, never throws to the UI.
+    func startMeshPolling(_ client: HTTPDesktopClient, peerName: String,
+                          every seconds: TimeInterval = 5) {
+        meshClient = client
+        meshPeerName = peerName
+        meshPollTask?.cancel()
+        meshPollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.pollMesh()
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            }
+        }
+    }
+    func stopMeshPolling() { meshPollTask?.cancel(); meshPollTask = nil }
+
+    private func pollMesh() async {
+        guard let client = meshClient else { return }
+        if let inbox = try? await client.meshInbox() {
+            meshJobs = inbox.jobs ?? []
+            meshProposals = inbox.proposals ?? []
+            meshUnreachable = false
+        } else {
+            meshUnreachable = true
+        }
+    }
+
+    /// Decide a pending proposal FROM THE HUD — one act, the same decision routes
+    /// the desktop uses (origin picks the route; the audit names this surface).
+    /// Re-polls for fresh truth so the row settles honestly.
+    func decideMesh(_ proposal: MeshInboxProposal, approved: Bool) async {
+        guard let client = meshClient else { return }
+        if proposal.origin == "desk" {
+            _ = try? await client.decideDeskProposal(
+                target: proposal.target ?? "", proposalId: proposal.id, approved: approved)
+        } else if let meetingId = proposal.meetingId {
+            _ = try? await client.decideProposal(
+                meetingId: meetingId, proposalId: proposal.id, approved: approved)
+        }
+        await pollMesh()
+    }
+
     func seedDemo() {
         jobs = [
             QueuedJob("Standup digest", "Risks → questions", target: "Endpoint", status: .working, progress: 0.62),
@@ -89,6 +148,24 @@ struct WaitingAgent: Identifiable, Equatable {
             QueuedJob("Aftercare", "Action items", target: "Endpoint", status: .blocked, note: "endpoint down · retry 3/4 · auto-resumes"),
             QueuedJob("Standup digest", "Summary", target: "On-device", status: .done),
         ]
+    }
+
+    /// The mesh lane for a screenshot run: a grinding hub digest + a proposal
+    /// awaiting the nod (the `HS_DEMO_MESHQ` affordance drives this).
+    func seedMeshDemo(unreachable: Bool = false) {
+        meshPeerName = "Karol's Mac"
+        meshJobs = [
+            MeshInboxJob(id: "intelq:m1", kind: "intel", label: "Q3 kickoff digest",
+                         status: "running", meetingId: "m1", attempts: 1),
+            MeshInboxJob(id: "pj1", kind: "plugin", label: "risk_register",
+                         status: "queued", meetingId: "m1", attempts: 0),
+        ]
+        meshProposals = [
+            MeshInboxProposal(id: "prop-d", origin: "desk", target: "slack",
+                              action: "send_message",
+                              preview: "Digest → #eng-updates", status: "proposed"),
+        ]
+        meshUnreachable = unreachable
     }
 }
 
@@ -110,6 +187,8 @@ struct QueueHUD: View {
         .animation(.spring(response: 0.4, dampingFraction: 0.84), value: store.expanded)
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: store.jobs.count)
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: store.waitingAgents.count)
+        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: store.meshProposals.count)
+        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: store.meshJobs.count)
         .onAppear { pulse = true }
     }
 
@@ -128,6 +207,14 @@ struct QueueHUD: View {
                     HStack(spacing: 4) {
                         Image(systemName: "hand.raised.fill").font(.system(size: 9, weight: .black))
                         Text(agentSummary).font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundStyle(Sig.warn)
+                    .padding(.horizontal, 7).padding(.vertical, 3).background(Sig.warn.opacity(0.16), in: Capsule())
+                }
+                if !store.meshProposals.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.seal.fill").font(.system(size: 9, weight: .black))
+                        Text("\(store.meshProposals.count) to approve").font(.system(size: 11, weight: .bold))
                     }
                     .foregroundStyle(Sig.warn)
                     .padding(.horizontal, 7).padding(.vertical, 3).background(Sig.warn.opacity(0.16), in: Capsule())
@@ -162,10 +249,19 @@ struct QueueHUD: View {
 
             VStack(spacing: 8) {
                 ForEach(store.waitingAgents) { agent in agentLaneRow(agent) }
+                ForEach(store.meshProposals) { proposal in proposalRow(proposal) }
                 ForEach(store.ordered) { job in jobRow(job) }
+                ForEach(store.meshJobs) { job in meshJobRow(job) }
             }
             .padding(.horizontal, 12).padding(.bottom, 12)
 
+            if store.meshUnreachable {
+                HStack(spacing: 7) {
+                    Image(systemName: "desktopcomputer.trianglebadge.exclamationmark").font(.system(size: 11, weight: .bold))
+                    Text("\(store.meshPeerName) unreachable · auto-resumes").font(.system(size: 11, weight: .medium))
+                }
+                .foregroundStyle(Sig.warn).padding(.horizontal, 16).padding(.bottom, store.blocked > 0 ? 4 : 14)
+            }
             if store.blocked > 0 {
                 HStack(spacing: 7) {
                     Image(systemName: "clock.arrow.circlepath").font(.system(size: 11, weight: .bold))
@@ -257,15 +353,99 @@ struct QueueHUD: View {
         .buttonStyle(PressableCard())
     }
 
+    // A pending-approval row (HSM-15-03): the proposal's preview + its target,
+    // and the two decision buttons — approving here IS approving on the desktop
+    // (one act, the same route, the audit names this surface). Blocked-lane
+    // vocabulary: it is work waiting on YOU.
+    private func proposalRow(_ proposal: MeshInboxProposal) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(Sig.warn.opacity(0.16)).frame(width: 36, height: 36)
+                Image(systemName: "checkmark.seal.fill").font(.system(size: 14, weight: .black)).foregroundStyle(Sig.warn)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(proposal.preview ?? proposal.action ?? "Proposal")
+                    .font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
+                HStack(spacing: 5) {
+                    Image(systemName: "desktopcomputer").font(.system(size: 9, weight: .bold))
+                    Text(store.meshPeerName).font(.system(size: 11, weight: .semibold))
+                    Text("·").foregroundStyle(Sig.faint)
+                    Text(proposal.target ?? "").font(.system(size: 11, weight: .semibold))
+                }.foregroundStyle(Sig.faint).lineLimit(1)
+            }
+            Spacer(minLength: 4)
+            Button {
+                tactile()
+                Task { await store.decideMesh(proposal, approved: false) }
+            } label: {
+                Text("Reject").font(.system(size: 11, weight: .heavy))
+                    .foregroundStyle(Sig.muted)
+                    .padding(.horizontal, 11).padding(.vertical, 6)
+                    .background(Sig.s3, in: Capsule())
+            }.buttonStyle(PressableCard())
+            Button {
+                tactile()
+                Task { await store.decideMesh(proposal, approved: true) }
+            } label: {
+                Text("Approve").font(.system(size: 11, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 11).padding(.vertical, 6)
+                    .background(Sig.accentGradient, in: Capsule())
+            }.buttonStyle(PressableCard())
+        }
+        .padding(11).background(Sig.s2, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Sig.warn.opacity(0.25), lineWidth: 1))
+    }
+
+    // A hub job row (HSM-15-03): the same job vocabulary, the origin naming the
+    // peer. When the peer is unreachable the row degrades to blocked-style
+    // (`auto-resumes`) — a first-class state, never an error spinner.
+    private func meshJobRow(_ job: MeshInboxJob) -> some View {
+        let status: JobStatus = store.meshUnreachable ? .blocked
+            : (job.status == "running" ? .working : .queued)
+        return HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(status.color.opacity(0.16)).frame(width: 36, height: 36)
+                Image(systemName: status.glyph).font(.system(size: 14, weight: .bold)).foregroundStyle(status.color)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(job.label ?? job.id).font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
+                HStack(spacing: 5) {
+                    Text(job.kind == "plugin" ? "Plugin run" : "Meeting digest")
+                        .font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint)
+                    Text("·").foregroundStyle(Sig.faint)
+                    Image(systemName: "desktopcomputer").font(.system(size: 9, weight: .bold))
+                    Text(store.meshPeerName).font(.system(size: 11, weight: .semibold))
+                }.foregroundStyle(Sig.faint).lineLimit(1)
+                if store.meshUnreachable {
+                    Text("peer unreachable · auto-resumes")
+                        .font(.system(size: 10.5, weight: .semibold)).foregroundStyle(status.color)
+                        .lineLimit(1).padding(.top, 1)
+                }
+            }
+            Spacer(minLength: 4)
+            Text(status.label).font(.system(size: 10, weight: .heavy)).tracking(0.4)
+                .foregroundStyle(status.color)
+                .padding(.horizontal, 9).padding(.vertical, 5)
+                .background(status.color.opacity(0.14), in: Capsule())
+        }
+        .padding(11).background(Sig.s2, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+    }
+
     private func agentName(_ a: String) -> String { a.lowercased() == "codex" ? "Codex" : "Claude" }
 
-    private var beacon: JobStatus { store.blocked > 0 || !store.waitingAgents.isEmpty ? .blocked : (store.working > 0 ? .working : .queued) }
+    private var beacon: JobStatus {
+        store.blocked > 0 || !store.waitingAgents.isEmpty || !store.meshProposals.isEmpty || store.meshUnreachable
+            ? .blocked : (store.working > 0 || store.meshWorking > 0 ? .working : .queued)
+    }
     private var summary: String {
         var parts: [String] = []
         if store.working > 0 { parts.append("\(store.working) working") }
         if store.queued > 0 { parts.append("\(store.queued) queued") }
+        if !store.meshJobs.isEmpty { parts.append("\(store.meshJobs.count) on \(store.meshPeerName)") }
         if parts.isEmpty && store.jobs.isEmpty && !store.waitingAgents.isEmpty { return "Agent desk" }
-        if parts.isEmpty { parts.append("idle") }
+        if parts.isEmpty { parts.append(store.meshProposals.isEmpty ? "idle" : "needs you") }
         return parts.joined(separator: " · ")
     }
     private var agentSummary: String {

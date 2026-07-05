@@ -129,7 +129,14 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-05 (**THE MESH DISPATCH IS REAL — a Workbench node pinned to
+**Last updated:** 2026-07-05 (**THE MESH QUEUE IS REAL — the hub's work + asks ride the
+pill in your hand; approving there IS approving on the desktop.** HSM-15-03 CLOSED: hub
+`GET /api/mesh/inbox` (both queues in flight + pending proposals across meeting/desk
+origins, payload never rides) + the QueueHUD's mesh lanes (peer-named hub jobs,
+approve/reject rows, unreachable = first-class blocked). Proven live sim → real scratch
+hub; the approve receipt reads `decided_by: ipad-companion` through the real guarded
+executor. Also wired `PresenceStore.startPolling` (the survey's 15-08 finding). Hub 2486,
+Swift 479/9/0. Earlier: **THE MESH DISPATCH IS REAL — a Workbench node pinned to
 "Your Mac" runs on your Mac.** HSM-15-04 CLOSED (the runner dispatches per RUNS-ON:
 injected `MeshDispatch` over `POST /api/ask`, per-step targets, honest `ranOn`, no-peer
 rides the IF-UNREACHABLE policy) and 15-02's heart shipped (`ModelPref.desktop` +

@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 240 (plus static mounts). iOS-consumed: 52. Web-consumed: 174.
+Routes: 241 (plus static mounts). iOS-consumed: 53. Web-consumed: 174.
 
 ## device_audio_ws
 
@@ -280,6 +280,7 @@ Routes: 240 (plus static mounts). iOS-consumed: 52. Web-consumed: 174.
 
 | Method | Path | Consumers |
 |---|---|---|
+| GET | `/api/mesh/inbox` | ios |
 | GET | `/api/mesh/info` | server only |
 
 ## web.routes.missioncontrol
