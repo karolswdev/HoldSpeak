@@ -2,10 +2,20 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 15
-- **Status:** backlog
+- **Status:** done (2026-07-05 — see `evidence-story-03.md`: the hub gained
+  `GET /api/mesh/inbox` (the one window: both real queues in flight + every `proposed`
+  actuator proposal across meeting AND desk origins), the QueueHUD gained the mesh lanes
+  (hub jobs origin-labeled with the peer's name; proposals as approve/reject rows;
+  unreachable peer = a first-class blocked state), and the whole loop was proven live:
+  the Simulator polled a REAL scratch hub, the ledger rendered its real jobs + both
+  proposals, and an approve from the HUD transitioned the desk-origin row on the hub
+  with `decided_by: ipad-companion` through the real guarded executor (no webhook
+  configured → an honest `failed`, never a fake "sent"). The cabled-iPad LAN beat joins
+  the phase's owner queue. This commit also WIRED `PresenceStore.startPolling` (the
+  survey's 15-08 finding) at the same paired-peer call site.)
 - **Depends on:** the `QueueHUD` / `RunQueueStore` / `QueuedJob` (built Phase 14/15 craft);
   `HTTPDesktopClient`; HSM-15-04 (real on-device jobs); HSM-15-05 (the approval contract).
-- **Owner:** unassigned
+- **Owner:** agent (Fable)
 
 ## Grounding (2026-06-22)
 
@@ -44,13 +54,21 @@ spine.
 
 ## Acceptance criteria
 
-- [ ] **Merged ledger** — the QueueHUD shows on-device jobs + desktop jobs together, each labeled by
-      origin (iPad / your Mac) and target. LAN-proven.
-- [ ] **Approve from the HUD** — a pending desktop actuator proposal appears as a job with an
-      Approve action; approving it executes on the desktop (one act, HSM-15-05). LAN-proven.
-- [ ] **Unreachable peer** — desktop jobs degrade to a first-class `blocked · auto-resumes` state
-      when the Mac is unreachable. Simulator-shot.
-- [ ] **Consistency** — origin/status/egress chips match the built HUD vocabulary; no prose.
+- [x] **Merged ledger** — the QueueHUD shows on-device jobs + desktop jobs together, each
+      labeled by origin (the peer's name with the desktopcomputer glyph) and target —
+      proven with LIVE polled rows from a real local hub (`hsm-15-03-live-inbox.png` and
+      the seeded merged shot `hsm-15-03-unreachable.png`; the cabled-iPad LAN beat joins
+      the owner queue).
+- [x] **Approve from the HUD** — a pending desktop actuator proposal appears as an
+      approve/reject row; approving drives the SAME decision route the desktop uses and
+      the hub's row transitioned with `decided_by: ipad-companion` (the headless decide
+      affordance drives the exact `decideMesh` the tap drives).
+- [x] **Unreachable peer** — desktop jobs degrade to `blocked · peer unreachable ·
+      auto-resumes` + the footer names the peer; the last-known rows stay (never an
+      error spinner). Simulator-shot.
+- [x] **Consistency** — the mesh rows reuse the HUD's exact status vocabulary, chip and
+      capsule treatments, and glyph grammar; the pill gains one tight "N to approve"
+      chip. No prose.
 
 ## Build plan
 

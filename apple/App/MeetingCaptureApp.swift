@@ -113,6 +113,46 @@ struct MeetingCaptureApp: App {
                     // default keeps the pill (the always-on ambient lane badge) under the nudge.
                     RunQueueStore.shared.expanded = env["HS_DEMO_PRESENCE_OPEN"] == "1"
                 }
+                // HSM-15-03 — seed the mesh lane (a hub digest grinding + a proposal
+                // awaiting the nod); the UNREACHABLE variant shows the first-class
+                // degraded state. Seeded demos never start the live poll.
+                if env["HS_DEMO_MESHQ"] == "1" {
+                    RunQueueStore.shared.seedDemo()
+                    RunQueueStore.shared.seedMeshDemo(
+                        unreachable: env["HS_DEMO_MESHQ_UNREACHABLE"] == "1")
+                    RunQueueStore.shared.expanded = true
+                }
+                #endif
+                // HSM-15-03 + HSM-15-08 — the mesh lanes go LIVE when a desktop is
+                // paired: the inbox poll (hub jobs + approvals into the Queue HUD)
+                // and the presence poll (waiting agents). This is the wiring the
+                // Phase-15 survey found missing (`startPolling` had no call site).
+                #if targetEnvironment(simulator)
+                let liveMesh = env["HS_DEMO_MESHQ"] != "1" && env["HS_DEMO_QUEUE"] != "1"
+                    && env["HS_DEMO_PRESENCE"] != "1"
+                #else
+                let liveMesh = true
+                #endif
+                if liveMesh, let client = DictatePeerStore.shared.client() {
+                    RunQueueStore.shared.startMeshPolling(
+                        client, peerName: DictatePeerStore.shared.displayName)
+                    PresenceStore.shared.startPolling(client)
+                }
+                #if targetEnvironment(simulator)
+                // HSM-15-03 live-proof affordances: open the ledger over a LIVE poll,
+                // and decide the first pending proposal through the SAME `decideMesh`
+                // the Approve/Reject taps drive (headless CI has no finger).
+                if env["HS_DEMO_MESHQ_OPEN"] == "1" { RunQueueStore.shared.expanded = true }
+                if let verdict = env["HS_DEMO_MESHQ_DECIDE"], verdict == "approve" || verdict == "reject" {
+                    Task { @MainActor in
+                        for _ in 0..<40 where RunQueueStore.shared.meshProposals.isEmpty {
+                            try? await Task.sleep(nanoseconds: 250_000_000)
+                        }
+                        if let first = RunQueueStore.shared.meshProposals.first {
+                            await RunQueueStore.shared.decideMesh(first, approved: verdict == "approve")
+                        }
+                    }
+                }
                 #endif
             }
         }

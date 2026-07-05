@@ -156,6 +156,26 @@ class ActuatorRepository(BaseRepository):
             ).fetchone()
         return self._row_to_proposal(row) if row is not None else None
 
+    def list_pending_proposals(self, *, limit: int = 50) -> list[ActuatorProposalRecord]:
+        """Every proposal awaiting the human nod, ACROSS meetings + desk origins.
+
+        The mesh inbox's approval lane (HSM-15-03): `list_proposals` is
+        meeting-scoped, so device-initiated (`origin='desk'`, `meeting_id`
+        NULL) rows were reachable only by id. One query, newest first.
+        """
+        bounded = max(1, min(int(limit), 200))
+        with self._connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT * FROM actuator_proposals
+                WHERE status = 'proposed'
+                ORDER BY created_at DESC, id DESC
+                LIMIT ?
+                """,
+                (bounded,),
+            ).fetchall()
+        return [self._row_to_proposal(row) for row in rows]
+
     def list_proposals(
         self, meeting_id: str, *, status: Optional[str] = None
     ) -> list[ActuatorProposalRecord]:

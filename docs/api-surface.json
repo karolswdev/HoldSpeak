@@ -1585,6 +1585,16 @@
       ]
     },
     {
+      "path": "/api/mesh/inbox",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.mesh",
+      "consumers": [
+        "ios"
+      ]
+    },
+    {
       "path": "/api/mesh/info",
       "methods": [
         "GET"
