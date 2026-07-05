@@ -38,19 +38,29 @@ struct SuggestedModel: Identifiable {
 
 enum SuggestedModels {
     // Ordered small → large. Each fileName was verified against the repo's file list.
+    // Qwen3.5 + Gemma 4 need the upgraded engine (scripts/upgrade-llama-xcframework.sh,
+    // shipped from build 2) — the 2025-12 llama.cpp lacks their archs and cannot load them.
     static let all: [SuggestedModel] = [
         SuggestedModel(name: "Llama 3.2 3B Instruct",
                        detail: "~2.0 GB · fast, great on iPhone",
                        repo: "bartowski/Llama-3.2-3B-Instruct-GGUF",
                        fileName: "Llama-3.2-3B-Instruct-Q4_K_M.gguf"),
         SuggestedModel(name: "Qwen3 4B Instruct 2507",
-                       detail: "~2.5 GB · recommended",
+                       detail: "~2.5 GB · proven on-device",
                        repo: "unsloth/Qwen3-4B-Instruct-2507-GGUF",
                        fileName: "Qwen3-4B-Instruct-2507-Q4_K_M.gguf"),
+        SuggestedModel(name: "Qwen3.5 4B",
+                       detail: "~2.9 GB · recommended · 256K context",
+                       repo: "unsloth/Qwen3.5-4B-GGUF",
+                       fileName: "Qwen3.5-4B-Q5_K_M.gguf"),
         SuggestedModel(name: "Gemma 3n E4B",
                        detail: "~4.2 GB · Google, built for on-device",
                        repo: "unsloth/gemma-3n-E4B-it-GGUF",
                        fileName: "gemma-3n-E4B-it-Q4_K_M.gguf"),
+        SuggestedModel(name: "Gemma 4 E4B",
+                       detail: "~4.3 GB · Google's newest mobile-first",
+                       repo: "unsloth/gemma-4-E4B-it-GGUF",
+                       fileName: "gemma-4-E4B-it-Q4_K_M.gguf"),
         SuggestedModel(name: "Llama 3.1 8B Instruct",
                        detail: "~4.9 GB · best on iPad",
                        repo: "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
