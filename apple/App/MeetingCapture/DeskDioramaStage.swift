@@ -2342,8 +2342,9 @@ struct DioRouteSheet: View {
     @State private var profileId = InferenceConfigStore.shared.activeProfileId   // which model runs this
     private var resolvedProfile: RuntimeProfile { InferenceConfigStore.shared.resolveProfile(override: profileId) }
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onCancel() }
+        // In-world, off the scrim (the 17-08 atelier posture) — the desk stays visible
+        // while you compose the ask; tap-away cancels.
+        DioAtelierPanel(maxW: 460, dismiss: onCancel) {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 9) {
                     DeskSprite(name: "cartridge", size: 34)
@@ -2397,14 +2398,8 @@ struct DioRouteSheet: View {
                         .background(Capsule().strokeBorder(DioPal.violet.opacity(0.5), lineWidth: 1))
                 }.buttonStyle(.plain)
             }
-            .padding(20).frame(maxWidth: 460)
-            .background(RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
-                .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1))
-                .shadow(color: .black.opacity(0.6), radius: 30, y: 16))
-            .padding(.horizontal, 18)
+            .padding(20)
         }
-        .transition(.opacity)
     }
 }
 
@@ -2436,8 +2431,12 @@ struct DioRoutingTheater: View {
 }
 
 // THE PRINTED CARD — the new primitive that just came out of the core. Keep it (lands on the desk) or bin it.
+// It PRINTS: born at the AI core it ran through (`birth` = the core's offset from center) and
+// springing into reading position over a soft backdrop — the desk stays visible (no scrim modal).
 struct DioPrintedCard: View {
-    let rec: OutputRecord; let egress: EgressScope; let onKeep: () -> Void; let onBin: () -> Void
+    let rec: OutputRecord; let egress: EgressScope
+    var birth: CGSize = .zero
+    let onKeep: () -> Void; let onBin: () -> Void
     @State private var shown = false
     // honest provenance: a hub run reads "fresh from your desktop", anything else "from the AI core".
     private var freshLine: String {
@@ -2446,7 +2445,7 @@ struct DioPrintedCard: View {
     }
     var body: some View {
         ZStack {
-            Color.black.opacity(0.7).ignoresSafeArea().onTapGesture { onBin() }
+            Color.black.opacity(0.28).ignoresSafeArea().onTapGesture { onBin() }
             VStack(spacing: 0) {
                 HStack(spacing: 11) {
                     DeskSprite(name: "note", size: 38)
@@ -2476,9 +2475,13 @@ struct DioPrintedCard: View {
                 .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
                 .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(DioPal.accent.opacity(0.4), lineWidth: 1))
                 .shadow(color: .black.opacity(0.6), radius: 30, y: 16))
-            .padding(.horizontal, 18).scaleEffect(shown ? 1 : 0.85).opacity(shown ? 1 : 0)
+            .padding(.horizontal, 18)
+            .scaleEffect(shown ? 1 : 0.22)
+            .rotationEffect(.degrees(shown ? 0 : 2.5))
+            .offset(shown ? .zero : birth)
+            .opacity(shown ? 1 : 0)
         }
-        .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { shown = true } }
+        .onAppear { withAnimation(.spring(response: 0.55, dampingFraction: 0.72)) { shown = true } }
     }
 }
 
@@ -2489,6 +2492,7 @@ struct DioPrintedCard: View {
 struct DioLineageRow: View {
     let provenance: RunProvenance
     private var viaIsChain: Bool { provenance.viaKind == "chain" }
+    private var viaIsAsk: Bool { provenance.viaKind == "ask" }
     var body: some View {
         HStack(spacing: 7) {
             // FROM — the input card.
@@ -2503,9 +2507,9 @@ struct DioLineageRow: View {
             Image(systemName: "arrow.right").font(.system(size: 9, weight: .black)).foregroundStyle(DioPal.muted.opacity(0.8))
             // VIA — the recipe/chain that produced it.
             HStack(spacing: 5) {
-                Image(systemName: viaIsChain ? "arrow.triangle.branch" : "sparkles")
+                Image(systemName: viaIsChain ? "arrow.triangle.branch" : (viaIsAsk ? "wand.and.stars" : "sparkles"))
                     .font(.system(size: 9, weight: .bold)).foregroundStyle(DioPal.mint)
-                Text(provenance.viaName.isEmpty ? (viaIsChain ? "a crew" : "an agent") : provenance.viaName)
+                Text(provenance.viaName.isEmpty ? (viaIsChain ? "a crew" : (viaIsAsk ? "an ask" : "an agent")) : provenance.viaName)
                     .font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.mint).lineLimit(1)
             }
             .padding(.horizontal, 9).frame(height: 24)
@@ -2892,6 +2896,8 @@ struct DioStage: View {
     @State private var selectedSet: Set<String> = []
     @State private var bundleTitle = ""
     @State private var bundleText = ""
+    // the Ask's full lineage — every lasso'd card (id + title), carried onto the kept Artifact
+    @State private var bundleContexts: [(id: String, title: String)] = []
     // workflows: saved Asks as reusable desk tools (drop a primitive → runs the saved prompt)
     @AppStorage("hs.diorama.workflows") private var workflowsJSON = ""
     @State private var workflows: [WorkflowRecord] = []
@@ -2909,6 +2915,8 @@ struct DioStage: View {
     @State private var routeLensRun = ""
     @State private var showRouteSheet = false
     @State private var routing = false
+    // whether the CURRENT run's resolved profile is on-device (drives the theater's honest line)
+    @State private var runningLocal = true
     @State private var routeFrom: CGPoint = .zero
     @State private var routeTo: CGPoint = .zero
     @State private var printed: OutputRecord? = nil
@@ -3543,10 +3551,13 @@ struct DioStage: View {
                 }
                 if routing {
                     DioRoutingTheater(from: routeFrom, to: routeTo, sourceTitle: routeSourceTitle(),
-                                      lens: routeLensRun, local: InferenceConfigStore.shared.isLocal, tint: DioPal.accent).zIndex(125)
+                                      lens: routeLensRun, local: runningLocal, tint: DioPal.accent).zIndex(125)
                 }
                 if let rec = printed {
-                    DioPrintedCard(rec: rec, egress: printedEgress, onKeep: { keepPrinted() }, onBin: { binPrinted() }).zIndex(130)
+                    // The card PRINTS from the AI core it just ran through — in-world, not a scrim modal.
+                    DioPrintedCard(rec: rec, egress: printedEgress,
+                                   birth: CGSize(width: routeTo.x - w / 2, height: routeTo.y - h / 2),
+                                   onKeep: { keepPrinted() }, onBin: { binPrinted() }).zIndex(130)
                 }
                 // WHERE IT RUNS — the run-target picker for a recipe/chain route (on-device vs your desktop).
                 if let run = pendingHubRun {
@@ -3638,6 +3649,49 @@ struct DioStage: View {
                                // sits loose on the desk instead of a meeting's drawer.
                                OutputRecord(id: "runNew", title: "Scout: the mesh risks", body: "Top risk: the approval contract drifts between surfaces. Lock it with the parity guard before the air-gapped proof.", source: "your ask", lens: "Agent · your desktop", path: "")]
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds = ["m:demoNew", "out:delivNew", "out:runNew"]; flash = 0.5 }; withAnimation(.easeOut(duration: 0.9)) { flash = 0 } }
+                }
+                // THE ASK-AI ATOM demos (HSM-16-09) — the same states the lasso drives.
+                // HS_DESK_ASK=selected → three lasso'd cards + the bundle bar.
+                // HS_DESK_ASK=compose  → the Ask panel open on that bundle (off the scrim).
+                // HS_DESK_ASK=printed  → a kept-or-bin printed Ask wearing its FULL lineage
+                //                        (every context card + the prompt) and the local badge.
+                if let ask = ProcessInfo.processInfo.environment["HS_DESK_ASK"] {
+                    let m = Meeting(id: "askM", startedAt: Date(), title: "Q3 kickoff",
+                                    segments: [Segment(text: "The big bet is shipping the desk to the web; Karol owns mesh sync.", speaker: "Speaker 1", startTime: 0, endTime: 4)])
+                    model.meetings = [m] + model.meetings
+                    notes = [NoteRecord(id: "askN", title: "Mesh sync owner", body: "Karol owns the mesh-sync approval contract.", path: "")]
+                    outputs = [OutputRecord(id: "askO", title: "Q3 summary", body: "Ship the desk to the web; air-gapped proof due Friday.", source: "Q3 kickoff", lens: "Summary", path: "")]
+                    if ask == "selected" || ask == "compose" {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            withAnimation { selectedSet = ["m:askM", "note:askN", "out:askO"] }
+                        }
+                    }
+                    if ask == "compose" {
+                        // the askBundle tail minus geometry (the arc endpoints are cosmetic here)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            let picked = contentMembers().filter { selectedSet.contains($0.id) }
+                            bundleText = picked.map { "## \($0.title)\n\($0.routableText)" }.joined(separator: "\n\n")
+                            bundleTitle = "\(picked.count) items"
+                            bundleContexts = picked.map { ($0.id, $0.title) }
+                            routeSourceId = "__bundle__"
+                            withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showRouteSheet = true }
+                        }
+                    }
+                    if ask == "printed" {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                            printedEgress = .local
+                            withAnimation(.spring(response: 0.55, dampingFraction: 0.72)) {
+                                printed = OutputRecord(id: "askPrinted", title: "Distill",
+                                    body: "One decision is common to all three: the desk ships to the web this quarter, and Karol owns the mesh-sync approval contract that unblocks it. The open risk every card names is the air-gapped proof due Friday.",
+                                    source: "3 items", lens: "Distill", path: "",
+                                    provenance: RunProvenance(sourceCardId: "", sourceCardTitle: "3 items",
+                                                              viaId: "", viaName: "Distill", viaKind: "ask",
+                                                              contextIds: ["m:askM", "note:askN", "out:askO"],
+                                                              contextTitles: ["Q3 kickoff", "Mesh sync owner", "Q3 summary"],
+                                                              prompt: "what decisions are common across these"))
+                            }
+                        }
+                    }
                 }
                 // IN-WORLD editing + pairing demos (layout checks for the device punch-list).
                 // HS_DESK_NOTE=1 → a fresh note, edited in place on the desk (no modal).
@@ -4532,6 +4586,7 @@ struct DioStage: View {
         }
         bundleText = picked.map { "## \($0.element.title)\n\($0.element.routableText)" }.joined(separator: "\n\n")
         bundleTitle = "\(picked.count) items"
+        bundleContexts = picked.map { ($0.element.id, $0.element.title) }
         let centers = picked.map { pos($0.element.id, looseHome($0.offset, cm.count, w, h), w, h) }
         routeFrom = CGPoint(x: centers.map(\.x).reduce(0, +) / CGFloat(centers.count),
                             y: centers.map(\.y).reduce(0, +) / CGFloat(centers.count))
@@ -4806,13 +4861,23 @@ struct DioStage: View {
     private func runRoute(lens: String, prompt: String, profileId: String? = nil) {
         withAnimation { showRouteSheet = false }
         let material: String, srcTitle: String
+        let contexts: [(id: String, title: String)]
         if routeSourceId == "__bundle__" {
             material = String(bundleText.prefix(6000)); srcTitle = bundleTitle
+            contexts = bundleContexts
         } else {
             guard let src = members().first(where: { $0.id == routeSourceId }) else { return }
             material = String(src.routableText.prefix(6000)); srcTitle = src.title
+            contexts = [(src.id, src.title)]
         }
-        runAssembled(lens: lens, source: srcTitle, fullPrompt: prompt + "\n\nMaterial:\n" + material, profileId: profileId)
+        // The Ask atom's lineage (HSM-16-09): the exact cards read + the instruction on
+        // top of them ride the kept Artifact's provenance — keep is never a mystery.
+        let prov = RunProvenance(sourceCardId: contexts.count == 1 ? contexts[0].id : "",
+                                 sourceCardTitle: srcTitle, viaId: "", viaName: lens, viaKind: "ask",
+                                 contextIds: contexts.map(\.id), contextTitles: contexts.map(\.title),
+                                 prompt: prompt)
+        runAssembled(lens: lens, source: srcTitle, fullPrompt: prompt + "\n\nMaterial:\n" + material,
+                     provenance: prov, profileId: profileId)
     }
 
     // the shared inference tail: theater → callLLM → printed card (keep/bin). Used by routes and recipes.
@@ -4821,6 +4886,11 @@ struct DioStage: View {
     private func runAssembled(lens: String, source: String, fullPrompt: String, provenance: RunProvenance? = nil, profileId: String? = nil) {
         routeLensRun = lens
         let zpath = pathKey
+        // Resolve the profile THIS run actually uses (per-run override, else the active
+        // default) — the theater + the printed card's badge state where it truly ran.
+        // The old global `isLocal` read lied whenever an override differed (21-01 grammar).
+        let prof = InferenceConfigStore.shared.resolveProfile(recipeProfileId: profileId)
+        runningLocal = prof.isLocal
         haptic(.heavy)
         withAnimation { routing = true }
         Task { @MainActor in
@@ -4835,7 +4905,7 @@ struct DioStage: View {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     printed = OutputRecord(id: UUID().uuidString, title: lens, body: clean.isEmpty ? "(the model returned nothing)" : clean,
                                            source: source, lens: lens, path: zpath, provenance: provenance)
-                    printedEgress = InferenceConfigStore.shared.isLocal ? .local : .cloud("endpoint")
+                    printedEgress = prof.isLocal ? .local : .cloud(prof.egressHost ?? "endpoint")
                 }
                 selectedSet = []
             case .failure(let e):

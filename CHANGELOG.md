@@ -11,7 +11,19 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+- **The Ask AI atom carries its full lineage (iPad).** A kept Ask — lasso
+  cards on the desk, speak or type an instruction, keep the printed answer —
+  now persists as an artifact whose provenance names every card it read and
+  the exact prompt, on the synced wire the web and hub already read.
+
+### Fixed
+- The iPad's printed run card and routing theater stated where the run went
+  from the app-wide default, not the profile the run actually used; both now
+  resolve the per-run profile, and a cloud run names its real endpoint host.
+- The Ask composer and the printed card no longer black out the desk: the
+  composer joins the in-world panel posture, and the result card prints from
+  the AI core it ran through.
 
 ## [0.4.0] - 2026-07-04
 

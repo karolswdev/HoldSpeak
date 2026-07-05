@@ -63,6 +63,41 @@ final class DeskRecordsTests: XCTestCase {
         XCTAssertTrue(back.contract.isRunBorn)
     }
 
+    func testAskProvenanceRoundTrip() throws {
+        // HSM-16-09: a kept Ask carries its FULL lineage — the exact cards it read + the
+        // instruction spoken on top of them — through the structured wire and back.
+        let prov = RunProvenance(sourceCardId: "", sourceCardTitle: "3 items",
+                                 viaId: "", viaName: "Distill", viaKind: "ask",
+                                 contextIds: ["m1", "n2", "o3"],
+                                 contextTitles: ["Q3 kickoff", "Pricing note", "Risks"],
+                                 prompt: "what decisions are common across these")
+        let rec = OutputRecord(id: "o9", title: "Distill", body: "one shared decision", source: "3 items",
+                               lens: "Distill", path: "Atlas", provenance: prov)
+        let back = try roundTrip(rec, "OutputRecord")
+        XCTAssertEqual(back.provenance, prov)
+        XCTAssertEqual(back.provenance?.contextIds, ["m1", "n2", "o3"])
+        XCTAssertEqual(back.provenance?.prompt, "what decisions are common across these")
+        // The canonical sources rows web reads: one card row PER lasso'd context + the ask's own.
+        XCTAssertEqual(back.contract.sources.map(\.sourceRef), ["Q3 kickoff", "Pricing note", "Risks", "Distill"])
+        XCTAssertEqual(back.contract.sources.map(\.sourceType), ["card", "card", "card", "ask"])
+        XCTAssertEqual(back.lineageLine, "from 3 items · via Distill")
+    }
+
+    func testRecipeProvenanceKeepsLegacyWireShape() throws {
+        // A recipe run (no Ask fields) must keep the EXACT legacy structured shape —
+        // no context_ids/context_titles/prompt keys ride the wire (golden-pin safety).
+        let prov = RunProvenance(sourceCardId: "m1", sourceCardTitle: "Q3 kickoff",
+                                 viaId: "a1", viaName: "Scout", viaKind: "recipe")
+        let rec = OutputRecord(id: "o1", title: "Summary", body: "ship it", source: "Q3 kickoff",
+                               lens: "Summary", path: "Atlas", provenance: prov)
+        guard case let .object(o) = rec.contract.structuredJson,
+              case let .object(p)? = o["provenance"] else { return XCTFail("no structured provenance") }
+        XCTAssertNil(p["context_ids"])
+        XCTAssertNil(p["context_titles"])
+        XCTAssertNil(p["prompt"])
+        XCTAssertEqual(rec.contract.sources.count, 2)   // the legacy two-row shape
+    }
+
     func testWorkflowRecordRoundTrip() throws {
         let rec = WorkflowRecord(contract: WorkflowDefinition(id: "w1", name: "Risks",
                                                               prompt: "List the risks",
@@ -145,6 +180,9 @@ final class DeskRecordsTests: XCTestCase {
         XCTAssertEqual(rec.source, "Scout")
         XCTAssertEqual(rec.lens, "Recipe")
         XCTAssertEqual(rec.provenance?.viaName, "Scout")
+        // pre-Ask provenance rows lack the three Ask fields — they decode to empty, never throw
+        XCTAssertEqual(rec.provenance?.contextIds, [])
+        XCTAssertEqual(rec.provenance?.prompt, "")
         XCTAssertEqual(rec.contract.meetingId, "")
         XCTAssertEqual(rec.contract.artifactType, .pluginOutput)
         XCTAssertEqual(rec.contract.pluginId, "ipad.desk")

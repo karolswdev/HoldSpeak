@@ -35,11 +35,35 @@ public struct RunProvenance: Codable, Equatable, Sendable {
     public var sourceCardTitle: String   // its human title (what the lineage line names)
     public var viaId: String             // the recipe/chain id that produced this
     public var viaName: String           // its name ("Scout", a crew name)
-    public var viaKind: String           // "recipe" | "chain"
+    public var viaKind: String           // "recipe" | "chain" | "ask" (a direct Ask-AI run)
+    // The Ask atom's full lineage (HSM-16-09): every lasso'd primitive the run read
+    // (ids + human titles, index-paired) and the instruction spoken/typed on top of
+    // them. Empty for recipe/chain runs — their via row is the lineage.
+    public var contextIds: [String]
+    public var contextTitles: [String]
+    public var prompt: String
 
-    public init(sourceCardId: String, sourceCardTitle: String, viaId: String, viaName: String, viaKind: String) {
+    public init(sourceCardId: String, sourceCardTitle: String, viaId: String, viaName: String, viaKind: String,
+                contextIds: [String] = [], contextTitles: [String] = [], prompt: String = "") {
         self.sourceCardId = sourceCardId; self.sourceCardTitle = sourceCardTitle
         self.viaId = viaId; self.viaName = viaName; self.viaKind = viaKind
+        self.contextIds = contextIds; self.contextTitles = contextTitles; self.prompt = prompt
+    }
+
+    // Legacy rows (pre-Ask) carry none of the three Ask fields — decode them to empty.
+    private enum CodingKeys: String, CodingKey {
+        case sourceCardId, sourceCardTitle, viaId, viaName, viaKind, contextIds, contextTitles, prompt
+    }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        sourceCardId = try c.decode(String.self, forKey: .sourceCardId)
+        sourceCardTitle = try c.decode(String.self, forKey: .sourceCardTitle)
+        viaId = try c.decode(String.self, forKey: .viaId)
+        viaName = try c.decode(String.self, forKey: .viaName)
+        viaKind = try c.decode(String.self, forKey: .viaKind)
+        contextIds = try c.decodeIfPresent([String].self, forKey: .contextIds) ?? []
+        contextTitles = try c.decodeIfPresent([String].self, forKey: .contextTitles) ?? []
+        prompt = try c.decodeIfPresent(String.self, forKey: .prompt) ?? ""
     }
 
     // A tasteful one-line summary for the card: "from <source card> · via Scout".
@@ -199,26 +223,53 @@ public struct OutputRecord: Codable, Identifiable, Equatable, Sendable {
                   case let .string(scid)? = p["source_card_id"], case let .string(sct)? = p["source_card_title"],
                   case let .string(vid)? = p["via_id"], case let .string(vn)? = p["via_name"],
                   case let .string(vk)? = p["via_kind"] else { return nil }
-            return RunProvenance(sourceCardId: scid, sourceCardTitle: sct, viaId: vid, viaName: vn, viaKind: vk)
+            // The Ask fields are additive — legacy provenance objects simply lack them.
+            var ctxIds: [String] = [], ctxTitles: [String] = []
+            if case let .array(a)? = p["context_ids"] { ctxIds = a.compactMap { if case let .string(s) = $0 { return s }; return nil } }
+            if case let .array(a)? = p["context_titles"] { ctxTitles = a.compactMap { if case let .string(s) = $0 { return s }; return nil } }
+            var prm = ""
+            if case let .string(s)? = p["prompt"] { prm = s }
+            return RunProvenance(sourceCardId: scid, sourceCardTitle: sct, viaId: vid, viaName: vn, viaKind: vk,
+                                 contextIds: ctxIds, contextTitles: ctxTitles, prompt: prm)
         }
         set {
             if let p = newValue {
-                setStructured("provenance", .object([
-                    "source_card_id": .string(p.sourceCardId),
-                    "source_card_title": .string(p.sourceCardTitle),
-                    "via_id": .string(p.viaId),
-                    "via_name": .string(p.viaName),
-                    "via_kind": .string(p.viaKind),
-                ]))
-                contract.sources = [
-                    ArtifactSource(sourceType: "card", sourceRef: p.sourceCardTitle),
-                    ArtifactSource(sourceType: p.viaKind, sourceRef: p.viaName),
-                ]
+                setStructured("provenance", .object(Self.provenanceJSON(p)))
+                contract.sources = Self.provenanceSources(p)
             } else {
                 setStructured("provenance", nil)
                 contract.sources = [ArtifactSource(sourceType: "desk", sourceRef: source)]
             }
         }
+    }
+
+    // The structured provenance object. Ask keys ride only when present, so recipe/chain
+    // runs keep the exact legacy shape (golden-pinned on the wire).
+    static func provenanceJSON(_ p: RunProvenance) -> [String: JSONValue] {
+        var o: [String: JSONValue] = [
+            "source_card_id": .string(p.sourceCardId),
+            "source_card_title": .string(p.sourceCardTitle),
+            "via_id": .string(p.viaId),
+            "via_name": .string(p.viaName),
+            "via_kind": .string(p.viaKind),
+        ]
+        if !p.contextIds.isEmpty { o["context_ids"] = .array(p.contextIds.map { .string($0) }) }
+        if !p.contextTitles.isEmpty { o["context_titles"] = .array(p.contextTitles.map { .string($0) }) }
+        if !p.prompt.isEmpty { o["prompt"] = .string(p.prompt) }
+        return o
+    }
+
+    // The canonical `sources` rows web reads. An Ask lists EVERY lasso'd card it read
+    // plus its own via row; recipe/chain runs keep the legacy two-row shape.
+    static func provenanceSources(_ p: RunProvenance) -> [ArtifactSource] {
+        if !p.contextTitles.isEmpty {
+            return p.contextTitles.map { ArtifactSource(sourceType: "card", sourceRef: $0) }
+                + [ArtifactSource(sourceType: p.viaKind, sourceRef: p.viaName)]
+        }
+        return [
+            ArtifactSource(sourceType: "card", sourceRef: p.sourceCardTitle),
+            ArtifactSource(sourceType: p.viaKind, sourceRef: p.viaName),
+        ]
     }
 
     // The lineage line shown on the printed/kept card + the Output pull-out. Prefers the rich
@@ -246,17 +297,8 @@ public struct OutputRecord: Codable, Identifiable, Equatable, Sendable {
         var sources: [ArtifactSource] = [ArtifactSource(sourceType: "desk", sourceRef: source)]
         var structured: [String: JSONValue] = ["lens": .string(lens), "source": .string(source)]
         if let p = provenance {
-            sources = [
-                ArtifactSource(sourceType: "card", sourceRef: p.sourceCardTitle),
-                ArtifactSource(sourceType: p.viaKind, sourceRef: p.viaName),
-            ]
-            structured["provenance"] = .object([
-                "source_card_id": .string(p.sourceCardId),
-                "source_card_title": .string(p.sourceCardTitle),
-                "via_id": .string(p.viaId),
-                "via_name": .string(p.viaName),
-                "via_kind": .string(p.viaKind),
-            ])
+            sources = Self.provenanceSources(p)
+            structured["provenance"] = .object(Self.provenanceJSON(p))
         }
         self.contract = Artifact(id: id, meetingId: "", artifactType: .pluginOutput, title: title,
                                  bodyMarkdown: body, structuredJson: .object(structured),
