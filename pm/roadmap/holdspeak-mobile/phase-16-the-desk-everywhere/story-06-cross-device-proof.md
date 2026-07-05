@@ -2,10 +2,13 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 16
-- **Status:** todo
+- **Status:** todo — **walk staged** (2026-07-05: the press-play runbook is
+  [`HSM-16-06-WALK.md`](./HSM-16-06-WALK.md), four checks ~15 min, joins the standing couch
+  queue; rescoped to also carry 16-09's device beat, 16-08's manifest round-trip, and the
+  16-04 web cross-surface Ask)
 - **Depends on:** HSM-16-05 (the wiring).
 - **Unblocks:** HSM-16-07 (docs the proof informs).
-- **Owner:** unassigned
+- **Owner:** the owner's hands (agent-staged)
 
 ## Problem
 
