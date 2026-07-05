@@ -75,3 +75,31 @@ final class MissionControlPinningTests: XCTestCase {
         XCTAssertEqual(offBelt.map(\.key), ["g"])
     }
 }
+
+/// HSM-25-03 — the event ticker's formatting, pure and testable.
+/// `gate_refusal` must carry its rule id verbatim: the rails' words,
+/// not the app's.
+final class MissionControlEventFormattingTests: XCTestCase {
+    func testGateRefusalCarriesTheRuleIdVerbatim() {
+        let event = MCEvent(ts: "2026-07-04T21:00:00Z", event: "gate_refusal",
+                             story: "WLA-14-07", detail: ["rule": .string("story-evidence")])
+        let line = formatMCEvent(event)
+        XCTAssertEqual(line, "21:00:00  gate_refusal  WLA-14-07  rule=story-evidence")
+    }
+
+    func testEventWithNoDetailOmitsTheTrailingSection() {
+        let event = MCEvent(ts: "2026-07-04T21:00:00Z", event: "story_status", story: "S-1")
+        XCTAssertEqual(formatMCEvent(event), "21:00:00  story_status  S-1")
+    }
+
+    func testEventWithNoStoryOmitsIt() {
+        let event = MCEvent(ts: "2026-07-04T21:00:00Z", event: "contract_generated")
+        XCTAssertEqual(formatMCEvent(event), "21:00:00  contract_generated")
+    }
+
+    func testMultipleDetailKeysAreSortedForStableOutput() {
+        let event = MCEvent(ts: "2026-07-04T21:00:00Z", event: "story_status",
+                             detail: ["to": .string("done"), "from": .string("in-progress")])
+        XCTAssertEqual(formatMCEvent(event), "21:00:00  story_status  from=in-progress to=done")
+    }
+}

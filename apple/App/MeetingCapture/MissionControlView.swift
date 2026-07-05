@@ -269,7 +269,7 @@ struct MissionControlView: View {
             Text("rail events").font(.caption.weight(.semibold)).foregroundStyle(Sig.muted)
             ForEach(model.events.reversed().prefix(6), id: \.ts) { event in
                 let isRefusal = event.event == "gate_refusal"
-                Text("\(isRefusal ? "✕ " : "")\(event.ts)  \(event.event)\(event.story.map { "  \($0)" } ?? "")")
+                Text("\(isRefusal ? "✕ " : "")\(formatMCEvent(event))")
                     .font(.caption2.monospaced())
                     .foregroundStyle(isRefusal ? Sig.bad : Sig.faint)
             }

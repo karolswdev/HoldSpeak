@@ -243,6 +243,29 @@ public struct MCEvent: Codable, Equatable, Sendable {
 /// (`mission_control_live_layer` in `dw_pmo/workbench.py`,
 /// WLA-15-02) so both clients make the same call from the same
 /// correlation document.
+/// One rail-event ticker line: `gate_refusal` carries its rule id
+/// verbatim — the rails' words, not the app's. Pure and testable;
+/// mirrors the web workbench's `mcEvents` renderer (WLA-15-02).
+public func formatMCEvent(_ event: MCEvent) -> String {
+    let time = event.ts.contains("T")
+        ? String(event.ts.split(separator: "T").last ?? "").replacingOccurrences(of: "Z", with: "")
+        : event.ts
+    let detail = (event.detail ?? [:])
+        .compactMap { key, value -> String? in
+            switch value {
+            case .string(let s): return "\(key)=\(s)"
+            case .number(let n): return "\(key)=\(n)"
+            case .bool(let b): return "\(key)=\(b)"
+            case .null, .array, .object: return nil
+            }
+        }
+        .sorted()
+        .joined(separator: " ")
+    return [time, event.event, event.story, detail.isEmpty ? nil : detail]
+        .compactMap { $0 }
+        .joined(separator: "  ")
+}
+
 public func pinMissionControlSessions(
     _ sessions: [MCSession]
 ) -> (pins: [String: [MCSession]], offBelt: [MCSession]) {

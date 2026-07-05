@@ -1,6 +1,6 @@
 # HSM-25-03 — Sessions and events ride the belt
 
-- **Status:** backlog
+- **Status:** done (2026-07-04) — evidence: [evidence-story-03.md](./evidence-story-03.md). `swift test` 484/0 (+4): the event ticker now carries gate_refusal's rule id verbatim.
 - **Depends on:** HSM-25-01, HSM-25-02.
 
 ## Problem
