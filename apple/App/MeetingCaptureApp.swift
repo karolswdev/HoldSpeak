@@ -57,6 +57,10 @@ struct MeetingCaptureApp: App {
                             if peer.host.isEmpty { peer.host = "192.168.1.13"; peer.portText = "8081" }
                             if peer.name.isEmpty { peer.name = "Karol's Mac" }
                         }
+                } else if ProcessInfo.processInfo.environment["HS_DEMO_MISSIONCONTROL"] != nil {
+                    // HSM-25-02/03/04 — the Mission Control conveyor straight, for a design/
+                    // Simulator screenshot run and the on-device proof leg.
+                    MissionControlDemo()
                 } else if ProcessInfo.processInfo.environment["HS_CLASSIC_HOME"] != nil {
                     MeetingListView()
                         .onOpenURL { url in
@@ -598,6 +602,7 @@ struct MeetingListView: View {
         if ProcessInfo.processInfo.environment["HS_DEMO_AGENTDESK"] == "1" { return AnyView(AgentDeskDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] == "1" { return AnyView(DictateDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "1" { return AnyView(ConnectDemo()) }
+        if ProcessInfo.processInfo.environment["HS_DEMO_MISSIONCONTROL"] == "1" { return AnyView(MissionControlDemo()) }
         #endif
         return AnyView(listBody)
     }

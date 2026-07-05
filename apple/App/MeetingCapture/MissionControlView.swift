@@ -1,6 +1,4 @@
 import SwiftUI
-import Contracts
-import Providers
 
 // HSM-25-02 — the conveyor: mission control's belt, the Agent Desk's
 // bigger sibling. Same posture as CompanionBoardState/AgentDeskView
@@ -148,15 +146,29 @@ struct MissionControlView: View {
             Spacer()
             reachChip
         }
+        .padding(.top, 40) // clears the .topBack overlay chip (Simulator-proven overlap fix)
     }
 
     @ViewBuilder private var reachChip: some View {
         switch model.reach {
-        case .connecting: GlyphChip(glyph: "clock", text: "connecting", tint: Sig.muted)
-        case .ok: GlyphChip(glyph: "checkmark.circle", text: "live", tint: Sig.ok)
-        case .unreachable: GlyphChip(glyph: "wifi.slash", text: "unreachable", tint: Sig.bad)
-        case .unauthorized: GlyphChip(glyph: "lock", text: "pair with the owner token", tint: Sig.warn)
+        case .connecting: mcChip("clock", "connecting", Sig.muted)
+        case .ok: mcChip("checkmark.circle", "live", Sig.ok)
+        case .unreachable: mcChip("wifi.slash", "unreachable", Sig.bad)
+        case .unauthorized: mcChip("lock", "pair with the owner token", Sig.warn)
         }
+    }
+
+    /// A small glyph+text pill (there's no existing small chip in the
+    /// shared design system — `GlyphChip` is a large icon badge, a
+    /// different shape) for the reach indicator and repo status.
+    private func mcChip(_ glyph: String, _ text: String, _ tint: Color) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: glyph).font(.caption2)
+            Text(text).font(.caption2)
+        }
+        .foregroundStyle(tint)
+        .padding(.horizontal, 8).padding(.vertical, 3)
+        .background(Capsule().fill(tint.opacity(0.15)))
     }
 
     @ViewBuilder private var content: some View {
@@ -187,7 +199,7 @@ struct MissionControlView: View {
         if !repo.isLive {
             HStack {
                 Text(repo.name).foregroundStyle(Sig.text)
-                GlyphChip(glyph: "exclamationmark.triangle", text: repo.status, tint: Sig.warn)
+                mcChip("exclamationmark.triangle", repo.status, Sig.warn)
             }
             .signalCard()
         } else if let feed = repo.feed {
@@ -278,35 +290,19 @@ struct MissionControlView: View {
     }
 }
 
-/// A minimal flow layout for story chips wrapping onto new lines —
-/// no third-party dependency for something this small.
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 6
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? .infinity
-        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > width, x > 0 {
-                x = 0; y += rowHeight + spacing; rowHeight = 0
-            }
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
-        }
-        return CGSize(width: width.isFinite ? width : x, height: y + rowHeight)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x: CGFloat = bounds.minX, y: CGFloat = bounds.minY, rowHeight: CGFloat = 0
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > bounds.maxX, x > bounds.minX {
-                x = bounds.minX; y += rowHeight + spacing; rowHeight = 0
-            }
-            subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
+#if targetEnvironment(simulator)
+/// Simulator-only: the belt seeded for a design screenshot (the
+/// AgentDeskDemo/DictateDemo idiom). HS_DEMO_MISSIONCONTROL=1 to
+/// route here from MeetingCaptureApp; HS_DEMO_MC=1 fires the seed
+/// inside MissionControlModel; no live hub is reachable in the
+/// Simulator, so polling never needs to succeed for this shot.
+struct MissionControlDemo: View {
+    var body: some View {
+        let peer = DesktopPeer(host: "127.0.0.1", port: 8080)
+        let config = HTTPDesktopClient.Config(peer: peer) ?? HTTPDesktopClient.Config(baseURL: URL(string: "http://127.0.0.1:8080")!)
+        NavigationStack {
+            MissionControlView(client: HTTPDesktopClient(config: config))
         }
     }
 }
+#endif

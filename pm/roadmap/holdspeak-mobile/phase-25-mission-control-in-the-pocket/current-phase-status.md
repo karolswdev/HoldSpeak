@@ -38,16 +38,36 @@ a contract that is already trustworthy.
 | Story | Title | Status | Depends on |
 |---|---|---|---|
 | HSM-25-01 | The mission-control wire contract + the client extension — **leads** | **done** ([evidence](./evidence-story-01.md): swift test 473/0, +8) | none |
-| HSM-25-02 | The conveyor renders: phases as the belt, stories as the items | **done** ([evidence](./evidence-story-02.md): swift test 480/0, +7) | HSM-25-01 |
-| HSM-25-03 | Sessions and events ride the belt | **done** ([evidence](./evidence-story-03.md): swift test 484/0, +4) | HSM-25-01, HSM-25-02 |
-| HSM-25-04 | The pocket, proven on device | blocked | HSM-25-02, HSM-25-03 (backend PR #247 merged 2026-07-05 — unblocked pending a hub build)
+| HSM-25-02 | The conveyor renders: phases as the belt, stories as the items | **done** ([evidence](./evidence-story-02.md): swift test 484/0, +7 — plus a real Simulator build + screenshot, see update) | HSM-25-01 |
+| HSM-25-03 | Sessions and events ride the belt | **done** ([evidence](./evidence-story-03.md): swift test 484/0, +4 — same Simulator build proves it too) | HSM-25-01, HSM-25-02 |
+| HSM-25-04 | The pocket, proven on device | ready | HSM-25-02, HSM-25-03 |
 
 ## Where we are
 
-Opened. Scope notes kept honest: the on-device proof (25-04)
-depends on the backend's PR #247 being merged and a hub running the
-`/api/missioncontrol/*` routes; until then 01–03 land against
-frozen fixtures (the same split the backend's Phase 82 carried).
-Owner-only auth is already the client's posture; a missing or
-non-owner token renders as an honest "pair with the owner token"
-state, not a thrown error.
+01–03 done. Backend PR #247 merged 2026-07-05 (the mission-control
+routes are on HoldSpeak `main`). The owner's home Mac is now
+reachable over Tailscale from anywhere (`karol-co-mac.tailad9943.ts.net`),
+which is what actually unblocks 25-04 — no more "when I'm physically
+home" constraint.
+
+25-02/03 also got a real compile-and-render proof, not just
+`swift test` on the isolated logic: `gen-meeting-capture.rb`
+generates a real Xcode project from `App/MeetingCapture/**`
+(the same generator the on-device gate scripts use), and
+`xcodebuild ... -destination 'platform=iOS Simulator,name=iPhone 17
+Pro'` built it clean. Three real bugs surfaced and got fixed in the
+process (stray imports invalid in this app's flat-module staging, a
+duplicate `FlowLayout` already in the codebase, a misread
+`GlyphChip` signature) plus one visual bug the screenshot itself
+caught (title/back-button overlap). A `HS_DEMO_MISSIONCONTROL` demo
+entry point was added to `MeetingCaptureApp`'s root selector (the
+`AgentDeskDemo`/`DictateDemo` idiom) so the screen is reachable at
+all — the same gap `AgentDeskView` itself still has (full main-menu
+wiring stays a tracked follow-up, not a defect blocking this phase).
+
+25-04 needs: a `holdspeak web` hub actually running (on the CO Mac,
+already Tailscale-reachable), and the real device's `DesktopPeer`
+pointed at the tailnet hostname instead of a LAN IP. Owner-only auth
+is already the client's posture; a missing or non-owner token
+renders as an honest "pair with the owner token" state, not a
+thrown error.
