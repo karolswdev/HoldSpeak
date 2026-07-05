@@ -1,0 +1,278 @@
+/** Mission control on the Desk (HS-82-03/04) — the typed data layer.
+ *
+ * The Desk consumes exactly the three documents the Delivery Workbench
+ * contract allows a client: the state feed, the correlation document,
+ * and the event log, all relayed byte-honest by the bridge
+ * (/api/missioncontrol/*). Wire is snake_case; these are the camelCase
+ * view shapes the belt renders. Statuses are typed and honest:
+ * "compatibility" and "unreachable" render as themselves, never as an
+ * empty belt pretending the rails are idle.
+ * Design: docs/internal/MISSION_CONTROL_DESK.md §2–§3.
+ */
+
+import { create } from "zustand";
+
+export type McRepoStatus = "live" | "compatibility" | "unavailable" | "unreachable";
+
+export interface McPhase {
+  number: number;
+  title: string;
+  status: "open" | "closed";
+  storiesDone: number;
+  storiesTotal: number;
+}
+
+export interface McStory {
+  storyId: string;
+  title: string;
+  status: string;
+  phase: number;
+  evidenceExists: boolean;
+}
+
+export interface McProject {
+  slug: string;
+  prefix: string;
+  currentPhase: McPhase | null;
+  nextStoryId: string | null;
+  phases: McPhase[];
+  stories: McStory[];
+  warnings: number;
+}
+
+export interface McRepo {
+  name: string;
+  path: string;
+  status: McRepoStatus;
+  detail: string;
+  projects: McProject[];
+}
+
+export interface McSession {
+  key: string;
+  agent: string;
+  correlation: string;
+  storyIds: string[];
+  awaitingResponse: boolean;
+  lastAssistantText: string;
+  stale: boolean;
+  tmuxSession: string | null;
+}
+
+export interface McEvent {
+  ts: string;
+  event: string;
+  story: string | null;
+  detail: Record<string, unknown>;
+  repo: string;
+}
+
+const fromWirePhase = (p: any): McPhase => ({
+  number: p.number,
+  title: p.title || `phase ${p.number}`,
+  status: p.status === "closed" ? "closed" : "open",
+  storiesDone: p.stories_done ?? 0,
+  storiesTotal: p.stories_total ?? 0,
+});
+
+const fromWireProject = (p: any): McProject => ({
+  slug: p.slug || "",
+  prefix: p.prefix || "",
+  currentPhase: p.current_phase ? fromWirePhase(p.current_phase) : null,
+  nextStoryId: p.next_story ? p.next_story.story_id || null : null,
+  phases: (p.phases || []).map(fromWirePhase),
+  stories: (p.stories || []).map((s: any): McStory => ({
+    storyId: s.story_id || "",
+    title: s.title || "",
+    status: s.status || "",
+    phase: s.phase ?? 0,
+    evidenceExists: Boolean(s.evidence_exists),
+  })),
+  warnings: p.warnings ?? 0,
+});
+
+export const fromWireMcRepo = (entry: any): McRepo => ({
+  name: entry.name || "",
+  path: entry.path || "",
+  status: (entry.status as McRepoStatus) || "unreachable",
+  detail: entry.detail || "",
+  projects:
+    entry.status === "live" && entry.feed
+      ? (entry.feed.projects || []).map(fromWireProject)
+      : [],
+});
+
+export const fromWireMcSession = (s: any): McSession => ({
+  key: s.key || "",
+  agent: s.agent || "",
+  correlation: s.correlation || "",
+  storyIds: (s.stories || []).map((st: any) => st.story_id).filter(Boolean),
+  awaitingResponse: Boolean(s.awaiting_response),
+  lastAssistantText: s.last_assistant_text || "",
+  stale: Boolean(s.stale),
+  tmuxSession: (s.tmux && s.tmux.session) || null,
+});
+
+export const fromWireMcEvents = (repoEntry: any): McEvent[] =>
+  repoEntry.status === "live"
+    ? (repoEntry.events || []).map((e: any): McEvent => ({
+        ts: e.ts || "",
+        event: e.event || "",
+        story: e.story || null,
+        detail: e.detail || {},
+        repo: repoEntry.name || "",
+      }))
+    : [];
+
+/** Sessions keyed by the story they are on — the belt pins these. */
+export function sessionsByStory(sessions: McSession[]): Record<string, McSession[]> {
+  const map: Record<string, McSession[]> = {};
+  for (const s of sessions) {
+    if (s.correlation !== "on_story") continue;
+    for (const id of s.storyIds) (map[id] ||= []).push(s);
+  }
+  return map;
+}
+
+/** Sessions that cannot pin to a story, grouped in the correlation's
+ * own honest buckets (ambiguous lists candidates; nothing guessed). */
+export function offBeltSessions(sessions: McSession[]): McSession[] {
+  return sessions.filter((s) => s.correlation !== "on_story");
+}
+
+/** One ticker line per event; gate refusals carry their rule id
+ * verbatim — the rails' words, not ours. */
+export function formatEvent(e: McEvent): string {
+  const time = e.ts.includes("T") ? e.ts.split("T")[1].replace("Z", "") : e.ts;
+  const detail = Object.entries(e.detail || {})
+    .filter(([, v]) => v !== null && v !== undefined)
+    .map(([k, v]) => `${k}=${v}`)
+    .join(" ");
+  return [time, e.event, e.story || "", detail].filter(Boolean).join("  ");
+}
+
+async function fetchJson(url: string, opts?: RequestInit): Promise<any> {
+  const res = await fetch(url, opts);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || body.detail || `HTTP ${res.status}`);
+  return body;
+}
+
+export const POLL_MS = 15_000; // the design's cadence, single-flight
+
+export interface McProposal {
+  id: string;
+  status: string;
+  preview: string;
+  error: string | null;
+}
+
+export const fromWireProposal = (p: any): McProposal => ({
+  id: p.id || "",
+  status: p.status || "",
+  preview: p.preview || "",
+  error: p.error || null,
+});
+
+interface McState {
+  repos: McRepo[];
+  sessions: McSession[];
+  sessionsStatus: string;
+  sessionsDetail: string;
+  events: McEvent[];
+  updatedAt: number | null;
+  inflight: boolean;
+  open: boolean;
+  proposal: McProposal | null;
+  proposalError: string;
+  toggle(): void;
+  refresh(): Promise<void>;
+  proposeFlip(repo: string, project: string, story: string, status: string): Promise<void>;
+  decide(decision: "approved" | "rejected"): Promise<void>;
+  dismissProposal(): void;
+}
+
+export const useMissionControl = create<McState>((set, get) => ({
+  repos: [],
+  sessions: [],
+  sessionsStatus: "unreachable",
+  sessionsDetail: "",
+  events: [],
+  updatedAt: null,
+  inflight: false,
+  open: true,
+  proposal: null,
+  proposalError: "",
+
+  toggle() {
+    set({ open: !get().open });
+  },
+
+  async proposeFlip(repo, project, story, status) {
+    set({ proposalError: "" });
+    try {
+      const body = await fetchJson("/api/missioncontrol/story/propose", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repo, verb: "status", project, story, status }),
+      });
+      set({ proposal: fromWireProposal(body.proposal) });
+    } catch (e: any) {
+      set({ proposalError: e.message || "propose failed", proposal: null });
+    }
+  },
+
+  async decide(decision) {
+    const proposal = get().proposal;
+    if (!proposal) return;
+    try {
+      const body = await fetchJson(
+        `/api/missioncontrol/proposals/${proposal.id}/decision`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision, actor: "desk-owner" }),
+        },
+      );
+      set({ proposal: fromWireProposal(body.proposal) });
+      if (body.proposal && body.proposal.status === "executed") {
+        await get().refresh(); // the belt moves
+      }
+    } catch (e: any) {
+      set({ proposalError: e.message || "decision failed" });
+    }
+  },
+
+  dismissProposal() {
+    set({ proposal: null, proposalError: "" });
+  },
+
+  async refresh() {
+    if (get().inflight) return; // single-flight: a slow poll skips ticks
+    set({ inflight: true });
+    try {
+      const [state, sessions, events] = await Promise.all([
+        fetchJson("/api/missioncontrol/state").catch(() => null),
+        fetchJson("/api/missioncontrol/sessions").catch(() => null),
+        fetchJson("/api/missioncontrol/events?tail=20").catch(() => null),
+      ]);
+      set({
+        repos: state
+          ? (state.repos || []).map(fromWireMcRepo)
+          : get().repos.map((r) => ({ ...r, status: "unreachable" as const })),
+        sessions:
+          sessions && sessions.status === "live"
+            ? (sessions.sessions.sessions || []).map(fromWireMcSession)
+            : [],
+        sessionsStatus: sessions ? sessions.status : "unreachable",
+        sessionsDetail: sessions ? sessions.detail || "" : "",
+        events: events
+          ? (events.repos || []).flatMap(fromWireMcEvents).reverse()
+          : [],
+        updatedAt: Date.now(),
+      });
+    } finally {
+      set({ inflight: false });
+    }
+  },
+}));

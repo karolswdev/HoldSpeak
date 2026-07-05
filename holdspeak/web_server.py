@@ -517,6 +517,7 @@ class MeetingWebServer:
             build_meeting_import_router,
             build_meetings_router,
             build_mesh_router,
+            build_missioncontrol_router,
             build_pages_router,
             build_primitives_router,
             build_projects_router,
@@ -572,6 +573,7 @@ class MeetingWebServer:
         app.include_router(build_desk_actuators_router(web_ctx))
         app.include_router(build_meeting_import_router(web_ctx))
         app.include_router(build_mesh_router(web_ctx))
+        app.include_router(build_missioncontrol_router(web_ctx))
         app.include_router(build_dictation_router(web_ctx))
         app.include_router(build_activity_router(web_ctx))
         app.include_router(build_pages_router(web_ctx))

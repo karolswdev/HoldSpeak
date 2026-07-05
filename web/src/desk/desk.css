@@ -704,3 +704,138 @@
   font-size: var(--font-size-xs);
   margin: 6px 0 0;
 }
+
+/* ── Mission control conveyor (HS-82-03) ─────────────────────────
+   A fixture at the foot of the desk: belts of phases and stories
+   relayed from the Delivery Workbench rails. Signal tokens only;
+   the one --accent use is the next actionable story. */
+.desk-next .desk-mc {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 30;
+  padding: var(--space-2) var(--space-3);
+  background: color-mix(in srgb, var(--surface-1) 88%, transparent);
+  border: 1px solid var(--surface-3);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.desk-next .desk-mc-tab {
+  position: fixed;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 30;
+  padding: 2px 10px;
+  background: color-mix(in srgb, var(--surface-1) 88%, transparent);
+  border: 1px solid var(--surface-3);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.desk-next .desk-mc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-1);
+}
+.desk-next .desk-mc-title { color: var(--text); letter-spacing: 0.04em; }
+.desk-next .desk-mc-close {
+  background: none; border: none; color: var(--text-faint); cursor: pointer;
+}
+.desk-next .desk-mc-project { margin-top: var(--space-1); }
+.desk-next .desk-mc-phases {
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+}
+.desk-next .desk-mc-slug { color: var(--text); margin-right: var(--space-2); }
+.desk-next .desk-mc-phase {
+  min-width: 20px; text-align: center; padding: 0 4px;
+  border: 1px solid var(--surface-3); border-radius: 4px;
+  color: var(--text-faint);
+}
+.desk-next .desk-mc-phase.closed { opacity: 0.45; }
+.desk-next .desk-mc-phase.current {
+  color: var(--text); border-color: var(--text-muted);
+}
+.desk-next .desk-mc-belt {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin: 4px 0 2px calc(var(--space-2) + 8px);
+}
+.desk-next .desk-mc-story {
+  padding: 1px 8px; border-radius: 999px;
+  border: 1px solid var(--surface-3); color: var(--text-muted);
+}
+.desk-next .desk-mc-story.st-done { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.desk-next .desk-mc-story.st-in-progress { color: var(--text); }
+.desk-next .desk-mc-story.st-blocked { color: var(--danger); }
+.desk-next .desk-mc-story.next {
+  color: var(--accent); border-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow, rgba(255, 107, 53, 0.35));
+}
+.desk-next .desk-mc-warn { color: var(--warn); margin-left: var(--space-2); }
+.desk-next .desk-mc-honest { display: flex; gap: var(--space-2); align-items: baseline; margin-top: var(--space-1); }
+.desk-next .desk-mc-state { color: var(--danger); }
+.desk-next .desk-mc-state.compatibility { color: var(--warn); }
+.desk-next .desk-mc-detail { color: var(--text-faint); }
+
+/* ── Sessions and events on the belt (HS-82-04) ────────────────── */
+.desk-next .desk-mc-pin {
+  display: inline-flex; align-items: center; gap: 2px;
+  margin-left: 6px; padding: 0 6px; border-radius: 999px;
+  background: var(--surface-2); color: var(--text-muted);
+  font-size: 11px;
+}
+.desk-next .desk-mc-pin.awaiting {
+  color: var(--warn);
+  animation: desk-mc-pulse 1.6s ease-in-out infinite;
+}
+.desk-next .desk-mc-pin.stale { opacity: 0.5; }
+@keyframes desk-mc-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 8px 0 color-mix(in srgb, var(--warn) 55%, transparent); }
+}
+.desk-next .desk-mc-sessions {
+  display: flex; gap: var(--space-2); flex-wrap: wrap;
+  margin-top: var(--space-1); padding-top: var(--space-1);
+  border-top: 1px dashed var(--surface-3);
+}
+.desk-next .desk-mc-offbelt { display: inline-flex; align-items: center; gap: 4px; }
+.desk-next .desk-mc-bucket { color: var(--text-faint); font-size: 11px; }
+.desk-next .desk-mc-ticker {
+  display: flex; flex-direction: column; gap: 1px;
+  margin-top: var(--space-1); padding-top: var(--space-1);
+  border-top: 1px dashed var(--surface-3);
+  max-height: 84px; overflow: hidden;
+}
+.desk-next .desk-mc-event { color: var(--text-faint); font-size: 11px; white-space: nowrap; }
+.desk-next .desk-mc-event.refusal { color: var(--danger); }
+
+/* ── The approval leg (HS-82-05) ────────────────────────────────── */
+.desk-next .desk-mc-story { cursor: pointer; }
+.desk-next .desk-mc-story.picked { outline: 1px solid var(--text-muted); }
+.desk-next .desk-mc-flip {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
+.desk-next .desk-mc-flip-label { color: var(--text-faint); }
+.desk-next .desk-mc-btn {
+  padding: 1px 10px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--surface-3);
+  color: var(--text-muted); font-size: 11px; cursor: pointer;
+}
+.desk-next .desk-mc-btn.approve {
+  color: var(--accent); border-color: var(--accent);
+}
+.desk-next .desk-mc-proposal {
+  display: flex; align-items: center; gap: var(--space-2);
+  margin-top: var(--space-1); padding: var(--space-1) var(--space-2);
+  border: 1px dashed var(--surface-3); border-radius: 8px;
+}
+.desk-next .desk-mc-proposal.failed { border-color: color-mix(in srgb, var(--danger) 50%, transparent); }
+.desk-next .desk-mc-preview { color: var(--text); }
+.desk-next .desk-mc-refusal { color: var(--danger); }
+.desk-next .desk-mc-executed { color: var(--ok); }

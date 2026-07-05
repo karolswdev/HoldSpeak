@@ -13,6 +13,7 @@ import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
 import { RecordOrb } from "./components/RecordOrb";
 import { RecipeRail } from "./components/RecipeRail";
+import { MissionControlConveyor } from "./components/MissionControlConveyor";
 import "./desk.css";
 
 export default function DeskApp() {
@@ -33,6 +34,7 @@ export default function DeskApp() {
       {updatedAt !== null && total === 0 ? <EmptyDesk /> : <World />}
       <RecordOrb />
       <RecipeRail />
+      <MissionControlConveyor />
     </div>
   );
 }
