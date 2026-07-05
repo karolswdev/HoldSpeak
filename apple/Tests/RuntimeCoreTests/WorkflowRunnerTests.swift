@@ -200,4 +200,129 @@ final class WorkflowRunnerTests: XCTestCase {
         XCTAssertEqual(result.finalText, "CARRY_ME", "skip carries the input through unchanged")
         XCTAssertEqual(result.steps.first?.status, .skipped)
     }
+
+    // MARK: HSM-15-02 — the mesh dispatch (a step pinned to "Your Mac")
+
+    /// Thread-safe recorder for the dispatch closure (the same @unchecked posture
+    /// as RecordingProvider — tests are serial, the lock is belt-and-braces).
+    final class DispatchRecorder: @unchecked Sendable {
+        private let lock = NSLock()
+        private var _prompts: [String] = []
+        private var failTimes: Int
+        init(failTimes: Int = 0) { self.failTimes = failTimes }
+        var prompts: [String] { lock.lock(); defer { lock.unlock() }; return _prompts }
+        /// The synchronous record step (NSLock is refused in async contexts).
+        private func record(_ prompt: String) -> Int {
+            lock.lock(); defer { lock.unlock() }
+            _prompts.append(prompt)
+            return _prompts.count
+        }
+        func handler(_ prompt: String) async throws -> String {
+            if record(prompt) <= failTimes { throw NSError(domain: "mac-unreachable", code: 7) }
+            return "MAC(\(prompt))"
+        }
+    }
+
+    func testDispatchedStepRunsOnTheMacNotTheProvider() async {
+        let provider = RecordingProvider()
+        let mac = DispatchRecorder()
+        let runner = WorkflowRunner(provider: provider, dispatch: mac.handler,
+                                    policy: noBackoffPolicy(maxRetries: 0, policy: .retryThenQueue))
+        let wf = Workflow(name: "m", source: .fullTranscript, steps: [.summarize], output: .note)
+
+        let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
+
+        XCTAssertEqual(provider.calls, 0, "a Mac-pinned step never touches the local provider")
+        XCTAssertEqual(mac.prompts.count, 1)
+        XCTAssertTrue(mac.prompts[0].contains("SRC"), "the fully-resolved prompt rode the dispatch")
+        XCTAssertTrue(result.didComplete)
+        XCTAssertTrue(result.finalText.hasPrefix("MAC("))
+        XCTAssertEqual(result.steps.first?.ranOn, .dispatchToMac, "the outcome states where it ran")
+    }
+
+    func testNoPairedPeerRidesTheFailurePolicy() async {
+        // No dispatch handler wired (no paired desktop): retryThenQueue parks the run
+        // so it can resume when a peer is adopted — never a crash, never a silent skip.
+        let provider = RecordingProvider()
+        let runner = WorkflowRunner(provider: provider,
+                                    policy: noBackoffPolicy(maxRetries: 2, policy: .retryThenQueue))
+        let wf = Workflow(name: "np", source: .fullTranscript, steps: [.summarize], output: .note)
+
+        let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
+
+        XCTAssertEqual(provider.calls, 0)
+        XCTAssertTrue(result.didPark)
+        XCTAssertEqual(result.parked?.resumeFromStep, 0)
+        XCTAssertEqual(result.steps.first?.status, .parked)
+        XCTAssertEqual(result.steps.first?.ranOn, .dispatchToMac)
+    }
+
+    func testUnreachableMacFallsBackOnDeviceWithHonestRanOn() async {
+        // The IF-UNREACHABLE grammar: the Mac is down, the node's policy says fall
+        // back on-device — the step succeeds AND the outcome says .onDevice (it
+        // never left after all; the badge updates).
+        let mac = DispatchRecorder(failTimes: 99)
+        let fallback = RecordingProvider(transform: { _ in "ON_DEVICE_RESULT" })
+        let runner = WorkflowRunner(provider: DeadProvider(), fallback: fallback,
+                                    dispatch: mac.handler,
+                                    policy: noBackoffPolicy(maxRetries: 1, policy: .fallbackOnDevice))
+        let wf = Workflow(name: "fbm", source: .fullTranscript, steps: [.summarize], output: .note)
+
+        let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
+
+        XCTAssertEqual(mac.prompts.count, 2, "1 try + 1 retry on the Mac before falling back")
+        XCTAssertEqual(fallback.calls, 1)
+        XCTAssertTrue(result.didComplete)
+        XCTAssertEqual(result.finalText, "ON_DEVICE_RESULT")
+        XCTAssertEqual(result.steps.first?.status, .fellBack)
+        XCTAssertEqual(result.steps.first?.ranOn, .onDevice)
+    }
+
+    func testDispatchRetriesUnderTheSameBound() async {
+        // The Mac hiccups once; the SAME bounded retry loop that covers providers
+        // covers the dispatch — the second try lands.
+        let mac = DispatchRecorder(failTimes: 1)
+        let runner = WorkflowRunner(provider: RecordingProvider(), dispatch: mac.handler,
+                                    policy: noBackoffPolicy(maxRetries: 2, policy: .retryThenQueue))
+        let wf = Workflow(name: "r", source: .fullTranscript, steps: [.summarize], output: .note)
+
+        let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
+
+        XCTAssertTrue(result.didComplete)
+        XCTAssertEqual(result.steps.first?.attempts, 2)
+        XCTAssertEqual(result.steps.first?.ranOn, .dispatchToMac)
+    }
+
+    func testMixedTargetsRunEachStepWhereItIsPinned() async {
+        // Step 1 unpinned (the local provider), step 2 pinned to the Mac — one runner,
+        // one walk, two targets, the threaded value crossing the mesh boundary.
+        let provider = RecordingProvider(transform: { _ in "LOCAL_OUT" })
+        let mac = DispatchRecorder()
+        let runner = WorkflowRunner(provider: provider, dispatch: mac.handler,
+                                    policy: noBackoffPolicy(maxRetries: 0, policy: .skip))
+        let wf = Workflow(name: "mix", source: .fullTranscript,
+                          steps: [.summarize, .rewrite(tone: "executive")], output: .note)
+
+        let result = await runner.run(wf, sourceText: "SRC", targets: [nil, .dispatchToMac])
+
+        XCTAssertEqual(provider.calls, 1)
+        XCTAssertEqual(mac.prompts.count, 1)
+        XCTAssertTrue(mac.prompts[0].contains("LOCAL_OUT"), "the Mac step read the local step's output")
+        XCTAssertEqual(result.steps.map(\.ranOn), [.onDevice, .dispatchToMac])
+        XCTAssertTrue(result.finalText.hasPrefix("MAC("))
+    }
+
+    func testEmptyTargetsStaysByteIdenticalLegacy() async {
+        // No targets array (every pre-mesh call site): the provider runs everything
+        // and the outcome reports .onDevice — the pre-15-02 behaviour, locked.
+        let provider = RecordingProvider()
+        let runner = WorkflowRunner(provider: provider)
+        let wf = Workflow(name: "l", source: .fullTranscript, steps: [.summarize], output: .note)
+
+        let result = await runner.run(wf, sourceText: "SRC")
+
+        XCTAssertEqual(provider.calls, 1)
+        XCTAssertTrue(result.didComplete)
+        XCTAssertEqual(result.steps.first?.ranOn, .onDevice)
+    }
 }

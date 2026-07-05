@@ -70,8 +70,10 @@ _LINEAR_KINDS = _PASSTHROUGH_KINDS | _MODEL_KINDS | _PURE_TRANSFORM_KINDS
 #
 # What a run does when a node's model call throws (`FailurePolicy`):
 _FAILURE_POLICIES = frozenset({"retryThenQueue", "fallbackOnDevice", "skip"})
-# Where a model-op node prefers to run (`ModelPref`):
-_RUN_TARGETS = frozenset({"auto", "onDevice", "endpoint"})
+# Where a model-op node prefers to run (`ModelPref`). "desktop" pins the step to
+# the paired desktop (the mesh dispatch, HSM-15-02): ON the hub that simply means
+# "run here", so the trail preserves the pin instead of folding it to "auto".
+_RUN_TARGETS = frozenset({"auto", "onDevice", "endpoint", "desktop"})
 
 
 def _norm_failure_policy(raw: Any) -> Optional[str]:
@@ -88,8 +90,9 @@ def _norm_failure_policy(raw: Any) -> Optional[str]:
 def _norm_run_target(raw: Any) -> str:
     """Normalize a node's raw `runs_on` to a known target; default "auto".
 
-    Accepts the iPad `ModelPref` raw string (`auto`/`onDevice`/`endpoint`). Unset /
-    unrecognised → "auto" (follow the hub's configured provider — byte-identical).
+    Accepts the iPad `ModelPref` raw string (`auto`/`onDevice`/`endpoint`/`desktop`).
+    Unset / unrecognised → "auto" (follow the hub's configured provider —
+    byte-identical).
     """
     if isinstance(raw, str) and raw in _RUN_TARGETS:
         return raw

@@ -454,6 +454,7 @@
       ],
       "module": "web.routes.primitives.ask",
       "consumers": [
+        "ios",
         "web"
       ]
     },

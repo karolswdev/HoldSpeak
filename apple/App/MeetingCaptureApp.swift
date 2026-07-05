@@ -595,6 +595,11 @@ struct MeetingListView: View {
         if ProcessInfo.processInfo.environment["HS_DEMO_SETTINGS"] == "1" { return AnyView(SettingsDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_WORKBENCH"] == "1" || ProcessInfo.processInfo.environment["HS_DEMO_WORKBENCH_LLM"] == "1" { return AnyView(NavigationStack { WorkbenchView() }) }
         if ProcessInfo.processInfo.environment["HS_DEMO_WB_EXEC"] == "1" { return AnyView(NavigationStack { WorkbenchView() }) }
+        // HSM-15-02 — the mesh-dispatch proof run (a node pinned to Your Mac; with
+        // HS_DESKTOP_HOST set, the pinned step genuinely runs on that hub).
+        if ProcessInfo.processInfo.environment["HS_DEMO_WB_MESH"] == "1" || ProcessInfo.processInfo.environment["HS_DEMO_WB_RUNTIME"] == "1" {
+            return AnyView(NavigationStack { WorkbenchView() })
+        }
         if ProcessInfo.processInfo.environment["HS_DEMO_AGENTDESK"] == "1" { return AnyView(AgentDeskDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] == "1" { return AnyView(DictateDemo()) }
         if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "1" { return AnyView(ConnectDemo()) }

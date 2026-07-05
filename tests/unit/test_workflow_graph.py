@@ -180,6 +180,22 @@ def test_parse_graph_carries_failure_policy_and_runs_on() -> None:
     assert (nodes[1].failure_policy, nodes[1].runs_on) == ("fallbackOnDevice", "onDevice")
 
 
+def test_parse_graph_preserves_the_desktop_pin() -> None:
+    """HSM-15-02: a node pinned to the paired desktop keeps its pin in the trail.
+
+    On the hub "desktop" simply means "run here" (the hub IS the desktop), so the
+    value is recognised — preserved for the honest per-node trail — rather than
+    folded to "auto". An OLDER hub folds it to "auto" (the tolerant default below),
+    which carries the same semantics: the addition is wire-safe by construction.
+    """
+    g = {"nodes": [
+        {"id": "a", "kind": {"summarize": {}}, "runs_on": "desktop"},
+    ]}
+    nodes = parse_graph(g)
+    assert nodes is not None
+    assert nodes[0].runs_on == "desktop"
+
+
 def test_parse_graph_unset_or_unknown_provenance_is_byte_identical_default() -> None:
     # No keys, explicit null, and unknown strings all normalize to the inherit-default:
     # failure_policy None (inherit the run default), runs_on "auto" (follow Settings).

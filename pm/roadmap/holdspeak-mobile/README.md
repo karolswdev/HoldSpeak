@@ -129,7 +129,14 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-05 (**Phase 15 RESUMED, survey-corrected** — 15-05 recorded done
+**Last updated:** 2026-07-05 (**THE MESH DISPATCH IS REAL — a Workbench node pinned to
+"Your Mac" runs on your Mac.** HSM-15-04 CLOSED (the runner dispatches per RUNS-ON:
+injected `MeshDispatch` over `POST /api/ask`, per-step targets, honest `ranOn`, no-peer
+rides the IF-UNREACHABLE policy) and 15-02's heart shipped (`ModelPref.desktop` +
+`BPRunsOn.desktop`, wire-safe; the HUD label names the peer and settles to where the step
+actually ran). Proven sim → REAL local hub with prompt receipts. Two latent finds fixed:
+canvas HUD jobs never settled (jobID mismatch); the job target label read the app
+default. Swift 476/9/0. Earlier: **Phase 15 RESUMED, survey-corrected** — 15-05 recorded done
 pre-paid (one-spine proposal origin + P21 EgressScope, receipts in evidence); 15-02
 re-scoped to the per-step dispatch (the runner's `dispatchToMac` still throws; per-node
 pins ignored at run time; the HUD target label reads the app default) with `POST /api/ask`

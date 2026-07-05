@@ -162,8 +162,13 @@ public enum BPNodeKind: Codable, Sendable, Equatable {
 /// the hub's `workflow_graph.py` `_RUN_TARGETS` accepts exactly these; `nil`/unset
 /// means inherit the run default ("auto", byte-identical to pre-provenance runs).
 /// The App's `ModelPref` UI enum shares these raw values.
+///
+/// `desktop` (HSM-15-02) pins the step to the paired desktop: on the iPad the runner
+/// dispatches it over the mesh; on the hub itself it means "run here" (the hub IS the
+/// desktop), and an OLDER hub folds the unknown value to "auto" — same semantics, so
+/// the addition is wire-safe by construction.
 public enum BPRunsOn: String, Codable, Sendable, Equatable, CaseIterable {
-    case auto, onDevice, endpoint
+    case auto, onDevice, endpoint, desktop
 }
 
 /// One node in the Blueprint graph.
