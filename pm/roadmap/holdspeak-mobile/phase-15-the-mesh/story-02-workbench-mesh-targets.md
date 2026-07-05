@@ -2,10 +2,46 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 15
-- **Status:** backlog
+- **Status:** in-progress (2026-07-05 — **survey-corrected**; see "The 2026-07-05 rescope"
+  below. Much of the original design shipped elsewhere; the genuinely-open heart — the
+  per-step dispatch — is the active build.)
 - **Depends on:** the Workbench canvas + `ModelPref`/`NodeKind` (Phase 14 / HSM-14-15);
   `HTTPDesktopClient` (the desktop's capabilities); HSM-15-04 (the runner dispatches per target).
-- **Owner:** unassigned
+- **Owner:** agent (Fable)
+
+## The 2026-07-05 rescope (the resume survey, code-read)
+
+Pre-paid while the phase slept:
+
+- **The graph travels and runs on the hub whole** — Phase 22: `lowerToBlueprint()` →
+  `graph_json` sync → the hub's `workflow_graph.py` linearizer runs it (22-04 proved the
+  iPad-authored graph on the hub with real `.43` intel).
+- **Per-node `runs_on` + `failure_policy` ride the wire** — 22-01 (`BPRunsOn`, the exact
+  raw strings the hub's `_RUN_TARGETS` accepts; unset stays byte-identical "auto").
+- **The run-target pick is informed, not blind** — 16-08: the model MANIFEST syncs and the
+  "where should it run?" sheet names the hub's actual model.
+- **Device-initiated proposals through the desktop connectors** — the desk actuator relay
+  (`api/desk/actuators/*`, Phase 38/72): the iPad proposes, the hub's one 5-gate executor
+  acts after approval.
+- **The generic "run a capability on your Mac" RPC this story's grounding asked for now
+  exists** — `POST /api/ask` (HSM-16-04): prompt + optional context in, output + honest
+  per-run egress out, persists nothing. The dispatch seam consumes it as-is.
+
+Genuinely open (the story's remaining substance):
+
+1. **Per-STEP dispatch** (the heart, building now): `WorkflowRunner.dispatchToMac` is a
+   stubbed seam that THROWS `dispatchUnimplemented`; `run()` hard-codes `.onDevice` for
+   every step; per-node `modelPref` is honoured on the WIRE but ignored at RUN time; and
+   the Queue HUD's job "target" label reads the app-wide `isLocal`, not the node's pin —
+   the same class of egress lie 16-09 killed on the desk. The slice: a "Your Mac" per-node
+   target, the runner's injected dispatch handler (unreachable Mac rides the node's
+   IF-UNREACHABLE policy: retry → queue / fall back on-device / skip), honest per-step
+   `ranOn`, dispatch wired to the paired peer over `/api/ask`.
+2. **Connector sinks from a canvas run** — a Slack/GitHub sink node still never routes
+   through the desktop's propose→approve→execute from a run (reachable → propose via the
+   desk relay; air-gapped → honest local draft + badge).
+3. **Mesh source** — a desktop meeting selectable as a workflow source.
+4. **Workflow-level default target + failure policy** (nodes inherit/override).
 
 ## Grounding (2026-06-22)
 

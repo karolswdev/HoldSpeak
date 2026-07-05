@@ -129,7 +129,13 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-05 (**HSM-16-07 DONE — docs caught up; Phase 16 is 8/9 with only
+**Last updated:** 2026-07-05 (**Phase 15 RESUMED, survey-corrected** — 15-05 recorded done
+pre-paid (one-spine proposal origin + P21 EgressScope, receipts in evidence); 15-02
+re-scoped to the per-step dispatch (the runner's `dispatchToMac` still throws; per-node
+pins ignored at run time; the HUD target label reads the app default) with `POST /api/ask`
+(16-04) as the ready-made RPC; filed: no aggregated mesh inbox yet (15-03 real),
+`PresenceStore.startPolling` never called (15-08/09 wiring). Earlier the same day:
+**HSM-16-07 DONE — docs caught up; Phase 16 is 8/9 with only
 the 16-06 owner walk left**, runbook staged the same day. Earlier:
 **HSM-16-04 DONE — the desk runs on the web too.** The web
 recipe layer resurrected from its half-landed rename (a loud truth-up: the survey's

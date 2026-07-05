@@ -8,7 +8,26 @@ a senior software architect increasing his efficiency with tools + memory he pai
 running local inference on a machine he owns that is **completely air-gapped**, and still
 extracting enormous value.)
 
-**Last updated:** 2026-06-22 (**opened.** Authored from the owner's ratified vision. The
+**Last updated:** 2026-07-05 (**RESUMED, SURVEY-CORRECTED — the deltas kept getting pre-paid.**
+The phase's four genuinely-new deltas (named in the 2026-06-22 grounding) were re-read against
+the shipped code: **15-05 is done pre-paid** (the `meeting_id` decoupling shipped as the
+one-spine owner-typed proposal `origin`; the shared egress model is Phase 21's ONE
+`EgressScope` grammar + two-surface trust chip; approval parity is Qlippy≡dashboard + the
+iPad's `decided_by` decisions — receipts in `evidence-story-05.md`); the **"run a capability
+on your Mac" RPC now exists as `POST /api/ask`** (HSM-16-04 — prompt + context in, output +
+honest per-run egress out, persists nothing); the graph already **travels and runs on the hub
+whole** (Phase 22) with per-node `runs_on`/`failure_policy` on the wire (22-01) and the target
+pick informed by real model manifests (16-08). What is genuinely open: **the per-STEP
+dispatch** — `WorkflowRunner.dispatchToMac` still THROWS `dispatchUnimplemented`, `run()`
+hard-codes `.onDevice`, per-node `modelPref` is ignored at run time, and the Queue HUD's job
+target label reads the app-wide `isLocal` (the 16-09 class of egress lie) — now HSM-15-02's
+active build; the aggregated **mesh inbox** (15-03, still real: the hub has no single
+in-flight + pending-approvals endpoint and the HUD shows no desktop lane); the **connector
+sinks from a canvas run**, the **mesh source**, and the workflow-level policy (15-02's
+remaining rows); and one wiring find: **`PresenceStore.startPolling` has no call site** — the
+15-08/09 live-poll wiring is genuinely unwired. 15-06 (the air-gapped Proof) stays the
+owner's; 15-07 docs after the builds. Earlier:
+**2026-06-22 — opened.** Authored from the owner's ratified vision. The
 connective tissue already exists in code — the iPad pairs to the desktop over
 `HTTPDesktopClient` (host + port + token), `POST /api/dictation/remote` already runs an iPad
 dictation through the desktop's full pipeline into any focused app, `/api/companion/*` is the
@@ -194,11 +213,11 @@ contract, the LLM endpoints) is **reuse**, not new.
 | ID | Story | Status | Story file | Evidence |
 |----|-------|--------|------------|----------|
 | HSM-15-01 | Dictation, into your Mac (first-class flagship mode) | in-progress (**01a desktop delta + 01b iPad SURFACE both BUILT + Simulator-proven**; live LAN trace owner-gated) | [story-01](./story-01-dictation-into-your-mac.md) | `DictateView` (reactive waveform + push-to-talk/hands-free + read-back ticks + pairing-aware reach chip + egress badge); `sendRemoteDictation(target:.focused)`; suite **250/6/0**; `dictate-surface.png` |
-| HSM-15-02 | The Workbench targets the mesh (RUNS ON: Your Mac + real connectors) | backlog | [story-02](./story-02-workbench-mesh-targets.md) | — |
+| HSM-15-02 | The Workbench targets the mesh (RUNS ON: Your Mac + real connectors) | **in-progress, survey-corrected** (pre-paid: whole-graph travel + hub runs (P22), `runs_on` on the wire (22-01), manifest-informed target naming (16-08), the desk actuator relay, and the generic RPC itself — `POST /api/ask` (16-04). **Open: the per-step dispatch** — the runner's stubbed `dispatchToMac`, per-node pins ignored at run time, the HUD's app-default target label — plus connector sinks from a run, the mesh source, workflow-level policy) | [story-02](./story-02-workbench-mesh-targets.md) | rescope in the story |
 | HSM-15-03 | The mesh queue (desktop jobs + approvals in the QueueHUD) | backlog | [story-03](./story-03-the-mesh-queue.md) | — |
-| HSM-15-04 | One runner for the mesh (local or dispatched, policy-enforcing) | in-progress (pure runner BUILT + host-proven; **CANVAS NOW EXECUTES through it** — `PatchModel.lowerToWorkflow()` → `WorkflowRunner` on-device; nodes light + Queue HUD shows live `StepOutcome` jobs; Simulator-proven) | [story-04](./story-04-one-mesh-runner.md) | suite 250/6/0 · `scratchpad/wb-exec.png` (the Workbench running) |
-| HSM-15-05 | One approval + egress contract (across surfaces) | backlog | [story-05](./story-05-one-approval-egress-contract.md) | — |
-| HSM-15-08 | The Agent Desk — your live agents + the question each is asking | **built + Simulator-proven** (`AgentDeskView`/`AgentDeskCard`; waiting sorts first + pulses, tight question quote, Answer/pin/dismiss; `HS_DEMO_AGENTDESK` seed) — live `companionStatus()` poll + voice-answer are the wiring follow-up | [story-08](./story-08-the-agent-desk.md) | `apple/build/agentdesk.png`; iPad build green (runner+desk; FailurePolicy unified into RuntimeCore) |
+| HSM-15-04 | One runner for the mesh (local or dispatched, policy-enforcing) | in-progress (pure runner BUILT + host-proven; **CANVAS NOW EXECUTES through it** — `PatchModel.lowerToWorkflow()` → `WorkflowRunner` on-device; nodes light + Queue HUD shows live `StepOutcome` jobs; Simulator-proven. **2026-07-05 survey: closes with the 15-02 dispatch** — `run()` hard-codes `.onDevice`; the dispatch seam still throws) | [story-04](./story-04-one-mesh-runner.md) | suite 250/6/0 · `scratchpad/wb-exec.png` (the Workbench running) |
+| HSM-15-05 | One approval + egress contract (across surfaces) | **done** (2026-07-05, PRE-PAID: the `meeting_id` decoupling = the one-spine owner-typed proposal `origin` (locked by `test_db_actuator_origin.py`); one egress grammar = P21 `EgressScope` + two-surface trust chip; approval parity = Qlippy≡dashboard (P56) + iPad decisions (P19); air-gapped draft+badge = 17-05/16-09. Approve-from-the-HUD stays 15-03's) | [story-05](./story-05-one-approval-egress-contract.md) | [evidence](./evidence-story-05.md) |
+| HSM-15-08 | The Agent Desk — your live agents + the question each is asking | **built + Simulator-proven** (`AgentDeskView`/`AgentDeskCard`; waiting sorts first + pulses, tight question quote, Answer/pin/dismiss; `HS_DEMO_AGENTDESK` seed) — live `companionStatus()` poll + voice-answer are the wiring follow-up (**2026-07-05 survey: `PresenceStore.startPolling` exists but has NO call site — the live wiring is genuinely unwired**) | [story-08](./story-08-the-agent-desk.md) | `apple/build/agentdesk.png`; iPad build green (runner+desk; FailurePolicy unified into RuntimeCore) |
 | HSM-15-09 | Proactive agent presence — surface a waiting agent the moment it asks | **built + Simulator-proven** (`PresenceWatcher` pure rising-edge/debounce/quiet-mode, 7 host tests; HUD waiting-lane + the nudge card w/ Answer-by-voice; non-autonomous) — voice delivery reuses the desk composer (LAN proof owner-gated) | [story-09](./story-09-proactive-agent-presence.md) | 83 ProvidersTests green; `presence-hud-lane.png` |
 | HSM-15-10 | The Connect surface ("Your Computer" — discovery-first pairing) | **built end-to-end + Simulator-proven** (desktop advertises `_holdspeak._tcp` + unauth `/api/mesh/info`; iPad `ConnectView` browses via `NWBrowser`, discovered list by name + reach, tap-to-pair w/ token step + manual fallback, `DictatePeerStore.adopt/forget`; `NSBonjourServices` in plist + gen assertion) — real LAN discover+pair is the owner-at-iPad proof | [story-10](./story-10-the-connect-surface.md) | 12 mesh + 2205 desktop · iPad build green · `connect-surface.png` |
 | HSM-15-06 | The Proof — air-gapped value + the launch narrative | backlog | [story-06](./story-06-the-proof-and-narrative.md) | — |
@@ -206,7 +225,22 @@ contract, the LLM endpoints) is **reuse**, not new.
 
 ## Where we are
 
-**2026-06-22 — opened.** Phase authored from the owner's ratified Mesh vision. The thesis:
+**2026-07-05 — resumed, survey-corrected.** Two weeks of other phases quietly paid this
+one's bills: the proposal ledger decoupling (one-spine), the one egress grammar (Phase 21),
+whole-graph travel + hub runs with `runs_on` on the wire (Phase 22), manifest-informed
+target naming (16-08), and — as of this morning — the generic "run a capability on your
+Mac" RPC itself (`POST /api/ask`, HSM-16-04). The survey records 15-05 done pre-paid with
+receipts and re-scopes 15-02 to its genuinely-open heart: **the per-step dispatch**. The
+runner's `dispatchToMac` seam still throws, `run()` hard-codes `.onDevice`, a node pinned
+in the inspector is honoured on the wire but ignored at run time, and the Queue HUD labels
+every job with the app-wide default instead of where the step actually ran — the same
+class of egress lie 16-09 killed on the desk. That slice builds next, wiring the runner to
+the paired peer over `/api/ask` with the IF-UNREACHABLE policy (retry → queue / fall back
+on-device / skip) doing exactly what its inspector hints promise. Also filed: the hub
+still has no aggregated in-flight + pending-approvals endpoint (15-03 stays real), and
+`PresenceStore.startPolling` has no call site (the 15-08/09 live wiring is unwired).
+
+Earlier — **2026-06-22 — opened.** Phase authored from the owner's ratified Mesh vision. The thesis:
 HoldSpeak is a **personal intelligence mesh** — a desktop hub + mobile companions, two modes on
 every surface, fluid compute, one queue, one approval contract, all private and air-gappable.
 The seam already exists (`HTTPDesktopClient` pairing, `/api/dictation/remote`, `/api/companion/*`,
