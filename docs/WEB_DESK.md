@@ -22,7 +22,8 @@ Every primitive is a pixel-art object with a soft shadow and a gentle bob:
 - **meetings** are cassette tapes,
 - **notes** are notepads,
 - **knowledge bases** are crystals,
-- **agents** and **coder sessions** are little characters,
+- **recipes** (your saved AI personas) and **coder sessions** are little
+  characters,
 - **chains** and **workflows** are cartridges,
 - **artifacts** are typed pages, each carrying its lineage.
 
@@ -37,9 +38,9 @@ No header, no sidebar. A compact cluster floats in each corner:
   (Dictation, Meetings, Studio, Settings); beside it, the hub dot (green
   when connected) and the **egress badge**, the one trust answer: local,
   or exactly which endpoint can be reached.
-- **Top right**: the create chips (**+ Note**, **+ KB**, **+ Agent**,
-  **+ Zone**), **Tidy** (only when you have arranged things), and
-  refresh.
+- **Top right**: the create chips (**+ Note**, **+ KB**, **+ Recipe**,
+  **+ Zone**, **+ Workflow**), **Tidy** (only when you have arranged
+  things), and refresh.
 - **Bottom center**: the **Record orb**.
 - **Right edge**: the **agent rail**.
 
@@ -47,10 +48,12 @@ No header, no sidebar. A compact cluster floats in each corner:
 
 A create chip makes the thing immediately; the object materializes at
 center and its editor opens beside it on the stage, with the world dimmed
-around it. Notes take a title, markdown body, and tags; agents show the
-essentials with **More** expanding the advanced fields in the same card.
-Everything autosaves as you type; Escape or a click outside settles the
-object back. There are no dialog windows on the desk.
+around it. Notes take a title, markdown body, and tags; recipes show the
+essentials (avatar, name, role, system prompt) with **More** expanding
+the advanced fields (template, tools, knowledge base, and which runtime
+profile it runs on) in the same card. Everything autosaves as you type;
+Escape or a click outside settles the object back. There are no dialog
+windows on the desk.
 
 ## Open, in place
 
@@ -85,12 +88,38 @@ stage as an object.
 
 ## Ask from the rail
 
-The right-edge rail holds your agent personas, each wearing a dot for
-where it runs (green on device, blue endpoint). Tap one, type an ask, and
-run it. The answer comes back in place with a copy button, and it also
+The right-edge rail holds your recipes, each wearing a dot for where it
+runs (green on device, blue endpoint). Tap one, type an ask, and run it.
+The answer comes back in place with a copy button, and it also
 **persists as an artifact on the stage**, wearing the NEW mark, with a
-lineage chip naming the agent. File it, reopen it, or copy it like
+lineage chip naming the recipe. File it, reopen it, or copy it like
 anything else.
+
+## Rope things together and Ask AI
+
+The desk's signature move needs no saved recipe at all. Drag on the
+empty desk and a rope follows your pointer; everything inside it is
+selected (shift-click or cmd-click ropes objects one at a time). A bar
+rises with the count and one action: **Ask AI**.
+
+The composer docks at the edge with the desk still alive behind it. Pick
+a lens (Summarize, Action items, Risks, Decisions, Draft email) or speak
+your own instruction with the mic, choose where it runs (the hub's
+default, or any runtime profile), and Ask. The hub reads the roped
+objects from its own store (a note's body, an artifact's text, a
+meeting's summary and actions) and runs your instruction over exactly
+that pile.
+
+The answer prints as a card wearing an honest badge: which model ran it
+and, for an endpoint run, which host it went to. This run, not the app
+default. Then you judge it:
+
+- **Keep** makes it a real artifact on the stage, and its lineage names
+  every object it read plus the exact instruction you gave.
+- **Bin** closes it. Nothing is stored.
+
+A kept ask syncs like any other artifact, so the card you keep here
+shows the same lineage on the iPad, and one kept there lands here.
 
 ## Talk, don't type
 

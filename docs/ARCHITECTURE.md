@@ -306,6 +306,60 @@ The composer's draft runs on the engine you configured, on device or on your
 endpoint, and shows that as its own badge; where the draft runs is not where
 the answer goes. A failed delivery keeps the question on the desk.
 
+## The desk across surfaces
+
+The desk is one convention rendered three times. Every desk concept
+(meeting, artifact, note, recipe, knowledge base, directory, chain,
+workflow, profile) is a primitive under a single documented contract
+([the Primitive Framework](../pm/roadmap/holdspeak-mobile/contracts/THE_PRIMITIVE_FRAMEWORK.md):
+one canonical table of kinds, wire shapes, and per-surface parity), and
+each surface derives its rendering from that contract rather than keeping
+its own model. The desktop hub owns the canonical store; the iPad and the
+web desk are authoring ports onto it.
+
+Not everything on a desk is the same kind of data, and the sync model
+keeps four classes apart:
+
+- **Content** (meetings, artifacts): the canonical record; syncs.
+- **Organization** (directories, knowledge bases, membership): which
+  object lives in which container is shared truth; it syncs, and the hub
+  is canonical.
+- **Capability** (recipes, chains, workflows, runtime profiles): the
+  definitions are portable and sync, so a workflow authored on the iPad
+  runs on the hub. Models are the exception: only a small **manifest**
+  syncs per node (its id, node, name, capabilities), so every surface can
+  say which model "run it on your desktop" would actually use. The model
+  binary never rides the wire, and the schema, the Swift wire test, and a
+  hub route test each assert that independently.
+- **Layout** (where a card sits, how it is arranged): per-device
+  ergonomics; never syncs.
+
+```mermaid
+flowchart LR
+  subgraph hub["Desktop hub (canonical store)"]
+    DB[("SQLite<br/>(db/*)")]
+    SY["Sync routes<br/>(web/routes/sync.py)"]
+  end
+  IPAD["iPad desk<br/>(DeskDioramaStage)"]
+  WEBD["Web desk<br/>(web/src/desk/)"]
+  IPAD <-->|"content, organization, capability,<br/>model manifests (never binaries)"| SY
+  WEBD <-->|"the same primitive routes"| SY
+  SY <--> DB
+  IPAD -. "layout stays on the iPad" .- IPAD
+  WEBD -. "layout stays in the browser" .- WEBD
+```
+
+The simplest capability needs no authoring at all. On any desk you can
+rope a few objects together and ask the AI one thing about exactly that
+pile: the run is grounded in the canonical record (the hub or the device
+reads each roped object's real content), nothing is stored unless you
+keep the answer, and a kept answer becomes an artifact whose lineage
+names every object it read plus the exact instruction. Both surfaces
+mint and read one provenance shape, so a card kept on the iPad shows the
+same lineage on the web and the other way round. The printed card's
+badge states where that run went (the model, and the host for an
+endpoint run), resolved per run rather than from the app default.
+
 ## The trust boundary
 
 Everything inside the box runs on your machine. Every arrow leaving it is a

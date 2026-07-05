@@ -43,7 +43,7 @@ comes back as typed, reviewable artifacts:
 
 Launch `holdspeak` and the browser opens on the Desk: everything the two
 modes produce, living as objects in one spatial world. Meetings, notes,
-knowledge bases, agents, and their artifacts float on the stage; zones are
+knowledge bases, recipes, and their artifacts float on the stage; zones are
 shelves you drag things onto; tap anything and it opens in place.
 
 <p align="center">
@@ -52,10 +52,13 @@ shelves you drag things onto; tap anything and it opens in place.
 <p align="center"><em>The front door: the world your voice work lives in. The orb records, the rail asks, the tray files.</em></p>
 
 The Desk is where the loops close. Press the orb and the hub records a
-meeting; when it ends, the meeting lands on the stage as an object. Ask an
-agent from the rail and its answer persists as an artifact you can open,
-trace (the lineage chip names the agent that made it), and file into a
-zone. The egress badge in the corner is the one trust answer: local, or
+meeting; when it ends, the meeting lands on the stage as an object. Ask a
+recipe from the rail and its answer persists as an artifact you can open,
+trace (the lineage chip names the recipe that made it), and file into a
+zone. Or rope a few objects together with the lasso and **Ask AI** about
+exactly that pile: the answer prints as a card you keep or bin, and a kept
+card records every object it read plus your instruction. The egress badge
+in the corner is the one trust answer: local, or
 exactly which endpoint. See [The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md).
 
 ## Why it's different

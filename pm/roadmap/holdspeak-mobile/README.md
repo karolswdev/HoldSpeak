@@ -13,7 +13,16 @@
 > the build workaround args). Older loop/gotcha background: [`HANDOVER.md`](./HANDOVER.md).
 
 **Current phase:** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
-— **7/9: HSM-16-04 DONE — the desk runs on the web too.** The survey-corrected remaining
+— **8/9: HSM-16-07 DONE — the entry points caught up; ONLY the 16-06 owner walk remains**
+(staged as [`HSM-16-06-WALK.md`](./phase-16-the-desk-everywhere/HSM-16-06-WALK.md): four
+checks ~15 min on the couch queue — the Ask atom on glass, the manifest naming the hub's
+real model, the org loop both ways, one kept Ask on every surface; PASS × 4 closes the
+phase). The docs: ARCHITECTURE's new "The desk across surfaces" (the four-class sync
+taxonomy, canonical hub + layout-is-local, no-binary manifests, the atom's cross-surface
+arc, one new rendered diagram), WEB_DESK's recipe-rename catch-up + the "Rope things
+together and Ask AI" walkthrough, README's tour sentence; doc guard 18/18, mermaid 2/2.
+Earlier the same day:
+**7/9: HSM-16-04 DONE — the desk runs on the web too.** The survey-corrected remaining
 slice shipped with its own truth-up: the "pre-paid" recipe layer was DEAD on the web (the
 Phase-17 rename half-landed — wrong loader keys, four stale kind checks, a crashing
 "+ Agent" chip, a red desk vitest suite no gate watched); resurrected, regression-locked,
@@ -120,7 +129,9 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-05 (**HSM-16-04 DONE — the desk runs on the web too.** The web
+**Last updated:** 2026-07-05 (**HSM-16-07 DONE — docs caught up; Phase 16 is 8/9 with only
+the 16-06 owner walk left**, runbook staged the same day. Earlier:
+**HSM-16-04 DONE — the desk runs on the web too.** The web
 recipe layer resurrected from its half-landed rename (a loud truth-up: the survey's
 "pre-paid" credit was false in practice) + in-world authoring parity; the Ask atom's full
 web arc over new hub `/api/ask` + `/api/ask/keep`, keep byte-identical to the iPad's kept
