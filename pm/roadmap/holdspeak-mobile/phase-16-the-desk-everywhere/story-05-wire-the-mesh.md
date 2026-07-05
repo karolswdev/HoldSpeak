@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 16
-- **Status:** todo
+- **Status:** done (2026-07-04 resume survey — pre-paid: the Phase-23-04 10-kind push→pull round-trip matrix carries kb/directory/membership byte-faithful, golden-pinned on both sides of the wire; live merges proven in the 22-01/22-04 DeskSync passes)
 - **Depends on:** HSM-16-02 (model), HSM-16-03 (hub), HSM-16-04 (web surface).
 - **Unblocks:** HSM-16-06 (proof).
 - **Owner:** unassigned

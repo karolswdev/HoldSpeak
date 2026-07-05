@@ -6,12 +6,23 @@ delivered and look for parity with the web client in Astro… and design for syn
 desktop. This is all a mesh system, so everything has to flow back and forth. Knowledge bases, stuff
 like that."*)
 
-**Last updated:** 2026-06-24 (**opened.** Authored directly from the instruction. Grounds in three
-existing arcs: the **DeskObject convention** ([[story-20-the-desk-object-model]] / HSM-14-20), the
-**sync object model** (Phase 10 — `SyncKind` / `Synced<>` / `ChangeSet` in
-`apple/Sources/Contracts/Sync.swift`), and **the Mesh** (Phase 15 — `HTTPDesktopClient` pairing, the
-desktop as hub, one approval+egress contract). Leads with **HSM-16-01 (the parity & sync contract)** —
-the platform-neutral spec everything else is measured against.)
+**Last updated:** 2026-07-04 (**RESUMED, SURVEY-CORRECTED — more than half the phase was pre-paid
+while it slept.** The phase was authored 2026-06-24 and then the Primitive Framework
+([`THE_PRIMITIVE_FRAMEWORK.md`](../contracts/THE_PRIMITIVE_FRAMEWORK.md), waves 1–4, PRs #140–142),
+Phase 17 (recipes atomic across hub/wire/Swift/web), Phase 22 (workflows travel + run on the hub),
+Phase 23 (the 10-kind round-trip matrix), and the HS-73-02 owner call ("the desk IS the front door" —
+`web/src/pages/index.astro` mounts `DeskApp`) delivered its parity + sync spine without ever touching
+this doc. The survey records **16-01/02/03/05 done pre-paid** (evidence in the table; fresh targeted
+run `uv run pytest tests/unit/test_web_routes_primitives.py test_web_routes_sync*.py
+test_db_primitives.py test_primitive_contract.py` → **66 passed**, on top of today's `swift test`
+437/8/0 from the Phase-23 closeout) and re-scopes 16-04/08 to their genuinely-open slices. What
+remains is the phase's whole point made sharp: **the capability layer's felt value.**
+**HSM-16-09 — the Ask AI atom — now LEADS**: it exists nowhere in the code (grep-verified), its
+every dependency has since shipped (lasso HSM-14-19, `routableText` drop grammar 17-04, the
+fresh-provider draft seam 17-05, runtime profiles Phase 24, the `EgressScope` grammar 21-01, the
+materialize treatment 14-03, the speak-to-fill mic), and it composes them into the desk's signature
+moment with almost no new construction. Sequence: 16-09 → 16-08 (the atom generalized) → 16-04's
+web slice → 16-06 proof → 16-07 docs.)
 
 ## Why this phase exists
 
@@ -77,25 +88,34 @@ the user. It is the spine of the whole phase.
 
 | ID | Title | Status | Thrust |
 |---|---|---|---|
-| HSM-16-01 | The DeskObject parity & sync contract (inventory + spec) | todo | the baseline both thrusts measure against |
-| HSM-16-02 | The organization sync model (design + contract additions) | todo | sync (design-first) |
-| HSM-16-03 | The desktop hub surface for organization | todo | sync (hub) |
-| HSM-16-04 | The web Astro Desk (parity build) | todo | parity (the big build) |
-| HSM-16-05 | Wire the mesh — organization flows back and forth | todo | sync (wire) |
-| HSM-16-09 | **The Ask AI atom** — lasso → ask → speak → print → keep/bin (on-device, no mesh needed) | todo | capability (the atom — a lead candidate) |
-| HSM-16-08 | Capability objects: workflows + models, combinable + runnable across the mesh | todo | capability (combine/execute) |
-| HSM-16-06 | The cross-device proof | todo | proof (real metal) |
+| HSM-16-01 | The DeskObject parity & sync contract (inventory + spec) | **done** (pre-paid: [`THE_PRIMITIVE_FRAMEWORK.md`](../contracts/THE_PRIMITIVE_FRAMEWORK.md) IS this spec — the canonical primitive table, sync classes, wire shapes, per-surface parity inventory; authored 2026-06-26 on the owner's directive, kept current through wave 4 + the Phase-17 recipe rename) | the baseline both thrusts measure against |
+| HSM-16-02 | The organization sync model (design + contract additions) | **done** (pre-paid: `SyncKind.kb`/`.directory`/`.membership` live in `apple/Sources/Contracts/Sync.swift` with identity+membership syncing and geometry/paint per-device, exactly this story's design call; locked by the Phase-23-04 round-trip matrix) | sync (design-first) |
+| HSM-16-03 | The desktop hub surface for organization | **done** (pre-paid: `holdspeak/web/routes/primitives/` serves directories/kbs/notes/recipes/chains/workflows/profiles CRUD + `routes/sync.py`; fresh 66-test green run 2026-07-04) | sync (hub) |
+| HSM-16-04 | The web Astro Desk (parity build) | **in-progress, survey-corrected** (substantially pre-paid: the desk IS the web front door — `index.astro` mounts `DeskApp` with World/Stage/zones/pull-out/RecipeRail/InlineEditor/mic, and 22-03 made it a workflow producer; **remaining slice = web recipe/atelier authoring** — the 17-08 closeout filed it verbatim as "the next slice" — **+ the Ask-AI atom's web parity** once 16-09 lands) | parity (the big build) |
+| HSM-16-05 | Wire the mesh — organization flows back and forth | **done** (pre-paid: the Phase-23-04 10-kind per-primitive push→pull round-trip matrix covers kb/directory/membership byte-faithful, golden-pinned on both sides of the wire; live merges proven in the 22-01/22-04 DeskSync passes) | sync (wire) |
+| HSM-16-09 | **The Ask AI atom** — lasso → ask → speak → print → keep/bin (on-device, no mesh needed) | todo — **LEADS** (ratified by the resume survey: zero code exists, every seam shipped) | capability (the atom) |
+| HSM-16-08 | Capability objects — survey-corrected remaining scope: **generalize the atom** (save an Ask as a recipe/workflow you re-run by drop) + **model manifests** (`SyncKind` has no `model` kind yet — the framework table promises one) + the combine-by-drop gestures for recipes/chains | todo (partially pre-paid: workflows already sync + run on the hub, Phase 22; recipes/chains sync, schema v8) | capability (combine/execute) |
+| HSM-16-06 | The cross-surface proof (author on one surface → felt on the other two, real metal) | todo (rescoped to ride the atom: an Ask kept on the iPad appears file-able on the web desk + the hub; org edits round-trip live) | proof (real metal) |
 | HSM-16-07 | Docs catch-up (mesh + DeskObject across surfaces) | todo | docs |
 
-*(16-08/09 are the capability layer; 09 is the atom 08 generalizes. 09 needs no sync and can lead. 06/07
-stay the closing proof + docs.)*
+*(The build order after the survey: **16-09 → 16-08 → 16-04's remaining slice → 16-06 → 16-07.**
+09 is the atom 08 generalizes; 09 needs no sync and leads.)*
 
 ## Where we are
 
-Just opened. The iPad DeskOS (HSM-14-19/20) is live on the device: objects, spill, lasso, directories,
-windows, the KB primitive on a documented convention. Nothing of it is on the web or syncs yet — that
-is exactly this phase. Next action: author/close **HSM-16-01** (the parity & sync contract), since both
-the web build and the sync design are measured against it.
+**Resumed 2026-07-04, survey-corrected.** The parity + sync spine this phase was opened to design got
+built underneath it by the Primitive Framework and Equilibrium (see the table's evidence pointers) —
+the survey records 16-01/02/03/05 done pre-paid on a fresh 66-test green run and re-scopes the rest.
+What was never built anywhere is the phase's own headline: **the Ask AI atom** (16-09), the desk's
+gamified core — lasso a pile of context, speak your instruction on top of it, watch the answer print
+out of the shelf, keep it (a real synced `Artifact` with provenance) or bin it. Every dependency has
+shipped since the story was written: the lasso (HSM-14-19), the `routableText` drop/grounding grammar
+(17-04), the fresh-resolved-provider one-call draft pattern (17-05's `CoderAnswer.draft`, Mode-A KV
+rule included), per-agent runtime profiles with honest key custody (Phase 24), the one `EgressScope`
+grammar (21-01), the materialize treatment (14-03), and the speak-to-fill mic
+([[feedback_voice_mic_every_input]]). It runs on-device with no mesh — air-gap honest — and it is
+in-world, no modals ([[feedback_no_modals_in_world]]). Next action: **build HSM-16-09 on the iPad**,
+then generalize it (16-08), then carry it to the web (16-04's slice), then the cross-surface proof.
 
 ## Relationship to the rest of the roadmap
 

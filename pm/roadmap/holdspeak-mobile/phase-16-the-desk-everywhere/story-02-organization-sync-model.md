@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 16
-- **Status:** todo
+- **Status:** done (2026-07-04 resume survey — pre-paid: `SyncKind.kb`/`.directory`/`.membership` shipped in `apple/Sources/Contracts/Sync.swift` with identity+membership canonical and geometry per-device, exactly this story's design call; locked by the Phase-23-04 round-trip matrix)
 - **Depends on:** HSM-16-01 (the shapes), Phase 10 (`Sync.swift`).
 - **Unblocks:** HSM-16-03 (hub), HSM-16-05 (wire).
 - **Owner:** unassigned
