@@ -10,12 +10,12 @@ import Contracts
 // contract from the flat fields on every push, stamping `createdAt = now` (creation
 // time never stable) and hardcoding whatever the flat record didn't carry (`Note.tags`
 // wiped, `KB.memberIds` wiped, a meeting-born `Artifact`'s meetingId/type/confidence/
-// status/sources replaced, `WorkflowDefinition.graphJson` dropped, `Agent.tools`
+// status/sources replaced, `WorkflowDefinition.graphJson` dropped, `Recipe.tools`
 // dropped, every record's timestamps re-minted). With the contract embedded, `synced(at:)`
 // bumps ONLY `updatedAt` and everything else rides through untouched.
 //
 // Codable is dual-shape for device-data migration: these records persist as
-// `@AppStorage` JSON arrays on real devices (hs.diorama.notes/.agents/…), so the OLD
+// `@AppStorage` JSON arrays on real devices (hs.diorama.notes/.recipes/…), so the OLD
 // flat shape (`{id, title, body, path}`) must keep decoding. Legacy rows build a fresh
 // contract with `createdAt = updatedAt =` decode-time. The NEW shape nests the
 // contract: `{contract: {…}, path: …}`.
@@ -28,14 +28,14 @@ import Contracts
 // MARK: - RunProvenance — where a generated output came from
 
 // LINEAGE — records the input card an output was made from (id + human title) and what
-// produced it (the agent/chain that ran). Carried into the synced `Artifact.sources`,
+// produced it (the recipe/chain that ran). Carried into the synced `Artifact.sources`,
 // so web reads the same provenance the iPad shows.
 public struct RunProvenance: Codable, Equatable, Sendable {
     public var sourceCardId: String      // the routed primitive's id (the input)
     public var sourceCardTitle: String   // its human title (what the lineage line names)
-    public var viaId: String             // the agent/chain id that produced this
+    public var viaId: String             // the recipe/chain id that produced this
     public var viaName: String           // its name ("Scout", a crew name)
-    public var viaKind: String           // "agent" | "chain"
+    public var viaKind: String           // "recipe" | "chain"
 
     public init(sourceCardId: String, sourceCardTitle: String, viaId: String, viaName: String, viaKind: String) {
         self.sourceCardId = sourceCardId; self.sourceCardTitle = sourceCardTitle
@@ -189,7 +189,7 @@ public struct OutputRecord: Codable, Identifiable, Equatable, Sendable {
             if provenance == nil { contract.sources = [ArtifactSource(sourceType: "desk", sourceRef: newValue)] }
         }
     }
-    // Provenance — populated when this output came from a routed run (agent/chain). nil for
+    // Provenance — populated when this output came from a routed run (recipe/chain). nil for
     // direct lens routes / live captures / harvested scores (their `source` is the lineage).
     // Rides BOTH in `sources` (the canonical provenance array web reads) and in
     // `structuredJson` (so the typed `RunProvenance` can be rebuilt after a round-trip).
@@ -348,10 +348,10 @@ public struct WorkflowRecord: Codable, Identifiable, Equatable, Sendable {
     }
 }
 
-// MARK: - AgentRecord — a tailored persona (embeds `Agent`)
+// MARK: - RecipeRecord — a tailored persona (embeds `Recipe`)
 
-public struct AgentRecord: Codable, Identifiable, Equatable, Sendable {
-    public var contract: Agent   // THE contract fields — single source
+public struct RecipeRecord: Codable, Identifiable, Equatable, Sendable {
+    public var contract: Recipe   // THE contract fields — single source
 
     public var id: String { contract.id }
     public var name: String { get { contract.name } set { contract.name = newValue } }
@@ -366,20 +366,20 @@ public struct AgentRecord: Codable, Identifiable, Equatable, Sendable {
         get { contract.kbId ?? "" }
         set { contract.kbId = newValue.isEmpty ? nil : newValue }
     }
-    // Phase 24 — the RuntimeProfile this agent runs on ("" ⇔ nil = active default).
+    // Phase 24 — the RuntimeProfile this recipe runs on ("" ⇔ nil = active default).
     public var profileId: String {
         get { contract.profileId ?? "" }
         set { contract.profileId = newValue.isEmpty ? nil : newValue }
     }
 
-    public init(contract a: Agent) {
+    public init(contract a: Recipe) {
         self.contract = a
     }
     public init(id: String, name: String, avatar: String, role: String, systemPrompt: String,
                 userTemplate: String, manualContext: String, useZoneContext: Bool, kb: String,
                 profileId: String = "") {
         let now = Date()
-        self.contract = Agent(id: id, name: name, avatar: avatar, role: role,
+        self.contract = Recipe(id: id, name: name, avatar: avatar, role: role,
                               systemPrompt: systemPrompt, userTemplate: userTemplate, tools: [],
                               kbId: kb.isEmpty ? nil : kb, manualContext: manualContext,
                               useZoneContext: useZoneContext,
@@ -387,26 +387,26 @@ public struct AgentRecord: Codable, Identifiable, Equatable, Sendable {
                               createdAt: now, updatedAt: now)
     }
 
-    // sync-ready envelope (carried by ChangeSet.agents) — createdAt/tools preserved.
-    public func synced(at: Date = Date()) -> Synced<Agent> {
+    // sync-ready envelope (carried by ChangeSet.recipes) — createdAt/tools preserved.
+    public func synced(at: Date = Date()) -> Synced<Recipe> {
         var c = contract; c.updatedAt = at
-        return .live(c, id: c.id, kind: .agent, modifiedAt: at)
+        return .live(c, id: c.id, kind: .recipe, modifiedAt: at)
     }
 
-    // Legacy decode stays tolerant: persisted agents predate `profileId` (and earlier
+    // Legacy decode stays tolerant: persisted recipes predate `profileId` (and earlier
     // fields), so absent keys default rather than fail — a missing field must never
-    // wipe a user's saved agents.
+    // wipe a user's saved recipes.
     private enum CodingKeys: String, CodingKey { case contract }
     private enum LegacyKeys: String, CodingKey {
         case id, name, avatar, role, systemPrompt, userTemplate, manualContext, useZoneContext, kb, profileId
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        if let k = try c.decodeIfPresent(Agent.self, forKey: .contract) {
+        if let k = try c.decodeIfPresent(Recipe.self, forKey: .contract) {
             contract = k
         } else {
             let l = try decoder.container(keyedBy: LegacyKeys.self)
-            self = AgentRecord(
+            self = RecipeRecord(
                 id: try l.decode(String.self, forKey: .id),
                 name: try l.decode(String.self, forKey: .name),
                 avatar: try l.decode(String.self, forKey: .avatar),
@@ -425,7 +425,7 @@ public struct AgentRecord: Codable, Identifiable, Equatable, Sendable {
     }
 }
 
-// MARK: - ChainRecord — an ordered crew of agents (embeds `Chain`)
+// MARK: - ChainRecord — an ordered chain of recipes (embeds `Chain`)
 
 public struct ChainRecord: Codable, Identifiable, Equatable, Sendable {
     public var contract: Chain   // THE contract fields — single source

@@ -54,8 +54,8 @@ def test_note_requires_id(db: Database) -> None:
 
 
 def test_agent_persona_roundtrip(db: Database) -> None:
-    agent = db.agents.upsert(
-        agent_id="a1",
+    agent = db.recipes.upsert(
+        recipe_id="a1",
         name="Summarizer",
         avatar="robot",
         role="assistant",
@@ -69,7 +69,7 @@ def test_agent_persona_roundtrip(db: Database) -> None:
     assert agent.kb_id == "kb1"
     assert agent.system_prompt == "You summarize."
 
-    got = db.agents.get("a1")
+    got = db.recipes.get("a1")
     assert got is not None and got.user_template == "Summarize: {input}"
 
     # to_dict carries the persona contract shape.
@@ -78,8 +78,8 @@ def test_agent_persona_roundtrip(db: Database) -> None:
                 "tools", "kb_id", "last_modified", "deleted"):
         assert key in d
 
-    assert db.agents.delete("a1") is True
-    assert db.agents.get("a1") is None
+    assert db.recipes.delete("a1") is True
+    assert db.recipes.get("a1") is None
 
 
 def test_kb_chain_workflow_roundtrip(db: Database) -> None:

@@ -22,7 +22,7 @@ public enum SyncKind: String, Codable, Sendable, CaseIterable {
     case directory      // the iPad "zone": identity + nesting (geometry/paint stays local)
     case membership = "directory_membership"   // a primitive's home-directory edge; wire kind matches the hub
     // capability
-    case agent
+    case recipe
     case chain
     case workflow
     case profile        // a runtime/connectivity target (Phase 24); SHAPE only — the API key never syncs
@@ -79,7 +79,7 @@ public struct ChangeSet: Codable, Equatable, Sendable {
     public var kbs: [Synced<KB>]
     public var directories: [Synced<Directory>]   // the iPad zone's identity + nesting
     public var directoryMemberships: [Synced<Membership>]  // primitive → home-directory edges
-    public var agents: [Synced<Agent>]
+    public var recipes: [Synced<Recipe>]
     public var chains: [Synced<Chain>]
     public var workflows: [Synced<WorkflowDefinition>]
     public var profiles: [Synced<RuntimeProfile>]   // runtime targets — SHAPE only (key never synced)
@@ -87,7 +87,7 @@ public struct ChangeSet: Codable, Equatable, Sendable {
     public init(meetings: [Synced<Meeting>] = [], artifacts: [Synced<Artifact>] = [],
                 notes: [Synced<Note>] = [], kbs: [Synced<KB>] = [],
                 directories: [Synced<Directory>] = [], directoryMemberships: [Synced<Membership>] = [],
-                agents: [Synced<Agent>] = [], chains: [Synced<Chain>] = [],
+                recipes: [Synced<Recipe>] = [], chains: [Synced<Chain>] = [],
                 workflows: [Synced<WorkflowDefinition>] = [], profiles: [Synced<RuntimeProfile>] = []) {
         self.meetings = meetings
         self.artifacts = artifacts
@@ -95,7 +95,7 @@ public struct ChangeSet: Codable, Equatable, Sendable {
         self.kbs = kbs
         self.directories = directories
         self.directoryMemberships = directoryMemberships
-        self.agents = agents
+        self.recipes = recipes
         self.chains = chains
         self.workflows = workflows
         self.profiles = profiles
@@ -105,7 +105,7 @@ public struct ChangeSet: Codable, Equatable, Sendable {
     // know a kind (e.g. the hub before it learns `profiles`) sends a subset, and the others must still
     // decode — the whole point of cross-surface equilibrium. (Encoding stays synthesized: all keys out.)
     private enum CodingKeys: String, CodingKey {
-        case meetings, artifacts, notes, kbs, directories, directoryMemberships, agents, chains, workflows, profiles
+        case meetings, artifacts, notes, kbs, directories, directoryMemberships, recipes, chains, workflows, profiles
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -115,7 +115,7 @@ public struct ChangeSet: Codable, Equatable, Sendable {
         kbs = try c.decodeIfPresent([Synced<KB>].self, forKey: .kbs) ?? []
         directories = try c.decodeIfPresent([Synced<Directory>].self, forKey: .directories) ?? []
         directoryMemberships = try c.decodeIfPresent([Synced<Membership>].self, forKey: .directoryMemberships) ?? []
-        agents = try c.decodeIfPresent([Synced<Agent>].self, forKey: .agents) ?? []
+        recipes = try c.decodeIfPresent([Synced<Recipe>].self, forKey: .recipes) ?? []
         chains = try c.decodeIfPresent([Synced<Chain>].self, forKey: .chains) ?? []
         workflows = try c.decodeIfPresent([Synced<WorkflowDefinition>].self, forKey: .workflows) ?? []
         profiles = try c.decodeIfPresent([Synced<RuntimeProfile>].self, forKey: .profiles) ?? []
@@ -124,11 +124,11 @@ public struct ChangeSet: Codable, Equatable, Sendable {
     public var isEmpty: Bool {
         meetings.isEmpty && artifacts.isEmpty && notes.isEmpty && kbs.isEmpty
             && directories.isEmpty && directoryMemberships.isEmpty
-            && agents.isEmpty && chains.isEmpty && workflows.isEmpty && profiles.isEmpty
+            && recipes.isEmpty && chains.isEmpty && workflows.isEmpty && profiles.isEmpty
     }
     public var count: Int {
         meetings.count + artifacts.count + notes.count + kbs.count
             + directories.count + directoryMemberships.count
-            + agents.count + chains.count + workflows.count + profiles.count
+            + recipes.count + chains.count + workflows.count + profiles.count
     }
 }

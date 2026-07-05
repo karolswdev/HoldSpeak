@@ -829,6 +829,73 @@ class TestCompanionControlEndpoints:
             == 400
         )
 
+    # ── HSM-17-02: the live set at GET /api/coders/sessions ─────────────
+
+    def _live_sessions(self, client, **params):
+        query = "&".join(f"{k}={v}" for k, v in params.items())
+        url = "/api/coders/sessions" + (f"?{query}" if query else "")
+        response = client.get(url)
+        assert response.status_code == 200
+        return response.json()
+
+    def test_sessions_lists_the_full_live_set_not_just_awaiting(self, companion):
+        # A working session (no captured question) is invisible on the status
+        # board but MUST appear in the live set.
+        companion.module.ingest_agent_hook_event(
+            agent="claude",
+            payload={
+                "session_id": "busy",
+                "hook_event_name": "UserPromptSubmit",
+                "cwd": str(companion.state.parent),
+            },
+            state_path=companion.state,
+        )
+        companion.ingest("asking", "Ship it?")
+
+        payload = self._live_sessions(companion.client)
+
+        assert payload["count"] == 2
+        by_id = {item["session"]["session_id"]: item for item in payload["sessions"]}
+        assert by_id["busy"]["session"]["state"] == "working"
+        assert by_id["asking"]["session"]["state"] == "waiting"
+        assert by_id["asking"]["session"]["question"] == "Ship it?"
+        assert by_id["busy"]["identity"] is not None
+
+    def test_sessions_agent_filter(self, companion):
+        companion.ingest("c1", "Claude?", agent="claude")
+        companion.ingest("x1", "Codex?", agent="codex")
+
+        payload = self._live_sessions(companion.client, agent="claude")
+
+        assert payload["count"] == 1
+        assert payload["sessions"][0]["session"]["agent"] == "claude"
+
+    def test_sessions_tombstones_are_included_then_filterable(self, companion):
+        companion.ingest("done", "Anything else?", agent="claude")
+        companion.module.ingest_agent_hook_event(
+            agent="claude",
+            payload={
+                "session_id": "done",
+                "hook_event_name": "SessionEnd",
+                "cwd": str(companion.state.parent),
+            },
+            state_path=companion.state,
+        )
+
+        with_ended = self._live_sessions(companion.client)
+        assert with_ended["count"] == 1
+        assert with_ended["sessions"][0]["session"]["state"] == "ended"
+
+        without = self._live_sessions(companion.client, include_ended="false")
+        assert without["count"] == 0
+
+    def test_sessions_dead_sessions_fall_out_of_the_live_set(self, companion):
+        companion.ingest("ancient", "Still there?", now=companion.old)
+
+        payload = self._live_sessions(companion.client)
+
+        assert payload["count"] == 0
+
 
 @pytest.mark.integration
 class TestApiStateEndpoint:
@@ -1854,7 +1921,7 @@ class TestCompanionUiSmoke:
             "Companion",
             "The Agent Desk",
             "Needs you",
-            "Agents",
+            "Recipes",
             "companionDesk()",
         ):
             assert marker in html, f"missing Agent Desk marker: {marker}"

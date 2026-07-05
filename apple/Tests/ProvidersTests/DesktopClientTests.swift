@@ -262,9 +262,9 @@ final class DesktopClientTests: XCTestCase {
         // v6 (Phase 74): the hub persists the run's output as a run-born
         // artifact and returns its id — the desk card must reuse it so a kept
         // card reconciles with the hub's artifact on sync, never duplicates.
-        StubProtocol.routes = ["/api/agents/a-owl/run": (200,
+        StubProtocol.routes = ["/api/recipes/a-owl/run": (200,
             Data(#"{"output":"the run output","artifact_id":"art_run_1"}"#.utf8))]
-        let result = try await client(token: "tok").runAgent(id: "a-owl", input: "say hi")
+        let result = try await client(token: "tok").runRecipe(id: "a-owl", input: "say hi")
         XCTAssertEqual(StubProtocol.lastMethod, "POST")
         XCTAssertEqual(result.output, "the run output")
         XCTAssertEqual(result.artifactId, "art_run_1")
@@ -278,5 +278,96 @@ final class DesktopClientTests: XCTestCase {
         XCTAssertEqual(result.output, "crew says hi")
         XCTAssertEqual(result.steps, ["Scout: hi"])
         XCTAssertNil(result.artifactId)
+    }
+}
+
+// MARK: - HSM-17-02/03: the live coder set
+
+extension DesktopClientTests {
+
+    /// The wire shape below is the REAL payload the hub served during the
+    /// HSM-17-02 real-metal proof (a live claude blocked on a permission ask),
+    /// trimmed to the fields the client reads plus extras it must tolerate.
+    func testCoderSessionsDecodesTheLiveSetWireShape() async throws {
+        let wire = """
+        {"sessions": [
+          {"session": {"agent": "claude", "session_id": "d19676dc-81ee-4",
+            "cwd": "/private/tmp/scratch/proof-repo", "updated_at": "2026-07-04T17:20:00Z",
+            "hook_event_name": "Notification", "project_name": "proof-repo",
+            "model": "claude-fable-5", "last_prompt": "commit it", "last_tool_name": "Bash",
+            "awaiting_response": false, "capture_messages": true, "event_count": 7,
+            "pinned": false, "lifecycle": "waiting", "question": "Claude needs your permission",
+            "state": "waiting"},
+           "age_seconds": 12,
+           "identity": {"agent_label": "Claude", "target_confidence": "high"}},
+          {"session": {"agent": "codex", "session_id": "019f2e2e",
+            "cwd": "/private/tmp/scratch/proof-repo", "state": "working",
+            "lifecycle": "working", "question": null, "event_count": 5, "pinned": false},
+           "age_seconds": 3, "identity": null}
+        ], "count": 2}
+        """
+        StubProtocol.routes["/api/coders/sessions"] = (200, Data(wire.utf8))
+
+        let sessions = try await client().coderSessions()
+
+        XCTAssertEqual(sessions.count, 2)
+        let claude = try XCTUnwrap(sessions.first { $0.agent == "claude" })
+        XCTAssertEqual(claude.sessionID, "d19676dc-81ee-4")
+        XCTAssertEqual(claude.state, "waiting")
+        XCTAssertEqual(claude.question, "Claude needs your permission")
+        XCTAssertEqual(claude.project, "proof-repo")
+        XCTAssertEqual(claude.model, "claude-fable-5")
+        XCTAssertEqual(claude.lastPrompt, "commit it")
+        XCTAssertEqual(claude.lastTool, "Bash")
+        XCTAssertEqual(claude.eventCount, 7)
+        XCTAssertEqual(claude.ageSeconds, 12)
+        let codex = try XCTUnwrap(sessions.first { $0.agent == "codex" })
+        XCTAssertEqual(codex.state, "working")
+        XCTAssertNil(codex.question)
+    }
+
+    func testCoderSessionsToleratesEmptyAndSkipsMalformedItems() async throws {
+        StubProtocol.routes["/api/coders/sessions"] =
+            (200, Data(#"{"sessions": [{"session": {"agent": "claude"}}, {}], "count": 2}"#.utf8))
+
+        let sessions = try await client().coderSessions()
+
+        XCTAssertEqual(sessions, [])  // no session_id -> skipped, never invented
+    }
+
+    func testCoderSessionsThrowsOnHTTPError() async {
+        StubProtocol.routes["/api/coders/sessions"] = (500, Data())
+
+        do {
+            _ = try await client().coderSessions()
+            XCTFail("expected an error")
+        } catch {
+            XCTAssertEqual(error as? HTTPDesktopClient.DesktopClientError, .http(500))
+        }
+    }
+
+    func testDefaultConformerReportsCoderSessionsUnsupported() async {
+        struct Bare: IDesktopClient {
+            func handshake() async -> DesktopConnection { .offline("test") }
+            var egressLabel: String { "test" }
+            func listMeetings() async throws -> [MeetingSummary] { [] }
+            func runtimeState() async throws -> RuntimeState { RuntimeState(status: "x", mode: nil, meetingActive: false, meetingId: nil) }
+            func startMeeting(title: String?) async throws -> RuntimeState { try await runtimeState() }
+            func stopMeeting() async throws -> RuntimeState { try await runtimeState() }
+            func sendRemoteDictation(text: String, target: DictationTarget, raw: Bool) async throws -> RemoteDictationResult {
+                RemoteDictationResult(success: false, finalText: "", delivered: false)
+            }
+            func companionStatus() async throws -> CompanionBoardState { CompanionBoardState() }
+            func selectCompanionTarget(agent: String, sessionID: String) async throws {}
+            func dismissCompanionTarget(agent: String, sessionID: String) async throws {}
+            func pinCompanionTarget(agent: String, sessionID: String, pinned: Bool) async throws {}
+        }
+
+        do {
+            _ = try await Bare().coderSessions()
+            XCTFail("expected notImplemented")
+        } catch {
+            XCTAssertEqual(error as? HubRunUnsupported, .notImplemented)
+        }
     }
 }

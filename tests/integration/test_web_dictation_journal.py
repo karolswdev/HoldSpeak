@@ -178,3 +178,49 @@ def test_dictation_journal_premium_and_a11y_markers(test_client: TestClient) -> 
             "journal-card is scoped — it will NOT style the runtime-injected "
             "cards. Move these rules into <style is:global>."
         )
+
+
+# ── F-07: the journal follows journal_enabled, not the pipeline gate ─
+
+
+def test_dry_run_journals_passthrough_when_pipeline_disabled(
+    persistent_db: Database, settings_path: Path
+) -> None:
+    from holdspeak.config import Config
+
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = False
+    cfg.save(path=settings_path)
+    client = _persistent_client(persistent_db)
+
+    resp = client.post("/api/dictation/dry-run", json={"utterance": "keep me"})
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["runtime_status"] == "disabled"
+    assert body["final_text"] == "keep me"
+    rows = persistent_db.dictation_journal.recent()
+    assert len(rows) == 1
+    assert rows[0].source == "dry_run"
+    assert rows[0].transcript == "keep me"
+    assert rows[0].final_text == "keep me"
+    assert rows[0].warnings == ["dictation pipeline disabled"]
+    assert body["journal_id"] == rows[0].id
+
+
+def test_dry_run_pipeline_disabled_respects_journal_off(
+    persistent_db: Database, settings_path: Path
+) -> None:
+    from holdspeak.config import Config
+
+    cfg = Config()
+    cfg.dictation.pipeline.enabled = False
+    cfg.dictation.pipeline.journal_enabled = False
+    cfg.save(path=settings_path)
+    client = _persistent_client(persistent_db)
+
+    resp = client.post("/api/dictation/dry-run", json={"utterance": "keep me"})
+
+    assert resp.status_code == 200
+    assert resp.json()["journal_id"] is None
+    assert persistent_db.dictation_journal.count() == 0

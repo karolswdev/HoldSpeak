@@ -59,35 +59,35 @@ def test_note_crud_flow(client: TestClient) -> None:
 
 # ── Agents ─────────────────────────────────────────────────────────────────
 def test_agent_crud_flow(client: TestClient) -> None:
-    resp = client.post("/api/agents", json={
+    resp = client.post("/api/recipes", json={
         "name": "Summarizer", "role": "assistant",
         "system_prompt": "You summarize.", "user_template": "Summarize: {input}",
         "tools": ["web"], "kb_id": "kb1",
     })
     assert resp.status_code == 201
-    agent = resp.json()["agent"]
+    agent = resp.json()["recipe"]
     aid = agent["id"]
     assert agent["name"] == "Summarizer" and agent["kb_id"] == "kb1"
 
-    assert len(client.get("/api/agents").json()["agents"]) == 1
+    assert len(client.get("/api/recipes").json()["recipes"]) == 1
 
-    upd = client.put(f"/api/agents/{aid}", json={"role": "expert"})
-    assert upd.json()["agent"]["role"] == "expert"
-    assert upd.json()["agent"]["system_prompt"] == "You summarize."  # unchanged
+    upd = client.put(f"/api/recipes/{aid}", json={"role": "expert"})
+    assert upd.json()["recipe"]["role"] == "expert"
+    assert upd.json()["recipe"]["system_prompt"] == "You summarize."  # unchanged
 
-    assert client.delete(f"/api/agents/{aid}").json() == {"success": True}
-    assert client.get(f"/api/agents/{aid}").status_code == 404
+    assert client.delete(f"/api/recipes/{aid}").json() == {"success": True}
+    assert client.get(f"/api/recipes/{aid}").status_code == 404
 
 
 def test_agent_create_requires_name(client: TestClient) -> None:
-    assert client.post("/api/agents", json={"role": "x"}).status_code == 400
+    assert client.post("/api/recipes", json={"role": "x"}).status_code == 400
 
 
 # ── Run a persona ────────────────────────────────────────────────────────────
 def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
-    aid = client.post("/api/agents", json={
+    aid = client.post("/api/recipes", json={
         "name": "Echo", "system_prompt": "SYS", "user_template": "Q: {input}",
-    }).json()["agent"]["id"]
+    }).json()["recipe"]["id"]
 
     captured = {}
 
@@ -104,18 +104,18 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
         lambda: _FakeIntel(),
     )
 
-    resp = client.post(f"/api/agents/{aid}/run", json={"input": "hello"})
+    resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hello"})
     assert resp.status_code == 200
     body = resp.json()
     # HS-74-01: the run persists as a run-born artifact; the id is minted.
     artifact_id = body.pop("artifact_id")
     assert artifact_id
     assert body == {
-        "agent_id": aid,
+        "recipe_id": aid,
         "output": "ANSWER",
         "provider": "local",
         "profile_id": None,
-        "sources": [{"source_type": "agent", "source_ref": aid}],
+        "sources": [{"source_type": "recipe", "source_ref": aid}],
     }
     # The persona's system prompt + rendered template reached the engine.
     assert captured["system_prompt"] == "SYS"
@@ -124,9 +124,9 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
 
 def test_run_agent_includes_input_source(client: TestClient, monkeypatch) -> None:
     """A caller-provided `source_ref` is recorded as an `input` lineage source."""
-    aid = client.post("/api/agents", json={
+    aid = client.post("/api/recipes", json={
         "name": "Echo", "user_template": "{input}",
-    }).json()["agent"]["id"]
+    }).json()["recipe"]["id"]
 
     class _FakeIntel:
         active_provider = "local"
@@ -138,10 +138,10 @@ def test_run_agent_includes_input_source(client: TestClient, monkeypatch) -> Non
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
     )
     resp = client.post(
-        f"/api/agents/{aid}/run", json={"input": "x", "source_ref": "meeting_7"}
+        f"/api/recipes/{aid}/run", json={"input": "x", "source_ref": "meeting_7"}
     )
     assert resp.json()["sources"] == [
-        {"source_type": "agent", "source_ref": aid},
+        {"source_type": "recipe", "source_ref": aid},
         {"source_type": "input", "source_ref": "meeting_7"},
     ]
 
@@ -161,7 +161,7 @@ def test_run_response_source_type_vocab_is_pinned() -> None:
     )
 
     # The full canonical set the hub run endpoints emit.
-    assert CANONICAL_SOURCE_TYPES == {"agent", "input", "chain", "workflow"}
+    assert CANONICAL_SOURCE_TYPES == {"recipe", "input", "chain", "workflow"}
 
     # Canonical values pass through unchanged.
     for value in CANONICAL_SOURCE_TYPES:
@@ -182,9 +182,9 @@ def test_run_agent_input_source_accepts_ipad_card_alias(
     client: TestClient, monkeypatch
 ) -> None:
     """An iPad-supplied `source_type: "card"` folds to the canonical "input"."""
-    aid = client.post("/api/agents", json={
+    aid = client.post("/api/recipes", json={
         "name": "Echo", "user_template": "{input}",
-    }).json()["agent"]["id"]
+    }).json()["recipe"]["id"]
 
     class _FakeIntel:
         active_provider = "local"
@@ -196,23 +196,23 @@ def test_run_agent_input_source_accepts_ipad_card_alias(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel()
     )
     resp = client.post(
-        f"/api/agents/{aid}/run",
+        f"/api/recipes/{aid}/run",
         json={"input": "x", "source_ref": "meeting_7", "source_type": "card"},
     )
     assert resp.json()["sources"] == [
-        {"source_type": "agent", "source_ref": aid},
+        {"source_type": "recipe", "source_ref": aid},
         {"source_type": "input", "source_ref": "meeting_7"},
     ]
 
 
 def test_run_agent_unknown_is_404(client: TestClient) -> None:
-    assert client.post("/api/agents/nope/run", json={"input": "x"}).status_code == 404
+    assert client.post("/api/recipes/nope/run", json={"input": "x"}).status_code == 404
 
 
 def test_run_agent_engine_error_is_502(client: TestClient, monkeypatch) -> None:
-    aid = client.post("/api/agents", json={
+    aid = client.post("/api/recipes", json={
         "name": "X", "user_template": "{input}",
-    }).json()["agent"]["id"]
+    }).json()["recipe"]["id"]
 
     from holdspeak.intel.models import MeetingIntelError
 
@@ -225,7 +225,7 @@ def test_run_agent_engine_error_is_502(client: TestClient, monkeypatch) -> None:
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_configured_meeting_intel", lambda: _Boom()
     )
-    resp = client.post(f"/api/agents/{aid}/run", json={"input": "x"})
+    resp = client.post(f"/api/recipes/{aid}/run", json={"input": "x"})
     assert resp.status_code == 502
     assert "no model" in resp.json()["error"]
 
@@ -292,9 +292,9 @@ def test_chain_create_requires_name(client: TestClient) -> None:
 
 # ── Run a chain (crew) ───────────────────────────────────────────────────────
 def _make_agent(client: TestClient, name: str, template: str) -> str:
-    return client.post("/api/agents", json={
+    return client.post("/api/recipes", json={
         "name": name, "system_prompt": f"SYS-{name}", "user_template": template,
-    }).json()["agent"]["id"]
+    }).json()["recipe"]["id"]
 
 
 def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
@@ -324,7 +324,7 @@ def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
     assert calls[1] == ("SYS-A2", "step2: out(step1: hello)")
 
     assert body["chain_id"] == cid
-    assert [s["agent_id"] for s in body["steps"]] == [a1, a2]
+    assert [s["recipe_id"] for s in body["steps"]] == [a1, a2]
     assert body["steps"][0]["output"] == "out(step1: hello)"
     assert body["steps"][0]["provider"] == "local"
     # Chain output is the last step's output.
@@ -334,8 +334,8 @@ def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
     # Provenance: the chain plus each step's agent.
     assert body["sources"] == [
         {"source_type": "chain", "source_ref": cid},
-        {"source_type": "agent", "source_ref": a1},
-        {"source_type": "agent", "source_ref": a2},
+        {"source_type": "recipe", "source_ref": a1},
+        {"source_type": "recipe", "source_ref": a2},
     ]
 
 
@@ -375,7 +375,7 @@ def test_run_chain_engine_error_is_502(client: TestClient, monkeypatch) -> None:
     resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
     assert resp.status_code == 502
     assert "no model" in resp.json()["error"]
-    assert resp.json()["agent_id"] == a1
+    assert resp.json()["recipe_id"] == a1
 
 
 # ── Workflows ──────────────────────────────────────────────────────────────
@@ -749,10 +749,10 @@ def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) ->
         "name": "OpenRouter", "kind": "openAICompatible",
         "base_url": "https://openrouter.ai/api/v1", "model": "x", "requires_key": True,
     }).json()["profile"]["id"]
-    aid = client.post("/api/agents", json={
+    aid = client.post("/api/recipes", json={
         "name": "Scout", "system_prompt": "S", "user_template": "{input}", "profile_id": pid,
-    }).json()["agent"]["id"]
-    assert client.get(f"/api/agents/{aid}").json()["agent"]["profile_id"] == pid
+    }).json()["recipe"]["id"]
+    assert client.get(f"/api/recipes/{aid}").json()["recipe"]["profile_id"] == pid
 
     seen = {}
 
@@ -770,7 +770,7 @@ def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) ->
         "holdspeak.intel.providers.build_configured_meeting_intel",
         lambda: (_ for _ in ()).throw(AssertionError("default builder must NOT be used when a profile is assigned")),
     )
-    resp = client.post(f"/api/agents/{aid}/run", json={"input": "hi"})
+    resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hi"})
     assert resp.status_code == 200, resp.text
     assert resp.json()["profile_id"] == pid
     assert seen == {"kind": "openAICompatible", "base_url": "https://openrouter.ai/api/v1", "profile_id": pid}
@@ -778,9 +778,9 @@ def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) ->
 
 def test_run_agent_falls_back_when_profile_missing(client: TestClient, monkeypatch) -> None:
     """A dangling profile_id (e.g. deleted) falls back to the hub default, reporting profile_id=None."""
-    aid = client.post("/api/agents", json={
+    aid = client.post("/api/recipes", json={
         "name": "Ghost", "system_prompt": "S", "user_template": "{input}", "profile_id": "gone",
-    }).json()["agent"]["id"]
+    }).json()["recipe"]["id"]
 
     class _FakeIntel:
         active_provider = "local"
@@ -788,6 +788,6 @@ def test_run_agent_falls_back_when_profile_missing(client: TestClient, monkeypat
             return "OUT"
 
     monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel())
-    resp = client.post(f"/api/agents/{aid}/run", json={"input": "hi"})
+    resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hi"})
     assert resp.status_code == 200, resp.text
     assert resp.json()["profile_id"] is None

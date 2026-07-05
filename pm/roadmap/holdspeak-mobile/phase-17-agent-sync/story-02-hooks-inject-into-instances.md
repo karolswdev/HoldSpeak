@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 17
-- **Status:** todo
+- **Status:** done (2026-07-04 — real-metal proven on the owner's Mac; see `evidence-story-02.md`)
 - **Depends on:** HSM-17-01 (the `AgentSession` contract — the shape the hooks must report into), the
   existing capture spine (`holdspeak/commands/agent_hook.py`, `holdspeak/agent_context/` `AgentSession` +
   `~/.config/holdspeak/agent_sessions.json`, `holdspeak/agent_device.py`).
@@ -41,15 +41,18 @@ the desk can show it. That is the capture half of agent sync.
 
 ## Acceptance criteria
 
-- [ ] A live Claude Code session and a live Codex session, with our hooks installed, appear in the
-      desktop's live-session endpoint with correct `agent`, `cwd/project`, and `state`.
-- [ ] When the coder blocks on a question, the session flips to `waiting` and the **question text** is
-      captured into the `AgentSession`.
-- [ ] When the coder resumes / exits, the session returns to `working`/`idle` / tombstones to `ended`
-      within a bounded staleness window.
-- [ ] The install is one command, idempotent, reversible; documented (feeds HSM-17-07).
-- [ ] Secret-safe: a captured question is filtered the same way the dictation journal filters secrets
-      (reuse the existing filter), never leaking tokens/keys into the synced state.
+- [x] A live Claude Code session and a live Codex session, with our hooks installed, appear in the
+      desktop's live-session endpoint with correct `agent`, `cwd/project`, and `state`. (Both driven
+      live in tmux; `GET /api/coders/sessions`.)
+- [x] When the coder blocks on a question, the session flips to `waiting` and the **question text** is
+      captured into the `AgentSession`. (Two real `git commit`/`git push` permission asks captured live.)
+- [x] When the coder resumes / exits, the session returns to `working`/`idle` / tombstones to `ended`
+      within a bounded staleness window. (Claude exits via SessionEnd; codex 0.142.4 emits none and
+      tombstones via the decay window — recorded honestly.)
+- [x] The install is one command, idempotent, reversible; documented (feeds HSM-17-07).
+      (`holdspeak agent-hook install|uninstall`; uninstall restores the pre-install JSON exactly.)
+- [x] Secret-safe: a captured question is filtered the same way the dictation journal filters secrets
+      (reuse the existing filter), never leaking tokens/keys into the synced state. (Test-pinned.)
 
 ## Test plan
 

@@ -10,7 +10,7 @@
     "artifacts": { "$ref": "#/$defs/bucket_artifact" },
     "notes": { "$ref": "#/$defs/bucket_note" },
     "kbs": { "$ref": "#/$defs/bucket_kb" },
-    "agents": { "$ref": "#/$defs/bucket_agent" },
+    "recipes": { "$ref": "#/$defs/bucket_recipe" },
     "chains": { "$ref": "#/$defs/bucket_chain" },
     "workflows": { "$ref": "#/$defs/bucket_workflow" },
     "directories": { "$ref": "#/$defs/bucket_directory" },
@@ -23,7 +23,7 @@
       "required": ["id", "kind", "last_modified", "deleted"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "kind": { "enum": ["meeting", "artifact", "note", "kb", "agent", "chain", "workflow", "directory", "directory_membership", "profile"] },
+        "kind": { "enum": ["meeting", "artifact", "note", "kb", "recipe", "chain", "workflow", "directory", "directory_membership", "profile"] },
         "last_modified": { "type": ["string", "null"] },
         "deleted": { "type": "boolean" }
       }
@@ -39,7 +39,7 @@
     "bucket_artifact": { "type": "array", "items": { "allOf": [ { "$ref": "#/$defs/synced" }, { "properties": { "meta": { "properties": { "kind": { "const": "artifact" } } }, "value": { "if": { "type": "object" }, "then": { "$ref": "https://holdspeak.dev/contracts/v0/artifact.schema.json" } } } } ] } },
     "bucket_note": { "type": "array", "items": { "allOf": [ { "$ref": "#/$defs/synced" }, { "properties": { "meta": { "properties": { "kind": { "const": "note" } } }, "value": { "if": { "type": "object" }, "then": { "$ref": "https://holdspeak.dev/contracts/v0/note.schema.json" } } } } ] } },
     "bucket_kb": { "type": "array", "items": { "allOf": [ { "$ref": "#/$defs/synced" }, { "properties": { "meta": { "properties": { "kind": { "const": "kb" } } }, "value": { "if": { "type": "object" }, "then": { "$ref": "https://holdspeak.dev/contracts/v0/kb.schema.json" } } } } ] } },
-    "bucket_agent": { "type": "array", "items": { "allOf": [ { "$ref": "#/$defs/synced" }, { "properties": { "meta": { "properties": { "kind": { "const": "agent" } } }, "value": { "if": { "type": "object" }, "then": { "$ref": "https://holdspeak.dev/contracts/v0/agent.schema.json" } } } } ] } },
+    "bucket_recipe": { "type": "array", "items": { "allOf": [ { "$ref": "#/$defs/synced" }, { "properties": { "meta": { "properties": { "kind": { "const": "recipe" } } }, "value": { "if": { "type": "object" }, "then": { "$ref": "https://holdspeak.dev/contracts/v0/recipe.schema.json" } } } } ] } },
     "bucket_chain": { "type": "array", "items": { "allOf": [ { "$ref": "#/$defs/synced" }, { "properties": { "meta": { "properties": { "kind": { "const": "chain" } } }, "value": { "if": { "type": "object" }, "then": { "$ref": "https://holdspeak.dev/contracts/v0/chain.schema.json" } } } } ] } },
     "bucket_workflow": { "type": "array", "items": { "allOf": [ { "$ref": "#/$defs/synced" }, { "properties": { "meta": { "properties": { "kind": { "const": "workflow" } } }, "value": { "if": { "type": "object" }, "then": { "$ref": "https://holdspeak.dev/contracts/v0/workflow.schema.json" } } } } ] } },
     "bucket_directory": { "type": "array", "items": { "allOf": [ { "$ref": "#/$defs/synced" }, { "properties": { "meta": { "properties": { "kind": { "const": "directory" } } }, "value": { "if": { "type": "object" }, "then": { "$ref": "https://holdspeak.dev/contracts/v0/directory.schema.json" } } } } ] } },

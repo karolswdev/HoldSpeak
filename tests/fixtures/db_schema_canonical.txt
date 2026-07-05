@@ -30,7 +30,6 @@ ON activity_records(source_browser, source_profile, normalized_url)
 index idx_actuator_proposal_audit_proposal: CREATE INDEX idx_actuator_proposal_audit_proposal ON actuator_proposal_audit(proposal_id, created_at)
 index idx_actuator_proposals_meeting: CREATE INDEX idx_actuator_proposals_meeting ON actuator_proposals(meeting_id, created_at DESC)
 index idx_actuator_proposals_status: CREATE INDEX idx_actuator_proposals_status ON actuator_proposals(status, created_at DESC)
-index idx_agents_modified: CREATE INDEX idx_agents_modified ON agents(last_modified DESC)
 index idx_artifact_sources_ref: CREATE INDEX idx_artifact_sources_ref ON artifact_sources(source_type, source_ref)
 index idx_artifacts_meeting: CREATE INDEX idx_artifacts_meeting ON artifacts(meeting_id, created_at DESC)
 index idx_artifacts_type: CREATE INDEX idx_artifacts_type ON artifacts(artifact_type, created_at DESC)
@@ -68,6 +67,7 @@ index idx_plugin_runs_window: CREATE INDEX idx_plugin_runs_window ON plugin_runs
 index idx_project_detection_log_meeting: CREATE INDEX idx_project_detection_log_meeting ON project_detection_log(meeting_id, created_at DESC)
 index idx_project_detection_log_project: CREATE INDEX idx_project_detection_log_project ON project_detection_log(project_id, created_at DESC)
 index idx_projects_archived: CREATE INDEX idx_projects_archived ON projects(is_archived, name)
+index idx_recipes_modified: CREATE INDEX idx_recipes_modified ON recipes(last_modified DESC)
 index idx_segments_meeting: CREATE INDEX idx_segments_meeting ON segments(meeting_id)
 index idx_segments_speaker: CREATE INDEX idx_segments_speaker ON segments(speaker)
 index idx_segments_speaker_id: CREATE INDEX idx_segments_speaker_id ON segments(speaker_id)
@@ -216,24 +216,6 @@ table actuator_proposals: CREATE TABLE actuator_proposals (
     decided_at TEXT,
     executed_at TEXT,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-)
-table agents: CREATE TABLE agents (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL DEFAULT '',
-    avatar TEXT NOT NULL DEFAULT '',
-    role TEXT NOT NULL DEFAULT '',
-    system_prompt TEXT NOT NULL DEFAULT '',
-    user_template TEXT NOT NULL DEFAULT '',
-    tools_json TEXT NOT NULL DEFAULT '[]',
-    kb_id TEXT,
-    profile_id TEXT,
-    -- v7 (Phase 77): the iPad-authored pinned context persists on the hub
-    -- (ends the loss HS-72-01 documented in the Swift tolerant decode).
-    manual_context TEXT NOT NULL DEFAULT '',
-    use_zone_context INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
-    deleted INTEGER NOT NULL DEFAULT 0
 )
 table artifact_sources: CREATE TABLE artifact_sources (
     artifact_id TEXT NOT NULL REFERENCES artifacts(id) ON DELETE CASCADE,
@@ -556,6 +538,24 @@ table projects: CREATE TABLE projects (
     is_archived INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table recipes: CREATE TABLE recipes (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    avatar TEXT NOT NULL DEFAULT '',
+    role TEXT NOT NULL DEFAULT '',
+    system_prompt TEXT NOT NULL DEFAULT '',
+    user_template TEXT NOT NULL DEFAULT '',
+    tools_json TEXT NOT NULL DEFAULT '[]',
+    kb_id TEXT,
+    profile_id TEXT,
+    -- v7 (Phase 77): the iPad-authored pinned context persists on the hub
+    -- (ends the loss HS-72-01 documented in the Swift tolerant decode).
+    manual_context TEXT NOT NULL DEFAULT '',
+    use_zone_context INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0
 )
 table schema_version: CREATE TABLE schema_version (
     version INTEGER PRIMARY KEY,

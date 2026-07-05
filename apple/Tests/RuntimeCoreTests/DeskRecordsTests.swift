@@ -48,7 +48,7 @@ final class DeskRecordsTests: XCTestCase {
 
     func testOutputRecordRoundTrip() throws {
         let prov = RunProvenance(sourceCardId: "m1", sourceCardTitle: "Q3 kickoff",
-                                 viaId: "a1", viaName: "Scout", viaKind: "agent")
+                                 viaId: "a1", viaName: "Scout", viaKind: "recipe")
         let rec = OutputRecord(id: "o1", title: "Summary", body: "ship it", source: "Q3 kickoff",
                                lens: "Summary", path: "Atlas", provenance: prov)
         let back = try roundTrip(rec, "OutputRecord")
@@ -74,12 +74,12 @@ final class DeskRecordsTests: XCTestCase {
     }
 
     func testAgentRecordRoundTrip() throws {
-        let rec = AgentRecord(contract: Agent(id: "a1", name: "Scout", avatar: "p1", role: "digs",
+        let rec = RecipeRecord(contract: Recipe(id: "a1", name: "Scout", avatar: "p1", role: "digs",
                                               systemPrompt: "research", userTemplate: "{input}",
                                               tools: ["wf1"], kbId: "kb1", manualContext: "pinned",
                                               useZoneContext: true, profileId: "profile.local",
                                               createdAt: t0, updatedAt: t1))
-        let back = try roundTrip(rec, "AgentRecord")
+        let back = try roundTrip(rec, "RecipeRecord")
         XCTAssertEqual(back.kb, "kb1")
         XCTAssertEqual(back.profileId, "profile.local")
         XCTAssertEqual(back.contract.tools, ["wf1"])
@@ -137,13 +137,13 @@ final class DeskRecordsTests: XCTestCase {
         // OLD shape: struct OutputRecord { var id, title, body, source, lens, path: String;
         //                                  var provenance: RunProvenance? }
         let rec = try decodeLegacy(#"""
-            {"id":"o1","title":"Scout · reply","body":"three facts","source":"Scout","lens":"Agent",
+            {"id":"o1","title":"Scout · reply","body":"three facts","source":"Scout","lens":"Recipe",
              "path":"Atlas","provenance":{"sourceCardId":"m1","sourceCardTitle":"Q3 kickoff",
-             "viaId":"a1","viaName":"Scout","viaKind":"agent"}}
+             "viaId":"a1","viaName":"Scout","viaKind":"recipe"}}
             """#, as: OutputRecord.self)
         XCTAssertEqual(rec.title, "Scout · reply")
         XCTAssertEqual(rec.source, "Scout")
-        XCTAssertEqual(rec.lens, "Agent")
+        XCTAssertEqual(rec.lens, "Recipe")
         XCTAssertEqual(rec.provenance?.viaName, "Scout")
         XCTAssertEqual(rec.contract.meetingId, "")
         XCTAssertEqual(rec.contract.artifactType, .pluginOutput)
@@ -173,7 +173,7 @@ final class DeskRecordsTests: XCTestCase {
         //  manualContext?,useZoneContext?,kb?,profileId?} — early rows predate the optionals.
         let early = try decodeLegacy(
             #"{"id":"a1","name":"Scout","avatar":"p1","role":"digs","systemPrompt":"research","userTemplate":"{input}"}"#,
-            as: AgentRecord.self)
+            as: RecipeRecord.self)
         XCTAssertEqual(early.name, "Scout")
         XCTAssertEqual(early.manualContext, "")
         XCTAssertFalse(early.useZoneContext)
@@ -183,7 +183,7 @@ final class DeskRecordsTests: XCTestCase {
         let full = try decodeLegacy(#"""
             {"id":"a2","name":"Sage","avatar":"p3","role":"plans","systemPrompt":"plan","userTemplate":"{input}",
              "manualContext":"three engineers","useZoneContext":true,"kb":"Architecture","profileId":"profile.local"}
-            """#, as: AgentRecord.self)
+            """#, as: RecipeRecord.self)
         XCTAssertEqual(full.kb, "Architecture")
         XCTAssertEqual(full.contract.kbId, "Architecture")
         XCTAssertEqual(full.profileId, "profile.local")
@@ -237,7 +237,7 @@ final class DeskRecordsTests: XCTestCase {
         XCTAssertEqual(kb.value?.memberIds, ["note:n1"], "memberIds must survive (old bridge sent [])")
         XCTAssertEqual(kb.value?.createdAt, t0)
 
-        let agent = AgentRecord(contract: Agent(id: "a1", name: "Scout", avatar: "p1", role: "digs",
+        let agent = RecipeRecord(contract: Recipe(id: "a1", name: "Scout", avatar: "p1", role: "digs",
                                                 systemPrompt: "s", userTemplate: "{input}", tools: ["wf1"],
                                                 createdAt: t0, updatedAt: t0)).synced(at: t1)
         XCTAssertEqual(agent.value?.tools, ["wf1"], "tools must survive (old bridge sent [])")
@@ -293,7 +293,7 @@ final class DeskRecordsTests: XCTestCase {
     private struct GoldenFixture: Decodable {
         var note: Note
         var kb: KB
-        var agent: Agent
+        var recipe: Recipe
         var chain: Chain
         var workflow: WorkflowDefinition
         var directory: Directory
@@ -323,7 +323,7 @@ final class DeskRecordsTests: XCTestCase {
         XCTAssertEqual(kb.contract.memberIds, ["note-golden-1"])
         XCTAssertEqual(kb.items, 1)
 
-        let agent = try roundTrip(AgentRecord(contract: f.agent), "golden AgentRecord")
+        let agent = try roundTrip(RecipeRecord(contract: f.recipe), "golden RecipeRecord")
         XCTAssertEqual(agent.kb, "kb-golden-1")
         XCTAssertEqual(agent.profileId, "")
 

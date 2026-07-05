@@ -5,7 +5,7 @@
 _DOGFOOD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 export DOGFOOD_HOME="${DOGFOOD_HOME:-$_DOGFOOD_DIR/_home}"
 export DOGFOOD_INTEL_BASE_URL="${DOGFOOD_INTEL_BASE_URL:-http://192.168.1.43:8080/v1}"
-export DOGFOOD_INTEL_MODEL="${DOGFOOD_INTEL_MODEL:-Qwen3.5-9B-UD-Q6_K_XL.gguf}"
+export DOGFOOD_INTEL_MODEL="${DOGFOOD_INTEL_MODEL:-Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf}"
 
 hs() { "$_DOGFOOD_DIR/hs" "$@"; }
 

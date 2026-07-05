@@ -28,7 +28,7 @@ export type PrimitiveKind =
   | "note"
   | "directory"
   | "kb"
-  | "agent"
+  | "recipe"
   | "chain"
   | "workflow"
   | "coder"
@@ -127,7 +127,7 @@ export interface KB {
 
 /** NEW primitive — a tailored persona that runs your intelligence. */
 export interface Agent {
-  kind: "agent";
+  kind: "recipe";
   id: string;
   name: string;
   avatar: string;
@@ -287,8 +287,8 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     icon: "M2 7l10-4 10 4-10 4zM2 7v10l10 4 10-4V7M2 12l10 4 10-4",
     authorable: true,
   },
-  agent: {
-    kind: "agent",
+  recipe: {
+    kind: "recipe",
     label: "Agent",
     plural: "Agents",
     syncClass: "capability",
@@ -301,7 +301,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     label: "Chain",
     plural: "Chains",
     syncClass: "capability",
-    blurb: "An ordered run of agents, output flowing into the next.",
+    blurb: "An ordered run of recipes, output flowing into the next.",
     icon: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1",
     authorable: true,
   },
@@ -346,7 +346,7 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
 /** Order of the Desk's primitive sections, grouped by sync class. */
 export const DESK_GROUPS: { label: string; kinds: PrimitiveKind[] }[] = [
   { label: "Content", kinds: ["meeting", "artifact", "note"] },
-  { label: "Capabilities", kinds: ["agent", "chain", "workflow"] },
+  { label: "Capabilities", kinds: ["recipe", "chain", "workflow"] },
   { label: "Organization", kinds: ["directory", "kb"] },
   { label: "Live", kinds: ["coder"] },
 ];

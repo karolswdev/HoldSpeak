@@ -89,6 +89,50 @@ struct CoderSession: Identifiable, Equatable {
         state = t.question != nil ? .waiting : (t.stale ? .idle : .working)
         events = t.question.map { [CoderEvent(id: "ask", ts: nil, kind: .approval(question: $0, command: nil))] } ?? []
     }
+
+    // the full live set (HSM-17-02, GET /api/coders/sessions) → a session with an
+    // honest minimal feed built from what the hub actually captured. The rich
+    // per-event stream is the 17-01 transport follow-on; nothing here is invented.
+    init(from live: LiveCoderSession) {
+        agent = live.agent
+        sessionId = live.sessionID
+        project = live.project ?? live.cwd.map { URL(fileURLWithPath: $0).lastPathComponent }
+        model = live.model
+        tokensUsed = nil
+        state = State(rawValue: live.state) ?? .working
+        var evts: [CoderEvent] = []
+        if let p = live.lastPrompt {
+            evts.append(CoderEvent(id: "prompt", ts: nil, kind: .userPrompt(p)))
+        }
+        if let t = live.lastTool, let tool = CoderTool(hookName: t) {
+            evts.append(CoderEvent(id: "tool", ts: nil, kind: .tool(tool, target: "", detail: nil)))
+        }
+        if state == .ended {
+            evts.append(CoderEvent(id: "end", ts: nil, kind: .ended))
+        }
+        // last, so pendingApproval (events.last matching .approval) finds it
+        if let q = live.question {
+            evts.append(CoderEvent(id: "ask", ts: nil, kind: .approval(question: q, command: nil)))
+        }
+        events = evts
+    }
+}
+
+extension CoderTool {
+    /// A hub hook tool name ("Bash", "Edit", "Write", "Task", "Read"…) → the desk's
+    /// tool vocabulary. Unknown names return nil (the feed simply omits the row).
+    init?(hookName: String) {
+        switch hookName.lowercased() {
+        case "read": self = .read
+        case "edit", "apply_patch", "multiedit": self = .edit
+        case "write": self = .write
+        case "bash", "shell": self = .bash
+        case "grep", "glob", "search": self = .search
+        case "webfetch", "websearch", "web": self = .web
+        case "task", "agent": self = .task
+        default: return nil
+        }
+    }
 }
 
 // MARK: - the desk primitive
@@ -313,15 +357,62 @@ struct DioCoderSession: View {
     }
 }
 
-// MARK: - the answer composer (typed → send; voice / dropped-context / AI-draft fold in here next)
+// MARK: - the answer composer (typed + spoken + dropped-context → one explicit send; AI-draft is 17-05)
+
+/// Dropped-context grounding for an answer (HSM-17-04): the `routableText` of a
+/// primitive dropped onto a waiting coder, cited by its source title. Visible
+/// and trimmable in the composer before anything is sent.
+struct CoderGrounding: Equatable {
+    var title: String
+    var text: String
+}
 
 struct DioCoderAnswer: View {
     let session: CoderSession
     var maxW: CGFloat = 400       // clamped by the caller's DeskCamera so it fits the lane (HSM-20-04)
-    let onSend: (String) -> Void
+    var grounding: CoderGrounding? = nil
+    // HSM-17-05: the AI draft. The composer assembles the prompt (question +
+    // trimmable grounding) and hands it here; the stage runs it on the RESOLVED
+    // engine (on-device / endpoint). `draftEgress` is where THAT run happens —
+    // distinct from the send's Local + your desktop. nil = drafting unavailable.
+    var draftEgress: EgressScope? = nil
+    var onDraft: ((String) async -> Result<String, Error>)? = nil
+    let onSend: (String) -> Void  // receives the COMPOSED payload (reply + grounding)
     let onCancel: () -> Void
     @State private var text = ""
+    @State private var groundingText: String? = nil   // nil until edited; falls back to grounding.text
+    @State private var groundingRemoved = false
+    @State private var drafting = false
+    @State private var draftError: String? = nil
     @FocusState private var focused: Bool
+
+    private func runDraft() {
+        guard let onDraft, let q = session.question, !drafting else { return }
+        drafting = true; draftError = nil
+        let prompt = CoderAnswer.draftPrompt(
+            agent: session.display,
+            question: q,
+            groundingTitle: groundingRemoved ? nil : grounding?.title,
+            grounding: effectiveGrounding)
+        Task { @MainActor in
+            let result = await onDraft(prompt)
+            drafting = false
+            switch result {
+            case .success(let draft):
+                withAnimation { text = draft.trimmingCharacters(in: .whitespacesAndNewlines) }
+            case .failure(let e):
+                draftError = e.localizedDescription
+            }
+        }
+    }
+
+    private var effectiveGrounding: String { groundingRemoved ? "" : (groundingText ?? grounding?.text ?? "") }
+    private var payload: String {
+        CoderAnswer.compose(reply: text,
+                            groundingTitle: grounding?.title,
+                            grounding: effectiveGrounding)
+    }
+    private var sendable: Bool { !payload.isEmpty }
     var body: some View {
         ZStack {
             Color.black.opacity(0.78).ignoresSafeArea().onTapGesture { onCancel() }
@@ -345,28 +436,81 @@ struct DioCoderAnswer: View {
                 }
                 ZStack(alignment: .topLeading) {
                     if text.isEmpty {
-                        Text("Type your reply…").font(.system(size: 15, weight: .medium, design: .rounded))
+                        Text("Type or speak your reply…").font(.system(size: 15, weight: .medium, design: .rounded))
                             .foregroundStyle(DioPal.muted.opacity(0.7)).padding(.top, 8).padding(.leading, 5)
                     }
                     TextEditor(text: $text)
                         .font(.system(size: 15, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text)
                         .scrollContentBackground(.hidden).background(.clear).focused($focused)
                         .frame(minHeight: 120, maxHeight: 200)
+                    VStack { Spacer(minLength: 0); HStack { Spacer(minLength: 0)
+                        VoiceFillMic(text: $text, tint: DioPal.accent, size: 32, fill: .append)
+                    } }
                 }
                 .padding(13)
                 .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.05))
                     .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.1), lineWidth: 1)))
+                if grounding != nil && !groundingRemoved {
+                    VStack(alignment: .leading, spacing: 5) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "link").font(.system(size: 9, weight: .black))
+                            Text("CONTEXT · \(grounding?.title.uppercased() ?? "")")
+                                .font(.system(size: 9, weight: .black, design: .rounded)).tracking(1.2)
+                            Spacer(minLength: 0)
+                            Button { withAnimation { groundingRemoved = true } } label: {
+                                Image(systemName: "xmark.circle.fill").font(.system(size: 13))
+                                    .foregroundStyle(DioPal.muted)
+                            }.buttonStyle(.plain)
+                        }
+                        .foregroundStyle(DioPal.mint)
+                        TextEditor(text: Binding(
+                            get: { groundingText ?? grounding?.text ?? "" },
+                            set: { groundingText = $0 }
+                        ))
+                        .font(.system(size: 12.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text.opacity(0.85))
+                        .scrollContentBackground(.hidden).background(.clear)
+                        .frame(minHeight: 56, maxHeight: 110)
+                    }
+                    .padding(11)
+                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(DioPal.mint.opacity(0.06))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(DioPal.mint.opacity(0.22), lineWidth: 1)))
+                }
+                if onDraft != nil && session.question != nil {
+                    VStack(spacing: 6) {
+                        Button { runDraft() } label: {
+                            HStack(spacing: 8) {
+                                if drafting { ProgressView().controlSize(.small).tint(DioPal.violet) }
+                                else { Image(systemName: "wand.and.stars") }
+                                Text(drafting ? "Drafting…" : (text.isEmpty ? "Draft with AI" : "Re-draft"))
+                                    .font(.system(size: 14.5, weight: .heavy, design: .rounded))
+                                if let scope = draftEgress { EgressBadge(scope: scope) }
+                            }
+                            .foregroundStyle(DioPal.violet)
+                            .frame(maxWidth: .infinity).frame(height: 46)
+                            .background(Capsule().fill(DioPal.violet.opacity(0.12))
+                                .overlay(Capsule().strokeBorder(DioPal.violet.opacity(0.35), lineWidth: 1)))
+                        }.buttonStyle(.plain).disabled(drafting)
+                        if let err = draftError {
+                            Text(err).font(.system(size: 11.5, weight: .semibold, design: .rounded))
+                                .foregroundStyle(DioPal.accent).fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                HStack(spacing: 10) {
+                    EgressBadge(scope: AgentSessionPrimitive(session: session).egress)
+                    Spacer(minLength: 0)
+                }
                 HStack(spacing: 13) {
                     Button { onCancel() } label: {
                         Text("Cancel").font(.system(size: 15, weight: .heavy, design: .rounded))
                             .foregroundStyle(DioPal.muted).frame(maxWidth: .infinity).frame(height: 54).background(Capsule().fill(.white.opacity(0.06)))
                     }.buttonStyle(.plain)
-                    Button { onSend(text) } label: {
+                    Button { if sendable { onSend(payload) } } label: {
                         HStack(spacing: 8) { Image(systemName: "paperplane.fill"); Text("Send").font(.system(size: 16.5, weight: .heavy, design: .rounded)) }
                             .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 54)
                             .background(Capsule().fill(LinearGradient(colors: [DioPal.accent, DioPal.accent.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
                             .shadow(color: DioPal.accent.opacity(0.45), radius: 10, y: 4)
-                    }.buttonStyle(.plain).opacity(text.trimmingCharacters(in: .whitespaces).isEmpty ? 0.5 : 1)
+                    }.buttonStyle(.plain).opacity(sendable ? 1 : 0.5)
                 }
             }
             .frame(width: maxW).padding(.vertical, 8)

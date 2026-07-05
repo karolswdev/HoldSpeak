@@ -17,7 +17,7 @@ final class PrimitiveContractFixtureTests: XCTestCase {
     private struct Fixture: Codable, Equatable {
         var note: Note
         var kb: KB
-        var agent: Agent
+        var recipe: Recipe
         var chain: Chain
         var workflow: WorkflowDefinition
         var directory: Directory
@@ -50,12 +50,12 @@ final class PrimitiveContractFixtureTests: XCTestCase {
         XCTAssertEqual(f.note.id, "note-golden-1")
         XCTAssertEqual(f.note.tags, ["golden", "contract"])
         XCTAssertEqual(f.kb.memberIds, ["note-golden-1"])
-        XCTAssertEqual(f.agent.kbId, "kb-golden-1")
-        XCTAssertNil(f.agent.profileId)
+        XCTAssertEqual(f.recipe.kbId, "kb-golden-1")
+        XCTAssertNil(f.recipe.profileId)
         // Phase 77: the hub persists + re-emits the pinned context — the wire
         // fields must REACH the properties, not just decode tolerantly (HSM-23-04).
-        XCTAssertEqual(f.agent.manualContext, "Always consider the Q3 launch.")
-        XCTAssertTrue(f.agent.useZoneContext)
+        XCTAssertEqual(f.recipe.manualContext, "Always consider the Q3 launch.")
+        XCTAssertTrue(f.recipe.useZoneContext)
         XCTAssertEqual(f.chain.steps, ["agent-golden-1"])
         XCTAssertEqual(f.workflow.prompt, "Draft a stakeholder update")
         XCTAssertEqual(f.directory.parentId, "Atlas")
@@ -72,7 +72,7 @@ final class PrimitiveContractFixtureTests: XCTestCase {
         let f = try decodedFixture()
         for (name, created, updated) in [
             ("kb", f.kb.createdAt, f.kb.updatedAt),
-            ("agent", f.agent.createdAt, f.agent.updatedAt),
+            ("recipe", f.recipe.createdAt, f.recipe.updatedAt),
             ("chain", f.chain.createdAt, f.chain.updatedAt),
             ("workflow", f.workflow.createdAt, f.workflow.updatedAt),
             ("directory", f.directory.createdAt, f.directory.updatedAt),
@@ -89,7 +89,7 @@ final class PrimitiveContractFixtureTests: XCTestCase {
         let dec = HoldSpeakContracts.decoder()
         XCTAssertEqual(try dec.decode(Note.self, from: enc.encode(f.note)), f.note)
         XCTAssertEqual(try dec.decode(KB.self, from: enc.encode(f.kb)), f.kb)
-        XCTAssertEqual(try dec.decode(Agent.self, from: enc.encode(f.agent)), f.agent)
+        XCTAssertEqual(try dec.decode(Recipe.self, from: enc.encode(f.recipe)), f.recipe)
         XCTAssertEqual(try dec.decode(Chain.self, from: enc.encode(f.chain)), f.chain)
         XCTAssertEqual(try dec.decode(WorkflowDefinition.self, from: enc.encode(f.workflow)), f.workflow)
         XCTAssertEqual(try dec.decode(Directory.self, from: enc.encode(f.directory)), f.directory)

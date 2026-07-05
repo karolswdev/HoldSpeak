@@ -174,3 +174,43 @@ def test_write_meeting_export_rejects_invalid_format(
     """Unsupported export formats should fail fast."""
     with pytest.raises(ValueError, match="Unsupported export format"):
         write_meeting_export(sample_meeting, "pdf", destination_dir=tmp_path)  # type: ignore[arg-type]
+
+
+def test_write_meeting_export_srt_round_trips_speakers(
+    sample_meeting: MeetingState, tmp_path
+) -> None:
+    # F-12: srt is a first-class export. `Speaker: text` cue bodies re-import
+    # through the real parser with the same speakers and timestamps.
+    filepath = write_meeting_export(sample_meeting, "srt", tmp_path)
+
+    assert filepath.suffix == ".srt"
+    content = filepath.read_text(encoding="utf-8")
+    assert "1\n00:00:00,000 --> 00:00:03,000\nMe: First segment" in content
+    assert "2\n00:00:04,000 --> 00:00:07,000\nRemote: Second segment" in content
+
+    from holdspeak.transcript_parse import parse_transcript
+
+    parsed = parse_transcript(content, filepath.name)
+    assert [c.speaker for c in parsed.cues] == ["Me", "Remote"]
+    assert [c.text for c in parsed.cues] == ["First segment", "Second segment"]
+    assert parsed.cues[0].start == 0.0
+    assert parsed.cues[1].end == 7.0
+
+
+def test_write_meeting_export_srt_repairs_degenerate_end_time(tmp_path) -> None:
+    meeting = MeetingState(
+        id="degenerate123",
+        started_at=datetime(2024, 1, 15, 10, 0, 0),
+        segments=[
+            TranscriptSegment(
+                text="Instant remark",
+                speaker="Me",
+                start_time=2.0,
+                end_time=2.0,
+            )
+        ],
+    )
+
+    filepath = write_meeting_export(meeting, "srt", tmp_path)
+
+    assert "00:00:02,000 --> 00:00:02,010" in filepath.read_text(encoding="utf-8")

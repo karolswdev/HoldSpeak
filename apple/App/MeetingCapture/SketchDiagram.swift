@@ -635,8 +635,8 @@ struct SketchToDiagramView: View {
 
     /// Resolve which profile runs a given action: an explicit inline override → the agent's assigned
     /// profile → the global active profile. (The owner's "expose + change the default at any time".)
-    func resolveProfile(agentProfileId: String? = nil, override: String? = nil) -> RuntimeProfile {
-        for id in [override, agentProfileId].compactMap({ $0 }) where !id.isEmpty {
+    func resolveProfile(recipeProfileId: String? = nil, override: String? = nil) -> RuntimeProfile {
+        for id in [override, recipeProfileId].compactMap({ $0 }) where !id.isEmpty {
             if let p = profiles.first(where: { $0.id == id }) { return p }
         }
         return activeProfile

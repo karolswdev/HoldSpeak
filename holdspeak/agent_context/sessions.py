@@ -18,13 +18,86 @@ from .hs_context import _normalize_project_root, detect_repo_root
 from .models import (
     AgentSession,
     DEFAULT_ASSISTANT_CAPTURE_MAX_CHARS,
+    DEFAULT_LIFECYCLE_DEAD_SECONDS,
+    DEFAULT_LIFECYCLE_IDLE_SECONDS,
     DEFAULT_PROMPT_CAPTURE_MAX_CHARS,
     DEFAULT_RECENT_MAX_AGE_SECONDS,
     DEFAULT_STALE_AGENT_SESSION_SECONDS,
+    LIFECYCLE_ENDED,
+    LIFECYCLE_IDLE,
+    LIFECYCLE_WAITING,
+    LIFECYCLE_WORKING,
     MAX_SESSIONS,
     STATE_VERSION,
     SUPPORTED_AGENTS,
 )
+
+
+# HSM-17-02: hook-event → raw lifecycle. Events that mean "the coder is
+# actively doing things" are heartbeats (working); `Notification` and `Stop`
+# mean the coder handed the turn to the human (waiting); `SessionEnd` is the
+# tombstone. Unknown events keep the prior lifecycle (a heartbeat at most).
+_WORKING_EVENTS = {
+    "SessionStart",
+    "CwdChanged",
+    "UserPromptSubmit",
+    "UserPromptExpansion",
+    "PreToolUse",
+    "PostToolUse",
+    "PreCompact",
+    "SubagentStop",
+}
+_WAITING_EVENTS = {"Notification", "Stop"}
+_ENDED_EVENTS = {"SessionEnd"}
+
+
+def _lifecycle_for_event(hook_event_name: str, previous_lifecycle: str) -> str:
+    if hook_event_name in _ENDED_EVENTS:
+        return LIFECYCLE_ENDED
+    if hook_event_name in _WAITING_EVENTS:
+        return LIFECYCLE_WAITING
+    if hook_event_name in _WORKING_EVENTS:
+        return LIFECYCLE_WORKING
+    return previous_lifecycle or LIFECYCLE_WORKING
+
+
+def _filter_question(text: str | None) -> str | None:
+    """Secret-filter a captured question (HSM-17-02 acceptance: reuse the
+    dictation journal's whole-field redaction so a synced question can never
+    carry a token/key)."""
+    if not text:
+        return None
+    from holdspeak.plugins.dictation.journal import filter_secret
+
+    filtered = filter_secret(str(text).strip())
+    return filtered or None
+
+
+def effective_state(
+    session: AgentSession,
+    *,
+    now: datetime | None = None,
+    idle_after_seconds: int = DEFAULT_LIFECYCLE_IDLE_SECONDS,
+    dead_after_seconds: int = DEFAULT_LIFECYCLE_DEAD_SECONDS,
+) -> str:
+    """The state a consumer should render: the raw lifecycle plus decay.
+
+    `ended` is sticky. A session whose last heartbeat is older than
+    `idle_after_seconds` decays to `idle`; older than `dead_after_seconds`
+    tombstones to `ended`. Computed at read time — the registry is never
+    rewritten by staleness.
+    """
+    if session.lifecycle == LIFECYCLE_ENDED:
+        return LIFECYCLE_ENDED
+    updated = _parse_timestamp(session.updated_at)
+    if updated is None:
+        return session.lifecycle or LIFECYCLE_WORKING
+    age = ((now or datetime.now(timezone.utc)) - updated).total_seconds()
+    if age > dead_after_seconds:
+        return LIFECYCLE_ENDED
+    if age > idle_after_seconds:
+        return LIFECYCLE_IDLE
+    return session.lifecycle or LIFECYCLE_WORKING
 
 
 def _default_state_file() -> Path:
@@ -98,6 +171,24 @@ def ingest_agent_hook_event(
             summary = None
             awaiting_response = looks_like_agent_question(assistant_text)
 
+        # HSM-17-02: the raw lifecycle + the pending question. A `Notification`
+        # carries the blocking ask in `message` (permission prompts, "waiting
+        # for your input"); a question-shaped `Stop` reuses the captured
+        # assistant text. Any working event clears the question — the coder
+        # resumed. Everything captured here is secret-filtered.
+        lifecycle = _lifecycle_for_event(
+            hook_event_name, _optional_str(previous.get("lifecycle")) or LIFECYCLE_WORKING
+        )
+        question = _optional_str(previous.get("question"))
+        if lifecycle == LIFECYCLE_WORKING:
+            question = None
+        elif hook_event_name == "Notification":
+            question = _filter_question(
+                _optional_str(payload.get("message")) or _optional_str(payload.get("prompt"))
+            ) or question
+        elif hook_event_name == "Stop" and assistant_text and awaiting_response:
+            question = _filter_question(assistant_text)
+
         session = AgentSession(
             agent=normalized_agent,
             session_id=session_id,
@@ -124,6 +215,8 @@ def ingest_agent_hook_event(
             created_at=_optional_str(previous.get("created_at")) or timestamp,
             event_count=event_count,
             pinned=bool(previous.get("pinned")),
+            lifecycle=lifecycle,
+            question=question,
         )
         sessions[key] = session.to_dict()
         state["version"] = STATE_VERSION

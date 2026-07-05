@@ -173,3 +173,73 @@ def test_web_runtime_method_delegates(monkeypatch) -> None:
     assert captured["server"] == "SRV"
     assert captured["audio_duration_s"] == 2.0
     assert captured["transcribed_at"] is _NOW
+
+
+class _JournalSpy:
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    def record(self, run, **kwargs):
+        self.calls.append({"run": run, **kwargs})
+        return SimpleNamespace(id=41)
+
+
+def test_disabled_pipeline_journals_passthrough_row() -> None:
+    # F-07: journal_enabled promises a record even when the pipeline is off.
+    cfg = _enabled_config()
+    cfg.dictation.pipeline.enabled = False
+    server = _bare_server()
+    server.dictation_journal = _JournalSpy()
+
+    out = run_dictation_pipeline(
+        "hello world",
+        config=cfg,
+        server=server,
+        audio_duration_s=1.0,
+        transcribed_at=_NOW,
+    )
+
+    assert out == "hello world"  # typed text stays byte-identical
+    (call,) = server.dictation_journal.calls
+    assert call["source"] == "dictation"
+    assert call["transcript"] == "hello world"
+    assert call["enabled"] is True
+    assert call["run"].final_text == "hello world"
+    assert call["run"].stage_results == []
+    assert call["run"].warnings == ["dictation pipeline disabled"]
+
+
+def test_disabled_pipeline_passes_journal_toggle_through() -> None:
+    cfg = _enabled_config()
+    cfg.dictation.pipeline.enabled = False
+    cfg.dictation.pipeline.journal_enabled = False
+    server = _bare_server()
+    server.dictation_journal = _JournalSpy()
+
+    out = run_dictation_pipeline(
+        "hello world",
+        config=cfg,
+        server=server,
+        audio_duration_s=1.0,
+        transcribed_at=_NOW,
+    )
+
+    assert out == "hello world"
+    (call,) = server.dictation_journal.calls
+    assert call["enabled"] is False  # the recorder no-ops on this
+
+
+def test_missing_pipeline_config_never_touches_the_journal() -> None:
+    server = _bare_server()
+    server.dictation_journal = _JournalSpy()
+
+    out = run_dictation_pipeline(
+        "hello world",
+        config=SimpleNamespace(dictation=SimpleNamespace(pipeline=None)),
+        server=server,
+        audio_duration_s=1.0,
+        transcribed_at=_NOW,
+    )
+
+    assert out == "hello world"
+    assert server.dictation_journal.calls == []

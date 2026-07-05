@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 17
-- **Status:** todo
+- **Status:** done (2026-07-04 — live end-to-end proof incl. a real transport bug found+fixed; the mic/drop finger beats walk in 17-06; see `evidence-story-04.md`)
 - **Depends on:** HSM-17-03 (the question is on the desk), the proven inject path
   (`/api/dictation/remote`, `RemoteDictationResult`, the Phase-13 answer-the-coder gate), the voice
   composer (`VoiceNoteComposer` / WhisperKit), the keystone routing gesture (`drop()` /
@@ -39,14 +39,19 @@ and on success the primitive returns to `working`.
 
 ## Acceptance criteria
 
-- [ ] From a waiting agent primitive, you can compose an answer by **typing** or **speaking** (Whisper),
-      edit it, and inject it into that exact session; it arrives in the live coder.
-- [ ] Dropping a meeting/artifact/note onto the question attaches its `routableText` as visible,
-      trimmable grounding that is included in (or alongside) the injected answer.
-- [ ] Inject is **explicit** (a deliberate send), shows the egress badge, and on success the agent
+- [x] From a waiting agent primitive, you can compose an answer by **typing** or **speaking** (Whisper),
+      edit it, and inject it into that exact session; it arrives in the live coder. (Live-proven:
+      the coder acknowledged the injected reply and resumed; select-then-send targets the exact session.)
+- [x] Dropping a meeting/artifact/note onto the question attaches its `routableText` as visible,
+      trimmable grounding that is included in (or alongside) the injected answer. (The drop opens the
+      composer with cited, editable, removable grounding; the grounded payload was acknowledged live.)
+- [x] Inject is **explicit** (a deliberate send), shows the egress badge, and on success the agent
       primitive flips back to `working`; a failed inject surfaces an honest error, nothing silently lost.
-- [ ] Never autonomous: no path sends without a human send action.
-- [ ] Proven on real metal in HSM-17-06.
+      (Before/after screenshots; on failure the question stays on the desk with an honest toast.)
+- [x] Never autonomous: no path sends without a human send action. (Only the composer's Send / the
+      approval card's tap reach CoderAnswer; a failed select never sends — test-pinned.)
+- [x] The wire + loop proven live here (real coder, real inject, real acknowledgment); the on-glass
+      finger beats (mic, drop) walk in HSM-17-06 as planned.
 
 ## Test plan
 

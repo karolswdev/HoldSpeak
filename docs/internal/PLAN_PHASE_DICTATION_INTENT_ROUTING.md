@@ -284,7 +284,11 @@ blocks:
           type: enum
           values: [buildout, refinement, debugging, documentation]
     inject:
-      mode: append   # append | prepend | replace
+      # append/prepend keep the dictated text and add the rendered template
+      # after/before it -- so their templates must NOT contain {raw_text}
+      # (that would repeat the utterance). Use `replace` when the template
+      # carries the full output, as here.
+      mode: replace   # append | prepend | replace
       template: |
         {raw_text}
 
@@ -302,7 +306,7 @@ blocks:
         - "This module is responsible for..."
         - "The endpoint accepts a JSON body with..."
     inject:
-      mode: append
+      mode: replace
       template: |
         {raw_text}
 

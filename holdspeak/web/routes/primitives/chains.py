@@ -99,7 +99,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
         Each step loads its AgentRecord, renders its `user_template` against the
         current input (the previous step's output, or the request `input` for the
         first step) + the shared `variables`, and runs it through the same
-        persona-run path as `POST /api/agents/{id}/run`
+        persona-run path as `POST /api/recipes/{id}/run`
         (`build_configured_meeting_intel().run_prompt`). 404 if the chain or any
         referenced agent is missing; 502 on the first engine failure (no silent
         empty). Returns the per-step trail plus the last step's output.
@@ -120,11 +120,11 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
 
             # Resolve every agent up front so a missing one 404s before any run.
             agents = []
-            for agent_id in steps:
-                agent = db.agents.get(str(agent_id))
+            for recipe_id in steps:
+                agent = db.recipes.get(str(recipe_id))
                 if agent is None:
                     return JSONResponse(
-                        {"error": f"Unknown agent in chain: {agent_id}"}, status_code=404
+                        {"error": f"Unknown recipe in chain: {recipe_id}"}, status_code=404
                     )
                 agents.append(agent)
 
@@ -152,7 +152,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                                 "or an agent user_template"
                             ),
                             "chain_id": chain_id,
-                            "agent_id": agent.id,
+                            "recipe_id": agent.id,
                         },
                         status_code=400,
                     )
@@ -167,11 +167,11 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                     _run_frame(ctx, "error", kind="chain", ref=chain_id,
                                name=chain.name or chain_id, error=str(exc))
                     return JSONResponse(
-                        {"error": str(exc), "chain_id": chain_id, "agent_id": agent.id},
+                        {"error": str(exc), "chain_id": chain_id, "recipe_id": agent.id},
                         status_code=502,
                     )
                 run_steps.append({
-                    "agent_id": agent.id,
+                    "recipe_id": agent.id,
                     "output": output,
                     "provider": intel.active_provider,
                 })
@@ -188,7 +188,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             ]
             for step in run_steps:
                 sources.append(
-                    {"source_type": "agent", "source_ref": str(step["agent_id"])}
+                    {"source_type": "recipe", "source_ref": str(step["recipe_id"])}
                 )
 
             _run_frame(ctx, "ready", kind="chain", ref=chain_id, name=chain.name or chain_id)

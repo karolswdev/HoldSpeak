@@ -1520,8 +1520,8 @@ enum LiveLenses {
 // one live-intelligence result floating by the mic
 struct LiveIntelCard: Identifiable { let id: String; let lens: String; let minutes: Double; var text: String?; var thinking: Bool }
 
-// what a live marker fires: a quick built-in lens, one of YOUR tailored agents, or a whole crew — all on a window
-enum LiveTarget { case lens(LiveLens); case agent(AgentRecord); case chain(ChainRecord) }
+// what a live marker fires: a quick built-in lens, one of YOUR recipes, or a whole chain — all on a window
+enum LiveTarget { case lens(LiveLens); case recipe(RecipeRecord); case chain(ChainRecord) }
 
 // THE MODE PICKER — a hovering popup over the corner mic: are we recording a meeting, or talking to the Mac?
 struct DioRecordModePicker: View {
@@ -1561,7 +1561,7 @@ struct DioRecordModePicker: View {
 
 // THE AMBIENT RECORDER — recording does NOT take over. The corner mic stays put and RADIATES: faint angled
 // waveform sprawls, a small live transcript, and the intelligence markers. Fire one → a quick window slider →
-// the agent runs on the recent transcript WHILE Whisper keeps going, and a small card floats up by the mic.
+// the recipe runs on the recent transcript WHILE Whisper keeps going, and a small card floats up by the mic.
 // A wrapping flow — chips flow left-to-right and wrap to new rows so NOTHING cuts off (no horizontal scroll).
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
@@ -1863,7 +1863,7 @@ struct DioAmbientRecorder: View {
     let isDesktop: Bool
     let orb: CGPoint; let w: CGFloat; let h: CGFloat
     let cards: [LiveIntelCard]
-    let agents: [AgentRecord]; let chains: [ChainRecord]
+    let recipes: [RecipeRecord]; let chains: [ChainRecord]
     let onFire: (LiveTarget, Double) -> Void
     let onKeep: (LiveIntelCard) -> Void
     let onDismiss: (String) -> Void
@@ -1891,7 +1891,7 @@ struct DioAmbientRecorder: View {
                 ForEach(cards) { c in DioLiveIntelCard(card: c, onKeep: { onKeep(c) }, onDismiss: { onDismiss(c.id) }) }
                 if !model.transcribing {
                     if expanded { transcriptPanel } else { peekChip }
-                    // ASK LIVE — every lens, agent, and crew, wrapped so NONE cut off (no horizontal scroll)
+                    // ASK LIVE — every lens, recipe, and chain, wrapped so NONE cut off (no horizontal scroll)
                     Text("ASK LIVE").font(.system(size: 8, weight: .black, design: .rounded)).tracking(1.5).foregroundStyle(DioPal.muted.opacity(0.8))
                     FlowLayout(spacing: 7) {
                         ForEach(LiveLenses.all, id: \.name) { l in
@@ -1901,11 +1901,11 @@ struct DioAmbientRecorder: View {
                                     .background(Capsule().fill(DioPal.violet.opacity(0.22)).overlay(Capsule().strokeBorder(DioPal.violet.opacity(0.5), lineWidth: 1)))
                             }.buttonStyle(.plain)
                         }
-                        ForEach(agents) { a in
-                            Button { pending = .agent(a); mins = 0.5; tap() } label: {
-                                HStack(spacing: 6) { AgentAvatarView(avatarId: a.avatar, size: 24); Text(a.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
+                        ForEach(recipes) { a in
+                            Button { pending = .recipe(a); mins = 0.5; tap() } label: {
+                                HStack(spacing: 6) { RecipeAvatarView(avatarId: a.avatar, size: 24); Text(a.name).font(.system(size: 11.5, weight: .heavy, design: .rounded)) }
                                     .foregroundStyle(DioPal.text).padding(.horizontal, 8).frame(height: 32)
-                                    .background(Capsule().fill(AgentAvatars.color(a.avatar).opacity(0.2)).overlay(Capsule().strokeBorder(AgentAvatars.color(a.avatar).opacity(0.5), lineWidth: 1)))
+                                    .background(Capsule().fill(RecipeAvatars.color(a.avatar).opacity(0.2)).overlay(Capsule().strokeBorder(RecipeAvatars.color(a.avatar).opacity(0.5), lineWidth: 1)))
                             }.buttonStyle(.plain)
                         }
                         ForEach(chains.filter { !$0.steps.isEmpty }) { c in
@@ -1931,9 +1931,9 @@ struct DioAmbientRecorder: View {
         .onAppear { if ProcessInfo.processInfo.environment["HS_DESK_RECORD"] == "transcript" { expanded = true } }
         #endif
     }
-    private func targetTitle(_ t: LiveTarget) -> String { switch t { case .lens(let l): return l.name; case .agent(let a): return a.name; case .chain(let c): return c.name } }
-    private func targetIcon(_ t: LiveTarget) -> String { switch t { case .lens(let l): return l.icon; case .agent: return "person.fill"; case .chain: return "arrow.triangle.branch" } }
-    private func targetTint(_ t: LiveTarget) -> Color { switch t { case .lens: return DioPal.violet; case .agent(let a): return AgentAvatars.color(a.avatar); case .chain: return DioPal.accent } }
+    private func targetTitle(_ t: LiveTarget) -> String { switch t { case .lens(let l): return l.name; case .recipe(let a): return a.name; case .chain(let c): return c.name } }
+    private func targetIcon(_ t: LiveTarget) -> String { switch t { case .lens(let l): return l.icon; case .recipe: return "person.fill"; case .chain: return "arrow.triangle.branch" } }
+    private func targetTint(_ t: LiveTarget) -> Color { switch t { case .lens: return DioPal.violet; case .recipe(let a): return RecipeAvatars.color(a.avatar); case .chain: return DioPal.accent } }
     private var bottomRow: some View {
         HStack(spacing: 11) {
             Button(action: onStop) {
@@ -2211,7 +2211,7 @@ struct DioRecordOrb: View {
 }
 
 // THE ROUTE SHEET — drop a primitive on the AI core → pick a lens (or write a prompt) → Ask.
-// A pending route through an agent/chain whose "where it runs" the user is choosing —
+// A pending route through a recipe/chain whose "where it runs" the user is choosing —
 // on this iPad (on-device) or on the paired Mac (the hub's big model). Captured so the
 // run target sheet can fire the right path with the card's text intact.
 // The RUNS-ON choice the user can remember (Phase-15 fluid compute) — on this iPad or your desktop.
@@ -2221,21 +2221,21 @@ enum DeskRunTarget: String { case device, mac }
 struct PendingHubRun: Identifiable, Equatable {
     // HSM-22-04: a workflow joins the runs-on choice — its graph travels, so the
     // hub can finally run it (the linear subset; refusals ride back as a warning).
-    enum Kind: Equatable { case agent(AgentRecord); case chain(ChainRecord); case workflow(WorkflowRecord) }
+    enum Kind: Equatable { case recipe(RecipeRecord); case chain(ChainRecord); case workflow(WorkflowRecord) }
     let id = UUID()
     let kind: Kind
     let input: String
     let inputId: String            // the routed primitive's id — the lineage's "from" card
     let inputTitle: String
-    var name: String { switch kind { case .agent(let a): return a.name.isEmpty ? "Agent" : a.name
+    var name: String { switch kind { case .recipe(let a): return a.name.isEmpty ? "Agent" : a.name
                                       case .chain(let c): return c.name.isEmpty ? "Crew" : c.name
                                       case .workflow(let w): return w.name.isEmpty ? "Workflow" : w.name } }
     var isChain: Bool { if case .chain = kind { return true }; return false }
     var isWorkflow: Bool { if case .workflow = kind { return true }; return false }
     // The id + kind of what produced the run — carried into the output's provenance.
-    var viaId: String { switch kind { case .agent(let a): return a.id; case .chain(let c): return c.id
+    var viaId: String { switch kind { case .recipe(let a): return a.id; case .chain(let c): return c.id
                                        case .workflow(let w): return w.id } }
-    var viaKind: String { isChain ? "chain" : (isWorkflow ? "workflow" : "agent") }
+    var viaKind: String { isChain ? "chain" : (isWorkflow ? "workflow" : "recipe") }
     // The lineage record stamped onto the resulting OutputRecord.
     var provenance: RunProvenance {
         RunProvenance(sourceCardId: inputId, sourceCardTitle: inputTitle,
@@ -2243,7 +2243,7 @@ struct PendingHubRun: Identifiable, Equatable {
     }
 }
 
-// WHERE IT RUNS — the Mesh RUNS-ON choice for routing a card through an agent/chain:
+// WHERE IT RUNS — the Mesh RUNS-ON choice for routing a card through a recipe/chain:
 // on this iPad (private, on-device) or on your desktop (its big model, LAN egress). When no
 // Mac is paired, the hub row is disabled with a clear "pair first" cue; on-device stays
 // the default. Premium DioPal sheet — never a flat picker.
@@ -2458,7 +2458,7 @@ struct DioPrintedCard: View {
                     EgressBadge(scope: egress)
                 }.padding(.horizontal, 18).padding(.top, 16).padding(.bottom, 8)
                 // LINEAGE — where this came from + what produced it ("from Q3 kickoff · via Scout").
-                // A crafted chip, not a flat caption: a branch glyph + the source card + the agent/chain.
+                // A crafted chip, not a flat caption: a branch glyph + the source card + the recipe/chain.
                 if let p = rec.provenance, !p.line.isEmpty {
                     DioLineageRow(provenance: p).padding(.horizontal, 18).padding(.bottom, 8)
                 }
@@ -2482,9 +2482,9 @@ struct DioPrintedCard: View {
     }
 }
 
-// THE LINEAGE ROW — the crafted "from <source card> · via <agent/chain>" line on a run result.
+// THE LINEAGE ROW — the crafted "from <source card> · via <recipe/chain>" line on a run result.
 // Not a flat caption: a tinted source-card pill, a flowing connector glyph, and a via-pill that
-// reads the agent vs crew icon. Reused by the printed card; the Output pull-out carries the same
+// reads the recipe vs chain icon. Reused by the printed card; the Output pull-out carries the same
 // text in its subtitle. Honest provenance the user (and the synced Artifact) can trust.
 struct DioLineageRow: View {
     let provenance: RunProvenance
@@ -2501,7 +2501,7 @@ struct DioLineageRow: View {
             .background(Capsule().fill(DioPal.accent.opacity(0.12)).overlay(Capsule().strokeBorder(DioPal.accent.opacity(0.3), lineWidth: 0.8)))
             // the flow connector
             Image(systemName: "arrow.right").font(.system(size: 9, weight: .black)).foregroundStyle(DioPal.muted.opacity(0.8))
-            // VIA — the agent/chain that produced it.
+            // VIA — the recipe/chain that produced it.
             HStack(spacing: 5) {
                 Image(systemName: viaIsChain ? "arrow.triangle.branch" : "sparkles")
                     .font(.system(size: 9, weight: .bold)).foregroundStyle(DioPal.mint)
@@ -2870,6 +2870,9 @@ struct DioStage: View {
     @AppStorage("hs.diorama.games") private var gamesJSON = ""  // games placed on the desk as primitives
     @State private var placedGames: [GameRecord] = []
     @State private var coders: [CoderSession] = []             // HSM-17 live Claude/Codex sessions on the desk
+    @State private var coderPoll: Task<Void, Never>? = nil     // HSM-17-03: the live-set poll (typed presence stream)
+    @State private var coderGrounding: CoderGrounding? = nil   // HSM-17-04: dropped-context for the open composer
+    @State private var coderWasWaiting: Set<String> = []       // rising-edge memory: glare once per flip into waiting
     @State private var answeringCoder: CoderSession? = nil     // the answer composer is open on this session
     @State private var openCoderSession: CoderSession? = nil   // the live "running coder" feed is open
     @State private var showSettings = false
@@ -2941,13 +2944,13 @@ struct DioStage: View {
     @State private var sentToast: String? = nil
     @State private var summonSource: String? = nil       // the card being routed (radial summon active)
     @State private var summonAt: CGPoint = .zero          // where the radial centers (the card's position)
-    // tailored agents — characters you build (avatar + system prompt + context); ask them or route cards through them
-    @AppStorage("hs.diorama.agents") private var agentsJSON = ""
-    @State private var agents: [AgentRecord] = []
-    @State private var editingAgent: AgentRecord? = nil  // builder open with this draft (new or existing)
-    @State private var openAgent: AgentRecord? = nil      // the agent conversation is open
-    @AppStorage("hs.diorama.agentchats") private var agentChatsJSON = ""
-    @State private var agentChats: [String: [AgentMessage]] = [:]   // per-agent conversation threads
+    // tailored recipes — characters you build (avatar + system prompt + context); ask them or route cards through them
+    @AppStorage("hs.diorama.recipes") private var agentsJSON = ""
+    @State private var recipes: [RecipeRecord] = []
+    @State private var editingAgent: RecipeRecord? = nil  // builder open with this draft (new or existing)
+    @State private var openAgent: RecipeRecord? = nil      // the agent conversation is open
+    @AppStorage("hs.diorama.recipechats") private var agentChatsJSON = ""
+    @State private var agentChats: [String: [RecipeMessage]] = [:]   // per-agent conversation threads
     // agent chains (crews) — Scout → Critic → Editor, run in order
     @AppStorage("hs.diorama.chains") private var chainsJSON = ""
     @State private var chains: [ChainRecord] = []
@@ -2972,7 +2975,7 @@ struct DioStage: View {
     @State private var editingChain: ChainRecord? = nil   // chain builder open
     @State private var editingZone: ZoneRec? = nil        // the zone style editor is open
     @State private var runChainSheet: ChainRecord? = nil  // the run/manage sheet
-    // RUN ON THE HUB (the Mesh "RUNS ON: your desktop") — routing a card through an agent/chain
+    // RUN ON THE HUB (the Mesh "RUNS ON: your desktop") — routing a card through a recipe/chain
     // offers running it on the desktop hub's big model instead of on-device. The choice
     // sheet captures the pending run; the hub run lands a printed card with a cloud egress.
     @State private var pendingHubRun: PendingHubRun? = nil  // the run/where-it-runs picker is open
@@ -3048,9 +3051,9 @@ struct DioStage: View {
         for wf in workflows { out.append(WorkflowPrimitive(rec: wf)) }
         return out
     }
-    private func agentMembers() -> [any DeskPrimitive] { agents.map { AgentPrimitive(rec: $0) } }
+    private func recipeMembers() -> [any DeskPrimitive] { recipes.map { RecipePrimitive(rec: $0) } }
     private func chainMembers() -> [any DeskPrimitive] { chains.filter { !$0.steps.isEmpty }.map { ChainPrimitive(rec: $0) } }
-    private func members() -> [any DeskPrimitive] { contentMembers() + toolMembers() + agentMembers() + chainMembers() }
+    private func members() -> [any DeskPrimitive] { contentMembers() + toolMembers() + recipeMembers() + chainMembers() }
     private var hostLink: DeskHostLink? {
         let h = peerHost.trimmingCharacters(in: .whitespaces)
         guard !h.isEmpty, let p = Int(peerPort.trimmingCharacters(in: .whitespaces)), p > 0 else { return nil }
@@ -3070,7 +3073,7 @@ struct DioStage: View {
         if prim.kind == .game { return .localOnly }
         guard hostLink != nil else { return .none }
         // only the durable, syncable classes carry a canonical/pending cue
-        let syncable: Set<PrimitiveKind> = [.note, .agent, .kb, .artifact, .chain, .workflow]
+        let syncable: Set<PrimitiveKind> = [.note, .recipe, .kb, .artifact, .chain, .workflow]
         guard syncable.contains(prim.kind) else { return .none }
         // the bare record id (the side maps are keyed bare; the primitive id is "kind:bare")
         let bare = prim.id.contains(":") ? String(prim.id.split(separator: ":", maxSplits: 1)[1]) : prim.id
@@ -3224,7 +3227,7 @@ struct DioStage: View {
 
                 // an empty zone you dived into — teach how to fill it (you file from the desk; or nest deeper).
                 // DIORAMA ONLY: on the iPad the canvas is genuinely blank, so the centred card fits. On the
-                // lane the zone still lists the global toolkit (connectors/models/agents), so a centred card
+                // lane the zone still lists the global toolkit (connectors/models/recipes), so a centred card
                 // would land ON those rows (text-on-text) and falsely read "empty" — the lane gets a compact
                 // inline hint at the top of the column instead (see laneColumn).
                 if emptyZone && !camera.isLane && landed && selected == nil {
@@ -3431,9 +3434,9 @@ struct DioStage: View {
                             Color.clear.contentShape(Rectangle()).ignoresSafeArea()
                                 .onTapGesture { withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { railOpen = false } }.zIndex(63)
                         }
-                        DioAgentRail(agents: agents, chains: chains, dimmed: false,
+                        DioRecipeRail(recipes: recipes, chains: chains, dimmed: false,
                                      onOpen: { a in railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { openAgent = a } },
-                                     onCreate: { railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingAgent = AgentRecord.blank() } },
+                                     onCreate: { railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingAgent = RecipeRecord.blank() } },
                                      onRunChain: { c in railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { runChainSheet = c } },
                                      onCreateChain: { railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { editingChain = ChainRecord.blank() } },
                                      onPlay: { id in railOpen = false; haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { if id == "arkanoid" { arkadeOpen = true } else { openGameId = id } } },
@@ -3454,7 +3457,7 @@ struct DioStage: View {
                 // recording is AMBIENT — anchored to the corner mic, it does not take over the desk
                 if capturing && !weaving {
                     DioAmbientRecorder(model: model, isDesktop: captureDesktop, orb: orbPos(w, h), w: w, h: h,
-                                       cards: liveCards, agents: agents, chains: chains,
+                                       cards: liveCards, recipes: recipes, chains: chains,
                                        onFire: { target, m in fireLive(target, minutes: m) },
                                        onKeep: { c in keepLiveCard(c) },
                                        onDismiss: { id in withAnimation { liveCards.removeAll { $0.id == id } } },
@@ -3486,34 +3489,9 @@ struct DioStage: View {
 
                 // THE RADIAL SUMMON — long-press a card and its VALID tools bloom around it; tap one to route.
                 // No drawer, no menu: the targets come to your finger, and only the tools that accept the card show.
+                // (Extracted from the body: the enclosing expression crossed the type-checker's budget.)
                 if let src = summonSource, let srcPrim = members().first(where: { $0.id == src }) {
-                    let targets = summonTargets(for: srcPrim)
-                    Color.black.opacity(0.55).ignoresSafeArea().contentShape(Rectangle())
-                        .onTapGesture { dismissSummon() }.transition(.opacity).zIndex(118)
-                    Circle().strokeBorder(DioPal.accent.opacity(0.9), lineWidth: 3)
-                        .frame(width: srcPrim.base * 1.12, height: srcPrim.base * 1.12)
-                        .shadow(color: DioPal.accent.opacity(0.7), radius: 14)
-                        .position(summonAt).allowsHitTesting(false).zIndex(119)
-                    if targets.isEmpty {
-                        VStack(spacing: 6) {
-                            Image(systemName: "tray").font(.system(size: 26)).foregroundStyle(DioPal.muted)
-                            Text("No tool can take this yet").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                            Text("Add a model in Settings.").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).multilineTextAlignment(.center)
-                        }.padding(18).background(RoundedRectangle(cornerRadius: 18).fill(.black.opacity(0.8)))
-                        .frame(maxWidth: 280).position(x: w / 2, y: max(140, summonAt.y - 150)).zIndex(121)
-                    } else {
-                        ForEach(Array(targets.enumerated()), id: \.element.id) { i, t in
-                            let p = summonPos(i, targets.count, summonAt, w, h)
-                            Path { pa in pa.move(to: summonAt); pa.addLine(to: p) }
-                                .stroke(t.color.opacity(0.55), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [2, 6]))
-                                .allowsHitTesting(false).zIndex(119)
-                            DioSummonSatellite(prim: t, index: i) { routeFrom = summonAt; routeTo = p; let s = srcPrim; dismissSummon(); beginRoute(sourceId: s.id, target: t) }
-                                .position(p).zIndex(122)
-                        }
-                        Text("tap a tool to route").font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
-                            .padding(.horizontal, 12).padding(.vertical, 6).background(Capsule().fill(.black.opacity(0.5)))
-                            .position(x: w / 2, y: min(h - 36, summonAt.y + srcPrim.base * 0.7 + 26)).allowsHitTesting(false).zIndex(121)
-                    }
+                    summonOverlay(srcPrim: srcPrim, w: w, h: h)
                 }
 
                 RadialGradient(colors: [.clear, .clear, .black.opacity(0.5)], center: .center, startRadius: 160, endRadius: 800)
@@ -3570,102 +3548,11 @@ struct DioStage: View {
                 if let rec = printed {
                     DioPrintedCard(rec: rec, egress: printedEgress, onKeep: { keepPrinted() }, onBin: { binPrinted() }).zIndex(130)
                 }
-                // WHERE IT RUNS — the run-target picker for an agent/chain route (on-device vs your desktop).
+                // WHERE IT RUNS — the run-target picker for a recipe/chain route (on-device vs your desktop).
                 if let run = pendingHubRun {
-                    DioRunTargetSheet(run: run, paired: hostLink != nil,
-                                      peerLabel: peerHost.isEmpty ? "your desktop" : peerHost,
-                                      preferred: preferredRunTarget,
-                                      remembered: DeskRunTarget(rawValue: runTargetPref) != nil,
-                                      onDevice: { runOnDevice(run) },
-                                      onHub: { runOnHub(run) },
-                                      onCancel: { withAnimation { pendingHubRun = nil } })
-                        .zIndex(132)
+                    runTargetOverlay(run)
                 }
-                if showSendCard {
-                    let member = members().first(where: { $0.id == sendSourceId })
-                    let sTitle = sendOverride?.title ?? member?.title
-                    let sText = sendOverride?.text ?? member?.routableText
-                    if let sTitle, let sText {
-                        DioSendCard(sourceTitle: sTitle, preview: String(sText.prefix(220)), connName: sendTargetName, sending: sending,
-                                    onApprove: { sendNow(title: sTitle, text: sText) },
-                                    onCancel: { if !sending { withAnimation { showSendCard = false }; sendSourceId = nil; sendOverride = nil } }).zIndex(135)
-                    }
-                }
-                if showActSheet, let item = actItem {
-                    DioActSheet(itemText: item.text, connectors: actConnectors(), configured: hostLink != nil,
-                                onSend: { cid, nm in actSend(connId: cid, name: nm) },
-                                onFile: { actFile() },
-                                onCancel: { withAnimation { showActSheet = false }; actItem = nil }).zIndex(136)
-                }
-                // the agent's home — a living multi-turn conversation; harvest replies to the desk
-                if let a = openAgent {
-                    DioAgentChat(agent: a,
-                                 messages: agentChats[a.id] ?? [],
-                                 onInfer: { history, q in await agentReply(a, history: history, question: q) },
-                                 onChange: { msgs in agentChats[a.id] = msgs; persistAgentChats() },
-                                 onSaveCard: { text in saveAgentReply(text, from: a) },
-                                 onEdit: { withAnimation { openAgent = nil; editingAgent = a } },
-                                 onDelete: { deleteAgent(a.id) },
-                                 onClose: { withAnimation { openAgent = nil } })
-                        .id(a.id)
-                        .zIndex(140).transition(.opacity)
-                }
-                // the builder — craft / edit an agent (avatar gallery, presets, context)
-                if let draft = editingAgent {
-                    DioAgentBuilder(draft: draft, knowledgeBases: knowledgeBases,
-                                    onSave: { saveAgent($0) },
-                                    onCancel: { withAnimation { editingAgent = nil } },
-                                    isNew: !agents.contains { $0.id == draft.id },
-                                    contextLimit: agentContextLimit(), zoneTokens: zoneGroundingTokens())
-                        .id(draft.id)
-                        .zIndex(145).transition(.opacity)
-                }
-                // the chain run/manage sheet
-                if let c = runChainSheet {
-                    DioChainSheet(chain: c, agents: agents,
-                                  onRun: { input in withAnimation { runChainSheet = nil }; runChain(c, input: input, inputTitle: "Crew run") },
-                                  onEdit: { withAnimation { runChainSheet = nil; editingChain = c } },
-                                  onDelete: { deleteChain(c.id) },
-                                  onClose: { withAnimation { runChainSheet = nil } })
-                        .id(c.id).zIndex(141).transition(.opacity)
-                }
-                // the chain builder
-                if let draft = editingChain {
-                    DioChainBuilder(draft: draft, agents: agents,
-                                    onSave: { saveChain($0) },
-                                    onCancel: { withAnimation { editingChain = nil } },
-                                    isNew: !chains.contains { $0.id == draft.id })
-                        .id(draft.id).zIndex(146).transition(.opacity)
-                }
-                // the live relay (the gamified payoff)
-                if let c = chainRelay {
-                    DioChainRelay(chain: c, agents: agents, step: chainStep, results: chainResults)
-                        .zIndex(128).transition(.opacity)
-                }
-                // the zone style editor — paint a place (colour, border, fill, glow)
-                if let z = editingZone {
-                    DioZoneEditor(zone: z, name: name(of: z.path), maxW: camera.cardWidth(380, in: w),
-                                  onSave: { saveZone($0) },
-                                  onDelete: { deleteZone(z.path) },
-                                  onCancel: { withAnimation { editingZone = nil } })
-                        .id(z.path).zIndex(147).transition(.opacity)
-                }
-                // Notes + KBs are edited IN-WORLD on the desk (see `level`), never in a dimmed modal.
-                // the live "running coder" feed — replay the session, approve / answer inline (HSM-17-03)
-                if let c = openCoderSession {
-                    DioCoderSession(session: c, maxW: camera.cardWidth(480, in: w), maxH: min(560, h - h * 0.12),
-                                    onAnswer: { withAnimation { openCoderSession = nil; answeringCoder = c } },
-                                    onApprove: { approveCoder(c) },
-                                    onClose: { withAnimation { openCoderSession = nil } })
-                        .id(c.id).zIndex(149).transition(.opacity)
-                }
-                // the coder answer composer — reply into a live Claude/Codex session (HSM-17-04)
-                if let c = answeringCoder {
-                    DioCoderAnswer(session: c, maxW: camera.cardWidth(400, in: w),
-                                   onSend: { answerCoder(c, $0) },
-                                   onCancel: { withAnimation { answeringCoder = nil } })
-                        .id(c.id).zIndex(150).transition(.opacity)
-                }
+                sheetOverlays(camera: camera, w: w, h: h)
                 // THE IN-WORLD CONNECT CARD — pair the Mac from the desk. A transparent (no scrim)
                 // catcher dismisses it on a tap-away; the card itself carries Connect / Test / Forget.
                 if connecting {
@@ -3697,7 +3584,7 @@ struct DioStage: View {
                 }
             }
             .ignoresSafeArea()
-            .onAppear { landed = true; load(); model.refresh(); syncDesk(reason: "desk load")
+            .onAppear { landed = true; load(); model.refresh(); syncDesk(reason: "desk load"); startCoderPolling()
                 #if targetEnvironment(simulator)
                 if let s = ProcessInfo.processInfo.environment["HS_DESK_SETTINGS"], s == "1" || s == "local" {
                     if s == "local" { InferenceConfigStore.shared.mode = .local }
@@ -3707,9 +3594,9 @@ struct DioStage: View {
                     model.liveTranscript = "Welcome everyone to the Q3 kickoff. The big bet this quarter is shipping the desk to the web. Karol will own the mesh sync and the approval contract. We agreed to demo the air-gapped proof by Friday"
                     model.partial = "and then we will"
                     captureDesktop = (r == "desktop")
-                    agents = [
-                        AgentRecord(id: "seed1", name: "Scout", avatar: "p1", role: "digs for the facts", systemPrompt: "You are a researcher.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
-                        AgentRecord(id: "seed3", name: "Critic", avatar: "p7", role: "finds the holes", systemPrompt: "You are a critic.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
+                    recipes = [
+                        RecipeRecord(id: "seed1", name: "Scout", avatar: "p1", role: "digs for the facts", systemPrompt: "You are a researcher.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
+                        RecipeRecord(id: "seed3", name: "Critic", avatar: "p7", role: "finds the holes", systemPrompt: "You are a critic.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
                     ]
                     chains = [ChainRecord(id: "c1", name: "Refine", steps: ["seed1", "seed3"])]
                     if r == "intel" {
@@ -3800,7 +3687,7 @@ struct DioStage: View {
                     peerHost = peerHost.isEmpty ? "192.168.1.13" : peerHost
                     notes = [NoteRecord(id: "nSynced", title: "Approval contract owner", body: "Karol owns the mesh-sync approval contract + egress badge copy.", path: ""),
                              NoteRecord(id: "nPending", title: "Air-gapped proof script", body: "Record the LinkedIn proof offline before Friday's demo.", path: "")]
-                    agents = [AgentRecord(id: "agSynced", name: "Scout", avatar: "p1", role: "digs for the facts", systemPrompt: "You are a researcher.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: "")]
+                    recipes = [RecipeRecord(id: "agSynced", name: "Scout", avatar: "p1", role: "digs for the facts", systemPrompt: "You are a researcher.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: "")]
                     kbs = [KBRecord(id: "kSynced", name: "Architecture", path: "", items: 7)]
                     placedGames = [GameRecord(gameId: "merge", path: "")]   // local-only cue
                     syncModified = ["nPending": Date()]                     // pending: edited, not pushed
@@ -3879,14 +3766,14 @@ struct DioStage: View {
                     model.meetings = [m] + model.meetings
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { selected = "m:demoT" } }
                 }
-                if let ag = ProcessInfo.processInfo.environment["HS_DESK_AGENTS"] {
-                    agents = [
-                        AgentRecord(id: "seed1", name: "Scout", avatar: "p1", role: "digs for the facts", systemPrompt: "You are a sharp researcher. Pull out concrete facts, names and numbers.", userTemplate: "{input}", manualContext: "", useZoneContext: true, kb: ""),
-                        AgentRecord(id: "seed2", name: "Sage", avatar: "p3", role: "turns talk into a plan", systemPrompt: "You are a pragmatic planner.", userTemplate: "Make a plan from this:\n{input}", manualContext: "The team is three engineers.", useZoneContext: false, kb: ""),
-                        AgentRecord(id: "seed3", name: "Critic", avatar: "p7", role: "finds the holes", systemPrompt: "You are a constructive critic.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
+                if let ag = ProcessInfo.processInfo.environment["HS_DESK_RECIPES"] {
+                    recipes = [
+                        RecipeRecord(id: "seed1", name: "Scout", avatar: "p1", role: "digs for the facts", systemPrompt: "You are a sharp researcher. Pull out concrete facts, names and numbers.", userTemplate: "{input}", manualContext: "", useZoneContext: true, kb: ""),
+                        RecipeRecord(id: "seed2", name: "Sage", avatar: "p3", role: "turns talk into a plan", systemPrompt: "You are a pragmatic planner.", userTemplate: "Make a plan from this:\n{input}", manualContext: "The team is three engineers.", useZoneContext: false, kb: ""),
+                        RecipeRecord(id: "seed3", name: "Critic", avatar: "p7", role: "finds the holes", systemPrompt: "You are a constructive critic.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
                     ]
                     chains = [ChainRecord(id: "c1", name: "Refine", steps: ["seed1", "seed3", "seed2"])]
-                    if ag == "builder" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { editingAgent = AgentRecord.blank() } } }
+                    if ag == "builder" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { editingAgent = RecipeRecord.blank() } } }
                     if ag == "chainbuild" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { editingChain = ChainRecord(id: "newc", name: "Refine", steps: ["seed1", "seed3"]) } } }
                     if ag == "chainrun" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { runChainSheet = chains.first } } }
                     // the WHERE-IT-RUNS picker (on-device vs your desktop) — seeded paired so the hub row is live.
@@ -3894,7 +3781,7 @@ struct DioStage: View {
                         if ag == "runtarget" { peerHost = "192.168.1.43"; peerPort = "8080" }
                         else { peerHost = ""; peerPort = "8000" }   // unpaired → hub row disabled with a cue
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                            withAnimation { pendingHubRun = PendingHubRun(kind: .agent(agents[0]),
+                            withAnimation { pendingHubRun = PendingHubRun(kind: .recipe(recipes[0]),
                                                                           input: "Welcome to the Q3 kickoff. The big bet is shipping the desk to the web; Karol owns mesh sync.",
                                                                           inputId: "mtg.q3", inputTitle: "Q3 kickoff") }
                         }
@@ -3912,22 +3799,22 @@ struct DioStage: View {
                         }
                     }
                     if ag == "chainrelay" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { chainStep = 1; chainResults = ["Three key facts: the mesh-sync approval contract is the riskiest piece, the air-gapped proof is due Friday, and the egress badge copy has no owner yet."]; withAnimation { chainRelay = chains.first } } }
-                    if ["p0", "o0", "s0"].contains(ag) { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { var d = AgentRecord.blank(); d.avatar = ag; d.name = "Buddy"; withAnimation { editingAgent = d } } }
+                    if ["p0", "o0", "s0"].contains(ag) { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { var d = RecipeRecord.blank(); d.avatar = ag; d.name = "Buddy"; withAnimation { editingAgent = d } } }
                     if ag == "sheet" || ag == "chat" {
                         agentChats["seed1"] = [
-                            AgentMessage(id: "m1", role: "you", text: "What should I focus on after today's kickoff?"),
-                            AgentMessage(id: "m2", role: "agent", text: "Three things stood out: lock the mesh-sync approval contract (it's the riskiest piece), get the air-gapped proof recorded before Friday, and pin down who owns the egress badge copy. Want me to draft a short plan for the first one?"),
-                            AgentMessage(id: "m3", role: "you", text: "Yes, keep it tight."),
+                            RecipeMessage(id: "m1", role: "you", text: "What should I focus on after today's kickoff?"),
+                            RecipeMessage(id: "m2", role: "agent", text: "Three things stood out: lock the mesh-sync approval contract (it's the riskiest piece), get the air-gapped proof recorded before Friday, and pin down who owns the egress badge copy. Want me to draft a short plan for the first one?"),
+                            RecipeMessage(id: "m3", role: "you", text: "Yes, keep it tight."),
                         ]
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { openAgent = agents.first } }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { openAgent = recipes.first } }
                     }
                 }
                 if ProcessInfo.processInfo.environment["HS_DESK_SUMMON"] == "1" {
                     outputs = [OutputRecord(id: "demo", title: "Standup notes", body: "Shipped the egress badge; review the dock by Friday.", source: "Standup", lens: "Note", path: "")]
-                    if agents.isEmpty {
-                        agents = [
-                            AgentRecord(id: "seed1", name: "Scout", avatar: "a21", role: "digs for the facts", systemPrompt: "You are a researcher.", userTemplate: "{input}", manualContext: "", useZoneContext: true, kb: ""),
-                            AgentRecord(id: "seed3", name: "Critic", avatar: "a22", role: "finds the holes", systemPrompt: "You are a critic.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
+                    if recipes.isEmpty {
+                        recipes = [
+                            RecipeRecord(id: "seed1", name: "Scout", avatar: "a21", role: "digs for the facts", systemPrompt: "You are a researcher.", userTemplate: "{input}", manualContext: "", useZoneContext: true, kb: ""),
+                            RecipeRecord(id: "seed3", name: "Critic", avatar: "a22", role: "finds the holes", systemPrompt: "You are a critic.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: ""),
                         ]
                     }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
@@ -3976,28 +3863,172 @@ struct DioStage: View {
         case .note: return "notes"
         case .kb: return "kb"
         case .model, .connector, .workflow: return "tools"
-        case .agent, .chain, .coder: return "agents"
+        case .recipe, .chain: return "recipes"
+        case .coder: return "coders"
         case .game: return "play"
         }
     }
+    @ViewBuilder private func summonOverlay(srcPrim: any DeskPrimitive, w: CGFloat, h: CGFloat) -> some View {
+        let targets = summonTargets(for: srcPrim)
+        Color.black.opacity(0.55).ignoresSafeArea().contentShape(Rectangle())
+            .onTapGesture { dismissSummon() }.transition(.opacity).zIndex(118)
+        Circle().strokeBorder(DioPal.accent.opacity(0.9), lineWidth: 3)
+            .frame(width: srcPrim.base * 1.12, height: srcPrim.base * 1.12)
+            .shadow(color: DioPal.accent.opacity(0.7), radius: 14)
+            .position(summonAt).allowsHitTesting(false).zIndex(119)
+        if targets.isEmpty {
+            VStack(spacing: 6) {
+                Image(systemName: "tray").font(.system(size: 26)).foregroundStyle(DioPal.muted)
+                Text("No tool can take this yet").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                Text("Add a model in Settings.").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).multilineTextAlignment(.center)
+            }.padding(18).background(RoundedRectangle(cornerRadius: 18).fill(.black.opacity(0.8)))
+            .frame(maxWidth: 280).position(x: w / 2, y: max(140, summonAt.y - 150)).zIndex(121)
+        } else {
+            ForEach(Array(targets.enumerated()), id: \.element.id) { i, t in
+                let p = summonPos(i, targets.count, summonAt, w, h)
+                Path { pa in pa.move(to: summonAt); pa.addLine(to: p) }
+                    .stroke(t.color.opacity(0.55), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [2, 6]))
+                    .allowsHitTesting(false).zIndex(119)
+                DioSummonSatellite(prim: t, index: i) { routeFrom = summonAt; routeTo = p; let s = srcPrim; dismissSummon(); beginRoute(sourceId: s.id, target: t) }
+                    .position(p).zIndex(122)
+            }
+            Text("tap a tool to route").font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+                .padding(.horizontal, 12).padding(.vertical, 6).background(Capsule().fill(.black.opacity(0.5)))
+                .position(x: w / 2, y: min(h - 36, summonAt.y + srcPrim.base * 0.7 + 26)).allowsHitTesting(false).zIndex(121)
+        }
+    }
+
+    @ViewBuilder private func runTargetOverlay(_ run: PendingHubRun) -> some View {
+        DioRunTargetSheet(run: run, paired: hostLink != nil,
+                          peerLabel: peerHost.isEmpty ? "your desktop" : peerHost,
+                          preferred: preferredRunTarget,
+                          remembered: DeskRunTarget(rawValue: runTargetPref) != nil,
+                          onDevice: { runOnDevice(run) },
+                          onHub: { runOnHub(run) },
+                          onCancel: { withAnimation { pendingHubRun = nil } })
+            .zIndex(132)
+    }
+
+    // The sheet overlays (send / act / recipe chat + builder / chain sheets / zone editor /
+    // coder feed + composer), extracted from the body: the enclosing ZStack expression
+    // crossed the type-checker's budget during the Recipe rename.
+    @ViewBuilder private func sheetOverlays(camera: DeskCamera, w: CGFloat, h: CGFloat) -> some View {
+        if showSendCard {
+            let member = members().first(where: { $0.id == sendSourceId })
+            let sTitle = sendOverride?.title ?? member?.title
+            let sText = sendOverride?.text ?? member?.routableText
+            if let sTitle, let sText {
+                DioSendCard(sourceTitle: sTitle, preview: String(sText.prefix(220)), connName: sendTargetName, sending: sending,
+                            onApprove: { sendNow(title: sTitle, text: sText) },
+                            onCancel: { if !sending { withAnimation { showSendCard = false }; sendSourceId = nil; sendOverride = nil } }).zIndex(135)
+            }
+        }
+        if showActSheet, let item = actItem {
+            DioActSheet(itemText: item.text, connectors: actConnectors(), configured: hostLink != nil,
+                        onSend: { cid, nm in actSend(connId: cid, name: nm) },
+                        onFile: { actFile() },
+                        onCancel: { withAnimation { showActSheet = false }; actItem = nil }).zIndex(136)
+        }
+        // the agent's home — a living multi-turn conversation; harvest replies to the desk
+        if let a = openAgent {
+            DioRecipeChat(recipe: a,
+                         messages: agentChats[a.id] ?? [],
+                         onInfer: { history, q in await recipeReply(a, history: history, question: q) },
+                         onChange: { msgs in agentChats[a.id] = msgs; persistAgentChats() },
+                         onSaveCard: { text in saveAgentReply(text, from: a) },
+                         onEdit: { withAnimation { openAgent = nil; editingAgent = a } },
+                         onDelete: { deleteAgent(a.id) },
+                         onClose: { withAnimation { openAgent = nil } })
+                .id(a.id)
+                .zIndex(140).transition(.opacity)
+        }
+        // the builder — craft / edit an agent (avatar gallery, presets, context)
+        if let draft = editingAgent {
+            DioRecipeBuilder(draft: draft, knowledgeBases: knowledgeBases,
+                            onSave: { saveAgent($0) },
+                            onCancel: { withAnimation { editingAgent = nil } },
+                            isNew: !recipes.contains { $0.id == draft.id },
+                            contextLimit: recipeContextLimit(), zoneTokens: zoneGroundingTokens())
+                .id(draft.id)
+                .zIndex(145).transition(.opacity)
+        }
+        // the chain run/manage sheet
+        if let c = runChainSheet {
+            DioChainSheet(chain: c, recipes: recipes,
+                          onRun: { input in withAnimation { runChainSheet = nil }; runChain(c, input: input, inputTitle: "Crew run") },
+                          onEdit: { withAnimation { runChainSheet = nil; editingChain = c } },
+                          onDelete: { deleteChain(c.id) },
+                          onClose: { withAnimation { runChainSheet = nil } })
+                .id(c.id).zIndex(141).transition(.opacity)
+        }
+        // the chain builder
+        if let draft = editingChain {
+            DioChainBuilder(draft: draft, recipes: recipes,
+                            onSave: { saveChain($0) },
+                            onCancel: { withAnimation { editingChain = nil } },
+                            isNew: !chains.contains { $0.id == draft.id })
+                .id(draft.id).zIndex(146).transition(.opacity)
+        }
+        // the live relay (the gamified payoff)
+        if let c = chainRelay {
+            DioChainRelay(chain: c, recipes: recipes, step: chainStep, results: chainResults)
+                .zIndex(128).transition(.opacity)
+        }
+        // the zone style editor — paint a place (colour, border, fill, glow)
+        if let z = editingZone {
+            DioZoneEditor(zone: z, name: name(of: z.path), maxW: camera.cardWidth(380, in: w),
+                          onSave: { saveZone($0) },
+                          onDelete: { deleteZone(z.path) },
+                          onCancel: { withAnimation { editingZone = nil } })
+                .id(z.path).zIndex(147).transition(.opacity)
+        }
+        // Notes + KBs are edited IN-WORLD on the desk (see `level`), never in a dimmed modal.
+        // the live "running coder" feed — replay the session, approve / answer inline (HSM-17-03)
+        if let c = openCoderSession {
+            DioCoderSession(session: c, maxW: camera.cardWidth(480, in: w), maxH: min(560, h - h * 0.12),
+                            onAnswer: { withAnimation { openCoderSession = nil; answeringCoder = c } },
+                            onApprove: { approveCoder(c) },
+                            onClose: { withAnimation { openCoderSession = nil } })
+                .id(c.id).zIndex(149).transition(.opacity)
+        }
+        // the coder answer composer — reply into a live Claude/Codex session (HSM-17-04)
+        if let c = answeringCoder {
+            DioCoderAnswer(session: c, maxW: camera.cardWidth(400, in: w),
+                           grounding: coderGrounding,
+                           draftEgress: InferenceConfigStore.shared.isLocal ? .local : .cloud("endpoint"),
+                           onDraft: { prompt in
+                               // the seeded demo drafts offline so the flow is drivable without a model
+                               if ProcessInfo.processInfo.environment["HS_DESK_CODER"] != nil {
+                                   try? await Task.sleep(nanoseconds: 700_000_000)
+                                   return .success("Yes — push with --force-with-lease. The mixin split was reviewed in the standup and the branch is mine alone; if the lease fails, stop and tell me.")
+                               }
+                               return await callLLM(prompt)
+                           },
+                           onSend: { answerCoder(c, $0) },
+                           onCancel: { withAnimation { answeringCoder = nil; coderGrounding = nil } })
+                .id(c.id).zIndex(150).transition(.opacity)
+        }
+    }
+
     private func laneBucketLabel(_ key: String) -> String {
         switch key {
         case "meetings": return "Meetings"; case "notes": return "Notes"; case "kb": return "KB"
-        case "tools": return "Tools"; case "agents": return "Agents"; case "play": return "Play"
+        case "tools": return "Tools"; case "recipes": return "Recipes"
+        case "coders": return "Coders"; case "play": return "Play"
         default: return key.capitalized
         }
     }
     private func laneBucketTint(_ key: String) -> Color {
         switch key {
         case "meetings": return DioPal.accent; case "notes": return DioPal.mint; case "kb": return DioPal.violet
-        case "tools": return DioPal.cobalt; case "agents": return DioPal.mint; case "play": return DioPal.cobalt
+        case "tools": return DioPal.cobalt; case "recipes": return DioPal.mint; case "play": return DioPal.cobalt
         default: return DioPal.accent
         }
     }
     /// The chip rail: "All" plus a chip per bucket that has at least one primitive (preserving a
     /// stable order), so the lane never shows an empty filter.
     private func laneBuckets(_ prims: [any DeskPrimitive]) -> [String] {
-        let order = ["meetings", "notes", "kb", "agents", "tools", "play"]
+        let order = ["meetings", "notes", "kb", "recipes", "coders", "tools", "play"]
         let present = Set(prims.map { laneBucketKey($0.kind) })
         return order.filter { present.contains($0) }
     }
@@ -4010,7 +4041,7 @@ struct DioStage: View {
         let zs = childZones()
         let prims = members()
         let buckets = laneBuckets(prims)
-        // "All" is your CONTENT + things you invoke (meetings/notes/KBs/agents/chains/games). Pure
+        // "All" is your CONTENT + things you invoke (meetings/notes/KBs/recipes/chains/games). Pure
         // infrastructure — models + connectors + workflows (the "tools" bucket) — is not content you
         // browse; it earns a spot only as a drag-target, which the lane has none of. So it lives behind
         // the "Tools" chip, out of the default view (owner: "why even have them there?"). This also keeps
@@ -4328,9 +4359,9 @@ struct DioStage: View {
     // MARK: the radial summon — the tools that can take this card, blooming around it
     private func summonTargets(for src: any DeskPrimitive) -> [any DeskPrimitive] {
         var out: [any DeskPrimitive] = []
-        // the AI core first, then your tailored agents, then saved workflows, then connectors
+        // the AI core first, then your tailored recipes, then saved workflows, then connectors
         out += toolMembers().filter { $0.kind == .model }                        // takes anything
-        out += agentMembers().filter { $0.accepts.contains(src.kind) }           // route the card through an agent
+        out += recipeMembers().filter { $0.accepts.contains(src.kind) }           // route the card through an agent
         out += chainMembers().filter { $0.accepts.contains(src.kind) }           // …or a whole crew
         out += toolMembers().filter { $0.kind == .workflow && $0.accepts.contains(src.kind) }
         out += toolMembers().filter { $0.kind == .connector }                    // tap guides pairing
@@ -4431,11 +4462,11 @@ struct DioStage: View {
         guard startLen > 0, startLen < full.count else { return full }
         return String(full.dropFirst(startLen))
     }
-    // a live marker fired: a quick lens, one of your agents, or a crew — all on a transcript window
+    // a live marker fired: a quick lens, one of your recipes, or a crew — all on a transcript window
     private func fireLive(_ target: LiveTarget, minutes: Double) {
         switch target {
         case .lens(let l):  fireLiveIntel(l, minutes: minutes)
-        case .agent(let a): fireLiveAgent(a, minutes: minutes)
+        case .recipe(let a): fireLiveAgent(a, minutes: minutes)
         case .chain(let c): fireLiveChain(c, minutes: minutes)
         }
     }
@@ -4469,18 +4500,18 @@ struct DioStage: View {
             }
         }
     }
-    private func fireLiveAgent(_ a: AgentRecord, minutes: Double) {
+    private func fireLiveAgent(_ a: RecipeRecord, minutes: Double) {
         let id = startLiveCard(a.name, minutes)
         let question = "Based on this live meeting transcript window, respond per your role:\n\n" + liveWindowMaterial(minutes)
-        Task { @MainActor in setLiveCard(id, await agentReply(a, history: [], question: question)) }
+        Task { @MainActor in setLiveCard(id, await recipeReply(a, history: [], question: question)) }
     }
     private func fireLiveChain(_ c: ChainRecord, minutes: Double) {
-        let steps = c.steps.compactMap { sid in agents.first { $0.id == sid } }
+        let steps = c.steps.compactMap { sid in recipes.first { $0.id == sid } }
         guard !steps.isEmpty else { return }
         let id = startLiveCard(c.name, minutes)
         Task { @MainActor in
             var carry = liveWindowMaterial(minutes)
-            for ag in steps { let r = await agentReply(ag, history: [], question: carry); carry = r; if r.hasPrefix("⚠️") { break } }
+            for ag in steps { let r = await recipeReply(ag, history: [], question: carry); carry = r; if r.hasPrefix("⚠️") { break } }
             setLiveCard(id, carry)
         }
     }
@@ -4541,6 +4572,16 @@ struct DioStage: View {
         defer { dragHotZone = nil; dragHotObjectId = nil }
         // 1) dropped on a desk content target (a KB)?
         if let target = objectHit(end, contentMembers(), w, h, excluding: p.id), target.prim.accepts.contains(p.kind) {
+            // HSM-17-04: dropped onto a WAITING coder — answer *from this*. The dropped
+            // primitive's routableText becomes visible, trimmable grounding in the
+            // composer; nothing is sent until the human sends (the keystone routing
+            // gesture, pointed at an agent instead of the AI core).
+            if let coderTarget = target.prim as? AgentSessionPrimitive {
+                haptic(.medium)
+                coderGrounding = CoderGrounding(title: p.title, text: p.routableText)
+                withAnimation(focusSpring) { answeringCoder = coderTarget.session }
+                return
+            }
             routeFrom = start; routeTo = target.center            // the cable runs source → target
             beginRoute(sourceId: p.id, target: target.prim); return
         }
@@ -4641,11 +4682,11 @@ struct DioStage: View {
                 routeSourceId = sourceId
                 runRoute(lens: wf.rec.name, prompt: wf.rec.prompt)
             }
-        case .agent:                                            // a tailored agent → answer grounded in the card
-            guard let ap = target as? AgentPrimitive,
+        case .recipe:                                            // a tailored agent → answer grounded in the card
+            guard let ap = target as? RecipePrimitive,
                   let src = members().first(where: { $0.id == sourceId }) else { break }
             // offer WHERE it runs (on-device vs your desktop's big model) — on-device stays default.
-            offerRunTarget(.init(kind: .agent(ap.rec), input: src.routableText, inputId: src.id, inputTitle: src.title))
+            offerRunTarget(.init(kind: .recipe(ap.rec), input: src.routableText, inputId: src.id, inputTitle: src.title))
         case .chain:                                            // a crew → run the card through each agent in order
             guard let cp = target as? ChainPrimitive,
                   let src = members().first(where: { $0.id == sourceId }) else { break }
@@ -4774,7 +4815,7 @@ struct DioStage: View {
         runAssembled(lens: lens, source: srcTitle, fullPrompt: prompt + "\n\nMaterial:\n" + material, profileId: profileId)
     }
 
-    // the shared inference tail: theater → callLLM → printed card (keep/bin). Used by routes and agents.
+    // the shared inference tail: theater → callLLM → printed card (keep/bin). Used by routes and recipes.
     // `provenance` is the run lineage (input card + the agent/chain that produced it) for routed runs;
     // nil for direct lens routes (their `source` is the lineage).
     private func runAssembled(lens: String, source: String, fullPrompt: String, provenance: RunProvenance? = nil, profileId: String? = nil) {
@@ -4804,7 +4845,7 @@ struct DioStage: View {
     }
 
     // the agent's role + always-on context (manual notes, zone meetings, KB) — shared by routing and chat.
-    private func agentRoleAndContext(_ a: AgentRecord) -> [String] {
+    private func recipeRoleAndContext(_ a: RecipeRecord) -> [String] {
         var blocks: [String] = []
         blocks.append("[ROLE]\n" + (a.systemPrompt.isEmpty ? "You are \(a.name), a helpful assistant." : a.systemPrompt))
         var ctx: [String] = []
@@ -4829,7 +4870,7 @@ struct DioStage: View {
 
     // The chosen runtime's usable context: the on-device budget when local (clamped by RAM), else the
     // ceiling as a reference for an endpoint (whose true window we don't control).
-    private func agentContextLimit() -> Int {
+    private func recipeContextLimit() -> Int {
         guard InferenceConfigStore.shared.isLocal, let p = MeetingReviewState.localGGUF() else { return 16_384 }
         let modelBytes = ((try? FileManager.default.attributesOfItem(atPath: p))?[.size] as? Int) ?? 0
         let availRaw = Int(os_proc_available_memory())
@@ -4839,8 +4880,8 @@ struct DioStage: View {
 
     // route a card THROUGH an agent (radial): assemble role + context + the card, infer → printed card.
     // `provenance` records the lineage (input card + this agent) onto the resulting output.
-    private func runAgent(_ a: AgentRecord, input: String, inputTitle: String, provenance: RunProvenance? = nil) {
-        var blocks = agentRoleAndContext(a)
+    private func runRecipe(_ a: RecipeRecord, input: String, inputTitle: String, provenance: RunProvenance? = nil) {
+        var blocks = recipeRoleAndContext(a)
         let template = a.userTemplate.isEmpty ? "{input}" : a.userTemplate
         blocks.append("[TASK]\n" + template.replacingOccurrences(of: "{input}", with: String(input.prefix(6000))))
         routeSourceId = nil
@@ -4848,8 +4889,8 @@ struct DioStage: View {
     }
 
     // one conversational turn — role + context + the running transcript + the new message.
-    @MainActor private func agentReply(_ a: AgentRecord, history: [AgentMessage], question: String) async -> String {
-        var blocks = agentRoleAndContext(a)
+    @MainActor private func recipeReply(_ a: RecipeRecord, history: [RecipeMessage], question: String) async -> String {
+        var blocks = recipeRoleAndContext(a)
         if !history.isEmpty {
             let convo = history.suffix(12).map { ($0.isYou ? "User: " : "\(a.name): ") + $0.text }.joined(separator: "\n")
             blocks.append("[CONVERSATION SO FAR]\n" + convo)
@@ -4866,7 +4907,7 @@ struct DioStage: View {
     // run a chain (crew): thread the input through each agent in order; the relay animates; final → printed card.
     // `provenance` records the lineage (input card + this crew) onto the final output.
     private func runChain(_ c: ChainRecord, input: String, inputTitle: String, provenance: RunProvenance? = nil) {
-        let steps = c.steps.compactMap { sid in agents.first { $0.id == sid } }
+        let steps = c.steps.compactMap { sid in recipes.first { $0.id == sid } }
         guard !steps.isEmpty else { return }
         haptic(.heavy)
         chainResults = []; chainStep = 0
@@ -4875,7 +4916,7 @@ struct DioStage: View {
             var carry = input
             for (i, ag) in steps.enumerated() {
                 withAnimation { chainStep = i }
-                let out = await agentReply(ag, history: [], question: carry)
+                let out = await recipeReply(ag, history: [], question: carry)
                 chainResults.append(out)
                 carry = out
                 if out.hasPrefix("⚠️") { break }              // a step failed → stop, surface what we got
@@ -4931,7 +4972,7 @@ struct DioStage: View {
         rememberRunTarget(.device)
         withAnimation { pendingHubRun = nil }
         switch run.kind {
-        case .agent(let a): runAgent(a, input: run.input, inputTitle: run.inputTitle, provenance: run.provenance)
+        case .recipe(let a): runRecipe(a, input: run.input, inputTitle: run.inputTitle, provenance: run.provenance)
         case .chain(let c): runChain(c, input: run.input, inputTitle: run.inputTitle, provenance: run.provenance)
         case .workflow(let w):
             // On-device keeps the saved-Ask semantics: the prompt (or the input
@@ -4964,8 +5005,8 @@ struct DioStage: View {
                 let artifactId: String?
                 var warning: String?
                 switch run.kind {
-                case .agent(let a):
-                    let result = try await client.runAgent(id: a.id, input: input)
+                case .recipe(let a):
+                    let result = try await client.runRecipe(id: a.id, input: input)
                     output = result.output; artifactId = result.artifactId
                 case .chain(let c):
                     let result = try await client.runChain(id: c.id, input: input)
@@ -5067,7 +5108,7 @@ struct DioStage: View {
     }
     /// The desk's syncable records as a flat snapshot the store reads.
     private func currentDeskRecords() -> DeskRecords {
-        DeskRecords(notes: notes, agents: agents, kbs: kbs, outputs: outputs,
+        DeskRecords(notes: notes, recipes: recipes, kbs: kbs, outputs: outputs,
                     chains: chains, workflows: workflows,
                     zones: zones, membership: unifiedMembership(),
                     modified: syncModified, tombstones: syncTombstones)
@@ -5100,18 +5141,63 @@ struct DioStage: View {
     }
     /// Write a merged record set back into the desk's @AppStorage-backed arrays + persist.
     private func applyDeskRecords(_ r: DeskRecords) {
-        notes = r.notes; agents = r.agents; kbs = r.kbs
+        notes = r.notes; recipes = r.recipes; kbs = r.kbs
         outputs = r.outputs; chains = r.chains; workflows = r.workflows
         zones = r.zones
         syncModified = r.modified; syncTombstones = r.tombstones
         // membership reconciles back into the filed map + each record's path (it overwrites the
         // record-path writes above for the filed surfaces — applied last so it wins).
         applyMembership(r.membership)
-        persistNotes(); persistAgents(); persistKBs()
+        persistNotes(); persistRecipes(); persistKBs()
         persistOutputs(); persistChains(); persistWorkflows()
         persistZones(); persistFiled(); persistSyncMaps()
     }
     /// Run one real sync pass against the paired hub: push the local snapshot + pull/apply
+    // MARK: HSM-17-03 — live coders on the desk
+
+    /// Poll the hub's live coder set (`GET /api/coders/sessions`) and mirror it into
+    /// `coders`. Ephemeral presence, so it rides its own cadence (the PresenceStore
+    /// pattern), never DeskSync's durable pass. A session flipping INTO `waiting`
+    /// gets the glaring NEW-arrival treatment exactly once per flip; `ended`
+    /// sessions leave via the existing contentMembers() filter. The seeded
+    /// `HS_DESK_CODER` demo keeps the desk fully offline-drivable, so the poll
+    /// never runs under it.
+    private func startCoderPolling() {
+        guard ProcessInfo.processInfo.environment["HS_DESK_CODER"] == nil else { return }
+        coderPoll?.cancel()
+        coderPoll = Task { @MainActor in
+            while !Task.isCancelled {
+                await coderPollTick()
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+            }
+        }
+    }
+
+    @MainActor
+    private func coderPollTick() async {
+        guard let client = coderClient() else { return }
+        guard let live = try? await client.coderSessions() else { return }  // unreachable = keep last truth
+        let mapped = live.map(CoderSession.init(from:))
+
+        // rising edge into waiting → the glare (and only the rising edge:
+        // an already-glaring or answered session never re-pulses on a poll).
+        let nowWaiting = Set(mapped.filter { $0.state == .waiting }.map(\.id))
+        let fresh = nowWaiting.subtracting(coderWasWaiting)
+        coderWasWaiting = nowWaiting
+        if mapped != coders {
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { coders = mapped }
+        }
+        if !fresh.isEmpty {
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
+                arrivedIds.formUnion(fresh); flash = 0.4
+            }
+            withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                withAnimation { arrivedIds.subtract(fresh) }
+            }
+        }
+    }
+
     /// remote changes (offline-safe; never on the author path). Triggered on desk load,
     /// after authoring a Note/Agent, and from the manual "Sync" affordance.
     private func syncDesk(reason: String) {
@@ -5165,7 +5251,7 @@ struct DioStage: View {
     private func deskPrimitiveIds(_ r: DeskRecords) -> Set<String> {
         var ids = Set<String>()
         ids.formUnion(r.notes.map { "note:\($0.id)" })
-        ids.formUnion(r.agents.map { "agent:\($0.id)" })
+        ids.formUnion(r.recipes.map { "agent:\($0.id)" })
         ids.formUnion(r.kbs.map { "kb:\($0.id)" })
         ids.formUnion(r.outputs.map { "out:\($0.id)" })
         ids.formUnion(r.chains.map { "chain:\($0.id)" })
@@ -5174,7 +5260,7 @@ struct DioStage: View {
     }
 
     // harvest a reply onto the desk as a routable output card.
-    private func saveAgentReply(_ text: String, from a: AgentRecord) {
+    private func saveAgentReply(_ text: String, from a: RecipeRecord) {
         haptic(.medium)
         let rec = OutputRecord(id: UUID().uuidString, title: "\(a.name) · reply", body: text, source: a.name, lens: "Agent", path: pathKey)
         withAnimation(focusSpring) { outputs.append(rec) }
@@ -5188,7 +5274,7 @@ struct DioStage: View {
     @MainActor private func callLLM(_ prompt: String, profileId: String? = nil) async -> Result<String, Error> {
         do {
             let cfg = InferenceConfigStore.shared
-            let profile = cfg.resolveProfile(agentProfileId: profileId)
+            let profile = cfg.resolveProfile(recipeProfileId: profileId)
             let langModels = ModelFiles.installed().filter { $0.kind == .language }
             let wantFile = profile.modelFile.isEmpty ? cfg.localModelId : profile.modelFile
             let chosen = langModels.first { $0.id == wantFile } ?? langModels.first
@@ -5317,24 +5403,68 @@ struct DioStage: View {
         withAnimation(focusSpring) { placedGames.removeAll { $0.gameId == raw }; if selected == id { selected = nil } }
         positions[id] = nil; persistGames(); persistPositions()
     }
-    // HSM-17-04 — send your reply back into the live coding session. This slice does the optimistic desk
-    // side (clears the question, returns the coder to working, toasts). The real inject over
-    // `/api/dictation/remote` (the proven Phase-13 path) + voice / dropped-context / AI-draft land next.
+    // HSM-17-04 — send your reply back into the live coding session, for real: select the
+    // exact session as the hub's reply target, then deliver over /api/dictation/remote
+    // (the proven Phase-13 inject). Explicit by construction — only the composer's Send
+    // reaches this. On failure the question STAYS on the desk; nothing silently lost.
     private func answerCoder(_ session: CoderSession, _ text: String) {
         let reply = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !reply.isEmpty else { return }
         haptic(.medium)
-        // TODO(HSM-17-04): inject via HTTPDesktopClient.sendRemoteDictation(target: session) on real metal.
-        resolveCoder(session, with: .userPrompt(reply))
-        answeringCoder = nil
-        toast("Sent to \(session.display)")
+        withAnimation { answeringCoder = nil; coderGrounding = nil }
+        // The seeded demo desk stays fully offline-drivable: optimistic resolve only.
+        if ProcessInfo.processInfo.environment["HS_DESK_CODER"] != nil {
+            resolveCoder(session, with: .userPrompt(reply)); toast("Sent to \(session.display)"); return
+        }
+        guard let client = coderClient() else { toast("Pair your desktop to answer"); return }
+        Task { @MainActor in
+            do {
+                let result = try await CoderAnswer.send(
+                    client, agent: session.agent, sessionID: session.sessionId, reply: reply)
+                if result.delivered {
+                    resolveCoder(session, with: .userPrompt(result.finalText))
+                    toast("Answer delivered · \(session.display)")
+                } else {
+                    toast("Processed, not delivered — question kept")
+                }
+            } catch {
+                toast("Desktop unreachable — question kept")
+            }
+        }
     }
     private func approveCoder(_ session: CoderSession) {
         haptic(.medium)
-        // TODO(HSM-17-04): send the approval down /api/dictation/remote (or the approve route) on real metal.
-        resolveCoder(session, with: .notification("You approved the request"))
-        openCoderSession = nil
-        toast("Approved · \(session.display) continues")
+        if ProcessInfo.processInfo.environment["HS_DESK_CODER"] != nil {
+            resolveCoder(session, with: .notification("You approved the request"))
+            openCoderSession = nil
+            toast("Approved · \(session.display) continues")
+            return
+        }
+        guard let client = coderClient() else { toast("Pair your desktop to approve"); return }
+        Task { @MainActor in
+            do {
+                let result = try await CoderAnswer.approve(
+                    client, agent: session.agent, sessionID: session.sessionId)
+                if result.delivered {
+                    resolveCoder(session, with: .notification("You approved the request"))
+                    withAnimation { openCoderSession = nil }
+                    toast("Approved · \(session.display) continues")
+                } else {
+                    toast("Not delivered — question kept")
+                }
+            } catch {
+                toast("Desktop unreachable — nothing sent")
+            }
+        }
+    }
+    /// The paired hub as a desktop client (HSM-17-03/04) — nil when unpaired.
+    private func coderClient() -> HTTPDesktopClient? {
+        guard let link = hostLink,
+              let config = HTTPDesktopClient.Config(
+                  peer: DesktopPeer(host: link.host, port: link.port,
+                                    token: peerToken.isEmpty ? nil : peerToken))
+        else { return nil }
+        return HTTPDesktopClient(config: config)
     }
     // optimistic desk side: clear the pending ask, append the resolving event, return the coder to working
     private func resolveCoder(_ session: CoderSession, with event: CoderEvent.Kind) {
@@ -5357,26 +5487,26 @@ struct DioStage: View {
     private func persistWorkflows() {
         if let data = try? JSONEncoder().encode(workflows), let s = String(data: data, encoding: .utf8) { workflowsJSON = s }
     }
-    private func persistAgents() {
-        if let data = try? JSONEncoder().encode(agents), let s = String(data: data, encoding: .utf8) { agentsJSON = s }
+    private func persistRecipes() {
+        if let data = try? JSONEncoder().encode(recipes), let s = String(data: data, encoding: .utf8) { agentsJSON = s }
     }
     private func persistAgentChats() {
         if let data = try? JSONEncoder().encode(agentChats), let s = String(data: data, encoding: .utf8) { agentChatsJSON = s }
     }
-    private func saveAgent(_ rec: AgentRecord) {
+    private func saveAgent(_ rec: RecipeRecord) {
         haptic(.medium)
         withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
-            if let i = agents.firstIndex(where: { $0.id == rec.id }) { agents[i] = rec } else { agents.append(rec) }
+            if let i = recipes.firstIndex(where: { $0.id == rec.id }) { recipes[i] = rec } else { recipes.append(rec) }
             editingAgent = nil
         }
-        persistAgents(); stampSync(rec.id); syncDesk(reason: "agent saved")
+        persistRecipes(); stampSync(rec.id); syncDesk(reason: "agent saved")
     }
     private func deleteAgent(_ id: String) {
         haptic(.medium)
         withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) {
-            agents.removeAll { $0.id == id }; openAgent = nil
+            recipes.removeAll { $0.id == id }; openAgent = nil
         }
-        persistAgents(); tombstone(id, kind: .agent); syncDesk(reason: "agent deleted")
+        persistRecipes(); tombstone(id, kind: .recipe); syncDesk(reason: "recipe deleted")
     }
     private func saveTool() {
         let nm = toolName.trimmingCharacters(in: .whitespaces)
@@ -5423,8 +5553,8 @@ struct DioStage: View {
         }
         if let data = gamesJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([GameRecord].self, from: data) { placedGames = arr }
         if let data = workflowsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([WorkflowRecord].self, from: data) { workflows = arr }
-        if let data = agentsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([AgentRecord].self, from: data) { agents = arr }
-        if let data = agentChatsJSON.data(using: .utf8), let d = try? JSONDecoder().decode([String: [AgentMessage]].self, from: data) { agentChats = d }
+        if let data = agentsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([RecipeRecord].self, from: data) { recipes = arr }
+        if let data = agentChatsJSON.data(using: .utf8), let d = try? JSONDecoder().decode([String: [RecipeMessage]].self, from: data) { agentChats = d }
         if let data = chainsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([ChainRecord].self, from: data) { chains = arr }
         loadSyncMaps()
     }

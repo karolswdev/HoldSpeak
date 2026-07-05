@@ -102,9 +102,10 @@ For whoever cuts a release:
    model are fine). See the captured example in the release evidence.
 6. Set the default install ref to the new tag: `HOLDSPEAK_REF` in
    `scripts/install.sh` (default) so a script install pins the release.
-7. Tag the release (`vX.Y.Z`) and push the tag.
-8. Publishing to PyPI is a separate, deliberate step once the gate above is green.
-   It is not automated here.
+7. Tag the release (`vX.Y.Z`) and push the tag. **The tag is the publish**:
+   pushing it runs the release workflow, which builds and publishes to PyPI
+   via trusted publishing and creates the GitHub release. Only push the tag
+   when the gate above is green.
 
 ## Related
 

@@ -154,9 +154,9 @@ public struct KB: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
-// MARK: - Agent (capability / synced) — a persona you build and route cards through
+// MARK: - Recipe (capability / synced) — a persona you build and route cards through
 
-public struct Agent: Codable, Equatable, Sendable, Identifiable {
+public struct Recipe: Codable, Equatable, Sendable, Identifiable {
     public var id: String
     public var name: String
     public var avatar: String            // an avatar id (drives glyph + hue on the desk)
@@ -216,12 +216,12 @@ public struct Agent: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
-// MARK: - Chain (capability / synced) — an ordered crew of agents
+// MARK: - Chain (capability / synced) — an ordered chain of recipes
 
 public struct Chain: Codable, Equatable, Sendable, Identifiable {
     public var id: String
     public var name: String
-    public var steps: [String]          // ordered Agent ids
+    public var steps: [String]          // ordered Recipe ids
     public var createdAt: Date
     public var updatedAt: Date
 
@@ -249,7 +249,7 @@ public struct Chain: Codable, Equatable, Sendable, Identifiable {
 // MARK: - RuntimeProfile (capability / synced) — a named "where intelligence runs" target (Phase 24)
 
 /// A named, reusable inference target: on-device, or any OpenAI-compatible endpoint. The app keeps a
-/// LIST of these plus one active; an `Agent` may point at one (`Agent.profileId`).
+/// LIST of these plus one active; an `Recipe` may point at one (`Recipe.profileId`).
 ///
 /// **Security invariant (load-bearing):** the API key is NEVER a field here and NEVER syncs. It lives
 /// in the device Keychain (or, on the hub, its secrets), referenced by `id`, and is joined to an

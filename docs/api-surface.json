@@ -408,67 +408,6 @@
       ]
     },
     {
-      "path": "/api/agents",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.primitives.agents",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/agents",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.primitives.agents",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/agents/{agent_id}",
-      "methods": [
-        "DELETE"
-      ],
-      "module": "web.routes.primitives.agents",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/agents/{agent_id}",
-      "methods": [
-        "GET"
-      ],
-      "module": "web.routes.primitives.agents",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/agents/{agent_id}",
-      "methods": [
-        "PUT"
-      ],
-      "module": "web.routes.primitives.agents",
-      "consumers": [
-        "web"
-      ]
-    },
-    {
-      "path": "/api/agents/{agent_id}/run",
-      "methods": [
-        "POST"
-      ],
-      "module": "web.routes.primitives.agents",
-      "consumers": [
-        "ios",
-        "web"
-      ]
-    },
-    {
       "path": "/api/all-action-items",
       "methods": [
         "GET"
@@ -714,6 +653,16 @@
       "consumers": [
         "ios",
         "web"
+      ]
+    },
+    {
+      "path": "/api/coders/sessions",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coders",
+      "consumers": [
+        "ios"
       ]
     },
     {
@@ -1935,6 +1884,67 @@
       ],
       "module": "web.routes.projects",
       "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recipes",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recipes",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recipes/{recipe_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recipes/{recipe_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recipes/{recipe_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recipes/{recipe_id}/run",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": [
+        "ios",
         "web"
       ]
     },

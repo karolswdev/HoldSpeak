@@ -8,7 +8,7 @@ round-trip and reconcile in that single store.
 
 The two surfaces, on the same hub:
 
-- **Web** authors with the CRUD verbs (`POST /api/notes`, `POST /api/agents`,
+- **Web** authors with the CRUD verbs (`POST /api/notes`, `POST /api/recipes`,
   `POST /api/kbs`, ...). The hub stamps `last_modified`/`created_at`.
 - **iPad** authors by pushing a `ChangeSet` (`POST /api/sync/push`) — per kind a
   list of ``{meta:{id, kind, last_modified, deleted}, value}`` records with
@@ -97,7 +97,7 @@ def test_web_authored_note_and_agent_appear_in_pull(env) -> None:
     nid = note.json()["note"]["id"]
 
     agent = client.post(
-        "/api/agents",
+        "/api/recipes",
         json={
             "name": "Summarizer", "avatar": "🤖", "role": "assistant",
             "system_prompt": "You summarize.", "user_template": "Summarize: {input}",
@@ -105,7 +105,7 @@ def test_web_authored_note_and_agent_appear_in_pull(env) -> None:
         },
     )
     assert agent.status_code == 201
-    aid = agent.json()["agent"]["id"]
+    aid = agent.json()["recipe"]["id"]
 
     pulled = client.get("/api/sync/pull").json()
 
@@ -120,9 +120,9 @@ def test_web_authored_note_and_agent_appear_in_pull(env) -> None:
     assert note_rec["value"]["title"] == "Spec"
     assert note_rec["value"]["tags"] == ["a", "b"]
 
-    agent_rec = _bucket_by_id(pulled["agents"], aid)
+    agent_rec = _bucket_by_id(pulled["recipes"], aid)
     assert agent_rec is not None
-    assert agent_rec["meta"]["kind"] == "agent"
+    assert agent_rec["meta"]["kind"] == "recipe"
     # The agent value is EXACTLY the contract field set.
     assert set(agent_rec["value"]) == AGENT_KEYS
     assert agent_rec["value"]["name"] == "Summarizer"
@@ -145,8 +145,8 @@ def test_ipad_changeset_push_is_readable_via_crud_and_pull(env) -> None:
                 "updated_at": lm, "last_modified": lm, "deleted": False,
             },
         }],
-        "agents": [{
-            "meta": {"id": "ipad_agent_1", "kind": "agent",
+        "recipes": [{
+            "meta": {"id": "ipad_agent_1", "kind": "recipe",
                      "last_modified": lm, "deleted": False},
             "value": {
                 "id": "ipad_agent_1", "name": "Tailored Persona", "avatar": "🎯",
@@ -170,7 +170,7 @@ def test_ipad_changeset_push_is_readable_via_crud_and_pull(env) -> None:
     push = client.post("/api/sync/push", json=changeset)
     assert push.status_code == 200, push.text
     rcv = push.json()["received"]
-    assert rcv["notes"] == 1 and rcv["agents"] == 1 and rcv["kbs"] == 1
+    assert rcv["notes"] == 1 and rcv["recipes"] == 1 and rcv["kbs"] == 1
 
     # Readable via the CRUD GET routes (the web surface's read path).
     note = client.get("/api/notes/ipad_note_1")
@@ -178,10 +178,10 @@ def test_ipad_changeset_push_is_readable_via_crud_and_pull(env) -> None:
     assert note.json()["note"]["title"] == "From the iPad"
     assert note.json()["note"]["tags"] == ["mobile"]
 
-    agent = client.get("/api/agents/ipad_agent_1")
+    agent = client.get("/api/recipes/ipad_agent_1")
     assert agent.status_code == 200
-    assert agent.json()["agent"]["name"] == "Tailored Persona"
-    assert agent.json()["agent"]["kb_id"] == "ipad_kb_1"
+    assert agent.json()["recipe"]["name"] == "Tailored Persona"
+    assert agent.json()["recipe"]["kb_id"] == "ipad_kb_1"
 
     kb = client.get("/api/kbs/ipad_kb_1")
     assert kb.status_code == 200
@@ -194,7 +194,7 @@ def test_ipad_changeset_push_is_readable_via_crud_and_pull(env) -> None:
     assert note_rec["meta"]["last_modified"] == lm
     assert note_rec["meta"]["kind"] == "note"
     assert NOTE_KEYS.issubset(set(note_rec["value"]))
-    agent_rec = _bucket_by_id(pulled["agents"], "ipad_agent_1")
+    agent_rec = _bucket_by_id(pulled["recipes"], "ipad_agent_1")
     assert agent_rec is not None and set(agent_rec["value"]) == AGENT_KEYS
     kb_rec = _bucket_by_id(pulled["kbs"], "ipad_kb_1")
     assert kb_rec is not None and set(kb_rec["value"]) == KB_KEYS
@@ -486,8 +486,8 @@ def test_profile_syncs_shape_only_and_agent_carries_profile_id(env) -> None:
                 "created_at": "2030-06-27T08:00:00Z", "last_modified": lm, "deleted": False,
             },
         }],
-        "agents": [{
-            "meta": {"id": "ag_on_claude", "kind": "agent", "last_modified": lm, "deleted": False},
+        "recipes": [{
+            "meta": {"id": "ag_on_claude", "kind": "recipe", "last_modified": lm, "deleted": False},
             "value": {
                 "id": "ag_on_claude", "name": "Scout", "avatar": "a21", "role": "researcher",
                 "system_prompt": "Be precise.", "user_template": "{input}", "tools": [],
@@ -498,12 +498,12 @@ def test_profile_syncs_shape_only_and_agent_carries_profile_id(env) -> None:
     }
     push = client.post("/api/sync/push", json=changeset)
     assert push.status_code == 200, push.text
-    assert push.json()["received"]["profiles"] == 1 and push.json()["received"]["agents"] == 1
+    assert push.json()["received"]["profiles"] == 1 and push.json()["received"]["recipes"] == 1
 
     # The profile is stored as shape; the agent carries its profile_id.
     stored = db.profiles.get("prof_claude")
     assert stored is not None and stored.kind == "openAICompatible" and stored.context_limit == 200000
-    assert db.agents.get("ag_on_claude").profile_id == "prof_claude"
+    assert db.recipes.get("ag_on_claude").profile_id == "prof_claude"
 
     # THE NEVER-SYNC INVARIANT: no key material persisted, and none appears in a pull.
     pulled = client.get("/api/sync/pull").json()

@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 237 (plus static mounts). iOS-consumed: 50. Web-consumed: 172.
+Routes: 238 (plus static mounts). iOS-consumed: 51. Web-consumed: 172.
 
 ## device_audio_ws
 
@@ -315,17 +315,6 @@ Routes: 237 (plus static mounts). iOS-consumed: 50. Web-consumed: 172.
 | GET | `/welcome` | server only |
 | GET | `/workbench` | server only |
 
-## web.routes.primitives.agents
-
-| Method | Path | Consumers |
-|---|---|---|
-| GET | `/api/agents` | web |
-| POST | `/api/agents` | web |
-| DELETE | `/api/agents/{agent_id}` | web |
-| GET | `/api/agents/{agent_id}` | web |
-| PUT | `/api/agents/{agent_id}` | web |
-| POST | `/api/agents/{agent_id}/run` | ios, web |
-
 ## web.routes.primitives.chains
 
 | Method | Path | Consumers |
@@ -380,6 +369,17 @@ Routes: 237 (plus static mounts). iOS-consumed: 50. Web-consumed: 172.
 | GET | `/api/profiles/{profile_id}` | web |
 | PUT | `/api/profiles/{profile_id}` | web |
 
+## web.routes.primitives.recipes
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/recipes` | web |
+| POST | `/api/recipes` | web |
+| DELETE | `/api/recipes/{recipe_id}` | web |
+| GET | `/api/recipes/{recipe_id}` | web |
+| PUT | `/api/recipes/{recipe_id}` | web |
+| POST | `/api/recipes/{recipe_id}/run` | ios, web |
+
 ## web.routes.primitives.workflows
 
 | Method | Path | Consumers |
@@ -431,6 +431,7 @@ Routes: 237 (plus static mounts). iOS-consumed: 50. Web-consumed: 172.
 | POST | `/api/coders/dismiss` | ios |
 | POST | `/api/coders/pin` | ios |
 | POST | `/api/coders/select` | ios, web |
+| GET | `/api/coders/sessions` | ios |
 | GET | `/api/coders/status` | ios, web |
 
 ## web.routes.system.health

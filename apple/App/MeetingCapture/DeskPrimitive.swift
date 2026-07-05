@@ -8,7 +8,7 @@ import SwiftUI
 // the keystone gesture (drag onto the AI core → LLM → new primitive) becomes trivial to add next.
 
 enum PrimitiveKind: String {
-    case meeting, summary, actions, transcript, topics, note, artifact, model, kb, workflow, connector, agent, chain, game, coder
+    case meeting, summary, actions, transcript, topics, note, artifact, model, kb, workflow, connector, recipe, chain, game, coder
 
     var glyph: String {                       // the sprite asset (one source of truth → canvas + card + pull-out)
         switch self {
@@ -16,7 +16,7 @@ enum PrimitiveKind: String {
         case .model:   return "cartridge"
         case .kb:      return "crystal"
         case .note:    return "note"
-        case .agent:   return "sparkles"      // overridden per-agent by its chosen avatar
+        case .recipe:   return "sparkles"      // overridden per-agent by its chosen avatar
         case .chain:   return "arrow.triangle.branch"
         case .game:    return "gamecontroller.fill"   // overridden per-game by its cover art
         case .coder:   return "sparkles"              // a live coding session; overridden per-agent
@@ -30,7 +30,7 @@ enum PrimitiveKind: String {
         case .transcript, .model:           return DioPal.cobalt
         case .topics, .kb, .workflow:       return DioPal.violet
         case .connector:                    return DioPal.cobalt
-        case .agent:                        return DioPal.mint   // overridden per-agent by its avatar hue
+        case .recipe:                        return DioPal.mint   // overridden per-agent by its avatar hue
         case .chain:                        return DioPal.accent
         case .game:                         return DioPal.cobalt
         case .coder:                        return DioPal.cobalt
@@ -38,7 +38,7 @@ enum PrimitiveKind: String {
     }
     var badge: String { rawValue.uppercased() }
     var base: CGFloat {                       // canvas sprite size
-        switch self { case .model: return 162; case .kb: return 120; case .note: return 106; case .agent: return 104; case .chain: return 110; case .game: return 122; case .coder: return 118; default: return 130 }
+        switch self { case .model: return 162; case .kb: return 120; case .note: return 106; case .recipe: return 104; case .chain: return 110; case .game: return 122; case .coder: return 118; default: return 130 }
     }
 }
 

@@ -139,10 +139,17 @@ def _cmd_dry_run(args, out: TextIO) -> int:
 def _resolved_blocks(args) -> "LoadedBlocks":
     from ..plugins.dictation.assembly import DEFAULT_GLOBAL_BLOCKS_PATH
     from ..plugins.dictation.blocks import resolve_blocks
+    from ..plugins.dictation.project_root import detect_project_for_cwd
 
     project_root: Optional[Path] = None
     if getattr(args, "project", None):
         project_root = Path(args.project).expanduser()
+    else:
+        # F-03: match dry-run — inside a project, ls/show resolve that
+        # project's blocks without needing --project.
+        project = detect_project_for_cwd()
+        if project:
+            project_root = Path(project["root"])
     return resolve_blocks(DEFAULT_GLOBAL_BLOCKS_PATH, project_root)
 
 
