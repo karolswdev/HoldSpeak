@@ -71,6 +71,10 @@ end
 Dir[File.join(ROOT, 'App', '{cassette,note,crystal}*.png')].sort.each do |p|
   target.add_resources([res_group.new_reference(p)])
 end
+# The app icon asset catalog (TestFlight/App Store upload validation requires an
+# icon; ASSETCATALOG_COMPILER_APPICON_NAME below picks AppIcon out of it).
+xcassets = File.join(ROOT, 'App', 'Assets.xcassets')
+target.add_resources([res_group.new_reference(xcassets)]) if File.exist?(xcassets)
 
 # HSM-14-17 — the on-device speaker-diarization Core ML model (audio→256-dim embedding). Added as a
 # resource so Xcode compiles AudioEmbed.mlpackage → AudioEmbed.mlmodelc into the app bundle, where
@@ -131,6 +135,8 @@ target.build_configurations.each do |config|
   # App Store Connect auth key (the old blocker was Xcode having no account to talk
   # to the portal with).
   s['CODE_SIGN_ENTITLEMENTS'] = File.join(ROOT, 'App', 'Local.entitlements')
+  # TestFlight: the app icon (upload validation requires it).
+  s['ASSETCATALOG_COMPILER_APPICON_NAME'] = 'AppIcon'
 end
 
 project.save
