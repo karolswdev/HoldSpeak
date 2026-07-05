@@ -8,10 +8,49 @@ config should we run on the phone."
 
 ## The verdict (one line)
 
-**Qwen3-4B-Instruct-2507, Q5_K_M (imatrix), 16K context** — on Metal, non-thinking. It is
-the convergent winner for HoldSpeak's workload (meeting summarize/extract + dictation
-rewrite) on a thermally-constrained 12GB phone, and it is already the model witnessed
-running on the iPad.
+**On-device today: Qwen3-4B-Instruct-2507, Q5_K_M (imatrix), 16K context, non-thinking —
+the best model the SHIPPED engine can load. Power lane: route a profile over Tailscale to
+your own Mac/`.43` hub (Qwen3.5-9B or a Qwen3.5 MoE) — private, powerful, already built.**
+The full answer is HYBRID, not one model.
+
+## The engine reality (this overrides generic model advice) — verified 2026-07-05
+
+The bundled llama.cpp (LLM.swift 2.1.0 xcframework) recognizes exactly these architectures
+(pulled from the framework binary): `gemma, gemma2, gemma3, gemma3n, qwen2, qwen2moe,
+qwen3, qwen3moe, llama, llama4, phi2, phi3, phimoe, mistral (all variants), deepseek2,
+granite`. It is a **pre-April-2026 build**. Consequences that override any generic
+"best model" list:
+
+- **Gemma 4 (April 2026) will NOT load** — no `gemma4` arch in the bundle, even though
+  upstream llama.cpp added it at launch. Any recommendation to run Gemma 4 E4B on-device
+  is blocked until the engine is upgraded.
+- **Qwen3.5 / Qwen3.6 (2026) likely will NOT load on-device** in the shipped build either
+  (new family, post-dating this xcframework) — verify the arch before assuming.
+- **Qwen3 (dense) + Qwen3-MoE DO load** — so `qwen3moe` means a Qwen3/3.5-class **MoE**
+  (e.g. 30B-A3B / 35B-A3B) is viable as the HUB model on a beefier machine, reachable from
+  the phone over the mesh.
+- **The frontier has moved a generation** (Gemma 4, Qwen3.5/3.6, Claude Sonnet 5 — all
+  real, all verified). The shipped on-device engine is a generation behind them. So the
+  best *installable-today* model is still Qwen3-4B-Instruct-2507; the best *achievable*
+  on-device model needs an **engine upgrade** (bump the LLM.swift / llama.cpp xcframework
+  to a current build → unlocks Gemma 4 E4B + Qwen3.5-4B locally).
+
+## The hybrid is the real answer (and HoldSpeak already ships it)
+
+A phone should NOT try to be the whole brain. HoldSpeak's profile system + the Phase-15
+mesh already implement the right split:
+
+- **On-device fast/private/offline path** — Qwen3-4B-2507 for routing, rewriting, live
+  meeting state, offline fallback. Data never leaves the phone.
+- **Power lane over Tailscale to YOUR hardware** — the highest-leverage move for this
+  owner: an endpoint profile pointed at the CO Mac / `.43` box (already running
+  Qwen3.5-9B-Q6) or a Qwen3.5-MoE on a bigger host. Big-model quality, on hardware you own,
+  private, reachable NYC→CO over the tailnet via the dispatch seam (HSM-15-02) + the mesh
+  queue (HSM-15-03) shipped today. This is the "amazingness" lane, and it's cloud-free.
+- **Cloud premium lane (only if egress is acceptable)** — Claude Sonnet 5 (verified real,
+  near-Opus at $2/$10 intro) for the hardest agentic/coding traces; GPT-4.1 mini as a cheap
+  high-volume default. Given the owner's local-first / air-gapped posture, the Tailscale
+  lane is the better power answer than cloud.
 
 ## Why the 4B, not the 8B (the counter-intuitive part)
 
@@ -93,6 +132,27 @@ bartowski equivalent). Q4_K_M is the safe cross-device default the list already 
 
 1. Tune the on-device sampling for extraction (temp/topP/topK per Qwen3 non-thinking).
 2. Confirm +, if needed, pin Metal `n_gpu_layers` on device.
-3. (Optional) raise `contextCeiling` to 32K for the 12GB tier.
-4. (Later) patch LLM.swift for `--flash-attn` + q8_0 KV if 64K+ on-device context is ever
+3. **Upgrade the bundled llama.cpp / LLM.swift to a current (post-April-2026) build** —
+   unlocks Gemma 4 E4B and Qwen3.5-4B on-device (the frontier small models), and newer
+   quant/attention features. This is the single biggest capability jump for local
+   inference; the shipped engine is a generation behind.
+4. (Optional) raise `contextCeiling` to 32K for the 12GB tier.
+5. (Later) patch LLM.swift for `--flash-attn` + q8_0 KV if 64K+ on-device context is ever
    wanted.
+
+## Corrections to an external study (2026-07-05) — verify, don't assume
+
+A thorough external study recommended a hybrid architecture with Gemma 4 E4B as the
+primary on-device model and Claude Sonnet 5 as the premium lane. Adjudicated against
+live verification + the app's engine:
+
+- **Right (I was stale):** Claude Sonnet 5 IS real (2026-06-30, near-Opus, $2/$10 intro);
+  Gemma 4 and Qwen3.5/3.6 ARE real with upstream llama.cpp support; the HYBRID thesis is
+  correct and matches HoldSpeak's profile + mesh design.
+- **Wrong for this app:** Gemma 4 E4B (and Qwen3.5-4B) **cannot load in the shipped
+  engine** — the bundled xcframework predates them (arch list above). Generic model
+  research without checking the app's engine version is the trap. On-device TODAY =
+  Qwen3-4B-2507; Gemma 4 on-device = after an engine upgrade.
+- **Under-weighted:** the study's cloud-default framing under-serves this owner's
+  local-first / air-gapped posture. The Tailscale-to-your-own-Mac power lane (already
+  built) is the better "power" answer than cloud egress.
