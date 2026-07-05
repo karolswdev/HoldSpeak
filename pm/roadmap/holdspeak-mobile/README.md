@@ -10,17 +10,22 @@
 > gotchas, and the exact remaining work to finish **Phase 8** and **Phase 14** (top priority).
 
 **Current phase:** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
-— **RESUMED 2026-07-04, survey-corrected: 4/9 pre-paid on resume.** The Primitive Framework +
-Phases 17/22/23 + the HS-73-02 front-door call delivered its parity + sync spine while it slept
-(16-01/02/03/05 recorded done on a fresh 66-test targeted run; 16-04/08 re-scoped to their
-genuinely-open slices). **HSM-16-09 — the Ask AI atom — LEADS**: lasso a pile of context on the
-desk → speak the ask on top of it → the answer prints from the shelf → keep (a real synced
-`Artifact` with provenance, instantly file-able) or bin. Zero Ask-AI code exists (grep-verified);
-every seam has since shipped (lasso 14-19, the `routableText` grounding grammar 17-04, the
-fresh-resolved-provider one-call draft 17-05, runtime profiles P24, the `EgressScope` chip 21-01,
-the materialize treatment 14-03, the speak-to-fill mic). Build order: 16-09 → 16-08 (generalize:
-save an Ask as a recipe/workflow; model manifests; combine-by-drop) → 16-04's remaining web slice
-(atelier authoring + the atom) → 16-06 cross-surface proof → 16-07 docs. **The owner couch session
+— **5/9: HSM-16-09, the Ask AI atom, DONE the day the phase resumed** (sim-proven; the device
+beat rides 16-06). The build TRUTHED-UP the resume survey: the atom's skeleton already existed
+(`askBundle` → `DioRouteSheet` → theater → `DioPrintedCard` — the survey's "zero Ask-AI code"
+claim was wrong), and the story's real substance was what the skeleton faked: **the full Ask
+lineage** (a kept Ask persists as an `Artifact` naming every lasso'd card + the exact prompt,
+decode-tolerant, recipe/chain wire shapes byte-stable test-locked), **two egress-honesty fixes**
+(the printed card + the routing theater stated the app-wide default, not the run's resolved
+profile — a per-run cloud ask printed a card claiming local; both now resolve per-run and a
+cloud run names its real host), and **both Ask surfaces off the scrim** (the composer joins the
+atelier posture; the card PRINTS from the AI core it ran through). Suite 467/9/0; sim build
+green; three `HS_DESK_ASK` screenshots committed. Build order ahead: **16-08** (generalize the
+atom: save an Ask as a recipe/workflow; model manifests; combine-by-drop) → 16-04's remaining
+web slice (atelier authoring + the atom) → 16-06 cross-surface proof → 16-07 docs. Resume
+context: **4/9 pre-paid on resume** — the Primitive Framework + Phases 17/22/23 + the HS-73-02
+front-door call delivered the parity + sync spine while the phase slept (16-01/02/03/05 recorded
+done on a fresh 66-test targeted run; 16-04/08 re-scoped to their genuinely-open slices). **The owner couch session
 (17-06 + the 18/19/21/22/23 walk riders) stays the standing gate queue.** Prior current phase:
 [Phase 22 — The graph travels](./phase-22-the-graph-travels/current-phase-status.md)
 — **opened 2026-07-04, survey-corrected: 1/4 on open, CLOSED-BUILT 4/4 the same day.** The hub half (22-02) was
@@ -85,7 +90,14 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-04 (**PHASE 16 RESUMED, SURVEY-CORRECTED — the next build phase.** With
+**Last updated:** 2026-07-04 (**HSM-16-09 DONE — the Ask AI atom, honest to the bone.** A kept
+Ask now carries its full lineage (every card it read + the exact prompt) onto the synced
+Artifact; two egress lies fixed (the printed card + the theater now state the RUN's resolved
+profile, never the app default); both Ask surfaces left the scrim — the composer is an atelier
+panel, the card prints from the core. Suite 467/9/0; three sim shots. The build truthed-up the
+morning's survey: the atom's skeleton already existed, the "zero code" claim was wrong — the
+correction is recorded as loudly as the claim (story-09 + evidence). Next: 16-08. Earlier:
+**PHASE 16 RESUMED, SURVEY-CORRECTED — the next build phase.** With
 the Equilibrium build complete and every open gate waiting on the one owner couch session, the
 delivery framework's next buildable work is the only open build phase: Phase 16. The resume survey
 found 4/9 stories pre-paid (the Primitive Framework's waves, Phase 17's recipe atomicity, Phase 22's

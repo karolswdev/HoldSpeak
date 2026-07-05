@@ -6,7 +6,13 @@ delivered and look for parity with the web client in Astro… and design for syn
 desktop. This is all a mesh system, so everything has to flow back and forth. Knowledge bases, stuff
 like that."*)
 
-**Last updated:** 2026-07-04 (**RESUMED, SURVEY-CORRECTED — more than half the phase was pre-paid
+**Last updated:** 2026-07-04 (**HSM-16-09 DONE — the Ask AI atom, honest to the bone (5/9).** The
+kept Ask now carries its full lineage (every card read + the prompt) onto the synced Artifact;
+two egress lies fixed (card + theater now state the RUN's profile, not the app default); both Ask
+surfaces left the scrim — the composer is an atelier panel and the card prints from the core.
+Suite 467/9/0, sim shots committed, the device beat rides 16-06. The build also TRUTHED-UP the
+morning's survey: the atom's skeleton already existed — the "zero code" claim was wrong. Next:
+16-08. Earlier: **RESUMED, SURVEY-CORRECTED — more than half the phase was pre-paid
 while it slept.** The phase was authored 2026-06-24 and then the Primitive Framework
 ([`THE_PRIMITIVE_FRAMEWORK.md`](../contracts/THE_PRIMITIVE_FRAMEWORK.md), waves 1–4, PRs #140–142),
 Phase 17 (recipes atomic across hub/wire/Swift/web), Phase 22 (workflows travel + run on the hub),
@@ -93,7 +99,7 @@ the user. It is the spine of the whole phase.
 | HSM-16-03 | The desktop hub surface for organization | **done** (pre-paid: `holdspeak/web/routes/primitives/` serves directories/kbs/notes/recipes/chains/workflows/profiles CRUD + `routes/sync.py`; fresh 66-test green run 2026-07-04) | sync (hub) |
 | HSM-16-04 | The web Astro Desk (parity build) | **in-progress, survey-corrected** (substantially pre-paid: the desk IS the web front door — `index.astro` mounts `DeskApp` with World/Stage/zones/pull-out/RecipeRail/InlineEditor/mic, and 22-03 made it a workflow producer; **remaining slice = web recipe/atelier authoring** — the 17-08 closeout filed it verbatim as "the next slice" — **+ the Ask-AI atom's web parity** once 16-09 lands) | parity (the big build) |
 | HSM-16-05 | Wire the mesh — organization flows back and forth | **done** (pre-paid: the Phase-23-04 10-kind per-primitive push→pull round-trip matrix covers kb/directory/membership byte-faithful, golden-pinned on both sides of the wire; live merges proven in the 22-01/22-04 DeskSync passes) | sync (wire) |
-| HSM-16-09 | **The Ask AI atom** — lasso → ask → speak → print → keep/bin (on-device, no mesh needed) | todo — **LEADS** (ratified by the resume survey: zero code exists, every seam shipped) | capability (the atom) |
+| HSM-16-09 | **The Ask AI atom** — lasso → ask → speak → print → keep/bin (on-device, no mesh needed) | **done** (2026-07-04, sim-proven; device beat rides 16-06. TRUTH-UP: the survey's "zero code exists" was wrong — the skeleton had shipped; this story built the missing substance: full Ask lineage on the wire, two egress-honesty fixes, composer + printed card off the scrim) | capability (the atom) |
 | HSM-16-08 | Capability objects — survey-corrected remaining scope: **generalize the atom** (save an Ask as a recipe/workflow you re-run by drop) + **model manifests** (`SyncKind` has no `model` kind yet — the framework table promises one) + the combine-by-drop gestures for recipes/chains | todo (partially pre-paid: workflows already sync + run on the hub, Phase 22; recipes/chains sync, schema v8) | capability (combine/execute) |
 | HSM-16-06 | The cross-surface proof (author on one surface → felt on the other two, real metal) | todo (rescoped to ride the atom: an Ask kept on the iPad appears file-able on the web desk + the hub; org edits round-trip live) | proof (real metal) |
 | HSM-16-07 | Docs catch-up (mesh + DeskObject across surfaces) | todo | docs |
@@ -103,7 +109,21 @@ the user. It is the spine of the whole phase.
 
 ## Where we are
 
-**Resumed 2026-07-04, survey-corrected.** The parity + sync spine this phase was opened to design got
+**16-09 DONE the day the phase resumed (5/9).** The build immediately truthed-up the resume
+survey: the atom's skeleton (`askBundle` → `DioRouteSheet` → theater → `DioPrintedCard`) had
+ALREADY shipped under other names — the survey's "zero Ask-AI code exists" was wrong, and the
+story's real substance was what the skeleton faked. Shipped: **the full Ask lineage** (a kept Ask
+persists as an `Artifact` naming every lasso'd card + the exact prompt, wire-tolerant and
+golden-pin-safe — recipe/chain shapes byte-stable, test-locked), **two egress-honesty fixes**
+(the printed card and the theater read the app-wide default, not the run's resolved profile — a
+per-run cloud ask printed a card claiming local; both now resolve per-run and name the real
+host), **both Ask surfaces off the scrim** (the composer joins the atelier posture; the card
+PRINTS from the AI core), and the ask lineage glyph. Suite 467/9/0; sim build green; three
+committed screenshots (selected / compose / printed) via new `HS_DESK_ASK` affordances. The
+on-device walk beat rides 16-06. **Next: 16-08 — generalize the atom** (save an Ask as a
+recipe/workflow by drop; model manifests; combine-by-drop), then 16-04's web slice.
+
+Earlier — **resumed 2026-07-04, survey-corrected.** The parity + sync spine this phase was opened to design got
 built underneath it by the Primitive Framework and Equilibrium (see the table's evidence pointers) —
 the survey records 16-01/02/03/05 done pre-paid on a fresh 66-test green run and re-scopes the rest.
 What was never built anywhere is the phase's own headline: **the Ask AI atom** (16-09), the desk's

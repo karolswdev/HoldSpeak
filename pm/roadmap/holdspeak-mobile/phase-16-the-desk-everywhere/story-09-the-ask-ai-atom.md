@@ -2,9 +2,20 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 16
-- **Status:** todo — **LEADS the phase** (ratified by the 2026-07-04 resume survey: zero Ask-AI code
-  exists anywhere — grep-verified — and every dependency has since shipped; it runs on-device today
-  and needs none of the mesh).
+- **Status:** done (2026-07-04 — sim-proven end to end; the on-device real-metal walk is a 16-06
+  beat by this story's own acceptance. **TRUTH-UP of the resume survey:** "zero Ask-AI code exists"
+  was WRONG — the atom's skeleton (`askBundle` → `DioRouteSheet` → theater → `DioPrintedCard`,
+  keep/bin, mic, profile picker) had already shipped under other names. What this story actually
+  built was the part the skeleton faked: (1) **the full Ask lineage** — `RunProvenance` grew
+  `contextIds`/`contextTitles`/`prompt` (decode-tolerant; recipe/chain wire shape byte-stable,
+  test-locked) so a kept Ask persists as an `Artifact` naming every card it read + the exact
+  instruction, one canonical `sources` row per context; (2) **two egress-honesty bugs fixed** —
+  the printed card and the routing theater read the app-wide `isLocal` instead of the run's
+  resolved profile, so a per-run cloud override printed a card claiming local (both now resolve
+  the per-run profile; a cloud run names its real host, the 21-01 grammar); (3) **off the scrim**
+  — the Ask composer joins the atelier posture and the result card PRINTS from the AI core it ran
+  through onto a soft backdrop ([[feedback_no_modals_in_world]]); (4) the ask lineage glyph. Suite
+  467/9/0; sim build green; three committed screenshots.)
 - **Depends on:** the lasso/selection (HSM-14-19), **runtime profiles** (Phase 24 —
   `resolveProfile`/`makeProvider(profile:)`, not the old raw `InferenceConfigStore` mode), the
   speak-to-fill mic (`VoiceCaptureState`, [[feedback_voice_mic_every_input]]), the **`EgressScope`
