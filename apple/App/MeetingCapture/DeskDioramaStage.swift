@@ -1035,14 +1035,19 @@ struct DioConnectCard: View {
     let onConnect: (_ host: String, _ port: String, _ token: String, _ name: String) -> Void
     let onForget: () -> Void
     let onCancel: () -> Void
-    let onTest: (_ host: String, _ port: String, _ token: String) async -> Bool
+    let onTest: (_ host: String, _ port: String, _ token: String) async -> (ok: Bool, detail: String)
     @State private var testing = false
     @State private var testResult: Bool? = nil
+    @State private var testDetail: String = ""
+    // Opening the card browses for `_holdspeak._tcp` — discovery, and it forces iOS to
+    // surface the Local Network prompt the app is otherwise never asked for.
+    @StateObject private var lanProbe = MeshBrowser()
     @FocusState private var hostFocused: Bool
     private let tint = DioPal.cobalt
     private var canConnect: Bool {
         !host.trimmingCharacters(in: .whitespaces).isEmpty && (Int(port.trimmingCharacters(in: .whitespaces)) ?? 0) > 0
     }
+    private var dialedURL: String { PeerAddress.describe(host, port: port, path: "/health") }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
@@ -1056,7 +1061,10 @@ struct DioConnectCard: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(paired ? "YOUR DESKTOP" : "CONNECT YOUR DESKTOP").font(.system(size: 11, weight: .black, design: .rounded)).tracking(1.4).foregroundStyle(tint)
-                    Text("Sync + send run through it").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                    // The build number rides the card so "which binary is on the phone"
+                    // is answered by the surface itself, never by TestFlight archaeology.
+                    Text("Sync + send run through it · build \((Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "?")")
+                        .font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                 }
                 Spacer(minLength: 0)
                 Button(action: onCancel) { Image(systemName: "xmark").font(.system(size: 14, weight: .black)).foregroundStyle(DioPal.muted).frame(width: 30, height: 30).background(Circle().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
@@ -1066,6 +1074,18 @@ struct DioConnectCard: View {
             HStack(alignment: .bottom, spacing: 12) {
                 field(label: "PORT", placeholder: "8765", text: $port, mic: false, keyboard: .numberPad, mono: true).frame(width: 96)
                 tokenField
+            }
+            // The literal probe target + the live result reason — a wrong scheme, a
+            // stale host or an OS-level denial reads on screen, never as a silent bool.
+            VStack(alignment: .leading, spacing: 4) {
+                Text("WILL DIAL").font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1.4).foregroundStyle(DioPal.muted)
+                Text(dialedURL).font(.system(size: 12, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(DioPal.muted).lineLimit(2).minimumScaleFactor(0.7)
+                if !testDetail.isEmpty {
+                    Text(testDetail).font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(testResult == true ? DioPal.mint : Color(hex: 0xFF6B6B))
+                        .lineLimit(4).fixedSize(horizontal: false, vertical: true)
+                }
             }
             HStack(spacing: 12) {
                 if paired {
@@ -1101,6 +1121,8 @@ struct DioConnectCard: View {
         )
         .shadow(color: tint.opacity(0.4), radius: 26, y: 10).shadow(color: .black.opacity(0.55), radius: 16, y: 12)
         .transition(.scale(scale: 0.92).combined(with: .opacity))
+        .onAppear { lanProbe.start() }
+        .onDisappear { lanProbe.stop() }
     }
 
     @ViewBuilder
@@ -1144,10 +1166,10 @@ struct DioConnectCard: View {
     }
 
     private func runTest() {
-        testing = true; testResult = nil
+        testing = true; testResult = nil; testDetail = ""
         Task {
-            let ok = await onTest(host, port, token)
-            await MainActor.run { testing = false; testResult = ok }
+            let r = await onTest(host, port, token)
+            await MainActor.run { testing = false; testResult = r.ok; testDetail = r.detail }
         }
     }
 }
@@ -2695,17 +2717,31 @@ struct DeskHostLink {
     // `Authorization: Bearer <token>` — without this the companion (Slack/webhook) routes 401.
     var token: String = ""
     enum HostError: Error { case message(String) }
-    private var base: URL? { URL(string: "http://\(host):\(port)") }
+    private var base: URL? { PeerAddress.base(host, port) }
     private func auth(_ r: inout URLRequest) {
         let t = token.trimmingCharacters(in: .whitespaces)
         if !t.isEmpty { r.setValue("Bearer \(t)", forHTTPHeaderField: "Authorization") }
     }
 
-    func reachable() async -> Bool {
-        guard let u = base?.appendingPathComponent("health") else { return false }
-        var r = URLRequest(url: u); r.timeoutInterval = 4; auth(&r)
-        if let (_, resp) = try? await URLSession.shared.data(for: r), (resp as? HTTPURLResponse)?.statusCode == 200 { return true }
-        return false
+    func reachable() async -> Bool { await probe().ok }
+
+    /// The probe with its REASON — the exact URLError domain+code on failure, so the
+    /// connect card can show why instead of a bare "No answer" (the build-3 lesson:
+    /// silent bools hid a device that couldn't dial at all).
+    func probe() async -> (ok: Bool, detail: String) {
+        guard let u = base?.appendingPathComponent("health") else {
+            return (false, "bad address — check host and port")
+        }
+        var r = URLRequest(url: u); r.timeoutInterval = 6; auth(&r)
+        do {
+            let (_, resp) = try await URLSession.shared.data(for: r)
+            let code = (resp as? HTTPURLResponse)?.statusCode ?? -1
+            return (code == 200, code == 200 ? "HTTP 200" : "HTTP \(code)")
+        } catch let e as URLError {
+            return (false, "URLError \(e.errorCode): \(e.localizedDescription)")
+        } catch {
+            return (false, "\((error as NSError).domain) \((error as NSError).code): \(error.localizedDescription)")
+        }
     }
     /// Which desk connectors the HOST actually has configured (HSM-21-03; booleans only —
     /// GET /api/desk/actuators/status, HS-77-03: the URLs are credentials and never ride).
@@ -3581,8 +3617,10 @@ struct DioStage: View {
                                    onForget: { forgetPeer() },
                                    onCancel: { withAnimation { connecting = false } },
                                    onTest: { hh, pp, tt in
-                                       guard let p = Int(pp.trimmingCharacters(in: .whitespaces)), p > 0 else { return false }
-                                       return await DeskHostLink(host: hh.trimmingCharacters(in: .whitespaces), port: p, token: tt).reachable()
+                                       guard let p = Int(pp.trimmingCharacters(in: .whitespaces)), p > 0 else {
+                                           return (false, "port must be a number")
+                                       }
+                                       return await DeskHostLink(host: hh.trimmingCharacters(in: .whitespaces), port: p, token: tt).probe()
                                    })
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .padding(.top, h * 0.08).zIndex(152).transition(.scale(scale: 0.92).combined(with: .opacity))
@@ -3606,6 +3644,12 @@ struct DioStage: View {
                 if let s = ProcessInfo.processInfo.environment["HS_DESK_SETTINGS"], s == "1" || s == "local" {
                     if s == "local" { InferenceConfigStore.shared.mode = .local }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { showSettings = true }
+                }
+                // Open the connect card on launch so the sim can SHOW it — the card must be
+                // screenshot-verified before an upload (the build-4 lesson: a green build is
+                // not proof the surface shipped).
+                if ProcessInfo.processInfo.environment["HS_DESK_CONNECT"] == "1" {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { connecting = true } }
                 }
                 if let r = ProcessInfo.processInfo.environment["HS_DESK_RECORD"] {
                     model.liveTranscript = "Welcome everyone to the Q3 kickoff. The big bet this quarter is shipping the desk to the web. Karol will own the mesh sync and the approval contract. We agreed to demo the air-gapped proof by Friday"

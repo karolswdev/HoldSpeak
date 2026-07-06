@@ -318,6 +318,34 @@ extension DeskSyncStore {
 /// flush the queue (offline-safe) → pull + apply. Never throws on an unreachable peer;
 /// the outbound snapshot stays queued for the next pass, so sync is never on the
 /// capture/author path.
+/// The ONE rule for what HOST may hold: a bare host ("100.x.y.z",
+/// "mac.tailnet.ts.net") dials plain http; an explicit "https://host" dials TLS
+/// (e.g. a `tailscale serve` front, which defeats cleartext-HTTP filters).
+/// Every dial site — test, sync, mesh, dictate — must agree, so they all parse here.
+enum PeerAddress {
+    /// (scheme, bare host) from whatever the owner typed.
+    static func split(_ raw: String) -> (scheme: String, host: String) {
+        var t = raw.trimmingCharacters(in: .whitespaces)
+        var scheme = "http"
+        if t.lowercased().hasPrefix("https://") { scheme = "https"; t = String(t.dropFirst(8)) }
+        else if t.lowercased().hasPrefix("http://") { t = String(t.dropFirst(7)) }
+        while t.hasSuffix("/") { t = String(t.dropLast()) }
+        return (scheme, t)
+    }
+
+    static func base(_ raw: String, _ port: Int) -> URL? {
+        let (scheme, host) = split(raw)
+        guard !host.isEmpty, port > 0 else { return nil }
+        return URL(string: "\(scheme)://\(host):\(port)")
+    }
+
+    /// The literal URL a probe will dial — shown on screen so a typo is visible.
+    static func describe(_ raw: String, port: String, path: String) -> String {
+        let (scheme, host) = split(raw)
+        return "\(scheme)://\(host):\(port.trimmingCharacters(in: .whitespaces))\(path)"
+    }
+}
+
 struct DeskSyncDriver {
     let provider: HTTPSyncProvider
     let queue: SyncQueue
@@ -340,8 +368,7 @@ struct DeskSyncDriver {
     /// The `token` is the hub's web auth token (required for a LAN/non-loopback bind) — it
     /// rides every /api/sync request as `Authorization: Bearer <token>`.
     static func make(host: String, port: Int, token: String? = nil) -> DeskSyncDriver? {
-        guard !host.trimmingCharacters(in: .whitespaces).isEmpty, port > 0,
-              let url = URL(string: "http://\(host):\(port)") else { return nil }
+        guard port > 0, let url = PeerAddress.base(host, port) else { return nil }
         let dir = (try? SyncQueue.defaultDirectory())
             ?? FileManager.default.temporaryDirectory.appendingPathComponent("hs-sync-queue")
         let key = token?.trimmingCharacters(in: .whitespaces)

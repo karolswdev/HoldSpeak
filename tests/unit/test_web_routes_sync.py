@@ -105,8 +105,10 @@ def test_pull_serializes_meetings_and_artifacts(monkeypatch, tmp_path):
 
     assert len(body["meetings"]) == 1
     m = body["meetings"][0]
+    # Strict wire ISO-8601 (`Z`, no fraction): Foundation's `.iso8601` on the iPad
+    # rejects timezone-less stamps, and ONE bad stamp fails the whole pull decode.
     assert m["meta"] == {"id": "m1", "kind": "meeting",
-                         "last_modified": "2026-01-01T00:00:00", "deleted": False}
+                         "last_modified": "2026-01-01T00:00:00Z", "deleted": False}
     assert m["value"]["id"] == "m1"
 
     assert len(body["artifacts"]) == 1
@@ -161,3 +163,17 @@ def test_push_rejects_malformed_record(monkeypatch, tmp_path):
     resp = _client().post("/api/sync/push", json=bad)
     assert resp.status_code == 422
     assert not (tmp_path / "sync_inbox").exists()
+
+
+def test_iso_emits_strict_wire_timestamps():
+    """Every `_iso` shape lands as strict `Z` seconds — the iPad's `.iso8601`
+    decoder rejects fractional seconds and timezone-less strings, and one bad
+    stamp fails the WHOLE pull decode (the 2026-07-05 remote-pairing autopsy)."""
+    from datetime import timezone
+    from holdspeak.web.routes.sync import _iso
+
+    assert _iso(None) is None
+    assert _iso(datetime(2026, 7, 4, 9, 12, 48, 721541)) == "2026-07-04T09:12:48Z"
+    assert _iso(datetime(2026, 7, 4, 9, 12, 48)) == "2026-07-04T09:12:48Z"
+    assert _iso(datetime(2026, 7, 4, 9, 12, 48, 5, tzinfo=timezone.utc)) == "2026-07-04T09:12:48Z"
+    assert _iso("2026-07-04T09:12:48Z") == "2026-07-04T09:12:48Z"

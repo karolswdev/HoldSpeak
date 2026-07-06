@@ -4,7 +4,9 @@
 - **Phase:** 15
 - **Status:** in-progress — opened 2026-06-22 (owner: *"Where do I set up the computer and connect
   to? Have you thought about creating a new place for that? a lot of these have got a lot of
-  discovery verbs."*). The foundational connection home the mesh was missing.
+  discovery verbs."*). **2026-07-06: the remote-pairing saga — five stacked defects found and
+  fixed across builds 3–4 (see the section below); connect is proven end-to-end in the
+  Simulator against the live hub; the owner's on-device green run is the remaining beat.**
 - **Depends on:** `HTTPDesktopClient`/`DictatePeerStore` (the paired peer), the desktop `holdspeak web`
   LAN bind + `web_auth` token.
 - **Owner:** unassigned
@@ -58,6 +60,70 @@ is a manual bearer token (`web_auth.py`) + the device PSK (`holdspeak device-psk
 - Desktop: unit/integration for the advertising toggle + `/api/mesh/info`; manual LAN discovery check.
 - iPad: the discovery→connect flow Simulator-shot with a seeded list; a real LAN discover+pair is the
   owner-at-the-iPad proof.
+
+## The remote-pairing saga (2026-07-05/06) — five stacked defects, builds 3 + 4
+
+The owner, remote (phone in NYC, hub in Denver, Tailscale the only door), could not pair the
+TestFlight app: the desk pill sat on "Offline · queued" while the same phone's Safari reached
+the identical hub. Every one of these was REAL and each masked the next:
+
+1. **The manual sheet never dialed** (build ≤2): `PairMacSheet` bound fields and dismissed —
+   no probe, no feedback. **Build 3** gave it a real Test (handshake + on-screen `WILL DIAL`
+   URL + the `URLError` reason). But the sheet is on the CLASSIC home, not the desk front
+   door — the surface the owner actually uses is `DioConnectCard`, which stayed bool-only.
+2. **The hub DB was missing `model_manifests`** — the table was added to `SCHEMA_SQL` without
+   bumping `SCHEMA_VERSION` past 8, so a v8-stamped DB no-ops the DDL; `/api/sync/pull`
+   500'd forever. (Rider: bump schema v9 in the repo — every other v8 DB breaks identically.)
+3. **The sync wire was undecodable by the Swift contract** — two independent poisons, proven
+   by compiling `Sources/Contracts/*.swift` into a decode harness against the live pull JSON:
+   a run-born artifact carried `artifact_type: "run_output"` (Phase-74 hub concept, absent
+   from the Swift `ArtifactType` enum → the WHOLE ChangeSet decode fails), and `_iso()` in
+   `web/routes/sync.py` emitted naive `datetime.isoformat()` (microseconds, no timezone —
+   Foundation `.iso8601` rejects both). Fixed `_iso` (strict seconds+`Z`, this commit),
+   retyped the row, normalized ~110 stored rows. (Riders: `runOutput` case + unknown-tolerant
+   enum decoding in Swift; the driver folds 500/401/decode-fail/no-network into ONE
+   "Offline · queued" state — give it honest error states.)
+4. **The killer: a leftover `tailscale serve` TLS-over-TCP interceptor on port 8765** (parked
+   in tailscaled state during the build-2 proxy investigation). Every tailnet connection to
+   the hub port had to speak TLS: Safari silently auto-upgrades to HTTPS so it handshook and
+   *looked like proof the network was fine*, while the app's plain-HTTP died inside
+   tailscaled — zero packets at the hub, zero iOS prompts, surviving reinstall + reboot.
+   `tailscale serve --tls-terminated-tcp=8765 off`. **Lesson: when one app dials and Safari
+   works, read `tailscale serve status` FIRST.**
+5. **Build 4** hardens the surface the owner uses: `DioConnectCard` gains the literal
+   `WILL DIAL` line + the exact probe reason (HTTP status / `URLError` code — this bug would
+   have read "SSL error" on screen in one tap); a new `PeerAddress` helper (DeskSync.swift)
+   is THE one host-parsing rule for every dial site (card, sync driver, host link, dictate
+   peer, mesh-info) and understands an `https://` host prefix, so a TLS front
+   (`tailscale serve` at `https://<mac>.ts.net`, 443) is a first-class door; opening the card
+   starts the Bonjour browse, forcing iOS to surface the Local Network prompt.
+
+**THE FINAL ROOT CAUSE (2026-07-06, builds 5–6) — ATS was vetoing every dial client-side.**
+The plist carried `NSAllowsArbitraryLoads` AND `NSAllowsLocalNetworking`; when the
+finer-grained key is present, modern iOS **silently ignores ArbitraryLoads**, so the
+effective policy was "HTTPS except local" — and iOS counts only RFC1918 as local. A
+Tailscale CGNAT address (100.64/10) reads as PUBLIC internet → cleartext refused inside
+the phone (`URLError -1022`), zero packets, no prompt, every build since 1. Safari is
+exempt from app ATS (and auto-upgrades to HTTPS), which made the network look healthy;
+the Simulator "proof" dialed 127.0.0.1 (loopback-exempt) and was blind to it. **Fix
+(build 6): drop `NSAllowsLocalNetworking` — never re-add it.** Interim door that
+confirmed everything (build 5): `tailscale serve` HTTPS front
+(`https://karol-co-mac.tailad9943.ts.net`, 443) — the phone connected from NYC and the
+hub logged `POST /api/sync/push · auth=yes · HoldSpeakMobile/5`. **The phone pairs and
+syncs.** Build 5 also added: the build number ON the connect card (ends
+which-binary-is-installed arguments; TestFlight's export rewrites `CFBundleVersion`, so
+the static plist "1" is renumbered at upload) and the `HS_DESK_CONNECT=1` sim seed so
+the card itself is screenshot-verified BEFORE upload (the build-4 lesson: `strings`
+verification lies twice — short literals are register-packed and em-dashes split ASCII
+runs; verify with pure-ASCII substrings + eyes on the rendered surface).
+
+**Debug rig (reusable):** the logging proxy (`/tmp/hublog.py`, 8765→hub) shows arrivals per
+TCP connection (keep-alive hides follow-up requests — a "missing" pull can be an unlogged
+same-connection ride); `xcrun simctl spawn <sim> defaults write dev.holdspeak.mobile
+hs.peer.host/port/token` injects a pairing so a Simulator launch fires a REAL desk sync
+against the live hub; the compiled-contracts decode harness prints the exact `DecodingError`.
+Evidence: Simulator "Synced · just now" against the live hub with the full desk pulled
+(screenshots in the session log); build 4 uploaded, VALID, attached to the internal group.
 
 ## Notes
 
