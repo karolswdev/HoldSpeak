@@ -1563,6 +1563,20 @@ struct PairMacSheet: View {
     @ObservedObject private var peers = DictatePeerStore.shared
     @Environment(\.dismiss) private var dismiss
 
+    // A visible connection test — the manual sheet used to just save fields and
+    // dismiss (no probe, no feedback), so a wrong host/port/token failed silently.
+    // Now it dials the hub and shows the EXACT URL + the real result/error.
+    private enum Probe: Equatable { case idle, testing, ok(String), fail(String) }
+    @State private var probe: Probe = .idle
+
+    /// The literal URL the client will dial — shown so a typo (a scheme, a stray
+    /// path, the wrong port) is obvious on screen.
+    private var dialedURL: String {
+        let h = peers.host.trimmingCharacters(in: .whitespaces)
+        let p = peers.portText.trimmingCharacters(in: .whitespaces)
+        return "http://\(h):\(p)/health"
+    }
+
     var body: some View {
         ZStack {
             Sig.bg.ignoresSafeArea()
@@ -1576,21 +1590,66 @@ struct PairMacSheet: View {
                                 .frame(width: 38, height: 38).background(Sig.s2, in: Circle())
                         }
                     }
-                    Text("Run HoldSpeak on your desktop.")
+                    Text("Run HoldSpeak on your desktop, then enter its address. A hostname (a Tailscale IP or a tunnel domain) works too — no http://, no trailing slash.")
                         .font(.system(size: 14)).foregroundStyle(Sig.faint)
                     field("Name", text: $peers.name, placeholder: "Karol's Mac")
-                    field("Host", text: $peers.host, placeholder: "192.168.1.x")
-                    field("Port", text: $peers.portText, placeholder: "8000")
-                    field("Token (optional)", text: $peers.token, placeholder: "")
-                    Button { dismiss() } label: {
-                        Text("Done").font(.system(size: 17, weight: .heavy)).foregroundStyle(.black)
-                            .frame(maxWidth: .infinity).padding(.vertical, 14)
-                            .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    field("Host", text: $peers.host, placeholder: "100.x.y.z or host.example.com")
+                    field("Port", text: $peers.portText, placeholder: "8765")
+                    field("Token", text: $peers.token, placeholder: "shown when you run holdspeak web")
+
+                    // What it will actually dial + the live probe result.
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("WILL DIAL").font(.system(size: 11, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint)
+                        Text(dialedURL).font(.system(size: 13, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(Sig.muted).lineLimit(2).minimumScaleFactor(0.7)
                     }
-                    .disabled(!peers.isPaired)
-                    .opacity(peers.isPaired ? 1 : 0.5)
+                    switch probe {
+                    case .idle: EmptyView()
+                    case .testing:
+                        HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Testing…").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint) }
+                    case .ok(let d):
+                        Label(d, systemImage: "checkmark.circle.fill").font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.ok)
+                    case .fail(let d):
+                        Label(d, systemImage: "xmark.octagon.fill").font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.bad).lineLimit(4)
+                    }
+
+                    HStack(spacing: 12) {
+                        Button { runProbe() } label: {
+                            HStack(spacing: 7) {
+                                Image(systemName: "dot.radiowaves.left.and.right")
+                                Text("Test connection").font(.system(size: 15, weight: .heavy))
+                            }
+                            .foregroundStyle(Sig.text).frame(maxWidth: .infinity).padding(.vertical, 14)
+                            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Sig.line, lineWidth: 1))
+                        }
+                        .disabled(!peers.isPaired || probe == .testing)
+                        .opacity(peers.isPaired ? 1 : 0.5)
+                        Button { dismiss() } label: {
+                            Text("Done").font(.system(size: 17, weight: .heavy)).foregroundStyle(.black)
+                                .frame(maxWidth: .infinity).padding(.vertical, 14)
+                                .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                        .disabled(!peers.isPaired)
+                        .opacity(peers.isPaired ? 1 : 0.5)
+                    }
                 }
                 .padding(22).frame(maxWidth: 600).frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private func runProbe() {
+        probe = .testing
+        Task {
+            guard let client = peers.client() else {
+                await MainActor.run { probe = .fail("Couldn't build a request — check the host and port (port must be a number).") }
+                return
+            }
+            let c = await client.handshake()
+            await MainActor.run {
+                probe = c.reachable ? .ok(c.runtimeReady ? "Reachable · \(c.detail)" : "Reachable")
+                                    : .fail(c.detail)   // "desktop unreachable: <the real URLError reason>"
             }
         }
     }
