@@ -10,7 +10,7 @@
   "properties": {
     "id": { "type": "string", "minLength": 1 },
     "name": { "type": "string" },
-    "kind": { "enum": ["onDevice", "openAICompatible"] },
+    "kind": { "enum": ["onDevice", "openAICompatible", "desktop"] },
     "model_file": { "type": "string" },
     "base_url": { "type": "string" },
     "model": { "type": "string" },

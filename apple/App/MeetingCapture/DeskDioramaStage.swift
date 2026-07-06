@@ -2964,6 +2964,9 @@ struct DioStage: View {
     // .cloud("your desktop"). Drives the printed card's honest egress badge (POSITIONING canon).
     @State private var printedEgress: EgressScope = .local
     @State private var routeError: String? = nil
+    // HSM-15-11: a failed desktop-profile run's one-tap "run on this device instead"
+    // (set beside routeError; the alert offers it; nothing retargets silently).
+    @State private var deskFallbackRun: (() -> Void)? = nil
     // connectors (the integrations half: drop an output on Slack → approve → the MAC sends).
     // Routed through the paired host PC — the iPad holds no credential. Reuses the desk's Mac pairing.
     @AppStorage("hs.peer.host") private var peerHost = ""
@@ -3898,6 +3901,23 @@ struct DioStage: View {
                                                                           inputId: "mtg.q3", inputTitle: "Q3 kickoff") }
                         }
                     }
+                    // HSM-15-11: a REAL desktop-profile run against the live PAIRED hub —
+                    // inject hs.peer.* first (the 15-10 rig), then this fires runRecipe
+                    // through the desktop profile; the printed card wears the egress the
+                    // hub actually reported. Nothing is faked past the seed.
+                    // HS_DESK_MODEL pins one of the hub's models (else the hub default).
+                    if ag == "desktoprun" {
+                        let pinned = ProcessInfo.processInfo.environment["HS_DESK_MODEL"] ?? ""
+                        // Pin AT fire time (not seed time): the launch sync may replace the
+                        // profile list in between, and the run must resolve the desktop kind.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                            let prof = InferenceConfigStore.shared.desktopProfile(model: pinned)
+                            var target = recipes.first ?? RecipeRecord(id: "probe", name: "Probe", avatar: "p1", role: "", systemPrompt: "You are a terse probe.", userTemplate: "{input}", manualContext: "", useZoneContext: false, kb: "")
+                            target.profileId = prof.id
+                            runRecipe(target, input: "Reply with exactly: DESKTOP RUN OK",
+                                      inputTitle: "15-11 proof")
+                        }
+                    }
                     // a hub run's RESULT — the printed card with the cloud · your desktop egress badge.
                     if ag == "hubresult" {
                         peerHost = "192.168.1.43"; peerPort = "8080"
@@ -3939,8 +3959,11 @@ struct DioStage: View {
             .onChange(of: model.liveTranscript) { newValue in
                 if capturing { liveTimeline.append((model.elapsedSeconds, newValue.count)) }   // for "last N minutes" windows
             }
-            .alert("Couldn’t route", isPresented: Binding(get: { routeError != nil }, set: { if !$0 { routeError = nil } })) {
-                Button("OK", role: .cancel) { routeError = nil }
+            .alert("Couldn’t route", isPresented: Binding(get: { routeError != nil }, set: { if !$0 { routeError = nil; deskFallbackRun = nil } })) {
+                if deskFallbackRun != nil {
+                    Button("Run on this device") { let run = deskFallbackRun; routeError = nil; deskFallbackRun = nil; run?() }
+                }
+                Button("OK", role: .cancel) { routeError = nil; deskFallbackRun = nil }
             } message: { Text(routeError ?? "") }
             // Pairing is IN-WORLD on the desk now (DioConnectCard), not a system alert.
             .alert("Save as a tool", isPresented: $savingTool) {
@@ -4953,24 +4976,44 @@ struct DioStage: View {
         haptic(.heavy)
         withAnimation { routing = true }
         Task { @MainActor in
-            let result = await callLLM(fullPrompt, profileId: profileId)
+            let result = await callLLMTurn(fullPrompt, profileId: profileId)
             withAnimation { routing = false }
             switch result {
-            case .success(let raw):
-                let clean = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            case .success(let turn):
+                let clean = turn.text.trimmingCharacters(in: .whitespacesAndNewlines)
                 #if canImport(UIKit)
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 #endif
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     printed = OutputRecord(id: UUID().uuidString, title: lens, body: clean.isEmpty ? "(the model returned nothing)" : clean,
                                            source: source, lens: lens, path: zpath, provenance: provenance)
-                    printedEgress = prof.isLocal ? .local : .cloud(prof.egressHost ?? "endpoint")
+                    printedEgress = runEgress(prof, turn: turn)
                 }
                 selectedSet = []
             case .failure(let e):
-                routeError = friendly(e)
+                // A failed desktop turn offers the one-tap fallback (never a silent
+                // retarget): the alert gains "Run on this device" when possible.
+                if prof.kind == .desktop,
+                   let dev = InferenceConfigStore.shared.profiles.first(where: { $0.kind == .onDevice }) {
+                    deskFallbackRun = { runAssembled(lens: lens, source: source, fullPrompt: fullPrompt,
+                                                     provenance: provenance, profileId: dev.id) }
+                }
+                routeError = friendly(e, profile: prof)
             }
         }
+    }
+
+    /// The printed card's badge for one finished turn — the desktop kind wears the
+    /// egress the HUB reported for this run, everything else keeps the 21-01 grammar.
+    private func runEgress(_ prof: RuntimeProfile, turn: LLMTurn) -> EgressScope {
+        guard prof.kind == .desktop else {
+            return prof.isLocal ? .local : .cloud(prof.egressHost ?? "endpoint")
+        }
+        if let he = turn.hubEgress, he.scope == "cloud" {
+            return .cloud((he.host?.isEmpty == false ? he.host! : "your desktop"))
+        }
+        let model = turn.hubModel ?? ""
+        return .mixed(model.isEmpty ? "your desktop" : "your desktop · \(model)")
     }
 
     // the agent's role + always-on context (manual notes, zone meetings, KB) — shared by routing and chat.
@@ -5025,11 +5068,12 @@ struct DioStage: View {
             blocks.append("[CONVERSATION SO FAR]\n" + convo)
         }
         blocks.append("[USER]\n" + String(question.prefix(6000)) + "\n\nReply as \(a.name).")
+        let prof = InferenceConfigStore.shared.resolveProfile(recipeProfileId: a.profileId)
         switch await callLLM(blocks.joined(separator: "\n\n"), profileId: a.profileId) {
         case .success(let raw):
             let c = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             return c.isEmpty ? "⚠️ The model returned nothing — try rephrasing." : c
-        case .failure(let e): return "⚠️ " + friendly(e)
+        case .failure(let e): return "⚠️ " + friendly(e, profile: prof)
         }
     }
 
@@ -5059,7 +5103,11 @@ struct DioStage: View {
             #endif
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                 printed = OutputRecord(id: UUID().uuidString, title: c.name, body: carry, source: inputTitle, lens: "Chain", path: zpath, provenance: provenance)
-                printedEgress = InferenceConfigStore.shared.isLocal ? .local : .cloud("endpoint")
+                // Chains may mix targets per step (profileId is per-recipe) — any
+                // desktop step means the chain's material visited the hub.
+                let cfg = InferenceConfigStore.shared
+                let onDesktop = steps.contains { cfg.resolveProfile(recipeProfileId: $0.profileId).kind == .desktop }
+                printedEgress = onDesktop ? .mixed("your desktop") : (cfg.isLocal ? .local : .cloud("endpoint"))
             }
         }
     }
@@ -5069,9 +5117,13 @@ struct DioStage: View {
     /// Reuses the same host/port the desk already pairs against (`hs.peer.*`); the hub
     /// run is a longer call than a health probe, so it gets a generous timeout.
     private var desktopClient: HTTPDesktopClient? {
-        let h = peerHost.trimmingCharacters(in: .whitespaces)
+        // The ONE host rule (PeerAddress, build 4) + the pairing's token — a
+        // token-requiring hub 401'd every desk hub-run before this carried it
+        // (found live by the 15-11 desktoprun rig).
+        let (scheme, h) = PeerAddress.split(peerHost)
         guard !h.isEmpty, let p = Int(peerPort.trimmingCharacters(in: .whitespaces)), p > 0 else { return nil }
-        let peer = DesktopPeer(host: h, port: p)
+        let tok = peerToken.trimmingCharacters(in: .whitespaces)
+        let peer = DesktopPeer(host: h, port: p, token: tok.isEmpty ? nil : tok, scheme: scheme)
         guard let cfg = HTTPDesktopClient.Config(peer: peer, timeout: 120) else { return nil }
         return HTTPDesktopClient(config: cfg)
     }
@@ -5184,6 +5236,7 @@ struct DioStage: View {
         if let e = error as? HTTPDesktopClient.DesktopClientError {
             switch e {
             case .http(502), .http(503): return "Your desktop has no model loaded — start the desktop runtime and try again."
+            case .http(400): return "Your desktop doesn’t have that model — pick another in Runs on."
             case .http(404): return "That agent, crew, or workflow isn’t on your desktop yet — sync first, then run on the hub."
             case .http(let code): return "Your desktop refused the run (status \(code))."
             case .malformed: return "Your desktop sent back something the desk couldn’t read."
@@ -5449,19 +5502,59 @@ struct DioStage: View {
     // `profileId` (an agent's assignment) resolves which runtime executes this — override → agent →
     // active. For an on-device profile, its `modelFile` chooses the GGUF; the key (endpoint) is joined
     // from the Keychain inside makeProvider.
-    @MainActor private func callLLM(_ prompt: String, profileId: String? = nil) async -> Result<String, Error> {
+    /// One model turn's result: the text + (for a desktop run) the hub's honest per-run
+    /// egress and the model that actually ran, straight from `/api/ask`'s answer —
+    /// never inferred client-side (the 16-04 contract).
+    struct LLMTurn {
+        var text: String
+        var hubEgress: HubStepEgress? = nil
+        var hubModel: String? = nil
+    }
+
+    enum DesktopRunError: Error {
+        case notPaired        // a desktop profile with no paired peer
+        case emptyAnswer      // the hub answered with nothing
+    }
+
+    /// The ONE inference dispatch every run path funnels through (recipes, chat turns,
+    /// chains, live lenses, weave steps). HSM-15-11: a `desktop` profile sends the turn
+    /// to the paired hub over `POST /api/ask`, optionally pinned to one of the hub's
+    /// models (`profile.model`; the hub allow-lists it against what it can really run).
+    @MainActor private func callLLMTurn(_ prompt: String, profileId: String? = nil) async -> Result<LLMTurn, Error> {
+        let cfg = InferenceConfigStore.shared
+        let profile = cfg.resolveProfile(recipeProfileId: profileId)
+        if profile.kind == .desktop {
+            guard let client = desktopClient else { return .failure(DesktopRunError.notPaired) }
+            do {
+                let r = try await client.runStep(prompt: prompt, lens: "Agent", model: profile.model)
+                let text = (r.output ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !text.isEmpty else { return .failure(DesktopRunError.emptyAnswer) }
+                return .success(LLMTurn(text: text, hubEgress: r.egress, hubModel: r.model))
+            } catch { return .failure(error) }
+        }
         do {
-            let cfg = InferenceConfigStore.shared
-            let profile = cfg.resolveProfile(recipeProfileId: profileId)
             let langModels = ModelFiles.installed().filter { $0.kind == .language }
             let wantFile = profile.modelFile.isEmpty ? cfg.localModelId : profile.modelFile
             let chosen = langModels.first { $0.id == wantFile } ?? langModels.first
             let provider = try cfg.makeProvider(profile: profile, localModelPath: chosen?.url.path, context: 8192)
             let text = try await provider.complete(prompt: prompt)
-            return .success(text)
+            return .success(LLMTurn(text: text))
         } catch { return .failure(error) }
     }
-    private func friendly(_ e: Error) -> String {
+
+    @MainActor private func callLLM(_ prompt: String, profileId: String? = nil) async -> Result<String, Error> {
+        (await callLLMTurn(prompt, profileId: profileId)).map(\.text)
+    }
+
+    private func friendly(_ e: Error, profile: RuntimeProfile? = nil) -> String {
+        // A desktop-profile turn fails in the mesh vocabulary (the 15-02/15-03 grammar).
+        if profile?.kind == .desktop {
+            switch e {
+            case DesktopRunError.notPaired: return "No desktop paired — open Connect on the desk."
+            case DesktopRunError.emptyAnswer: return "Your desktop returned nothing — try again."
+            default: return hubRunError(e)
+            }
+        }
         let cfg = InferenceConfigStore.shared
         if cfg.isLocal { return "No on-device model is loaded. Add one in Models, or point at an endpoint in Settings → where intelligence runs." }
         return "Couldn’t reach the endpoint. Check Settings → where intelligence runs (URL / model)."

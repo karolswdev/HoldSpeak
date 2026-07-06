@@ -165,6 +165,31 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                 if prof is None or prof.deleted:
                     ran_profile_id = None
                     prof = None
+
+            # HSM-15-11: a manifest-bounded model override — "run THIS model on
+            # the hub". The allow-list is what the hub can actually run: its own
+            # configured model + its profiles' models. A model some OTHER node
+            # pushed a manifest for is not runnable here and refuses loudly.
+            override = str(body.get("model") or "").strip() or None
+            if override:
+                from ..sync import _hub_model_name
+
+                hub_model = _hub_model_name(ctx)
+                profiles = [p for p in db.profiles.list() if not p.deleted]
+                if prof is not None and (prof.model or "") == override:
+                    pass  # the requested profile already runs it
+                elif (by_model := next((p for p in profiles if (p.model or "") == override), None)) is not None:
+                    prof, ran_profile_id = by_model, by_model.id
+                elif override == hub_model:
+                    prof, ran_profile_id = None, None  # the hub's own engine IS this model
+                else:
+                    allowed = sorted({m for m in (hub_model, *(p.model for p in profiles)) if m})
+                    return JSONResponse(
+                        {"error": f"model {override!r} is not runnable on this hub",
+                         "allowed_models": allowed},
+                        status_code=400,
+                    )
+
             if prof is not None:
                 intel = build_meeting_intel_for_profile(
                     kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id

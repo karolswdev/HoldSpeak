@@ -30,16 +30,17 @@ from NYC. The phone pairs and syncs.
   `https://karol-co-mac.tailad9943.ts.net` port `443` (any build — a `tailscale serve`
   web front → 127.0.0.1:8765). Token `beef7b5e` in
   `~/.config/holdspeak/config.json → meeting.web_auth_token`.
-- **The hub on the Denver Mac is still running behind the DEBUG logging proxy:**
-  `/tmp/hublog.py` listens on 8765 → real hub on 8799
-  (`HOLDSPEAK_WEB_HOST=0.0.0.0 HOLDSPEAK_WEB_PORT=8799 uv run holdspeak web --no-open`).
-  Log at `/tmp/hub-requests.log`. **Cleanup owed:** kill both, restart the hub plain on
-  8765, retire hublog. Note hublog logs only the FIRST request per TCP connection
-  (keep-alive hides follow-ups) and binary TLS hellos print as garbage — both fooled us
-  once.
+- **The hub runs PLAIN on :8765 as of 2026-07-06 evening** — hublog + the 8799 hub
+  were killed and the hub restarted (`HOLDSPEAK_WEB_HOST=0.0.0.0
+  HOLDSPEAK_WEB_PORT=8765 uv run holdspeak web --no-open`, from the 15-11 working
+  tree; converges with main on merge). First open stamped the live DB **v9** (fresh
+  backup `holdspeak.db.20260706-160553.bak`). hublog is retired; its traps
+  (first-request-only logging, TLS-hello garbage) remain worth remembering if a wire
+  argument ever needs it again.
 - **Leftover `tailscale serve` web fronts** on :443 (keep — it's the TLS door), :8443
-  and :34999 (stale — safe to remove). The **TCP interceptor on :8765 is OFF** — never
-  re-add a serve rule on the hub port.
+  and :34999 (stale — safe to remove; STILL OWED — the tailscaled socket wasn't
+  reachable from the evening session's CLI). The **TCP interceptor on :8765 is OFF** —
+  never re-add a serve rule on the hub port.
 - **Branch/PR:** `holdspeak-mobile/build3-visible-connect`, PR **#271** (saga + both
   scaffolds), CI was pending at handover — **gate the merge on check CONCLUSIONS**
   (never chain watch→merge).
@@ -77,8 +78,17 @@ from NYC. The phone pairs and syncs.
 
 ## The rigs (reuse these, they end arguments)
 
-- **Sim pairing injection:** `xcrun simctl spawn <dev> defaults write
-  dev.holdspeak.mobile hs.peer.host|port|token|name` → launch fires a REAL desk sync.
+- **Sim pairing injection (CORRECTED 2026-07-06 evening):** the user-domain write
+  (`simctl spawn <dev> defaults write dev.holdspeak.mobile …`) silently no-ops once
+  the app owns container prefs — write into the CONTAINER domain:
+  `xcrun simctl spawn <dev> defaults write "$(xcrun simctl get_app_container <dev>
+  dev.holdspeak.mobile data)/Library/Preferences/dev.holdspeak.mobile"
+  hs.peer.host -string "…"` (always `-string`; a bare port writes an integer that
+  `@AppStorage` String readers silently drop). Launch then fires a REAL desk sync.
+- **The desktop-run proof rig (15-11):** `SIMCTL_CHILD_HS_DESK_RECIPES=desktoprun`
+  (+ optional `SIMCTL_CHILD_HS_DESK_MODEL=<hub model>`) fires a REAL recipe run
+  through the desktop profile against the live paired hub — the printed card must
+  wear the hub-reported egress. This rig found the missing-token 401 in one pass.
 - **Card-on-screen before upload:** launch with `SIMCTL_CHILD_HS_DESK_CONNECT=1` →
   the connect card opens itself → screenshot. **Never ship a surface you haven't seen.**
 - **Contract decode harness:** `xcrun swiftc -parse-as-library

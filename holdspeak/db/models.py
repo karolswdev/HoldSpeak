@@ -559,7 +559,7 @@ class ProfileRecord:
 
     id: str
     name: str = ""
-    kind: str = "onDevice"          # onDevice | openAICompatible
+    kind: str = "onDevice"          # onDevice | openAICompatible | desktop (HSM-15-11: the paired hub; on the hub itself it resolves to the configured default engine)
     model_file: str = ""
     base_url: str = ""
     model: str = ""
