@@ -219,7 +219,7 @@ contract, the LLM endpoints) is **reuse**, not new.
 | HSM-15-05 | One approval + egress contract (across surfaces) | **done** (2026-07-05, PRE-PAID: the `meeting_id` decoupling = the one-spine owner-typed proposal `origin` (locked by `test_db_actuator_origin.py`); one egress grammar = P21 `EgressScope` + two-surface trust chip; approval parity = Qlippy≡dashboard (P56) + iPad decisions (P19); air-gapped draft+badge = 17-05/16-09. Approve-from-the-HUD stays 15-03's) | [story-05](./story-05-one-approval-egress-contract.md) | [evidence](./evidence-story-05.md) |
 | HSM-15-08 | The Agent Desk — your live agents + the question each is asking | **built + Simulator-proven** (`AgentDeskView`/`AgentDeskCard`; waiting sorts first + pulses, tight question quote, Answer/pin/dismiss; `HS_DEMO_AGENTDESK` seed) — **the live `companionStatus()` poll is WIRED as of the 15-03 build** (`startPolling` now called at the paired-peer call site in the app root; the survey had found it call-site-less); the device walk beat joins the owner queue | [story-08](./story-08-the-agent-desk.md) | `apple/build/agentdesk.png`; iPad build green (runner+desk; FailurePolicy unified into RuntimeCore) |
 | HSM-15-09 | Proactive agent presence — surface a waiting agent the moment it asks | **built + Simulator-proven** (`PresenceWatcher` pure rising-edge/debounce/quiet-mode, 7 host tests; HUD waiting-lane + the nudge card w/ Answer-by-voice; non-autonomous) — voice delivery reuses the desk composer (LAN proof owner-gated) | [story-09](./story-09-proactive-agent-presence.md) | 83 ProvidersTests green; `presence-hud-lane.png` |
-| HSM-15-10 | The Connect surface ("Your Computer" — discovery-first pairing) | **built end-to-end + Simulator-proven; 2026-07-06: the remote-pairing saga closed** (five stacked defects across TestFlight builds 3–4: the silent manual sheet, the un-bumped schema's missing `model_manifests`, two sync-wire poisons the Swift contract can't decode (`run_output` + naive `isoformat()`), and a leftover `tailscale serve` TLS interceptor on the hub port eating the app's cleartext while Safari's auto-HTTPS "proved" the network fine; build 4 = `WILL DIAL` + exact probe reason on `DioConnectCard`, ONE `PeerAddress` host rule w/ `https://` support, browse-on-open forces the LN prompt) — owner's on-device green run is the remaining proof | [story-10](./story-10-the-connect-surface.md) | 12 mesh + 2205 desktop · iPad build green · sim "Synced · just now" vs the live hub · b4 VALID+attached |
+| HSM-15-10 | The Connect surface ("Your Computer" — discovery-first pairing) | **built end-to-end + Simulator-proven; 2026-07-06: the remote-pairing saga closed** (five stacked defects across TestFlight builds 3–4: the silent manual sheet, the un-bumped schema's missing `model_manifests`, two sync-wire poisons the Swift contract can't decode (`run_output` + naive `isoformat()`), and a leftover `tailscale serve` TLS interceptor on the hub port eating the app's cleartext while Safari's auto-HTTPS "proved" the network fine; build 4 = `WILL DIAL` + exact probe reason on `DioConnectCard`, ONE `PeerAddress` host rule w/ `https://` support, browse-on-open forces the LN prompt); **repo debt 1–3 paid** (schema v9 + tolerant ChangeSet/`runOutput` + honest sync-pill states) — owner's on-device green run is the remaining proof | [story-10](./story-10-the-connect-surface.md) | 12 mesh + 2205 desktop · iPad build green · sim "Synced · just now" vs the live hub · b4 VALID+attached · debt PR: hub 3199 / Swift 484 / sim build green |
 | HSM-15-11 | Agents on your desktop's models (pick the Mac's model, run through it) | **scaffolded** (owner ask 2026-07-06 minutes after the first NYC→Denver pair; agent-definition sync already ships via Phase 17 — the delta is a `desktop` profile kind dispatching recipe/chat/chain turns over `/api/ask`, picker fed by the synced model manifests, egress from the hub's per-run report) | [story-11](./story-11-agents-on-your-desktops-models.md) | — |
 | HSM-15-12 | The context envelope (select meetings, expand their artifacts, into the ask) | **scaffolded** (owner ask 2026-07-06 with 15-11; today context = manualContext + all-zone-meetings-truncated + a KB *hint string* — the story adds a per-ask picker w/ artifact expansion + ONE provenance-headed envelope across run targets + hub-side hydration via `/api/ask` grounding refs + the KB-honesty rider) | [story-12](./story-12-the-context-envelope.md) | — |
 | HSM-15-06 | The Proof — air-gapped value + the launch narrative | backlog | [story-06](./story-06-the-proof-and-narrative.md) | — |
@@ -227,7 +227,24 @@ contract, the LLM endpoints) is **reuse**, not new.
 
 ## Where we are
 
-**2026-07-06 — THE REMOTE-PAIRING SAGA CLOSED (15-10): the mesh works from another city.**
+**2026-07-06 (later) — THE SAGA'S REPO DEBT IS PAID (15-10 riders 1–3, the mesh-repo-debt PR).**
+The three code riders the saga left behind shipped together: **schema v9**
+(`SCHEMA_VERSION = 9` routes every v8-stamped DB through backup-then-apply so
+`model_manifests` lands; regression pin `test_v8_db_gains_model_manifests_via_the_bump` —
+no other v8 install can hit the pull-500 again), **a tolerant ChangeSet wire**
+(`ArtifactType.runOutput` known in enum + wire schema, and `ChangeSet.init(from:)` decodes
+per-record: a novel type drops that one record into a visible `undecodedRecords` count
+instead of failing the whole set — `ChangeSetToleranceTests`, plus the SyncEngine wire test
+re-pinned to skip-and-count), and **honest sync-pill states**
+(`DeskSyncDriver.Outcome.failure` distinguishes unauthorized / hubError(code) /
+contractMismatch / unreachable; the pill says "Token rejected" / "Hub error 500" /
+"Hub reply unreadable" — only a dead network path may say "Offline · queued", and "Synced"
+admits "· n skipped"). Suites: hub **3199 passed**, Swift package **484/9/0**, contract
+validator ALL PASS, iPad sim build green. Debt row 4 (classic-home connect cleanup) stays
+open; next builds are 15-11 (agents on your desktop's models) then 15-12 (the context
+envelope).
+
+Earlier — **2026-07-06 — THE REMOTE-PAIRING SAGA CLOSED (15-10): the mesh works from another city.**
 The owner, phone in NYC and hub in Denver, couldn't pair the TestFlight app while Safari on
 the same phone reached the identical hub — the desk pill lied "Offline · queued" through
 FIVE stacked, mutually-masking defects (full autopsy in story-10): the classic-home sheet
@@ -246,7 +263,8 @@ new `PeerAddress` helper is the ONE host rule at every dial site and speaks `htt
 (a `tailscale serve` TLS front is now a first-class door), and opening the card browses
 Bonjour so iOS surfaces the Local Network prompt. Riders queued: schema v9 bump, `runOutput`
 + unknown-tolerant enum decoding, honest sync-pill error states (500/401/decode/no-network
-currently all wear "Offline · queued"). Remaining beat: the owner's on-device green run.
+currently all wear "Offline · queued") — **all three paid later this day, see above**.
+Remaining beat: the owner's on-device green run.
 
 Earlier — **2026-07-05 (evening) — THE MESH QUEUE IS REAL: the hub's work and the hub's asks ride
 the pill in your hand, and approving there IS approving on the desktop.** 15-03 closed:

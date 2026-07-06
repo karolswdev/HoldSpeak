@@ -39,7 +39,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 8   # v8: the persona subsystem is named Recipe (agents table -> recipes; owner-ratified rename)
+SCHEMA_VERSION = 9   # v9: model_manifests (HSM-16-08) — shipped additively without a bump, so v8-stamped DBs never ran the DDL and /api/sync/pull 500'd; the bump routes them through backup-then-apply
 
 
 class SchemaVersionError(RuntimeError):

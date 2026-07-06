@@ -27,7 +27,7 @@
       "type": "string"
     },
     "artifact_type": {
-      "description": "Discriminator. The 15 shipped types from plugins/synthesis.py _ARTIFACT_TYPE_BY_PLUGIN, plus the plugin_output fallback.",
+      "description": "Discriminator. The 15 shipped types from plugins/synthesis.py _ARTIFACT_TYPE_BY_PLUGIN, plus the plugin_output fallback and the v6 run-born run_output (_persist_run_artifact).",
       "enum": [
         "requirements",
         "action_items",
@@ -44,7 +44,8 @@
         "runbook_delta",
         "decision_announcement",
         "project_association",
-        "plugin_output"
+        "plugin_output",
+        "run_output"
       ]
     },
     "title": {

@@ -354,6 +354,17 @@ struct DeskSyncDriver {
     var localModels: [Synced<ModelManifest>] = []
     let store = DeskSyncStore()
 
+    /// WHY a pass failed. The 2026-07-06 saga's five defects all wore ONE state
+    /// ("Offline · queued") because this distinction didn't exist — a hub 500, a
+    /// rejected token, an undecodable reply, and a dead network demand different
+    /// fixes from the owner, so they wear different states.
+    enum SyncFailure: Equatable {
+        case unauthorized            // 401/403 — the token is wrong or missing
+        case hubError(Int)           // any other non-2xx — the hub itself broke (e.g. the v8 pull 500)
+        case contractMismatch        // the reply didn't decode — app and hub disagree on the wire
+        case unreachable             // no network path — the only case that is honestly "offline"
+    }
+
     struct Outcome: Equatable {
         var pushed = 0
         var pendingAfter = 0
@@ -362,6 +373,11 @@ struct DeskSyncDriver {
         /// The mesh's model availability as pulled from the hub (its own model + every
         /// node's pushed manifests) — what "run it on your desktop" would actually run.
         var meshModels: [ModelManifest] = []
+        /// nil on success; on failure, the honest reason (drives the sync pill).
+        var failure: SyncFailure? = nil
+        /// Records the tolerant ChangeSet decode skipped (novel/malformed rows) —
+        /// surfaced so "Synced" can admit "· n skipped" instead of feigning completeness.
+        var skippedRecords = 0
     }
 
     /// Build a driver pointed at the paired hub. Returns nil when no peer is paired.
@@ -395,10 +411,25 @@ struct DeskSyncDriver {
             let (merged, report) = store.apply(incoming, to: records)
             return (merged, Outcome(pushed: pushed, pendingAfter: pendingAfter,
                                     applied: report.applied, reachedPeer: true,
-                                    meshModels: incoming.models.compactMap(\.value)))
+                                    meshModels: incoming.models.compactMap(\.value),
+                                    skippedRecords: incoming.undecodedRecords))
         } catch {
             return (records, Outcome(pushed: pushed, pendingAfter: pendingAfter,
-                                     applied: 0, reachedPeer: false))
+                                     applied: 0, reachedPeer: false,
+                                     failure: Self.classify(error)))
         }
+    }
+
+    /// Map a pull error to its honest failure. Anything unrecognized is treated as
+    /// unreachable — the queue holds the snapshot either way.
+    static func classify(_ error: Error) -> SyncFailure {
+        if let e = error as? HTTPSyncProvider.SyncTransportError {
+            switch e {
+            case .http(401), .http(403): return .unauthorized
+            case .http(let code): return .hubError(code)
+            case .malformedResponse: return .contractMismatch
+            }
+        }
+        return .unreachable
     }
 }

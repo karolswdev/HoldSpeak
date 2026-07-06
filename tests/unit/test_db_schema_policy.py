@@ -116,6 +116,30 @@ def test_newer_db_is_refused_and_left_untouched(db_path: Path) -> None:
     assert list(db_path.parent.glob("*.bak")) == []
 
 
+def test_v8_db_gains_model_manifests_via_the_bump(db_path: Path) -> None:
+    """The v9 regression pin (the 2026-07-06 connect saga, defect #2).
+
+    model_manifests shipped additively WITHOUT a version bump, so a v8-stamped
+    database read `stored == SCHEMA_VERSION`, never re-ran SCHEMA_SQL, and
+    /api/sync/pull 500'd on the missing table. A v8 DB missing the table must
+    now take the backup-then-apply path and land it.
+    """
+    Database(db_path)
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("DROP TABLE model_manifests")  # what a real v8 install looks like
+    conn.execute("DELETE FROM schema_version")  # the reader takes MAX(version); clear the v9 stamp
+    conn.commit()
+    conn.close()
+    _stamp_version(db_path, 8)
+
+    db = Database(db_path)
+
+    assert _stored_version(db_path) == SCHEMA_VERSION
+    assert db.model_manifests.list() == []  # the table exists and reads clean
+    backups = list(db_path.parent.glob("*.bak"))
+    assert len(backups) == 1  # safe-by-default: backed up before the apply
+
+
 def test_backup_database_copies_to_timestamped_sibling(db_path: Path) -> None:
     Database(db_path)
     conn = sqlite3.connect(str(db_path))
