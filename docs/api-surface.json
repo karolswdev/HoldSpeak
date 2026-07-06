@@ -1600,7 +1600,9 @@
         "GET"
       ],
       "module": "web.routes.mesh",
-      "consumers": []
+      "consumers": [
+        "ios"
+      ]
     },
     {
       "path": "/api/missioncontrol/events",
