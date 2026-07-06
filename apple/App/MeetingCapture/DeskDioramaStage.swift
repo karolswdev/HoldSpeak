@@ -1061,7 +1061,10 @@ struct DioConnectCard: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(paired ? "YOUR DESKTOP" : "CONNECT YOUR DESKTOP").font(.system(size: 11, weight: .black, design: .rounded)).tracking(1.4).foregroundStyle(tint)
-                    Text("Sync + send run through it").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                    // The build number rides the card so "which binary is on the phone"
+                    // is answered by the surface itself, never by TestFlight archaeology.
+                    Text("Sync + send run through it · build \((Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "?")")
+                        .font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                 }
                 Spacer(minLength: 0)
                 Button(action: onCancel) { Image(systemName: "xmark").font(.system(size: 14, weight: .black)).foregroundStyle(DioPal.muted).frame(width: 30, height: 30).background(Circle().fill(.white.opacity(0.06))) }.buttonStyle(.plain)
@@ -3641,6 +3644,12 @@ struct DioStage: View {
                 if let s = ProcessInfo.processInfo.environment["HS_DESK_SETTINGS"], s == "1" || s == "local" {
                     if s == "local" { InferenceConfigStore.shared.mode = .local }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { showSettings = true }
+                }
+                // Open the connect card on launch so the sim can SHOW it — the card must be
+                // screenshot-verified before an upload (the build-4 lesson: a green build is
+                // not proof the surface shipped).
+                if ProcessInfo.processInfo.environment["HS_DESK_CONNECT"] == "1" {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { connecting = true } }
                 }
                 if let r = ProcessInfo.processInfo.environment["HS_DESK_RECORD"] {
                     model.liveTranscript = "Welcome everyone to the Q3 kickoff. The big bet this quarter is shipping the desk to the web. Karol will own the mesh sync and the approval contract. We agreed to demo the air-gapped proof by Friday"

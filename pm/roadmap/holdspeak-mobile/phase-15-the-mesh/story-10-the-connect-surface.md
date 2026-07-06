@@ -98,6 +98,25 @@ the identical hub. Every one of these was REAL and each masked the next:
    (`tailscale serve` at `https://<mac>.ts.net`, 443) is a first-class door; opening the card
    starts the Bonjour browse, forcing iOS to surface the Local Network prompt.
 
+**THE FINAL ROOT CAUSE (2026-07-06, builds 5–6) — ATS was vetoing every dial client-side.**
+The plist carried `NSAllowsArbitraryLoads` AND `NSAllowsLocalNetworking`; when the
+finer-grained key is present, modern iOS **silently ignores ArbitraryLoads**, so the
+effective policy was "HTTPS except local" — and iOS counts only RFC1918 as local. A
+Tailscale CGNAT address (100.64/10) reads as PUBLIC internet → cleartext refused inside
+the phone (`URLError -1022`), zero packets, no prompt, every build since 1. Safari is
+exempt from app ATS (and auto-upgrades to HTTPS), which made the network look healthy;
+the Simulator "proof" dialed 127.0.0.1 (loopback-exempt) and was blind to it. **Fix
+(build 6): drop `NSAllowsLocalNetworking` — never re-add it.** Interim door that
+confirmed everything (build 5): `tailscale serve` HTTPS front
+(`https://karol-co-mac.tailad9943.ts.net`, 443) — the phone connected from NYC and the
+hub logged `POST /api/sync/push · auth=yes · HoldSpeakMobile/5`. **The phone pairs and
+syncs.** Build 5 also added: the build number ON the connect card (ends
+which-binary-is-installed arguments; TestFlight's export rewrites `CFBundleVersion`, so
+the static plist "1" is renumbered at upload) and the `HS_DESK_CONNECT=1` sim seed so
+the card itself is screenshot-verified BEFORE upload (the build-4 lesson: `strings`
+verification lies twice — short literals are register-packed and em-dashes split ASCII
+runs; verify with pure-ASCII substrings + eyes on the rendered surface).
+
 **Debug rig (reusable):** the logging proxy (`/tmp/hublog.py`, 8765→hub) shows arrivals per
 TCP connection (keep-alive hides follow-up requests — a "missing" pull can be an unlogged
 same-connection ride); `xcrun simctl spawn <sim> defaults write dev.holdspeak.mobile

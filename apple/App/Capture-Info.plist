@@ -64,13 +64,15 @@
     </array>
     <key>LSSupportsOpeningDocumentsInPlace</key>
     <false/>
-    <!-- HSM-14: the sketch→Mermaid feature calls a local-network vision model (Qwythos on
-         .43). Allow HTTP to the LAN + declare local-network use. -->
+    <!-- The app's whole job is dialing machines YOU own: LAN IPs, and Tailscale CGNAT
+         addresses (100.64/10) that iOS classifies as PUBLIC internet. ArbitraryLoads
+         alone is the working posture: when NSAllowsLocalNetworking is ALSO present,
+         modern iOS silently IGNORES NSAllowsArbitraryLoads and refuses cleartext to
+         100.x client-side (URLError -1022, zero packets) — the two-day build-1..5
+         "the app has no network" saga. Never re-add the finer-grained key. -->
     <key>NSAppTransportSecurity</key>
     <dict>
         <key>NSAllowsArbitraryLoads</key>
-        <true/>
-        <key>NSAllowsLocalNetworking</key>
         <true/>
     </dict>
     <key>NSLocalNetworkUsageDescription</key>
