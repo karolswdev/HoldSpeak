@@ -114,15 +114,19 @@ final class SyncEngineTests: XCTestCase {
         XCTAssertEqual(try b.loadArtifacts(meetingId: s.artifact.meetingId), [s.artifact])
     }
 
-    func testMalformedChangeSetRejectedAtWire() {
-        // A live meeting record missing the required `id` — schema-invalid; the
-        // contract decoder must reject it before it could ever reach the store.
+    func testMalformedRecordSkippedAtWire() throws {
+        // A live meeting record missing the required `id` — schema-invalid. The
+        // safety property is unchanged: it must never reach the store. The
+        // MECHANISM changed with the tolerant ChangeSet decode (the 2026-07-06
+        // saga): the bad record is skipped and counted, not allowed to fail the
+        // whole set (which is what turned one bad row into "Offline · queued").
         let bad = #"""
         {"meetings":[{"meta":{"id":"m1","kind":"meeting","last_modified":"2026-01-01T00:00:00Z","deleted":false},
          "value":{"started_at":"2026-01-01T00:00:00Z","tags":[],"segments":[],"bookmarks":[],
                   "intel_status":"none","mic_label":"m","remote_label":"r","devices":[]}}],"artifacts":[]}
         """#
-        XCTAssertThrowsError(
-            try HoldSpeakContracts.decoder().decode(ChangeSet.self, from: Data(bad.utf8)))
+        let set = try HoldSpeakContracts.decoder().decode(ChangeSet.self, from: Data(bad.utf8))
+        XCTAssertEqual(set.meetings.count, 0)      // never reaches the store
+        XCTAssertEqual(set.undecodedRecords, 1)    // and the skip is visible, not silent
     }
 }

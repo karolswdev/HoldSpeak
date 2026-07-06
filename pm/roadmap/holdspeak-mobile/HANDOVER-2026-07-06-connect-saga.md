@@ -46,17 +46,18 @@ from NYC. The phone pairs and syncs.
 
 ## Repo debt (owed, ordered)
 
-1. **Schema v9 bump** (`holdspeak/db/core.py SCHEMA_VERSION`): `model_manifests` shipped
-   additively without a bump, so every v8-stamped DB no-ops the DDL and pull 500s. The
-   owner's live DB was hand-fixed (backups at
-   `~/.local/share/holdspeak/holdspeak.db.backup-*`); every OTHER v8 DB is still broken.
-2. **`ArtifactType` tolerance** (`apple/Sources/Contracts/Enums.swift`): add
-   `case runOutput = "run_output"` AND make decoding unknown-tolerant — one novel type
-   must never fail the whole ChangeSet again. (The live row was retyped to
-   `plugin_output` as the unblock.)
-3. **Honest sync-pill states** (`DeskSyncDriver.syncNow` catch + `DioSyncStatus`):
-   500 / 401 / decode-fail / no-network all wear "Offline · queued" today — that mask
-   is what made this saga cost two days.
+1. ~~**Schema v9 bump**~~ **PAID 2026-07-06** (mesh-repo-debt PR): `SCHEMA_VERSION = 9`
+   routes v8 DBs through backup-then-apply; pinned by
+   `test_v8_db_gains_model_manifests_via_the_bump`. The owner's hand-fixed live DB reads
+   as v8-with-the-table and upgrades cleanly (the DDL is `IF NOT EXISTS`).
+2. ~~**`ArtifactType` tolerance**~~ **PAID 2026-07-06**: `case runOutput = "run_output"`
+   added (enum + wire schema), and `ChangeSet.init(from:)` is per-record tolerant — a
+   novel type drops that record into a visible `undecodedRecords` count, never the set
+   (`ChangeSetToleranceTests`).
+3. ~~**Honest sync-pill states**~~ **PAID 2026-07-06**: `DeskSyncDriver.Outcome.failure`
+   classifies unauthorized / hubError(code) / contractMismatch / unreachable; the desk
+   pill wears each ("Token rejected", "Hub error 500", "Hub reply unreadable") — only a
+   dead network path says "Offline · queued", and "Synced" admits "· n skipped".
 4. **Classic-home cleanup:** build 3's diagnostics went to `PairMacSheet` on the
    unreachable classic home; the desk card now has better ones. Consider retiring the
    classic-home connect path entirely.

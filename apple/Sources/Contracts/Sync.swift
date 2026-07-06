@@ -105,25 +105,54 @@ public struct ChangeSet: Codable, Equatable, Sendable {
         self.models = models
     }
 
-    // Decode tolerantly: any array absent from the payload defaults to []. A surface that doesn't yet
-    // know a kind (e.g. the hub before it learns `profiles`) sends a subset, and the others must still
-    // decode — the whole point of cross-surface equilibrium. (Encoding stays synthesized: all keys out.)
+    /// Records the tolerant decode below could not read (a novel enum value, a
+    /// malformed payload). Never encoded; surfaced so a sync pass can report
+    /// "n skipped" instead of silently pretending completeness. One bad record
+    /// must never fail the whole ChangeSet again (the 2026-07-06 saga: a single
+    /// `run_output` artifact took down every pull for four builds).
+    public var undecodedRecords: Int = 0
+
+    // Decode tolerantly, on two axes:
+    // - any array absent from the payload defaults to [] (a surface that doesn't yet
+    //   know a kind sends a subset, and the others must still decode);
+    // - within an array, a record that fails to decode is skipped and COUNTED
+    //   (`undecodedRecords`), never allowed to fail the set.
+    // (Encoding stays synthesized: all keys out; the counter is not a CodingKey.)
     private enum CodingKeys: String, CodingKey {
         case meetings, artifacts, notes, kbs, directories, directoryMemberships, recipes, chains, workflows, profiles, models
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        meetings = try c.decodeIfPresent([Synced<Meeting>].self, forKey: .meetings) ?? []
-        artifacts = try c.decodeIfPresent([Synced<Artifact>].self, forKey: .artifacts) ?? []
-        notes = try c.decodeIfPresent([Synced<Note>].self, forKey: .notes) ?? []
-        kbs = try c.decodeIfPresent([Synced<KB>].self, forKey: .kbs) ?? []
-        directories = try c.decodeIfPresent([Synced<Directory>].self, forKey: .directories) ?? []
-        directoryMemberships = try c.decodeIfPresent([Synced<Membership>].self, forKey: .directoryMemberships) ?? []
-        recipes = try c.decodeIfPresent([Synced<Recipe>].self, forKey: .recipes) ?? []
-        chains = try c.decodeIfPresent([Synced<Chain>].self, forKey: .chains) ?? []
-        workflows = try c.decodeIfPresent([Synced<WorkflowDefinition>].self, forKey: .workflows) ?? []
-        profiles = try c.decodeIfPresent([Synced<RuntimeProfile>].self, forKey: .profiles) ?? []
-        models = try c.decodeIfPresent([Synced<ModelManifest>].self, forKey: .models) ?? []
+        var dropped = 0
+        func lossy<V: Codable & Equatable & Sendable>(
+            _ type: V.Type, _ key: CodingKeys
+        ) -> [Synced<V>] {
+            guard var arr = try? c.nestedUnkeyedContainer(forKey: key) else { return [] }
+            var out: [Synced<V>] = []
+            while !arr.isAtEnd {
+                if let rec = try? arr.decode(Synced<V>.self) {
+                    out.append(rec)
+                } else {
+                    // A failed decode does not advance the container — consume the
+                    // element as an opaque JSONValue to move past it.
+                    _ = try? arr.decode(JSONValue.self)
+                    dropped += 1
+                }
+            }
+            return out
+        }
+        meetings = lossy(Meeting.self, .meetings)
+        artifacts = lossy(Artifact.self, .artifacts)
+        notes = lossy(Note.self, .notes)
+        kbs = lossy(KB.self, .kbs)
+        directories = lossy(Directory.self, .directories)
+        directoryMemberships = lossy(Membership.self, .directoryMemberships)
+        recipes = lossy(Recipe.self, .recipes)
+        chains = lossy(Chain.self, .chains)
+        workflows = lossy(WorkflowDefinition.self, .workflows)
+        profiles = lossy(RuntimeProfile.self, .profiles)
+        models = lossy(ModelManifest.self, .models)
+        undecodedRecords = dropped
     }
 
     public var isEmpty: Bool {

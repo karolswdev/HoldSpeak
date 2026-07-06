@@ -117,6 +117,18 @@ the card itself is screenshot-verified BEFORE upload (the build-4 lesson: `strin
 verification lies twice — short literals are register-packed and em-dashes split ASCII
 runs; verify with pure-ASCII substrings + eyes on the rendered surface).
 
+**Repo debt paid (2026-07-06, the mesh-repo-debt PR):** the saga's three code riders shipped
+together: (1) `SCHEMA_VERSION` → 9, so every v8-stamped DB takes the backup-then-apply path and
+gains `model_manifests` (regression pin: `test_v8_db_gains_model_manifests_via_the_bump`);
+(2) `ArtifactType` knows `runOutput` AND the `ChangeSet` decode is per-record tolerant — a novel
+type drops that one record into a visible `undecodedRecords` count instead of failing the set
+(`ChangeSetToleranceTests`; the wire schema's `artifact_type` enum gained `run_output`);
+(3) `DeskSyncDriver` classifies failure (`unauthorized` / `hubError(code)` / `contractMismatch` /
+`unreachable`) and the desk pill wears each honestly — only a dead network path may say
+"Offline · queued", and "Synced" admits "· n skipped" when the tolerant decode dropped rows.
+Still owed from the saga: the classic-home connect cleanup (debt row 4) and the hub-side
+hublog/serve teardown (ops, not repo).
+
 **Debug rig (reusable):** the logging proxy (`/tmp/hublog.py`, 8765→hub) shows arrivals per
 TCP connection (keep-alive hides follow-up requests — a "missing" pull can be an unlogged
 same-connection ride); `xcrun simctl spawn <sim> defaults write dev.holdspeak.mobile

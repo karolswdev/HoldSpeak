@@ -5363,7 +5363,10 @@ struct DioStage: View {
                 // everything we just pushed/round-tripped is now canonical on the hub → mark it
                 // confirmed so the per-primitive cue can honestly read "synced".
                 syncConfirmed.formUnion(deskPrimitiveIds(merged))
-                lastSyncSummary = "Synced · \(outcome.pushed) sent · \(outcome.applied) in"
+                // A skipped row (a record this build couldn't decode) is admitted,
+                // never hidden — completeness claims are earned.
+                let skipped = outcome.skippedRecords > 0 ? " · \(outcome.skippedRecords) skipped" : ""
+                lastSyncSummary = "Synced · \(outcome.pushed) sent · \(outcome.applied) in\(skipped)"
                 // PULL-APPLIED FEEDBACK: a remote primitive (a note authored on the web, an agent
                 // from the desktop) lands on the desk with the NEW-arrival treatment — cross-surface
                 // sync is visible + delightful, reusing the same `arrivedIds` halo as a fresh weave.
@@ -5375,12 +5378,29 @@ struct DioStage: View {
                     withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 6) { withAnimation { arrivedIds.subtract(fresh) } }
                 }
-            } else if outcome.pendingAfter > 0 {
-                syncState = .offline
-                lastSyncSummary = "Offline · queued for your desktop"
             } else {
-                syncState = .error("Couldn’t reach your desktop")
-                lastSyncSummary = nil
+                // The honest failure states (the 2026-07-06 saga's lesson): a hub
+                // 500, a rejected token, and a wire mismatch are NOT "offline" —
+                // only a dead network path is, and only that state may say "queued".
+                switch outcome.failure {
+                case .unauthorized:
+                    syncState = .error("Token rejected")
+                    lastSyncSummary = "Token rejected · fix it in Connect"
+                case .hubError(let code):
+                    syncState = .error("Hub error \(code)")
+                    lastSyncSummary = "Hub error \(code) · check the desktop"
+                case .contractMismatch:
+                    syncState = .error("Hub reply unreadable")
+                    lastSyncSummary = "Hub reply unreadable · update app or desktop"
+                case .unreachable, .none:
+                    if outcome.pendingAfter > 0 {
+                        syncState = .offline
+                        lastSyncSummary = "Offline · queued for your desktop"
+                    } else {
+                        syncState = .error("Couldn’t reach your desktop")
+                        lastSyncSummary = nil
+                    }
+                }
             }
             if let s = lastSyncSummary { toast(s) }
         }

@@ -129,16 +129,16 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-06 (**THE REMOTE-PAIRING SAGA CLOSED (HSM-15-10) — the mesh
-connects from another city.** Phone in NYC vs hub in Denver over Tailscale: five stacked
-defects unmasked and fixed across TestFlight builds 3–4 — the silent classic-home sheet,
-the un-bumped schema (missing `model_manifests` → pull 500s), a Swift-undecodable sync
-wire (`run_output` + naive timestamps; `_iso` fixed, proven via a compiled-Contracts
-decode harness), and a leftover `tailscale serve` TLS interceptor eating the app's
-cleartext while Safari's auto-HTTPS looked like proof of health. Build 4 (VALID, attached):
-`WILL DIAL` + exact probe reason on the desk card, ONE `PeerAddress` host rule with
-`https://` support, browse-on-open forces the LN prompt. Full autopsy:
-phase-15 story-10. Riders: schema v9, tolerant `ArtifactType`, honest sync-error states.)
+**Last updated:** 2026-07-06 (**THE SAGA'S REPO DEBT IS PAID (HSM-15-10 riders 1–3).**
+Schema v9 routes every v8-stamped DB through backup-then-apply so `model_manifests`
+lands (regression-pinned); the `ChangeSet` wire decode is per-record tolerant with
+`ArtifactType.runOutput` known and a visible `undecodedRecords` count — one novel type
+can never fail a whole pull again; and the desk sync pill wears honest failure states
+("Token rejected" / "Hub error 500" / "Hub reply unreadable") — only a dead network path
+may say "Offline · queued". Hub 3199 / Swift 484 / validator + sim build green. Earlier
+same day: the remote-pairing saga closed — five stacked defects unmasked, full autopsy in
+phase-15 story-10; the phone pairs and syncs from NYC. Next: 15-11 agents on your
+desktop's models, then 15-12 the context envelope.)
 Earlier — 2026-07-05 (**THE MESH QUEUE IS REAL — the hub's work + asks ride the
 pill in your hand; approving there IS approving on the desktop.** HSM-15-03 CLOSED: hub
 `GET /api/mesh/inbox` (both queues in flight + pending proposals across meeting/desk

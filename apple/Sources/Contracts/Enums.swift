@@ -1,8 +1,9 @@
 import Foundation
 
-/// The 15 shipped artifact types (+ the plugin_output fallback), from the desktop
-/// `plugins/synthesis.py` `_ARTIFACT_TYPE_BY_PLUGIN` map. Raw values are the wire
-/// strings (key-conversion does not touch enum values).
+/// The 15 shipped artifact types (+ the plugin_output fallback + the v6 run-born
+/// run_output), from the desktop `plugins/synthesis.py` `_ARTIFACT_TYPE_BY_PLUGIN`
+/// map and `_persist_run_artifact`. Raw values are the wire strings
+/// (key-conversion does not touch enum values).
 public enum ArtifactType: String, Codable, Sendable, CaseIterable {
     case requirements
     case actionItems = "action_items"
@@ -20,6 +21,7 @@ public enum ArtifactType: String, Codable, Sendable, CaseIterable {
     case decisionAnnouncement = "decision_announcement"
     case projectAssociation = "project_association"
     case pluginOutput = "plugin_output"
+    case runOutput = "run_output"   // missing here failed whole ChangeSets (the 2026-07-06 saga, defect #3)
 }
 
 public enum ArtifactStatus: String, Codable, Sendable {
