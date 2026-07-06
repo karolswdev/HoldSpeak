@@ -255,7 +255,10 @@ public struct Chain: Codable, Equatable, Sendable, Identifiable {
 /// in the device Keychain (or, on the hub, its secrets), referenced by `id`, and is joined to an
 /// `EndpointConfig` only at request time. Only the SHAPE below crosses the wire.
 public struct RuntimeProfile: Codable, Equatable, Sendable, Identifiable {
-    public enum Kind: String, Codable, Sendable { case onDevice, openAICompatible }
+    /// `desktop` (HSM-15-11): run the turn on the PAIRED desktop hub over `POST /api/ask`.
+    /// `model` pins one of the hub's models ("" = the hub's default); `baseURL` is unused —
+    /// the peer comes from the pairing, never the profile shape.
+    public enum Kind: String, Codable, Sendable { case onDevice, openAICompatible, desktop }
     public var id: String
     public var name: String
     public var kind: Kind

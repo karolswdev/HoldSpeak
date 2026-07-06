@@ -49,11 +49,14 @@ struct ProfilesView: View {
         return HStack(spacing: 13) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous).fill((p.isLocal ? Sig.local : Sig.accent).opacity(0.16))
-                Image(systemName: p.isLocal ? "iphone" : "cloud.fill").font(.system(size: 18, weight: .bold)).foregroundStyle(p.isLocal ? Sig.local : Sig.accent)
+                Image(systemName: p.isLocal ? "iphone" : (p.kind == .desktop ? "desktopcomputer" : "cloud.fill"))
+                    .font(.system(size: 18, weight: .bold)).foregroundStyle(p.isLocal ? Sig.local : Sig.accent)
             }.frame(width: 44, height: 44)
             VStack(alignment: .leading, spacing: 3) {
                 Text(p.name).font(.system(size: 15.5, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
-                Text(p.isLocal ? "On-device · \(p.contextLimit / 1000)k ctx" : "\(p.egressHost ?? "endpoint") · \(p.contextLimit / 1000)k ctx")
+                Text(p.isLocal ? "On-device · \(p.contextLimit / 1000)k ctx"
+                     : p.kind == .desktop ? (p.model.isEmpty ? "Your desktop" : "Your desktop · \(p.model)")
+                     : "\(p.egressHost ?? "endpoint") · \(p.contextLimit / 1000)k ctx")
                     .font(.system(size: 12, weight: .semibold)).foregroundStyle(Sig.faint).lineLimit(1)
             }
             Spacer(minLength: 4)

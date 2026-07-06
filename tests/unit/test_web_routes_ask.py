@@ -130,6 +130,74 @@ def test_ask_runs_on_profile_and_names_honest_egress(env, monkeypatch) -> None:
     assert body["profile_id"] == pid
 
 
+def test_ask_model_override_picks_the_matching_profile(env, monkeypatch) -> None:
+    """HSM-15-11: `model` alone selects the hub profile that runs that model —
+    the phone can say "think with Qwen3.5-9B" without knowing profile ids."""
+    _, client = env
+    pid = client.post("/api/profiles", json={
+        "name": "LAN box", "kind": "openAICompatible",
+        "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
+    }).json()["profile"]["id"]
+
+    captured = {}
+
+    def fake_for_profile(*, kind, base_url, model, profile_id):
+        captured.update(model=model, profile_id=profile_id)
+        intel = _FakeIntel()
+        intel.active_provider = "cloud"
+        return intel
+
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_meeting_intel_for_profile", fake_for_profile
+    )
+    monkeypatch.setattr(
+        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
+    )
+
+    resp = client.post("/api/ask", json={"prompt": "Go", "model": "Qwen3.5-9B-Q6_K"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert captured == {"model": "Qwen3.5-9B-Q6_K", "profile_id": pid}
+    assert body["model"] == "Qwen3.5-9B-Q6_K"     # the run record names what ran
+    assert body["profile_id"] == pid
+    assert body["egress"] == {"scope": "cloud", "host": "192.168.1.43"}
+
+
+def test_ask_model_override_matching_the_hubs_own_model_runs_the_default_engine(env, monkeypatch) -> None:
+    _, client = env
+    fake = _FakeIntel()
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+    )
+    monkeypatch.setattr(
+        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
+    )
+    resp = client.post("/api/ask", json={"prompt": "Go", "model": "HubModel-9B"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["model"] == "HubModel-9B"
+    assert body["egress"] == {"scope": "local"}
+    assert body["profile_id"] is None
+
+
+def test_ask_model_override_refuses_a_model_the_hub_cannot_run(env, monkeypatch) -> None:
+    """The manifest is the allow-list: a model some other node pushed (or a
+    typo) refuses loudly with the runnable set — never a silent fallback."""
+    _, client = env
+    client.post("/api/profiles", json={
+        "name": "LAN box", "kind": "openAICompatible",
+        "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
+    })
+    monkeypatch.setattr(
+        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
+    )
+    resp = client.post("/api/ask", json={"prompt": "Go", "model": "iphone-gemma4-2B"})
+    assert resp.status_code == 400
+    body = resp.json()
+    assert "not runnable" in body["error"]
+    assert body["allowed_models"] == ["HubModel-9B", "Qwen3.5-9B-Q6_K"]
+
+
 def test_ask_surfaces_engine_error_as_502(env, monkeypatch) -> None:
     _, client = env
     from holdspeak.intel.models import MeetingIntelError

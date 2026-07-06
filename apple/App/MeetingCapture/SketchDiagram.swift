@@ -588,6 +588,19 @@ struct SketchToDiagramView: View {
 
     private func persistProfiles() { if let data = try? JSONEncoder().encode(profiles) { d.set(data, forKey: K.profiles) } }
 
+    /// HSM-15-11 — the desktop-backed profile for one of the HUB's models, created on
+    /// first pick (id stable per model, so a recipe's pin survives sessions and syncs).
+    /// `model` "" = the hub's default engine. The peer itself comes from the pairing
+    /// (`hs.peer.*`), never the profile shape.
+    func desktopProfile(model: String) -> RuntimeProfile {
+        let id = "desktop:" + (model.isEmpty ? "default" : model)
+        if let p = profiles.first(where: { $0.id == id }) { return p }
+        let p = RuntimeProfile(id: id, name: model.isEmpty ? "Your desktop" : "Your desktop · \(model)",
+                               kind: .desktop, model: model, createdAt: Date(), updatedAt: Date())
+        upsertProfile(p)
+        return p
+    }
+
     /// Add or replace a profile (advanced management). First profile becomes active.
     func upsertProfile(_ p: RuntimeProfile) {
         if let i = profiles.firstIndex(where: { $0.id == p.id }) { profiles[i] = p } else { profiles.append(p) }

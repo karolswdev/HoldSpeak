@@ -129,16 +129,18 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-06 (**THE SAGA'S REPO DEBT IS PAID (HSM-15-10 riders 1–3).**
-Schema v9 routes every v8-stamped DB through backup-then-apply so `model_manifests`
-lands (regression-pinned); the `ChangeSet` wire decode is per-record tolerant with
-`ArtifactType.runOutput` known and a visible `undecodedRecords` count — one novel type
-can never fail a whole pull again; and the desk sync pill wears honest failure states
-("Token rejected" / "Hub error 500" / "Hub reply unreadable") — only a dead network path
-may say "Offline · queued". Hub 3199 / Swift 484 / validator + sim build green. Earlier
-same day: the remote-pairing saga closed — five stacked defects unmasked, full autopsy in
-phase-15 story-10; the phone pairs and syncs from NYC. Next: 15-11 agents on your
-desktop's models, then 15-12 the context envelope.)
+**Last updated:** 2026-07-06 (**AGENTS RUN ON YOUR DESKTOP'S MODELS (HSM-15-11 built +
+live-proven), same day the saga's repo debt was paid.** The hub's `/api/ask` gained a
+manifest-bounded `model` override (real-metal proven on the .43 llama.cpp: the pinned
+model answers, an unknown model refuses with the runnable set); `RuntimeProfile.Kind
+.desktop` + the one `callLLMTurn` dispatch send recipe/chat/chain/live turns to the
+paired hub with the hub-REPORTED per-run egress on the printed card; the Runs-on picker
+names the hub's models from the synced manifests. The proof rig ran a real recipe
+sim→hub→llama.cpp and found the desk `desktopClient` never sent the pairing token
+(fixed). Earlier same day: repo debt 1–3 paid (schema v9, tolerant ChangeSet wire +
+`runOutput`, honest sync-pill states) and the remote-pairing saga closed (story-10
+autopsy). Owed: the 15-11 fidelity-rider walk + the cross-country TestFlight run;
+next build: 15-12 the context envelope.)
 Earlier — 2026-07-05 (**THE MESH QUEUE IS REAL — the hub's work + asks ride the
 pill in your hand; approving there IS approving on the desktop.** HSM-15-03 CLOSED: hub
 `GET /api/mesh/inbox` (both queues in flight + pending proposals across meeting/desk

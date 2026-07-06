@@ -220,14 +220,40 @@ contract, the LLM endpoints) is **reuse**, not new.
 | HSM-15-08 | The Agent Desk — your live agents + the question each is asking | **built + Simulator-proven** (`AgentDeskView`/`AgentDeskCard`; waiting sorts first + pulses, tight question quote, Answer/pin/dismiss; `HS_DEMO_AGENTDESK` seed) — **the live `companionStatus()` poll is WIRED as of the 15-03 build** (`startPolling` now called at the paired-peer call site in the app root; the survey had found it call-site-less); the device walk beat joins the owner queue | [story-08](./story-08-the-agent-desk.md) | `apple/build/agentdesk.png`; iPad build green (runner+desk; FailurePolicy unified into RuntimeCore) |
 | HSM-15-09 | Proactive agent presence — surface a waiting agent the moment it asks | **built + Simulator-proven** (`PresenceWatcher` pure rising-edge/debounce/quiet-mode, 7 host tests; HUD waiting-lane + the nudge card w/ Answer-by-voice; non-autonomous) — voice delivery reuses the desk composer (LAN proof owner-gated) | [story-09](./story-09-proactive-agent-presence.md) | 83 ProvidersTests green; `presence-hud-lane.png` |
 | HSM-15-10 | The Connect surface ("Your Computer" — discovery-first pairing) | **built end-to-end + Simulator-proven; 2026-07-06: the remote-pairing saga closed** (five stacked defects across TestFlight builds 3–4: the silent manual sheet, the un-bumped schema's missing `model_manifests`, two sync-wire poisons the Swift contract can't decode (`run_output` + naive `isoformat()`), and a leftover `tailscale serve` TLS interceptor on the hub port eating the app's cleartext while Safari's auto-HTTPS "proved" the network fine; build 4 = `WILL DIAL` + exact probe reason on `DioConnectCard`, ONE `PeerAddress` host rule w/ `https://` support, browse-on-open forces the LN prompt); **repo debt 1–3 paid** (schema v9 + tolerant ChangeSet/`runOutput` + honest sync-pill states) — owner's on-device green run is the remaining proof | [story-10](./story-10-the-connect-surface.md) | 12 mesh + 2205 desktop · iPad build green · sim "Synced · just now" vs the live hub · b4 VALID+attached · debt PR: hub 3199 / Swift 484 / sim build green |
-| HSM-15-11 | Agents on your desktop's models (pick the Mac's model, run through it) | **scaffolded** (owner ask 2026-07-06 minutes after the first NYC→Denver pair; agent-definition sync already ships via Phase 17 — the delta is a `desktop` profile kind dispatching recipe/chat/chain turns over `/api/ask`, picker fed by the synced model manifests, egress from the hub's per-run report) | [story-11](./story-11-agents-on-your-desktops-models.md) | — |
+| HSM-15-11 | Agents on your desktop's models (pick the Mac's model, run through it) | **built + live-proven in the sim** (2026-07-06: hub `/api/ask` manifest-bounded `model` override; `RuntimeProfile.Kind.desktop` + the ONE `callLLMTurn` dispatch across recipes/chat/chains/live-lenses; "Your desktop" picker section naming the hub's models; honest failure + one-tap on-device fallback; found+fixed: the desk `desktopClient` never sent the pairing token — every desk hub-run 401'd on a token-requiring hub) — owed: Phase-17 fidelity rider walk + the owner's cross-country run | [story-11](./story-11-agents-on-your-desktops-models.md) | ask pytest ×10 · real-metal .43 control-vs-treatment · sim→hub→llama.cpp printed card (`screenshots/15-11-desktoprun-live-proof.png`) · hub 3202 / Swift 484 |
 | HSM-15-12 | The context envelope (select meetings, expand their artifacts, into the ask) | **scaffolded** (owner ask 2026-07-06 with 15-11; today context = manualContext + all-zone-meetings-truncated + a KB *hint string* — the story adds a per-ask picker w/ artifact expansion + ONE provenance-headed envelope across run targets + hub-side hydration via `/api/ask` grounding refs + the KB-honesty rider) | [story-12](./story-12-the-context-envelope.md) | — |
 | HSM-15-06 | The Proof — air-gapped value + the launch narrative | backlog | [story-06](./story-06-the-proof-and-narrative.md) | — |
 | HSM-15-07 | Docs — the Mesh, end to end | backlog | [story-07](./story-07-docs.md) | — |
 
 ## Where we are
 
-**2026-07-06 (later) — THE SAGA'S REPO DEBT IS PAID (15-10 riders 1–3, the mesh-repo-debt PR).**
+**2026-07-06 (evening) — AGENTS RUN ON YOUR DESKTOP'S MODELS (15-11 built + live-proven).**
+The owner's morning ask shipped the same day. Hub half: `POST /api/ask` gained a
+manifest-bounded `model` override — the allow-list is what the hub can actually run
+(its own engine + its profiles' models; another node's manifest row refuses loudly
+with the runnable set). Proven real-metal on the restarted Denver hub: the pinned
+Qwen3.5-9B on 192.168.1.43 answered, the unknown model 400'd. Swift half:
+`RuntimeProfile.Kind.desktop` (schema + contract), and the new `callLLMTurn` seam —
+the ONE dispatch every run path already funnels through (recipes, chat, chains, live
+lenses, weave) — sends desktop-profile turns over the paired hub's ask route, pinned
+to `profile.model`, and returns the hub's per-run egress so the printed card's badge
+is REPORTED, never inferred. The Runs-on picker gained a "Your desktop" section naming
+the hub's models from the synced manifests (blocked row when unpaired — never
+disappears); a failed desktop turn wears the mesh vocabulary with a one-tap **Run on
+this device** fallback. The `desktoprun` proof rig ran a REAL recipe sim→hub→llama.cpp:
+`screenshots/15-11-desktoprun-live-proof.png` shows the answer on the printed card
+wearing `Cloud · 192.168.1.43`. The rig found two real defects: the desk's
+`desktopClient` NEVER sent the pairing token (every desk hub-run since 15-02 would
+401 on a token-requiring hub — fixed via `DesktopPeer` + `PeerAddress`), and the sim
+pairing injection must target the app CONTAINER defaults domain (the user-domain
+write silently no-ops once the app owns container prefs). Ops: the Denver hub now runs
+PLAIN on :8765 (hublog retired, DB stamped v9 with a fresh backup); stale
+`tailscale serve` fronts on :8443/:34999 still owed (daemon CLI unreachable this
+session). Owed on the story: the Phase-17 fidelity rider walk + the owner's
+cross-country TestFlight run. Suites: hub **3202**, Swift **484**, validator ALL PASS,
+sim build green.
+
+Earlier — **2026-07-06 (later) — THE SAGA'S REPO DEBT IS PAID (15-10 riders 1–3, the mesh-repo-debt PR).**
 The three code riders the saga left behind shipped together: **schema v9**
 (`SCHEMA_VERSION = 9` routes every v8-stamped DB through backup-then-apply so
 `model_manifests` lands; regression pin `test_v8_db_gains_model_manifests_via_the_bump` —
