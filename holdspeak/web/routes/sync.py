@@ -94,9 +94,21 @@ _BUCKET_KIND = {
 
 
 def _iso(value: Any) -> Any:
+    """A timestamp → strict wire ISO-8601: seconds precision, always ``Z``.
+
+    The iPad decodes the change-set with Foundation's ``.iso8601`` strategy,
+    which rejects fractional seconds and timezone-less strings — one naive
+    ``datetime.isoformat()`` on the wire fails the WHOLE pull decode on every
+    Swift client (surfacing as a permanent "Offline · queued" pill).
+    """
     if value is None:
         return None
-    return value.isoformat() if hasattr(value, "isoformat") else str(value)
+    if hasattr(value, "isoformat"):
+        s = value.isoformat(timespec="seconds")
+        if s.endswith("+00:00"):
+            return s[:-6] + "Z"
+        return s if s.endswith("Z") else s + "Z"
+    return str(value)
 
 
 def _records_valid(records: Any) -> bool:

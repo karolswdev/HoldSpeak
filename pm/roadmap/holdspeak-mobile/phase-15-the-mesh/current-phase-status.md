@@ -219,13 +219,34 @@ contract, the LLM endpoints) is **reuse**, not new.
 | HSM-15-05 | One approval + egress contract (across surfaces) | **done** (2026-07-05, PRE-PAID: the `meeting_id` decoupling = the one-spine owner-typed proposal `origin` (locked by `test_db_actuator_origin.py`); one egress grammar = P21 `EgressScope` + two-surface trust chip; approval parity = Qlippy≡dashboard (P56) + iPad decisions (P19); air-gapped draft+badge = 17-05/16-09. Approve-from-the-HUD stays 15-03's) | [story-05](./story-05-one-approval-egress-contract.md) | [evidence](./evidence-story-05.md) |
 | HSM-15-08 | The Agent Desk — your live agents + the question each is asking | **built + Simulator-proven** (`AgentDeskView`/`AgentDeskCard`; waiting sorts first + pulses, tight question quote, Answer/pin/dismiss; `HS_DEMO_AGENTDESK` seed) — **the live `companionStatus()` poll is WIRED as of the 15-03 build** (`startPolling` now called at the paired-peer call site in the app root; the survey had found it call-site-less); the device walk beat joins the owner queue | [story-08](./story-08-the-agent-desk.md) | `apple/build/agentdesk.png`; iPad build green (runner+desk; FailurePolicy unified into RuntimeCore) |
 | HSM-15-09 | Proactive agent presence — surface a waiting agent the moment it asks | **built + Simulator-proven** (`PresenceWatcher` pure rising-edge/debounce/quiet-mode, 7 host tests; HUD waiting-lane + the nudge card w/ Answer-by-voice; non-autonomous) — voice delivery reuses the desk composer (LAN proof owner-gated) | [story-09](./story-09-proactive-agent-presence.md) | 83 ProvidersTests green; `presence-hud-lane.png` |
-| HSM-15-10 | The Connect surface ("Your Computer" — discovery-first pairing) | **built end-to-end + Simulator-proven** (desktop advertises `_holdspeak._tcp` + unauth `/api/mesh/info`; iPad `ConnectView` browses via `NWBrowser`, discovered list by name + reach, tap-to-pair w/ token step + manual fallback, `DictatePeerStore.adopt/forget`; `NSBonjourServices` in plist + gen assertion) — real LAN discover+pair is the owner-at-iPad proof | [story-10](./story-10-the-connect-surface.md) | 12 mesh + 2205 desktop · iPad build green · `connect-surface.png` |
+| HSM-15-10 | The Connect surface ("Your Computer" — discovery-first pairing) | **built end-to-end + Simulator-proven; 2026-07-06: the remote-pairing saga closed** (five stacked defects across TestFlight builds 3–4: the silent manual sheet, the un-bumped schema's missing `model_manifests`, two sync-wire poisons the Swift contract can't decode (`run_output` + naive `isoformat()`), and a leftover `tailscale serve` TLS interceptor on the hub port eating the app's cleartext while Safari's auto-HTTPS "proved" the network fine; build 4 = `WILL DIAL` + exact probe reason on `DioConnectCard`, ONE `PeerAddress` host rule w/ `https://` support, browse-on-open forces the LN prompt) — owner's on-device green run is the remaining proof | [story-10](./story-10-the-connect-surface.md) | 12 mesh + 2205 desktop · iPad build green · sim "Synced · just now" vs the live hub · b4 VALID+attached |
 | HSM-15-06 | The Proof — air-gapped value + the launch narrative | backlog | [story-06](./story-06-the-proof-and-narrative.md) | — |
 | HSM-15-07 | Docs — the Mesh, end to end | backlog | [story-07](./story-07-docs.md) | — |
 
 ## Where we are
 
-**2026-07-05 (evening) — THE MESH QUEUE IS REAL: the hub's work and the hub's asks ride
+**2026-07-06 — THE REMOTE-PAIRING SAGA CLOSED (15-10): the mesh works from another city.**
+The owner, phone in NYC and hub in Denver, couldn't pair the TestFlight app while Safari on
+the same phone reached the identical hub — the desk pill lied "Offline · queued" through
+FIVE stacked, mutually-masking defects (full autopsy in story-10): the classic-home sheet
+that never dialed (build 3 fixed the WRONG surface — the desk front door uses
+`DioConnectCard`), the hub DB missing `model_manifests` (additive DDL, no v9 bump → v8 DBs
+no-op the schema and `/api/sync/pull` 500s), a sync wire the Swift contract cannot decode
+(`artifact_type: "run_output"` absent from the `ArtifactType` enum + `_iso()` emitting
+naive microsecond timestamps Foundation's `.iso8601` rejects — `_iso` fixed this commit,
+proven by compiling the real Contracts sources into a decode harness against the live pull
+JSON), and the killer: a **leftover `tailscale serve` TLS-over-TCP interceptor on the hub
+port** from the build-2 investigation — Safari auto-upgrades to HTTPS so it handshook fine,
+while the app's honest cleartext died inside tailscaled with zero packets, zero prompts,
+across reinstalls and reboots. **Build 4** (uploaded, VALID, attached) hardens the real
+surface: `DioConnectCard` wears the literal `WILL DIAL` URL + the exact probe reason, the
+new `PeerAddress` helper is the ONE host rule at every dial site and speaks `https://`
+(a `tailscale serve` TLS front is now a first-class door), and opening the card browses
+Bonjour so iOS surfaces the Local Network prompt. Riders queued: schema v9 bump, `runOutput`
++ unknown-tolerant enum decoding, honest sync-pill error states (500/401/decode/no-network
+currently all wear "Offline · queued"). Remaining beat: the owner's on-device green run.
+
+Earlier — **2026-07-05 (evening) — THE MESH QUEUE IS REAL: the hub's work and the hub's asks ride
 the pill in your hand, and approving there IS approving on the desktop.** 15-03 closed:
 the hub gained its one window (`GET /api/mesh/inbox` — the deferred intel queue + the
 MIR plugin queue in flight, plus every `proposed` actuator proposal across meeting AND

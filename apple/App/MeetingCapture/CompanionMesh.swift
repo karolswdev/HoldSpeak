@@ -321,9 +321,9 @@ private struct AgentDeskCard: View {
 
     var peer: DesktopPeer? {
         guard let port = Int(portText.trimmingCharacters(in: .whitespaces)), port > 0 else { return nil }
-        let h = host.trimmingCharacters(in: .whitespaces)
+        let (scheme, h) = PeerAddress.split(host)
         guard !h.isEmpty else { return nil }
-        return DesktopPeer(host: h, port: port, token: token.isEmpty ? nil : token, scheme: "http")
+        return DesktopPeer(host: h, port: port, token: token.isEmpty ? nil : token, scheme: scheme)
     }
 
     func client() -> HTTPDesktopClient? {
@@ -1541,7 +1541,7 @@ struct ConnectView: View {
     /// The unauthenticated identity probe (`GET /api/mesh/info`). Fail-soft — `nil` when the
     /// endpoint isn't there yet (the desktop half ships separately), so the TXT hint is used.
     private func fetchMeshInfo(host: String, port: Int) async -> MeshInfo? {
-        guard let url = URL(string: "http://\(host):\(port)/api/mesh/info") else { return nil }
+        guard let url = PeerAddress.base(host, port)?.appendingPathComponent("api/mesh/info") else { return nil }
         var req = URLRequest(url: url); req.timeoutInterval = 4
         guard let (data, resp) = try? await URLSession.shared.data(for: req),
               let http = resp as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
@@ -1572,9 +1572,7 @@ struct PairMacSheet: View {
     /// The literal URL the client will dial — shown so a typo (a scheme, a stray
     /// path, the wrong port) is obvious on screen.
     private var dialedURL: String {
-        let h = peers.host.trimmingCharacters(in: .whitespaces)
-        let p = peers.portText.trimmingCharacters(in: .whitespaces)
-        return "http://\(h):\(p)/health"
+        PeerAddress.describe(peers.host, port: peers.portText, path: "/health")
     }
 
     var body: some View {
@@ -1590,7 +1588,7 @@ struct PairMacSheet: View {
                                 .frame(width: 38, height: 38).background(Sig.s2, in: Circle())
                         }
                     }
-                    Text("Run HoldSpeak on your desktop, then enter its address. A hostname (a Tailscale IP or a tunnel domain) works too — no http://, no trailing slash.")
+                    Text("Run HoldSpeak on your desktop, then enter its address. A hostname works too; prefix https:// when the desktop is behind TLS (e.g. tailscale serve).")
                         .font(.system(size: 14)).foregroundStyle(Sig.faint)
                     field("Name", text: $peers.name, placeholder: "Karol's Mac")
                     field("Host", text: $peers.host, placeholder: "100.x.y.z or host.example.com")
