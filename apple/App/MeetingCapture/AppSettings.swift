@@ -12,6 +12,8 @@ import AVFAudio
 /// endpoint. Signal depth throughout; the egress reality is shown plainly, never narrated.
 struct SettingsView: View {
     @ObservedObject private var cfg = InferenceConfigStore.shared
+    @ObservedObject private var mesh = MeshServeStore.shared     // HSM-25-02 — the serving state line
+    @ObservedObject private var peer = DictatePeerStore.shared
     @Environment(\.dismiss) private var dismiss
     @FocusState private var focused: Field?
     @State private var fetch: FetchState = .idle
@@ -55,6 +57,7 @@ struct SettingsView: View {
                     targetCard(.homelab, "LAN endpoint", "An OpenAI-compatible server on your network", "server.rack", Sig.accentGradient)
                     if !cfg.isLocal { endpointCard }
                     egressRow
+                    meshServeCard
                     label("TRANSCRIPTION")
                     whisperCard
                     languageCard
@@ -461,6 +464,36 @@ struct SettingsView: View {
         .padding(15)
         .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+    }
+
+    // HSM-25-02 — serving is consent (off by default; the desktop HS-85 rule).
+    // The subline is the whole story: the guard's named reason when unarmable,
+    // "no hub paired" without a peer, the serving state while on. No prose.
+    private var meshServeCard: some View {
+        HStack(spacing: 14) {
+            GlyphChip(system: "antenna.radiowaves.left.and.right",
+                      gradient: Sig.accentGradient, size: 50)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Serve my models to the mesh")
+                    .font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                Text(meshServeSubline)
+                    .font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+            }
+            Spacer()
+            Toggle("", isOn: $cfg.meshServeOn).labelsHidden().tint(Sig.accent)
+                .disabled(mesh.refusal != nil || !peer.isPaired)
+        }
+        .padding(15)
+        .background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+    }
+
+    private var meshServeSubline: String {
+        if let refusal = mesh.refusal { return refusal }
+        if !peer.isPaired { return "no hub paired" }
+        guard cfg.meshServeOn else { return "off" }
+        let runs = mesh.jobsServed == 1 ? "1 run" : "\(mesh.jobsServed) runs"
+        return "serving as \(mesh.node) · \(runs)"
     }
 
     private var egressRow: some View {

@@ -1,6 +1,6 @@
 # HSM-25-02 — Consent + the serving surface
 
-- **Status:** backlog
+- **Status:** done (2026-07-07) — toggle + serving surface, sim-proven against the REAL hub (doctor read "iPad: live (2s ago)"). Evidence: [evidence-story-02.md](./evidence-story-02.md).
 - **Depends on:** HSM-25-01
 - **Unblocks:** HSM-25-03
 

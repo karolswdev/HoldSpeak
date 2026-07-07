@@ -1,6 +1,6 @@
 # HSM-25-01 — The Swift relay worker on the provider seam
 
-- **Status:** backlog
+- **Status:** done (2026-07-07) — worker + wire + 7 tests; full `swift test` 500/0. Evidence: [evidence-story-01.md](./evidence-story-01.md).
 - **Depends on:** desktop phase-85 (shipped)
 - **Unblocks:** HSM-25-02, HSM-25-03
 

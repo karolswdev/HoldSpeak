@@ -20,6 +20,8 @@ import WebKit
 struct MeetingCaptureApp: App {
     // Captures iOS's background-URLSession relaunch so model downloads survive lock/suspend/terminate.
     @UIApplicationDelegateAdaptor(HoldSpeakAppDelegate.self) private var appDelegate
+    // HSM-25-02 — mesh serving is foreground-only: a suspended worker must not look live.
+    @Environment(\.scenePhase) private var scenePhase
     var body: some Scene {
         WindowGroup {
             ZStack(alignment: .top) {
@@ -144,6 +146,11 @@ struct MeetingCaptureApp: App {
                         client, peerName: DictatePeerStore.shared.displayName)
                     PresenceStore.shared.startPolling(client)
                 }
+                // HSM-25-02 — resume serving when the consent flag survived a
+                // relaunch (the toggle's didSet handles in-session flips).
+                if InferenceConfigStore.shared.meshServeOn {
+                    MeshServeStore.shared.apply(on: true)
+                }
                 #if targetEnvironment(simulator)
                 // HSM-15-03 live-proof affordances: open the ledger over a LIVE poll,
                 // and decide the first pending proposal through the SAME `decideMesh`
@@ -160,6 +167,13 @@ struct MeetingCaptureApp: App {
                     }
                 }
                 #endif
+            }
+            // HSM-25-02 — serving follows the foreground: leaving it stops the
+            // worker (the hub's liveness must never lie about a suspended
+            // phone); returning re-arms only if the consent flag is still on.
+            .onChange(of: scenePhase) { _, phase in
+                let consented = InferenceConfigStore.shared.meshServeOn
+                MeshServeStore.shared.apply(on: phase == .active && consented)
             }
         }
     }

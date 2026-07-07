@@ -536,6 +536,9 @@ struct SketchToDiagramView: View {
     /// HSM-14-17 — on-device speaker diarization (opt-in). Default ON. When set, capture's `stop()`
     /// labels each transcript segment with who spoke it, fully on-device (no network).
     @Published var diarizationOn: Bool { didSet { d.set(diarizationOn, forKey: K.diarize) } }
+    /// HSM-25-02 — the mesh-serve consent. Default OFF; no node serves implicitly. While on and
+    /// the app is foregrounded, this device's worker claims relayed runs addressed to it.
+    @Published var meshServeOn: Bool { didSet { d.set(meshServeOn, forKey: K.meshServe); MeshServeStore.shared.apply(on: meshServeOn) } }
     /// Which installed on-device model (its `InstalledModel.id`, i.e. the .gguf filename) runs local
     /// intelligence. Empty = "use the first installed language model" (back-compat default).
     @Published var localModelId: String { didSet { d.set(localModelId, forKey: K.localModel) } }
@@ -551,13 +554,14 @@ struct SketchToDiagramView: View {
     static let whisperLangKey = "hs.inf.whisperlang"  // the UserDefaults key the transcriber reads directly
 
     private let d = UserDefaults.standard
-    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize", localModel = "hs.inf.localmodel", whisper = "hs.inf.whisper", whisperLang = "hs.inf.whisperlang", profiles = "hs.inf.profiles", activeProfile = "hs.inf.activeprofile" }
+    private enum K { static let mode = "hs.inf.mode", url = "hs.inf.url", model = "hs.inf.model", key = "hs.inf.key", diarize = "hs.inf.diarize", localModel = "hs.inf.localmodel", whisper = "hs.inf.whisper", whisperLang = "hs.inf.whisperlang", profiles = "hs.inf.profiles", activeProfile = "hs.inf.activeprofile", meshServe = "hs.inf.meshserve" }
     private init() {
         mode = RuntimeMode(rawValue: d.string(forKey: K.mode) ?? "") ?? .local
         endpointURL = d.string(forKey: K.url) ?? ""
         endpointModel = d.string(forKey: K.model) ?? ""
         endpointKey = d.string(forKey: K.key) ?? ""
         diarizationOn = d.object(forKey: K.diarize) as? Bool ?? true
+        meshServeOn = d.object(forKey: K.meshServe) as? Bool ?? false
         localModelId = d.string(forKey: K.localModel) ?? ""
         whisperModel = d.string(forKey: K.whisper) ?? "base"
         whisperLanguage = d.string(forKey: K.whisperLang) ?? "auto"
@@ -677,6 +681,17 @@ struct SketchToDiagramView: View {
 
     /// The egress reality for the badge: local keeps everything on the iPad; an endpoint sends to its host.
     var egressLabel: String { isLocal ? "On-device" : "Sends to \(endpointConfig?.baseURL.host ?? "your endpoint")" }
+
+    /// HSM-25-02 — the serving node's OWN engine: the active profile resolved the Phase-24 way,
+    /// with the recursion guard (a profile that runs elsewhere must not serve — "executing" would
+    /// relay onward instead of running anything). The worker fails the job with this, verbatim.
+    func makeMeshServeProvider() throws -> ILLMProvider {
+        let p = activeProfile
+        if p.kind == .meshNode || p.kind == .desktop {
+            throw MeshServeRefusal("this device's profile runs elsewhere — serving needs an on-device model or an endpoint")
+        }
+        return try makeProvider(profile: p, localModelPath: MeetingReviewState.localGGUF(), context: 16_384)
+    }
 
     private struct ModelsResponse: Decodable { let data: [Entry]; struct Entry: Decodable { let id: String } }
 
