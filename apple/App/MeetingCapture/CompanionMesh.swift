@@ -577,7 +577,7 @@ struct DictateView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .tint(Sig.accent)
-        .sheet(isPresented: $pairing) { PairMacSheet() }
+        .sheet(isPresented: $pairing) { DeskConnectSheet() }
         .navigationDestination(isPresented: $showCommands) { CommandsBoard() }
         .onAppear {
             withAnimation(reduceMotion ? nil : .spring(response: 0.6, dampingFraction: 0.85)) { appeared = true }
@@ -1255,13 +1255,17 @@ struct ConnectView: View {
         .sheet(item: $pairTarget) { target in
             tokenSheet(for: target)
         }
-        .sheet(isPresented: $manual) { PairMacSheet() }
+        .sheet(isPresented: $manual) { DeskConnectSheet() }
         .onAppear {
             withAnimation(reduceMotion ? nil : .spring(response: 0.6, dampingFraction: 0.85)) { appeared = true }
             browser.start()
             if peers.isPaired { Task { await probePaired() } }
             #if targetEnvironment(simulator)
             if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "1" { browser.seedDemo() }
+            // The manual door — now the ONE desk connect card, sheet-hosted (debt row 4).
+            if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "manual" {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { manual = true }
+            }
             #endif
         }
         .onDisappear { browser.stop() }
@@ -1559,107 +1563,38 @@ struct ConnectDemo: View {
 
 /// The pairing sheet: enter the Mac's host + port (and an optional token) so the iPad can reach the
 /// desktop server on the LAN. One clear path, not buried in Settings (HSM-15-01).
-struct PairMacSheet: View {
+/// The ONE connect card, hosted as a sheet for the companion surfaces (the saga's
+/// repo debt row 4): the classic manual PairMacSheet is retired — this presents the
+/// desk's `DioConnectCard` (LAN browse, WILL DIAL, the exact probe reason, build
+/// number on the card) bound to the SAME `hs.peer.*` pairing store, so both doors
+/// share one pairing and one diagnostics surface.
+struct DeskConnectSheet: View {
     @ObservedObject private var peers = DictatePeerStore.shared
     @Environment(\.dismiss) private var dismiss
-
-    // A visible connection test — the manual sheet used to just save fields and
-    // dismiss (no probe, no feedback), so a wrong host/port/token failed silently.
-    // Now it dials the hub and shows the EXACT URL + the real result/error.
-    private enum Probe: Equatable { case idle, testing, ok(String), fail(String) }
-    @State private var probe: Probe = .idle
-
-    /// The literal URL the client will dial — shown so a typo (a scheme, a stray
-    /// path, the wrong port) is obvious on screen.
-    private var dialedURL: String {
-        PeerAddress.describe(peers.host, port: peers.portText, path: "/health")
-    }
 
     var body: some View {
         ZStack {
             Sig.bg.ignoresSafeArea()
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    HStack {
-                        Text("Pair your desktop").font(.system(size: 28, weight: .heavy)).foregroundStyle(Sig.text)
-                        Spacer()
-                        Button { dismiss() } label: {
-                            Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted)
-                                .frame(width: 38, height: 38).background(Sig.s2, in: Circle())
-                        }
-                    }
-                    Text("Run HoldSpeak on your desktop, then enter its address. A hostname works too; prefix https:// when the desktop is behind TLS (e.g. tailscale serve).")
-                        .font(.system(size: 14)).foregroundStyle(Sig.faint)
-                    field("Name", text: $peers.name, placeholder: "Karol's Mac")
-                    field("Host", text: $peers.host, placeholder: "100.x.y.z or host.example.com")
-                    field("Port", text: $peers.portText, placeholder: "8765")
-                    field("Token", text: $peers.token, placeholder: "shown when you run holdspeak web")
-
-                    // What it will actually dial + the live probe result.
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("WILL DIAL").font(.system(size: 11, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint)
-                        Text(dialedURL).font(.system(size: 13, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(Sig.muted).lineLimit(2).minimumScaleFactor(0.7)
-                    }
-                    switch probe {
-                    case .idle: EmptyView()
-                    case .testing:
-                        HStack(spacing: 8) { ProgressView().controlSize(.small); Text("Testing…").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint) }
-                    case .ok(let d):
-                        Label(d, systemImage: "checkmark.circle.fill").font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.ok)
-                    case .fail(let d):
-                        Label(d, systemImage: "xmark.octagon.fill").font(.system(size: 13, weight: .semibold)).foregroundStyle(Sig.bad).lineLimit(4)
-                    }
-
-                    HStack(spacing: 12) {
-                        Button { runProbe() } label: {
-                            HStack(spacing: 7) {
-                                Image(systemName: "dot.radiowaves.left.and.right")
-                                Text("Test connection").font(.system(size: 15, weight: .heavy))
-                            }
-                            .foregroundStyle(Sig.text).frame(maxWidth: .infinity).padding(.vertical, 14)
-                            .background(Sig.s2, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Sig.line, lineWidth: 1))
-                        }
-                        .disabled(!peers.isPaired || probe == .testing)
-                        .opacity(peers.isPaired ? 1 : 0.5)
-                        Button { dismiss() } label: {
-                            Text("Done").font(.system(size: 17, weight: .heavy)).foregroundStyle(.black)
-                                .frame(maxWidth: .infinity).padding(.vertical, 14)
-                                .background(Sig.accentGradient, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        }
-                        .disabled(!peers.isPaired)
-                        .opacity(peers.isPaired ? 1 : 0.5)
-                    }
-                }
-                .padding(22).frame(maxWidth: 600).frame(maxWidth: .infinity)
+                DioConnectCard(name: peers.name, host: peers.host,
+                               port: peers.portText.trimmingCharacters(in: .whitespaces).isEmpty ? "8765" : peers.portText,
+                               token: peers.token,
+                               paired: peers.isPaired,
+                               onConnect: { hh, pp, tt, nn in
+                                   peers.host = hh; peers.portText = pp; peers.token = tt; peers.name = nn
+                                   dismiss()
+                               },
+                               onForget: { peers.host = ""; peers.token = ""; peers.name = "" },
+                               onCancel: { dismiss() },
+                               onTest: { hh, pp, tt in
+                                   guard let p = Int(pp.trimmingCharacters(in: .whitespaces)), p > 0 else {
+                                       return (false, "port must be a number")
+                                   }
+                                   return await DeskHostLink(host: hh.trimmingCharacters(in: .whitespaces), port: p, token: tt).probe()
+                               })
+                    .padding(.vertical, 26)
+                    .frame(maxWidth: .infinity)
             }
-        }
-    }
-
-    private func runProbe() {
-        probe = .testing
-        Task {
-            guard let client = peers.client() else {
-                await MainActor.run { probe = .fail("Couldn't build a request — check the host and port (port must be a number).") }
-                return
-            }
-            let c = await client.handshake()
-            await MainActor.run {
-                probe = c.reachable ? .ok(c.runtimeReady ? "Reachable · \(c.detail)" : "Reachable")
-                                    : .fail(c.detail)   // "desktop unreachable: <the real URLError reason>"
-            }
-        }
-    }
-
-    private func field(_ label: String, text: Binding<String>, placeholder: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label.uppercased()).font(.system(size: 11, weight: .heavy)).tracking(1.2).foregroundStyle(Sig.faint)
-            TextField(placeholder, text: text)
-                .font(.system(size: 16, weight: .semibold)).foregroundStyle(Sig.text)
-                .textInputAutocapitalization(.never).autocorrectionDisabled()
-                .padding(14).background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Sig.line, lineWidth: 1))
         }
     }
 }

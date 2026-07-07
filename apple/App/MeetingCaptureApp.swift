@@ -718,7 +718,7 @@ struct MeetingListView: View {
                 if ProcessInfo.processInfo.environment["HS_DEMO"] == "1" { capturing = true }
                 if ProcessInfo.processInfo.environment["HS_DEMO_AGENTDESK"] == "1" { showAgentDesk = true }
                 if ProcessInfo.processInfo.environment["HS_DEMO_DICTATE"] == "1" { showDictate = true }
-                if ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] == "1" { showConnect = true }
+                if ["1", "manual"].contains(ProcessInfo.processInfo.environment["HS_DEMO_CONNECT"] ?? "") { showConnect = true }
             }
             #endif
             .toolbar(.hidden, for: .navigationBar)

@@ -242,6 +242,12 @@ opened a chat that titled ITSELF with the real pull's manifest name
 uploaded, VALID, attached to "Owner (internal)". Ops: the stale `tailscale serve`
 fronts :8443/:34999 are REMOVED (the daemon socket lives at
 `/opt/homebrew/var/run/tailscaled.sock` — pass `--socket`); :443 → 8765 kept.
+**Saga debt row 4 PAID:** the classic-home manual `PairMacSheet` is retired —
+both companion doors (Dictate's pair affordance + Your Desktop's "Connect
+manually") now present the ONE desk `DioConnectCard` sheet-hosted
+(`DeskConnectSheet`, same `hs.peer.*` store, same probe, WILL DIAL + exact
+reason + build number; `screenshots/15-debt4-connect-sheet.png` — the live
+Bonjour browse found the real Mac in the same frame).
 
 Earlier — **2026-07-06 (night) — THE ASK KNOWS YOUR RECORDS (15-12 built + real-metal hydration proven).**
 The second owner ask of the day shipped the same day. One assembler:
