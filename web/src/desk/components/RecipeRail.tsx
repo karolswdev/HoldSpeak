@@ -1,20 +1,16 @@
-// The recipe rail (HS-73-07): personas run FROM the world and their results
-// land IN the world. A slim right-edge rail of avatars (the iPad's Agents
-// rail); tap → an anchored prompt (not a modal) → run through the real
-// route → the result renders with a copy affordance. Personas ONLY —
-// a coder is a live session, never railed (the Primitive Framework rule).
-import { useState } from "react";
+// The recipe rail (HS-73-07 → HS-83-02): personas run FROM the world and
+// their results land IN the world. A slim right-edge rail of avatars (the
+// iPad's Agents rail); tap → the persona's CONVERSATION (PersonaChat — a
+// persistent multi-turn thread; the old anchored single-prompt is retired).
+// Personas ONLY — a coder is a live session, never railed (the Primitive
+// Framework rule).
 import { useDesk } from "../store";
-import { MicButton } from "./MicButton";
 
 export function RecipeRail() {
   const agents = useDesk((s) => s.items.recipe);
   const profiles = useDesk((s) => s.profiles);
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [input, setInput] = useState("");
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [output, setOutput] = useState("");
-  const [copied, setCopied] = useState(false);
+  const chatPersonaId = useDesk((s) => s.chatPersonaId);
+  const { openChat, closeChat } = useDesk.getState();
 
   if (!agents.length) return null;
 
@@ -30,79 +26,19 @@ export function RecipeRail() {
     );
   };
 
-  const run = async (id: string) => {
-    setBusyId(id);
-    setOutput("");
-    setCopied(false);
-    const result = await useDesk.getState().runCapability("recipe", id, input);
-    setOutput(result.output);
-    setBusyId(null);
-  };
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(output);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      /* clipboard blocked; the text is selectable */
-    }
-  };
-
   return (
     <div className="desk-rail">
       {agents.map((a: any) => (
         <div key={a.id} className="desk-rail-slot">
           <button
             type="button"
-            className={
-              "desk-rail-avatar" +
-              (openId === a.id ? " open" : "") +
-              (busyId === a.id ? " working" : "")
-            }
+            className={"desk-rail-avatar" + (chatPersonaId === a.id ? " open" : "")}
             title={String(a.name || a.id)}
-            onClick={() => {
-              setOpenId((v) => (v === a.id ? null : a.id));
-              setOutput("");
-              setInput("");
-            }}
+            onClick={() => (chatPersonaId === a.id ? closeChat() : openChat(a.id))}
           >
             <span aria-hidden="true">{String(a.avatar || "🤖")}</span>
             {egressDot(a)}
           </button>
-          {openId === a.id && (
-            <div className="desk-rail-ask" onPointerDown={(e) => e.stopPropagation()}>
-              <div className="desk-rail-ask-row">
-                <MicButton onText={(t) => setInput((v) => (v ? v + " " + t : t))} />
-                <input
-                  autoFocus
-                  value={input}
-                  placeholder="Ask"
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && input.trim()) void run(a.id);
-                    if (e.key === "Escape") setOpenId(null);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="desk-chip"
-                  disabled={busyId === a.id || !input.trim()}
-                  onClick={() => void run(a.id)}
-                >
-                  {busyId === a.id ? "…" : "Run"}
-                </button>
-              </div>
-              {output && (
-                <>
-                  <pre className="desk-pullout-md">{output}</pre>
-                  <button type="button" className="desk-chip quiet" onClick={() => void copy()}>
-                    {copied ? "Copied" : "Copy"}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
         </div>
       ))}
     </div>

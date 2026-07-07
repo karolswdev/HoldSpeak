@@ -199,6 +199,201 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to run recipe")
 
+    def _kb_block(db: Any, kb_id: str) -> str:
+        """The KB honesty rider (HS-83-02, the 15-12 grammar): real hydrated
+        member content, or an explicit marker — never a hint string."""
+        from .ask import _context_material
+
+        kb = db.kbs.get(kb_id)
+        if kb is None:
+            return ""
+        name = kb.name or kb_id
+        texts: list[str] = []
+        for mid in list(getattr(kb, "member_ids", None) or [])[:12]:
+            bare = mid.split(":", 1)[1] if ":" in mid else mid
+            for kind in ("note", "artifact", "meeting"):
+                _, text = _context_material(db, bare, kind, "")
+                if text:
+                    texts.append(text[:1200])
+                    break
+        if texts:
+            return f"[KB: {name}]\n" + "\n\n".join(texts)
+        return f"[KB: {name} — no hydrated members]"
+
+    @router.post("/api/recipes/{recipe_id}/chat")
+    async def api_chat_recipe(recipe_id: str, request: Request) -> Any:
+        """One conversational turn with a persona (HS-83-02). Persists NOTHING —
+        harvest is the human's judgment (`/keep` below).
+
+        The turn's envelope mirrors the iPad's `recipeReply`: the persona's
+        standing context (`manual_context` + the KB honesty block), the
+        HSM-15-12 grounding refs hydrated from the canonical store, the last
+        12 turns, then the question. The role rides the system channel (the
+        transport-correct seat for `run_prompt`); everything else is the same
+        block grammar.
+        """
+        body = await _json_body(request) or {}
+        question = str(body.get("question") or "").strip()
+        if not question:
+            return JSONResponse({"error": "question is required"}, status_code=400)
+        try:
+            from ....db import get_database
+            from ....intel.models import MeetingIntelError
+            from ....intel.providers import (
+                build_configured_meeting_intel,
+                build_meeting_intel_for_profile,
+            )
+            from .ask import (
+                _GROUNDING_EXPANDS, _GROUNDING_MAX_REFS, _host_of, _hydrate_grounding,
+            )
+
+            db = get_database()
+            recipe = db.recipes.get(recipe_id)
+            if recipe is None:
+                return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
+            name = recipe.name or recipe_id
+
+            blocks: list[str] = []
+            ctx_parts: list[str] = []
+            if (recipe.manual_context or "").strip():
+                ctx_parts.append(recipe.manual_context)
+            if recipe.kb_id:
+                kb_text = _kb_block(db, recipe.kb_id)
+                if kb_text:
+                    ctx_parts.append(kb_text)
+            if ctx_parts:
+                blocks.append("[CONTEXT]\n" + "\n\n".join(ctx_parts))
+
+            # HSM-15-12 grounding — the SAME wire and refusal grammar as /api/ask.
+            grounding = body.get("grounding")
+            context_ids: list[str] = []
+            context_titles: list[str] = []
+            grounding_echo = None
+            if grounding is not None:
+                if not isinstance(grounding, dict):
+                    return JSONResponse({"error": "grounding must be an object"}, status_code=400)
+                raw_m = grounding.get("meeting_ids")
+                raw_a = grounding.get("artifact_ids")
+                meeting_ids = [str(x).strip() for x in raw_m if str(x).strip()] if isinstance(raw_m, list) else []
+                artifact_ids = [str(x).strip() for x in raw_a if str(x).strip()] if isinstance(raw_a, list) else []
+                expand = str(grounding.get("expand") or "summary").strip() or "summary"
+                if expand not in _GROUNDING_EXPANDS:
+                    return JSONResponse(
+                        {"error": f"expand {expand!r} is not one of {list(_GROUNDING_EXPANDS)}"},
+                        status_code=400,
+                    )
+                if len(meeting_ids) + len(artifact_ids) > _GROUNDING_MAX_REFS:
+                    return JSONResponse(
+                        {"error": f"grounding is capped at {_GROUNDING_MAX_REFS} refs"},
+                        status_code=400,
+                    )
+                g_blocks, g_ids, g_titles, unknown = _hydrate_grounding(
+                    db, meeting_ids, artifact_ids, expand
+                )
+                if unknown:
+                    return JSONResponse(
+                        {"error": "grounding ids not on this hub", "unknown_ids": unknown},
+                        status_code=400,
+                    )
+                if g_blocks:
+                    blocks.append("[GROUNDING]\n" + "\n\n".join(g_blocks))
+                context_ids += g_ids
+                context_titles += g_titles
+                grounding_echo = {
+                    "meeting_ids": meeting_ids, "artifact_ids": artifact_ids,
+                    "expand": expand, "titles": g_titles,
+                }
+
+            history = body.get("history") if isinstance(body.get("history"), list) else []
+            window = [h for h in history if isinstance(h, dict)][-12:]
+            if window:
+                convo = "\n".join(
+                    ("User: " if str(h.get("role")) == "you" else f"{name}: ") + str(h.get("text") or "")
+                    for h in window
+                )
+                blocks.append("[CONVERSATION SO FAR]\n" + convo)
+            blocks.append("[USER]\n" + question[:6000] + f"\n\nReply as {name}.")
+
+            ran_profile_id = (recipe.profile_id or "").strip() or None
+            prof = db.profiles.get(ran_profile_id) if ran_profile_id else None
+            if prof is not None and not prof.deleted:
+                intel = build_meeting_intel_for_profile(
+                    kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id
+                )
+            else:
+                ran_profile_id = None
+                prof = None
+                intel = build_configured_meeting_intel()
+
+            system_prompt = (recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant."
+            _run_frame(ctx, "running", kind="recipe", ref=recipe_id, name=name)
+            try:
+                output = intel.run_prompt(
+                    system_prompt=system_prompt,
+                    user_prompt="\n\n".join(blocks),
+                )
+            except MeetingIntelError as exc:
+                _run_frame(ctx, "error", kind="recipe", ref=recipe_id, name=name, error=str(exc))
+                return JSONResponse({"error": str(exc), "recipe_id": recipe_id}, status_code=502)
+            _run_frame(ctx, "ready", kind="recipe", ref=recipe_id, name=name)
+
+            # The turn's HONEST egress — the 16-09 grammar, same as /api/ask.
+            if prof is not None and prof.kind == "openAICompatible" and prof.base_url:
+                egress: dict[str, Any] = {"scope": "cloud", "host": _host_of(prof.base_url)}
+                model = str(prof.model or "")
+            elif intel.active_provider == "cloud":
+                from ....config import Config
+
+                meeting_cfg = Config.load().meeting
+                egress = {"scope": "cloud", "host": _host_of(meeting_cfg.intel_cloud_base_url) or "api.openai.com"}
+                model = str(meeting_cfg.intel_cloud_model or "")
+            else:
+                from ..sync import _hub_model_name
+
+                egress = {"scope": "local"}
+                model = _hub_model_name(ctx)
+
+            payload: dict[str, Any] = {
+                "recipe_id": recipe_id,
+                "output": output,
+                "provider": intel.active_provider,
+                "profile_id": ran_profile_id,
+                "egress": egress,
+                "model": model,
+                "context_ids": context_ids,
+                "context_titles": context_titles,
+            }
+            if grounding_echo is not None:
+                payload["grounding"] = grounding_echo
+            return JSONResponse(payload)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to chat with recipe")
+
+    @router.post("/api/recipes/{recipe_id}/keep")
+    async def api_keep_recipe_reply(recipe_id: str, request: Request) -> Any:
+        """Harvest one chat reply onto the desk — the run-born artifact the
+        run route mints, minted only when the human says keep."""
+        body = await _json_body(request) or {}
+        output = str(body.get("output") or "")
+        if not output.strip():
+            return JSONResponse({"error": "output is required"}, status_code=400)
+        try:
+            from ....db import get_database
+            recipe = get_database().recipes.get(recipe_id)
+            if recipe is None:
+                return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
+            artifact_id = _persist_run_artifact(
+                kind="recipe", name=recipe.name or recipe_id,
+                user_input=str(body.get("question") or ""),
+                output=output,
+                sources=[{"source_type": "recipe", "source_ref": recipe_id}],
+            )
+            if not artifact_id:
+                return JSONResponse({"error": "keep failed"}, status_code=500)
+            return JSONResponse({"artifact_id": artifact_id}, status_code=201)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to keep chat reply")
+
     # ── Runtime profiles (Phase 24) ───────────────────────────────────────
     # SHAPE ONLY over the API. The api key never rides a profile body; it lives in
     # the hub's secrets (env: HOLDSPEAK_PROFILE_<ID>_KEY) and is joined at run time.

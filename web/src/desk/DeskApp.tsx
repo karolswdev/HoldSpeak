@@ -13,12 +13,14 @@ import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
 import { RecordOrb } from "./components/RecordOrb";
 import { RecipeRail } from "./components/RecipeRail";
+import { PersonaChat } from "./components/PersonaChat";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
 import "./desk.css";
 
 export default function DeskApp() {
   const items = useDesk((s) => s.items);
   const updatedAt = useDesk((s) => s.updatedAt);
+  const chatPersonaId = useDesk((s) => s.chatPersonaId);
   const { refresh } = useDesk.getState();
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export default function DeskApp() {
       {updatedAt !== null && total === 0 ? <EmptyDesk /> : <World />}
       <RecordOrb />
       <RecipeRail />
+      {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
       <MissionControlConveyor />
     </div>
   );

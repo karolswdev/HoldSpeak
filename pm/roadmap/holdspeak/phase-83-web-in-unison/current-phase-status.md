@@ -1,11 +1,12 @@
 # Phase 83 — Web in Unison (the desk speaks back)
 
-**Status:** OPEN (1/4) — opened 2026-07-07 on the owner's direction, the same
+**Status:** OPEN (2/4) — opened 2026-07-07 on the owner's direction, the same
 session HSM-15-12/15-13 shipped on iOS.
 
-**Last updated:** 2026-07-07 (HS-83-01 done — the web composer grounds asks:
-the picker + honest fetched-length gauge + refs-only wire; rig-proven with the
-captured-prompt treatment assert; 49/49 vitest; 2 screenshots).
+**Last updated:** 2026-07-07 (HS-83-02 done — personas grow threads: the chat
+route assembles context + KB honesty + grounding + the 12-turn window
+server-side and persists nothing; the rail opens conversations; device-local
+persistence; harvest via /keep. Hub 3215 · vitest 54 · rig-proven · 2 shots).
 
 ## Why this phase exists
 
@@ -70,13 +71,35 @@ the web desk, riding the same wire.
 | ID | Story | Status | Story file |
 |----|-------|--------|------------|
 | HS-83-01 | Ground this ask, on the web composer | **done** (2026-07-07 — picker + gauge + refs wire; rig + 49 vitest + 2 shots) | [story-01](./story-01-ground-this-ask-on-the-web.md) |
-| HS-83-02 | Agent conversations (the rail grows threads) | open | [story-02](./story-02-agent-conversations.md) |
+| HS-83-02 | Agent conversations (the rail grows threads) | **done** (2026-07-07 — `/api/recipes/{id}/chat` + `/keep`; PersonaChat + device-local threads; grounding rides; rig + 6 pytest + 5 vitest + 2 shots) | [story-02](./story-02-agent-conversations.md) |
 | HS-83-03 | The models front door (`/api/models` + chat-with-model) | open | [story-03](./story-03-the-models-front-door.md) |
 | HS-83-04 | Docs + the live walk | open | [story-04](./story-04-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 (later) — THE WEB COMPOSER GROUNDS ASKS (HS-83-01 done).** The
+**2026-07-07 (later still) — PERSONAS GROW THREADS (HS-83-02 done).** The rail's
+avatars open CONVERSATIONS now (the anchored single-prompt is retired):
+`PersonaChat` is the docked thread — bubbles, the thinking beat, a per-turn
+HONEST badge (the hub's reported egress/model, never inferred), Save-to-desk
+per reply, and the HS-83-01 grounding picker on the composer with
+per-conversation persistence. The turn is ONE hub call:
+`POST /api/recipes/{id}/chat` assembles the persona's standing context (manual
++ the KB honesty block — hydrated members or the explicit marker), the
+HSM-15-12 grounding refs (same wire, same refusals as `/api/ask`), the last 12
+turns, then the question — the role rides the system channel — and persists
+NOTHING; `POST /api/recipes/{id}/keep` mints the run-born artifact only on the
+human's keep. Threads are device-local (`localStorage` — the iPad AppStorage
+posture; recipes sync, threads don't). Proof: the rig ran a real two-turn
+conversation — grounding attached MID-thread hydrated the meeting into turn 2's
+captured prompt in the pinned block order, the reply harvested to a NEW desk
+artifact, and the thread survived a reload. Hub **3215** (the api-surface
+drift guard caught a pre-consumer regen — regenerate AFTER the client call
+sites exist), vitest **54**, 2 screenshots. `use_zone_context` stays honestly
+unassembled on web (the zone contract isn't on this wire — noted in the
+story). Next: HS-83-03 (the models front door — a model chat is one of THESE
+threads with a pinned model).
+
+Earlier — **2026-07-07 (later) — THE WEB COMPOSER GROUNDS ASKS (HS-83-01 done).** The
 "Ground this ask" section sits on `AskPanel` under Runs-on: meetings expand to
 digest / transcript / each bound artifact (independently toggleable, iPad
 defaults — digest on, transcript opt-in), the gauge prices the selection from

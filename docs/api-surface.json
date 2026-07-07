@@ -1971,6 +1971,26 @@
       ]
     },
     {
+      "path": "/api/recipes/{recipe_id}/chat",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/recipes/{recipe_id}/keep",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.recipes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/recipes/{recipe_id}/run",
       "methods": [
         "POST"
