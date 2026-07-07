@@ -1,8 +1,11 @@
 # Phase 84 — One Runtime (where intelligence runs is a profile)
 
-**Status:** OPEN (0/5, scaffolded 2026-07-07).
+**Status:** OPEN (1/5).
 
-**Last updated:** 2026-07-07 (phase scaffolded; no story started).
+**Last updated:** 2026-07-07 (HS-84-01 done — the resolver seam
+`effective_intel_cloud` + `meeting.intel_profile_id`, adopted by all four
+config→cloud-shape sites: plugins' default constructor, the live session,
+the deferred-queue drain, the CLI).
 
 ## Why this phase exists
 
@@ -109,7 +112,7 @@ the profile editor.
 
 | ID | Story | Status | Story file |
 |----|-------|--------|------------|
-| HS-84-01 | Meeting intelligence runs on a profile | backlog | [story-01](./story-01-meeting-intel-on-a-profile.md) |
+| HS-84-01 | Meeting intelligence runs on a profile | **done** (2026-07-07 — `effective_intel_cloud` seam + `intel_profile_id`; all four derivation sites adopted; 14 new tests + neighbors green) | [story-01](./story-01-meeting-intel-on-a-profile.md) |
 | HS-84-02 | Dictation runs on a profile | backlog | [story-02](./story-02-dictation-on-a-profile.md) |
 | HS-84-03 | Settings pick, not type | backlog | [story-03](./story-03-settings-pick-not-type.md) |
 | HS-84-04 | The honest doctor + one egress derivation | backlog | [story-04](./story-04-honest-doctor-one-egress.md) |
@@ -117,11 +120,27 @@ the profile editor.
 
 ## Where we are
 
-**2026-07-07 — scaffolded.** The phase folder, five story stubs, the README
-pointer, and the BACKLOG reconciliation (candidate S's already-shipped
-majority recorded there) land together. Next: HS-84-01, the resolver seam +
-meeting intel — it generalizes `build_meeting_intel_for_profile`, which
-already exists and is tested on the ask/recipes path.
+**2026-07-07 — HS-84-01 done: meeting intelligence runs on a profile.**
+`MeetingConfig.intel_profile_id` (config-version-safe, normalized on the
+settings route) + the ONE resolver seam
+`effective_intel_cloud(meeting_cfg, get_profile=None)` in
+`intel/providers.py`: valid `openAICompatible` profile → its
+base_url/model with `HOLDSPEAK_PROFILE_<ID>_KEY` preferred, legacy env
+fallback; dangling/deleted/onDevice-kind/lookup-failure → the legacy
+`intel_cloud_*` shape with a named reason (never a crash); unset →
+byte-identical. Scope grew honestly (recorded in the story): the survey
+found FOUR config→cloud-triple derivation sites, not one — plugins'
+`build_configured_meeting_intel`, `resolve_llm_capability`, the live
+session construction (`runtime/meeting_glue.py`), the deferred-queue drain
+(`web/routes/meetings/intel.py`), and the CLI (`commands/intel.py`) — all
+now read the seam, so the live meeting and the plugins can't split across
+two worlds. 14 new tests (the resolution matrix, both constructors, config
++ settings round trips incl. clear-to-None); neighboring suites 136 passed
+unmodified. Next: HS-84-02 — dictation adopts the same seam.
+
+Earlier — **2026-07-07 — scaffolded.** The phase folder, five story stubs,
+the README pointer, and the BACKLOG reconciliation (candidate S's
+already-shipped majority recorded there) landed together (PR #286).
 
 ## Active risks
 

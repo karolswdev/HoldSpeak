@@ -229,6 +229,14 @@ class MeetingGlueMixin:
                 log.warning("segment intent probe unavailable; using lexical scoring", exc_info=True)
                 segment_probe = None
 
+        # HS-84-01: the session's cloud leg runs where the assigned RuntimeProfile
+        # says (dangling/none ⇒ the legacy intel_cloud_* shape, byte-identical).
+        from ..intel.providers import effective_intel_cloud
+
+        effective_cloud = effective_intel_cloud(self.config.meeting)
+        if effective_cloud.reason:
+            log.warning("meeting intel profile fallback: %s", effective_cloud.reason)
+
         try:
             session = MeetingSession(
                 transcriber=self.transcriber,
@@ -245,9 +253,9 @@ class MeetingGlueMixin:
                 intel_enabled=self.config.meeting.intel_enabled,
                 intel_model_path=self.config.meeting.intel_realtime_model,
                 intel_provider=self.config.meeting.intel_provider,
-                intel_cloud_model=self.config.meeting.intel_cloud_model,
-                intel_cloud_api_key_env=self.config.meeting.intel_cloud_api_key_env,
-                intel_cloud_base_url=self.config.meeting.intel_cloud_base_url,
+                intel_cloud_model=effective_cloud.model,
+                intel_cloud_api_key_env=effective_cloud.api_key_env,
+                intel_cloud_base_url=effective_cloud.base_url,
                 intel_cloud_reasoning_effort=self.config.meeting.intel_cloud_reasoning_effort,
                 intel_cloud_store=self.config.meeting.intel_cloud_store,
                 intel_deferred_enabled=self.config.meeting.intel_deferred_enabled,

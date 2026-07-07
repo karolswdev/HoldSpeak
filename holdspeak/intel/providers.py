@@ -8,8 +8,9 @@ that monkeypatch `holdspeak.intel.OpenAI` / `holdspeak.intel.Llama` are honored.
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 from urllib.parse import urlparse
 
 import holdspeak.intel as _intel_pkg
@@ -181,11 +182,11 @@ def resolve_llm_capability(meeting_config: Any) -> bool:
         if not bool(getattr(meeting_config, "intel_enabled", False)):
             return False
         provider = getattr(meeting_config, "intel_provider", None) or DEFAULT_INTEL_PROVIDER
+        effective = effective_intel_cloud(meeting_config)
         kwargs: dict[str, Any] = {
-            "cloud_model": getattr(meeting_config, "intel_cloud_model", None) or DEFAULT_INTEL_CLOUD_MODEL,
-            "cloud_api_key_env": getattr(meeting_config, "intel_cloud_api_key_env", None)
-            or DEFAULT_INTEL_CLOUD_API_KEY_ENV,
-            "cloud_base_url": getattr(meeting_config, "intel_cloud_base_url", None),
+            "cloud_model": effective.model,
+            "cloud_api_key_env": effective.api_key_env,
+            "cloud_base_url": effective.base_url,
         }
         model_path = getattr(meeting_config, "intel_realtime_model", None)
         if model_path:
@@ -208,11 +209,12 @@ def build_configured_meeting_intel() -> "MeetingIntel":
     from .engine import MeetingIntel
 
     meeting = Config.load().meeting
+    effective = effective_intel_cloud(meeting)
     kwargs: dict[str, Any] = {
         "provider": getattr(meeting, "intel_provider", DEFAULT_INTEL_PROVIDER),
-        "cloud_model": getattr(meeting, "intel_cloud_model", DEFAULT_INTEL_CLOUD_MODEL),
-        "cloud_api_key_env": getattr(meeting, "intel_cloud_api_key_env", DEFAULT_INTEL_CLOUD_API_KEY_ENV),
-        "cloud_base_url": getattr(meeting, "intel_cloud_base_url", None),
+        "cloud_model": effective.model,
+        "cloud_api_key_env": effective.api_key_env,
+        "cloud_base_url": effective.base_url,
         "cloud_reasoning_effort": getattr(meeting, "intel_cloud_reasoning_effort", None),
         "cloud_store": bool(getattr(meeting, "intel_cloud_store", False)),
     }
@@ -227,6 +229,83 @@ def profile_key_env(profile_id: str) -> str:
     the hub's SECRETS (env), never on the synced profile shape or in the payload."""
     safe = "".join(ch if ch.isalnum() else "_" for ch in str(profile_id or "").upper())
     return f"HOLDSPEAK_PROFILE_{safe}_KEY"
+
+
+@dataclass(frozen=True)
+class EffectiveIntelCloud:
+    """The meeting-intel cloud leg's effective endpoint shape (HS-84-01).
+
+    ``profile_id``/``profile_name`` are set only when an assigned RuntimeProfile
+    was actually adopted. ``reason`` is set only when a profile was assigned but
+    NOT used (dangling id, non-endpoint kind, lookup unavailable) — it is the
+    honest sentence doctor/status surfaces later; the shape itself has already
+    fallen back to the legacy ``intel_cloud_*`` fields.
+    """
+
+    model: str
+    api_key_env: str
+    base_url: Optional[str]
+    profile_id: Optional[str] = None
+    profile_name: Optional[str] = None
+    reason: Optional[str] = None
+
+
+def _lookup_profile_record(profile_id: str) -> Any:
+    """Best-effort RuntimeProfile lookup for config resolution.
+
+    Meeting intel is constructed on CLI and early-boot paths too, so a missing
+    or unopenable DB must degrade to the legacy config shape, never raise."""
+    from ..db import get_database
+
+    return get_database().profiles.get(profile_id)
+
+
+def effective_intel_cloud(
+    meeting_cfg: Any,
+    *,
+    get_profile: Optional[Callable[[str], Any]] = None,
+) -> EffectiveIntelCloud:
+    """Resolve where the meeting-intel cloud leg runs (HS-84-01).
+
+    Resolution order: a valid assigned ``openAICompatible`` RuntimeProfile →
+    the legacy ``intel_cloud_*`` config shape. ``intel_provider`` semantics
+    (local / auto / cloud) are untouched — this shapes only the cloud leg.
+    An adopted profile's key is ``HOLDSPEAK_PROFILE_<ID>_KEY`` when that env
+    var is set, else the legacy key env (matching
+    ``build_meeting_intel_for_profile``).
+    """
+    legacy = EffectiveIntelCloud(
+        model=str(getattr(meeting_cfg, "intel_cloud_model", "") or "").strip()
+        or DEFAULT_INTEL_CLOUD_MODEL,
+        api_key_env=str(getattr(meeting_cfg, "intel_cloud_api_key_env", "") or "").strip()
+        or DEFAULT_INTEL_CLOUD_API_KEY_ENV,
+        base_url=getattr(meeting_cfg, "intel_cloud_base_url", None),
+    )
+    profile_id = str(getattr(meeting_cfg, "intel_profile_id", "") or "").strip()
+    if not profile_id:
+        return legacy
+
+    try:
+        prof = (get_profile or _lookup_profile_record)(profile_id)
+    except Exception as exc:
+        return replace(legacy, reason=f"profile lookup unavailable ({exc.__class__.__name__}): {profile_id}")
+    if prof is None or bool(getattr(prof, "deleted", False)):
+        return replace(legacy, reason=f"assigned profile missing: {profile_id}")
+    kind = str(getattr(prof, "kind", "") or "")
+    base_url = str(getattr(prof, "base_url", "") or "").strip()
+    if kind != "openAICompatible" or not base_url:
+        return replace(
+            legacy,
+            reason=f"assigned profile is {kind or 'unknown'}-kind; running on the hub engine",
+        )
+    env = profile_key_env(profile_id)
+    return EffectiveIntelCloud(
+        model=str(getattr(prof, "model", "") or "").strip() or legacy.model,
+        api_key_env=env if os.environ.get(env) else legacy.api_key_env,
+        base_url=base_url,
+        profile_id=profile_id,
+        profile_name=str(getattr(prof, "name", "") or "").strip() or profile_id,
+    )
 
 
 def build_meeting_intel_for_profile(
