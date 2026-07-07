@@ -462,12 +462,27 @@ def _check_meeting_intel_egress(config: Config) -> DoctorCheck:
             detail=description,
         )
 
+    # HS-84-04: name where the cloud leg ACTUALLY goes — an assigned
+    # RuntimeProfile (HS-84-01) is the endpoint, not the raw legacy fields.
+    from ..intel.providers import effective_intel_cloud, endpoint_host
+
+    effective = effective_intel_cloud(meeting)
+    if effective.profile_id:
+        destination = (
+            f" Runs on profile '{effective.profile_name}'"
+            f" ({endpoint_host(effective.base_url) or effective.base_url})."
+        )
+    elif effective.reason:
+        destination = f" NOTE: {effective.reason}."
+    else:
+        destination = ""
+
     # Cloud is a legitimate, user-chosen option; we surface it loudly so it is
     # never a surprise, but it is not a failure.
     return DoctorCheck(
         name="Meeting intelligence egress",
         status="WARN",
-        detail=f"provider=`{meeting.intel_provider}`: {description}",
+        detail=f"provider=`{meeting.intel_provider}`: {description}{destination}",
         fix=(
             "This is expected if you chose cloud intentionally. To keep all "
             "transcripts local, set meeting.intel_provider to 'local'."
@@ -690,6 +705,82 @@ def _check_dictation_project_context(config: Config) -> DoctorCheck:
     )
 
 
+def _check_runtime_profiles(config: Config) -> DoctorCheck:
+    """HS-84-04: name the RuntimeProfile each hub pipeline resolves to.
+
+    One honest line per enabled pipeline (meeting intel, dictation). A
+    dangling assignment is a WARN with the resolver's own reason; an adopted
+    profile that `requires_key` with no key in the hub's env is a WARN naming
+    the exact env var. Never FAIL — every fallback keeps the pipeline running.
+    """
+    from ..intel.providers import (
+        _lookup_profile_record,
+        effective_dictation_llm,
+        effective_intel_cloud,
+        endpoint_host,
+        profile_key_env,
+    )
+
+    pipelines: list[tuple[str, object]] = []
+    if config.meeting.intel_enabled:
+        pipelines.append(("meeting intel", effective_intel_cloud(config.meeting)))
+    if config.dictation.pipeline.enabled:
+        pipelines.append(("dictation", effective_dictation_llm(config.dictation.runtime)))
+    if not pipelines:
+        return DoctorCheck(
+            name="Runtime profiles",
+            status="PASS",
+            detail="no pipeline enabled — nothing resolves through a profile",
+        )
+
+    lines: list[str] = []
+    warns: list[str] = []
+    fixes: list[str] = []
+    for label, effective in pipelines:
+        if effective.profile_id:
+            lines.append(
+                f"{label}: profile '{effective.profile_name}'"
+                f" ({endpoint_host(effective.base_url) or effective.base_url})"
+            )
+            try:
+                record = _lookup_profile_record(effective.profile_id)
+            except Exception:
+                record = None
+            if (
+                record is not None
+                and bool(getattr(record, "requires_key", False))
+                and not os.environ.get(effective.api_key_env)
+            ):
+                warns.append(
+                    f"{label}: profile '{effective.profile_name}' requires a key"
+                    f" but ${effective.api_key_env} is unset"
+                )
+                fixes.append(
+                    f"export {profile_key_env(effective.profile_id)}=<key> on this hub"
+                    " (keys never sync; each device holds its own)"
+                )
+        elif effective.reason:
+            warns.append(f"{label}: {effective.reason}")
+            fixes.append(
+                f"Re-pick the {label} profile in Settings, or clear its profile id"
+            )
+        else:
+            lines.append(f"{label}: hub default (no profile assigned)")
+
+    if warns:
+        return DoctorCheck(
+            name="Runtime profiles",
+            status="WARN",
+            detail="; ".join(warns + lines),
+            fix=" · ".join(dict.fromkeys(fixes)),
+        )
+    return DoctorCheck(
+        name="Runtime profiles",
+        status="PASS",
+        detail="; ".join(lines),
+    )
+
+
 def _check_dictation_runtime(config: Config) -> DoctorCheck:
     """DIR-DOC-001: report the resolved dictation LLM runtime + model availability.
 
@@ -706,8 +797,30 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
             detail="dictation pipeline disabled (opt-in)",
         )
 
+    from ..intel.providers import effective_dictation_llm
     from ..plugins.dictation.guidance import doctor_model_fix, doctor_runtime_install_fix
     from ..plugins.dictation.runtime import RuntimeUnavailableError, resolve_backend
+
+    # HS-84-04: name the RuntimeProfile the pipeline resolves to. An adopted
+    # profile selects the endpoint backend (HS-84-02); a dangling assignment
+    # falls back to the configured backend and must say so loudly.
+    effective = effective_dictation_llm(cfg.runtime)
+    if effective.profile_id:
+        return DoctorCheck(
+            name="LLM runtime",
+            status="PASS",
+            detail=(
+                f"runs on profile '{effective.profile_name}'; endpoint="
+                f"{effective.base_url}; model={effective.model}"
+            ),
+        )
+    profile_note = f" NOTE: {effective.reason}." if effective.reason else ""
+    profile_fix = (
+        "Re-pick a profile in Dictation → Runtime (or clear "
+        "dictation.runtime.profile_id). "
+        if effective.reason
+        else ""
+    )
 
     requested = cfg.runtime.backend
     try:
@@ -716,19 +829,20 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
         return DoctorCheck(
             name="LLM runtime",
             status="WARN",
-            detail=f"requested={requested!r}; resolution failed: {exc}",
-            fix=doctor_runtime_install_fix(requested),
+            detail=f"requested={requested!r}; resolution failed: {exc}{profile_note}",
+            fix=f"{profile_fix}{doctor_runtime_install_fix(requested)}",
         )
 
     if resolved == "openai_compatible":
         return DoctorCheck(
             name="LLM runtime",
-            status="PASS",
+            status="WARN" if effective.reason else "PASS",
             detail=(
                 f"resolved={resolved} ({reason}); endpoint="
                 f"{cfg.runtime.openai_compatible_base_url}; "
-                f"model={cfg.runtime.openai_compatible_model}"
+                f"model={cfg.runtime.openai_compatible_model}{profile_note}"
             ),
+            fix=profile_fix or None,
         )
 
     target = (
@@ -740,14 +854,15 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
         return DoctorCheck(
             name="LLM runtime",
             status="WARN",
-            detail=f"resolved={resolved} ({reason}); model missing at {target}",
-            fix=doctor_model_fix(resolved, target),
+            detail=f"resolved={resolved} ({reason}); model missing at {target}{profile_note}",
+            fix=f"{profile_fix}{doctor_model_fix(resolved, target)}",
         )
 
     return DoctorCheck(
         name="LLM runtime",
-        status="PASS",
-        detail=f"resolved={resolved} ({reason}); model available at {target}",
+        status="WARN" if effective.reason else "PASS",
+        detail=f"resolved={resolved} ({reason}); model available at {target}{profile_note}",
+        fix=profile_fix or None,
     )
 
 
@@ -1010,6 +1125,7 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_web_auth(config),
         _check_meeting_intel_runtime(config),
         _check_meeting_intel_egress(config),
+        _check_runtime_profiles(config),
         _check_meeting_intel_cloud_preflight(config, skip_network=skip_network),
         _check_dictation_project_context(config),
         _check_dictation_runtime(config),

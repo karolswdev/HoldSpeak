@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 84
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-84-01, HS-84-02
 - **Unblocks:** HS-84-05
 - **Owner:** unassigned
@@ -57,3 +57,20 @@ product refuses. One derivation, everywhere.
 - `intel_egress_posture`'s prose strings are user-facing via doctor; keep
   the badge-not-prose rule for UI surfaces, but doctor's terminal lines may
   stay sentences (they already are).
+- **Shape of the "one helper" (recorded):** it split naturally into two
+  layers — `endpoint_egress(cloud=, base_url=, label=)` in
+  `intel/providers.py` is the ONE badge constructor every site calls
+  (routes, cadence, audit), and `_run_egress(ctx, prof, intel)` in `ask.py`
+  is the shared run-badge derivation (imported by recipes.py, the same
+  pattern as `_hydrate_grounding`). `intel_egress_posture` stays as the
+  provider-level *intent* prose (doctor/status), now suffixed with the
+  resolved destination.
+- **The find:** the default-cloud run badge read the RAW
+  `intel_cloud_base_url` — but since HS-84-01 the default engine may run on
+  the assigned intel profile, so the badge could name the wrong host. The
+  shared derivation now reports `effective_intel_cloud`, i.e. where the run
+  actually went (test-pinned).
+- Added a dedicated "Runtime profiles" doctor check (registered in
+  `collect_doctor_checks`, so the setup-status drift guard covers it
+  automatically) rather than overloading the two existing checks — one place
+  answers "where does each pipeline run" at a glance.

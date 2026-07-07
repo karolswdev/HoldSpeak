@@ -101,7 +101,11 @@ def _trust_block(config: Any, *, web_bind: str = "127.0.0.1") -> dict[str, Any]:
 
     endpoints: list[str] = []
     if meeting.intel_enabled and str(meeting.intel_provider).lower() != "local":
-        base = (meeting.intel_cloud_base_url or "").strip()
+        # HS-84-04: the EFFECTIVE endpoint — an assigned RuntimeProfile
+        # (HS-84-01) is where transcripts actually go, not the raw field.
+        from .intel.providers import effective_intel_cloud
+
+        base = (effective_intel_cloud(meeting).base_url or "").strip()
         if base:
             endpoints.append(base)
     # HS-84-02: report the EFFECTIVE dictation endpoint — an adopted

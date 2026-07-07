@@ -45,13 +45,29 @@ _ASK_SYSTEM_PROMPT = (
 )
 
 
-def _host_of(base_url: Any) -> str:
-    """The bare host a cloud run egresses to (never a full URL in a badge)."""
-    raw = str(base_url or "").strip()
-    if not raw:
-        return ""
-    parsed = urlparse(raw if "//" in raw else f"//{raw}")
-    return parsed.hostname or ""
+# HS-84-04: the host/badge derivation lives with the resolver now; the alias
+# keeps this module's import surface (recipes.py) stable.
+from ....intel.providers import endpoint_egress, endpoint_host as _host_of
+
+
+def _run_egress(ctx: Any, prof: Any, intel: Any) -> tuple[dict[str, Any], str]:
+    """The run's HONEST egress badge + model (the 16-09 grammar), ONE derivation.
+
+    A profile run names its endpoint's host. A default cloud run names the
+    endpoint the engine ACTUALLY used — `effective_intel_cloud`, so an
+    assigned intel profile (HS-84-01) is reported, not the raw legacy config.
+    """
+    if prof is not None and prof.kind == "openAICompatible" and prof.base_url:
+        return endpoint_egress(cloud=True, base_url=prof.base_url), str(prof.model or "")
+    if intel.active_provider == "cloud":
+        from ....config import Config
+        from ....intel.providers import effective_intel_cloud
+
+        effective = effective_intel_cloud(Config.load().meeting)
+        return endpoint_egress(cloud=True, base_url=effective.base_url), str(effective.model or "")
+    from ..sync import _hub_model_name
+
+    return endpoint_egress(cloud=False), _hub_model_name(ctx)
 
 
 def _meeting_digest(state: Any) -> str:
@@ -373,22 +389,8 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
             _run_frame(ctx, "ready", kind="ask", ref="ask", name=lens)
 
             # The run's HONEST egress (the 16-09 grammar: state where THIS run
-            # went, never the app default). A profile run names its endpoint's
-            # host; a default run reports what the engine actually used.
-            if prof is not None and prof.kind == "openAICompatible" and prof.base_url:
-                egress: dict[str, Any] = {"scope": "cloud", "host": _host_of(prof.base_url)}
-                model = str(prof.model or "")
-            elif intel.active_provider == "cloud":
-                from ....config import Config
-
-                meeting_cfg = Config.load().meeting
-                egress = {"scope": "cloud", "host": _host_of(meeting_cfg.intel_cloud_base_url) or "api.openai.com"}
-                model = str(meeting_cfg.intel_cloud_model or "")
-            else:
-                from ..sync import _hub_model_name
-
-                egress = {"scope": "local"}
-                model = _hub_model_name(ctx)
+            # went, never the app default) — the one derivation (HS-84-04).
+            egress, model = _run_egress(ctx, prof, intel)
 
             payload: dict[str, Any] = {
                 "output": output,

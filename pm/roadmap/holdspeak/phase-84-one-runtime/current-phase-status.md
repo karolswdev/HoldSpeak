@@ -1,12 +1,13 @@
 # Phase 84 — One Runtime (where intelligence runs is a profile)
 
-**Status:** OPEN (3/5).
+**Status:** OPEN (4/5).
 
-**Last updated:** 2026-07-07 (HS-84-03 done — both endpoint sections author
-by PICKING: the /settings cloud section and the /dictation Runtime tab each
-grew a "Runs on" profile picker + egress badge + the /profiles door; the raw
-base-URL/model/key-env inputs are gone from the UI; screenshot-verified in
-both states, and the pass caught + fixed an Alpine select-display race).
+**Last updated:** 2026-07-07 (HS-84-04 done — `endpoint_egress` is the ONE
+badge constructor (routes/cadence/audit), the run badge reports the
+EFFECTIVE endpoint (found + fixed: it read the raw legacy field while the
+engine ran on the assigned profile), and doctor grew the "Runtime profiles"
+check — per-pipeline resolution by name, dangling WARNs, missing
+per-profile keys named).
 
 ## Why this phase exists
 
@@ -116,12 +117,36 @@ the profile editor.
 | HS-84-01 | Meeting intelligence runs on a profile | **done** (2026-07-07 — `effective_intel_cloud` seam + `intel_profile_id`; all four derivation sites adopted; 14 new tests + neighbors green) | [story-01](./story-01-meeting-intel-on-a-profile.md) |
 | HS-84-02 | Dictation runs on a profile | **done** (2026-07-07 — `dictation.runtime.profile_id` via the shared `_apply_runtime_profile`; adopted ⇒ openai_compatible backend; probe/status honest; 11 new tests, 437 neighbors green) | [story-02](./story-02-dictation-on-a-profile.md) |
 | HS-84-03 | Settings pick, not type | **done** (2026-07-07 — pickers + badges on /settings cloud + /dictation Runtime; raw endpoint inputs gone; 4 asserted screenshots; the rig caught a real Alpine select race) | [story-03](./story-03-settings-pick-not-type.md) |
-| HS-84-04 | The honest doctor + one egress derivation | backlog | [story-04](./story-04-honest-doctor-one-egress.md) |
+| HS-84-04 | The honest doctor + one egress derivation | **done** (2026-07-07 — `endpoint_egress` + shared `_run_egress` (fixed the stale-badge find); the "Runtime profiles" doctor check; 13 new tests, doctor 62 + neighbors 70 unmodified) | [story-04](./story-04-honest-doctor-one-egress.md) |
 | HS-84-05 | Docs + the live walk | backlog | [story-05](./story-05-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 — HS-84-03 done: settings pick, not type.** Both endpoint
+**2026-07-07 — HS-84-04 done: the honest doctor + one egress derivation.**
+The badge has ONE constructor now — `endpoint_egress(cloud=, base_url=,
+label=)` in `intel/providers.py` — called by the routes (via the shared
+`_run_egress` in `ask.py`, imported by recipes like `_hydrate_grounding`),
+cadence's `_LOCAL_EGRESS`, and the audit snapshot; wire shapes unchanged
+(route tests pass verbatim). The story's FIND, fixed and test-pinned: the
+default-cloud run badge read the RAW `intel_cloud_base_url`, but since
+HS-84-01 the default engine may run on the assigned intel profile — the
+badge could name the wrong host; `_run_egress` now reports
+`effective_intel_cloud`, where the run actually went. Doctor grew a
+dedicated **"Runtime profiles"** check (registered in
+`collect_doctor_checks`, so the setup-status drift guard covers it
+automatically): per-pipeline resolution by name ("meeting intel: profile
+'LAN box' (192.168.1.43); dictation: hub default"), dangling assignments as
+WARNs with the resolver's own reason, and `requires_key` profiles with no
+key a WARN naming the exact `HOLDSPEAK_PROFILE_<ID>_KEY` to export (keys
+never sync — each device holds its own). The two existing checks got the
+same honesty: intel egress names the adopted profile's host; the LLM
+runtime check reports "runs on profile …" / carries the dangling note.
+`setup_status`'s trust endpoints now list the EFFECTIVE intel endpoint too.
+13 new tests (`test_doctor_runtime_profiles.py`); doctor suite 62 +
+route/status neighbors 70 pass unmodified. Next: HS-84-05 — docs + the live
+walk on `.43` closes the phase.
+
+Earlier — **2026-07-07 — HS-84-03 done: settings pick, not type.** Both endpoint
 sections author by picking now. `/settings` → Cloud & advanced: a "Runs on"
 select (`Hub default` + every non-deleted profile as `name — host`) bound to
 `meeting.intel_profile_id`, wearing the pick's egress chip (`☁ host` /
