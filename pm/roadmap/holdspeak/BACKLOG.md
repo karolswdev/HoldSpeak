@@ -280,6 +280,43 @@ dictation rewrite). The legacy config fields stay as the documented fallback
 shape (deliberate; see the phase final summary).
 
 The original entry, for the record:
+
+---
+### T. The Mesh Edge (run where the node is) — scaffolded as [phase-85](./phase-85-the-mesh-edge/) (2026-07-07, same day as filed)
+
+Owner direction (2026-07-07, post-84 conversation): *"if a provider is
+available on a mesh device, why can't we ask for the request to go through
+that mesh edge? That way we use powerful models without any friction on
+synchronizing."* The generalization of the shipped device→hub relay
+(HSM-15-13, the iPad chatting with the desktop's model): make ANY node's
+providers callable from ANY surface. A profile that only one device can host
+(its on-device model) or reach (its network, its Keychain key) serves the
+whole mesh — the KEY and the model never move; the REQUEST goes to where
+they live. This strengthens the key rule rather than bending it.
+
+**The substrate that already exists:** per-node capability rows
+(`ModelManifestRecord`, availability-only), the RuntimeProfile layer +
+`_apply_runtime_profile` (Phase 84's one resolver), `endpoint_egress` (one
+badge constructor), the pull-queue precedent (the coder-companion queue —
+devices are mesh CLIENTS; an iPhone cannot be dialed into), and the
+`ILLMProvider` seam on the Apple side.
+
+**The hard constraint (named honestly):** transport topology. Mesh devices
+sleep, background, and sit behind NAT — so "route through the edge" means
+relay-through-hub with a device-side pull worker, and availability is
+honest-but-soft: a node's provider is runnable only while its session is
+live. Pickers must show LIVENESS, not existence; runs against a sleeping
+node must refuse fast, never hang.
+
+**Shape:** a mesh-node profile kind (node + model) resolving through the
+Phase-84 seams; a hub relay queue (enqueue → the node's worker pulls →
+executes on its local provider → returns; TTL + fast refusal); egress scope
+`mesh` naming the node (a run that leaves this machine for YOUR device is
+neither `local` nor `cloud` — say so); doctor liveness; a per-device
+"serve my models to the mesh" consent toggle, off by default.
+
+*Lands on:* the profile layer (Phase 84), the sync/manifest contract
+(HSM-16-08), the companion queue pattern, the Apple `ILLMProvider` seam.
 Today the app conflates "where intelligence runs" into ONE global choice (`InferenceConfigStore`:
 mode = local | endpoint, a single endpoint URL/model/key). Owner's call (pre-GA): split it.
 
