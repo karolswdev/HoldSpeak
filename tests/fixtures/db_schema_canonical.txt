@@ -57,6 +57,8 @@ index idx_kbs_modified: CREATE INDEX idx_kbs_modified ON kbs(last_modified DESC)
 index idx_meeting_projects_meeting: CREATE INDEX idx_meeting_projects_meeting ON meeting_projects(meeting_id)
 index idx_meeting_projects_project: CREATE INDEX idx_meeting_projects_project ON meeting_projects(project_id, detected_at DESC)
 index idx_meetings_date: CREATE INDEX idx_meetings_date ON meetings(started_at)
+index idx_mesh_relay_jobs_node_status: CREATE INDEX idx_mesh_relay_jobs_node_status
+    ON mesh_relay_jobs(node, status)
 index idx_notes_modified: CREATE INDEX idx_notes_modified ON notes(last_modified DESC)
 index idx_plugin_run_jobs_meeting: CREATE INDEX idx_plugin_run_jobs_meeting ON plugin_run_jobs(meeting_id, requested_at)
 index idx_plugin_run_jobs_status: CREATE INDEX idx_plugin_run_jobs_status ON plugin_run_jobs(status, requested_at)
@@ -459,6 +461,27 @@ table meetings: CREATE TABLE meetings (
     web_url TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table mesh_relay_jobs: CREATE TABLE mesh_relay_jobs (
+    id TEXT PRIMARY KEY,
+    node TEXT NOT NULL,
+    task_kind TEXT NOT NULL DEFAULT 'llm',
+    system_prompt TEXT NOT NULL DEFAULT '',
+    user_prompt TEXT NOT NULL DEFAULT '',
+    temperature REAL,
+    max_tokens INTEGER,
+    model_hint TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'queued', -- queued | running | completed | failed
+    result TEXT,
+    error TEXT,
+    deadline_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    claimed_at TEXT,
+    completed_at TEXT
+)
+table mesh_workers: CREATE TABLE mesh_workers (
+    node TEXT PRIMARY KEY,
+    last_seen TEXT NOT NULL DEFAULT (datetime('now'))
 )
 table milestones: CREATE TABLE milestones (
     key TEXT PRIMARY KEY,

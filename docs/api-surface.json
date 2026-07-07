@@ -1605,6 +1605,30 @@
       ]
     },
     {
+      "path": "/api/mesh/relay/claim",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.mesh",
+      "consumers": []
+    },
+    {
+      "path": "/api/mesh/relay/{job_id}/complete",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.mesh",
+      "consumers": []
+    },
+    {
+      "path": "/api/mesh/relay/{job_id}/fail",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.mesh",
+      "consumers": []
+    },
+    {
       "path": "/api/missioncontrol/events",
       "methods": [
         "GET"
