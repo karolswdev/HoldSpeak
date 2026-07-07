@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 84
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-84-01
 - **Unblocks:** HS-84-03, HS-84-05
 - **Owner:** unassigned
@@ -58,3 +58,14 @@ the HS-84-01 seam.
 - If the setup_status change wants to name the profile (not just the URL),
   keep the wording minimal here — HS-84-04 owns the honest-reporting pass;
   this story only has to stop it lying.
+- **Design decision (recorded):** an ADOPTED profile also selects the
+  `openai_compatible` backend — assignment is the user's explicit "run it
+  there"; with the backend knob untouched, a profile assignment would be
+  dead code under `backend: mlx`. Every fallback path (dangling, deleted,
+  onDevice-kind, lookup failure, unset) leaves the configured backend
+  untouched, byte-identically. HS-84-03's picker should present backend +
+  profile as one coherent "runs on" choice.
+- **Naming (recorded):** the HS-84-01 dataclass was renamed
+  `EffectiveIntelCloud` → `EffectiveEndpoint` now that both pipelines share
+  it; the adoption rule itself was extracted as `_apply_runtime_profile`
+  (one rule, two thin config-shape wrappers).

@@ -49,11 +49,21 @@ def probe_runtime(
             "detail": "Basic voice typing — no LLM runtime configured. Hold, speak, release works as-is.",
         }
 
+    # HS-84-02: an adopted RuntimeProfile means the LLM leg runs on that
+    # endpoint (openai_compatible), so the probe must test THAT — not the raw
+    # config fields. Dangling/none ⇒ the configured backend, byte-identical.
+    from .intel.providers import effective_dictation_llm
+
+    effective = effective_dictation_llm(runtime)
+
     requested = getattr(runtime, "backend", "auto")
-    try:
-        resolved, _reason = runtime_module.resolve_backend(requested)
-    except runtime_module.RuntimeUnavailableError as exc:
-        return {"ok": False, "status": "unavailable", "backend": requested, "detail": str(exc)}
+    if effective.profile_id:
+        resolved = "openai_compatible"
+    else:
+        try:
+            resolved, _reason = runtime_module.resolve_backend(requested)
+        except runtime_module.RuntimeUnavailableError as exc:
+            return {"ok": False, "status": "unavailable", "backend": requested, "detail": str(exc)}
 
     if resolved in ("mlx", "llama_cpp"):
         path_attr = "mlx_model" if resolved == "mlx" else "llama_cpp_model_path"
@@ -69,11 +79,11 @@ def probe_runtime(
                 "detail": f"Ready — {resolved} model at {path}."}
 
     if resolved == "openai_compatible":
-        base = str(getattr(runtime, "openai_compatible_base_url", "") or "").strip().rstrip("/")
+        base = str(effective.base_url or "").strip().rstrip("/")
         if not base:
             return {"ok": False, "status": "unconfigured", "backend": resolved,
                     "detail": "No base URL set for the OpenAI-compatible endpoint."}
-        key_env = str(getattr(runtime, "openai_compatible_api_key_env", "") or "OPENAI_API_KEY").strip()
+        key_env = str(effective.api_key_env or "OPENAI_API_KEY").strip()
         api_key = (os.environ.get(key_env) or "").strip()
         headers = {"Accept": "application/json"}
         if api_key:

@@ -1,11 +1,12 @@
 # Phase 84 — One Runtime (where intelligence runs is a profile)
 
-**Status:** OPEN (1/5).
+**Status:** OPEN (2/5).
 
-**Last updated:** 2026-07-07 (HS-84-01 done — the resolver seam
-`effective_intel_cloud` + `meeting.intel_profile_id`, adopted by all four
-config→cloud-shape sites: plugins' default constructor, the live session,
-the deferred-queue drain, the CLI).
+**Last updated:** 2026-07-07 (HS-84-02 done — dictation adopts the seam:
+`dictation.runtime.profile_id`, the shared `_apply_runtime_profile` rule
+(dataclass renamed `EffectiveEndpoint`), an adopted profile also selects the
+`openai_compatible` backend; probe + setup status report the effective
+endpoint).
 
 ## Why this phase exists
 
@@ -113,14 +114,33 @@ the profile editor.
 | ID | Story | Status | Story file |
 |----|-------|--------|------------|
 | HS-84-01 | Meeting intelligence runs on a profile | **done** (2026-07-07 — `effective_intel_cloud` seam + `intel_profile_id`; all four derivation sites adopted; 14 new tests + neighbors green) | [story-01](./story-01-meeting-intel-on-a-profile.md) |
-| HS-84-02 | Dictation runs on a profile | backlog | [story-02](./story-02-dictation-on-a-profile.md) |
+| HS-84-02 | Dictation runs on a profile | **done** (2026-07-07 — `dictation.runtime.profile_id` via the shared `_apply_runtime_profile`; adopted ⇒ openai_compatible backend; probe/status honest; 11 new tests, 437 neighbors green) | [story-02](./story-02-dictation-on-a-profile.md) |
 | HS-84-03 | Settings pick, not type | backlog | [story-03](./story-03-settings-pick-not-type.md) |
 | HS-84-04 | The honest doctor + one egress derivation | backlog | [story-04](./story-04-honest-doctor-one-egress.md) |
 | HS-84-05 | Docs + the live walk | backlog | [story-05](./story-05-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 — HS-84-01 done: meeting intelligence runs on a profile.**
+**2026-07-07 — HS-84-02 done: dictation runs on a profile.**
+`LLMRuntimeConfig.profile_id` (config-version-safe, normalized on the
+settings route like the meeting knob) resolves through the SAME rule as
+meeting intel — the HS-84-01 adoption logic was extracted as
+`_apply_runtime_profile` with two thin config-shape wrappers
+(`effective_intel_cloud`, `effective_dictation_llm`), and the shared
+dataclass was renamed `EffectiveEndpoint`. One recorded design decision: an
+ADOPTED profile also selects the `openai_compatible` backend — otherwise the
+assignment is dead code under `backend: mlx`; every fallback leaves the
+configured backend untouched, byte-identically. The honesty riders shipped
+with it: `probe_runtime` (the setup self-test) probes the ADOPTED endpoint's
+`/models`, and `setup_status`'s trust block lists the effective dictation
+endpoint instead of the raw config field. 11 new tests
+(`test_dictation_profile_resolution.py`: resolver matrix, assembly
+byte-identical/adopted/dangling, probe, trust block, config + settings round
+trips); dictation/setup/runtime neighbors 437 passed unmodified. Next:
+HS-84-03 — the settings sections become profile pickers (backend + profile
+presented as ONE "runs on" choice, per the recorded decision).
+
+Earlier — **2026-07-07 — HS-84-01 done: meeting intelligence runs on a profile.**
 `MeetingConfig.intel_profile_id` (config-version-safe, normalized on the
 settings route) + the ONE resolver seam
 `effective_intel_cloud(meeting_cfg, get_profile=None)` in
@@ -161,6 +181,10 @@ already-shipped majority recorded there) landed together (PR #286).
 - 2026-07-07 — Legacy endpoint fields leave the settings *UI* this phase but
   stay in config as the fallback shape. — smallest honest step; deletion is
   deferred below.
+- 2026-07-07 (HS-84-02) — An ADOPTED dictation profile also selects the
+  `openai_compatible` backend; every fallback leaves the configured backend
+  untouched. — shape-only adoption would make the assignment dead code under
+  a local backend; assignment is the user's explicit "run it there".
 
 ## Decisions deferred
 

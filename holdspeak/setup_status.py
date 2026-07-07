@@ -104,8 +104,19 @@ def _trust_block(config: Any, *, web_bind: str = "127.0.0.1") -> dict[str, Any]:
         base = (meeting.intel_cloud_base_url or "").strip()
         if base:
             endpoints.append(base)
-    if str(getattr(dictation_runtime, "backend", "")).lower() == "openai_compatible":
-        base = (getattr(dictation_runtime, "openai_compatible_base_url", "") or "").strip()
+    # HS-84-02: report the EFFECTIVE dictation endpoint — an adopted
+    # RuntimeProfile both selects the openai_compatible backend and supplies
+    # the base URL, so the raw config fields would lie here.
+    from .intel.providers import effective_dictation_llm
+
+    dictation_effective = effective_dictation_llm(dictation_runtime)
+    dictation_backend = (
+        "openai_compatible"
+        if dictation_effective.profile_id
+        else str(getattr(dictation_runtime, "backend", "")).lower()
+    )
+    if dictation_backend == "openai_compatible":
+        base = (dictation_effective.base_url or "").strip()
         if base:
             endpoints.append(base)
 

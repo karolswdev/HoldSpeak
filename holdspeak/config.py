@@ -340,6 +340,11 @@ class LLMRuntimeConfig:
     openai_compatible_model: str = "qwen3.5-8b-instruct"
     openai_compatible_base_url: str = "http://127.0.0.1:8000/v1"
     openai_compatible_api_key_env: str = "OPENAI_API_KEY"
+    # HS-84-02: run the LLM leg on a RuntimeProfile (authored at /profiles).
+    # Empty/None = the openai_compatible_* fields above stay the shape,
+    # byte-identical. An adopted profile also selects the openai_compatible
+    # backend; a dangling id falls back to this config — honestly, never a crash.
+    profile_id: Optional[str] = None
     openai_compatible_timeout_seconds: float = 8.0
     n_ctx: int = 2048
     n_threads: Optional[int] = None

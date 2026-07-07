@@ -613,6 +613,18 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 "openai_compatible_api_key_env",
                 current.dictation.runtime.openai_compatible_api_key_env,
             )).strip()
+            # HS-84-02: the assigned RuntimeProfile (empty ⇒ the legacy
+            # openai_compatible_* shape). Stored as-is; a dangling id degrades
+            # honestly at resolution time, so saving never blocks on it.
+            runtime_data["profile_id"] = (
+                str(
+                    runtime_data.get(
+                        "profile_id", current.dictation.runtime.profile_id or ""
+                    )
+                    or ""
+                ).strip()
+                or None
+            )
             try:
                 timeout_seconds = float(runtime_data.get(
                     "openai_compatible_timeout_seconds",
