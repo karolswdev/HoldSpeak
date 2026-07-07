@@ -13,7 +13,7 @@
 > the build workaround args). Older loop/gotcha background: [`HANDOVER.md`](./HANDOVER.md).
 
 **Current phase:** [Phase 25 — Serve the Mesh](./phase-25-serve-the-mesh/current-phase-status.md)
-— **OPEN (0/3, scaffolded 2026-07-07)**: the phone becomes an edge. The recorded handoff from
+— **OPEN (1/3, 2026-07-07; HSM-25-01 done — the Swift relay worker, URLProtocol-tested 7/7, `swift test` 500/0)**: the phone becomes an edge. The recorded handoff from
 desktop [phase-85 — The Mesh Edge (CLOSED 5/5)](../holdspeak/phase-85-the-mesh-edge/final-summary.md):
 the Swift pull worker on the `ILLMProvider` seam + the off-by-default "Serve my models to the
 mesh" consent toggle, foreground-only, polling-is-liveness — flip one switch and a desk ask on

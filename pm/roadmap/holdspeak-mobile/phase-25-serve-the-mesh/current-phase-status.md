@@ -1,12 +1,14 @@
 # Phase 25 — Serve the Mesh (the phone becomes an edge)
 
-**Status:** OPEN (0/3, scaffolded 2026-07-07).
+**Status:** OPEN (1/3).
 
-**Last updated:** 2026-07-07 (scaffolded — the recorded handoff from desktop
-[phase-85 — The Mesh Edge](../../holdspeak/phase-85-the-mesh-edge/final-summary.md),
-CLOSED the same day: the relay wire is proven live with the reference
-`holdspeak mesh serve` worker; this phase puts the SAME worker on the
-Apple devices, behind an explicit consent toggle).
+**Last updated:** 2026-07-07 (HSM-25-01 done — `MeshServeWorker` +
+`HTTPDesktopClient+MeshServe` land the claim→execute→report loop on the
+`ILLMProvider` seam, URLProtocol-tested 7/7 with backoff, verbatim
+outcomes, the named recursion refusal, and the empty-answer guard; full
+`swift test` 500/0. Scaffolded earlier the same day — the recorded
+handoff from desktop
+[phase-85 — The Mesh Edge](../../holdspeak/phase-85-the-mesh-edge/final-summary.md).)
 
 ## Why this phase exists
 
@@ -81,16 +83,33 @@ name the moment the phone stops serving.
 
 | ID | Story | Status | Story file |
 |----|-------|--------|------------|
-| HSM-25-01 | The Swift relay worker on the provider seam | backlog | [story-01](./story-01-swift-relay-worker.md) |
+| HSM-25-01 | The Swift relay worker on the provider seam | **done** (2026-07-07 — worker + wire + 7 tests; `swift test` 500/0) | [story-01](./story-01-swift-relay-worker.md) |
 | HSM-25-02 | Consent + the serving surface | backlog | [story-02](./story-02-consent-and-serving-surface.md) |
 | HSM-25-03 | The live proof + docs | backlog | [story-03](./story-03-live-proof-and-docs.md) |
 
 ## Where we are
 
-**2026-07-07 — scaffolded.** The desktop wire closed the same day
-(phase-85, PR #297) with the walk-find lessons recorded in its final
+**2026-07-07 — HSM-25-01 done: the loop exists in Swift.**
+`MeshRelayJob` + the three wire calls ride a new
+`HTTPDesktopClient+MeshServe` extension (the conflict rule; Bearer
+discipline identical to the rest of the client; a late completion is
+`.http(409)` — logged once, never retried). `MeshServeWorker` (an actor)
+translates the Python loop: claim → execute on THIS device's own provider
+(built lazily from the injected factory) → report verbatim → claim again
+immediately while work exists; idle sleeps jittered ~3s; outages back off
+1s→30s; cancellation honored between polls so an in-flight job always
+finishes. `MeshServeRefusal` carries the recursion guard's named reason
+for the 25-02 factory; an EMPTY provider answer fails by name (found
+writing the tests — the hub refuses empty results, so a blank answer
+would otherwise dangle to its deadline). The fold onto
+`complete(prompt:)` is the recorded v1 limit. 7 new tests
+(request-scripted URLProtocol stub + a sleep recorder that cancels the
+loop — deterministic, no waits); full `swift test` 500/0. Next:
+HSM-25-02 — consent + the serving surface.
+
+Earlier — **2026-07-07 — scaffolded.** The desktop wire closed the same
+day (phase-85, PR #297) with the walk-find lessons recorded in its final
 summary; the Swift seam survey (receipts above) confirmed a green field.
-Next: HSM-25-01.
 
 ## Active risks
 
