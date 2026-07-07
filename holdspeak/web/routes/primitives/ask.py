@@ -31,6 +31,14 @@ log = get_logger("web.routes.primitives")
 # the hub mirrors it so the same ask reads the same amount of desk.
 _MATERIAL_CAP = 6000
 
+# HSM-15-12: the context envelope. A grounded ask ships REFERENCES and the hub
+# hydrates from its own store — it holds the full transcripts, the phone may
+# hold truncated copies, and DERP bandwidth stays sane. Bounds are explicit:
+# a cut transcript is marked in the block, never trimmed silently.
+_GROUNDING_MAX_REFS = 16
+_GROUNDING_TRANSCRIPT_CAP = 12_000
+_GROUNDING_EXPANDS = ("summary", "full")
+
 _ASK_SYSTEM_PROMPT = (
     "You are the desk's AI core. Follow the instruction using the material "
     "provided. Be concrete and brief."
@@ -44,6 +52,22 @@ def _host_of(base_url: Any) -> str:
         return ""
     parsed = urlparse(raw if "//" in raw else f"//{raw}")
     return parsed.hostname or ""
+
+
+def _meeting_digest(state: Any) -> str:
+    """A meeting's summary-level material: intel summary + action items when
+    intel exists, else the opening segments (mirrors the iPad's routableText)."""
+    parts: list[str] = []
+    if state.intel is not None and state.intel.summary:
+        parts.append(state.intel.summary)
+        items = state.intel.to_dict().get("action_items") or []
+        tasks = [str(i.get("task") or i.get("text") or "") for i in items if isinstance(i, dict)]
+        tasks = [t for t in tasks if t]
+        if tasks:
+            parts.append("\n".join(f"- {t}" for t in tasks))
+    else:
+        parts.append("\n".join(f"{s.speaker}: {s.text}" for s in state.segments[:40]))
+    return "\n\n".join(p for p in parts if p)
 
 
 def _context_material(db: Any, cid: str, kind: str, title: str) -> tuple[str, str]:
@@ -65,17 +89,7 @@ def _context_material(db: Any, cid: str, kind: str, title: str) -> tuple[str, st
         elif kind == "meeting":
             state = db.meetings.get_meeting(cid)
             if state is not None:
-                parts: list[str] = []
-                if state.intel is not None and state.intel.summary:
-                    parts.append(state.intel.summary)
-                    items = state.intel.to_dict().get("action_items") or []
-                    tasks = [str(i.get("task") or i.get("text") or "") for i in items if isinstance(i, dict)]
-                    tasks = [t for t in tasks if t]
-                    if tasks:
-                        parts.append("\n".join(f"- {t}" for t in tasks))
-                else:
-                    parts.append("\n".join(f"{s.speaker}: {s.text}" for s in state.segments[:40]))
-                return (state.title or title or cid, "\n\n".join(p for p in parts if p))
+                return (state.title or title or cid, _meeting_digest(state))
         elif kind == "kb":
             kb = db.kbs.get(cid)
             if kb is not None and not getattr(kb, "deleted", False):
@@ -104,6 +118,71 @@ def _assemble_material(db: Any, context: list[dict[str, Any]]) -> tuple[str, lis
         titles.append(resolved_title)
         blocks.append(f"## {resolved_title}\n{text}" if text else f"## {resolved_title}")
     return ("\n\n".join(blocks))[:_MATERIAL_CAP], ids, titles
+
+
+def _hydrate_grounding(
+    db: Any, meeting_ids: list[str], artifact_ids: list[str], expand: str
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    """The envelope's hub half: (blocks, ids, titles, unknown_ids).
+
+    Each block wears the provenance header the iPad's assembler wears —
+    ``[MEETING: <title> — <date>]`` / ``[ARTIFACT: <title> — <meeting>]`` —
+    one envelope shape across on-device, endpoint, and desktop runs. An id
+    the hub does not hold is returned as unknown (the caller refuses loudly;
+    grounding is never a best-effort claim)."""
+    blocks: list[str] = []
+    ids: list[str] = []
+    titles: list[str] = []
+    unknown: list[str] = []
+    for mid in meeting_ids:
+        try:
+            state = db.meetings.get_meeting(mid)
+        except Exception:
+            state = None
+        if state is None:
+            unknown.append(mid)
+            continue
+        title = state.title or mid
+        day = ""
+        try:
+            day = state.started_at.date().isoformat()
+        except Exception:
+            day = ""
+        header = f"[MEETING: {title} — {day}]" if day else f"[MEETING: {title}]"
+        if expand == "full" and state.segments:
+            text = "\n".join(f"{s.speaker}: {s.text}" for s in state.segments)
+            if len(text) > _GROUNDING_TRANSCRIPT_CAP:
+                text = (
+                    text[:_GROUNDING_TRANSCRIPT_CAP]
+                    + f"\n[transcript cut at {_GROUNDING_TRANSCRIPT_CAP} chars]"
+                )
+        else:
+            text = _meeting_digest(state)
+        blocks.append(f"{header}\n{text}" if text else header)
+        ids.append(mid)
+        titles.append(title)
+    for aid in artifact_ids:
+        try:
+            art = db.plugins.get_artifact(aid)
+        except Exception:
+            art = None
+        if art is None:
+            unknown.append(aid)
+            continue
+        of = ""
+        if art.meeting_id:
+            try:
+                parent = db.meetings.get_meeting(art.meeting_id)
+                of = (parent.title or "") if parent is not None else ""
+            except Exception:
+                of = ""
+        title = art.title or aid
+        header = f"[ARTIFACT: {title} — {of}]" if of else f"[ARTIFACT: {title}]"
+        body = str(art.body_markdown or "")
+        blocks.append(f"{header}\n{body}" if body else header)
+        ids.append(aid)
+        titles.append(title)
+    return blocks, ids, titles, unknown
 
 
 def _ask_provenance(
@@ -154,7 +233,52 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
 
             db = get_database()
             material, context_ids, context_titles = _assemble_material(db, context)
+
+            # HSM-15-12: hydrate the grounding refs from the canonical store.
+            grounding = body.get("grounding")
+            grounding_echo: Optional[dict[str, Any]] = None
+            envelope = ""
+            if grounding is not None:
+                if not isinstance(grounding, dict):
+                    return JSONResponse(
+                        {"error": "grounding must be an object"}, status_code=400
+                    )
+                raw_m = grounding.get("meeting_ids")
+                raw_a = grounding.get("artifact_ids")
+                meeting_ids = [str(x).strip() for x in raw_m if str(x).strip()] if isinstance(raw_m, list) else []
+                artifact_ids = [str(x).strip() for x in raw_a if str(x).strip()] if isinstance(raw_a, list) else []
+                expand = str(grounding.get("expand") or "summary").strip() or "summary"
+                if expand not in _GROUNDING_EXPANDS:
+                    return JSONResponse(
+                        {"error": f"expand {expand!r} is not one of {list(_GROUNDING_EXPANDS)}"},
+                        status_code=400,
+                    )
+                if len(meeting_ids) + len(artifact_ids) > _GROUNDING_MAX_REFS:
+                    return JSONResponse(
+                        {"error": f"grounding is capped at {_GROUNDING_MAX_REFS} refs"},
+                        status_code=400,
+                    )
+                blocks, g_ids, g_titles, unknown = _hydrate_grounding(
+                    db, meeting_ids, artifact_ids, expand
+                )
+                if unknown:
+                    return JSONResponse(
+                        {"error": "grounding ids not on this hub", "unknown_ids": unknown},
+                        status_code=400,
+                    )
+                envelope = "\n\n".join(blocks)
+                context_ids += g_ids
+                context_titles += g_titles
+                grounding_echo = {
+                    "meeting_ids": meeting_ids,
+                    "artifact_ids": artifact_ids,
+                    "expand": expand,
+                    "titles": g_titles,
+                }
+
             user_prompt = prompt + ("\n\nMaterial:\n" + material if material else "")
+            if envelope:
+                user_prompt += "\n\nGrounding:\n" + envelope
 
             # Phase 24: run on the requested profile when set (its endpoint, the
             # key from the hub's secrets), else the hub's configured default.
@@ -230,7 +354,7 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                 egress = {"scope": "local"}
                 model = _hub_model_name(ctx)
 
-            return JSONResponse({
+            payload: dict[str, Any] = {
                 "output": output,
                 "lens": lens,
                 "provider": intel.active_provider,
@@ -239,7 +363,10 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                 "model": model,
                 "context_ids": context_ids,
                 "context_titles": context_titles,
-            })
+            }
+            if grounding_echo is not None:
+                payload["grounding"] = grounding_echo
+            return JSONResponse(payload)
         except Exception as exc:
             return error_500(exc, log, "Failed to run ask")
 

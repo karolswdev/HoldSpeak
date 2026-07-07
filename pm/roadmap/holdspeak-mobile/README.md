@@ -129,7 +129,20 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-06 (**AGENTS RUN ON YOUR DESKTOP'S MODELS (HSM-15-11 built +
+**Last updated:** 2026-07-06 (**THE ASK KNOWS YOUR RECORDS — HSM-15-12 built + real-metal
+hydration proven, same day it was asked.** "Ground this ask" on both composers (agent
+chat + route sheet): pick meetings, expand each to digest / transcript / its bound
+artifacts, the gauge prices it live, the selection survives the conversation. ONE
+assembler (`ContextEnvelope`, host-tested) renders provenance-headed blocks and
+refuses past-budget selections before the run; ONE split ships REFERENCES to a
+desktop turn (`/api/ask` `grounding` refs — the hub hydrates from its own store,
+refuses unknown ids by name) and hydrates client-side everywhere else. The KB hint
+string is dead (hydrated content or the honest marker). Proof on the live hub → .43
+llama.cpp: ungrounded guesses, grounded answers the codename that only lives in the
+hub's transcript. HSM-15-13 (chat with the desktop's model) scaffolded from the
+owner's next ask — the manifest becomes a front door. Suites: hub 3206 · Swift 490 ·
+sim build green.)
+Earlier — 2026-07-06 (**AGENTS RUN ON YOUR DESKTOP'S MODELS (HSM-15-11 built +
 live-proven), same day the saga's repo debt was paid.** The hub's `/api/ask` gained a
 manifest-bounded `model` override (real-metal proven on the .43 llama.cpp: the pinned
 model answers, an unknown model refuses with the runnable set); `RuntimeProfile.Kind

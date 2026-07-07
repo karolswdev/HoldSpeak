@@ -198,6 +198,133 @@ def test_ask_model_override_refuses_a_model_the_hub_cannot_run(env, monkeypatch)
     assert body["allowed_models"] == ["HubModel-9B", "Qwen3.5-9B-Q6_K"]
 
 
+def _seed_meeting(db, mid: str, title: str, *, segments=None, intel=None) -> None:
+    from datetime import datetime
+
+    from holdspeak.meeting_session import MeetingState
+
+    db.meetings.save_meeting(MeetingState(
+        id=mid, started_at=datetime(2026, 7, 1, 10, 0, 0),
+        ended_at=datetime(2026, 7, 1, 11, 0, 0), title=title,
+        segments=segments or [], intel=intel,
+    ))
+
+
+def test_ask_grounding_hydrates_references_from_the_hub_store(env, monkeypatch) -> None:
+    """HSM-15-12: the envelope ships ids; the hub hydrates the bodies — the
+    answer can know content the phone never shipped. Blocks wear the envelope's
+    provenance headers, and the lineage folds into context_ids/titles."""
+    from holdspeak.meeting_session import IntelSnapshot, TranscriptSegment
+
+    db, client = env
+    _seed_meeting(
+        db, "m_env1", "Q3 kickoff",
+        segments=[TranscriptSegment(text="We ship the manifest.", speaker="Karol",
+                                    start_time=0.0, end_time=2.0)],
+        intel=IntelSnapshot(timestamp=1.0, summary="Kickoff decided the manifest ships.",
+                            action_items=[{"id": "ai_env1", "task": "Ship the manifest"}]),
+    )
+    db.plugins.record_artifact(
+        artifact_id="artifact_env1", meeting_id="m_env1", artifact_type="decisions",
+        title="Decisions", body_markdown="- The manifest ships this quarter.",
+    )
+
+    fake = _FakeIntel()
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+    )
+    monkeypatch.setattr(
+        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
+    )
+
+    resp = client.post("/api/ask", json={
+        "prompt": "What did we decide?",
+        "grounding": {"meeting_ids": ["m_env1"], "artifact_ids": ["artifact_env1"]},
+    })
+    assert resp.status_code == 200
+    body = resp.json()
+
+    up = fake.captured["user_prompt"]
+    assert up.startswith("What did we decide?")
+    # Provenance-headed blocks — the ONE envelope shape (story 15-12).
+    assert "[MEETING: Q3 kickoff — 2026-07-01]" in up
+    assert "Kickoff decided the manifest ships." in up      # summary expand = intel digest
+    assert "- Ship the manifest" in up
+    assert "[ARTIFACT: Decisions — Q3 kickoff]" in up
+    assert "- The manifest ships this quarter." in up
+
+    # The lineage is one list: grounding rides context_ids/titles + the echo.
+    assert body["context_ids"] == ["m_env1", "artifact_env1"]
+    assert body["context_titles"] == ["Q3 kickoff", "Decisions"]
+    assert body["grounding"] == {
+        "meeting_ids": ["m_env1"], "artifact_ids": ["artifact_env1"],
+        "expand": "summary", "titles": ["Q3 kickoff", "Decisions"],
+    }
+
+
+def test_ask_grounding_full_expand_hydrates_the_transcript_and_marks_a_cut(env, monkeypatch) -> None:
+    """expand=full reads the real segments; a transcript past the bound is CUT
+    WITH A MARKER in the block — never trimmed silently (the overflow rule)."""
+    from holdspeak.meeting_session import TranscriptSegment
+
+    db, client = env
+    segs = [TranscriptSegment(text=f"Point {i} on the mesh roadmap, in detail.",
+                              speaker="Karol", start_time=float(i), end_time=float(i) + 1)
+            for i in range(400)]
+    _seed_meeting(db, "m_env2", "Deep dive", segments=segs)
+
+    fake = _FakeIntel()
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel", lambda: fake
+    )
+    monkeypatch.setattr(
+        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
+    )
+
+    resp = client.post("/api/ask", json={
+        "prompt": "Recap.",
+        "grounding": {"meeting_ids": ["m_env2"], "expand": "full"},
+    })
+    assert resp.status_code == 200
+    up = fake.captured["user_prompt"]
+    assert "Karol: Point 0 on the mesh roadmap" in up
+    assert "[transcript cut at 12000 chars]" in up
+
+
+def test_ask_grounding_refuses_unknown_ids_loudly(env, monkeypatch) -> None:
+    """Grounding is never a best-effort claim: an id the hub does not hold
+    refuses the whole ask, naming the ids (unlike inline context's title-only
+    honesty, which predates the envelope)."""
+    from holdspeak.meeting_session import TranscriptSegment
+
+    db, client = env
+    _seed_meeting(db, "m_env3", "Real one",
+                  segments=[TranscriptSegment(text="hi", speaker="Me",
+                                              start_time=0.0, end_time=1.0)])
+    resp = client.post("/api/ask", json={
+        "prompt": "Go",
+        "grounding": {"meeting_ids": ["m_env3", "ghost_m"], "artifact_ids": ["ghost_a"]},
+    })
+    assert resp.status_code == 400
+    body = resp.json()
+    assert "not on this hub" in body["error"]
+    assert body["unknown_ids"] == ["ghost_m", "ghost_a"]
+
+
+def test_ask_grounding_refuses_bad_shapes(env) -> None:
+    _, client = env
+    assert client.post("/api/ask", json={
+        "prompt": "Go", "grounding": "meetings",
+    }).status_code == 400
+    assert client.post("/api/ask", json={
+        "prompt": "Go", "grounding": {"meeting_ids": ["m1"], "expand": "everything"},
+    }).status_code == 400
+    too_many = {"meeting_ids": [f"m{i}" for i in range(17)]}
+    resp = client.post("/api/ask", json={"prompt": "Go", "grounding": too_many})
+    assert resp.status_code == 400
+    assert "capped at 16" in resp.json()["error"]
+
+
 def test_ask_surfaces_engine_error_as_502(env, monkeypatch) -> None:
     _, client = env
     from holdspeak.intel.models import MeetingIntelError
