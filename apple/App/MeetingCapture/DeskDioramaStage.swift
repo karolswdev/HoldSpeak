@@ -1032,6 +1032,10 @@ struct DioConnectCard: View {
     @State var token: String
     var maxW: CGFloat = 380   // clamped by the caller's DeskCamera so it fits the lane (HSM-20-02)
     let paired: Bool
+    // HSM-15-13 — the desktop's models, straight off the synced manifests: each row
+    // is a chat you can open. Blocked (never hidden) when unpaired.
+    var models: [ModelManifest] = []
+    var onChatModel: (ModelManifest) -> Void = { _ in }
     let onConnect: (_ host: String, _ port: String, _ token: String, _ name: String) -> Void
     let onForget: () -> Void
     let onCancel: () -> Void
@@ -1085,6 +1089,36 @@ struct DioConnectCard: View {
                     Text(testDetail).font(.system(size: 12, weight: .semibold, design: .monospaced))
                         .foregroundStyle(testResult == true ? DioPal.mint : Color(hex: 0xFF6B6B))
                         .lineLimit(4).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            if !models.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("MODELS").font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1.4).foregroundStyle(DioPal.muted)
+                    ForEach(models, id: \.id) { m in
+                        Button { onChatModel(m) } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "cpu.fill").font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(paired ? tint : DioPal.muted.opacity(0.5))
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(m.name).font(.system(size: 13, weight: .heavy, design: .rounded))
+                                        .foregroundStyle(DioPal.text.opacity(paired ? 1 : 0.5)).lineLimit(1).minimumScaleFactor(0.75)
+                                    Text(paired ? ModelChat.nodeLabel(m.node) : "blocked · no desktop paired")
+                                        .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                                }
+                                Spacer(minLength: 0)
+                                HStack(spacing: 5) {
+                                    Image(systemName: "bubble.left.fill").font(.system(size: 10, weight: .bold))
+                                    Text("Chat").font(.system(size: 11.5, weight: .heavy, design: .rounded))
+                                }
+                                .foregroundStyle(paired ? .white : DioPal.muted.opacity(0.5))
+                                .padding(.horizontal, 12).frame(height: 30)
+                                .background(Capsule().fill(paired ? AnyShapeStyle(tint) : AnyShapeStyle(Color.white.opacity(0.06))))
+                            }
+                            .padding(.horizontal, 11).frame(height: 50)
+                            .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(.white.opacity(0.04))
+                                .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1)))
+                        }.buttonStyle(.plain).disabled(!paired)
+                    }
                 }
             }
             HStack(spacing: 12) {
@@ -3658,6 +3692,8 @@ struct DioStage: View {
                         .onTapGesture { withAnimation { connecting = false } }.zIndex(151)
                     DioConnectCard(name: peerName, host: peerHost, port: peerPort.isEmpty ? "8765" : peerPort, token: peerToken,
                                    maxW: camera.cardWidth(380, in: w), paired: hostLink != nil,
+                                   models: remoteMeshModels(),
+                                   onChatModel: { m in openModelChat(m) },
                                    onConnect: { hh, pp, tt, nn in savePeerFull(host: hh, port: pp, token: tt, name: nn) },
                                    onForget: { forgetPeer() },
                                    onCancel: { withAnimation { connecting = false } },
@@ -3797,6 +3833,52 @@ struct DioStage: View {
                 if ProcessInfo.processInfo.environment["HS_DESK_CONNECT"] == "1" {
                     peerHost = ""   // force the unpaired front door
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { connecting = true } }
+                }
+                // HSM-15-13 — model chat. "card" = the connect card listing the hub's
+                // models; "chat" = the model chat open on a seeded thread; "run" = a
+                // REAL turn through the live PAIRED hub (inject hs.peer.* first — the
+                // 15-10 rig; nothing faked past the seed).
+                if let mv = ProcessInfo.processInfo.environment["HS_DESK_MODELCHAT"] {
+                    let hub = ModelManifest(id: "desktop:intel", node: "desktop",
+                                            name: "Qwen3.5-9B-UD-Q6_K_XL", capabilities: ["language"],
+                                            createdAt: Date(), updatedAt: Date())
+                    if mv == "card" || mv == "chat" {
+                        if let d = try? JSONEncoder().encode([hub]) { meshModelsJSON = String(decoding: d, as: UTF8.self) }
+                        if peerHost.isEmpty { peerHost = "192.168.1.43"; peerPort = "8765"; peerName = "Denver Mac" }
+                    }
+                    if mv == "blocked" {   // unpaired: the rows wear the blocked state, never disappear
+                        if let d = try? JSONEncoder().encode([hub]) { meshModelsJSON = String(decoding: d, as: UTF8.self) }
+                        peerHost = ""
+                    }
+                    if mv == "card" || mv == "blocked" {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { connecting = true } }
+                    }
+                    if mv == "chat" {
+                        agentChats[ModelChat.threadId(node: "desktop", model: hub.name)] = [
+                            RecipeMessage(id: "mc1", role: "you", text: "What runs on you?"),
+                            RecipeMessage(id: "mc2", role: "agent", text: "Qwen3.5-9B at Q6_K_XL, served by your desktop."),
+                        ]
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { openModelChat(hub) }
+                    }
+                    if mv == "run" {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                            let live = ModelManifest(id: "desktop:intel", node: "desktop",
+                                                     name: hubModelName() ?? "Your desktop's model",
+                                                     capabilities: ["language"], createdAt: Date(), updatedAt: Date())
+                            let prof = InferenceConfigStore.shared.desktopProfile(model: "")
+                            let persona = ModelChat.persona(manifest: live, profileId: prof.id)
+                            Task { @MainActor in
+                                let q = "Reply with exactly: MODEL CHAT OK"
+                                let reply = await recipeReply(persona, history: [], question: q)
+                                agentChats[persona.id] = [
+                                    RecipeMessage(id: UUID().uuidString, role: "you", text: q),
+                                    RecipeMessage(id: UUID().uuidString, role: "agent", text: reply),
+                                ]
+                                persistAgentChats()
+                                withAnimation { openAgent = persona }
+                            }
+                        }
+                    }
                 }
                 // HS_DESK_OPEN=1 → seed a deliverable and open it, so the pull-out is shown. On the
                 // lane it RISES from the bottom edge with a grab handle; on iPad it enters from the
@@ -4143,6 +4225,7 @@ struct DioStage: View {
                          messages: agentChats[a.id] ?? [],
                          grounding: chatGrounding[a.id] ?? GroundingSelection(),
                          onEditGrounding: { withAnimation { groundingPickerFor = a.id } },
+                         isTransient: ModelChat.isModelChat(a.id),
                          onInfer: { history, q in await recipeReply(a, history: history, question: q, grounding: chatGrounding[a.id]) },
                          onChange: { msgs in agentChats[a.id] = msgs; persistAgentChats() },
                          onSaveCard: { text in saveAgentReply(text, from: a) },
@@ -5669,6 +5752,28 @@ struct DioStage: View {
             return .live(m, id: m.id, kind: .model, modifiedAt: now)
         }
     }
+    /// HSM-15-13 — the other nodes' models from the cached mesh manifests, hub rows
+    /// first: the connect card's chat targets.
+    private func remoteMeshModels() -> [ModelManifest] {
+        guard let data = meshModelsJSON.data(using: .utf8),
+              let all = try? JSONDecoder().decode([ModelManifest].self, from: data) else { return [] }
+        var seen = Set<String>()
+        return all.filter { $0.node != DeviceLabel.current && !$0.name.isEmpty && seen.insert($0.id).inserted }
+            .sorted { a, b in
+                if (a.node == "desktop") != (b.node == "desktop") { return a.node == "desktop" }
+                return a.name < b.name
+            }
+    }
+
+    /// Open a chat with a mesh model: one transient persona pinned to the desktop
+    /// profile that runs it, through the SAME chat surface (thread + grounding ride).
+    private func openModelChat(_ m: ModelManifest) {
+        haptic(.medium)
+        let prof = InferenceConfigStore.shared.desktopProfile(model: m.name)
+        let persona = ModelChat.persona(manifest: m, profileId: prof.id)
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { connecting = false; openAgent = persona }
+    }
+
     /// The hub's model name from the cached mesh manifests (nil until a sync has told us).
     /// Prefers the hub's own row ("desktop"); falls back to any non-local node.
     private func hubModelName() -> String? {

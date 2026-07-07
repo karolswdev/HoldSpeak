@@ -129,7 +129,14 @@ dictation contracts); the rest open in sequence.
 Its design layer: [`EXPERIENCE-VISION-2026-06-27.md`](./EXPERIENCE-VISION-2026-06-27.md) — the
 masterful interface direction (web + iOS, iPad=iPhone), one per experience, build against it.
 
-**Last updated:** 2026-07-06 (**THE ASK KNOWS YOUR RECORDS — HSM-15-12 built + real-metal
+**Last updated:** 2026-07-06 (**THE MAC'S MODEL IS A PERSON YOU CAN OPEN — HSM-15-13
+built + live-proven in the same session it was asked.** The connect card lists the
+desktop's models off the synced manifests (blocked, never hidden, unpaired); one tap
+opens the existing chat surface pinned to that model on the paired hub — transient
+persona, persistent thread, the 15-12 grounding picker on its composer. Live proof:
+the chat titled itself with the real manifest's `Qwen3.5-9B-UD-Q6_K_XL.gguf` and
+answered through the live hub → .43 llama.cpp.)
+Earlier — 2026-07-06 (**THE ASK KNOWS YOUR RECORDS — HSM-15-12 built + real-metal
 hydration proven, same day it was asked.** "Ground this ask" on both composers (agent
 chat + route sheet): pick meetings, expand each to digest / transcript / its bound
 artifacts, the gauge prices it live, the selection survives the conversation. ONE

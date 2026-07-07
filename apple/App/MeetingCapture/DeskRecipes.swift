@@ -732,6 +732,7 @@ struct DioRecipeChat: View {
     @State var messages: [RecipeMessage]
     var grounding = GroundingSelection()           // HSM-15-12 — this conversation's records
     var onEditGrounding: () -> Void = {}
+    var isTransient = false                        // HSM-15-13 — a model chat has no recipe to edit/delete
     let onInfer: (_ history: [RecipeMessage], _ question: String) async -> String   // assembles + calls the LLM
     let onChange: ([RecipeMessage]) -> Void        // persist the thread
     let onSaveCard: (String) -> Void              // harvest a reply onto the desk
@@ -773,9 +774,9 @@ struct DioRecipeChat: View {
             }
             Spacer(minLength: 0)
             Menu {
-                Button { onEdit() } label: { Label("Edit recipe", systemImage: "slider.horizontal.3") }
+                if !isTransient { Button { onEdit() } label: { Label("Edit recipe", systemImage: "slider.horizontal.3") } }
                 if !messages.isEmpty { Button { clearChat() } label: { Label("Clear chat", systemImage: "eraser") } }
-                Button(role: .destructive) { onDelete() } label: { Label("Delete recipe", systemImage: "trash") }
+                if !isTransient { Button(role: .destructive) { onDelete() } label: { Label("Delete recipe", systemImage: "trash") } }
             } label: { Image(systemName: "ellipsis.circle.fill").font(.system(size: 23)).foregroundStyle(DioPal.muted) }
             Button { onClose() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 23)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
         }
