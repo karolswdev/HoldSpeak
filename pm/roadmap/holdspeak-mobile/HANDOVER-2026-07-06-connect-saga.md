@@ -1,5 +1,11 @@
 # HANDOVER — 2026-07-06 — the remote-pairing saga (builds 3–6) + what's next
 
+> **SUPERSEDED as the entry point** by
+> [HANDOVER-2026-07-06-mesh-momentum.md](./HANDOVER-2026-07-06-mesh-momentum.md)
+> (same day, evening): the repo debt below is PAID, 15-11 is built + live-proven,
+> builds 7–8 shipped. This doc stays canon for the saga autopsy, the rigs, and the
+> traps — read it second.
+
 **Read this first if you're picking up the mobile connect / mesh-sync work.**
 Full autopsy lives in `phase-15-the-mesh/story-10-the-connect-surface.md`; this is the
 operational handover: what's live, what's owed, and the traps that cost us two days.
