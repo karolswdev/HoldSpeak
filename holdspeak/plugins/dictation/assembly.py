@@ -119,14 +119,23 @@ def _try_build_runtime(
     factory = runtime_factory if runtime_factory is not None else build_runtime
     # DIR-R-003: cold-start hard-cap is `max_total_latency_ms × 5`.
     cold_start_cap_ms = cfg.pipeline.max_total_latency_ms * 5
+
+    # HS-84-02: the LLM leg runs where the assigned RuntimeProfile says. An
+    # adopted profile also selects the openai_compatible backend (assignment is
+    # the user's explicit "run it there"); dangling/none ⇒ the configured
+    # backend + openai_compatible_* shape, byte-identical.
+    from ...intel.providers import effective_dictation_llm
+
+    effective = effective_dictation_llm(cfg.runtime)
+    backend = "openai_compatible" if effective.profile_id else cfg.runtime.backend
     try:
         runtime = factory(
-            backend=cfg.runtime.backend,
+            backend=backend,
             mlx_model=cfg.runtime.mlx_model,
             llama_cpp_model_path=cfg.runtime.llama_cpp_model_path,
-            openai_compatible_model=cfg.runtime.openai_compatible_model,
-            openai_compatible_base_url=cfg.runtime.openai_compatible_base_url,
-            openai_compatible_api_key_env=cfg.runtime.openai_compatible_api_key_env,
+            openai_compatible_model=effective.model,
+            openai_compatible_base_url=effective.base_url,
+            openai_compatible_api_key_env=effective.api_key_env,
             openai_compatible_timeout_seconds=cfg.runtime.openai_compatible_timeout_seconds,
             n_ctx=cfg.runtime.n_ctx,
             n_threads=cfg.runtime.n_threads,

@@ -232,14 +232,14 @@ def profile_key_env(profile_id: str) -> str:
 
 
 @dataclass(frozen=True)
-class EffectiveIntelCloud:
-    """The meeting-intel cloud leg's effective endpoint shape (HS-84-01).
+class EffectiveEndpoint:
+    """A pipeline's effective LLM endpoint shape (HS-84-01/02).
 
     ``profile_id``/``profile_name`` are set only when an assigned RuntimeProfile
     was actually adopted. ``reason`` is set only when a profile was assigned but
     NOT used (dangling id, non-endpoint kind, lookup unavailable) — it is the
     honest sentence doctor/status surfaces later; the shape itself has already
-    fallen back to the legacy ``intel_cloud_*`` fields.
+    fallen back to the pipeline's legacy config fields.
     """
 
     model: str
@@ -253,35 +253,25 @@ class EffectiveIntelCloud:
 def _lookup_profile_record(profile_id: str) -> Any:
     """Best-effort RuntimeProfile lookup for config resolution.
 
-    Meeting intel is constructed on CLI and early-boot paths too, so a missing
+    The pipelines are constructed on CLI and early-boot paths too, so a missing
     or unopenable DB must degrade to the legacy config shape, never raise."""
     from ..db import get_database
 
     return get_database().profiles.get(profile_id)
 
 
-def effective_intel_cloud(
-    meeting_cfg: Any,
-    *,
-    get_profile: Optional[Callable[[str], Any]] = None,
-) -> EffectiveIntelCloud:
-    """Resolve where the meeting-intel cloud leg runs (HS-84-01).
+def _apply_runtime_profile(
+    legacy: EffectiveEndpoint,
+    profile_id: str,
+    get_profile: Optional[Callable[[str], Any]],
+) -> EffectiveEndpoint:
+    """The ONE profile-adoption rule shared by every hub pipeline (HS-84-01).
 
-    Resolution order: a valid assigned ``openAICompatible`` RuntimeProfile →
-    the legacy ``intel_cloud_*`` config shape. ``intel_provider`` semantics
-    (local / auto / cloud) are untouched — this shapes only the cloud leg.
-    An adopted profile's key is ``HOLDSPEAK_PROFILE_<ID>_KEY`` when that env
-    var is set, else the legacy key env (matching
-    ``build_meeting_intel_for_profile``).
+    A valid assigned ``openAICompatible`` profile shapes the endpoint (key env =
+    ``HOLDSPEAK_PROFILE_<ID>_KEY`` when set, else the legacy env, matching
+    ``build_meeting_intel_for_profile``); anything else falls back to ``legacy``
+    with a named ``reason`` — never a crash.
     """
-    legacy = EffectiveIntelCloud(
-        model=str(getattr(meeting_cfg, "intel_cloud_model", "") or "").strip()
-        or DEFAULT_INTEL_CLOUD_MODEL,
-        api_key_env=str(getattr(meeting_cfg, "intel_cloud_api_key_env", "") or "").strip()
-        or DEFAULT_INTEL_CLOUD_API_KEY_ENV,
-        base_url=getattr(meeting_cfg, "intel_cloud_base_url", None),
-    )
-    profile_id = str(getattr(meeting_cfg, "intel_profile_id", "") or "").strip()
     if not profile_id:
         return legacy
 
@@ -299,13 +289,58 @@ def effective_intel_cloud(
             reason=f"assigned profile is {kind or 'unknown'}-kind; running on the hub engine",
         )
     env = profile_key_env(profile_id)
-    return EffectiveIntelCloud(
+    return EffectiveEndpoint(
         model=str(getattr(prof, "model", "") or "").strip() or legacy.model,
         api_key_env=env if os.environ.get(env) else legacy.api_key_env,
         base_url=base_url,
         profile_id=profile_id,
         profile_name=str(getattr(prof, "name", "") or "").strip() or profile_id,
     )
+
+
+def effective_intel_cloud(
+    meeting_cfg: Any,
+    *,
+    get_profile: Optional[Callable[[str], Any]] = None,
+) -> EffectiveEndpoint:
+    """Resolve where the meeting-intel cloud leg runs (HS-84-01).
+
+    Resolution order: a valid assigned ``openAICompatible`` RuntimeProfile →
+    the legacy ``intel_cloud_*`` config shape. ``intel_provider`` semantics
+    (local / auto / cloud) are untouched — this shapes only the cloud leg.
+    """
+    legacy = EffectiveEndpoint(
+        model=str(getattr(meeting_cfg, "intel_cloud_model", "") or "").strip()
+        or DEFAULT_INTEL_CLOUD_MODEL,
+        api_key_env=str(getattr(meeting_cfg, "intel_cloud_api_key_env", "") or "").strip()
+        or DEFAULT_INTEL_CLOUD_API_KEY_ENV,
+        base_url=getattr(meeting_cfg, "intel_cloud_base_url", None),
+    )
+    profile_id = str(getattr(meeting_cfg, "intel_profile_id", "") or "").strip()
+    return _apply_runtime_profile(legacy, profile_id, get_profile)
+
+
+def effective_dictation_llm(
+    runtime_cfg: Any,
+    *,
+    get_profile: Optional[Callable[[str], Any]] = None,
+) -> EffectiveEndpoint:
+    """Resolve where the DIR-01 dictation LLM leg runs (HS-84-02).
+
+    Resolution order: a valid assigned ``openAICompatible`` RuntimeProfile →
+    the legacy ``openai_compatible_*`` config shape. An ADOPTED profile also
+    means the dictation backend runs ``openai_compatible`` (the assignment is
+    the user's explicit "run it there"); every fallback leaves the configured
+    backend untouched.
+    """
+    legacy = EffectiveEndpoint(
+        model=str(getattr(runtime_cfg, "openai_compatible_model", "") or "").strip(),
+        api_key_env=str(getattr(runtime_cfg, "openai_compatible_api_key_env", "") or "").strip()
+        or DEFAULT_INTEL_CLOUD_API_KEY_ENV,
+        base_url=getattr(runtime_cfg, "openai_compatible_base_url", None),
+    )
+    profile_id = str(getattr(runtime_cfg, "profile_id", "") or "").strip()
+    return _apply_runtime_profile(legacy, profile_id, get_profile)
 
 
 def build_meeting_intel_for_profile(

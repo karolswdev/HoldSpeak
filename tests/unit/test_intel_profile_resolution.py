@@ -17,7 +17,7 @@ import pytest
 import holdspeak.intel as intel_module
 from holdspeak.db.models import ProfileRecord
 from holdspeak.intel.providers import (
-    EffectiveIntelCloud,
+    EffectiveEndpoint,
     build_configured_meeting_intel,
     effective_intel_cloud,
     profile_key_env,
@@ -58,7 +58,7 @@ def _profile(**overrides) -> ProfileRecord:
 
 def test_unset_profile_is_the_legacy_shape_verbatim() -> None:
     eff = effective_intel_cloud(_meeting_cfg(), get_profile=lambda pid: pytest.fail("no lookup"))
-    assert eff == EffectiveIntelCloud(
+    assert eff == EffectiveEndpoint(
         model="legacy-model",
         api_key_env="LEGACY_KEY_ENV",
         base_url="http://legacy.example:8000/v1",
