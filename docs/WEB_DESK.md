@@ -86,14 +86,39 @@ anywhere else shows here too, marked "live elsewhere", and the orb can
 only stop it. When the recording ends, the finished meeting lands on the
 stage as an object.
 
-## Ask from the rail
+## Converse from the rail
 
 The right-edge rail holds your recipes, each wearing a dot for where it
-runs (green on device, blue endpoint). Tap one, type an ask, and run it.
-The answer comes back in place with a copy button, and it also
-**persists as an artifact on the stage**, wearing the NEW mark, with a
-lineage chip naming the recipe. File it, reopen it, or copy it like
-anything else.
+runs (green on device, blue endpoint). Tap one and its **conversation**
+opens: a docked thread, not a one-shot prompt. Turns accumulate, the
+thread survives a reload (it lives on this device; recipes sync, threads
+stay yours), and **Clear** empties it when you want a fresh start.
+
+Each reply wears a badge for where that turn actually ran, and any reply
+has **Save to desk**: the answer becomes a real artifact on the stage,
+wearing the NEW mark, with a lineage chip naming the recipe. Nothing is
+stored until you save it.
+
+Below the recipes, the rail lists **every model the hub can run**: its
+own engine and each runtime profile's model. Tap one and a chat opens
+pinned to that model, through the same conversation surface. Ask a model
+the hub cannot run and it refuses, naming what it can.
+
+## Ground this ask
+
+Both composers (the Ask AI panel and any conversation) carry an attach
+control: **Ground this ask**. Open it and pick meetings; each one
+expands to its digest, its transcript, and every artifact it produced,
+each independently toggleable. A gauge prices the selection against the
+model's window from the records' real sizes, and a selection past the
+window refuses before anything runs.
+
+The run sends references, not copies: the hub reads the selected records
+from its own store and answers from them. A kept answer names the
+meetings and artifacts that grounded it, and an unknown reference
+refuses with its id instead of silently guessing. In a conversation the
+selection sticks, so every following turn stays grounded on the same
+records.
 
 ## Rope things together and Ask AI
 

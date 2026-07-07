@@ -58,6 +58,40 @@ const hasSecondary = Astro.slots.has("secondary");
     {description && <meta name="description" content={description} />}
     <link rel="icon" type="image/svg+xml" href="/_built/favicon.svg" />
     <link rel="apple-touch-icon" href="/_built/apple-touch-icon.png" />
+    <script is:inline>
+      // HS-83-04 — the token rides every request. A hub bound off-loopback
+      // gates every /api call; the browser arrives with ?token=… exactly once
+      // (the Jupyter-style door web_auth.py documents), so capture it, keep it
+      // for the session, scrub it from the address bar, and attach it to every
+      // same-origin fetch. Without this the entire desk 401s on a guarded hub
+      // (found live, 2026-07-07).
+      (function () {
+        try {
+          var url = new URL(window.location.href);
+          var fromQuery = url.searchParams.get("token");
+          if (fromQuery) {
+            sessionStorage.setItem("hs.web.token", fromQuery);
+            url.searchParams.delete("token");
+            history.replaceState(null, "", url.toString());
+          }
+          var token = sessionStorage.getItem("hs.web.token");
+          if (!token) return;
+          var origin = window.location.origin;
+          var raw = window.fetch.bind(window);
+          window.fetch = function (input, init) {
+            var href = typeof input === "string" ? input : (input && input.url) || "";
+            var sameOrigin = href.startsWith("/") || href.startsWith(origin);
+            if (!sameOrigin) return raw(input, init);
+            var opts = init || {};
+            var headers = new Headers(opts.headers || (typeof input !== "string" && input.headers) || {});
+            if (!headers.has("X-HoldSpeak-Token")) headers.set("X-HoldSpeak-Token", token);
+            return raw(input, Object.assign({}, opts, { headers: headers }));
+          };
+        } catch (e) {
+          /* an old browser without URL/sessionStorage keeps the loopback path */
+        }
+      })();
+    </script>
   </head>
   <body class={immersive ? "app-immersive" : undefined}>
     {!immersive && (
