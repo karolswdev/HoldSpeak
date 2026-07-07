@@ -142,13 +142,19 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
                 if event is not None:
                     ctx.broadcast("aftercare_ready", event)
 
+            # HS-84-01: deferred jobs run where the assigned RuntimeProfile says
+            # (dangling/none ⇒ the legacy intel_cloud_* shape, byte-identical).
+            from ....intel.providers import effective_intel_cloud
+
+            effective_cloud = effective_intel_cloud(cfg)
+
             processed = drain_intel_queue(
                 cfg.intel_realtime_model,
                 on_meeting_ready=_on_meeting_ready,
                 provider=cfg.intel_provider,
-                cloud_model=cfg.intel_cloud_model,
-                cloud_api_key_env=cfg.intel_cloud_api_key_env,
-                cloud_base_url=cfg.intel_cloud_base_url,
+                cloud_model=effective_cloud.model,
+                cloud_api_key_env=effective_cloud.api_key_env,
+                cloud_base_url=effective_cloud.base_url,
                 cloud_reasoning_effort=cfg.intel_cloud_reasoning_effort,
                 cloud_store=cfg.intel_cloud_store,
                 retry_base_seconds=cfg.intel_retry_base_seconds,

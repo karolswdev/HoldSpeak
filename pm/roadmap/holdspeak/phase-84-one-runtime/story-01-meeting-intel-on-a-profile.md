@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 84
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-84-02, HS-84-03, HS-84-04
 - **Owner:** unassigned
@@ -61,3 +61,13 @@ rest of the phase reuses.
 - The resolver must not force a DB import at module import time
   (`providers.py` is imported early); take the profiles lookup as a
   parameter or resolve lazily, matching how the ask route passes shapes in.
+- **Scope deviation (recorded per methodology):** the story's In-list named
+  only `build_configured_meeting_intel`, but the survey during
+  implementation found the identical config→cloud-triple derivation in
+  three more consumer sites — the live session construction
+  (`runtime/meeting_glue.py`), the deferred-queue drain route
+  (`web/routes/meetings/intel.py`), and the CLI (`commands/intel.py`).
+  Shipping only the plugins' constructor would have split meeting intel
+  across two worlds (plugins on the profile, the live meeting on legacy),
+  so all four sites adopt the one seam in this story. Doctor/status wording
+  stays with HS-84-04 as planned.

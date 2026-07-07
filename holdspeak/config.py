@@ -143,6 +143,10 @@ class MeetingConfig:
     intel_cloud_base_url: Optional[str] = None
     intel_cloud_reasoning_effort: Optional[str] = None
     intel_cloud_store: bool = False
+    # HS-84-01: run the cloud leg on a RuntimeProfile (authored at /profiles).
+    # Empty/None = the intel_cloud_* fields above stay the shape, byte-identical.
+    # A dangling id falls back to those fields too — honestly, never a crash.
+    intel_profile_id: Optional[str] = None
 
     # Web dashboard
     web_auto_open: bool = False  # Auto-open browser on meeting start

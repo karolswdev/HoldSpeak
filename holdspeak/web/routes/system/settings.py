@@ -465,6 +465,19 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 meeting_data.get("intel_cloud_model", current.meeting.intel_cloud_model)
             ).strip() or "gpt-5-mini"
 
+            # HS-84-01: the assigned RuntimeProfile (empty ⇒ the legacy
+            # intel_cloud_* shape). Stored as-is; a dangling id degrades
+            # honestly at resolution time, so saving never blocks on it.
+            meeting_data["intel_profile_id"] = (
+                str(
+                    meeting_data.get(
+                        "intel_profile_id", current.meeting.intel_profile_id or ""
+                    )
+                    or ""
+                ).strip()
+                or None
+            )
+
             # WFS-CFG-004: validate the dictation slice (preserves
             # current values when payload omits them; merged already
             # carries `current.to_dict()["dictation"]` as the base).
