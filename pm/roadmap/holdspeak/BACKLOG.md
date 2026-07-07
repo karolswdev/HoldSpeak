@@ -8,7 +8,7 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-06-11 (candidate **Q** shipped as [phase-58](./phase-58-front-door/) (CLOSED 6/6) — the story is a decision now. Earlier today: **P** shipped as [phase-57](./phase-57-transcript-import/) (CLOSED 5/5) — transcripts import as real meetings. Earlier today: **J** shipped as [phase-56](./phase-56-qlippy/) (CLOSED 7/7), **G** absorbed-shipped with it; **K** is next per the agreed sequence. Prior: post-Phase-53 strategic review: candidate **D** promoted
+**Last updated:** 2026-07-07 (candidate **S** reconciled and picked up: the 2026-07-07 code survey found its majority already shipped under other flags — the RuntimeProfile contract + `SyncKind.profile` + per-agent `profile_id` + the `/profiles` and Apple authoring surfaces landed with HSM Phase 24 / the mesh / Phase 83. The remaining slice — the hub's own meeting-intel and dictation pipelines still on hand-typed endpoint configs — is scaffolded as [phase-84](./phase-84-one-runtime/). Prior: candidate **Q** shipped as [phase-58](./phase-58-front-door/) (CLOSED 6/6) — the story is a decision now. Earlier today: **P** shipped as [phase-57](./phase-57-transcript-import/) (CLOSED 5/5) — transcripts import as real meetings. Earlier today: **J** shipped as [phase-56](./phase-56-qlippy/) (CLOSED 7/7), **G** absorbed-shipped with it; **K** is next per the agreed sequence. Prior: post-Phase-53 strategic review: candidate **D** promoted
 to its own phase and scaffolded as [phase-54](./phase-54-dictation-frontend-decomposition/)
 — the dictation frontend is now 6,101 coupled lines and lost the density invariant five
 phases running. New candidates **I** (meeting import + faceted history search), **J**
@@ -251,7 +251,26 @@ so Apple-system / PCC / cloud / Core AI all sit behind one protocol.
 engine) + the per-device model policy. Owner action gates the start: install Xcode 27 / iOS 27.
 
 ---
-### S. Runtime / connectivity profiles (cross-surface, pre-GA) — PARKED (design ready)
+### S. Runtime / connectivity profiles (cross-surface, pre-GA) — mostly shipped under other flags; the hub slice scaffolded as [phase-84](./phase-84-one-runtime/)
+
+**Reconciliation (2026-07-07):** when this row was picked up, the code survey
+found the design below largely built — it shipped incrementally without this
+row being updated. The map: the `RuntimeProfile` contract
+(`ProfileRecord`, `profile.schema.json` shape-only with the key-never-syncs
+invariant, `SyncKind.profile` on hub + Swift) and the hub CRUD
+(`/api/profiles`) landed with **HSM Phase 24**; per-agent assignment
+(`RecipeRecord.profile_id`, honored by recipe chat/workflows, pickable in the
+desk editor) with **Phase 24 + the mesh**; the web authoring surface
+(`/profiles`, HSM-24-05) and the Apple Basic/Advanced surface on the mobile
+track; the context gauge reading the picked profile's window and the models
+front door with **Phase 83**. Keys resolve hub-side from
+`HOLDSPEAK_PROFILE_<ID>_KEY` env vars (the desktop analog of the Keychain
+rule — never on the wire or in the browser). What never adopted the layer:
+the hub's OWN two pipelines — meeting intel (`intel_cloud_*`) and dictation
+(`openai_compatible_*`) still hand-type the same endpoint shape in parallel.
+That remaining slice is **[phase-84 — One Runtime](./phase-84-one-runtime/)**.
+
+The original entry, for the record:
 Today the app conflates "where intelligence runs" into ONE global choice (`InferenceConfigStore`:
 mode = local | endpoint, a single endpoint URL/model/key). Owner's call (pre-GA): split it.
 
