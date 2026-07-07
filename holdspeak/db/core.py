@@ -1075,6 +1075,21 @@ class Database:
                 conn.execute("ALTER TABLE agents RENAME TO recipes")
                 conn.execute("DROP INDEX IF EXISTS idx_agents_modified")
 
+        # v11: profiles grew the `node` column (the meshNode kind). A column
+        # ADDED to an existing table is exactly what `CREATE TABLE IF NOT
+        # EXISTS` cannot express — the live walk caught a v9 database
+        # upgrading to a stamped v11 with the column silently missing.
+        if stored < 11:
+            has_profiles = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='profiles'"
+            ).fetchone()
+            if has_profiles:
+                cols = {r[1] for r in conn.execute("PRAGMA table_info(profiles)").fetchall()}
+                if "node" not in cols:
+                    conn.execute(
+                        "ALTER TABLE profiles ADD COLUMN node TEXT NOT NULL DEFAULT ''"
+                    )
+
     def _read_schema_version(self) -> Optional[int]:
         """Return the stored schema version, or None for a fresh/empty database."""
         return read_schema_version(self.db_path)

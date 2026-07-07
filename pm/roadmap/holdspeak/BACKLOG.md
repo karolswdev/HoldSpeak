@@ -8,7 +8,7 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-07-07 (candidate **S** SHIPPED: the remaining hub slice closed as [phase-84 — One Runtime (CLOSED 5/5, same day)](./phase-84-one-runtime/) — both hub pipelines on the profile layer, pickers instead of typed endpoints, one egress derivation, the "Runtime profiles" doctor check, proven live on `.43`. Earlier the same day: the code survey found S's majority already shipped under other flags — the RuntimeProfile contract + `SyncKind.profile` + per-agent `profile_id` + the `/profiles` and Apple authoring surfaces landed with HSM Phase 24 / the mesh / Phase 83. Prior: candidate **Q** shipped as [phase-58](./phase-58-front-door/) (CLOSED 6/6) — the story is a decision now. Earlier today: **P** shipped as [phase-57](./phase-57-transcript-import/) (CLOSED 5/5) — transcripts import as real meetings. Earlier today: **J** shipped as [phase-56](./phase-56-qlippy/) (CLOSED 7/7), **G** absorbed-shipped with it; **K** is next per the agreed sequence. Prior: post-Phase-53 strategic review: candidate **D** promoted
+**Last updated:** 2026-07-07 (candidate **T** SHIPPED: [phase-85 — The Mesh Edge (CLOSED 5/5, same day)](./phase-85-the-mesh-edge/) — a meshNode profile relays a run through the hub to the node hosting the provider; pull worker + liveness from its polling, fast named refusal, egress scope `mesh`, proven live end to end with a second-process worker; the Apple worker + consent toggle is the HSM follow-up. Earlier the same day: candidate **S** SHIPPED: the remaining hub slice closed as [phase-84 — One Runtime (CLOSED 5/5, same day)](./phase-84-one-runtime/) — both hub pipelines on the profile layer, pickers instead of typed endpoints, one egress derivation, the "Runtime profiles" doctor check, proven live on `.43`. Earlier the same day: the code survey found S's majority already shipped under other flags — the RuntimeProfile contract + `SyncKind.profile` + per-agent `profile_id` + the `/profiles` and Apple authoring surfaces landed with HSM Phase 24 / the mesh / Phase 83. Prior: candidate **Q** shipped as [phase-58](./phase-58-front-door/) (CLOSED 6/6) — the story is a decision now. Earlier today: **P** shipped as [phase-57](./phase-57-transcript-import/) (CLOSED 5/5) — transcripts import as real meetings. Earlier today: **J** shipped as [phase-56](./phase-56-qlippy/) (CLOSED 7/7), **G** absorbed-shipped with it; **K** is next per the agreed sequence. Prior: post-Phase-53 strategic review: candidate **D** promoted
 to its own phase and scaffolded as [phase-54](./phase-54-dictation-frontend-decomposition/)
 — the dictation frontend is now 6,101 coupled lines and lost the density invariant five
 phases running. New candidates **I** (meeting import + faceted history search), **J**
@@ -282,7 +282,15 @@ shape (deliberate; see the phase final summary).
 The original entry, for the record:
 
 ---
-### T. The Mesh Edge (run where the node is) — scaffolded as [phase-85](./phase-85-the-mesh-edge/) (2026-07-07, same day as filed)
+### T. The Mesh Edge (run where the node is) — **SHIPPED** as [phase-85 (CLOSED 5/5, same day)](./phase-85-the-mesh-edge/) (2026-07-07)
+
+**Shipped:** the hub relay queue + pull worker (`holdspeak mesh serve` —
+running it is the consent), the meshNode profile kind mirrored three ways,
+liveness on every surface with fast named refusal, egress scope `mesh`,
+and the six-beat live walk (agent chat / meeting intel / dictation all
+executed on the second-process node, worker log as proof). The per-device
+Apple worker + consent toggle is the HSM track's follow-up, recorded in
+the phase's final-summary.
 
 Owner direction (2026-07-07, post-84 conversation): *"if a provider is
 available on a mesh device, why can't we ask for the request to go through

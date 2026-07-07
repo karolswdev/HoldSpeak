@@ -4,6 +4,7 @@ Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipli
 """
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import Any, Optional
 
@@ -185,7 +186,10 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                         if not node_prompt.strip():
                             continue
                         try:
-                            out = intel.run_prompt(
+                            # off the event loop: a mesh run WAITS on the relay
+                            # queue, and THIS loop must serve the claim polls
+                            out = await asyncio.to_thread(
+                                intel.run_prompt,
                                 system_prompt="",
                                 user_prompt=node_prompt,
                                 temperature=float(temperature) if temperature is not None else None,
@@ -297,7 +301,8 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
 
             intel = build_configured_meeting_intel()
             try:
-                output = intel.run_prompt(
+                output = await asyncio.to_thread(
+                    intel.run_prompt,
                     system_prompt="",
                     user_prompt=user_prompt,
                     temperature=float(temperature) if temperature is not None else None,

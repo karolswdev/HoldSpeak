@@ -102,3 +102,29 @@ class MeshRelayIntel:
                     f"mesh node '{self.node}': {current.error or 'run failed'}"
                 )
             self._sleep(self._poll_interval)
+
+    def _chat_completion_text(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        temperature: float,
+        max_tokens: int,
+    ) -> str:
+        """The engine's de-facto SECOND seam: the built-in meeting plugins and
+        the segment probe call the chat surface directly (the `messages`
+        keyword shape, `plugins/segment_probe.py`). Without this adapter every
+        LLM plugin fails softly on a mesh engine while the chain still reports
+        executed=True — the HS-85-05 walk find. The relay wire stays
+        `run_prompt`; messages fold onto it."""
+        system = "\n\n".join(
+            str(m.get("content") or "") for m in messages if m.get("role") == "system"
+        ).strip()
+        user = "\n\n".join(
+            str(m.get("content") or "") for m in messages if m.get("role") != "system"
+        ).strip()
+        return self.run_prompt(
+            system_prompt=system,
+            user_prompt=user,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )

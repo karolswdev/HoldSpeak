@@ -84,7 +84,9 @@ through the same conversation surface, grounding included.
   any OpenAI-compatible endpoint you choose, including one on your own LAN.
   Name those as reusable **runtime profiles** and run a different one per agent;
   the profile shape syncs across your surfaces while the API key stays on each
-  one, never synced.
+  one, never synced. A profile can even name another of your machines: run
+  `holdspeak mesh serve` there and every run against that profile executes on
+  that node, with its own model and keys.
   See [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 - **It learns how you work, and shows you the receipts.** The dictation
   journal records what you said, what it typed, where it routed, and how long

@@ -102,6 +102,37 @@ def test_run_round_trips_through_the_queue(db) -> None:
     assert out == "Speaking words."
 
 
+def test_chat_seam_folds_messages_onto_the_relay(db) -> None:
+    """The HS-85-05 walk find: built-in plugins speak `_chat_completion_text`
+    (the engine's de-facto second seam), and without it every LLM plugin
+    failed softly while the reroute still said executed=True."""
+    clock = _Clock(T0)
+    db.mesh_relay.touch_worker("walk-edge", now=T0)
+    original_sleep = clock.sleep
+
+    def sleep_and_work(seconds: float) -> None:
+        original_sleep(seconds)
+        job = db.mesh_relay.claim_next("walk-edge", now=clock.now())
+        if job is not None:
+            assert job.system_prompt == "Plan milestones."
+            assert job.user_prompt == "The transcript.\n\nThe tail."
+            db.mesh_relay.complete(job.id, result="{}", now=clock.now())
+
+    provider = MeshRelayIntel(
+        node="walk-edge", relay=db.mesh_relay, sleep=sleep_and_work, now=clock.now,
+    )
+    out = provider._chat_completion_text(
+        [
+            {"role": "system", "content": "Plan milestones."},
+            {"role": "user", "content": "The transcript."},
+            {"role": "user", "content": "The tail."},
+        ],
+        temperature=0.2,
+        max_tokens=1000,
+    )
+    assert out == "{}"
+
+
 def test_node_side_failure_surfaces_verbatim(db) -> None:
     clock = _Clock(T0)
     db.mesh_relay.touch_worker("walk-edge", now=T0)

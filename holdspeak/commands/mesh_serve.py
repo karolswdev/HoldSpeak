@@ -88,12 +88,25 @@ class MeshServeWorker:
     def _engine_for_run(self) -> Any:
         if self._engine is None:
             if self._engine_factory is not None:
-                self._engine = self._engine_factory()
+                engine = self._engine_factory()
             else:
                 # THIS node's own resolution — its engine, its profiles, its keys
                 from ..intel.providers import build_configured_meeting_intel
 
-                self._engine = build_configured_meeting_intel()
+                engine = build_configured_meeting_intel()
+            from ..intel.mesh_relay import MeshRelayIntel
+
+            if isinstance(engine, MeshRelayIntel):
+                # the recursion guard (the walk's design find): this machine's
+                # own engine resolves to a mesh profile, so "executing" would
+                # relay onward (or back to itself) instead of running anything.
+                # Refuse by name; the job fails honestly instead of looping.
+                raise RuntimeError(
+                    f"this node's engine resolves to mesh node '{engine.node}' — "
+                    "a serving node needs a REAL provider (local model or "
+                    "endpoint) in its own config"
+                )
+            self._engine = engine
         return self._engine
 
     def execute(self, job: dict[str, Any]) -> bool:

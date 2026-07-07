@@ -4,6 +4,7 @@ Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipli
 """
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import Any, Optional
 
@@ -155,7 +156,10 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 intel = build_configured_meeting_intel()
             _run_frame(ctx, "running", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
             try:
-                output = intel.run_prompt(
+                # off the event loop: a mesh run WAITS on the relay queue, and
+                # THIS loop must stay free to serve the worker's claim polls
+                output = await asyncio.to_thread(
+                    intel.run_prompt,
                     system_prompt=recipe.system_prompt,
                     user_prompt=user_prompt,
                     temperature=float(temperature) if temperature is not None else None,
@@ -330,7 +334,8 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             system_prompt = (recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant."
             _run_frame(ctx, "running", kind="recipe", ref=recipe_id, name=name)
             try:
-                output = intel.run_prompt(
+                output = await asyncio.to_thread(
+                    intel.run_prompt,
                     system_prompt=system_prompt,
                     user_prompt="\n\n".join(blocks),
                 )

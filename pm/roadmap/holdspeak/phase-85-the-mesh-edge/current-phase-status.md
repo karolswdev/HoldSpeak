@@ -1,12 +1,13 @@
 # Phase 85 — The Mesh Edge (run where the node is)
 
-**Status:** OPEN (4/5).
+**Status:** CLOSED (5/5, 2026-07-07 — scaffolded and shipped the same day).
+See [final-summary.md](./final-summary.md).
 
-**Last updated:** 2026-07-07 (HS-85-04 done — liveness on every surface:
-`/api/models` rows carry live/last-seen; an offline meshNode ask refuses 400
-by name BEFORE anything queues; the profiles list carries a liveness
-sidecar (the synced shape stays pure); the `/profiles` editor authors the
-Mesh kind; doctor's "Mesh edges" check lists every node with its age).
+**Last updated:** 2026-07-07 (HS-85-05 done — the six-beat live walk proven
+on the REAL hub with a real second-process worker; the walk's three runtime
+finds fixed + locked: the event-loop deadlock, the mesh-blind LLM
+capability gate, and the `_chat_completion_text` de-facto seam. Docs
+shipped: MODELS.md mesh section, README bullet, SECURITY egress row.)
 
 ## Why this phase exists
 
@@ -91,25 +92,33 @@ node is not there, and badged as exactly what happened.
 
 ## Exit criteria (evidence required)
 
-- [ ] A live walk on the real hub: a mesh-node profile whose provider
+- [x] A live walk on the real hub: a mesh-node profile whose provider
   exists ONLY on the worker node runs an agent chat and a meeting-intel
   run from the hub's surfaces, badges reading `Mesh · <node>`, with the
   worker's log proving execution happened there
-  (`scripts/walk_hs85_live.py` output + screenshots in evidence).
-- [ ] The same walk kills the worker and proves fast, named refusal:
+  (`scripts/walk_hs85_live.py` output + screenshots in evidence) —
+  [evidence-story-05](./evidence-story-05.md): six beats, five relay jobs
+  all `COMPLETED on node walk-edge`, three committed screenshots (and the
+  walk added a dictation beat beyond the criterion).
+- [x] The same walk kills the worker and proves fast, named refusal:
   the picker shows the node offline; a forced run fails inside the
-  deadline with the node named — no hang.
-- [ ] `holdspeak doctor` reports mesh workers (node, last-seen age) and
+  deadline with the node named — no hang — refusal in **0.00s** (`mesh
+  node 'walk-edge' is offline (last seen 19s ago)`), the rail dimming
+  screenshot-captured.
+- [x] `holdspeak doctor` reports mesh workers (node, last-seen age) and
   the "Runtime profiles" check names a mesh-node resolution (tests +
-  captured live).
-- [ ] Contract mirrored three ways (JSON schema, Python, Swift) with the
+  captured live) — beat 1 captured `[PASS] Mesh edges: walk-edge: live
+  (0s ago)` live; HS-85-04 tests.
+- [x] Contract mirrored three ways (JSON schema, Python, Swift) with the
   primitive-contract test green; `docs/api-surface.json` regenerated for
-  the new relay routes.
-- [ ] Every new queue/provider/CLI path unit-tested (claim/complete/fail,
-  deadline expiry, liveness window, offline refusal); full suite green
-  (`uv run pytest -q --ignore=tests/e2e/test_metal.py`).
-- [ ] Docs teach the feature honestly (what serves, what moves, what
-  never moves); voice/drift guards green; BACKLOG row T updated.
+  the new relay routes (HS-85-01/02; 247 routes).
+- [x] Every new queue/provider/CLI path unit-tested (claim/complete/fail,
+  deadline expiry, liveness window, offline refusal); full suite green:
+  `uv run pytest -q --ignore=tests/e2e/test_metal.py` → **3299 passed,
+  37 skipped** (standing env-gated skips) at close.
+- [x] Docs teach the feature honestly (what serves, what moves, what
+  never moves) — MODELS.md §"The mesh edge", README, SECURITY §4 row;
+  voice/drift/docs guards **107 passed**; BACKLOG row T → shipped.
 
 ## Story status
 
@@ -119,11 +128,38 @@ node is not there, and badged as exactly what happened.
 | HS-85-02 | The mesh profile kind + the relay provider | **done** (2026-07-07 — meshNode + `node` mirrored 3 ways @ v11; `MeshRelayIntel` + `MeshRelayRuntime` (DIR adopts, owner call); mesh egress to both web badges; 16 new tests) | [story-02](./story-02-mesh-profile-and-relay-provider.md) |
 | HS-85-03 | `holdspeak mesh serve` — the edge worker | **done** (2026-07-07 — the poll→execute→report loop, factored + tested against an in-process hub; 6 new tests, CLI neighbors 192 green) | [story-03](./story-03-mesh-serve-worker.md) |
 | HS-85-04 | Liveness on every surface + the honest doctor | **done** (2026-07-07 — models rows + fast 400 + envelope sidecar + Mesh-kind authoring + rail dimming + the "Mesh edges" doctor check; 8 new tests, 4 asserted shots) | [story-04](./story-04-liveness-surfaces-and-doctor.md) |
-| HS-85-05 | Docs + the live walk | backlog | [story-05](./story-05-docs-and-the-live-walk.md) |
+| HS-85-05 | Docs + the live walk | **done** (2026-07-07 — six beats proven live; 3 runtime finds fixed + locked (deadlock / capability gate / chat seam) + the v11 upgrade hole + the recursion guard; docs + guards 107; full suite 3299) | [story-05](./story-05-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 — HS-85-04 done: liveness, not existence, everywhere.**
+**2026-07-07 — HS-85-05 done: the phase closes with the walk it promised.**
+Six beats on the REAL hub with a real second-process worker (`holdspeak
+mesh serve`, node `walk-edge`, its own HOME → the .43 llama.cpp): the edge
+goes live in doctor's "Mesh edges" line; ONE profile authored in the
+`/profiles` editor; an agent conversation wearing `⇄ mesh · walk-edge`
+with the worker's own log proving execution in that process; a
+meeting-intel reroute of a freshly imported meeting THROUGH the edge
+(worker completions 1→4, artifacts saved 4); a dictation dry-run through
+the same profile (completions 4→5); and the kill — offline on the models
+door, rail dimmed, a forced run refused in **0.00s** naming the node.
+The walk earned its keep: three shipping bugs no unit suite had caught.
+(1) The event-loop deadlock the risk table predicted — every LLM route ran
+the engine ON the loop that must serve the worker's claim polls, so relay
+jobs died "never claimed"; `asyncio.to_thread` at all nine call sites,
+property-locked (`test_engine_off_the_loop.py`). (2) `resolve_llm_capability`
+was mesh-blind — LLM plugins silently skipped while the reroute said
+executed=true; a named node is now capable, liveness stays a run-time
+refusal. (3) The 14 builtin plugins speak `_chat_completion_text` — a
+de-facto second engine seam; `MeshRelayIntel` folds it onto the one relay
+wire. Plus the v10→v11 upgrade hole (`profiles.node` silently missing on
+upgraded databases — explicit ALTER TABLE), the worker recursion guard,
+and the editor card's stale "never served". Docs: MODELS.md's mesh-edge
+section, the README profiles bullet, SECURITY's Mesh relay egress row;
+guards 107. Full suite **3299 passed, 37 skipped**; vitest 57. The HSM
+follow-up (Apple worker + consent toggle) is recorded in
+[final-summary.md](./final-summary.md). The phase is CLOSED.
+
+Earlier — **2026-07-07 — HS-85-04 done: liveness, not existence, everywhere.**
 `/api/models` rows for meshNode profiles carry `node` + `live` +
 `last_seen_seconds` (the set-equality with the ask allow-list untouched);
 an ask against an offline node refuses **400 naming the node and its

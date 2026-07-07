@@ -8,6 +8,7 @@ actions are local cadence_* writes; a `next_action` that maps to a connector is 
 """
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -186,7 +187,9 @@ def build_cadence_router(ctx: WebContext) -> APIRouter:
         from ...cadence.llm_action import next_action_for
 
         out = _loop_dict(loop, with_next_action=False)
-        na = next_action_for(loop, llm=_cadence_llm())
+        # off the event loop: the llm callable can resolve to a mesh relay,
+        # which waits on this same loop serving the worker's claim polls
+        na = await asyncio.to_thread(next_action_for, loop, llm=_cadence_llm())
         out["next_action"] = {"kind": na.kind, "title": na.title,
                               "body_markdown": na.body_markdown, "reversible": na.reversible,
                               "confidence": na.confidence, "generated_by": na.generated_by}

@@ -166,3 +166,33 @@ def test_backup_database_does_not_clobber(db_path: Path) -> None:
     second = db_core.backup_database(db_path)
     assert first != second
     assert first.exists() and second.exists()
+
+
+def test_upgrade_adds_the_profiles_node_column(tmp_path):
+    """The live-walk find: a column ADDED to an existing table is invisible to
+    `CREATE TABLE IF NOT EXISTS` — a v10 database upgrading must gain
+    `profiles.node` (with existing rows preserved), not a stamped version over
+    a stale shape."""
+    import sqlite3
+
+    from holdspeak.db import Database
+
+    path = tmp_path / "old.db"
+    db = Database(path)
+    db.profiles.upsert(profile_id="p-keep", name="Kept", kind="openAICompatible",
+                       base_url="http://x.example/v1", model="m")
+    del db
+
+    conn = sqlite3.connect(str(path))
+    conn.execute("ALTER TABLE profiles DROP COLUMN node")
+    conn.execute("DELETE FROM schema_version")
+    conn.execute("INSERT INTO schema_version (version) VALUES (10)")
+    conn.commit()
+    conn.close()
+
+    upgraded = Database(path)
+    kept = upgraded.profiles.get("p-keep")
+    assert kept is not None and kept.name == "Kept" and kept.node == ""
+    upgraded.profiles.upsert(profile_id="p-mesh", name="Edge", kind="meshNode",
+                             node="walk-edge")
+    assert upgraded.profiles.get("p-mesh").node == "walk-edge"
