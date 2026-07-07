@@ -13,12 +13,14 @@
 > the build workaround args). Older loop/gotcha background: [`HANDOVER.md`](./HANDOVER.md).
 
 **Current phase:** [Phase 25 — Serve the Mesh](./phase-25-serve-the-mesh/current-phase-status.md)
-— **OPEN (2/3, 2026-07-07; HSM-25-02 done — the consent toggle, sim-proven live: the hub's doctor read "iPad: live (2s ago)"; earlier HSM-25-01 — the worker, 7/7)**: the phone becomes an edge. The recorded handoff from
-desktop [phase-85 — The Mesh Edge (CLOSED 5/5)](../holdspeak/phase-85-the-mesh-edge/final-summary.md):
-the Swift pull worker on the `ILLMProvider` seam + the off-by-default "Serve my models to the
-mesh" consent toggle, foreground-only, polling-is-liveness — flip one switch and a desk ask on
-the Mac executes on the phone's own model. Stories: 25-01 the worker, 25-02 consent + the
-serving surface, 25-03 the live proof + docs.
+— **CLOSED (3/3, 2026-07-07 — scaffolded and shipped the same day)**: the phone is an edge.
+The recorded handoff from desktop
+[phase-85 — The Mesh Edge (CLOSED 5/5)](../holdspeak/phase-85-the-mesh-edge/final-summary.md),
+proven live: flip Settings → "Serve my models to the mesh" (off by default) and an ask against
+a profile naming the device executes on the device's own model — the walk measured 2.6s with
+egress `mesh · iPad`, and killing the app refused the next run in 0.00s, named. The wire now
+has two workers (Python `mesh serve`, Swift `MeshServeWorker`) on one relay contract. Next
+phase: not yet scaffolded.
 
 **Also staged (owner-gated):** [Phase 16 — The Desk, Everywhere](./phase-16-the-desk-everywhere/current-phase-status.md)
 — **8/9: HSM-16-07 DONE — the entry points caught up; ONLY the 16-06 owner walk remains**

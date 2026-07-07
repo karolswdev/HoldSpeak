@@ -561,7 +561,17 @@ struct SketchToDiagramView: View {
         endpointModel = d.string(forKey: K.model) ?? ""
         endpointKey = d.string(forKey: K.key) ?? ""
         diarizationOn = d.object(forKey: K.diarize) as? Bool ?? true
-        meshServeOn = d.object(forKey: K.meshServe) as? Bool ?? false
+        // HSM-25-03 — the walk's env seed folds into the FIRST assignment: the
+        // @Published wrapper is initialized exactly once here, so no didSet
+        // fires (a later `meshServeOn = true` in init goes through the SETTER,
+        // whose didSet re-enters InferenceConfigStore.shared mid-dispatch_once
+        // via MeshServeStore — the trap the first cut crashed on).
+        #if targetEnvironment(simulator)
+        let walkServeURL = ProcessInfo.processInfo.environment["HS_WALK_SERVE_URL"] ?? ""
+        #else
+        let walkServeURL = ""
+        #endif
+        meshServeOn = (d.object(forKey: K.meshServe) as? Bool ?? false) || !walkServeURL.isEmpty
         localModelId = d.string(forKey: K.localModel) ?? ""
         whisperModel = d.string(forKey: K.whisper) ?? "base"
         whisperLanguage = d.string(forKey: K.whisperLang) ?? "auto"
@@ -571,6 +581,22 @@ struct SketchToDiagramView: View {
         } else {
             migrateLegacyToProfiles()   // first launch with profiles — seed from the single legacy config
         }
+        #if targetEnvironment(simulator)
+        // HSM-25-03 — the walk's seed (the demo-env house pattern): an endpoint
+        // profile as the active target, ephemeral (loaded is still false, so
+        // the profiles didSet persists nothing; the consent flag folded into
+        // meshServeOn's initial assignment above). Seeding the container plist
+        // from outside loses to cfprefsd.
+        if !walkServeURL.isEmpty {
+            let p = RuntimeProfile(
+                id: "walk.endpoint", name: "Walk Edge", kind: .openAICompatible,
+                baseURL: walkServeURL,
+                model: ProcessInfo.processInfo.environment["HS_WALK_SERVE_MODEL"] ?? "local-model",
+                createdAt: Date(), updatedAt: Date())
+            profiles = profiles + [p]
+            activeProfileId = p.id
+        }
+        #endif
         loaded = true
     }
 

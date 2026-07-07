@@ -53,6 +53,19 @@ scripts/gate1-device.sh [device-udid]
 `gate1-device.sh` calls `gen-device-project.rb` to generate a signed iOS app
 project under `build/` (gitignored). Override the signing team with `HS_TEAM=…`.
 
+## Serve the mesh
+
+The device can host runs for the whole mesh: Settings → "Serve my models to
+the mesh" (off by default). While the toggle is on and the app is in the
+foreground, a worker (`MeshServeWorker`, Providers layer) claims relayed runs
+from the paired hub and executes them on this device's own active profile —
+its model, its Keychain key; neither ever leaves the device. Hub-side, a
+profile with the Mesh node kind naming `iPad`/`iPhone` routes any run here,
+badged `Mesh · <node>`. Closing the app reads offline within seconds and
+further runs refuse fast, naming the node. Serving requires an on-device
+model or an endpoint profile — a profile that itself runs elsewhere refuses
+to serve, by name.
+
 ## Status
 
 Phase 1 (Mobile Foundation): the SPM package + `Contracts` types are in

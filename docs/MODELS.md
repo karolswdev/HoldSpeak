@@ -138,7 +138,10 @@ HOLDSPEAK_HUB_TOKEN=<the hub token> holdspeak mesh serve --hub http://<hub>:8765
 ```
 
 Running the command is the consent; Ctrl-C stops it and the node reads
-offline within seconds. Availability is honest: a node is live only while
+offline within seconds. On iPhone and iPad the same consent is one switch,
+Settings → "Serve my models to the mesh": while the app is open, runs
+against a profile naming that device execute on its own model.
+Availability is honest: a node is live only while
 its worker polls, so pickers and the models list show its state, a run
 against an offline node refuses immediately and names the node, and
 `holdspeak doctor` lists every edge with its age under "Mesh edges". The
