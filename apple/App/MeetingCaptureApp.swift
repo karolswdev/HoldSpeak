@@ -83,6 +83,12 @@ struct MeetingCaptureApp: App {
                 PresenceNudgeOverlay()
             }
             .preferredColorScheme(.dark)
+            // Owner feedback (build 7): the keyboard had no way DOWN. Three app-wide
+            // layers (KeyboardDismiss.swift): a visible hide button above the keyboard,
+            // interactive scroll-to-dismiss, and a window-level swipe-down (covers sheets).
+            .keyboardDone()
+            .scrollDismissesKeyboard(.interactively)
+            .background(KeyboardDismissInstaller())
             .onAppear {
                 ModelDownloadManager.shared.ensureSession()   // reattach any in-flight model download
                 #if targetEnvironment(simulator)

@@ -1121,7 +1121,14 @@ struct DioConnectCard: View {
         )
         .shadow(color: tint.opacity(0.4), radius: 26, y: 10).shadow(color: .black.opacity(0.55), radius: 16, y: 12)
         .transition(.scale(scale: 0.92).combined(with: .opacity))
-        .onAppear { lanProbe.start() }
+        .onAppear {
+            lanProbe.start()
+            #if targetEnvironment(simulator)
+            // Screenshot rig: summon the keyboard so the hide-keyboard accessory
+            // bar (KeyboardDismiss.swift) is verifiable headlessly.
+            if ProcessInfo.processInfo.environment["HS_DESK_KEYFOCUS"] == "1" { hostFocused = true }
+            #endif
+        }
         .onDisappear { lanProbe.stop() }
     }
 
