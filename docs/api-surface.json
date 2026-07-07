@@ -1655,6 +1655,16 @@
       ]
     },
     {
+      "path": "/api/models",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.ask",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/notes",
       "methods": [
         "GET"

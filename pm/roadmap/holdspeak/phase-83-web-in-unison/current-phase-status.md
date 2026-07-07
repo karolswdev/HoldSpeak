@@ -1,12 +1,12 @@
 # Phase 83 — Web in Unison (the desk speaks back)
 
-**Status:** OPEN (2/4) — opened 2026-07-07 on the owner's direction, the same
+**Status:** OPEN (3/4) — opened 2026-07-07 on the owner's direction, the same
 session HSM-15-12/15-13 shipped on iOS.
 
-**Last updated:** 2026-07-07 (HS-83-02 done — personas grow threads: the chat
-route assembles context + KB honesty + grounding + the 12-turn window
-server-side and persists nothing; the rail opens conversations; device-local
-persistence; harvest via /keep. Hub 3215 · vitest 54 · rig-proven · 2 shots).
+**Last updated:** 2026-07-07 (HS-83-03 done — the models front door:
+`GET /api/models` shares the ask allow-list derivation; the rail lists every
+runnable model; one click opens a pinned chat through the same thread surface.
+Hub 3212 · vitest 57 · rig-proven · 2 shots. Only HS-83-04 remains).
 
 ## Why this phase exists
 
@@ -72,12 +72,27 @@ the web desk, riding the same wire.
 |----|-------|--------|------------|
 | HS-83-01 | Ground this ask, on the web composer | **done** (2026-07-07 — picker + gauge + refs wire; rig + 49 vitest + 2 shots) | [story-01](./story-01-ground-this-ask-on-the-web.md) |
 | HS-83-02 | Agent conversations (the rail grows threads) | **done** (2026-07-07 — `/api/recipes/{id}/chat` + `/keep`; PersonaChat + device-local threads; grounding rides; rig + 6 pytest + 5 vitest + 2 shots) | [story-02](./story-02-agent-conversations.md) |
-| HS-83-03 | The models front door (`/api/models` + chat-with-model) | open | [story-03](./story-03-the-models-front-door.md) |
+| HS-83-03 | The models front door (`/api/models` + chat-with-model) | **done** (2026-07-07 — one shared allow-list derivation; the rail's MODELS section; pinned model chats through the HS-83-02 surface; rig + set-equality pytest + 3 vitest + 2 shots) | [story-03](./story-03-the-models-front-door.md) |
 | HS-83-04 | Docs + the live walk | open | [story-04](./story-04-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 (later still) — PERSONAS GROW THREADS (HS-83-02 done).** The rail's
+**2026-07-07 (night) — EVERY MODEL THE HUB CAN RUN IS A DOOR (HS-83-03 done).**
+`GET /api/models` returns the runnable allow-list from ONE derivation
+(`_runnable_models`) now shared with the ask route's refusal — no client
+provokes a 400 to learn capability. The rail grows a MODELS section: hub row
+first, deduped by name; one click opens a chat titled with the model through
+the SAME HS-83-02 thread surface (synthetic persona `modelchat:hub:<name>`,
+turns ride `/api/ask` pinned via the manifest-bounded `model` override, the
+conversation packs client-side — a model persona has no standing context by
+design — grounding and device-local persistence ride free, harvest mints via
+the ask keep). Rig-proven: hub-row-first asserted, the pin resolved at the
+engine seam, the reply's badge wears the hub-reported
+`Qwen3.5-9B-Q6_K · 192.168.1.43`. Hub **3212** (api-surface 246 routes),
+vitest **57**, 2 screenshots. Remaining: HS-83-04 — docs + the live
+in-browser walk on the real hub → .43, which closes the phase.
+
+Earlier — **2026-07-07 (later still) — PERSONAS GROW THREADS (HS-83-02 done).** The rail's
 avatars open CONVERSATIONS now (the anchored single-prompt is retired):
 `PersonaChat` is the docked thread — bubbles, the thinking beat, a per-turn
 HONEST badge (the hub's reported egress/model, never inferred), Save-to-desk

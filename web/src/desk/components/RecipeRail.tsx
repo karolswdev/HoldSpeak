@@ -5,14 +5,16 @@
 // Personas ONLY — a coder is a live session, never railed (the Primitive
 // Framework rule).
 import { useDesk } from "../store";
+import { modelChatId } from "../chat";
 
 export function RecipeRail() {
   const agents = useDesk((s) => s.items.recipe);
   const profiles = useDesk((s) => s.profiles);
+  const models = useDesk((s) => s.models);
   const chatPersonaId = useDesk((s) => s.chatPersonaId);
   const { openChat, closeChat } = useDesk.getState();
 
-  if (!agents.length) return null;
+  if (!agents.length && !models.length) return null;
 
   const egressDot = (a: any) => {
     const p = profiles.find((x) => x.id === a.profileId);
@@ -41,6 +43,24 @@ export function RecipeRail() {
           </button>
         </div>
       ))}
+      {/* HS-83-03 — the models front door: every model the hub can run is a
+          chat you can open (the /api/models allow-list; hub row first). */}
+      {models.length > 0 && agents.length > 0 && <div className="desk-rail-rule" aria-hidden="true" />}
+      {models.map((m) => {
+        const id = modelChatId(m.name);
+        return (
+          <div key={id} className="desk-rail-slot">
+            <button
+              type="button"
+              className={"desk-rail-avatar desk-rail-model" + (chatPersonaId === id ? " open" : "")}
+              title={m.name}
+              onClick={() => (chatPersonaId === id ? closeChat() : openChat(id))}
+            >
+              <span aria-hidden="true">🖥️</span>
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

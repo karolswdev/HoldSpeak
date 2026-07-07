@@ -120,6 +120,29 @@ def _assemble_material(db: Any, context: list[dict[str, Any]]) -> tuple[str, lis
     return ("\n\n".join(blocks))[:_MATERIAL_CAP], ids, titles
 
 
+def _runnable_models(ctx: WebContext, db: Any) -> list[dict[str, Any]]:
+    """The hub's runnable allow-list (HS-83-03) — ONE derivation shared by the
+    ask route's model-override check and ``GET /api/models``: the hub's own
+    configured model, then each non-deleted profile's model. Deduped by name
+    (the hub's own row wins), so no client discovers capability by provoking
+    the 400."""
+    from ..sync import _hub_model_name
+
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    hub_model = _hub_model_name(ctx)
+    if hub_model:
+        rows.append({"name": hub_model, "source": "hub", "profile_id": None})
+        seen.add(hub_model)
+    for p in db.profiles.list():
+        name = str(p.model or "")
+        if p.deleted or not name or name in seen:
+            continue
+        rows.append({"name": name, "source": "profile", "profile_id": p.id})
+        seen.add(name)
+    return rows
+
+
 def _hydrate_grounding(
     db: Any, meeting_ids: list[str], artifact_ids: list[str], expand: str
 ) -> tuple[list[str], list[str], list[str], list[str]]:
@@ -211,6 +234,19 @@ def _ask_provenance(
 
 def build_ask_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
+
+    @router.get("/api/models")
+    async def api_list_models() -> Any:
+        """The runnable allow-list (HS-83-03): what a `model` override on
+        `/api/ask` would accept — the hub's own model + its profiles' models.
+        The SAME derivation the ask route's refusal names, so no client ever
+        discovers capability by provoking the 400."""
+        try:
+            from ....db import get_database
+
+            return JSONResponse({"models": _runnable_models(ctx, get_database())})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list models")
 
     @router.post("/api/ask")
     async def api_ask(request: Request) -> Any:
@@ -307,7 +343,7 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                 elif override == hub_model:
                     prof, ran_profile_id = None, None  # the hub's own engine IS this model
                 else:
-                    allowed = sorted({m for m in (hub_model, *(p.model for p in profiles)) if m})
+                    allowed = sorted({r["name"] for r in _runnable_models(ctx, db)})
                     return JSONResponse(
                         {"error": f"model {override!r} is not runnable on this hub",
                          "allowed_models": allowed},

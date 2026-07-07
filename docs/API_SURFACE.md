@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 243 (plus static mounts). iOS-consumed: 54. Web-consumed: 176.
+Routes: 244 (plus static mounts). iOS-consumed: 54. Web-consumed: 177.
 
 ## device_audio_ws
 
@@ -322,6 +322,7 @@ Routes: 243 (plus static mounts). iOS-consumed: 54. Web-consumed: 176.
 |---|---|---|
 | POST | `/api/ask` | ios, web |
 | POST | `/api/ask/keep` | web |
+| GET | `/api/models` | web |
 
 ## web.routes.primitives.chains
 

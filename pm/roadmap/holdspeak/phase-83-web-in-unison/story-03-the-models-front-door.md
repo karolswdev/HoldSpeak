@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 83
-- **Status:** open
+- **Status:** done — 2026-07-07, see [`evidence-story-03.md`](./evidence-story-03.md).
 - **Depends on:** HS-83-02 (the chat surface a model persona opens into). The
   route half is independent and can land first.
 - **Unblocks:** HS-83-04.
@@ -33,13 +33,19 @@ door (HSM-15-13); the web — the surface that lives ON the hub — has none.
 
 ## Acceptance criteria
 
-- [ ] `GET /api/models` names exactly the ask route's allow-list (test pins
+- [x] `GET /api/models` names exactly the ask route's allow-list (test pins
       equality via the shared derivation); api-surface regenerated.
-- [ ] The desk lists the models; one click opens a chat titled with the model.
-- [ ] A turn in that chat runs pinned to THAT model; the reply's badge wears
-      the hub-reported model/egress (live proof against the hub → .43).
-- [ ] The thread persists under the model-chat persona id; grounding rides.
-- [ ] Screenshots: the models list; a live model-chat reply.
+      (`_runnable_models` — one derivation; set-equality pytest.)
+- [x] The desk lists the models; one click opens a chat titled with the model.
+      (The rail's MODELS section; rig-asserted hub-row-first + title.)
+- [x] A turn in that chat runs pinned to THAT model; the reply's badge wears
+      the hub-reported model/egress. (Rig: the pin resolved at the engine
+      seam; badge asserted. The in-browser .43 beat rides HS-83-04's walk;
+      the override itself was real-metal-proven in HSM-15-11/15-13.)
+- [x] The thread persists under the model-chat persona id; grounding rides.
+      (`modelchat:hub:<name>` keys the same device-local store; the composer
+      carries the HS-83-01 picker.)
+- [x] Screenshots: the models list; a model-chat reply. (`hs-83-03-*.png`.)
 
 ## Test plan
 

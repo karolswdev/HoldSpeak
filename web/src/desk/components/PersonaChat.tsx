@@ -7,9 +7,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { useDesk } from "../store";
 import {
-  clearThread, keepReply, loadChatGrounding, loadThread, runChatTurn,
-  saveChatGrounding, saveThread, type ChatTurn,
+  clearThread, isModelChat, keepReply, loadChatGrounding, loadThread,
+  modelChatName, runChatTurn, runModelChatTurn, saveChatGrounding, saveThread,
+  type ChatTurn,
 } from "../chat";
+import { keepAsk } from "../ask";
 import { groundingIsEmpty, groundingTokens, type GroundingSelection } from "../grounding";
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
@@ -22,10 +24,15 @@ export function PersonaChat(props: { personaId: string }) {
   const profiles = useDesk((s) => s.profiles);
   const { closeChat, refresh, markNew } = useDesk.getState();
 
-  const persona = useMemo(
-    () => (items.recipe || []).find((a: any) => a.id === personaId) as any,
-    [items, personaId],
-  );
+  // HS-83-03: a model chat is one of THESE threads — a synthetic persona
+  // pinned to one of the hub's runnable models (no recipe record behind it).
+  const persona = useMemo(() => {
+    if (isModelChat(personaId)) {
+      const name = modelChatName(personaId);
+      return { id: personaId, name, avatar: "🖥️", role: "hub model", profileId: "" } as any;
+    }
+    return (items.recipe || []).find((a: any) => a.id === personaId) as any;
+  }, [items, personaId]);
 
   const [turns, setTurns] = useState<ChatTurn[]>(() => loadThread(personaId));
   const [grounding, setGrounding] = useState<GroundingSelection>(() => loadChatGrounding(personaId));
@@ -75,7 +82,9 @@ export function PersonaChat(props: { personaId: string }) {
     saveThread(personaId, withMine);
     setInput("");
     setThinking(true);
-    const r = await runChatTurn(personaId, q, history, grounding);
+    const r = isModelChat(personaId)
+      ? await runModelChatTurn(modelChatName(personaId), q, history, grounding)
+      : await runChatTurn(personaId, q, history, grounding);
     const reply: ChatTurn = r.ok
       ? { id: turnId(), role: "agent", text: r.output, egress: r.egress, model: r.model }
       : { id: turnId(), role: "agent", text: r.output, error: true };
@@ -89,7 +98,9 @@ export function PersonaChat(props: { personaId: string }) {
     if (savedId) return;
     setSavedId(t.id);
     const question = [...turns].reverse().find((x) => x.role === "you")?.text || "";
-    const artifactId = await keepReply(personaId, question, t.text);
+    const artifactId = isModelChat(personaId)
+      ? await keepAsk({ lens: modelChatName(personaId), prompt: question, output: t.text, context: [] })
+      : await keepReply(personaId, question, t.text);
     if (artifactId) {
       await refresh();
       markNew(artifactId);

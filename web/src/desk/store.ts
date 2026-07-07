@@ -34,6 +34,8 @@ function savePositions(positions: Record<string, UnitPos>) {
 interface DeskState {
   items: Items;
   profiles: Array<Record<string, unknown>>;
+  /** HS-83-03 — the hub's runnable models (the ask allow-list). */
+  models: Array<{ name: string; source: "hub" | "profile"; profile_id: string | null }>;
   status: Status;
   error: string;
   loading: boolean;
@@ -110,6 +112,7 @@ interface DeskState {
 export const useDesk = create<DeskState>((set, get) => ({
   items: { ...EMPTY_ITEMS },
   profiles: [],
+  models: [],
   status: {},
   error: "",
   loading: false,
@@ -130,11 +133,11 @@ export const useDesk = create<DeskState>((set, get) => ({
 
   async refresh() {
     set({ loading: true, error: "" });
-    const [{ items, profiles, status, error }, setup] = await Promise.all([
+    const [{ items, profiles, models, status, error }, setup] = await Promise.all([
       loadAll(),
       loadSetup(),
     ]);
-    set({ items, profiles, status, error, setup, loading: false, updatedAt: Date.now() });
+    set({ items, profiles, models, status, error, setup, loading: false, updatedAt: Date.now() });
   },
 
   async createPrimitive(kind) {
