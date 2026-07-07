@@ -119,7 +119,9 @@ export function PersonaChat(props: { personaId: string }) {
     t.egress
       ? t.egress.scope === "local"
         ? { scope: "local", text: t.model ? `⌂ ${t.model}` : "⌂ On this machine" }
-        : { scope: "cloud", text: `☁ ${[t.model, t.egress.host].filter(Boolean).join(" · ")}` }
+        : t.egress.scope === "mesh"
+          ? { scope: "mesh", text: `⇄ ${["mesh", t.egress.host, t.model].filter(Boolean).join(" · ")}` }
+          : { scope: "cloud", text: `☁ ${[t.model, t.egress.host].filter(Boolean).join(" · ")}` }
       : null;
 
   return (

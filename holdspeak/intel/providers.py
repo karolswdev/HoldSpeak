@@ -210,6 +210,10 @@ def build_configured_meeting_intel() -> "MeetingIntel":
 
     meeting = Config.load().meeting
     effective = effective_intel_cloud(meeting)
+    if effective.node:
+        from .mesh_relay import MeshRelayIntel
+
+        return MeshRelayIntel(node=effective.node, model_hint=effective.model)  # type: ignore[return-value]
     kwargs: dict[str, Any] = {
         "provider": getattr(meeting, "intel_provider", DEFAULT_INTEL_PROVIDER),
         "cloud_model": effective.model,
@@ -234,7 +238,8 @@ def endpoint_host(base_url: Any) -> str:
 
 
 def endpoint_egress(
-    *, cloud: bool, base_url: Optional[str] = None, label: Optional[str] = None
+    *, cloud: bool = False, base_url: Optional[str] = None,
+    label: Optional[str] = None, node: Optional[str] = None
 ) -> dict[str, Any]:
     """The ONE egress badge constructor (HS-84-04): ``{scope, host?, label?}``.
 
@@ -242,9 +247,12 @@ def endpoint_egress(
     cadence, audit — so the wire shape can't drift per call site. Badges stay
     REPORTED facts: pass the endpoint the run actually used, never a default.
     """
-    badge: dict[str, Any] = {"scope": "cloud" if cloud else "local"}
-    if cloud:
-        badge["host"] = endpoint_host(base_url) or "api.openai.com"
+    if node:
+        badge: dict[str, Any] = {"scope": "mesh", "host": str(node)}
+    else:
+        badge = {"scope": "cloud" if cloud else "local"}
+        if cloud:
+            badge["host"] = endpoint_host(base_url) or "api.openai.com"
     if label:
         badge["label"] = label
     return badge
@@ -274,6 +282,7 @@ class EffectiveEndpoint:
     profile_id: Optional[str] = None
     profile_name: Optional[str] = None
     reason: Optional[str] = None
+    node: Optional[str] = None  # meshNode adoption (HS-85-02): the executing mesh node
 
 
 def _lookup_profile_record(profile_id: str) -> Any:
@@ -309,6 +318,18 @@ def _apply_runtime_profile(
         return replace(legacy, reason=f"assigned profile missing: {profile_id}")
     kind = str(getattr(prof, "kind", "") or "")
     base_url = str(getattr(prof, "base_url", "") or "").strip()
+    if kind == "meshNode":
+        node = str(getattr(prof, "node", "") or "").strip()
+        if not node:
+            return replace(legacy, reason=f"assigned meshNode profile names no node: {profile_id}")
+        return EffectiveEndpoint(
+            model=str(getattr(prof, "model", "") or "").strip() or legacy.model,
+            api_key_env=legacy.api_key_env,
+            base_url=None,
+            profile_id=profile_id,
+            profile_name=str(getattr(prof, "name", "") or "").strip() or profile_id,
+            node=node,
+        )
     if kind != "openAICompatible" or not base_url:
         return replace(
             legacy,
@@ -366,11 +387,16 @@ def effective_dictation_llm(
         base_url=getattr(runtime_cfg, "openai_compatible_base_url", None),
     )
     profile_id = str(getattr(runtime_cfg, "profile_id", "") or "").strip()
+    # meshNode adopts here too (owner call, 2026-07-07): DIR's endpoint leg is
+    # already advisory-constrained (ask for JSON, validate, retry), so the
+    # relay rides the same posture — a far edge degrades under the pipeline's
+    # existing latency budget, exactly like a slow endpoint.
     return _apply_runtime_profile(legacy, profile_id, get_profile)
 
 
 def build_meeting_intel_for_profile(
-    *, kind: str, base_url: Optional[str], model: Optional[str], profile_id: str
+    *, kind: str, base_url: Optional[str], model: Optional[str], profile_id: str,
+    node: str = ""
 ) -> "MeetingIntel":
     """Build a `MeetingIntel` for a specific RuntimeProfile (Phase 24).
 
@@ -381,6 +407,10 @@ def build_meeting_intel_for_profile(
     """
     from .engine import MeetingIntel
 
+    if kind == "meshNode" and str(node or "").strip():
+        from .mesh_relay import MeshRelayIntel
+
+        return MeshRelayIntel(node=str(node).strip(), model_hint=str(model or ""))  # type: ignore[return-value]
     if kind == "openAICompatible" and str(base_url or "").strip():
         env = profile_key_env(profile_id)
         key_env = env if os.environ.get(env) else DEFAULT_INTEL_CLOUD_API_KEY_ENV

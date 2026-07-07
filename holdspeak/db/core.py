@@ -40,7 +40,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 10  # v10: mesh_relay_jobs + mesh_workers (HS-85-01) — bumped WITH the DDL (the v9 lesson: additive-unbumped means old stamps never run it)
+SCHEMA_VERSION = 11  # v11: profiles.node for the meshNode kind (HS-85-02); v10: mesh_relay_jobs + mesh_workers (HS-85-01) — both bumped WITH their DDL (the v9 lesson)
 
 
 class SchemaVersionError(RuntimeError):
@@ -799,6 +799,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     model_file TEXT NOT NULL DEFAULT '',
     base_url TEXT NOT NULL DEFAULT '',
     model TEXT NOT NULL DEFAULT '',
+    node TEXT NOT NULL DEFAULT '', -- meshNode kind (HS-85-02): the executing mesh node
     context_limit INTEGER NOT NULL DEFAULT 16384,
     requires_key INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),

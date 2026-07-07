@@ -518,7 +518,7 @@ def test_profile_syncs_shape_only_and_agent_carries_profile_id(env) -> None:
 # Apple Contracts/Primitives.swift RuntimeProfile fields). NO key field exists anywhere in it — the
 # secret is each surface's own custodian (iPad Keychain / hub env secrets), joined at run time.
 _PROFILE_SHAPE_KEYS = {
-    "id", "name", "kind", "model_file", "base_url", "model",
+    "id", "name", "kind", "model_file", "base_url", "model", "node",
     "context_limit", "requires_key", "created_at", "last_modified", "deleted",
 }
 

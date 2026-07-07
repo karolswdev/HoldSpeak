@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 85
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-85-01
 - **Unblocks:** HS-85-04, HS-85-05
 - **Owner:** unassigned
@@ -69,3 +69,23 @@ queue, waits bounded, and returns the node's answer — or refuses by name.
 - meeting intel / dictation assignment to a meshNode profile works through
   the Phase-84 knobs for free once this branch exists — worth one matrix
   row each, not new plumbing.
+- **Scope decision (recorded, then REVERSED by the owner in-story):** the
+  first cut had dictation refuse meshNode ("the DIR runtime speaks
+  grammar-constrained calls"). The owner overruled — *"DIR could also be
+  routed"* — and the code agrees: DIR's `openai_compatible` leg is ALREADY
+  advisory-constrained (ask for JSON, parse, validate, retry), so the relay
+  rides the identical posture. Shipped: `MeshRelayRuntime`
+  (`runtime_mesh_relay.py`) REUSES the endpoint backend's message/validation
+  helpers with the transport swapped to the relay queue; assembly builds it
+  (wrapped in the same counting/cold-start delegate) on adoption; the setup
+  probe reports node liveness; doctor names the node. Latency is governed by
+  the pipeline's existing honesty (the per-utterance budget + the DIR-R-003
+  cold-start cap) — a far edge degrades exactly like a slow endpoint.
+- **Schema note:** `profiles.node` needed a column, so the phase carries
+  TWO bumps (v10 queue, v11 profiles.node), each with its DDL.
+- **Swift decode was load-bearing:** the `Kind` enum decode throws on
+  unknown cases — without `case meshNode`, a synced meshNode profile would
+  have broken iPad sync. Caught in the pre-edit read, mirrored in the same
+  commit.
+- Three pre-existing test stubs of `build_meeting_intel_for_profile` grew
+  the `node=""` kwarg (signature growth, not behavior change).

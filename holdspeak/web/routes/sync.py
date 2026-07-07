@@ -62,7 +62,7 @@ _MERGEABLE: dict[str, tuple[str, str, dict[str, str]]] = {
     # Runtime profiles (Phase 24) — SHAPE ONLY; no api key field crosses the wire.
     "profiles": ("profiles", "profile_id", {
         "name": "name", "kind": "kind", "model_file": "model_file",
-        "base_url": "base_url", "model": "model",
+        "base_url": "base_url", "model": "model", "node": "node",
         "context_limit": "context_limit", "requires_key": "requires_key",
     }),
     "chains": ("chains", "chain_id", {"name": "name", "steps": "steps"}),

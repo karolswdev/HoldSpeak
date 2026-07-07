@@ -145,7 +145,8 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 prof = get_database().profiles.get(ran_profile_id)
                 if prof is not None and not prof.deleted:
                     intel = build_meeting_intel_for_profile(
-                        kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id
+                        kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id,
+                    node=getattr(prof, "node", "")
                     )
                 else:
                     ran_profile_id = None
@@ -318,7 +319,8 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             prof = db.profiles.get(ran_profile_id) if ran_profile_id else None
             if prof is not None and not prof.deleted:
                 intel = build_meeting_intel_for_profile(
-                    kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id
+                    kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id,
+                    node=getattr(prof, "node", "")
                 )
             else:
                 ran_profile_id = None

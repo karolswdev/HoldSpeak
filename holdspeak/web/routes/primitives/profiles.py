@@ -30,6 +30,7 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
             "model_file": str(pick("model_file", existing.model_file if existing else "")),
             "base_url": str(pick("base_url", existing.base_url if existing else "")),
             "model": str(pick("model", existing.model if existing else "")),
+            "node": str(pick("node", existing.node if existing else "")),
             "context_limit": int(pick("context_limit", existing.context_limit if existing else 16384)),
             "requires_key": bool(pick("requires_key", existing.requires_key if existing else False)),
         }

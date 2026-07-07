@@ -128,7 +128,9 @@ export function AskPanel() {
   const printedEgress = result?.egress
     ? result.egress.scope === "local"
       ? { scope: "local", text: result.model ? `⌂ ${result.model}` : "⌂ On this machine" }
-      : { scope: "cloud", text: `☁ ${[result.model, result.egress.host].filter(Boolean).join(" · ")}` }
+      : result.egress.scope === "mesh"
+        ? { scope: "mesh", text: `⇄ ${["mesh", result.egress.host, result.model].filter(Boolean).join(" · ")}` }
+        : { scope: "cloud", text: `☁ ${[result.model, result.egress.host].filter(Boolean).join(" · ")}` }
     : null;
 
   return (

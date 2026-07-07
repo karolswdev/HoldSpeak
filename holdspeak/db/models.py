@@ -559,10 +559,11 @@ class ProfileRecord:
 
     id: str
     name: str = ""
-    kind: str = "onDevice"          # onDevice | openAICompatible | desktop (HSM-15-11: the paired hub; on the hub itself it resolves to the configured default engine)
+    kind: str = "onDevice"          # onDevice | openAICompatible | desktop (HSM-15-11: the paired hub; on the hub itself it resolves to the configured default engine) | meshNode (HS-85-02: relay the run to a mesh node's own provider)
     model_file: str = ""
     base_url: str = ""
     model: str = ""
+    node: str = ""                  # meshNode: the mesh node whose worker claims the run
     context_limit: int = 16384
     requires_key: bool = False
     created_at: str = ""
@@ -577,6 +578,7 @@ class ProfileRecord:
             "model_file": self.model_file,
             "base_url": self.base_url,
             "model": self.model,
+            "node": self.node,
             "context_limit": self.context_limit,
             "requires_key": self.requires_key,
             "created_at": self.created_at,

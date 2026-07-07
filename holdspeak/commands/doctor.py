@@ -806,12 +806,17 @@ def _check_dictation_runtime(config: Config) -> DoctorCheck:
     # falls back to the configured backend and must say so loudly.
     effective = effective_dictation_llm(cfg.runtime)
     if effective.profile_id:
+        where = (
+            f"mesh node '{effective.node}'"
+            if effective.node
+            else f"endpoint={effective.base_url}"
+        )
         return DoctorCheck(
             name="LLM runtime",
             status="PASS",
             detail=(
-                f"runs on profile '{effective.profile_name}'; endpoint="
-                f"{effective.base_url}; model={effective.model}"
+                f"runs on profile '{effective.profile_name}'; {where}; "
+                f"model={effective.model}"
             ),
         )
     profile_note = f" NOTE: {effective.reason}." if effective.reason else ""

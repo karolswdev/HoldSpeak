@@ -1,11 +1,14 @@
 # Phase 85 — The Mesh Edge (run where the node is)
 
-**Status:** OPEN (1/5).
+**Status:** OPEN (2/5).
 
-**Last updated:** 2026-07-07 (HS-85-01 done — the relay queue
-(`mesh_relay_jobs` + `mesh_workers`, schema v10) and the three-route node
-wire; liveness born from claim polls; deadlines enforced lazily; late
-completions refused by name).
+**Last updated:** 2026-07-07 (HS-85-02 done — the meshNode profile kind
+(contract mirrored schema/Python/Swift, `profiles.node` @ v11) +
+`MeshRelayIntel` (immediate named refusal offline; bounded wait; queue
+errors verbatim); DICTATION ADOPTS TOO (owner call, reversing the first
+cut): `MeshRelayRuntime` rides the endpoint leg's advisory-constrained
+posture over the relay; egress scope `mesh` end to end incl. both web
+badge renderers).
 
 ## Why this phase exists
 
@@ -115,14 +118,47 @@ node is not there, and badged as exactly what happened.
 | ID | Story | Status | Story file |
 |----|-------|--------|------------|
 | HS-85-01 | The relay queue + the node wire | **done** (2026-07-07 — `mesh_relay_jobs`+`mesh_workers` @ schema v10; claim/complete/fail routes; 12 new tests, 79+7 neighbors/guards green) | [story-01](./story-01-relay-queue-and-node-wire.md) |
-| HS-85-02 | The mesh profile kind + the relay provider | backlog | [story-02](./story-02-mesh-profile-and-relay-provider.md) |
+| HS-85-02 | The mesh profile kind + the relay provider | **done** (2026-07-07 — meshNode + `node` mirrored 3 ways @ v11; `MeshRelayIntel` + `MeshRelayRuntime` (DIR adopts, owner call); mesh egress to both web badges; 16 new tests) | [story-02](./story-02-mesh-profile-and-relay-provider.md) |
 | HS-85-03 | `holdspeak mesh serve` — the edge worker | backlog | [story-03](./story-03-mesh-serve-worker.md) |
 | HS-85-04 | Liveness on every surface + the honest doctor | backlog | [story-04](./story-04-liveness-surfaces-and-doctor.md) |
 | HS-85-05 | Docs + the live walk | backlog | [story-05](./story-05-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 — HS-85-01 done: the spine exists.** `mesh_relay_jobs` +
+**2026-07-07 — HS-85-02 done: a node is pickable, and picking it relays.**
+The contract moved as one: `kind: meshNode` + `node: string` on
+`profile.schema.json`, `ProfileRecord`/repository/sync row/routes on the
+hub (`profiles.node` column ⇒ schema v11, snapshot regenerated, +1 line),
+and the Swift `RuntimeProfile` mirror — where the pre-edit read caught a
+load-bearing detail: the `Kind` enum decode THROWS on unknown cases, so
+without `case meshNode` a synced profile would have broken iPad sync.
+`MeshRelayIntel` (`intel/mesh_relay.py`) speaks the standard
+`run_prompt` interface: a node not seen within the liveness window refuses
+IMMEDIATELY naming the node and its last-seen age (and enqueues NOTHING);
+otherwise it enqueues on the HS-85-01 queue and waits bounded — node-side
+failures and deadline expiries surface the queue's own named errors
+verbatim. Adoption: `_apply_runtime_profile` resolves meshNode to a
+node-shaped `EffectiveEndpoint`; both meeting-intel builders return the
+relay provider; DICTATION refuses meshNode honestly (named fallback — the
+DIR runtime speaks grammar-constrained calls, recorded scope decision).
+Egress end to end: `endpoint_egress(node=)` ⇒ `{scope: "mesh", host}`,
+`_run_egress` reports it for per-run AND config-adopted mesh runs, and both
+web badge renderers (PersonaChat, AskPanel) wear `⇄ mesh · <node> ·
+<model>`. MID-STORY OWNER CALL: the first cut had dictation refuse meshNode;
+the owner overruled ("DIR could also be routed") and the code agreed — the
+endpoint leg is already advisory-constrained, so `MeshRelayRuntime`
+(`plugins/dictation/runtime_mesh_relay.py`) reuses its message/validation
+helpers with the transport swapped to the relay queue; assembly builds it in
+the same counting/cold-start delegate; the setup probe reports node
+liveness; doctor names the node; latency degrades under the pipeline's
+existing budget machinery, exactly like a slow endpoint. 16 new tests
+(`test_mesh_relay_provider.py`); contract + queue + profile-resolution +
+route + dictation neighbors green (three pre-existing stubs grew the `node`
+kwarg); vitest 57; bundle rebuilt. Next: HS-85-03 — `holdspeak mesh serve`.
+DICTATION runs mesh now, so the resolution matrix treats meshNode
+identically across both pipelines.
+
+Earlier — **2026-07-07 — HS-85-01 done: the spine exists.** `mesh_relay_jobs` +
 `mesh_workers` land at schema v10 (bumped WITH the DDL — the v9 lesson;
 snapshot regenerated with the house no-op-regex recipe, +23 additive lines
 only). The repository (`db/mesh_relay.py`) carries the pinned lifecycle:
