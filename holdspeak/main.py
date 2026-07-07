@@ -329,6 +329,37 @@ Logs are written to: {LOG_FILE}
     import_parser.add_argument("--speaker", help='Speaker label for the whole recording (default "Recording")')
     import_parser.add_argument("--tag", action="append", help="Tag the meeting (repeatable)")
 
+    # Mesh serve subcommand (HS-85-03): this machine becomes a mesh edge.
+    mesh_parser = subparsers.add_parser(
+        "mesh",
+        help="Mesh-edge commands",
+    )
+    mesh_sub = mesh_parser.add_subparsers(dest="mesh_command")
+    mesh_serve_parser = mesh_sub.add_parser(
+        "serve",
+        help=(
+            "Serve this node's model to the mesh: poll the hub's relay queue, "
+            "run each job on THIS machine's provider, post results back. "
+            "Running it is the consent; Ctrl-C stops."
+        ),
+    )
+    mesh_serve_parser.add_argument(
+        "--hub", default="http://127.0.0.1:8765",
+        help="The hub's base URL (default: http://127.0.0.1:8765)",
+    )
+    mesh_serve_parser.add_argument(
+        "--node", default="",
+        help="Node name to serve as (default: this device's mesh name)",
+    )
+    mesh_serve_parser.add_argument(
+        "--token-env", default="HOLDSPEAK_HUB_TOKEN", dest="token_env",
+        help="Env var holding the hub token (never a flag; default HOLDSPEAK_HUB_TOKEN)",
+    )
+    mesh_serve_parser.add_argument(
+        "--once", action="store_true",
+        help="Claim at most one job, run it, exit",
+    )
+
     subparsers.add_parser(
         "backup",
         help="Back up the HoldSpeak database to a timestamped file",
@@ -405,6 +436,15 @@ Logs are written to: {LOG_FILE}
         from .commands.import_recording import run_import_command
 
         raise SystemExit(run_import_command(args))
+
+    # Handle mesh subcommands (HS-85-03)
+    if args.command == "mesh":
+        if getattr(args, "mesh_command", None) == "serve":
+            from .commands.mesh_serve import run_mesh_serve_command
+
+            raise SystemExit(run_mesh_serve_command(args))
+        print("usage: holdspeak mesh serve [--hub URL] [--node NAME] [--once]")
+        raise SystemExit(2)
 
     # Handle backup / restore subcommands (HS-50-03)
     if args.command == "backup":
