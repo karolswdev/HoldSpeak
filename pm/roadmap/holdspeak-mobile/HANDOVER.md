@@ -1,6 +1,16 @@
 # HoldSpeak Mobile — Agent Handover
 
-> ## ⏭️ READ FIRST: [`HANDOVER-2026-06-22-craft.md`](./HANDOVER-2026-06-22-craft.md)
+> ## ⏭️ READ FIRST: [`HANDOVER-2026-07-06-mesh-momentum.md`](./HANDOVER-2026-07-06-mesh-momentum.md)
+> The CURRENT entry point (2026-07-06 evening): five PRs merged in one day — the
+> remote-pairing saga closed + its repo debt paid, **HSM-15-11 agents run on your
+> desktop's models (live-proven sim→hub→llama.cpp)**, TestFlight builds 7 + 8 shipped
+> (b8 = app-wide keyboard dismissal from same-day owner feedback). It carries the bar,
+> the live state, the ordered next work (15-12 the context envelope first), every rig
+> recipe (corrected sim pairing, desktop-run proof, headless TestFlight), and the traps.
+> Read [`HANDOVER-2026-07-06-connect-saga.md`](./HANDOVER-2026-07-06-connect-saga.md)
+> second for the saga autopsy. Older pointers below are historical.
+
+> ## Older: [`HANDOVER-2026-06-22-craft.md`](./HANDOVER-2026-06-22-craft.md)
 > A full craft session shipped **PRs #121–#129** (Signal design system, flagship home, generation
 > theater, App Settings, and the **Workbench** — a visual user-defined intelligence builder), all on
 > `main` + the iPad. **The next build is wiring the Workbench to actually EXECUTE** (custom LLM-call
