@@ -909,6 +909,8 @@
 .desk-next .desk-rail-rule { height: 1px; margin: 4px 6px; background: var(--border); }
 .desk-next .desk-rail-model { filter: saturate(0.7); }
 .desk-next .desk-rail-model.open { filter: none; }
+/* HS-85-04: an offline mesh model is visibly asleep, not gone */
+.desk-next .desk-rail-model.is-offline { opacity: 0.45; filter: grayscale(0.8); }
 
 /* HS-83-02 — the persona's conversation (the DioRecipeChat posture): docked
    pullout, bubbles, per-turn honest badge, harvest per reply. */

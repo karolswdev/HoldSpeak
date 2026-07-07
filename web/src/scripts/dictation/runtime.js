@@ -49,6 +49,7 @@ function profileHost(p) {
 
 function profileOptionLabel(p) {
   if (p.kind === "openAICompatible") return `${p.name} — ${profileHost(p) || "endpoint"}`;
+  if (p.kind === "meshNode") return `${p.name} — mesh · ${p.node || "?"}`;
   return `${p.name} — on device`;
 }
 
@@ -62,9 +63,11 @@ function updateProfileBadge() {
   }
   badge.hidden = false;
   badge.textContent =
-    picked.kind === "openAICompatible" && profileHost(picked)
-      ? `☁ ${profileHost(picked)}`
-      : "⌂ hub engine";
+    picked.kind === "meshNode"
+      ? `⇄ mesh · ${picked.node || "?"}`
+      : picked.kind === "openAICompatible" && profileHost(picked)
+        ? `☁ ${profileHost(picked)}`
+        : "⌂ hub engine";
 }
 
 function renderProfilePicker(runtime) {

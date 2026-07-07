@@ -161,7 +161,20 @@ def _runnable_models(ctx: WebContext, db: Any) -> list[dict[str, Any]]:
         name = str(p.model or "")
         if p.deleted or not name or name in seen:
             continue
-        rows.append({"name": name, "source": "profile", "profile_id": p.id})
+        row: dict[str, Any] = {"name": name, "source": "profile", "profile_id": p.id}
+        node = str(getattr(p, "node", "") or "")
+        if p.kind == "meshNode" and node:
+            # HS-85-04: mesh availability is soft — show LIVENESS, not existence
+            from datetime import datetime as _dt
+
+            from ....intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
+
+            row["node"] = node
+            last = db.mesh_relay.worker_last_seen(node)
+            age = None if last is None else (_dt.now() - last).total_seconds()
+            row["live"] = age is not None and age <= DEFAULT_LIVENESS_WINDOW_SECONDS
+            row["last_seen_seconds"] = None if age is None else int(age)
+        rows.append(row)
         seen.add(name)
     return rows
 
@@ -370,6 +383,26 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                     return JSONResponse(
                         {"error": f"model {override!r} is not runnable on this hub",
                          "allowed_models": allowed},
+                        status_code=400,
+                    )
+
+            # HS-85-04: a meshNode target that is not live refuses HERE — an
+            # immediate 400 naming the node, never queue-then-timeout.
+            if prof is not None and prof.kind == "meshNode":
+                from datetime import datetime as _dt
+
+                from ....intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
+
+                node = str(getattr(prof, "node", "") or "")
+                last = db.mesh_relay.worker_last_seen(node) if node else None
+                age = None if last is None else (_dt.now() - last).total_seconds()
+                if age is None or age > DEFAULT_LIVENESS_WINDOW_SECONDS:
+                    seen_txt = (
+                        "no worker has ever polled" if age is None
+                        else f"last seen {int(age)}s ago"
+                    )
+                    return JSONResponse(
+                        {"error": f"mesh node '{node}' is offline ({seen_txt})"},
                         status_code=400,
                     )
 
