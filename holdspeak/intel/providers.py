@@ -183,6 +183,11 @@ def resolve_llm_capability(meeting_config: Any) -> bool:
             return False
         provider = getattr(meeting_config, "intel_provider", None) or DEFAULT_INTEL_PROVIDER
         effective = effective_intel_cloud(meeting_config)
+        if effective.node:
+            # a mesh-adopted endpoint has no base_url for the resolver to
+            # judge; the capability EXISTS (the relay provider is the engine)
+            # and node liveness is a run-time question with a named refusal
+            return True
         kwargs: dict[str, Any] = {
             "cloud_model": effective.model,
             "cloud_api_key_env": effective.api_key_env,

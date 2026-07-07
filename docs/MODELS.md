@@ -125,6 +125,28 @@ which profile each pipeline resolves to, warns when an assigned profile is
 missing, and names the exact `HOLDSPEAK_PROFILE_<ID>_KEY` variable to export
 when a profile needs a key on this machine.
 
+### The mesh edge: run on another node
+
+A profile can name a NODE instead of an endpoint: pick the **Mesh node**
+kind and type the node's name. A run against that profile relays through
+the hub to the node's worker, which executes it on the node's own provider
+and keys. The model and the key never move; the request does. Any machine
+becomes an edge with one command:
+
+```bash
+HOLDSPEAK_HUB_TOKEN=<the hub token> holdspeak mesh serve --hub http://<hub>:8765
+```
+
+Running the command is the consent; Ctrl-C stops it and the node reads
+offline within seconds. Availability is honest: a node is live only while
+its worker polls, so pickers and the models list show its state, a run
+against an offline node refuses immediately and names the node, and
+`holdspeak doctor` lists every edge with its age under "Mesh edges". The
+serving machine needs a real provider of its own (a local model or an
+endpoint) in its config; the hub-side profile only names where the run
+goes. Relay runs are chat, agent, meeting-intelligence, and dictation
+rewrites; the prompt travels only between the hub and the executing node.
+
 Manage profiles on the web at `/profiles`, or on iPad and iPhone under
 Settings; assign an agent to one in the agent editor.
 

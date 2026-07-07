@@ -7,6 +7,7 @@ detected project-doc suggestions into the shared store owned by
 
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any, Optional
 
@@ -278,8 +279,11 @@ def build_pipeline_router(
             )
 
         try:
+            # off the event loop: a mesh-routed rewrite WAITS on the relay
+            # queue, and THIS loop must serve the worker's claim polls
             return JSONResponse(
-                _run_dictation_dry_run_text(
+                await asyncio.to_thread(
+                    _run_dictation_dry_run_text,
                     text,
                     project_root_override,
                     target_hints,
@@ -415,7 +419,8 @@ def build_pipeline_router(
         # corrections/blocks/plugins apply — the answer is as smart as one spoken at
         # the desk, not raw transcript.
         try:
-            processed = _run_dictation_dry_run_text(
+            processed = await asyncio.to_thread(
+                _run_dictation_dry_run_text,
                 text,
                 None,
                 target_hints,

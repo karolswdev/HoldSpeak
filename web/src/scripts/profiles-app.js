@@ -129,6 +129,9 @@ function ProfilesApp() {
           const i = this.profiles.findIndex((p) => p.id === saved.id);
           if (i >= 0) this.profiles[i] = saved;
         }
+        // a new mesh profile's liveness lives in the list envelope — re-pull
+        // so the card states the node's real state, not "never served"
+        await this.loadProfiles();
         this.status = "live";
         this.close();
       } catch (e) {

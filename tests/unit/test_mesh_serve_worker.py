@@ -156,3 +156,21 @@ def test_cli_wiring_parses() -> None:
     )
     assert proc.returncode == 0
     assert "serve" in proc.stdout
+
+
+def test_recursion_guard_refuses_a_mesh_engine(db, hub) -> None:
+    # a serving node whose OWN engine resolves to a mesh profile must fail
+    # the job by name instead of relaying onward (or back to itself)
+    from holdspeak.intel.mesh_relay import MeshRelayIntel
+
+    job = db.mesh_relay.enqueue(node="walk-edge", user_prompt="x")
+    worker = MeshServeWorker(
+        hub_url="http://test-hub", node="walk-edge",
+        http_post=_http_via(hub),
+        engine_factory=lambda: MeshRelayIntel(node="walk-edge", relay=object()),
+        sleep=lambda s: None,
+    )
+    assert worker.run_once() == 1
+    failed = db.mesh_relay.get(job.id)
+    assert failed.status == "failed"
+    assert "needs a REAL provider" in failed.error

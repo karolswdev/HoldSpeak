@@ -4,6 +4,7 @@ Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipli
 """
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import Any, Optional
 
@@ -157,7 +158,10 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                         status_code=400,
                     )
                 try:
-                    output = intel.run_prompt(
+                    # off the event loop: a mesh run WAITS on the relay queue,
+                    # and THIS loop must serve the worker's claim polls
+                    output = await asyncio.to_thread(
+                        intel.run_prompt,
                         system_prompt=agent.system_prompt,
                         user_prompt=user_prompt,
                         temperature=float(temperature) if temperature is not None else None,

@@ -14,6 +14,7 @@ Two routes, because keep/bin is the human's judgment:
 """
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Optional
 from urllib.parse import urlparse
 
@@ -418,7 +419,10 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
             temperature = body.get("temperature")
             _run_frame(ctx, "running", kind="ask", ref="ask", name=lens)
             try:
-                output = intel.run_prompt(
+                # off the event loop: a mesh run WAITS on the relay queue, and
+                # THIS loop must stay free to serve the worker's claim polls
+                output = await asyncio.to_thread(
+                    intel.run_prompt,
                     system_prompt=_ASK_SYSTEM_PROMPT,
                     user_prompt=user_prompt,
                     temperature=float(temperature) if temperature is not None else None,

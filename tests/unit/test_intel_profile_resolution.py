@@ -182,6 +182,22 @@ def test_llm_capability_judges_the_effective_endpoint(monkeypatch) -> None:
     assert captured["cloud_model"] == "Qwen3.5-9B-Q6_K"
 
 
+def test_llm_capability_knows_the_mesh(monkeypatch) -> None:
+    """The HS-85-05 walk find: a mesh-adopted endpoint has no base_url, so the
+    endpoint resolver says no — and every LLM plugin silently skipped while the
+    reroute still reported executed=True. The capability must say yes for a
+    named node; liveness is judged at run time with a named refusal."""
+    monkeypatch.setattr(
+        "holdspeak.intel.providers._lookup_profile_record",
+        lambda pid: _profile(kind="meshNode", base_url=None, node="walk-edge"),
+    )
+    monkeypatch.setattr(
+        intel_module, "resolve_intel_provider",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not consult the endpoint resolver")),
+    )
+    assert resolve_llm_capability(_meeting_cfg(intel_profile_id="p-43")) is True
+
+
 # ── config + settings carry the knob ─────────────────────────────────────
 
 

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 85
-- **Status:** backlog
+- **Status:** done (2026-07-07 — all six beats proven live on the real hub; see [evidence](./evidence-story-05.md))
 - **Depends on:** HS-85-01, HS-85-02, HS-85-03, HS-85-04
 - **Unblocks:** none (closes the phase)
 - **Owner:** unassigned
