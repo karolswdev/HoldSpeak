@@ -62,6 +62,9 @@ describe("the run/keep wire", () => {
       ok: true, output: "PRINTED",
       egress: { scope: "cloud", host: "192.168.1.43" },
       model: "Qwen3.5-9B-Q6_K", profileId: "p1",
+      // HS-83-01: the hub's folded lineage rides the result (empty when the
+      // response omits it — an ungrounded ask against an older shape).
+      contextIds: [], contextTitles: [],
     });
   });
 

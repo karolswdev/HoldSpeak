@@ -1,9 +1,11 @@
 # Phase 83 — Web in Unison (the desk speaks back)
 
-**Status:** OPEN (0/4) — opened 2026-07-07 on the owner's direction, the same
+**Status:** OPEN (1/4) — opened 2026-07-07 on the owner's direction, the same
 session HSM-15-12/15-13 shipped on iOS.
 
-**Last updated:** 2026-07-07 (phase opened; stories scaffolded).
+**Last updated:** 2026-07-07 (HS-83-01 done — the web composer grounds asks:
+the picker + honest fetched-length gauge + refs-only wire; rig-proven with the
+captured-prompt treatment assert; 49/49 vitest; 2 screenshots).
 
 ## Why this phase exists
 
@@ -67,14 +69,28 @@ the web desk, riding the same wire.
 
 | ID | Story | Status | Story file |
 |----|-------|--------|------------|
-| HS-83-01 | Ground this ask, on the web composer | open | [story-01](./story-01-ground-this-ask-on-the-web.md) |
+| HS-83-01 | Ground this ask, on the web composer | **done** (2026-07-07 — picker + gauge + refs wire; rig + 49 vitest + 2 shots) | [story-01](./story-01-ground-this-ask-on-the-web.md) |
 | HS-83-02 | Agent conversations (the rail grows threads) | open | [story-02](./story-02-agent-conversations.md) |
 | HS-83-03 | The models front door (`/api/models` + chat-with-model) | open | [story-03](./story-03-the-models-front-door.md) |
 | HS-83-04 | Docs + the live walk | open | [story-04](./story-04-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 — OPENED.** The gap survey is in the story files; the design is
+**2026-07-07 (later) — THE WEB COMPOSER GROUNDS ASKS (HS-83-01 done).** The
+"Ground this ask" section sits on `AskPanel` under Runs-on: meetings expand to
+digest / transcript / each bound artifact (independently toggleable, iPad
+defaults — digest on, transcript opt-in), the gauge prices the selection from
+REAL fetched lengths and refuses past the picked profile's window, and the run
+ships REFERENCES ONLY (`grounding: {meeting_ids, artifact_ids, expand}`) — the
+hub hydrates. Receipts: grounding rows join the kept ask's context; a 400
+renders the hub's refusal naming `unknown_ids` verbatim. Proof: the house
+Playwright rig (`scripts/screenshot_hs83_grounding.py`) drove the full arc and
+ASSERTED the treatment — the engine-captured prompt contains the hydrated
+`[MEETING: …]` / `[ARTIFACT: …]` blocks while the request carried ids only;
+49/49 vitest; 2 screenshots. Next: HS-83-02 (the chat surface reuses this
+picker) or HS-83-03's route half.
+
+Earlier — **2026-07-07 — OPENED.** The gap survey is in the story files; the design is
 pinned above; HS-83-01 is the first build (the picker + `grounding` refs on
 `AskPanel`), HS-83-03's `/api/models` route can land independently. The proof
 posture for every story: the live hub on this Mac (engine → the .43 llama.cpp),

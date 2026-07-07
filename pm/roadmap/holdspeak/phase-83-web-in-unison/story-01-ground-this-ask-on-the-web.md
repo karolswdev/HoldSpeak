@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 83
-- **Status:** open
+- **Status:** done — 2026-07-07, see [`evidence-story-01.md`](./evidence-story-01.md).
 - **Depends on:** the hub's `grounding` hydration (HSM-15-12, merged #277 —
   `holdspeak/web/routes/primitives/ask.py`, 5 tests in
   `tests/unit/test_web_routes_ask.py`).
@@ -41,16 +41,22 @@ artifacts... into the context of that q") applies verbatim to the web.
 
 ## Acceptance criteria
 
-- [ ] From the composer: select ≥1 meeting, expand it, toggle transcript and an
+- [x] From the composer: select ≥1 meeting, expand it, toggle transcript and an
       artifact independently; the gauge re-prices live from fetched lengths.
-- [ ] The run's request body carries `grounding` refs; the answer reflects
+      (Rig-driven; gauge/chip text asserted non-lying.)
+- [x] The run's request body carries `grounding` refs; the answer reflects
       hub-hydrated content the request never shipped (control-vs-treatment on
-      the live hub → .43).
-- [ ] A kept grounded ask's artifact lists the grounding by name.
-- [ ] Unknown ids / over-cap selections render the hub's refusal verbatim.
-- [ ] Past-budget refuses at the gauge, before any run.
-- [ ] Screenshots: the picker open with expansion rows + gauge; a grounded
-      printed card.
+      the live hub → .43). (Rig asserts the captured prompt's hydrated blocks
+      vs an ids-only request; the live .43 treatment receipts ride the
+      HSM-15-12 story header — the in-browser live beat is HS-83-04's walk.)
+- [x] A kept grounded ask's artifact lists the grounding by name.
+      (`groundingReceiptRows` join the pinned print context.)
+- [x] Unknown ids / over-cap selections render the hub's refusal verbatim.
+      (vitest: "grounding ids not on this hub (ghost)".)
+- [x] Past-budget refuses at the gauge, before any run. (Ask disabled + the
+      warning line; `overBudget` gates `ask()`.)
+- [x] Screenshots: the picker open with expansion rows + gauge; a grounded
+      printed card. (`screenshots/hs-83-01-*.png`.)
 
 ## Test plan
 

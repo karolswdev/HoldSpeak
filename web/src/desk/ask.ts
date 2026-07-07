@@ -49,15 +49,24 @@ export interface AskRunResult {
   egress: { scope: "local" | "cloud"; host?: string } | null;
   model: string;
   profileId: string | null;
+  /** The lineage the hub actually read — grounding rows folded in (HS-83-01). */
+  contextIds: string[];
+  contextTitles: string[];
 }
 
-/** Run the ask through the hub. Persists nothing — keep/bin is yours. */
+/** Run the ask through the hub. Persists nothing — keep/bin is yours.
+ * `grounding` (HS-83-01) ships REFERENCES — the hub hydrates from its own
+ * store and refuses unknown ids by name (a 400 this returns verbatim). */
 export async function runAsk(opts: {
   prompt: string;
   lens: string;
   context: AskContext[];
   profileId?: string;
+  grounding?: { meeting_ids: string[]; artifact_ids: string[]; expand: "summary" | "full" } | null;
 }): Promise<AskRunResult> {
+  const fail = (output: string): AskRunResult => ({
+    ok: false, output, egress: null, model: "", profileId: null, contextIds: [], contextTitles: [],
+  });
   try {
     const res = await fetch("/api/ask", {
       method: "POST",
@@ -67,15 +76,14 @@ export async function runAsk(opts: {
         lens: opts.lens,
         context: opts.context.map((c) => ({ id: c.id, kind: c.kind, title: c.title })),
         ...(opts.profileId ? { profile_id: opts.profileId } : {}),
+        ...(opts.grounding ? { grounding: opts.grounding } : {}),
       }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      return {
-        ok: false,
-        output: String(data.error || `HTTP ${res.status}`),
-        egress: null, model: "", profileId: null,
-      };
+      const unknown = Array.isArray(data.unknown_ids) && data.unknown_ids.length
+        ? ` (${data.unknown_ids.join(", ")})` : "";
+      return fail(String(data.error || `HTTP ${res.status}`) + unknown);
     }
     return {
       ok: true,
@@ -83,9 +91,11 @@ export async function runAsk(opts: {
       egress: data.egress && data.egress.scope ? data.egress : null,
       model: String(data.model || ""),
       profileId: data.profile_id ? String(data.profile_id) : null,
+      contextIds: Array.isArray(data.context_ids) ? data.context_ids.map(String) : [],
+      contextTitles: Array.isArray(data.context_titles) ? data.context_titles.map(String) : [],
     };
   } catch (e) {
-    return { ok: false, output: String(e), egress: null, model: "", profileId: null };
+    return fail(String(e));
   }
 }
 
