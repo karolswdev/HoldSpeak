@@ -175,6 +175,18 @@ class MeshRelayRepository(BaseRepository):
         except (TypeError, ValueError):
             return None
 
+    def list_workers(self) -> dict[str, datetime]:
+        """Every node that has EVER served, with its last poll time."""
+        with self._connection() as conn:
+            rows = conn.execute("SELECT node, last_seen FROM mesh_workers").fetchall()
+        out: dict[str, datetime] = {}
+        for row in rows:
+            try:
+                out[row["node"]] = datetime.fromisoformat(row["last_seen"])
+            except (TypeError, ValueError):
+                continue
+        return out
+
     def live_nodes(
         self, window_seconds: int = 15, *, now: Optional[datetime] = None
     ) -> dict[str, datetime]:

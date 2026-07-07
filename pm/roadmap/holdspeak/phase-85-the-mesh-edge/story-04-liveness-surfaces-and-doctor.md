@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 85
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-85-02, HS-85-03
 - **Unblocks:** HS-85-05
 - **Owner:** unassigned
@@ -65,3 +65,11 @@ one line.
   poller on any client; the web reads what it already fetches.
 - Wording stays badge-not-prose (Phase 62): a chip like "mesh · live" /
   "mesh · offline 3m", never a sentence.
+- **Implementation notes (recorded):** profile-list liveness rides the
+  ENVELOPE (`mesh_liveness` sidecar on `GET /api/profiles`) — never the
+  profile object, whose exact key set the integration shape guard pins.
+  The offline-ask refusal sits BEFORE intel construction (an earlier draft
+  landed it after the run; caught in review of the diff). The `/profiles`
+  editor grew the third kind (Mesh node + node field) — without it, no
+  meshNode profile could be authored in the UI and the walk's "authored
+  once in the editor" beat would be impossible.

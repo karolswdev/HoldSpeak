@@ -1,11 +1,12 @@
 # Phase 85 — The Mesh Edge (run where the node is)
 
-**Status:** OPEN (3/5).
+**Status:** OPEN (4/5).
 
-**Last updated:** 2026-07-07 (HS-85-03 done — `holdspeak mesh serve`:
-the reference edge worker; claim → execute on THIS node's own provider →
-complete/fail verbatim; backoff on hub outage; SIGINT-clean; `--once` for
-scripts; running it IS the consent).
+**Last updated:** 2026-07-07 (HS-85-04 done — liveness on every surface:
+`/api/models` rows carry live/last-seen; an offline meshNode ask refuses 400
+by name BEFORE anything queues; the profiles list carries a liveness
+sidecar (the synced shape stays pure); the `/profiles` editor authors the
+Mesh kind; doctor's "Mesh edges" check lists every node with its age).
 
 ## Why this phase exists
 
@@ -117,12 +118,34 @@ node is not there, and badged as exactly what happened.
 | HS-85-01 | The relay queue + the node wire | **done** (2026-07-07 — `mesh_relay_jobs`+`mesh_workers` @ schema v10; claim/complete/fail routes; 12 new tests, 79+7 neighbors/guards green) | [story-01](./story-01-relay-queue-and-node-wire.md) |
 | HS-85-02 | The mesh profile kind + the relay provider | **done** (2026-07-07 — meshNode + `node` mirrored 3 ways @ v11; `MeshRelayIntel` + `MeshRelayRuntime` (DIR adopts, owner call); mesh egress to both web badges; 16 new tests) | [story-02](./story-02-mesh-profile-and-relay-provider.md) |
 | HS-85-03 | `holdspeak mesh serve` — the edge worker | **done** (2026-07-07 — the poll→execute→report loop, factored + tested against an in-process hub; 6 new tests, CLI neighbors 192 green) | [story-03](./story-03-mesh-serve-worker.md) |
-| HS-85-04 | Liveness on every surface + the honest doctor | backlog | [story-04](./story-04-liveness-surfaces-and-doctor.md) |
+| HS-85-04 | Liveness on every surface + the honest doctor | **done** (2026-07-07 — models rows + fast 400 + envelope sidecar + Mesh-kind authoring + rail dimming + the "Mesh edges" doctor check; 8 new tests, 4 asserted shots) | [story-04](./story-04-liveness-surfaces-and-doctor.md) |
 | HS-85-05 | Docs + the live walk | backlog | [story-05](./story-05-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 — HS-85-03 done: the wire has a real node.** `holdspeak mesh
+**2026-07-07 — HS-85-04 done: liveness, not existence, everywhere.**
+`/api/models` rows for meshNode profiles carry `node` + `live` +
+`last_seen_seconds` (the set-equality with the ask allow-list untouched);
+an ask against an offline node refuses **400 naming the node and its
+last-seen age BEFORE intel construction** — and enqueues nothing (an
+earlier draft landed the check after the run; caught reviewing the diff).
+The profiles list carries liveness as an ENVELOPE sidecar
+(`mesh_liveness`) so the synced profile shape stays pure under the
+integration shape guard. The `/profiles` editor grew the third kind —
+Mesh node + node field — without which no meshNode profile could be
+authored in the UI; its card wears the state line ("live (2s ago)" /
+"offline (180s ago)") and the `⇄ mesh · <node>` badge. The settings and
+Runtime pickers label mesh options and their badges wear the chip; the
+desk rail's models door dims an offline mesh model and names it in the
+title. Doctor grew the informational **"Mesh edges"** check (every node
+that ever served, with its age; registered, so the drift guard covers it)
+and the Runtime-profiles line names the mesh node instead of a None
+endpoint. 8 new tests (`test_mesh_liveness_surfaces.py`), 4 asserted
+screenshots (`scripts/screenshot_hs85_liveness.py`, the regression rig);
+vitest 57; bundle rebuilt. Next: HS-85-05 — docs + the live walk closes
+the phase.
+
+Earlier — **2026-07-07 — HS-85-03 done: the wire has a real node.** `holdspeak mesh
 serve` (`commands/mesh_serve.py` + the nested `mesh` CLI verb): the worker
 polls `claim` on the pinned ~3s cadence (jittered; every poll stamps this
 node's liveness hub-side), executes each `llm` job on THIS machine's OWN

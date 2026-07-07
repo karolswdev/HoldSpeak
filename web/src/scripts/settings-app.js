@@ -108,12 +108,14 @@ function settingsApp() {
     },
     profileOptionLabel(p) {
       if (p.kind === "openAICompatible") return `${p.name} — ${this.profileHost(p) || "endpoint"}`;
+      if (p.kind === "meshNode") return `${p.name} — mesh · ${p.node || "?"}`;
       return `${p.name} — on device`;
     },
     intelEgressBadge() {
       const meeting = this.settings?.meeting || {};
       const picked = this.profiles.find((p) => p.id === String(meeting.intel_profile_id || ""));
       if (picked) {
+        if (picked.kind === "meshNode") return `⇄ mesh · ${picked.node || "?"}`;
         return picked.kind === "openAICompatible" && this.profileHost(picked)
           ? `☁ ${this.profileHost(picked)}`
           : "⌂ hub engine";

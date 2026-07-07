@@ -738,10 +738,12 @@ def _check_runtime_profiles(config: Config) -> DoctorCheck:
     fixes: list[str] = []
     for label, effective in pipelines:
         if effective.profile_id:
-            lines.append(
-                f"{label}: profile '{effective.profile_name}'"
-                f" ({endpoint_host(effective.base_url) or effective.base_url})"
+            where = (
+                f"mesh node '{effective.node}'"
+                if getattr(effective, "node", None)
+                else (endpoint_host(effective.base_url) or effective.base_url)
             )
+            lines.append(f"{label}: profile '{effective.profile_name}' ({where})")
             try:
                 record = _lookup_profile_record(effective.profile_id)
             except Exception:
@@ -779,6 +781,43 @@ def _check_runtime_profiles(config: Config) -> DoctorCheck:
         status="PASS",
         detail="; ".join(lines),
     )
+
+
+def _check_mesh_edges(config: Config) -> DoctorCheck:
+    """HS-85-04: which mesh edges are alive right now.
+
+    Liveness is born from each worker's claim polling — this reports every
+    node that has EVER served, with its age, and flags nothing by itself
+    (an offline edge only matters when a profile points at it, which the
+    "Runtime profiles" check owns). Informational, always cheap.
+    """
+    from datetime import datetime
+
+    from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
+
+    try:
+        from ..db import get_database
+
+        workers = get_database().mesh_relay.list_workers()
+    except Exception as exc:
+        return DoctorCheck(
+            name="Mesh edges",
+            status="PASS",
+            detail=f"not readable ({exc.__class__.__name__}) — no mesh serving on this hub",
+        )
+    if not workers:
+        return DoctorCheck(
+            name="Mesh edges",
+            status="PASS",
+            detail="no node has ever served this mesh (start one: holdspeak mesh serve)",
+        )
+    now = datetime.now()
+    parts: list[str] = []
+    for node, last_seen in sorted(workers.items()):
+        age = int((now - last_seen).total_seconds())
+        state = "live" if age <= DEFAULT_LIVENESS_WINDOW_SECONDS else "offline"
+        parts.append(f"{node}: {state} ({age}s ago)")
+    return DoctorCheck(name="Mesh edges", status="PASS", detail="; ".join(parts))
 
 
 def _check_dictation_runtime(config: Config) -> DoctorCheck:
@@ -1131,6 +1170,7 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_meeting_intel_runtime(config),
         _check_meeting_intel_egress(config),
         _check_runtime_profiles(config),
+        _check_mesh_edges(config),
         _check_meeting_intel_cloud_preflight(config, skip_network=skip_network),
         _check_dictation_project_context(config),
         _check_dictation_runtime(config),

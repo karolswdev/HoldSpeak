@@ -48,12 +48,23 @@ export function RecipeRail() {
       {models.length > 0 && agents.length > 0 && <div className="desk-rail-rule" aria-hidden="true" />}
       {models.map((m) => {
         const id = modelChatId(m.name);
+        // HS-85-04: a mesh model shows LIVENESS, not existence
+        const mesh = (m as any).node
+          ? (m as any).live
+            ? ` — mesh · ${(m as any).node}`
+            : ` — mesh · ${(m as any).node} (offline)`
+          : "";
+        const offline = Boolean((m as any).node) && !(m as any).live;
         return (
           <div key={id} className="desk-rail-slot">
             <button
               type="button"
-              className={"desk-rail-avatar desk-rail-model" + (chatPersonaId === id ? " open" : "")}
-              title={m.name}
+              className={
+                "desk-rail-avatar desk-rail-model" +
+                (chatPersonaId === id ? " open" : "") +
+                (offline ? " is-offline" : "")
+              }
+              title={m.name + mesh}
               onClick={() => (chatPersonaId === id ? closeChat() : openChat(id))}
             >
               <span aria-hidden="true">🖥️</span>

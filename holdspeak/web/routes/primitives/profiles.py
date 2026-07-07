@@ -39,7 +39,29 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
     async def api_list_profiles() -> Any:
         try:
             from ....db import get_database
-            return JSONResponse({"profiles": [p.to_dict() for p in get_database().profiles.list()]})
+            db = get_database()
+            profiles = db.profiles.list()
+            # HS-85-04: mesh liveness rides the ENVELOPE, never the profile
+            # shape (the synced primitive stays pure; the shape guard pins it).
+            liveness: dict[str, Any] = {}
+            nodes = {str(getattr(p, "node", "") or "") for p in profiles if p.kind == "meshNode"}
+            if nodes - {""}:
+                from datetime import datetime as _dt
+
+                from ....intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
+
+                now = _dt.now()
+                for node in sorted(nodes - {""}):
+                    last = db.mesh_relay.worker_last_seen(node)
+                    age = None if last is None else (now - last).total_seconds()
+                    liveness[node] = {
+                        "live": age is not None and age <= DEFAULT_LIVENESS_WINDOW_SECONDS,
+                        "last_seen_seconds": None if age is None else int(age),
+                    }
+            return JSONResponse({
+                "profiles": [p.to_dict() for p in profiles],
+                "mesh_liveness": liveness,
+            })
         except Exception as exc:
             return error_500(exc, log, "Failed to list profiles")
 

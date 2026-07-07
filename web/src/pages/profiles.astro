@@ -83,6 +83,13 @@ import EmptyState from "../components/EmptyState.astro";
             <div x-show="p.requires_key"><dt>Key</dt><dd class="pf-keyref">on the hub · <span class="mono" x-text="`HOLDSPEAK_PROFILE_${p.id}_KEY`"></span></dd></div>
           </dl>
 
+          {/* Mesh-node detail — liveness, not existence (HS-85-04) */}
+          <dl class="pf-meta" x-show="p.kind === 'meshNode'" x-cloak>
+            <div><dt>Node</dt><dd class="mono" x-text="p.node || '—'"></dd></div>
+            <div><dt>Model</dt><dd class="mono" x-text="p.model || '—'"></dd></div>
+            <div><dt>State</dt><dd class="mono" :class="meshIsLive(p) ? 'pf-live' : 'pf-offline'" x-text="meshState(p)"></dd></div>
+          </dl>
+
           {/* On-device detail — honest n/a on web */}
           <dl class="pf-meta" x-show="p.kind === 'onDevice'" x-cloak>
             <div><dt>Model file</dt><dd class="mono" x-text="p.model_file || '—'"></dd></div>
@@ -131,6 +138,7 @@ import EmptyState from "../components/EmptyState.astro";
               <div class="pf-segmented" role="radiogroup" aria-label="Profile kind">
                 <button type="button" :class="{ 'is-on': editing.kind === 'openAICompatible' }" @click="editing.kind = 'openAICompatible'" role="radio" :aria-checked="editing.kind === 'openAICompatible'">Endpoint</button>
                 <button type="button" :class="{ 'is-on': editing.kind === 'onDevice' }" @click="editing.kind = 'onDevice'" role="radio" :aria-checked="editing.kind === 'onDevice'">On-device</button>
+                <button type="button" :class="{ 'is-on': editing.kind === 'meshNode' }" @click="editing.kind = 'meshNode'" role="radio" :aria-checked="editing.kind === 'meshNode'">Mesh node</button>
               </div>
             </div>
 
@@ -155,6 +163,22 @@ import EmptyState from "../components/EmptyState.astro";
                   <code x-text="isNew ? 'HOLDSPEAK_PROFILE_<id>_KEY' : `HOLDSPEAK_PROFILE_${editing.id}_KEY`">HOLDSPEAK_PROFILE_&lt;id&gt;_KEY</code>.
                   The browser never sees it.
                 </p>
+              </div>
+            </template>
+
+            {/* Mesh-node fields (HS-85-04): the run relays to that node's worker */}
+            <template x-if="editing.kind === 'meshNode'">
+              <div class="pf-fieldset">
+                <label class="pf-field"><span>Node</span>
+                  <input type="text" x-model="editing.node" placeholder="walk-edge" />
+                </label>
+                <label class="pf-field"><span>Model</span>
+                  <input type="text" x-model="editing.model" placeholder="qwen3.5-4b" />
+                </label>
+                <label class="pf-field"><span>Context window (tokens)</span>
+                  <input type="number" min="1" x-model.number="editing.context_limit" placeholder="16384" />
+                </label>
+                <p class="pf-keynote">Runs on that node's own model and keys. The node serves with <code>holdspeak mesh serve</code>.</p>
               </div>
             </template>
 
@@ -485,6 +509,10 @@ import EmptyState from "../components/EmptyState.astro";
   }
   .pf-segmented button.is-on { background: var(--accent); color: var(--accent-contrast, #06121f); font-weight: 600; }
   .pf-check { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); color: var(--text); cursor: pointer; }
+  .pf-live { color: var(--success, #4ade80); }
+  .pf-offline { color: var(--warning, #fbbf24); }
+  .pf-kind.is-meshNode { color: var(--accent, #7dd3fc); }
+  .egress-badge.is-mesh { border-color: currentColor; }
   .pf-keynote { font-size: 0.8125rem; color: var(--text-muted); margin: 0; line-height: 1.5; }
   .pf-keynote code { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); background: var(--accent-tint); padding: 0.05rem 0.3rem; border-radius: var(--radius-xs); }
   .pf-drawer-foot {
