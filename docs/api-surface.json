@@ -1610,7 +1610,9 @@
         "POST"
       ],
       "module": "web.routes.mesh",
-      "consumers": []
+      "consumers": [
+        "ios"
+      ]
     },
     {
       "path": "/api/mesh/relay/{job_id}/complete",
@@ -1618,7 +1620,9 @@
         "POST"
       ],
       "module": "web.routes.mesh",
-      "consumers": []
+      "consumers": [
+        "ios"
+      ]
     },
     {
       "path": "/api/mesh/relay/{job_id}/fail",
@@ -1626,7 +1630,9 @@
         "POST"
       ],
       "module": "web.routes.mesh",
-      "consumers": []
+      "consumers": [
+        "ios"
+      ]
     },
     {
       "path": "/api/missioncontrol/events",
