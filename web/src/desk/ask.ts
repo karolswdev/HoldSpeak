@@ -63,6 +63,9 @@ export async function runAsk(opts: {
   context: AskContext[];
   profileId?: string;
   grounding?: { meeting_ids: string[]; artifact_ids: string[]; expand: "summary" | "full" } | null;
+  /** HS-83-03: pin one of the hub's runnable models (the /api/models set);
+   * an unknown name refuses 400 naming the allowed set. */
+  model?: string;
 }): Promise<AskRunResult> {
   const fail = (output: string): AskRunResult => ({
     ok: false, output, egress: null, model: "", profileId: null, contextIds: [], contextTitles: [],
@@ -77,6 +80,7 @@ export async function runAsk(opts: {
         context: opts.context.map((c) => ({ id: c.id, kind: c.kind, title: c.title })),
         ...(opts.profileId ? { profile_id: opts.profileId } : {}),
         ...(opts.grounding ? { grounding: opts.grounding } : {}),
+        ...(opts.model ? { model: opts.model } : {}),
       }),
     });
     const data = await res.json().catch(() => ({}));

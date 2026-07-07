@@ -108,6 +108,49 @@ export async function runChatTurn(
   }
 }
 
+// ── Model chats (HS-83-03) ──────────────────────────────────────────────
+// A model chat IS one of these threads: a synthetic persona pinned to one of
+// the hub's runnable models. Its turns ride /api/ask with the manifest-
+// bounded `model` override; the conversation packs CLIENT-side (a model
+// persona has no standing context by design — grounding is the thread's).
+
+export const MODEL_CHAT_PREFIX = "modelchat:hub:";
+export const modelChatId = (model: string): string => MODEL_CHAT_PREFIX + model;
+export const isModelChat = (personaId: string): boolean => personaId.startsWith(MODEL_CHAT_PREFIX);
+export const modelChatName = (personaId: string): string => personaId.slice(MODEL_CHAT_PREFIX.length);
+
+/** The packed turn: the running conversation + the question — the iPad's
+ * block grammar, minus role/context (a model persona has none). */
+export function packModelTurn(name: string, question: string, history: ChatTurn[]): string {
+  const blocks: string[] = [];
+  const window = history.slice(-12);
+  if (window.length) {
+    blocks.push(
+      "[CONVERSATION SO FAR]\n" +
+        window.map((t) => (t.role === "you" ? "User: " : `${name}: `) + t.text).join("\n"),
+    );
+  }
+  blocks.push("[USER]\n" + question.slice(0, 6000));
+  return blocks.join("\n\n");
+}
+
+export async function runModelChatTurn(
+  model: string,
+  question: string,
+  history: ChatTurn[],
+  grounding: GroundingSelection,
+): Promise<ChatTurnResult> {
+  const { runAsk } = await import("./ask");
+  const r = await runAsk({
+    prompt: packModelTurn(model, question, history),
+    lens: "Chat",
+    context: [],
+    grounding: hubGrounding(grounding),
+    model,
+  });
+  return { ok: r.ok, output: r.output, egress: r.egress, model: r.model };
+}
+
 /** Harvest one reply onto the desk — the hub mints the run-born artifact. */
 export async function keepReply(recipeId: string, question: string, output: string): Promise<string | null> {
   try {

@@ -325,6 +325,35 @@ def test_ask_grounding_refuses_bad_shapes(env) -> None:
     assert "capped at 16" in resp.json()["error"]
 
 
+def test_models_route_names_exactly_the_ask_allow_list(env, monkeypatch) -> None:
+    """HS-83-03: GET /api/models IS the ask route's allow-list — one shared
+    derivation (hub row first, deduped by name), so no client discovers
+    capability by provoking the 400."""
+    _, client = env
+    pid = client.post("/api/profiles", json={
+        "name": "LAN box", "kind": "openAICompatible",
+        "base_url": "http://192.168.1.43:8080/v1", "model": "Qwen3.5-9B-Q6_K",
+    }).json()["profile"]["id"]
+    client.post("/api/profiles", json={
+        "name": "Twin", "kind": "openAICompatible",
+        "base_url": "http://192.168.1.44:8080/v1", "model": "Qwen3.5-9B-Q6_K",
+    })  # a second profile serving the SAME model dedupes away
+    monkeypatch.setattr(
+        "holdspeak.web.routes.sync._hub_model_name", lambda ctx: "HubModel-9B"
+    )
+
+    resp = client.get("/api/models")
+    assert resp.status_code == 200
+    rows = resp.json()["models"]
+    assert rows[0] == {"name": "HubModel-9B", "source": "hub", "profile_id": None}
+    assert {"name": "Qwen3.5-9B-Q6_K", "source": "profile", "profile_id": pid} in rows
+    assert len(rows) == 2  # deduped by name
+
+    refusal = client.post("/api/ask", json={"prompt": "Go", "model": "nope"})
+    assert refusal.status_code == 400
+    assert sorted(r["name"] for r in rows) == refusal.json()["allowed_models"]
+
+
 def test_ask_surfaces_engine_error_as_502(env, monkeypatch) -> None:
     _, client = env
     from holdspeak.intel.models import MeetingIntelError

@@ -18,9 +18,17 @@ export interface DeskItem {
 export type Items = Record<Kind, DeskItem[]>;
 export type Status = Partial<Record<Kind | "profile", "live" | "unreachable">>;
 
+/** One runnable model (HS-83-03): what a `model` override on /api/ask accepts. */
+export interface HubModel {
+  name: string;
+  source: "hub" | "profile";
+  profile_id: string | null;
+}
+
 export interface LoadResult {
   items: Items;
   profiles: Array<Record<string, unknown>>;
+  models: HubModel[];
   status: Status;
   error: string;
 }
@@ -132,6 +140,7 @@ export async function loadAll(): Promise<LoadResult> {
   const items: Items = { ...EMPTY_ITEMS };
   const status: Status = {};
   let profiles: Array<Record<string, unknown>> = [];
+  let models: HubModel[] = [];
   let error = "";
   const fail = (kind: Kind | "profile", label: string, e: any) => {
     status[kind] = "unreachable";
@@ -170,10 +179,14 @@ export async function loadAll(): Promise<LoadResult> {
     fetchJson("/api/profiles")
       .then((d) => { profiles = (d.profiles || []).filter((p: any) => !p.deleted); status.profile = "live"; })
       .catch(() => { profiles = []; status.profile = "unreachable"; }),
+    // HS-83-03 — the runnable allow-list (what a `model` override accepts).
+    fetchJson("/api/models")
+      .then((d) => { models = Array.isArray(d.models) ? d.models : []; })
+      .catch(() => { models = []; /* older hub = honest empty door */ }),
     fetchJson("/api/coders/status")
       .then((d) => { items.coder = fromCoderStatus(d); status.coder = "live"; })
       .catch(() => { items.coder = []; /* companion off = honest empty lane */ }),
   ]);
 
-  return { items, profiles, status, error };
+  return { items, profiles, models, status, error };
 }

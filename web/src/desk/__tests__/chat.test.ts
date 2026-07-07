@@ -88,6 +88,45 @@ describe("the turn wire", () => {
   });
 });
 
+describe("model chats (HS-83-03)", () => {
+  it("ids discriminate and round-trip the model name", async () => {
+    const { isModelChat, modelChatId, modelChatName } = await import("../chat");
+    expect(modelChatId("Qwen3.5-9B")).toBe("modelchat:hub:Qwen3.5-9B");
+    expect(isModelChat("modelchat:hub:Qwen3.5-9B")).toBe(true);
+    expect(isModelChat("recipe_scout")).toBe(false);
+    expect(modelChatName("modelchat:hub:Qwen3.5-9B")).toBe("Qwen3.5-9B");
+  });
+  it("packs the conversation client-side (no role/context — a model persona has none)", async () => {
+    const { packModelTurn } = await import("../chat");
+    expect(packModelTurn("Qwen", "codename?", [])).toBe("[USER]\ncodename?");
+    const packed = packModelTurn("Qwen", "and now?", [turn("you", "hi"), turn("agent", "hello")]);
+    expect(packed).toBe("[CONVERSATION SO FAR]\nUser: hi\nQwen: hello\n\n[USER]\nand now?");
+  });
+  it("a model turn rides /api/ask pinned to THAT model, grounding refs along", async () => {
+    const { runModelChatTurn } = await import("../chat");
+    let sent: any = null;
+    vi.stubGlobal("fetch", (url: string, init: any) => {
+      expect(url).toBe("/api/ask");
+      sent = JSON.parse(init.body);
+      return Promise.resolve(new Response(JSON.stringify({
+        output: "OK", egress: { scope: "cloud", host: "192.168.1.43" }, model: "Qwen3.5-9B",
+      })));
+    });
+    const r = await runModelChatTurn("Qwen3.5-9B", "codename?", [turn("you", "hi")], {
+      meetings: [{
+        id: "m1", title: "Kickoff", day: "", hasIntel: true, includeIntel: true,
+        transcriptLines: 0, includeTranscript: false, intelChars: 10, transcriptChars: 0, artifacts: [],
+      }],
+    });
+    expect(sent.model).toBe("Qwen3.5-9B");
+    expect(sent.lens).toBe("Chat");
+    expect(sent.prompt).toContain("[CONVERSATION SO FAR]\nUser: hi");
+    expect(sent.grounding).toEqual({ meeting_ids: ["m1"], artifact_ids: [], expand: "summary" });
+    expect(r.ok).toBe(true);
+    expect(r.model).toBe("Qwen3.5-9B");
+  });
+});
+
 describe("harvest", () => {
   it("keepReply posts question + output and returns the artifact id", async () => {
     let sent: any = null;
