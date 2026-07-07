@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 84
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-84-01, HS-84-02
 - **Unblocks:** HS-84-05
 - **Owner:** unassigned
@@ -63,3 +63,14 @@ authoring to `/profiles`.
 - The settings page is the existing page-class surface — restyle nothing
   beyond the two sections; no new Alpine (standing rule); if the sections
   live in partials/modules, keep the Phase-54 density pattern.
+- **Two surfaces, not one page (recorded):** the dictation runtime's
+  endpoint fields never lived on `/settings` — they live on the `/dictation`
+  Runtime tab (`RuntimeSection.astro` + `scripts/dictation/runtime.js`). The
+  story's pickers landed on both surfaces; `/settings` owns meeting intel,
+  the Runtime tab owns dictation. The API-key read-only state was skipped
+  (keys are env-only; the picker shows nothing about them — the doctor
+  names a missing `HOLDSPEAK_PROFILE_<ID>_KEY` in HS-84-04).
+- **Screenshot pass caught a real bug:** the Alpine `x-model` select
+  displayed "Hub default" while the model held the assigned id — the
+  classic x-model + late `x-for` options race. Fixed with `:selected` on
+  the option; the rig now asserts `input_value()` so it can't regress.

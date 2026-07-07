@@ -1,12 +1,12 @@
 # Phase 84 — One Runtime (where intelligence runs is a profile)
 
-**Status:** OPEN (2/5).
+**Status:** OPEN (3/5).
 
-**Last updated:** 2026-07-07 (HS-84-02 done — dictation adopts the seam:
-`dictation.runtime.profile_id`, the shared `_apply_runtime_profile` rule
-(dataclass renamed `EffectiveEndpoint`), an adopted profile also selects the
-`openai_compatible` backend; probe + setup status report the effective
-endpoint).
+**Last updated:** 2026-07-07 (HS-84-03 done — both endpoint sections author
+by PICKING: the /settings cloud section and the /dictation Runtime tab each
+grew a "Runs on" profile picker + egress badge + the /profiles door; the raw
+base-URL/model/key-env inputs are gone from the UI; screenshot-verified in
+both states, and the pass caught + fixed an Alpine select-display race).
 
 ## Why this phase exists
 
@@ -115,13 +115,36 @@ the profile editor.
 |----|-------|--------|------------|
 | HS-84-01 | Meeting intelligence runs on a profile | **done** (2026-07-07 — `effective_intel_cloud` seam + `intel_profile_id`; all four derivation sites adopted; 14 new tests + neighbors green) | [story-01](./story-01-meeting-intel-on-a-profile.md) |
 | HS-84-02 | Dictation runs on a profile | **done** (2026-07-07 — `dictation.runtime.profile_id` via the shared `_apply_runtime_profile`; adopted ⇒ openai_compatible backend; probe/status honest; 11 new tests, 437 neighbors green) | [story-02](./story-02-dictation-on-a-profile.md) |
-| HS-84-03 | Settings pick, not type | backlog | [story-03](./story-03-settings-pick-not-type.md) |
+| HS-84-03 | Settings pick, not type | **done** (2026-07-07 — pickers + badges on /settings cloud + /dictation Runtime; raw endpoint inputs gone; 4 asserted screenshots; the rig caught a real Alpine select race) | [story-03](./story-03-settings-pick-not-type.md) |
 | HS-84-04 | The honest doctor + one egress derivation | backlog | [story-04](./story-04-honest-doctor-one-egress.md) |
 | HS-84-05 | Docs + the live walk | backlog | [story-05](./story-05-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 — HS-84-02 done: dictation runs on a profile.**
+**2026-07-07 — HS-84-03 done: settings pick, not type.** Both endpoint
+sections author by picking now. `/settings` → Cloud & advanced: a "Runs on"
+select (`Hub default` + every non-deleted profile as `name — host`) bound to
+`meeting.intel_profile_id`, wearing the pick's egress chip (`☁ host` /
+`⌂ hub engine`; unset shows the honest legacy posture: `⌂ local` or the
+legacy endpoint's host) and the "Manage profiles →" door. `/dictation` →
+Runtime tab: the same picker (`None — backend above` + profiles) bound to
+`dictation.runtime.profile_id`, badge + door; the meta banner names
+`runs on: <profile>` when assigned. The raw base-URL / model / key-env
+inputs are GONE from both surfaces (the `openai_compatible_timeout` stays —
+a client knob, relabeled "Endpoint timeout seconds"); saves omit the legacy
+fields (dictation) or pass them through untouched (settings), and the
+client-side validation skips legacy-field checks when a profile is picked.
+Proven by `scripts/screenshot_hs84_settings_pickers.py` (real app, scratch
+DB, Playwright): 4 committed screenshots (both sections × empty/picked) and
+asserted claims — badge text equals the picked host, raw inputs absent,
+banner names the profile. The eyeball pass caught a REAL bug the assertions
+then locked: the Alpine `x-model` select displayed "Hub default" while the
+model held the assigned id (x-model + late `x-for` options race) — fixed
+with `:selected`, regression-asserted via `input_value()`. Guards + settings
+suites 54 passed; vitest 57; web bundle rebuilt (source-only commit). Next:
+HS-84-04 — doctor + one egress derivation.
+
+Earlier — **2026-07-07 — HS-84-02 done: dictation runs on a profile.**
 `LLMRuntimeConfig.profile_id` (config-version-safe, normalized on the
 settings route like the meeting knob) resolves through the SAME rule as
 meeting intel — the HS-84-01 adoption logic was extracted as

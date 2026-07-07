@@ -1891,11 +1891,14 @@ class TestHistoryUiSmoke:
 
     def test_settings_route_serves_the_global_settings_page(self, test_client):
         # HS-42-02: /settings is now its own shell-level page (not the history
-        # shell). It carries the settings Alpine factory + the cloud-intel field.
+        # shell). It carries the settings Alpine factory; since HS-84-03 the
+        # cloud endpoint is a picked RuntimeProfile, not a typed base URL.
         response = test_client.get("/settings")
         assert response.status_code == 200
         assert "settingsApp" in response.text
-        assert "OpenAI-compatible base URL" in response.text
+        assert "intel_profile_id" in response.text
+        assert "Manage profiles" in response.text
+        assert "OpenAI-compatible base URL" not in response.text
         assert "HoldSpeak History" not in response.text
 
 
