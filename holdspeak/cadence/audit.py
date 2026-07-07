@@ -20,9 +20,13 @@ def export_audit(db, *, now: Optional[datetime] = None, nudge_limit: int = 500) 
     for loop in loops:
         by_status[loop.status] = by_status.get(loop.status, 0) + 1
         by_source[loop.source_type] = by_source.get(loop.source_type, 0) + 1
+    from ..intel.providers import endpoint_egress
+
     return {
         "generated_at": now.isoformat(),
-        "egress": {"scope": "local", "label": "Local audit — nothing leaves this machine"},
+        "egress": endpoint_egress(
+            cloud=False, label="Local audit — nothing leaves this machine"
+        ),
         "totals": {"loops": len(loops), "by_status": by_status, "by_source": by_source},
         "loops": [
             {

@@ -224,6 +224,32 @@ def build_configured_meeting_intel() -> "MeetingIntel":
     return MeetingIntel(**kwargs)
 
 
+def endpoint_host(base_url: Any) -> str:
+    """The bare host an endpoint egresses to (never a full URL in a badge)."""
+    raw = str(base_url or "").strip()
+    if not raw:
+        return ""
+    parsed = urlparse(raw if "//" in raw else f"//{raw}")
+    return parsed.hostname or ""
+
+
+def endpoint_egress(
+    *, cloud: bool, base_url: Optional[str] = None, label: Optional[str] = None
+) -> dict[str, Any]:
+    """The ONE egress badge constructor (HS-84-04): ``{scope, host?, label?}``.
+
+    Every surface that states where a run went builds its badge here — routes,
+    cadence, audit — so the wire shape can't drift per call site. Badges stay
+    REPORTED facts: pass the endpoint the run actually used, never a default.
+    """
+    badge: dict[str, Any] = {"scope": "cloud" if cloud else "local"}
+    if cloud:
+        badge["host"] = endpoint_host(base_url) or "api.openai.com"
+    if label:
+        badge["label"] = label
+    return badge
+
+
 def profile_key_env(profile_id: str) -> str:
     """The hub env var that holds a runtime profile's API key (Phase 24). The key lives in
     the hub's SECRETS (env), never on the synced profile shape or in the payload."""

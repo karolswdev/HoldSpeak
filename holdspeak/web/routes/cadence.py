@@ -13,10 +13,12 @@ from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException
 
+from ...intel.providers import endpoint_egress
 from ..context import WebContext
 
-# Phase 2 reads/writes are local-only; the badge is honest about that.
-_LOCAL_EGRESS = {"scope": "local", "label": "Local only"}
+# Phase 2 reads/writes are local-only; the badge is honest about that —
+# built by the one egress constructor (HS-84-04).
+_LOCAL_EGRESS = endpoint_egress(cloud=False, label="Local only")
 
 
 def _cadence_llm():

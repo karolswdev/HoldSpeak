@@ -244,7 +244,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 build_meeting_intel_for_profile,
             )
             from .ask import (
-                _GROUNDING_EXPANDS, _GROUNDING_MAX_REFS, _host_of, _hydrate_grounding,
+                _GROUNDING_EXPANDS, _GROUNDING_MAX_REFS, _hydrate_grounding, _run_egress,
             )
 
             db = get_database()
@@ -337,21 +337,9 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 return JSONResponse({"error": str(exc), "recipe_id": recipe_id}, status_code=502)
             _run_frame(ctx, "ready", kind="recipe", ref=recipe_id, name=name)
 
-            # The turn's HONEST egress — the 16-09 grammar, same as /api/ask.
-            if prof is not None and prof.kind == "openAICompatible" and prof.base_url:
-                egress: dict[str, Any] = {"scope": "cloud", "host": _host_of(prof.base_url)}
-                model = str(prof.model or "")
-            elif intel.active_provider == "cloud":
-                from ....config import Config
-
-                meeting_cfg = Config.load().meeting
-                egress = {"scope": "cloud", "host": _host_of(meeting_cfg.intel_cloud_base_url) or "api.openai.com"}
-                model = str(meeting_cfg.intel_cloud_model or "")
-            else:
-                from ..sync import _hub_model_name
-
-                egress = {"scope": "local"}
-                model = _hub_model_name(ctx)
+            # The turn's HONEST egress — the 16-09 grammar, the same ONE
+            # derivation as /api/ask (HS-84-04).
+            egress, model = _run_egress(ctx, prof, intel)
 
             payload: dict[str, Any] = {
                 "recipe_id": recipe_id,
