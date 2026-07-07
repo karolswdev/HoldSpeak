@@ -1,16 +1,15 @@
 # Phase 25 — Serve the Mesh (the phone becomes an edge)
 
-**Status:** OPEN (2/3).
+**Status:** CLOSED (3/3, 2026-07-07 — scaffolded and shipped the same
+day). See [final-summary.md](./final-summary.md).
 
-**Last updated:** 2026-07-07 (HSM-25-02 done — the consent toggle (off by
-default) + the serving surface, sim-proven against the REAL hub: with the
-toggle on, the desktop's own doctor read "Mesh edges: iPad: live (2s
-ago)" — the simulator genuinely stamping liveness on the relay queue.
-The build also caught a LATENT HS-85-02 App break: RunsOnPicker's Kind
-switch missed `meshNode`, invisible to `swift test` (it never compiles
-the App target). Earlier: HSM-25-01 — the worker loop, 7/7; scaffolded
-the same day, the handoff from desktop
-[phase-85](../../holdspeak/phase-85-the-mesh-edge/final-summary.md).)
+**Last updated:** 2026-07-07 (HSM-25-03 done — the four-beat live walk on
+the real hub: an ask THROUGH the device in 2.6s wearing egress
+`{scope: mesh, host: iPad}`; kill → offline everywhere, refusal 0.00s
+named. The rig's finds fixed: the models-door-vs-doctor liveness surface,
+the container-domain defaults trap (the env-seed house pattern instead),
+and a @Published-init recursion SIGTRAP (crash-report-diagnosed). Docs at
+the entry points; guards 107; `swift test` 500/0.)
 
 ## Why this phase exists
 
@@ -64,22 +63,26 @@ name the moment the phone stops serving.
 
 ## Exit criteria (evidence required)
 
-- [ ] `swift test` covers the worker loop against a stubbed hub
+- [x] `swift test` covers the worker loop against a stubbed hub
   (URLProtocol): claim→execute→complete verbatim; node-side failure →
   fail verbatim; hub outage → backoff without crash; cancel stops
   cleanly; the recursion guard refuses by name; the token rides as
-  Bearer and never appears in any label.
-- [ ] The consent toggle (off by default) starts/stops the worker; app
-  background/kill stops it; the serving state renders on Settings.
-- [ ] The live proof on real metal: a desk ask on the Mac (or web desk)
-  runs against a meshNode profile naming the DEVICE and executes on the
-  device's own provider — the hub-side badge names the device node, the
-  device's serving counter increments, and doctor's "Mesh edges" line
-  lists the device. Kill the app: pickers read offline, a forced run
-  refuses fast and named. Screenshots + outputs committed.
-- [ ] Docs teach it at the entry points (apple/README + the mobile
-  ARCHITECTURE note + desktop MODELS.md gains the "your phone can serve
-  too" sentence); guards green.
+  Bearer and never appears in any label —
+  `MeshServeWorkerTests` 7/7 ([evidence-01](./evidence-story-01.md));
+  full suite 500/0 at close.
+- [x] The consent toggle (off by default) starts/stops the worker; app
+  background/kill stops it; the serving state renders on Settings —
+  [evidence-02](./evidence-story-02.md): two screenshots + the live
+  doctor line; scenePhase observer for background; kill needs no cleanup
+  by design (polling IS liveness), proven by the walk's beat 4.
+- [x] The live proof on real metal: an ask against a meshNode profile
+  naming the DEVICE executed on the device's own provider in 2.6s,
+  egress `{scope: mesh, host: iPad}`; doctor listed the device live;
+  kill → offline + 0.00s named refusal
+  ([evidence-03](./evidence-story-03.md); three walk screenshots).
+- [x] Docs teach it at the entry points (apple/README "Serve the mesh",
+  the ARCHITECTURE seam-in-reverse note, MODELS.md's phone-consent
+  sentence); guards **107 passed**.
 
 ## Story status
 
@@ -87,11 +90,30 @@ name the moment the phone stops serving.
 |----|-------|--------|------------|
 | HSM-25-01 | The Swift relay worker on the provider seam | **done** (2026-07-07 — worker + wire + 7 tests; `swift test` 500/0) | [story-01](./story-01-swift-relay-worker.md) |
 | HSM-25-02 | Consent + the serving surface | **done** (2026-07-07 — toggle + state line, sim-proven on the real hub's doctor; the RunsOnPicker meshNode find) | [story-02](./story-02-consent-and-serving-surface.md) |
-| HSM-25-03 | The live proof + docs | backlog | [story-03](./story-03-live-proof-and-docs.md) |
+| HSM-25-03 | The live proof + docs | **done** (2026-07-07 — four beats live; 3 rig finds fixed; docs + guards 107) | [story-03](./story-03-live-proof-and-docs.md) |
 
 ## Where we are
 
-**2026-07-07 — HSM-25-02 done: one switch, and the phone is an edge.**
+**2026-07-07 — HSM-25-03 done: the phone served, live, and the phase is
+CLOSED.** The four-beat walk (`scripts/walk_hsm25_live.py`, the standing
+rig) ran the real app on the iPad simulator against the REAL hub: doctor
+read `iPad: live (1s ago)`; the hub-side "Phone Edge" meshNode profile's
+card read live; an ask against it executed THROUGH the device in **2.6s**
+wearing egress `{scope: mesh, host: iPad}` (hub → relay queue → the app's
+worker → the device's own endpoint provider → .43 → back); killing the
+app read offline and a forced run refused in **0.00s**, named. Three rig
+finds fixed along the way: beat 1 must poll doctor (the models door shows
+PROFILES, not bare workers); seeding the app's persisted defaults from
+outside loses to the container domain + cfprefsd — the env-seed house
+pattern (`HS_WALK_SERVE_URL`, simulator-only, ephemeral) replaced it; and
+the seed's first cut hit a @Published-init recursion SIGTRAP (a second
+assignment in `init` goes through the setter — crash report read,
+frame-exact; the seed folds into the FIRST assignment). Docs at the entry
+points (apple/README, ARCHITECTURE, MODELS.md); guards 107; `swift test`
+500/0. The phase is CLOSED 3/3 — see
+[final-summary.md](./final-summary.md).
+
+Earlier — **2026-07-07 — HSM-25-02 done: one switch, and the phone is an edge.**
 `meshServeOn` (UserDefaults, default FALSE — no node serves implicitly)
 drives `MeshServeStore`, the worker's lifecycle owner: toggle on →
 `MeshServeWorker` serves as `DeviceLabel.current` (the SAME node string

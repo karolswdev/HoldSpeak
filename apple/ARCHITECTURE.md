@@ -92,6 +92,14 @@ turns messy model text into validated contract values (extract JSON → decode t
 the contract `Codable` → bounded repair-retry) — the engine-agnostic floor under any
 provider.
 
+**Serve the mesh (HSM-25).** The seam also runs in reverse: `MeshServeWorker`
+([file](./Sources/Providers/Desktop/MeshServeWorker.swift)) polls the paired
+hub's relay queue (`HTTPDesktopClient+MeshServe`: claim / complete / fail) and
+executes each claimed run on THIS device's own `ILLMProvider` — polling is the
+node's liveness, running the worker is the consent (the Settings toggle, off
+by default, foreground-only). The request moves; the model and the Keychain
+key never do.
+
 ## Meeting intelligence — transcript to artifacts
 
 ```mermaid

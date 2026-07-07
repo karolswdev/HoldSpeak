@@ -1,6 +1,6 @@
 # HSM-25-03 — The live proof + docs
 
-- **Status:** backlog
+- **Status:** done (2026-07-07) — four beats proven live (ask through the device in 2.6s, egress `mesh · iPad`; kill → 0.00s named refusal); docs at the entry points; guards 107. Evidence: [evidence-story-03.md](./evidence-story-03.md).
 - **Depends on:** HSM-25-01, HSM-25-02
 - **Unblocks:** none (closes the phase)
 
