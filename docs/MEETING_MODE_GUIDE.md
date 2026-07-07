@@ -58,9 +58,10 @@ holdspeak
   larger models give better intel at the cost of speed.
 - Optional endpoint mode: `intel_provider: "cloud"` (or `auto` fallback) points
   at **any OpenAI-compatible endpoint**: a self-hosted LAN server, Ollama, vLLM,
-  llama.cpp-server, or a real cloud API. Set `intel_cloud_base_url`; the API key
-  (`OPENAI_API_KEY` or your configured env var) is optional for keyless
-  self-hosted endpoints.
+  llama.cpp-server, or a real cloud API. Author the endpoint once as a runtime
+  profile (web: `/profiles`) and pick it under Settings → Cloud & advanced →
+  **Runs on**; the API key is optional for keyless self-hosted endpoints. The
+  `intel_cloud_base_url` config field still works when no profile is picked.
 
 ### For Web Interfaces
 - **FastAPI + Uvicorn** - Web server dependencies
@@ -287,9 +288,12 @@ Notes:
 For local-first capture plus remote intel on your LAN:
 
 1. Run an OpenAI-compatible endpoint on homelab (for example vLLM/Ollama-compatible API).
-2. Set `intel_cloud_base_url` to that endpoint (`http://host:port/v1`).
+2. Author it as a runtime profile (web: `/profiles`, with the endpoint's
+   `http://host:port/v1` URL) and pick it under Settings → Cloud & advanced →
+   **Runs on**. Setting `intel_cloud_base_url` by hand still works when no
+   profile is picked.
 3. Keep `intel_deferred_enabled: true` so meetings continue when the homelab is temporarily unavailable.
-4. Export your API key env var and run `holdspeak doctor` to preflight reachability + model availability.
+4. Export your API key env var and run `holdspeak doctor` to preflight reachability + model availability; its "Runtime profiles" line names the profile each pipeline resolves to.
 
 ### What It Extracts
 

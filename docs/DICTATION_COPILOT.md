@@ -185,6 +185,10 @@ at any local or LAN [OpenAI-compatible / GGUF / MLX endpoint](./MODELS.md)):
 }
 ```
 
+Prefer the picker: author the endpoint once as a runtime profile (web:
+`/profiles`), then pick it under Dictation → Runtime → **Runs on profile**.
+The fields above remain the fallback when nothing is picked.
+
 </details>
 
 ## Run the demo yourself
