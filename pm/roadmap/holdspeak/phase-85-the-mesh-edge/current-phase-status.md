@@ -1,14 +1,11 @@
 # Phase 85 — The Mesh Edge (run where the node is)
 
-**Status:** OPEN (2/5).
+**Status:** OPEN (3/5).
 
-**Last updated:** 2026-07-07 (HS-85-02 done — the meshNode profile kind
-(contract mirrored schema/Python/Swift, `profiles.node` @ v11) +
-`MeshRelayIntel` (immediate named refusal offline; bounded wait; queue
-errors verbatim); DICTATION ADOPTS TOO (owner call, reversing the first
-cut): `MeshRelayRuntime` rides the endpoint leg's advisory-constrained
-posture over the relay; egress scope `mesh` end to end incl. both web
-badge renderers).
+**Last updated:** 2026-07-07 (HS-85-03 done — `holdspeak mesh serve`:
+the reference edge worker; claim → execute on THIS node's own provider →
+complete/fail verbatim; backoff on hub outage; SIGINT-clean; `--once` for
+scripts; running it IS the consent).
 
 ## Why this phase exists
 
@@ -119,13 +116,30 @@ node is not there, and badged as exactly what happened.
 |----|-------|--------|------------|
 | HS-85-01 | The relay queue + the node wire | **done** (2026-07-07 — `mesh_relay_jobs`+`mesh_workers` @ schema v10; claim/complete/fail routes; 12 new tests, 79+7 neighbors/guards green) | [story-01](./story-01-relay-queue-and-node-wire.md) |
 | HS-85-02 | The mesh profile kind + the relay provider | **done** (2026-07-07 — meshNode + `node` mirrored 3 ways @ v11; `MeshRelayIntel` + `MeshRelayRuntime` (DIR adopts, owner call); mesh egress to both web badges; 16 new tests) | [story-02](./story-02-mesh-profile-and-relay-provider.md) |
-| HS-85-03 | `holdspeak mesh serve` — the edge worker | backlog | [story-03](./story-03-mesh-serve-worker.md) |
+| HS-85-03 | `holdspeak mesh serve` — the edge worker | **done** (2026-07-07 — the poll→execute→report loop, factored + tested against an in-process hub; 6 new tests, CLI neighbors 192 green) | [story-03](./story-03-mesh-serve-worker.md) |
 | HS-85-04 | Liveness on every surface + the honest doctor | backlog | [story-04](./story-04-liveness-surfaces-and-doctor.md) |
 | HS-85-05 | Docs + the live walk | backlog | [story-05](./story-05-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 — HS-85-02 done: a node is pickable, and picking it relays.**
+**2026-07-07 — HS-85-03 done: the wire has a real node.** `holdspeak mesh
+serve` (`commands/mesh_serve.py` + the nested `mesh` CLI verb): the worker
+polls `claim` on the pinned ~3s cadence (jittered; every poll stamps this
+node's liveness hub-side), executes each `llm` job on THIS machine's OWN
+provider (`build_configured_meeting_intel().run_prompt` — its engine, its
+profiles, its keys; built lazily once, reused), and posts
+`complete`/`fail` verbatim. Hub outages back off exponentially (1s→30s cap,
+reset on success) without crash-looping; SIGINT/SIGTERM stop cleanly with
+the in-flight job finishing; `--once` claims at most one job for
+scripts/tests (no-work exits 0; an unreachable hub exits 1 — silence and
+outage are different answers). The token rides `HOLDSPEAK_HUB_TOKEN` (an
+env var, never a flag). One honest log line per claim/execute/outcome —
+the walk's evidence. 6 new tests (`test_mesh_serve_worker.py`: end-to-end
+against an in-process hub app — complete verbatim, fail verbatim, backoff
+sequence 1/2/4, liveness stamping, run-forever stop, CLI parse); CLI
+neighbors 192 green. Next: HS-85-04 — liveness on every surface.
+
+Earlier — **2026-07-07 — HS-85-02 done: a node is pickable, and picking it relays.**
 The contract moved as one: `kind: meshNode` + `node: string` on
 `profile.schema.json`, `ProfileRecord`/repository/sync row/routes on the
 hub (`profiles.node` column ⇒ schema v11, snapshot regenerated, +1 line),

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 85
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-85-01
 - **Unblocks:** HS-85-05
 - **Owner:** unassigned
@@ -64,3 +64,10 @@ is consent, off by default because it never runs unless started).
   from an env var; never a flag, so tokens don't land in shell history).
 - Deliberately a *reference* implementation: simple, synchronous, one job
   at a time. Parallel claims are a future knob, not a v1 accident.
+- **Implementation notes (recorded):** the worker rides `urllib` (the house
+  pattern; `requests` is not a package dependency). `--once` does ONE claim
+  poll and exits 0 on no-work (deterministic for scripts) but exits 1 on an
+  unreachable hub — silence and outage are different answers. The `mesh`
+  subcommand nests (`holdspeak mesh serve`) so future mesh verbs have a
+  home. No route changes ⇒ api-surface untouched. The engine builds lazily
+  ONCE and is reused across jobs (a GGUF engine must not reload per job).
