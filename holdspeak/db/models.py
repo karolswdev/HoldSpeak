@@ -750,3 +750,46 @@ class DictationJournalRecord:
     corrected: bool = False
     correction_id: Optional[int] = None
 
+
+
+@dataclass
+class MeshRelayJob:
+    """A mesh-edge relay run (HS-85-01): work addressed to ONE node, claimed by
+    that node's worker, executed on ITS OWN provider, result posted back.
+    Hub-local rows — never a synced kind; prompts move only hub ⇄ the
+    executing node."""
+
+    id: str
+    node: str
+    task_kind: str = "llm"
+    system_prompt: str = ""
+    user_prompt: str = ""
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    model_hint: str = ""
+    status: str = "queued"  # queued | running | completed | failed
+    result: Optional[str] = None
+    error: Optional[str] = None
+    deadline_at: str = ""
+    created_at: str = ""
+    claimed_at: Optional[str] = None
+    completed_at: Optional[str] = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "node": self.node,
+            "task_kind": self.task_kind,
+            "system_prompt": self.system_prompt,
+            "user_prompt": self.user_prompt,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "model_hint": self.model_hint,
+            "status": self.status,
+            "result": self.result,
+            "error": self.error,
+            "deadline_at": self.deadline_at,
+            "created_at": self.created_at,
+            "claimed_at": self.claimed_at,
+            "completed_at": self.completed_at,
+        }

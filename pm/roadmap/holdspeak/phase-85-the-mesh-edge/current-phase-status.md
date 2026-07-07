@@ -1,9 +1,11 @@
 # Phase 85 — The Mesh Edge (run where the node is)
 
-**Status:** OPEN (0/5, scaffolded 2026-07-07).
+**Status:** OPEN (1/5).
 
-**Last updated:** 2026-07-07 (phase scaffolded from backlog candidate T; no
-story started).
+**Last updated:** 2026-07-07 (HS-85-01 done — the relay queue
+(`mesh_relay_jobs` + `mesh_workers`, schema v10) and the three-route node
+wire; liveness born from claim polls; deadlines enforced lazily; late
+completions refused by name).
 
 ## Why this phase exists
 
@@ -112,7 +114,7 @@ node is not there, and badged as exactly what happened.
 
 | ID | Story | Status | Story file |
 |----|-------|--------|------------|
-| HS-85-01 | The relay queue + the node wire | backlog | [story-01](./story-01-relay-queue-and-node-wire.md) |
+| HS-85-01 | The relay queue + the node wire | **done** (2026-07-07 — `mesh_relay_jobs`+`mesh_workers` @ schema v10; claim/complete/fail routes; 12 new tests, 79+7 neighbors/guards green) | [story-01](./story-01-relay-queue-and-node-wire.md) |
 | HS-85-02 | The mesh profile kind + the relay provider | backlog | [story-02](./story-02-mesh-profile-and-relay-provider.md) |
 | HS-85-03 | `holdspeak mesh serve` — the edge worker | backlog | [story-03](./story-03-mesh-serve-worker.md) |
 | HS-85-04 | Liveness on every surface + the honest doctor | backlog | [story-04](./story-04-liveness-surfaces-and-doctor.md) |
@@ -120,12 +122,29 @@ node is not there, and badged as exactly what happened.
 
 ## Where we are
 
-**2026-07-07 — scaffolded.** Candidate T graduated same-day from the
-post-84 conversation; the transport survey grounded the five stories in the
-real seams (no device WS, no heartbeat — the worker's polling becomes the
-liveness signal; the intel-jobs queue shape is the precedent; `run_prompt`
-is the whole provider interface). Next: HS-85-01, the queue + wire — the
-spine everything else rides.
+**2026-07-07 — HS-85-01 done: the spine exists.** `mesh_relay_jobs` +
+`mesh_workers` land at schema v10 (bumped WITH the DDL — the v9 lesson;
+snapshot regenerated with the house no-op-regex recipe, +23 additive lines
+only). The repository (`db/mesh_relay.py`) carries the pinned lifecycle:
+enqueue (120s default deadline) → per-node oldest-first claim (every poll
+stamps `mesh_workers.last_seen` — the mesh's only heartbeat) →
+complete/fail verbatim; deadlines enforce lazily on ANY read, and both
+abandonment shapes fail with named reasons ("never claimed" /
+"claimed but never completed"). A late completion is refused (409) so a
+slow worker learns the truth. The wire is three token-guarded routes on the
+mesh router (claim / complete / fail; enqueue deliberately has no route —
+only the HS-85-02 provider writes jobs); api-surface at 247 routes. 12 new
+tests (`test_mesh_relay_queue.py`: lifecycle, per-node isolation, ordering,
+both deadline shapes, late-completion refusal, liveness aging, wire
+validation, never-a-synced-kind); db/schema-policy/sync/api-surface
+neighbors 79 + density guard 7, unmodified. Next: HS-85-02 — the meshNode
+profile kind + the relay provider.
+
+Earlier — **2026-07-07 — scaffolded.** Candidate T graduated same-day from
+the post-84 conversation; the transport survey grounded the five stories in
+the real seams (no device WS, no heartbeat — the worker's polling becomes
+the liveness signal; the intel-jobs queue shape is the precedent;
+`run_prompt` is the whole provider interface).
 
 ## Active risks
 

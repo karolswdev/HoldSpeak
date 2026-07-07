@@ -13,6 +13,7 @@ from .corrections import DictationCorrectionRepository  # noqa: F401
 from .journal import DictationJournalRepository  # noqa: F401
 from .milestones import MilestoneRepository, FIRST_DICTATION_SUCCESS  # noqa: F401
 from .cadence import CadenceRepository  # noqa: F401
+from .mesh_relay import MeshRelayRepository  # noqa: F401
 from .primitives import (  # noqa: F401
     NoteRepository,
     KBRepository,

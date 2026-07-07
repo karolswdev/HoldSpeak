@@ -12,6 +12,7 @@ from typing import Optional, Iterator
 from ..logging_config import get_logger
 from .meetings import MeetingRepository
 from .intel import IntelRepository
+from .mesh_relay import MeshRelayRepository
 from .plugins import PluginArtifactRepository
 from .projects import ProjectRepository
 from .activity import ActivityRepository
@@ -39,7 +40,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 9   # v9: model_manifests (HSM-16-08) — shipped additively without a bump, so v8-stamped DBs never ran the DDL and /api/sync/pull 500'd; the bump routes them through backup-then-apply
+SCHEMA_VERSION = 10  # v10: mesh_relay_jobs + mesh_workers (HS-85-01) — bumped WITH the DDL (the v9 lesson: additive-unbumped means old stamps never run it)
 
 
 class SchemaVersionError(RuntimeError):
@@ -818,6 +819,38 @@ CREATE TABLE IF NOT EXISTS model_manifests (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
+-- Mesh relay queue (HS-85-01): HUB-LOCAL run rows — a run addressed to one
+-- node, claimed by that node's worker, executed on ITS OWN provider, result
+-- posted back. Never a synced kind: prompts move only hub <-> the executing
+-- node (the deferred-intel trust posture). Deadlines enforced lazily on read.
+CREATE TABLE IF NOT EXISTS mesh_relay_jobs (
+    id TEXT PRIMARY KEY,
+    node TEXT NOT NULL,
+    task_kind TEXT NOT NULL DEFAULT 'llm',
+    system_prompt TEXT NOT NULL DEFAULT '',
+    user_prompt TEXT NOT NULL DEFAULT '',
+    temperature REAL,
+    max_tokens INTEGER,
+    model_hint TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'queued', -- queued | running | completed | failed
+    result TEXT,
+    error TEXT,
+    deadline_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    claimed_at TEXT,
+    completed_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_mesh_relay_jobs_node_status
+    ON mesh_relay_jobs(node, status);
+
+-- Mesh worker liveness (HS-85-01): last claim-poll per node. Liveness is
+-- born from the worker's own polling; the mesh has no other heartbeat.
+CREATE TABLE IF NOT EXISTS mesh_workers (
+    node TEXT PRIMARY KEY,
+    last_seen TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Directory (organization/synced): the canonical organization container; the
 -- iPad renders it spatially as a "zone". Only identity + nesting sync here
 -- (`id, name, parent_id`); the zone's geometry/paint is per-device layout and
@@ -960,6 +993,7 @@ class Database:
         self.directories = DirectoryRepository(self._connection, self)
         self.directory_memberships = DirectoryMembershipRepository(self._connection, self)
         self.model_manifests = ModelManifestRepository(self._connection, self)
+        self.mesh_relay = MeshRelayRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

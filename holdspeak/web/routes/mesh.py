@@ -124,4 +124,71 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
 
             return error_500(exc, get_logger("web.routes.mesh"), "Failed to build the mesh inbox")
 
+    # ── The mesh-edge relay wire (HS-85-01) ─────────────────────────────
+    # A node's WORKER speaks these three routes (normal auth applies): claim
+    # stamps the node's liveness on every poll — the mesh's only heartbeat —
+    # and returns the oldest queued job addressed to that node; complete/fail
+    # post the run's outcome verbatim. Enqueue has no route: only the hub's
+    # own relay provider (HS-85-02) writes jobs.
+
+    @router.post("/api/mesh/relay/claim")
+    async def api_mesh_relay_claim(payload: dict[str, Any]) -> Any:
+        node = str((payload or {}).get("node") or "").strip()
+        if not node:
+            return JSONResponse({"error": "node must be a non-empty string"}, status_code=400)
+        try:
+            from ...db import get_database
+
+            job = get_database().mesh_relay.claim_next(node)
+            return JSONResponse({"job": job.to_dict() if job is not None else None})
+        except Exception as exc:
+            from ...logging_config import get_logger
+            from ..runtime_support import error_500
+
+            return error_500(exc, get_logger("web.routes.mesh"), "Failed to claim relay work")
+
+    @router.post("/api/mesh/relay/{job_id}/complete")
+    async def api_mesh_relay_complete(job_id: str, payload: dict[str, Any]) -> Any:
+        result = (payload or {}).get("result")
+        if not isinstance(result, str) or not result.strip():
+            return JSONResponse({"error": "result must be a non-empty string"}, status_code=400)
+        try:
+            from ...db import get_database
+
+            ok = get_database().mesh_relay.complete(job_id, result=result)
+            if not ok:
+                # the answer arrived after the deadline (or for an unknown id) —
+                # refuse it by name so a late worker learns the truth
+                return JSONResponse(
+                    {"error": f"relay job {job_id} is not completable (expired, failed, or unknown)"},
+                    status_code=409,
+                )
+            return JSONResponse({"success": True})
+        except Exception as exc:
+            from ...logging_config import get_logger
+            from ..runtime_support import error_500
+
+            return error_500(exc, get_logger("web.routes.mesh"), "Failed to complete relay work")
+
+    @router.post("/api/mesh/relay/{job_id}/fail")
+    async def api_mesh_relay_fail(job_id: str, payload: dict[str, Any]) -> Any:
+        error = str((payload or {}).get("error") or "").strip()
+        if not error:
+            return JSONResponse({"error": "error must be a non-empty string"}, status_code=400)
+        try:
+            from ...db import get_database
+
+            ok = get_database().mesh_relay.fail(job_id, error=error)
+            if not ok:
+                return JSONResponse(
+                    {"error": f"relay job {job_id} is not failable (already terminal or unknown)"},
+                    status_code=409,
+                )
+            return JSONResponse({"success": True})
+        except Exception as exc:
+            from ...logging_config import get_logger
+            from ..runtime_support import error_500
+
+            return error_500(exc, get_logger("web.routes.mesh"), "Failed to record relay failure")
+
     return router

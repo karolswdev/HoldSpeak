@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 85
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-85-02, HS-85-03
 - **Owner:** unassigned
@@ -64,3 +64,10 @@ record born from the worker's own polling.
   it, don't ship additively unbumped).
 - Job rows hold prompt text like deferred-intel rows hold transcripts —
   same trust posture, documented in HS-85-05.
+- **Implementation notes (recorded):** enqueue deliberately has NO route —
+  only the hub's own relay provider (HS-85-02) writes jobs, so the wire's
+  attack surface is claim/complete/fail only. A late `complete` (past the
+  deadline) is refused with 409 naming the state, so a slow worker learns
+  the truth instead of silently "winning" after the user already saw the
+  timeout. Repository timestamps take an injected `now` for deterministic
+  deadline tests.
