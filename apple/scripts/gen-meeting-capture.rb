@@ -119,7 +119,7 @@ target.build_configurations.each do |config|
   s['PRODUCT_BUNDLE_IDENTIFIER'] = BUNDLE_ID
   s['PRODUCT_NAME'] = 'HoldSpeakMobile'
   s['MARKETING_VERSION'] = '0.1.0'
-  s['CURRENT_PROJECT_VERSION'] = '8'   # TestFlight build number — bump per upload (b8 = keyboard dismissal everywhere)
+  s['CURRENT_PROJECT_VERSION'] = '9'   # TestFlight build number — bump per upload (b9 = ground-this-ask + model chat)
   s['GENERATE_INFOPLIST_FILE'] = 'NO'
   s['INFOPLIST_FILE'] = info_plist
   s['TARGETED_DEVICE_FAMILY'] = '1,2'

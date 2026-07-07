@@ -238,6 +238,10 @@ grounding picker rides free on its composer. Live proof: a sim paired to the liv
 opened a chat that titled ITSELF with the real pull's manifest name
 (`Qwen3.5-9B-UD-Q6_K_XL.gguf`) and answered `MODEL CHAT OK` through
 127.0.0.1:8765 → the .43 llama.cpp (`screenshots/15-13-live-run.png`). Swift **493**.
+**TestFlight build 9** (b9 = merged main at #278: ground-this-ask + model chat)
+uploaded, VALID, attached to "Owner (internal)". Ops: the stale `tailscale serve`
+fronts :8443/:34999 are REMOVED (the daemon socket lives at
+`/opt/homebrew/var/run/tailscaled.sock` — pass `--socket`); :443 → 8765 kept.
 
 Earlier — **2026-07-06 (night) — THE ASK KNOWS YOUR RECORDS (15-12 built + real-metal hydration proven).**
 The second owner ask of the day shipped the same day. One assembler:
