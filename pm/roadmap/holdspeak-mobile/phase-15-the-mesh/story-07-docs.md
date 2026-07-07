@@ -41,3 +41,8 @@ approval/egress contract.
 - Documents **shipped** behavior only — if a surface didn't land, it isn't documented.
 - Lesson carried from Phase 64: feature-docs stories must update the **entry points**, not only deep
   files.
+- **Write once, aim both (HS-83-04, 2026-07-07):** the web docs already describe ground-this-ask,
+  persona conversations, and the models front door in product tense (`README.md` §The Desk +
+  `docs/WEB_DESK.md` §"Converse from the rail" / §"Ground this ask", both voice-guard-clean). This
+  story describes the SAME features from the phone's side — point at those sections rather than
+  re-deriving the feature language.

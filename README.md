@@ -52,14 +52,30 @@ shelves you drag things onto; tap anything and it opens in place.
 <p align="center"><em>The front door: the world your voice work lives in. The orb records, the rail asks, the tray files.</em></p>
 
 The Desk is where the loops close. Press the orb and the hub records a
-meeting; when it ends, the meeting lands on the stage as an object. Ask a
-recipe from the rail and its answer persists as an artifact you can open,
-trace (the lineage chip names the recipe that made it), and file into a
-zone. Or rope a few objects together with the lasso and **Ask AI** about
-exactly that pile: the answer prints as a card you keep or bin, and a kept
-card records every object it read plus your instruction. The egress badge
-in the corner is the one trust answer: local, or
+meeting; when it ends, the meeting lands on the stage as an object. Rope a
+few objects together with the lasso and **Ask AI** about exactly that pile:
+the answer prints as a card you keep or bin, and a kept card records every
+object it read plus your instruction. The egress badge in the corner is the
+one trust answer: local, or
 exactly which endpoint. See [The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md).
+
+**Ground this ask.** The composer carries an attach control: pick meetings,
+expand each one to its digest, its transcript, or any artifact it produced,
+and the gauge prices the selection against the model's window before you
+run. The question is answered from those records (the hub reads them from
+its own store), the kept card names them, and an unknown reference refuses
+with its id instead of guessing.
+
+**Talk to your personas.** Tap an avatar on the rail and it opens a
+conversation, not a one-shot prompt: turns accumulate, the thread survives a
+reload, each reply wears the badge for where that turn actually ran, and any
+reply can be saved to the desk as an artifact. The attach control rides the
+chat composer too, so a conversation can be grounded on the meetings it is
+about.
+
+**Open a model.** The rail also lists every model the hub can run: its own
+engine and each profile's model. One tap opens a chat pinned to that model,
+through the same conversation surface, grounding included.
 
 ## Why it's different
 

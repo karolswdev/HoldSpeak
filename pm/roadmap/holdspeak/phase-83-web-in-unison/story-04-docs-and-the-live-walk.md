@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 83
-- **Status:** open
+- **Status:** done — 2026-07-07, see [`evidence-story-04.md`](./evidence-story-04.md).
 - **Depends on:** HS-83-01..03.
 - **Unblocks:** phase close.
 
@@ -30,11 +30,14 @@ features from the phone's side. Write once, aim both.
 
 ## Acceptance criteria
 
-- [ ] Entry-point docs describe all three features in product tense; guards
-      pass.
-- [ ] The recorded walk exists with screenshots; every claim in the docs is a
-      beat in the walk.
-- [ ] The phase status flips to CLOSED with the final summary.
+- [x] Entry-point docs describe all three features in product tense; guards
+      pass. (README Desk section + WEB_DESK.md; drift/voice guards 18/18.)
+- [x] The recorded walk exists with screenshots; every claim in the docs is a
+      beat in the walk. (`scripts/walk_hs83_live.py` — four asserted beats on
+      the real hub → .43; 4 screenshots. The walk also FOUND and this story
+      FIXED the token gap: the desk 401'd wholesale on a guarded hub; the
+      layout now carries `?token` → `X-HoldSpeak-Token` on every request.)
+- [x] The phase status flips to CLOSED with the final summary.
 
 ## Test plan
 
