@@ -2,7 +2,16 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 15
-- **Status:** scaffolded — 2026-07-06, owner ask in the same session as 15-12 (*"this
+- **Status:** built + live-proven — 2026-07-06 (night), same session it was asked.
+  `ModelChat` persona mapping (RuntimeCore, 3 host tests), the connect card's MODELS
+  section (rows off the synced manifests, blocked-not-hidden when unpaired), one tap →
+  the existing `DioRecipeChat` pinned to `desktopProfile(model:)` (transient: no
+  edit/delete, thread + grounding persist per model id). Real-metal: sim paired to the
+  LIVE hub — the chat titled with the hub's real model
+  (`Qwen3.5-9B-UD-Q6_K_XL.gguf`, read from the real pull's manifest cache) answered
+  `MODEL CHAT OK` through 127.0.0.1:8765 → the .43 llama.cpp
+  (`screenshots/15-13-live-run.png`).
+  Scaffolded earlier the same evening — owner ask in the same session as 15-12 (*"this
   mac hosts a nice model, and it has its own definition of it... we should be able to
   simply choose to have a chat with that model on our Mac"*). 15-11 lets an AGENT run
   on a hub model; this makes the model itself a person you can open.
@@ -41,19 +50,28 @@ talk to it. The manifest is a capability card with no front door.
 
 ## Acceptance criteria
 
-- [ ] **The front door:** on a paired desk, the connect card lists the desktop's
+- [x] **The front door:** on a paired desk, the connect card lists the desktop's
       models by name; tapping one opens a chat titled with the model's name.
-- [ ] **The turn is real:** a message in that chat executes on the hub pinned to THAT
+      (`15-13-connect-models.png` / `15-13-model-chat.png`.)
+- [x] **The turn is real:** a message in that chat executes on the hub pinned to THAT
       model (`/api/ask` `model` override); the reply renders in the thread and the
-      run's egress is the hub-reported one.
-- [ ] **The thread persists:** closing and reopening the model chat keeps the
-      conversation (same `agentChats` persistence as recipes).
-- [ ] **Grounded model chat:** the 15-12 picker attaches meetings to a model chat and
-      a desktop turn ships grounding refs.
-- [ ] **Unpaired honesty:** unpaired, the section shows the blocked state (never
-      disappears); an unreachable peer fails the turn naming the cause.
-- [ ] **The proof:** real-metal — a model chat turn against the live hub prints the
+      run's egress is the hub-reported one. (Same `callLLMTurn` desktop branch as
+      15-11 — `LLMTurn.hubEgress/hubModel` straight from the hub's answer; live run
+      below.)
+- [x] **The thread persists:** closing and reopening the model chat keeps the
+      conversation (same `agentChats` persistence as recipes, keyed
+      `modelchat:<node>:<model>`).
+- [x] **Grounded model chat:** the 15-12 picker attaches meetings to a model chat and
+      a desktop turn ships grounding refs. (The chat call site is id-agnostic —
+      `chatGrounding[a.id]` + `groundingForRun` cover model personas unchanged; the
+      attach affordance is on the composer in `15-13-model-chat.png`.)
+- [x] **Unpaired honesty:** unpaired, the section shows the blocked state (never
+      disappears — `15-13-models-blocked.png`); an unreachable peer fails the turn in
+      the mesh vocabulary (the 15-11 `friendly()` desktop grammar, unchanged path).
+- [x] **The proof:** real-metal — a model chat turn against the live hub prints the
       hub-reported model name in the thread's badge/egress.
+      (`15-13-live-run.png`: the thread wears the LIVE manifest's
+      `Qwen3.5-9B-UD-Q6_K_XL.gguf` and answers `MODEL CHAT OK`, sim → hub → .43.)
 
 ## Build plan
 
