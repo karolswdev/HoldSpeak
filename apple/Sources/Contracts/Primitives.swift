@@ -258,23 +258,27 @@ public struct RuntimeProfile: Codable, Equatable, Sendable, Identifiable {
     /// `desktop` (HSM-15-11): run the turn on the PAIRED desktop hub over `POST /api/ask`.
     /// `model` pins one of the hub's models ("" = the hub's default); `baseURL` is unused —
     /// the peer comes from the pairing, never the profile shape.
-    public enum Kind: String, Codable, Sendable { case onDevice, openAICompatible, desktop }
+    /// `meshNode` (HS-85-02): relay the run through the hub to the named mesh node's own
+    /// provider — the model and the key never move; the request does.
+    public enum Kind: String, Codable, Sendable { case onDevice, openAICompatible, desktop, meshNode }
     public var id: String
     public var name: String
     public var kind: Kind
     public var modelFile: String        // onDevice: the .gguf filename ("" = first installed)
     public var baseURL: String          // openAICompatible: the OpenAI-compatible root
     public var model: String            // openAICompatible: the served model id
+    public var node: String             // meshNode: the executing mesh node ("" otherwise)
     public var contextLimit: Int        // usable window (on-device computed at run time; endpoint declared)
     public var requiresKey: Bool        // openAICompatible: a key is expected in the Keychain (never here)
     public var createdAt: Date
     public var updatedAt: Date
 
     public init(id: String, name: String, kind: Kind, modelFile: String = "", baseURL: String = "",
-                model: String = "", contextLimit: Int = 16_384, requiresKey: Bool = false,
-                createdAt: Date, updatedAt: Date) {
+                model: String = "", node: String = "", contextLimit: Int = 16_384,
+                requiresKey: Bool = false, createdAt: Date, updatedAt: Date) {
         self.id = id; self.name = name; self.kind = kind; self.modelFile = modelFile
-        self.baseURL = baseURL; self.model = model; self.contextLimit = contextLimit
+        self.baseURL = baseURL; self.model = model; self.node = node
+        self.contextLimit = contextLimit
         self.requiresKey = requiresKey; self.createdAt = createdAt; self.updatedAt = updatedAt
     }
 
@@ -282,7 +286,7 @@ public struct RuntimeProfile: Codable, Equatable, Sendable, Identifiable {
     // API key is NEVER a field here — decoding ignores unknown keys, and the
     // schema (profile.schema.json) rejects any key-shaped field on the wire.
     private enum CodingKeys: String, CodingKey {
-        case id, name, kind, modelFile, baseURL = "baseUrl", model, contextLimit, requiresKey
+        case id, name, kind, modelFile, baseURL = "baseUrl", model, node, contextLimit, requiresKey
         case createdAt, updatedAt
     }
     public init(from decoder: Decoder) throws {
@@ -293,6 +297,7 @@ public struct RuntimeProfile: Codable, Equatable, Sendable, Identifiable {
         modelFile = try c.decodeIfPresent(String.self, forKey: .modelFile) ?? ""
         baseURL = try c.decodeIfPresent(String.self, forKey: .baseURL) ?? ""
         model = try c.decodeIfPresent(String.self, forKey: .model) ?? ""
+        node = try c.decodeIfPresent(String.self, forKey: .node) ?? ""
         contextLimit = try c.decodeIfPresent(Int.self, forKey: .contextLimit) ?? 16_384
         requiresKey = try c.decodeIfPresent(Bool.self, forKey: .requiresKey) ?? false
         createdAt = try c.decode(Date.self, forKey: .createdAt)

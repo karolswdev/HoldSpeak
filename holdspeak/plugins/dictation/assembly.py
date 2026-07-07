@@ -127,6 +127,22 @@ def _try_build_runtime(
     from ...intel.providers import effective_dictation_llm
 
     effective = effective_dictation_llm(cfg.runtime)
+    if effective.node:
+        # a meshNode profile: the LLM legs run on that node's provider via the
+        # relay queue, wrapped in the same counting/cold-start delegate.
+        try:
+            from .runtime_counters import CountingRuntime
+            from .runtime_mesh_relay import MeshRelayRuntime
+
+            inner = MeshRelayRuntime(node=effective.node, model_hint=effective.model)
+            runtime = CountingRuntime(
+                inner,
+                warm_on_start=cfg.runtime.warm_on_start,
+                cold_start_cap_ms=cold_start_cap_ms,
+            )
+        except Exception as exc:
+            return None, "unavailable", f"{type(exc).__name__}: {exc}"
+        return runtime, "loaded", f"backend=mesh_relay node={effective.node}"
     backend = "openai_compatible" if effective.profile_id else cfg.runtime.backend
     try:
         runtime = factory(

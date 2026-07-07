@@ -10,10 +10,11 @@
   "properties": {
     "id": { "type": "string", "minLength": 1 },
     "name": { "type": "string" },
-    "kind": { "enum": ["onDevice", "openAICompatible", "desktop"] },
+    "kind": { "enum": ["onDevice", "openAICompatible", "desktop", "meshNode"] },
     "model_file": { "type": "string" },
     "base_url": { "type": "string" },
     "model": { "type": "string" },
+    "node": { "type": "string" },
     "context_limit": { "type": "integer", "minimum": 0 },
     "requires_key": { "type": "boolean" },
     "created_at": { "type": "string", "format": "date-time" },

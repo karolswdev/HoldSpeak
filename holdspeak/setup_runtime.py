@@ -57,6 +57,25 @@ def probe_runtime(
     effective = effective_dictation_llm(runtime)
 
     requested = getattr(runtime, "backend", "auto")
+    if effective.node:
+        # a meshNode assignment: the self-test is the node's liveness
+        try:
+            from .db import get_database
+
+            last_seen = get_database().mesh_relay.worker_last_seen(effective.node)
+        except Exception:
+            last_seen = None
+        if last_seen is None:
+            return {"ok": False, "status": "unreachable", "backend": "mesh_relay",
+                    "detail": f"Mesh node '{effective.node}' is offline (no worker has polled)."}
+        from datetime import datetime
+
+        age = (datetime.now() - last_seen).total_seconds()
+        if age > 15:
+            return {"ok": False, "status": "unreachable", "backend": "mesh_relay",
+                    "detail": f"Mesh node '{effective.node}' is offline (last seen {int(age)}s ago)."}
+        return {"ok": True, "status": "ok", "backend": "mesh_relay",
+                "detail": f"Ready — mesh node '{effective.node}' is live (seen {int(age)}s ago)."}
     if effective.profile_id:
         resolved = "openai_compatible"
     else:

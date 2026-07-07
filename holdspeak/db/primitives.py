@@ -401,6 +401,7 @@ class ProfileRepository(BaseRepository):
         model_file: str = "",
         base_url: str = "",
         model: str = "",
+        node: str = "",
         context_limit: int = 16384,
         requires_key: bool = False,
         last_modified: Optional[str] = None,
@@ -418,15 +419,16 @@ class ProfileRepository(BaseRepository):
             created = created_at or (existing["created_at"] if existing else now)
             conn.execute(
                 """
-                INSERT INTO profiles (id, name, kind, model_file, base_url, model,
+                INSERT INTO profiles (id, name, kind, model_file, base_url, model, node,
                                       context_limit, requires_key, created_at, last_modified, deleted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     kind = excluded.kind,
                     model_file = excluded.model_file,
                     base_url = excluded.base_url,
                     model = excluded.model,
+                    node = excluded.node,
                     context_limit = excluded.context_limit,
                     requires_key = excluded.requires_key,
                     last_modified = excluded.last_modified,
@@ -439,6 +441,7 @@ class ProfileRepository(BaseRepository):
                     str(model_file or ""),
                     str(base_url or ""),
                     str(model or ""),
+                    str(node or ""),
                     int(context_limit or 16384),
                     1 if requires_key else 0,
                     created,
@@ -491,6 +494,7 @@ class ProfileRepository(BaseRepository):
             model_file=row["model_file"],
             base_url=row["base_url"],
             model=row["model"],
+            node=row["node"],
             context_limit=int(row["context_limit"]),
             requires_key=bool(row["requires_key"]),
             created_at=row["created_at"],

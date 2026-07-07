@@ -761,7 +761,7 @@ def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) ->
         def run_prompt(self, **kwargs):
             return "OUT"
 
-    def _for_profile(*, kind, base_url, model, profile_id):
+    def _for_profile(*, kind, base_url, model, profile_id, node=""):
         seen.update(kind=kind, base_url=base_url, profile_id=profile_id)
         return _FakeIntel()
 

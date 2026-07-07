@@ -57,8 +57,15 @@ def _run_egress(ctx: Any, prof: Any, intel: Any) -> tuple[dict[str, Any], str]:
     endpoint the engine ACTUALLY used — `effective_intel_cloud`, so an
     assigned intel profile (HS-84-01) is reported, not the raw legacy config.
     """
+    if prof is not None and prof.kind == "meshNode" and getattr(prof, "node", ""):
+        return endpoint_egress(node=prof.node), str(prof.model or "")
     if prof is not None and prof.kind == "openAICompatible" and prof.base_url:
         return endpoint_egress(cloud=True, base_url=prof.base_url), str(prof.model or "")
+    if getattr(intel, "active_provider", "") == "mesh":
+        # the DEFAULT engine is a config-assigned meshNode profile (HS-85-02)
+        return endpoint_egress(node=getattr(intel, "node", "")), str(
+            getattr(intel, "model_hint", "") or ""
+        )
     if intel.active_provider == "cloud":
         from ....config import Config
         from ....intel.providers import effective_intel_cloud
@@ -368,7 +375,8 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
 
             if prof is not None:
                 intel = build_meeting_intel_for_profile(
-                    kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id
+                    kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id,
+                    node=getattr(prof, "node", "")
                 )
             else:
                 intel = build_configured_meeting_intel()
