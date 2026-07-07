@@ -58,6 +58,8 @@ interface DeskState {
   selectedIds: string[];
   /** The Ask composer is open (in-world, desk visible — never a modal). */
   askOpen: boolean;
+  /** HS-83-02 — the persona whose CONVERSATION is open (null = none). */
+  chatPersonaId: string | null;
 
   refresh(): Promise<void>;
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
@@ -95,6 +97,8 @@ interface DeskState {
   setSelected(ids: string[]): void;
   clearSelection(): void;
   openAsk(): void;
+  openChat(personaId: string): void;
+  closeChat(): void;
   closeAsk(): void;
   setPosition(id: string, pos: UnitPos): void;
   persistPositions(): void;
@@ -122,6 +126,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   renamingZoneId: null,
   selectedIds: [],
   askOpen: false,
+  chatPersonaId: null,
 
   async refresh() {
     set({ loading: true, error: "" });
@@ -381,6 +386,14 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
   closeAsk() {
     set({ askOpen: false });
+  },
+  openChat(personaId) {
+    // The conversation joins the desk like the composer does (one docked
+    // panel at a time; the world stays alive behind it).
+    set({ chatPersonaId: personaId, askOpen: false, pulloutId: null, pulloutBackId: null, editingId: null });
+  },
+  closeChat() {
+    set({ chatPersonaId: null });
   },
   setPosition(id, pos) {
     set({ positions: { ...get().positions, [id]: pos } });
