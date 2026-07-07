@@ -72,20 +72,20 @@ bridge, vLLM, llama.cpp-server, LM Studio, LiteLLM, or an actual cloud API. The
 endpoint owns model loading; HoldSpeak needs no local weights.
 
 - **Install:** `uv pip install -e '.[dictation-openai]'` (dictation side)
-- **Configure (dictation):**
-  ```jsonc
-  "dictation": {
-    "runtime": {
-      "backend": "openai_compatible",
-      "openai_compatible_base_url": "http://127.0.0.1:8000/v1",
-      "openai_compatible_model": "qwen3.5-8b-instruct",
-      "openai_compatible_api_key_env": "OPENAI_API_KEY"
-    }
-  }
-  ```
-- **Configure (meeting intel):** set `meeting.intel_provider` to `"cloud"`
-  (or `"auto"` for local-first with endpoint fallback) and set
-  `meeting.intel_cloud_base_url` + `meeting.intel_cloud_model`.
+- **Configure:** author the endpoint **once as a runtime profile** (web:
+  `/profiles`; give it a name, the base URL, and the model), then pick it
+  wherever work should run on it:
+  - **Meeting intel:** Settings → Cloud & advanced → **Runs on**.
+  - **Dictation:** Dictation → Runtime → **Runs on profile**. Picking a
+    profile also selects the endpoint backend; clear it to return to the
+    local backend configured above.
+  - **Agents:** the agent editor's profile picker, per agent.
+- **Configure (by hand, the fallback):** the same shape lives in
+  `config.json` and still works when no profile is picked:
+  `dictation.runtime.openai_compatible_base_url` + `_model` + `_api_key_env`
+  for dictation; `meeting.intel_provider: "cloud"` (or `"auto"` for
+  local-first with endpoint fallback) + `meeting.intel_cloud_base_url` +
+  `intel_cloud_model` for meeting intel.
 
 > **On the name `cloud`.** The intel provider called `cloud` just means
 > "the endpoint provider"; it is **not** necessarily a hosted/paid API. Point
@@ -116,6 +116,14 @@ available everywhere; a surface that cannot host a kind (an on-device GGUF in
 a browser) shows it as unavailable rather than pretending. The key stays with
 each surface and is joined only at request time. See
 [Security & privacy](SECURITY.md#5-secrets-handling).
+
+Profiles also drive the desktop hub's own pipelines: meeting intelligence and
+the dictation rewrite each carry a "Runs on" picker (Settings → Cloud &
+advanced, and Dictation → Runtime), so one profile authored once can serve
+your agents, your meetings, and your dictation. `holdspeak doctor` reports
+which profile each pipeline resolves to, warns when an assigned profile is
+missing, and names the exact `HOLDSPEAK_PROFILE_<ID>_KEY` variable to export
+when a profile needs a key on this machine.
 
 Manage profiles on the web at `/profiles`, or on iPad and iPhone under
 Settings; assign an agent to one in the agent editor.

@@ -259,7 +259,10 @@ Use `openai_compatible` when the model is served somewhere else:
 - LiteLLM
 - OpenAI or another hosted compatible API
 
-Configuration shape:
+The picker path: author the endpoint once as a runtime profile (web:
+`/profiles`), then pick it under Dictation → Runtime → **Runs on profile**.
+Picking a profile also selects this backend. The configuration shape below
+still works when no profile is picked:
 
 ```json
 {
@@ -426,9 +429,10 @@ Local-first behavior:
 Cloud or homelab behavior:
 
 - If you set `meeting.intel_provider` to `cloud` or configure `intel_cloud_base_url`, meeting text may be sent to that endpoint for analysis.
-- Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and auth configuration.
+- The picker path: author the endpoint once as a runtime profile (web: `/profiles`), then pick it under Settings → Cloud & advanced → **Runs on**.
+- Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and auth configuration; its "Runtime profiles" line names the profile each pipeline resolves to.
 
-Example cloud/homelab config:
+Example cloud/homelab config (the fallback shape when no profile is picked):
 
 ```json
 {

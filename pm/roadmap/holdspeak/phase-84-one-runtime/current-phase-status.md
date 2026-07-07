@@ -1,13 +1,14 @@
 # Phase 84 — One Runtime (where intelligence runs is a profile)
 
-**Status:** OPEN (4/5).
+**Status:** CLOSED (5/5, 2026-07-07 — opened and shipped the same day) —
+see [final-summary.md](./final-summary.md).
 
-**Last updated:** 2026-07-07 (HS-84-04 done — `endpoint_egress` is the ONE
-badge constructor (routes/cadence/audit), the run badge reports the
-EFFECTIVE endpoint (found + fixed: it read the raw legacy field while the
-engine ran on the assigned profile), and doctor grew the "Runtime profiles"
-check — per-pipeline resolution by name, dangling WARNs, missing
-per-profile keys named).
+**Last updated:** 2026-07-07 (HS-84-05 done, the phase closes: the guides
+teach "author a profile once, pick it everywhere" (guards 143/143) and the
+six-beat LIVE walk on the real hub → the `.43` llama.cpp proved the thesis:
+one profile authored once in the editor drove an agent chat, a
+meeting-intel reroute (4 artifacts), and a dictation dry-run, with doctor
+naming it for both pipelines).
 
 ## Why this phase exists
 
@@ -94,21 +95,25 @@ the profile editor.
 
 ## Exit criteria (evidence required)
 
-- [ ] One `.43` profile, authored once in `/profiles`, drives all three in a
+- [x] One `.43` profile, authored once in `/profiles`, drives all three in a
   single live walk: an agent chat, a meeting-intel artifact run, and a
-  dictation rewrite — no endpoint URL typed anywhere else
-  (`scripts/walk_hs84_live.py` output + screenshots in evidence).
-- [ ] Both knobs unset ⇒ the legacy construction paths, proven byte-identical
-  by unit tests pinning resolution order (profile → legacy → local).
-- [ ] `holdspeak doctor` (and `/api/setup/status`) name the profile each
-  pipeline resolves to, including the dangling-id fallback case (tests).
-- [ ] The two settings sections author by picker, screenshot-verified; the
-  raw endpoint fields are gone from the UI.
-- [ ] One egress helper feeds doctor + badges; the per-pipeline posture is
-  test-pinned for local, profile-cloud, and legacy-cloud shapes.
-- [ ] Full suite green (`uv run pytest -q --ignore=tests/e2e/test_metal.py`),
-  docs/voice guards green, `docs/api-surface.json` regenerated if routes
-  changed, BACKLOG.md row S updated.
+  dictation rewrite — no endpoint URL typed anywhere else — the six-beat
+  walk output + 4 screenshots in [evidence-story-05](./evidence-story-05.md).
+- [x] Both knobs unset ⇒ the legacy construction paths, proven byte-identical
+  by unit tests pinning resolution order — [evidence-story-01](./evidence-story-01.md),
+  [evidence-story-02](./evidence-story-02.md).
+- [x] `holdspeak doctor` (and `/api/setup/status`) name the profile each
+  pipeline resolves to, including the dangling-id fallback case —
+  [evidence-story-04](./evidence-story-04.md); named live in the walk's beat 6.
+- [x] The two settings sections author by picker, screenshot-verified; the
+  raw endpoint fields are gone from the UI —
+  [evidence-story-03](./evidence-story-03.md).
+- [x] One egress helper feeds doctor + badges; posture test-pinned for
+  local, profile-cloud, and legacy-cloud shapes —
+  [evidence-story-04](./evidence-story-04.md).
+- [x] Full suite green, docs/voice guards green (143), no route changes so
+  `docs/api-surface.json` is untouched, BACKLOG.md row S updated —
+  [evidence-story-05](./evidence-story-05.md).
 
 ## Story status
 
@@ -118,11 +123,27 @@ the profile editor.
 | HS-84-02 | Dictation runs on a profile | **done** (2026-07-07 — `dictation.runtime.profile_id` via the shared `_apply_runtime_profile`; adopted ⇒ openai_compatible backend; probe/status honest; 11 new tests, 437 neighbors green) | [story-02](./story-02-dictation-on-a-profile.md) |
 | HS-84-03 | Settings pick, not type | **done** (2026-07-07 — pickers + badges on /settings cloud + /dictation Runtime; raw endpoint inputs gone; 4 asserted screenshots; the rig caught a real Alpine select race) | [story-03](./story-03-settings-pick-not-type.md) |
 | HS-84-04 | The honest doctor + one egress derivation | **done** (2026-07-07 — `endpoint_egress` + shared `_run_egress` (fixed the stale-badge find); the "Runtime profiles" doctor check; 13 new tests, doctor 62 + neighbors 70 unmodified) | [story-04](./story-04-honest-doctor-one-egress.md) |
-| HS-84-05 | Docs + the live walk | backlog | [story-05](./story-05-docs-and-the-live-walk.md) |
+| HS-84-05 | Docs + the live walk | **done** (2026-07-07 — 5 guides re-taught, guards 143/143; the six-beat live walk on the real hub → .43, all asserted, 4 shots; legacy-fields decision resolved: fallback stays) | [story-05](./story-05-docs-and-the-live-walk.md) |
 
 ## Where we are
 
-**2026-07-07 — HS-84-04 done: the honest doctor + one egress derivation.**
+**2026-07-07 (close) — THE PHASE IS CLOSED (5/5, same day).** HS-84-05
+shipped the doc re-teach (MODELS.md leads with "author a profile once, pick
+it everywhere"; MEETING_MODE_GUIDE, USER_GUIDE, and both dictation guides
+point at the pickers, with the config fields kept as the documented
+fallback; guards 143/143) and the six-beat LIVE walk on the REAL hub → the
+`.43` llama.cpp (`scripts/walk_hs84_live.py`, every beat asserted): the
+profile authored in the `/profiles` editor (the ONE place a URL was typed),
+both pickers saved in the UI, an agent's reply wearing
+`☁ Qwen3.5-9B-Q6_K · 192.168.1.43`, `intel --reroute` executing the routed
+chain through the profile (4 artifacts), a dictation dry-run through the
+same endpoint, and doctor's line: `[PASS] Runtime profiles: meeting intel:
+profile 'Walk .43' (192.168.1.43); dictation: profile 'Walk .43'
+(192.168.1.43)`. Cleanup restored the owner's assignments. The deferred
+legacy-fields decision is resolved: the fallback stays (recorded in
+story-05). See [final-summary.md](./final-summary.md).
+
+Earlier — **2026-07-07 — HS-84-04 done: the honest doctor + one egress derivation.**
 The badge has ONE constructor now — `endpoint_egress(cloud=, base_url=,
 label=)` in `intel/providers.py` — called by the routes (via the shared
 `_run_egress` in `ask.py`, imported by recipes like `_hydrate_grounding`),

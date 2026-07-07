@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 84
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-84-01, HS-84-02, HS-84-03, HS-84-04
 - **Unblocks:** none (closes the phase)
 - **Owner:** unassigned
@@ -61,3 +61,14 @@ flip belongs here.
 
 - Keep the walk script self-cleaning like `walk_hs83_live.py`; reuse its
   token-wrapper arrival beat so the auth fix stays regression-covered.
+- **Deferred decision resolved (recorded):** the legacy config fields
+  (`intel_cloud_*`, `openai_compatible_*`) STAY as the fallback shape. The
+  walk itself is the argument: the owner's real config still runs on them
+  when nothing is picked, headless/scripted setups write them directly, and
+  they cost nothing (one resolver branch). Deleting them is a naming/config
+  cleanup with migration cost and no behavior win; parked, not filed as a
+  phase.
+- **Hub ops note:** the live walk needs the hub restarted on the merged
+  code first (`HOLDSPEAK_WEB_PORT=8765 uv run holdspeak web --no-open`); a
+  plain restart can fall back to an ephemeral port if 8765 is still in
+  TIME_WAIT, so pin the env var.

@@ -128,6 +128,12 @@ Config file shape:
 }
 ```
 
+Endpoints are also available as runtime profiles: author the endpoint once
+(web: `/profiles`), then pick it under Dictation → Runtime → **Runs on
+profile**. A picked profile supplies the endpoint and model and selects this
+backend; the fields above remain the fallback when nothing is picked. See
+[MODELS.md](./MODELS.md).
+
 HoldSpeak reads the API key from the named environment variable. Do not put API
 keys in `.hs/` files.
 
