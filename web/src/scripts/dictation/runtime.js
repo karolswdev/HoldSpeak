@@ -9,7 +9,7 @@ import {
   wireCopyCommandButtons,
 } from "./core.js";
 
-export const rtState = { last: null };
+export const rtState = { last: null, profiles: [] };
 
 export async function loadRuntime() {
   const banner = document.getElementById("rt-meta-banner");
@@ -23,12 +23,75 @@ export async function loadRuntime() {
     } catch (_) {
       readiness = null;
     }
+    // HS-84-03: the "Runs on profile" picker. Best-effort — an unreachable
+    // profiles route leaves the picker with its "None" option only.
+    try {
+      rtState.profiles = (await api("GET", "/api/profiles")).profiles || [];
+    } catch (_) {
+      rtState.profiles = [];
+    }
     rtState.last = data;
     renderRuntime(data, readiness);
   } catch (e) {
     banner.classList.add("error");
     banner.textContent = e.message;
   }
+}
+
+// ── HS-84-03: the profile picker ──
+function profileHost(p) {
+  try {
+    return new URL(p.base_url).host;
+  } catch (_) {
+    return "";
+  }
+}
+
+function profileOptionLabel(p) {
+  if (p.kind === "openAICompatible") return `${p.name} — ${profileHost(p) || "endpoint"}`;
+  return `${p.name} — on device`;
+}
+
+function updateProfileBadge() {
+  const sel = document.getElementById("rt-profile");
+  const badge = document.getElementById("rt-profile-badge");
+  const picked = rtState.profiles.find((p) => p.id === sel.value);
+  if (!picked) {
+    badge.hidden = true;
+    return;
+  }
+  badge.hidden = false;
+  badge.textContent =
+    picked.kind === "openAICompatible" && profileHost(picked)
+      ? `☁ ${profileHost(picked)}`
+      : "⌂ hub engine";
+}
+
+function renderProfilePicker(runtime) {
+  const sel = document.getElementById("rt-profile");
+  const assigned = String(runtime.profile_id || "");
+  sel.innerHTML = "";
+  const none = document.createElement("option");
+  none.value = "";
+  none.textContent = "None — backend above";
+  sel.appendChild(none);
+  for (const p of rtState.profiles.filter((p) => !p.deleted)) {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = profileOptionLabel(p);
+    sel.appendChild(opt);
+  }
+  // an assigned-but-missing profile stays visible (and picked) rather than
+  // silently reading as "None" — resolution falls back honestly server-side
+  if (assigned && !rtState.profiles.some((p) => p.id === assigned)) {
+    const ghost = document.createElement("option");
+    ghost.value = assigned;
+    ghost.textContent = `${assigned} — missing`;
+    sel.appendChild(ghost);
+  }
+  sel.value = assigned;
+  sel.onchange = updateProfileBadge;
+  updateProfileBadge();
 }
 
 export function renderRuntime(data, readiness = null) {
@@ -38,10 +101,18 @@ export function renderRuntime(data, readiness = null) {
   const status = data._runtime_status || { counters: {}, session: {} };
 
   const passes = Number(pipeline.rewrite_passes ?? 1);
+  // HS-84-03: the banner names the EFFECTIVE runtime — an assigned profile
+  // selects the endpoint backend server-side (HS-84-02).
+  const assignedProfile = rtState.profiles.find(
+    (p) => p.id === String(runtime.profile_id || "")
+  );
+  const runsOn = assignedProfile
+    ? `runs on: <strong>${escapeHtml(assignedProfile.name || assignedProfile.id)}</strong>`
+    : `backend: <strong>${escapeHtml(runtime.backend || "auto")}</strong>`;
   document.getElementById("rt-meta-banner").innerHTML =
     `pipeline: <strong>${pipeline.enabled ? "enabled" : "disabled"}</strong>  ·  ` +
     `target: <strong>${escapeHtml(pipeline.target_profile_override || "auto")}</strong>  ·  ` +
-    `backend: <strong>${escapeHtml(runtime.backend || "auto")}</strong>  ·  ` +
+    `${runsOn}  ·  ` +
     `cold-start cap: <strong>${(pipeline.max_total_latency_ms || 0) * 5} ms</strong>  ·  ` +
     `depth: <strong>${passes}× pass${passes === 1 ? "" : "es"}</strong>` +
     `${pipeline.corrections_enabled ? " · <strong>learns</strong>" : ""}` +
@@ -54,9 +125,7 @@ export function renderRuntime(data, readiness = null) {
   document.getElementById("rt-backend").value = runtime.backend || "auto";
   document.getElementById("rt-mlx-model").value = runtime.mlx_model || "";
   document.getElementById("rt-llama-path").value = runtime.llama_cpp_model_path || "";
-  document.getElementById("rt-openai-model").value = runtime.openai_compatible_model || "";
-  document.getElementById("rt-openai-base-url").value = runtime.openai_compatible_base_url || "";
-  document.getElementById("rt-openai-api-key-env").value = runtime.openai_compatible_api_key_env || "";
+  renderProfilePicker(runtime);
   document.getElementById("rt-openai-timeout").value = runtime.openai_compatible_timeout_seconds || 8;
   document.getElementById("rt-warm").checked = !!runtime.warm_on_start;
   const slider = document.getElementById("rt-latency");
@@ -176,9 +245,10 @@ export async function saveRuntime(options = {}) {
         backend: document.getElementById("rt-backend").value,
         mlx_model: document.getElementById("rt-mlx-model").value.trim(),
         llama_cpp_model_path: document.getElementById("rt-llama-path").value.trim(),
-        openai_compatible_model: document.getElementById("rt-openai-model").value.trim(),
-        openai_compatible_base_url: document.getElementById("rt-openai-base-url").value.trim(),
-        openai_compatible_api_key_env: document.getElementById("rt-openai-api-key-env").value.trim(),
+        // HS-84-03: the endpoint is the picked profile; the legacy
+        // openai_compatible_* fields are no longer authored here (the
+        // settings route preserves the saved values when omitted).
+        profile_id: document.getElementById("rt-profile").value || null,
         openai_compatible_timeout_seconds: Number(document.getElementById("rt-openai-timeout").value),
         warm_on_start: document.getElementById("rt-warm").checked,
       },

@@ -7,6 +7,7 @@
 function settingsApp() {
   return {
     settings: null,
+    profiles: [],
     loading: true,
     saving: false,
     errors: [],
@@ -85,7 +86,46 @@ function settingsApp() {
         this.settings = null;
         this.flash(`Could not load settings: ${error.message}`, true);
       }
+      // HS-84-03: the "Runs on" picker. Best-effort — an unreachable profiles
+      // route leaves only the "Hub default" option.
+      try {
+        this.profiles = ((await this.apiJson("/api/profiles")).profiles || []).filter(
+          (p) => !p.deleted
+        );
+      } catch (_error) {
+        this.profiles = [];
+      }
       this.loading = false;
+    },
+
+    // ── HS-84-03: profile picker helpers ──
+    profileHost(p) {
+      try {
+        return new URL(p.base_url).host;
+      } catch (_error) {
+        return "";
+      }
+    },
+    profileOptionLabel(p) {
+      if (p.kind === "openAICompatible") return `${p.name} — ${this.profileHost(p) || "endpoint"}`;
+      return `${p.name} — on device`;
+    },
+    intelEgressBadge() {
+      const meeting = this.settings?.meeting || {};
+      const picked = this.profiles.find((p) => p.id === String(meeting.intel_profile_id || ""));
+      if (picked) {
+        return picked.kind === "openAICompatible" && this.profileHost(picked)
+          ? `☁ ${this.profileHost(picked)}`
+          : "⌂ hub engine";
+      }
+      if (String(meeting.intel_provider || "").toLowerCase() === "local") return "⌂ local";
+      const base = String(meeting.intel_cloud_base_url || "").trim();
+      if (!base) return "☁ api.openai.com";
+      try {
+        return `☁ ${new URL(base).host}`;
+      } catch (_error) {
+        return `☁ ${base}`;
+      }
     },
 
     async save() {
@@ -107,6 +147,7 @@ function settingsApp() {
         payload.meeting.intel_retry_failure_webhook_header_value = String(payload.meeting.intel_retry_failure_webhook_header_value || "").trim() || null;
         payload.meeting.intel_cloud_api_key_env = String(payload.meeting.intel_cloud_api_key_env || "").trim();
         payload.meeting.intel_cloud_model = String(payload.meeting.intel_cloud_model || "").trim();
+        payload.meeting.intel_profile_id = String(payload.meeting.intel_profile_id || "").trim() || null;
         payload.meeting.intel_provider = String(payload.meeting.intel_provider || "").toLowerCase();
         payload.meeting.intel_summary_model = String(payload.meeting.intel_summary_model || "").trim() || null;
         payload.meeting.intel_cloud_reasoning_effort = String(payload.meeting.intel_cloud_reasoning_effort || "").trim() || null;
@@ -204,10 +245,13 @@ function settingsApp() {
       if (!Number.isFinite(similarity) || similarity < 0 || similarity > 1) {
         errors.push("Speaker similarity threshold must be between 0 and 1.");
       }
-      if (provider === "cloud" && !cloudModel) {
+      // HS-84-03: a picked profile supplies model/endpoint/key; the legacy
+      // field checks apply only on the hub-default (legacy config) path.
+      const intelProfileId = String(meeting.intel_profile_id || "").trim();
+      if (provider === "cloud" && !cloudModel && !intelProfileId) {
         errors.push("Cloud model is required when intel provider is cloud.");
       }
-      if (!cloudApiEnv) {
+      if (!cloudApiEnv && !intelProfileId) {
         errors.push("Cloud API key env var cannot be empty.");
       }
       if (cloudBaseUrl) {

@@ -308,9 +308,9 @@ const WHISPER_LANGUAGES = [
           <h2 class="set-sec-h" x-show="sectionVisible('cloud')" x-cloak>Cloud &amp; advanced</h2>
           <p class="warn-note" x-show="sectionVisible('cloud')" x-cloak>These apply only when intel provider is <code>cloud</code> or <code>auto</code> — the only settings that can send a transcript off your machine.</p>
           <div class="set-grid">
-            <div class="field" x-show="fieldVisible('cloud','common','cloud model gpt')" x-cloak><label>Cloud model</label><input class="input" type="text" x-model="settings.meeting.intel_cloud_model" /></div>
-            <div class="field" x-show="fieldVisible('cloud','common','api key env var openai')" x-cloak><label>API key env var</label><input class="input" type="text" x-model="settings.meeting.intel_cloud_api_key_env" /></div>
-            <div class="field full" x-show="fieldVisible('cloud','common','openai compatible base url endpoint')" x-cloak><label>OpenAI-compatible base URL</label><input class="input" type="text" placeholder="https://api.openai.com/v1" x-model="settings.meeting.intel_cloud_base_url" /></div>
+            <!-- HS-84-03: the endpoint is a picked RuntimeProfile, not typed fields. -->
+            <div class="field" x-show="fieldVisible('cloud','common','runs on runtime profile endpoint cloud model base url')" x-cloak><label>Runs on</label><select id="set-intel-profile" class="select" x-model="settings.meeting.intel_profile_id"><option value="">Hub default</option><template x-for="p in profiles" :key="p.id"><option :value="p.id" :selected="p.id === settings.meeting.intel_profile_id" x-text="profileOptionLabel(p)"></option></template></select></div>
+            <div class="field" x-show="fieldVisible('cloud','common','egress badge manage profiles')" x-cloak><label>Egress</label><div class="runs-on-row"><span class="egress-chip" x-text="intelEgressBadge()"></span><a class="manage-profiles" href="/profiles">Manage profiles →</a></div></div>
             <div class="field" x-show="fieldVisible('cloud','advanced','cloud reasoning effort')" x-cloak><label>Cloud reasoning effort <span class="hint">(advanced)</span></label><input class="input" type="text" placeholder="low / medium / high" x-model="settings.meeting.intel_cloud_reasoning_effort" /></div>
             <div class="field" x-show="fieldVisible('cloud','advanced','intel queue poll seconds')" x-cloak><label>Intel queue poll (s) <span class="hint">(advanced)</span></label><input class="input" type="number" min="5" x-model.number="settings.meeting.intel_queue_poll_seconds" /></div>
             <div class="field" x-show="fieldVisible('cloud','advanced','retry base delay seconds')" x-cloak><label>Retry base delay (s) <span class="hint">(advanced)</span></label><input class="input" type="number" min="1" x-model.number="settings.meeting.intel_retry_base_seconds" /></div>
@@ -396,6 +396,13 @@ const WHISPER_LANGUAGES = [
   .set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); margin-bottom: var(--space-4); }
   .field { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
   .field.full { grid-column: 1 / -1; }
+  .runs-on-row { display: flex; align-items: center; gap: var(--space-3); }
+  .egress-chip {
+    font-family: var(--font-mono); font-size: var(--font-size-xs);
+    color: var(--text-muted); border: 1px solid var(--border-default);
+    border-radius: 999px; padding: 2px 10px; white-space: nowrap;
+  }
+  .manage-profiles { font-size: var(--font-size-xs); }
   .field > label { font-size: var(--font-size-sm); font-weight: 500; color: var(--text-muted); }
   .field .hint { color: var(--text-faint); font-weight: 400; }
   .input, .select { width: 100%; padding: var(--space-2) var(--space-3); background: var(--field-bg); border: 1px solid var(--field-border); border-radius: var(--radius-sm); color: var(--text); font-family: var(--font-ui); font-size: var(--font-size-sm); transition: border-color var(--duration-short) var(--ease-standard); }

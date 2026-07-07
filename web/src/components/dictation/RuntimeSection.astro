@@ -43,10 +43,18 @@
       </label>
       <label>MLX model path <input type="text" id="rt-mlx-model" /></label>
       <label>llama_cpp GGUF path <input type="text" id="rt-llama-path" /></label>
-      <label>OpenAI-compatible model <input type="text" id="rt-openai-model" /></label>
-      <label>OpenAI-compatible base URL <input type="text" id="rt-openai-base-url" /></label>
-      <label>OpenAI-compatible API key env <input type="text" id="rt-openai-api-key-env" /></label>
-      <label>OpenAI-compatible timeout seconds <input type="number" id="rt-openai-timeout" min="1" step="0.5" /></label>
+      <!-- HS-84-03: the endpoint is a picked RuntimeProfile, not typed fields.
+           Empty = the backend above (endpoint shape from saved config). -->
+      <label>Runs on profile
+        <select id="rt-profile">
+          <option value="">None — backend above</option>
+        </select>
+      </label>
+      <div class="rt-runs-on">
+        <span id="rt-profile-badge" class="rt-egress-badge" hidden></span>
+        <a href="/profiles" class="rt-manage-profiles">Manage profiles →</a>
+      </div>
+      <label>Endpoint timeout seconds <input type="number" id="rt-openai-timeout" min="1" step="0.5" /></label>
       <label class="check-label"><input type="checkbox" id="rt-warm" /> warm_on_start (load model at launch)</label>
       <label>max_total_latency_ms
         <input type="range" id="rt-latency" min="100" max="5000" step="50" />
@@ -150,5 +158,22 @@
   .rt-counters {
     font-family: var(--font-mono);
     font-size: var(--font-size-sm);
+  }
+  .rt-runs-on {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3, 0.75rem);
+    margin: 0.25rem 0 0.5rem;
+  }
+  .rt-egress-badge {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle, currentColor);
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+  }
+  .rt-manage-profiles {
+    font-size: var(--font-size-xs);
   }
 </style>
