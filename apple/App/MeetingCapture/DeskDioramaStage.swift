@@ -2369,7 +2369,11 @@ struct DioRunTargetSheet: View {
 }
 
 struct DioRouteSheet: View {
-    let sourceTitle: String; let onAsk: (String, String, String) -> Void; let onCancel: () -> Void; let onSaveTool: (String) -> Void
+    let sourceTitle: String
+    var grounding = GroundingSelection()          // HSM-15-12 — what this ask is about
+    var groundingTokens = 0
+    var onEditGrounding: () -> Void = {}
+    let onAsk: (String, String, String) -> Void; let onCancel: () -> Void; let onSaveTool: (String) -> Void
     @State private var lens = RouteLenses.all.first!.name
     @State private var prompt = RouteLenses.all.first!.instruction
     @State private var profileId = InferenceConfigStore.shared.activeProfileId   // which model runs this
@@ -2395,6 +2399,28 @@ struct DioRouteSheet: View {
                         .background(Capsule().fill((resolvedProfile.isLocal ? DioPal.mint : DioPal.accent).opacity(0.14)))
                 }
                 RunsOnPicker(selectedId: $profileId, allowsDefault: true, label: "Runs on")
+                // HSM-15-12 — "Ground this ask": attach meetings + their artifacts; the
+                // picker gauges the price live and the chip wears the selection.
+                Button { onEditGrounding() } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: grounding.isEmpty ? "square.stack.3d.up" : "square.stack.3d.up.fill")
+                            .font(.system(size: 13, weight: .bold))
+                        Text(grounding.isEmpty ? "Ground this ask" : "Grounded on \(grounding.summaryLabel)")
+                            .font(.system(size: 12.5, weight: .heavy, design: .rounded)).lineLimit(1)
+                        Spacer(minLength: 0)
+                        if !grounding.isEmpty {
+                            Text("~\(groundingTokens) tok").font(.system(size: 11, weight: .heavy, design: .rounded))
+                                .foregroundStyle(DioPal.muted)
+                        }
+                        Image(systemName: "chevron.right").font(.system(size: 10, weight: .black)).foregroundStyle(DioPal.muted)
+                    }
+                    .foregroundStyle(grounding.isEmpty ? DioPal.muted : DioPal.cobalt)
+                    .padding(.horizontal, 13).frame(height: 40)
+                    .background(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .fill(grounding.isEmpty ? Color.white.opacity(0.04) : DioPal.cobalt.opacity(0.1))
+                        .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .strokeBorder(grounding.isEmpty ? Color.white.opacity(0.08) : DioPal.cobalt.opacity(0.45), lineWidth: 1)))
+                }.buttonStyle(.plain)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
                     ForEach(RouteLenses.all) { l in
                         Button { lens = l.name; prompt = l.instruction } label: {
@@ -3009,6 +3035,12 @@ struct DioStage: View {
     @State private var openAgent: RecipeRecord? = nil      // the agent conversation is open
     @AppStorage("hs.diorama.recipechats") private var agentChatsJSON = ""
     @State private var agentChats: [String: [RecipeMessage]] = [:]   // per-agent conversation threads
+    // HSM-15-12 — what each conversation is grounded on (the chat keeps its grounding;
+    // the recipe's standing context stays authorship). The route sheet's pick is one-shot.
+    @AppStorage("hs.diorama.chatgrounding") private var chatGroundingJSON = ""
+    @State private var chatGrounding: [String: GroundingSelection] = [:]
+    @State private var routeGrounding = GroundingSelection()
+    @State private var groundingPickerFor: String? = nil    // a conversation id, or "__route__"
     // agent chains (crews) — Scout → Critic → Editor, run in order
     @AppStorage("hs.diorama.chains") private var chainsJSON = ""
     @State private var chains: [ChainRecord] = []
@@ -3596,8 +3628,11 @@ struct DioStage: View {
                 // the keystone routing flow: sheet → theater → printed card (keep/bin)
                 if showRouteSheet {
                     DioRouteSheet(sourceTitle: routeSourceTitle(),
+                                  grounding: routeGrounding,
+                                  groundingTokens: groundingTokens(routeGrounding),
+                                  onEditGrounding: { withAnimation { groundingPickerFor = "__route__" } },
                                   onAsk: { l, p, pid in runRoute(lens: l, prompt: p, profileId: pid) },
-                                  onCancel: { withAnimation { showRouteSheet = false }; routeSourceId = nil },
+                                  onCancel: { withAnimation { showRouteSheet = false }; routeSourceId = nil; routeGrounding = GroundingSelection() },
                                   onSaveTool: { p in pendingToolPrompt = p; toolName = ""; withAnimation { showRouteSheet = false }; savingTool = true })
                         .zIndex(120)
                 }
@@ -3939,6 +3974,36 @@ struct DioStage: View {
                     }
                     if ag == "chainrelay" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { chainStep = 1; chainResults = ["Three key facts: the mesh-sync approval contract is the riskiest piece, the air-gapped proof is due Friday, and the egress badge copy has no owner yet."]; withAnimation { chainRelay = chains.first } } }
                     if ["p0", "o0", "s0"].contains(ag) { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { var d = RecipeRecord.blank(); d.avatar = ag; d.name = "Buddy"; withAnimation { editingAgent = d } } }
+                    // HSM-15-12: the context envelope. "ground" = the chat wearing its
+                    // grounded chip; "groundpicker" = the picker itself (expansion rows +
+                    // the live gauge). Meetings carry intel + bound artifacts so every
+                    // toggle class renders.
+                    if ag == "ground" || ag == "groundpicker" {
+                        let g1 = Meeting(id: "gm1", startedAt: Date(timeIntervalSinceNow: -86_400), title: "Q3 kickoff",
+                                         segments: [Segment(text: "The big bet is shipping the desk to the web.", speaker: "Karol", startTime: 0, endTime: 4),
+                                                    Segment(text: "Mesh sync approval is the riskiest piece.", speaker: "Sam", startTime: 4, endTime: 8)],
+                                         intel: IntelSnapshot(timestamp: 1, topics: ["mesh"],
+                                                              actionItems: [ActionItem(task: "Record the air-gapped proof", id: "ga.ai1", createdAt: Date())],
+                                                              summary: "Kickoff decided the manifest ships this quarter."))
+                        let g2 = Meeting(id: "gm2", startedAt: Date(timeIntervalSinceNow: -172_800), title: "Mesh deep dive",
+                                         segments: [Segment(text: "Peers pair by token; the hub hydrates transcripts.", speaker: "Karol", startTime: 0, endTime: 5)])
+                        model.meetings = [g1, g2] + model.meetings
+                        outputs = [OutputRecord(id: "gart1", title: "Decisions", body: "- The manifest ships this quarter.", source: "Q3 kickoff", lens: "Decisions", path: ""),
+                                   OutputRecord(id: "gart2", title: "Action items", body: "- Record the air-gapped proof.", source: "Q3 kickoff", lens: "Actions", path: "")]
+                        chatGrounding["seed1"] = GroundingSelection(meetings: [
+                            .init(id: "gm1", title: "Q3 kickoff", day: "2026-07-05", includeTranscript: false, includeIntel: true, artifactIds: ["gart1"])
+                        ])
+                        agentChats["seed1"] = [
+                            RecipeMessage(id: "g1", role: "you", text: "What did we decide about the manifest?"),
+                            RecipeMessage(id: "g2", role: "agent", text: "The kickoff settled it: the manifest ships this quarter, and the air-gapped proof is the gating action item."),
+                        ]
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            withAnimation { openAgent = recipes.first }
+                            if ag == "groundpicker" {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { withAnimation { groundingPickerFor = "seed1" } }
+                            }
+                        }
+                    }
                     if ag == "sheet" || ag == "chat" {
                         agentChats["seed1"] = [
                             RecipeMessage(id: "m1", role: "you", text: "What should I focus on after today's kickoff?"),
@@ -4076,7 +4141,9 @@ struct DioStage: View {
         if let a = openAgent {
             DioRecipeChat(recipe: a,
                          messages: agentChats[a.id] ?? [],
-                         onInfer: { history, q in await recipeReply(a, history: history, question: q) },
+                         grounding: chatGrounding[a.id] ?? GroundingSelection(),
+                         onEditGrounding: { withAnimation { groundingPickerFor = a.id } },
+                         onInfer: { history, q in await recipeReply(a, history: history, question: q, grounding: chatGrounding[a.id]) },
                          onChange: { msgs in agentChats[a.id] = msgs; persistAgentChats() },
                          onSaveCard: { text in saveAgentReply(text, from: a) },
                          onEdit: { withAnimation { openAgent = nil; editingAgent = a } },
@@ -4084,6 +4151,22 @@ struct DioStage: View {
                          onClose: { withAnimation { openAgent = nil } })
                 .id(a.id)
                 .zIndex(140).transition(.opacity)
+        }
+        // HSM-15-12 — "Ground this ask": the picker layers over whichever composer
+        // asked for it (a chat keeps its selection; the route sheet's is one-shot).
+        if let convo = groundingPickerFor {
+            GroundingPicker(meetings: meetings,
+                            artifactsFor: { derivativesOf($0) },
+                            contextLimit: recipeContextLimit(),
+                            tokensFor: { groundingTokens($0) },
+                            selection: Binding(
+                                get: { convo == "__route__" ? routeGrounding : (chatGrounding[convo] ?? GroundingSelection()) },
+                                set: { sel in
+                                    if convo == "__route__" { routeGrounding = sel }
+                                    else { chatGrounding[convo] = sel; persistChatGrounding() }
+                                }),
+                            onDone: { withAnimation { groundingPickerFor = nil } })
+                .zIndex(160).transition(.opacity)
         }
         // the builder — craft / edit an agent (avatar gallery, presets, context)
         if let draft = editingAgent {
@@ -4950,7 +5033,7 @@ struct DioStage: View {
     private func runRoute(lens: String, prompt: String, profileId: String? = nil) {
         withAnimation { showRouteSheet = false }
         let material: String, srcTitle: String
-        let contexts: [(id: String, title: String)]
+        var contexts: [(id: String, title: String)]
         if routeSourceId == "__bundle__" {
             material = String(bundleText.prefix(6000)); srcTitle = bundleTitle
             contexts = bundleContexts
@@ -4959,6 +5042,11 @@ struct DioStage: View {
             material = String(src.routableText.prefix(6000)); srcTitle = src.title
             contexts = [(src.id, src.title)]
         }
+        // HSM-15-12: the sheet's grounding is one-shot — it rides THIS run's envelope
+        // and its provenance rows (receipts), then clears.
+        let sel = routeGrounding
+        routeGrounding = GroundingSelection()
+        if !sel.isEmpty { contexts += groundingContexts(sel) }
         // The Ask atom's lineage (HSM-16-09): the exact cards read + the instruction on
         // top of them ride the kept Artifact's provenance — keep is never a mystery.
         let prov = RunProvenance(sourceCardId: contexts.count == 1 ? contexts[0].id : "",
@@ -4966,24 +5054,36 @@ struct DioStage: View {
                                  contextIds: contexts.map(\.id), contextTitles: contexts.map(\.title),
                                  prompt: prompt)
         runAssembled(lens: lens, source: srcTitle, fullPrompt: prompt + "\n\nMaterial:\n" + material,
-                     provenance: prov, profileId: profileId)
+                     provenance: prov, profileId: profileId, grounding: sel.isEmpty ? nil : sel)
     }
 
     // the shared inference tail: theater → callLLM → printed card (keep/bin). Used by routes and recipes.
     // `provenance` is the run lineage (input card + the agent/chain that produced it) for routed runs;
     // nil for direct lens routes (their `source` is the lineage).
-    private func runAssembled(lens: String, source: String, fullPrompt: String, provenance: RunProvenance? = nil, profileId: String? = nil) {
+    private func runAssembled(lens: String, source: String, fullPrompt: String, provenance: RunProvenance? = nil, profileId: String? = nil, grounding: GroundingSelection? = nil) {
         routeLensRun = lens
         let zpath = pathKey
         // Resolve the profile THIS run actually uses (per-run override, else the active
         // default) — the theater + the printed card's badge state where it truly ran.
         // The old global `isLocal` read lied whenever an override differed (21-01 grammar).
         let prof = InferenceConfigStore.shared.resolveProfile(recipeProfileId: profileId)
+        // HSM-15-12: the envelope's split for THIS target — hub refs, inline blocks,
+        // or the honest budget refusal before anything runs.
+        var prompt = fullPrompt
+        var hubRefs: HubGrounding? = nil
+        switch groundingForRun(grounding, profileId: profileId) {
+        case .none: break
+        case .hub(let g): hubRefs = g
+        case .inline(let env): prompt += "\n\n[GROUNDING]\n" + env
+        case .refused(let needed, let budget):
+            routeError = "Grounding needs ~\(needed) tokens; the window is \(budget). Pick less."
+            return
+        }
         runningLocal = prof.isLocal
         haptic(.heavy)
         withAnimation { routing = true }
         Task { @MainActor in
-            let result = await callLLMTurn(fullPrompt, profileId: profileId)
+            let result = await callLLMTurn(prompt, profileId: profileId, grounding: hubRefs)
             withAnimation { routing = false }
             switch result {
             case .success(let turn):
@@ -4999,11 +5099,12 @@ struct DioStage: View {
                 selectedSet = []
             case .failure(let e):
                 // A failed desktop turn offers the one-tap fallback (never a silent
-                // retarget): the alert gains "Run on this device" when possible.
+                // retarget): the alert gains "Run on this device" when possible. The
+                // grounding rides along — the re-run re-splits and hydrates locally.
                 if prof.kind == .desktop,
                    let dev = InferenceConfigStore.shared.profiles.first(where: { $0.kind == .onDevice }) {
                     deskFallbackRun = { runAssembled(lens: lens, source: source, fullPrompt: fullPrompt,
-                                                     provenance: provenance, profileId: dev.id) }
+                                                     provenance: provenance, profileId: dev.id, grounding: grounding) }
                 }
                 routeError = friendly(e, profile: prof)
             }
@@ -5034,9 +5135,92 @@ struct DioStage: View {
                 .map { "## \($0.title)\n\(String($0.routableText.prefix(2000)))" }.joined(separator: "\n\n")
             if !z.isEmpty { ctx.append("Meetings filed here:\n" + z) }
         }
-        if !a.kb.isEmpty { ctx.append("Lean on the knowledge base \"\(a.kb)\" when relevant.") }
+        // The KB honesty rider (HSM-15-12): real hydrated members, or the explicit
+        // non-hydrated marker — never a hint string pretending to be grounding.
+        if !a.kb.isEmpty { ctx.append(ContextEnvelope.kbBlock(name: a.kb, content: kbContent(a.kb)).rendered) }
         if !ctx.isEmpty { blocks.append("[CONTEXT]\n" + ctx.joined(separator: "\n\n")) }
         return blocks
+    }
+
+    /// The KB's members' text, when this device actually holds them (synced
+    /// `memberIds` resolved against the desk) — nil hydrates the honest marker.
+    private func kbContent(_ name: String) -> String? {
+        guard let kb = kbs.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) else { return nil }
+        let all = members()
+        let texts = kb.contract.memberIds.compactMap { mid -> String? in
+            guard let p = all.first(where: { $0.id == mid || $0.id.hasSuffix(":\(mid)") }) else { return nil }
+            return "## \(p.title)\n\(String(p.routableText.prefix(1200)))"
+        }
+        return texts.isEmpty ? nil : texts.joined(separator: "\n\n")
+    }
+
+    // MARK: - The context envelope (HSM-15-12)
+
+    /// Client-side hydration: the selection's meetings (digest / transcript) and
+    /// their toggled artifacts become provenance-headed blocks, in selection order.
+    private func envelopeBlocks(_ sel: GroundingSelection) -> [ContextEnvelope.Block] {
+        var blocks: [ContextEnvelope.Block] = []
+        for gm in sel.meetings {
+            guard let m = meetings.first(where: { $0.id == gm.id }) else { continue }
+            let title = MeetingPrimitive(meeting: m, index: 0).title
+            var body: [String] = []
+            if gm.includeIntel, let intel = m.intel, !intel.summary.isEmpty {
+                body.append(intel.summary)
+                if !intel.actionItems.isEmpty {
+                    body.append(intel.actionItems.map { "- \($0.task)" }.joined(separator: "\n"))
+                }
+            }
+            if gm.includeTranscript, !m.segments.isEmpty {
+                body.append(m.segments.map { "\($0.speaker.isEmpty ? "Speaker" : $0.speaker): \($0.text)" }.joined(separator: "\n"))
+            }
+            if body.isEmpty {
+                body.append(String(MeetingPrimitive(meeting: m, index: 0).routableText.prefix(2000)))
+            }
+            blocks.append(.init(kind: .meeting, title: title, detail: gm.day, body: body.joined(separator: "\n\n")))
+            for aid in gm.artifactIds {
+                guard let art = outputs.first(where: { $0.id == aid }) else { continue }
+                blocks.append(.init(kind: .artifact, title: art.title, detail: title, body: art.body))
+            }
+        }
+        return blocks
+    }
+
+    /// The gauge's live price for a selection (same estimator the run refusal uses).
+    private func groundingTokens(_ sel: GroundingSelection) -> Int {
+        ContextEnvelope.estimateTokens(envelopeBlocks(sel))
+    }
+
+    /// How one selection reaches one run target — the ONE split. A desktop run
+    /// ships REFERENCES (the hub hydrates; DERP carries ids, not transcripts);
+    /// everything else hydrates here, and past-budget refuses BEFORE the run.
+    private enum RunGrounding {
+        case none
+        case hub(HubGrounding)
+        case inline(String)
+        case refused(needed: Int, budget: Int)
+    }
+    private func groundingForRun(_ sel: GroundingSelection?, profileId: String?) -> RunGrounding {
+        guard let sel, !sel.isEmpty else { return .none }
+        let prof = InferenceConfigStore.shared.resolveProfile(recipeProfileId: profileId)
+        if prof.kind == .desktop {
+            return .hub(HubGrounding(meetingIds: sel.hubMeetingIds,
+                                     artifactIds: sel.hubArtifactIds, expand: sel.hubExpand))
+        }
+        switch ContextEnvelope.assemble(envelopeBlocks(sel), budgetTokens: recipeContextLimit()) {
+        case .success(let env): return env.isEmpty ? .none : .inline(env)
+        case .failure(.overBudget(let needed, let budget)): return .refused(needed: needed, budget: budget)
+        }
+    }
+
+    /// The provenance rows a grounded run wears (receipts: meetings + artifacts by name).
+    private func groundingContexts(_ sel: GroundingSelection) -> [(id: String, title: String)] {
+        var rows: [(id: String, title: String)] = sel.meetings.map { ("m:\($0.id)", $0.title) }
+        for gm in sel.meetings {
+            for aid in gm.artifactIds {
+                if let art = outputs.first(where: { $0.id == aid }) { rows.append(("out:\(aid)", art.title)) }
+            }
+        }
+        return rows
     }
 
     // For the builder's context gauge: the est. tokens this zone's meetings would add as grounding
@@ -5068,15 +5252,25 @@ struct DioStage: View {
     }
 
     // one conversational turn — role + context + the running transcript + the new message.
-    @MainActor private func recipeReply(_ a: RecipeRecord, history: [RecipeMessage], question: String) async -> String {
+    // `grounding` (HSM-15-12) is THIS conversation's envelope; a chain step passes none
+    // (the verbs stay distinct: chat grounding is the chat's, not the recipe's).
+    @MainActor private func recipeReply(_ a: RecipeRecord, history: [RecipeMessage], question: String, grounding: GroundingSelection? = nil) async -> String {
         var blocks = recipeRoleAndContext(a)
+        var hubRefs: HubGrounding? = nil
+        switch groundingForRun(grounding, profileId: a.profileId) {
+        case .none: break
+        case .hub(let g): hubRefs = g
+        case .inline(let env): blocks.append("[GROUNDING]\n" + env)
+        case .refused(let needed, let budget):
+            return "⚠️ Grounding needs ~\(needed) tokens; the window is \(budget). Pick less."
+        }
         if !history.isEmpty {
             let convo = history.suffix(12).map { ($0.isYou ? "User: " : "\(a.name): ") + $0.text }.joined(separator: "\n")
             blocks.append("[CONVERSATION SO FAR]\n" + convo)
         }
         blocks.append("[USER]\n" + String(question.prefix(6000)) + "\n\nReply as \(a.name).")
         let prof = InferenceConfigStore.shared.resolveProfile(recipeProfileId: a.profileId)
-        switch await callLLM(blocks.joined(separator: "\n\n"), profileId: a.profileId) {
+        switch await callLLM(blocks.joined(separator: "\n\n"), profileId: a.profileId, grounding: hubRefs) {
         case .success(let raw):
             let c = raw.trimmingCharacters(in: .whitespacesAndNewlines)
             return c.isEmpty ? "⚠️ The model returned nothing — try rephrasing." : c
@@ -5527,13 +5721,15 @@ struct DioStage: View {
     /// chains, live lenses, weave steps). HSM-15-11: a `desktop` profile sends the turn
     /// to the paired hub over `POST /api/ask`, optionally pinned to one of the hub's
     /// models (`profile.model`; the hub allow-lists it against what it can really run).
-    @MainActor private func callLLMTurn(_ prompt: String, profileId: String? = nil) async -> Result<LLMTurn, Error> {
+    /// HSM-15-12: `grounding` ships the envelope's REFERENCES on desktop turns — the
+    /// hub hydrates from its own store; non-desktop turns hydrated client-side upstream.
+    @MainActor private func callLLMTurn(_ prompt: String, profileId: String? = nil, grounding: HubGrounding? = nil) async -> Result<LLMTurn, Error> {
         let cfg = InferenceConfigStore.shared
         let profile = cfg.resolveProfile(recipeProfileId: profileId)
         if profile.kind == .desktop {
             guard let client = desktopClient else { return .failure(DesktopRunError.notPaired) }
             do {
-                let r = try await client.runStep(prompt: prompt, lens: "Agent", model: profile.model)
+                let r = try await client.runStep(prompt: prompt, lens: "Agent", model: profile.model, grounding: grounding)
                 let text = (r.output ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !text.isEmpty else { return .failure(DesktopRunError.emptyAnswer) }
                 return .success(LLMTurn(text: text, hubEgress: r.egress, hubModel: r.model))
@@ -5549,8 +5745,8 @@ struct DioStage: View {
         } catch { return .failure(error) }
     }
 
-    @MainActor private func callLLM(_ prompt: String, profileId: String? = nil) async -> Result<String, Error> {
-        (await callLLMTurn(prompt, profileId: profileId)).map(\.text)
+    @MainActor private func callLLM(_ prompt: String, profileId: String? = nil, grounding: HubGrounding? = nil) async -> Result<String, Error> {
+        (await callLLMTurn(prompt, profileId: profileId, grounding: grounding)).map(\.text)
     }
 
     private func friendly(_ e: Error, profile: RuntimeProfile? = nil) -> String {
@@ -5771,6 +5967,9 @@ struct DioStage: View {
     private func persistAgentChats() {
         if let data = try? JSONEncoder().encode(agentChats), let s = String(data: data, encoding: .utf8) { agentChatsJSON = s }
     }
+    private func persistChatGrounding() {
+        if let data = try? JSONEncoder().encode(chatGrounding), let s = String(data: data, encoding: .utf8) { chatGroundingJSON = s }
+    }
     private func saveAgent(_ rec: RecipeRecord) {
         haptic(.medium)
         withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) {
@@ -5833,6 +6032,7 @@ struct DioStage: View {
         if let data = workflowsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([WorkflowRecord].self, from: data) { workflows = arr }
         if let data = agentsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([RecipeRecord].self, from: data) { recipes = arr }
         if let data = agentChatsJSON.data(using: .utf8), let d = try? JSONDecoder().decode([String: [RecipeMessage]].self, from: data) { agentChats = d }
+        if let data = chatGroundingJSON.data(using: .utf8), let d = try? JSONDecoder().decode([String: GroundingSelection].self, from: data) { chatGrounding = d }
         if let data = chainsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([ChainRecord].self, from: data) { chains = arr }
         loadSyncMaps()
     }

@@ -221,13 +221,40 @@ contract, the LLM endpoints) is **reuse**, not new.
 | HSM-15-09 | Proactive agent presence — surface a waiting agent the moment it asks | **built + Simulator-proven** (`PresenceWatcher` pure rising-edge/debounce/quiet-mode, 7 host tests; HUD waiting-lane + the nudge card w/ Answer-by-voice; non-autonomous) — voice delivery reuses the desk composer (LAN proof owner-gated) | [story-09](./story-09-proactive-agent-presence.md) | 83 ProvidersTests green; `presence-hud-lane.png` |
 | HSM-15-10 | The Connect surface ("Your Computer" — discovery-first pairing) | **built end-to-end + Simulator-proven; 2026-07-06: the remote-pairing saga closed** (five stacked defects across TestFlight builds 3–4: the silent manual sheet, the un-bumped schema's missing `model_manifests`, two sync-wire poisons the Swift contract can't decode (`run_output` + naive `isoformat()`), and a leftover `tailscale serve` TLS interceptor on the hub port eating the app's cleartext while Safari's auto-HTTPS "proved" the network fine; build 4 = `WILL DIAL` + exact probe reason on `DioConnectCard`, ONE `PeerAddress` host rule w/ `https://` support, browse-on-open forces the LN prompt); **repo debt 1–3 paid** (schema v9 + tolerant ChangeSet/`runOutput` + honest sync-pill states) — owner's on-device green run is the remaining proof | [story-10](./story-10-the-connect-surface.md) | 12 mesh + 2205 desktop · iPad build green · sim "Synced · just now" vs the live hub · b4 VALID+attached · debt PR: hub 3199 / Swift 484 / sim build green |
 | HSM-15-11 | Agents on your desktop's models (pick the Mac's model, run through it) | **built + live-proven in the sim** (2026-07-06: hub `/api/ask` manifest-bounded `model` override; `RuntimeProfile.Kind.desktop` + the ONE `callLLMTurn` dispatch across recipes/chat/chains/live-lenses; "Your desktop" picker section naming the hub's models; honest failure + one-tap on-device fallback; found+fixed: the desk `desktopClient` never sent the pairing token — every desk hub-run 401'd on a token-requiring hub) — owed: Phase-17 fidelity rider walk + the owner's cross-country run | [story-11](./story-11-agents-on-your-desktops-models.md) | ask pytest ×10 · real-metal .43 control-vs-treatment · sim→hub→llama.cpp printed card (`screenshots/15-11-desktoprun-live-proof.png`) · hub 3202 / Swift 484 |
-| HSM-15-12 | The context envelope (select meetings, expand their artifacts, into the ask) | **scaffolded** (owner ask 2026-07-06 with 15-11; today context = manualContext + all-zone-meetings-truncated + a KB *hint string* — the story adds a per-ask picker w/ artifact expansion + ONE provenance-headed envelope across run targets + hub-side hydration via `/api/ask` grounding refs + the KB-honesty rider) | [story-12](./story-12-the-context-envelope.md) | — |
+| HSM-15-12 | The context envelope (select meetings, expand their artifacts, into the ask) | **built + real-metal hydration proven** (2026-07-06 evening: `ContextEnvelope`+`GroundingSelection` pure assembler (6 host tests) · "Ground this ask" picker on chat + run sheet, gauge live-priced, per-conversation persistence · hub `/api/ask` `grounding` refs hydration (+5 pytest, unknown ids refuse naming them) · `callLLMTurn(grounding:)` ships refs on desktop turns · KB hint string replaced by hydrated content or the honest marker · grounding rows on `RunProvenance`. Control-vs-treatment on the live hub → .43: ungrounded guesses "Mesh", grounded answers **BLUE LANTERN** from a transcript the request never shipped) — owed: the owner's cross-country phone walk | [story-12](./story-12-the-context-envelope.md) | hub 3206 · Swift 490 · 3 sim screenshots (`15-12-*.png`) · curl receipts in the story header |
+| HSM-15-13 | Chat with the desktop's model (the manifest becomes a front door) | **scaffolded** (owner ask 2026-07-06: the phone knows the Mac's models but only two menus deep — the story makes each manifest row a chat you can open: transient model persona through the SAME `DioRecipeChat`/`callLLMTurn` path, grounding rides free, honest blocked/unreachable states) | [story-13](./story-13-chat-with-the-desktops-model.md) | — |
 | HSM-15-06 | The Proof — air-gapped value + the launch narrative | backlog | [story-06](./story-06-the-proof-and-narrative.md) | — |
 | HSM-15-07 | Docs — the Mesh, end to end | backlog | [story-07](./story-07-docs.md) | — |
 
 ## Where we are
 
-**2026-07-06 (evening) — AGENTS RUN ON YOUR DESKTOP'S MODELS (15-11 built + live-proven).**
+**2026-07-06 (night) — THE ASK KNOWS YOUR RECORDS (15-12 built + real-metal hydration proven).**
+The second owner ask of the day shipped the same day. One assembler:
+`ContextEnvelope` (RuntimeCore, pure, host-tested) renders provenance-headed blocks
+(`[MEETING: title — date]` / `[ARTIFACT: title — meeting]`), refuses past-budget
+selections BEFORE the run, and `GroundingSelection` persists per CONVERSATION (the
+chat keeps its grounding; the recipe's standing context stays authorship; a chain
+step gets none). One split: `groundingForRun` — a desktop turn ships REFERENCES
+(`/api/ask` gained `grounding: {meeting_ids, artifact_ids, expand}`; the hub
+hydrates from its own store, bounds a full transcript at 12k chars with an in-block
+cut marker, and refuses unknown ids naming them), every other target hydrates
+client-side into `[GROUNDING]`. The picker ("Ground this ask") sits on BOTH
+composers — the agent chat and the route sheet — with the ContextGauge pricing the
+selection live and each meeting expanding to digest / transcript / its bound
+artifacts, each independently toggleable. The KB honesty rider landed with it: the
+"lean on the knowledge base" hint string is dead — hydrated member content or the
+explicit `[KB: name — not hydrated on this device]` marker. Receipts: grounding rows
+ride `RunProvenance`, and the hub echoes what it hydrated. Real-metal
+control-vs-treatment on the restarted live hub (its engine = the .43 llama.cpp,
+Qwen3.5-9B): the ungrounded ask GUESSES ("Mesh"); the grounded-by-reference ask
+answers **BLUE LANTERN** — a codename living only in a transcript the request never
+shipped; the ghost id refuses with `unknown_ids`. (First run also proved WHY the
+rigs matter: the pre-restart hub silently ignored the new param — a stale process,
+caught only because the proof was live.) 15-13 (chat with the desktop's model)
+scaffolded from the owner's third ask. Suites: hub **3206**, Swift **490**, sim
+build green, 3 screenshots. Owed: the owner's cross-country walk.
+
+Earlier — **2026-07-06 (evening) — AGENTS RUN ON YOUR DESKTOP'S MODELS (15-11 built + live-proven).**
 The owner's morning ask shipped the same day. Hub half: `POST /api/ask` gained a
 manifest-bounded `model` override — the allow-list is what the hub can actually run
 (its own engine + its profiles' models; another node's manifest row refuses loudly

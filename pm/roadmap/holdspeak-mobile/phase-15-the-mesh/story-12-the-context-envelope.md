@@ -2,7 +2,18 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 15
-- **Status:** scaffolded — 2026-07-06, owner ask in the same breath as 15-11 (*"there's
+- **Status:** built + real-metal hydration proven — 2026-07-06 (evening). The pure
+  assembler (`ContextEnvelope` + `GroundingSelection`, RuntimeCore, 6 host tests), the
+  "Ground this ask" picker on the chat composer AND the run sheet (gauge live-priced,
+  per-conversation persistence, sim screenshots `screenshots/15-12-*.png`), hub
+  `/api/ask` `grounding: {meeting_ids, artifact_ids, expand}` hydration (+5 pytest),
+  the KB honesty rider (the hint string is dead), and grounding rows on
+  `RunProvenance`. Real-metal control-vs-treatment on the live hub → .43 llama.cpp:
+  ungrounded ask guesses ("Mesh"), grounded-by-reference ask answers **BLUE LANTERN**
+  from a transcript the request never shipped; unknown ids refuse
+  `{"error": "grounding ids not on this hub", "unknown_ids": [...]}`. Owed: the
+  cross-country phone walk (owner-gated).
+  Scaffolded earlier the same day — owner ask in the same breath as 15-11 (*"there's
   no clear path of being able to select meetings, and, in fact, expand them and include
   any bound artifacts... into the context of that q"*). 15-11 is WHERE the model runs;
   this is WHAT the question knows.
@@ -55,24 +66,36 @@ about.*
 
 ## Acceptance criteria
 
-- [ ] **The picker:** from an agent chat and from a run sheet, select ≥1 meeting and
+- [x] **The picker:** from an agent chat and from a run sheet, select ≥1 meeting and
       expand it — transcript and each bound artifact independently toggleable; the
       gauge re-prices live; the selection survives the conversation.
-- [ ] **The envelope:** the run's prompt contains the selected blocks with provenance
+      (`GroundingPicker.swift`; chat selection persists in `hs.diorama.chatgrounding`;
+      sim shots `15-12-ground-picker.png` / `15-12-chat-grounded.png` /
+      `15-12-routesheet-ground.png`.)
+- [x] **The envelope:** the run's prompt contains the selected blocks with provenance
       headers, via the ONE assembler — verified identical shape across on-device,
       endpoint, and desktop targets (host test on the assembly function).
-- [ ] **Hub hydration:** a desktop-profile run sends references; the hub hydrates and
+      (`ContextEnvelope.assemble` + `groundingForRun` — the one split; 6 host tests.)
+- [x] **Hub hydration:** a desktop-profile run sends references; the hub hydrates and
       the answer reflects content the phone never shipped (provable: a transcript
       section beyond the phone's truncation). Unknown ids refuse loudly.
-- [ ] **KB honesty:** the KB block carries real content or an explicit non-hydrated
-      marker — the hint string dies.
-- [ ] **Provenance:** the run record lists the grounding (meetings + artifacts by
-      name); the answer surface can show it.
-- [ ] **Overflow:** a selection past the budget fails honestly at the gauge (pick
-      less / summarize), never silent truncation mid-run.
+      (Real-metal control-vs-treatment: "Mesh" vs "BLUE LANTERN"; refusal names
+      `unknown_ids`. Runner side: `callLLMTurn(_:profileId:grounding:)` →
+      `runStep(grounding:)`.)
+- [x] **KB honesty:** the KB block carries real content or an explicit non-hydrated
+      marker — the hint string dies. (`ContextEnvelope.kbBlock` + `kbContent`;
+      host-tested.)
+- [x] **Provenance:** the run record lists the grounding (meetings + artifacts by
+      name); the answer surface can show it. (`groundingContexts` rows ride
+      `RunProvenance.contextIds/Titles`; hub answers echo `grounding` + fold into
+      `context_ids/titles`.)
+- [x] **Overflow:** a selection past the budget fails honestly at the gauge (pick
+      less / summarize), never silent truncation mid-run. (`Failure.overBudget`
+      refusal before any run; the hub's transcript bound is marked in-block, never
+      silent.)
 - [ ] **The proof:** cross-country — an agent on the phone answers a question about a
       specific meeting's decisions, grounded via hub hydration, receipts in the run
-      record. (Rides the 15-10/15-11 rig.)
+      record. (Rides the 15-10/15-11 rig; owner-gated.)
 
 ## Build plan
 
@@ -94,14 +117,16 @@ about.*
 - Hub: `uv run pytest -q -k ask` for the grounding hydration + refusals.
 - Device: the cross-country grounded ask (acceptance row 7).
 
-## Open questions (decide at build, not silently)
+## Open questions — decided at build (2026-07-06)
 
-- **Transcript bounds:** whole-transcript grounding blows on-device budgets fast —
-  default to intel summary + artifacts with transcript opt-in per meeting?
-- **Live meetings:** can an in-progress meeting be grounding (partial transcript), or
-  only finished records? (Lean: finished only for v1.)
-- **Selection surface:** does the desk's multi-select (`__bundle__` routing) become
-  the same envelope, unifying the drop-verb with the picker under one contract?
+- **Transcript bounds:** DECIDED as leaned — a selected meeting defaults to the intel
+  digest (`includeIntel`); the transcript is an explicit per-meeting toggle. Hub-side
+  `expand=full` bounds each transcript at 12k chars with an in-block cut marker.
+- **Live meetings:** v1 lists the desk's meetings as they are (an in-progress record
+  grounds with whatever segments it holds — same honesty as its card).
+- **Selection surface:** the picker COMPOSES with `__bundle__` routing (grounding rows
+  append to the bundle's provenance) rather than replacing it; unifying the drop-verb
+  stays open for a later story.
 
 ## Notes
 

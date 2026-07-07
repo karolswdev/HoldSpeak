@@ -730,6 +730,8 @@ struct ContextGauge: View {
 struct DioRecipeChat: View {
     let recipe: RecipeRecord
     @State var messages: [RecipeMessage]
+    var grounding = GroundingSelection()           // HSM-15-12 — this conversation's records
+    var onEditGrounding: () -> Void = {}
     let onInfer: (_ history: [RecipeMessage], _ question: String) async -> String   // assembles + calls the LLM
     let onChange: ([RecipeMessage]) -> Void        // persist the thread
     let onSaveCard: (String) -> Void              // harvest a reply onto the desk
@@ -805,6 +807,7 @@ struct DioRecipeChat: View {
                     if recipe.useZoneContext { tag("This zone", "tray.full.fill") }
                     if !recipe.kb.isEmpty { tag(recipe.kb, "crystal.fill") }
                     if !recipe.manualContext.isEmpty { tag("Pinned notes", "note.text") }
+                    if !grounding.isEmpty { tag(grounding.summaryLabel, "square.stack.3d.up.fill") }
                 }
             }
             Text("Long-press a desk card to use \(recipe.name).")
@@ -851,7 +854,29 @@ struct DioRecipeChat: View {
     }
 
     private var inputBar: some View {
-        HStack(spacing: 10) {
+        VStack(spacing: 8) {
+            if !grounding.isEmpty {
+                Button { onEditGrounding() } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.stack.3d.up.fill").font(.system(size: 10, weight: .bold))
+                        Text("Grounded on \(grounding.summaryLabel)")
+                            .font(.system(size: 11, weight: .heavy, design: .rounded)).lineLimit(1)
+                        Image(systemName: "chevron.right").font(.system(size: 8, weight: .black)).opacity(0.7)
+                    }
+                    .foregroundStyle(DioPal.cobalt)
+                    .padding(.horizontal, 11).frame(height: 28)
+                    .background(Capsule().fill(DioPal.cobalt.opacity(0.12))
+                        .overlay(Capsule().strokeBorder(DioPal.cobalt.opacity(0.4), lineWidth: 1)))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }.buttonStyle(.plain)
+            }
+            HStack(spacing: 10) {
+            Button { onEditGrounding() } label: {
+                Image(systemName: grounding.isEmpty ? "square.stack.3d.up" : "square.stack.3d.up.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(grounding.isEmpty ? DioPal.muted : DioPal.cobalt)
+                    .frame(width: 36, height: 36).background(Circle().fill(.white.opacity(0.06)))
+            }.buttonStyle(.plain)
             TextField("", text: $input, prompt: Text("Message \(recipe.name)…").foregroundColor(DioPal.muted.opacity(0.7)), axis: .vertical)
                 .lineLimit(1...4)
                 .font(.system(size: 15, weight: .medium, design: .rounded)).foregroundStyle(DioPal.text).focused($focused)
@@ -862,12 +887,13 @@ struct DioRecipeChat: View {
                 Image(systemName: "arrow.up").font(.system(size: 17, weight: .black)).foregroundStyle(.white)
                     .frame(width: 44, height: 44).background(Circle().fill(canSend ? AnyShapeStyle(tint) : AnyShapeStyle(Color.white.opacity(0.1))))
             }.buttonStyle(.plain).disabled(!canSend)
+            }
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
     }
 
     private var canSend: Bool { !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !thinking }
-    private var hasContext: Bool { recipe.useZoneContext || !recipe.kb.isEmpty || !recipe.manualContext.isEmpty }
+    private var hasContext: Bool { recipe.useZoneContext || !recipe.kb.isEmpty || !recipe.manualContext.isEmpty || !grounding.isEmpty }
     private func clearChat() { haptic(); messages = []; onChange(messages) }
     private func send() {
         let q = input.trimmingCharacters(in: .whitespacesAndNewlines); guard !q.isEmpty, !thinking else { return }

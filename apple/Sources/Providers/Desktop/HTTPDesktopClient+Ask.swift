@@ -48,9 +48,16 @@ extension HTTPDesktopClient {
     /// caller treats it as a failed attempt, riding the failure policy).
     /// `model` (HSM-15-11) pins one of the HUB's models — the hub allow-lists it
     /// against what it can actually run and refuses 400 on anything else.
-    public func runStep(prompt: String, lens: String = "Workbench", model: String? = nil) async throws -> HubStepResult {
+    /// `grounding` (HSM-15-12) ships the envelope's REFERENCES — the hub hydrates
+    /// meetings/artifacts from its own store and refuses 400 on unknown ids.
+    public func runStep(prompt: String, lens: String = "Workbench", model: String? = nil,
+                        grounding: HubGrounding? = nil) async throws -> HubStepResult {
         var body: [String: Any] = ["prompt": prompt, "lens": lens, "context": []]
         if let model, !model.isEmpty { body["model"] = model }
+        if let g = grounding, !g.isEmpty {
+            body["grounding"] = ["meeting_ids": g.meetingIds, "artifact_ids": g.artifactIds,
+                                 "expand": g.expand]
+        }
         let data = try await sendAsk(makeAskRequest(path: "api/ask", body: body))
         do { return try HoldSpeakContracts.decoder().decode(HubStepResult.self, from: data) }
         catch { throw DesktopClientError.malformed }

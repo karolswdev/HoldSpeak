@@ -335,6 +335,21 @@ public struct ModelManifest: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+/// HSM-15-12 — a grounded ask's wire half. A desktop run ships REFERENCES and the
+/// hub hydrates from its own store (it holds the full transcripts; the phone may
+/// hold truncated copies; DERP bandwidth stays sane). Ids only — bodies never ride.
+public struct HubGrounding: Codable, Equatable, Sendable {
+    public var meetingIds: [String]
+    public var artifactIds: [String]
+    public var expand: String            // "summary" | "full"
+
+    public init(meetingIds: [String] = [], artifactIds: [String] = [], expand: String = "summary") {
+        self.meetingIds = meetingIds; self.artifactIds = artifactIds; self.expand = expand
+    }
+
+    public var isEmpty: Bool { meetingIds.isEmpty && artifactIds.isEmpty }
+}
+
 /// Pure mapping from the legacy single inference config (one mode + one endpoint) to a profile list
 /// plus the active id. Deterministic (takes `now`) so the one-time app migration is testable. No key
 /// flows through here — `endpointHasKey` only signals the caller to move the key into the Keychain.
