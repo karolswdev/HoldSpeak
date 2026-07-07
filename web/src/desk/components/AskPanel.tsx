@@ -13,6 +13,11 @@ import {
   ASK_LENSES, askContexts, askLineageLine, keepAsk, runAsk,
   type AskRunResult,
 } from "../ask";
+import {
+  emptyGrounding, groundingIsEmpty, groundingReceiptRows, groundingTokens, hubGrounding,
+  type GroundingSelection,
+} from "../grounding";
+import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
 
 export function AskPanel() {
@@ -29,12 +34,23 @@ export function AskPanel() {
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [error, setError] = useState("");
   const [kept, setKept] = useState(false);
+  const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding());
   const ref = useRef<HTMLDivElement | null>(null);
 
   const context = useMemo(() => askContexts(items, selectedIds), [items, selectedIds]);
   // The context is pinned at print time so keep records what was actually read
-  // even if the selection changes underneath.
+  // even if the selection changes underneath. Grounding rows join it at print
+  // time (the receipts rule): the kept ask names what grounded the answer.
   const printedContext = useRef(context);
+
+  // The gauge's budget: the picked profile's window, else the ceiling the iPad
+  // assumes for an endpoint it doesn't control.
+  const limitTokens = useMemo(() => {
+    const p = profiles.find((x) => x.id === profileId);
+    return Number(p?.context_limit) > 0 ? Number(p?.context_limit) : 16_384;
+  }, [profileId, profiles]);
+  const groundTokens = groundingTokens(grounding);
+  const overBudget = groundTokens > limitTokens;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -61,11 +77,21 @@ export function AskPanel() {
   }, [profileId, profiles, setup]);
 
   const ask = async () => {
-    if (!prompt.trim() || phase === "routing") return;
+    if (!prompt.trim() || phase === "routing" || overBudget) return;
     setPhase("routing");
     setError("");
-    printedContext.current = context;
-    const r = await runAsk({ prompt: prompt.trim(), lens, context, profileId: profileId || undefined });
+    // Receipts: the grounding rows ride the pinned context so keep names them.
+    printedContext.current = [
+      ...context,
+      ...groundingReceiptRows(grounding)
+        .filter((g) => !context.some((c) => c.id === g.id))
+        .map((g) => ({ id: g.id, kind: "grounding", title: g.title })),
+    ];
+    const r = await runAsk({
+      prompt: prompt.trim(), lens, context,
+      profileId: profileId || undefined,
+      grounding: hubGrounding(grounding),
+    });
     if (!r.ok) {
       setError(r.output);
       setPhase("compose");
@@ -178,6 +204,14 @@ export function AskPanel() {
                 ))}
               </select>
             )}
+            <GroundingSection
+              meetings={(items.meeting || []).map((m) => ({
+                id: m.id, title: String(m.title || "Untitled meeting"), startedAt: (m as any).startedAt,
+              }))}
+              selection={grounding}
+              onChange={setGrounding}
+              limitTokens={limitTokens}
+            />
             {error && <p className="desk-run-warning">⚠ {error}</p>}
           </>
         )}
@@ -195,7 +229,13 @@ export function AskPanel() {
             <button type="button" className="desk-chip quiet" onClick={bin}>
               Cancel
             </button>
-            <button type="button" className="desk-chip" disabled={!prompt.trim()} onClick={() => void ask()}>
+            <button
+              type="button"
+              className="desk-chip"
+              disabled={!prompt.trim() || overBudget}
+              title={overBudget ? "Grounding is past the window — pick less" : undefined}
+              onClick={() => void ask()}
+            >
               Ask
             </button>
           </>
