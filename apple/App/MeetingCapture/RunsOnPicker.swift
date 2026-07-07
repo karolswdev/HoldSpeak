@@ -91,6 +91,7 @@ struct RunsOnPicker: View {
         case .onDevice: return "iphone"
         case .desktop: return "desktopcomputer"
         case .openAICompatible: return "cloud.fill"
+        case .meshNode: return "antenna.radiowaves.left.and.right"
         }
     }
 
