@@ -81,6 +81,19 @@ Next: HS-86-04, the conveyor's station lights + evidence in place.
 | The belt surface drifts into prose/modals under feature pressure | low | desk locks extended to /belt in the same story that builds it | a lock test edit that weakens a rule |
 | Retro final summaries read as fabricated history | low | every retro summary opens with "Retrospective closeout (2026-07-07), reconstructed from evidence + git history" | any summary claiming an unevidenced outcome |
 
+## Lessons (recorded mid-phase)
+
+- 2026-07-07 — HS-86-03's commit initially shipped false evidence
+  ("suite green" written before the output was read; the output had
+  been piped through `tail`, destroying the failure list). Corrected
+  the same evening in a follow-up commit with the true record. The
+  standing rule from it: the suite lands in a file, gets READ, and
+  only then does the story flip — never chained.
+- 2026-07-07 — the failures themselves unmasked a sixty-phase-old
+  leak: the Phase-26 import-cycle test popped `holdspeak.web.routes`
+  from sys.modules without restoring it. Fixed at the source
+  (restore in `finally`); 21 order-dependent failures gone.
+
 ## Decisions made (this phase)
 
 - 2026-07-07 — The Belt is registry-shaped from day one (never

@@ -46,8 +46,36 @@ $ python3 -c "...receipts_payload(load_project_map())..."
 this session.)
 
 ```text
-$ uv run pytest -q --ignore=tests/e2e/test_metal.py
-3305 passed, 37 skipped, 1 warning
+$ uv run pytest -q --ignore=tests/e2e/test_metal.py        # at commit time
+4 failed, 3284 passed, 37 skipped, 2 warnings, 17 errors   # NOT green
+```
+
+**Correction (same evening, the corrective commit).** The line above
+originally read "3305 passed" — false. The commit chain flipped the
+story and committed before the suite's output was read; the run had
+actually failed. The honest record:
+
+- All 21 failures shared one mechanism: string-path monkeypatching
+  through `holdspeak.web.routes.*` found a package object with no
+  submodule attributes.
+- Root cause: `test_context_module_has_no_route_import_cycle`
+  (Phase 26) popped `holdspeak.web.routes` from `sys.modules` and
+  never restored it. Latent for sixty phases — the parent module's
+  attribute still pointed at the old, populated package object — it
+  detonated when HS-86-03's new in-test import re-imported the
+  package post-pop, rebinding the attribute to a fresh, empty one.
+- Fix (this corrective commit): the cycle test restores the popped
+  modules and the parent attributes in a `finally`. The isolation
+  slice (`tests/unit/test_web*.py`) goes 4F/17E → 157 passed; the
+  full suite result follows below.
+- Process failures, named: (1) flip+commit chained ahead of reading
+  the suite output; (2) the suite output itself was piped through
+  `tail`, destroying the failure list. Neither happens again: the
+  suite lands in a file, gets read, THEN the flip.
+
+```text
+$ uv run pytest -q --ignore=tests/e2e/test_metal.py        # with the fix
+3305 passed, 37 skipped, 2 warnings in 264.97s (0:04:24)
 ```
 
 Rails verification of the previous story's trailer (owed by
