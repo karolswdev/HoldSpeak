@@ -322,6 +322,18 @@ test greps the codebase to keep the transport's call sites pinned to that one
 chokepoint. Nothing here leaves the machine; the model is a consent boundary,
 not an egress, and lives in [SECURITY.md](SECURITY.md).
 
+That chokepoint later grew from a reply channel into full manipulation without
+loosening. Real keys (`C-c`, `Escape`, arrows) pass a sibling function,
+`coder_steering.deliver_keys`, with the same grant check and audit and its own
+pinned census; a named key is allow-listed or refused by name, never handed to
+`tmux` raw. A `pane:%N` key steers any tmux pane on the machine, not only a
+tracked session, pinned and re-verified the same way. And `coder_steering_relay`
+reaches another machine: it forwards a command to a configured node whose own
+copy of this chokepoint executes it, so the machine that types owns the grant and
+the audit while the hub only relays and names where the key landed. Each addition
+is more reach over the exact same spine: watch free, manipulate armed, re-verify
+every key, refuse and revoke, audit everything.
+
 ### The rails as material
 
 The delivery rails are also material a run can ground on. An open phase, a

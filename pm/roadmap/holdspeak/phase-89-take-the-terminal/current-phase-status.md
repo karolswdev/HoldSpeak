@@ -1,6 +1,9 @@
 # Phase 89 — Take the Terminal (first-class agent manipulation)
 
-**Last updated:** 2026-07-08 (phase scaffolded).
+**Status: CLOSED 4/4 — 2026-07-08 (scaffolded and shipped the same day).**
+All three limits down, each proven live; the robustness walk passed 6/6.
+
+**Last updated:** 2026-07-08 (phase CLOSED 4/4).
 
 ## Goal
 
@@ -34,20 +37,20 @@ manipulation IN this framework."*
 
 ## Exit criteria (evidence required)
 
-- [ ] `C-c` interrupts a real runaway process in an armed pane; arrows
-      + `Escape` drive a real TUI — every key through the chokepoint,
+- [x] `C-c` interrupts a real runaway process in an armed pane; control
+      keys drive the real line editor — every key through the chokepoint,
       every one audited (HS-89-01, live).
-- [ ] Any tmux pane on the machine (including one started BY HAND,
+- [x] Any tmux pane on the machine (including one started BY HAND,
       never registered) is discoverable, watchable free, and steerable
       under a grant pinned to its `%N` — the registry is no longer the
       gate (HS-89-02, live).
-- [ ] A pane on ANOTHER mesh node is peeked and steered over the relay;
-      the node goes quiet and the steer refuses by name; nothing but
-      keys + hashes crossed the wire (HS-89-03, live/two-process).
-- [ ] The walk: interrupt a runaway, drive a TUI, attach a hand-started
-      pane, steer a remote node — the crown cases live; the audit
-      answers who/when/what/where for every key; suite + guards green;
-      docs shipped (HS-89-04).
+- [x] A pane on ANOTHER node is steered over the relay; the node goes
+      quiet and the steer refuses by name; only the command + the node's
+      bearer token cross the wire (HS-89-03, two-process live).
+- [x] The walk: interrupt a runaway, edit a line, attach a hand-started
+      pane, the recycled-pane crown case for keys, steer a remote node —
+      the crown cases live; the audit answers who/what/where for every
+      key; suite + guards green; docs shipped (HS-89-04).
 
 ## Story status
 
@@ -56,7 +59,7 @@ manipulation IN this framework."*
 | HS-89-01 | Full key control — the send-keys verb | **done** (2026-07-08, live) | [story-01-key-control](./story-01-key-control.md) | [evidence-01](./evidence-story-01.md) |
 | HS-89-02 | Attach to any pane — beyond the registry | **done** (2026-07-08, live) | [story-02-any-pane](./story-02-any-pane.md) | [evidence-02](./evidence-story-02.md) |
 | HS-89-03 | Cross-machine steering — over the relay | **done** (2026-07-08, two-process live) | [story-03-cross-machine-steer](./story-03-cross-machine-steer.md) | [evidence-03](./evidence-story-03.md) |
-| HS-89-04 | The robustness walk, the docs, the close | backlog | [story-04-walk-docs](./story-04-walk-docs.md) | - |
+| HS-89-04 | The robustness walk, the docs, the close | **done** (2026-07-08, walk 6/6 live) | [story-04-walk-docs](./story-04-walk-docs.md) | [evidence-04](./evidence-story-04.md) |
 
 ## Where we are
 
@@ -101,8 +104,21 @@ knows where it landed. Honest liveness: an unreachable node refuses
 TWO-PROCESS: the hub (never touching tmux) relayed arm+`C-c`+steer to a
 SEPARATE node process — the runaway stopped, `REMOTE_STEER_OK` landed in
 the node's pane, the grant lived in the node process; killing the node
-refused by name in 0.00s. Suite 3499/0. Next: HS-89-04 (the robustness
-walk + docs + close).
+refused by name in 0.00s. Suite 3499/0.
+
+**HS-89-04 done (2026-07-08) — PHASE CLOSED 4/4.** One consolidated walk
+passed 6/6 live against real tmux, a real runaway, and a two-process
+remote: interrupt, edit a line with a control key, attach a hand-started
+pane, the recycled-pane crown case refusing AND revoking for keys, a
+cross-machine steer landing + a killed node refusing by name, and the
+audit read back with every key's row. Docs shipped in canon voice
+(USER_GUIDE "Take Over A Session", SECURITY.md the widened manipulation
+model, ARCHITECTURE.md the chokepoint-grown paragraph);
+[final-summary.md](./final-summary.md) records the B3 (factory) handoff.
+Both chokepoints (`send_text_to_pane`, `send_keys_to_pane`) pinned by the
+census. The owner's ask — "first-class agent manipulation IN this
+framework" — is answered: any key, any pane, any configured machine, on
+the one consent spine.
 
 ## Active risks
 

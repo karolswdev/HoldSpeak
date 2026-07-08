@@ -548,6 +548,33 @@ Every reply and every refusal is written to the steering audit: who, when, which
 session, which pane, and a hash of the text. Read it back with
 `GET /api/coders/steering/audit`.
 
+### Take Over A Session: Any Key, Any Pane, Any Machine
+
+Steering is not only typing text. Under the same arming grant you can send real
+keys: interrupt a runaway with `C-c`, dismiss a prompt with `Escape`, or drive a
+menu with the arrows and `Enter`. Keys go through the same one path and the same
+audit as a text reply, so the trail reads like what you did: `C-c`,
+`Down Down Enter`. A key that is not a real terminal key is refused by name and
+never sent (`POST /api/coders/{key}/keys`).
+
+The session does not have to be one HoldSpeak already knows. Every tmux pane on
+the machine is listed at `GET /api/coders/steering/panes`, including a shell you
+opened by hand. Watch any of them free; to steer one, arm it by its pane id
+(`pane:%N`). Arming pins that exact pane the same way, so a pane you attach to by
+hand is as safe to steer as a tracked session.
+
+And the machine does not have to be this one. With a node configured
+(`HOLDSPEAK_STEER_NODES`), the desk relays a watch, an arm, a steer, or a key
+sequence to that node, which runs it against its own terminal. The machine that
+types owns the consent and keeps the audit: the far node checks its own grant
+and records its own keystroke, and the relay only names where it landed. A node
+that does not answer refuses by name, at once, rather than leaving you waiting.
+
+The rule never changes as the reach grows: watching is free, manipulating is
+armed, the pane is re-checked before every key, a recycled pane refuses and drops
+the grant, and every key is audited. There is no autonomous mode; a person is
+behind each keystroke or nothing is sent.
+
 ## Ground A Run On The Rails
 
 If you plan work with Delivery Workbench, the rails themselves become
