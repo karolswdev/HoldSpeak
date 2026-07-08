@@ -76,6 +76,11 @@ interface SteeringState {
   /** The last steer's fate (HS-87-03), rendered in place. */
   steerState: "idle" | "sending" | "sent" | "refused";
   steerDetail: string;
+  /** Classify (HS-87-05): manual session→story pins, desk-side only.
+   * A view preference over receipts — never the correlator's verdict;
+   * persisted to localStorage, re-asserted if the registry changes. */
+  manualPins: Record<string, string>;
+  classifyState: "idle" | "kept" | "failed";
   openSession(key: string): void;
   closeSession(): void;
   poll(): Promise<void>;
@@ -87,9 +92,30 @@ interface SteeringState {
     submit: boolean,
     grounding?: { meeting_ids: string[]; artifact_ids: string[]; expand: string } | null,
   ): Promise<boolean>;
+  keepAsNote(title?: string): Promise<boolean>;
+  pinToStory(key: string, storyId: string): void;
+  clearPin(key: string): void;
 }
 
 let timer: ReturnType<typeof setInterval> | null = null;
+
+const PIN_KEY = "hs.steering.pins";
+
+function loadPins(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(PIN_KEY) || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+function savePins(pins: Record<string, string>) {
+  try {
+    localStorage.setItem(PIN_KEY, JSON.stringify(pins));
+  } catch {
+    /* storage unavailable — the pin won't persist, honestly */
+  }
+}
 
 /** The grant riding the peek envelope → the store's armed shape. */
 function grantPatch(key: string, grant: any, armedKeys: Record<string, number>) {
@@ -119,6 +145,8 @@ export const useSteering = create<SteeringState>((set, get) => ({
   armedKeys: {},
   steerState: "idle",
   steerDetail: "",
+  manualPins: loadPins(),
+  classifyState: "idle",
 
   openSession(key) {
     if (timer !== null) clearInterval(timer);
@@ -134,6 +162,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
       armError: "",
       steerState: "idle",
       steerDetail: "",
+      classifyState: "idle",
     });
     void get().poll();
     timer = setInterval(() => void get().poll(), PEEK_POLL_MS);
@@ -156,6 +185,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
       armError: "",
       steerState: "idle",
       steerDetail: "",
+      classifyState: "idle",
     });
   },
 
@@ -240,6 +270,36 @@ export const useSteering = create<SteeringState>((set, get) => ({
         set({ steerState: "refused", steerDetail: "hub unreachable" });
       return false;
     }
+  },
+
+  async keepAsNote(title) {
+    const key = get().openKey;
+    if (!key) return false;
+    try {
+      const res = await fetch(`/api/coders/${encodeURIComponent(key)}/keep-note`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(title ? { title } : {}),
+      });
+      const ok = res.status === 201;
+      if (get().openKey === key) set({ classifyState: ok ? "kept" : "failed" });
+      return ok;
+    } catch {
+      if (get().openKey === key) set({ classifyState: "failed" });
+      return false;
+    }
+  },
+
+  pinToStory(key, storyId) {
+    const pins = { ...get().manualPins, [key]: storyId };
+    set({ manualPins: pins });
+    savePins(pins);
+  },
+
+  clearPin(key) {
+    const { [key]: _dropped, ...rest } = get().manualPins;
+    set({ manualPins: rest });
+    savePins(rest);
   },
 
   async refreshGrants() {

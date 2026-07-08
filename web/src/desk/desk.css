@@ -1154,3 +1154,23 @@
 .desk-next .desk-steer-enter.is-on { opacity: 1; border-color: var(--accent); color: var(--accent); }
 .desk-next .desk-steer-sent { color: var(--ok); font-size: 11px; font-family: var(--font-mono); }
 .desk-next .desk-steer-grounded { color: var(--text-faint); font-size: 10px; }
+
+/* ── HS-87-05: classify (keep as note, pin to story, flip from here) ── */
+.desk-next .desk-classify { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.desk-next .desk-classify-label {
+  color: var(--text-faint); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.desk-next .desk-classify-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.desk-next .desk-classify-input {
+  flex: 1; min-width: 120px; padding: 6px 8px;
+  border: 1px solid var(--surface-3); border-radius: var(--radius-sm);
+  background: var(--surface-1); color: var(--text);
+  font-family: var(--font-mono); font-size: 11px;
+}
+/* A manual pin is a HOLLOW ring — never the correlator's filled verdict. */
+.desk-next .desk-mc-pin.manual {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--text-faint);
+  border-style: dashed;
+}

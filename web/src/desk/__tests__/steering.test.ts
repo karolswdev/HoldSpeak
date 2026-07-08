@@ -321,6 +321,43 @@ describe("the steer action (HS-87-03)", () => {
   });
 });
 
+describe("classify (HS-87-05)", () => {
+  afterEach(() => {
+    useSteering.getState().closeSession();
+    useSteering.setState({ manualPins: {}, classifyState: "idle" });
+    vi.unstubAllGlobals();
+  });
+
+  it("keepAsNote posts and reports kept on a 201", async () => {
+    const posts: string[] = [];
+    vi.stubGlobal("fetch", (url: string) => {
+      posts.push(String(url));
+      return Promise.resolve({ status: 201, json: () => Promise.resolve({ note: { id: "n1" } }) });
+    });
+    useSteering.setState({ openKey: "claude:abc123" });
+    const ok = await useSteering.getState().keepAsNote();
+    expect(ok).toBe(true);
+    expect(posts[0]).toContain("/api/coders/claude%3Aabc123/keep-note");
+    expect(useSteering.getState().classifyState).toBe("kept");
+  });
+
+  it("keepAsNote reports failed on a non-201", async () => {
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve({ status: 400, json: () => Promise.resolve({ error: "nothing to keep" }) }),
+    );
+    useSteering.setState({ openKey: "claude:abc123" });
+    expect(await useSteering.getState().keepAsNote()).toBe(false);
+    expect(useSteering.getState().classifyState).toBe("failed");
+  });
+
+  it("pinToStory and clearPin mutate the manual pin map", () => {
+    useSteering.getState().pinToStory("claude:x", "HS-87-05");
+    expect(useSteering.getState().manualPins["claude:x"]).toBe("HS-87-05");
+    useSteering.getState().clearPin("claude:x");
+    expect(useSteering.getState().manualPins["claude:x"]).toBeUndefined();
+  });
+});
+
 describe("coder frames on the one bus", () => {
   it("matches only scope:coder intel_status frames", () => {
     expect(

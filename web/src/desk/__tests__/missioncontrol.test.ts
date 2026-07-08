@@ -4,6 +4,7 @@
 // belt renders. Honest statuses stay honest through normalization.
 import { describe, expect, it } from "vitest";
 import {
+  flipTargetForStory,
   formatEvent,
   fromWireMcEvents,
   fromWireMcRepo,
@@ -11,6 +12,7 @@ import {
   offBeltSessions,
   sessionsByStory,
 } from "../missioncontrol";
+import { manualPinsByStory } from "../components/MissionControlConveyor";
 
 const LIVE_ENTRY = {
   name: "delivery-workbench",
@@ -90,6 +92,14 @@ describe("fromWireMcSession", () => {
     const s = fromWireMcSession({ key: "k", agent: "codex", correlation: "off_rails" });
     expect(s.tmuxSession).toBeNull();
     expect(s.storyIds).toEqual([]);
+  });
+
+  it("carries story refs with their project for flip-from-here (HS-87-05)", () => {
+    const s = fromWireMcSession({
+      key: "claude:s1", agent: "claude", correlation: "on_story",
+      stories: [{ story_id: "HS-87-05", project: "holdspeak" }],
+    });
+    expect(s.storyRefs).toEqual([{ storyId: "HS-87-05", project: "holdspeak" }]);
   });
 });
 
@@ -215,5 +225,47 @@ describe("isBeltFrame", () => {
     expect(isBeltFrame({ type: "intel_status", data: { scope: "run" } })).toBe(false);
     expect(isBeltFrame({ type: "segment", data: { scope: "belt" } })).toBe(false);
     expect(isBeltFrame(null)).toBe(false);
+  });
+});
+
+describe("classify verbs (HS-87-05)", () => {
+  const repos = [
+    {
+      name: "code", status: "live", projects: [{ slug: "holdspeak" }, { slug: "other" }],
+    },
+    { name: "dw", status: "unavailable", projects: [] },
+  ] as any;
+
+  it("flipTargetForStory resolves the repo whose live project owns the story", () => {
+    expect(flipTargetForStory(repos, "HS-87-05", "holdspeak")).toEqual({
+      repo: "code", project: "holdspeak", story: "HS-87-05",
+    });
+  });
+
+  it("flipTargetForStory is null when no live belt claims the project", () => {
+    expect(flipTargetForStory(repos, "X-1-01", "ghost")).toBeNull();
+    expect(flipTargetForStory(repos, "", "holdspeak")).toBeNull();
+  });
+
+  const sessA = fromWireMcSession({ key: "claude:a", agent: "claude", correlation: "ambiguous" });
+  const sessOn = fromWireMcSession({
+    key: "claude:b", agent: "claude", correlation: "on_story",
+    stories: [{ story_id: "HS-1", project: "holdspeak" }],
+  });
+
+  it("manualPinsByStory places a pinned session under its story", () => {
+    const map = manualPinsByStory([sessA], { "claude:a": "HS-2" }, {});
+    expect(map["HS-2"].map((s) => s.key)).toEqual(["claude:a"]);
+  });
+
+  it("never duplicates a session the correlator already placed there", () => {
+    const correlated = { "HS-1": [sessOn] };
+    const map = manualPinsByStory([sessOn], { "claude:b": "HS-1" }, correlated);
+    expect(map["HS-1"]).toBeUndefined();
+  });
+
+  it("drops a pin whose session is gone from the registry (re-asserts on return)", () => {
+    const map = manualPinsByStory([], { "claude:gone": "HS-2" }, {});
+    expect(map).toEqual({});
   });
 });

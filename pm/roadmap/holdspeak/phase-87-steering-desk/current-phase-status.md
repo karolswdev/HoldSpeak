@@ -1,6 +1,6 @@
 # Phase 87 — The Steering Desk (B2: attach, steer, classify, ground)
 
-**Last updated:** 2026-07-08 (HS-87-04 done — grounding shipped; 4/6).
+**Last updated:** 2026-07-08 (HS-87-05 done — classify shipped; 5/6).
 
 ## Goal
 
@@ -58,7 +58,7 @@ bar: *"so robust, it will literally destroy our brains."*
 | HS-87-02 | The arming grant: consent with a countdown | done | [story-02-arming-grant](./story-02-arming-grant.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-87-03 | Steer: the voice-first composer, delivered and audited | done | [story-03-steer-composer](./story-03-steer-composer.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-87-04 | Ground: desk objects ride into the steer | done | [story-04-desk-context](./story-04-desk-context.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-87-05 | Classify: triage from the pull-out | backlog | [story-05-classify-verbs](./story-05-classify-verbs.md) | - |
+| HS-87-05 | Classify: triage from the pull-out | done | [story-05-classify-verbs](./story-05-classify-verbs.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-87-06 | The robustness rig, the walk, the docs | backlog | [story-06-robustness-walk](./story-06-robustness-walk.md) | - |
 
 ## Where we are
@@ -93,7 +93,20 @@ compose time, executed == previewed via `preview: true`). `POST
 `GroundingSection` with an 8 KB gauge. Control-vs-treatment PROVEN on
 .43: the bare question gets "I don't have access…"; the grounded steer
 gets "Friday the 13th at 3:47pm, code-named BLUEBIRD" — the exact
-composed text landing in a real pane. Next: HS-87-05, classify verbs.
+composed text landing in a real pane.
+
+Classify is real (HS-87-05): three triage verbs from the pull-out,
+all through existing write paths. **Keep as note** — `POST
+/{key}/keep-note` mints a real desk note whose body is the ask and
+whose lineage names session/agent/timestamp (proven live openable).
+**Pin to story** — a desk-side `manualPins` map in `steering.ts`
+(localStorage, the positions-contract channel), rendered by the
+conveyor as a HOLLOW dashed ring, never disguised as the correlator's
+verdict, dropped when the session leaves the registry and re-asserted
+when it returns. **Flip from here** — `flipTargetForStory` resolves
+the session's correlated story to `{repo, project, story}` and calls
+the Phase-82 `proposeFlip`; the ProposalCard renders where it always
+does. Next: HS-87-06, the robustness rig, the walk, the docs — the close.
 
 ## Active risks
 
@@ -135,6 +148,14 @@ composed text landing in a real pane. Next: HS-87-05, classify verbs.
 - 2026-07-08 (HS-87-03) — `deliver` sends to the VERIFIED `%N`, not
   the target string: nothing can re-resolve between the ownership
   check and the keystroke (the TOCTOU window closed by construction).
+- 2026-07-08 (HS-87-05) — The manual story pin is a DESK-SIDE view
+  preference (localStorage `hs.steering.pins`), never the hub db and
+  never `dw sessions` output: it renders as a hollow dashed ring, is
+  skipped where the correlator already placed the session, and drops
+  when the session leaves the registry (re-asserts on return). The
+  honest correlation is untouched. Keep-as-note and flip reuse the
+  existing note-create and Phase-82 propose→approve→execute paths —
+  zero new write machinery.
 - 2026-07-08 (HS-87-04) — Hydration factored to `holdspeak/grounding.py`
   as `hydrate_refs` → `GroundingBlock`s (raw), with ask's `[MEETING:…]`
   headers a thin re-export (`hydrate_grounding_blocks`); ask.py and

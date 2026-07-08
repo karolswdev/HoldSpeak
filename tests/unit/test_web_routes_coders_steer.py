@@ -276,3 +276,48 @@ def test_audit_route_reads_the_trail_newest_first(env) -> None:
     assert [a["outcome"] for a in audit] == ["delivered", "unarmed"]
     assert audit[0]["text_head"] == "delivered one"
     assert "text" not in audit[0]  # heads and hashes only
+
+
+# --- classify (HS-87-05): keep as note ------------------------------------
+
+
+def test_keep_as_note_creates_a_real_note_with_lineage(env) -> None:
+    _register(
+        env.monkeypatch,
+        _session(question="Should we merge #303?", awaiting_response=True),
+    )
+    res = env.client.post("/api/coders/claude:abc/keep-note", json={})
+    assert res.status_code == 201
+    note = res.json()["note"]
+    assert "Should we merge #303?" in note["body_markdown"]
+    # Lineage names the session, the agent, and the moment.
+    assert "claude:abc" in note["body_markdown"]
+    assert "claude" in note["tags"]
+    # It files and opens like any primitive: it is really in the store.
+    assert env.db.notes.get(note["id"]) is not None
+
+
+def test_keep_as_note_accepts_an_override_title_and_body(env) -> None:
+    _register(env.monkeypatch, _session(question="raw ask"))
+    res = env.client.post(
+        "/api/coders/claude:abc/keep-note",
+        json={"title": "Merge decision", "body": "keep this instead"},
+    )
+    note = res.json()["note"]
+    assert note["title"] == "Merge decision"
+    assert "keep this instead" in note["body_markdown"]
+
+
+def test_keep_as_note_refuses_when_there_is_nothing_to_keep(env) -> None:
+    _register(
+        env.monkeypatch,
+        _session(question=None, last_assistant_text=None),
+    )
+    res = env.client.post("/api/coders/claude:abc/keep-note", json={})
+    assert res.status_code == 400
+
+
+def test_keep_as_note_unknown_session_is_404(env) -> None:
+    _register(env.monkeypatch)
+    res = env.client.post("/api/coders/claude:nope/keep-note", json={})
+    assert res.status_code == 404

@@ -14,6 +14,7 @@ import {
   hubGrounding,
   type GroundingSelection,
 } from "../grounding";
+import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
@@ -167,6 +168,91 @@ function SteerComposer() {
   );
 }
 
+/** Classify (HS-87-05): triage the session onto the desk and the rails —
+ * keep the ask as a note, pin to a story, or flip a correlated story
+ * through the Phase-82 proposal leg (the ProposalCard renders in the
+ * conveyor). All through existing write paths. */
+function ClassifySection({ sessionKey }: { sessionKey: string }) {
+  const classifyState = useSteering((s) => s.classifyState);
+  const manualPins = useSteering((s) => s.manualPins);
+  const repos = useMissionControl((s) => s.repos);
+  const mcSessions = useMissionControl((s) => s.sessions);
+  const [pinInput, setPinInput] = useState("");
+
+  const mc = mcSessions.find((s) => s.key === sessionKey);
+  const correlated = mc?.storyRefs[0] || null;
+  const flipTarget = correlated
+    ? flipTargetForStory(repos, correlated.storyId, correlated.project)
+    : null;
+  const pinned = manualPins[sessionKey];
+
+  return (
+    <div className="desk-classify">
+      <span className="desk-classify-label">Classify</span>
+      <div className="desk-classify-row">
+        <button
+          type="button"
+          className="desk-chip"
+          onClick={() => void useSteering.getState().keepAsNote()}
+        >
+          {classifyState === "kept"
+            ? "✓ kept as note"
+            : classifyState === "failed"
+              ? "retry keep"
+              : "Keep as note"}
+        </button>
+        {flipTarget && (
+          <button
+            type="button"
+            className="desk-chip"
+            title={`propose a status flip for ${flipTarget.story}`}
+            onClick={() =>
+              useMissionControl
+                .getState()
+                .proposeFlip(flipTarget.repo, flipTarget.project, flipTarget.story, "done")
+            }
+          >
+            Flip {flipTarget.story} →
+          </button>
+        )}
+      </div>
+      <div className="desk-classify-row">
+        {pinned ? (
+          <button
+            type="button"
+            className="desk-chip quiet"
+            title="clear the manual pin"
+            onClick={() => useSteering.getState().clearPin(sessionKey)}
+          >
+            pinned → {pinned} ✕
+          </button>
+        ) : (
+          <>
+            <MicButton label="Pin to story" onText={(t) => setPinInput(t.trim())} />
+            <input
+              className="desk-classify-input"
+              value={pinInput}
+              placeholder="story id (e.g. HS-87-05)"
+              onChange={(e) => setPinInput(e.target.value)}
+            />
+            <button
+              type="button"
+              className="desk-chip quiet"
+              disabled={!pinInput.trim()}
+              onClick={() => {
+                useSteering.getState().pinToStory(sessionKey, pinInput.trim());
+                setPinInput("");
+              }}
+            >
+              Pin
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function SessionPullout() {
   const openKey = useSteering((s) => s.openKey);
   const session = useSteering((s) => s.session);
@@ -255,6 +341,9 @@ export function SessionPullout() {
           <SteerComposer />
         </footer>
       )}
+      <footer className="desk-pullout-foot">
+        <ClassifySection sessionKey={openKey} />
+      </footer>
     </motion.div>
   );
 }

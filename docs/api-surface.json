@@ -736,6 +736,16 @@
       ]
     },
     {
+      "path": "/api/coders/{key}/keep-note",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/coders/{key}/peek",
       "methods": [
         "GET"

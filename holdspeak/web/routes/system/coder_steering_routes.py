@@ -324,4 +324,52 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500("steering audit", e, log)
 
+    @router.post("/api/coders/{key}/keep-note")
+    async def api_coder_keep_note(
+        key: str, payload: Optional[dict[str, Any]] = None
+    ) -> Any:
+        """Classify (HS-87-05): keep the session's current ask as a desk
+        note. The body is the ask; a lineage line names the session, the
+        agent, and the moment — so the filed note opens, ropes, and
+        traces like any primitive (no new store). An override title/body
+        lets the composer name it (with the mic, per canon)."""
+        from datetime import datetime, timezone
+
+        from ....db import get_database
+        from ..primitives._shared import _new_id  # the primitives id minter
+
+        try:
+            session = _registry_session(key)
+        except Exception as e:
+            return error_500("coder keep-note", e, log)
+        if isinstance(session, JSONResponse):
+            return session
+        body = payload if isinstance(payload, dict) else {}
+        ask = str(
+            body.get("body")
+            or getattr(session, "question", None)
+            or getattr(session, "last_assistant_text", None)
+            or ""
+        )
+        if not ask.strip():
+            return JSONResponse(
+                {"error": "nothing to keep — the session has no current ask"},
+                status_code=400,
+            )
+        ts = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        title = str(body.get("title") or "").strip() or f"From {session.agent} · {key}"
+        lineage = f"> kept from session `{key}` ({session.agent}) at {ts}"
+        note_body = f"{lineage}\n\n{ask}"
+        try:
+            note = await asyncio.to_thread(
+                get_database().notes.upsert,
+                note_id=_new_id("note"),
+                title=title,
+                body_markdown=note_body,
+                tags=["session", session.agent],
+            )
+            return JSONResponse({"note": note.to_dict()}, status_code=201)
+        except Exception as e:
+            return error_500("coder keep-note", e, log)
+
     return router

@@ -120,6 +120,58 @@ def test_live_steer_lands_in_the_real_pane(live_pane) -> None:
         clear_grants()
 
 
+def test_live_keep_as_note_creates_a_real_openable_note(tmp_path) -> None:
+    """HS-87-05 against a real DB: keep an ask as a note; it lands in the
+    store with lineage naming the session, openable like any primitive."""
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+
+    import holdspeak.agent_context as agent_context
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from holdspeak.db import core as dbcore
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes.system.coder_steering_routes import (
+        build_coder_steering_router,
+    )
+
+    dbcore.reset_database()
+    db = dbcore.Database(tmp_path / "hs.db")
+    import holdspeak.db as hsdb
+
+    _orig = hsdb.get_database
+    hsdb.get_database = lambda *a, **k: db
+    session = SimpleNamespace(
+        agent="claude",
+        session_id="live",
+        updated_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        awaiting_response=True,
+        question="Merge the branch?",
+        tmux_pane="%0",
+        tmux_session="hs",
+        tmux_window="0",
+        tmux_pane_index="0",
+    )
+    _orig_list = agent_context.list_agent_sessions
+    agent_context.list_agent_sessions = lambda agent=None: [session]
+    try:
+        app = FastAPI()
+        app.include_router(build_coder_steering_router(WebContext(get_state=lambda: {})))
+        client = TestClient(app)
+        res = client.post("/api/coders/claude:live/keep-note", json={})
+        assert res.status_code == 201
+        note_id = res.json()["note"]["id"]
+        stored = db.notes.get(note_id)
+        assert stored is not None
+        assert "Merge the branch?" in stored.body_markdown
+        assert "claude:live" in stored.body_markdown
+    finally:
+        agent_context.list_agent_sessions = _orig_list
+        hsdb.get_database = _orig
+        dbcore.reset_database()
+
+
 def test_live_peek_hash_gate_and_dead_pane(live_pane) -> None:
     session, pane = live_pane
 
