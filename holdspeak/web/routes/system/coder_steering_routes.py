@@ -454,6 +454,64 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(result)
         return JSONResponse(result, status_code=409)
 
+    # --- the session factory (HS-90-01) ------------------------------------
+    #
+    # Lifecycle acts. spawn/rename are name-validated audited create/label
+    # acts; kill is gated exactly like a steer (armed + verified %N + audit).
+
+    @router.post("/api/coders/factory/spawn")
+    async def api_factory_spawn(payload: Optional[dict[str, Any]] = None) -> Any:
+        from .... import coder_factory
+
+        body = payload if isinstance(payload, dict) else {}
+        name = str(body.get("name", "")).strip()
+        command = body.get("command")
+        result = await asyncio.to_thread(
+            coder_factory.spawn, name, command=(str(command) if command else None)
+        )
+        code = 200 if result["status"] == "spawned" else 409
+        return JSONResponse(result, status_code=code)
+
+    @router.post("/api/coders/factory/rename")
+    async def api_factory_rename(payload: Optional[dict[str, Any]] = None) -> Any:
+        from .... import coder_factory
+
+        body = payload if isinstance(payload, dict) else {}
+        target = str(body.get("target", "")).strip()
+        new_name = str(body.get("name", "")).strip()
+        if not target:
+            return JSONResponse({"error": "target is required"}, status_code=400)
+        result = await asyncio.to_thread(coder_factory.rename, target, new_name)
+        code = 200 if result["status"] == "renamed" else 409
+        return JSONResponse(result, status_code=code)
+
+    @router.post("/api/coders/{key}/kill")
+    async def api_coder_kill(key: str, payload: Optional[dict[str, Any]] = None) -> Any:
+        """End the armed pane (`scope="pane"`) or its session
+        (`scope="session"`) — the ultimate manipulation, gated like a steer
+        (HS-90-01). Unarmed is a typed 409; a recycled pane refuses AND
+        revokes (its frame broadcasts); killed on success."""
+        from .... import coder_factory, coder_steering
+
+        try:
+            session = _registry_session(key)
+        except Exception as e:
+            return error_500("coder kill", e, log)
+        if isinstance(session, JSONResponse):
+            return session
+        body = payload if isinstance(payload, dict) else {}
+        target = coder_steering.resolve_pane_target(session)
+        result = await asyncio.to_thread(
+            coder_factory.kill,
+            key,
+            current_target=target,
+            scope=str(body.get("scope", "pane")),
+            agent=session.agent,
+        )
+        if result.get("revoked"):
+            _coder_frame(ctx, key)
+        return JSONResponse(result, status_code=200 if result["status"] == "killed" else 409)
+
     @router.get("/api/coders/steering/audit")
     async def api_coder_steering_audit(
         session_key: Optional[str] = None, limit: int = 50

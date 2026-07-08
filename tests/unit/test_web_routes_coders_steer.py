@@ -542,3 +542,53 @@ def test_relay_requires_a_key(env) -> None:
     _capture_relay(env)
     res = env.client.post("/api/coders/relay/beta/keys", json={"keys": ["C-c"]})
     assert res.status_code == 400
+
+
+# --- the factory routes (HS-90-01) -----------------------------------------
+
+
+def test_factory_spawn_returns_the_new_pane(env) -> None:
+    from holdspeak import coder_factory
+    env.monkeypatch.setattr(
+        coder_factory, "spawn",
+        lambda name, command=None: {"status": "spawned", "session": name, "pane_id": "%9"},
+    )
+    res = env.client.post("/api/coders/factory/spawn", json={"name": "work"})
+    assert res.status_code == 200 and res.json()["pane_id"] == "%9"
+
+
+def test_factory_spawn_bad_name_is_409(env) -> None:
+    from holdspeak import coder_factory
+    env.monkeypatch.setattr(
+        coder_factory, "spawn",
+        lambda name, command=None: {"status": "bad_name", "detail": "no"},
+    )
+    res = env.client.post("/api/coders/factory/spawn", json={"name": "a b"})
+    assert res.status_code == 409 and res.json()["status"] == "bad_name"
+
+
+def test_factory_rename_requires_target(env) -> None:
+    res = env.client.post("/api/coders/factory/rename", json={"name": "x"})
+    assert res.status_code == 400
+
+
+def test_kill_unarmed_is_a_typed_409(env) -> None:
+    _register(env.monkeypatch, _session())
+    res = env.client.post("/api/coders/claude:abc/kill", json={})
+    assert res.status_code == 409 and res.json()["status"] == "unarmed"
+
+
+def test_armed_kill_ends_the_pane(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    from holdspeak import coder_factory
+    killed: list = []
+    env.monkeypatch.setattr(
+        coder_factory, "kill",
+        lambda key, *, current_target, scope="pane", agent="": killed.append((key, scope))
+        or {"status": "killed", "pane_id": "%3", "scope": scope},
+    )
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post("/api/coders/claude:abc/kill", json={"scope": "session"})
+    assert res.status_code == 200 and res.json()["status"] == "killed"
+    assert killed == [("claude:abc", "session")]

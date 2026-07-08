@@ -50,7 +50,7 @@ human behind every act.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-90-01 | The factory — spawn, rename, kill | backlog | [story-01-factory](./story-01-factory.md) | - |
+| HS-90-01 | The factory — spawn, rename, kill | **done** (2026-07-08, live) | [story-01-factory](./story-01-factory.md) | [evidence-01](./evidence-story-01.md) |
 | HS-90-02 | The manipulation surface on the web desk | backlog | [story-02-manip-ui](./story-02-manip-ui.md) | - |
 | HS-90-03 | The factory on glass + the walk + close | backlog | [story-03-factory-glass-walk](./story-03-factory-glass-walk.md) | - |
 
@@ -58,7 +58,20 @@ human behind every act.
 
 Scaffolded 2026-07-08 as the fast follow to Phase 89 (first-class
 manipulation, CLOSED 4/4). Phase 89 made a pane fully manipulable; this
-adds the lifecycle + the first UI. Nothing implemented. Next: HS-90-01.
+adds the lifecycle + the first UI.
+
+**HS-90-01 done (2026-07-08, live) — the lifecycle rides the spine.**
+`holdspeak/coder_factory.py`: `spawn` (`tmux new-session -d`, returns the
+new `%N`) and `rename` are name-validated (`^[A-Za-z0-9_][...]$`, first
+char alnum so a name can't be read as a flag) audited create/label acts;
+`kill` is gated EXACTLY like a steer — `require_grant` → verify the
+pinned `%N` → `kill-pane`/`kill-session` → drop the grant → audit.
+Routes `POST /api/coders/factory/{spawn,rename}` + `POST /api/coders/
+{key}/kill`. The destructive tmux verbs are census-pinned to the one
+module. Proven live: spawn → rename → arm → steer (`BORN_AND_STEERED`
+landed) → kill (session gone, grant dropped); a payload name
+(`evil; reboot`) refused before tmux; the audit read back all five acts.
+Suite 3514/0. Next: HS-90-02 (the manipulation UI on the web desk).
 
 ## Active risks
 

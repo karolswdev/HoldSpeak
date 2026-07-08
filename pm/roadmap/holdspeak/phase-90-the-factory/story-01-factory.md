@@ -2,7 +2,8 @@
 
 - **Project:** holdspeak
 - **Phase:** 90
-- **Status:** backlog
+- **Status:** done
+- **Shipped:** 2026-07-08 — the lifecycle rides the spine. `coder_factory.spawn/rename/kill` (name-validated, kill gated like a steer). Proven live: spawn → rename → arm → steer → kill, the audit reading back every act; a payload name refused before tmux. Suite 3514/0. Evidence: [evidence-story-01.md](./evidence-story-01.md).
 - **Depends on:** Phase 89 (the manipulation spine)
 - **Unblocks:** HS-90-02, HS-90-03
 
@@ -27,21 +28,24 @@ be injection-safe (a session name is user input).
 
 ## Acceptance criteria
 
-- [ ] `spawn` creates a real detached session and returns `{session,
-      pane_id}`; a name with a shell metachar / space is refused BY NAME
-      (never reaches tmux); tmux-absent is typed. Audited.
-- [ ] `rename` relabels a session; the same name guard; audited.
-- [ ] `kill` is gated like a steer: unarmed refuses, a recycled pane
+- [x] `spawn` creates a real detached session and returns `{session,
+      pane_id}`; a name with a shell metachar / space / leading `-` is
+      refused BY NAME (never reaches tmux); tmux-absent is typed. Audited
+      (`test_coder_factory.py`).
+- [x] `rename` relabels a session; the same name guard; audited.
+- [x] `kill` is gated like a steer: unarmed refuses, a recycled pane
       refuses AND revokes, an armed kill terminates the VERIFIED `%N`
-      (pane or session scope); audited. Pinned by tests mirroring
-      `deliver`.
-- [ ] The routes return typed results (spawned/renamed/killed or the
-      typed refusal); `POST /kill` is a 409 when unarmed.
-- [ ] Live: spawn a real session, rename it, arm it, kill it — captured;
-      the audit shows all three with the pane named.
-- [ ] Full suite green (read from the file); api-surface regen; the
-      factory's tmux call sites are named in the steering census (or a
-      sibling census) so they cannot sprawl.
+      (pane or session scope) and drops the grant; audited. Pinned by
+      tests mirroring `deliver`, and a shape test (require_grant before
+      `kill-pane`).
+- [x] The routes return typed results; `POST /kill` is a 409 when
+      unarmed; spawn bad-name is 409 (`test_web_routes_coders_steer.py`).
+- [x] Live (`evidence-story-01.md`): spawn → rename → arm → steer → kill;
+      the audit read back all five acts with the pane named; a payload
+      name refused before tmux.
+- [x] Full suite green (3514/0); api-surface regenerated; the factory's
+      destructive tmux verbs (`kill-pane`/`kill-session`/`new-session`/
+      `rename-session`) pinned to `coder_factory.py` by a census.
 
 ## Test plan
 
