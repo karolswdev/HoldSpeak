@@ -1153,3 +1153,4 @@
 .desk-next .desk-steer-enter { opacity: 0.45; }
 .desk-next .desk-steer-enter.is-on { opacity: 1; border-color: var(--accent); color: var(--accent); }
 .desk-next .desk-steer-sent { color: var(--ok); font-size: 11px; font-family: var(--font-mono); }
+.desk-next .desk-steer-grounded { color: var(--text-faint); font-size: 10px; }

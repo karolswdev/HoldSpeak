@@ -1,6 +1,6 @@
 # Phase 87 — The Steering Desk (B2: attach, steer, classify, ground)
 
-**Last updated:** 2026-07-08 (HS-87-03 done — steer shipped; 3/6).
+**Last updated:** 2026-07-08 (HS-87-04 done — grounding shipped; 4/6).
 
 ## Goal
 
@@ -57,7 +57,7 @@ bar: *"so robust, it will literally destroy our brains."*
 | HS-87-01 | Attach: the session pull-out with the live pane view | done | [story-01-session-pullout](./story-01-session-pullout.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-87-02 | The arming grant: consent with a countdown | done | [story-02-arming-grant](./story-02-arming-grant.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-87-03 | Steer: the voice-first composer, delivered and audited | done | [story-03-steer-composer](./story-03-steer-composer.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-87-04 | Ground: desk objects ride into the steer | backlog | [story-04-desk-context](./story-04-desk-context.md) | - |
+| HS-87-04 | Ground: desk objects ride into the steer | done | [story-04-desk-context](./story-04-desk-context.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-87-05 | Classify: triage from the pull-out | backlog | [story-05-classify-verbs](./story-05-classify-verbs.md) | - |
 | HS-87-06 | The robustness rig, the walk, the docs | backlog | [story-06-robustness-walk](./story-06-robustness-walk.md) | - |
 
@@ -79,8 +79,21 @@ affordance. The chokepoint census (`test_steering_chokepoint.py`)
 pins the `send_text_to_pane` call sites mechanically; the steering
 routes were carved into `coder_steering_routes.py` (the Phase-79
 single-concern budget). Live-proven: an armed steer lands in a real
-pane, the recycled-pane crown case refuses and revokes. Next:
-HS-87-04, grounding desk objects into a steer.
+pane, the recycled-pane crown case refuses and revokes.
+
+Grounding is real (HS-87-04): the Phase-83 ask hydration was factored
+verbatim into `holdspeak/grounding.py` (`hydrate_refs` →
+`GroundingBlock`s; ask's `[MEETING: …]` formatting is a thin re-export
+so ask/recipes tests pass unmodified). `compose_steer` builds the
+steer — message first, then per-object `--- from <kind>: "<title>" ---`
+fences, then a count line — hard-capped at 8 KB (over-cap refuses at
+compose time, executed == previewed via `preview: true`). `POST
+/{key}/steer` gained `grounding` refs (unknown → 400 named, over-cap →
+409 named); the audit row carries the refs; the desk composer mounts
+`GroundingSection` with an 8 KB gauge. Control-vs-treatment PROVEN on
+.43: the bare question gets "I don't have access…"; the grounded steer
+gets "Friday the 13th at 3:47pm, code-named BLUEBIRD" — the exact
+composed text landing in a real pane. Next: HS-87-05, classify verbs.
 
 ## Active risks
 
@@ -122,6 +135,14 @@ HS-87-04, grounding desk objects into a steer.
 - 2026-07-08 (HS-87-03) — `deliver` sends to the VERIFIED `%N`, not
   the target string: nothing can re-resolve between the ownership
   check and the keystroke (the TOCTOU window closed by construction).
+- 2026-07-08 (HS-87-04) — Hydration factored to `holdspeak/grounding.py`
+  as `hydrate_refs` → `GroundingBlock`s (raw), with ask's `[MEETING:…]`
+  headers a thin re-export (`hydrate_grounding_blocks`); ask.py and
+  recipes.py import the names unchanged, tests byte-identical. Steer
+  composition (`compose_steer`) is separate from delivery: the route
+  composes, `preview: true` returns the exact send text, and the send
+  re-composes identically (executed == previewed by construction, one
+  function). Steer cap is 8 KB, refused at compose time.
 
 ## Decisions deferred
 

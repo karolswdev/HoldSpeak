@@ -6,7 +6,19 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { MicButton } from "./MicButton";
+import { GroundingSection } from "./GroundingSection";
+import { useDesk } from "../store";
+import {
+  emptyGrounding,
+  groundingIsEmpty,
+  hubGrounding,
+  type GroundingSelection,
+} from "../grounding";
 import { mmss, useSteering } from "../steering";
+
+// The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
+// at 4 chars/token); the gauge refuses past it before any send.
+const STEER_LIMIT_TOKENS = 2000;
 
 const PANE_STATE_LABEL: Record<string, string> = {
   pane_gone: "pane gone",
@@ -86,12 +98,19 @@ function ArmChip() {
 function SteerComposer() {
   const steerState = useSteering((s) => s.steerState);
   const steerDetail = useSteering((s) => s.steerDetail);
+  const meetings = useDesk((s) => s.items.meeting);
   const [text, setText] = useState("");
   const [submitOn, setSubmitOn] = useState(true);
+  const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding());
 
   const send = async () => {
-    const delivered = await useSteering.getState().steer(text, submitOn);
-    if (delivered) setText(""); // a refused steer keeps its composition
+    const delivered = await useSteering
+      .getState()
+      .steer(text, submitOn, hubGrounding(grounding));
+    if (delivered) {
+      setText(""); // a refused steer keeps its composition
+      setGrounding(emptyGrounding());
+    }
   };
 
   return (
@@ -125,6 +144,21 @@ function SteerComposer() {
           {steerState === "sending" ? "…" : "Send"}
         </button>
       </div>
+      <GroundingSection
+        meetings={(meetings || []).map((m) => ({
+          id: m.id,
+          title: String((m as any).title || "Untitled meeting"),
+          startedAt: (m as any).startedAt,
+        }))}
+        selection={grounding}
+        onChange={setGrounding}
+        limitTokens={STEER_LIMIT_TOKENS}
+      />
+      {!groundingIsEmpty(grounding) && (
+        <span className="desk-steer-grounded">
+          objects ride in with a provenance header, capped at 8 KB
+        </span>
+      )}
       {steerState === "refused" && (
         <span className="desk-arm-refusal">✕ {steerDetail}</span>
       )}

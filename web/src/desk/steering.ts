@@ -82,7 +82,11 @@ interface SteeringState {
   arm(): Promise<void>;
   disarm(): Promise<void>;
   refreshGrants(): Promise<void>;
-  steer(text: string, submit: boolean): Promise<boolean>;
+  steer(
+    text: string,
+    submit: boolean,
+    grounding?: { meeting_ids: string[]; artifact_ids: string[]; expand: string } | null,
+  ): Promise<boolean>;
 }
 
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -199,7 +203,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
     }
   },
 
-  async steer(text, submit) {
+  async steer(text, submit, grounding) {
     const key = get().openKey;
     if (!key || !text.trim()) return false;
     set({ steerState: "sending", steerDetail: "" });
@@ -207,7 +211,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
       const res = await fetch(`/api/coders/${encodeURIComponent(key)}/steer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, submit }),
+        body: JSON.stringify(
+          grounding ? { text, submit, grounding } : { text, submit },
+        ),
       });
       const body = await res.json().catch(() => ({}));
       if (get().openKey !== key) return false;
@@ -217,7 +223,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
       }
       // A refusal that revoked (expiry, recycled pane) re-offers ARM:
       // the armed flag drops here and the header chip is the answer.
-      const refusal = body.status || body.error || `HTTP ${res.status}`;
+      // A grounding-over-cap or unknown-ref refusal keeps the grant —
+      // it is a composition problem, not a consent one.
+      const refusal = body.detail || body.error || body.status || `HTTP ${res.status}`;
       const revoking = ["unarmed", "expired", "pane_mismatch", "pane_gone"].includes(
         body.status,
       );

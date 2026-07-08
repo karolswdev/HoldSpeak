@@ -161,6 +161,109 @@ def test_empty_text_is_a_400(env) -> None:
     assert res.status_code == 400
 
 
+def _seed_meeting(db, mid="m_steer", title="Kickoff"):
+    """A real meeting + intel row so grounding hydrates from the store."""
+    from datetime import datetime
+
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState
+
+    db.meetings.save_meeting(
+        MeetingState(
+            id=mid,
+            started_at=datetime(2026, 7, 1, 10, 0, 0),
+            ended_at=datetime(2026, 7, 1, 11, 0, 0),
+            title=title,
+            segments=[],
+            intel=IntelSnapshot(
+                timestamp=1.0,
+                summary="We decided to ship Friday.",
+                action_items=[],
+            ),
+        )
+    )
+    return mid
+
+
+def test_grounded_steer_carries_the_object_into_the_pane(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch)
+    mid = _seed_meeting(env.db)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post(
+        "/api/coders/claude:abc/steer",
+        json={
+            "text": "summarize the decision",
+            "submit": False,
+            "grounding": {"meeting_ids": [mid]},
+        },
+    )
+    assert res.status_code == 200
+    assert res.json()["status"] == "delivered"
+    sent_text = env.sent[0]["text"]
+    assert sent_text.startswith("summarize the decision")
+    assert '--- from meeting: "Kickoff"' in sent_text
+    assert "ship Friday" in sent_text
+    assert sent_text.rstrip().endswith("(1 object grounded)")
+    # The audit row names the ref that rode along.
+    trail = env.db.steering.list()
+    assert trail[0].grounding == [f"meeting:{mid}"]
+
+
+def test_preview_returns_the_exact_send_text_without_delivering(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch)
+    mid = _seed_meeting(env.db)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    body = {
+        "text": "the ask",
+        "submit": False,
+        "grounding": {"meeting_ids": [mid]},
+    }
+    preview = env.client.post(
+        "/api/coders/claude:abc/steer", json={**body, "preview": True}
+    ).json()
+    assert preview["status"] == "preview"
+    assert env.sent == []  # preview never types
+    delivered = env.client.post("/api/coders/claude:abc/steer", json=body).json()
+    assert delivered["status"] == "delivered"
+    # executed == previewed: the pane got exactly the previewed text.
+    assert env.sent[0]["text"] == preview["text"]
+
+
+def test_over_cap_grounding_refuses_at_compose_time(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch)
+    # A giant artifact body blows the 8 KB steer cap.
+    mid = _seed_meeting(env.db)
+    env.db.plugins.record_artifact(
+        artifact_id="big_art",
+        meeting_id=mid,
+        artifact_type="note",
+        title="Huge",
+        body_markdown="z" * 9000,
+    )
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post(
+        "/api/coders/claude:abc/steer",
+        json={"text": "q", "grounding": {"artifact_ids": ["big_art"]}},
+    )
+    assert res.status_code == 409
+    assert res.json()["status"] == "grounding_over_cap"
+    assert env.sent == []
+
+
+def test_unknown_grounding_ref_refuses_naming_the_id(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post(
+        "/api/coders/claude:abc/steer",
+        json={"text": "q", "grounding": {"meeting_ids": ["ghost"]}},
+    )
+    assert res.status_code == 400
+    assert res.json()["unknown_ids"] == ["ghost"]
+
+
 def test_audit_route_reads_the_trail_newest_first(env) -> None:
     _register(env.monkeypatch, _session())
     _pin_identity(env.monkeypatch)

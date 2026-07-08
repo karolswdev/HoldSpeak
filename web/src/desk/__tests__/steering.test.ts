@@ -280,6 +280,45 @@ describe("the steer action (HS-87-03)", () => {
     expect(st.armed).toBe(true);
     expect(st.steerDetail).toBe("tmux timed out");
   });
+
+  it("grounding refs ride the steer body (HS-87-04)", async () => {
+    const posts: any[] = [];
+    vi.stubGlobal("fetch", (url: string, opts?: any) => {
+      posts.push(opts?.body ? JSON.parse(opts.body) : null);
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ status: "delivered", pane_id: "%5" }),
+      });
+    });
+    useSteering.setState({ openKey: "claude:abc123", armed: true });
+    const refs = { meeting_ids: ["m1"], artifact_ids: [], expand: "summary" };
+    await useSteering.getState().steer("with context", false, refs);
+    expect(posts[0]).toEqual({ text: "with context", submit: false, grounding: refs });
+  });
+
+  it("an over-cap refusal keeps the grant and names the size (HS-87-04)", async () => {
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve({
+        ok: false,
+        status: 409,
+        json: () =>
+          Promise.resolve({
+            status: "grounding_over_cap",
+            detail: "grounded context is 9000 bytes, over the 8000 byte cap",
+          }),
+      }),
+    );
+    useSteering.setState({ openKey: "claude:abc123", armed: true });
+    await useSteering.getState().steer("q", true, {
+      meeting_ids: ["m1"],
+      artifact_ids: [],
+      expand: "summary",
+    });
+    const st = useSteering.getState();
+    expect(st.armed).toBe(true); // a composition problem, not consent
+    expect(st.steerDetail).toContain("over the 8000 byte cap");
+  });
 });
 
 describe("coder frames on the one bus", () => {

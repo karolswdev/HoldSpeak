@@ -180,16 +180,79 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         _sweep_and_frame()
         return JSONResponse({"grants": coder_steering.active_grants()})
 
+    def _compose_from_body(body: dict[str, Any]):
+        """Message + optional grounding → the composed steer (HS-87-04).
+
+        A JSONResponse on any refusal (bad text, bad grounding shape,
+        unknown refs, over-cap); otherwise the compose result dict from
+        `grounding.compose_steer`. Hydration is the SAME helper the ask
+        route uses — one grounding truth.
+        """
+        from ....db import get_database
+        from ....grounding import (
+            GROUNDING_EXPANDS,
+            GROUNDING_MAX_REFS,
+            compose_steer,
+            hydrate_refs,
+        )
+
+        text = body.get("text")
+        if not isinstance(text, str) or not text.strip():
+            return JSONResponse({"error": "text is required"}, status_code=400)
+        grounding = body.get("grounding")
+        if grounding is None:
+            return compose_steer(text, [])
+        if not isinstance(grounding, dict):
+            return JSONResponse(
+                {"error": "grounding must be an object"}, status_code=400
+            )
+        raw_m = grounding.get("meeting_ids")
+        raw_a = grounding.get("artifact_ids")
+        meeting_ids = (
+            [str(x).strip() for x in raw_m if str(x).strip()]
+            if isinstance(raw_m, list)
+            else []
+        )
+        artifact_ids = (
+            [str(x).strip() for x in raw_a if str(x).strip()]
+            if isinstance(raw_a, list)
+            else []
+        )
+        expand = str(grounding.get("expand") or "summary").strip() or "summary"
+        if expand not in GROUNDING_EXPANDS:
+            return JSONResponse(
+                {"error": f"expand {expand!r} is not one of {list(GROUNDING_EXPANDS)}"},
+                status_code=400,
+            )
+        if len(meeting_ids) + len(artifact_ids) > GROUNDING_MAX_REFS:
+            return JSONResponse(
+                {"error": f"grounding is capped at {GROUNDING_MAX_REFS} refs"},
+                status_code=400,
+            )
+        blocks, unknown = hydrate_refs(
+            get_database(), meeting_ids, artifact_ids, expand
+        )
+        if unknown:
+            return JSONResponse(
+                {"error": "grounding ids not on this hub", "unknown_ids": unknown},
+                status_code=400,
+            )
+        return compose_steer(text, blocks)
+
     @router.post("/api/coders/{key}/steer")
     async def api_coder_steer(
         key: str, payload: Optional[dict[str, Any]] = None
     ) -> Any:
-        """Deliver one steer through THE chokepoint (HS-87-03).
+        """Deliver one steer through THE chokepoint (HS-87-03/04).
 
-        An unarmed steer is a typed 409 (the desk answers with the ARM
-        affordance); a revoking refusal broadcasts its frame so every
-        surface sees the disarm. Delivered or refused, the attempt is
-        audited.
+        The steer may carry `grounding` refs (HS-87-04): the hub
+        hydrates them through the SAME helper the ask route uses, fences
+        them with provenance headers, and caps the context — over-cap
+        refuses at compose time (executed == previewed). `preview: true`
+        returns the exact composed text WITHOUT sending. An unarmed
+        steer is a typed 409 (the desk shows the ARM affordance); a
+        revoking refusal broadcasts its frame. Delivered or refused, the
+        attempt is audited.
         """
         from .... import coder_steering
 
@@ -200,18 +263,43 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         if isinstance(session, JSONResponse):
             return session
         body = payload if isinstance(payload, dict) else {}
-        text = body.get("text")
-        if not isinstance(text, str) or not text.strip():
-            return JSONResponse({"error": "text is required"}, status_code=400)
+        composed = _compose_from_body(body)
+        if isinstance(composed, JSONResponse):
+            return composed
+        if composed["status"] == "over_cap":
+            return JSONResponse(
+                {
+                    "status": "grounding_over_cap",
+                    "detail": (
+                        f"grounded context is {composed['context_bytes']} bytes, "
+                        f"over the {composed['cap_bytes']} byte cap"
+                    ),
+                    "context_bytes": composed["context_bytes"],
+                    "cap_bytes": composed["cap_bytes"],
+                },
+                status_code=409,
+            )
         submit = bool(body.get("submit", True))
+        if bool(body.get("preview")):
+            # Executed == previewed: the SAME composed text the send uses.
+            return JSONResponse(
+                {
+                    "status": "preview",
+                    "text": composed["text"],
+                    "context_bytes": composed["context_bytes"],
+                    "cap_bytes": composed["cap_bytes"],
+                    "refs": composed["refs"],
+                }
+            )
         target = coder_steering.resolve_pane_target(session)
         result = await asyncio.to_thread(
             coder_steering.deliver,
             key,
-            text,
+            composed["text"],
             current_target=target,
             agent=session.agent,
             submit=submit,
+            grounding_refs=composed["refs"],
         )
         if result.get("revoked"):
             _coder_frame(ctx, key)  # the disarm is visible everywhere, now
