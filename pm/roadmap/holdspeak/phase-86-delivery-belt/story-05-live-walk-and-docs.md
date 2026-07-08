@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 86
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-86-04
 - **Unblocks:** B2 (the nod — a future phase)
 - **Owner:** unassigned

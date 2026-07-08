@@ -30,20 +30,23 @@ verbs stand on.
 
 ## Exit criteria (evidence required)
 
-- [ ] `dw check` on this repo reports zero errors, and `dw doctor`
-      reports healthy rails (HS-86-01, HS-86-02).
-- [ ] A commit of this phase lands through the refreshed stamped
-      gate with PMO trailers (HS-86-02 evidence shows the trailer).
-- [ ] PR/CI receipts and change-driven `scope:"belt"` frames ride
+- [x] `dw check` on this repo reports zero errors, and `dw doctor`
+      reports healthy rails (HS-86-01, HS-86-02 —
+      [evidence-01](./evidence-story-01.md), [evidence-02](./evidence-story-02.md)).
+- [x] A commit of this phase lands through the refreshed stamped
+      gate with PMO trailers (HS-86-02's own commit; `dw verify` ok
+      in [evidence-03](./evidence-story-03.md)).
+- [x] PR/CI receipts and change-driven `scope:"belt"` frames ride
       the existing mission-control routes/bus for ≥2 real repos,
-      GET-only proven (HS-86-03, re-scoped — Phase 82 owns the
-      registry + state relay).
-- [ ] The Phase-82 conveyor gains station lights (PR/CI/gate/close)
+      GET-only proven ([evidence-03](./evidence-story-03.md)).
+- [x] The Phase-82 conveyor gains station lights (PR/CI/gate/close)
       and evidence opening in place, frame-driven, desk locks green
-      (HS-86-04, re-scoped).
-- [ ] The live walk: a real story's motion (in-progress → evidence →
-      done → gate pass → PR → CI green → merge) observed on the belt
-      and captured (HS-86-05).
+      ([evidence-04](./evidence-story-04.md) + screenshots).
+- [x] The live walk: the closing story's motion observed on the belt
+      and captured, zero belt-side writes
+      ([evidence-05](./evidence-story-05.md), walk-1..4 + the
+      all-GET access log; the merge beat lands post-commit on green
+      CI per the cadence).
 
 ## Story status
 
@@ -53,7 +56,7 @@ verbs stand on.
 | HS-86-02 | The refreshed rails — stamped gate + embedded dw | done | [story-02-refreshed-rails](./story-02-refreshed-rails.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-86-03 | The receipts the conveyor lacks: gh lights + belt frames (hub) | done | [story-03-hub-belt-route](./story-03-hub-belt-route.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-86-04 | The conveyor completes: station lights + evidence in place | done | [story-04-belt-surface](./story-04-belt-surface.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-86-05 | The live walk + docs + closeout | backlog | [story-05-live-walk-and-docs](./story-05-live-walk-and-docs.md) | - |
+| HS-86-05 | The live walk + docs + closeout | done | [story-05-live-walk-and-docs](./story-05-live-walk-and-docs.md) | [evidence-story-05](./evidence-story-05.md) |
 
 ## Where we are
 
@@ -75,7 +78,12 @@ new receipts, gate from the newest rail event — the shots caught a
 REAL contract-missing refusal on the delivery-workbench lane),
 evidence opening in place inside the conveyor, frame-driven refresh
 on scope:belt. 39 route/lock/guard tests + 63 desk tests + suite
-3312 (read from the file). Next: HS-86-05, the walk.
+3312 (read from the file). HS-86-05 done: the walk ran live (one page session, never reloaded)
+— the flip, the evidence capture, a REAL contract-missing refusal,
+and PR #303's lights, each on the belt within a poll beat; the
+access log holds 12 requests, all GET. Docs (USER_GUIDE, SECURITY
+egress row, ARCHITECTURE read path) + BACKLOG/README cadence +
+final-summary ship with this commit. The phase closes 5/5.
 
 ## Active risks
 

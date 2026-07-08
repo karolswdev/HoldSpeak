@@ -1,0 +1,50 @@
+[
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/state"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/sessions"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/events"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/receipts"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/state"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/sessions"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/events"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/receipts"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/state"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/sessions"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/events"
+ },
+ {
+  "method": "GET",
+  "path": "/api/missioncontrol/receipts"
+ }
+]
