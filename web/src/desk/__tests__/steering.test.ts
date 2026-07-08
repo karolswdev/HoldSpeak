@@ -218,6 +218,70 @@ describe("the arming grant (HS-87-02)", () => {
   });
 });
 
+describe("the steer action (HS-87-03)", () => {
+  afterEach(() => {
+    useSteering.getState().closeSession();
+    vi.unstubAllGlobals();
+  });
+
+  it("a delivered steer reports sent and carries the submit flag", async () => {
+    const posts: any[] = [];
+    vi.stubGlobal("fetch", (url: string, opts?: any) => {
+      posts.push({ url: String(url), body: opts?.body ? JSON.parse(opts.body) : null });
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ status: "delivered", pane_id: "%5" }),
+      });
+    });
+    useSteering.setState({ openKey: "claude:abc123", armed: true });
+    const ok = await useSteering.getState().steer("do the thing", false);
+    expect(ok).toBe(true);
+    expect(posts[0].url).toContain("/api/coders/claude%3Aabc123/steer");
+    expect(posts[0].body).toEqual({ text: "do the thing", submit: false });
+    expect(useSteering.getState().steerState).toBe("sent");
+  });
+
+  it("a revoking refusal drops the armed flag — ARM re-offered, not a toast", async () => {
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve({
+        ok: false,
+        status: 409,
+        json: () =>
+          Promise.resolve({ status: "expired", revoked: true }),
+      }),
+    );
+    useSteering.setState({
+      openKey: "claude:abc123",
+      armed: true,
+      armedUntil: Date.now() + 60_000,
+      armedKeys: { "claude:abc123": Date.now() + 60_000 },
+    });
+    const ok = await useSteering.getState().steer("too late", true);
+    expect(ok).toBe(false);
+    const st = useSteering.getState();
+    expect(st.steerState).toBe("refused");
+    expect(st.armed).toBe(false); // the composer yields to the ARM chip
+    expect(st.armedKeys["claude:abc123"]).toBeUndefined();
+  });
+
+  it("a non-revoking refusal keeps the grant and names the reason", async () => {
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve({
+        ok: false,
+        status: 409,
+        json: () =>
+          Promise.resolve({ status: "error", detail: "tmux timed out" }),
+      }),
+    );
+    useSteering.setState({ openKey: "claude:abc123", armed: true });
+    await useSteering.getState().steer("hello", true);
+    const st = useSteering.getState();
+    expect(st.armed).toBe(true);
+    expect(st.steerDetail).toBe("tmux timed out");
+  });
+});
+
 describe("coder frames on the one bus", () => {
   it("matches only scope:coder intel_status frames", () => {
     expect(

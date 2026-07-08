@@ -1,6 +1,6 @@
 # Phase 87 — The Steering Desk (B2: attach, steer, classify, ground)
 
-**Last updated:** 2026-07-08 (HS-87-02 done — arming shipped; 2/6).
+**Last updated:** 2026-07-08 (HS-87-03 done — steer shipped; 3/6).
 
 ## Goal
 
@@ -56,28 +56,31 @@ bar: *"so robust, it will literally destroy our brains."*
 |---|---|---|---|---|
 | HS-87-01 | Attach: the session pull-out with the live pane view | done | [story-01-session-pullout](./story-01-session-pullout.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-87-02 | The arming grant: consent with a countdown | done | [story-02-arming-grant](./story-02-arming-grant.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-87-03 | Steer: the voice-first composer, delivered and audited | backlog | [story-03-steer-composer](./story-03-steer-composer.md) | - |
+| HS-87-03 | Steer: the voice-first composer, delivered and audited | done | [story-03-steer-composer](./story-03-steer-composer.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-87-04 | Ground: desk objects ride into the steer | backlog | [story-04-desk-context](./story-04-desk-context.md) | - |
 | HS-87-05 | Classify: triage from the pull-out | backlog | [story-05-classify-verbs](./story-05-classify-verbs.md) | - |
 | HS-87-06 | The robustness rig, the walk, the docs | backlog | [story-06-robustness-walk](./story-06-robustness-walk.md) | - |
 
 ## Where we are
 
-Attach (HS-87-01) and arming (HS-87-02) are real. The grant store
-lives in `coder_steering.py` (in-memory, monotonic clock, lazy
-sweep): `arm` pins the pane's `%N` at grant time, `require_grant` is
-the chokepoint check 03 will call — unarmed/expired refused,
-recycled or retargeted pane refused AND revoked, transient tmux
-errors refused without burning the grant. Routes: `POST
-/{key}/arm|/disarm` (stale refused by name, refusals typed 409s),
-`GET /steering/grants`; the grant rides the peek envelope; every
-arming motion and lazy-swept expiry broadcasts its `scope:"coder"`
-frame. Desk: hold-to-arm chip → countdown → one-tap disarm; armed
-ring on every pin. The live rig caught a real tmux 3.6 edge: a dead
-target answers `display-message` with rc 0 and an EMPTY expansion —
-now typed `pane_gone`, proven by the kill-the-pane crown case.
-SECURITY.md carries the consent model. Next: HS-87-03, the steer
-composer.
+Attach, arm, AND steer are real (HS-87-01/02/03). The full spine
+sends: `coder_steering.deliver` is the ONE chokepoint — grant check
+→ resolve the registry's current pane → send to the VERIFIED `%N`
+(never the target string, so nothing re-resolves between check and
+keystroke) → audit row. Delivery reuses `send_text_to_pane` verbatim
+(literal text, `\r` submit). The `steering_audit` table (schema v12,
+canonical snapshot regenerated) records who/when/session/pane/shape
+for every attempt, delivered or refused; the receipt is the sha256 +
+first 120 chars, never the full steer. Routes: `POST /{key}/steer`
+(unarmed → typed 409, revoking refusal frames the disarm), `GET
+/steering/audit`. Desk: the voice-first composer (MicButton, no-submit
+`⏎` toggle) mounts only while armed — the ARM chip IS the unarmed
+affordance. The chokepoint census (`test_steering_chokepoint.py`)
+pins the `send_text_to_pane` call sites mechanically; the steering
+routes were carved into `coder_steering_routes.py` (the Phase-79
+single-concern budget). Live-proven: an armed steer lands in a real
+pane, the recycled-pane crown case refuses and revokes. Next:
+HS-87-04, grounding desk objects into a steer.
 
 ## Active risks
 
@@ -108,6 +111,17 @@ composer.
   so the hub stats the registry file's mtime (2 s) and diffs
   awaiting flags — one observer, first observation a baseline
   (the HS-86-03 rule), frames on the one bus.
+- 2026-07-08 (HS-87-03) — The legacy voice-answer paths (option (b)
+  of the story): `/api/coders/select` + `/api/dictation/remote` (and
+  the cadence Telegram answer leg) stay as they are, documented as
+  the flows that TYPE ONLY WHEN A CODER ASKED — their consent story
+  is the agent's own question. They never gain free-text steering;
+  anything composed at the desk goes through `deliver`. The
+  chokepoint census (`test_steering_chokepoint.py`) pins the
+  call-site set mechanically.
+- 2026-07-08 (HS-87-03) — `deliver` sends to the VERIFIED `%N`, not
+  the target string: nothing can re-resolve between the ownership
+  check and the keystroke (the TOCTOU window closed by construction).
 
 ## Decisions deferred
 

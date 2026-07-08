@@ -85,6 +85,41 @@ def test_live_arm_then_killed_pane_refuses_and_revokes(live_pane) -> None:
         clear_grants()
 
 
+def test_live_steer_lands_in_the_real_pane(live_pane) -> None:
+    """HS-87-03 against a real tmux server: an armed steer delivered
+    through THE chokepoint lands in the pane exactly as composed
+    (literal text, no-submit mode so the shell holds it), and the
+    audit sink records the delivery against the verified %N."""
+    from holdspeak.coder_steering import arm, clear_grants, deliver, peek_pane
+
+    session, pane = live_pane
+    clear_grants()
+    rows: list[dict] = []
+    try:
+        # The fixture pane's foreground `sleep` leaves tty echo on, so
+        # delivered keystrokes are visible in the capture.
+        armed = arm("claude:live-steer", f"{session}:0.0")
+        assert armed["status"] == "armed"
+        marker = f"steered-{uuid.uuid4().hex[:8]}"
+        result = deliver(
+            "claude:live-steer",
+            marker,
+            current_target=f"{session}:0.0",
+            agent="claude",
+            submit=False,  # leave it visible in the composer line
+            audit=lambda **kw: rows.append(kw) or 1,
+        )
+        assert result["status"] == "delivered"
+        assert result["pane_id"] == pane
+        time.sleep(0.4)
+        seen = peek_pane(pane, lines=50)
+        assert marker in "\n".join(seen["lines"])  # the keystrokes are IN the pane
+        assert rows[0]["outcome"] == "delivered"
+        assert rows[0]["pane_id"] == pane
+    finally:
+        clear_grants()
+
+
 def test_live_peek_hash_gate_and_dead_pane(live_pane) -> None:
     session, pane = live_pane
 

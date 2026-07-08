@@ -73,12 +73,16 @@ interface SteeringState {
   armError: string;
   /** Armed state for every pin on the desk: key → epoch ms expiry. */
   armedKeys: Record<string, number>;
+  /** The last steer's fate (HS-87-03), rendered in place. */
+  steerState: "idle" | "sending" | "sent" | "refused";
+  steerDetail: string;
   openSession(key: string): void;
   closeSession(): void;
   poll(): Promise<void>;
   arm(): Promise<void>;
   disarm(): Promise<void>;
   refreshGrants(): Promise<void>;
+  steer(text: string, submit: boolean): Promise<boolean>;
 }
 
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -109,6 +113,8 @@ export const useSteering = create<SteeringState>((set, get) => ({
   armedUntil: null,
   armError: "",
   armedKeys: {},
+  steerState: "idle",
+  steerDetail: "",
 
   openSession(key) {
     if (timer !== null) clearInterval(timer);
@@ -122,6 +128,8 @@ export const useSteering = create<SteeringState>((set, get) => ({
       armed: false,
       armedUntil: null,
       armError: "",
+      steerState: "idle",
+      steerDetail: "",
     });
     void get().poll();
     timer = setInterval(() => void get().poll(), PEEK_POLL_MS);
@@ -142,6 +150,8 @@ export const useSteering = create<SteeringState>((set, get) => ({
       armed: false,
       armedUntil: null,
       armError: "",
+      steerState: "idle",
+      steerDetail: "",
     });
   },
 
@@ -186,6 +196,41 @@ export const useSteering = create<SteeringState>((set, get) => ({
     }
     if (get().openKey === key) {
       set(grantPatch(key, { armed: false }, get().armedKeys));
+    }
+  },
+
+  async steer(text, submit) {
+    const key = get().openKey;
+    if (!key || !text.trim()) return false;
+    set({ steerState: "sending", steerDetail: "" });
+    try {
+      const res = await fetch(`/api/coders/${encodeURIComponent(key)}/steer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, submit }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (get().openKey !== key) return false;
+      if (res.ok && body.status === "delivered") {
+        set({ steerState: "sent", steerDetail: "" });
+        return true;
+      }
+      // A refusal that revoked (expiry, recycled pane) re-offers ARM:
+      // the armed flag drops here and the header chip is the answer.
+      const refusal = body.status || body.error || `HTTP ${res.status}`;
+      const revoking = ["unarmed", "expired", "pane_mismatch", "pane_gone"].includes(
+        body.status,
+      );
+      set({
+        steerState: "refused",
+        steerDetail: body.detail || refusal,
+        ...(revoking ? grantPatch(key, { armed: false }, get().armedKeys) : {}),
+      });
+      return false;
+    } catch {
+      if (get().openKey === key)
+        set({ steerState: "refused", steerDetail: "hub unreachable" });
+      return false;
     }
   },
 

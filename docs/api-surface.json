@@ -698,11 +698,19 @@
       ]
     },
     {
+      "path": "/api/coders/steering/audit",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": []
+    },
+    {
       "path": "/api/coders/steering/grants",
       "methods": [
         "GET"
       ],
-      "module": "web.routes.system.coders",
+      "module": "web.routes.system.coder_steering_routes",
       "consumers": [
         "web"
       ]
@@ -712,7 +720,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system.coders",
+      "module": "web.routes.system.coder_steering_routes",
       "consumers": [
         "web"
       ]
@@ -722,7 +730,7 @@
       "methods": [
         "POST"
       ],
-      "module": "web.routes.system.coders",
+      "module": "web.routes.system.coder_steering_routes",
       "consumers": [
         "web"
       ]
@@ -732,7 +740,17 @@
       "methods": [
         "GET"
       ],
-      "module": "web.routes.system.coders",
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/coders/{key}/steer",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
       "consumers": [
         "web"
       ]

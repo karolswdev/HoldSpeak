@@ -5,6 +5,7 @@
 // hub-side — this surface can only ask.
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
+import { MicButton } from "./MicButton";
 import { mmss, useSteering } from "../steering";
 
 const PANE_STATE_LABEL: Record<string, string> = {
@@ -79,12 +80,66 @@ function ArmChip() {
   );
 }
 
+/** The voice-first composer (HS-87-03) — spoken first, typed if you
+ * like, Enter its own deliberate chip. Rendered only while armed: the
+ * ARM chip in the header IS the unarmed affordance. */
+function SteerComposer() {
+  const steerState = useSteering((s) => s.steerState);
+  const steerDetail = useSteering((s) => s.steerDetail);
+  const [text, setText] = useState("");
+  const [submitOn, setSubmitOn] = useState(true);
+
+  const send = async () => {
+    const delivered = await useSteering.getState().steer(text, submitOn);
+    if (delivered) setText(""); // a refused steer keeps its composition
+  };
+
+  return (
+    <div className="desk-steer">
+      <div className="desk-steer-row">
+        <MicButton
+          label="Hold to speak"
+          onText={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))}
+        />
+        <textarea
+          className="desk-steer-input"
+          value={text}
+          rows={2}
+          placeholder="Steer"
+          onChange={(e) => setText(e.target.value)}
+        />
+        <button
+          type="button"
+          className={"desk-chip desk-steer-enter" + (submitOn ? " is-on" : "")}
+          title={submitOn ? "Enter after send" : "no Enter — text only"}
+          onClick={() => setSubmitOn((v) => !v)}
+        >
+          ⏎
+        </button>
+        <button
+          type="button"
+          className="desk-chip"
+          disabled={steerState === "sending" || !text.trim()}
+          onClick={() => void send()}
+        >
+          {steerState === "sending" ? "…" : "Send"}
+        </button>
+      </div>
+      {steerState === "refused" && (
+        <span className="desk-arm-refusal">✕ {steerDetail}</span>
+      )}
+      {steerState === "sent" && <span className="desk-steer-sent">✓ sent</span>}
+    </div>
+  );
+}
+
 export function SessionPullout() {
   const openKey = useSteering((s) => s.openKey);
   const session = useSteering((s) => s.session);
   const paneStatus = useSteering((s) => s.paneStatus);
   const paneDetail = useSteering((s) => s.paneDetail);
   const paneLines = useSteering((s) => s.paneLines);
+  const armed = useSteering((s) => s.armed);
   const { closeSession } = useSteering.getState();
   const ref = useRef<HTMLDivElement | null>(null);
   const preRef = useRef<HTMLPreElement | null>(null);
@@ -160,6 +215,12 @@ export function SessionPullout() {
           </p>
         )}
       </div>
+
+      {armed && (
+        <footer className="desk-pullout-foot">
+          <SteerComposer />
+        </footer>
+      )}
     </motion.div>
   );
 }

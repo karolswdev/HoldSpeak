@@ -18,7 +18,9 @@ from fastapi.testclient import TestClient
 import holdspeak.agent_context as agent_context
 from holdspeak import coder_steering
 from holdspeak.web.context import WebContext
-from holdspeak.web.routes.system.coders import build_coders_router
+from holdspeak.web.routes.system.coder_steering_routes import (
+    build_coder_steering_router,
+)
 
 
 def _iso(dt: datetime) -> str:
@@ -44,7 +46,7 @@ def _session(**kw) -> SimpleNamespace:
 @pytest.fixture
 def client() -> TestClient:
     app = FastAPI()
-    app.include_router(build_coders_router(WebContext(get_state=lambda: {})))
+    app.include_router(build_coder_steering_router(WebContext(get_state=lambda: {})))
     return TestClient(app)
 
 

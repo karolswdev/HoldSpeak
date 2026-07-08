@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 253 (plus static mounts). iOS-consumed: 57. Web-consumed: 183.
+Routes: 255 (plus static mounts). iOS-consumed: 57. Web-consumed: 184.
 
 ## device_audio_ws
 
@@ -439,6 +439,17 @@ Routes: 253 (plus static mounts). iOS-consumed: 57. Web-consumed: 183.
 | GET | `/api/sync/pull` | ios, web |
 | POST | `/api/sync/push` | ios |
 
+## web.routes.system.coder_steering_routes
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/coders/steering/audit` | server only |
+| GET | `/api/coders/steering/grants` | web |
+| POST | `/api/coders/{key}/arm` | web |
+| POST | `/api/coders/{key}/disarm` | web |
+| GET | `/api/coders/{key}/peek` | web |
+| POST | `/api/coders/{key}/steer` | web |
+
 ## web.routes.system.coders
 
 | Method | Path | Consumers |
@@ -449,10 +460,6 @@ Routes: 253 (plus static mounts). iOS-consumed: 57. Web-consumed: 183.
 | POST | `/api/coders/select` | ios, web |
 | GET | `/api/coders/sessions` | ios |
 | GET | `/api/coders/status` | ios, web |
-| GET | `/api/coders/steering/grants` | web |
-| POST | `/api/coders/{key}/arm` | web |
-| POST | `/api/coders/{key}/disarm` | web |
-| GET | `/api/coders/{key}/peek` | web |
 
 ## web.routes.system.health
 

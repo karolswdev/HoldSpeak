@@ -348,6 +348,86 @@ def clear_grants() -> None:
         _GRANTS.clear()
 
 
+# --- Deliver (HS-87-03): THE chokepoint ------------------------------------
+#
+# The only path by which steering text reaches a pane. require_grant
+# verifies the pinned identity against what the registry points at
+# NOW; the send itself targets the verified `%N` (not the target
+# string, so nothing can re-resolve between check and keystroke); the
+# send craft is `tmux_transport.send_text_to_pane` verbatim — literal
+# text, submit as its own raw `\r`. Every attempt lands one audit
+# row, refusals included.
+
+
+def _default_audit(**kw: Any) -> int:
+    from . import db as hsdb
+
+    return hsdb.get_database().steering.record(**kw)
+
+
+def deliver(
+    key: str,
+    text: str,
+    *,
+    current_target: Optional[str],
+    agent: str = "",
+    submit: bool = True,
+    grounding_refs: Optional[list[Any]] = None,
+    runner: Optional[Runner] = None,
+    clock: Clock = time.monotonic,
+    transport: Optional[Callable[..., Any]] = None,
+    audit: Optional[Callable[..., int]] = None,
+) -> dict[str, Any]:
+    """Deliver one steer into an armed session's verified pane.
+
+    Statuses: ``delivered``, ``empty_text``, the `require_grant`
+    refusals verbatim (``unarmed`` / ``expired`` / ``pane_mismatch`` /
+    ``pane_gone`` / ``tmux_absent`` / ``error``), or
+    ``transport_error`` when tmux refused the keystroke itself.
+    Every outcome is audited; ``audit_id`` rides the result.
+    """
+    record = audit or _default_audit
+    refs = list(grounding_refs or [])
+
+    def _audited(result: dict[str, Any], *, pane_id: Optional[str]) -> dict[str, Any]:
+        try:
+            result["audit_id"] = record(
+                session_key=key,
+                agent=agent,
+                pane_id=pane_id,
+                text=text,
+                grounding=refs,
+                submit=submit,
+                outcome=result["status"],
+                detail=result.get("detail"),
+            )
+        except Exception:
+            result["audit_id"] = None
+        return result
+
+    if not str(text or "").strip():
+        return _audited({"status": "empty_text"}, pane_id=None)
+    check = require_grant(key, current_target, runner=runner, clock=clock)
+    if check["status"] != "ok":
+        return _audited(dict(check), pane_id=None)
+    pane_id = check["pane_id"]
+    send = transport
+    if send is None:
+        from .tmux_transport import send_text_to_pane
+
+        send = send_text_to_pane
+    try:
+        send(pane=pane_id, text=text, submit=submit)
+    except Exception as exc:
+        return _audited(
+            {"status": "transport_error", "detail": str(exc)}, pane_id=pane_id
+        )
+    return _audited(
+        {"status": "delivered", "pane_id": pane_id, "submitted": bool(submit)},
+        pane_id=pane_id,
+    )
+
+
 __all__ = [
     "ARM_DEFAULT_TTL_SECONDS",
     "ARM_MAX_TTL_SECONDS",
@@ -365,6 +445,7 @@ __all__ = [
     "clamp_ttl",
     "clear_grants",
     "content_hash",
+    "deliver",
     "disarm",
     "peek_pane",
     "require_grant",

@@ -13,6 +13,7 @@ from ..logging_config import get_logger
 from .meetings import MeetingRepository
 from .intel import IntelRepository
 from .mesh_relay import MeshRelayRepository
+from .steering import SteeringAuditRepository
 from .plugins import PluginArtifactRepository
 from .projects import ProjectRepository
 from .activity import ActivityRepository
@@ -40,7 +41,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 11  # v11: profiles.node for the meshNode kind (HS-85-02); v10: mesh_relay_jobs + mesh_workers (HS-85-01) — both bumped WITH their DDL (the v9 lesson)
+SCHEMA_VERSION = 12  # v12: steering_audit (HS-87-03); v11: profiles.node for the meshNode kind (HS-85-02); v10: mesh_relay_jobs + mesh_workers (HS-85-01) — both bumped WITH their DDL (the v9 lesson)
 
 
 class SchemaVersionError(RuntimeError):
@@ -964,6 +965,25 @@ CREATE TABLE IF NOT EXISTS cadence_policies (
     config_json TEXT NOT NULL DEFAULT '{}',
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Steering audit (HS-87-03): every keystroke toward a pane, remembered.
+-- Privacy-respecting receipt: the text's sha256 + first 120 chars, never
+-- the full steer. Refusals audit too, with the refusal as the outcome.
+CREATE TABLE IF NOT EXISTS steering_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts TEXT NOT NULL DEFAULT (datetime('now')),
+    session_key TEXT NOT NULL,
+    agent TEXT NOT NULL DEFAULT '',
+    pane_id TEXT,
+    text_sha256 TEXT NOT NULL,
+    text_head TEXT NOT NULL DEFAULT '',
+    grounding_json TEXT NOT NULL DEFAULT '[]',
+    submit INTEGER NOT NULL DEFAULT 1,
+    outcome TEXT NOT NULL,
+    detail TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_steering_audit_ts ON steering_audit(ts);
+CREATE INDEX IF NOT EXISTS idx_steering_audit_key ON steering_audit(session_key);
 """
 
 
@@ -995,6 +1015,7 @@ class Database:
         self.directory_memberships = DirectoryMembershipRepository(self._connection, self)
         self.model_manifests = ModelManifestRepository(self._connection, self)
         self.mesh_relay = MeshRelayRepository(self._connection, self)
+        self.steering = SteeringAuditRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

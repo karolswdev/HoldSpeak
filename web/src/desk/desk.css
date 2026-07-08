@@ -1129,3 +1129,27 @@
   box-shadow: 0 0 0 1.5px var(--accent-glow);
   border-radius: var(--radius-pill);
 }
+
+/* ── HS-87-03: the steer composer (voice-first, Enter deliberate) ── */
+.desk-next .desk-steer { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.desk-next .desk-steer-row { display: flex; align-items: flex-end; gap: 8px; width: 100%; }
+.desk-next .desk-steer-input {
+  flex: 1;
+  resize: vertical;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.desk-next .desk-steer-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.desk-next .desk-steer-enter { opacity: 0.45; }
+.desk-next .desk-steer-enter.is-on { opacity: 1; border-color: var(--accent); color: var(--accent); }
+.desk-next .desk-steer-sent { color: var(--ok); font-size: 11px; font-family: var(--font-mono); }
