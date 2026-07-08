@@ -1,12 +1,31 @@
 # HSM-26-04 — Rails grounding + the journal on glass
 
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HSM-26-01 (the contracts)
-- **Owner-gated:** device work (the couch walk is the exit; sim is the working proof)
+- **Owner-gated:** the grounding PICKER lives in the interactive steer composer — device-felt, staged for the couch walk (HSM-26-05).
 
 ## Problem
 
 Rails objects and the ambient journal must be first-class on the diorama.
+
+## Progress
+
+- **The journal on glass (done, 2026-07-08, sim-proven):**
+  `RailsJournalPrimitive` (`apple/App/MeetingCapture/DeskBelt.swift`) —
+  a `DeskPrimitive` reading the ambient observer's journal from
+  `GET /api/missioncontrol/rails/journal` (client + poll wired into
+  `DioStage`, an `HS_DESK_JOURNAL` seed). The screenshot
+  (`screenshots/journal-pullout.png`) shows each entry naming the events
+  it saw (story flips, a gate refusal, the `@walk-remote` cross-machine
+  origin) plus the local model's summary, with a meaningful "Route this
+  to AI" affordance (a journal entry becomes AI-routable material). Sim
+  BUILD SUCCEEDED.
+- **Rails grounding into a steer (wire done, picker on the couch):** the
+  grounding ref already rides `steerCoder(...grounding:)`
+  (HSM-26-03 client, `SteeringClientTests` proves it carries the rails
+  refs in the body). The grounding PICKER — choosing a rail object to
+  attach — lives in the interactive steer composer, device-felt craft
+  staged for the couch walk (HSM-26-05).
 
 ## Scope
 

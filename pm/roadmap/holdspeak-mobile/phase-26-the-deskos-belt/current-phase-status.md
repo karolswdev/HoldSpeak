@@ -56,7 +56,7 @@ iPhone, that oh my gosh, don't we just want to keep manipulating it."*
 | HSM-26-01 | The steering + rails presence contracts | **done** (2026-07-08 — 9 schemas + fixtures; validate.py ALL CHECKS PASSED; the real hub responses validate via `test_steering_contracts_fidelity.py`, 8/8; suite 3461) | [story-01](./story-01-steering-rails-contracts.md) |
 | HSM-26-02 | The belt on the diorama | **done** (2026-07-08, sim-proven — the belt renders on the iPad diorama from the `BeltState` contract; `swift test` 503/0 + sim BUILD SUCCEEDED + [screenshot](./screenshots/belt-pullout.png); craft polish deferred to the couch walk) | [story-02](./story-02-belt-on-the-diorama.md) |
 | HSM-26-03 | Attach, arm, steer, ground on glass | in progress (client layer done — the consent spine on the wire, `SteeringClientTests` 7/7; the interactive surface is staged for the couch walk) | [story-03](./story-03-steer-on-glass.md) |
-| HSM-26-04 | Rails grounding + the journal on glass | backlog | [story-04](./story-04-rails-on-glass.md) |
+| HSM-26-04 | Rails grounding + the journal on glass | in progress (the journal renders on glass, sim-proven — [screenshot](./screenshots/journal-pullout.png); the grounding wire is in `steerCoder`, the picker rides the couch composer) | [story-04](./story-04-rails-on-glass.md) |
 | HSM-26-05 | The couch walk + docs | backlog | [story-05](./story-05-couch-walk.md) |
 
 ## Where we are
@@ -111,7 +111,18 @@ case (`revoked: true`) proven over a stubbed network
 (the live peek, hold-to-arm → countdown, the voice-first composer) is
 device-felt consent craft — unlike the read-only belt, a static sim
 shot is not its proof — so it is staged for the couch walk (HSM-26-05).
-Next: HSM-26-04, rails grounding + the journal on glass.
+
+The rails JOURNAL renders on glass (HSM-26-04, sim-proven):
+`RailsJournalPrimitive` reads the ambient observer's journal from
+`GET /api/missioncontrol/rails/journal` (client + poll wired into
+`DioStage`, an `HS_DESK_JOURNAL` seed). The screenshot shows each entry
+naming the events it saw (story flips, a gate refusal, the
+`@walk-remote` cross-machine origin) + the local model's summary, with
+a meaningful "Route this to AI" affordance. Sim BUILD SUCCEEDED. The
+rails-grounding WIRE is already in `steerCoder` (HSM-26-03); its PICKER
+lives in the interactive steer composer, staged for the couch. The
+device-felt interactive surfaces (the steer composer + the grounding
+picker) all converge on the couch walk (HSM-26-05), B4's craft exit.
 
 ## Active risks
 

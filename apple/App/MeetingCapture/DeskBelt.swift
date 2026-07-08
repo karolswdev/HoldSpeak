@@ -123,3 +123,62 @@ extension BeltPrimitive {
     }
 }
 #endif
+
+// HSM-26-04 — the ambient observer's rail journal as a desk primitive. Each
+// entry is a note the local model wrote about rail motion (Phase 88), read from
+// GET /api/missioncontrol/rails/journal — read-only, off by default upstream.
+// The journal is openable and (in turn) groundable, like any note.
+
+struct RailsJournalPrimitive: DeskPrimitive {
+    let entries: [RailsJournalEntry]
+
+    var id: String { "rails-journal" }
+    var kind: PrimitiveKind { .note }                // a journal of notes
+    var glyph: String { "text.book.closed.fill" }
+    var isSymbol: Bool { true }
+    var color: Color { DioPal.violet }
+    var base: CGFloat { 114 }
+    var title: String { "Rails Journal" }
+
+    var subtitle: String {
+        entries.isEmpty ? "the observer is quiet"
+            : "\(entries.count) entr\(entries.count == 1 ? "y" : "ies") · the observer's note"
+    }
+
+    var preview: String? {
+        entries.first.map { String($0.bodyMarkdown.replacingOccurrences(of: "\n", with: " ").prefix(80)) }
+            ?? "the observer is off"
+    }
+
+    var sections: [PrimitiveSection] {
+        guard !entries.isEmpty else {
+            return [.init(label: "JOURNAL", tint: DioPal.muted,
+                          body: .text("The ambient observer is off (or the rails have been quiet). Turn it on in the desktop's config to keep a running note of story flips, gate refusals, and phase closes."))]
+        }
+        return entries.prefix(20).map { e in
+            let when = e.createdAt.map { " · \($0)" } ?? ""
+            return .init(label: (e.title + when).uppercased(), tint: DioPal.violet, body: .text(e.bodyMarkdown))
+        }
+    }
+
+    // The journal reads from the paired Mac's observer — Local + your desktop.
+    var egress: EgressScope { .mixed("your desktop") }
+    var emits: [PrimitiveKind] { [.note] }           // groundable in turn
+}
+
+#if DEBUG
+extension RailsJournalPrimitive {
+    /// A sim-seed sample so the journal renders on glass without a live hub
+    /// (HS_DESK_JOURNAL). Mirrors GET /api/missioncontrol/rails/journal.
+    static func sampleEntries() -> [RailsJournalEntry] {
+        [
+            RailsJournalEntry(id: "note_a1", title: "Rails journal",
+                bodyMarkdown: "> 3 rail events observed\n\n- HS-88-04 story_status → done\n- HS-88-04 gate_pass\n- HS-88-05 story_status → in-progress\n\nHS-88-04 flipped to done and passed the gate; HS-88-05 was pulled into progress.",
+                createdAt: "2026-07-08T10:02:30Z"),
+            RailsJournalEntry(id: "note_a2", title: "Rails journal",
+                bodyMarkdown: "> 2 rail events observed\n\n- @walk-remote story_status → done\n- work-log-automation gate_refusal (rule: story-evidence)\n\nA remote node flipped a story to done; work-log-automation hit a contract-missing gate refusal.",
+                createdAt: "2026-07-08T10:05:10Z"),
+        ]
+    }
+}
+#endif
