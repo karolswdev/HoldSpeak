@@ -1,0 +1,82 @@
+[
+  {
+    "id": 6,
+    "ts": "2026-07-08 04:56:36",
+    "session_key": "claude:walk",
+    "agent": "claude",
+    "pane_id": null,
+    "text_sha256": "4ebc920d599cd11a62be6e4f058095b72df2e0f15e708be3337a05d7ce8510e4",
+    "text_head": "after the disarm",
+    "grounding": [],
+    "submit": true,
+    "outcome": "unarmed",
+    "detail": null
+  },
+  {
+    "id": 5,
+    "ts": "2026-07-08 04:56:36",
+    "session_key": "claude:walk",
+    "agent": "claude",
+    "pane_id": null,
+    "text_sha256": "38cb8dd843399c196b059ef16e8e97b4cfb5dc140832284f2bc5181f81a64107",
+    "text_head": "too late",
+    "grounding": [],
+    "submit": true,
+    "outcome": "expired",
+    "detail": null
+  },
+  {
+    "id": 4,
+    "ts": "2026-07-08 04:56:36",
+    "session_key": "claude:walk",
+    "agent": "claude",
+    "pane_id": null,
+    "text_sha256": "f70c128ddaf1449f5e46de6cf7807317e7a024cb98c28b75cdd6b72ad2cc7079",
+    "text_head": "meant for the dead pane",
+    "grounding": [],
+    "submit": false,
+    "outcome": "pane_gone",
+    "detail": "no server running on /private/tmp/tmux-501/default"
+  },
+  {
+    "id": 3,
+    "ts": "2026-07-08 04:56:35",
+    "session_key": "claude:walk",
+    "agent": "claude",
+    "pane_id": "%0",
+    "text_sha256": "644f1ea1c790b1d38f641cab2cfbf5110ffe39a1631e9c59a49e6e9a74829d45",
+    "text_head": "In one short sentence: when is the deploy and its code name?\n\n--- from artifact: \"Deploy Decisions\" (Release) ---\nDecisi",
+    "grounding": [
+      "artifact:a1"
+    ],
+    "submit": false,
+    "outcome": "delivered",
+    "detail": null
+  },
+  {
+    "id": 2,
+    "ts": "2026-07-08 04:56:34",
+    "session_key": "claude:walk",
+    "agent": "claude",
+    "pane_id": "%0",
+    "text_sha256": "cff9b5a10bf10827c88bfd1f60baf656f2510713870857165792e8a01bd748af",
+    "text_head": "walk-steer-fd1f0d",
+    "grounding": [],
+    "submit": false,
+    "outcome": "delivered",
+    "detail": null
+  },
+  {
+    "id": 1,
+    "ts": "2026-07-08 04:56:34",
+    "session_key": "claude:walk",
+    "agent": "claude",
+    "pane_id": null,
+    "text_sha256": "7854b066ab4be012841dcefa422dfe9cd24bc25bb11e620e484f212b5689259e",
+    "text_head": "this must not land",
+    "grounding": [],
+    "submit": false,
+    "outcome": "unarmed",
+    "detail": null
+  }
+]

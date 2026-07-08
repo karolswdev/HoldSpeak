@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 87
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-87-04, HS-87-05
 - **Unblocks:** B3 (the factory) / B4 (the DeskOS belt) per the RFC
 - **Owner:** unassigned

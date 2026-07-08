@@ -1,6 +1,6 @@
 # Phase 87 — The Steering Desk (B2: attach, steer, classify, ground)
 
-**Last updated:** 2026-07-08 (HS-87-05 done — classify shipped; 5/6).
+**Last updated:** 2026-07-08 (**PHASE CLOSED 6/6** — the walk passed live, docs shipped).
 
 ## Goal
 
@@ -33,21 +33,21 @@ bar: *"so robust, it will literally destroy our brains."*
 
 ## Exit criteria (evidence required)
 
-- [ ] A live agent session is watched from the desk pull-out (real
+- [x] A live agent session is watched from the desk pull-out (real
       pane content, updating, honest staleness) with zero grants
       issued (HS-87-01).
-- [ ] An unarmed steer is refused; an armed steer lands in the real
+- [x] An unarmed steer is refused; an armed steer lands in the real
       pane; a recycled-pane steer is refused AND disarms; expiry and
       disarm are visible on the desk (HS-87-02/03, crown cases
-      captured live).
-- [ ] A steer carries a real desk object (meeting artifact or note)
+      captured live in the walk).
+- [x] A steer carries a real desk object (meeting artifact or note)
       as hydrated, provenance-headed context, and the receiving
-      agent's next output demonstrably uses it (control vs treatment,
-      the Phase-53 proof pattern) (HS-87-04).
-- [ ] Classify: a session's ask becomes a desk primitive; a story
+      agent's next output demonstrably uses it (control vs treatment
+      on .43, the Phase-53 proof pattern) (HS-87-04).
+- [x] Classify: a session's ask becomes a desk primitive; a story
       flip proposed from the pull-out rides the Phase-82 leg
       end-to-end (HS-87-05).
-- [ ] The audit trail answers who/when/what/where for every steer of
+- [x] The audit trail answers who/when/what/where for every steer of
       the walk; the suite + guards green; docs shipped (HS-87-06).
 
 ## Story status
@@ -59,7 +59,7 @@ bar: *"so robust, it will literally destroy our brains."*
 | HS-87-03 | Steer: the voice-first composer, delivered and audited | done | [story-03-steer-composer](./story-03-steer-composer.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-87-04 | Ground: desk objects ride into the steer | done | [story-04-desk-context](./story-04-desk-context.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-87-05 | Classify: triage from the pull-out | done | [story-05-classify-verbs](./story-05-classify-verbs.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-87-06 | The robustness rig, the walk, the docs | backlog | [story-06-robustness-walk](./story-06-robustness-walk.md) | - |
+| HS-87-06 | The robustness rig, the walk, the docs | done | [story-06-robustness-walk](./story-06-robustness-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
@@ -106,7 +106,20 @@ verdict, dropped when the session leaves the registry and re-asserted
 when it returns. **Flip from here** — `flipTargetForStory` resolves
 the session's correlated story to `{repo, project, story}` and calls
 the Phase-82 `proposeFlip`; the ProposalCard renders where it always
-does. Next: HS-87-06, the robustness rig, the walk, the docs — the close.
+does.
+
+**CLOSED (HS-87-06).** The eight-beat walk ran live against one real
+tmux pane and the real `.43` model: attach, refuse-unarmed, arm,
+steer, ground (control vs treatment), classify (keep note), then the
+crown cases — recycled pane refused+revoked, TTL expiry
+refused+revoked, cross-surface disarm → next send unarmed — and the
+audit trail read back with every steer's row present. Mechanical
+rules: the chokepoint census pins `send_text_to_pane`'s call sites,
+audit-completeness pins one row per outcome, the desk locks already
+cover the pull-out tree. Docs shipped: USER_GUIDE "Steer a session
+from the desk", the SECURITY.md consent-model boundary, the
+ARCHITECTURE.md steering-chokepoint paragraph. The B3/B4 handoff is
+in the [final summary](./final-summary.md).
 
 ## Active risks
 
