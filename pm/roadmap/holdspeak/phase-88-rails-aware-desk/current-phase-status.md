@@ -1,6 +1,6 @@
 # Phase 88 — The Rails-Aware Desk (rails as material, the ambient observer)
 
-**Last updated:** 2026-07-08 (HS-88-02 done — the rails picker; 2/5).
+**Last updated:** 2026-07-08 (HS-88-03 done — the ambient observer; 3/5).
 
 ## Goal
 
@@ -63,7 +63,7 @@ everything happening with dw in the background."*
 |---|---|---|---|---|
 | HS-88-01 | Rails objects as grounding kinds — the hub hydration seam | done | [story-01-rails-grounding-hub](./story-01-rails-grounding-hub.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-88-02 | The grounding picker learns the rails | done | [story-02-rails-picker](./story-02-rails-picker.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-88-03 | The ambient dw observer — the local rail journal | backlog | [story-03-ambient-observer](./story-03-ambient-observer.md) | - |
+| HS-88-03 | The ambient dw observer — the local rail journal | done | [story-03-ambient-observer](./story-03-ambient-observer.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-88-04 | Reach: rail events from another machine (scoped) | backlog | [story-04-cross-machine-reach](./story-04-cross-machine-reach.md) | - |
 | HS-88-05 | The walk, the docs, the close | backlog | [story-05-walk-docs](./story-05-walk-docs.md) | - |
 
@@ -97,8 +97,25 @@ honest: `POST /api/missioncontrol/rails/size` hydrates the picked refs
 (the dw-named file) and returns SIZES only, never content; over-budget
 warns in the composer. Control-vs-treatment on .43: asked (from a
 grounded open story) the wire key rail refs ride under, the bare model
-could not answer, the grounded run said `rails`. Next: HS-88-03, the
-ambient observer.
+could not answer, the grounded run said `rails`.
+
+The ambient observer is real (HS-88-03): `holdspeak/rails_observer.py`
+is the pure core (event diffing by stable signature, batch summary,
+journal body) with an injectable summarizer; `web_server.
+_rails_observer_loop` drives it — OFF BY DEFAULT
+(`RailsObserverConfig`, re-read each tick), tailing a bounded
+`dw events` (the receipt posture), the first observation a baseline,
+each NEW batch summarized by a RuntimeProfile model
+(`build_profile_summarizer`, off the event loop) into a journal note
+tagged `rails-journal`. Model-unavailable degrades to an honest
+event-only entry (never a fabricated summary). READ-ONLY: the only
+write is the journal — a census (`test_rails_observer.py`) forbids any
+rails-write path in the module. `GET /api/missioncontrol/rails/journal`
+reads it back. Proven live on .43: the observer tailed 16 real rail
+events and journaled them accurately ("HS-88-02 moved from backlog to
+done… HS-88-03 pulled into in-progress… a contract-missing refusal
+resolved by regenerating the contract and passing the gate"). Next:
+HS-88-04, the cross-machine reach.
 
 ## Active risks
 

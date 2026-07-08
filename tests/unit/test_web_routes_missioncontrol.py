@@ -655,3 +655,42 @@ class TestRailsSize:
         ).json()
         assert "text" not in body["sizes"][0]
         assert "zzz" not in json.dumps(body)  # the file body never crosses
+
+
+class TestRailsJournal:
+    """The observer's journal read (HS-88-03) — notes tagged
+    rails-journal, newest first, read-only."""
+
+    def test_journal_lists_tagged_notes(self, tmp_path, monkeypatch):
+        from holdspeak.db.core import Database, reset_database
+        from holdspeak import rails_observer
+
+        reset_database()
+        db = Database(tmp_path / "hs.db")
+        monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
+        batch = rails_observer.summarize_batch(
+            [{"ts": "t1", "event": "story_status", "story": "HS-1", "repo": "code"}],
+            summarize_fn=lambda s, u: "HS-1 shipped.",
+        )
+        rails_observer.record_journal_entry(db, batch, title="Rails journal")
+
+        client = _client(_make_map(tmp_path), _runner_for({}))
+        res = client.get("/api/missioncontrol/rails/journal")
+        assert res.status_code == 200
+        entries = res.json()["entries"]
+        assert len(entries) == 1
+        assert "HS-1 shipped." in entries[0]["body_markdown"]
+        reset_database()
+
+    def test_journal_is_get_only(self, tmp_path):
+        app = FastAPI()
+        app.include_router(
+            build_missioncontrol_router(
+                WebContext(get_state=lambda: {}),
+                runner=_runner_for({}),
+                map_path=_make_map(tmp_path),
+            )
+        )
+        for route in app.routes:
+            if "rails/journal" in getattr(route, "path", ""):
+                assert set(route.methods) == {"GET"}

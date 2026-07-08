@@ -301,6 +301,7 @@ class MeetingWebServer:
         self._ws = WebSocketManager()
         self._duration_task: Optional[asyncio.Task[None]] = None
         self._coder_frames_task: Optional[asyncio.Task[None]] = None
+        self._rails_observer_task: Optional[asyncio.Task[None]] = None
 
         self.app = self._create_app()
 
@@ -589,12 +590,17 @@ class MeetingWebServer:
             self._loop = asyncio.get_running_loop()
             self._duration_task = asyncio.create_task(self._duration_loop())
             self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())
+            self._rails_observer_task = asyncio.create_task(self._rails_observer_loop())
             self._started.set()
             log.debug("Meeting web server startup complete")
 
         @app.on_event("shutdown")
         async def _shutdown() -> None:
-            for task in (self._duration_task, self._coder_frames_task):
+            for task in (
+                self._duration_task,
+                self._coder_frames_task,
+                self._rails_observer_task,
+            ):
                 if task is None:
                     continue
                 task.cancel()
@@ -696,3 +702,65 @@ class MeetingWebServer:
                 raise
             except Exception as e:
                 log.debug(f"coder frames loop error: {e}")
+
+    async def _rails_observer_loop(self) -> None:
+        """The ambient dw observer (HS-88-03) — OFF BY DEFAULT. When
+        enabled, tail the rails' events, and each NEW batch becomes a
+        journal note summarized by a local RuntimeProfile model (off the
+        event loop). Read-only: the only write is the journal. The flag
+        is re-read each tick so it can be turned on without a restart;
+        when off the loop just sleeps."""
+        from . import rails_observer
+        from .config import Config
+        from .missioncontrol_bridge import events_payload, load_project_map
+
+        seen: set[str] = set()
+        primed = False
+        while True:
+            await asyncio.sleep(5.0)
+            try:
+                cfg = Config.load().rails_observer
+                if not cfg.enabled:
+                    continue
+                payload = await asyncio.to_thread(
+                    events_payload, load_project_map(), cfg.tail
+                )
+                events: list[dict] = []
+                for repo in payload.get("repos", []):
+                    if repo.get("status") == "live":
+                        for e in repo.get("events", []) or []:
+                            events.append({**e, "repo": repo.get("name", "")})
+                fresh, seen = rails_observer.new_events(events, seen)
+                if not primed:
+                    # First observation is a baseline — journal only what
+                    # happens AFTER the observer wakes (the HS-86-03 rule).
+                    primed = True
+                    continue
+                if not fresh:
+                    continue
+                summarizer = rails_observer.build_profile_summarizer(cfg.profile_id)
+                batch = await asyncio.to_thread(
+                    rails_observer.summarize_batch, fresh, summarize_fn=summarizer
+                )
+                from .db import get_database
+
+                await asyncio.to_thread(
+                    rails_observer.record_journal_entry,
+                    get_database(),
+                    batch,
+                    title="Rails journal",
+                )
+                await self._ws.broadcast(
+                    BroadcastMessage(
+                        type="intel_status",
+                        data={
+                            "state": "ready",
+                            "scope": "rails-journal",
+                            "capability": {"kind": "rails-journal", "id": "journal", "name": "rails"},
+                        },
+                    )
+                )
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                log.debug(f"rails observer loop error: {e}")

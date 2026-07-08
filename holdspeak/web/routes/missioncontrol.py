@@ -214,6 +214,32 @@ def build_missioncontrol_router(
             log.warning(f"mission control evidence failed ({exc})")
             return {"status": "unavailable", "detail": "evidence read failed"}
 
+    @router.get("/api/missioncontrol/rails/journal")
+    async def api_missioncontrol_rails_journal(limit: int = 50) -> Any:
+        """The ambient observer's journal (HS-88-03) — the local model's
+        running note of what the rails did, newest first. Read-only; the
+        journal entries are notes, openable and groundable like any
+        primitive."""
+        try:
+            from ...db import get_database
+            from ...rails_observer import list_journal
+
+            entries = await asyncio.to_thread(list_journal, get_database(), limit=limit)
+            return {
+                "entries": [
+                    {
+                        "id": n.id,
+                        "title": n.title,
+                        "body_markdown": n.body_markdown,
+                        "created_at": getattr(n, "created_at", ""),
+                    }
+                    for n in entries
+                ]
+            }
+        except Exception as exc:
+            log.warning(f"rails journal read failed ({exc})")
+            return {"entries": [], "error": "rails journal read failed"}
+
     @router.post("/api/missioncontrol/rails/size")
     async def api_missioncontrol_rails_size(body: dict[str, Any]) -> Any:
         """Hydrated sizes for picked rail refs (HS-88-02) — the grounding
