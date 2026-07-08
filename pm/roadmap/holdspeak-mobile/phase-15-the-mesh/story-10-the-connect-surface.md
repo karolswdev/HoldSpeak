@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 15
-- **Status:** in-progress — opened 2026-06-22 (owner: *"Where do I set up the computer and connect
+- **Status:** built end-to-end + Simulator-proven (owner's on-device green run remaining) — opened 2026-06-22 (owner: *"Where do I set up the computer and connect
   to? Have you thought about creating a new place for that? a lot of these have got a lot of
   discovery verbs."*). **2026-07-06: the remote-pairing saga — five stacked defects found and
   fixed across builds 3–4 (see the section below); connect is proven end-to-end in the

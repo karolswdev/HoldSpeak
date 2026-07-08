@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 15
-- **Status:** backlog
+- **Status:** built + Simulator-proven (voice delivery reuses the desk composer; LAN proof owner-gated)
 - **Depends on:** HSM-15-08 (the desk it expands into), the Queue HUD, `GET /api/companion/status`,
   the presence/notification surfaces.
 - **Owner:** unassigned

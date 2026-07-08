@@ -1645,9 +1645,29 @@
       ]
     },
     {
+      "path": "/api/missioncontrol/evidence",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/missioncontrol/proposals/{proposal_id}/decision",
       "methods": [
         "POST"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/missioncontrol/receipts",
+      "methods": [
+        "GET"
       ],
       "module": "web.routes.missioncontrol",
       "consumers": [

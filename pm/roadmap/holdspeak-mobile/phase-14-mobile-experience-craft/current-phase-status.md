@@ -82,11 +82,11 @@ Pencil), accessibility + adaptivity, and a polish pass — each delivered with c
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSM-14-01 | Native design system (Signal → SwiftUI tokens + components) | in-progress | [story-01](./story-01-native-design-system.md) | [shot](./screenshots/tactile-sheets.png) |
-| HSM-14-02 | The capture experience, recrafted (flagship moment) | in-progress | story-02 | floating draggable recorder + full-bleed canvas + mic-reactive waveform + faster transcription |
+| HSM-14-02 | The capture experience, recrafted (flagship moment) | in-progress | [story-02-capture-experience-recrafted](./story-02-capture-experience-recrafted.md) | floating draggable recorder + full-bleed canvas + mic-reactive waveform + faster transcription |
 | HSM-14-03 | The meeting + intelligence surface, recrafted | in-progress | [story-03](./story-03-meeting-intelligence-recrafted.md) | cards materialize (glow+insert) + MIR-as-lens, on device |
-| HSM-14-04 | Interaction craft (gesture, haptic, motion, Pencil) | backlog | story-04 | — |
-| HSM-14-05 | Accessibility + adaptivity | backlog | story-05 | — |
-| HSM-14-06 | Polish & craft QA (states, micro-copy, screenshot gallery) | backlog | story-06 | — |
+| HSM-14-04 | Interaction craft (gesture, haptic, motion, Pencil) | backlog | [story-04-interaction-craft](./story-04-interaction-craft.md) | — |
+| HSM-14-05 | Accessibility + adaptivity | backlog | [story-05-accessibility-adaptivity](./story-05-accessibility-adaptivity.md) | — |
+| HSM-14-06 | Polish & craft QA (states, micro-copy, screenshot gallery) | backlog | [story-06-polish-craft-qa](./story-06-polish-craft-qa.md) | — |
 | HSM-14-07 | Voice correction — reject by voice → local model re-routes | in-progress | [story-07](./story-07-voice-correction.md) | host-tested + on iPad |
 | HSM-14-08 | The Pencil as a diagram language (sketch → Mermaid) | in-progress | [story-08](./story-08-pencil-diagram-language.md) | engine host-tested (209/0) |
 | HSM-14-09 | Local vision model (Gemma 4) seam + ambiguity resolution | in-progress | [story-09](./story-09-local-vision-model.md) | seam host-tested (211/0) |

@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+# Deferred work-log summarizer.
+#
+# Reads deterministic pmo-roadmap daily work-log entries and writes a companion
+# digest beside the source log. This is intentionally outside the Git commit
+# hook path.
+
+set -eu
+set -o pipefail
+
+usage() {
+  cat <<EOF
+Usage: work-log-summarize [options]
+
+Options:
+  --date YYYY-MM-DD        Day to summarize (default: today)
+  --log-dir DIR            Work-log root (default: \$PMO_WORK_LOG_DIR or ~/.work/log)
+  --log-file FILE          Summarize one specific log file
+  --command CMD            Summarizer command (default: \$PMO_WORK_LOG_SUMMARIZER)
+  --max-output-bytes N     Cap summarizer output (default: 20000)
+  --timeout-seconds N      Kill summarizer after N seconds (default: 120)
+  --force                  Overwrite an existing companion digest
+  -h, --help               Show this help
+
+The command receives a prepared prompt and the deterministic log on stdin.
+It should write markdown to stdout. No command runs unless one is configured.
+EOF
+}
+
+die() {
+  echo "work-log-summarize: $1" >&2
+  exit 1
+}
+
+DATE="$(date +%F)"
+# PMO_WORK_LOG_DIR precedence: pre-commit.config > environment > default;
+# the --log-dir flag beats all three.
+LOG_DIR="${PMO_WORK_LOG_DIR:-${HOME:-}/.work/log}"
+REPO_TOPLEVEL="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -n "$REPO_TOPLEVEL" ] && [ -f "$REPO_TOPLEVEL/.githooks/pre-commit.config" ]; then
+  # shellcheck disable=SC1091
+  . "$REPO_TOPLEVEL/.githooks/pre-commit.config"
+  LOG_DIR="${PMO_WORK_LOG_DIR:-$LOG_DIR}"
+fi
+LOG_FILE=""
+SUMMARIZER_CMD="${PMO_WORK_LOG_SUMMARIZER:-}"
+MAX_OUTPUT_BYTES="${PMO_WORK_LOG_SUMMARY_MAX_BYTES:-20000}"
+TIMEOUT_SECONDS="${PMO_WORK_LOG_SUMMARY_TIMEOUT_SECONDS:-120}"
+FORCE=0
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help) usage; exit 0 ;;
+    --date) DATE="$2"; shift 2 ;;
+    --log-dir) LOG_DIR="$2"; shift 2 ;;
+    --log-file) LOG_FILE="$2"; shift 2 ;;
+    --command) SUMMARIZER_CMD="$2"; shift 2 ;;
+    --max-output-bytes) MAX_OUTPUT_BYTES="$2"; shift 2 ;;
+    --timeout-seconds) TIMEOUT_SECONDS="$2"; shift 2 ;;
+    --force) FORCE=1; shift ;;
+    --) shift; break ;;
+    -*) die "unknown option: $1" ;;
+    *) die "unexpected argument: $1" ;;
+  esac
+done
+
+[ -n "$SUMMARIZER_CMD" ] || die "missing summarizer command; set PMO_WORK_LOG_SUMMARIZER or pass --command"
+case "$MAX_OUTPUT_BYTES" in
+  ''|*[!0-9]*) die "--max-output-bytes must be a positive integer" ;;
+esac
+[ "$MAX_OUTPUT_BYTES" -gt 0 ] || die "--max-output-bytes must be greater than zero"
+case "$TIMEOUT_SECONDS" in
+  ''|*[!0-9]*) die "--timeout-seconds must be a positive integer" ;;
+esac
+[ "$TIMEOUT_SECONDS" -gt 0 ] || die "--timeout-seconds must be greater than zero"
+
+limit_bytes() {
+  awk -v max="$MAX_OUTPUT_BYTES" '
+    BEGIN { count=0 }
+    {
+      line=$0 "\n"
+      len=length(line)
+      if (count + len <= max) {
+        printf "%s", line
+        count += len
+      } else {
+        remaining=max-count
+        if (remaining > 0) {
+          printf "%s", substr(line, 1, remaining)
+        }
+        printf "\n[PMO_WORK_LOG_SUMMARY_TRUNCATED]\n"
+        exit
+      }
+    }
+  '
+}
+
+fallback_summary() {
+  src="$1"
+  entry_count=$(grep -c '^kind: pmo-work-log-entry$' "$src" 2>/dev/null || true)
+  first_subject=$(grep '^- \*\*Subject:\*\*' "$src" 2>/dev/null | sed -n '1p' | sed 's/^- \*\*Subject:\*\* //')
+  last_commit=$(grep '^commit: ' "$src" 2>/dev/null | tail -1 | sed 's/^commit: //')
+  echo "## Deterministic Fallback"
+  echo
+  echo "- Summarizer output was empty, so no model-authored summary was recorded."
+  echo "- Source log: \`$src\`"
+  echo "- Work-log entries: ${entry_count:-0}"
+  if [ -n "$first_subject" ]; then
+    echo "- First subject: $first_subject"
+  fi
+  if [ -n "$last_commit" ]; then
+    echo "- Latest commit: \`$last_commit\`"
+  fi
+  echo "- The deterministic source log remains the authoritative record."
+}
+
+summarize_one() {
+  src="$1"
+  [ -f "$src" ] || die "log file does not exist: $src"
+
+  case "$src" in
+    *-work-summary.log) digest="${src%-work-summary.log}-deferred-summary.md" ;;
+    *) digest="$src.deferred-summary.md" ;;
+  esac
+
+  if [ -e "$digest" ] && [ "$FORCE" -ne 1 ]; then
+    echo "work-log-summarize: skip existing digest: $digest" >&2
+    return 0
+  fi
+
+  tmp_payload="${digest}.payload.$$"
+  tmp_output="${digest}.out.$$"
+  tmp_raw="${digest}.raw.$$"
+  tmp_err="${digest}.err.$$"
+
+  {
+    echo "# PMO Work Log Deferred Summarization Payload"
+    echo
+    echo "Summarize the deterministic architect log below into concise markdown."
+    echo "Preserve technical specificity. Do not invent impact that is not present."
+    echo "Call out delivered value, important files, verification/evidence, and follow-ups."
+    echo
+    echo "Source log: $src"
+    echo
+    echo "--- SOURCE LOG ---"
+    cat "$src"
+  } > "$tmp_payload"
+
+  sh -c "$SUMMARIZER_CMD" < "$tmp_payload" > "$tmp_raw" 2> "$tmp_err" &
+  summarizer_pid=$!
+  waited=0
+  while kill -0 "$summarizer_pid" 2>/dev/null; do
+    if [ "$waited" -ge "$TIMEOUT_SECONDS" ]; then
+      kill "$summarizer_pid" 2>/dev/null || true
+      sleep 1
+      kill -9 "$summarizer_pid" 2>/dev/null || true
+      rm -f "$tmp_payload" "$tmp_output" "$tmp_raw" "$tmp_err"
+      die "summarizer command timed out after ${TIMEOUT_SECONDS}s for $src"
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+
+  if ! wait "$summarizer_pid"; then
+    err=$(sed -n '1,8p' "$tmp_err" 2>/dev/null || true)
+    rm -f "$tmp_payload" "$tmp_output" "$tmp_raw" "$tmp_err"
+    if [ -n "$err" ]; then
+      die "summarizer command failed for $src: $err"
+    else
+      die "summarizer command failed for $src"
+    fi
+  fi
+
+  limit_bytes < "$tmp_raw" > "$tmp_output"
+  if ! grep -q '[^[:space:]]' "$tmp_output"; then
+    fallback_summary "$src" > "$tmp_output"
+  fi
+
+  {
+    echo "---"
+    echo "kind: pmo-work-log-deferred-summary"
+    echo "schema_version: 1"
+    echo "timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "source_log: $src"
+    echo "summary_mode: deferred"
+    echo "---"
+    echo
+    cat "$tmp_output"
+    echo
+  } > "$digest"
+
+  rm -f "$tmp_payload" "$tmp_output" "$tmp_raw" "$tmp_err"
+  echo "work-log-summarize: wrote $digest"
+}
+
+if [ -n "$LOG_FILE" ]; then
+  summarize_one "$LOG_FILE"
+else
+  day_dir="$LOG_DIR/$DATE"
+  [ -d "$day_dir" ] || die "no log directory for date: $day_dir"
+  found=0
+  for f in "$day_dir"/*-work-summary.log; do
+    [ -f "$f" ] || continue
+    found=1
+    summarize_one "$f"
+  done
+  [ "$found" -eq 1 ] || die "no work-summary logs found in $day_dir"
+fi
+
+exit 0

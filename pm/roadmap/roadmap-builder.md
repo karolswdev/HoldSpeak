@@ -2,14 +2,14 @@
 
 **Owner:** PMO.
 **Status:** canonical methodology, distributed via `pmo-roadmap`
-(`~/dev/reusable-processes/pmo-roadmap`).
+(`pmo-roadmap/` in https://github.com/karolswdev/delivery-workbench).
 **Read this if:** you are an agent (or a human) tasked with translating a
 PMO plan + product vision into a phase-based, evidence-rich roadmap project
 under `pm/roadmap/{project}/`.
 
 This document is **both** the methodology and the primer prompt. §6 is the
 copy-paste prompt block. The rest is the reference material that prompt
-points at. §8 is a worked example from one real project (Pantrybot) — keep
+points at. §8 points at a worked example under `templates/examples/` — keep
 or replace as fits your project.
 
 ---
@@ -54,7 +54,7 @@ pm/roadmap/
 Rules:
 
 1. One project per top-level folder. Slug is kebab-case, derived from the
-   project's user-facing name (`pantrybot`, `mealplanner-v2`, etc.).
+   project's user-facing name (`myproject`, `mealplanner-v2`, etc.).
 2. Phase folders are `phase-{n}-{kebab-slug}` where `{n}` is zero-indexed
    if there is a "convergence / setup" phase (Phase 0), otherwise one-indexed.
 3. Story files are `story-{n}-{kebab-slug}.md` where `{n}` is the story's
@@ -89,7 +89,9 @@ Required sections:
 
 **Last updated:** YYYY-MM-DD.
 **Current phase:** [phase-{n}-{slug}](./phase-{n}-{slug}/current-phase-status.md)
-**Status:** {planning | in-progress | shipped | paused}.
+**Status:** {planning | active | paused | done | cancelled}.
+  (the canonical project-status vocabulary — other docs reference it,
+  never restate it)
 
 ## Vision
 {1–3 paragraphs: what we're building and why. Quote canon, don't invent.}
@@ -145,7 +147,7 @@ Checklist. Every item names a real artifact or test:
 |---|---|---|---|---|
 | PB-1-01 | … | done | [story-01](./story-01-…md) | [evidence-01](./evidence-story-01.md) |
 | PB-1-02 | … | in-progress | [story-02](./story-02-…md) | — |
-| PB-1-03 | … | backlog | [story-03](./story-03-…md) | — |
+| PRJ-1-03 | … | backlog | [story-03](./story-03-…md) | — |
 
 ## Where we are
 {2–6 sentences: most recent chunk, what's next, blockers. Updated each
@@ -166,8 +168,9 @@ should know what to do next.}
 
 ### 2.3 `phase-{n}-{slug}/story-{n}-{slug}.md`
 
-One file per atomic unit of work. One story = one PR. Ported from the
-existing `pm/pantry-life/` story shape (it works; don't redesign it).
+One file per atomic unit of work. One story = one PR. This shape is
+battle-tested across the framework's own seven shipped phases; don't
+redesign it.
 
 Required header + sections:
 
@@ -177,6 +180,9 @@ Required header + sections:
 - **Project:** {project-slug}
 - **Phase:** {n}
 - **Status:** backlog | ready | in-progress | blocked | done
+  (the canonical story-status vocabulary — single source; done-synonyms
+  accepted by tooling: complete | closed | shipped. Other docs and
+  templates reference this line, never restate it.)
 - **Depends on:** {comma-separated IDs, or "none"}
 - **Unblocks:** {comma-separated IDs} (optional)
 - **Owner:** {initials or "unassigned"}
@@ -196,7 +202,7 @@ reading code or running a command:
 
 ## Test plan
 - Unit: {commands + which files}
-- Integration / Cypress: {commands + spec files, or "n/a — covered in PB-X-Y"}
+- Integration: {commands, or "n/a — covered in {ID}"}
 - Manual / device: {steps, or "n/a"}
 
 ## Notes / open questions
@@ -228,7 +234,7 @@ Paste the actual output, not a summary:
 - `npm run type-check` → passed.
 - `npm run test:unit -- foo.test.ts` → 1 file, 7 tests passed.
 - `npm run lint -- path/to/file.ts` → 0 errors, 2 existing warnings.
-- Cypress / device review: {results, screenshot paths if relevant}
+- UI / device review: {results; screenshots under `assets/` next to this file}
 
 ## Acceptance criteria — re-checked
 Re-run through the story's checklist with one-line evidence per item.
@@ -250,47 +256,35 @@ Created **on phase exit**. Immutable afterwards.
 
 Required sections:
 
+Four sections — the phase status and evidence files already carry the
+detail; the summary is the exit record, not a restatement.
+
 ```markdown
-# Phase {n} — Final Summary
+# Phase {n} Final Summary
 
-- **Phase opened:** YYYY-MM-DD
-- **Phase closed:** YYYY-MM-DD
-- **Chunks shipped:** {count}
+**Status:** complete.
+**Date:** YYYY-MM-DD.
 
-## Goal — was it met?
-Re-list the original goal verbatim, then a yes/no/partial with evidence
-links to the relevant `evidence-story-*.md` files.
-
-## Exit criteria — final state
-Re-run the original exit-criteria checklist. Every item: status + evidence
-link.
+## Outcome vs exit criteria
+Re-run the original exit-criteria checklist verbatim. Every item:
+status + evidence link, or an explicit deferral with the reason and
+re-target.
 - [x] … — see [evidence-story-04](./evidence-story-04.md)
 - [ ] … — **deferred to phase {m}**, reason: …
 
-## Stories shipped
-| ID | Title | Commit/PR | Date |
+## Evidence index
+| ID | Title | Evidence | Commit |
 |---|---|---|---|
-| PB-{n}-01 | … | abc1234 | 2026-04-26 |
-
-## Stories cut or deferred
-| ID | Title | Reason | Re-targeted to |
-|---|---|---|---|
-| PB-{n}-07 | … | scope cut at chunk {x.y} | phase {m}, or "won't ship" |
+| PRJ-{n}-01 | … | [evidence-story-01](./evidence-story-01.md) | abc1234 |
 
 ## Surprises and lessons
-{What did we learn that the next phase needs to know? Calibration data
-(e.g. "Pixellab batch 3 needed 2 regen passes — budget that into phase
-{m}"). Not a feel-good retro; a practical handoff.}
+{What the next phase needs to know. Calibration data, not a feel-good
+retro.}
 
 ## Handoff to phase {n+1}
 - What is now available that wasn't before: {…}
 - What changed in the contract / canon: {…}
 - What the next phase should read first: {paths}
-
-## Final asset / test posture
-- {test counts}
-- {asset counts}
-- {anything material to baseline going forward}
 ```
 
 ---
@@ -308,8 +302,8 @@ PHASE OPEN
 WORK IN PROGRESS (per chunk, repeat)
   ├─ Pick a story; flip its status: backlog → ready → in-progress
   ├─ Update current-phase-status.md story-status row in the same edit
-  ├─ Ship one PR (per memory feedback_actually_run_tests: tests must
-  │   actually run, not just be authored)
+  ├─ Ship one PR (tests must actually run — capture them with
+  │   `dw evidence capture` — not just be authored)
   ├─ On merge:
   │   ├─ Story status → done
   │   ├─ Create evidence-story-{n}.md with real verification output
@@ -337,16 +331,19 @@ Anti-patterns that break the lifecycle (reject if seen):
 - Phase folders without exit criteria.
 - Multiple stories in one PR (split, or document why with a `Notes`
   entry on each story file).
+- UI-facing story evidence without the project's extension artifacts,
+  when the project defines extension rules in `PMO-CONTRACT.md`. If
+  there is no visual output, the evidence must say why.
 
 ---
 
 ## 4. Naming and ID rules
 
 - **Project slug:** kebab-case, derived from user-facing name. Stable
-  forever. `pantrybot`, not `pantrybot-v2`.
+  forever. `myproject`, not `myproject-v2`.
 - **Project prefix:** uppercase abbreviation, used in story IDs.
-  `pantrybot` → `PB`. Pre-existing prefixes (`PL` for pantry-life) stay
-  as-is on legacy stories; new projects pick a new prefix.
+  `myproject` → `MP`. Pre-existing prefixes stay as-is on legacy
+  stories; new projects pick a new prefix.
 - **Phase folder:** `phase-{n}-{kebab-slug}`. Slug derives from the phase
   goal (`phase-0-convergence-pm-lock`, `phase-3-pl-raster-catalog`). Keep
   under ~40 chars total.
@@ -377,6 +374,11 @@ same project should not duplicate or corrupt anything.
    the PMO plan; if the plan does not specify them, ask the user or
    surface candidate phases for approval before writing anything.
 
+   (Prefer the mechanical scaffolders for steps 3-5: `dw phase create`,
+   `dw story create`, and `dw adopt --from-report` render exactly the
+   §2 templates and update the cross-links; hand-write files only when
+   the tooling is unavailable.)
+
 3. PROJECT SCAFFOLD — if pm/roadmap/{slug}/ does not exist:
    - create it
    - write README.md from §2.1 template, populated from canon
@@ -401,6 +403,8 @@ same project should not duplicate or corrupt anything.
    - no final-summary.md exists for a phase with unchecked exit
      criteria ✓
    - every file follows the templates in §2 ✓
+   - if the project tracks design handoff, every UI-facing story has
+     a design-handoff test-plan line ✓
 
 7. REPORT — print a summary: what was created, what was skipped, what
    needs user input. Do NOT mark any work as complete in stories the
@@ -449,9 +453,10 @@ Hard rules:
 - Do NOT invent phases, stories, or acceptance criteria not grounded
   in canon. If canon is silent, surface the gap and ask.
 - Follow the file templates in roadmap-builder.md §2 exactly.
-- Honor every memory rule in ~/.claude/projects/.../memory/MEMORY.md
-  that applies (greenfield, run-tests-don't-author, update-master-docs,
-  etc.).
+- For work covered by the project's extension rules, include the
+  matching acceptance + verification per the project's
+  `PMO-CONTRACT.md` §"Project extensions" (which names the project's
+  specific commands and artifacts; the canonical doesn't).
 
 Output: a filesystem diff (what was created, what was skipped, what
 needs user input) plus a one-paragraph summary. Do not write code
@@ -466,59 +471,39 @@ These are the principles every roadmap project inherits. They are not
 restated in each project's README; this section is the canonical source.
 
 - **Evidence, not vibes.** Every "done" needs an `evidence-story-*.md`
-  with actual command output. Type-check is not validation
-  (memory: `feedback_actually_run_tests`).
+  with actual command output — prefer captured runs
+  (`dw evidence capture`). Type-check is not validation.
 - **Update master docs in the same chunk.** Every shipping commit
-  touches the relevant tracking docs together (memory:
-  `feedback_update_master_docs`,
-  `feedback_pantry_life_pickup_snapshot`).
-- **Run the tests; don't just author them.** Use the documented npm
-  scripts (memory: `feedback_ios_test_npm_scripts`,
-  `feedback_actually_run_tests`).
-- **Greenfield discipline.** Pre-TestFlight, no users → no migration
-  ceremony, no compat shims (memory:
-  `feedback_greenfield_no_migrations`). Project-specific; honor when
-  the project is in that state.
+  touches the relevant tracking docs together.
+- **Run the tests; don't just author them.** Use the project's
+  documented scripts and read the output.
+- **Greenfield discipline.** Pre-launch, no users → no migration
+  ceremony, no compat shims. Project-specific; honor when the project
+  declares that state.
 - **One PR per story.** If a chunk needs to bundle, document why on
   every story file involved.
 - **Stop signals matter.** Risk tables in `current-phase-status.md`
   must include a stop signal — the concrete observation that triggers
   "halt this approach and regroup." Without one, the risk is
   decorative.
-- **Canon wins.** If a story contradicts `APP-SOUL.md`, the design
-  brief, or the PMO plan, the canon wins. Record the disagreement in
-  the story's "Notes / open questions" and move on.
+- **Project extensions are part of the work they cover.** If a project
+  declares extension rules in its `PMO-CONTRACT.md` §"Project
+  extensions" (gated by `.githooks/pre-commit.local`), any story the
+  rule covers updates the matching artifacts in the same chunk. If a
+  rule genuinely does not apply, the evidence says why.
+- **Canon wins.** If a story contradicts the project's canon docs or
+  the PMO plan, the canon wins. Record the disagreement in the story's
+  "Notes / open questions" and move on.
 
 ---
 
-## 8. Worked example — Pantrybot (illustrative)
+## 8. Worked example
 
-> The section below is the first real project to use this contract. Treat
-> it as a concrete reference for *how* to map a PMO plan onto the
-> directory contract. Replace or delete when you have your own example.
-
-
-The first project to use this contract is `pm/roadmap/pantrybot/`,
-seeded from `pm/ROADMAP.md`. The mapping:
-
-| `pm/ROADMAP.md` section | `pm/roadmap/pantrybot/` artifact |
-|---|---|
-| §0–§3 vision + convergence | `README.md` |
-| §4 phase 0 | `phase-0-convergence-pm-lock/current-phase-status.md` + 2 stories |
-| §4 phase 1 | `phase-1-raster-runtime-shell/current-phase-status.md` + 3 stories |
-| §4 phase 2 | `phase-2-testflight-brand-pack/current-phase-status.md` + 6 stories |
-| §4 phase 3 | `phase-3-pl-raster-catalog/current-phase-status.md` + 8 stories |
-| §4 phase 4 | `phase-4-pre-testflight-polish/current-phase-status.md` + 4 stories |
-| §4 phase 5 | not scaffolded yet (post-TestFlight, deferred) |
-| §6 risks / §7 decisions | distributed across each phase's `current-phase-status.md` |
-| §10 cadence log | per-phase `final-summary.md` files at close |
-
-Story prefix: `PB`. Example IDs: `PB-0-01`, `PB-3-04`.
-
-When the user approves Phase 0 of `pm/ROADMAP.md`, run this builder on
-the Pantrybot project to produce the scaffold. The first story shipped
-under the new contract should have its evidence file land in the same
-PR as the story-status flip.
+A complete worked example — mapping a real PMO plan onto this directory
+contract, including the extension-rule pattern — lives at
+[`templates/examples/roadmap-builder-worked-example.md`](./examples/roadmap-builder-worked-example.md)
+in the framework repository. It is illustrative only and is not
+installed into consumer projects.
 
 ---
 
@@ -528,3 +513,11 @@ This file changes when the methodology changes, not when individual
 projects do. Bump the "Status" line date and add a note here:
 
 - 2026-04-25 — initial methodology, v1.
+- 2026-07-02 — Phase 6 hardening: §2.3 declares the canonical story
+  vocabulary (doc-parity tested); §2.5 slimmed to the four-section
+  final summary; captured runs (`dw evidence capture`) named in the
+  lifecycle; worked examples extracted to `templates/examples/`;
+  de-personalized.
+- 2026-07-02 — Phase 7 accuracy pass: §2.5 header aligned with the
+  generator's output; §5 names the mechanical scaffolders; legacy
+  project reference removed from §2.3.

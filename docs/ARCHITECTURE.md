@@ -360,6 +360,19 @@ same lineage on the web and the other way round. The printed card's
 badge states where that run went (the model, and the host for an
 endpoint run), resolved per run rather than from the app default.
 
+The desk's mission-control conveyor is a read path with one deliberate
+shape: the hub shells each mapped repository's own `dw` CLI for the
+three documents the Delivery Workbench contract allows a client (state
+feed, session correlation, event log), asks the operator's own `gh` for
+open pull requests and their check rollups, and relays all of it typed
+and byte-honest (`missioncontrol_bridge.py` behind
+`/api/missioncontrol/*`, every belt read GET-only under a fitness
+test). When a read observes a repository's state tree change, the hub
+broadcasts a `scope:"belt"` frame on the one `/ws` bus, so any surface
+can move its belt without private polling. Evidence files open through
+the same CLI-resolved paths, contained to each repository's
+`pm/roadmap` tree.
+
 ## The trust boundary
 
 Everything inside the box runs on your machine. Every arrow leaving it is a

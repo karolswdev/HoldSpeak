@@ -11,11 +11,14 @@
 // Design: docs/internal/MISSION_CONTROL_DESK.md §2–§3.
 import { useEffect, useState } from "react";
 import {
+  McEvent,
   McProject,
   McRepo,
   McSession,
   POLL_MS,
   formatEvent,
+  gateLightFor,
+  isBeltFrame,
   offBeltSessions,
   sessionsByStory,
   useMissionControl,
@@ -112,7 +115,21 @@ function PhaseBelt({
             }
           >
             {s.storyId}
-            {s.evidenceExists ? " ✓" : ""}
+            {s.evidenceExists && (
+              <span
+                role="button"
+                className="desk-mc-evidence-open"
+                title="open the evidence in place"
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  void useMissionControl
+                    .getState()
+                    .openEvidence(repoName, project.slug, s.storyId);
+                }}
+              >
+                ✓
+              </span>
+            )}
             {(pins[s.storyId] || []).map((sess) => (
               <SessionPin key={sess.key} session={sess} />
             ))}
@@ -123,16 +140,62 @@ function PhaseBelt({
   );
 }
 
+/** The lane-head station lights (HS-86-04): PR, CI, gate — receipts
+ * only; each light is absent when its receipt is. */
+function StationLights({ repo, events }: { repo: McRepo; events: McEvent[] }) {
+  const gate = gateLightFor(events, repo.name);
+  return (
+    <span className="desk-mc-lights">
+      {repo.receipts === "live" && repo.prs.length > 0 && (
+        <a
+          className="desk-mc-light pr"
+          href={repo.prs[0].url}
+          target="_blank"
+          rel="noreferrer"
+          title={repo.prs.map((p) => `#${p.number} ${p.title}`).join("\n")}
+        >
+          ⛓ {repo.prs.length}
+        </a>
+      )}
+      {repo.receipts === "live" && repo.prs.length > 0 && (
+        <span
+          className={"desk-mc-light ci-" + repo.prs[0].ci}
+          title={`CI on #${repo.prs[0].number} (${repo.prs[0].branch})`}
+        >
+          ●
+        </span>
+      )}
+      {repo.receipts === "unavailable" && (
+        <span className="desk-mc-light off" title="gh receipts unavailable">
+          ⛓ ∅
+        </span>
+      )}
+      {gate.state === "pass" && (
+        <span className="desk-mc-light gate-pass" title="last gate: pass">
+          ▣
+        </span>
+      )}
+      {gate.state === "refusal" && (
+        <span className="desk-mc-light gate-refusal" title="last gate: refusal">
+          ▣ ✕ {gate.rule}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function RepoBlock({
   repo,
   pins,
   picked,
   onPick,
+  events,
 }: {
   repo: McRepo;
   pins: Record<string, McSession[]>;
   picked: PickTarget | null;
   onPick: (t: PickTarget | null) => void;
+  events: McEvent[];
 }) {
   if (repo.status !== "live") {
     return (
@@ -147,6 +210,10 @@ function RepoBlock({
   }
   return (
     <>
+      <div className="desk-mc-repo-head">
+        <span className="desk-mc-repo-name">{repo.name}</span>
+        <StationLights repo={repo} events={events} />
+      </div>
       {repo.projects.map((p) => (
         <PhaseBelt
           key={repo.name + p.slug}
@@ -158,6 +225,32 @@ function RepoBlock({
         />
       ))}
     </>
+  );
+}
+
+/** The filed object, opened in place (HS-86-04) — a pull-out inside
+ * the conveyor, never a modal, never a route away. */
+function EvidencePanel() {
+  const evidence = useMissionControl((s) => s.evidence);
+  const evidenceDetail = useMissionControl((s) => s.evidenceDetail);
+  const { closeEvidence } = useMissionControl.getState();
+  if (evidenceDetail) {
+    return (
+      <div className="desk-mc-evidence">
+        <span className="desk-mc-refusal">✕ {evidenceDetail}</span>
+        <button className="desk-mc-btn" onClick={closeEvidence}>close</button>
+      </div>
+    );
+  }
+  if (!evidence) return null;
+  return (
+    <div className="desk-mc-evidence">
+      <div className="desk-mc-evidence-head">
+        <span className="desk-mc-evidence-path">{evidence.path}</span>
+        <button className="desk-mc-btn" onClick={closeEvidence}>close</button>
+      </div>
+      <pre className="desk-mc-evidence-body">{evidence.text}</pre>
+    </div>
   );
 }
 
@@ -219,7 +312,16 @@ export function MissionControlConveyor() {
   useEffect(() => {
     void refresh();
     const timer = setInterval(() => void refresh(), POLL_MS);
-    return () => clearInterval(timer);
+    // A `scope:"belt"` frame on the one bus moves the belt now; the
+    // poll stays as the fallback heartbeat (HS-86-04).
+    const onFrame = (e: Event) => {
+      if (isBeltFrame((e as CustomEvent).detail)) void refresh();
+    };
+    document.addEventListener("hs-broadcast", onFrame);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("hs-broadcast", onFrame);
+    };
   }, []);
 
   if (updatedAt === null || repos.length === 0) return null; // no rails on this desk
@@ -252,8 +354,10 @@ export function MissionControlConveyor() {
           pins={pins}
           picked={picked}
           onPick={setPicked}
+          events={events}
         />
       ))}
+      <EvidencePanel />
       {picked && (
         <div className="desk-mc-flip">
           <span className="desk-mc-flip-label">flip {picked.story} to</span>

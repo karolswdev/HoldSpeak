@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delivery Workbench</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/">Delivery&nbsp;Workbench</a>
+    <a class="navlink" href="#/mc" id="mc-link">mission control</a>
+    <a class="navlink" href="#/health" id="health-link">health</a>
+    <a class="navlink" href="#/edit" id="edit-link">edit</a>
+    <nav class="crumbs" id="crumbs"></nav>
+    <div class="refresh">
+      <span id="refresh-time" title="last refresh">—</span>
+      <button id="refresh-btn" type="button" title="re-read from Markdown">↻ refresh</button>
+    </div>
+  </header>
+  <main id="app" class="app">
+    <div class="state">Loading…</div>
+  </main>
+  <footer class="footbar">
+    read-only explorer · Markdown is the source of truth · served from
+    <code id="foot-root">this repository</code>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

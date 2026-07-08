@@ -487,6 +487,27 @@ AIPI-Lite is an optional portable device for meeting controls, status feedback,
 and spoken replies to a waiting Claude/Codex session. Firmware and bridge setup
 are in the [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md).
 
+## Mission Control On The Desk
+
+If you plan work with [Delivery Workbench](https://github.com/karolswdev/delivery-workbench),
+the desk renders your repositories as a conveyor: one belt per project, phases
+as segments, the current phase's stories riding it, and live agent sessions
+pinned to the story they are working. Name your repositories in
+`~/.holdspeak/delivery_workbench.json` and the belt appears at the foot of the
+desk.
+
+Everything on the belt is read from receipts. Roadmap state comes from each
+repository's own `dw` command line, pull requests and their check results from
+your own authenticated `gh`, and the event ticker from the repository's rail
+log, with commit-gate refusals shown first and carrying the refused rule
+verbatim. A story chip's evidence tick opens the evidence file right there on
+the desk. When a repository cannot answer, its lane says so plainly instead of
+pretending an empty belt.
+
+The belt itself never writes. The one way to act from it is the story-flip
+proposal, which rides the same propose, approve, execute flow as every other
+action on the desk, and the repository's own commit gate keeps the final say.
+
 ## Privacy Model
 
 HoldSpeak is designed to be local-first.

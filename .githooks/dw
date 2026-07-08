@@ -1,0 +1,767 @@
+#!/usr/bin/env python3
+"""Delivery Workbench roadmap maintenance CLI.
+
+Thin adapter over the ``dw_pmo`` core package. All parsing, validation,
+trace, and mutation behavior lives in ``pmo-roadmap/lib/dw_pmo`` so the
+CLI, the workbench server, and future adapters share one implementation.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+
+def _bootstrap_core() -> None:
+    """Make dw_pmo importable in both source and installed layouts.
+
+    Source layout: this file is pmo-roadmap/bin/dw and the package is
+    pmo-roadmap/lib/dw_pmo. Installed layout: this file is
+    <target>/.githooks/dw and the package is <target>/.githooks/dw_pmo.
+    """
+    here = Path(__file__).resolve().parent
+    for candidate in (here.parent / "lib", here / "lib", here):
+        if (candidate / "dw_pmo" / "__init__.py").is_file():
+            if str(candidate) not in sys.path:
+                sys.path.insert(0, str(candidate))
+            return
+
+
+_bootstrap_core()
+
+try:
+    from dw_pmo import (
+        DwError,
+        __version__ as DW_VERSION,
+        append_trailers,
+        apply_plan,
+        build_context_payload,
+        contract_digest,
+        discover_phases,
+        discover_projects,
+        find_root,
+        get_phase,
+        get_project,
+        parse_story_rows,
+        plan_phase_close,
+        plan_phase_create,
+        plan_story_create,
+        plan_story_evidence,
+        plan_story_status,
+        read_text,
+        next_story,
+        parse_contract_facts,
+        run_adoption,
+        render_doctor,
+        render_gate_failure,
+        render_gate_porcelain,
+        render_verify,
+        render_verify_porcelain,
+        run_capture,
+        run_doctor,
+        run_gate,
+        run_verify,
+        story_num_from_file,
+        write_agent_docs,
+        write_contract,
+    )
+except ImportError as exc:  # pragma: no cover - environment failure path
+    print(
+        "dw: cannot import the dw_pmo core package "
+        f"({exc}); expected it next to this script or under ../lib",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+
+
+def die(message: str, code: int = 1) -> None:
+    print(f"dw: {message}", file=sys.stderr)
+    raise SystemExit(code)
+
+
+def read_body_arg(body: str | None, from_file: Path | None) -> str:
+    if body and from_file:
+        die("pass either --body or --from-file, not both")
+    if from_file:
+        return read_text(from_file)
+    return body or ""
+
+
+def command_projects(args: argparse.Namespace) -> int:
+    for project in discover_projects(args.root):
+        print(f"{project.slug}\t{project.prefix}\t{project.path.relative_to(args.root)}")
+    return 0
+
+
+def command_phase_list(args: argparse.Namespace) -> int:
+    project = get_project(args.root, args.project)
+    for phase in discover_phases(project):
+        print(f"{phase.number}\t{phase.path.name}\t{phase.path.relative_to(args.root)}")
+    return 0
+
+
+def command_phase_show(args: argparse.Namespace) -> int:
+    project = get_project(args.root, args.project)
+    phase = get_phase(project, args.phase)
+    status_file = phase.path / "current-phase-status.md"
+    if not status_file.exists():
+        die(f"phase status file missing: {status_file}")
+    print(read_text(status_file), end="")
+    return 0
+
+
+def command_phase_create(args: argparse.Namespace) -> int:
+    project = get_project(args.root, args.project)
+    plan = plan_phase_create(
+        args.root,
+        project,
+        args.number,
+        args.title,
+        slug=args.slug,
+        status=args.status,
+        goal=args.goal,
+    )
+    apply_plan(plan, validate_after=False)
+    print(plan.summary["phase_dir"])
+    return 0
+
+
+def command_phase_close(args: argparse.Namespace) -> int:
+    project = get_project(args.root, args.project)
+    phase = get_phase(project, args.phase)
+    summary_body = read_body_arg(args.summary, args.from_file)
+    plan = plan_phase_close(
+        args.root,
+        project,
+        phase,
+        summary_body=summary_body,
+        status=args.status,
+        force=args.force,
+    )
+    apply_plan(plan, validate_after=False)
+    print(plan.summary["summary_path"])
+    return 0
+
+
+def command_story_create(args: argparse.Namespace) -> int:
+    project = get_project(args.root, args.project)
+    phase = get_phase(project, args.phase)
+    plan = plan_story_create(
+        args.root,
+        project,
+        phase,
+        args.title,
+        slug=args.slug,
+        status=args.status,
+    )
+    apply_plan(plan, validate_after=False)
+    print(plan.summary["story_path"])
+    return 0
+
+
+def command_story_status(args: argparse.Namespace) -> int:
+    project = get_project(args.root, args.project)
+    phase = get_phase(project, args.phase)
+    evidence_body = read_body_arg(args.evidence_body, args.evidence_from_file)
+    plan = plan_story_status(
+        args.root,
+        project,
+        phase,
+        args.story,
+        args.status,
+        evidence_body=evidence_body,
+        force=args.force,
+    )
+    apply_plan(plan, validate_after=False)
+    print(f"{plan.summary['story_id']}\t{plan.summary['status']}\t{plan.summary['story_path']}")
+    return 0
+
+
+def command_story_evidence(args: argparse.Namespace) -> int:
+    project = get_project(args.root, args.project)
+    phase = get_phase(project, args.phase)
+    body = read_body_arg(args.body, args.from_file)
+    plan = plan_story_evidence(
+        args.root,
+        project,
+        phase,
+        args.story,
+        body=body,
+        force=args.force,
+    )
+    apply_plan(plan, validate_after=False)
+    print(plan.summary["evidence_path"])
+    return 0
+
+
+def command_story_list(args: argparse.Namespace) -> int:
+    project = get_project(args.root, args.project)
+    phases = [get_phase(project, args.phase)] if args.phase else discover_phases(project)
+    for phase in phases:
+        for row in parse_story_rows(phase.path / "current-phase-status.md"):
+            if args.status and row.status != args.status:
+                continue
+            print(f"{row.story_id}\t{row.status}\tphase-{phase.number}\t{row.title}")
+    return 0
+
+
+def command_tree(args: argparse.Namespace) -> int:
+    projects = [get_project(args.root, args.project)] if args.project else discover_projects(args.root)
+    status_filter = "done" if args.done else args.status
+    for project in projects:
+        print(f"{project.slug} ({project.prefix})")
+        phases = discover_phases(project)
+        if args.phase:
+            phases = [get_phase(project, args.phase)]
+        for phase in phases:
+            print(f"  phase {phase.number}: {phase.path.name}")
+            rows = parse_story_rows(phase.path / "current-phase-status.md")
+            if not rows:
+                print("    (no stories)")
+                continue
+            for row in rows:
+                if status_filter and row.status != status_filter:
+                    continue
+                story_num = story_num_from_file(row.story_file)
+                evidence_file = phase.path / f"evidence-story-{story_num:02d}.md" if story_num else None
+                evidence = "yes" if evidence_file and evidence_file.exists() else "no"
+                print(f"    {row.story_id} [{row.status}] evidence:{evidence} {row.title}")
+    return 0
+
+
+def command_next(args: argparse.Namespace) -> int:
+    # Exit contract: 0 = story found, 2 = nothing actionable, 1 = error
+    # (errors surface as DwError via main()).
+    project = get_project(args.root, args.project)
+    found = next_story(project, args.root)
+    if found is None:
+        if args.json:
+            print(json.dumps({"next_story": None}, sort_keys=True))
+        else:
+            print("dw next: nothing actionable (no in-progress, ready, or backlog stories)", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps(found, sort_keys=True))
+    else:
+        print(f"{found['story_id']}\t{found['status']}\t{found['phase_path']}\t{found['title']}")
+    return 0
+
+
+def command_agent_docs(args: argparse.Namespace) -> int:
+    target = args.file if args.file else None
+    path, action = write_agent_docs(args.root, target)
+    try:
+        shown = str(path.relative_to(args.root))
+    except ValueError:
+        shown = str(path)
+    print(f"{shown}\t{action}")
+    return 0
+
+
+def command_adopt(args: argparse.Namespace) -> int:
+    result = run_adoption(
+        args.root,
+        args.from_report,
+        slug=args.project,
+        name=args.project_name,
+        prefix=args.project_prefix,
+        apply=args.apply,
+    )
+    if result["mode"] == "preview":
+        print(f"dw adopt preview for project '{result['project']}' (nothing written):")
+        for item in result["planned"]:
+            print(f"  - {item}")
+        print("Re-run with --apply to scaffold.", file=sys.stderr)
+        return 0
+    print(f"dw adopt applied for project '{result['project']}':")
+    for item in result["applied"]:
+        print(f"  - {item}")
+    for issue in result["issues"]:
+        print(f"ERROR {issue}")
+    return 1 if result["issues"] else 0
+
+
+def command_doctor(args: argparse.Namespace) -> int:
+    checks = run_doctor(args.root)
+    print(render_doctor(checks), end="")
+    return 0 if all(check.ok for check in checks) else 1
+
+
+def command_context(args: argparse.Namespace) -> int:
+    projects = [get_project(args.root, args.project)] if args.project else discover_projects(args.root)
+    status_filter = "done" if args.done else args.status
+    payload = build_context_payload(
+        args.root,
+        projects,
+        phase_selector=args.phase,
+        status_filter=status_filter,
+        include_trace=args.trace,
+    )
+    print(json.dumps(payload, indent=None if args.compact else 2, sort_keys=True))
+    return 0
+
+
+def command_evidence_capture(args: argparse.Namespace) -> int:
+    project = get_project(args.root, args.project)
+    phase = get_phase(project, args.phase)
+    cmd = list(args.cmd or [])
+    exit_code, evidence_path, timestamp = run_capture(
+        args.root, project, phase, args.story, cmd, args.max_output_bytes
+    )
+    try:
+        shown = str(evidence_path.relative_to(args.root))
+    except ValueError:
+        shown = str(evidence_path)
+    print(f"{shown}\t{exit_code}\t{timestamp}")
+    return exit_code
+
+
+def command_contract_new(args: argparse.Namespace) -> int:
+    story_ids = []
+    for raw in args.story or []:
+        story_ids.extend(s.strip() for s in raw.split(",") if s.strip())
+    reasons = list(args.reasons or [])
+    path = write_contract(
+        args.root,
+        story_ids=story_ids or None,
+        consent=args.consent,
+        reasons=reasons or None,
+        force=args.force,
+        tests_capture=args.tests_capture,
+        tier=args.tier,
+    )
+    text = read_text(path)
+    facts = parse_contract_facts(text) or {}
+    print(f".tmp/CONTRACT.md\t{facts.get('index_tree', 'unknown')}\t{facts.get('story', 'none')}")
+    print(
+        "dw contract new: facts stamped. Verify each rule, flip every '- [ ]' to '- [x]', "
+        "then commit. Restaging invalidates the contract (re-run with --force).",
+        file=sys.stderr,
+    )
+    return 0
+
+
+def command_contract_digest(args: argparse.Namespace) -> int:
+    path = args.root / ".tmp" / "CONTRACT.md"
+    if not path.is_file():
+        die("no contract at .tmp/CONTRACT.md")
+    print(contract_digest(read_text(path)))
+    return 0
+
+
+def command_contract_trailers(args: argparse.Namespace) -> int:
+    path = args.root / ".tmp" / "CONTRACT.md"
+    if not path.is_file():
+        die("no contract at .tmp/CONTRACT.md")
+    text = read_text(path)
+    facts = parse_contract_facts(text)
+    story_ids = list(facts["story_ids"]) if facts else []
+    bundle = None
+    bundle_path = args.root / ".tmp" / "BUNDLE-OK.md"
+    if bundle_path.is_file():
+        for line in read_text(bundle_path).splitlines():
+            if line.strip():
+                bundle = line.strip().lstrip("#").strip()
+                break
+    append_trailers(args.root, args.message_file, story_ids, contract_digest(text), bundle=bundle)
+    return 0
+
+
+def command_gate(args: argparse.Namespace) -> int:
+    result = run_gate(args.root)
+    if args.porcelain:
+        print(render_gate_porcelain(result), end="")
+    if not result.ok:
+        sys.stderr.write(render_gate_failure(result))
+        return 1
+    if not args.porcelain:
+        print(
+            f"dw gate: pass ({result.checked_boxes}/{result.expected_boxes} checkboxes, "
+            f"{len(result.shipped_stories)} story flip(s))"
+        )
+    return 0
+
+
+def command_verify(args: argparse.Namespace) -> int:
+    result = run_verify(
+        args.root,
+        range_spec=args.range,
+        all_history=args.all,
+        epoch=args.epoch,
+    )
+    if args.porcelain:
+        print(render_verify_porcelain(result), end="")
+    else:
+        print(render_verify(result), end="")
+    if result.error:
+        return 2
+    return 0 if result.ok else 1
+
+
+def command_check(args: argparse.Namespace) -> int:
+    from dw_pmo import check_project
+    from dw_pmo.riderdocs import rider_docs_issues
+
+    projects = [get_project(args.root, args.project)] if args.project else discover_projects(args.root)
+    issues: list[str] = []
+    for project in projects:
+        issues.extend(check_project(project, args.root))
+    # Repo-level: rendered agent surfaces must match canon (WLA-12-04).
+    issues.extend(rider_docs_issues(args.root))
+    if issues:
+        for issue in issues:
+            print(f"ERROR {issue}")
+        return 1
+    print("dw check: ok")
+    return 0
+
+
+def command_state(args: argparse.Namespace) -> int:
+    from dw_pmo.statefeed import build_state_feed, render_state_feed
+
+    if args.json or args.write:
+        rendered = render_state_feed(args.root)
+        if args.write:
+            args.write.parent.mkdir(parents=True, exist_ok=True)
+            args.write.write_text(rendered + "\n", encoding="utf-8")
+            print(f"{args.write}")
+        if args.json:
+            print(rendered)
+        return 0
+    for project in build_state_feed(args.root)["projects"]:
+        phase = project["current_phase"]
+        nxt = project["next_story"]
+        phase_part = (
+            f"phase {phase['number']} [{phase['status']}] "
+            f"{phase['stories_done']}/{phase['stories_total']}"
+            if phase
+            else "no phases"
+        )
+        next_part = (
+            f"next {nxt['story_id']} [{nxt['status']}]" if nxt else "nothing actionable"
+        )
+        print(f"{project['slug']}\t{phase_part}\t{next_part}\twarnings:{project['warnings']}")
+    return 0
+
+
+def command_events(args: argparse.Namespace) -> int:
+    from dw_pmo.events import read_events
+
+    entries = read_events(args.root, tail=args.tail)
+    if args.json:
+        print(json.dumps(entries, sort_keys=True))
+        return 0
+    for entry in entries:
+        detail = " ".join(f"{k}={v}" for k, v in (entry.get("detail") or {}).items() if v is not None)
+        print(f"{entry.get('ts')}\t{entry.get('event')}\t{entry.get('story') or '-'}\t{detail or '-'}")
+    return 0
+
+
+def command_hook(args: argparse.Namespace) -> int:
+    from dw_pmo import agenthooks
+
+    agents = (
+        ["claude", "codex"] if args.agent == "all" else [args.agent]
+    )
+    if args.hook_action == "install":
+        return max(agenthooks.install_agent(agent) for agent in agents)
+    if args.hook_action == "uninstall":
+        return max(agenthooks.uninstall_agent(agent) for agent in agents)
+    if args.hook_action == "status":
+        for agent in agents:
+            report = agenthooks.status_agent(agent)
+            marks = " ".join(
+                f"{event}:{'on' if on else 'off'}"
+                for event, on in report["events"].items()
+            )
+            print(f"{report['agent']}\t{marks}\t{report['settings']}")
+        return 0
+    if args.hook_action == "emit":
+        stdin_text = "" if sys.stdin.isatty() else sys.stdin.read()
+        return agenthooks.emit(args.agent, args.event, stdin_text)
+    print(f"dw hook: unknown action {args.hook_action!r}", file=sys.stderr)
+    return 1
+
+
+def command_sessions(args: argparse.Namespace) -> int:
+    from dw_pmo.sessions import correlate_sessions, render_sessions
+
+    if args.json:
+        print(render_sessions(args.registry))
+        return 0
+    doc = correlate_sessions(args.registry)
+    if doc.get("registry") != "ok":
+        print(f"sessions: registry {doc.get('registry')}")
+        return 0 if doc.get("registry") == "absent" else 1
+    for s_ in doc["sessions"]:
+        where = s_["stories"][0]["story_id"] if s_["correlation"] == "on_story" else s_["correlation"]
+        flags = []
+        if s_["awaiting_response"]:
+            flags.append("awaiting-response")
+        if s_["stale"]:
+            flags.append("stale")
+        tmux = s_["tmux"]
+        if tmux:
+            flags.append(f"tmux {tmux['session']}:{tmux['window']}.{tmux['pane']}")
+        print(f"{s_['agent']}\t{where}\t{s_['repo_root'] or '-'}\t{' '.join(flags) or '-'}")
+    return 0
+
+
+def command_rider_docs(args: argparse.Namespace) -> int:
+    from dw_pmo.riderdocs import rider_docs_issues, write_rider_docs
+
+    if args.check:
+        issues = rider_docs_issues(args.root)
+        for issue in issues:
+            print(f"ERROR {issue}")
+        if issues:
+            return 1
+        print("dw rider docs: all rendered surfaces match canon")
+        return 0
+    for path, action in write_rider_docs(args.root):
+        try:
+            shown = path.relative_to(args.root)
+        except ValueError:
+            shown = path
+        print(f"{shown}\t{action}")
+    return 0
+
+
+def command_rider_install(args: argparse.Namespace) -> int:
+    from dw_pmo.riderdocs import install_codex_rider, install_holdspeak_presence, install_pi_rider
+
+    installer = {"codex": install_codex_rider, "pi": install_pi_rider, "holdspeak": install_holdspeak_presence}[args.surface]
+    result = installer(args.root)
+    for path, action in result["actions"]:
+        try:
+            shown = path.relative_to(args.root)
+        except ValueError:
+            shown = path
+        print(f"{shown}\t{action}")
+    if result.get("mcp_snippet"):
+        print()
+        print(result["mcp_snippet"])
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="dw", description="Delivery Workbench roadmap maintenance CLI")
+    parser.add_argument("--version", action="version", version=f"dw {DW_VERSION}")
+    parser.add_argument("--root", type=Path, default=None, help="repository root containing pm/roadmap")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    projects = sub.add_parser("projects", help="list roadmap projects")
+    projects.set_defaults(func=command_projects)
+
+    tree = sub.add_parser("tree", help="show project/phase/story tree")
+    tree.add_argument("project", nargs="?")
+    tree.add_argument("--phase")
+    tree.add_argument("--status")
+    tree.add_argument("--done", action="store_true")
+    tree.set_defaults(func=command_tree)
+
+    next_cmd = sub.add_parser("next", help="show the next active story (exit 0 found / 2 none / 1 error)")
+    next_cmd.add_argument("project", nargs="?")
+    next_cmd.add_argument("--json", action="store_true", help="emit the story as a JSON object")
+    next_cmd.set_defaults(func=command_next)
+
+    doctor = sub.add_parser("doctor", help="verify the rails are wired in this clone (hooksPath, hooks, core, agent docs)")
+    doctor.set_defaults(func=command_doctor)
+
+    adopt = sub.add_parser("adopt", help="scaffold the roadmap from an adoption discovery report (preview by default)")
+    adopt.add_argument("--from-report", type=Path, required=True, help="path to adoption-discovery.md")
+    adopt.add_argument("--project", help="project slug (default: the report's Roadmap root line)")
+    adopt.add_argument("--project-name", help="human project name for a new README")
+    adopt.add_argument("--project-prefix", help="story-ID prefix for a new README (default: from the report's story IDs)")
+    adopt.add_argument("--apply", action="store_true", help="write the scaffold (default is a dry-run preview)")
+    adopt.set_defaults(func=command_adopt)
+
+    state = sub.add_parser("state", help="the mission-control state feed (versioned; docs/mission-control.md §1)")
+    state.add_argument("--json", action="store_true", help="emit the feed_schema JSON document")
+    state.add_argument("--write", type=Path, default=None, help="also write the JSON document to this path")
+    state.set_defaults(func=command_state)
+
+    events = sub.add_parser("events", help="the rail event log (append-only; docs/mission-control.md §3)")
+    events.add_argument("--tail", type=int, default=None, help="only the last N events")
+    events.add_argument("--json", action="store_true", help="emit events as a JSON array")
+    events.set_defaults(func=command_events)
+
+    sessions = sub.add_parser("sessions", help="correlate live agent sessions to stories (docs/mission-control.md §2)")
+    sessions.add_argument("--json", action="store_true", help="emit the sessions_schema JSON document")
+    sessions.add_argument("--registry", type=Path, default=None, help="registry file to read (default: the HoldSpeak desk registry)")
+    sessions.set_defaults(func=command_sessions)
+
+    hook = sub.add_parser("hook", help="agent hook seam: instant push events (docs/absorption-ccgram.md §1)")
+    hook.add_argument("hook_action", choices=["install", "uninstall", "status", "emit"])
+    hook.add_argument("--agent", default="all", choices=["claude", "codex", "all"], help="which agent CLI (emit requires a specific one)")
+    hook.add_argument("--event", default="", help="hook event name (emit only)")
+    hook.set_defaults(func=command_hook)
+
+    rider = sub.add_parser("rider", help="agent-surface rider tooling (canonical brief renderers)")
+    rider_sub = rider.add_subparsers(dest="rider_command", required=True)
+    rider_docs = rider_sub.add_parser("docs", help="regenerate rendered agent surfaces (.claude/commands, plugin/commands, .codex/skills, managed doc blocks) from canon")
+    rider_docs.add_argument("--check", action="store_true", help="report drift without writing anything")
+    rider_docs.set_defaults(func=command_rider_docs)
+
+    rider_install = rider_sub.add_parser("install", help="wire an agent rider into this repo from canon")
+    rider_install.add_argument("surface", choices=["codex", "pi", "holdspeak"], help="rider surface to install")
+    rider_install.set_defaults(func=command_rider_install)
+
+    agent_docs = sub.add_parser("agent-docs", help="write or refresh the managed Delivery Workbench block in CLAUDE.md/AGENTS.md")
+    agent_docs.add_argument("--file", type=Path, help="explicit target file (default: existing CLAUDE.md, then AGENTS.md, else new CLAUDE.md)")
+    agent_docs.set_defaults(func=command_agent_docs)
+
+    context = sub.add_parser("context", help="print machine-readable roadmap context")
+    context.add_argument("project", nargs="?")
+    context.add_argument("--phase")
+    context.add_argument("--status")
+    context.add_argument("--done", action="store_true")
+    context.add_argument("--trace", action="store_true")
+    context.add_argument("--compact", action="store_true")
+    context.set_defaults(func=command_context)
+
+    check = sub.add_parser("check", help="validate roadmap links and statuses")
+    check.add_argument("project", nargs="?")
+    check.set_defaults(func=command_check)
+
+    gate = sub.add_parser("gate", help="run the commit-gate structural checks (used by the pre-commit shim)")
+    gate.add_argument("--hook", choices=["pre-commit"], default=None, help="hook context (reserved)")
+    gate.add_argument("--porcelain", action="store_true", help="stable key=value output for machine consumers")
+    gate.set_defaults(func=command_gate)
+
+    verify = sub.add_parser(
+        "verify",
+        help="re-derive gate rules over pushed history (exit 0 clean / 1 violations / 2 usage or git error)",
+    )
+    verify.add_argument(
+        "range", nargs="?", default=None, metavar="<base>..<head>",
+        help="commit range to verify (default: merge-base of the default branch and HEAD, to HEAD)",
+    )
+    verify.add_argument("--all", action="store_true", help="verify the full history from the epoch to HEAD")
+    verify.add_argument("--epoch", default=None, help="rev where remote rules begin (default: auto-detect first digest-trailer commit; PMO_VERIFY_EPOCH config)")
+    verify.add_argument("--porcelain", action="store_true", help="stable key=value output for machine consumers")
+    verify.set_defaults(func=command_verify)
+
+    contract = sub.add_parser("contract", help="commit-contract commands")
+    contract_sub = contract.add_subparsers(dest="contract_command", required=True)
+    contract_new = contract_sub.add_parser("new", help="generate .tmp/CONTRACT.md with stamped, gate-verified facts")
+    contract_new.add_argument("--story", action="append", help="story ID(s) this commit works under (repeatable or comma-separated)")
+    contract_new.add_argument("--consent", choices=["yes", "no"], default="no", help="work-log consent")
+    contract_new.add_argument("--reasons", action="append", help="work-log reason line (repeatable; used with --consent yes)")
+    contract_new.add_argument(
+        "--tests-capture",
+        help="discharge the 'Tests ran.' rule mechanically: <staged-evidence-path>[#timestamp] of a passing captured run",
+    )
+    contract_new.add_argument(
+        "--tier",
+        choices=["auto", "full", "short"],
+        default="auto",
+        help="contract tier; auto picks short only for commits that do not touch the roadmap tree (full is always accepted)",
+    )
+    contract_new.add_argument("--force", action="store_true", help="replace an existing contract")
+    contract_new.set_defaults(func=command_contract_new)
+    contract_digest_cmd = contract_sub.add_parser("digest", help="print the sha256 digest of the current contract")
+    contract_digest_cmd.set_defaults(func=command_contract_digest)
+    contract_trailers = contract_sub.add_parser("trailers", help="stamp PMO trailers onto a commit message file (used by the commit-msg shim)")
+    contract_trailers.add_argument("--message-file", type=Path, required=True)
+    contract_trailers.set_defaults(func=command_contract_trailers)
+
+    phase = sub.add_parser("phase", help="phase commands")
+    phase_sub = phase.add_subparsers(dest="phase_command", required=True)
+    phase_list = phase_sub.add_parser("list", help="list phases")
+    phase_list.add_argument("project", nargs="?")
+    phase_list.set_defaults(func=command_phase_list)
+    phase_show = phase_sub.add_parser("show", help="print phase status")
+    phase_show.add_argument("project")
+    phase_show.add_argument("phase")
+    phase_show.set_defaults(func=command_phase_show)
+    phase_create = phase_sub.add_parser("create", help="create a phase")
+    phase_create.add_argument("project")
+    phase_create.add_argument("number", type=int)
+    phase_create.add_argument("title")
+    phase_create.add_argument("--goal")
+    phase_create.add_argument("--slug")
+    phase_create.add_argument("--status", default="not-started")
+    phase_create.set_defaults(func=command_phase_create)
+    phase_close = phase_sub.add_parser("close", help="close a phase with a final summary")
+    phase_close.add_argument("project")
+    phase_close.add_argument("phase")
+    phase_close.add_argument("--summary")
+    phase_close.add_argument("--from-file", type=Path)
+    phase_close.add_argument("--status", default="done")
+    phase_close.add_argument("--force", action="store_true")
+    phase_close.set_defaults(func=command_phase_close)
+
+    evidence = sub.add_parser("evidence", help="evidence commands")
+    evidence_sub = evidence.add_subparsers(dest="evidence_command", required=True)
+    evidence_capture = evidence_sub.add_parser(
+        "capture",
+        help="run a command and append the captured, verifiable output block to the story's evidence file",
+    )
+    evidence_capture.add_argument("project")
+    evidence_capture.add_argument("phase")
+    evidence_capture.add_argument("story")
+    evidence_capture.add_argument("--max-output-bytes", type=int, default=20000)
+    evidence_capture.add_argument("cmd", nargs="*", help="command to run (everything after `--`)")
+    evidence_capture.set_defaults(func=command_evidence_capture)
+
+    story = sub.add_parser("story", help="story commands")
+    story_sub = story.add_subparsers(dest="story_command", required=True)
+    story_list = story_sub.add_parser("list", help="list stories")
+    story_list.add_argument("project", nargs="?")
+    story_list.add_argument("--phase")
+    story_list.add_argument("--status")
+    story_list.set_defaults(func=command_story_list)
+    story_create = story_sub.add_parser("create", help="create a story")
+    story_create.add_argument("project")
+    story_create.add_argument("phase")
+    story_create.add_argument("title")
+    story_create.add_argument("--slug")
+    story_create.add_argument("--status", default="backlog")
+    story_create.set_defaults(func=command_story_create)
+    story_status = story_sub.add_parser("status", help="transactionally update story and phase-table status")
+    story_status.add_argument("project")
+    story_status.add_argument("phase")
+    story_status.add_argument("story")
+    story_status.add_argument("status")
+    story_status.add_argument("--evidence-body")
+    story_status.add_argument("--evidence-from-file", type=Path)
+    story_status.add_argument("--force", action="store_true")
+    story_status.set_defaults(func=command_story_status)
+    story_evidence = story_sub.add_parser("evidence", help="create or attach paired story evidence")
+    story_evidence.add_argument("project")
+    story_evidence.add_argument("phase")
+    story_evidence.add_argument("story")
+    story_evidence.add_argument("--body")
+    story_evidence.add_argument("--from-file", type=Path)
+    story_evidence.add_argument("--force", action="store_true")
+    story_evidence.set_defaults(func=command_story_evidence)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    # Everything after a standalone `--` is an opaque passthrough command
+    # (used by `evidence capture`); argparse's REMAINDER would otherwise
+    # swallow options that precede it.
+    passthrough: list[str] | None = None
+    if "--" in argv:
+        split = argv.index("--")
+        passthrough = argv[split + 1:]
+        argv = argv[:split]
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if passthrough is not None:
+        args.cmd = passthrough
+    args.root = (args.root.resolve() if args.root else find_root(Path.cwd()))
+    try:
+        return args.func(args)
+    except DwError as err:
+        print(f"dw: {err.message}", file=sys.stderr)
+        return err.code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

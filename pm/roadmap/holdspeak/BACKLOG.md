@@ -8,7 +8,15 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-07-07 (candidate **U** FILED — the Delivery Belt: delivery-workbench as a desk-native conveyor-belt surface on DeskOS + the web desk, rendering from receipts only; owner direction quoted in the section. Earlier the same day: candidate **T** SHIPPED: [phase-85 — The Mesh Edge (CLOSED 5/5, same day)](./phase-85-the-mesh-edge/) — a meshNode profile relays a run through the hub to the node hosting the provider; pull worker + liveness from its polling, fast named refusal, egress scope `mesh`, proven live end to end with a second-process worker; the Apple worker + consent toggle is the HSM follow-up. Earlier the same day: candidate **S** SHIPPED: the remaining hub slice closed as [phase-84 — One Runtime (CLOSED 5/5, same day)](./phase-84-one-runtime/) — both hub pipelines on the profile layer, pickers instead of typed endpoints, one egress derivation, the "Runtime profiles" doctor check, proven live on `.43`. Earlier the same day: the code survey found S's majority already shipped under other flags — the RuntimeProfile contract + `SyncKind.profile` + per-agent `profile_id` + the `/profiles` and Apple authoring surfaces landed with HSM Phase 24 / the mesh / Phase 83. Prior: candidate **Q** shipped as [phase-58](./phase-58-front-door/) (CLOSED 6/6) — the story is a decision now. Earlier today: **P** shipped as [phase-57](./phase-57-transcript-import/) (CLOSED 5/5) — transcripts import as real meetings. Earlier today: **J** shipped as [phase-56](./phase-56-qlippy/) (CLOSED 7/7), **G** absorbed-shipped with it; **K** is next per the agreed sequence. Prior: post-Phase-53 strategic review: candidate **D** promoted
+**Last updated:** 2026-07-07 late (candidate **U** SCAFFOLDED — B1 opens as
+[phase-86 — The Delivery Belt (read-only)](./phase-86-delivery-belt/): the
+AI-Headquarters floor, registry-shaped from day one. The B0 substrate turned
+out to already exist upstream (delivery-workbench v1.12: `dw state`/`sessions`/
+`events`, the stamped gate, the workbench belt, the Telegram interface); what
+was missing was a reader that survives THIS repo's 86 phases of dialect —
+shipped upstream the same day as delivery-workbench phase 16 ("the flagship
+tree", PR #2): 397 spurious `dw check` errors → 31 real desyncs, which
+HS-86-01 now consumes. Earlier the same day: candidate **U** FILED — the Delivery Belt: delivery-workbench as a desk-native conveyor-belt surface on DeskOS + the web desk, rendering from receipts only; owner direction quoted in the section. Earlier the same day: candidate **T** SHIPPED: [phase-85 — The Mesh Edge (CLOSED 5/5, same day)](./phase-85-the-mesh-edge/) — a meshNode profile relays a run through the hub to the node hosting the provider; pull worker + liveness from its polling, fast named refusal, egress scope `mesh`, proven live end to end with a second-process worker; the Apple worker + consent toggle is the HSM follow-up. Earlier the same day: candidate **S** SHIPPED: the remaining hub slice closed as [phase-84 — One Runtime (CLOSED 5/5, same day)](./phase-84-one-runtime/) — both hub pipelines on the profile layer, pickers instead of typed endpoints, one egress derivation, the "Runtime profiles" doctor check, proven live on `.43`. Earlier the same day: the code survey found S's majority already shipped under other flags — the RuntimeProfile contract + `SyncKind.profile` + per-agent `profile_id` + the `/profiles` and Apple authoring surfaces landed with HSM Phase 24 / the mesh / Phase 83. Prior: candidate **Q** shipped as [phase-58](./phase-58-front-door/) (CLOSED 6/6) — the story is a decision now. Earlier today: **P** shipped as [phase-57](./phase-57-transcript-import/) (CLOSED 5/5) — transcripts import as real meetings. Earlier today: **J** shipped as [phase-56](./phase-56-qlippy/) (CLOSED 7/7), **G** absorbed-shipped with it; **K** is next per the agreed sequence. Prior: post-Phase-53 strategic review: candidate **D** promoted
 to its own phase and scaffolded as [phase-54](./phase-54-dictation-frontend-decomposition/)
 — the dictation frontend is now 6,101 coupled lines and lost the density invariant five
 phases running. New candidates **I** (meeting import + faceted history search), **J**
@@ -365,7 +373,15 @@ profile; (3) desktop hub honors profiles; (4) web authors/uses them. Each surfac
 primitive framework, the per-agent `AgentRecord`, and the egress-badge canon.
 
 ---
-### U. The Delivery Belt — delivery-workbench as a desk surface (the conveyor-belt builder) — [full proposal](./proposals/delivery-belt.md)
+### U. The Delivery Belt — delivery-workbench as a desk surface (the conveyor-belt builder) — [full proposal](./proposals/delivery-belt.md) — **B1 SHIPPED → [phase-86](./phase-86-delivery-belt/) (5/5)**; B2 (the nod, beyond the story-flip leg Phase 82 already carries), B3 (the factory), B4 (DeskOS) remain
+
+*2026-07-07 (late):* B0 reconciled against reality — the substrate already
+shipped upstream richer than the RFC guessed; the flagship-tree reader work
+landed there (phase 16). B1 scaffolded here with the owner's wider frame
+pinned in the AGENT-BRIEF: *"my AI Headquarters — build out projects, steer
+projects, finalize projects"* — the belt is registry-shaped (never
+single-project) from the first commit. B2 (the nod), B3 (the factory), B4
+(DeskOS) remain future phases per the RFC.
 
 Owner direction (2026-07-07, the post-85/25 conversation): *"the desire was
 for the delivery-workbench integration to be incredibly well integrated into
