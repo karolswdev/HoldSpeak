@@ -2983,6 +2983,8 @@ struct DioStage: View {
     @State private var coders: [CoderSession] = []             // HSM-17 live Claude/Codex sessions on the desk
     @State private var coderPoll: Task<Void, Never>? = nil     // HSM-17-03: the live-set poll (typed presence stream)
     @State private var coderGrounding: CoderGrounding? = nil   // HSM-17-04: dropped-context for the open composer
+    @State private var beltState: BeltState? = nil             // HSM-26-02: the delivery belt (mission control)
+    @State private var beltPoll: Task<Void, Never>? = nil      // HSM-26-02: the belt poll (read-only presence)
     @State private var coderWasWaiting: Set<String> = []       // rising-edge memory: glare once per flip into waiting
     @State private var answeringCoder: CoderSession? = nil     // the answer composer is open on this session
     @State private var openCoderSession: CoderSession? = nil   // the live "running coder" feed is open
@@ -3175,6 +3177,9 @@ struct DioStage: View {
                                       paired: hostLink != nil, configured: connReady("github"),
                                       detail: peerHost.isEmpty ? "" : peerHost))
         for wf in workflows { out.append(WorkflowPrimitive(rec: wf)) }
+        // HSM-26-02: the delivery belt — a global tool when the paired desktop
+        // names rails (the belt appears only when there is a rail to show).
+        if let bs = beltState, !bs.repos.isEmpty { out.append(BeltPrimitive(state: bs)) }
         return out
     }
     private func recipeMembers() -> [any DeskPrimitive] { recipes.map { RecipePrimitive(rec: $0) } }
@@ -3720,7 +3725,7 @@ struct DioStage: View {
                 }
             }
             .ignoresSafeArea()
-            .onAppear { landed = true; load(); model.refresh(); syncDesk(reason: "desk load"); startCoderPolling()
+            .onAppear { landed = true; load(); model.refresh(); syncDesk(reason: "desk load"); startCoderPolling(); startBeltPolling()
                 #if targetEnvironment(simulator)
                 if let s = ProcessInfo.processInfo.environment["HS_DESK_SETTINGS"], s == "1" || s == "local" {
                     if s == "local" { InferenceConfigStore.shared.mode = .local }
@@ -3982,6 +3987,16 @@ struct DioStage: View {
                         withAnimation(.easeOut(duration: 0.9)) { flash = 0 }
                         if cv == "session" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { openCoderSession = coders.first } } }
                         if cv == "answer" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { answeringCoder = coders.first } } }
+                    }
+                }
+                // HSM-26-02: seed the belt so the diorama SHOWS it offline. `open`
+                // pops the pull-out; the poll is skipped under the seed.
+                if let bv = ProcessInfo.processInfo.environment["HS_DESK_BELT"] {
+                    beltState = BeltPrimitive.sampleState()
+                    if bv == "open" {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { selected = "belt:mission-control" }
+                        }
                     }
                 }
                 if ProcessInfo.processInfo.environment["HS_DESK_TRANSCRIPT"] == "1" {
@@ -5661,6 +5676,32 @@ struct DioStage: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
                 withAnimation { arrivedIds.subtract(fresh) }
             }
+        }
+    }
+
+    // MARK: HSM-26-02 — the delivery belt on the desk
+
+    /// Poll the hub's mission control (`GET /api/missioncontrol/state`) and mirror
+    /// it into `beltState`. Read-only presence on its own gentle cadence (the
+    /// coder-poll pattern); the seeded `HS_DESK_BELT` demo drives the desk fully
+    /// offline, so the poll never runs under it.
+    private func startBeltPolling() {
+        guard ProcessInfo.processInfo.environment["HS_DESK_BELT"] == nil else { return }
+        beltPoll?.cancel()
+        beltPoll = Task { @MainActor in
+            while !Task.isCancelled {
+                await beltPollTick()
+                try? await Task.sleep(nanoseconds: 15_000_000_000)   // the belt's cadence (web parity)
+            }
+        }
+    }
+
+    @MainActor
+    private func beltPollTick() async {
+        guard let client = desktopClient else { return }
+        guard let state = try? await client.missionControlState() else { return }   // unreachable = keep last truth
+        if state != beltState {
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { beltState = state }
         }
     }
 
