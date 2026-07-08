@@ -306,6 +306,22 @@ The composer's draft runs on the engine you configured, on device or on your
 endpoint, and shows that as its own badge; where the draft runs is not where
 the answer goes. A failed delivery keeps the question on the desk.
 
+### The steering chokepoint
+
+The web desk can also steer a live session directly: watch its pane, arm it,
+and type into it. Watching is free and read only, a hash gated peek that costs
+a poll only while a pull-out is open. Every keystroke, by contrast, passes one
+function, `coder_steering.deliver`, and there is no other path to the pane. That
+function checks the arming grant, re-resolves the session's current pane, and
+sends only to the exact pane identity that was pinned when the grant was issued,
+so nothing can be retargeted between the check and the keystroke. A recycled or
+expired grant refuses and revokes. The send itself reuses the same tmux
+transport the answer loop uses. Every delivery and every refusal writes a row to
+the steering audit, a hash and a heading of the text, never the whole steer. A
+test greps the codebase to keep the transport's call sites pinned to that one
+chokepoint. Nothing here leaves the machine; the model is a consent boundary,
+not an egress, and lives in [SECURITY.md](SECURITY.md).
+
 ## The desk across surfaces
 
 The desk is one convention rendered three times. Every desk concept

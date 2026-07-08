@@ -10,6 +10,7 @@ import { useDesk } from "../store";
 import { parseLinearGraph, stepLabel } from "../graph";
 import { MicButton } from "./MicButton";
 import { lineage } from "../lineage";
+import { useSteering } from "../steering";
 import { objGlow, type WorldObject } from "../world";
 
 const FILABLE = new Set(["meeting", "artifact", "note", "recipe", "chain", "workflow", "kb"]);
@@ -257,6 +258,18 @@ export function Pullout({ o }: { o: WorldObject }) {
                 }}
               >
                 {answered === "selected" ? "Dictation target" : "Use the hotkey"}
+              </button>
+              <button
+                type="button"
+                className="desk-chip quiet"
+                onClick={() => {
+                  closePullout();
+                  useSteering
+                    .getState()
+                    .openSession(`${String(ir.agent || "claude")}:${String(ir.sessionId || o.id)}`);
+                }}
+              >
+                Watch live
               </button>
             </div>
           </section>

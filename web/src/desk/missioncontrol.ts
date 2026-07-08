@@ -61,11 +61,17 @@ export interface McPr {
 
 export type CiLight = "pass" | "fail" | "pending" | "none";
 
+export interface McStoryRef {
+  storyId: string;
+  project: string;
+}
+
 export interface McSession {
   key: string;
   agent: string;
   correlation: string;
   storyIds: string[];
+  storyRefs: McStoryRef[];
   awaitingResponse: boolean;
   lastAssistantText: string;
   stale: boolean;
@@ -187,16 +193,40 @@ export function isBeltFrame(frame: any): boolean {
   );
 }
 
-export const fromWireMcSession = (s: any): McSession => ({
-  key: s.key || "",
-  agent: s.agent || "",
-  correlation: s.correlation || "",
-  storyIds: (s.stories || []).map((st: any) => st.story_id).filter(Boolean),
-  awaitingResponse: Boolean(s.awaiting_response),
-  lastAssistantText: s.last_assistant_text || "",
-  stale: Boolean(s.stale),
-  tmuxSession: (s.tmux && s.tmux.session) || null,
-});
+export const fromWireMcSession = (s: any): McSession => {
+  const refs: McStoryRef[] = (s.stories || [])
+    .map((st: any) => ({ storyId: st.story_id || "", project: st.project || "" }))
+    .filter((r: McStoryRef) => r.storyId);
+  return {
+    key: s.key || "",
+    agent: s.agent || "",
+    correlation: s.correlation || "",
+    storyIds: refs.map((r) => r.storyId),
+    storyRefs: refs,
+    awaitingResponse: Boolean(s.awaiting_response),
+    lastAssistantText: s.last_assistant_text || "",
+    stale: Boolean(s.stale),
+    tmuxSession: (s.tmux && s.tmux.session) || null,
+  };
+};
+
+/** Resolve a story id to its {repo, project, story} flip target
+ * (HS-87-05): find the repo whose live projects include the given
+ * project slug. Null when nothing on the belt claims it. */
+export function flipTargetForStory(
+  repos: McRepo[],
+  storyId: string,
+  project: string,
+): { repo: string; project: string; story: string } | null {
+  if (!storyId || !project) return null;
+  for (const repo of repos) {
+    if (repo.status !== "live") continue;
+    if (repo.projects.some((p) => p.slug === project)) {
+      return { repo: repo.name, project, story: storyId };
+    }
+  }
+  return null;
+}
 
 export const fromWireMcEvents = (repoEntry: any): McEvent[] =>
   repoEntry.status === "live"

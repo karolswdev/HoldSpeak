@@ -1,6 +1,9 @@
 """The coder board: which live coding session receives a spoken answer.
 
 Bodies moved verbatim from routes/system.py (HS-79-02, the Phase-63 discipline).
+The steering surface (attach/arm/steer/audit) is a sibling concern in
+`coder_steering_routes.py` (HS-87-03); `_coder_frame` and
+`_session_age_seconds` are shared from here.
 """
 from __future__ import annotations
 
@@ -23,6 +26,29 @@ from ._shared import _normalize_runtime_status_payload
 
 _COMPANION_TARGET_MAX_AGE_SECONDS = 120
 _COMPANION_OVERVIEW_MAX_AGE_SECONDS = 30 * 60
+
+
+def _coder_frame(ctx: WebContext, key: str) -> None:
+    """One `scope:"coder"` frame on the one bus — arming moved, a grant
+    expired, an awaiting flag flipped; every surface hears the same
+    motion (the HS-86-03 frame shape, coder scope)."""
+    if ctx.broadcast is None:
+        return
+    try:
+        ctx.broadcast(
+            "intel_status",
+            {
+                "state": "ready",
+                "scope": "coder",
+                "capability": {
+                    "kind": "coder",
+                    "id": key,
+                    "name": key.split(":", 1)[0],
+                },
+            },
+        )
+    except Exception as exc:
+        log.debug(f"coder frame dropped: {exc}")
 
 
 def _session_age_seconds(stamp: Optional[str], now: datetime) -> Optional[int]:

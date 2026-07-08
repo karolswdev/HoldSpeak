@@ -23,6 +23,7 @@ import {
   sessionsByStory,
   useMissionControl,
 } from "../missioncontrol";
+import { isCoderFrame, useSteering } from "../steering";
 
 const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
 
@@ -32,21 +33,31 @@ interface PickTarget {
   story: string;
 }
 
-function SessionPin({ session }: { session: McSession }) {
+function SessionPin({ session, manual }: { session: McSession; manual?: boolean }) {
+  const armedUntil = useSteering((s) => s.armedKeys[session.key]);
+  const armed = Boolean(armedUntil && armedUntil > Date.now());
   return (
     <span
+      role="button"
       className={
         "desk-mc-pin" +
         (session.awaitingResponse ? " awaiting" : "") +
-        (session.stale ? " stale" : "")
+        (session.stale ? " stale" : "") +
+        (armed ? " armed" : "") +
+        (manual ? " manual" : "")
       }
       title={
-        `${session.key}` +
+        `${session.key} — watch live` +
+        (manual ? " — manually pinned (not the correlator's verdict)" : "") +
         (session.awaitingResponse
           ? ` — awaiting a response: ${session.lastAssistantText.slice(0, 200)}`
           : "") +
         (session.stale ? " (stale)" : "")
       }
+      onClick={(e) => {
+        e.stopPropagation(); // the pin attaches; the story span picks
+        useSteering.getState().openSession(session.key);
+      }}
     >
       {session.awaitingResponse ? "🙋" : "🤖"}
       {session.agent}
@@ -57,12 +68,14 @@ function SessionPin({ session }: { session: McSession }) {
 function PhaseBelt({
   project,
   pins,
+  manualPins,
   repoName,
   picked,
   onPick,
 }: {
   project: McProject;
   pins: Record<string, McSession[]>;
+  manualPins: Record<string, McSession[]>;
   repoName: string;
   picked: PickTarget | null;
   onPick: (t: PickTarget | null) => void;
@@ -133,6 +146,9 @@ function PhaseBelt({
             {(pins[s.storyId] || []).map((sess) => (
               <SessionPin key={sess.key} session={sess} />
             ))}
+            {(manualPins[s.storyId] || []).map((sess) => (
+              <SessionPin key={"m-" + sess.key} session={sess} manual />
+            ))}
           </span>
         ))}
       </div>
@@ -187,12 +203,14 @@ function StationLights({ repo, events }: { repo: McRepo; events: McEvent[] }) {
 function RepoBlock({
   repo,
   pins,
+  manualPins,
   picked,
   onPick,
   events,
 }: {
   repo: McRepo;
   pins: Record<string, McSession[]>;
+  manualPins: Record<string, McSession[]>;
   picked: PickTarget | null;
   onPick: (t: PickTarget | null) => void;
   events: McEvent[];
@@ -219,6 +237,7 @@ function RepoBlock({
           key={repo.name + p.slug}
           project={p}
           pins={pins}
+          manualPins={manualPins}
           repoName={repo.name}
           picked={picked}
           onPick={onPick}
@@ -300,22 +319,49 @@ function ProposalCard() {
   );
 }
 
+/** Manually-pinned sessions grouped by their pinned story (HS-87-05),
+ * skipping any already correlated there — a manual pin never disguises
+ * itself as the correlator's verdict, and a session gone from the
+ * registry drops (the pin re-asserts when it returns). */
+export function manualPinsByStory(
+  sessions: McSession[],
+  pins: Record<string, string>,
+  correlated: Record<string, McSession[]>,
+): Record<string, McSession[]> {
+  const map: Record<string, McSession[]> = {};
+  for (const [key, storyId] of Object.entries(pins)) {
+    const sess = sessions.find((s) => s.key === key);
+    if (!sess) continue;
+    if ((correlated[storyId] || []).some((c) => c.key === key)) continue;
+    (map[storyId] ||= []).push(sess);
+  }
+  return map;
+}
+
 export function MissionControlConveyor() {
   const repos = useMissionControl((s) => s.repos);
   const sessions = useMissionControl((s) => s.sessions);
   const events = useMissionControl((s) => s.events);
   const updatedAt = useMissionControl((s) => s.updatedAt);
   const open = useMissionControl((s) => s.open);
+  const pinMap = useSteering((s) => s.manualPins);
   const { refresh, toggle } = useMissionControl.getState();
   const [picked, setPicked] = useState<PickTarget | null>(null);
 
   useEffect(() => {
-    void refresh();
-    const timer = setInterval(() => void refresh(), POLL_MS);
-    // A `scope:"belt"` frame on the one bus moves the belt now; the
-    // poll stays as the fallback heartbeat (HS-86-04).
+    const tick = () => {
+      void refresh();
+      void useSteering.getState().refreshGrants(); // the pins' armed rings
+    };
+    tick();
+    const timer = setInterval(tick, POLL_MS);
+    // A `scope:"belt"` frame on the one bus moves the belt now; a
+    // `scope:"coder"` frame moves the pins (HS-87-01/02). The poll
+    // stays as the fallback heartbeat (HS-86-04).
     const onFrame = (e: Event) => {
-      if (isBeltFrame((e as CustomEvent).detail)) void refresh();
+      const frame = (e as CustomEvent).detail;
+      if (isBeltFrame(frame)) void refresh();
+      if (isCoderFrame(frame)) tick();
     };
     document.addEventListener("hs-broadcast", onFrame);
     return () => {
@@ -337,6 +383,7 @@ export function MissionControlConveyor() {
   }
 
   const pins = sessionsByStory(sessions);
+  const manualPins = manualPinsByStory(sessions, pinMap, pins);
   const offBelt = offBeltSessions(sessions);
 
   return (
@@ -352,6 +399,7 @@ export function MissionControlConveyor() {
           key={r.name}
           repo={r}
           pins={pins}
+          manualPins={manualPins}
           picked={picked}
           onPick={setPicked}
           events={events}

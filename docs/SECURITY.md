@@ -82,6 +82,19 @@ SQLCipher) becomes warranted and should be its own story.
    (`connector_runtime.py`) is an *honesty* mechanism, **not a security sandbox**:
    a malicious pack can call `subprocess.run` directly. Only install packs you
    trust.
+5. **Session steering** (`coder_steering.py` → a local tmux pane): typing into
+   a live agent session is a local consequential act (nothing leaves the
+   machine), gated by a consent model rather than an egress row. Watching is
+   free: the pull-out's peek is read-only, hash-gated, never a keystroke.
+   Steering requires an **arming grant**: issued per session by an explicit
+   desk act, TTL'd (15 min default, 60 min hard cap), pinned to the pane's
+   unique tmux `%N` identity at grant time, and held **in memory only**, so a
+   hub restart disarms everything. Every keystroke re-verifies that the
+   registry's current pane still resolves to the pinned identity; a recycled
+   or retargeted pane refuses AND revokes the grant. Expiry is checked on
+   every read; disarm is one act. Enforcement lives in one hub-side
+   chokepoint, not in any UI. Steers within an armed window are auto-approved
+   by the grant and every delivery (and refusal) is audited.
 
 ---
 

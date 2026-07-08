@@ -36,9 +36,16 @@ _MATERIAL_CAP = 6000
 # hydrates from its own store — it holds the full transcripts, the phone may
 # hold truncated copies, and DERP bandwidth stays sane. Bounds are explicit:
 # a cut transcript is marked in the block, never trimmed silently.
-_GROUNDING_MAX_REFS = 16
-_GROUNDING_TRANSCRIPT_CAP = 12_000
-_GROUNDING_EXPANDS = ("summary", "full")
+# The hydration itself lives in `holdspeak.grounding` (HS-87-04, shared with
+# steer); these names re-export it so this route (and recipes.py, which
+# imports from here) stay byte-identical.
+from ....grounding import (  # noqa: E402
+    GROUNDING_EXPANDS as _GROUNDING_EXPANDS,
+    GROUNDING_MAX_REFS as _GROUNDING_MAX_REFS,
+    GROUNDING_TRANSCRIPT_CAP as _GROUNDING_TRANSCRIPT_CAP,
+    hydrate_grounding_blocks as _hydrate_grounding,
+    meeting_digest as _meeting_digest,
+)
 
 _ASK_SYSTEM_PROMPT = (
     "You are the desk's AI core. Follow the instruction using the material "
@@ -77,21 +84,6 @@ def _run_egress(ctx: Any, prof: Any, intel: Any) -> tuple[dict[str, Any], str]:
 
     return endpoint_egress(cloud=False), _hub_model_name(ctx)
 
-
-def _meeting_digest(state: Any) -> str:
-    """A meeting's summary-level material: intel summary + action items when
-    intel exists, else the opening segments (mirrors the iPad's routableText)."""
-    parts: list[str] = []
-    if state.intel is not None and state.intel.summary:
-        parts.append(state.intel.summary)
-        items = state.intel.to_dict().get("action_items") or []
-        tasks = [str(i.get("task") or i.get("text") or "") for i in items if isinstance(i, dict)]
-        tasks = [t for t in tasks if t]
-        if tasks:
-            parts.append("\n".join(f"- {t}" for t in tasks))
-    else:
-        parts.append("\n".join(f"{s.speaker}: {s.text}" for s in state.segments[:40]))
-    return "\n\n".join(p for p in parts if p)
 
 
 def _context_material(db: Any, cid: str, kind: str, title: str) -> tuple[str, str]:
@@ -178,71 +170,6 @@ def _runnable_models(ctx: WebContext, db: Any) -> list[dict[str, Any]]:
         rows.append(row)
         seen.add(name)
     return rows
-
-
-def _hydrate_grounding(
-    db: Any, meeting_ids: list[str], artifact_ids: list[str], expand: str
-) -> tuple[list[str], list[str], list[str], list[str]]:
-    """The envelope's hub half: (blocks, ids, titles, unknown_ids).
-
-    Each block wears the provenance header the iPad's assembler wears —
-    ``[MEETING: <title> — <date>]`` / ``[ARTIFACT: <title> — <meeting>]`` —
-    one envelope shape across on-device, endpoint, and desktop runs. An id
-    the hub does not hold is returned as unknown (the caller refuses loudly;
-    grounding is never a best-effort claim)."""
-    blocks: list[str] = []
-    ids: list[str] = []
-    titles: list[str] = []
-    unknown: list[str] = []
-    for mid in meeting_ids:
-        try:
-            state = db.meetings.get_meeting(mid)
-        except Exception:
-            state = None
-        if state is None:
-            unknown.append(mid)
-            continue
-        title = state.title or mid
-        day = ""
-        try:
-            day = state.started_at.date().isoformat()
-        except Exception:
-            day = ""
-        header = f"[MEETING: {title} — {day}]" if day else f"[MEETING: {title}]"
-        if expand == "full" and state.segments:
-            text = "\n".join(f"{s.speaker}: {s.text}" for s in state.segments)
-            if len(text) > _GROUNDING_TRANSCRIPT_CAP:
-                text = (
-                    text[:_GROUNDING_TRANSCRIPT_CAP]
-                    + f"\n[transcript cut at {_GROUNDING_TRANSCRIPT_CAP} chars]"
-                )
-        else:
-            text = _meeting_digest(state)
-        blocks.append(f"{header}\n{text}" if text else header)
-        ids.append(mid)
-        titles.append(title)
-    for aid in artifact_ids:
-        try:
-            art = db.plugins.get_artifact(aid)
-        except Exception:
-            art = None
-        if art is None:
-            unknown.append(aid)
-            continue
-        of = ""
-        if art.meeting_id:
-            try:
-                parent = db.meetings.get_meeting(art.meeting_id)
-                of = (parent.title or "") if parent is not None else ""
-            except Exception:
-                of = ""
-        title = art.title or aid
-        header = f"[ARTIFACT: {title} — {of}]" if of else f"[ARTIFACT: {title}]"
-        body = str(art.body_markdown or "")
-        blocks.append(f"{header}\n{body}" if body else header)
-        ids.append(aid)
-        titles.append(title)
-    return blocks, ids, titles, unknown
 
 
 def _ask_provenance(

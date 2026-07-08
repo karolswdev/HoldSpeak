@@ -508,6 +508,46 @@ The belt itself never writes. The one way to act from it is the story-flip
 proposal, which rides the same propose, approve, execute flow as every other
 action on the desk, and the repository's own commit gate keeps the final say.
 
+## Steer A Session From The Desk
+
+Watching is free; steering is armed; every steer is audited. Nothing here
+leaves your machine.
+
+Click any session pin on the belt, or the "Watch live" chip in a coder card,
+and the session pull-out opens with a live view of that agent's terminal pane.
+The view is read only: it updates on its own, marks itself stale when the
+session has gone quiet, and never sends a keystroke.
+
+To reply, you arm the session first. Press and hold the ARM chip. The chip
+becomes a countdown; the grant lasts fifteen minutes, and one tap disarms it.
+Arming pins the exact terminal pane at that moment, and every keystroke
+re-checks that the pane you armed is still the pane in front of you. If the
+session's pane was replaced, the steer refuses and the grant is dropped, so a
+reply meant for one session can never land in another. A restart of the hub
+disarms everything.
+
+Once armed, the composer appears. Speak your reply by holding the mic, or type
+it. The paper-plane toggle chooses whether a return is pressed after the text
+lands, so a multi-part steer can stay in the agent's input box. Send, and the
+reply lands in the pane exactly as you composed it.
+
+You can carry desk objects into a steer. Open the grounding picker in the
+composer, choose a meeting or an artifact, and its content rides in ahead of
+your message under a labeled header, capped so it fits what the agent can read
+in one go. The composer shows the exact text before it sends, and refuses at
+compose time if the context is too large, naming the size.
+
+Triage what a session surfaces, three ways, all from the pull-out. Keep the
+agent's current question as a desk note, its lineage naming the session and the
+moment. Pin an off-rails session to a story yourself, a manual mark the belt
+shows with a hollow ring so it never reads as the rails' own verdict. Or flip a
+correlated story's status through the same proposal the belt uses, the commit
+gate keeping the final say.
+
+Every reply and every refusal is written to the steering audit: who, when, which
+session, which pane, and a hash of the text. Read it back with
+`GET /api/coders/steering/audit`.
+
 ## Privacy Model
 
 HoldSpeak is designed to be local-first.

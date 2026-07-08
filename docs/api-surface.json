@@ -698,6 +698,74 @@
       ]
     },
     {
+      "path": "/api/coders/steering/audit",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/coders/steering/grants",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/coders/{key}/arm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/coders/{key}/disarm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/coders/{key}/keep-note",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/coders/{key}/peek",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/coders/{key}/steer",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/commands/test",
       "methods": [
         "POST"

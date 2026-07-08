@@ -373,7 +373,7 @@ profile; (3) desktop hub honors profiles; (4) web authors/uses them. Each surfac
 primitive framework, the per-agent `AgentRecord`, and the egress-badge canon.
 
 ---
-### U. The Delivery Belt — delivery-workbench as a desk surface (the conveyor-belt builder) — [full proposal](./proposals/delivery-belt.md) — **B1 SHIPPED → [phase-86](./phase-86-delivery-belt/) (5/5)**; B2 (the nod, beyond the story-flip leg Phase 82 already carries), B3 (the factory), B4 (DeskOS) remain
+### U. The Delivery Belt — delivery-workbench as a desk surface (the conveyor-belt builder) — [full proposal](./proposals/delivery-belt.md) — **B1 SHIPPED → [phase-86](./phase-86-delivery-belt/) (5/5)**; B2 expanded by owner direction into the **Steering Desk charter, scaffolded → [phase-87](./phase-87-steering-desk/)** (attach/steer/classify/ground under the Telegram consent spine, contract-shaped for the Apple surfaces); B3 (the factory), B4 (DeskOS) remain
 
 *2026-07-07 (late):* B0 reconciled against reality — the substrate already
 shipped upstream richer than the RFC guessed; the flagship-tree reader work
@@ -427,3 +427,46 @@ markdown renders FROM (the pmo-roadmap side), so the desk reads state, not
 regex. Spans three repos deliberately — the belt is the flagship consumer
 that forces the substrate honest.
 
+
+---
+### V. The Rails-Aware Desk — rails objects as grounding kinds + the ambient dw observer
+
+Owner direction (2026-07-08, verbatim, during the Phase-87 charter
+conversation): *"having the ability to natively offer parts of, e.g.,
+open phases, open roadmaps, open stories, to use as context for any of
+the agent definitions, and so on, and the ability to construct agent
+chains so the local model keeps a note of everything happening with dw
+in the background, happening on another computer, for example."*
+
+Two capabilities, one thesis (the rails are desk-native material):
+
+- **Rails objects as grounding kinds.** An open phase, a roadmap, a
+  story, an evidence file — pickable in the grounding picker exactly
+  like a meeting or a note, hydrated with provenance into ANY agent
+  run: an ask, a recipe/persona turn, a chain step, or a Phase-87
+  steer. The content comes CLI-mediated per repo (the
+  `missioncontrol_bridge` posture: `dw context` names the paths, the
+  read is contained, state is never re-parsed from markdown), so a
+  grounded story is a receipt, not a scrape. *Lands on:* the Phase-87
+  factored hydration helper (`grounding_hydrate`), the grounding
+  picker (`GroundingSection`), the project map, `dw context`.
+- **The ambient dw observer.** A chain/workflow subscribed to rail
+  events (`dw events`, the `dw hook` push seam, `scope:"belt"`
+  frames) so a LOCAL model (RuntimeProfile-resolved — on-device, LAN,
+  or a mesh node) keeps a running journal of what the rails did:
+  story flips, gate refusals, evidence captures, phase closes —
+  including repos living on ANOTHER machine, over the proven mesh
+  relay (Phase 85) with the same honest liveness rules. The journal
+  is a desk primitive (openable, ropeable, groundable in turn); the
+  observer is read-only and off by default; anything it wants to DO
+  is a proposal through the actuator flow. *Lands on:* the
+  chains/workflows primitives, the one bus, `dw events`/`dw hook`,
+  RuntimeProfile + mesh relay, the run-story frames.
+
+**Sequencing note:** graduates after Phase 87 ships (it consumes the
+factored hydration seam and the steering audit vocabulary). The
+cross-machine leg needs the rails repo's `dw` reachable on the far node
+— the mesh worker precedent covers execution; rail-event RELAY is the
+new wire and should be scoped honestly (likely: the remote node's
+worker tails its own `dw events` and pushes envelopes, mirroring the
+coder-queue pull pattern).
