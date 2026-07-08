@@ -27,6 +27,29 @@ _COMPANION_TARGET_MAX_AGE_SECONDS = 120
 _COMPANION_OVERVIEW_MAX_AGE_SECONDS = 30 * 60
 
 
+def _coder_frame(ctx: WebContext, key: str) -> None:
+    """One `scope:"coder"` frame on the one bus — arming moved, a grant
+    expired, an awaiting flag flipped; every surface hears the same
+    motion (the HS-86-03 frame shape, coder scope)."""
+    if ctx.broadcast is None:
+        return
+    try:
+        ctx.broadcast(
+            "intel_status",
+            {
+                "state": "ready",
+                "scope": "coder",
+                "capability": {
+                    "kind": "coder",
+                    "id": key,
+                    "name": key.split(":", 1)[0],
+                },
+            },
+        )
+    except Exception as exc:
+        log.debug(f"coder frame dropped: {exc}")
+
+
 def _session_age_seconds(stamp: Optional[str], now: datetime) -> Optional[int]:
     """Seconds since an ISO-8601 session timestamp, or None if unparseable."""
     if not isinstance(stamp, str) or not stamp.strip():
@@ -308,6 +331,47 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500("coders sessions", e, log)
 
+    def _registry_session(key: str):
+        """Resolve `agent:session_id` against the registry; a JSONResponse
+        when the key is malformed or the session is gone."""
+        from ....agent_context import list_agent_sessions
+
+        agent, _, session_id = key.partition(":")
+        if not agent.strip() or not session_id.strip():
+            return JSONResponse(
+                {"error": "key must be agent:session_id"}, status_code=400
+            )
+        session = next(
+            (
+                s
+                for s in list_agent_sessions(agent=agent)
+                if s.session_id == session_id
+            ),
+            None,
+        )
+        if session is None:
+            return JSONResponse(
+                {"status": "unknown_session", "key": key}, status_code=404
+            )
+        return session
+
+    def _session_is_stale(session: Any) -> tuple[bool, Optional[int]]:
+        from ....agent_context import DEFAULT_RECENT_MAX_AGE_SECONDS
+
+        age = _session_age_seconds(session.updated_at, datetime.now(timezone.utc))
+        return (
+            bool(age is not None and age > DEFAULT_RECENT_MAX_AGE_SECONDS),
+            age,
+        )
+
+    def _sweep_and_frame() -> None:
+        """Lazy expiry on read (no background timer): expired grants
+        broadcast their frame the moment any steering read notices."""
+        from .... import coder_steering
+
+        for expired_key in coder_steering.sweep_expired():
+            _coder_frame(ctx, expired_key)
+
     @router.get("/api/coders/{key}/peek")
     async def api_coder_peek(
         key: str, lines: int = 200, last_hash: Optional[str] = None
@@ -318,44 +382,31 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
         resolved from the registry record; absences come back as typed
         peek statuses (`no_pane`, `pane_gone`, `tmux_absent`), and a
         registry entry past the recent window is marked `stale`, never
-        dropped.
+        dropped. The envelope carries the grant state (HS-87-02) so an
+        open pull-out renders the countdown without a second poll.
         """
         from .... import coder_steering
-        from ....agent_context import (
-            DEFAULT_RECENT_MAX_AGE_SECONDS,
-            list_agent_sessions,
-        )
 
-        agent, _, session_id = key.partition(":")
-        if not agent.strip() or not session_id.strip():
-            return JSONResponse(
-                {"error": "key must be agent:session_id"}, status_code=400
-            )
         try:
-            session = next(
-                (
-                    s
-                    for s in list_agent_sessions(agent=agent)
-                    if s.session_id == session_id
-                ),
-                None,
-            )
+            session = _registry_session(key)
         except Exception as e:
             return error_500("coder peek", e, log)
-        if session is None:
-            return JSONResponse(
-                {"status": "unknown_session", "key": key}, status_code=404
-            )
-        age = _session_age_seconds(session.updated_at, datetime.now(timezone.utc))
+        if isinstance(session, JSONResponse):
+            return session
+        stale, _age = _session_is_stale(session)
+        _sweep_and_frame()
+        grant = coder_steering.active_grants().get(key)
         envelope: dict[str, Any] = {
             "key": key,
             "agent": session.agent,
-            "stale": bool(
-                age is not None and age > DEFAULT_RECENT_MAX_AGE_SECONDS
-            ),
+            "stale": stale,
             "awaiting_response": session.awaiting_response,
             "question": session.question,
             "updated_at": session.updated_at,
+            "grant": {
+                "armed": grant is not None,
+                "expires_in_seconds": grant["expires_in_seconds"] if grant else None,
+            },
         }
         target = coder_steering.resolve_pane_target(session)
         if target is None:
@@ -365,6 +416,74 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             coder_steering.peek_pane, target, lines=lines, last_hash=last_hash
         )
         return JSONResponse(envelope)
+
+    @router.post("/api/coders/{key}/arm")
+    async def api_coder_arm(
+        key: str, payload: Optional[dict[str, Any]] = None
+    ) -> Any:
+        """Arm a session for steering (HS-87-02) — the explicit desk act.
+
+        Pins the pane's `%N` identity at grant time; refuses a stale
+        registry record by naming the staleness, and a pane that cannot
+        prove itself. Refusals are 409 with a typed status — the UI
+        renders them in place, never a toast-shaped apology.
+        """
+        from .... import coder_steering
+
+        try:
+            session = _registry_session(key)
+        except Exception as e:
+            return error_500("coder arm", e, log)
+        if isinstance(session, JSONResponse):
+            return session
+        stale, age = _session_is_stale(session)
+        if stale:
+            return JSONResponse(
+                {
+                    "status": "stale_session",
+                    "detail": (
+                        f"registry record is {age}s old — a stale session "
+                        "cannot be armed"
+                    ),
+                },
+                status_code=409,
+            )
+        target = coder_steering.resolve_pane_target(session)
+        if target is None:
+            return JSONResponse(
+                {"status": "no_pane", "detail": "this session never saw tmux"},
+                status_code=409,
+            )
+        body = payload if isinstance(payload, dict) else {}
+        ttl = coder_steering.clamp_ttl(
+            body.get("ttl_seconds", coder_steering.ARM_DEFAULT_TTL_SECONDS)
+        )
+        result = await asyncio.to_thread(
+            coder_steering.arm, key, target, ttl_seconds=ttl
+        )
+        if result["status"] != "armed":
+            return JSONResponse(result, status_code=409)
+        _coder_frame(ctx, key)
+        return JSONResponse(result)
+
+    @router.post("/api/coders/{key}/disarm")
+    async def api_coder_disarm(key: str) -> Any:
+        """One tap, immediate, idempotent (HS-87-02)."""
+        from .... import coder_steering
+
+        was_armed = coder_steering.disarm(key)
+        if was_armed:
+            _coder_frame(ctx, key)
+        return JSONResponse({"status": "disarmed", "key": key, "was_armed": was_armed})
+
+    @router.get("/api/coders/steering/grants")
+    async def api_coder_grants() -> Any:
+        """Every live grant (HS-87-02) — the pins' armed state, one read.
+        Expired grants sweep (and frame) on the way through."""
+        from .... import coder_steering
+
+        _sweep_and_frame()
+        return JSONResponse({"grants": coder_steering.active_grants()})
 
     @router.post("/api/coders/select")
     async def api_companion_select(payload: Optional[dict[str, Any]] = None) -> Any:

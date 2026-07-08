@@ -52,6 +52,12 @@ export function isCoderFrame(frame: any): boolean {
 export const PEEK_POLL_MS = 1_500;
 export const PEEK_LINES = 200;
 
+/** `m:ss` for the countdown chip — the grant's honest remainder. */
+export function mmss(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
 interface SteeringState {
   openKey: string | null;
   session: SteeringSession | null;
@@ -60,12 +66,36 @@ interface SteeringState {
   paneLines: string[];
   paneHash: string | null;
   inflight: boolean;
+  /** The OPEN session's grant (HS-87-02): armed + a client-side
+   * countdown anchor (epoch ms), re-synced by every peek. */
+  armed: boolean;
+  armedUntil: number | null;
+  armError: string;
+  /** Armed state for every pin on the desk: key → epoch ms expiry. */
+  armedKeys: Record<string, number>;
   openSession(key: string): void;
   closeSession(): void;
   poll(): Promise<void>;
+  arm(): Promise<void>;
+  disarm(): Promise<void>;
+  refreshGrants(): Promise<void>;
 }
 
 let timer: ReturnType<typeof setInterval> | null = null;
+
+/** The grant riding the peek envelope → the store's armed shape. */
+function grantPatch(key: string, grant: any, armedKeys: Record<string, number>) {
+  const armed = Boolean(grant && grant.armed);
+  const expiresIn = armed ? Number(grant.expires_in_seconds || 0) : 0;
+  const nextKeys = { ...armedKeys };
+  if (armed) nextKeys[key] = Date.now() + expiresIn * 1000;
+  else delete nextKeys[key];
+  return {
+    armed,
+    armedUntil: armed ? Date.now() + expiresIn * 1000 : null,
+    armedKeys: nextKeys,
+  };
+}
 
 export const useSteering = create<SteeringState>((set, get) => ({
   openKey: null,
@@ -75,6 +105,10 @@ export const useSteering = create<SteeringState>((set, get) => ({
   paneLines: [],
   paneHash: null,
   inflight: false,
+  armed: false,
+  armedUntil: null,
+  armError: "",
+  armedKeys: {},
 
   openSession(key) {
     if (timer !== null) clearInterval(timer);
@@ -85,6 +119,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
       paneDetail: "",
       paneLines: [],
       paneHash: null,
+      armed: false,
+      armedUntil: null,
+      armError: "",
     });
     void get().poll();
     timer = setInterval(() => void get().poll(), PEEK_POLL_MS);
@@ -102,7 +139,70 @@ export const useSteering = create<SteeringState>((set, get) => ({
       paneDetail: "",
       paneLines: [],
       paneHash: null,
+      armed: false,
+      armedUntil: null,
+      armError: "",
     });
+  },
+
+  async arm() {
+    const key = get().openKey;
+    if (!key) return;
+    set({ armError: "" });
+    try {
+      const res = await fetch(`/api/coders/${encodeURIComponent(key)}/arm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (get().openKey !== key) return;
+      if (res.ok && body.status === "armed") {
+        set(
+          grantPatch(
+            key,
+            { armed: true, expires_in_seconds: body.expires_in_seconds },
+            get().armedKeys,
+          ),
+        );
+        return;
+      }
+      // The refusal, typed and in place — staleness named, pane named.
+      set({ armError: body.detail || body.status || `HTTP ${res.status}` });
+    } catch {
+      if (get().openKey === key) set({ armError: "hub unreachable" });
+    }
+  },
+
+  async disarm() {
+    const key = get().openKey;
+    if (!key) return;
+    try {
+      await fetch(`/api/coders/${encodeURIComponent(key)}/disarm`, {
+        method: "POST",
+      });
+    } catch {
+      /* the grant state re-syncs on the next peek either way */
+    }
+    if (get().openKey === key) {
+      set(grantPatch(key, { armed: false }, get().armedKeys));
+    }
+  },
+
+  async refreshGrants() {
+    try {
+      const res = await fetch("/api/coders/steering/grants");
+      if (!res.ok) return;
+      const body = await res.json().catch(() => ({}));
+      const now = Date.now();
+      const armedKeys: Record<string, number> = {};
+      for (const [key, grant] of Object.entries(body.grants || {})) {
+        armedKeys[key] = now + Number((grant as any).expires_in_seconds || 0) * 1000;
+      }
+      set({ armedKeys });
+    } catch {
+      /* pins keep their last honest state; the next tick retries */
+    }
   },
 
   async poll() {
@@ -127,8 +227,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
       }
       const peek = body.peek || {};
       const session = fromWireSteeringSession(body);
+      const grant = grantPatch(key, body.grant, get().armedKeys);
       if (peek.status === "not_modified") {
-        set({ session, paneStatus: "live" }); // the view stays; the gate held
+        set({ session, paneStatus: "live", ...grant }); // the view stays; the gate held
         return;
       }
       if (peek.status === "live") {
@@ -138,6 +239,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
           paneLines: peek.lines || [],
           paneHash: peek.hash || null,
           paneDetail: "",
+          ...grant,
         });
         return;
       }
@@ -147,6 +249,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
         paneDetail: peek.detail || "",
         paneLines: [],
         paneHash: null,
+        ...grant,
       });
     } catch {
       if (get().openKey === key) set({ paneStatus: "unreachable", paneDetail: "" });

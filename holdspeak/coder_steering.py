@@ -21,9 +21,12 @@ import hashlib
 import re
 import shutil
 import subprocess
+import threading
+import time
 from typing import Any, Callable, Optional
 
 Runner = Callable[..., "subprocess.CompletedProcess[str]"]
+Clock = Callable[[], float]
 
 TMUX_TIMEOUT_SECONDS = 5
 
@@ -164,16 +167,209 @@ def awaiting_transitions(
     return changed
 
 
+# --- The arming grant (HS-87-02): consent with a countdown ---------------
+#
+# Watching is free; ANY keystroke toward a pane requires an active
+# grant for that session. One file owns consent: the store is
+# in-memory and module-level — a hub restart disarms everything (fail
+# closed, a phase decision, not a gap). Expiry is a lazy sweep on
+# read; there is no background timer. The clock is monotonic so a
+# wall-clock jump can never extend a grant.
+
+ARM_DEFAULT_TTL_SECONDS = 15 * 60  # the upstream Telegram default
+ARM_MAX_TTL_SECONDS = 60 * 60  # the upstream hard cap
+ARM_MIN_TTL_SECONDS = 10
+
+_GRANTS: dict[str, dict[str, Any]] = {}
+_GRANTS_LOCK = threading.Lock()
+
+
+def resolve_pane_identity(
+    target: str, *, runner: Optional[Runner] = None
+) -> dict[str, Any]:
+    """The pane's unique ``%N`` id, freshly resolved from tmux.
+
+    Statuses: ``ok`` (with ``pane_id``), ``pane_gone``, ``tmux_absent``,
+    ``error``. This is the recycled-pane lesson made structural: prove
+    what the target resolves to NOW, never trust a stored address.
+    """
+    if runner is None and shutil.which("tmux") is None:
+        return {"status": "tmux_absent"}
+    run = runner or _default_runner
+    try:
+        completed = run(
+            ["tmux", "display-message", "-p", "-t", str(target), "#{pane_id}"]
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {"status": "error", "detail": str(exc)}
+    if completed.returncode != 0:
+        detail = (completed.stderr or "").strip() or "tmux refused"
+        return {"status": "pane_gone", "detail": detail}
+    pane_id = (completed.stdout or "").strip()
+    if not pane_id:
+        # tmux 3.6 answers a dead target with rc 0 and an EMPTY
+        # expansion when the server is otherwise alive — an
+        # unprovable pane is a gone pane, never a transient error.
+        return {"status": "pane_gone", "detail": "target does not resolve to a pane"}
+    return {"status": "ok", "pane_id": pane_id}
+
+
+def clamp_ttl(ttl_seconds: Any) -> int:
+    try:
+        ttl = int(ttl_seconds)
+    except (TypeError, ValueError):
+        return ARM_DEFAULT_TTL_SECONDS
+    return max(ARM_MIN_TTL_SECONDS, min(ttl, ARM_MAX_TTL_SECONDS))
+
+
+def arm(
+    key: str,
+    target: str,
+    *,
+    ttl_seconds: int = ARM_DEFAULT_TTL_SECONDS,
+    runner: Optional[Runner] = None,
+    clock: Clock = time.monotonic,
+) -> dict[str, Any]:
+    """Issue the grant: pin the pane identity, start the countdown.
+
+    Statuses: ``armed`` (with ``pane_id`` + ``expires_in_seconds``),
+    or the identity failure verbatim (``pane_gone`` / ``tmux_absent`` /
+    ``error``) — a pane that cannot prove itself cannot be armed.
+    """
+    identity = resolve_pane_identity(target, runner=runner)
+    if identity["status"] != "ok":
+        return identity
+    ttl = clamp_ttl(ttl_seconds)
+    now = clock()
+    with _GRANTS_LOCK:
+        _GRANTS[key] = {
+            "pane_id": identity["pane_id"],
+            "target": str(target),
+            "granted_at": now,
+            "expires_at": now + ttl,
+        }
+    return {
+        "status": "armed",
+        "key": key,
+        "pane_id": identity["pane_id"],
+        "expires_in_seconds": ttl,
+    }
+
+
+def disarm(key: str) -> bool:
+    """One tap, immediate; idempotent (returns whether a grant died)."""
+    with _GRANTS_LOCK:
+        return _GRANTS.pop(key, None) is not None
+
+
+def sweep_expired(*, clock: Clock = time.monotonic) -> list[str]:
+    """Drop every grant past its window; return the keys that expired.
+    The caller broadcasts their frames — the sweep is the only timer."""
+    now = clock()
+    expired: list[str] = []
+    with _GRANTS_LOCK:
+        for key in list(_GRANTS):
+            if now > _GRANTS[key]["expires_at"]:
+                del _GRANTS[key]
+                expired.append(key)
+    return expired
+
+
+def active_grants(*, clock: Clock = time.monotonic) -> dict[str, dict[str, Any]]:
+    """``{key: {pane_id, expires_in_seconds}}`` for every live grant
+    (expired ones swept first — call `sweep_expired` yourself when you
+    need the expiry keys for frames)."""
+    sweep_expired(clock=clock)
+    now = clock()
+    with _GRANTS_LOCK:
+        return {
+            key: {
+                "pane_id": grant["pane_id"],
+                "expires_in_seconds": max(0, int(grant["expires_at"] - now)),
+            }
+            for key, grant in _GRANTS.items()
+        }
+
+
+def require_grant(
+    key: str,
+    current_target: Optional[str],
+    *,
+    runner: Optional[Runner] = None,
+    clock: Clock = time.monotonic,
+) -> dict[str, Any]:
+    """THE chokepoint check — nothing types without passing here.
+
+    Statuses: ``ok`` (grant verified against the pane the registry
+    points at NOW), ``unarmed``, ``expired`` (removed), ``pane_gone``
+    (REVOKED), ``pane_mismatch`` (REVOKED — the recycled/retargeted
+    pane must never receive text meant for its predecessor),
+    ``tmux_absent`` / ``error`` (refused, grant kept: transient
+    failures burn nothing, and nothing was typed).
+    """
+    with _GRANTS_LOCK:
+        grant = _GRANTS.get(key)
+    if grant is None:
+        return {"status": "unarmed"}
+    if clock() > grant["expires_at"]:
+        with _GRANTS_LOCK:
+            _GRANTS.pop(key, None)
+        return {"status": "expired", "revoked": True}
+    if not current_target:
+        # The registry lost the pane while the grant lived: structural.
+        disarm(key)
+        return {"status": "pane_gone", "detail": "registry has no pane", "revoked": True}
+    identity = resolve_pane_identity(current_target, runner=runner)
+    if identity["status"] == "pane_gone":
+        disarm(key)
+        return {**identity, "revoked": True}
+    if identity["status"] != "ok":
+        return identity  # transient: refuse, keep the grant
+    if identity["pane_id"] != grant["pane_id"]:
+        disarm(key)
+        return {
+            "status": "pane_mismatch",
+            "detail": (
+                f"pane {identity['pane_id']!r} is not the armed "
+                f"{grant['pane_id']!r} — nothing was typed"
+            ),
+            "revoked": True,
+        }
+    return {
+        "status": "ok",
+        "pane_id": grant["pane_id"],
+        "expires_in_seconds": max(0, int(grant["expires_at"] - clock())),
+    }
+
+
+def clear_grants() -> None:
+    """Test seam. A real restart clears the store by construction."""
+    with _GRANTS_LOCK:
+        _GRANTS.clear()
+
+
 __all__ = [
+    "ARM_DEFAULT_TTL_SECONDS",
+    "ARM_MAX_TTL_SECONDS",
+    "ARM_MIN_TTL_SECONDS",
+    "Clock",
     "PEEK_DEFAULT_LINES",
     "PEEK_MAX_BYTES",
     "PEEK_MAX_LINES",
     "Runner",
     "TMUX_TIMEOUT_SECONDS",
+    "arm",
+    "active_grants",
     "awaiting_snapshot",
     "awaiting_transitions",
+    "clamp_ttl",
+    "clear_grants",
     "content_hash",
+    "disarm",
     "peek_pane",
+    "require_grant",
+    "resolve_pane_identity",
     "resolve_pane_target",
     "strip_ansi",
+    "sweep_expired",
 ]

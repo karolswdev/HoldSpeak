@@ -1,6 +1,6 @@
 # Phase 87 — The Steering Desk (B2: attach, steer, classify, ground)
 
-**Last updated:** 2026-07-08 (HS-87-01 done — attach shipped).
+**Last updated:** 2026-07-08 (HS-87-02 done — arming shipped; 2/6).
 
 ## Goal
 
@@ -55,7 +55,7 @@ bar: *"so robust, it will literally destroy our brains."*
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-87-01 | Attach: the session pull-out with the live pane view | done | [story-01-session-pullout](./story-01-session-pullout.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-87-02 | The arming grant: consent with a countdown | backlog | [story-02-arming-grant](./story-02-arming-grant.md) | - |
+| HS-87-02 | The arming grant: consent with a countdown | done | [story-02-arming-grant](./story-02-arming-grant.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-87-03 | Steer: the voice-first composer, delivered and audited | backlog | [story-03-steer-composer](./story-03-steer-composer.md) | - |
 | HS-87-04 | Ground: desk objects ride into the steer | backlog | [story-04-desk-context](./story-04-desk-context.md) | - |
 | HS-87-05 | Classify: triage from the pull-out | backlog | [story-05-classify-verbs](./story-05-classify-verbs.md) | - |
@@ -63,16 +63,21 @@ bar: *"so robust, it will literally destroy our brains."*
 
 ## Where we are
 
-Attach is real (HS-87-01): `coder_steering.peek_pane` reads a pane's
-tail through an injectable runner with the sha256 hash gate;
-`GET /api/coders/{key}/peek` serves it with the honest envelope
-(stale, awaiting, typed absences — `no_pane`, `pane_gone`,
-`tmux_absent` — never a 500); the SessionPullout renders the live
-view (poll only-while-open, 1.5 s, single-flight) and opens from the
-conveyor SessionPin and the coder pull-out's "Watch live"; the hub's
-one registry observer broadcasts `scope:"coder"` frames on
-awaiting-response transitions. Proven live against a real tmux pane
-(evidence). Next: HS-87-02, the arming grant.
+Attach (HS-87-01) and arming (HS-87-02) are real. The grant store
+lives in `coder_steering.py` (in-memory, monotonic clock, lazy
+sweep): `arm` pins the pane's `%N` at grant time, `require_grant` is
+the chokepoint check 03 will call — unarmed/expired refused,
+recycled or retargeted pane refused AND revoked, transient tmux
+errors refused without burning the grant. Routes: `POST
+/{key}/arm|/disarm` (stale refused by name, refusals typed 409s),
+`GET /steering/grants`; the grant rides the peek envelope; every
+arming motion and lazy-swept expiry broadcasts its `scope:"coder"`
+frame. Desk: hold-to-arm chip → countdown → one-tap disarm; armed
+ring on every pin. The live rig caught a real tmux 3.6 edge: a dead
+target answers `display-message` with rc 0 and an EMPTY expansion —
+now typed `pane_gone`, proven by the kill-the-pane crown case.
+SECURITY.md carries the consent model. Next: HS-87-03, the steer
+composer.
 
 ## Active risks
 

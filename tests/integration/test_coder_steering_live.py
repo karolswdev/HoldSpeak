@@ -54,6 +54,37 @@ def live_pane():
         subprocess.run(["tmux", "kill-session", "-t", session], timeout=10)
 
 
+def test_live_arm_then_killed_pane_refuses_and_revokes(live_pane) -> None:
+    """HS-87-02 crown case against a real tmux server: arm pins the
+    real `%N`, the grant verifies while the pane lives, and killing
+    the pane makes the next check refuse AND revoke."""
+    from holdspeak.coder_steering import (
+        active_grants,
+        arm,
+        clear_grants,
+        require_grant,
+    )
+
+    session, pane = live_pane
+    clear_grants()
+    try:
+        armed = arm("claude:live-proof", f"{session}:0.0")
+        assert armed["status"] == "armed"
+        assert armed["pane_id"] == pane  # the real unique id, pinned
+
+        ok = require_grant("claude:live-proof", f"{session}:0.0")
+        assert ok["status"] == "ok"
+
+        subprocess.run(["tmux", "kill-session", "-t", session], timeout=10)
+        time.sleep(0.2)
+        refused = require_grant("claude:live-proof", f"{session}:0.0")
+        assert refused["status"] == "pane_gone"
+        assert refused["revoked"] is True
+        assert active_grants() == {}
+    finally:
+        clear_grants()
+
+
 def test_live_peek_hash_gate_and_dead_pane(live_pane) -> None:
     session, pane = live_pane
 

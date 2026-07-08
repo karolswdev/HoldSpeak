@@ -1,10 +1,11 @@
-// The session pull-out (HS-87-01) — attach: a real view into a real
-// agent session, in the desk grammar. Read-only in this story: watching
-// is free, and this surface issues no grants and sends no keystrokes;
-// the arming chip and the composer land with HS-87-02/03.
-import { useEffect, useRef } from "react";
+// The session pull-out (HS-87-01/02) — attach + arm, in the desk
+// grammar. Watching is free; steering is armed: the ARM chip is a
+// press-and-hold (the desk's consent gesture, the record-orb family),
+// armed becomes the countdown, one tap disarms. Enforcement lives
+// hub-side — this surface can only ask.
+import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { useSteering } from "../steering";
+import { mmss, useSteering } from "../steering";
 
 const PANE_STATE_LABEL: Record<string, string> = {
   pane_gone: "pane gone",
@@ -15,6 +16,68 @@ const PANE_STATE_LABEL: Record<string, string> = {
   unreachable: "hub unreachable",
   idle: "…",
 };
+
+const HOLD_TO_ARM_MS = 600;
+
+function ArmChip() {
+  const armed = useSteering((s) => s.armed);
+  const armedUntil = useSteering((s) => s.armedUntil);
+  const armError = useSteering((s) => s.armError);
+  const stale = useSteering((s) => Boolean(s.session?.stale));
+  const [remaining, setRemaining] = useState(0);
+  const [holding, setHolding] = useState(false);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!armed || armedUntil === null) return;
+    const tick = () => setRemaining((armedUntil - Date.now()) / 1000);
+    tick();
+    const t = setInterval(tick, 500);
+    return () => clearInterval(t);
+  }, [armed, armedUntil]);
+
+  const cancelHold = () => {
+    setHolding(false);
+    if (holdTimer.current !== null) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+  };
+
+  if (armed) {
+    return (
+      <button
+        type="button"
+        className="desk-chip desk-arm-chip is-armed"
+        title="armed — tap to disarm"
+        onClick={() => void useSteering.getState().disarm()}
+      >
+        ⏻ {mmss(remaining)}
+      </button>
+    );
+  }
+  return (
+    <span className="desk-arm-wrap">
+      <button
+        type="button"
+        className={"desk-chip desk-arm-chip" + (holding ? " is-holding" : "")}
+        title={stale ? "stale — arming will refuse" : "hold to arm steering"}
+        onPointerDown={() => {
+          setHolding(true);
+          holdTimer.current = setTimeout(() => {
+            cancelHold();
+            void useSteering.getState().arm();
+          }, HOLD_TO_ARM_MS);
+        }}
+        onPointerUp={cancelHold}
+        onPointerLeave={cancelHold}
+      >
+        ARM
+      </button>
+      {armError && <span className="desk-arm-refusal">✕ {armError}</span>}
+    </span>
+  );
+}
 
 export function SessionPullout() {
   const openKey = useSteering((s) => s.openKey);
@@ -71,6 +134,7 @@ export function SessionPullout() {
         </span>
         {session?.stale && <span className="desk-chip quiet is-stale">stale</span>}
         {live && <span className="desk-session-live" title="watching">●</span>}
+        <ArmChip />
         <button
           type="button"
           className="desk-pullout-close"

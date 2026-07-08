@@ -698,6 +698,36 @@
       ]
     },
     {
+      "path": "/api/coders/steering/grants",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coders",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/coders/{key}/arm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coders",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/coders/{key}/disarm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coders",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/coders/{key}/peek",
       "methods": [
         "GET"

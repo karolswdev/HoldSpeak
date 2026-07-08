@@ -34,13 +34,16 @@ interface PickTarget {
 }
 
 function SessionPin({ session }: { session: McSession }) {
+  const armedUntil = useSteering((s) => s.armedKeys[session.key]);
+  const armed = Boolean(armedUntil && armedUntil > Date.now());
   return (
     <span
       role="button"
       className={
         "desk-mc-pin" +
         (session.awaitingResponse ? " awaiting" : "") +
-        (session.stale ? " stale" : "")
+        (session.stale ? " stale" : "") +
+        (armed ? " armed" : "")
       }
       title={
         `${session.key} — watch live` +
@@ -316,14 +319,19 @@ export function MissionControlConveyor() {
   const [picked, setPicked] = useState<PickTarget | null>(null);
 
   useEffect(() => {
-    void refresh();
-    const timer = setInterval(() => void refresh(), POLL_MS);
+    const tick = () => {
+      void refresh();
+      void useSteering.getState().refreshGrants(); // the pins' armed rings
+    };
+    tick();
+    const timer = setInterval(tick, POLL_MS);
     // A `scope:"belt"` frame on the one bus moves the belt now; a
-    // `scope:"coder"` frame moves the pins (HS-87-01). The poll stays
-    // as the fallback heartbeat (HS-86-04).
+    // `scope:"coder"` frame moves the pins (HS-87-01/02). The poll
+    // stays as the fallback heartbeat (HS-86-04).
     const onFrame = (e: Event) => {
       const frame = (e as CustomEvent).detail;
-      if (isBeltFrame(frame) || isCoderFrame(frame)) void refresh();
+      if (isBeltFrame(frame)) void refresh();
+      if (isCoderFrame(frame)) tick();
     };
     document.addEventListener("hs-broadcast", onFrame);
     return () => {
