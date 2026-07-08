@@ -365,12 +365,20 @@ profile; (3) desktop hub honors profiles; (4) web authors/uses them. Each surfac
 primitive framework, the per-agent `AgentRecord`, and the egress-badge canon.
 
 ---
-### U. The Delivery Belt — delivery-workbench as a desk surface (the conveyor-belt builder)
+### U. The Delivery Belt — delivery-workbench as a desk surface (the conveyor-belt builder) — [full proposal](./proposals/delivery-belt.md)
 
 Owner direction (2026-07-07, the post-85/25 conversation): *"the desire was
 for the delivery-workbench integration to be incredibly well integrated into
 the UI/UX philosophy of Desk OS on iOS, and of course, its Web Equivalent…
 it's almost like a conveyor belt builder with rich interaction affordances."*
+
+Expanded the same day (owner): an **app of DeskOS** — start a repository
+scaffolded with the delivery framework from the desk, an AI agent (Claude
+Code / codex / any paired runner) scaffolds it properly from the user's
+input, projects live as desk primitives AND separate entities, and many
+such processes run controllable alongside. The factory floor. Slices B0–B4
+and the two non-negotiables (receipts-only; every consequential act is an
+actuator) are pinned in [the proposal](./proposals/delivery-belt.md).
 
 **The reframe (recorded from the same conversation's honest audit):** the
 framework's agent integration today is markdown-as-database plus hand-typed
