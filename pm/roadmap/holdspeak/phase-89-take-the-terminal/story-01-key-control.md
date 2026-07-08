@@ -2,7 +2,8 @@
 
 - **Project:** holdspeak
 - **Phase:** 89
-- **Status:** backlog
+- **Status:** done
+- **Shipped:** 2026-07-08 — full key control through the ONE chokepoint. `C-c` interrupts a REAL runaway (counter frozen, shell responsive); `BSpace` edits a real line (`echo AB`+BSpace+`C` → `AC`); `C-c` cancels a typed junk line — every key audited with a readable head. Suite 3480/0. Evidence: [evidence-story-01.md](./evidence-story-01.md).
 - **Depends on:** none (extends Phase 87)
 - **Unblocks:** HS-89-02, HS-89-03
 
@@ -30,20 +31,25 @@ EXACT Phase-87 consent/audit chokepoint.
 
 ## Acceptance criteria
 
-- [ ] `deliver_keys` refuses unarmed, refuses+revokes a recycled pane,
+- [x] `deliver_keys` refuses unarmed, refuses+revokes a recycled pane,
       and on success sends the key list to the VERIFIED `%N` — each
-      pinned by a test (mirroring `deliver`).
-- [ ] A key sequence renders faithfully to `tmux send-keys` (named
+      pinned by a test (`test_coder_steering_keys.py`).
+- [x] A key sequence renders faithfully to `tmux send-keys` (named
       keys as named args, a literal run via `-l`); a test asserts the
-      exact argv for `C-c`, for `Down Down Enter`, and for a literal.
-- [ ] Every keys delivery, delivered or refused, writes an audit row
-      whose head is the readable sequence (`C-c`, `Down Down Enter`).
-- [ ] `POST /keys` is a typed 409 when unarmed (the desk shows ARM);
-      delivered when armed; a revoking refusal frames the disarm.
-- [ ] Live: `C-c` interrupts a REAL runaway process in an armed pane;
-      arrows + `Escape` drive a REAL TUI — captured in evidence.
-- [ ] Full suite green (read from the file); the chokepoint census
-      covers `send_keys_to_pane`; api-surface regen.
+      exact argv for `C-c`, for `Down Down Enter`, and for a literal
+      (`test_tmux_transport.py`).
+- [x] Every keys delivery, delivered or refused, writes an audit row
+      whose head is the readable sequence (the live audit read back
+      `"echo AB" BSpace "C" Enter`, `C-c`, …).
+- [x] `POST /keys` is a typed 409 when unarmed, `unknown_key` for a
+      junk key, delivered when armed, a revoking refusal frames the
+      disarm (`test_web_routes_coders_steer.py`).
+- [x] Live: `C-c` interrupts a REAL runaway; named control keys
+      (`BSpace` line-edit, `C-c` line-cancel) drive the real line
+      editor — captured in evidence. (Full arrow-driven TUI navigation
+      is HS-89-04's walk beat 2; arrow argv is unit-proven here.)
+- [x] Full suite green (3480/0, read from the file); the chokepoint
+      census covers `send_keys_to_pane`; api-surface regenerated.
 
 ## Test plan
 

@@ -371,3 +371,69 @@ def test_keep_as_note_unknown_session_is_404(env) -> None:
     _register(env.monkeypatch)
     res = env.client.post("/api/coders/claude:nope/keep-note", json={})
     assert res.status_code == 404
+
+
+# --- key control route (HS-89-01) ------------------------------------------
+
+
+def _capture_keys(env):
+    keyed: list[dict] = []
+    env.monkeypatch.setattr(
+        tmux_transport,
+        "send_keys_to_pane",
+        lambda *, pane, keys, timeout_s=2.0: keyed.append({"pane": pane, "keys": keys}),
+    )
+    return keyed
+
+
+def test_unarmed_keys_is_a_typed_409_and_audited(env) -> None:
+    _register(env.monkeypatch, _session())
+    keyed = _capture_keys(env)
+    res = env.client.post("/api/coders/claude:abc/keys", json={"keys": ["C-c"]})
+    assert res.status_code == 409
+    assert res.json()["status"] == "unarmed"
+    assert keyed == []
+    trail = env.db.steering.list()
+    assert trail[0].outcome == "unarmed"
+
+
+def test_armed_keys_interrupt_reaches_the_verified_pane(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    keyed = _capture_keys(env)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post("/api/coders/claude:abc/keys", json={"keys": ["C-c"]})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["status"] == "delivered" and body["pane_id"] == "%3"
+    assert keyed == [{"pane": "%3", "keys": [("named", "C-c")]}]
+    trail = env.db.steering.list()
+    assert trail[0].outcome == "delivered" and trail[0].text_head == "C-c"
+
+
+def test_unknown_key_is_refused_by_name_and_types_nothing(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    keyed = _capture_keys(env)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post("/api/coders/claude:abc/keys", json={"keys": ["sudo reboot"]})
+    assert res.status_code == 409
+    assert res.json()["status"] == "unknown_key"
+    assert res.json()["detail"] == "sudo reboot"
+    assert keyed == []
+
+
+def test_recycled_pane_keys_refuse_disarm_and_frame(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    keyed = _capture_keys(env)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    env.frames.clear()
+    _pin_identity(env.monkeypatch, "%99")  # the pane was recycled
+    res = env.client.post("/api/coders/claude:abc/keys", json={"keys": ["C-c"]})
+    assert res.status_code == 409
+    assert res.json()["status"] == "pane_mismatch"
+    assert res.json()["revoked"] is True
+    assert keyed == []
+    assert coder_steering.active_grants() == {}
+    assert len(env.frames) == 1  # the disarm is visible everywhere

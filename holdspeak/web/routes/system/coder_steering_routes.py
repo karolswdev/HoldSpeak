@@ -317,6 +317,44 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(result)
         return JSONResponse(result, status_code=409)
 
+    @router.post("/api/coders/{key}/keys")
+    async def api_coder_keys(
+        key: str, payload: Optional[dict[str, Any]] = None
+    ) -> Any:
+        """Send a KEY sequence through THE chokepoint (HS-89-01).
+
+        Full key control: `C-c` to interrupt a runaway, arrows/`Escape`/
+        `Tab` to drive a TUI — not just literal text. The body is
+        `{"keys": [...]}` where each item is a named key (a string like
+        `"C-c"`, or `{"key": "C-c"}`) or a literal run (`{"literal": "…"}`).
+        Named keys are held to an allow-list — an unknown key is refused by
+        name (409 `unknown_key`), never sent. Unarmed is a typed 409 (the
+        desk shows ARM); a revoking refusal broadcasts its frame. Delivered
+        or refused, every key sequence is audited.
+        """
+        from .... import coder_steering
+
+        try:
+            session = _registry_session(key)
+        except Exception as e:
+            return error_500("coder keys", e, log)
+        if isinstance(session, JSONResponse):
+            return session
+        body = payload if isinstance(payload, dict) else {}
+        target = coder_steering.resolve_pane_target(session)
+        result = await asyncio.to_thread(
+            coder_steering.deliver_keys,
+            key,
+            body.get("keys"),
+            current_target=target,
+            agent=session.agent,
+        )
+        if result.get("revoked"):
+            _coder_frame(ctx, key)  # the disarm is visible everywhere, now
+        if result["status"] == "delivered":
+            return JSONResponse(result)
+        return JSONResponse(result, status_code=409)
+
     @router.get("/api/coders/steering/audit")
     async def api_coder_steering_audit(
         session_key: Optional[str] = None, limit: int = 50

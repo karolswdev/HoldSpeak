@@ -750,6 +750,14 @@
       ]
     },
     {
+      "path": "/api/coders/{key}/keys",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": []
+    },
+    {
       "path": "/api/coders/{key}/peek",
       "methods": [
         "GET"

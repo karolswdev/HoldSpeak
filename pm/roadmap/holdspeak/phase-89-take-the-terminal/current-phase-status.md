@@ -53,7 +53,7 @@ manipulation IN this framework."*
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-89-01 | Full key control — the send-keys verb | backlog | [story-01-key-control](./story-01-key-control.md) | - |
+| HS-89-01 | Full key control — the send-keys verb | **done** (2026-07-08, live) | [story-01-key-control](./story-01-key-control.md) | [evidence-01](./evidence-story-01.md) |
 | HS-89-02 | Attach to any pane — beyond the registry | backlog | [story-02-any-pane](./story-02-any-pane.md) | - |
 | HS-89-03 | Cross-machine steering — over the relay | backlog | [story-03-cross-machine-steer](./story-03-cross-machine-steer.md) | - |
 | HS-89-04 | The robustness walk, the docs, the close | backlog | [story-04-walk-docs](./story-04-walk-docs.md) | - |
@@ -64,7 +64,20 @@ Scaffolded 2026-07-08 from the owner's direct ask — "first-class agent
 manipulation IN this framework" — after an honest audit of Phase 87
 found the steering channel real and safe but scoped: text-only,
 registry-gated, local-only. This phase removes those three limits on
-the same consent spine. Nothing implemented. Next: HS-89-01.
+the same consent spine.
+
+**HS-89-01 done (2026-07-08, live) — text-only is gone.** The chokepoint
+now sends real keys: `tmux_transport.send_keys_to_pane` (named keys as
+bare `send-keys` args, a literal run via `-l`) and
+`coder_steering.deliver_keys` (the SAME grant → verify `%N` → send →
+audit shape as `deliver`, an allow-list refusing any junk key BY NAME).
+`POST /api/coders/{key}/keys` is a typed 409 when unarmed / `unknown_key`
+/ revoking. Proven on real metal through the real chokepoint: `C-c`
+interrupted a runaway (counter frozen, shell responsive), `BSpace`
+edited a real line (`echo AB`+BSpace+`C` → `AC`), `C-c` cancelled a
+typed junk line — the audit read back every sequence with a readable
+head. The census pins `send_keys_to_pane` to the one chokepoint; suite
+3480/0. Next: HS-89-02 (attach to any pane).
 
 ## Active risks
 
