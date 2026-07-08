@@ -502,3 +502,80 @@ class TestBeltFrames:
         assert payload["scope"] == "belt"
         assert payload["state"] == "ready"
         assert payload["capability"] == {"kind": "belt", "id": "demo", "name": "demo"}
+
+
+# ── HS-86-04: evidence in place (CLI-resolved, path-contained) ───────
+
+def _context_doc(evidence_rel):
+    return {
+        "kind": "delivery-workbench-roadmap-context",
+        "projects": [{
+            "slug": "demo",
+            "phases": [{
+                "number": 1,
+                "stories": [{
+                    "story_id": "DM-1-01",
+                    "evidence_path": evidence_rel,
+                }],
+            }],
+        }],
+    }
+
+
+def _evidence_client(tmp_path, evidence_rel, write=True):
+    map_path = _make_map(tmp_path)
+    repo = tmp_path / "rails-repo"
+    if write:
+        target = repo / "pm" / "roadmap" / "demo" / "phase-1-a"
+        target.mkdir(parents=True, exist_ok=True)
+        (target / "evidence-story-01.md").write_text("# Evidence\n\n- real proof\n")
+    runner = _runner_for({"context": _context_doc(evidence_rel)})
+    return _client(map_path, runner)
+
+
+class TestEvidenceInPlace:
+    REL = "pm/roadmap/demo/phase-1-a/evidence-story-01.md"
+
+    def _get(self, client, repo="demo"):
+        return client.get(
+            f"/api/missioncontrol/evidence?repo={repo}&project=demo&story=DM-1-01"
+        ).json()
+
+    def test_happy_path_reads_the_contained_file(self, tmp_path):
+        body = self._get(_evidence_client(tmp_path, self.REL))
+        assert body["status"] == "live"
+        assert body["path"] == self.REL
+        assert "real proof" in body["text"]
+
+    def test_traversal_is_refused(self, tmp_path):
+        body = self._get(_evidence_client(tmp_path, "pm/roadmap/../../secrets.md"))
+        assert body["status"] == "refused"
+
+    def test_absolute_path_is_refused(self, tmp_path):
+        body = self._get(_evidence_client(tmp_path, "/etc/hosts"))
+        assert body["status"] == "refused"
+
+    def test_non_markdown_is_refused(self, tmp_path):
+        body = self._get(_evidence_client(tmp_path, "pm/roadmap/demo/notes.txt"))
+        assert body["status"] == "refused"
+
+    def test_unknown_repo_is_refused(self, tmp_path):
+        body = self._get(_evidence_client(tmp_path, self.REL), repo="nope")
+        assert body["status"] == "refused"
+
+    def test_missing_file_is_absent(self, tmp_path):
+        body = self._get(_evidence_client(tmp_path, self.REL, write=False))
+        assert body["status"] == "absent"
+
+    def test_route_is_get_only(self, tmp_path):
+        app = FastAPI()
+        app.include_router(
+            build_missioncontrol_router(
+                WebContext(get_state=lambda: {}),
+                runner=_runner_for({}),
+                map_path=_make_map(tmp_path),
+            )
+        )
+        for route in app.routes:
+            if "evidence" in getattr(route, "path", ""):
+                assert set(route.methods) == {"GET"}

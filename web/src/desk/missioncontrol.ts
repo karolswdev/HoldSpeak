@@ -46,7 +46,20 @@ export interface McRepo {
   status: McRepoStatus;
   detail: string;
   projects: McProject[];
+  /** GitHub receipts (HS-86-04): open PRs with a derived CI light. */
+  receipts: "live" | "unavailable" | "unknown";
+  prs: McPr[];
 }
+
+export interface McPr {
+  number: number;
+  title: string;
+  url: string;
+  branch: string;
+  ci: CiLight;
+}
+
+export type CiLight = "pass" | "fail" | "pending" | "none";
 
 export interface McSession {
   key: string;
@@ -100,7 +113,79 @@ export const fromWireMcRepo = (entry: any): McRepo => ({
     entry.status === "live" && entry.feed
       ? (entry.feed.projects || []).map(fromWireProject)
       : [],
+  receipts: "unknown",
+  prs: [],
 });
+
+/** Worst-conclusion CI light over a PR's check rollup — one honest
+ * dot: any failure-shaped conclusion wins, then pending, then pass;
+ * no checks at all is "none", never a fake green. */
+export const ciLight = (rollup: any[]): CiLight => {
+  if (!rollup || rollup.length === 0) return "none";
+  let pending = false;
+  for (const check of rollup) {
+    const conclusion = String(check?.conclusion || "").toUpperCase();
+    if (
+      ["FAILURE", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE"].includes(
+        conclusion,
+      )
+    )
+      return "fail";
+    if (!conclusion || conclusion === "PENDING") pending = true;
+  }
+  return pending ? "pending" : "pass";
+};
+
+const fromWirePr = (p: any): McPr => ({
+  number: p.number ?? 0,
+  title: p.title || "",
+  url: p.url || "",
+  branch: p.headRefName || "",
+  ci: ciLight(p.statusCheckRollup || []),
+});
+
+/** Fold the receipts document into the repos by name (HS-86-04). */
+export function mergeReceipts(repos: McRepo[], receipts: any): McRepo[] {
+  const byName: Record<string, any> = {};
+  for (const entry of receipts?.repos || []) byName[entry.name] = entry;
+  return repos.map((repo) => {
+    const entry = byName[repo.name];
+    if (!entry) return repo;
+    if (entry.status !== "live")
+      return { ...repo, receipts: "unavailable" as const, prs: [] };
+    return {
+      ...repo,
+      receipts: "live" as const,
+      prs: (entry.prs || []).map(fromWirePr),
+    };
+  });
+}
+
+/** The gate station light: the newest gate event for a repo speaks
+ * (events arrive newest-first). A refusal carries its rule verbatim. */
+export function gateLightFor(
+  events: McEvent[],
+  repo: string,
+): { state: "pass" | "refusal" | "none"; rule: string } {
+  for (const e of events) {
+    if (e.repo !== repo) continue;
+    if (e.event === "gate_pass") return { state: "pass", rule: "" };
+    if (e.event === "gate_refusal")
+      return { state: "refusal", rule: String(e.detail?.rule ?? "") };
+  }
+  return { state: "none", rule: "" };
+}
+
+/** A `scope:"belt"` frame on the one bus (HS-86-03) — the conveyor
+ * refreshes on sight instead of waiting for its tick. */
+export function isBeltFrame(frame: any): boolean {
+  return Boolean(
+    frame &&
+      frame.type === "intel_status" &&
+      frame.data &&
+      frame.data.scope === "belt",
+  );
+}
 
 export const fromWireMcSession = (s: any): McSession => ({
   key: s.key || "",
@@ -174,6 +259,12 @@ export const fromWireProposal = (p: any): McProposal => ({
   error: p.error || null,
 });
 
+export interface McEvidence {
+  storyId: string;
+  path: string;
+  text: string;
+}
+
 interface McState {
   repos: McRepo[];
   sessions: McSession[];
@@ -185,11 +276,15 @@ interface McState {
   open: boolean;
   proposal: McProposal | null;
   proposalError: string;
+  evidence: McEvidence | null;
+  evidenceDetail: string;
   toggle(): void;
   refresh(): Promise<void>;
   proposeFlip(repo: string, project: string, story: string, status: string): Promise<void>;
   decide(decision: "approved" | "rejected"): Promise<void>;
   dismissProposal(): void;
+  openEvidence(repo: string, project: string, story: string): Promise<void>;
+  closeEvidence(): void;
 }
 
 export const useMissionControl = create<McState>((set, get) => ({
@@ -203,6 +298,8 @@ export const useMissionControl = create<McState>((set, get) => ({
   open: true,
   proposal: null,
   proposalError: "",
+  evidence: null,
+  evidenceDetail: "",
 
   toggle() {
     set({ open: !get().open });
@@ -247,19 +344,44 @@ export const useMissionControl = create<McState>((set, get) => ({
     set({ proposal: null, proposalError: "" });
   },
 
+  async openEvidence(repo, project, story) {
+    set({ evidence: null, evidenceDetail: "" });
+    try {
+      const body = await fetchJson(
+        `/api/missioncontrol/evidence?repo=${encodeURIComponent(repo)}` +
+          `&project=${encodeURIComponent(project)}&story=${encodeURIComponent(story)}`,
+      );
+      if (body.status === "live") {
+        set({ evidence: { storyId: story, path: body.path, text: body.text } });
+      } else {
+        set({ evidenceDetail: `${body.status}: ${body.detail || story}` });
+      }
+    } catch (e: any) {
+      set({ evidenceDetail: e.message || "evidence read failed" });
+    }
+  },
+
+  closeEvidence() {
+    set({ evidence: null, evidenceDetail: "" });
+  },
+
   async refresh() {
     if (get().inflight) return; // single-flight: a slow poll skips ticks
     set({ inflight: true });
     try {
-      const [state, sessions, events] = await Promise.all([
+      const [state, sessions, events, receipts] = await Promise.all([
         fetchJson("/api/missioncontrol/state").catch(() => null),
         fetchJson("/api/missioncontrol/sessions").catch(() => null),
         fetchJson("/api/missioncontrol/events?tail=20").catch(() => null),
+        fetchJson("/api/missioncontrol/receipts").catch(() => null),
       ]);
       set({
-        repos: state
-          ? (state.repos || []).map(fromWireMcRepo)
-          : get().repos.map((r) => ({ ...r, status: "unreachable" as const })),
+        repos: mergeReceipts(
+          state
+            ? (state.repos || []).map(fromWireMcRepo)
+            : get().repos.map((r) => ({ ...r, status: "unreachable" as const })),
+          receipts,
+        ),
         sessions:
           sessions && sessions.status === "live"
             ? (sessions.sessions.sessions || []).map(fromWireMcSession)

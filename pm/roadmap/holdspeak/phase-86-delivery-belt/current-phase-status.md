@@ -52,7 +52,7 @@ verbs stand on.
 | HS-86-01 | The clean tree — fix the 31 triaged desyncs | done | [story-01-clean-tree](./story-01-clean-tree.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-86-02 | The refreshed rails — stamped gate + embedded dw | done | [story-02-refreshed-rails](./story-02-refreshed-rails.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-86-03 | The receipts the conveyor lacks: gh lights + belt frames (hub) | done | [story-03-hub-belt-route](./story-03-hub-belt-route.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-86-04 | The conveyor completes: station lights + evidence in place | backlog | [story-04-belt-surface](./story-04-belt-surface.md) | - |
+| HS-86-04 | The conveyor completes: station lights + evidence in place | done | [story-04-belt-surface](./story-04-belt-surface.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-86-05 | The live walk + docs + closeout | backlog | [story-05-live-walk-and-docs](./story-05-live-walk-and-docs.md) | - |
 
 ## Where we are
@@ -70,7 +70,12 @@ gate. HS-86-03 done (re-scoped): `/api/missioncontrol/receipts` (gh PR +
 check rollups per map repo, typed absence), `scope:"belt"` frames on
 observed tree change, the three Phase-82 reads moved onto
 asyncio.to_thread, GET-only fitness. 22/22 module tests; suite 3305.
-Next: HS-86-04, the conveyor's station lights + evidence in place.
+HS-86-04 done: station lights on every lane head (PR/CI from the
+new receipts, gate from the newest rail event — the shots caught a
+REAL contract-missing refusal on the delivery-workbench lane),
+evidence opening in place inside the conveyor, frame-driven refresh
+on scope:belt. 39 route/lock/guard tests + 63 desk tests + suite
+3312 (read from the file). Next: HS-86-05, the walk.
 
 ## Active risks
 

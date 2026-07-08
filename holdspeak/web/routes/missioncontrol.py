@@ -200,6 +200,20 @@ def build_missioncontrol_router(
             log.warning(f"mission control receipts failed ({exc})")
             return {"repos": [], "error": "mission control receipts failed"}
 
+    @router.get("/api/missioncontrol/evidence")
+    async def api_missioncontrol_evidence(repo: str, project: str, story: str) -> Any:
+        """One story's evidence content (HS-86-04), CLI-resolved and
+        path-contained — the desk opens it in place. Read-only."""
+        try:
+            from ...missioncontrol_bridge import story_evidence_payload
+
+            return await asyncio.to_thread(
+                story_evidence_payload, _map(), repo, project, story, runner
+            )
+        except Exception as exc:
+            log.warning(f"mission control evidence failed ({exc})")
+            return {"status": "unavailable", "detail": "evidence read failed"}
+
     @router.post("/api/missioncontrol/story/propose")
     async def api_missioncontrol_story_propose(body: _StoryProposeRequest) -> Any:
         """Record a story-verb proposal (§4): fields validated against

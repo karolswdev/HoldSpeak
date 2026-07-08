@@ -216,6 +216,50 @@ def receipts_payload(
     }
 
 
+def story_evidence_payload(
+    project_map: dict[str, Any],
+    repo_name: str,
+    project_slug: str,
+    story_id: str,
+    runner: Optional[Runner] = None,
+) -> dict[str, Any]:
+    """Evidence content for one story (HS-86-04) — the desk opens the
+    filed object in place. The path comes from the repo's own CLI
+    (`dw context`), never from re-parsing the roadmap; the read is
+    contained to `<repo>/pm/roadmap/**/*.md`. Display-only: state is
+    never derived from this document."""
+    repo_path = project_map["projects"].get(repo_name)
+    if not repo_path:
+        return {"status": "refused", "detail": f"repo {repo_name!r} is not in the project map"}
+    doc, status, detail = _fetch_document(
+        Path(repo_path), ["context", project_slug, "--compact"], runner
+    )
+    if doc is None:
+        return {"status": status, "detail": detail}
+    rel = ""
+    for project in (doc.get("projects") or []) if isinstance(doc, dict) else []:
+        if project.get("slug") != project_slug:
+            continue
+        for phase in project.get("phases") or []:
+            for story in phase.get("stories") or []:
+                if story.get("story_id") == story_id:
+                    rel = str(story.get("evidence_path") or "")
+    if not rel:
+        return {"status": "absent", "detail": f"no evidence path for {story_id}"}
+    root = Path(repo_path).resolve()
+    target = (root / rel).resolve()
+    roadmap_root = str((root / "pm" / "roadmap").resolve()) + os.sep
+    if target.suffix != ".md" or not str(target).startswith(roadmap_root):
+        return {"status": "refused", "detail": "evidence path escapes pm/roadmap or is not markdown"}
+    if not target.is_file():
+        return {"status": "absent", "detail": f"{rel} does not exist"}
+    try:
+        text = target.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        return {"status": "unavailable", "detail": f"unreadable: {exc}"}
+    return {"status": "live", "story_id": story_id, "path": rel, "text": text[:200_000]}
+
+
 ALLOWED_STORY_STATUSES = ("backlog", "ready", "in-progress", "blocked", "done")
 
 

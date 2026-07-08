@@ -143,3 +143,77 @@ describe("fromWireMcEvents", () => {
     expect(fromWireMcEvents({ name: "dw", status: "unavailable" })).toEqual([]);
   });
 });
+
+// ── HS-86-04: receipts, station lights, belt frames ──────────────
+
+import { ciLight, gateLightFor, isBeltFrame, mergeReceipts } from "../missioncontrol";
+
+describe("ciLight", () => {
+  it("any failure-shaped conclusion wins", () => {
+    expect(
+      ciLight([{ conclusion: "SUCCESS" }, { conclusion: "FAILURE" }, {}]),
+    ).toBe("fail");
+    expect(ciLight([{ conclusion: "SUCCESS" }, { conclusion: "CANCELLED" }])).toBe("fail");
+  });
+  it("pending beats pass; all green is pass; no checks is none, never a fake green", () => {
+    expect(ciLight([{ conclusion: "SUCCESS" }, { conclusion: "" }])).toBe("pending");
+    expect(ciLight([{ conclusion: "SUCCESS" }, { conclusion: "SUCCESS" }])).toBe("pass");
+    expect(ciLight([])).toBe("none");
+  });
+});
+
+describe("mergeReceipts", () => {
+  const repo = fromWireMcRepo(LIVE_ENTRY);
+  it("folds live receipts into the repo by name", () => {
+    const merged = mergeReceipts([repo], {
+      repos: [
+        {
+          name: "delivery-workbench",
+          status: "live",
+          prs: [
+            {
+              number: 7, title: "flagship", url: "https://x/pr/7",
+              headRefName: "flagship-tree",
+              statusCheckRollup: [{ conclusion: "SUCCESS" }],
+            },
+          ],
+        },
+      ],
+    });
+    expect(merged[0].receipts).toBe("live");
+    expect(merged[0].prs[0]).toEqual({
+      number: 7, title: "flagship", url: "https://x/pr/7",
+      branch: "flagship-tree", ci: "pass",
+    });
+  });
+  it("keeps absence typed: unavailable receipts and unknown repos stay honest", () => {
+    const merged = mergeReceipts([repo], {
+      repos: [{ name: "delivery-workbench", status: "unavailable", detail: "no gh" }],
+    });
+    expect(merged[0].receipts).toBe("unavailable");
+    expect(merged[0].prs).toEqual([]);
+    expect(mergeReceipts([repo], null)[0].receipts).toBe("unknown");
+  });
+});
+
+describe("gateLightFor", () => {
+  const events = [
+    { ts: "t3", event: "gate_refusal", story: "A-1-01", detail: { rule: "story-evidence" }, repo: "hs" },
+    { ts: "t2", event: "gate_pass", story: "A-1-01", detail: {}, repo: "hs" },
+    { ts: "t1", event: "gate_pass", story: "B-1-01", detail: {}, repo: "dw" },
+  ];
+  it("the newest gate event for the repo speaks, refusals carry their rule", () => {
+    expect(gateLightFor(events as any, "hs")).toEqual({ state: "refusal", rule: "story-evidence" });
+    expect(gateLightFor(events as any, "dw")).toEqual({ state: "pass", rule: "" });
+    expect(gateLightFor(events as any, "other")).toEqual({ state: "none", rule: "" });
+  });
+});
+
+describe("isBeltFrame", () => {
+  it("matches only intel_status frames with scope belt", () => {
+    expect(isBeltFrame({ type: "intel_status", data: { scope: "belt" } })).toBe(true);
+    expect(isBeltFrame({ type: "intel_status", data: { scope: "run" } })).toBe(false);
+    expect(isBeltFrame({ type: "segment", data: { scope: "belt" } })).toBe(false);
+    expect(isBeltFrame(null)).toBe(false);
+  });
+});

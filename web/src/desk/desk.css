@@ -1017,3 +1017,43 @@
   0% { opacity: 0; transform: translateY(-16px) scale(0.92); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* ── Station lights + evidence in place (HS-86-04) ─────────────── */
+.desk-next .desk-mc-repo-head {
+  display: flex; align-items: center; gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+.desk-next .desk-mc-repo-name {
+  color: var(--text-faint); font-size: 11px; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.desk-next .desk-mc-lights { display: inline-flex; align-items: center; gap: var(--space-2); }
+.desk-next .desk-mc-light { font-size: 11px; color: var(--text-faint); text-decoration: none; }
+.desk-next .desk-mc-light.pr:hover { color: var(--accent); }
+.desk-next .desk-mc-light.ci-pass { color: var(--ok); }
+.desk-next .desk-mc-light.ci-fail { color: var(--danger); }
+.desk-next .desk-mc-light.ci-pending { color: var(--warn); }
+.desk-next .desk-mc-light.ci-none { color: var(--text-faint); }
+.desk-next .desk-mc-light.off { opacity: 0.6; }
+.desk-next .desk-mc-light.gate-pass { color: var(--ok); }
+.desk-next .desk-mc-light.gate-refusal {
+  color: var(--danger); font-size: 11px;
+  max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.desk-next .desk-mc-evidence-open { cursor: pointer; }
+.desk-next .desk-mc-evidence-open:hover { color: var(--accent); }
+.desk-next .desk-mc-evidence {
+  margin-top: var(--space-1);
+  border: 1px solid var(--surface-3); border-radius: var(--radius-sm);
+  background: var(--surface-1); padding: var(--space-2);
+}
+.desk-next .desk-mc-evidence-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-2); margin-bottom: var(--space-1);
+}
+.desk-next .desk-mc-evidence-path { color: var(--text-faint); font-size: 11px; font-family: var(--font-mono); }
+.desk-next .desk-mc-evidence-body {
+  margin: 0; max-height: 260px; overflow: auto;
+  font-family: var(--font-mono); font-size: 11px; line-height: 1.5;
+  color: var(--text); white-space: pre-wrap;
+}
