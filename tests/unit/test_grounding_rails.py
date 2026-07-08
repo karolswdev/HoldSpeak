@@ -49,6 +49,12 @@ def _repo(tmp_path, files: dict[str, str]):
     """Build a repo tree + a runner that returns the context doc and a
     project map pointing at it. Returns (project_map, runner)."""
     repo = tmp_path / "repo"
+    # The repo's own `.githooks/dw` so `dw_argv_base` resolves without a
+    # `dw` on PATH — CI has none; the injected runner does the real work.
+    (repo / ".githooks").mkdir(parents=True, exist_ok=True)
+    dw = repo / ".githooks" / "dw"
+    dw.write_text("#!/usr/bin/env python3\n")
+    dw.chmod(0o755)
     for rel, body in files.items():
         p = repo / rel
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -134,7 +140,10 @@ def test_bad_kind_refuses(tmp_path) -> None:
 
 def test_dw_unavailable_refuses(tmp_path) -> None:
     repo = tmp_path / "repo"
-    repo.mkdir()
+    (repo / ".githooks").mkdir(parents=True)
+    dw = repo / ".githooks" / "dw"
+    dw.write_text("#!/usr/bin/env python3\n")
+    dw.chmod(0o755)
     pm = {"projects": {"holdspeak": str(repo)}, "default": str(repo)}
 
     def runner(argv, cwd=None):
