@@ -9,18 +9,33 @@ pre-commit hook.
 
 ## What this is
 
-Every commit in this repo passes through a `pre-commit` hook that
-requires you (agent or human) to write `.tmp/CONTRACT.md` with all
-checkboxes set to `[x]`. The hook verifies, deletes the file on success,
-and prints a confirmation. A stale contract (older than `HEAD`) is
-rejected. An unchecked contract is rejected.
+Every commit in this repo passes through a `pre-commit` gate (`dw
+gate`) that requires you (agent or human) to hold a fresh
+`.tmp/CONTRACT.md` with all checkboxes set to `[x]`. Generate it with
+`dw contract new` after staging: it stamps machine-verified facts —
+branch, HEAD, `git write-tree` index tree, the staged file sample, and
+the story ID(s) it covers — and the gate re-derives each fact at
+commit time. The index tree is the freshness proof: a contract written
+for a different staging state is stale by definition
+(`contract-index-tree-mismatch`), and touching the file cannot refresh
+it. Checked boxes are verified against the rule titles in this
+document's contract template — canonical plus project extensions —
+not merely counted (`contract-unknown-box` / `contract-missing-box`).
+
+On success the trail is durable: the `commit-msg` hook stamps
+`PMO-Story:` and `PMO-Contract-Digest:` (sha256) trailers onto the
+commit message, and `post-commit` archives the exact contract — plus
+any `BUNDLE-OK.md` rationale — under `.git/pmo-contract-archive/<sha>`
+before clearing the working files. An aborted commit leaves the
+contract in place for the retry.
 
 The certification has two purposes:
 
 1. Force a re-read of the rules at commit time, when context is
    sharpest and stakes are highest.
 2. Make every commit auditable — if an agent ever ships shoddy work,
-   they did so having explicitly certified otherwise.
+   they did so having explicitly certified otherwise, and the archived
+   contract plus digest trailer prove exactly what was certified.
 
 The hook will not lecture you about the rules. They live here.
 
@@ -48,7 +63,8 @@ Type-check passing is not validation.
 If this commit ships a story, the relevant tracking docs are updated
 in the same commit:
 
-- the story-file header status (`backlog → ready → in-progress → done`)
+- the story-file header status (moving through the canonical
+  story-status vocabulary declared in `roadmap-builder.md` §2.3)
 - `pm/roadmap/{slug}/phase-{n}-*/current-phase-status.md` story table
 - `pm/roadmap/{slug}/README.md` "Last updated"
 - any project-canon doc the story explicitly mentions
@@ -62,6 +78,14 @@ You ran the relevant tests via the documented project commands (npm
 scripts, bash scripts, etc.). You read the output. You did not just
 author the test file. Failed tests are either fixed or named in the
 commit message as a known regression with a follow-up plan.
+
+Prefer discharging this rule mechanically: run the tests through
+`dw evidence capture <project> <phase> <story> -- <command>` and
+generate the contract with `dw contract new --tests-capture
+<evidence-path>`. The gate then verifies the captured run exists in
+the staged evidence with exit code 0
+(`contract-tests-capture-mismatch` otherwise), instead of trusting
+the checkbox.
 
 ### 4. Greenfield discipline (where applicable)
 
@@ -87,11 +111,18 @@ If a story file's status flipped to `done` in this commit, the
 corresponding `evidence-story-{n}.md` exists in this same commit.
 Otherwise the story is `in-progress`, not `done`.
 
-The pre-commit hook scans the staged diff for `+- **Status:** done`
-on any `pm/roadmap/{slug}/phase-{n}-*/story-{nn}-*.md` file and
-verifies the matching `evidence-story-{n}.md` (same phase folder,
-same number) is staged. The hook also rejects orphan evidence files
-(an evidence file without a matching story flip in the same commit).
+The gate compares each staged story file's `**Status:**` header in
+`HEAD` against the staged index: a story "ships" when the header
+flips from a non-done value to `done` or a done-synonym
+(`complete | closed | shipped`) — renames and reformatting of
+already-done stories are not flips. A shipped story without its
+`evidence-story-{n}.md` staged in the same commit is blocked
+(`evidence-missing`); evidence numbers pair as integers, so
+`evidence-story-1.md` matches `story-01-*`. The gate also rejects
+orphan evidence (`orphan-evidence`: an added evidence file whose
+story does not flip in the same commit) and evidence deletions that
+would orphan a still-done story
+(`evidence-deletion-orphans-story`).
 
 ### 7. One PR per story (mechanically enforced)
 
@@ -102,27 +133,41 @@ multiple stories, the commit message says so and each story file's
 
 The pre-commit hook counts how many `pm/roadmap/.../story-*.md`
 files flipped to `done` in this commit. More than one is a hard
-block. To bundle intentionally — and only intentionally — write
-`.tmp/BUNDLE-OK.md` with a one-line rationale. The hook accepts
-that as a per-commit override and auto-deletes it on success
-(same pattern as the contract file). Bundling is rare; if you find
-yourself reaching for `BUNDLE-OK` regularly, you are mis-sizing
-your stories.
+block (`atomicity`). To bundle intentionally — and only
+intentionally — write `.tmp/BUNDLE-OK.md` with a one-line rationale.
+The gate accepts that as a per-commit override; on success it is
+archived with the contract under `.git/pmo-contract-archive/<sha>`
+and the working copy cleared (same pattern as the contract file).
+Bundling is rare; if you find yourself reaching for `BUNDLE-OK`
+regularly, you are mis-sizing your stories.
 
 ---
 
 ## Contract template
 
-When the hook blocks you, write **exactly this** to `.tmp/CONTRACT.md`,
-flipping every `[ ]` to `[x]` only after honestly verifying each rule.
+Generate the contract — do not hand-type it. After staging, run:
+
+```bash
+.githooks/dw gate                 # optional non-consuming preflight
+.githooks/dw contract new         # stamps the facts, writes .tmp/CONTRACT.md
+```
+
+then flip every `[ ]` to `[x]` only after honestly verifying each
+rule. The generated file looks like this (the facts block is stamped,
+re-derived, and enforced by the gate; the box lines below are the
+rule set the gate verifies by title):
 
 ```markdown
 # Commit Contract
 
-**Generated:** YYYY-MM-DD HH:MM (your timestamp)
+**Generated:** {UTC timestamp}
 **Branch:** {branch}
+**HEAD:** {commit sha, or "none" on the first commit}
+**Index-tree:** {git write-tree of the staged index — the freshness proof}
+**Story:** {story ID(s) detected in the staged diff, or "none"}
+**Tier:** {full | short — decided mechanically; see "Contract tiers"}
 **Staged files (sample):**
-- {a few staged file paths — gives the agent a moment to look at what's actually about to ship}
+- {staged paths — must be a truthful subset of the real staged index}
 
 I certify, for this commit:
 
@@ -136,14 +181,58 @@ I certify, for this commit:
 
 Methodology: pm/roadmap/roadmap-builder.md
 Rules canon: pm/roadmap/PMO-CONTRACT.md
+
+## Work-log consent
+
+**Work-log consent:** no
+
+**Work-log reasons:**
+- n/a
+
+**Work-log exclusions:**
+- none
 ```
 
-The canonical hook expects **at least 7** `[x]` checkboxes (it
-checks `actual < expected`, not equality). Projects that add
-rules above #7 simply add their checkboxes to this template;
-filling them satisfies the canonical count automatically. To
-enforce a project-specific rule mechanically, see "Extending"
-below.
+The gate verifies boxes **by rule title**, against this fenced
+template: every checked box must match a known rule title, and every
+known rule must be checked. Projects that add rules simply add their
+`- [ ] **Rule title.** …` lines to this template fence; `dw contract
+new` and the gate pick them up automatically. The legacy
+`EXPECTED_BOXES` count check applies only when no `PMO-CONTRACT.md`
+is present. Restaging after generation invalidates the contract
+(index-tree mismatch); re-run `dw contract new --force`.
+
+The work-log consent block is not an eighth PMO checkbox and is not
+counted by `EXPECTED_BOXES`. Projects that enable work logging through
+`.githooks/pre-commit.config` only get a daily log entry when this line
+is explicit:
+
+```markdown
+**Work-log consent:** yes
+```
+
+Use `yes` only when the staged work is valid long-term technical work
+evidence. Keep `no` for commits that should not create an architect-log
+entry. When consent is `yes`, write concrete reasons and any exclusions:
+
+```markdown
+**Work-log reasons:**
+- Implements WLA-1-02 by capturing the staged diff after PMO checks pass.
+
+**Work-log exclusions:**
+- Do not include secret-looking fixture values from `testdata/`.
+```
+
+When work logging is enabled, `pre-commit` captures the consented staged
+payload under `.git/pmo-work-log/`. `post-commit` appends a deterministic
+entry to `~/.work/log/YYYY-MM-DD/{log-identity}-work-summary.log` only
+after Git creates the commit. LLM summarization is intentionally outside
+the MVP commit path.
+
+For mechanical path omission, set `PMO_WORK_LOG_EXCLUDE_REGEX` in
+`.githooks/pre-commit.config`. Contract exclusions explain intent; the
+regex is what keeps matching staged paths out of captured work-log
+payloads.
 
 ---
 
@@ -179,65 +268,43 @@ the canonical hook.
    structural check with a one-line rationale. Add the sentinel
    path to `$EXTRA_CLEANUP_FILES` so it auto-deletes on success
    (same pattern as `BUNDLE-OK.md`).
+5. **(Legacy) `EXPECTED_BOXES`** in `.githooks/pre-commit.config` is
+   no longer required: the gate derives the required box set from this
+   document's contract-template fence, so adding the checkbox in step 2
+   is authoritative. The count-based override only matters for repos
+   without a `PMO-CONTRACT.md`.
 
-`update.sh` never touches `.githooks/pre-commit.local`. Local
-extensions survive framework updates.
+`update.sh` never touches `.githooks/pre-commit.local` or
+`.githooks/pre-commit.config`. Both survive framework updates.
 
-### Worked example: Pantrybot's "design handoff" rule
+### Worked example
 
-Pantrybot adds a rule #8: every UI-facing change must update the
-design handoff inputs that feed `design.pantrybot.app`, OR the
-agent writes `.tmp/DESIGN-HANDOFF-OK.md` to explain the exception.
+A complete project-extension example (rule text, template checkbox, and
+the `pre-commit.local` structural check) lives at
+[`templates/examples/project-extension-example.md`](./examples/project-extension-example.md)
+in the framework repository. The pattern: the canonical framework stays
+unchanged; the project's rule is mechanically enforced; `update.sh`
+refreshes canonical files without clobbering the local extension.
 
-The implementation:
+---
 
-**`pm/roadmap/PMO-CONTRACT.md`** — adds, after the canonical 7:
+## Contract tiers
 
-```markdown
-<!-- Project extensions (Pantrybot) -->
+The gate decides the required tier mechanically:
 
-### 8. Design handoff for UI-facing changes (project-specific)
+- **Full contract** — required whenever staged changes touch the
+  roadmap tree (`pm/roadmap/**`), which includes every story flip. The
+  full rule set above applies.
+- **Short form** — commits that do not touch the roadmap tree may use
+  `dw contract new --tier short` (or rely on `auto`, which picks it):
+  the same stamped facts plus only the **No bypasses.** rule. A
+  short-form contract on a roadmap-touching commit is rejected
+  (`contract-tier-mismatch`).
 
-If this commit changes anything a user or designer can see, it also
-updates the graphic-design handoff infrastructure in the same commit
-(`docs/user-journeys/`, `graphic-design-handoff/`,
-`frontend/public/handoff-data.json` from `npm run handoff:build`,
-etc.). If the UI-facing path genuinely doesn't need new artifacts,
-write `.tmp/DESIGN-HANDOFF-OK.md` with a one-line rationale.
-```
-
-**Contract template** — adds an 8th checkbox after the canonical 7:
-
-```markdown
-- [ ] **Design handoff updated.** UI-facing changes update the
-  design handoff inputs, or `.tmp/DESIGN-HANDOFF-OK.md` explains why not.
-```
-
-**`.githooks/pre-commit.local`** — the structural check:
-
-```bash
-DESIGN_HANDOFF_OK_FILE="$REPO_ROOT/.tmp/DESIGN-HANDOFF-OK.md"
-UI_FACING_REGEX='^frontend/(app|components|lib/(brand|icons)|public/|.*\.css$)'
-DESIGN_HANDOFF_REGEX='^(docs/user-journeys/|graphic-design-handoff/|frontend/public/handoff-data\.json$)'
-
-STAGED_UI=$(printf '%s\n' "$STAGED" | grep -E "$UI_FACING_REGEX" || true)
-STAGED_HANDOFF=$(printf '%s\n' "$STAGED" | grep -E "$DESIGN_HANDOFF_REGEX" || true)
-
-if [ -n "$STAGED_UI" ] && [ -z "$STAGED_HANDOFF" ] && [ ! -f "$DESIGN_HANDOFF_OK_FILE" ]; then
-  bar
-  echo "✗ Design handoff missing — UI-facing files staged but no handoff updates." >&2
-  echo "  Update docs/user-journeys/ + run npm run handoff:build, OR write" >&2
-  echo "  .tmp/DESIGN-HANDOFF-OK.md with a one-line rationale." >&2
-  bar
-  exit 1
-fi
-
-EXTRA_CLEANUP_FILES="$EXTRA_CLEANUP_FILES $DESIGN_HANDOFF_OK_FILE"
-```
-
-The result: the canonical framework is unchanged; the project gets
-its rule mechanically enforced; `update.sh` can refresh the canonical
-files freely without clobbering the local extension.
+Projects that want full ceremony everywhere set `PMO_CONTRACT_TIER=full`
+in `.githooks/pre-commit.config`; the generator and the gate both honor
+it. The conservative default: `auto` — full for anything roadmap-shaped,
+short available for docs-and-code-only commits.
 
 ---
 

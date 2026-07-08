@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Delivery Workbench MCP stdio server entry point.
+
+Thin launcher for dw_pmo.mcpserver (docs/mcp.md): binds to one
+repository (cwd or --root), then speaks newline-delimited JSON-RPC
+on stdio until the client closes the pipe.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+
+def _bootstrap_core() -> None:
+    """Make dw_pmo importable in both source and installed layouts."""
+    here = Path(__file__).resolve().parent
+    for candidate in (here.parent / "lib", here / "lib", here):
+        if (candidate / "dw_pmo" / "__init__.py").is_file():
+            if str(candidate) not in sys.path:
+                sys.path.insert(0, str(candidate))
+            return
+
+
+_bootstrap_core()
+
+try:
+    from dw_pmo import __version__
+    from dw_pmo.mcpserver import serve
+    from dw_pmo.paths import find_root
+except ImportError as exc:  # pragma: no cover - environment failure path
+    print(
+        f"dw-mcp: cannot import the dw_pmo core package ({exc}); "
+        "expected it next to this script or under ../lib",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        prog="dw-mcp",
+        description="Delivery Workbench MCP stdio server (tools-only; see docs/mcp.md)",
+    )
+    parser.add_argument("--version", action="version", version=f"dw-mcp {__version__}")
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=None,
+        help="repository root containing pm/roadmap (default: discovered from cwd)",
+    )
+    args = parser.parse_args()
+    root = args.root.resolve() if args.root else find_root(Path.cwd())
+    return serve(root)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

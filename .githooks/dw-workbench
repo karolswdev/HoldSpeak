@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""Delivery Workbench local server: read-only roadmap explorer.
+
+Usage: dw-workbench [--root PATH] [--port N]
+
+Serves the JSON API and static explorer UI for exactly one repo root,
+bound to 127.0.0.1. Markdown stays authoritative: every response is
+computed live through the dw_pmo core; nothing is cached or written.
+"""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+
+def _bootstrap_core() -> None:
+    here = Path(__file__).resolve().parent
+    for candidate in (here.parent / "lib", here / "lib", here):
+        if (candidate / "dw_pmo" / "__init__.py").is_file():
+            if str(candidate) not in sys.path:
+                sys.path.insert(0, str(candidate))
+            return
+
+
+_bootstrap_core()
+
+try:
+    from dw_pmo import DwError, find_root
+    from dw_pmo.workbench import serve
+except ImportError as exc:  # pragma: no cover - environment failure path
+    print(f"dw-workbench: cannot import the dw_pmo core package ({exc})", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="dw-workbench", description="Delivery Workbench read-only roadmap explorer")
+    parser.add_argument("--root", type=Path, default=None, help="repository root to serve (default: discovered from cwd)")
+    parser.add_argument("--port", type=int, default=8377, help="localhost port (default 8377)")
+    parser.add_argument("--quiet", action="store_true", help="suppress the per-request access log")
+    args = parser.parse_args(argv)
+    try:
+        root = args.root.resolve() if args.root else find_root(Path.cwd())
+        serve(root, args.port, quiet=args.quiet)
+    except DwError as err:
+        print(f"dw-workbench: {err.message}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

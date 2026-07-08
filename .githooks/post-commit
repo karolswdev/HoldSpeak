@@ -1,0 +1,243 @@
+#!/usr/bin/env bash
+# pmo-roadmap post-commit work-log finalizer.
+#
+# If pre-commit captured a consented staged payload, append one deterministic
+# architect-log entry after Git has created the commit. Bash 3.2 compatible.
+
+set -u
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$REPO_ROOT" ]; then
+  exit 0
+fi
+
+# PMO_WORK_LOG_DIR precedence: pre-commit.config > environment > default.
+PMO_WORK_LOG_ENABLED="${PMO_WORK_LOG_ENABLED:-0}"
+PMO_WORK_LOG_DIR="${PMO_WORK_LOG_DIR:-${HOME:-}/.work/log}"
+PMO_WORK_LOG_PROJECT_SLUG="${PMO_WORK_LOG_PROJECT_SLUG:-}"
+PMO_WORK_LOG_ID="${PMO_WORK_LOG_ID:-}"
+
+if [ -f "$REPO_ROOT/.githooks/pre-commit.config" ]; then
+  # shellcheck disable=SC1091
+  . "$REPO_ROOT/.githooks/pre-commit.config"
+fi
+
+enabled() {
+  case "${1:-}" in
+    1|yes|YES|true|TRUE|on|ON) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+git_dir_abs() {
+  gd=$(git rev-parse --git-dir 2>/dev/null || true)
+  [ -n "$gd" ] || return 1
+  case "$gd" in
+    /*) printf '%s\n' "$gd" ;;
+    *) printf '%s\n' "$REPO_ROOT/$gd" ;;
+  esac
+}
+
+payload_value() {
+  sed -n "s/^$1=//p" "$PENDING_FILE" | sed -n '1p'
+}
+
+payload_section() {
+  awk -v start="$1" '
+    $0 == start {capture=1; next}
+    /^--- / && capture {exit}
+    capture {print}
+  ' "$PENDING_FILE"
+}
+
+print_section_or_default() {
+  content=$(payload_section "$1" | sed '/^[[:space:]]*$/d')
+  if [ -n "$content" ]; then
+    printf '%s\n' "$content"
+  else
+    printf '%s\n' "$2"
+  fi
+}
+
+escape_table_cell() {
+  sed 's/|/\\|/g'
+}
+
+gd=$(git_dir_abs 2>/dev/null || true)
+[ -n "$gd" ] || exit 0
+
+commit_sha=$(git rev-parse HEAD 2>/dev/null || true)
+
+# Archive the consumed, gate-verified contract (plus any BUNDLE-OK
+# rationale) under .git/pmo-contract-archive/<sha>, then clear the
+# working files. Runs for every gated commit, independent of work
+# logging — this is the durable audit trail the trailers point at.
+CONTRACT_FILE="$REPO_ROOT/.tmp/CONTRACT.md"
+BUNDLE_OK_FILE="$REPO_ROOT/.tmp/BUNDLE-OK.md"
+if [ -n "$commit_sha" ] && [ -f "$CONTRACT_FILE" ]; then
+  archive_dir="$gd/pmo-contract-archive/$commit_sha"
+  if mkdir -p "$archive_dir" 2>/dev/null \
+    && cp "$CONTRACT_FILE" "$archive_dir/CONTRACT.md" 2>/dev/null; then
+    if [ -f "$BUNDLE_OK_FILE" ]; then
+      cp "$BUNDLE_OK_FILE" "$archive_dir/BUNDLE-OK.md" 2>/dev/null || true
+    fi
+    rm -f "$CONTRACT_FILE" "$BUNDLE_OK_FILE"
+    rmdir "$REPO_ROOT/.tmp" 2>/dev/null || true
+    echo "pmo-roadmap post-commit: contract archived to .git/pmo-contract-archive/$commit_sha"
+  else
+    echo "pmo-roadmap post-commit: warning: could not archive the contract; leaving .tmp/CONTRACT.md in place." >&2
+  fi
+fi
+
+PENDING_FILE="$gd/pmo-work-log/pending"
+[ -f "$PENDING_FILE" ] || exit 0
+
+if ! enabled "$PMO_WORK_LOG_ENABLED"; then
+  exit 0
+fi
+
+[ -n "$commit_sha" ] || exit 0
+
+log_identity=$(payload_value log_identity)
+if [ -z "$log_identity" ]; then
+  log_identity=$(basename "$REPO_ROOT")
+fi
+
+log_day=$(date +%F)
+log_dir="$PMO_WORK_LOG_DIR/$log_day"
+log_file="$log_dir/${log_identity}-work-summary.log"
+
+mkdir -p "$log_dir" 2>/dev/null || {
+  echo "pmo-roadmap post-commit: work-log warning: could not create $log_dir; pending payload kept." >&2
+  exit 0
+}
+
+if [ -f "$log_file" ] && grep -q "^commit: $commit_sha$" "$log_file"; then
+  rm -f "$PENDING_FILE"
+  echo "pmo-roadmap post-commit: work log already contains $commit_sha; pending payload removed."
+  exit 0
+fi
+
+capture_repo=$(payload_value repo_root)
+capture_branch=$(payload_value branch)
+capture_ts=$(payload_value capture_timestamp)
+project_slug=$(payload_value project_slug)
+index_tree=$(payload_value index_tree)
+reflog_action=$(payload_value git_reflog_action)
+exclude_regex=$(payload_value exclude_regex)
+commit_subject=$(git log -1 --format=%s HEAD 2>/dev/null || echo "(no subject)")
+entry_ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+file_count=$(payload_section "--- STAGED_NAME_STATUS ---" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')
+omitted_count=$(payload_section "--- OMITTED_PATHS ---" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')
+
+tmp_entry="$gd/pmo-work-log/entry.$$"
+{
+  echo "---"
+  echo "kind: pmo-work-log-entry"
+  echo "schema_version: 1"
+  echo "timestamp: $entry_ts"
+  echo "capture_timestamp: $capture_ts"
+  echo "project: $project_slug"
+  echo "repo: $capture_repo"
+  echo "branch: $capture_branch"
+  echo "commit: $commit_sha"
+  echo "source: pmo-roadmap"
+  echo "summary_mode: deterministic"
+  echo "log_identity: $log_identity"
+  echo "index_tree: $index_tree"
+  if [ -n "$reflog_action" ]; then
+    echo "git_reflog_action: $reflog_action"
+  fi
+  echo "---"
+  echo
+  echo "## Commit"
+  echo
+  echo "- **Subject:** $commit_subject"
+  echo "- **Staged files:** ${file_count:-0}"
+  echo "- **Omitted paths:** ${omitted_count:-0}"
+  echo "- **Log identity:** $log_identity"
+  if [ -n "$exclude_regex" ]; then
+    echo "- **Exclude regex:** \`$exclude_regex\`"
+  fi
+  echo
+  echo "## Consent"
+  echo
+  echo "**Work-log consent:** yes"
+  echo
+  echo "**Reasons:**"
+  print_section_or_default "--- WORK_LOG_REASONS ---" "- not provided"
+  echo
+  echo "**Exclusions:**"
+  print_section_or_default "--- WORK_LOG_EXCLUSIONS ---" "- none recorded"
+  echo
+  echo "## Technical Summary"
+  echo
+  echo "- Captured a consented PMO commit after all pre-commit checks passed."
+  echo "- Finalized after Git created commit \`$commit_sha\`."
+  echo "- Changed ${file_count:-0} staged path(s); see file table and diff stat below."
+  if [ "${omitted_count:-0}" != "0" ]; then
+    echo "- Omitted ${omitted_count:-0} path(s) from the work-log payload by project exclusion policy."
+  fi
+  echo
+  echo "## Files Changed"
+  echo
+  echo "| Status | Path |"
+  echo "|---|---|"
+  payload_section "--- STAGED_NAME_STATUS ---" | while IFS="$(printf '\t')" read -r status path_a path_b; do
+    [ -n "$status" ] || continue
+    if [ -n "$path_b" ]; then
+      path="$path_a -> $path_b"
+    else
+      path="$path_a"
+    fi
+    safe_path=$(printf '%s' "$path" | escape_table_cell)
+    safe_status=$(printf '%s' "$status" | escape_table_cell)
+    echo "| $safe_status | \`$safe_path\` |"
+  done
+  echo
+  echo "## Omitted Paths"
+  echo
+  omitted_paths=$(payload_section "--- OMITTED_PATHS ---" | sed '/^[[:space:]]*$/d')
+  if [ -n "$omitted_paths" ]; then
+    printf '%s\n' "$omitted_paths" | sed 's/^/- `/' | sed 's/$/`/'
+  else
+    echo "- none"
+  fi
+  echo
+  echo "## Verification And Evidence"
+  echo
+  story_paths=$(payload_section "--- STAGED_NAME_STATUS ---" | awk -F '\t' '{for (i=2; i<=NF; i++) if ($i ~ /^pm\/roadmap\/.*\/story-[0-9]+-.*\.md$/) print "- `" $i "`"}')
+  evidence_paths=$(payload_section "--- STAGED_NAME_STATUS ---" | awk -F '\t' '{for (i=2; i<=NF; i++) if ($i ~ /^pm\/roadmap\/.*\/evidence-story-[0-9]+\.md$/) print "- `" $i "`"}')
+  echo "**Roadmap story files:**"
+  if [ -n "$story_paths" ]; then printf '%s\n' "$story_paths"; else echo "- n/a"; fi
+  echo
+  echo "**Evidence files:**"
+  if [ -n "$evidence_paths" ]; then printf '%s\n' "$evidence_paths"; else echo "- n/a"; fi
+  echo
+  echo "**Diff stat:**"
+  echo
+  echo '```text'
+  print_section_or_default "--- STAGED_STAT ---" "(no diff stat captured)"
+  echo '```'
+  echo
+  echo "## Follow-ups"
+  echo
+  echo "- none recorded"
+  echo
+} > "$tmp_entry" || {
+  rm -f "$tmp_entry"
+  echo "pmo-roadmap post-commit: work-log warning: could not render entry; pending payload kept." >&2
+  exit 0
+}
+
+cat "$tmp_entry" >> "$log_file" 2>/dev/null || {
+  rm -f "$tmp_entry"
+  echo "pmo-roadmap post-commit: work-log warning: could not append $log_file; pending payload kept." >&2
+  exit 0
+}
+
+rm -f "$tmp_entry" "$PENDING_FILE"
+rmdir "$gd/pmo-work-log" 2>/dev/null || true
+echo "pmo-roadmap post-commit: work log appended to $log_file"
+
+exit 0

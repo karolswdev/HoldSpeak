@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
-# pmo-roadmap pre-commit hygiene gate.
+# pmo-roadmap pre-commit shim.
 #
-# Blocks the commit until .tmp/CONTRACT.md exists, is fresh (newer than
-# HEAD), and has every checkbox set to [x]. Auto-deletes the file on
-# success and prints a confirmation. See pm/roadmap/PMO-CONTRACT.md.
+# Every structural rule check (contract presence/freshness/checkboxes,
+# shipped-story detection, atomicity, evidence pairing) lives in the
+# dw_pmo core and runs through `dw gate`. This shim only:
+#   - wires configuration (.githooks/pre-commit.config),
+#   - invokes the gate (fail closed if python3 is unavailable),
+#   - exposes the documented extension seam (.githooks/pre-commit.local),
+#   - captures the consented work-log payload,
+#   - cleans up the contract artifacts on success.
 #
-# Bash 3.2 compatible. macOS + Linux. No external runtime deps.
+# Bash 3.2 compatible. macOS + Linux. python3 is a hard dependency of
+# the gate itself.
 
 set -u
 
@@ -15,213 +21,296 @@ if [ -z "$REPO_ROOT" ]; then
   exit 0
 fi
 
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONTRACT_FILE="$REPO_ROOT/.tmp/CONTRACT.md"
-RULES_DOC="$REPO_ROOT/pm/roadmap/PMO-CONTRACT.md"
-METHODOLOGY="$REPO_ROOT/pm/roadmap/roadmap-builder.md"
-EXPECTED_BOXES=7
+# shellcheck disable=SC2034  # documented seam path, readable by pre-commit.local
+BUNDLE_OK_FILE="$REPO_ROOT/.tmp/BUNDLE-OK.md"
+EXPECTED_BOXES="${EXPECTED_BOXES:-7}"
+# PMO_WORK_LOG_DIR precedence: pre-commit.config > environment > default.
+PMO_WORK_LOG_ENABLED="${PMO_WORK_LOG_ENABLED:-0}"
+PMO_WORK_LOG_DIR="${PMO_WORK_LOG_DIR:-${HOME:-}/.work/log}"
+PMO_WORK_LOG_MAX_DIFF_BYTES="${PMO_WORK_LOG_MAX_DIFF_BYTES:-120000}"
+PMO_WORK_LOG_PROJECT_SLUG="${PMO_WORK_LOG_PROJECT_SLUG:-}"
+PMO_WORK_LOG_ID="${PMO_WORK_LOG_ID:-}"
+PMO_WORK_LOG_EXCLUDE_REGEX="${PMO_WORK_LOG_EXCLUDE_REGEX:-}"
+
+# Project config seam — variable overrides only; structural rules go in
+# pre-commit.local (sourced after the gate passes).
+if [ -f "$REPO_ROOT/.githooks/pre-commit.config" ]; then
+  # shellcheck disable=SC1091
+  . "$REPO_ROOT/.githooks/pre-commit.config"
+fi
 
 bar() {
   printf '%s\n' "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
 
-print_reminder() {
-  bar
-  echo "PMO HYGIENE GATE — pre-commit"
-  bar
-  cat <<EOF
-Before this commit lands, certify in .tmp/CONTRACT.md that you followed:
-
-  1. Evidence, not vibes — claimed work has on-disk command output.
-  2. Master docs updated in this same commit (story header,
-     current-phase-status, project README, BACKLOG/CHANGELOG).
-  3. Tests actually ran via the project's documented scripts.
-  4. Greenfield discipline (no migrations / shims, where applicable).
-  5. No --no-verify, no unauthorized Co-Authored-By, no scope creep.
-  6. If a story flipped to "done", evidence-story-*.md ships with it.
-  7. One PR per story (or bundling documented).
-
-  Full rules:   ${RULES_DOC#$REPO_ROOT/}
-  Methodology:  ${METHODOLOGY#$REPO_ROOT/}
-
-To proceed: write .tmp/CONTRACT.md per the template in
-${RULES_DOC#$REPO_ROOT/} §"Contract template", with all $EXPECTED_BOXES
-checkboxes set to [x]. The file will be auto-deleted on successful
-commit.
-EOF
-  bar
-}
-
+# Available to pre-commit.local rules (sourced below), so shellcheck
+# cannot see the call sites.
+# shellcheck disable=SC2329
 fail() {
-  print_reminder
-  echo
+  bar
   echo "✗ $1" >&2
+  bar
   exit 1
 }
 
-# Cross-platform mtime in epoch seconds.
-mtime_epoch() {
-  if stat -f %m "$1" >/dev/null 2>&1; then
-    stat -f %m "$1"
+# ── run the gate (fail closed without python3) ──────────────────────
+
+PYTHON="${PMO_GATE_PYTHON:-}"
+if [ -z "$PYTHON" ]; then
+  PYTHON="$(command -v python3 || true)"
+fi
+if [ -z "$PYTHON" ] || ! "$PYTHON" -c 'pass' >/dev/null 2>&1; then
+  bar
+  echo "✗ PMO gate blocked: python3 is required to run the commit gate (dw gate)." >&2
+  echo "  Install python3 and retry. The gate fails closed by design;" >&2
+  echo "  agents may not bypass with --no-verify." >&2
+  bar
+  exit 1
+fi
+
+DW="$HOOK_DIR/dw"
+if [ ! -f "$DW" ]; then
+  bar
+  echo "✗ PMO gate blocked: $DW not found. Re-run install.sh or update.sh" >&2
+  echo "  so the dw CLI and dw_pmo core are installed next to this hook." >&2
+  bar
+  exit 1
+fi
+
+if ! GATE_OUT=$(EXPECTED_BOXES="$EXPECTED_BOXES" \
+  PMO_WORK_LOG_ENABLED="$PMO_WORK_LOG_ENABLED" \
+  "$PYTHON" "$DW" gate --hook pre-commit --porcelain); then
+  # The gate already printed its remediation banner to stderr.
+  exit 1
+fi
+
+porcelain_value() {
+  printf '%s\n' "$GATE_OUT" | sed -n "s/^$1=//p" | sed -n '1p'
+}
+
+porcelain_list() {
+  printf '%s\n' "$GATE_OUT" | sed -n "s/^$1=//p"
+}
+
+# Seam variables for pre-commit.local (newline-joined lists except
+# SHIPPED_STORIES, which stays space-joined for compatibility with
+# existing `for s in $SHIPPED_STORIES` consumers; paths with spaces are
+# fully handled inside the gate itself).
+STAGED="$(porcelain_list staged)"
+# shellcheck disable=SC2034  # seam variables consumed by sourced pre-commit.local
+STAGED_STORIES="$(porcelain_list staged_story)"
+# shellcheck disable=SC2034  # seam variable consumed by sourced pre-commit.local
+STAGED_EVIDENCE="$(porcelain_list staged_evidence)"
+# shellcheck disable=SC2034  # seam variable consumed by sourced pre-commit.local
+SHIPPED_STORIES="$(porcelain_list shipped_story | tr '\n' ' ' | sed 's/ *$//')"
+SHIPPED_COUNT="$(porcelain_value shipped_count)"
+SHIPPED_COUNT="${SHIPPED_COUNT:-0}"
+CHECKED_BOXES="$(porcelain_value checked_boxes)"
+CHECKED_BOXES="${CHECKED_BOXES:-0}"
+REPORTED_BOXES="$(porcelain_value expected_boxes)"
+REPORTED_BOXES="${REPORTED_BOXES:-$EXPECTED_BOXES}"
+WORKLOG_CAPTURE="$(porcelain_value worklog_capture)"
+WORKLOG_CAPTURE="${WORKLOG_CAPTURE:-no}"
+
+# ── work-log capture mechanics (gate decided the preconditions) ─────
+
+git_dir_abs() {
+  gd=$(git rev-parse --git-dir 2>/dev/null || true)
+  [ -n "$gd" ] || return 1
+  case "$gd" in
+    /*) printf '%s\n' "$gd" ;;
+    *) printf '%s\n' "$REPO_ROOT/$gd" ;;
+  esac
+}
+
+slugify() {
+  printf '%s' "$1" | sed -E 's/[^A-Za-z0-9._-]+/-/g; s/^-+//; s/-+$//'
+}
+
+infer_project_slug() {
+  if [ -n "$PMO_WORK_LOG_PROJECT_SLUG" ]; then
+    slugify "$PMO_WORK_LOG_PROJECT_SLUG"
+    return
+  fi
+
+  roadmap_dir="$REPO_ROOT/pm/roadmap"
+  if [ -d "$roadmap_dir" ]; then
+    roadmap_dirs=$(find "$roadmap_dir" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null | sort)
+    roadmap_count=$(printf '%s\n' "$roadmap_dirs" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')
+    if [ "$roadmap_count" = "1" ]; then
+      slugify "$(printf '%s\n' "$roadmap_dirs" | sed -n '1p')"
+      return
+    fi
+  fi
+
+  slugify "$(basename "$REPO_ROOT")"
+}
+
+path_hash() {
+  printf '%s' "$REPO_ROOT" | cksum | awk '{print $1}'
+}
+
+work_log_identity() {
+  if [ -n "$PMO_WORK_LOG_ID" ]; then
+    slugify "$PMO_WORK_LOG_ID"
   else
-    stat -c %Y "$1"
+    printf '%s-%s\n' "$(infer_project_slug)" "$(path_hash)"
   fi
 }
 
-# 1. Existence
-if [ ! -f "$CONTRACT_FILE" ]; then
-  fail "Missing .tmp/CONTRACT.md — commit blocked."
-fi
-
-# 2. Freshness — must be newer than HEAD commit (skip on first commit)
-if git rev-parse --verify HEAD >/dev/null 2>&1; then
-  HEAD_EPOCH=$(git log -1 --format=%ct HEAD 2>/dev/null || echo 0)
-  CONTRACT_EPOCH=$(mtime_epoch "$CONTRACT_FILE")
-  # Strictly older than HEAD = stale. Equality is allowed (a contract
-  # written within the same second as the previous commit is still fresh
-  # for *this* commit, since the previous commit's hook deleted any prior
-  # contract — the contract on disk is necessarily for this new commit).
-  if [ -n "$HEAD_EPOCH" ] && [ "$CONTRACT_EPOCH" -lt "$HEAD_EPOCH" ]; then
-    fail ".tmp/CONTRACT.md is stale (older than last commit). Re-write it for this commit."
-  fi
-fi
-
-# 3. No unchecked boxes
-if grep -q '^- \[ \]' "$CONTRACT_FILE"; then
-  print_reminder
-  echo
-  echo "✗ .tmp/CONTRACT.md still has unchecked items:" >&2
-  grep -n '^- \[ \]' "$CONTRACT_FILE" | sed 's/^/    /' >&2
-  exit 1
-fi
-
-# 4. Right number of [x] checkboxes
-ACTUAL_BOXES=$(grep -c '^- \[x\]' "$CONTRACT_FILE" 2>/dev/null || true)
-ACTUAL_BOXES=${ACTUAL_BOXES:-0}
-if [ "$ACTUAL_BOXES" -lt "$EXPECTED_BOXES" ]; then
-  fail ".tmp/CONTRACT.md has only $ACTUAL_BOXES/$EXPECTED_BOXES required [x] checkboxes."
-fi
-
-# ────────────────────────────────────────────────────────────────────
-# Structural checks — enforce one-story-per-commit + evidence pairing.
-# Only fires on the new pm/roadmap/<slug>/phase-<n>-*/story-<nn>-*.md
-# convention. Older PM patterns (pm/pantry-life/stories/PL-XXX.md,
-# pm/brand-identity/...) are out of scope and pass trivially.
-# ────────────────────────────────────────────────────────────────────
-
-STAGED=$(git diff --cached --name-only --diff-filter=ACMRD 2>/dev/null || true)
-BUNDLE_OK_FILE="$REPO_ROOT/.tmp/BUNDLE-OK.md"
-
-# Match story files: pm/roadmap/<slug>/phase-<n>-<slug>/story-<nn>-<slug>.md
-STORY_REGEX='^pm/roadmap/[^/]+/phase-[^/]+/story-[0-9]+-.*\.md$'
-EVIDENCE_REGEX='^pm/roadmap/[^/]+/phase-[^/]+/evidence-story-[0-9]+\.md$'
-
-STAGED_STORIES=$(printf '%s\n' "$STAGED" | grep -E "$STORY_REGEX" || true)
-STAGED_EVIDENCE=$(printf '%s\n' "$STAGED" | grep -E "$EVIDENCE_REGEX" || true)
-
-# Find stories that flipped to "done" in this commit. The match looks for
-# a new line "+- **Status:** done" in the cached diff (covers both edits
-# of an existing story and a brand-new story added with status done).
-SHIPPED_STORIES=""
-SHIPPED_COUNT=0
-if [ -n "$STAGED_STORIES" ]; then
-  while IFS= read -r story; do
-    [ -z "$story" ] && continue
-    if git diff --cached -- "$story" | grep -qE '^\+- \*\*Status:\*\* done([[:space:]]|$)'; then
-      SHIPPED_STORIES="$SHIPPED_STORIES $story"
-      SHIPPED_COUNT=$((SHIPPED_COUNT + 1))
-    fi
-  done <<EOF
-$STAGED_STORIES
-EOF
-fi
-
-# Atomicity: at most one story may flip to done per commit, unless
-# BUNDLE-OK is present. BUNDLE-OK is auto-deleted on success.
-if [ "$SHIPPED_COUNT" -gt 1 ]; then
-  if [ ! -f "$BUNDLE_OK_FILE" ]; then
-    bar
-    echo "✗ Atomicity violation — $SHIPPED_COUNT stories flipped to \"done\" in one commit." >&2
-    echo "  Stories shipped:" >&2
-    for s in $SHIPPED_STORIES; do echo "    - $s" >&2; done
-    echo "" >&2
-    echo "  Rule: one PR per story." >&2
-    echo "  To bundle intentionally, write .tmp/BUNDLE-OK.md with a one-line" >&2
-    echo "  rationale. The file will be auto-deleted on successful commit." >&2
-    bar
-    exit 1
-  fi
-fi
-
-# Evidence pairing (forward): for each shipped story, the matching
-# evidence-story-<n>.md must be in the same phase folder and staged.
-extract_story_num() {
-  basename "$1" | sed -E 's/^story-([0-9]+)-.*\.md$/\1/'
-}
-extract_evidence_num() {
-  basename "$1" | sed -E 's/^evidence-story-([0-9]+)\.md$/\1/'
+extract_work_log_reasons() {
+  awk '
+    /^\*\*Work-log reasons:\*\*/ {capture=1; next}
+    /^\*\*Work-log exclusions:\*\*/ {capture=0}
+    capture {print}
+  ' "$CONTRACT_FILE" | sed '/^[[:space:]]*$/d'
 }
 
-for story in $SHIPPED_STORIES; do
-  phase_dir=$(dirname "$story")
-  story_num=$(extract_story_num "$story")
-  evidence_path="$phase_dir/evidence-story-$story_num.md"
-  if ! printf '%s\n' "$STAGED" | grep -qx "$evidence_path"; then
-    bar
-    echo "✗ Evidence missing — story $story flipped to \"done\" but" >&2
-    echo "  $evidence_path is not in this commit." >&2
-    echo "" >&2
-    echo "  Rule: a story flipping to \"done\" must ship its evidence file" >&2
-    echo "  in the same commit (PMO-CONTRACT §6, framework lifecycle §3)." >&2
-    bar
-    exit 1
+extract_work_log_exclusions() {
+  awk '
+    /^\*\*Work-log exclusions:\*\*/ {capture=1; next}
+    /^## / {capture=0}
+    capture {print}
+  ' "$CONTRACT_FILE" | sed '/^[[:space:]]*$/d'
+}
+
+work_log_included_paths() {
+  if [ -n "$PMO_WORK_LOG_EXCLUDE_REGEX" ]; then
+    printf '%s\n' "$STAGED" | grep -Ev "$PMO_WORK_LOG_EXCLUDE_REGEX" || true
+  else
+    printf '%s\n' "$STAGED"
   fi
-done
+}
 
-# Evidence pairing (reverse): no orphan evidence files. Each staged
-# evidence-story-<n>.md must pair with a story flipping to done in
-# the same phase folder.
-if [ -n "$STAGED_EVIDENCE" ]; then
-  while IFS= read -r ev; do
-    [ -z "$ev" ] && continue
-    phase_dir=$(dirname "$ev")
-    ev_num=$(extract_evidence_num "$ev")
-    matched=0
-    for shipped in $SHIPPED_STORIES; do
-      if [ "$(dirname "$shipped")" = "$phase_dir" ] && [ "$(extract_story_num "$shipped")" = "$ev_num" ]; then
-        matched=1
-        break
-      fi
-    done
-    if [ "$matched" -eq 0 ]; then
-      bar
-      echo "✗ Orphan evidence — $ev exists but no story-$ev_num-*.md" >&2
-      echo "  in this phase flipped to \"done\" in this commit." >&2
-      echo "" >&2
-      echo "  Rule: evidence files appear only when their story ships." >&2
-      bar
-      exit 1
-    fi
-  done <<EOF
-$STAGED_EVIDENCE
-EOF
-fi
+work_log_omitted_paths() {
+  if [ -n "$PMO_WORK_LOG_EXCLUDE_REGEX" ]; then
+    printf '%s\n' "$STAGED" | grep -E "$PMO_WORK_LOG_EXCLUDE_REGEX" || true
+  fi
+}
 
-# ────────────────────────────────────────────────────────────────────
-# Project-specific extension seam.
+work_log_cached_name_status() {
+  included_paths=$(work_log_included_paths | sed '/^[[:space:]]*$/d')
+  [ -n "$included_paths" ] || return 0
+  # shellcheck disable=SC2086
+  git diff --cached --name-status -- $included_paths 2>/dev/null || true
+}
+
+work_log_cached_stat() {
+  included_paths=$(work_log_included_paths | sed '/^[[:space:]]*$/d')
+  [ -n "$included_paths" ] || return 0
+  # shellcheck disable=SC2086
+  git diff --cached --stat -- $included_paths 2>/dev/null || true
+}
+
+limited_cached_diff() {
+  included_paths=$(work_log_included_paths | sed '/^[[:space:]]*$/d')
+  [ -n "$included_paths" ] || return 0
+  # shellcheck disable=SC2086
+  git diff --cached --no-ext-diff --unified=3 -- $included_paths 2>/dev/null | awk -v max="$PMO_WORK_LOG_MAX_DIFF_BYTES" '
+    BEGIN { count=0; truncated=0 }
+    {
+      line=$0 "\n"
+      len=length(line)
+      if (count + len <= max) {
+        printf "%s", line
+        count += len
+      } else {
+        remaining=max-count
+        if (remaining > 0) {
+          printf "%s", substr(line, 1, remaining)
+        }
+        printf "\n[PMO_WORK_LOG_DIFF_TRUNCATED]\n"
+        truncated=1
+        exit
+      }
+    }
+  '
+}
+
+capture_work_log_payload() {
+  [ "$WORKLOG_CAPTURE" = "yes" ] || return 0
+
+  gd=$(git_dir_abs 2>/dev/null || true)
+  if [ -z "$gd" ]; then
+    echo "  Work log warning: could not locate .git directory; no pending payload written." >&2
+    return 0
+  fi
+
+  state_dir="$gd/pmo-work-log"
+  pending_file="$state_dir/pending"
+  mkdir -p "$state_dir" 2>/dev/null || {
+    echo "  Work log warning: could not create $state_dir; no pending payload written." >&2
+    return 0
+  }
+
+  if [ -f "$pending_file" ]; then
+    echo "  Work log warning: overwriting stale pending payload from an earlier aborted commit." >&2
+  fi
+
+  branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo detached)
+  index_tree=$(git write-tree 2>/dev/null || echo unknown)
+  capture_ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  project_slug=$(infer_project_slug)
+  log_id=$(work_log_identity)
+  reflog_action=${GIT_REFLOG_ACTION:-}
+
+  tmp_pending="$pending_file.$$"
+  {
+    echo "PMO_WORK_LOG_PAYLOAD_VERSION=1"
+    echo "capture_timestamp=$capture_ts"
+    echo "repo_root=$REPO_ROOT"
+    echo "git_dir=$gd"
+    echo "branch=$branch"
+    echo "index_tree=$index_tree"
+    echo "project_slug=$project_slug"
+    echo "log_identity=$log_id"
+    echo "git_reflog_action=$reflog_action"
+    echo "max_diff_bytes=$PMO_WORK_LOG_MAX_DIFF_BYTES"
+    echo "exclude_regex=$PMO_WORK_LOG_EXCLUDE_REGEX"
+    echo "--- WORK_LOG_REASONS ---"
+    extract_work_log_reasons
+    echo "--- WORK_LOG_EXCLUSIONS ---"
+    extract_work_log_exclusions
+    echo "--- CONTRACT ---"
+    cat "$CONTRACT_FILE"
+    echo "--- STAGED_NAME_STATUS ---"
+    work_log_cached_name_status
+    echo "--- OMITTED_PATHS ---"
+    work_log_omitted_paths
+    echo "--- STAGED_STAT ---"
+    work_log_cached_stat
+    echo "--- STAGED_DIFF ---"
+    limited_cached_diff
+  } > "$tmp_pending" || {
+    rm -f "$tmp_pending"
+    echo "  Work log warning: could not write pending payload; commit will continue." >&2
+    return 0
+  }
+
+  mv "$tmp_pending" "$pending_file" || {
+    rm -f "$tmp_pending"
+    echo "  Work log warning: could not finalize pending payload; commit will continue." >&2
+    return 0
+  }
+
+  EXTRA_BANNER_LINES="${EXTRA_BANNER_LINES}  Work log payload captured for post-commit finalization.
+"
+}
+
+# ── project-specific extension seam ─────────────────────────────────
 #
 # If .githooks/pre-commit.local exists, source it. The local hook can:
 #   - read $STAGED, $STAGED_STORIES, $STAGED_EVIDENCE, $SHIPPED_STORIES,
-#     $SHIPPED_COUNT, $REPO_ROOT, and call `bar` / `fail` from this script
+#     $SHIPPED_COUNT, $REPO_ROOT, and call `bar` / `fail` from this shim
 #   - call `fail "reason"` to block the commit
 #   - append paths to $EXTRA_CLEANUP_FILES (space-separated) to have
 #     them removed on success
 #   - append lines to $EXTRA_BANNER_LINES to extend the success banner
 #
 # Local extensions live OUTSIDE the framework and are NOT touched by
-# `update.sh`. This is how a project adds project-specific rule checks
-# (e.g., "UI-facing changes must update the design handoff") without
-# editing the canonical hook. See PMO-CONTRACT.md §"Extending".
-# ────────────────────────────────────────────────────────────────────
+# `update.sh`. See PMO-CONTRACT.md §"Extending".
 
 EXTRA_CLEANUP_FILES=""
 EXTRA_BANNER_LINES=""
@@ -231,19 +320,21 @@ if [ -f "$REPO_ROOT/.githooks/pre-commit.local" ]; then
   . "$REPO_ROOT/.githooks/pre-commit.local"
 fi
 
-# Pass — clean up and reinforce.
-rm -f "$CONTRACT_FILE" "$BUNDLE_OK_FILE"
+capture_work_log_payload
+
+# Pass — clean up project sentinel files and reinforce. The contract
+# and BUNDLE-OK survive here: commit-msg stamps trailers from them and
+# post-commit archives then clears them, so an aborted commit no longer
+# consumes the contract.
 for f in $EXTRA_CLEANUP_FILES; do
   rm -f "$f"
 done
-# If .tmp/ is now empty, remove it too (best-effort).
-rmdir "$REPO_ROOT/.tmp" 2>/dev/null || true
 
 bar
 echo "✓ The system accepted your understanding of the project management framework."
-echo "  Contract acknowledged ($ACTUAL_BOXES/$EXPECTED_BOXES checkboxes)."
+echo "  Contract acknowledged ($CHECKED_BOXES/$REPORTED_BOXES checkboxes)."
 if [ "$SHIPPED_COUNT" -gt 0 ]; then
-  echo "  Stories shipped this commit: $SHIPPED_COUNT (evidence verified)."
+  echo "  Stories shipped this commit: $SHIPPED_COUNT (evidence verified by dw gate)."
 fi
 if [ -n "$EXTRA_BANNER_LINES" ]; then
   printf '%s' "$EXTRA_BANNER_LINES"

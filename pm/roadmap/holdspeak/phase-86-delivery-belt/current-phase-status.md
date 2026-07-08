@@ -1,6 +1,6 @@
 # Phase 86 — The Delivery Belt (read-only): the AI Headquarters floor, first light
 
-**Last updated:** 2026-07-07 (HS-86-01 done).
+**Last updated:** 2026-07-07 (HS-86-02 done — the rails are current).
 
 ## Goal
 
@@ -49,7 +49,7 @@ verbs stand on.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-86-01 | The clean tree — fix the 31 triaged desyncs | done | [story-01-clean-tree](./story-01-clean-tree.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-86-02 | The refreshed rails — stamped gate + embedded dw | backlog | [story-02-refreshed-rails](./story-02-refreshed-rails.md) | - |
+| HS-86-02 | The refreshed rails — stamped gate + embedded dw | done | [story-02-refreshed-rails](./story-02-refreshed-rails.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-86-03 | The hub belt: registry, state route, belt frames | backlog | [story-03-hub-belt-route](./story-03-hub-belt-route.md) | - |
 | HS-86-04 | The belt surface on the web desk | backlog | [story-04-belt-surface](./story-04-belt-surface.md) | - |
 | HS-86-05 | The live walk + docs + closeout | backlog | [story-05-live-walk-and-docs](./story-05-live-walk-and-docs.md) | - |
@@ -61,8 +61,11 @@ across both projects (was 397 errors on v1.12.0, 31 after upstream
 phase 16). 14 retrospective final summaries (labeled), phase-15
 status doc backfilled, 7 placeholder rows became real story stubs,
 the genuine drifts reconciled on whichever side was stale. Suite
-3299 passed / 37 skipped. Next: HS-86-02 refreshes the rails from
-upstream main (phase 16 merged as delivery-workbench PR #2).
+3299 passed / 37 skipped. HS-86-02 done the same evening: the rails
+refreshed from upstream main — stamped-fact gate + embedded dw +
+managed CLAUDE.md block, doctor healthy, a hand-written contract
+refused by name, and its own commit is the first through the new
+gate. Next: HS-86-03, the hub belt route.
 
 ## Active risks
 

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# pmo-roadmap commit-msg shim.
+#
+# Stamps the durable audit trailers (PMO-Story, PMO-Contract-Digest)
+# onto the commit message from the live, gate-verified contract. Runs
+# only when a contract exists — merge and rewrite flows without one
+# pass through untouched. Stamping failure blocks the commit: a gated
+# commit without its trailers would silently break the audit trail.
+
+set -u
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+[ -n "$REPO_ROOT" ] || exit 0
+
+MSG_FILE="${1:-}"
+[ -n "$MSG_FILE" ] || exit 0
+
+CONTRACT_FILE="$REPO_ROOT/.tmp/CONTRACT.md"
+[ -f "$CONTRACT_FILE" ] || exit 0
+
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+DW="$HOOK_DIR/dw"
+
+PYTHON="${PMO_GATE_PYTHON:-}"
+if [ -z "$PYTHON" ]; then
+  PYTHON="$(command -v python3 || true)"
+fi
+
+if [ -z "$PYTHON" ] || [ ! -f "$DW" ]; then
+  echo "pmo-roadmap commit-msg: cannot stamp PMO trailers (python3 or dw missing); commit blocked." >&2
+  exit 1
+fi
+
+if ! "$PYTHON" "$DW" contract trailers --message-file "$MSG_FILE"; then
+  echo "pmo-roadmap commit-msg: failed to stamp PMO trailers; commit blocked." >&2
+  exit 1
+fi
+
+exit 0
