@@ -48,7 +48,7 @@ another window.
 | HS-4-03 | Project KB authoring API + UI (`WFS-CFG-003`) | done | [story-03-project-kb-api-ui](./story-03-project-kb-api-ui.md) | [evidence-story-03](./evidence-story-03.md) — 3 endpoints, new `project_kb.py` module, KB editor section, 16 integration tests |
 | HS-4-04 | Dictation runtime config UI (`WFS-CFG-004`) | done | [story-04-dictation-config-ui](./story-04-dictation-config-ui.md) | [evidence-story-04](./evidence-story-04.md) — `/api/settings` extended for dictation slice + `_runtime_status`, Runtime section on `/dictation`, 11 integration tests, fixes silent-drop bug |
 | HS-4-05 | Dry-run preview API + UI (`WFS-CFG-005`) | done | [story-05-dry-run-preview](./story-05-dry-run-preview.md) | [evidence-story-05](./evidence-story-05.md) — `/api/dictation/dry-run`, Dry-run section on `/dictation`, canonical project-KB schema, 9 integration tests |
-| HS-4-06 | DoD sweep + phase exit | done | [story-06-dod](./story-06-dod.md) | [phase evidence bundle](../../../../docs/evidence/phase-wfs-01/20260426-1537/) — 22 artifacts, WFS/WFS-CFG traceability, full sweep 1072 passed |
+| HS-4-06 | DoD sweep + phase exit | done | [story-06-dod](./story-06-dod.md) | [phase evidence bundle summary](../../../../docs/evidence/phase-wfs-01/20260426-1537/99_phase_summary.md) — 22 artifacts, WFS/WFS-CFG traceability, full sweep 1072 passed |
 
 ## Where we are
 

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-mobile
 - **Phase:** 15
-- **Status:** backlog
+- **Status:** built + Simulator-proven (the device walk beat joins the owner queue)
 - **Depends on:** the agent-hook loop + `AgentSession` (`holdspeak/agent_context/sessions.py`),
   `GET /api/companion/status` + select/pin/dismiss (`web/routes/system.py`), the iPad `CompanionBoard`
   (HSM-13-03) + `HTTPDesktopClient.companionStatus`, the Queue HUD (Phase 15 craft).

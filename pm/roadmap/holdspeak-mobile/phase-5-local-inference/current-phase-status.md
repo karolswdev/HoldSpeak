@@ -122,7 +122,7 @@ on Tier-1 hardware.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSM-5-01 | Engine evaluation & pick | done | [story-01](./story-01-engine-evaluation.md) | [evidence-01](./evidence-story-01.md) |
-| HSM-5-02 | `ILLMProvider` impl + Mode A | in-progress (host-proven; iPad run pending unlock) | [story-02](./story-02-llm-provider-impl.md) | in story (host Metal proof) |
+| HSM-5-02 | `ILLMProvider` impl + Mode A | done (host Metal + iPad Air M4 Mode A proven, owner-witnessed 2026-06-20; the stale 'iPad run pending' cell reconciled by HS-86-01) | [story-02](./story-02-llm-provider-impl.md) | in story (host Metal proof) |
 | HSM-5-03 | Model packaging & per-device defaults | in-progress (sideload + HF download host-proven; iPad install pending) | [story-03](./story-03-model-packaging-strategy.md) | in story (host proof) |
 | HSM-5-04 | Structured / JSON output | done | [story-04](./story-04-structured-output.md) | [evidence-04](./evidence-story-04.md) |
 | HSM-5-05 | 30-minute meeting closeout (Gate 4) | backlog | [story-05](./story-05-thirty-minute-meeting-closeout.md) | — |

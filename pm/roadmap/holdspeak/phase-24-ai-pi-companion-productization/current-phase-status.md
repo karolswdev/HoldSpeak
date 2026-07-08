@@ -46,9 +46,9 @@ logs.
 |---|---|---|---|---|
 | HS-24-01 | AI PI Companion surface: read-only session overview | done | [story-01-ai-pi-companion-surface-overview.md](./story-01-ai-pi-companion-surface-overview.md) | [evidence-story-01.md](./evidence-story-01.md) |
 | HS-24-02 | Session lifecycle controls | done | [story-02-session-lifecycle-controls.md](./story-02-session-lifecycle-controls.md) | [evidence-story-02.md](./evidence-story-02.md) |
-| HS-24-03 | Confidence and unavailable-target display affordances | backlog | — | — |
-| HS-24-04 | Push/repaint cadence decision | backlog | — | — |
-| HS-24-05 | Productization dogfood and closeout | backlog | — | — |
+| HS-24-03 | Confidence and unavailable-target display affordances | backlog | [story-story-03-confidence-display-affordances](./story-03-confidence-display-affordances.md) | — |
+| HS-24-04 | Push/repaint cadence decision | backlog | [story-story-04-display-update-cadence](./story-04-display-update-cadence.md) | — |
+| HS-24-05 | Productization dogfood and closeout | backlog | [story-story-05-productization-dogfood-closeout](./story-05-productization-dogfood-closeout.md) | — |
 | HS-24-06 | Companion public docs and PixelLab artwork | done | [story-06-companion-public-docs-and-artwork.md](./story-06-companion-public-docs-and-artwork.md) | [evidence-story-06.md](./evidence-story-06.md) |
 
 ## Resume guide (2026-06-01)

@@ -1,6 +1,6 @@
 # Phase 86 — The Delivery Belt (read-only): the AI Headquarters floor, first light
 
-**Last updated:** 2026-07-07 (phase scaffolded).
+**Last updated:** 2026-07-07 (HS-86-01 done).
 
 ## Goal
 
@@ -48,7 +48,7 @@ verbs stand on.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-86-01 | The clean tree — fix the 31 triaged desyncs | backlog | [story-01-clean-tree](./story-01-clean-tree.md) | - |
+| HS-86-01 | The clean tree — fix the 31 triaged desyncs | done | [story-01-clean-tree](./story-01-clean-tree.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-86-02 | The refreshed rails — stamped gate + embedded dw | backlog | [story-02-refreshed-rails](./story-02-refreshed-rails.md) | - |
 | HS-86-03 | The hub belt: registry, state route, belt frames | backlog | [story-03-hub-belt-route](./story-03-hub-belt-route.md) | - |
 | HS-86-04 | The belt surface on the web desk | backlog | [story-04-belt-surface](./story-04-belt-surface.md) | - |
@@ -56,10 +56,13 @@ verbs stand on.
 
 ## Where we are
 
-Scaffolded 2026-07-07, the same day the substrate learned to read
-this repo (delivery-workbench phase 16: 397 spurious check errors →
-31 real, triaged upstream in that phase's evidence-story-04). Next:
-HS-86-01 consumes that triage list.
+HS-86-01 done (2026-07-07): the tree is clean — `dw check` exits 0
+across both projects (was 397 errors on v1.12.0, 31 after upstream
+phase 16). 14 retrospective final summaries (labeled), phase-15
+status doc backfilled, 7 placeholder rows became real story stubs,
+the genuine drifts reconciled on whichever side was stale. Suite
+3299 passed / 37 skipped. Next: HS-86-02 refreshes the rails from
+upstream main (phase 16 merged as delivery-workbench PR #2).
 
 ## Active risks
 
