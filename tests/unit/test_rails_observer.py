@@ -163,3 +163,86 @@ def test_observer_module_has_no_rails_write_path() -> None:
             "observer is read-only; a suggested action is a proposal made "
             "elsewhere, never a write from here."
         )
+
+
+# --- cross-machine reach (HS-88-04) ----------------------------------------
+
+
+class _Clock:
+    def __init__(self, start=1000.0):
+        self.now = start
+
+    def __call__(self):
+        return self.now
+
+
+@pytest.fixture(autouse=True)
+def _fresh_remote():
+    rails_observer.clear_remote_buffer()
+    yield
+    rails_observer.clear_remote_buffer()
+
+
+def test_valid_envelope_events_only():
+    ok, _ = rails_observer.validate_remote_envelope(
+        {"node": "beta", "ts": "t1", "events": [{"ts": "t1", "event": "gate_pass"}]}
+    )
+    assert ok is True
+
+
+def test_envelope_must_name_its_node():
+    ok, reason = rails_observer.validate_remote_envelope({"events": []})
+    assert ok is False and "node" in reason
+
+
+def test_envelope_rejects_a_file_body_crossing():
+    # The reach is events only — a body-carrying event is refused.
+    for body_key in ("text", "body_markdown", "content", "file"):
+        ok, reason = rails_observer.validate_remote_envelope(
+            {"node": "beta", "events": [{"event": "x", body_key: "the story file"}]}
+        )
+        assert ok is False and "events only" in reason
+
+
+def test_push_and_drain_stamps_the_origin_node():
+    clk = _Clock()
+    rails_observer.push_remote_envelope(
+        {"node": "beta", "events": [{"ts": "t1", "event": "story_status", "story": "HS-1"}]},
+        clock=clk,
+    )
+    drained = rails_observer.drain_remote_events(clock=clk)
+    assert len(drained) == 1
+    assert drained[0]["origin_node"] == "beta"
+    # A second drain is empty (buffer cleared).
+    assert rails_observer.drain_remote_events(clock=clk) == []
+
+
+def test_stale_node_stream_is_dropped_never_fabricated():
+    clk = _Clock()
+    rails_observer.push_remote_envelope(
+        {"node": "beta", "events": [{"ts": "t1", "event": "gate_pass"}]}, clock=clk
+    )
+    clk.now += rails_observer.REMOTE_LIVENESS_SECONDS + 1
+    # The node went quiet: its stream drops, and liveness reads it gone.
+    assert rails_observer.drain_remote_events(clock=clk) == []
+    assert rails_observer.remote_node_liveness(clock=clk) == {}
+
+
+def test_liveness_tracks_a_live_node():
+    clk = _Clock()
+    rails_observer.push_remote_envelope(
+        {"node": "beta", "events": [{"ts": "t1", "event": "gate_pass"}]}, clock=clk
+    )
+    assert rails_observer.remote_node_liveness(clock=clk) == {"beta": True}
+
+
+def test_remote_events_render_with_the_origin_named():
+    events = [{"ts": "t1", "repo": "code", "event": "story_status", "story": "HS-1", "origin_node": "beta"}]
+    rendered = rails_observer.format_events_for_model(events)
+    assert "@beta" in rendered
+
+
+def test_a_remote_and_local_flip_do_not_collide_in_the_diff():
+    local = {"ts": "t1", "event": "story_status", "story": "HS-1", "repo": "code"}
+    remote = {**local, "origin_node": "beta"}
+    assert rails_observer.event_signature(local) != rails_observer.event_signature(remote)

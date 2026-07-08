@@ -1741,6 +1741,14 @@
       "consumers": []
     },
     {
+      "path": "/api/missioncontrol/rails/remote-events",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": []
+    },
+    {
       "path": "/api/missioncontrol/rails/size",
       "methods": [
         "POST"

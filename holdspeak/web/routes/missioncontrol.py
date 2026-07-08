@@ -214,6 +214,25 @@ def build_missioncontrol_router(
             log.warning(f"mission control evidence failed ({exc})")
             return {"status": "unavailable", "detail": "evidence read failed"}
 
+    @router.post("/api/missioncontrol/rails/remote-events")
+    async def api_missioncontrol_rails_remote_events(body: dict[str, Any]) -> Any:
+        """A remote node's rail-event envelope (HS-88-04) — the far node's
+        worker tails its OWN `dw events` and pushes `{node, ts, events}`
+        here; the ambient observer merges them, each stamped with its
+        origin node. Events only: a body-carrying event is refused (no
+        repo file contents cross the wire). Off-loopback this route is
+        token-gated like every write."""
+        from ...rails_observer import push_remote_envelope
+
+        accepted, reason = push_remote_envelope(body if isinstance(body, dict) else {})
+        if not accepted:
+            return JSONResponse(
+                {"accepted": False, "reason": reason}, status_code=400
+            )
+        node = str(body.get("node") or "")
+        count = len(body.get("events") or [])
+        return {"accepted": True, "node": node, "events": count}
+
     @router.get("/api/missioncontrol/rails/journal")
     async def api_missioncontrol_rails_journal(limit: int = 50) -> Any:
         """The ambient observer's journal (HS-88-03) — the local model's

@@ -1,6 +1,6 @@
 # Phase 88 — The Rails-Aware Desk (rails as material, the ambient observer)
 
-**Last updated:** 2026-07-08 (HS-88-03 done — the ambient observer; 3/5).
+**Last updated:** 2026-07-08 (HS-88-04 done — the cross-machine reach; 4/5).
 
 ## Goal
 
@@ -64,7 +64,7 @@ everything happening with dw in the background."*
 | HS-88-01 | Rails objects as grounding kinds — the hub hydration seam | done | [story-01-rails-grounding-hub](./story-01-rails-grounding-hub.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-88-02 | The grounding picker learns the rails | done | [story-02-rails-picker](./story-02-rails-picker.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-88-03 | The ambient dw observer — the local rail journal | done | [story-03-ambient-observer](./story-03-ambient-observer.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-88-04 | Reach: rail events from another machine (scoped) | backlog | [story-04-cross-machine-reach](./story-04-cross-machine-reach.md) | - |
+| HS-88-04 | Reach: rail events from another machine (scoped) | done | [story-04-cross-machine-reach](./story-04-cross-machine-reach.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-88-05 | The walk, the docs, the close | backlog | [story-05-walk-docs](./story-05-walk-docs.md) | - |
 
 ## Where we are
@@ -114,8 +114,20 @@ rails-write path in the module. `GET /api/missioncontrol/rails/journal`
 reads it back. Proven live on .43: the observer tailed 16 real rail
 events and journaled them accurately ("HS-88-02 moved from backlog to
 done… HS-88-03 pulled into in-progress… a contract-missing refusal
-resolved by regenerating the contract and passing the gate"). Next:
-HS-88-04, the cross-machine reach.
+resolved by regenerating the contract and passing the gate").
+
+The reach is real (HS-88-04): a far node's worker POSTs `{node, ts,
+events}` to `POST /api/missioncontrol/rails/remote-events`; the
+observer merges the buffer each tick with the origin node STAMPED,
+honest liveness drops a quiet node's stream (never fabricated), and
+the envelope carries EVENTS ONLY — a body-carrying event is refused
+(no repo file contents cross the wire). A remote and a local flip
+never collide in the diff (the signature includes the origin). Proven
+in-process (route → buffer → drain → journal, `@node` named); the
+mesh_relay job queue is prompt/result-shaped, so events ride their own
+thin push wire, and the pushing WORKER daemon is a deferred rider
+(lands when a second rails machine is real). Next: HS-88-05, the walk
+and the close.
 
 ## Active risks
 
@@ -140,15 +152,28 @@ HS-88-04, the cross-machine reach.
 - 2026-07-08 — The observer is read-only and off by default; anything
   it wants to do is an actuator proposal (the standing off-by-default
   actuator rule); it runs on a RuntimeProfile the owner chose.
+- 2026-07-08 (HS-88-04) — The cross-machine reach is a PUSH envelope,
+  not the mesh relay queue: the `mesh_relay` job queue is
+  prompt/result-shaped, so events ride their own thin wire — a far
+  node's worker POSTs `{node, ts, events}` to
+  `POST /api/missioncontrol/rails/remote-events`, the observer merges
+  the buffer each tick with the origin node stamped, honest liveness
+  drops a quiet node's stream, and the envelope carries EVENTS ONLY (a
+  body-carrying event is refused). The full mesh-worker daemon that
+  tails a remote `dw events` and calls this route is a deferred rider
+  (below) — the wire is proven in-process (route → buffer → drain →
+  journal, node named).
 
 ## Decisions deferred
 
 - Whether the journal is a new primitive kind or a specialized note —
   trigger: the picker/lineage needs a distinct glyph — default: reuse
   the note primitive with a `rails-journal` tag until it earns a kind.
-- Real-time cross-machine rail relay beyond the reach story — trigger:
-  the owner runs two live rails machines — default: local `dw` only,
-  the reach story proves the wire on one remote.
+- The remote-events WORKER daemon (a `holdspeak mesh serve`-style loop
+  that tails a far node's `dw events` and POSTs the envelope on a
+  cadence) — trigger: the owner runs two live rails machines —
+  default: the receiving wire is shipped and proven; the pushing
+  daemon lands when a second machine is real.
 - Grounding a CLOSED phase's whole roadmap (vs a single story) —
   trigger: a run that needs the portfolio — default: per-object refs;
   a roadmap ref hydrates the README, not every phase.

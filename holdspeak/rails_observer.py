@@ -17,9 +17,20 @@ call is injected so tests need no LLM.
 from __future__ import annotations
 
 import hashlib
+import threading
+import time
 from typing import Any, Callable, Optional
 
 JOURNAL_TAG = "rails-journal"
+
+# HS-88-04: a remote node whose last envelope is older than this reads
+# stale — its buffered stream stops, never fabricated (the Phase-85
+# liveness posture).
+REMOTE_LIVENESS_SECONDS = 90
+
+# Reject events that would smuggle a repo file body across the wire —
+# the reach is EVENTS only. Any of these keys means a body is riding.
+_BODY_KEYS = {"text", "body", "body_markdown", "content", "file", "contents"}
 
 _SYSTEM_PROMPT = (
     "You keep a terse running journal of a software delivery pipeline. "
@@ -35,10 +46,10 @@ SummarizeFn = Callable[[str, str], str]
 
 def event_signature(event: dict[str, Any]) -> str:
     """A stable id for one rail event, for diffing what is NEW. Uses the
-    event's own fields (ts + verb + story + a detail digest) — the raw
+    event's own fields (ts + verb + story + repo + origin) — the raw
     event, never re-derived state."""
     key = "|".join(
-        str(event.get(k, "")) for k in ("ts", "event", "story", "repo")
+        str(event.get(k, "")) for k in ("ts", "event", "story", "repo", "origin_node")
     )
     detail = event.get("detail")
     if detail is not None:
@@ -70,9 +81,10 @@ def format_events_for_model(events: list[dict[str, Any]]) -> str:
     the events' own fields, one per line, no interpretation."""
     lines: list[str] = []
     for e in events:
+        origin = str(e.get("origin_node") or "")
         parts = [
             str(e.get("ts") or ""),
-            str(e.get("repo") or ""),
+            (f"@{origin}" if origin else "") + str(e.get("repo") or ""),
             str(e.get("event") or ""),
             str(e.get("story") or ""),
         ]
@@ -137,6 +149,91 @@ def list_journal(db: Any, *, limit: int = 50) -> list[Any]:
     return rows[:limit]
 
 
+# --- Cross-machine reach (HS-88-04): remote event envelopes ---------------
+#
+# A far node's worker tails its OWN `dw events` and pushes envelopes to
+# the hub; the observer merges them, each event stamped with its origin
+# node. The reach is EVENTS only (no repo file bodies cross the wire),
+# and honest liveness: a node gone quiet has its stream dropped, never
+# fabricated. The buffer is in-memory (a restart clears it, like the
+# grant store) — the pull-worker precedent, inverted to a push.
+
+_REMOTE: dict[str, dict[str, Any]] = {}
+_REMOTE_LOCK = threading.Lock()
+
+
+def validate_remote_envelope(envelope: Any) -> tuple[bool, str]:
+    """`{node, ts, events: [dict]}`, events-only. (ok, reason)."""
+    if not isinstance(envelope, dict):
+        return False, "envelope must be an object"
+    node = str(envelope.get("node") or "").strip()
+    if not node:
+        return False, "envelope must name its origin node"
+    events = envelope.get("events")
+    if not isinstance(events, list):
+        return False, "envelope events must be a list"
+    for e in events:
+        if not isinstance(e, dict):
+            return False, "each event must be an object"
+        if _BODY_KEYS & set(e.keys()):
+            return False, "events carry no file bodies (the reach is events only)"
+    return True, ""
+
+
+def push_remote_envelope(
+    envelope: dict[str, Any], *, clock: Callable[[], float] = time.monotonic
+) -> tuple[bool, str]:
+    """Accept a remote node's envelope into the merge buffer, stamping
+    each event with its origin node. (accepted, reason)."""
+    ok, reason = validate_remote_envelope(envelope)
+    if not ok:
+        return False, reason
+    node = str(envelope["node"]).strip()
+    stamped = [{**e, "origin_node": node} for e in envelope["events"]]
+    with _REMOTE_LOCK:
+        entry = _REMOTE.get(node, {"events": []})
+        entry["last_seen"] = clock()
+        entry["events"] = list(entry.get("events", [])) + stamped
+        _REMOTE[node] = entry
+    return True, ""
+
+
+def drain_remote_events(
+    *, clock: Callable[[], float] = time.monotonic
+) -> list[dict[str, Any]]:
+    """Return + clear buffered events from LIVE remote nodes; a node past
+    the liveness window has its stream DROPPED (stale, never fabricated)."""
+    now = clock()
+    out: list[dict[str, Any]] = []
+    with _REMOTE_LOCK:
+        for node in list(_REMOTE):
+            entry = _REMOTE[node]
+            if now - entry.get("last_seen", 0) > REMOTE_LIVENESS_SECONDS:
+                del _REMOTE[node]
+                continue
+            out.extend(entry.get("events", []))
+            entry["events"] = []
+    return out
+
+
+def remote_node_liveness(
+    *, clock: Callable[[], float] = time.monotonic
+) -> dict[str, bool]:
+    """`{node: is_live}` for every remote node the hub has heard from."""
+    now = clock()
+    with _REMOTE_LOCK:
+        return {
+            node: (now - entry.get("last_seen", 0)) <= REMOTE_LIVENESS_SECONDS
+            for node, entry in _REMOTE.items()
+        }
+
+
+def clear_remote_buffer() -> None:
+    """Test seam. A real restart clears the buffer by construction."""
+    with _REMOTE_LOCK:
+        _REMOTE.clear()
+
+
 def build_profile_summarizer(profile_id: str = "") -> SummarizeFn:
     """Production summarizer: run the prompt on the named RuntimeProfile
     (else the hub default), through the SAME intel seam ask uses. Kept
@@ -169,13 +266,19 @@ def build_profile_summarizer(profile_id: str = "") -> SummarizeFn:
 
 __all__ = [
     "JOURNAL_TAG",
+    "REMOTE_LIVENESS_SECONDS",
     "SummarizeFn",
     "build_profile_summarizer",
+    "clear_remote_buffer",
+    "drain_remote_events",
     "event_signature",
     "format_events_for_model",
     "journal_body",
     "list_journal",
     "new_events",
+    "push_remote_envelope",
     "record_journal_entry",
+    "remote_node_liveness",
     "summarize_batch",
+    "validate_remote_envelope",
 ]

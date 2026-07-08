@@ -730,6 +730,9 @@ class MeetingWebServer:
                     if repo.get("status") == "live":
                         for e in repo.get("events", []) or []:
                             events.append({**e, "repo": repo.get("name", "")})
+                # HS-88-04: fold in events pushed by remote nodes (live
+                # ones only; a stale node's stream is dropped, never faked).
+                events += rails_observer.drain_remote_events()
                 fresh, seen = rails_observer.new_events(events, seen)
                 if not primed:
                     # First observation is a baseline — journal only what
