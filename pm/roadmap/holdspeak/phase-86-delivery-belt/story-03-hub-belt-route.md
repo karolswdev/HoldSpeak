@@ -1,66 +1,72 @@
-# HS-86-03 — The hub belt: registry, state route, belt frames
+# HS-86-03 — The receipts the conveyor lacks: gh lights + belt frames (hub)
 
 - **Project:** holdspeak
 - **Phase:** 86
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-86-02
 - **Unblocks:** HS-86-04
 - **Owner:** unassigned
 
 ## Problem
 
-The desk needs belt state the way it gets everything else: a pull
-snapshot plus frames on the one bus. Nothing in the hub knows about
-rails repos today. The AI-Headquarters frame means the shape is a
-REGISTRY of repos from the first commit, never "this repo".
+**Re-scoped 2026-07-07 (mid-phase correction):** the survey that
+opened this story found Phase 82 already shipped what it planned to
+build — `missioncontrol_bridge.py` + `/api/missioncontrol/*` relay
+the three contract documents per project-map repo, and the desk
+conveyor + approval leg exist. What the RFC's B1 still lacks, hub
+side: **PR/CI receipts** (the three documents carry no GitHub state,
+so the belt has no PR or check lights) and **belt frames on the one
+bus** (the conveyor polls privately at 15 s; no other surface —
+iPad, Qlippy — can see belt motion).
 
 ## Scope
 
-- In: `belt` config (`belt.projects`: absolute paths; default
-  `[<this repo>]`, and the dogfood config adds
-  `~/dev/reusable-processes`); a `holdspeak/web/routes/belt.py`
-  route factory (`build_belt_router(ctx)`) with
-  `GET /api/belt/state` → per-repo: `dw state --json`,
-  `dw sessions --json`, `dw events --json` (tail), `dw context`
-  issues/warnings counts, shelled from `<repo>/.githooks/dw` via
-  `asyncio.to_thread` with a short TTL cache; `gh` receipts for the
-  repo's open PRs + head-branch check conclusions (`gh pr list/
-  checks --json`, same thread pattern, degrade honestly to
-  `gh: unavailable` — never a 500); a repo without `.githooks/dw`
-  → `{rails: "absent"}`; `scope:"belt"` frames broadcast on `/ws`
-  when a poll observes state change (the `_run_frame` vocabulary:
-  `{state, scope:"belt", capability:{kind:"belt", id:<repo-slug>,
-  name}}`); a fitness test proving no non-GET route registered under
-  `/api/belt`; api-surface manifest regenerated AFTER the web call
-  site lands (coordinate with HS-86-04 — regen in whichever commit
-  adds the consumer last).
-- Out: any mutation (B2); persisting belt state (receipts only —
-  cache TTL in seconds); importing `dw_pmo` into the hub; auth
-  changes (the existing web-runtime posture applies).
+- In: `receipts_payload(project_map, runner)` in
+  `missioncontrol_bridge.py` — per repo, `gh pr list --json
+  number,title,url,headRefName,statusCheckRollup` with `cwd=repo`
+  (injectable runner; `gh` missing/failing → a typed
+  `{"status": "unavailable"}`, never a 500) — and
+  `GET /api/missioncontrol/receipts` relaying it. Belt frames,
+  emitted on observed change: the state read remembers each repo's
+  `generated_at_tree` (module-level, process-lifetime) and, when a
+  read observes a different tree, broadcasts
+  `{state: "ready", scope: "belt", capability: {kind: "belt",
+  id: <repo name>, name: <repo name>}}` on the existing bus (the
+  `_run_frame` vocabulary; any poller's read feeds every surface).
+  A fitness test proving the belt ADDITIONS register no non-GET
+  route. Route tests for receipts + frames (runner injected).
+- Out: a hub-side background poller (frames ride reads — decision
+  below); any change to the Phase-82 approval leg; evidence file
+  serving (HS-86-04 owns it with its consumer); api-surface regen
+  (HS-86-04, after the last consumer lands).
 
 ## Acceptance criteria
 
-- [ ] `GET /api/belt/state` returns both registered repos with
-      phases/stories/sessions/events and PR/check receipts; the
-      response's project shapes are the upstream `feed_schema: 1`
-      payloads embedded verbatim (no re-modeling).
-- [ ] A registered path without rails answers `rails: "absent"`
-      inside a 200 — captured in tests.
-- [ ] `gh` unavailable (env-forced in test) degrades to a labeled
-      absence, never an error.
-- [ ] Route tests via the TestClient + WebContext factory pattern;
-      the read-only fitness test passes; api-surface guard green.
+- [ ] `GET /api/missioncontrol/receipts` returns per-repo PR lists
+      with check rollups for the live two-repo map; a repo where
+      `gh` fails reports `unavailable` inside a 200 (test-forced).
+- [ ] Two consecutive state reads with an unchanged tree emit zero
+      belt frames; a read observing a changed tree emits exactly one
+      frame for that repo, in the pinned vocabulary (broadcast
+      captured in tests via ctx).
+- [ ] The fitness test enumerates the app's `/api/missioncontrol/*`
+      routes added by this story and asserts GET-only.
 - [ ] Full suite green.
 
 ## Test plan
 
-- Unit: new `tests/unit/test_web_routes_belt.py` (TestClient;
-  subprocess + gh injected/faked via ctx or monkeypatch).
-- Integration / Cypress: live route hit against the real two-repo
-  registry captured in evidence.
+- Unit: `tests/unit/test_web_routes_missioncontrol.py` extensions
+  (TestClient + injected runner + captured broadcast).
+- Integration / Cypress: a live receipts hit against the real map,
+  captured in evidence.
 - Manual / device: n/a.
 
 ## Notes / open questions
 
-- Poll cadence for frames: reuse the existing broadcast loop seams;
-  a 10s single-flight poll matches the upstream workbench belt.
+- Frames-on-read (not a background loop) is deliberate: the conveyor
+  already polls at the design's 15 s cadence, so its reads become the
+  heartbeat every other surface listens to; zero new lifecycle. If a
+  frame-hungry surface ever exists without any poller, B2 revisits.
+- Original story text (registry + `/api/belt/state`) superseded: the
+  registry IS the operator's project map (`load_project_map`), and
+  the state route IS `/api/missioncontrol/state` — both Phase 82.

@@ -17,6 +17,7 @@ banner riding back verbatim. Design: docs/internal/MISSION_CONTROL_DESK.md §4.
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 from pathlib import Path
@@ -37,6 +38,43 @@ _DW_RUNNER = None
 
 MC_PLUGIN_ID = "missioncontrol_desk"
 MC_PLUGIN_VERSION = "0.1.0"
+
+# Last observed state-feed tree per repo (HS-86-03). Process-lifetime
+# memory for change detection only — never a truth store; the feed
+# itself is re-read every time.
+_BELT_TREES: dict[str, str] = {}
+
+
+def _emit_belt_frames(ctx: WebContext, payload: dict[str, Any]) -> None:
+    """Broadcast one `scope:"belt"` frame per repo whose state-feed
+    tree changed since the last observation (HS-86-03). Frames ride
+    reads: the conveyor's poll is the heartbeat, and every surface on
+    the bus hears the same motion. The first observation is a
+    baseline, not a change."""
+    if ctx.broadcast is None:
+        return
+    for entry in payload.get("repos", []):
+        if entry.get("status") != "live":
+            continue
+        name = str(entry.get("name") or "")
+        tree = str((entry.get("feed") or {}).get("generated_at_tree") or "")
+        if not name or not tree:
+            continue
+        seen = _BELT_TREES.get(name)
+        _BELT_TREES[name] = tree
+        if seen is None or seen == tree:
+            continue
+        try:
+            ctx.broadcast(
+                "intel_status",
+                {
+                    "state": "ready",
+                    "scope": "belt",
+                    "capability": {"kind": "belt", "id": name, "name": name},
+                },
+            )
+        except Exception as exc:
+            log.debug(f"belt frame dropped: {exc}")
 
 
 class _StoryProposeRequest(BaseModel):
@@ -121,7 +159,11 @@ def build_missioncontrol_router(
         try:
             from ...missioncontrol_bridge import state_payload
 
-            return state_payload(_map(), runner)
+            # to_thread: the bridge shells a CLI per repo (the
+            # Phase-85 event-loop rule, applied here by HS-86-03).
+            payload = await asyncio.to_thread(state_payload, _map(), runner)
+            _emit_belt_frames(ctx, payload)
+            return payload
         except Exception as exc:
             log.warning(f"mission control state failed ({exc})")
             return {"repos": [], "error": "mission control state failed"}
@@ -131,7 +173,7 @@ def build_missioncontrol_router(
         try:
             from ...missioncontrol_bridge import sessions_payload
 
-            return sessions_payload(_map(), runner)
+            return await asyncio.to_thread(sessions_payload, _map(), runner)
         except Exception as exc:
             log.warning(f"mission control sessions failed ({exc})")
             return {"status": "unavailable", "detail": "sessions read failed"}
@@ -141,10 +183,22 @@ def build_missioncontrol_router(
         try:
             from ...missioncontrol_bridge import events_payload
 
-            return events_payload(_map(), tail, runner)
+            return await asyncio.to_thread(events_payload, _map(), tail, runner)
         except Exception as exc:
             log.warning(f"mission control events failed ({exc})")
             return {"repos": [], "error": "mission control events failed"}
+
+    @router.get("/api/missioncontrol/receipts")
+    async def api_missioncontrol_receipts() -> Any:
+        """GitHub receipts per map repo (HS-86-03) — the PR and CI
+        station lights. Read-only; absence is typed, never a 500."""
+        try:
+            from ...missioncontrol_bridge import receipts_payload
+
+            return await asyncio.to_thread(receipts_payload, _map(), runner)
+        except Exception as exc:
+            log.warning(f"mission control receipts failed ({exc})")
+            return {"repos": [], "error": "mission control receipts failed"}
 
     @router.post("/api/missioncontrol/story/propose")
     async def api_missioncontrol_story_propose(body: _StoryProposeRequest) -> Any:

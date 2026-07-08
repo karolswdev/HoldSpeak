@@ -70,6 +70,19 @@ bespoke polling per consumer. The Telegram interface upstream
 (absorption-ccgram) is the reference consumer for how third parties
 steer via this substrate — read it before designing B2.
 
+## Correction (2026-07-07, mid-phase)
+
+Phase 82 (Mission Control Conveyor) already shipped the hub bridge
+(`missioncontrol_bridge.py`, `/api/missioncontrol/state|sessions|
+events`), the registry (the operator's project map at
+`~/.holdspeak/delivery_workbench.json`), the desk conveyor
+(`MissionControlConveyor`, 15 s single-flight poll), and the gated
+story-verb approval leg. Read `docs/internal/MISSION_CONTROL_DESK.md`
+and phase-82's final summary before touching anything. HS-86-03/04
+are re-scoped to the true gaps: gh receipts, `scope:"belt"` frames,
+station lights, evidence in place. The section below describes the
+architecture Phase 82 chose; it stands.
+
 ## How the hub reads the substrate
 
 Shell out to the repo-embedded CLI (`.githooks/dw`, per registered

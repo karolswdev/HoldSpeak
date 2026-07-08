@@ -386,3 +386,119 @@ class TestApprovalLeg:
         ).json()["proposal"]
         assert final["status"] == "failed"
         assert "not in the operator's project map" in final["error"]
+
+
+# ── HS-86-03: receipts + belt frames ─────────────────────────────────
+
+RECEIPTS_DOC = [
+    {
+        "number": 7,
+        "title": "Phase 16: the flagship tree",
+        "url": "https://example.test/pr/7",
+        "headRefName": "flagship-tree",
+        "statusCheckRollup": [
+            {"name": "verify-history", "conclusion": "SUCCESS"},
+        ],
+    }
+]
+
+
+def _gh_runner(doc, returncode=0):
+    def runner(argv, cwd=None):
+        if argv and argv[0] == "gh":
+            if returncode != 0:
+                return SimpleNamespace(returncode=returncode, stdout="", stderr="gh: not logged in")
+            return SimpleNamespace(returncode=0, stdout=json.dumps(doc), stderr="")
+        return SimpleNamespace(returncode=1, stdout="", stderr="unknown verb")
+
+    return runner
+
+
+class TestReceipts:
+    def test_receipts_relayed_live(self, tmp_path):
+        client = _client(_make_map(tmp_path), _gh_runner(RECEIPTS_DOC))
+        body = client.get("/api/missioncontrol/receipts").json()
+        assert body["repos"][0]["status"] == "live"
+        assert body["repos"][0]["prs"] == RECEIPTS_DOC
+
+    def test_gh_failure_is_typed_unavailable_in_a_200(self, tmp_path):
+        client = _client(_make_map(tmp_path), _gh_runner(RECEIPTS_DOC, returncode=4))
+        resp = client.get("/api/missioncontrol/receipts")
+        assert resp.status_code == 200
+        entry = resp.json()["repos"][0]
+        assert entry["status"] == "unavailable"
+        assert "gh exited 4" in entry["detail"]
+
+    def test_non_json_gh_is_unavailable(self, tmp_path):
+        def runner(argv, cwd=None):
+            return SimpleNamespace(returncode=0, stdout="not json", stderr="")
+
+        client = _client(_make_map(tmp_path), runner)
+        entry = client.get("/api/missioncontrol/receipts").json()["repos"][0]
+        assert entry["status"] == "unavailable"
+
+    def test_receipts_route_is_get_only(self, tmp_path):
+        """The belt addition registers no write path (RFC B1)."""
+        from holdspeak.web.routes import missioncontrol as mc_module
+
+        app = FastAPI()
+        app.include_router(
+            build_missioncontrol_router(
+                WebContext(get_state=lambda: {}),
+                runner=_gh_runner(RECEIPTS_DOC),
+                map_path=_make_map(tmp_path),
+            )
+        )
+        for route in app.routes:
+            path = getattr(route, "path", "")
+            if "receipts" in path:
+                assert set(route.methods) == {"GET"}
+        assert not hasattr(mc_module, "_belt_write")
+
+
+class TestBeltFrames:
+    def _framed_client(self, tmp_path, tree_sequence):
+        """A client whose fake feed advances through tree_sequence."""
+        from holdspeak.web.routes import missioncontrol as mc_module
+
+        mc_module._BELT_TREES.clear()
+        trees = list(tree_sequence)
+        frames: list = []
+
+        def runner(argv, cwd=None):
+            if "state" in argv:
+                doc = dict(FEED_DOC)
+                doc["generated_at_tree"] = trees[0] if len(trees) == 1 else trees.pop(0)
+                return SimpleNamespace(returncode=0, stdout=json.dumps(doc), stderr="")
+            return SimpleNamespace(returncode=1, stdout="", stderr="unknown verb")
+
+        app = FastAPI()
+        app.include_router(
+            build_missioncontrol_router(
+                WebContext(
+                    get_state=lambda: {},
+                    broadcast=lambda kind, payload: frames.append((kind, payload)),
+                ),
+                runner=runner,
+                map_path=_make_map(tmp_path),
+            )
+        )
+        return TestClient(app), frames
+
+    def test_unchanged_tree_emits_no_frame(self, tmp_path):
+        client, frames = self._framed_client(tmp_path, ["t1"])
+        client.get("/api/missioncontrol/state")
+        client.get("/api/missioncontrol/state")
+        assert frames == []
+
+    def test_changed_tree_emits_one_belt_frame(self, tmp_path):
+        client, frames = self._framed_client(tmp_path, ["t1", "t2"])
+        client.get("/api/missioncontrol/state")
+        assert frames == []  # first observation is a baseline
+        client.get("/api/missioncontrol/state")
+        assert len(frames) == 1
+        kind, payload = frames[0]
+        assert kind == "intel_status"
+        assert payload["scope"] == "belt"
+        assert payload["state"] == "ready"
+        assert payload["capability"] == {"kind": "belt", "id": "demo", "name": "demo"}

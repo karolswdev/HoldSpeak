@@ -168,6 +168,54 @@ def sessions_payload(
     return {"status": "live", "sessions": doc}
 
 
+def receipts_entry(
+    name: str, repo_path: str, runner: Optional[Runner] = None
+) -> dict[str, Any]:
+    """One repo's GitHub receipts (HS-86-03): open PRs with their
+    check rollups, via the gh CLI with cwd inside the repo — the
+    belt's PR and CI station lights. gh missing, failing, or
+    answering non-JSON is a typed ``unavailable``, never an
+    exception; the belt renders absence honestly."""
+    entry: dict[str, Any] = {"name": name, "path": repo_path}
+    run = runner or _default_runner
+    if runner is None:
+        gh = shutil.which("gh")
+        if gh is None:
+            return {**entry, "status": "unavailable", "detail": "gh CLI is not installed"}
+    else:
+        gh = "gh"
+    argv = [
+        gh, "pr", "list", "--json",
+        "number,title,url,headRefName,statusCheckRollup",
+    ]
+    try:
+        proc = run(argv, str(repo_path))
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {**entry, "status": "unavailable", "detail": f"gh failed to run: {exc}"}
+    if proc.returncode != 0:
+        lines = (proc.stderr or proc.stdout or "").strip().splitlines()
+        tail = lines[-1] if lines else "unknown gh error"
+        return {**entry, "status": "unavailable", "detail": f"gh exited {proc.returncode}: {tail[:300]}"}
+    try:
+        prs = json.loads(proc.stdout)
+    except (json.JSONDecodeError, ValueError):
+        return {**entry, "status": "unavailable", "detail": "gh did not return JSON"}
+    if not isinstance(prs, list):
+        return {**entry, "status": "unavailable", "detail": "gh returned an unexpected shape"}
+    return {**entry, "status": "live", "prs": prs}
+
+
+def receipts_payload(
+    project_map: dict[str, Any], runner: Optional[Runner] = None
+) -> dict[str, Any]:
+    return {
+        "repos": [
+            receipts_entry(name, repo, runner)
+            for name, repo in sorted(project_map["projects"].items())
+        ]
+    }
+
+
 ALLOWED_STORY_STATUSES = ("backlog", "ready", "in-progress", "blocked", "done")
 
 

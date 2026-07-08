@@ -1,6 +1,6 @@
 # Phase 86 — The Delivery Belt (read-only): the AI Headquarters floor, first light
 
-**Last updated:** 2026-07-07 (HS-86-02 done — the rails are current).
+**Last updated:** 2026-07-07 (HS-86-03 done).
 
 ## Goal
 
@@ -34,12 +34,13 @@ verbs stand on.
       reports healthy rails (HS-86-01, HS-86-02).
 - [ ] A commit of this phase lands through the refreshed stamped
       gate with PMO trailers (HS-86-02 evidence shows the trailer).
-- [ ] `GET /api/belt/state` returns registry-shaped belt state for
-      ≥2 real repos, with a fitness test proving no mutation route
-      exists under `/api/belt` (HS-86-03).
-- [ ] The `/belt` surface renders both belts live (screenshots:
-      stations, lights, agent lane, evidence opened in place), and
-      the desk locks pass (HS-86-04).
+- [ ] PR/CI receipts and change-driven `scope:"belt"` frames ride
+      the existing mission-control routes/bus for ≥2 real repos,
+      GET-only proven (HS-86-03, re-scoped — Phase 82 owns the
+      registry + state relay).
+- [ ] The Phase-82 conveyor gains station lights (PR/CI/gate/close)
+      and evidence opening in place, frame-driven, desk locks green
+      (HS-86-04, re-scoped).
 - [ ] The live walk: a real story's motion (in-progress → evidence →
       done → gate pass → PR → CI green → merge) observed on the belt
       and captured (HS-86-05).
@@ -50,8 +51,8 @@ verbs stand on.
 |---|---|---|---|---|
 | HS-86-01 | The clean tree — fix the 31 triaged desyncs | done | [story-01-clean-tree](./story-01-clean-tree.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-86-02 | The refreshed rails — stamped gate + embedded dw | done | [story-02-refreshed-rails](./story-02-refreshed-rails.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-86-03 | The hub belt: registry, state route, belt frames | backlog | [story-03-hub-belt-route](./story-03-hub-belt-route.md) | - |
-| HS-86-04 | The belt surface on the web desk | backlog | [story-04-belt-surface](./story-04-belt-surface.md) | - |
+| HS-86-03 | The receipts the conveyor lacks: gh lights + belt frames (hub) | done | [story-03-hub-belt-route](./story-03-hub-belt-route.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-86-04 | The conveyor completes: station lights + evidence in place | backlog | [story-04-belt-surface](./story-04-belt-surface.md) | - |
 | HS-86-05 | The live walk + docs + closeout | backlog | [story-05-live-walk-and-docs](./story-05-live-walk-and-docs.md) | - |
 
 ## Where we are
@@ -65,7 +66,11 @@ the genuine drifts reconciled on whichever side was stale. Suite
 refreshed from upstream main — stamped-fact gate + embedded dw +
 managed CLAUDE.md block, doctor healthy, a hand-written contract
 refused by name, and its own commit is the first through the new
-gate. Next: HS-86-03, the hub belt route.
+gate. HS-86-03 done (re-scoped): `/api/missioncontrol/receipts` (gh PR +
+check rollups per map repo, typed absence), `scope:"belt"` frames on
+observed tree change, the three Phase-82 reads moved onto
+asyncio.to_thread, GET-only fitness. 22/22 module tests; suite 3305.
+Next: HS-86-04, the conveyor's station lights + evidence in place.
 
 ## Active risks
 
@@ -90,6 +95,16 @@ gate. Next: HS-86-03, the hub belt route.
   interop steer + Phase-72 one-bus canon.
 - 2026-07-07 — B1 is read-only with a fitness proof, mirroring the
   upstream workbench's mission-control guard — RFC non-negotiable #2.
+- 2026-07-07 (mid-phase correction) — HS-86-03/04 re-scoped: Phase 82
+  already shipped the registry (the operator's project map), the
+  three-document relay, the conveyor, AND the gated approval leg
+  (B2's seed). B1's remaining truth: gh receipts, belt frames on the
+  bus, station lights, evidence in place. The Phase-84 lesson
+  (survey before scaffolding) recorded twice in one day.
+- 2026-07-07 — belt frames are emitted on observed change during
+  reads (the conveyor's 15 s poll is the heartbeat), not from a new
+  background loop — zero new lifecycle; revisit in B2 if a
+  poller-less surface appears.
 
 ## Decisions deferred
 

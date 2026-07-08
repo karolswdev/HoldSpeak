@@ -1655,6 +1655,14 @@
       ]
     },
     {
+      "path": "/api/missioncontrol/receipts",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": []
+    },
+    {
       "path": "/api/missioncontrol/sessions",
       "methods": [
         "GET"
