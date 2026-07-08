@@ -56,7 +56,7 @@ iPhone, that oh my gosh, don't we just want to keep manipulating it."*
 | ID | Story | Status | Story file |
 |---|---|---|---|
 | HSM-26-01 | The steering + rails presence contracts | **done** (2026-07-08 — 9 schemas + fixtures; validate.py ALL CHECKS PASSED; the real hub responses validate via `test_steering_contracts_fidelity.py`, 8/8; suite 3461) | [story-01](./story-01-steering-rails-contracts.md) |
-| HSM-26-02 | The belt on the diorama | backlog | [story-02](./story-02-belt-on-the-diorama.md) |
+| HSM-26-02 | The belt on the diorama | in progress | [story-02](./story-02-belt-on-the-diorama.md) |
 | HSM-26-03 | Attach, arm, steer, ground on glass | backlog | [story-03](./story-03-steer-on-glass.md) |
 | HSM-26-04 | Rails grounding + the journal on glass | backlog | [story-04](./story-04-rails-on-glass.md) |
 | HSM-26-05 | The couch walk + docs | backlog | [story-05](./story-05-couch-walk.md) |
@@ -75,9 +75,21 @@ deliver, the audit entry, the peek envelope, the journal entry, the
 remote envelope) and validates them against the schemas — so a route
 that drifts from its contract fails in CI, not on glass. The
 entity-catalog and serialization-contract carry the presence section.
-Both runners green; suite 3461. Nothing on glass yet — the Swift
-surfaces (HSM-26-02/03/04) and the couch walk (HSM-26-05) are the
-device-gated stories.
+Both runners green; suite 3461.
+
+HSM-26-02 in flight — the Swift DECODE layer is done (`swift test`
+503/0): `apple/Sources/Contracts/MissionControl.swift` carries the
+belt-state models AND the presence shapes (peek, grant, steer result,
+audit, rails ref, journal entry), mirroring the HSM-26-01 schemas 1:1;
+`HTTPDesktopClient+MissionControl.swift` reads `/api/missioncontrol/
+state` and `/rails/journal`; `MissionControlTests.swift` decodes the
+SAME fixtures the Python validator checks (one source, three runners).
+Fixing the Swift models surfaced a real contract bug HSM-26-01 missed:
+the audit `ts` was SQLite-naive, not the contract's UTC-Z — the source
+(`db/steering.py`) now emits ISO-Z and the fidelity test builds a REAL
+db row to catch it. The RENDER (the `BeltPrimitive` conveyor on
+`DioStage` + a sim screenshot) is the remaining half; the couch walk
+(HSM-26-05) is the craft/acceptance exit.
 
 ## Active risks
 
