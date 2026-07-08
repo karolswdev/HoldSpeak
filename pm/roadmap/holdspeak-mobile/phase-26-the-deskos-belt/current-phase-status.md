@@ -1,12 +1,10 @@
 # Phase 26 — The DeskOS Belt (B4: the belt, steering, and rails travel)
 
-**Status:** in progress (1/5). Contracts foundation first, per the
-owner's B4 scoping (2026-07-08).
+**Status:** in progress (2/5). Contracts foundation first, per the
+owner's B4 scoping (2026-07-08); the belt now renders on glass.
 
-**Last updated:** 2026-07-08 (HSM-26-01 done — the presence contracts
-are written down and validated against the real hub responses; the
-Swift surfaces + the couch walk are the device-gated stories that
-follow).
+**Last updated:** 2026-07-08 (HSM-26-02 done, sim-proven — the delivery
+belt renders on the iPad diorama from the `BeltState` contract).
 
 ## Goal
 
@@ -56,9 +54,9 @@ iPhone, that oh my gosh, don't we just want to keep manipulating it."*
 | ID | Story | Status | Story file |
 |---|---|---|---|
 | HSM-26-01 | The steering + rails presence contracts | **done** (2026-07-08 — 9 schemas + fixtures; validate.py ALL CHECKS PASSED; the real hub responses validate via `test_steering_contracts_fidelity.py`, 8/8; suite 3461) | [story-01](./story-01-steering-rails-contracts.md) |
-| HSM-26-02 | The belt on the diorama | backlog | [story-02](./story-02-belt-on-the-diorama.md) |
-| HSM-26-03 | Attach, arm, steer, ground on glass | backlog | [story-03](./story-03-steer-on-glass.md) |
-| HSM-26-04 | Rails grounding + the journal on glass | backlog | [story-04](./story-04-rails-on-glass.md) |
+| HSM-26-02 | The belt on the diorama | **done** (2026-07-08, sim-proven — the belt renders on the iPad diorama from the `BeltState` contract; `swift test` 503/0 + sim BUILD SUCCEEDED + [screenshot](./screenshots/belt-pullout.png); craft polish deferred to the couch walk) | [story-02](./story-02-belt-on-the-diorama.md) |
+| HSM-26-03 | Attach, arm, steer, ground on glass | in progress (client layer done — the consent spine on the wire, `SteeringClientTests` 7/7; the interactive surface is staged for the couch walk) | [story-03](./story-03-steer-on-glass.md) |
+| HSM-26-04 | Rails grounding + the journal on glass | in progress (the journal renders on glass, sim-proven — [screenshot](./screenshots/journal-pullout.png); the grounding wire is in `steerCoder`, the picker rides the couch composer) | [story-04](./story-04-rails-on-glass.md) |
 | HSM-26-05 | The couch walk + docs | backlog | [story-05](./story-05-couch-walk.md) |
 
 ## Where we are
@@ -75,9 +73,56 @@ deliver, the audit entry, the peek envelope, the journal entry, the
 remote envelope) and validates them against the schemas — so a route
 that drifts from its contract fails in CI, not on glass. The
 entity-catalog and serialization-contract carry the presence section.
-Both runners green; suite 3461. Nothing on glass yet — the Swift
-surfaces (HSM-26-02/03/04) and the couch walk (HSM-26-05) are the
-device-gated stories.
+Both runners green; suite 3461.
+
+HSM-26-02 in flight — the Swift DECODE layer is done (`swift test`
+503/0): `apple/Sources/Contracts/MissionControl.swift` carries the
+belt-state models AND the presence shapes (peek, grant, steer result,
+audit, rails ref, journal entry), mirroring the HSM-26-01 schemas 1:1;
+`HTTPDesktopClient+MissionControl.swift` reads `/api/missioncontrol/
+state` and `/rails/journal`; `MissionControlTests.swift` decodes the
+SAME fixtures the Python validator checks (one source, three runners).
+Fixing the Swift models surfaced a real contract bug HSM-26-01 missed:
+the audit `ts` was SQLite-naive, not the contract's UTC-Z — the source
+(`db/steering.py`) now emits ISO-Z and the fidelity test builds a REAL
+db row to catch it.
+
+The belt renders on glass (HSM-26-02, sim-proven):
+`apple/App/MeetingCapture/DeskBelt.swift` is `BeltPrimitive`, a
+`DeskPrimitive` conformer whose whole UI derives from one declaration;
+`DioStage` polls `GET /api/missioncontrol/state` (15 s, read-only) into
+`beltState`, appends the belt to `toolMembers` when the desktop names
+rails, and an `HS_DESK_BELT` seed drives it offline. The screenshot
+shows both live rails with their current phase + stories (status marks,
+evidence + next tags), the ⚠ warnings lane, the honest `✕ unavailable`
+lane, and the "Local + your desktop" badge — the web conveyor's
+information in the diorama's grammar, from the contract. `swift test`
+503/0; sim BUILD SUCCEEDED. Two craft refinements (the header truncates;
+stories inherit a route-arrow) are deferred to the couch walk
+(HSM-26-05), the craft/acceptance exit.
+
+The steering CONSENT SPINE is on the wire (HSM-26-03 client layer,
+`swift test` 510/0): `HTTPDesktopClient+Steering.swift` speaks
+peek/arm/disarm/steer/audit; refusals are first-class DATA (a 409
+arm/steer body decodes into `CoderArmResult`/`SteerResult`), so the
+surface re-offers ARM from the shape alone — the recycled-pane crown
+case (`revoked: true`) proven over a stubbed network
+(`SteeringClientTests.swift`, 7/7). The interactive steering SURFACE
+(the live peek, hold-to-arm → countdown, the voice-first composer) is
+device-felt consent craft — unlike the read-only belt, a static sim
+shot is not its proof — so it is staged for the couch walk (HSM-26-05).
+
+The rails JOURNAL renders on glass (HSM-26-04, sim-proven):
+`RailsJournalPrimitive` reads the ambient observer's journal from
+`GET /api/missioncontrol/rails/journal` (client + poll wired into
+`DioStage`, an `HS_DESK_JOURNAL` seed). The screenshot shows each entry
+naming the events it saw (story flips, a gate refusal, the
+`@walk-remote` cross-machine origin) + the local model's summary, with
+a meaningful "Route this to AI" affordance. Sim BUILD SUCCEEDED. The
+rails-grounding WIRE is already in `steerCoder` (HSM-26-03); its PICKER
+lives in the interactive steer composer, staged for the couch. The
+device-felt interactive surfaces (the steer composer + the grounding
+picker) all converge on the couch walk (HSM-26-05), B4's craft exit.
 
 ## Active risks
 

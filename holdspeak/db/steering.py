@@ -17,6 +17,18 @@ from .base import BaseRepository
 TEXT_HEAD_CHARS = 120
 
 
+def _iso_z(raw: object) -> str:
+    """SQLite `datetime('now')` ("YYYY-MM-DD HH:MM:SS", UTC-naive) → the
+    wire's UTC-Z instant ("YYYY-MM-DDTHH:MM:SSZ"), the contract §2 rule.
+    An already-ISO value (a test-supplied Z string) passes through."""
+    text = str(raw or "")
+    if not text:
+        return ""
+    if text.endswith("Z") or "T" in text:
+        return text
+    return text.replace(" ", "T", 1) + "Z"
+
+
 @dataclass(frozen=True)
 class SteeringAuditEntry:
     id: int
@@ -106,7 +118,7 @@ class SteeringAuditRepository(BaseRepository):
         return [
             SteeringAuditEntry(
                 id=int(row[0]),
-                ts=str(row[1]),
+                ts=_iso_z(row[1]),
                 session_key=str(row[2]),
                 agent=str(row[3] or ""),
                 pane_id=row[4],

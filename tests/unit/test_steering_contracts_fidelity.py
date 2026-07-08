@@ -80,15 +80,22 @@ def test_steer_result_matches_the_contract() -> None:
     coder_steering.clear_grants()
 
 
-def test_steering_audit_entry_matches_the_contract() -> None:
-    from holdspeak.db.steering import SteeringAuditEntry
+def test_steering_audit_entry_matches_the_contract(tmp_path) -> None:
+    # Build a REAL audit row through the db (SQLite stamps the ts), so the
+    # test catches a ts that is not the contract's UTC-Z instant.
+    from holdspeak.db.core import Database, reset_database
 
-    entry = SteeringAuditEntry(
-        id=7, ts="2026-07-08T10:00:00Z", session_key="claude:x", agent="claude",
-        pane_id="%5", text_sha256="a" * 64, text_head="hi",
-        grounding=["rails:story:HS-88-05"], submit=False, outcome="delivered", detail=None,
+    reset_database()
+    db = Database(tmp_path / "hs.db")
+    db.steering.record(
+        session_key="claude:x", agent="claude", pane_id="%5", text="hi",
+        grounding=["rails:story:HS-88-05"], submit=False, outcome="delivered",
     )
-    _assert_valid("steering-audit-entry", entry.to_dict())
+    row = db.steering.list()[0].to_dict()
+    _assert_valid("steering-audit-entry", row)
+    # The contract's §2 rule: instants are UTC Z, not SQLite's naive format.
+    assert row["ts"].endswith("Z") and "T" in row["ts"], row["ts"]
+    reset_database()
 
 
 def test_rails_grounding_block_ref_shape_matches_the_contract() -> None:

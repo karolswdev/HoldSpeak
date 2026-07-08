@@ -13,12 +13,13 @@
 > the build workaround args). Older loop/gotcha background: [`HANDOVER.md`](./HANDOVER.md).
 
 **Current phase:** [Phase 26 — The DeskOS Belt](./phase-26-the-deskos-belt/current-phase-status.md)
-— **in progress (1/5)**: B4 of the Delivery Belt RFC — the belt, steering, and rails travel to the
-diorama. Contracts foundation first (owner scoping, 2026-07-08): HSM-26-01 DONE — the presence-class
-steering + rails shapes are written down as 9 JSON-Schema contracts with fixtures, validated against
-the REAL Phase-87/88 hub responses (a route that drifts from its contract fails in CI, not on glass).
-The Swift diorama surfaces (HSM-26-02/03/04) and the couch walk (HSM-26-05) are the device-gated
-stories. Previous: [Phase 25 — Serve the Mesh](./phase-25-serve-the-mesh/current-phase-status.md)
+— **in progress (2/5)**: B4 of the Delivery Belt RFC — the belt, steering, and rails travel to the
+diorama. HSM-26-01 DONE — the presence-class steering + rails shapes are 9 JSON-Schema contracts with
+fixtures, validated against the REAL Phase-87/88 hub responses. HSM-26-02 DONE (sim-proven) — the
+delivery belt renders on the iPad diorama from the `BeltState` contract (`DeskBelt.swift` +
+`missionControlState()` poll; `swift test` 503/0 + sim BUILD SUCCEEDED + screenshot). The steering +
+rails surfaces (HSM-26-03/04) and the couch walk (HSM-26-05) follow; the craft/acceptance proof is
+the device walk. Previous: [Phase 25 — Serve the Mesh](./phase-25-serve-the-mesh/current-phase-status.md)
 — **CLOSED (3/3, 2026-07-07 — scaffolded and shipped the same day)**: the phone is an edge.
 The recorded handoff from desktop
 [phase-85 — The Mesh Edge (CLOSED 5/5)](../holdspeak/phase-85-the-mesh-edge/final-summary.md),

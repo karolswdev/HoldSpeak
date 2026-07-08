@@ -1,12 +1,31 @@
 # HSM-26-03 — Attach, arm, steer, ground on glass
 
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HSM-26-01 (the contracts)
-- **Owner-gated:** device work (the couch walk is the exit; sim is the working proof)
+- **Owner-gated:** the interactive consent surface (hold-to-arm, countdown, send) is device-felt — its real proof is the couch walk (HSM-26-05).
 
 ## Problem
 
 Steering a session must work from the iPad under the ported consent spine.
+
+## Progress
+
+- **Client layer (done, 2026-07-08, `swift test` 510/0):** the consent
+  spine on the wire — `HTTPDesktopClient+Steering.swift`:
+  `coderPeek(key:)` (watch, read-only), `armCoder(key:)` (the grant OR a
+  typed refusal), `disarmCoder(key:)`, `steerCoder(key:text:submit:
+  grounding:)` (delivered OR a first-class refusal), `steeringAudit()`.
+  The refusals are DATA, not thrown: a 409 arm/steer body decodes into
+  the result (`CoderArmResult`, `SteerResult`), so the surface re-offers
+  ARM from the shape alone — the recycled-pane crown case
+  (`revoked: true`) proven over a stubbed network
+  (`SteeringClientTests.swift`, 7/7). Grounding rides the steer body as
+  rails refs.
+- **Surface (staged for the couch, HSM-26-05):** the steering pull-out
+  (the live peek, the hold-to-arm chip → countdown, the voice-first
+  composer). This is INTERACTIVE consent — the gesture, the countdown,
+  and the send are motion-felt, so unlike the read-only belt a static
+  sim shot is not the proof. Built and reviewed live on the cabled iPad.
 
 ## Scope
 

@@ -703,7 +703,9 @@
         "GET"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "ios"
+      ]
     },
     {
       "path": "/api/coders/steering/grants",
@@ -722,6 +724,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -732,6 +735,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -752,6 +756,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -762,6 +767,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -1738,7 +1744,9 @@
         "GET"
       ],
       "module": "web.routes.missioncontrol",
-      "consumers": []
+      "consumers": [
+        "ios"
+      ]
     },
     {
       "path": "/api/missioncontrol/rails/remote-events",
@@ -1785,6 +1793,7 @@
       ],
       "module": "web.routes.missioncontrol",
       "consumers": [
+        "ios",
         "web"
       ]
     },
