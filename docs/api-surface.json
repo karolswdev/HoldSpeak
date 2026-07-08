@@ -698,6 +698,16 @@
       ]
     },
     {
+      "path": "/api/coders/{key}/peek",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coders",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/commands/test",
       "methods": [
         "POST"

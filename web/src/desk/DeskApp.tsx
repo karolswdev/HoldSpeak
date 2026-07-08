@@ -15,6 +15,7 @@ import { RecordOrb } from "./components/RecordOrb";
 import { RecipeRail } from "./components/RecipeRail";
 import { PersonaChat } from "./components/PersonaChat";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
+import { SessionPullout } from "./components/SessionPullout";
 import "./desk.css";
 
 export default function DeskApp() {
@@ -38,6 +39,7 @@ export default function DeskApp() {
       <RecipeRail />
       {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
       <MissionControlConveyor />
+      <SessionPullout />
     </div>
   );
 }

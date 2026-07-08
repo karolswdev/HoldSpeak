@@ -1057,3 +1057,40 @@
   font-family: var(--font-mono); font-size: 11px; line-height: 1.5;
   color: var(--text); white-space: pre-wrap;
 }
+
+/* ── HS-87-01: the session pull-out (attach — the live pane view) ── */
+.desk-next .desk-pullout.is-session { width: min(620px, 92vw); }
+.desk-next .desk-session-glyph { font-size: 16px; }
+.desk-next .desk-session-live {
+  color: var(--accent);
+  font-size: 10px;
+  animation: desk-mc-pulse 1.6s ease-in-out infinite;
+}
+.desk-next .desk-chip.is-stale { opacity: 0.6; }
+.desk-next .desk-session-pane {
+  flex: 1;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+.desk-next .desk-session-question {
+  border-left: 2px solid var(--accent);
+  padding-left: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.desk-next .desk-session-state {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-mono);
+}

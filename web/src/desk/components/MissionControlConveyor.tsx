@@ -23,6 +23,7 @@ import {
   sessionsByStory,
   useMissionControl,
 } from "../missioncontrol";
+import { isCoderFrame, useSteering } from "../steering";
 
 const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
 
@@ -35,18 +36,23 @@ interface PickTarget {
 function SessionPin({ session }: { session: McSession }) {
   return (
     <span
+      role="button"
       className={
         "desk-mc-pin" +
         (session.awaitingResponse ? " awaiting" : "") +
         (session.stale ? " stale" : "")
       }
       title={
-        `${session.key}` +
+        `${session.key} — watch live` +
         (session.awaitingResponse
           ? ` — awaiting a response: ${session.lastAssistantText.slice(0, 200)}`
           : "") +
         (session.stale ? " (stale)" : "")
       }
+      onClick={(e) => {
+        e.stopPropagation(); // the pin attaches; the story span picks
+        useSteering.getState().openSession(session.key);
+      }}
     >
       {session.awaitingResponse ? "🙋" : "🤖"}
       {session.agent}
@@ -312,10 +318,12 @@ export function MissionControlConveyor() {
   useEffect(() => {
     void refresh();
     const timer = setInterval(() => void refresh(), POLL_MS);
-    // A `scope:"belt"` frame on the one bus moves the belt now; the
-    // poll stays as the fallback heartbeat (HS-86-04).
+    // A `scope:"belt"` frame on the one bus moves the belt now; a
+    // `scope:"coder"` frame moves the pins (HS-87-01). The poll stays
+    // as the fallback heartbeat (HS-86-04).
     const onFrame = (e: Event) => {
-      if (isBeltFrame((e as CustomEvent).detail)) void refresh();
+      const frame = (e as CustomEvent).detail;
+      if (isBeltFrame(frame) || isCoderFrame(frame)) void refresh();
     };
     document.addEventListener("hs-broadcast", onFrame);
     return () => {

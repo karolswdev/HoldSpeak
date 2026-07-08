@@ -1,9 +1,11 @@
 """The coder board: which live coding session receives a spoken answer.
 
 Bodies moved verbatim from routes/system.py (HS-79-02, the Phase-63 discipline).
+HS-87-01 adds the attach verb: a read-only peek into a session's tmux pane.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from copy import deepcopy
@@ -305,6 +307,64 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"sessions": items, "count": len(items)})
         except Exception as e:
             return error_500("coders sessions", e, log)
+
+    @router.get("/api/coders/{key}/peek")
+    async def api_coder_peek(
+        key: str, lines: int = 200, last_hash: Optional[str] = None
+    ) -> Any:
+        """Read-only window into a session's tmux pane (HS-87-01).
+
+        Watching is free — no grant, no keystroke, ever. The pane is
+        resolved from the registry record; absences come back as typed
+        peek statuses (`no_pane`, `pane_gone`, `tmux_absent`), and a
+        registry entry past the recent window is marked `stale`, never
+        dropped.
+        """
+        from .... import coder_steering
+        from ....agent_context import (
+            DEFAULT_RECENT_MAX_AGE_SECONDS,
+            list_agent_sessions,
+        )
+
+        agent, _, session_id = key.partition(":")
+        if not agent.strip() or not session_id.strip():
+            return JSONResponse(
+                {"error": "key must be agent:session_id"}, status_code=400
+            )
+        try:
+            session = next(
+                (
+                    s
+                    for s in list_agent_sessions(agent=agent)
+                    if s.session_id == session_id
+                ),
+                None,
+            )
+        except Exception as e:
+            return error_500("coder peek", e, log)
+        if session is None:
+            return JSONResponse(
+                {"status": "unknown_session", "key": key}, status_code=404
+            )
+        age = _session_age_seconds(session.updated_at, datetime.now(timezone.utc))
+        envelope: dict[str, Any] = {
+            "key": key,
+            "agent": session.agent,
+            "stale": bool(
+                age is not None and age > DEFAULT_RECENT_MAX_AGE_SECONDS
+            ),
+            "awaiting_response": session.awaiting_response,
+            "question": session.question,
+            "updated_at": session.updated_at,
+        }
+        target = coder_steering.resolve_pane_target(session)
+        if target is None:
+            envelope["peek"] = {"status": "no_pane"}
+            return JSONResponse(envelope)
+        envelope["peek"] = await asyncio.to_thread(
+            coder_steering.peek_pane, target, lines=lines, last_hash=last_hash
+        )
+        return JSONResponse(envelope)
 
     @router.post("/api/coders/select")
     async def api_companion_select(payload: Optional[dict[str, Any]] = None) -> Any:

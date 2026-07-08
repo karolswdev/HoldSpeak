@@ -1,6 +1,6 @@
 # Phase 87 — The Steering Desk (B2: attach, steer, classify, ground)
 
-**Last updated:** 2026-07-08 (phase scaffolded).
+**Last updated:** 2026-07-08 (HS-87-01 done — attach shipped).
 
 ## Goal
 
@@ -54,7 +54,7 @@ bar: *"so robust, it will literally destroy our brains."*
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-87-01 | Attach: the session pull-out with the live pane view | backlog | [story-01-session-pullout](./story-01-session-pullout.md) | - |
+| HS-87-01 | Attach: the session pull-out with the live pane view | done | [story-01-session-pullout](./story-01-session-pullout.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-87-02 | The arming grant: consent with a countdown | backlog | [story-02-arming-grant](./story-02-arming-grant.md) | - |
 | HS-87-03 | Steer: the voice-first composer, delivered and audited | backlog | [story-03-steer-composer](./story-03-steer-composer.md) | - |
 | HS-87-04 | Ground: desk objects ride into the steer | backlog | [story-04-desk-context](./story-04-desk-context.md) | - |
@@ -63,9 +63,16 @@ bar: *"so robust, it will literally destroy our brains."*
 
 ## Where we are
 
-Scaffolded 2026-07-08, immediately after Phase 86 closed, from the
-owner's steering-bar direction (quoted in the AGENT-BRIEF). Nothing
-implemented. Next: HS-87-01.
+Attach is real (HS-87-01): `coder_steering.peek_pane` reads a pane's
+tail through an injectable runner with the sha256 hash gate;
+`GET /api/coders/{key}/peek` serves it with the honest envelope
+(stale, awaiting, typed absences — `no_pane`, `pane_gone`,
+`tmux_absent` — never a 500); the SessionPullout renders the live
+view (poll only-while-open, 1.5 s, single-flight) and opens from the
+conveyor SessionPin and the coder pull-out's "Watch live"; the hub's
+one registry observer broadcasts `scope:"coder"` frames on
+awaiting-response transitions. Proven live against a real tmux pane
+(evidence). Next: HS-87-02, the arming grant.
 
 ## Active risks
 
@@ -90,6 +97,12 @@ implemented. Next: HS-87-01.
   grant but always audited — the voice-macro consent rule, applied.
 - 2026-07-08 — Grounding reuses the Phase-83 hydration seam (factored,
   not forked) — one hydration truth for ask and steer.
+- 2026-07-08 (HS-87-01) — The awaiting-transition watcher lives
+  hub-side (`web_server._coder_frames_loop`): the ingest-side
+  detection runs in the hook's own process and cannot reach the bus,
+  so the hub stats the registry file's mtime (2 s) and diffs
+  awaiting flags — one observer, first observation a baseline
+  (the HS-86-03 rule), frames on the one bus.
 
 ## Decisions deferred
 

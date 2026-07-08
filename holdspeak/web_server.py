@@ -300,6 +300,7 @@ class MeetingWebServer:
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self._ws = WebSocketManager()
         self._duration_task: Optional[asyncio.Task[None]] = None
+        self._coder_frames_task: Optional[asyncio.Task[None]] = None
 
         self.app = self._create_app()
 
@@ -587,19 +588,22 @@ class MeetingWebServer:
         async def _startup() -> None:
             self._loop = asyncio.get_running_loop()
             self._duration_task = asyncio.create_task(self._duration_loop())
+            self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())
             self._started.set()
             log.debug("Meeting web server startup complete")
 
         @app.on_event("shutdown")
         async def _shutdown() -> None:
-            if self._duration_task is not None:
-                self._duration_task.cancel()
+            for task in (self._duration_task, self._coder_frames_task):
+                if task is None:
+                    continue
+                task.cancel()
                 try:
-                    await self._duration_task
+                    await task
                 except asyncio.CancelledError:
                     pass
                 except Exception as e:
-                    log.debug(f"Duration task error during shutdown: {e}")
+                    log.debug(f"Background task error during shutdown: {e}")
             await self._ws.close_all()
             log.debug("Meeting web server shutdown complete")
 
@@ -650,3 +654,45 @@ class MeetingWebServer:
             if duration != last:
                 await self._ws.broadcast(BroadcastMessage(type="duration", data=duration))
                 last = duration
+
+    async def _coder_frames_loop(self) -> None:
+        """THE registry watcher (HS-87-01): a `scope:"coder"` frame per
+        awaiting-response transition, so closed surfaces stay current
+        without polling. The registry file's mtime gates the read (a
+        stat every 2 s, the JSON only when the hooks actually wrote);
+        the first observation is a baseline, never a broadcast."""
+        from . import agent_context, coder_steering
+
+        last_mtime: Optional[float] = None
+        snapshot: Optional[dict[str, bool]] = None
+        while True:
+            await asyncio.sleep(2.0)
+            try:
+                path = agent_context.AGENT_CONTEXT_FILE
+                mtime = path.stat().st_mtime if path.exists() else None
+                if mtime == last_mtime:
+                    continue
+                last_mtime = mtime
+                sessions = await asyncio.to_thread(agent_context.list_agent_sessions)
+                current = coder_steering.awaiting_snapshot(sessions)
+                if snapshot is not None:
+                    for key in coder_steering.awaiting_transitions(snapshot, current):
+                        await self._ws.broadcast(
+                            BroadcastMessage(
+                                type="intel_status",
+                                data={
+                                    "state": "ready",
+                                    "scope": "coder",
+                                    "capability": {
+                                        "kind": "coder",
+                                        "id": key,
+                                        "name": key.split(":", 1)[0],
+                                    },
+                                },
+                            )
+                        )
+                snapshot = current
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                log.debug(f"coder frames loop error: {e}")
