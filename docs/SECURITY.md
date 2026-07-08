@@ -95,6 +95,17 @@ SQLCipher) becomes warranted and should be its own story.
    every read; disarm is one act. Enforcement lives in one hub-side
    chokepoint, not in any UI. Steers within an armed window are auto-approved
    by the grant and every delivery (and refusal) is audited.
+6. **Rails as material** (`grounding_rails.py`, `rails_observer.py`):
+   grounding a run on an open phase or story reads the exact file your own
+   `dw` command line names, as opaque text; it never re-derives rail state
+   from a markdown body, and nothing leaves the machine. The ambient
+   observer is off by default and read-only: it watches your `dw` event
+   stream and writes one local journal note per batch, summarized by a
+   RuntimeProfile model you chose. It never writes to the rails; a suggested
+   action is the existing story-flip proposal, human-approved, the commit
+   gate keeping the final say. A remote node's rail events reach the journal
+   only as events (no repo file bodies cross the wire), each stamped with
+   its origin node, and a node gone quiet reads stale rather than fabricated.
 
 ---
 

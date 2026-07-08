@@ -753,6 +753,24 @@ class TelegramConfig:
 
 
 @dataclass
+class RailsObserverConfig:
+    """The ambient dw observer (HS-88-03) — OFF BY DEFAULT.
+
+    When `enabled` is False the runtime starts no observer loop and
+    behaves identically to a build without it. When on, a local model
+    (the RuntimeProfile named by `profile_id`, else the hub default)
+    summarizes a bounded `dw events` tail into a journal note. The
+    observer is READ-ONLY: it never writes to the rails; anything it
+    would DO is a proposal through the actuator flow.
+    """
+
+    enabled: bool = False
+    profile_id: str = ""  # the summarizer's RuntimeProfile; "" = hub default
+    poll_seconds: int = 30
+    tail: int = 20  # how many recent rail events to consider per tick
+
+
+@dataclass
 class Config:
     """Main configuration container."""
     config_version: int = CONFIG_VERSION
@@ -767,6 +785,7 @@ class Config:
     mesh: MeshConfig = field(default_factory=MeshConfig)
     cadence: CadenceConfig = field(default_factory=CadenceConfig)
     cadence_telegram: TelegramConfig = field(default_factory=TelegramConfig)
+    rails_observer: RailsObserverConfig = field(default_factory=RailsObserverConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -816,6 +835,9 @@ class Config:
                 cadence=_coerce(CadenceConfig, data.get("cadence", {}) or {}, section="cadence"),
                 cadence_telegram=_coerce(
                     TelegramConfig, data.get("cadence_telegram", {}) or {}, section="cadence_telegram"
+                ),
+                rails_observer=_coerce(
+                    RailsObserverConfig, data.get("rails_observer", {}) or {}, section="rails_observer"
                 ),
             )
         except Exception as exc:

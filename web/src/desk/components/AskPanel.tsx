@@ -14,10 +14,11 @@ import {
   type AskRunResult,
 } from "../ask";
 import {
-  emptyGrounding, groundingIsEmpty, groundingReceiptRows, groundingTokens, hubGrounding,
-  type GroundingSelection,
+  buildGrounding, emptyGrounding, groundingIsEmpty, groundingReceiptRows, groundingTokens,
+  railsTokens, type GroundingSelection, type RailsPick,
 } from "../grounding";
 import { GroundingSection } from "./GroundingSection";
+import { RailsPicker } from "./RailsPicker";
 import { MicButton } from "./MicButton";
 
 export function AskPanel() {
@@ -35,6 +36,7 @@ export function AskPanel() {
   const [error, setError] = useState("");
   const [kept, setKept] = useState(false);
   const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding());
+  const [rails, setRails] = useState<RailsPick[]>([]);
   const ref = useRef<HTMLDivElement | null>(null);
 
   const context = useMemo(() => askContexts(items, selectedIds), [items, selectedIds]);
@@ -49,7 +51,7 @@ export function AskPanel() {
     const p = profiles.find((x) => x.id === profileId);
     return Number(p?.context_limit) > 0 ? Number(p?.context_limit) : 16_384;
   }, [profileId, profiles]);
-  const groundTokens = groundingTokens(grounding);
+  const groundTokens = groundingTokens(grounding) + railsTokens(rails);
   const overBudget = groundTokens > limitTokens;
 
   useEffect(() => {
@@ -90,7 +92,7 @@ export function AskPanel() {
     const r = await runAsk({
       prompt: prompt.trim(), lens, context,
       profileId: profileId || undefined,
-      grounding: hubGrounding(grounding),
+      grounding: buildGrounding(grounding, rails),
     });
     if (!r.ok) {
       setError(r.output);
@@ -214,6 +216,7 @@ export function AskPanel() {
               onChange={setGrounding}
               limitTokens={limitTokens}
             />
+            <RailsPicker picks={rails} onChange={setRails} limitTokens={limitTokens} />
             {error && <p className="desk-run-warning">⚠ {error}</p>}
           </>
         )}

@@ -49,6 +49,70 @@ export function hubGrounding(
   };
 }
 
+/** HS-88-02 — a picked rails object: a phase/story/evidence/roadmap
+ * from the belt, priced by its real fetched file size. */
+export interface RailsPick {
+  repo: string;
+  project: string;
+  kind: string; // phase | story | evidence | roadmap
+  id: string;
+  title: string;
+  chars: number; // real fetched length; 0 until hydrated
+}
+
+/** The rails wire refs (what the hub hydrator resolves). */
+export function railsRefs(
+  picks: RailsPick[],
+): Array<{ repo: string; project: string; kind: string; id: string }> {
+  return picks.map((p) => ({ repo: p.repo, project: p.project, kind: p.kind, id: p.id }));
+}
+
+/** The gauge's rails contribution — real file sizes + the provenance
+ * header's own weight, in the same 4-chars/token estimate. */
+export function railsTokens(picks: RailsPick[]): number {
+  return tokens(picks.reduce((n, p) => n + p.chars + p.title.length + 32, 0));
+}
+
+/** One wire object for a run grounded on desk objects AND rails.
+ * Null only when BOTH are empty. */
+export function buildGrounding(
+  sel: GroundingSelection,
+  rails: RailsPick[],
+): {
+  meeting_ids: string[];
+  artifact_ids: string[];
+  expand: "summary" | "full";
+  rails?: Array<{ repo: string; project: string; kind: string; id: string }>;
+} | null {
+  const base = hubGrounding(sel);
+  if (!base && rails.length === 0) return null;
+  const wire = base || { meeting_ids: [], artifact_ids: [], expand: "summary" as const };
+  return rails.length ? { ...wire, rails: railsRefs(rails) } : wire;
+}
+
+/** Fetch the real hydrated size of picked rail refs (mirror of
+ * fetchGroundingMeeting) so the gauge is honest, never guessed. The
+ * hub reads the dw-named file; we keep only the size. */
+export async function fetchRailsSizes(
+  refs: Array<{ repo: string; project: string; kind: string; id: string }>,
+): Promise<Record<string, number>> {
+  if (refs.length === 0) return {};
+  try {
+    const res = await fetch("/api/missioncontrol/rails/size", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rails: refs }),
+    });
+    if (!res.ok) return {};
+    const body = await res.json();
+    const out: Record<string, number> = {};
+    for (const row of body.sizes || []) out[`${row.kind}:${row.id}`] = row.chars || 0;
+    return out;
+  } catch {
+    return {};
+  }
+}
+
 /** ≈4 chars/token — the same deliberately simple estimator as OnDeviceBudget. */
 const tokens = (chars: number): number => (chars <= 0 ? 0 : Math.max(1, Math.floor(chars / 4)));
 

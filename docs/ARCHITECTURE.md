@@ -322,6 +322,22 @@ test greps the codebase to keep the transport's call sites pinned to that one
 chokepoint. Nothing here leaves the machine; the model is a consent boundary,
 not an egress, and lives in [SECURITY.md](SECURITY.md).
 
+### The rails as material
+
+The delivery rails are also material a run can ground on. An open phase, a
+story, an evidence file, or the roadmap can be picked in the same grounding
+picker as a meeting, and the hub hydrates it through the one grounding seam
+that ask and steer share. The content is a receipt: the `dw` command line
+names the exact file for that object, the hub reads that file as opaque text,
+and rail state is never re-derived from the markdown, so a grounded story is
+always the real thing on disk. Alongside grounding, an ambient observer
+(off by default) tails the rails' own event stream through the same command
+line, summarizes each batch of new activity on a local model, and writes a
+journal note. The observer only reads and journals; anything it would do
+rides the existing story-flip proposal, and a remote machine's events reach
+the journal as events alone, named by their origin node. The whole surface
+reads your own `dw` and runs your own model; nothing new leaves the machine.
+
 ## The desk across surfaces
 
 The desk is one convention rendered three times. Every desk concept

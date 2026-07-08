@@ -579,3 +579,156 @@ class TestEvidenceInPlace:
         for route in app.routes:
             if "evidence" in getattr(route, "path", ""):
                 assert set(route.methods) == {"GET"}
+
+
+class TestRailsSize:
+    """The grounding gauge's honest number (HS-88-02): sizes only, a
+    receipt (the dw-named file), never the content."""
+
+    def _repo_with_story(self, tmp_path: Path):
+        repo = tmp_path / "rails-repo"
+        (repo / ".githooks").mkdir(parents=True)
+        dw = repo / ".githooks" / "dw"
+        dw.write_text("#!/usr/bin/env python3\n")
+        dw.chmod(0o755)
+        story_rel = "pm/roadmap/demo/phase-1/story-01.md"
+        (repo / "pm" / "roadmap" / "demo" / "phase-1").mkdir(parents=True)
+        (repo / story_rel).write_text("z" * 640, encoding="utf-8")
+        map_path = tmp_path / "delivery_workbench.json"
+        map_path.write_text(
+            json.dumps({"projects": {"demo": str(repo)}, "default": str(repo)})
+        )
+        context_doc = {
+            "kind": "delivery-workbench-roadmap-context",
+            "projects": [
+                {
+                    "slug": "demo",
+                    "readme": "pm/roadmap/demo/README.md",
+                    "phases": [
+                        {
+                            "number": 1,
+                            "slug": "demo-phase",
+                            "status_file": "pm/roadmap/demo/phase-1/current-phase-status.md",
+                            "stories": [
+                                {
+                                    "story_id": "DEMO-1-01",
+                                    "title": "First",
+                                    "trace": {"story": story_rel, "evidence": "x"},
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        return map_path, _runner_for({"context": context_doc})
+
+    def test_rails_size_returns_hydrated_char_counts(self, tmp_path):
+        map_path, runner = self._repo_with_story(tmp_path)
+        client = _client(map_path, runner)
+        res = client.post(
+            "/api/missioncontrol/rails/size",
+            json={"rails": [{"repo": "demo", "project": "demo", "kind": "story", "id": "DEMO-1-01"}]},
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["sizes"] == [
+            {"kind": "story", "id": "DEMO-1-01", "title": "DEMO-1-01 First", "chars": 640}
+        ]
+        assert body["unknown"] == []
+
+    def test_rails_size_reports_unknown_refs(self, tmp_path):
+        map_path, runner = self._repo_with_story(tmp_path)
+        client = _client(map_path, runner)
+        res = client.post(
+            "/api/missioncontrol/rails/size",
+            json={"rails": [{"repo": "demo", "project": "demo", "kind": "story", "id": "GHOST"}]},
+        )
+        assert res.json()["unknown"] == ["story:GHOST"]
+
+    def test_rails_size_never_returns_the_content(self, tmp_path):
+        map_path, runner = self._repo_with_story(tmp_path)
+        client = _client(map_path, runner)
+        body = client.post(
+            "/api/missioncontrol/rails/size",
+            json={"rails": [{"repo": "demo", "project": "demo", "kind": "story", "id": "DEMO-1-01"}]},
+        ).json()
+        assert "text" not in body["sizes"][0]
+        assert "zzz" not in json.dumps(body)  # the file body never crosses
+
+
+class TestRailsJournal:
+    """The observer's journal read (HS-88-03) — notes tagged
+    rails-journal, newest first, read-only."""
+
+    def test_journal_lists_tagged_notes(self, tmp_path, monkeypatch):
+        from holdspeak.db.core import Database, reset_database
+        from holdspeak import rails_observer
+
+        reset_database()
+        db = Database(tmp_path / "hs.db")
+        monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
+        batch = rails_observer.summarize_batch(
+            [{"ts": "t1", "event": "story_status", "story": "HS-1", "repo": "code"}],
+            summarize_fn=lambda s, u: "HS-1 shipped.",
+        )
+        rails_observer.record_journal_entry(db, batch, title="Rails journal")
+
+        client = _client(_make_map(tmp_path), _runner_for({}))
+        res = client.get("/api/missioncontrol/rails/journal")
+        assert res.status_code == 200
+        entries = res.json()["entries"]
+        assert len(entries) == 1
+        assert "HS-1 shipped." in entries[0]["body_markdown"]
+        reset_database()
+
+    def test_journal_is_get_only(self, tmp_path):
+        app = FastAPI()
+        app.include_router(
+            build_missioncontrol_router(
+                WebContext(get_state=lambda: {}),
+                runner=_runner_for({}),
+                map_path=_make_map(tmp_path),
+            )
+        )
+        for route in app.routes:
+            if "rails/journal" in getattr(route, "path", ""):
+                assert set(route.methods) == {"GET"}
+
+
+class TestRailsRemoteEvents:
+    """The cross-machine reach (HS-88-04): a remote node's envelope
+    through the real route into the observer's buffer, events-only."""
+
+    def test_remote_envelope_is_accepted_and_buffered(self, tmp_path):
+        from holdspeak import rails_observer
+
+        rails_observer.clear_remote_buffer()
+        client = _client(_make_map(tmp_path), _runner_for({}))
+        res = client.post(
+            "/api/missioncontrol/rails/remote-events",
+            json={"node": "beta", "ts": "t1", "events": [{"ts": "t1", "event": "story_status", "story": "HS-1"}]},
+        )
+        assert res.status_code == 200
+        assert res.json() == {"accepted": True, "node": "beta", "events": 1}
+        drained = rails_observer.drain_remote_events()
+        assert drained[0]["origin_node"] == "beta"
+        rails_observer.clear_remote_buffer()
+
+    def test_remote_envelope_with_a_file_body_is_refused(self, tmp_path):
+        from holdspeak import rails_observer
+
+        rails_observer.clear_remote_buffer()
+        client = _client(_make_map(tmp_path), _runner_for({}))
+        res = client.post(
+            "/api/missioncontrol/rails/remote-events",
+            json={"node": "beta", "events": [{"event": "x", "body_markdown": "a story file"}]},
+        )
+        assert res.status_code == 400
+        assert "events only" in res.json()["reason"]
+        assert rails_observer.drain_remote_events() == []  # nothing buffered
+
+    def test_remote_envelope_without_a_node_is_refused(self, tmp_path):
+        client = _client(_make_map(tmp_path), _runner_for({}))
+        res = client.post("/api/missioncontrol/rails/remote-events", json={"events": []})
+        assert res.status_code == 400

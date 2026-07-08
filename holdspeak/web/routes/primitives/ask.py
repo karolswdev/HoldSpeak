@@ -245,15 +245,17 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                     )
                 raw_m = grounding.get("meeting_ids")
                 raw_a = grounding.get("artifact_ids")
+                raw_r = grounding.get("rails")
                 meeting_ids = [str(x).strip() for x in raw_m if str(x).strip()] if isinstance(raw_m, list) else []
                 artifact_ids = [str(x).strip() for x in raw_a if str(x).strip()] if isinstance(raw_a, list) else []
+                rails_refs = [x for x in raw_r if isinstance(x, dict)] if isinstance(raw_r, list) else []
                 expand = str(grounding.get("expand") or "summary").strip() or "summary"
                 if expand not in _GROUNDING_EXPANDS:
                     return JSONResponse(
                         {"error": f"expand {expand!r} is not one of {list(_GROUNDING_EXPANDS)}"},
                         status_code=400,
                     )
-                if len(meeting_ids) + len(artifact_ids) > _GROUNDING_MAX_REFS:
+                if len(meeting_ids) + len(artifact_ids) + len(rails_refs) > _GROUNDING_MAX_REFS:
                     return JSONResponse(
                         {"error": f"grounding is capped at {_GROUNDING_MAX_REFS} refs"},
                         status_code=400,
@@ -261,6 +263,20 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                 blocks, g_ids, g_titles, unknown = _hydrate_grounding(
                     db, meeting_ids, artifact_ids, expand
                 )
+                # HS-88-01: rails objects (phase/story/evidence/roadmap) ground
+                # through the SAME block type, CLI-mediated per repo — a receipt,
+                # never a markdown scrape. They fold in after the desk objects.
+                if rails_refs:
+                    from ....grounding_rails import hydrate_rails_refs
+
+                    r_blocks, r_unknown = hydrate_rails_refs(rails_refs)
+                    unknown = list(unknown) + r_unknown
+                    for b in r_blocks:
+                        label = b.kind.replace("rails:", "RAILS ").upper()
+                        header = f"[{label}: {b.title} — {b.subtitle}]"
+                        blocks.append(f"{header}\n{b.text}" if b.text else header)
+                        g_ids.append(b.ref)
+                        g_titles.append(b.title)
                 if unknown:
                     return JSONResponse(
                         {"error": "grounding ids not on this hub", "unknown_ids": unknown},
@@ -275,6 +291,8 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                     "expand": expand,
                     "titles": g_titles,
                 }
+                if rails_refs:
+                    grounding_echo["rails"] = rails_refs
 
             user_prompt = prompt + ("\n\nMaterial:\n" + material if material else "")
             if envelope:

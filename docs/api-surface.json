@@ -1733,6 +1733,32 @@
       ]
     },
     {
+      "path": "/api/missioncontrol/rails/journal",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": []
+    },
+    {
+      "path": "/api/missioncontrol/rails/remote-events",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": []
+    },
+    {
+      "path": "/api/missioncontrol/rails/size",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/missioncontrol/receipts",
       "methods": [
         "GET"

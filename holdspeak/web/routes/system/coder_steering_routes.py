@@ -208,6 +208,7 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
             )
         raw_m = grounding.get("meeting_ids")
         raw_a = grounding.get("artifact_ids")
+        raw_r = grounding.get("rails")
         meeting_ids = (
             [str(x).strip() for x in raw_m if str(x).strip()]
             if isinstance(raw_m, list)
@@ -218,13 +219,14 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
             if isinstance(raw_a, list)
             else []
         )
+        rails_refs = [x for x in raw_r if isinstance(x, dict)] if isinstance(raw_r, list) else []
         expand = str(grounding.get("expand") or "summary").strip() or "summary"
         if expand not in GROUNDING_EXPANDS:
             return JSONResponse(
                 {"error": f"expand {expand!r} is not one of {list(GROUNDING_EXPANDS)}"},
                 status_code=400,
             )
-        if len(meeting_ids) + len(artifact_ids) > GROUNDING_MAX_REFS:
+        if len(meeting_ids) + len(artifact_ids) + len(rails_refs) > GROUNDING_MAX_REFS:
             return JSONResponse(
                 {"error": f"grounding is capped at {GROUNDING_MAX_REFS} refs"},
                 status_code=400,
@@ -232,6 +234,14 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         blocks, unknown = hydrate_refs(
             get_database(), meeting_ids, artifact_ids, expand
         )
+        # HS-88-01: rails objects ground through the same block type,
+        # CLI-mediated per repo — a receipt, folded in after desk objects.
+        if rails_refs:
+            from ....grounding_rails import hydrate_rails_refs
+
+            r_blocks, r_unknown = hydrate_rails_refs(rails_refs)
+            blocks = list(blocks) + r_blocks
+            unknown = list(unknown) + r_unknown
         if unknown:
             return JSONResponse(
                 {"error": "grounding ids not on this hub", "unknown_ids": unknown},

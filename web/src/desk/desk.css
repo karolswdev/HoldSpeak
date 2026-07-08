@@ -997,6 +997,13 @@
 .desk-next .desk-ground-check { color: #5B8DEF; font-size: 12px; }
 .desk-next .desk-ground-name { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .desk-next .desk-ground-day, .desk-next .desk-ground-loading { color: var(--text-muted); font-size: 11px; }
+/* HS-88-02: the rail object's kind, a quiet monospace tag before its title. */
+.desk-next .desk-rails-kind {
+  font-family: var(--font-mono); font-size: 9px; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-faint);
+  border: 1px solid var(--surface-3); border-radius: var(--radius-xs);
+  padding: 1px 4px; flex-shrink: 0;
+}
 .desk-next .desk-ground-expand {
   display: flex; flex-wrap: wrap; gap: 6px; padding: 0 10px 9px 30px;
 }
