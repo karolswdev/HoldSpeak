@@ -100,3 +100,27 @@ def test_the_key_chokepoint_checks_the_grant_before_the_transport() -> None:
     assert deliver_src.index("require_grant") < deliver_src.index(
         "send_keys_to_pane"
     )
+
+
+# The factory census (HS-90-01): the DESTRUCTIVE / creating tmux verbs live
+# in exactly one module. `kill-pane`/`kill-session` end processes; `new-session`
+# creates them — both consequential, both confined to `coder_factory.py`.
+FACTORY_VERBS = ("kill-pane", "kill-session", "new-session", "rename-session")
+FACTORY_ALLOWED = {"holdspeak/coder_factory.py"}
+
+
+def test_factory_verb_call_sites_are_pinned() -> None:
+    for verb in FACTORY_VERBS:
+        actual = _mentioning_files(f'"{verb}"')
+        unexpected = actual - FACTORY_ALLOWED
+        assert not unexpected, (
+            f"tmux '{verb}' used outside the factory: {sorted(unexpected)} — "
+            "route lifecycle acts through coder_factory or record a decision."
+        )
+
+
+def test_the_kill_gate_checks_the_grant_before_tmux() -> None:
+    # kill is the ultimate manipulation: require_grant before kill-pane.
+    body = (REPO / "holdspeak" / "coder_factory.py").read_text(encoding="utf-8")
+    kill_src = body.split("def kill(", 1)[1]
+    assert kill_src.index("require_grant") < kill_src.index("kill-pane")
