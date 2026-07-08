@@ -7,7 +7,59 @@ from types import SimpleNamespace
 import pytest
 
 import holdspeak.tmux_transport as tmux_transport
-from holdspeak.tmux_transport import TmuxTransportError, send_text_to_pane
+from holdspeak.tmux_transport import (
+    TmuxTransportError,
+    send_keys_to_pane,
+    send_text_to_pane,
+)
+
+
+def _capture(monkeypatch: pytest.MonkeyPatch) -> list[list[str]]:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(tmux_transport.shutil, "which", lambda _name: "/usr/bin/tmux")
+    monkeypatch.setattr(
+        tmux_transport.subprocess,
+        "run",
+        lambda cmd, **_kwargs: calls.append(list(cmd))
+        or SimpleNamespace(returncode=0, stdout="", stderr=""),
+    )
+    return calls
+
+
+def test_send_keys_named_key_is_a_bare_argument(monkeypatch: pytest.MonkeyPatch) -> None:
+    # C-c interrupts: a named key, NOT -l (that would type the letters).
+    calls = _capture(monkeypatch)
+    delivery = send_keys_to_pane(pane="%7", keys=[("named", "C-c")])
+    assert delivery.pane == "%7"
+    assert calls == [["tmux", "send-keys", "-t", "%7", "C-c"]]
+
+
+def test_send_keys_renders_a_tui_drive_sequence(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _capture(monkeypatch)
+    send_keys_to_pane(pane="%7", keys=[("named", "Down"), ("named", "Down"), ("named", "Enter")])
+    assert calls == [
+        ["tmux", "send-keys", "-t", "%7", "Down"],
+        ["tmux", "send-keys", "-t", "%7", "Down"],
+        ["tmux", "send-keys", "-t", "%7", "Enter"],
+    ]
+
+
+def test_send_keys_literal_run_uses_dash_l(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _capture(monkeypatch)
+    send_keys_to_pane(pane="%7", keys=[("literal", "/search"), ("named", "Enter")])
+    assert calls == [
+        ["tmux", "send-keys", "-t", "%7", "-l", "/search"],
+        ["tmux", "send-keys", "-t", "%7", "Enter"],
+    ]
+
+
+def test_send_keys_requires_tmux_and_a_sequence(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(tmux_transport.shutil, "which", lambda _name: "/usr/bin/tmux")
+    with pytest.raises(TmuxTransportError, match="key sequence is required"):
+        send_keys_to_pane(pane="%7", keys=[])
+    monkeypatch.setattr(tmux_transport.shutil, "which", lambda _name: None)
+    with pytest.raises(TmuxTransportError, match="tmux executable"):
+        send_keys_to_pane(pane="%7", keys=[("named", "C-c")])
 
 
 def test_send_text_to_pane_sends_literal_text_then_enter(monkeypatch: pytest.MonkeyPatch) -> None:

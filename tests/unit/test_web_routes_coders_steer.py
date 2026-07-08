@@ -371,3 +371,127 @@ def test_keep_as_note_unknown_session_is_404(env) -> None:
     _register(env.monkeypatch)
     res = env.client.post("/api/coders/claude:nope/keep-note", json={})
     assert res.status_code == 404
+
+
+# --- key control route (HS-89-01) ------------------------------------------
+
+
+def _capture_keys(env):
+    keyed: list[dict] = []
+    env.monkeypatch.setattr(
+        tmux_transport,
+        "send_keys_to_pane",
+        lambda *, pane, keys, timeout_s=2.0: keyed.append({"pane": pane, "keys": keys}),
+    )
+    return keyed
+
+
+def test_unarmed_keys_is_a_typed_409_and_audited(env) -> None:
+    _register(env.monkeypatch, _session())
+    keyed = _capture_keys(env)
+    res = env.client.post("/api/coders/claude:abc/keys", json={"keys": ["C-c"]})
+    assert res.status_code == 409
+    assert res.json()["status"] == "unarmed"
+    assert keyed == []
+    trail = env.db.steering.list()
+    assert trail[0].outcome == "unarmed"
+
+
+def test_armed_keys_interrupt_reaches_the_verified_pane(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    keyed = _capture_keys(env)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post("/api/coders/claude:abc/keys", json={"keys": ["C-c"]})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["status"] == "delivered" and body["pane_id"] == "%3"
+    assert keyed == [{"pane": "%3", "keys": [("named", "C-c")]}]
+    trail = env.db.steering.list()
+    assert trail[0].outcome == "delivered" and trail[0].text_head == "C-c"
+
+
+def test_unknown_key_is_refused_by_name_and_types_nothing(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    keyed = _capture_keys(env)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post("/api/coders/claude:abc/keys", json={"keys": ["sudo reboot"]})
+    assert res.status_code == 409
+    assert res.json()["status"] == "unknown_key"
+    assert res.json()["detail"] == "sudo reboot"
+    assert keyed == []
+
+
+def test_recycled_pane_keys_refuse_disarm_and_frame(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    keyed = _capture_keys(env)
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    env.frames.clear()
+    _pin_identity(env.monkeypatch, "%99")  # the pane was recycled
+    res = env.client.post("/api/coders/claude:abc/keys", json={"keys": ["C-c"]})
+    assert res.status_code == 409
+    assert res.json()["status"] == "pane_mismatch"
+    assert res.json()["revoked"] is True
+    assert keyed == []
+    assert coder_steering.active_grants() == {}
+    assert len(env.frames) == 1  # the disarm is visible everywhere
+
+
+# --- attach to any pane: the pane:%N path (HS-89-02) ------------------------
+
+
+def test_panes_discovery_lists_every_pane(env) -> None:
+    env.monkeypatch.setattr(
+        coder_steering,
+        "list_panes",
+        lambda: {"status": "ok", "panes": [
+            {"pane_id": "%7", "session": "hand", "window": "0",
+             "command": "bash", "title": "", "active": True}]},
+    )
+    res = env.client.get("/api/coders/steering/panes")
+    assert res.status_code == 200
+    assert res.json()["panes"][0]["pane_id"] == "%7"
+
+
+def test_peek_any_pane_is_free_no_registry(env) -> None:
+    # A hand-started pane (never registered) is watchable with NO grant,
+    # resolved directly from its pane:%N key.
+    env.monkeypatch.setattr(
+        coder_steering, "peek_pane",
+        lambda target, lines=200, last_hash=None: {"status": "live", "hash": "h", "lines": ["$ ok"]},
+    )
+    res = env.client.get("/api/coders/pane:%7/peek")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["agent"] == "pane" and body["peek"]["status"] == "live"
+    assert body["grant"]["armed"] is False  # watching is free
+
+
+def test_arm_and_key_control_any_pane_under_a_grant(env) -> None:
+    _pin_identity(env.monkeypatch, "%7")  # the raw pane resolves to itself
+    keyed = _capture_keys(env)
+    arm = env.client.post("/api/coders/pane:%7/arm", json={})
+    assert arm.status_code == 200 and arm.json()["status"] == "armed"
+    res = env.client.post("/api/coders/pane:%7/keys", json={"keys": ["C-c"]})
+    assert res.status_code == 200
+    assert res.json()["status"] == "delivered" and res.json()["pane_id"] == "%7"
+    assert keyed == [{"pane": "%7", "keys": [("named", "C-c")]}]
+    trail = env.db.steering.list()
+    assert trail[0].session_key == "pane:%7" and trail[0].text_head == "C-c"
+
+
+def test_a_bad_pane_key_is_a_400(env) -> None:
+    res = env.client.post("/api/coders/pane:/arm", json={})
+    assert res.status_code == 400
+
+
+def test_registry_path_still_works_unchanged(env) -> None:
+    # HS-89-02 must not regress Phase 87: an agent:session_id key steers
+    # exactly as before.
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post("/api/coders/claude:abc/steer", json={"text": "hi"})
+    assert res.status_code == 200 and res.json()["pane_id"] == "%3"

@@ -214,6 +214,53 @@ def resolve_pane_identity(
     return {"status": "ok", "pane_id": pane_id}
 
 
+_PANE_FIELDS = (
+    "#{pane_id}\t#{session_name}\t#{window_index}\t"
+    "#{pane_current_command}\t#{pane_title}\t#{pane_active}"
+)
+
+
+def list_panes(*, runner: Optional[Runner] = None) -> dict[str, Any]:
+    """Every tmux pane on the machine (HS-89-02) — attach reaches beyond the
+    hook registry, so a pane started BY HAND is first-class.
+
+    Returns ``{"status": "ok", "panes": [...]}`` (each pane: ``pane_id``,
+    ``session``, ``window``, ``command``, ``title``, ``active``) or a typed
+    absence (``tmux_absent`` / ``error``). No tmux server (no panes) is an
+    honest EMPTY list, never an error — the desk shows "nothing to attach".
+    """
+    if runner is None and shutil.which("tmux") is None:
+        return {"status": "tmux_absent", "panes": []}
+    run = runner or _default_runner
+    try:
+        completed = run(["tmux", "list-panes", "-a", "-F", _PANE_FIELDS])
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {"status": "error", "detail": str(exc), "panes": []}
+    if completed.returncode != 0:
+        # "no server running" / "no current session" is not a failure —
+        # there simply are no panes to attach to.
+        return {"status": "ok", "panes": []}
+    panes: list[dict[str, Any]] = []
+    for line in (completed.stdout or "").splitlines():
+        if not line.strip():
+            continue
+        parts = line.split("\t")
+        if len(parts) < 6:
+            continue
+        pane_id, session, window, command, title, active = parts[:6]
+        panes.append(
+            {
+                "pane_id": pane_id,
+                "session": session,
+                "window": window,
+                "command": command,
+                "title": title,
+                "active": active == "1",
+            }
+        )
+    return {"status": "ok", "panes": panes}
+
+
 def clamp_ttl(ttl_seconds: Any) -> int:
     try:
         ttl = int(ttl_seconds)
@@ -428,6 +475,138 @@ def deliver(
     )
 
 
+# --- full key control (HS-89-01) -------------------------------------------
+#
+# The steer verb types literal text; key control sends real keys — C-c to
+# interrupt a runaway, arrows/Escape/Tab to drive a TUI. Named keys are held
+# to an allow-list (injection discipline: an arbitrary string never reaches
+# `tmux send-keys` as a key name); a literal run is passed through verbatim.
+
+# Special (non-modifier) named keys tmux understands.
+_SPECIAL_KEYS = frozenset(
+    {
+        "Enter", "Escape", "Tab", "BTab", "Space", "BSpace",
+        "Up", "Down", "Left", "Right",
+        "Home", "End", "PageUp", "PageDown", "IC", "DC",
+        "F1", "F2", "F3", "F4", "F5", "F6",
+        "F7", "F8", "F9", "F10", "F11", "F12",
+    }
+)
+# Modifier combos of a single alnum key: C-c, M-x, C-M-x, C-\ (a real tmux
+# key). No spaces, no arbitrary strings — the allow-list IS the safety.
+_MODIFIER_KEY = re.compile(r"^(C|M|S)(-(C|M|S))*-[A-Za-z0-9\\]$")
+
+
+def is_named_key(name: str) -> bool:
+    """True when ``name`` is a tmux key we permit (a special key or a
+    validated modifier combo). Everything else is refused by name."""
+    text = str(name or "")
+    return text in _SPECIAL_KEYS or bool(_MODIFIER_KEY.match(text))
+
+
+def normalize_keys(raw: Any) -> tuple[list[tuple[str, str]], Optional[str]]:
+    """Normalize a wire key sequence into ``[(kind, value)]``.
+
+    Each wire item is a NAMED key (a bare string like ``"C-c"``, or
+    ``{"key": "C-c"}`` / ``{"named": "C-c"}``) or a LITERAL run
+    (``{"literal": "text"}`` / ``{"text": "text"}``). Returns the normalized
+    list and an error string (the offending key) when a named key is not on
+    the allow-list — so the caller refuses by name, never sends it.
+    """
+    out: list[tuple[str, str]] = []
+    for item in raw or []:
+        if isinstance(item, str):
+            if not is_named_key(item):
+                return [], item
+            out.append(("named", item))
+        elif isinstance(item, dict):
+            if "literal" in item or "text" in item:
+                out.append(("literal", str(item.get("literal", item.get("text", "")))))
+            else:
+                name = str(item.get("key", item.get("named", "")))
+                if not is_named_key(name):
+                    return [], name
+                out.append(("named", name))
+        else:
+            return [], repr(item)
+    return out, None
+
+
+def render_keys(keys: list[tuple[str, str]]) -> str:
+    """A readable rendering of a key sequence for the audit head, so the
+    trail reads like what a human did: ``C-c``, ``Down Down Enter``,
+    ``"ship it"``."""
+    parts: list[str] = []
+    for kind, value in keys:
+        parts.append(value if kind == "named" else f'"{value}"')
+    return " ".join(parts)
+
+
+def deliver_keys(
+    key: str,
+    keys: Any,
+    *,
+    current_target: Optional[str],
+    agent: str = "",
+    runner: Optional[Runner] = None,
+    clock: Clock = time.monotonic,
+    transport: Optional[Callable[..., Any]] = None,
+    audit: Optional[Callable[..., int]] = None,
+) -> dict[str, Any]:
+    """Deliver a key sequence into an armed session's verified pane — the
+    control chokepoint, the SAME grant → verify ``%N`` → send → audit shape
+    as :func:`deliver`, sending keys instead of text.
+
+    Statuses: ``delivered``, ``empty_keys``, ``unknown_key`` (with the
+    offending key in ``detail``), the `require_grant` refusals verbatim, or
+    ``transport_error``. Every outcome is audited with the rendered sequence
+    as its head; ``audit_id`` rides the result.
+    """
+    record = audit or _default_audit
+    normalized, bad = normalize_keys(keys)
+    head = render_keys(normalized)
+
+    def _audited(result: dict[str, Any], *, pane_id: Optional[str]) -> dict[str, Any]:
+        try:
+            result["audit_id"] = record(
+                session_key=key,
+                agent=agent,
+                pane_id=pane_id,
+                text=head or (f"<unknown_key: {bad}>" if bad else ""),
+                grounding=[],
+                submit=False,
+                outcome=result["status"],
+                detail=result.get("detail"),
+            )
+        except Exception:
+            result["audit_id"] = None
+        return result
+
+    if bad is not None:
+        return _audited({"status": "unknown_key", "detail": bad}, pane_id=None)
+    if not normalized:
+        return _audited({"status": "empty_keys"}, pane_id=None)
+    check = require_grant(key, current_target, runner=runner, clock=clock)
+    if check["status"] != "ok":
+        return _audited(dict(check), pane_id=None)
+    pane_id = check["pane_id"]
+    send = transport
+    if send is None:
+        from .tmux_transport import send_keys_to_pane
+
+        send = send_keys_to_pane
+    try:
+        send(pane=pane_id, keys=normalized)
+    except Exception as exc:
+        return _audited(
+            {"status": "transport_error", "detail": str(exc)}, pane_id=pane_id
+        )
+    return _audited(
+        {"status": "delivered", "pane_id": pane_id, "keys": head},
+        pane_id=pane_id,
+    )
+
+
 __all__ = [
     "ARM_DEFAULT_TTL_SECONDS",
     "ARM_MAX_TTL_SECONDS",
@@ -446,7 +625,12 @@ __all__ = [
     "clear_grants",
     "content_hash",
     "deliver",
+    "deliver_keys",
     "disarm",
+    "is_named_key",
+    "list_panes",
+    "normalize_keys",
+    "render_keys",
     "peek_pane",
     "require_grant",
     "resolve_pane_identity",

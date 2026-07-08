@@ -27,8 +27,36 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     def _registry_session(key: str):
-        """Resolve `agent:session_id` against the registry; a JSONResponse
-        when the key is malformed or the session is gone."""
+        """Resolve a steering key to a session-like target.
+
+        Two key shapes (HS-89-02): a `pane:%N` key resolves DIRECTLY to
+        that raw tmux pane (attach to ANY pane, beyond the hook registry —
+        a hand-started pane is first-class); every other key is an
+        `agent:session_id` resolved against the registry. A JSONResponse
+        when the key is malformed or the session is gone.
+        """
+        if key.startswith("pane:"):
+            pane_id = key[len("pane:"):].strip()
+            if not pane_id:
+                return JSONResponse(
+                    {"error": "key must be pane:%N"}, status_code=400
+                )
+            # A synthetic session over the raw pane — `resolve_pane_target`
+            # reads `tmux_pane`, so the whole spine (arm pins %N, steer/keys
+            # re-verify it) works unchanged. Fresh `updated_at`: a raw pane
+            # is never "stale" the way a registry record can be.
+            from types import SimpleNamespace
+
+            return SimpleNamespace(
+                agent="pane",
+                session_id=pane_id,
+                awaiting_response=False,
+                question=None,
+                updated_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                tmux_pane=pane_id,
+                last_assistant_text=None,
+            )
+
         from ....agent_context import list_agent_sessions
 
         agent, _, session_id = key.partition(":")
@@ -180,6 +208,21 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         _sweep_and_frame()
         return JSONResponse({"grants": coder_steering.active_grants()})
 
+    @router.get("/api/coders/steering/panes")
+    async def api_coder_panes() -> Any:
+        """Every tmux pane on the machine (HS-89-02) — the discovery behind
+        attach-to-any-pane. Read-only (no grant): the desk lists panes with
+        their session/window/command/title so a human can watch any of them
+        free, then arm the one they mean by its `pane:%N` key. No tmux
+        server is an honest empty list."""
+        from .... import coder_steering
+
+        try:
+            result = await asyncio.to_thread(coder_steering.list_panes)
+            return JSONResponse(result)
+        except Exception as e:
+            return error_500("steering panes", e, log)
+
     def _compose_from_body(body: dict[str, Any]):
         """Message + optional grounding → the composed steer (HS-87-04).
 
@@ -310,6 +353,44 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
             agent=session.agent,
             submit=submit,
             grounding_refs=composed["refs"],
+        )
+        if result.get("revoked"):
+            _coder_frame(ctx, key)  # the disarm is visible everywhere, now
+        if result["status"] == "delivered":
+            return JSONResponse(result)
+        return JSONResponse(result, status_code=409)
+
+    @router.post("/api/coders/{key}/keys")
+    async def api_coder_keys(
+        key: str, payload: Optional[dict[str, Any]] = None
+    ) -> Any:
+        """Send a KEY sequence through THE chokepoint (HS-89-01).
+
+        Full key control: `C-c` to interrupt a runaway, arrows/`Escape`/
+        `Tab` to drive a TUI — not just literal text. The body is
+        `{"keys": [...]}` where each item is a named key (a string like
+        `"C-c"`, or `{"key": "C-c"}`) or a literal run (`{"literal": "…"}`).
+        Named keys are held to an allow-list — an unknown key is refused by
+        name (409 `unknown_key`), never sent. Unarmed is a typed 409 (the
+        desk shows ARM); a revoking refusal broadcasts its frame. Delivered
+        or refused, every key sequence is audited.
+        """
+        from .... import coder_steering
+
+        try:
+            session = _registry_session(key)
+        except Exception as e:
+            return error_500("coder keys", e, log)
+        if isinstance(session, JSONResponse):
+            return session
+        body = payload if isinstance(payload, dict) else {}
+        target = coder_steering.resolve_pane_target(session)
+        result = await asyncio.to_thread(
+            coder_steering.deliver_keys,
+            key,
+            body.get("keys"),
+            current_target=target,
+            agent=session.agent,
         )
         if result.get("revoked"):
             _coder_frame(ctx, key)  # the disarm is visible everywhere, now
