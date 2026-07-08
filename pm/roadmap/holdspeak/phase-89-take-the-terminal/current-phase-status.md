@@ -55,7 +55,7 @@ manipulation IN this framework."*
 |---|---|---|---|---|
 | HS-89-01 | Full key control — the send-keys verb | **done** (2026-07-08, live) | [story-01-key-control](./story-01-key-control.md) | [evidence-01](./evidence-story-01.md) |
 | HS-89-02 | Attach to any pane — beyond the registry | **done** (2026-07-08, live) | [story-02-any-pane](./story-02-any-pane.md) | [evidence-02](./evidence-story-02.md) |
-| HS-89-03 | Cross-machine steering — over the relay | backlog | [story-03-cross-machine-steer](./story-03-cross-machine-steer.md) | - |
+| HS-89-03 | Cross-machine steering — over the relay | **done** (2026-07-08, two-process live) | [story-03-cross-machine-steer](./story-03-cross-machine-steer.md) | [evidence-03](./evidence-story-03.md) |
 | HS-89-04 | The robustness walk, the docs, the close | backlog | [story-04-walk-docs](./story-04-walk-docs.md) | - |
 
 ## Where we are
@@ -87,7 +87,22 @@ peek free, arm pins `%N`, steer/keys re-verify — works on ANY pane, not
 just hook-registered ones. The registry path is untouched (regression
 pinned). Proven live: a HAND-started pane (confirmed not an agent
 session) was discovered, peeked free, armed, steered, and `C-c`'d — the
-text landed. Suite 3488/0. Next: HS-89-03 (cross-machine steering).
+text landed. Suite 3488/0.
+
+**HS-89-03 done (2026-07-08, two-process live) — local-only is gone; all
+three limits are down.** `coder_steering_relay.relay` forwards a peek/
+arm/steer/keys to a configured node's OWN steering routes (percent-
+encoded key + bearer token); the node executes against its own tmux. The
+security model refined from the scaffold: **the machine that types owns
+the consent AND the audit** — the far node checks its own grant and
+writes its own row; the hub is a relay, and stamps `node` so the caller
+knows where it landed. Honest liveness: an unreachable node refuses
+`node_offline` BY NAME, an unconfigured one `unknown_node`. Proven
+TWO-PROCESS: the hub (never touching tmux) relayed arm+`C-c`+steer to a
+SEPARATE node process — the runaway stopped, `REMOTE_STEER_OK` landed in
+the node's pane, the grant lived in the node process; killing the node
+refused by name in 0.00s. Suite 3499/0. Next: HS-89-04 (the robustness
+walk + docs + close).
 
 ## Active risks
 
@@ -111,6 +126,13 @@ text landed. Suite 3488/0. Next: HS-89-03 (cross-machine steering).
 - 2026-07-08 — Any-pane attach keys the grant store by the pane `%N`
   itself (a `pane:%N` pseudo-key), so a hand-started pane needs no
   registry entry; peek by pane is free, steer/keys need the grant.
+- 2026-07-08 (HS-89-03) — Cross-machine: **the machine that types owns
+  the consent AND the audit.** The far node checks its own grant and
+  writes its own audit row; the hub is a relay (a push to the node's own
+  steering routes), never the authority over another machine's terminal.
+  This SUPERSEDES the scaffold's "grant + audit stay on the hub" — the
+  node-owns-consent model is safer and shipped. Nodes are explicit
+  config (`HOLDSPEAK_STEER_NODES`), never discovery.
 
 ## Decisions deferred
 

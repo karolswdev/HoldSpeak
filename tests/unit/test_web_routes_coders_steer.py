@@ -495,3 +495,50 @@ def test_registry_path_still_works_unchanged(env) -> None:
     env.client.post("/api/coders/claude:abc/arm", json={})
     res = env.client.post("/api/coders/claude:abc/steer", json={"text": "hi"})
     assert res.status_code == 200 and res.json()["pane_id"] == "%3"
+
+
+# --- cross-machine relay routes (HS-89-03) ---------------------------------
+
+
+def _capture_relay(env):
+    calls: list[dict] = []
+
+    def fake_relay(node, verb, key, *, method="POST", body=None):
+        calls.append({"node": node, "verb": verb, "key": key, "method": method, "body": body})
+        # canned "delivered on the far node"
+        return {"status": "delivered", "pane_id": "%5", "node": node}
+
+    from holdspeak import coder_steering_relay
+    env.monkeypatch.setattr(coder_steering_relay, "relay", fake_relay)
+    env.monkeypatch.setattr(coder_steering_relay, "relay_http_code", lambda r: 200)
+    return calls
+
+
+def test_relay_keys_forwards_node_key_and_sequence(env) -> None:
+    calls = _capture_relay(env)
+    res = env.client.post("/api/coders/relay/beta/keys", json={"key": "pane:%5", "keys": ["C-c"]})
+    assert res.status_code == 200
+    assert res.json()["node"] == "beta"
+    assert calls == [{"node": "beta", "verb": "keys", "key": "pane:%5",
+                      "method": "POST", "body": {"keys": ["C-c"]}}]
+
+
+def test_relay_steer_drops_key_from_the_forwarded_body(env) -> None:
+    calls = _capture_relay(env)
+    env.client.post("/api/coders/relay/beta/steer",
+                    json={"key": "claude:x", "text": "ship it", "submit": False})
+    assert calls[0]["verb"] == "steer" and calls[0]["key"] == "claude:x"
+    assert calls[0]["body"] == {"text": "ship it", "submit": False}  # no key in the body
+
+
+def test_relay_peek_is_a_get_with_the_key(env) -> None:
+    calls = _capture_relay(env)
+    env.client.get("/api/coders/relay/beta/peek", params={"key": "pane:%5", "lines": 50})
+    assert calls[0]["method"] == "GET" and calls[0]["key"] == "pane:%5"
+    assert calls[0]["verb"].startswith("peek?lines=50")
+
+
+def test_relay_requires_a_key(env) -> None:
+    _capture_relay(env)
+    res = env.client.post("/api/coders/relay/beta/keys", json={"keys": ["C-c"]})
+    assert res.status_code == 400
