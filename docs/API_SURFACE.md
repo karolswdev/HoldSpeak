@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 259 (plus static mounts). iOS-consumed: 57. Web-consumed: 186.
+Routes: 259 (plus static mounts). iOS-consumed: 64. Web-consumed: 186.
 
 ## device_audio_ws
 
@@ -293,12 +293,12 @@ Routes: 259 (plus static mounts). iOS-consumed: 57. Web-consumed: 186.
 | GET | `/api/missioncontrol/events` | web |
 | GET | `/api/missioncontrol/evidence` | web |
 | POST | `/api/missioncontrol/proposals/{proposal_id}/decision` | web |
-| GET | `/api/missioncontrol/rails/journal` | server only |
+| GET | `/api/missioncontrol/rails/journal` | ios |
 | POST | `/api/missioncontrol/rails/remote-events` | server only |
 | POST | `/api/missioncontrol/rails/size` | web |
 | GET | `/api/missioncontrol/receipts` | web |
 | GET | `/api/missioncontrol/sessions` | web |
-| GET | `/api/missioncontrol/state` | web |
+| GET | `/api/missioncontrol/state` | ios, web |
 | POST | `/api/missioncontrol/story/propose` | web |
 
 ## web.routes.pages
@@ -446,13 +446,13 @@ Routes: 259 (plus static mounts). iOS-consumed: 57. Web-consumed: 186.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/coders/steering/audit` | server only |
+| GET | `/api/coders/steering/audit` | ios |
 | GET | `/api/coders/steering/grants` | web |
-| POST | `/api/coders/{key}/arm` | web |
-| POST | `/api/coders/{key}/disarm` | web |
+| POST | `/api/coders/{key}/arm` | ios, web |
+| POST | `/api/coders/{key}/disarm` | ios, web |
 | POST | `/api/coders/{key}/keep-note` | web |
-| GET | `/api/coders/{key}/peek` | web |
-| POST | `/api/coders/{key}/steer` | web |
+| GET | `/api/coders/{key}/peek` | ios, web |
+| POST | `/api/coders/{key}/steer` | ios, web |
 
 ## web.routes.system.coders
 
