@@ -666,6 +666,46 @@
       ]
     },
     {
+      "path": "/api/coders/relay/{node}/arm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/coders/relay/{node}/disarm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/coders/relay/{node}/keys",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/coders/relay/{node}/peek",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/coders/relay/{node}/steer",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": []
+    },
+    {
       "path": "/api/coders/select",
       "methods": [
         "POST"

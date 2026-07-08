@@ -95,6 +95,24 @@ SQLCipher) becomes warranted and should be its own story.
    every read; disarm is one act. Enforcement lives in one hub-side
    chokepoint, not in any UI. Steers within an armed window are auto-approved
    by the grant and every delivery (and refusal) is audited.
+
+   **Full manipulation** widens the reach without loosening the consent.
+   (a) *Any key*, not just text: control and named keys (`C-c`, `Escape`,
+   arrows) go through a second chokepoint, `coder_steering.deliver_keys`, with
+   the same grant re-check and audit; a named key must be on an allow-list or it
+   is refused by name and never handed to `tmux`, so an arbitrary string can
+   never become a keystroke. (b) *Any pane*, not just registered sessions: a
+   `pane:%N` key steers a raw tmux pane (one you started by hand), pinned and
+   re-verified exactly like a tracked session; watching any pane is free,
+   manipulating any pane is armed. (c) *Any configured machine*:
+   `coder_steering_relay` forwards a command to a node named in
+   `HOLDSPEAK_STEER_NODES`, which executes it against its own tmux.
+   **The machine that types owns the grant and writes the audit**; the hub is a
+   relay, never the authority over another machine's terminal, and only the
+   command (text/keys) plus the node's own bearer token cross the wire. A node
+   that does not answer refuses by name (`node_offline`), never a hang. Both
+   chokepoints are pinned by a census test; there is no autonomous path, so a
+   person is behind every key.
 6. **Rails as material** (`grounding_rails.py`, `rails_observer.py`):
    grounding a run on an open phase or story reads the exact file your own
    `dw` command line names, as opaque text; it never re-derives rail state

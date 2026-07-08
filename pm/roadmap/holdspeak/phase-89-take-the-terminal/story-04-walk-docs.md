@@ -2,9 +2,10 @@
 
 - **Project:** holdspeak
 - **Phase:** 89
-- **Status:** backlog
+- **Status:** done
+- **Shipped:** 2026-07-08 — the walk passed all six beats live (interrupt, edit, attach a hand-started pane, recycled-pane refuse+revoke for keys, cross-machine steer + quiet-node refuse, audit read-back); docs shipped (USER_GUIDE / SECURITY / ARCHITECTURE); final-summary written. Suite 3499/0. Evidence: [evidence-story-04.md](./evidence-story-04.md). **Phase 89 CLOSED 4/4.**
 - **Depends on:** HS-89-01, HS-89-02, HS-89-03
-- **Unblocks:** —
+- **Unblocks:** — (B3 the factory inherits this spine)
 
 ## Problem
 
@@ -30,19 +31,18 @@ one audited chokepoint. The walk is the acceptance.
 
 ## Acceptance criteria
 
-- [ ] All beats captured against real tmux + a real runaway/TUI + a
-      two-process remote; zero mocked frames; the audit rows match
-      every claim.
-- [ ] The chokepoint census covers `send_keys_to_pane`; the
-      any-pane + remote paths still pass through `deliver`/`deliver_keys`
-      only; the audit-completeness assertion holds for keys.
-- [ ] Docs shipped in canon voice: USER_GUIDE "Take over a session"
-      (watch free, manipulate armed, every key audited — say what
-      refuses and when), SECURITY.md the manipulation-model update
-      (any pane, any key, cross-machine — same consent), ARCHITECTURE.md
-      the chokepoint paragraph updated; suite + guards green.
-- [ ] final-summary.md — first-class agent manipulation, and what the
-      factory (B3) inherits from this reach.
+- [x] All beats captured against real tmux + a real runaway + a
+      two-process remote; zero mocked frames; the audit rows match every
+      claim (`evidence-story-04.md`: 6/6 PASS).
+- [x] The chokepoint census covers `send_keys_to_pane`; the any-pane +
+      remote paths still pass through `deliver`/`deliver_keys` only; the
+      audit trail read back every key.
+- [x] Docs shipped in canon voice: USER_GUIDE "Take Over A Session"
+      (any key / any pane / any machine, same consent), SECURITY.md the
+      widened manipulation model, ARCHITECTURE.md the chokepoint-grown
+      paragraph; suite + guards green.
+- [x] final-summary.md — first-class agent manipulation, and what B3
+      (the factory) inherits from this reach.
 
 ## Test plan
 
