@@ -1,6 +1,6 @@
 # Phase 88 — The Rails-Aware Desk (rails as material, the ambient observer)
 
-**Last updated:** 2026-07-08 (HS-88-04 done — the cross-machine reach; 4/5).
+**Last updated:** 2026-07-08 (**PHASE CLOSED 5/5** — the walk passed live, docs shipped).
 
 ## Goal
 
@@ -37,24 +37,25 @@ everything happening with dw in the background."*
 
 ## Exit criteria (evidence required)
 
-- [ ] An open story (and a phase, and an evidence file) hydrates into
+- [x] An open story (and a phase, and an evidence file) hydrates into
       an ask byte-identically to how a meeting does, provenance-headed,
       the content CLI-mediated per repo — a grounded rail object is a
       receipt (HS-88-01).
-- [ ] The grounding picker offers rails objects from the belt's live
+- [x] The grounding picker offers rails objects from the belt's live
       projects, pickable into an ask AND a Phase-87 steer through the
       one shared hydration; over-cap and unknown refs refuse by name
       (HS-88-02).
-- [ ] Control vs treatment on a real model: the same question answered
+- [x] Control vs treatment on a real model: the same question answered
       without and with a grounded open story; the answer demonstrably
-      uses the rail content (the Phase-53 proof pattern) (HS-88-02).
-- [ ] The ambient observer, running on a local RuntimeProfile, turns a
+      uses the rail content (the Phase-53 proof pattern) (HS-88-02,
+      HS-88-05 walk beat 2).
+- [x] The ambient observer, running on a local RuntimeProfile, turns a
       real rail-event stream (a story flip, a gate refusal) into a
       journal primitive — read-only, off by default, openable and
       groundable; anything it proposes rides the actuator flow
       (HS-88-03).
-- [ ] The walk: a rail object grounded into a live run and used; the
-      observer journaling a real flip; the suite + guards green; docs
+- [x] The walk: a rail object grounded into a live run and used; the
+      observer journaling real motion; the suite + guards green; docs
       shipped (HS-88-05).
 
 ## Story status
@@ -65,7 +66,7 @@ everything happening with dw in the background."*
 | HS-88-02 | The grounding picker learns the rails | done | [story-02-rails-picker](./story-02-rails-picker.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-88-03 | The ambient dw observer — the local rail journal | done | [story-03-ambient-observer](./story-03-ambient-observer.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-88-04 | Reach: rail events from another machine (scoped) | done | [story-04-cross-machine-reach](./story-04-cross-machine-reach.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-88-05 | The walk, the docs, the close | backlog | [story-05-walk-docs](./story-05-walk-docs.md) | - |
+| HS-88-05 | The walk, the docs, the close | done | [story-05-walk-docs](./story-05-walk-docs.md) | [evidence-story-05](./evidence-story-05.md) |
 
 ## Where we are
 
@@ -126,8 +127,22 @@ never collide in the diff (the signature includes the origin). Proven
 in-process (route → buffer → drain → journal, `@node` named); the
 mesh_relay job queue is prompt/result-shaped, so events ride their own
 thin push wire, and the pushing WORKER daemon is a deferred rider
-(lands when a second rails machine is real). Next: HS-88-05, the walk
-and the close.
+(lands when a second rails machine is real).
+
+**CLOSED (HS-88-05).** The seven-beat walk ran live against the real
+`dw`, the real `.43` model, and a real tmux pane: ground THIS phase's
+open story into an ask (control vs treatment — the bare model can't
+name `steer_walk_hs87.py`, the grounded run does); ground the same
+story into a steer that lands the rail block in a real pane; the
+receipt/refusal check (the block IS the dw-named file; a bad ref
+refused); the observer journaling real rail motion on .43; the
+read-only census; the reach (a remote envelope named `@walk-remote`,
+then read stale and dropped); the journal grounds in turn. Docs
+shipped: USER_GUIDE "Ground a run on the rails" + "The rails journal",
+the SECURITY.md rails-as-material trust boundary, the ARCHITECTURE.md
+rails-as-material paragraph. The one deferred rider (the remote-events
+worker daemon) and the B3/B4 handoff are in the
+[final summary](./final-summary.md).
 
 ## Active risks
 

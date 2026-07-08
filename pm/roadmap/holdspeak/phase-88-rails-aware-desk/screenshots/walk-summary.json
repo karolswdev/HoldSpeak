@@ -1,0 +1,7 @@
+{
+  "grounding": {
+    "control": "I don't have access to any grounded story, Phase-87 walk scripts, or file listings in this context. Please provide the story text and the list of existing Phase-87 walk script filenames so I can determine which one the walk rig extends.",
+    "treatment": "steer_walk_hs87.py"
+  },
+  "journal": "The delivery-workbench pipeline experienced a contract-missing gate refusal, which was resolved after a contract was generated and the gate passed. In the holdspeak project, story HS-88-04 moved from backlog to in-progress, passed evidence checks, and was marked done with a generated contract, while HS-88-05 was moved to in-progress."
+}

@@ -548,6 +548,40 @@ Every reply and every refusal is written to the steering audit: who, when, which
 session, which pane, and a hash of the text. Read it back with
 `GET /api/coders/steering/audit`.
 
+## Ground A Run On The Rails
+
+If you plan work with Delivery Workbench, the rails themselves become
+material you can hand to any run. In the grounding picker, beside your
+meetings, is a rails group listing the belt's live projects: the
+roadmap, the current phase, and its stories. Pick one and its content
+rides into your ask or your steer, capped and labeled with where it
+came from.
+
+What rides in is a receipt, not a guess. The hub reads the exact file
+the `dw` command line names for that story or phase, and hands the run
+that file's text. It never reads a status out of the document, so a
+grounded story is always the real thing on disk. A reference the hub
+cannot resolve is refused by name rather than filled in.
+
+## The Rails Journal
+
+You can also let a local model keep a running note of what the rails
+do. Turn the ambient observer on in your configuration (it is off by
+default) and name the model you want it to use. From then on it watches
+your pipeline's own event stream (story flips, commit-gate passes and
+refusals, evidence captures, phase closes) and writes a short journal
+entry for each batch of new activity. The entries are ordinary desk
+notes: you can open them, file them, and ground a later run on them.
+
+The observer only reads and writes its journal. It never touches the
+rails; if you want to act on something it noticed, you use the same
+story-flip proposal every other desk action uses, and your commit gate
+keeps the final say. When the model is unreachable, the entry records
+the events plainly and says the summary was unavailable, rather than
+inventing one. Read the journal back with
+`GET /api/missioncontrol/rails/journal`. Nothing here leaves your
+machine: the observer reads your own `dw` and runs your own model.
+
 ## Privacy Model
 
 HoldSpeak is designed to be local-first.

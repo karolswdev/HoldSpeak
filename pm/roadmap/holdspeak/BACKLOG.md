@@ -429,7 +429,7 @@ that forces the substrate honest.
 
 
 ---
-### V. The Rails-Aware Desk — rails objects as grounding kinds + the ambient dw observer — **SCAFFOLDED → [phase-88](./phase-88-rails-aware-desk/) (0/5)** (2026-07-08, immediately after Phase 87 closed)
+### V. The Rails-Aware Desk — rails objects as grounding kinds + the ambient dw observer — **SHIPPED → [phase-88](./phase-88-rails-aware-desk/) (CLOSED 5/5, 2026-07-08, same day)**; one deferred rider (the remote-events worker daemon) recorded in the phase's decisions
 
 Owner direction (2026-07-08, verbatim, during the Phase-87 charter
 conversation): *"having the ability to natively offer parts of, e.g.,
