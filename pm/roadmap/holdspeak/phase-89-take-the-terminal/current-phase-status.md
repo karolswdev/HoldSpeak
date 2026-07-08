@@ -54,7 +54,7 @@ manipulation IN this framework."*
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-89-01 | Full key control — the send-keys verb | **done** (2026-07-08, live) | [story-01-key-control](./story-01-key-control.md) | [evidence-01](./evidence-story-01.md) |
-| HS-89-02 | Attach to any pane — beyond the registry | backlog | [story-02-any-pane](./story-02-any-pane.md) | - |
+| HS-89-02 | Attach to any pane — beyond the registry | **done** (2026-07-08, live) | [story-02-any-pane](./story-02-any-pane.md) | [evidence-02](./evidence-story-02.md) |
 | HS-89-03 | Cross-machine steering — over the relay | backlog | [story-03-cross-machine-steer](./story-03-cross-machine-steer.md) | - |
 | HS-89-04 | The robustness walk, the docs, the close | backlog | [story-04-walk-docs](./story-04-walk-docs.md) | - |
 
@@ -77,7 +77,17 @@ interrupted a runaway (counter frozen, shell responsive), `BSpace`
 edited a real line (`echo AB`+BSpace+`C` → `AC`), `C-c` cancelled a
 typed junk line — the audit read back every sequence with a readable
 head. The census pins `send_keys_to_pane` to the one chokepoint; suite
-3480/0. Next: HS-89-02 (attach to any pane).
+3480/0.
+
+**HS-89-02 done (2026-07-08, live) — the registry is no longer the gate.**
+`coder_steering.list_panes` names every tmux pane on the machine
+(`GET /api/coders/steering/panes`); a `pane:%N` key resolves the pane
+DIRECTLY (a synthetic session over the raw pane), so the whole spine —
+peek free, arm pins `%N`, steer/keys re-verify — works on ANY pane, not
+just hook-registered ones. The registry path is untouched (regression
+pinned). Proven live: a HAND-started pane (confirmed not an agent
+session) was discovered, peeked free, armed, steered, and `C-c`'d — the
+text landed. Suite 3488/0. Next: HS-89-03 (cross-machine steering).
 
 ## Active risks
 

@@ -214,6 +214,53 @@ def resolve_pane_identity(
     return {"status": "ok", "pane_id": pane_id}
 
 
+_PANE_FIELDS = (
+    "#{pane_id}\t#{session_name}\t#{window_index}\t"
+    "#{pane_current_command}\t#{pane_title}\t#{pane_active}"
+)
+
+
+def list_panes(*, runner: Optional[Runner] = None) -> dict[str, Any]:
+    """Every tmux pane on the machine (HS-89-02) — attach reaches beyond the
+    hook registry, so a pane started BY HAND is first-class.
+
+    Returns ``{"status": "ok", "panes": [...]}`` (each pane: ``pane_id``,
+    ``session``, ``window``, ``command``, ``title``, ``active``) or a typed
+    absence (``tmux_absent`` / ``error``). No tmux server (no panes) is an
+    honest EMPTY list, never an error — the desk shows "nothing to attach".
+    """
+    if runner is None and shutil.which("tmux") is None:
+        return {"status": "tmux_absent", "panes": []}
+    run = runner or _default_runner
+    try:
+        completed = run(["tmux", "list-panes", "-a", "-F", _PANE_FIELDS])
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return {"status": "error", "detail": str(exc), "panes": []}
+    if completed.returncode != 0:
+        # "no server running" / "no current session" is not a failure —
+        # there simply are no panes to attach to.
+        return {"status": "ok", "panes": []}
+    panes: list[dict[str, Any]] = []
+    for line in (completed.stdout or "").splitlines():
+        if not line.strip():
+            continue
+        parts = line.split("\t")
+        if len(parts) < 6:
+            continue
+        pane_id, session, window, command, title, active = parts[:6]
+        panes.append(
+            {
+                "pane_id": pane_id,
+                "session": session,
+                "window": window,
+                "command": command,
+                "title": title,
+                "active": active == "1",
+            }
+        )
+    return {"status": "ok", "panes": panes}
+
+
 def clamp_ttl(ttl_seconds: Any) -> int:
     try:
         ttl = int(ttl_seconds)
@@ -581,6 +628,7 @@ __all__ = [
     "deliver_keys",
     "disarm",
     "is_named_key",
+    "list_panes",
     "normalize_keys",
     "render_keys",
     "peek_pane",

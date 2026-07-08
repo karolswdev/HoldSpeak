@@ -2,7 +2,8 @@
 
 - **Project:** holdspeak
 - **Phase:** 89
-- **Status:** backlog
+- **Status:** done
+- **Shipped:** 2026-07-08 — the registry is no longer the gate. `list_panes` names every tmux pane; a `pane:%N` key steers ANY of them directly. Proven live: a HAND-started pane (confirmed not an agent session) was discovered, watched free, armed, steered, and keyed. Suite 3488/0. Evidence: [evidence-story-02.md](./evidence-story-02.md).
 - **Depends on:** HS-89-01
 - **Unblocks:** HS-89-03
 
@@ -28,18 +29,20 @@ becomes one source of panes, not the gate.
 
 ## Acceptance criteria
 
-- [ ] `list_panes` returns every pane (`tmux list-panes -a`), typed
-      absence when tmux is missing, each carrying its `%N` + command +
-      title; a test pins the parse.
-- [ ] A `pane:%N` key peeks read-only with no grant; arm pins that
+- [x] `list_panes` returns every pane (`tmux list-panes -a`), typed
+      absence when tmux is missing, honest empty on no-server, each
+      carrying its `%N` + command + title; parse pinned
+      (`test_coder_steering_panes.py`).
+- [x] A `pane:%N` key peeks read-only with no grant; arm pins that
       `%N`; steer/keys deliver to it under the grant; a recycled `%N`
-      (the pane died) refuses + revokes — all tested.
-- [ ] A pane started BY HAND (never in the registry) is discoverable
+      refuses + revokes (the Phase-87 spine, unchanged) — route tests.
+- [x] A pane started BY HAND (never in the registry) is discoverable
       via `/panes`, watchable, and steerable under a grant — proven
-      live (start a bare `sleep` pane, attach, steer it).
-- [ ] The registry path is unchanged: an `agent:session_id` key still
+      live (`evidence-story-02.md`): discovered, confirmed not an agent
+      session, peeked free, armed, steered + `C-c`, the text landed.
+- [x] The registry path is unchanged: an `agent:session_id` key still
       resolves + steers exactly as in Phase 87 (a regression test).
-- [ ] Full suite green (read from the file); api-surface regen.
+- [x] Full suite green (3488/0, read from the file); api-surface regen.
 
 ## Test plan
 

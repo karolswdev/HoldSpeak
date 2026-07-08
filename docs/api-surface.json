@@ -718,6 +718,14 @@
       ]
     },
     {
+      "path": "/api/coders/steering/panes",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": []
+    },
+    {
       "path": "/api/coders/{key}/arm",
       "methods": [
         "POST"
