@@ -373,7 +373,7 @@ profile; (3) desktop hub honors profiles; (4) web authors/uses them. Each surfac
 primitive framework, the per-agent `AgentRecord`, and the egress-badge canon.
 
 ---
-### U. The Delivery Belt — delivery-workbench as a desk surface (the conveyor-belt builder) — [full proposal](./proposals/delivery-belt.md) — **B1 SHIPPED → [phase-86](./phase-86-delivery-belt/) (5/5)**; B2 (the nod, beyond the story-flip leg Phase 82 already carries), B3 (the factory), B4 (DeskOS) remain
+### U. The Delivery Belt — delivery-workbench as a desk surface (the conveyor-belt builder) — [full proposal](./proposals/delivery-belt.md) — **B1 SHIPPED → [phase-86](./phase-86-delivery-belt/) (5/5)**; B2 expanded by owner direction into the **Steering Desk charter, scaffolded → [phase-87](./phase-87-steering-desk/)** (attach/steer/classify/ground under the Telegram consent spine, contract-shaped for the Apple surfaces); B3 (the factory), B4 (DeskOS) remain
 
 *2026-07-07 (late):* B0 reconciled against reality — the substrate already
 shipped upstream richer than the RFC guessed; the flagship-tree reader work

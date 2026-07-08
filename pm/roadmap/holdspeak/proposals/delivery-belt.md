@@ -88,6 +88,15 @@ So: not a viewer — a **factory floor**.
 - **B2 — The nod** (hub + web desk): the gated acts — approve/merge via
   `gh`, dispatch-an-agent as an actuator, stall chips from the hook/CI.
   Exit: one story shipped END TO END from the belt, every act audited.
+  *Expanded by owner direction (2026-07-08) into the Steering Desk
+  charter — [phase-87](../phase-87-steering-desk/AGENT-BRIEF.md):
+  attach (a real live view into a real agent session), steer
+  (voice-first, armed, pane-identity-verified, audited), classify
+  (session exhaust → desk primitives + rails truth), and desk objects
+  riding into steers as hydrated context. The Telegram interface's
+  consent spine is the floor; contract-shaped wire types keep iPad/
+  iPhone native (B4 inherits, never redesigns). Verbatim bar: "so
+  robust, it will literally destroy our brains."*
 - **B3 — The factory** (hub + web desk): "New Project" — repo + workbench
   install + agent-run intake from spoken input; belts as desk primitives in
   zones; the portfolio view. Exit: a new real repo born from the desk and
