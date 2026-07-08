@@ -272,3 +272,33 @@ Confirmed by the payload:
   HSM-0-02? (recommendation: open dict in v1, document the known shapes).
 - The two profile vocabularies must be named distinctly in the contract
   (`mir_profile` vs `target_profile`) so neither host conflates them (finding 2).
+
+## Presence: steering + rails (HSM-26-01, Phase 87/88)
+
+The DeskOS belt (B4) renders these ephemeral live shapes from the
+desktop hub. They are the framework's **presence** sync class — read
+from the documented routes, not synced as durable `ChangeSet`
+primitives. Each has a schema in `schemas/` and a conformance fixture
+in `fixtures/steering-and-rails-sample.json`; `validate.py` and the
+desktop test `tests/unit/test_steering_contracts_fidelity.py` both
+check the real hub responses against them.
+
+| Shape | Schema | Route / source |
+|---|---|---|
+| `CoderSessionPeek` | `coder-session-peek.schema.json` | `GET /api/coders/{key}/peek` (Phase 87) |
+| `ArmingGrant` | `arming-grant.schema.json` | `POST /api/coders/{key}/arm`, `GET .../steering/grants` (Phase 87) |
+| `SteerRequest` | `steer-request.schema.json` | `POST /api/coders/{key}/steer` body (Phase 87/88) |
+| `SteerGrounding` | `steer-grounding.schema.json` | the `grounding` object (Phase 83/87/88) |
+| `SteerResult` | `steer-result.schema.json` | `POST /api/coders/{key}/steer` result (Phase 87) |
+| `SteeringAuditEntry` | `steering-audit-entry.schema.json` | `GET /api/coders/steering/audit` (Phase 87) |
+| `RailsGroundingRef` | `rails-grounding-ref.schema.json` | `grounding.rails[]` (Phase 88) |
+| `RailsJournalEntry` | `rails-journal-entry.schema.json` | `GET /api/missioncontrol/rails/journal` (Phase 88) |
+| `RailsRemoteEventsEnvelope` | `rails-remote-events-envelope.schema.json` | `POST /api/missioncontrol/rails/remote-events` (Phase 88) |
+
+Consent is part of the contract: the grant pins the pane's `%N` and
+counts down; the steer result's status is the full deliver vocabulary
+(delivered + typed refusals, a revoking refusal disarms); every steer
+is audited (hash + head, never the full text). The reach is events
+only — the remote-events envelope schema rejects a file body, matching
+the route's runtime refusal. So the iPad enforces the same consent the
+desk does, from the shape alone.

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/arming-grant.schema.json",
+  "title": "ArmingGrant",
+  "description": "A steering grant over a live session. Source: POST /api/coders/{key}/arm result + GET /api/coders/steering/grants entries (holdspeak/coder_steering.py, Phase 87). The consent spine: watching is free, steering is armed; the grant pins the pane's %N identity and counts down.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "key", "pane_id", "expires_in_seconds"],
+  "properties": {
+    "status": { "const": "armed" },
+    "key": { "type": "string" },
+    "pane_id": { "type": "string", "description": "tmux %N unique id, pinned at arm time" },
+    "expires_in_seconds": { "type": "integer", "description": "TTL default 900 (15 min), max 3600" }
+  }
+}

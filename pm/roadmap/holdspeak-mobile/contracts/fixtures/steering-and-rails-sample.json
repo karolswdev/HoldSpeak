@@ -1,0 +1,115 @@
+{
+  "_comment": "HSM-26-01 conformance fixtures \u2014 the presence-class steering + rails shapes, captured from the REAL Phase-87/88 hub routes (coder_steering_routes.py, coder_steering.py, db/steering.py, grounding_rails.py, rails_observer.py, missioncontrol.py). Each sample validates against its schema; validate.py also runs the negative checks.",
+  "coder_session_peek": {
+    "key": "claude:9244985d-2dd6-4abf-a33c-7a099253c728",
+    "agent": "claude",
+    "stale": false,
+    "awaiting_response": true,
+    "question": "Should we merge #305?",
+    "updated_at": "2026-07-08T10:00:00Z",
+    "grant": {
+      "armed": true,
+      "expires_in_seconds": 842
+    },
+    "peek": {
+      "status": "live",
+      "hash": "9f2c1a7b3e4d5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8",
+      "lines": [
+        "$ uv run pytest -q",
+        "3453 passed, 37 skipped"
+      ]
+    }
+  },
+  "coder_session_peek_not_modified": {
+    "key": "claude:9244985d-2dd6-4abf-a33c-7a099253c728",
+    "agent": "claude",
+    "stale": false,
+    "awaiting_response": false,
+    "question": null,
+    "updated_at": "2026-07-08T10:00:00Z",
+    "grant": {
+      "armed": false,
+      "expires_in_seconds": null
+    },
+    "peek": {
+      "status": "not_modified",
+      "hash": "9f2c1a7b3e4d5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8"
+    }
+  },
+  "arming_grant": {
+    "status": "armed",
+    "key": "claude:9244985d-2dd6-4abf-a33c-7a099253c728",
+    "pane_id": "%5",
+    "expires_in_seconds": 900
+  },
+  "steer_request": {
+    "text": "run the full suite and read the tail",
+    "submit": false,
+    "grounding": {
+      "meeting_ids": [],
+      "artifact_ids": [],
+      "expand": "summary",
+      "rails": [
+        {
+          "repo": "holdspeak",
+          "project": "holdspeak",
+          "kind": "story",
+          "id": "HS-88-05"
+        }
+      ]
+    }
+  },
+  "steer_result_delivered": {
+    "status": "delivered",
+    "pane_id": "%5",
+    "submitted": false,
+    "audit_id": 7
+  },
+  "steer_result_refused": {
+    "status": "pane_mismatch",
+    "revoked": true,
+    "detail": "pane '%13' is not the armed '%5' \u2014 nothing was typed",
+    "audit_id": 8
+  },
+  "steering_audit_entry": {
+    "id": 7,
+    "ts": "2026-07-08T10:00:00Z",
+    "session_key": "claude:9244985d-2dd6-4abf-a33c-7a099253c728",
+    "agent": "claude",
+    "pane_id": "%5",
+    "text_sha256": "abc123def4567890abc123def4567890abc123def4567890abc123def4567890",
+    "text_head": "run the full suite and read the tail",
+    "grounding": [
+      "rails:story:HS-88-05"
+    ],
+    "submit": false,
+    "outcome": "delivered",
+    "detail": null
+  },
+  "rails_grounding_ref": {
+    "repo": "holdspeak",
+    "project": "holdspeak",
+    "kind": "story",
+    "id": "HS-88-05"
+  },
+  "rails_journal_entry": {
+    "id": "note_937f2027e2f9",
+    "title": "Rails journal",
+    "body_markdown": "> 3 rail events observed\n\n- 2026-07-08T10:00:00Z  holdspeak  story_status  HS-88-04  to=done\n- 2026-07-08T10:01:00Z  holdspeak  gate_pass  HS-88-04\n- 2026-07-08T10:02:00Z  holdspeak  story_status  HS-88-05  to=in-progress\n\nHS-88-04 flipped to done and passed the gate; HS-88-05 was pulled into progress.",
+    "created_at": "2026-07-08T10:02:30Z"
+  },
+  "rails_remote_events_envelope": {
+    "node": "walk-remote",
+    "ts": "2026-07-08T10:00:00Z",
+    "events": [
+      {
+        "ts": "2026-07-08T09:59:00Z",
+        "event": "story_status",
+        "story": "HS-1",
+        "detail": {
+          "to": "done"
+        }
+      }
+    ]
+  }
+}

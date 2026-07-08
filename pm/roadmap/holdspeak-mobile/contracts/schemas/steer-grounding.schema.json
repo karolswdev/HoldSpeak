@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/steer-grounding.schema.json",
+  "title": "SteerGrounding",
+  "description": "Desk objects and rails refs riding into a steer or an ask. Source: the grounding object in POST /api/ask and POST /api/coders/{key}/steer (holdspeak/grounding.py + grounding_rails.py, Phase 83/87/88). Capped at 16 refs total; the hub hydrates from its own store, refuses unknown ids by name.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "meeting_ids": { "type": "array", "items": { "type": "string" } },
+    "artifact_ids": { "type": "array", "items": { "type": "string" } },
+    "expand": { "enum": ["summary", "full"] },
+    "rails": { "type": "array", "items": { "$ref": "https://holdspeak.dev/contracts/v0/rails-grounding-ref.schema.json" } }
+  }
+}

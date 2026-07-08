@@ -256,3 +256,17 @@ push route merges them, pull re-emits them; byte-faithful round-trip locked in
 
 - **Timestamps:** standardize on UTC `Z` (§2). Resolved — folded into the contract.
 - **Quality Gates 3–7:** confirmed as-reconstructed (see `../CHARTER.md`).
+
+## §N. Presence: read, never synced (HSM-26-01)
+
+The steering + rails shapes (the peek, the grant, the steer, the audit
+entry, the rails ref, the journal entry, the remote-events envelope)
+are the framework's **presence** class: ephemeral live state a surface
+READS from the documented routes, not durable primitives that flow
+through the `ChangeSet` sync path. There is no last-write-wins, no
+tombstone, no bidirectional merge for these — the desktop hub is the
+one authority, and a surface polls the route (poll-only-while-open,
+the web desk's posture) or reads on demand. They still obey the wire
+rules: snake_case on the wire, camelCase native, instants UTC `Z`.
+Their schemas live beside the durable ones in `schemas/`; only their
+sync class differs.

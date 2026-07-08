@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/rails-journal-entry.schema.json",
+  "title": "RailsJournalEntry",
+  "description": "One entry in the ambient observer's journal of rail motion. Source: GET /api/missioncontrol/rails/journal (holdspeak/rails_observer.py, Phase 88). Each entry is a note tagged rails-journal; the observer is read-only and off by default.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "body_markdown"],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "body_markdown": { "type": "string", "description": "the events named (receipts) + the local model's summary" },
+    "created_at": { "type": "string", "description": "instant; may be empty when the note store omits it" }
+  }
+}

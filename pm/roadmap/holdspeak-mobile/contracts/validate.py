@@ -62,6 +62,21 @@ PRIMITIVE_SCHEMAS = {
     "model": "https://holdspeak.dev/contracts/v0/model-manifest.schema.json",
 }
 
+# HSM-26-01 — the presence-class steering + rails shapes (Phase 87/88), keyed
+# by the fixture entry that must validate against each schema.
+STEERING_RAILS_SCHEMAS = {
+    "coder_session_peek": "https://holdspeak.dev/contracts/v0/coder-session-peek.schema.json",
+    "coder_session_peek_not_modified": "https://holdspeak.dev/contracts/v0/coder-session-peek.schema.json",
+    "arming_grant": "https://holdspeak.dev/contracts/v0/arming-grant.schema.json",
+    "steer_request": "https://holdspeak.dev/contracts/v0/steer-request.schema.json",
+    "steer_result_delivered": "https://holdspeak.dev/contracts/v0/steer-result.schema.json",
+    "steer_result_refused": "https://holdspeak.dev/contracts/v0/steer-result.schema.json",
+    "steering_audit_entry": "https://holdspeak.dev/contracts/v0/steering-audit-entry.schema.json",
+    "rails_grounding_ref": "https://holdspeak.dev/contracts/v0/rails-grounding-ref.schema.json",
+    "rails_journal_entry": "https://holdspeak.dev/contracts/v0/rails-journal-entry.schema.json",
+    "rails_remote_events_envelope": "https://holdspeak.dev/contracts/v0/rails-remote-events-envelope.schema.json",
+}
+
 
 def _registry() -> Registry:
     resources = []
@@ -193,6 +208,47 @@ def main() -> int:
     else:
         ok = False
         print("FAIL  negative: corrupted artifact passed validation (schema too loose)")
+
+    # HSM-26-01 — the presence-class steering + rails shapes (Phase 87/88).
+    steering = json.loads((FIXTURE_DIR / "steering-and-rails-sample.json").read_text())
+    for entry, schema_id in STEERING_RAILS_SCHEMAS.items():
+        errs = _errors(_validator(schema_id, registry), steering[entry])
+        if errs:
+            ok = False
+            print(f"FAIL  {entry}: {len(errs)} error(s)")
+            for e in errs:
+                print(f"        - {e}")
+        else:
+            print(f"PASS  {entry}: validates against its schema (0 errors)")
+
+    # Negative (consent invariant): a steer request missing `text` MUST fail.
+    steer_v = _validator(STEERING_RAILS_SCHEMAS["steer_request"], registry)
+    no_text = {"submit": True}
+    if _errors(steer_v, no_text):
+        print("PASS  negative: steer request without text rejected (as expected)")
+    else:
+        ok = False
+        print("FAIL  negative: a steer request without text passed validation")
+
+    # Negative (reach invariant): a remote-events envelope smuggling a file
+    # body MUST fail — the reach is events only (no repo contents cross).
+    env_v = _validator(STEERING_RAILS_SCHEMAS["rails_remote_events_envelope"], registry)
+    leaky_env = {"node": "beta", "events": [{"event": "x", "body_markdown": "the story file"}]}
+    if _errors(env_v, leaky_env):
+        print("PASS  negative: remote envelope carrying a file body rejected (as expected)")
+    else:
+        ok = False
+        print("FAIL  negative: a remote envelope with a file body passed validation")
+
+    # Timestamps: the steering/rails instants are UTC Z-terminated too.
+    sr_tz = _utc_z_violations(steering)
+    if sr_tz:
+        ok = False
+        print(f"FAIL  utc-z (steering/rails): {len(sr_tz)} violation(s)")
+        for e in sr_tz:
+            print(f"        - {e}")
+    else:
+        print("PASS  utc-z (steering/rails): all instants are UTC Z-terminated")
 
     print("\nRESULT:", "ALL CHECKS PASSED" if ok else "FAILURES ABOVE")
     return 0 if ok else 1

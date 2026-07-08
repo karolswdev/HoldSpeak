@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/steer-request.schema.json",
+  "title": "SteerRequest",
+  "description": "A steer toward an armed session. Source: POST /api/coders/{key}/steer body (holdspeak/web/routes/system/coder_steering_routes.py, Phase 87/88). Carries the composed text, the submit flag, and optional grounding (desk objects + rails refs).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["text"],
+  "properties": {
+    "text": { "type": "string", "minLength": 1 },
+    "submit": { "type": "boolean", "description": "press Enter after the text; default true" },
+    "preview": { "type": "boolean", "description": "return the composed text without sending (executed == previewed)" },
+    "grounding": { "$ref": "https://holdspeak.dev/contracts/v0/steer-grounding.schema.json" }
+  }
+}

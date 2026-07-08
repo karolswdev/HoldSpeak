@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/rails-grounding-ref.schema.json",
+  "title": "RailsGroundingRef",
+  "description": "A reference to a delivery-rails object grounded into a run as a receipt. Source: the grounding.rails array (holdspeak/grounding_rails.py, Phase 88). The hub resolves the ref through dw context (the CLI names the file) and reads it as opaque text; state is never scraped from markdown.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["repo", "project", "kind", "id"],
+  "properties": {
+    "repo": { "type": "string", "description": "the project-map NAME" },
+    "project": { "type": "string", "description": "the dw project slug" },
+    "kind": { "enum": ["phase", "story", "evidence", "roadmap"] },
+    "id": { "type": "string", "description": "story id, phase number, or the project slug for a roadmap" }
+  }
+}

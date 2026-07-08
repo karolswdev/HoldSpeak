@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/steer-result.schema.json",
+  "title": "SteerResult",
+  "description": "The outcome of a steer through the one chokepoint. Source: POST /api/coders/{key}/steer result (holdspeak/coder_steering.py deliver, Phase 87). Delivered carries the verified pane_id + audit_id; every other status is a typed refusal (unarmed/expired/pane_mismatch/pane_gone/transport_error/grounding_over_cap), and a revoking refusal disarms.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status"],
+  "properties": {
+    "status": { "enum": ["delivered", "unarmed", "expired", "pane_mismatch", "pane_gone", "tmux_absent", "error", "transport_error", "empty_text", "grounding_over_cap", "preview"] },
+    "pane_id": { "type": "string" },
+    "submitted": { "type": "boolean" },
+    "audit_id": { "type": ["integer", "null"] },
+    "revoked": { "type": "boolean", "description": "the grant was revoked by this refusal (recycled pane / expiry)" },
+    "detail": { "type": "string" },
+    "text": { "type": "string", "description": "present only on preview: the exact composed text" },
+    "context_bytes": { "type": "integer" },
+    "cap_bytes": { "type": "integer" }
+  }
+}

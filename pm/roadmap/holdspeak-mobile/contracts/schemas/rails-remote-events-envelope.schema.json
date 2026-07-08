@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/rails-remote-events-envelope.schema.json",
+  "title": "RailsRemoteEventsEnvelope",
+  "description": "A far node's rail-event push. Source: POST /api/missioncontrol/rails/remote-events body (holdspeak/rails_observer.py, Phase 88). EVENTS ONLY: no repo file bodies cross the wire (a body-carrying event is refused); each event is stamped with its origin node and honest liveness applies.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["node", "events"],
+  "properties": {
+    "node": { "type": "string", "description": "the origin node id" },
+    "ts": { "type": "string", "description": "the push instant" },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "a raw dw event; must NOT carry a file body (text/body/body_markdown/content/file/contents)",
+        "not": {
+          "anyOf": [
+            { "required": ["text"] }, { "required": ["body"] }, { "required": ["body_markdown"] },
+            { "required": ["content"] }, { "required": ["file"] }, { "required": ["contents"] }
+          ]
+        }
+      }
+    }
+  }
+}
