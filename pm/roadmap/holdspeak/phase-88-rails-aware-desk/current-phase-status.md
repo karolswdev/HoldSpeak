@@ -1,6 +1,6 @@
 # Phase 88 — The Rails-Aware Desk (rails as material, the ambient observer)
 
-**Last updated:** 2026-07-08 (phase scaffolded).
+**Last updated:** 2026-07-08 (HS-88-01 done — rails hydrate as receipts; 1/5).
 
 ## Goal
 
@@ -61,7 +61,7 @@ everything happening with dw in the background."*
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-88-01 | Rails objects as grounding kinds — the hub hydration seam | backlog | [story-01-rails-grounding-hub](./story-01-rails-grounding-hub.md) | - |
+| HS-88-01 | Rails objects as grounding kinds — the hub hydration seam | done | [story-01-rails-grounding-hub](./story-01-rails-grounding-hub.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-88-02 | The grounding picker learns the rails | backlog | [story-02-rails-picker](./story-02-rails-picker.md) | - |
 | HS-88-03 | The ambient dw observer — the local rail journal | backlog | [story-03-ambient-observer](./story-03-ambient-observer.md) | - |
 | HS-88-04 | Reach: rail events from another machine (scoped) | backlog | [story-04-cross-machine-reach](./story-04-cross-machine-reach.md) | - |
@@ -69,9 +69,21 @@ everything happening with dw in the background."*
 
 ## Where we are
 
-Scaffolded 2026-07-08, immediately after Phase 87 (The Steering Desk)
-closed, from the owner's rails-aware direction (backlog candidate V,
-quoted in the AGENT-BRIEF). Nothing implemented. Next: HS-88-01.
+Rails hydrate as receipts (HS-88-01): `holdspeak/grounding_rails.py`
+resolves a `{repo, project, kind, id}` ref (`kind ∈ phase/story/
+evidence/roadmap`) through `dw context` — the CLI NAMES the trace
+path, the read is contained to that file, and the block is the SAME
+`GroundingBlock` the meeting/artifact path returns (`kind="rails:*"`,
+provenance subtitle `repo/project`, cap+cut). Unknown/unreachable/
+bad-kind refs refuse by name; one context fetch per repo (cached). The
+ask AND steer routes fold `grounding.rails: [refs]` in after the desk
+objects, one ordered list, capped at 16 refs total. A no-scrape census
+(`test_rails_no_scrape.py`) forbids parsing rail STATE from markdown.
+Proven live: real `dw context` against this repo grounds story-01 and
+the roadmap; control-vs-treatment on .43 — asked what kind string a
+hydrated story ref carries, the bare model guessed "GroundingBlock",
+the grounded run answered `kind="rails:<kind>"` (the story's own
+words). Next: HS-88-02, the picker.
 
 ## Active risks
 

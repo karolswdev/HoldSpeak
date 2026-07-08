@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 88
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none (consumes Phase-87 `hydrate_refs`)
 - **Unblocks:** HS-88-02
 - **Owner:** unassigned

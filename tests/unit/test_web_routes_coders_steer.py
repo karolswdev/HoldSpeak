@@ -252,6 +252,56 @@ def test_over_cap_grounding_refuses_at_compose_time(env) -> None:
     assert env.sent == []
 
 
+def test_rails_object_grounds_into_a_steer(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch)
+    # Fake the rails hydrator at its seam so the route folds it in.
+    from holdspeak.grounding import GroundingBlock
+    import holdspeak.grounding_rails as gr
+
+    env.monkeypatch.setattr(
+        gr,
+        "hydrate_rails_refs",
+        lambda refs, project_map=None, runner=None: (
+            [GroundingBlock("rails:story", "HS-88-01", "HS-88-01 Rails", "hs/hs", "the story body")],
+            [],
+        ),
+    )
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post(
+        "/api/coders/claude:abc/steer",
+        json={
+            "text": "what does this story want?",
+            "submit": False,
+            "grounding": {"rails": [{"repo": "hs", "project": "hs", "kind": "story", "id": "HS-88-01"}]},
+        },
+    )
+    assert res.status_code == 200
+    sent = env.sent[0]["text"]
+    assert '--- from rails:story: "HS-88-01 Rails" (hs/hs) ---' in sent
+    assert "the story body" in sent
+    assert env.db.steering.list()[0].grounding == ["rails:story:HS-88-01"]
+
+
+def test_unknown_rails_ref_refuses_naming_the_id(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch)
+    import holdspeak.grounding_rails as gr
+
+    env.monkeypatch.setattr(
+        gr,
+        "hydrate_rails_refs",
+        lambda refs, project_map=None, runner=None: ([], ["story:HS-99-99"]),
+    )
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    res = env.client.post(
+        "/api/coders/claude:abc/steer",
+        json={"text": "q", "grounding": {"rails": [{"repo": "hs", "project": "hs", "kind": "story", "id": "HS-99-99"}]}},
+    )
+    assert res.status_code == 400
+    assert res.json()["unknown_ids"] == ["story:HS-99-99"]
+
+
 def test_unknown_grounding_ref_refuses_naming_the_id(env) -> None:
     _register(env.monkeypatch, _session())
     _pin_identity(env.monkeypatch)
