@@ -1,6 +1,6 @@
 # Phase 88 — The Rails-Aware Desk (rails as material, the ambient observer)
 
-**Last updated:** 2026-07-08 (HS-88-01 done — rails hydrate as receipts; 1/5).
+**Last updated:** 2026-07-08 (HS-88-02 done — the rails picker; 2/5).
 
 ## Goal
 
@@ -62,7 +62,7 @@ everything happening with dw in the background."*
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-88-01 | Rails objects as grounding kinds — the hub hydration seam | done | [story-01-rails-grounding-hub](./story-01-rails-grounding-hub.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-88-02 | The grounding picker learns the rails | backlog | [story-02-rails-picker](./story-02-rails-picker.md) | - |
+| HS-88-02 | The grounding picker learns the rails | done | [story-02-rails-picker](./story-02-rails-picker.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-88-03 | The ambient dw observer — the local rail journal | backlog | [story-03-ambient-observer](./story-03-ambient-observer.md) | - |
 | HS-88-04 | Reach: rail events from another machine (scoped) | backlog | [story-04-cross-machine-reach](./story-04-cross-machine-reach.md) | - |
 | HS-88-05 | The walk, the docs, the close | backlog | [story-05-walk-docs](./story-05-walk-docs.md) | - |
@@ -83,7 +83,22 @@ Proven live: real `dw context` against this repo grounds story-01 and
 the roadmap; control-vs-treatment on .43 — asked what kind string a
 hydrated story ref carries, the bare model guessed "GroundingBlock",
 the grounded run answered `kind="rails:<kind>"` (the story's own
-words). Next: HS-88-02, the picker.
+words).
+
+The picker learns the rails (HS-88-02): `RailsPicker` (a
+`GroundingSection` sibling) flattens the belt's live projects from the
+mission-control store — the roadmap, the current phase, its stories —
+into pickable rail objects, mounted beside `GroundingSection` in BOTH
+the ask panel and the Phase-87 steer composer. `buildGrounding(sel,
+rails)` merges desk objects + rails into ONE wire object (null only
+when both empty), so ask and steer send byte-identical grounding —
+one hydration, both surfaces (a parity test pins it). The gauge is
+honest: `POST /api/missioncontrol/rails/size` hydrates the picked refs
+(the dw-named file) and returns SIZES only, never content; over-budget
+warns in the composer. Control-vs-treatment on .43: asked (from a
+grounded open story) the wire key rail refs ride under, the bare model
+could not answer, the grounded run said `rails`. Next: HS-88-03, the
+ambient observer.
 
 ## Active risks
 

@@ -7,12 +7,14 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { MicButton } from "./MicButton";
 import { GroundingSection } from "./GroundingSection";
+import { RailsPicker } from "./RailsPicker";
 import { useDesk } from "../store";
 import {
+  buildGrounding,
   emptyGrounding,
   groundingIsEmpty,
-  hubGrounding,
   type GroundingSelection,
+  type RailsPick,
 } from "../grounding";
 import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
@@ -103,14 +105,16 @@ function SteerComposer() {
   const [text, setText] = useState("");
   const [submitOn, setSubmitOn] = useState(true);
   const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding());
+  const [rails, setRails] = useState<RailsPick[]>([]);
 
   const send = async () => {
     const delivered = await useSteering
       .getState()
-      .steer(text, submitOn, hubGrounding(grounding));
+      .steer(text, submitOn, buildGrounding(grounding, rails));
     if (delivered) {
       setText(""); // a refused steer keeps its composition
       setGrounding(emptyGrounding());
+      setRails([]);
     }
   };
 
@@ -155,7 +159,8 @@ function SteerComposer() {
         onChange={setGrounding}
         limitTokens={STEER_LIMIT_TOKENS}
       />
-      {!groundingIsEmpty(grounding) && (
+      <RailsPicker picks={rails} onChange={setRails} limitTokens={STEER_LIMIT_TOKENS} />
+      {(!groundingIsEmpty(grounding) || rails.length > 0) && (
         <span className="desk-steer-grounded">
           objects ride in with a provenance header, capped at 8 KB
         </span>

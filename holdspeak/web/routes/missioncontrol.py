@@ -214,6 +214,34 @@ def build_missioncontrol_router(
             log.warning(f"mission control evidence failed ({exc})")
             return {"status": "unavailable", "detail": "evidence read failed"}
 
+    @router.post("/api/missioncontrol/rails/size")
+    async def api_missioncontrol_rails_size(body: dict[str, Any]) -> Any:
+        """Hydrated sizes for picked rail refs (HS-88-02) — the grounding
+        gauge's honest number. Reads the dw-named files (a receipt) and
+        returns SIZES only, never the content; unknown refs come back so
+        the picker can drop them."""
+        try:
+            from ...grounding_rails import hydrate_rails_refs
+
+            refs = body.get("rails") if isinstance(body, dict) else None
+            refs = [r for r in refs if isinstance(r, dict)] if isinstance(refs, list) else []
+            blocks, unknown = await asyncio.to_thread(
+                hydrate_rails_refs, refs, project_map=_map(), runner=runner
+            )
+            sizes = [
+                {
+                    "kind": b.kind.replace("rails:", ""),
+                    "id": b.ref,
+                    "title": b.title,
+                    "chars": len(b.text),
+                }
+                for b in blocks
+            ]
+            return {"sizes": sizes, "unknown": unknown}
+        except Exception as exc:
+            log.warning(f"rails size failed ({exc})")
+            return {"sizes": [], "unknown": [], "error": "rails size failed"}
+
     @router.post("/api/missioncontrol/story/propose")
     async def api_missioncontrol_story_propose(body: _StoryProposeRequest) -> Any:
         """Record a story-verb proposal (§4): fields validated against

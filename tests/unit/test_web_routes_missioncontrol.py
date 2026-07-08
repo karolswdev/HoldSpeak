@@ -579,3 +579,79 @@ class TestEvidenceInPlace:
         for route in app.routes:
             if "evidence" in getattr(route, "path", ""):
                 assert set(route.methods) == {"GET"}
+
+
+class TestRailsSize:
+    """The grounding gauge's honest number (HS-88-02): sizes only, a
+    receipt (the dw-named file), never the content."""
+
+    def _repo_with_story(self, tmp_path: Path):
+        repo = tmp_path / "rails-repo"
+        (repo / ".githooks").mkdir(parents=True)
+        dw = repo / ".githooks" / "dw"
+        dw.write_text("#!/usr/bin/env python3\n")
+        dw.chmod(0o755)
+        story_rel = "pm/roadmap/demo/phase-1/story-01.md"
+        (repo / "pm" / "roadmap" / "demo" / "phase-1").mkdir(parents=True)
+        (repo / story_rel).write_text("z" * 640, encoding="utf-8")
+        map_path = tmp_path / "delivery_workbench.json"
+        map_path.write_text(
+            json.dumps({"projects": {"demo": str(repo)}, "default": str(repo)})
+        )
+        context_doc = {
+            "kind": "delivery-workbench-roadmap-context",
+            "projects": [
+                {
+                    "slug": "demo",
+                    "readme": "pm/roadmap/demo/README.md",
+                    "phases": [
+                        {
+                            "number": 1,
+                            "slug": "demo-phase",
+                            "status_file": "pm/roadmap/demo/phase-1/current-phase-status.md",
+                            "stories": [
+                                {
+                                    "story_id": "DEMO-1-01",
+                                    "title": "First",
+                                    "trace": {"story": story_rel, "evidence": "x"},
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        return map_path, _runner_for({"context": context_doc})
+
+    def test_rails_size_returns_hydrated_char_counts(self, tmp_path):
+        map_path, runner = self._repo_with_story(tmp_path)
+        client = _client(map_path, runner)
+        res = client.post(
+            "/api/missioncontrol/rails/size",
+            json={"rails": [{"repo": "demo", "project": "demo", "kind": "story", "id": "DEMO-1-01"}]},
+        )
+        assert res.status_code == 200
+        body = res.json()
+        assert body["sizes"] == [
+            {"kind": "story", "id": "DEMO-1-01", "title": "DEMO-1-01 First", "chars": 640}
+        ]
+        assert body["unknown"] == []
+
+    def test_rails_size_reports_unknown_refs(self, tmp_path):
+        map_path, runner = self._repo_with_story(tmp_path)
+        client = _client(map_path, runner)
+        res = client.post(
+            "/api/missioncontrol/rails/size",
+            json={"rails": [{"repo": "demo", "project": "demo", "kind": "story", "id": "GHOST"}]},
+        )
+        assert res.json()["unknown"] == ["story:GHOST"]
+
+    def test_rails_size_never_returns_the_content(self, tmp_path):
+        map_path, runner = self._repo_with_story(tmp_path)
+        client = _client(map_path, runner)
+        body = client.post(
+            "/api/missioncontrol/rails/size",
+            json={"rails": [{"repo": "demo", "project": "demo", "kind": "story", "id": "DEMO-1-01"}]},
+        ).json()
+        assert "text" not in body["sizes"][0]
+        assert "zzz" not in json.dumps(body)  # the file body never crosses

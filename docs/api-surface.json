@@ -1733,6 +1733,16 @@
       ]
     },
     {
+      "path": "/api/missioncontrol/rails/size",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.missioncontrol",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/missioncontrol/receipts",
       "methods": [
         "GET"
