@@ -35,6 +35,7 @@ export const api = {
     }),
   finish: (id) => req(`/api/sittings/${id}/finish`, { method: "POST" }),
   generateDebrief: (id) => req(`/api/sittings/${id}/debrief`, { method: "POST" }),
+  readDebrief: (id) => req(`/api/sittings/${id}/debrief`), // GET — generates on first read
   triage: (findingId, triageState, disposition) =>
     req(`/api/findings/${findingId}`, {
       method: "PATCH",
