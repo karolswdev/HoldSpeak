@@ -1,0 +1,43 @@
+id: f-macros-fire
+title: A voice-command macro fires over the relay — off by default, on by consent
+# HSM-18-02: api_dictation_remote fires macros on the Mac relay instead of typing
+# prose. Macros are OFF by default (a consent gate). The mesh-node-alive recipe
+# stages the live relay the macro fires over; seeded-desk gives a real desk. The
+# control-vs-treatment is macros-disabled (dictated as prose) vs enabled (fires
+# the action) — the same spoken keyword, two outcomes.
+features:
+  - mobile.dictation.macros.fire
+recipes:
+  - mesh-node-alive
+  - seeded-desk
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "directory row mobile.dictation.macros.fire iphone=unknown — CommandsBoard compact-width rendering is not called out in the Phase 20 record; a phone-column gap, not a genuine absence"}
+steps:
+  - do: >
+      Staging-verify. Confirm the mesh relay worker is live (the macro's fire
+      target) and open the CommandsBoard to see the configured macros.
+    expect: >
+      The uat-worker mesh node reads live in the profiles liveness view, and the
+      CommandsBoard lists at least one configured macro (e.g. a type_text keyword)
+      with macros shown OFF by default.
+    where: /
+  - do: >
+      Control (macros DISABLED). With macros off, dictate a phrase containing the
+      macro keyword.
+    expect: >
+      The keyword is dictated as PLAIN PROSE — it free-types the literal words
+      byte-identically. Off by default means the keyword does nothing special;
+      this is the control leg where the macro must NOT fire.
+    where: /
+  - do: >
+      Treatment (macros ENABLED). Turn macros on, then speak the same type_text
+      macro keyword during dictation.
+    expect: >
+      This time the keyword FIRES the action over the relay instead of typing as
+      prose — the configured text free-types into the focused Mac app and the
+      macro chip renders on the surface. The same keyword the control dictated
+      literally now actuates; the difference is attributable to the consent toggle.
+    where: /
+teardown: []

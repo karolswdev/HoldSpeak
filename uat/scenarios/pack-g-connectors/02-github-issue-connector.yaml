@@ -1,0 +1,45 @@
+id: g-github-issue-connector
+title: File a GitHub issue from an approved proposal (hand-staged connector)
+features:
+  - actuators.connector.github_issue
+  - trust.egress.desk-github-issue
+recipes:
+  - pack-g-actuators-armed
+# No recipe can induce a real GitHub write — it needs an authenticated `gh`
+# against a repo you own. The pack-g-actuators-armed recipe stages the
+# proposal-ready desk with the gate open and github_issue allow-listed; the
+# credential/repo half is hand-staged. github_issue is a web-desk connector
+# (github_issue_actuator.py, host-injected opt-in); no device write-connector UI
+# is confirmed in the directory, so ipad/iphone are honest n/a here.
+manual_setup:
+  - Have an authenticated `gh` on this machine (`gh auth status` is logged in) pointed at a throwaway repo you own — the GitHub connector files via the host's own `gh`, no token is stored or crosses the wire.
+  - Note the owner/name of that throwaway repo; you will type it inline when proposing.
+surfaces:
+  web: yes
+  ipad: {n/a: "no device GitHub write-connector UI is confirmed in the directory (actuators.connector.github_issue ipad: unknown; no apple write-connector view)"}
+  iphone: {n/a: "no device GitHub write-connector UI is confirmed in the directory (actuators.connector.github_issue iphone: unknown)"}
+steps:
+  - do: >
+      Staging-verify. On the actuator-armed desk, confirm the pylon meeting has an
+      open action and that github_issue is allow-listed (the gate is open for it).
+    expect: The pylon meeting shows at least one open action; the github_issue actuator is available (not greyed out by the gate).
+    where: /history
+  - do: >
+      Turn an open action into a github_issue proposal, typing your throwaway
+      repo inline. Read the proposal BEFORE approving.
+    expect: >
+      A proposal is queued, unexecuted, showing exactly the issue title/body that
+      would be filed and against which repo. Nothing has been sent — it sits in
+      the proposed state. Its egress badge marks this as a cloud/outbound action
+      (the desk-github-issue egress), never local, never prose.
+    where: /history
+  - do: >
+      Approve the proposal, then check the throwaway repo's issues and read the
+      audit.
+    expect: >
+      Only on approval does one issue appear in the repo — created via your own
+      `gh`. The audit records who approved it and the issue URL. Exactly one issue
+      is filed (not a duplicate per refresh); nothing left the machine before the
+      approval.
+    where: /history
+teardown: []

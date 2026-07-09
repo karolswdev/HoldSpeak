@@ -1,0 +1,40 @@
+id: desk-transcribe-everywhere
+title: Hold-to-talk voice on every desk input — hand-staged, real mic
+# The one-mic-call-site promise: every desk input carries hold-to-talk. No
+# recipe can induce a live mic capture, so the capture beats are hand-staged
+# over a seeded desk (so there are real inputs to fill). Honest close: the mic
+# fills the box, it does not auto-submit — you still see the text before it acts.
+features:
+  - desk.web.transcribe_everywhere
+recipes:
+  - seeded-desk
+manual_setup:
+  - Grant the browser (or the iPad app) microphone permission for this run's origin.
+  - Have a working input microphone and a quiet spot to speak a short phrase.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "hold-to-talk at iPhone compact width is unverified in the directory record (desk.web.transcribe_everywhere iphone=unknown)"}
+steps:
+  - do: >
+      Staging-verify. Open the seeded desk and pick any input that takes text (a
+      create-a-note field, the Ask composer, a search box). Confirm it has a mic
+      affordance.
+    expect: >
+      The chosen input carries a hold-to-talk mic control — voice is offered on
+      the input, not only on one dedicated dictation screen.
+    where: /
+  - do: >
+      Hold the mic on that input, speak a short phrase, and release.
+    expect: >
+      The phrase is transcribed into that same input as editable text (POST to the
+      transcribe route succeeds). It reads back roughly what you said — judge on
+      substance, not exact punctuation.
+    where: /
+  - do: >
+      Pick a SECOND, different desk input and repeat the hold-speak-release.
+    expect: >
+      The second input also fills from voice — the mic is on every input, not a
+      one-off. Neither input auto-submitted; the text waits for you to commit.
+    where: /
+teardown: []

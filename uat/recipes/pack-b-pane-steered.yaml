@@ -1,0 +1,20 @@
+title: An armed pane that has taken a key and a steer
+description: >
+  The full steering spine staged end to end: a real tmux coder pane awaiting
+  input (SIGINT-trapping, so a C-c interrupts rather than kills it — a realistic
+  coder), an arming grant held, one key sent through the palette, and one steer
+  delivered. The audit trail therefore carries the arm plus the key/steer events
+  (heads and hashes only). Fully local — tmux + the product's own /api/coders
+  routes, no .43.
+deck: golden-local
+requires: []
+actions:
+  - spawn_pane: {name: coder, command: "bash -c 'trap : INT TERM; echo AWAITING-MIGRATION-CONFIRM; while true; do sleep 1; done'"}
+  - wait: 2
+  - arm_pane: {name: coder, ttl_seconds: 300}
+  - send_keys: {name: coder, keys: ["C-c"]}
+  - steer_pane: {name: coder, text: "confirm the migration"}
+  - wait: 1
+probe:
+  - grant_live: coder
+  - audit_min: 2

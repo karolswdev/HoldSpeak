@@ -1,0 +1,36 @@
+id: c-dictate-with-this
+title: "'Dictate with this' — a picked activity record grounds the next dictation"
+features:
+  - activity.prebriefing.dictate_with_this
+recipes:
+  - seeded-desk-43
+manual_setup:
+  # The activity ledger is derived from local browser history / recent
+  # activity — there is no public create route to seed an activity record — so
+  # a real activity record is hand-staged. The recipe stages the live .43
+  # runtime the pinned record feeds into.
+  - The seeded-desk-43 recipe has staged the live .43 dictation runtime; confirm it reads reachable.
+  - Populate the activity ledger with at least one record that carries a distinctive token the base model cannot know, e.g. visit a page or file referencing "PYLON-CANARY-7" so it appears as a recent-activity candidate.
+  - Open the activity pre-briefing surface and confirm that record is offered as a nudge/candidate.
+surfaces:
+  web: yes
+  ipad: {n/a: "directory row: activity.prebriefing.dictate_with_this ipad=unknown — the one-shot 'Dictate with this' pin on device is unverified in the record"}
+  iphone: {n/a: "directory row: activity.prebriefing.dictate_with_this iphone=unknown — no on-device 'Dictate with this' claim in the record"}
+steps:
+  # Staging-verify beat: the activity record is genuinely present and offered.
+  - do: Open the activity pre-briefing surface and confirm the hand-staged record carrying PYLON-CANARY-7 is offered as a candidate, and the runtime reads reachable.
+    where: /
+    expect: The record is listed as a selectable activity candidate with a 'Dictate with this' affordance; the runtime status reads reachable, not a dead endpoint.
+  # CONTROL leg — dictate WITHOUT pinning the record; token must be absent.
+  - do: Without selecting any activity record, dictate "draft a quick status update on what I was just working on".
+    where: /
+    expect: "The rewrite runs but cannot name PYLON-CANARY-7 — nothing has been pinned, so the model has no way to know it. The token is ABSENT in this control leg."
+  # TREATMENT leg — 'Dictate with this' pins the record, then the same prompt.
+  - do: Press 'Dictate with this' on the PYLON-CANARY-7 record, then dictate the SAME phrase.
+    where: /
+    expect: The treatment output names PYLON-CANARY-7 — the pinned activity record was fed into the dictation as context, so the token the control could not produce now appears. The only difference between the two runs is the pin; the token is attributable to it.
+  # Honest one-shot close — the pin is consumed, not sticky.
+  - do: Dictate the same phrase a third time without re-pinning.
+    where: /
+    expect: The record's token no longer appears — the 'Dictate with this' pin is one-shot and was consumed by the treatment dictation, so it does not silently ground every later dictation.
+teardown: []

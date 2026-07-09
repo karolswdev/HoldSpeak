@@ -1,0 +1,24 @@
+title: Actuators governance ON — master switch + allow-list open
+description: >
+  Real intel on .43 (so meetings and proposals are genuine pipeline output),
+  with the actuator governance gate deliberately OPEN: allow_actuators is on and
+  the github_issue / webhook_post / slack ids are on the per-project allow-list,
+  and a webhook host is allow-listed. This is the TREATMENT posture for the
+  connector packs — approval can execute — against golden-43's default-closed
+  gate. No URL secret is set here; the connector still needs its own consent.
+requires: [intel]
+config:
+  config_version: 1
+  model:
+    name: base
+    warm_on_start: false
+  meeting:
+    intel_enabled: true
+    intel_provider: cloud
+    intel_cloud_base_url: http://192.168.1.43:8080/v1
+    intel_cloud_model: Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
+    intent_router_enabled: true
+    mir_profile: balanced
+    allow_actuators: true
+    allowed_actuators: [github_issue, webhook_post, slack]
+    webhook_allowed_hosts: [uat.example.invalid]

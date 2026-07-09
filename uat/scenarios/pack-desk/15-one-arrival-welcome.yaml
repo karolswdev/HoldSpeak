@@ -1,0 +1,38 @@
+id: desk-one-arrival-welcome
+title: One first-run arrival — /welcome, and only on a first run
+# The first-run guard, both ways. A no-model first run (caches unlinked) must
+# route to /welcome. The honest close: once past first run (a seeded/ready
+# desk), the same guard must NOT force you back to /welcome — one arrival, not
+# a recurring gate.
+features:
+  - desk.web.one_arrival
+recipes:
+  - first-run-no-model
+  - seeded-desk
+surfaces:
+  web: yes
+  ipad: {n/a: "the iPad has its own connect/first-run flow, not the web /welcome arrival (desk.web.one_arrival ipad=unknown in the directory record)"}
+  iphone: {n/a: "the iPhone has its own connect/first-run flow, not the web /welcome arrival (desk.web.one_arrival iphone=unknown in the directory record)"}
+steps:
+  - do: >
+      Staging-verify. Boot a genuine first run (no model, caches unlinked) and
+      open the app root.
+    expect: >
+      The first-run guard routes you to /welcome — the single first-run arrival —
+      and the setup readiness honestly reports "not ready yet", not a faked green.
+    where: /
+  - do: >
+      Walk the /welcome arrival to its end (or confirm it lets you proceed once
+      set up).
+    expect: >
+      /welcome is a single guided arrival, not a wall — it hands you onward to the
+      desk when you finish, and reports its readiness honestly along the way.
+    where: /welcome
+  - do: >
+      Honest close. Now open a seeded/ready desk (past first run) at the root
+      route and confirm the guard does not force you back to /welcome.
+    expect: >
+      A ready run lands on the Desk, NOT on /welcome — the arrival fires once, it
+      is not a recurring gate. One arrival, honestly.
+    where: /
+teardown: []

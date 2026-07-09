@@ -1,0 +1,28 @@
+id: c-moment-of-truth
+title: The moment of truth — 'Was that right?' → Fix it → Taught, inline
+features:
+  - dictation.moment_of_truth.correct_inline
+recipes:
+  - seeded-desk-43
+surfaces:
+  web: yes
+  ipad: {n/a: "directory row: dictation.moment_of_truth.correct_inline ipad=unknown — ArtifactCorrectionTests exist but the dictation moment-of-truth on device is unconfirmed in the record; a genuine record gap"}
+  iphone: {n/a: "directory row: dictation.moment_of_truth.correct_inline iphone=unknown — no on-device moment-of-truth claim in the record"}
+steps:
+  # Staging-verify beat: start from a KNOWN-empty correction memory so the teach is attributable.
+  - do: Open the dictation surface on the seeded .43 desk and read the correction memory count. The seeded world has taught nothing.
+    where: /dictation
+    expect: The correction memory reads zero taught corrections — an honest empty, no pre-inflated N. The runtime status reads reachable, not a dead endpoint.
+  # CONTROL leg — the BEFORE, captured from a fresh dry-run result the human judges wrong in the moment.
+  - do: Dictate a short phrase the pipeline mis-handles in a way you can see (e.g. it types "ledger line" for the one-word repo name "ledgerline", or routes a code phrase to prose). The dry-run result shows before you accept it.
+    where: /dictation
+    expect: The result card shows the WRONG output and offers the moment-of-truth prompt ("Was that right?" with a Fix-it affordance). This is the control leg — no correction taught yet, so the mistake is expected and visible here.
+  # The inline teach — Fix it → Taught, in the same card.
+  - do: Press "Fix it" on that card, correct the result inline (make it "ledgerline" / re-route it), and confirm.
+    where: /dictation
+    expect: The card confirms "Taught" inline without leaving the moment — the said→typed correction is recorded and the memory count moves from zero to exactly one. The fix is applied to the pending result, not a separate settings screen.
+  # TREATMENT leg — the AFTER reflects the just-taught correction.
+  - do: Dictate the same phrase again.
+    where: /dictation
+    expect: This time it lands the corrected way — the one taught fix is applied. The before (wrong) vs after (right) contrast is the control-vs-treatment; the improvement is attributable to the single correction taught in the moment, not to chance.
+teardown: []

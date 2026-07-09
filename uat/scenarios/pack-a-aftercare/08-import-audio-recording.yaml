@@ -1,0 +1,26 @@
+id: a-import-audio-recording
+title: Import an audio recording — Whisper transcribes, intel runs (control vs treatment)
+features:
+  - meetings.import.audio
+manual_setup:
+  - On the web-desk / hub machine, have a Whisper model installed (the /setup readiness panel reads ready; audio import constructs a real transcriber, so no model means no import).
+  - Have a real meeting recording on disk — use the committed fixture dogfood/_audio/meeting-pylon-incident-warroom.wav (a warroom recording of the pylon expiry-headroom incident), or a fresh capture of your own.
+  - For the CONTROL beat, be able to point the meeting-intelligence runtime at a dead endpoint (the bad-endpoint posture) so intel cannot run after the audio transcribes.
+recipes: []
+surfaces:
+  web: yes
+  ipad: {n/a: "audio import is a web-desk/hub feature; no apple/ import UI was found in the inventory (row ipad: unknown) — the iPad reads the resulting meeting back, it does not run the importer"}
+  iphone: {n/a: "same as iPad — no apple/ audio-import UI found in the inventory (row iphone: unknown)"}
+steps:
+  - do: (Staging beat) Open /history and confirm the desk is ready to import audio — the readiness/setup panel reads ready (a transcriber can be constructed) and no pylon-warroom meeting exists yet.
+    expect: Setup reads ready and /history has no pre-existing pylon-warroom recording, so the import that follows is provably novel — not a stale replay.
+    where: /history
+  - do: Import the meeting-pylon-incident-warroom.wav recording through the /history import panel. Watch the meeting appear immediately, honestly marked importing, then transcribe.
+    expect: A new meeting appears at once carrying an honest importing status (never presented as done before Whisper finishes). When transcription completes, the meeting holds a real transcript with per-window start/end times — segments the audio actually contains, not fabricated text. The status flips from importing to complete only after the audio is transcribed.
+    where: /history
+  - do: (Control — intel endpoint dead) With the meeting transcribed, point the intel runtime at a dead endpoint and open the imported meeting's intelligence state.
+    expect: The transcript is present (Whisper already ran locally) but the intel state is an honest empty — no typed artifact cards are fabricated and the runtime status names the dead endpoint. The importer does not invent an incident summary it could not compute.
+    where: /history
+  - do: (Treatment — intel live) Point the intel runtime back at the live endpoint, run intelligence over the same transcribed recording, and read the artifact cards.
+    expect: Typed artifact cards now render with substance the control could not produce — the pylon expiry-headroom incident surfaces as a concrete artifact (an incident timeline or an open-actions list), each card carrying a confidence score and a transcript-source reference that resolves to a real audio-derived segment. Judge on substance — the decision (a headroom alert), an owner, a risk — never on wording.
+    where: /history

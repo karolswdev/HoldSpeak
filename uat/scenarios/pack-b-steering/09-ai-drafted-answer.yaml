@@ -1,0 +1,54 @@
+id: b-ai-drafted-answer
+title: AI drafts the answer to a blocked coder — approve, then inject
+features:
+  - agents.answer_coder.ai_drafted
+manual_setup:
+  # No recipe can induce this: the AI draft runs on a resolved on-device (or
+  # live-endpoint) model, on the iPad, against a REAL blocked coder session. The
+  # UAT harness stages panes and grants, but not the iPad app pointed at a live
+  # model provider. Stage it by hand:
+  - On a desktop, start a coding agent that blocks awaiting a decision (e.g. a
+    tmux pane printing "AWAITING-MIGRATION-CONFIRM; describe the rollback plan").
+  - On the iPad companion, pair with that desktop hub so the blocked coder shows
+    on the Agent Desk as a waiting session.
+  - In the iPad's model settings, resolve a provider the draft can run on — either
+    an installed on-device model, or the LAN endpoint (.43) — so "Draft with AI"
+    has a live provider (its egress chip will name where it ran).
+recipes: []
+# agents.answer_coder.ai_drafted is ipad:yes (CoderAnswer.draft on a fresh
+# resolved provider, violet Draft-with-AI action + its own egress chip, live
+# endpoint proof 0.52s). web is unknown in the record; iphone unknown.
+surfaces:
+  web: {n/a: "directory row: web unknown — the Draft-with-AI action is evidenced on iPad (CoderAnswer.draft), not on the web desk"}
+  ipad: yes
+  iphone: {n/a: "directory row: iphone unknown — no device claim for the AI-draft action on iPhone in the record"}
+steps:
+  - do: >
+      Manual-staging verify. On the iPad Agent Desk, confirm the blocked coder
+      shows as a waiting session with its question ("AWAITING-MIGRATION-CONFIRM /
+      describe the rollback plan"), and that the model provider resolves — the
+      Draft-with-AI action is enabled, not greyed out for a missing model.
+    expect: The blocked coder is listed waiting with its question visible, and the violet "Draft with AI" action is enabled (a provider resolved).
+  - do: >
+      Control — open the coder-answer composer and read it BEFORE drafting. Do not
+      type anything.
+    expect: >
+      The composer is empty — no answer text is present and nothing has been
+      injected to the coder. The coder is still blocked. This is the control leg:
+      no draft exists yet.
+  - do: >
+      Treatment — tap "Draft with AI". Judge the draft structurally, not on exact
+      wording.
+    expect: >
+      A drafted answer appears in the composer that actually addresses the coder's
+      question — it names a rollback plan / responds to the migration-confirm ask,
+      not boilerplate — and its egress chip names where it ran (on-device or the
+      endpoint). The draft is present where the control had nothing.
+  - do: >
+      Confirm the approve-then-inject gate: the draft is NOT auto-sent — inject it
+      only after you approve it.
+    expect: >
+      Nothing reaches the coder until you approve. On approve, the drafted answer
+      is injected to the waiting coder and the session unblocks; on discard, the
+      coder stays blocked and no text is sent. Draft never bypasses approval.
+teardown: []

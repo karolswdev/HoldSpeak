@@ -1,0 +1,34 @@
+id: c-journal-review
+title: The dictation Journal — every said→typed pair, in a durable timeline
+features:
+  - dictation.journal.review
+recipes:
+  - pack-c-journal-ready
+manual_setup:
+  # The Journal fills only from real dictations (there is no journal-entry
+  # create route), so the actual said->typed entries are hand-staged; the
+  # recipe stages the grounded context the entries land against.
+  - The pack-c-journal-ready recipe has staged the glossary note and Journal KB; confirm the desk is up.
+  - Have a transcription model installed and a short spoken phrase ready that leans on the repo, e.g. "note the ledgerline rewrite is on track".
+  - Dictate that phrase twice through the pipeline so at least two entries exist in the Journal before the walk.
+surfaces:
+  web: yes
+  ipad: {n/a: "directory row: dictation.journal.review ipad=unknown — LearningJournal.swift contract exists but the Journal UI on device is unconfirmed in the record; a genuine record gap, not a punt"}
+  iphone: {n/a: "directory row: dictation.journal.review iphone=unknown — no Journal-on-device claim in the record"}
+steps:
+  # Staging-verify beat: the context world is live and the journal has entries.
+  - do: Open the /dictation Journal tab and confirm the two hand-staged dictations are present, and the glossary note (uat-seed-note-journal-glossary) is on the desk.
+    where: /dictation
+    expect: The Journal tab lists at least two entries, each showing what was SAID and what was TYPED, plus its route and latency — a durable timeline, not an empty tab. The glossary note is visible on the desk.
+  # CONTROL vs TREATMENT — the LLM leg: the journal must record a grounded rewrite differently from an ungrounded one.
+  - do: With grounding OFF, dictate "summarise the ledgerline status"; then read that new entry in the Journal.
+    where: /dictation
+    expect: "The new Journal entry's TYPED side does not name BLUEBIRD (the glossary-only codename) — the control rewrite could not know it. The token is ABSENT in this entry."
+  - do: With grounding ON (the Journal KB attached), dictate the same phrase; read the new entry.
+    where: /dictation
+    expect: The new Journal entry's TYPED side names BLUEBIRD (or another glossary-only fact) — the journal faithfully records the grounded rewrite the control could not produce. The said side is identical between the two; only the typed side differs, attributable to grounding.
+  # Durability close — the timeline survives and a delete is honest.
+  - do: Reload the page, then delete one Journal entry and confirm the count.
+    where: /dictation
+    expect: The remaining entries persist across the reload (the Journal is durable, not session-scoped), and deleting one drops the count by exactly one — no phantom or resurrected entries.
+teardown: []

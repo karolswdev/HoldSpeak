@@ -1,0 +1,41 @@
+id: desk-coders-on-the-desk
+title: Live coding agents appear on the desk and demand you when blocked
+# Staging-verify beat opens (a real tmux coder pane spawned via the factory
+# route, printing a prompt and waiting). The coder must render as a desk object
+# whose state reads "blocked / awaiting". The honest close: send keys while the
+# pane is UNARMED and watch the consent gate refuse — a blocked coder is not a
+# free keyboard.
+features:
+  - desk.coders.agents-on-the-desk
+recipes:
+  - agent-pane-awaiting-input
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the coder-on-the-desk object at iPhone compact width is unverified in the directory record (desk.coders.agents-on-the-desk iphone=unknown)"}
+steps:
+  - do: >
+      Staging-verify. A real coder pane was spawned and is waiting on a prompt.
+      Open the desk and find the live coding agent among the objects.
+    expect: >
+      A coding-agent object is on the desk and it reads live/blocked — it shows
+      the "coder" pane as awaiting input (the AWAITING-MIGRATION-CONFIRM prompt is
+      visible when you peek), not a stale or empty tile.
+    where: /
+  - do: >
+      Confirm the blocked coder is demanding attention — it is visibly flagged as
+      needing you (a badge, a glow, or an "awaiting input" marker), distinct from
+      an idle agent.
+    expect: >
+      The pane is marked as awaiting your input, not silently idle — a blocked
+      agent surfaces itself rather than waiting to be discovered.
+    where: /
+  - do: >
+      Honest-failure close. Without arming the pane, try to send it a keystroke
+      (the raw key path, no consent grant held).
+    expect: >
+      The send is refused because the pane is unarmed — the consent gate names
+      that the pane must be armed first. A live coder on the desk is not an
+      un-gated keyboard.
+    where: /
+teardown: []

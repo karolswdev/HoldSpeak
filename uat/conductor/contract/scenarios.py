@@ -86,6 +86,7 @@ class Scenario:
     recipes: list[str]
     surfaces: dict[str, dict]  # resolved {surface: {applicable, reason}}
     steps: list[Step]
+    manual_setup: list[str] = field(default_factory=list)  # human-run staging when no recipe can
     teardown: list[Any] = field(default_factory=list)
     source: str = ""
 
@@ -100,6 +101,7 @@ class Scenario:
             "pack": self.pack,
             "features": self.features,
             "recipes": self.recipes,
+            "manual_setup": self.manual_setup,
             "surfaces": self.surfaces,
             "steps": [
                 {
@@ -175,6 +177,7 @@ def load_scenario(path: Path, pack: str | None = None) -> Scenario:
         recipes=recipes,
         surfaces=surfaces,
         steps=steps,
+        manual_setup=[str(x) for x in (doc.get("manual_setup") or [])],
         teardown=list(doc.get("teardown") or []),
         source=str(path),
     )
@@ -197,8 +200,14 @@ def validate_scenario(
         if key not in ledger_keys:
             errors.append(f"ERROR {src}: unknown ledger key: {key}")
 
-    if not scenario.recipes:
-        errors.append(f"ERROR {src}: scenario names no recipes (need ≥1)")
+    # A scenario stages its world by a recipe OR by a human precondition
+    # (manual_setup) — a must-do protocol we can't auto-stage is still a real
+    # protocol the person stages by hand and walks. One of the two is required.
+    if not scenario.recipes and not scenario.manual_setup:
+        errors.append(
+            f"ERROR {src}: scenario names no recipes and no manual_setup "
+            "(need ≥1 recipe, or manual_setup steps for a hand-staged protocol)"
+        )
     for r in scenario.recipes:
         if r not in recipe_names:
             errors.append(f"ERROR {src}: unknown recipe: {r}")

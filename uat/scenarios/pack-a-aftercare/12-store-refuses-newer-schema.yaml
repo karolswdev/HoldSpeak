@@ -1,0 +1,26 @@
+id: a-store-refuses-newer-schema
+title: The device store refuses a newer schema and backs up before it migrates
+features:
+  - sync.storage.refuse_newer
+manual_setup:
+  - Install the app on the device (iPad, and an iPhone for the second surface) with a store already holding real primitives.
+  - Stage a store file stamped with a schema version NEWER than the installed build understands (hand-edit the schema-version row, or install an older build over a store written by a newer one) so the app boots against a store from the future.
+  - Separately, stage a store one schema version OLDER than the build so the forward-migration + backup path can be exercised.
+recipes: []
+surfaces:
+  web: {n/a: "this is the iPad/iPhone App-layer SQLite store safety behaviour (HSM-23-01/02); the hub-side schema matrix is a different capability. Inventory web: yes refers to the hub matrix, not this on-device refuse-newer path"}
+  ipad: yes
+  iphone: yes
+steps:
+  - do: (Staging beat) Confirm the two staged stores exist — one stamped a schema version newer than the build, one a version older — and note each store's schema version before launch.
+    expect: Both stores are present with their stamped schema versions recorded, so the refuse-vs-migrate behaviour that follows can be attributed to the version, not to chance.
+    where: /
+  - do: Launch the app against the NEWER-schema store.
+    expect: The store refuses to open the from-the-future schema rather than silently downgrading or corrupting it — the readiness/doctor panel names the refusal and its reason (schema newer than this build). The app does not destructively rewrite data it does not understand.
+    where: /
+  - do: Launch the app against the OLDER-schema store and let it migrate forward.
+    expect: The store backs up the old file BEFORE migrating, then applies the forward migration — a backup artifact is present after migration and the migrated store opens. Backup-then-apply, in that order, not migrate-and-hope.
+    where: /
+  - do: (Honest-failure close) After the refusal on the newer store, confirm the original newer-schema data is untouched on disk.
+    expect: The refused store's data is intact — the refusal is non-destructive, so a user who upgrades the app on another device loses nothing. Refuse safely beats migrate wrongly.
+    where: /

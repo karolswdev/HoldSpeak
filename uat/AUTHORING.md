@@ -122,10 +122,35 @@ steps:
       - apply_recipe: mesh-node-just-died
 ```
 
+### Hand-staged protocols (`manual_setup`)
+
+A must-do protocol the harness **can't auto-stage** (a device-local state, a live
+capture, a connector needing real credentials) is still a real protocol — it's
+staged by hand. Give it a `manual_setup` list instead of (or alongside)
+`recipes:`; the guided site shows those as a checklist ("stage this by hand →
+continue") before the walkthrough, and the person still casts a verdict per
+surface.
+
+```yaml
+id: mesh-cross-machine-steer
+title: Steer a coder on a second machine
+features: [steering.cross_machine]
+manual_setup:                 # human staging — no recipe can induce this
+  - Pair a second Mac as a steering node (`holdspeak mesh serve` on it).
+  - Start a coder session on that node awaiting input.
+recipes: []                   # empty is fine when manual_setup is present
+steps:
+  - do: From this desk, arm and steer the remote coder.
+    expect: The far node writes its own audit row; the local one does not.
+```
+
+A scenario needs **≥1 recipe OR a non-empty `manual_setup`** — never neither.
+
 Rules the contract enforces (named errors):
 
 - **Cite real keys and recipes.** Every `features` key must exist in
   `uat/features.yaml`; every recipe must exist. Unknown → validation error.
+  A scenario with no recipe must carry `manual_setup`.
 - **The surface axis is explicit.** Default is all-yes; a surface is opted out
   only with `{n/a: <reason>}`. `n/a` without a reason fails; a step with **every**
   surface `n/a` fails (a step must be walked somewhere).

@@ -40,6 +40,7 @@ export const useStore = create((set, get) => ({
   sitting: null,
   staging: null,
   stagedIds: {},
+  confirmedIds: {},
   afterRan: {},
   error: null,
   busy: false,
@@ -107,6 +108,10 @@ export const useStore = create((set, get) => ({
       set({ error: String(e.message || e), busy: false, staging: { ok: false, error: String(e.message || e) } });
       return get().staging;
     }
+  },
+
+  confirmStaged(scenarioId) {
+    set((st) => ({ confirmedIds: { ...st.confirmedIds, [scenarioId]: true } }));
   },
 
   retryStage(scenarioId) {

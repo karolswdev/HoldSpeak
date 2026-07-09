@@ -1,0 +1,46 @@
+id: b-dictate-into-mac
+title: Dictate from the phone into the focused Mac app — and when nothing is focused
+features:
+  - agents.dictation.into_your_mac
+manual_setup:
+  # No recipe can induce this: the device is the mic and a separate focused Mac
+  # app is the target — a live capture across two machines the harness cannot
+  # drive. Stage by hand:
+  - On a Mac, run the HoldSpeak hub on the LAN and grant it the accessibility /
+    input permission it needs to type into the focused app.
+  - On the iPhone, pair with that Mac hub (reach chip reads reachable) and open
+    the dictation surface (the hold-bar teleprompter).
+  - On the Mac, put a real text field in focus (a note, an editor, a chat box) so
+    dictated text has somewhere to land.
+recipes: []
+# agents.dictation.into_your_mac is iphone:yes (iPhone dictation surface with
+# hold-bar teleprompter, phase 20 HSM-20-04, on the same seam). web is NO (the
+# device is the mic, the Mac is the target). ipad is in-progress (DictateView
+# built + Simulator-proven, live LAN trace owner-gated HSM-15-01) — still walked.
+surfaces:
+  web: {n/a: "directory row: web no — the device is the mic and the Mac is the target; there is no web surface for dictating INTO a Mac"}
+  ipad: yes
+  iphone: yes
+steps:
+  - do: >
+      Manual-staging verify. On the phone/iPad, confirm the dictation surface is
+      paired and reachable — the reach chip reads reachable to the Mac hub, and
+      the egress badge reflects where transcription runs.
+    expect: The reach chip reads reachable to the paired Mac; the hold-bar dictation surface is ready and the egress badge is shown (not a dead endpoint).
+  - do: >
+      Control — put the Mac focus on NO editable field (click the desktop, or a
+      window with no text field). Hold the bar and speak a short phrase.
+    expect: >
+      The dictation is captured and read back on the device, but with nothing
+      focused to receive it, no text is injected into a Mac app — the device says
+      it had no target rather than silently losing the words. This is the control:
+      no focused field, so nothing lands.
+  - do: >
+      Treatment — focus a real editable field on the Mac, hold the bar, and speak
+      the SAME phrase.
+    expect: >
+      This time the transcribed text lands in the focused Mac app exactly where
+      the cursor is — the phrase appears in the note/editor/chat box. The only
+      difference from the control is a focused target; the device dictated INTO
+      the Mac.
+teardown: []

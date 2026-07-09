@@ -1,0 +1,53 @@
+id: f-models-import-and-mode
+title: Import a model, then choose where inference runs — and the dead-endpoint control
+# Two device musts: the on-device model store (Files sideload + AirDrop + HF
+# download) and the runtime-mode setting (local / homelab / any endpoint). The
+# import side is device-local (Files/AirDrop/HF) so it is hand-staged; the mode
+# side gets a real control-vs-treatment on the endpoint, and the conductor can
+# induce the dead-endpoint half via the intel-endpoint-dead recipe.
+features:
+  - mobile.models.import_and_manage
+  - mobile.models.inference_mode_setting
+manual_setup:
+  - Have a GGUF model file available in the Files app (or ready to AirDrop from a Mac) for the sideload leg.
+  - Have network access for the Hugging Face download leg (a pinned catalog URL, since the HF scraper is by pinned URL only).
+  - Know one reachable OpenAI-compatible endpoint URL (e.g. the .43 llama-server) for the endpoint-mode treatment.
+recipes:
+  - intel-endpoint-dead
+surfaces:
+  web: {n/a: "directory rows: models.import_and_manage web=no (device model store) and inference_mode_setting web=unknown (web has its own runtime; this setting is the device's) — not the web surface"}
+  ipad: yes
+  iphone: {n/a: "directory rows: import_and_manage + inference_mode_setting iphone=unknown — the same core, but the iPhone Settings/model surface is not separately evidenced in this slice"}
+steps:
+  - do: >
+      Staging-verify. Open the model manager and read the installed list.
+    expect: >
+      The model manager opens and shows an honest list of installed models (or an
+      honest empty state) with sizes — not a spinner and not a fabricated entry.
+    where: /
+  - do: Download the pinned catalog model from Hugging Face and watch the progress.
+    expect: >
+      Progress moves 0 → 100% with real bytes (not a fake indeterminate bar); when
+      it completes the model appears in the list and can be activated. If a catalog
+      URL no longer resolves, the download fails honestly rather than hanging.
+  - do: Sideload a GGUF via Files / AirDrop, then delete a model.
+    expect: >
+      The sideloaded model appears in the list and can be activated; deleting a
+      model removes it from the list and frees its space. Add / activate / delete
+      all read back truthfully.
+  - do: >
+      Control for the mode setting. Set the runtime mode to endpoint but point it
+      at a DEAD endpoint (the intel-endpoint-dead world), then generate.
+    expect: >
+      The run fails honestly and fast — under five seconds — naming the unreachable
+      endpoint; it does NOT hang and does NOT silently fall back. This is the
+      control: the endpoint the model can't reach names itself as dead.
+  - do: >
+      Treatment. Set the mode to endpoint with the REACHABLE endpoint URL and
+      generate the same thing.
+    expect: >
+      A real result comes back and the egress badge names the real host (cloud /
+      endpoint, not "On device") — the badge tells the truth about where the run
+      went. The reachable endpoint produces what the dead one could not.
+    where: /
+teardown: []

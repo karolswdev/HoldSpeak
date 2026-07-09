@@ -1,0 +1,41 @@
+id: desk-profiles-editor
+title: The runtime profiles editor — pick-not-type, and the key never rides back
+# The /profiles editor. A seeded desk gives the editor a live surface; the
+# profile-key-never-syncs recipe stages a profile carrying a bogus secret so the
+# honest close is a real attack: create a key-bearing profile, then prove the
+# secret NEVER appears in the profiles read-back. Fail-loud if it leaks.
+features:
+  - runtime.web.profiles_editor
+recipes:
+  - seeded-desk
+  - profile-key-never-syncs
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the profiles editor at iPhone compact width is unverified in the directory record (runtime.web.profiles_editor iphone=unknown)"}
+steps:
+  - do: >
+      Staging-verify. Open the profiles editor at /profiles. A seeded desk and a
+      key-bearing "Leaky profile" were staged.
+    expect: >
+      The profiles editor lists the runtime profiles, including the seeded local
+      profile and the "Leaky profile" — it reads back as a real editor, not empty.
+    where: /profiles
+  - do: >
+      Confirm the editor is pick-not-type where it should be — the runtime/kind
+      selection is chosen from options, not free-typed into a raw field.
+    expect: >
+      Runtime selection is a pick (a chooser of known kinds/nodes), not a
+      hand-typed string — the editor guides the shape rather than trusting free
+      text.
+    where: /profiles
+  - do: >
+      Honest-failure close (the attack). The "Leaky profile" was created with a
+      secret API key. Open the profiles read-back (the editor, or GET /api/profiles)
+      and search the response for that secret.
+    expect: >
+      The secret key value NEVER appears in the profiles read-back — the profile
+      is listed but its key does not ride the wire. If the secret shows anywhere,
+      that is a loud fail. Absent-despite-present is the honest bar.
+    where: /profiles
+teardown: []

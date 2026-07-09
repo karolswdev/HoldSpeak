@@ -1,0 +1,18 @@
+# The context a dictation Journal / moment-of-truth walk leans on: a project
+# glossary note carrying a repo-only token the grounded rewrite must surface,
+# plus a KB the journal entries can be grounded against. The Journal itself
+# fills only from real dictations (there is no create route for a journal
+# entry), so a scenario using this seed hand-stages the actual dictations in
+# manual_setup and uses this seed for the surrounding checkable context.
+# Deterministic ids upsert in place.
+notes:
+  - id: uat-seed-note-journal-glossary
+    title: Project glossary (journal walk)
+    body_markdown: |
+      - **BLUEBIRD** — the internal codename for the ledgerline streaming rewrite.
+      - **ledgerline** — the reconciliation repo; one word, never "ledger line".
+    tags: [uat-seed, glossary, journal]
+kbs:
+  - id: uat-seed-kb-journal
+    name: Journal-walk project KB
+    member_ids: [uat-seed-note-journal-glossary]

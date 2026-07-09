@@ -1,0 +1,44 @@
+id: f-proposals-review
+title: The proposals review queue — approve, reject, and the illegal-transition refusal
+# HSM-19-05: a four-state proposals queue where proposed items can be Approved or
+# Rejected, the decision audited as 'ipad-companion' (not 'web-user'), and an
+# already-decided proposal refuses a second decision with a 400 illegal transition.
+# No recipe can induce a PENDING actuator proposal (the induction verbs don't
+# author proposals), so the pending item is hand-staged; the meeting world that
+# spawns it is staged by meeting-just-ended-open-actions.
+features:
+  - mobile.meeting.proposals.review
+manual_setup:
+  - Stage a meeting with open actions (apply the meeting-just-ended-open-actions recipe or import a transcript and run intel on .43).
+  - Get one actuator proposal into the PROPOSED state (e.g. accept an action that generates a propose→approve→execute proposal), so the queue has a decidable item.
+recipes:
+  - meeting-just-ended-open-actions
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "directory row mobile.meeting.proposals.review iphone=unknown — the queue at compact width is not separately proven; a phone-column gap, not a genuine absence"}
+steps:
+  - do: >
+      Staging-verify. Open the proposals queue and confirm a PROPOSED item is
+      present with all four states legible.
+    expect: >
+      The queue shows a four-state card with at least one item in the proposed
+      state — a decidable proposal, not an empty queue.
+    where: /
+  - do: Approve the proposed item, then read the audit attribution on the decision.
+    expect: >
+      The item transitions out of proposed, and the audit records the decision as
+      'ipad-companion' — NOT 'web-user'. Attribution correctness is load-bearing:
+      the surface that decided is named honestly.
+    where: /
+    surfaces:
+      web: {n/a: "the 'ipad-companion' audit attribution is the iPad-companion decision path; a web decision would audit as web-user, so this specific attribution check is the iPad leg"}
+  - do: >
+      Honest-failure close. Try to decide the SAME (already-decided) proposal again
+      — Approve or Reject it a second time.
+    expect: >
+      The second decision is refused with a 400 illegal transition — an
+      already-decided proposal cannot be re-decided. The consent/execution split is
+      enforced, not silently swallowed.
+    where: /
+teardown: []

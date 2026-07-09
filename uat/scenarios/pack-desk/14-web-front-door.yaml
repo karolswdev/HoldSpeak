@@ -1,0 +1,37 @@
+id: desk-web-front-door
+title: The Desk is the front door — a fresh arrival lands in the world
+# Two worlds, one door. A fresh desk proves the empty front door; the seeded
+# desk proves the door filled with objects. Route / IS the Desk (no separate
+# landing page). Honest-failure guard: the front door must load even before any
+# model is warm — a cold model does not block arrival.
+features:
+  - desk.web.front_door
+recipes:
+  - fresh-desk
+  - seeded-desk
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the iPhone diorama front-door layout is not separately proven in the directory record (desk.web.front_door iphone=unknown)"}
+steps:
+  - do: >
+      Staging-verify (empty world). Open the app at its root route with a fresh
+      desk. Where do you land?
+    expect: >
+      You land directly on the Desk at / — it IS the front door. There is no
+      intermediate dashboard or menu page; an empty desk world renders, ready.
+    where: /
+  - do: >
+      Now open the seeded desk (the primitive-rich world) at the same root route.
+    expect: >
+      The same / route now shows the seeded objects living in the one spatial
+      world — the door did not change, only its contents.
+    where: /
+  - do: >
+      Honest guard. Confirm the desk front door renders before any LLM/intel is
+      warm (no model loaded yet).
+    expect: >
+      The front door loads and its objects are reachable with a cold model — a
+      not-yet-warm model does not gate arrival at the desk.
+    where: /
+teardown: []

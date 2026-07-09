@@ -1,0 +1,38 @@
+id: b-voice-commands-board
+title: Map a spoken keyword to an action on the Voice Commands board
+features:
+  - macros.voice_commands.board
+recipes:
+  - seeded-desk
+# macros.voice_commands.board is web:yes (/commands route + commands.astro; POST
+# /api/commands/test), ipad:yes AND iphone:yes (the same CommandsBoard.swift +
+# VoiceCommands contract + CommandsClient serves both form factors). All three
+# surfaces are affirmed in the directory row — no n/a here.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: yes
+steps:
+  - do: >
+      Staging-verify. Open the seeded desk and confirm it is up (notes and KBs
+      present), then open the Voice Commands board (the /commands surface).
+    expect: The seeded desk is interactive and the Voice Commands board opens; it lists whatever mappings exist (an honest empty list is fine on a fresh board).
+    where: /
+  - do: >
+      Add a mapping on the board: bind a spoken keyword (e.g. "open journal") to a
+      concrete system action (a real action from the action picker, not free
+      text).
+    expect: >
+      The board saves the mapping and it appears in the list — the keyword and the
+      chosen action are shown as a bound pair. The action is one of the offered
+      real actions, not an arbitrary string.
+    where: /
+  - do: >
+      Use the board's own test affordance (POST /api/commands/test) to fire the
+      saved mapping's keyword.
+    expect: >
+      The test reports the keyword matched THAT action and would fire it — a
+      concrete match, naming the bound action. A keyword the board never mapped
+      does NOT match; the test is honest about a miss.
+    where: /
+teardown: []

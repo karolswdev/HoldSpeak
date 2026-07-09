@@ -1,0 +1,15 @@
+title: Wake-word world — a live desk ready to arm hands-free
+description: >
+  A seeded desk booted local and healthy, staged as the world the wake-word
+  beats ride. Arming hands-free and previewing the wake result are driven by a
+  live microphone saying the wake phrase — that capture is hand-staged in the
+  scenario's manual_setup — so this recipe verifies only what a route can read
+  back: the desk is up and reachable, ready to arm. Idempotent: the seeded ids
+  upsert in place, so re-applying converges to the same verified world.
+deck: golden-local
+requires: []
+seeds:
+  - dogfood-desk
+probe:
+  - setup_reachable: true
+  - note_exists: uat-seed-note-glossary

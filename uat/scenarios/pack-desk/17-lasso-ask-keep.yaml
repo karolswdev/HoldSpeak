@@ -1,0 +1,53 @@
+id: desk-lasso-ask-keep
+title: Ask over a lassoed pile, then keep or bin the printed card
+# The lasso -> Ask -> keep-or-bin loop. Ask is an LLM feature, so it rides the
+# mandatory control-vs-treatment pair on .43. The kept card must persist with
+# its lineage; the binned one must leave no object. This is distinct from
+# scenario 04's grounded-ask beat: here the focus is the KEEP/BIN lifecycle of
+# the printed card as a desk object.
+features:
+  - ask.atom.lasso_ask_keep
+recipes:
+  - seeded-desk-43
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the lasso-ask-keep loop at iPhone width is a later reflow (phase 20), unproven in the directory record (ask.atom.lasso_ask_keep iphone=unknown)"}
+steps:
+  - do: >
+      Staging-verify. The seeded desk is live on .43. Lasso (or shift-click) the
+      Ledgerline pile — the BLUEBIRD and pylon notes — into a bundle and open the
+      Ask composer over it.
+    expect: >
+      The lassoed objects form a bundle and the Ask composer opens scoped to
+      exactly that pile — the bundle bar shows the selected objects.
+    where: /
+  - do: >
+      CONTROL. Ask "summarise this pile in one line" with grounding OFF (the pile
+      NOT fed to the model). Judge this beat alone.
+    expect: >
+      The result is generic — it cannot name BLUEBIRD or the pylon incident,
+      because the pile was not fed. A vague or "no context" answer is the point.
+    where: /
+  - do: >
+      TREATMENT. Ask the SAME question grounded on the lassoed pile, on .43. Judge
+      this beat alone.
+    expect: >
+      The answer names the pile's substance (BLUEBIRD as the ledgerline rewrite,
+      the pylon incident) — judged structurally on whether it surfaces the pile's
+      real content, not wording. This is the token the control could not know.
+    where: /
+  - do: >
+      Keep the printed answer card, then confirm it persists as a desk object with
+      its lineage (which pile it came from, the prompt).
+    expect: >
+      The kept card lands on the desk as its own object and carries its lineage —
+      the source pile and the prompt are recoverable from it.
+    where: /
+  - do: >
+      Ask again over the same pile, and this time BIN (discard) the printed card.
+    expect: >
+      The binned card leaves NO object behind on the desk — discard means gone,
+      not hidden. Keep persists, bin removes; the two are honestly distinct.
+    where: /
+teardown: []

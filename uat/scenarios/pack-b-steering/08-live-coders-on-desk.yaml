@@ -1,0 +1,36 @@
+id: b-live-coders-on-desk
+title: Live coders on the desk — the one that is blocked demands you
+features:
+  - agents.desk.live_coders
+recipes:
+  - agent-pane-awaiting-input
+# agents.desk.live_coders is web:yes (Agent Desk, phase 69; /api/coders/sessions)
+# and ipad:yes (AgentSessionPrimitive .coder, waiting glares, DioCoderSession
+# replay, live-hub sim proof HSM-17-03). iPhone unknown (compact reflow phase 20).
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the coder session objects at iPhone compact width are unknown in the directory record (row: iphone unknown, compact reflow phase 20)"}
+steps:
+  - do: >
+      Staging-verify. Open the desk and confirm the staged coding agent appears
+      as a live session object — the pane awaiting input (it printed
+      AWAITING-MIGRATION-CONFIRM) is listed among the coders.
+    expect: The live coder session appears on the desk as an object and is listed in the coders view; its session is real, not a placeholder.
+    where: /
+  - do: >
+      Read the state the desk shows for that coder. It is blocked at a prompt,
+      awaiting input.
+    expect: >
+      The desk marks the blocked coder as waiting/demanding attention (a waiting
+      glare or "awaiting input" state), and surfaces the question it is stuck on —
+      the AWAITING-MIGRATION-CONFIRM prompt — not just a generic "running" badge.
+    where: /
+  - do: >
+      Peek at the blocked coder's live pane from the desk.
+    expect: >
+      The peek shows the pane live with its prompt visible — watching is free, no
+      grant needed to read what the agent is asking. The blocked question the
+      desk surfaced matches what the pane actually shows.
+    where: /
+teardown: []

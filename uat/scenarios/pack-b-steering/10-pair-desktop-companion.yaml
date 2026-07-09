@@ -1,0 +1,43 @@
+id: b-pair-desktop-companion
+title: Point the iPad at your desktop as a companion — pair, then lose the LAN
+features:
+  - agents.companion.pair_desktop
+manual_setup:
+  # No recipe can induce this: pairing is the device -> hub direction over the
+  # LAN, and the harness cannot drive a physical iPad's connect onboarding. Stage
+  # by hand:
+  - On a desktop, run the HoldSpeak hub on the LAN (holdspeak serve) and note its
+    reachable address + token.
+  - On the iPad, open the companion connect onboarding (CompanionShell) and point
+    it at that desktop hub (THIS iPAD -> DESKTOP cards).
+  - Keep both on the same network for the first steps; you will drop the iPad off
+    the network for the honest-failure close.
+recipes: []
+# agents.companion.pair_desktop is ipad:yes (CompanionShell + connect onboarding,
+# offline-tolerant localOnly, live on iPad HSM-12-01/03). web is NO by design —
+# the pairing is device -> hub, not a web capability. iphone unknown (chartered
+# at parity, Amendment 1.1, device gate HSM-12-04 not evidenced).
+surfaces:
+  web: {n/a: "directory row: web no — pairing is the device -> hub direction; there is no web companion-pairing surface"}
+  ipad: yes
+  iphone: {n/a: "directory row: iphone unknown — chartered at parity (Amendment 1.1) but the device gate (HSM-12-04) is not evidenced in the record"}
+steps:
+  - do: >
+      Manual-staging verify. On the iPad companion, open the connect onboarding
+      and confirm it presents the pairing target — a THIS iPAD card and a DESKTOP
+      card for the hub you started.
+    expect: The connect onboarding shows this iPad and the desktop hub as pairing endpoints; the desktop address/token you noted matches the DESKTOP card.
+  - do: >
+      Complete the pairing to the desktop hub.
+    expect: >
+      The iPad pairs and reads reachable — it names the paired desktop as its
+      companion hub, and the desk / coders it serves become visible. The pairing
+      is the device pointing at the hub, confirmed on the device.
+  - do: >
+      Honest-failure close — drop the iPad off the network (airplane mode / leave
+      the LAN), then look at the companion reach indicator.
+    expect: >
+      The companion degrades honestly — the reach chip reads unreachable / offline
+      and names the lost hub rather than pretending it is still paired. Nothing
+      fabricates a live desktop; the offline-tolerant localOnly posture holds.
+teardown: []

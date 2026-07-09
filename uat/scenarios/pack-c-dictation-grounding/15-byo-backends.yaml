@@ -1,0 +1,26 @@
+id: c-byo-backends
+title: Bring your own LLM — GGUF in-process, MLX, or an OpenAI-compatible endpoint
+features:
+  - models.byo.three-backends
+recipes:
+  - pack-c-byo-backends
+surfaces:
+  web: yes      # directory: models.byo.three-backends web=yes (MODELS.md 'three ways to bring an LLM')
+  ipad: yes     # directory: models.byo.three-backends ipad=yes (MODELS.md profiles sync across surfaces; a surface that cannot host a kind shows it unavailable)
+  iphone: yes   # directory: models.byo.three-backends iphone=yes (on-device gemma4/qwen35 engine; MODELS.md iPhone profiles under Settings)
+steps:
+  # Staging-verify beat: all three backend profiles are present.
+  - do: Open the profiles / runtime settings and confirm the three seeded profiles are present — Local GGUF (in-process), Apple Silicon MLX, and OpenAI-compatible endpoint.
+    where: /
+    expect: All three profiles are listed, one per documented backend — a GGUF in-process, an MLX, and an OpenAI-compatible endpoint. Not one generic profile, but the three distinct ways to bring an LLM.
+  # Each kind is a real target — the GGUF/MLX in-process leg.
+  - do: Read each profile's kind/backend label — confirm GGUF and MLX are shown as on-device (in-process) and the endpoint profile is shown as an external OpenAI-compatible target.
+    where: /
+    expect: The GGUF and MLX profiles read as on-device in-process runtimes; the endpoint profile reads as an OpenAI-compatible external endpoint (its own kind), matching the MODELS.md three-backends split — not all collapsed to one runtime type.
+  # Honest-degradation close — a surface that CANNOT host a kind marks it unavailable.
+  - do: On a surface that cannot host a given backend (e.g. MLX on a non-Apple-Silicon web host, or GGUF in-process on the iPhone form factor), read how that profile is presented.
+    where: /
+    expect: The backend it cannot host is marked unavailable on that surface — shown honestly as not-runnable-here, NOT silently offered as if it would run. A surface never pretends it can host a kind it cannot.
+    surfaces:
+      web: {n/a: "this honest-unavailable beat is a device/host-capability check; on web it is exercised by the MLX-on-non-Apple-Silicon reading covered surface-wide"}
+teardown: []

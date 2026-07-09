@@ -1,0 +1,43 @@
+id: desk-qlippy-decision-cards
+title: Qlippy sliding cards interrupt only for a real moment
+# Qlippy's opt-in decision cards. A real meeting-just-ended world (with open
+# actions, run through intel on .43) is a genuine "moment that needs you" — the
+# card surfaces it. Whether the card is a faithful decision surface is an LLM
+# question (its content comes from the meeting's real actions), so the moment's
+# content is judged against the meeting the control could not know. Honest close:
+# the card's Approve sends the byte-identical decision request the dashboard does.
+features:
+  - qlippy.decision_cards
+recipes:
+  - meeting-just-ended-open-actions
+surfaces:
+  web: yes
+  ipad: {n/a: "Qlippy decision cards are a web/desktop-presence surface; the iPad card surface is unverified in the directory record (qlippy.decision_cards ipad=unknown)"}
+  iphone: {n/a: "Qlippy decision cards are a web/desktop-presence surface; the iPhone card surface is unverified in the directory record (qlippy.decision_cards iphone=unknown)"}
+steps:
+  - do: >
+      Staging-verify. A meeting just ended on .43 with at least one open action.
+      With Qlippy presence ON, wait for a decision card to slide in for that
+      moment.
+    expect: >
+      A Qlippy card slides in tied to the just-ended meeting's open action — it
+      interrupts for a real moment, not a synthetic ping. The card names the
+      action's substance (drawn from the real meeting), which a card with no
+      meeting could not.
+    where: /
+  - do: >
+      With more than one pending moment, confirm the card queue behaves — the +N
+      hint counts the others, and hovering pauses the auto-slide.
+    expect: >
+      The FIFO card shows a +N hint for additional pending moments and pauses on
+      hover — you are not rushed past a decision.
+    where: /
+  - do: >
+      Honest close. Approve the action from the Qlippy card, then confirm the
+      dashboard reflects the same approval.
+    expect: >
+      Approving from the card sends the byte-identical decision request the
+      dashboard sends — the same action is approved whether you act from the card
+      or the dashboard; the two paths do not diverge.
+    where: /
+teardown: []

@@ -1,0 +1,51 @@
+id: desk-agent-rail-run
+title: Run an agent persona from the rail — control vs treatment on .43
+# Running a persona from the rail is an LLM feature, so it carries the mandatory
+# control-vs-treatment pair. The world seeds a desk (with the PM recipe persona)
+# on .43 AND registers a live mesh node so the run has a real place to execute
+# and be badged. OFF (groundless) can't cite the pile; ON (grounded on .43)
+# names the repo token. Honest close: the run is badged for where it ran.
+features:
+  - desk.web.agent_rail_run
+recipes:
+  - seeded-desk-43
+  - mesh-node-alive
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the agent rail at iPhone compact width is unverified in the directory record (desk.web.agent_rail_run iphone=unknown)"}
+steps:
+  - do: >
+      Staging-verify. The seeded desk is live on .43 and the "uat-worker" mesh
+      node reads live. Open the desk and find the agent rail with the seeded PM
+      persona on it.
+    expect: >
+      The agent rail shows the seeded persona (the PM recipe) as a runnable item,
+      and the "uat-worker" node reads live as a place a run could execute.
+    where: /
+  - do: >
+      CONTROL. Run the persona from the rail with NO pile / no grounding fed to
+      it, asking it to summarise "the BLUEBIRD decision and its owner". Judge this
+      beat alone.
+    expect: >
+      The run produces a generic result — it cannot name BLUEBIRD as the ledgerline
+      rewrite or its owner, because nothing from the desk grounded it. A vague or
+      "no such context" result is the point here.
+    where: /
+  - do: >
+      TREATMENT. Lasso the Ledgerline pile (the BLUEBIRD + pylon notes) and run
+      the SAME persona from the rail grounded on that pile, on .43. Judge this
+      beat alone.
+    expect: >
+      The result is grounded — it names BLUEBIRD as the ledgerline
+      streaming/reconciliation rewrite and surfaces the owner/risk. Judge
+      structurally on substance, not wording. This is the token the control could
+      not know.
+    where: /
+  - do: >
+      Read the badge on the treatment result — where did it run?
+    expect: >
+      The result is badged for where it executed (the on-device/hub/mesh scope),
+      not unlabeled — the provenance is asserted content, not decoration.
+    where: /
+teardown: []
