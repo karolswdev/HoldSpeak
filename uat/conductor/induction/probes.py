@@ -68,9 +68,10 @@ class ProbeError(RuntimeError):
 class ProbeEvaluator:
     """Evaluates a probe spec against a booted run."""
 
-    def __init__(self, client: ProductClient, *, home: Path | None = None):
+    def __init__(self, client: ProductClient, *, home: Path | None = None, run_id: str | None = None):
         self.client = client
         self.home = home
+        self.run_id = run_id
 
     def evaluate(self, spec: list[Any] | None) -> ProbeReport:
         report = ProbeReport()
@@ -278,6 +279,87 @@ class ProbeEvaluator:
             time.sleep(3.0)
         return (False, f"node {name!r} still reads live within {timeout:.0f}s")
 
+    # --- live steering (via the product's /api/coders routes) -------------
+
+    def _steer_session(self, name: str) -> str:
+        from . import steering
+
+        return steering.session_name(self.run_id or "", name)
+
+    def _peek(self, name: str) -> dict:
+        from . import steering
+
+        session = self._steer_session(name)
+        key = steering.pane_key_for_session(self.client, session)
+        if key is None:
+            return {"_missing": True}
+        try:
+            return self.client.get_json(f"/api/coders/{steering.enc(key)}/peek")
+        except Exception:
+            return {"_missing": True}
+
+    def _check_pane_listed(self, arg):
+        from . import steering
+
+        name = str(arg if not isinstance(arg, dict) else arg.get("name"))
+        session = self._steer_session(name)
+        present = steering.pane_key_for_session(self.client, session) is not None
+        return (present, f"pane {session!r} {'listed' if present else 'absent'}")
+
+    def _check_pane_shows(self, arg):
+        name = str(arg.get("name"))
+        contains = str(arg.get("contains", ""))
+        peek = self._peek(name)
+        if peek.get("_missing"):
+            return (False, f"no pane for {name!r}")
+        blob = _json_str(peek)
+        ok = peek.get("peek", {}).get("status") == "live" and contains in blob
+        return (ok, f"peek live={peek.get('peek',{}).get('status')} contains={contains!r}:{contains in blob}")
+
+    def _check_pane_awaiting_input(self, arg):
+        name = str(arg if not isinstance(arg, dict) else arg.get("name"))
+        marker = arg.get("marker", "AWAITING-INPUT") if isinstance(arg, dict) else "AWAITING-INPUT"
+        peek = self._peek(name)
+        if peek.get("_missing"):
+            return (False, f"no pane for {name!r}")
+        live = peek.get("peek", {}).get("status") == "live"
+        shows = str(marker) in _json_str(peek)
+        return (live and shows, f"pane live={live} shows-prompt={shows}")
+
+    def _check_grant_live(self, arg):
+        from . import steering
+
+        name = str(arg if not isinstance(arg, dict) else arg.get("name"))
+        session = self._steer_session(name)
+        key = steering.pane_key_for_session(self.client, session)
+        try:
+            grants = self.client.get_json("/api/coders/steering/grants").get("grants", {})
+        except Exception:
+            grants = {}
+        live = key is not None and key in grants
+        return (live, f"grant for {key!r} {'live' if live else 'absent'}")
+
+    def _check_audit_min(self, arg):
+        n = int(arg if not isinstance(arg, dict) else arg.get("count", 1))
+        try:
+            audit = self.client.get_json("/api/coders/steering/audit").get("audit", [])
+        except Exception:
+            audit = []
+        return (len(audit) >= n, f"{len(audit)} audit rows (need ≥{n})")
+
+    def _check_keys_refused_unarmed(self, arg):
+        """Sending keys to an UNARMED pane must refuse (the consent gate)."""
+        from . import steering
+
+        name = str(arg if not isinstance(arg, dict) else arg.get("name"))
+        session = self._steer_session(name)
+        key = steering.pane_key_for_session(self.client, session)
+        if key is None:
+            return (False, f"no pane for {name!r}")
+        resp = self.client.post_json(f"/api/coders/{steering.enc(key)}/keys", {"keys": ["a"]})
+        refused = resp.status_code != 200
+        return (refused, f"unarmed keys refused={refused} (HTTP {resp.status_code})")
+
     # --- doctor (subprocess, product-routed) ------------------------------
 
     def _check_doctor_names_dead_endpoint(self, _arg):
@@ -303,6 +385,15 @@ class ProbeEvaluator:
         )
         return (named, "doctor output names the dead endpoint" if named else
                 "doctor did not name the dead endpoint")
+
+
+def _json_str(obj: Any) -> str:
+    import json
+
+    try:
+        return json.dumps(obj)
+    except (TypeError, ValueError):
+        return str(obj)
 
 
 def _split_assertion(assertion: Any) -> tuple[str, Any]:

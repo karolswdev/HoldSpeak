@@ -153,6 +153,7 @@ class RunManager:
         self.recipes = recipe_engine or RecipeEngine()
         self._runs: dict[str, tuple[Run, ProductProcess]] = {}
         self._node_managers: dict[str, NodeManager] = {}
+        self._steer_sessions: dict[str, set[str]] = {}
         self._lock = threading.RLock()
 
     # --- creation / boot --------------------------------------------------
@@ -336,6 +337,18 @@ class RunManager:
         with self._lock:
             return self._nodes(run_id).kill(name)
 
+    def spawn_pane(self, run_id: str, name: str, command: str) -> dict:
+        """Spawn a tmux coder pane via the product's factory route; track the
+        session so it's killed on teardown (no residue in the owner's tmux)."""
+        from .induction import steering
+
+        run = self._runs.get(run_id, (None, None))[0]
+        if run is None:
+            raise KeyError(run_id)
+        session = steering.session_name(run_id, name)
+        self._steer_sessions.setdefault(run_id, set()).add(session)
+        return steering.spawn(self.product_client(run_id), session, command)
+
     def list_nodes(self, run_id: str) -> list[dict]:
         return [n.to_dict() for n in self._nodes(run_id).list()]
 
@@ -362,6 +375,10 @@ class RunManager:
             nm = self._node_managers.pop(run_id, None)
             if nm is not None:
                 nm.kill_all()
+            for session in self._steer_sessions.pop(run_id, set()):
+                from .induction import steering
+
+                steering.kill_session(session)
             product.stop()
             run.status = "down"
             run.pid = None
