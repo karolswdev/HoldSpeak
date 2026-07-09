@@ -5,6 +5,7 @@ features:
   - dictation.learning.digest
 recipes:
   - seeded-desk-43
+  - learned-correction-taught
 surfaces:
   web: yes
   ipad: yes   # directory: dictation.learning-digest.honest-count ipad=yes (iPad reads the learning digest with real learned-from-N reach; ios consumes /api/dictation/learning-digest)

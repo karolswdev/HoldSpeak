@@ -1,0 +1,11 @@
+title: A correction has been taught (known count)
+description: >
+  Record one dictation correction through the product's own route, so the
+  "learned from N" digest has a KNOWN count to check honestly against — the
+  honest-by-construction pillar. Fully local.
+deck: golden-local
+requires: []
+actions:
+  - teach_correction: {kind: intent, text: teh, value: the}
+probe:
+  - learning_digest_min: 1
