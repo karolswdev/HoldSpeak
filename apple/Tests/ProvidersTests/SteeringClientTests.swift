@@ -133,4 +133,91 @@ final class SteeringClientTests: XCTestCase {
         XCTAssertEqual(trail[0].outcome, "delivered")
         XCTAssertEqual(trail[0].grounding, ["rails:story:HS-88-05"])
     }
+
+    // MARK: - Phase-89/90 parity (the iPad catches up)
+
+    func testKeysDeliverNamedAndLiteral() async throws {
+        route("/api/coders/claude:s1/keys", 200,
+              #"{"status":"delivered","pane_id":"%5","keys":"C-c"}"#)
+        let res = try await client().coderKeys(key: "claude:s1", keys: [.interrupt, .literal("/find"), .down])
+        XCTAssertTrue(res.isDelivered)
+        let sent = String(decoding: StubProtocol.lastBody ?? Data(), as: UTF8.self)
+        XCTAssertTrue(sent.contains("\"C-c\""))       // a named key is a bare string
+        XCTAssertTrue(sent.contains("\"literal\""))   // a literal run is an object
+        XCTAssertTrue(sent.contains("/find"))
+    }
+
+    func testKeysRefusalIsData() async throws {
+        // A recycled-pane keys refusal comes back 409 → SteerResult, revoking.
+        route("/api/coders/claude:s1/keys", 409,
+              #"{"status":"pane_mismatch","revoked":true,"detail":"recycled"}"#)
+        let res = try await client().coderKeys(key: "claude:s1", keys: [.interrupt])
+        XCTAssertFalse(res.isDelivered)
+        XCTAssertTrue(res.didRevoke)
+    }
+
+    func testKeysToANodeRouteThroughTheRelayWithKeyInBody() async throws {
+        route("/api/coders/relay/beta/keys", 200, #"{"status":"delivered","node":"beta","pane_id":"%5"}"#)
+        let res = try await client().coderKeys(key: "pane:%5", keys: [.interrupt], node: "beta")
+        XCTAssertTrue(res.isDelivered)
+        let sent = String(decoding: StubProtocol.lastBody ?? Data(), as: UTF8.self)
+        XCTAssertTrue(sent.contains("\"key\""))        // the key rides the BODY on the relay
+        XCTAssertTrue(sent.contains("pane:%5"))
+    }
+
+    func testSteerToANodeRoutesThroughTheRelay() async throws {
+        route("/api/coders/relay/beta/steer", 200, #"{"status":"delivered","node":"beta","pane_id":"%5"}"#)
+        let res = try await client().steerCoder(key: "pane:%5", text: "hi", node: "beta")
+        XCTAssertTrue(res.isDelivered)
+        XCTAssertTrue(String(decoding: StubProtocol.lastBody ?? Data(), as: UTF8.self).contains("\"key\""))
+    }
+
+    func testPanesListDecodes() async throws {
+        route("/api/coders/steering/panes", 200, #"""
+        {"panes":[{"pane_id":"%3","session":"work","window":"0","command":"claude","title":"","active":true},
+                  {"pane_id":"%7","session":"build","window":"1","command":"npm","title":"","active":false}]}
+        """#)
+        let panes = try await client().steeringPanes()
+        XCTAssertEqual(panes.count, 2)
+        XCTAssertEqual(panes[0].paneId, "%3")
+        XCTAssertEqual(panes[0].command, "claude")
+        XCTAssertEqual(panes[0].active, true)
+    }
+
+    func testNodesListDecodes() async throws {
+        route("/api/coders/steering/nodes", 200, #"{"nodes":["beta","gamma"]}"#)
+        let nodes = try await client().steeringNodes()
+        XCTAssertEqual(nodes, ["beta", "gamma"])
+    }
+
+    func testKillDeliversAndRefusalIsData() async throws {
+        route("/api/coders/pane:%5/kill", 200, #"{"status":"killed","pane_id":"%5","scope":"session"}"#)
+        let killed = try await client().killCoder(key: "pane:%5", scope: "session")
+        XCTAssertTrue(killed.isKilled)
+        XCTAssertEqual(killed.scope, "session")
+
+        route("/api/coders/pane:%5/kill", 409, #"{"status":"unarmed"}"#)
+        let refused = try await client().killCoder(key: "pane:%5")
+        XCTAssertFalse(refused.isKilled)
+        XCTAssertEqual(refused.status, "unarmed")
+    }
+
+    func testSpawnReturnsThePaneKeyAndBadNameIsData() async throws {
+        route("/api/coders/factory/spawn", 200, #"{"status":"spawned","session":"work","pane_id":"%9"}"#)
+        let ok = try await client().spawnSession(name: "work", command: "bash")
+        XCTAssertTrue(ok.isOk)
+        XCTAssertEqual(ok.paneKey, "pane:%9")   // ready to attach
+
+        route("/api/coders/factory/spawn", 409, #"{"status":"bad_name","detail":"no"}"#)
+        let bad = try await client().spawnSession(name: "a b")
+        XCTAssertFalse(bad.isOk)
+        XCTAssertEqual(bad.status, "bad_name")
+    }
+
+    func testRenameRelabels() async throws {
+        route("/api/coders/factory/rename", 200, #"{"status":"renamed","session":"shipped"}"#)
+        let res = try await client().renameSession(target: "work", name: "shipped")
+        XCTAssertTrue(res.isOk)
+        XCTAssertEqual(res.session, "shipped")
+    }
 }
