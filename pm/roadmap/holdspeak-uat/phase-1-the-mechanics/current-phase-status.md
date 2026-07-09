@@ -1,64 +1,86 @@
 # Phase 1 — The Mechanics
 
-**Last updated:** 2026-07-08 (scaffolded, 0/6)
+**Last updated:** 2026-07-08 (owner direction folded in pre-build:
+three-surface UAT + the induction engine; still 0/6)
 
 ## Goal
 
 Build the UAT rig itself — the conductor that hosts HoldSpeak on this
-Mac under controlled conditions (isolated HOME per run, named config
-decks good and bad, desk seeding, mesh nodes), the scenario contract
-with an enumerated feature ledger, the guided website that walks a
-human through a pack and captures a verdict per step, and the debrief
-+ triage protocol that turns a sitting into backlog-ready findings —
-proven by one real smoke-pack sitting run end to end by the owner.
+Mac under controlled conditions and reachable by the devices, the
+induction engine (config decks good and bad, desk seeding, and named
+**idempotent state recipes** with verify probes — repeatable worlds,
+not stumbled-into ones), the **three-surface** scenario contract
+(web / iPad / iPhone, verdict per surface, honest `n/a`) with an
+enumerated feature ledger, the guided website that walks a human
+through a pack and captures per-surface verdicts — from the device's
+own browser too — and the debrief + triage protocol that turns a
+sitting into backlog-ready findings — proven by one real smoke-pack
+sitting run end to end by the owner across all three surfaces.
 
 ## Scope
 
 - **In:** the `uat/` harness (conductor process, run lifecycle, run
-  DB), config decks, seed manifests, mesh-node spawn/kill, the
-  scenario YAML contract + loader + validation, `uat/features.yaml`
-  (the coverage ledger derived from the holdspeak phase index), one
-  smoke pack (~6–8 scenarios incl. at least one deliberately-bad
-  deck), the React+Vite guided site, the debrief packet generator,
-  the joint triage protocol, harness docs, the live closing sitting.
-  Absorbing the dogfood substrate (isolated `_home` recipe, fixture
-  generators, mock repos, transcripts).
-- **Out:** full scenario coverage of the product (Phase 2); any change
-  to HoldSpeak product behavior (the harness drives the product
-  through its existing CLI/config/API surface only — a product bug
-  found here becomes a *finding*, not a fix in this phase); CI
-  automation of sittings (a sitting is human by definition);
-  packaging/publishing the harness.
+  DB, LAN reachability for device sittings), the induction engine
+  (config decks, seed manifests, idempotent state recipes with verify
+  probes, mesh-node spawn/kill), the three-surface scenario YAML
+  contract + loader + validation, `uat/features.yaml` v1 (the ledger
+  seeded from the holdspeak phase index, per-surface applicability
+  columns, `unknown` honest), one smoke pack (~6–8 scenarios incl. at
+  least one deliberately-bad deck and one three-surface scenario),
+  the React+Vite guided site with per-surface verdict capture usable
+  from the devices' browsers, the debrief packet generator
+  (per-surface scores, cross-surface splits first-class), the joint
+  triage protocol, harness docs, the live closing sitting. Absorbing
+  the dogfood substrate (isolated `_home` recipe, fixture generators,
+  mock repos, transcripts).
+- **Out:** the exhaustive capability inventory (Phase 2 — The
+  Inventory); full scenario coverage of the product (Phase 3); any
+  change to HoldSpeak product behavior (the harness drives the
+  product through its existing CLI/config/API surface only — a
+  product bug found here becomes a *finding*, not a fix in this
+  phase); device-side state induction beyond hub-synced state (a
+  Phase 2 inventory question); CI automation of sittings (a sitting
+  is human by definition); packaging/publishing the harness.
 
 ## Exit criteria
 
 - [ ] `uv run python -m uat.conductor` serves the guided site on a
-      pinned local port; a run boots an isolated HoldSpeak with a
-      chosen deck, health-checked, logs captured, torn down cleanly.
+      pinned local port (LAN-optable for device sittings); a run
+      boots an isolated HoldSpeak with a chosen deck, health-checked,
+      logs captured, torn down cleanly, and reports pairing facts a
+      device app can use.
 - [ ] At least five decks exist including two deliberately bad ones,
       and a scenario can assert the product *fails honestly* under
       them.
-- [ ] A seed manifest materializes a described desk (notes, KB,
-      recipes, ≥1 imported meeting) before a scenario starts.
-- [ ] The scenario contract is validated by tests;
-      `uat/features.yaml` enumerates the shipped surface with every
-      holdspeak phase mapped; the smoke pack loads clean.
+- [ ] The shipped state recipes apply idempotently and verify via
+      probes read back through product routes — incl.
+      `meeting-just-ended-open-actions` yielding a real meeting with
+      a real open action.
+- [ ] The scenario contract is validated by tests with the surface
+      axis enforced (explicit applicability, `n/a` requires a
+      reason); `uat/features.yaml` v1 enumerates the shipped surface
+      with every holdspeak phase mapped and three applicability
+      columns; the smoke pack loads clean.
 - [ ] The guided site walks a pack step by step, captures
-      pass/fail/partial/skip + note + screenshot per step into the run
-      DB, and survives a mid-sitting product restart.
+      pass/fail/partial/skip + note + screenshot **per (step,
+      surface)** into the run DB, works from an iPhone-width browser
+      over LAN, and survives a mid-sitting product restart.
 - [ ] A finished sitting generates a debrief packet (markdown + JSON,
-      coverage % included); the triage protocol doc defines the joint
+      per-surface scores + coverage %, cross-surface splits rendered
+      as one finding); the triage protocol doc defines the joint
       review and the BACKLOG feed format.
 - [ ] The closing sitting: the owner runs the smoke pack live on this
-      Mac end to end, the debrief is generated, and at least one
-      finding is triaged through the protocol.
+      Mac end to end — the three-surface scenario sat on web, iPad,
+      and iPhone with ≥1 verdict cast from a device — the debrief is
+      generated, and at least one finding is triaged through the
+      protocol.
 
 ## Story status
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSU-1-01 | The conductor: hosted runs | backlog | [story-01](./story-01-the-conductor.md) | — |
-| HSU-1-02 | Decks, seeds, and the mesh | backlog | [story-02](./story-02-decks-and-seeding.md) | — |
+| HSU-1-02 | The induction engine: decks, seeds, state recipes | backlog | [story-02](./story-02-the-induction-engine.md) | — |
 | HSU-1-03 | The scenario contract + the feature ledger | backlog | [story-03](./story-03-scenario-contract-and-coverage.md) | — |
 | HSU-1-04 | The guided site | backlog | [story-04](./story-04-the-guided-site.md) | — |
 | HSU-1-05 | The debrief + the triage protocol | backlog | [story-05](./story-05-the-debrief.md) | — |
@@ -70,10 +92,16 @@ Scaffolded 2026-07-08 from the owner's direct ask: a robust UAT
 harness that forces a real human sitting — a guided website with
 scenario scripts and per-step feedback capture, powerful enough to
 host the server, flip good/bad configurations, and seed the desk.
-Decisions locked at scaffold: standalone conductor (not an in-product
-route), absorb + supersede the Phase-67 dogfood harness, coverage
-enumerated from the git/phase record, mechanics + one smoke pack only
-(full coverage is Phase 2). Next: HSU-1-01.
+Amended the same day, pre-build, on the owner's second direction:
+(a) **three-surface UAT** — nearly every scenario aims at web, iPad,
+and iPhone with a verdict per surface and `n/a` honest; (b) **the
+induction engine** — decks/seeds generalized into named idempotent
+state recipes with verify probes, so the protocol is repeatable; (c)
+**Phase 2 re-chartered as The Inventory** (the joint capability
+census), pushing the coverage pack to Phase 3. Decisions locked at
+scaffold: standalone conductor (not an in-product route), absorb +
+supersede the Phase-67 dogfood harness, coverage enumerated from the
+git/phase record, mechanics + one smoke pack only. Next: HSU-1-01.
 
 ## Active risks
 
@@ -91,8 +119,11 @@ enumerated from the git/phase record, mechanics + one smoke pack only
 | 2026-07-08 | Standalone conductor process, never an in-product route | The harness must boot/kill/reboot the product under bad configs; it cannot live inside the process under test | owner + agent |
 | 2026-07-08 | Absorb and supersede dogfood (Phase 67) | One harness, no drift; the guided site replaces the fillable PROTOCOL.md | owner |
 | 2026-07-08 | Coverage ledger derived from the phase index + git history | "We have git" — the shipped surface is enumerated from the record, not from memory | owner |
-| 2026-07-08 | Phase 1 = mechanics + one smoke pack; full coverage is Phase 2 | Prove the rig on a thin vertical slice before authoring at scale | owner |
+| 2026-07-08 | Phase 1 = mechanics + one smoke pack | Prove the rig on a thin vertical slice before authoring at scale | owner |
 | 2026-07-08 | Story prefix `HSU`, code home `uat/` | Consistent with HS/HSM siblings; harness never ships in the package | owner |
+| 2026-07-08 | Three surfaces (web/iPad/iPhone) are the default target of every scenario; verdicts per surface; `n/a` needs a stated reason | "Literally nearly all of the tests should aim for those three targets" — owner, directly | owner |
+| 2026-07-08 | States are induced by named idempotent recipes with verify probes, never staged by hand | "Induce specific states, for a more idempotent, repeatable protocol" — owner, directly | owner |
+| 2026-07-08 | Phase 2 = The Inventory (the joint capability census + charter); the coverage pack moves to Phase 3 | The matrix must exist before scenarios are authored at scale — "really, really big material" | owner |
 
 ## Decisions deferred
 

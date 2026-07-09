@@ -21,49 +21,71 @@ only that we tested what we happened to think of.
 
 - In:
   - **The scenario contract** — `uat/scenarios/<pack>/<nn>-<slug>.yaml`:
-    `id`, `title`, `features: [ledger keys]`, `deck`, `seeds`,
-    `nodes`, ordered `steps` (each: `do` — the instruction to the
-    human, `expect` — the honest pass bar, optional `where` — the
-    product route/surface to open), optional `mid_run` actions the
-    conductor performs between steps (restart with another deck, kill
-    a node — the HSU-1-01/02 verbs), and `teardown`. Loader +
-    validation with named, greppable errors.
-  - **The feature ledger** — `uat/features.yaml`: the shipped surface
-    enumerated as stable keys (e.g. `dictation.pipeline`,
+    `id`, `title`, `features: [ledger keys]`, `recipes` (the HSU-1-02
+    state recipes that stage the world — decks/seeds ride inside
+    them), **`surfaces`** (the three-target rule: default
+    `{web: yes, ipad: yes, iphone: yes}`, overridable per scenario
+    *and per step* with `n/a: <reason>` — a surface is opted OUT with
+    a stated reason, never silently absent), ordered `steps` (each:
+    `do` — the instruction to the human, `expect` — the honest pass
+    bar, optional `where` — the product route/screen to open),
+    optional `mid_run` actions the conductor performs between steps
+    (apply a recipe, restart with another deck, kill a node — the
+    HSU-1-01/02 verbs), and `teardown`. Loader + validation with
+    named, greppable errors. A step's expected verdict count = its
+    applicable surfaces.
+  - **The feature ledger, v1** — `uat/features.yaml`: the shipped
+    capabilities enumerated as stable keys (e.g. `dictation.pipeline`,
     `meetings.import.transcript`, `desk.steering.arm`,
     `mesh.relay`, …), each entry naming the holdspeak phase(s) that
-    shipped it. Built by walking `pm/roadmap/holdspeak/README.md`'s
+    shipped it and carrying a per-surface applicability column
+    (`web/ipad/iphone: yes|no|unknown` — `unknown` is honest and
+    expected at v1). Built by walking `pm/roadmap/holdspeak/README.md`'s
     phase index (with git history as the tiebreaker for what survived
     later phases), reviewed by hand — the derivation script
     (`uat/tools/build_ledger.py`) proposes, the committed YAML is
-    canon. Retired features are marked `retired`, not deleted.
+    canon. Retired features are marked `retired`, not deleted. **v1
+    is the mechanical seed**: Phase 2 (The Inventory) owns making it
+    exhaustive and resolving every `unknown`; this story owns the
+    format and the derivation.
   - **Coverage math** — given a pack (or a finished sitting), compute
-    features covered / total live features; exposed via the conductor
-    API for HSU-1-04/05 to render.
+    features covered / total live features, **per surface and
+    overall**; exposed via the conductor API for HSU-1-04/05 to
+    render.
   - **The smoke pack** — `uat/scenarios/smoke/`: 6–8 scenarios proving
     the rig's whole vocabulary: a dictation-surface walk on
-    `golden-local`, a meeting round-trip on a seeded imported meeting,
-    a desk walk over seeded primitives, one `bad-endpoint` honest-
-    failure scenario, one `no-model` first-run-truth scenario, one
-    mesh-node scenario with a mid-run node kill.
+    `golden-local`, a meeting round-trip on
+    `meeting-just-ended-open-actions`, a desk walk over `seeded-desk`
+    **declared three-surface** (the same seeded primitives checked on
+    web, iPad, and iPhone), one `bad-endpoint` honest-failure
+    scenario, one `no-model` first-run-truth scenario, one mesh-node
+    scenario with a mid-run `mesh-node-just-died`, and at least one
+    step carrying an honest per-surface `n/a` with its reason.
 - Out: rendering (HSU-1-04), verdict storage semantics (HSU-1-04),
-  full-coverage pack authorship (Phase 2 — the ledger will make the
-  gap list explicit).
+  the exhaustive inventory (Phase 2), full-coverage pack authorship
+  (Phase 3 — the matrix will make the gap list explicit).
 
 ## Acceptance criteria
 
 - [ ] The contract is schema-validated; a malformed scenario fails
       load with a named error naming the file and field.
-- [ ] Every scenario must cite ≥1 ledger key that exists; an unknown
-      key fails validation.
+- [ ] Every scenario must cite ≥1 ledger key that exists and ≥1
+      recipe that exists; an unknown key or recipe fails validation.
+- [ ] Surface rules enforced: every scenario resolves to an explicit
+      per-surface applicability; `n/a` without a reason fails
+      validation.
 - [ ] `uat/features.yaml` exists with every holdspeak phase (0–90)
       mapped to at least one ledger entry or an explicit
-      `internal/no-uat-surface` marker — no phase silently absent.
-- [ ] Coverage math is exact and tested (covered, uncovered, retired
-      excluded).
-- [ ] The smoke pack loads clean, cites real ledger keys, and
-      exercises: both golden decks' postures, both bad decks, seeding,
-      and one mid-run conductor action.
+      `internal/no-uat-surface` marker — no phase silently absent —
+      and every entry carrying the three applicability columns
+      (`unknown` allowed at v1).
+- [ ] Coverage math is exact and tested, per surface and overall
+      (covered, uncovered, retired excluded, `n/a` and `unknown`
+      handled distinctly).
+- [ ] The smoke pack loads clean, cites real ledger keys and recipes,
+      and exercises: both golden decks' postures, both bad decks, a
+      three-surface scenario, an honest `n/a`, and one mid-run
+      conductor action.
 - [ ] Tests green under `uv run pytest -q tests/uat/`.
 
 ## Test plan
@@ -79,5 +101,6 @@ only that we tested what we happened to think of.
 - `expect` lines are written against POSITIONING canon voice: honest
   pass bars ("the badge reads local", "doctor names the dead
   endpoint"), never marketing.
-- The ledger doubles as the Phase-2 work generator: uncovered keys ARE
-  the scenario backlog.
+- The ledger doubles as the Phase-2 work generator: its `unknown`
+  applicability cells and thin domains ARE the inventory's worklist,
+  and after Phase 2 the uncovered keys ARE Phase 3's scenario backlog.

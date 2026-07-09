@@ -1,6 +1,6 @@
 # HoldSpeak UAT — Roadmap
 
-**Last updated:** 2026-07-08 (project scaffolded; Phase 1 — The Mechanics — 0/6)
+**Last updated:** 2026-07-08 (owner direction folded in: three-surface UAT + the induction engine; Phase 2 — The Inventory — scaffolded)
 **Current phase:** [Phase 1 — The Mechanics](./phase-1-the-mechanics/current-phase-status.md)
 **Status:** active
 
@@ -24,7 +24,7 @@ in a run database). A run ends in a **debrief packet** the owner and
 the agent triage together; accepted findings feed
 `pm/roadmap/holdspeak/BACKLOG.md` with the run as the citation.
 
-Two principles anchor it:
+Four principles anchor it:
 
 1. **The harness stands outside the product.** It must be able to
    boot HoldSpeak broken, kill it, and boot it again differently — so
@@ -37,6 +37,21 @@ Two principles anchor it:
    git history — into a feature ledger every scenario cites, so a
    debrief can honestly state what fraction of the product a sitting
    touched and what has never been sat through.
+3. **Three surfaces, one script.** The iPad, the iPhone, and the web
+   desk are the product's **claimed parity set** — that parity is the
+   experience HoldSpeak is building, and UAT is the instrument that
+   holds the product to the claim. Nearly every scenario aims at all
+   three, a verdict is cast *per surface* (with `n/a` an honest
+   first-class answer, reason stated), and a cross-surface verdict
+   split is a **parity break** — a first-class finding class. A
+   sitting that only touched the web is a partial sitting and the
+   record says so.
+4. **States are induced, not stumbled into.** A scenario's
+   precondition is a named, idempotent **state recipe** the conductor
+   executes and *verifies* ("a meeting just ended with three open
+   actions", "an agent pane is awaiting input", "the node just
+   died") — so two sittings a month apart start from the same world
+   and their verdicts are comparable.
 
 ## Source canon
 
@@ -57,13 +72,14 @@ canon, canon wins.
 
 | Phase | Goal (one line) | Status | Folder |
 |---|---|---|---|
-| 1 | The Mechanics: the conductor (hosted runs, config decks, desk seeding, mesh nodes), the scenario contract + coverage ledger, the guided UAT site, the debrief + triage protocol, proven by one live smoke-pack sitting | in-progress (0/6) | [phase-1-the-mechanics](./phase-1-the-mechanics/) |
+| 1 | The Mechanics: the conductor (hosted runs reachable by the devices), the induction engine (decks, seeds, idempotent state recipes, mesh hands), the three-surface scenario contract + seed ledger, the guided UAT site with per-surface verdicts, the debrief + triage protocol, proven by one live smoke-pack sitting | in-progress (0/6) | [phase-1-the-mechanics](./phase-1-the-mechanics/) |
+| 2 | The Inventory: owner + agent gather what UAT *is* here (the charter) and enumerate everything the system can do — dictation, meetings, the desk, the mesh, steering, KB/handoff — into the capability × surface × required-state matrix that Phase 3's coverage pack is authored from | planning (0/5) | [phase-2-the-inventory](./phase-2-the-inventory/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
-Phase 2 (not yet scaffolded) is the first real coverage pack: scenario
-authorship across the whole feature ledger — dictation, meetings,
-desk, mesh, steering, the belt — sat through end to end.
+Phase 3 (not yet scaffolded) is the coverage pack: scenario authorship
+across the whole inventory matrix, sat through end to end on all three
+surfaces.
 
 ## Operating cadence
 
@@ -95,13 +111,23 @@ commit on a fresh `.tmp/CONTRACT.md`.
   bad) written into the run's isolated HOME before boot.
 - **Seed manifest** — a declarative description of desk/context state
   (notes, KB, recipes, meetings) injected before a scenario starts.
-- **Scenario** — a declarative script: deck + seeds + ordered steps,
-  each step an instruction, an expectation, and a verdict prompt.
+- **State recipe** — a named, idempotent, self-verifying procedure the
+  conductor runs to induce a described world state (a deck + seeds +
+  process/mesh actions, closed by a verify probe read back through
+  product APIs). The unit of repeatability.
+- **Surface** — where the human meets the product: `web`, `ipad`,
+  `iphone`. Scenarios declare per-surface applicability; verdicts are
+  cast per surface.
+- **Scenario** — a declarative script: state recipe(s) + surfaces +
+  ordered steps, each step an instruction, an expectation, and a
+  verdict prompt.
 - **Pack** — a curated set of scenarios run as one sitting.
 - **Sitting** — one human UAT run of a pack, end to end, on real metal.
 - **Debrief packet** — the generated record of a sitting (verdicts,
   notes, screenshots, coverage) that the owner and the agent triage
   together.
 - **Feature ledger** — `uat/features.yaml`: the enumerated shipped
-  surface, derived from the holdspeak phase index; scenarios cite its
-  keys; debriefs compute coverage against it.
+  capabilities; scenarios cite its keys; debriefs compute coverage
+  against it. Phase 1 seeds it mechanically from the holdspeak phase
+  index; Phase 2's inventory makes it exhaustive and adds the
+  per-surface applicability + required-state columns (the matrix).
