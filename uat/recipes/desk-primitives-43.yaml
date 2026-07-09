@@ -1,0 +1,17 @@
+title: The primitive-rich desk on .43 — Ask AI grounds on the pile for real
+description: >
+  The same primitive-rich desk booted on golden-43, so the intel/model runtime
+  is wired to the LAN llama.cpp endpoint and a grounded Ask-on-pile actually
+  runs against the model. This is the TREATMENT posture for the Ask-AI
+  control-vs-treatment beat: lasso the Ledgerline zone's notes and ask, and the
+  answer can cite BLUEBIRD / Pylon because those notes are in the pile. Needs
+  the LAN.
+deck: golden-43
+requires: [intel]
+seeds:
+  - desk-primitives
+probe:
+  - notes_min_count: 3
+  - note_exists: desk-seed-note-bluebird
+  - zone_exists: {id: desk-seed-zone-ledgerline, members: [desk-seed-note-bluebird, desk-seed-note-pylon]}
+  - kb_exists: desk-seed-kb-project

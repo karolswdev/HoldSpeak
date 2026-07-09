@@ -1,0 +1,23 @@
+id: desk-workbench-blueprint
+title: The Workbench builds a visual intelligence blueprint
+features:
+  - desk.workbench.visual_builder
+recipes:
+  - desk-primitives
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the Workbench blueprint builder is unconfirmed on iPhone (desk.workbench.visual_builder ph=?)"}
+steps:
+  - do: Open the Workbench and confirm the seeded "Incident brief" workflow is present as a blueprint.
+    expect: The "Incident brief" workflow opens on the Workbench as a node graph (at least one prompt node wired to an entry), not a blank canvas.
+    where: /
+  - do: Add a second node to the blueprint and wire it after the first.
+    expect: The new node connects downstream of the entry node; the wire reads output→input and the graph stays a single unambiguous chain.
+    where: /
+    surfaces:
+      ipad: yes
+  - do: Confirm the seeded "Triage crew" chain exists as an ordered run of recipe steps.
+    expect: The chain lists its step (the "Summarize like a PM" recipe) in order; it is a distinct primitive from the workflow blueprint.
+    where: /
+teardown: []

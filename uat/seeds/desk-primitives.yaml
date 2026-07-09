@@ -1,0 +1,65 @@
+# The full desk-primitive vocabulary for pack-desk, one of each type the
+# product exposes a create route for, all through the public /api routes so a
+# seeded object is indistinguishable from a user-made one. Every item carries a
+# deterministic id (desk-seed-*) so re-applying upserts in place — no duplicate
+# desk. The BLUEBIRD / Pylon tokens are the repo-specific facts the grounded
+# Ask-AI treatment beat must surface and the groundless control cannot know.
+notes:
+  - id: desk-seed-note-bluebird
+    title: BLUEBIRD streaming rewrite
+    body_markdown: |
+      **BLUEBIRD** is the internal codename for the ledgerline reconciliation
+      rewrite that moves settlement onto the streaming path.
+
+      - Owner: Priya.
+      - Cutover target: end of Q3.
+      - Open risk: the backfill job has no owner yet.
+    tags: [desk-seed, bluebird]
+  - id: desk-seed-note-pylon
+    title: Pylon incident runbook
+    body_markdown: |
+      **Pylon** is the infra incident-response service. When the reconciliation
+      lag metric breaches, page the on-call rotation and freeze deploys until
+      the lag drains.
+    tags: [desk-seed, pylon]
+  - id: desk-seed-note-questline
+    title: Questline save-format note
+    body_markdown: |
+      Questline (the game client) defers the save-format migration to Q4. The
+      art review is still pending.
+    tags: [desk-seed, questline]
+kbs:
+  - id: desk-seed-kb-project
+    name: Project KB
+    member_ids: []
+  - id: desk-seed-kb-incidents
+    name: Incident runbooks
+    member_ids: []
+directories:               # the desk ZONES — a zone with two notes filed in
+  - id: desk-seed-zone-ledgerline
+    name: Ledgerline
+    member_ids: [desk-seed-note-bluebird, desk-seed-note-pylon]
+recipes:                   # a saved desk recipe primitive (persona/instruction)
+  - id: desk-seed-recipe-pm
+    name: Summarize like a PM
+    role: A pragmatic PM
+    system_prompt: Summarize the input as decisions, owners, and risks.
+chains:                    # an ordered run of recipe steps (agent ids)
+  - id: desk-seed-chain-triage
+    name: Triage crew
+    steps: [desk-seed-recipe-pm]
+workflows:                 # a visual Workbench blueprint (prompt + graph_json)
+  - id: desk-seed-workflow-brief
+    name: Incident brief
+    prompt: Draft an incident brief from the filed Pylon runbook.
+    graph_json:
+      nodes:
+        - id: n1
+          kind: prompt
+          prompt: Summarize the Pylon runbook as owner + risk.
+      exec_edges: []
+      entry: n1
+profiles:                  # a runtime profile
+  - id: desk-seed-profile-local
+    name: Local profile
+    kind: onDevice

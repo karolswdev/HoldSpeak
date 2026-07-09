@@ -1,0 +1,16 @@
+title: Two meetings with open actions — the since-last delta world
+description: >
+  Import TWO committed transcripts (the pylon incident, then the ledgerline
+  sync) on golden-43 and run real intel over both, so there is a prior meeting
+  for the aftercare "since last meeting" delta to reference and >1 meeting for
+  the archive facets to narrow. process_intel drains BOTH queued meetings.
+  Real pipeline output, not a DB fake — needs the .43 LAN endpoint.
+deck: golden-43
+requires: [intel]
+seeds:
+  - pylon-incident-meeting
+  - pack-a-ledgerline-meeting
+actions:
+  - process_intel: {parse_timeout: 120, rounds: 5}
+probe:
+  - meeting_with_open_actions: {min_actions: 1, timeout: 180}

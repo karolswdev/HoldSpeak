@@ -1,0 +1,37 @@
+id: b-answer-coder-relay
+title: Answer a coder across the mesh — the relay path, then it goes dark
+features:
+  - agents.answer_coder.by_voice
+  - mobile.steering.node_relay
+recipes:
+  - mesh-node-alive
+# answer_coder.by_voice is web:yes + ipad:yes (CompanionAnswerApp on iPad Air M4,
+# HSM-13-04; web /companion portal). node_relay is web:yes + ipad:yes (node param
+# routes through the relay, DioSteerSheet node chip). iPhone genuinely unknown.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "answering a coder over the relay at iPhone compact width is chartered but unproven in the record"}
+steps:
+  - do: >
+      Staging-verify. Confirm the "uat-worker" relay node reads live in the
+      profiles / mesh view — the machine a waiting coder's pane would live on.
+    expect: The "uat-worker" node reads live; the relay queue is being polled.
+    where: /
+  - do: >
+      Open the node relay target for answering a coder (the node chip / companion
+      board) and confirm the live node is offered as the destination an answer
+      would be routed to.
+    expect: The live "uat-worker" node is selectable as the relay destination for a coder answer; no answer is injected yet.
+    where: /
+    after:
+      - apply_recipe: mesh-node-just-died
+  - do: >
+      The relay node has just been stopped. Refresh, then attempt to route an
+      answer to a coder on the now-dead node.
+    expect: >
+      The node reads offline and routing an answer to the dead node refuses fast,
+      by name — it names "uat-worker" as unreachable rather than silently
+      dropping the answer or hanging.
+    where: /
+teardown: []

@@ -1,0 +1,26 @@
+id: d-profile-key-never-reappears
+title: A key pushed into a profile never reappears on a read
+features:
+  - trust.secrets.profile-key-never-syncs
+recipes:
+  - seeded-desk
+# The re-eval's finding #5 + task #19: trust.secrets.profile-key-never-syncs is
+# a MUST, all-three in the directory (web/ipad/iphone: yes), and was written in
+# the imagined voice. This stages the attack: supply a secret to an ingress,
+# then read every surface back and assert the key field is gone. Mirrors the
+# product's own key-never-syncs invariant.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: yes
+steps:
+  - do: On the seeded desk, open the runtime profiles view and confirm a profile exists to attack (the staging beat).
+    expect: At least one runtime profile is listed; the profiles surface is reachable and the desk is healthy.
+    where: /
+  - do: Create or edit a profile and supply a distinctive secret key value (an endpoint API key) — a token you can grep for, e.g. UAT-SECRET-NEVER-SYNCS.
+    expect: The profile saves and the runtime target is accepted; the write succeeds without echoing the secret back inline in the confirmation.
+    where: /
+  - do: Re-read the same profile — reload the profiles list, open the profile detail, and (where a raw export/sync view exists) inspect the synced representation.
+    expect: The secret value UAT-SECRET-NEVER-SYNCS appears in NO read response — not in the profile detail, not in the list, not in any sync/export payload; the key field is absent or masked, never round-tripped verbatim. If the exact token is found on any read, the beat fails loudly.
+    where: /
+teardown: []

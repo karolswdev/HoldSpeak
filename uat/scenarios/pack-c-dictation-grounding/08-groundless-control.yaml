@@ -1,0 +1,24 @@
+id: c-groundless-control
+title: The groundless world proves the control leg is real
+features:
+  - dictation.kb.project_facts
+  - dictation.pipeline.intent-routing
+recipes:
+  - dict-groundless-43
+  - seeded-desk-43
+steps:
+  # Staging-verify beat: the groundless world genuinely has NOTHING to ground on.
+  - do: Boot the groundless desk on .43 (dict-groundless-43) and confirm there are zero notes and zero KBs — the runtime is live but there is no project context anywhere.
+    expect: The notes list is empty and the KB list is empty; the dictation runtime still answers healthy. The control world is genuinely groundless, not just un-attached.
+    where: /
+  # CONTROL leg on the truly-empty world — token MUST be absent.
+  - do: Dictate the repo-leaning instruction ("rewrite this as a status note about the ledgerline streaming rewrite") against this empty desk.
+    expect: The rewrite runs but cannot cite BLUEBIRD or any project fact — there is nothing on the desk to know it from. The token is ABSENT, proving the control is real rather than a model that already memorised the codename.
+    where: /
+  # TREATMENT leg: switch to the seeded world so the same prompt can be grounded.
+  - do: Reboot into the seeded desk on .43 (seeded-desk-43) with the glossary KB present, and dictate the SAME instruction.
+    expect: Now the treatment names BLUEBIRD — the only difference between the two runs is the presence of the glossary, so the token appearing is attributable to grounding, not to the base model.
+    where: /
+    after:
+      - apply_recipe: seeded-desk-43
+teardown: []

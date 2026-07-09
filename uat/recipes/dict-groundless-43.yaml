@@ -1,0 +1,15 @@
+title: A groundless desk on .43 — the control leg
+description: >
+  A fresh desk booted on golden-43 with NO notes and NO KBs: the dictation
+  runtime and intel are wired to the LAN endpoint so a rewrite really runs,
+  but there is nothing to ground it on. This is the CONTROL leg of the
+  control-vs-treatment spine — the model cannot know a repo-specific token
+  because no glossary or project fact exists to cite. Pair it with
+  seeded-desk-43 (the treatment) so the same prompt, grounded, names the token
+  the groundless leg could not.
+deck: golden-43
+requires: [intel]
+seeds: []
+probe:
+  - notes_empty: true
+  - kbs_empty: true

@@ -1,19 +1,27 @@
-id: d-key-never-syncs
-title: The key never syncs; the door is loopback-gated
+id: d-loopback-gate-attacked
+title: The loopback door, attacked — off-loopback binds refuse without a token
 features:
-  - onboarding.trust.privacy_chip
   - trust.binding.loopback-token-gate
+  - onboarding.trust.privacy_chip
 recipes:
   - fresh-desk
+# The re-eval's finding #5: pack-d/05 previously asserted the gate "would require
+# one off-loopback" — a human IMAGINING the hostile case. A stranger never sees
+# the gate reject anything. This rewrites it as a staged do-then-attack: the
+# tester actually mounts the off-loopback request and reads the refusal. The
+# behaviour mirrors the product's own web_auth unit test.
 surfaces:
   web: yes
   ipad: yes
-  iphone: yes
+  iphone: {n/a: "the raw HTTP bind/auth attack is exercised against the web runtime process; iphone has no direct off-loopback bind surface (trust.binding.loopback-token-gate iphone: unknown)"}
 steps:
-  - do: Read the privacy chip's three promises on the desk.
-    expect: The chip states the answers plainly (local by default, what leaves and when, the key never syncs) without marketing.
+  - do: Read the privacy chip on a fresh desk (the staging beat — confirm the door starts on loopback).
+    expect: The chip states local by default, what leaves and when, and that the key never syncs — plainly, no marketing paragraph; and the run is answering on loopback right now.
     where: /
-  - do: Confirm the run answers on loopback without a token, and would require one off-loopback.
-    expect: The loopback door is open for local use; a non-loopback bind is gated by the run's own token — the promise the chip makes is the behaviour.
+  - do: Attack the gate — issue a request to an authenticated API route bound off-loopback with NO token (e.g. from another host on the LAN, or with the run bound to 0.0.0.0 and hitting its LAN IP).
+    expect: The off-loopback request to an authenticated route is REFUSED with 401 (not served, not silently downgraded); this is the gate rejecting a stranger, observed, not imagined.
+    where: /
+  - do: Repeat the off-loopback request with the run's own auth token supplied, and separately hit an unauthenticated liveness route with no token.
+    expect: With the token the authenticated route serves (200); the unauthenticated liveness route answers 200 without a token — the gate scopes exactly to authenticated routes, no more, no less.
     where: /
 teardown: []

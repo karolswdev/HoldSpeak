@@ -1,0 +1,24 @@
+title: A primitive-rich desk — one of every type, filed and verified
+description: >
+  The pack-desk staging world on golden-local (no LLM warm, no intel): notes,
+  two KBs, a zone with two notes filed in, a recipe primitive, a chain, a
+  workflow blueprint, and a runtime profile — all injected through the
+  product's own /api routes. The probe reads every primitive back so a stale or
+  half-applied desk fails loudly. Idempotent: applied twice, the probe passes
+  both times and no duplicate desk exists. This is also the groundless CONTROL
+  posture for the Ask-AI beat (no model, so it cannot cite BLUEBIRD).
+deck: golden-local
+requires: []
+seeds:
+  - desk-primitives
+probe:
+  - notes_min_count: 3
+  - note_exists: desk-seed-note-bluebird
+  - note_exists: desk-seed-note-pylon
+  - kb_exists: desk-seed-kb-project
+  - kb_exists: desk-seed-kb-incidents
+  - zone_exists: {id: desk-seed-zone-ledgerline, members: [desk-seed-note-bluebird, desk-seed-note-pylon]}
+  - recipe_exists: desk-seed-recipe-pm
+  - chain_exists: desk-seed-chain-triage
+  - workflow_exists: desk-seed-workflow-brief
+  - profile_exists: desk-seed-profile-local

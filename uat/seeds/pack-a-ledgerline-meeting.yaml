@@ -1,0 +1,9 @@
+# A SECOND committed transcript (ledgerline sync) imported alongside the pylon
+# incident, so the aftercare "since last meeting" delta is non-vacuous and the
+# archive facets have >1 meeting to narrow. Guarded by title: re-applying skips
+# the import if the meeting already exists (no duplicate, no re-dedup).
+meetings:
+  - transcript: dogfood/transcripts/ledgerline-sync.srt
+    title: Ledgerline sync (UAT seed)
+    tags: [uat-seed, ledgerline]
+    speaker: Team

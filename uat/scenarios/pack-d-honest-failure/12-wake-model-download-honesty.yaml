@@ -1,0 +1,27 @@
+id: d-wake-model-download-honesty
+title: Enabling wake-word downloads a model inbound — no audio ever leaves
+features:
+  - trust.egress.wake-model-download
+  - onboarding.model.setup_assistant
+recipes:
+  - first-run-no-model
+# trust.egress.wake-model-download (should): enabling wake-word triggers a
+# one-time INBOUND model download and NO audio ever egresses. This is a
+# directional-egress claim — the honest failure it guards against is a feature
+# that quietly starts streaming mic audio out. Staged on first-run-no-model so
+# the wake model is genuinely absent at the start.
+surfaces:
+  web: yes
+  ipad: {n/a: "wake-word model download + local mic loop is a desktop-runtime feature; the directory marks trust.egress.wake-model-download with no ipad surface"}
+  iphone: {n/a: "same — desktop wake-word runtime (trust.egress.wake-model-download iphone: unknown)"}
+steps:
+  - do: On a first run with no wake model present, confirm wake-word is off and its model is absent (the staging beat).
+    expect: The setup surface honestly reports the wake-word model as not present; wake-word is off and nothing has been downloaded.
+    where: /setup
+  - do: Enable wake-word and watch what the app does.
+    expect: The app performs exactly one INBOUND model download and says so; the direction is inbound (fetching a model), never a stream of audio outbound.
+    where: /setup
+  - do: With wake-word armed, speak near the mic and observe the network posture.
+    expect: Wake detection runs locally — NO audio egresses to any host; the egress posture for the mic loop stays local. Any outbound audio stream fails the beat.
+    where: /setup
+teardown: []

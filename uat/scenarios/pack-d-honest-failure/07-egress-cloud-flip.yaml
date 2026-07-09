@@ -1,0 +1,31 @@
+id: d-egress-cloud-flip
+title: The egress badge flips — a local note vs a card that names its cloud target
+features:
+  - trust.egress_badge
+  - trust.egress.desk-github-issue
+  - trust.egress.badge-tells-truth
+recipes:
+  - seeded-desk
+  - meeting-just-ended-open-actions
+# The re-eval's finding #10: every badge scenario only ever confirms "local".
+# The falsifiable case is the FLIP to a named cloud target. This is a
+# control-vs-treatment pair on egress posture, judged structurally:
+#   control  = a purely local note  -> badge reads local, names no remote
+#   treatment = a GitHub-issue proposal card off a real meeting -> pill names
+#               the exact target (the gh repo / the endpoint), no marketing prose.
+# Directory note: web egressBadge() is a single global chrome pill, not per-card.
+# If the product shows badge state as chrome-global rather than per-card, the
+# honest verdict is to RECORD that mismatch, not to assert a per-card truth the
+# code does not back.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the meeting-aftercare GitHub-issue proposal card is not present on iphone in the directory (trust.egress.desk-github-issue iphone: unknown / no card surface)"}
+steps:
+  - do: On the seeded desk, open a purely local note (the control — nothing here leaves the machine).
+    expect: The note's egress badge reads local and names no remote target; this is the OFF state the flip must be measured against.
+    where: /
+  - do: Open the just-ended meeting's open actions and start filing one as a GitHub issue (the treatment — a card that WILL leave the machine on approval).
+    expect: The GitHub-issue proposal card's egress reads NOT-local and names its exact target (the gh repo / endpoint it would post to) with no marketing prose; OR, if the product surfaces egress as one global chrome pill rather than per-card, the beat records that directory-vs-product mismatch honestly rather than asserting a per-card truth the code does not provide.
+    where: /
+teardown: []

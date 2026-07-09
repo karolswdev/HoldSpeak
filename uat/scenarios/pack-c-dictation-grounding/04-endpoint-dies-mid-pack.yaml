@@ -2,20 +2,22 @@ id: c-endpoint-dies-mid-pack
 title: The endpoint dies mid-pack — the rewrite degrades honestly
 features:
   - dictation.pipeline.dry_run
+  - dictation.runtime.openai_compatible
 recipes:
   - seeded-desk-43
 surfaces:
   web: yes
-  ipad: {n/a: "iPad dictation depth is unverified in the record"}
-  iphone: {n/a: "iPhone dictation depth is unverified in the record"}
+  ipad: yes   # directory: dictation.pipeline.dry_run ipad=yes (iPad previews the rewrite before typing, verbatim receipt — README.md:273)
+  iphone: {n/a: "directory row: dictation.pipeline.dry_run iphone=unknown — Apple app form-factor UI unconfirmed in the record"}
 steps:
-  - do: Dictate once while the endpoint is healthy (the staging beat — grounded rewrite works).
-    expect: The rewrite runs and returns a grounded result.
+  # Staging-verify beat: the healthy path works before we break it.
+  - do: Dictate once while the endpoint is healthy — the grounded rewrite runs against .43.
+    expect: The rewrite runs and returns a grounded result (it can cite a KB token), and the runtime status reads reachable.
     where: /
     # The honest-failure close: kill the intel endpoint mid-pack.
     after:
       - apply_recipe: intel-endpoint-dead
   - do: The intel endpoint is now dead. Dictate the same phrase again.
-    expect: The pipeline degrades to the raw transcript, honestly and fast — the DIR-01 invariant holds (you always get your words back), and the surface says the rewrite is unavailable rather than hanging or dropping the text.
+    expect: The pipeline degrades to the raw transcript honestly and fast — the DIR-01 invariant holds (you always get your words back), the runtime preflight refuses in under five seconds naming the unreachable endpoint, and the surface says the rewrite is unavailable rather than hanging or silently dropping the text.
     where: /
 teardown: []

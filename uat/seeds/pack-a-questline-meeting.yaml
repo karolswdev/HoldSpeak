@@ -1,0 +1,10 @@
+# A MIXED-TOPIC transcript (questline product sync) — a guilds product decision,
+# an activation-leak priority, an unscoped moderation/abuse surface, a privacy
+# non-goal, and three owned action items — so multi-intent routing has more than
+# one intent to route. Single-intent seeds cannot demonstrate MIR. Guarded by
+# title.
+meetings:
+  - transcript: dogfood/transcripts/questline-notes.txt
+    title: Questline product sync (UAT seed)
+    tags: [uat-seed, questline, product]
+    speaker: Team

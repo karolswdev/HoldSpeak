@@ -1,0 +1,18 @@
+id: e-node-events-to-hub
+title: Remote node rail-events surface on the hub observer
+features:
+  - mesh.handoff.node_events_to_hub
+recipes:
+  - mesh-run-ready
+surfaces:
+  web: yes
+  ipad: {n/a: "mesh.handoff.node_events_to_hub is ipad:no in the inventory — the remote-events observer merge is a hub/web to-surface only"}
+  iphone: {n/a: "mesh.handoff.node_events_to_hub is iphone:no in the inventory — no phone observer surface"}
+steps:
+  - do: Confirm the worker is live before driving any run (the staging beat).
+    expect: The "uat-worker" node reads live on the hub.
+    where: /
+  - do: Dispatch a run onto the mesh worker, then open the hub's mission-control / rails observer view.
+    expect: The remote node's rail-events (the run it claimed, its progress) appear MERGED into the hub observer — the events posted from the far node (POST /api/missioncontrol/rails/remote-events) show up on the hub, attributed to uat-worker, not silently dropped.
+    where: /
+teardown: []

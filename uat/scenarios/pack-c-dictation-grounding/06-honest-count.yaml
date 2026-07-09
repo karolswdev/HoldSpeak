@@ -1,0 +1,25 @@
+id: c-honest-count
+title: The learning digest reports a real N — honest at zero
+features:
+  - dictation.learning-digest.honest-count
+  - dictation.learning.digest
+recipes:
+  - seeded-desk-43
+surfaces:
+  web: yes
+  ipad: yes   # directory: dictation.learning-digest.honest-count ipad=yes (iPad reads the learning digest with real learned-from-N reach; ios consumes /api/dictation/learning-digest)
+  iphone: {n/a: "directory row: dictation.learning-digest.honest-count iphone=unknown — digest on iPhone form factor unverified in the record"}
+steps:
+  # Staging-verify beat + the zero case: the digest must be honest at N=0.
+  - do: Open the learning digest on the seeded desk, which has taught zero corrections.
+    expect: The digest reads honest zeros — "learned from 0" (or an explicit nothing-yet state), not a hardcoded "learned from 2". No inflated N when nothing has been taught.
+    where: /
+  # Teach a KNOWN count so the chip has a pinned truth to report.
+  - do: Correct exactly two dictations that match the same past utterance, so the corpus of similar corrections is a known N of 2.
+    expect: Each correction is recorded; the memory count moves 0 → 1 → 2, matching exactly what was taught.
+    where: /
+  # Honest-count assertion against the pinned N.
+  - do: Reopen the digest / read the learned-from-N chip for that utterance.
+    expect: The chip reads exactly "learned from 2 similar" — the real count of the two corrections just taught, never a rounded-up or hardcoded larger number.
+    where: /
+teardown: []

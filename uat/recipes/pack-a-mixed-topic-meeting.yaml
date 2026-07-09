@@ -1,0 +1,16 @@
+title: A mixed-topic meeting — the multi-intent routing world
+description: >
+  Import the questline product-sync transcript on golden-43 and run real intel.
+  It carries several distinct intents at once (a guilds product decision, an
+  activation-leak priority, an unscoped moderation surface, a privacy non-goal,
+  three owned actions), so multi-intent routing has more than one chain to run
+  and a buried intent to route. Real pipeline output — needs the .43 LAN
+  endpoint.
+deck: golden-43
+requires: [intel]
+seeds:
+  - pack-a-questline-meeting
+actions:
+  - process_intel: {parse_timeout: 120, rounds: 5}
+probe:
+  - meeting_with_open_actions: {min_actions: 1, timeout: 180}

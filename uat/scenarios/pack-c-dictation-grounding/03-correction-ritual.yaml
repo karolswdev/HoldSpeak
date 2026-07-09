@@ -1,5 +1,5 @@
 id: c-correction-ritual
-title: The correction ritual teaches, and the count is honest
+title: The correction ritual — before/after is the control, the count is pinned
 features:
   - dictation.correction.one-tap-teaches
   - dictation.correction.session_memory
@@ -7,10 +7,27 @@ recipes:
   - seeded-desk-43
 surfaces:
   web: yes
-  ipad: {n/a: "iPad dictation depth is unverified in the record"}
-  iphone: {n/a: "iPhone dictation depth is unverified in the record"}
+  ipad: {n/a: "directory row: dictation.correction.session_memory ipad=unknown — LearningClient/contracts exist but the Memory UI + correction-tap authoring on device is unconfirmed. Genuine record gap, not a punt."}
+  iphone: {n/a: "directory row: dictation.correction.* iphone=unknown — no device claim in the record"}
 steps:
-  - do: Correct one word the rewrite got wrong, then dictate again.
-    expect: The one-tap correction is applied and the next dictation reflects it; the learned-from-N chip reads the real count of corrections, not an inflated one.
+  # Staging-verify beat: start from a KNOWN correction count so N is checkable.
+  - do: Open the correction memory on the seeded desk and read the starting count. The seeded world has taught zero corrections, so the memory is empty.
+    expect: The Memory / learned-from panel reads zero taught corrections — an honest empty, no pre-inflated N.
+    where: /
+  # CONTROL leg: the BEFORE routing, captured before any teaching.
+  - do: Dictate a short utterance the pipeline routes wrong (e.g. it rewrites "ledgerline" as "ledger line" or routes a code phrase to prose). Note exactly how it lands — this is the before.
+    expect: The utterance lands the WRONG way and the routing/rewrite is captured verbatim. This is the control leg — no correction has been taught yet, so the mistake is expected here.
+    where: /
+  # The teaching tap.
+  - do: One-tap correct that exact result (fix the word / re-route it), which teaches the correction memory.
+    expect: A single tap records the correction; the panel confirms it was taught (the said→typed pair is stored), and the count moves from zero to exactly one.
+    where: /
+  # TREATMENT leg: the AFTER routing reflects the taught correction.
+  - do: Dictate the same utterance again.
+    expect: This time it lands the corrected way — the taught fix is applied. The before (wrong) vs after (right) contrast IS the control; the improvement must be attributable to the one correction just taught, not to chance.
+    where: /
+  # Honest-count assertion against a pinned known N.
+  - do: Read the learned-from-N chip / count after teaching exactly one correction.
+    expect: The chip reads exactly "learned from 1" (the real, pinned count) — not an inflated N, and not a hardcoded "learned from 2". If a second matching utterance is later corrected, the count reads 2, never more than what was taught.
     where: /
 teardown: []

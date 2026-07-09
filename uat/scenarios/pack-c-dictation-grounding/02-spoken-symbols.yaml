@@ -1,15 +1,26 @@
 id: c-spoken-symbols
-title: Spoken symbols land as symbols
+title: Spoken symbols land once — the double-substitution trap
 features:
   - languages.spoken_symbol_dictionary
+  - dictation.symbol-dictionary.spoken-vocabulary
+  - mobile.dictation.symbols.dictionary
 recipes:
-  - seeded-desk-43
+  - dict-symbols-43
 surfaces:
   web: yes
-  ipad: {n/a: "iPad dictation depth is unverified in the record"}
-  iphone: {n/a: "iPhone dictation depth is unverified in the record"}
+  ipad: yes      # directory: mobile.dictation.symbols.dictionary ipad=yes (HSM-18-04, Settings editor, user-wins test-proven)
+  iphone: yes    # directory: mobile.dictation.symbols.dictionary iphone=yes (SpokenSymbols is shared App-layer, reused meeting-side)
 steps:
-  - do: Dictate a phrase using the spoken-symbol words (for example "at sign", "hash", "percent sign").
-    expect: Each spoken symbol lands as its character with the configured spacing, not as the words — one combined matcher pass, no double substitution.
+  # Staging-verify beat: the symbol dictionary is actually loaded.
+  - do: Confirm the spoken-symbol dictionary is present — the Spoken-symbol dictionary note (uat-seed-note-symbols) is on the desk with its at-sign / hash / percent / arrow / double-dash entries.
+    expect: The dictionary note is visible and lists the taught words mapping to their characters; the editor shows the entries, not an empty table.
+    where: /
+  # The plain positive: single symbols land as characters.
+  - do: Dictate a phrase using single spoken-symbol words, e.g. "email me at sign example dot com, hash urgent, ninety percent sign done".
+    expect: Each spoken symbol lands as its character with the configured spacing — "@", "#", "%" — not the words "at sign", "hash", "percent sign".
+    where: /
+  # The adversarial trap — this beat CAN fail if the matcher re-eats its output.
+  - do: Dictate the engineered double-substitution phrase "double dash arrow" (the Phase-59 combined-matcher regression case).
+    expect: It lands exactly once as "-- ->" (double-dash then arrow). It must NOT re-substitute the dash it just wrote — a two-pass matcher would mangle this into a re-eaten "->" or a longer dash run. One combined longest-first pass, no double substitution.
     where: /
 teardown: []

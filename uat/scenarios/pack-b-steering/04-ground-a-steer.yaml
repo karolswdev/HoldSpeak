@@ -1,0 +1,36 @@
+id: b-ground-a-steer
+title: Ground a steer with a real desk object — and the empty control
+features:
+  - steering.ground
+  - agents.answer_coder.dropped_context
+recipes:
+  - seeded-desk
+# steering.ground is web:yes (GroundingSection.tsx, compose_steer fences objects,
+# 8KB cap). The iPad leg is carried by agents.answer_coder.dropped_context, which
+# IS ipad:yes — the keystone drop gesture opens the composer with the dropped
+# primitive's routableText as cited grounding (HSM-17-04). iPhone genuinely unknown.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the grounding picker at iPhone compact width is unverified in the directory record"}
+steps:
+  - do: >
+      Staging-verify. Open the seeded desk and confirm the "Project glossary" note
+      and the Project KB are present — the objects a steer or coder-answer could
+      cite as grounding.
+    expect: The "Project glossary" note and the Project KB are both present and openable on the desk.
+    where: /
+  - do: >
+      Control — open the steering composer (or the coder-answer composer) with NO
+      object grounded and read the grounding section.
+    expect: The grounding section reads empty; the composer will send only the typed text — nothing from the desk is fenced in yet.
+    where: /
+  - do: >
+      Treatment — ground the steer with the "Project glossary" note (drop it in /
+      pick it in the grounding picker).
+    expect: >
+      The grounded object is fenced into the composer with its own citation
+      (compose_steer's fenced object, capped ~8KB), and the composer now shows the
+      glossary content as grounding the control step did not carry.
+    where: /
+teardown: []

@@ -1,0 +1,16 @@
+title: Import while the intel endpoint is dead — honest empty, never a fake
+description: >
+  Boot bad-endpoint (intel runtime pointed at a dead local port) and import the
+  pylon transcript. The transcript PARSE is local and succeeds, so the meeting
+  appears in history — but intel has no reachable endpoint, so no typed
+  artifacts are fabricated. This is the CONTROL against the two-meetings /
+  mixed-topic treatment worlds: the same import that yields typed cards on .43
+  must yield an honest-empty intel state (and a named dead endpoint) here, never
+  a hallucinated card. No process_intel action — there is nothing live to drain.
+deck: bad-endpoint
+requires: []
+seeds:
+  - pylon-incident-meeting
+probe:
+  - runtime_endpoint_unreachable: true
+  - doctor_names_dead_endpoint: true

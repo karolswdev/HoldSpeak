@@ -1,0 +1,24 @@
+id: a-multi-intent-routing
+title: Multi-intent routing on a mixed-topic meeting (control vs treatment)
+features:
+  - meetings.intel.multi_intent_routing
+  - meetings.intel.intent-scored-chain
+  - meetings.plugins.fourteen_synthesizers
+recipes:
+  - pack-a-mixed-topic-meeting
+  - meeting-just-ended-open-actions
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "iPhone meeting-artifact rendering is unverified in the inventory (multi_intent_routing iphone: unknown)"}
+steps:
+  - do: (Staging beat) Confirm the mixed-topic questline meeting imported and its intel ran live on .43.
+    expect: The questline product-sync meeting is present with intel complete (not stuck importing) and at least one open action visible.
+    where: /history
+  - do: (Control — single-intent meeting) Open the pylon incident meeting (one dominant incident intent) and read which plugin chains ran.
+    expect: The pylon meeting routes to its incident-shaped chain; there is no separate product-decision or activation-priority artifact to find, because that intent is not in this transcript. The control cannot surface a guilds decision or a WAQC metric.
+    where: /history
+  - do: (Treatment — mixed-topic meeting) Open the questline meeting and read the artifacts across its distinct intents.
+    expect: More than one plugin chain ran — a product-decision artifact (guilds QL-310 deferred to Q4) AND a distinct priority/activation artifact (QL-301 activation is the bigger leak), each with per-segment lineage. A buried intent still routed (the moderation/abuse surface being unscoped, or the WAQC success-metric action) shows up rather than being dropped. Each card carries a confidence score and a transcript-source ref that resolves. Judge on whether ≥2 distinct intents were routed with the repo-specific tokens (QL-310, QL-301, WAQC) the single-intent control could not produce — not on wording.
+    where: /history
+teardown: []

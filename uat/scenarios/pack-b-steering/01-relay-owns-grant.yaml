@@ -1,0 +1,41 @@
+id: b-relay-owns-grant
+title: The relay node owns the grant — it dies, the far steer refuses by name
+features:
+  - trust.steering.relay-node-owns-grant
+  - steering.cross_machine
+recipes:
+  - mesh-node-alive
+# Cross-machine steering and its relay routing are ipad:yes in the directory
+# (DeskSteer node chip + relay routing, HSM P27 sim-proven; web SessionPullout).
+# iPhone is genuinely unknown in the record (form factor unproven), so it is the
+# honest n/a here — not the ipad leg.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the node-relay steering surface at iPhone compact width is unknown in the directory record"}
+steps:
+  - do: >
+      Staging-verify. Open the profiles / mesh view and confirm the "uat-worker"
+      relay node reads live — the hub has seen it poll the relay queue recently.
+      This is the machine that would own any cross-machine steering grant and audit.
+    expect: The "uat-worker" node reads live; it is the configured relay target for a cross-machine steer.
+    where: /
+  - do: >
+      Open the steering node chip (the "this Mac / configured node" selector) and
+      confirm the far node is offered as a steer target while it is live.
+    expect: The node chip lists the live "uat-worker" node as a selectable relay target for arm/steer/keys.
+    where: /
+    # The honest-failure close — kill the relay node's process group mid-run so
+    # the human watches cross-machine steering degrade.
+    after:
+      - apply_recipe: mesh-node-just-died
+  - do: >
+      The relay node has just been stopped. Refresh, then attempt a cross-machine
+      steer (or key send) pointed at the now-dead "uat-worker" node.
+    expect: >
+      The node reads offline and the forced cross-machine steer refuses fast, by
+      name — it names "uat-worker" as unreachable rather than hanging on the dead
+      relay. The grant lived on the typing node; with that node gone there is
+      nothing local to falsify.
+    where: /
+teardown: []

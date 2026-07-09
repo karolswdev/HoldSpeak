@@ -1,5 +1,5 @@
 id: c-grounded-rewrite
-title: A grounded rewrite (control vs treatment)
+title: A grounded rewrite — control (OFF) then treatment (ON)
 features:
   - dictation.pipeline.intent-routing
   - dictation.kb.project_facts
@@ -7,10 +7,19 @@ recipes:
   - seeded-desk-43
 surfaces:
   web: yes
-  ipad: {n/a: "iPad dictation depth is the biggest open cluster in the directory — confirm at the review sitting"}
-  iphone: {n/a: "iPhone dictation depth is unverified in the record"}
+  ipad: yes   # directory: dictation.pipeline.intent-routing ipad=yes (iPad runs the full dictation pipeline: /api/dictation/remote + dry-run)
+  iphone: {n/a: "directory row: iphone unknown — pipeline path on iPhone form factor unverified in the record; tracked as a phone-column gap, not a genuine absence"}
 steps:
-  - do: Dictate the same instruction twice — once with grounding OFF (control), once with grounding ON (treatment) against the seeded project KB.
-    expect: The treatment output names a repo-specific token the control cannot know (a glossary term like BLUEBIRD, or a project fact from the KB); the control says it does not have that context. A no-LLM pass alone is insufficient — the treatment must surface what the control cannot.
+  # Staging-verify beat: confirm the seeded world is live before the human walk.
+  - do: Confirm the seeded desk is up on .43 — the Project glossary note and Project KB are present, and the dictation runtime answers a health check.
+    expect: The glossary note (uat-seed-note-glossary) and the Project KB (uat-seed-kb-project) are both visible; the runtime status reads reachable, not a dead endpoint.
+    where: /
+  # CONTROL leg (grounding OFF) — its own verdict.
+  - do: With grounding OFF (no project context attached), dictate a rough instruction that leans on the repo, e.g. "rewrite this as a status note about the ledgerline streaming rewrite".
+    expect: "The rewrite runs but cannot name the internal codename — it does not print BLUEBIRD or any KB-only fact, and if pressed it says it has no project context. This is the control leg; the token must be ABSENT here."
+    where: /
+  # TREATMENT leg (grounding ON) — its own separate verdict.
+  - do: With grounding ON (the Project KB / glossary attached), dictate the SAME instruction again.
+    expect: The treatment output names the repo-specific token the control could not — it prints BLUEBIRD (the glossary codename for the ledgerline streaming rewrite) or another KB-only fact. A no-LLM pass is insufficient; the treatment must surface what the control cannot.
     where: /
 teardown: []

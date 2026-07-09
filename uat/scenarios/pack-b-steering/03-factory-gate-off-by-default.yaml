@@ -1,0 +1,37 @@
+id: b-factory-gate-off-by-default
+title: The session factory is gated off by default — nothing armed on a fresh desk
+features:
+  - trust.steering.session-factory-gates
+  - factory.spawn_rename
+recipes:
+  - seeded-desk
+# The factory + its gate are web:yes + ipad:yes (DeskSteer spawn/rename/kill,
+# HSM P27 sim-proven; coder_factory.py on web). This beat reads the disarmed
+# resting state — no live session is required to confirm the gate is closed.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the factory UI at iPhone compact width is unverified in the directory record"}
+steps:
+  - do: >
+      Staging-verify. Open the seeded desk and confirm it booted with notes and
+      KBs present (the workhorse world) — the surface the steering controls live on.
+    expect: The seeded desk shows its notes and KBs; the desk is up and interactive.
+    where: /
+  - do: >
+      Open the steering / session pull-out. With no session armed, look at the
+      spawn / rename / kill controls.
+    expect: >
+      No session reads as armed. The Kill control is gated behind a two-step
+      confirm and the steer/kill actions are disarmed — the factory is off by
+      default, exactly like a steer, and nothing can be typed or killed without
+      an explicit grant.
+    where: /
+  - do: >
+      Attempt a Kill (or a steer) without arming first — do NOT complete the
+      confirm.
+    expect: >
+      The action refuses without an arming grant; nothing is spawned, renamed, or
+      killed. The gate holds on the resting desk.
+    where: /
+teardown: []
