@@ -120,6 +120,12 @@ export const useStore = create((set, get) => ({
     return api.uploadShot(get().sitting.id, scenarioId, stepIndex, surface, file);
   },
 
+  // Speak-to-fill: WAV in, transcribed text out via the run's own transcribe
+  // route. Returns { ok, text } | { ok:false, error }.
+  async transcribeNote(wavBlob) {
+    return api.transcribe(get().sitting.id, wavBlob);
+  },
+
   async runAfter(scenarioId, stepIndex) {
     const key = `${scenarioId}|${stepIndex}`;
     if (get().afterRan[key]) return;

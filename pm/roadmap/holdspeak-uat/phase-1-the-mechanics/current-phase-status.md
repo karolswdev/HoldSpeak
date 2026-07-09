@@ -1,9 +1,9 @@
 # Phase 1 — The Mechanics
 
-**Last updated:** 2026-07-09 (HSU-1-06 docs + real scenario packs
-shipped — `uat/README.md`/`AUTHORING.md`, dogfood supersession, Packs
-D/A/C; the engine + web loop are complete. **The one thing left is the
-owner's live sitting** (HSU-1-06's owner-gated beat); 5/6 + docs)
+**Last updated:** 2026-07-09 (speak-to-fill voice notes shipped — every
+per-surface note field takes a 🎤 mic riding the run's own transcribe
+route; the HSU-1-04 deferred decision is resolved. Engine + web loop
+complete. **The one thing left is the owner's live sitting**; 5/6 + docs)
 
 ## Goal
 
@@ -263,5 +263,5 @@ git/phase record, mechanics + one smoke pack only. Next: HSU-1-01.
 | Decision | Trigger | Default |
 |---|---|---|
 | Whether dogfood's files physically move under `uat/` or are imported in place | HSU-1-01 implementation | Import/reuse in place; move only what the conductor must own |
-| Speak-to-fill mic on the site's note fields (needs a transcriber; the product under test may be down) | HSU-1-04 | Ship typed notes first; mic rides the host product's transcribe route when it is up, degrades honestly when not |
+| ~~Speak-to-fill mic on the site's note fields~~ **RESOLVED 2026-07-09** — every per-surface note field has a 🎤 mic that records a 16 kHz WAV in the browser and proxies it through the conductor to the run's OWN `/api/dictation/transcribe` (local Whisper, no egress). Present only when the product under test is up; honestly absent/inline-erroring when it is down or has no model. | HSU-1-04 | (was: ship typed notes first) |
 | Whether a sitting can drive a remote mesh node on another machine | Phase 2 scenario needs | Phase 1 spawns local `mesh serve` processes only |

@@ -170,6 +170,30 @@ class SittingManager:
         (shots / name).write_bytes(data)
         return str((shots / name))
 
+    def transcribe(self, sitting_id: str, wav: bytes) -> dict:
+        """Speak-to-fill a note: proxy browser audio to the run's OWN transcribe
+        route (its local Whisper, no egress). Honest when the product is down or
+        transcription is unavailable on this run — never a fake."""
+        sitting = self._require(sitting_id)
+        run = self.runs.get(sitting["run_id"])
+        if run is None or run.status != "up":
+            return {"ok": False, "error": "The product under test is not up on this run."}
+        client = self.runs.product_client(sitting["run_id"])
+        try:
+            resp = client.post_bytes("/api/dictation/transcribe", wav, content_type="audio/wav")
+        except Exception as exc:
+            return {"ok": False, "error": f"Could not reach the product: {exc}"}
+        if resp.status_code == 503:
+            return {"ok": False, "error": "Transcription is unavailable on this run (no model)."}
+        if resp.status_code != 200:
+            detail = ""
+            try:
+                detail = resp.json().get("error", "")
+            except Exception:
+                pass
+            return {"ok": False, "error": detail or f"Transcribe failed (HTTP {resp.status_code})."}
+        return {"ok": True, "text": resp.json().get("text", "")}
+
     def finish(self, sitting_id: str) -> dict:
         sitting = self._require(sitting_id)
         self.db.upsert_sitting({**sitting, "status": "done", "finished_at": _utcnow(), "updated_at": _utcnow()})

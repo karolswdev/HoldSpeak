@@ -26,7 +26,8 @@ Then, in the browser (it prints `http://localhost:8799`):
 2. Walk the beats: each says *do this*, *expect this*. Use **Open the product**
    to jump to the right screen. Cast a **verdict per surface** (web now;
    iPad/iPhone when you have a device in hand — see "Device sittings" below),
-   jot a note, drop a screenshot.
+   jot a note (type it or **speak it** — every note field has a 🎤 that rides
+   the run's own transcribe route, local Whisper, no egress), drop a screenshot.
 3. If `.43` is up, **Pack A — Meeting Aftercare** and **Pack C — Dictation
    Grounding** put the intelligence through its paces too.
 4. Read the **debrief** at sitting end (score per surface, coverage %, every
