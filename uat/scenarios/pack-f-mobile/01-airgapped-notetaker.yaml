@@ -1,0 +1,70 @@
+id: f-airgapped-notetaker
+title: The air-gapped notetaker — record, transcribe, and reason with no network
+# The charter's headline paradigm (Gate 8): the iPad in a room with NO network
+# does capture → live transcript → on-device intelligence end to end. No recipe
+# can induce a live mic + airplane-mode device world, so this is hand-staged.
+# Covers three device-local musts: meeting_record (live transcript), on_device
+# _inference (Mode-A local GGUF), and the airgapped_notetaker gate that ties
+# them together offline. The `first-run-no-model` recipe stages the negative
+# control on the conductor side (the "no model" truth the device must resolve).
+features:
+  - mobile.capture.airgapped_notetaker
+  - mobile.capture.meeting_record
+  - mobile.models.on_device_inference
+manual_setup:
+  - Put the iPad in airplane mode — Wi-Fi and cellular both OFF. Confirm no network.
+  - Have a local GGUF model already installed on the device (e.g. Qwen3-4B Q6 via the model manager) and activated as the runtime.
+  - Have a real microphone available and a short scripted meeting to speak (two speakers if diarization is being judged).
+recipes:
+  - first-run-no-model
+surfaces:
+  web: {n/a: "directory row mobile.capture.airgapped_notetaker web=no — on-device Mode-A inference is the point; the web desk consumes synced content, it does not record or run the device engine"}
+  ipad: yes
+  iphone: {n/a: "directory rows: airgapped_notetaker + on_device_inference iphone=unknown — iPhone air-gapped parity is chartered (Amendment 1.1 Q4) but the closing device walk is not evidenced in this slice; a phone-column gap, not a genuine absence"}
+steps:
+  - do: >
+      Staging-verify. With airplane mode ON, open Settings and confirm the runtime
+      reads a local on-device model as active (not an endpoint, not "no model").
+    expect: >
+      Settings names a local GGUF model as the active runtime and the egress
+      reads local; there is no network target configured. If NO model were
+      installed the readiness surface would honestly say "not ready yet" (the
+      first-run-no-model control), so a green here means a real device model.
+    where: /
+  - do: >
+      Press Record and speak the scripted meeting for a minute or two, watching
+      the transcript pane.
+    expect: >
+      A live transcript builds in near-real-time as you speak — the text grows
+      windowed, not all at once at the end. Nothing about it depends on the
+      network being up.
+  - do: Press Stop and reopen the meeting from the list.
+    expect: >
+      The meeting persists and reopens with its transcript intact — it is a real
+      saved meeting, not a transient buffer.
+  - do: >
+      Control vs treatment for the on-device model. FIRST, judge WITHOUT invoking
+      the model — read only the raw transcript view.
+    expect: >
+      The raw transcript is just the spoken words back — it names no decision,
+      owner, or risk structure it was not told; it is a verbatim record, nothing
+      inferred.
+  - do: >
+      Now generate intelligence on that meeting entirely on the device's own model
+      (still in airplane mode).
+    expect: >
+      Structurally, artifact cards render that the raw transcript could not — at
+      least a decision or an action-item list with an owner surfaced from what was
+      spoken — and each card carries a LOCAL egress badge. Judge substance (did it
+      surface the decision/owner/risk), not literal wording. Crucially nothing
+      degraded silently: no "endpoint unreachable", no empty result — the offline
+      run is rich, not a fallback.
+  - do: >
+      Honest-failure close. Leave airplane mode ON but deactivate the local model
+      in Settings, then try to generate intelligence again.
+    expect: >
+      The surface refuses honestly and fast — it says there is no model to run
+      on-device rather than hanging or silently returning the transcript dressed
+      as intelligence. The offline promise fails loud, not quietly.
+    where: /
+teardown: []

@@ -1,0 +1,52 @@
+id: desk-answer-blocked-agent
+title: Answer a blocked agent — typed, or AI-drafted (control vs treatment)
+# The blocked coder from scenario 09, now answered two ways. The AI-draft path
+# is an LLM feature, so it gets the mandatory control-vs-treatment pair: OFF
+# (no model / no dropped context) cannot name the repo token; ON (grounded on
+# the seeded desk, run on .43) drafts an answer that names it. Requires .43.
+features:
+  - desk.coders.answer-grounded-or-ai-drafted
+recipes:
+  - seeded-desk-43
+  - agent-pane-awaiting-input
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the answer-the-coder paths at iPhone compact width are unverified in the directory record (desk.coders.answer-grounded-or-ai-drafted iphone=unknown)"}
+steps:
+  - do: >
+      Staging-verify. A coder pane is awaiting input and the seeded desk (dogfood
+      notes + KBs) is live on .43. Open the desk, find the blocked coder, and open
+      its answer affordance.
+    expect: >
+      The blocked coder is present and offers an answer path — you can type an
+      answer, or draft one with AI. The seeded desk objects (notes/KBs) are
+      reachable to ground a draft.
+    where: /
+  - do: >
+      Type a plain answer ("proceed with the migration") and inject it into the
+      waiting pane.
+    expect: >
+      The typed answer reaches the pane — the coder is no longer stuck on the
+      prompt (the pane advances past AWAITING-MIGRATION-CONFIRM). The typed path
+      needs no model.
+    where: /
+  - do: >
+      CONTROL. Ask AI to draft an answer with grounding OFF — no desk pile, no
+      dropped record fed to the model. Judge this beat alone.
+    expect: >
+      The draft is generic — it cannot name BLUEBIRD (the ledgerline streaming
+      rewrite) or the pylon incident, because nothing from the desk was fed to it.
+      A vague or "I don't have that context" draft is the point here.
+    where: /
+  - do: >
+      TREATMENT. Drop the BLUEBIRD note (or lasso the Ledgerline pile) onto the
+      coder's answer composer, grounding ON, and AI-draft the answer against that
+      context on .43. Judge this beat alone.
+    expect: >
+      The AI-drafted answer names BLUEBIRD as the ledgerline streaming/reconciliation
+      rewrite (or cites the dropped record's substance) — judged structurally on
+      whether the decision/owner/risk is right, not literal wording. This is the
+      token the control could not know. Nothing is injected until you approve.
+    where: /
+teardown: []

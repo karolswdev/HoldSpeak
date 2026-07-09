@@ -1,0 +1,46 @@
+id: desk-schema-safe-upgrades
+title: Upgrades back the database up, and refuse a newer-build store
+# The data-safety promise, attacked not imagined. A fresh desk stages a real
+# store. The backup-before-migrate and refuse-newer-build behaviours are
+# CLI/on-device-local (holdspeak backup/doctor over the SQLite file) — no route
+# induces a "written by a newer build" store, so that beat is hand-staged. The
+# honest close: opening a doctored newer-build DB must refuse, not corrupt.
+features:
+  - desk.data.schema-safe-upgrades
+recipes:
+  - fresh-desk
+manual_setup:
+  - Locate this run's isolated HoldSpeak database file (the run prints its HOME; the store is under it).
+  - Make a copy of that DB file and hand-edit its recorded schema/build version to a value HIGHER than this build's (simulating a store written by a newer HoldSpeak).
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the on-device store readiness section at iPhone compact width is unverified in the directory record (desk.data.schema-safe-upgrades iphone=unknown)"}
+steps:
+  - do: >
+      Staging-verify. A fresh desk booted on a real store. Open the desk (or the
+      readiness/doctor readout) and confirm the store reports its health.
+    expect: >
+      The store reads healthy at the current build — a readiness section names the
+      store as OK and does not claim a broken or missing DB.
+    where: /
+  - do: >
+      Run holdspeak backup (or trigger an upgrade path) against the current store
+      and confirm a backup is written BEFORE anything migrates.
+    expect: >
+      A backup copy of the database is created before the migration touches the
+      live store — the upgrade names the backup it made, it does not migrate in
+      place unbacked.
+    where: /
+    surfaces:
+      ipad: {n/a: "the backup CLI is a desktop/on-device operation; the iPad store's own backup-before-migrate is covered by the next beat's readiness check"}
+  - do: >
+      Honest-failure close. Point HoldSpeak at the hand-doctored copy whose build
+      version is newer than this build, and open it (via doctor / the readiness
+      readout / launching against that store).
+    expect: >
+      HoldSpeak REFUSES to open the newer-build store — the readiness readout names
+      it as written by a newer build and declines to migrate it, rather than
+      silently downgrading or corrupting it. Refuse by name beats "it opened".
+    where: /
+teardown: []

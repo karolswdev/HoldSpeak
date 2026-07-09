@@ -1,0 +1,18 @@
+# Three runtime profiles, one per bring-your-own backend the product names in
+# MODELS.md: a GGUF in-process profile, an MLX-on-Apple-Silicon profile, and an
+# OpenAI-compatible endpoint profile. Seeded through the public /api/profiles
+# route so each is indistinguishable from a user-made one. The profiles let a
+# surface prove it lists every backend and marks the ones it cannot host as
+# unavailable. Deterministic ids upsert in place.
+profiles:
+  - id: uat-seed-profile-gguf
+    name: Local GGUF (in-process)
+    kind: onDevice
+  - id: uat-seed-profile-mlx
+    name: Apple Silicon MLX
+    kind: onDevice
+    role: mlx
+  - id: uat-seed-profile-endpoint
+    name: OpenAI-compatible endpoint
+    kind: openAICompatible
+    node: ""

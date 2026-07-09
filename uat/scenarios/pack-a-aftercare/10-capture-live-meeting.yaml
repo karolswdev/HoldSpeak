@@ -1,0 +1,27 @@
+id: a-capture-live-meeting
+title: Record a live meeting — mic and system audio with speaker labels
+features:
+  - meetings.capture.live
+  - meetings.capture.live-mic-system-audio
+manual_setup:
+  - On the web-desk / hub machine, install a Whisper model (the /setup readiness panel must read ready — a live capture transcribes as it records).
+  - Route system audio into HoldSpeak so both sides of the conversation are captured — macOS via BlackHole, Linux via a PulseAudio/PipeWire monitor source (README two-modes / platform table). A real mic must also be available.
+  - Have a short two-voice conversation ready to speak (two people, or one person plus audio playing from another app so system audio has content) so speaker labels have something to separate.
+recipes: []
+surfaces:
+  web: yes
+  ipad: {n/a: "the iPad reads a meeting back but capture-start is a desktop action per README.md:273 (inventory ipad: partial/unknown); live mic+system-audio capture on iPad is not claimed"}
+  iphone: {n/a: "live capture on iPhone is unverified in the inventory (row iphone: unknown)"}
+steps:
+  - do: (Staging beat) Open the meeting dashboard and confirm the desk is ready to capture — setup reads ready, a mic device is selected, and a system-audio source (BlackHole / a Pulse/PipeWire monitor) is bound.
+    expect: Setup reads ready, a mic input is listed, and a system-audio capture source is bound — the two capture modes the README names are both wired before any recording starts.
+    where: /
+  - do: Start a live meeting (POST /api/meeting/start under the hood), speak a short two-voice exchange with system audio playing, then stop it (POST /api/meeting/stop).
+    expect: A meeting records live and both audio paths land — the mic-only voice AND content that could only have come from system audio both appear in the transcript. This is the mic-and-system-audio claim, checked structurally — both sources are present, not one.
+    where: /
+  - do: Open the just-recorded meeting in /history and inspect the transcript's speaker labels and window timings.
+    expect: The transcript carries per-window start/end times from the live capture, and where two voices spoke the segments are separated by speaker label (labels are honest — never invented for a single-voice stretch). The recording appears as a real meeting with a real transcript, not an empty stub.
+    where: /history
+  - do: (Honest-failure close) Stop the system-audio source (unplug BlackHole / mute the monitor) and start another live capture with only the mic.
+    expect: The capture still records the mic honestly and does NOT fabricate a second speaker or invent system-audio content that was never routed — a single-source capture yields a single-source transcript, degrading truthfully rather than hallucinating the missing channel.
+    where: /

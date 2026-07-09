@@ -1,0 +1,16 @@
+title: A proposal-ready meeting on an actuator-armed desk
+description: >
+  Import the pylon transcript and run real intel on .43 (like
+  meeting-just-ended-open-actions), but boot the desk with the governance gate
+  OPEN (pack-g-actuators-on: allow_actuators + github_issue/webhook_post/slack on
+  the allow-list, one webhook host allow-listed). The world for the connector
+  packs' TREATMENT half: a genuine open action exists to propose from, and the
+  gate would let an approved proposal execute. Needs the LAN endpoint.
+deck: pack-g-actuators-on
+requires: [intel]
+seeds:
+  - pylon-incident-meeting
+actions:
+  - process_intel: {parse_timeout: 90, rounds: 4}
+probe:
+  - meeting_with_open_actions: {min_actions: 1, timeout: 180}

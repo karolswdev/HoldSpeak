@@ -1,0 +1,49 @@
+id: f-mesh-serve-toggle
+title: Flip one toggle to serve the mesh from the phone — default OFF, consent-gated
+# HSM-25-02: meshServeOn (default FALSE) makes the phone a live mesh edge that
+# serves inference to the desk; the Settings card subline shows serving state, and
+# the toggle disables when unarmable (no hub paired). Off-by-default is a consent
+# gate. The hub side is staged by mesh-node-alive (the desk that reads the edge
+# live); the device serve toggle + on-device engine is hand-staged. The unarmable
+# control is stageable via first-run-no-model (no hub paired → toggle disabled).
+features:
+  - mobile.mesh.serve.consent_toggle
+recipes:
+  - mesh-node-alive
+manual_setup:
+  - Use a device with the on-device engine (TestFlight build 2+) paired to the hub for the serving leg.
+  - Have a hub reachable so the toggle is armable; separately be able to unpair / point at no hub for the disabled-toggle control.
+surfaces:
+  web: {n/a: "directory row mobile.mesh.serve.consent_toggle web=no — serving is a device-edge capability; the web/hub is the consumer/orchestrator, not a served edge"}
+  ipad: yes
+  iphone: yes
+steps:
+  - do: >
+      Staging-verify. Open Settings and confirm the serve toggle exists and reads
+      its default state.
+    expect: >
+      The mesh serve toggle is present and default OFF — no node serves implicitly.
+      The card subline reads not-serving.
+    where: /
+  - do: >
+      Control (default OFF / unarmable). With no hub paired, observe the toggle.
+    expect: >
+      The toggle is disabled when unarmable (e.g. no hub paired) — it cannot be
+      turned on to serve into nothing, and nothing serves implicitly. Off means off.
+    where: /
+  - do: >
+      Treatment. Pair the hub, flip the serve toggle ON, and read the hub doctor /
+      the card subline.
+    expect: >
+      The hub doctor reads the device as a live mesh edge and the card subline
+      reads "serving as iPad · N runs" — the phone is now a served edge. The single
+      consented toggle is what changed it; before the flip nothing served.
+    where: /
+  - do: >
+      Consent-off close. Flip the serve toggle back OFF (or leave the app / kill it).
+    expect: >
+      Serving stops — the hub no longer reads the device as live once the toggle is
+      off (polling is liveness). Toggle-off, backgrounding, and app-death all stop
+      serving; consent is revocable and honest.
+    where: /
+teardown: []

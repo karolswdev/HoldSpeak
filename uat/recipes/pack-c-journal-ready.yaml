@@ -1,0 +1,16 @@
+title: Journal-ready desk — grounded context in place, journal empty
+description: >
+  A seeded desk booted local with the journal-walk glossary note and KB in
+  place, so the surrounding grounded context is checkable. The dictation
+  Journal fills only from real dictations (no journal-entry create route), so a
+  scenario on this world hand-stages the actual said→typed dictations in
+  manual_setup; this recipe verifies the context the journal entries land
+  against is present and the desk is reachable. Idempotent.
+deck: golden-local
+requires: []
+seeds:
+  - pack-c-journal-context
+probe:
+  - setup_reachable: true
+  - note_exists: uat-seed-note-journal-glossary
+  - kb_exists: uat-seed-kb-journal

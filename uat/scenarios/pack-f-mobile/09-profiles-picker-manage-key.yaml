@@ -1,0 +1,54 @@
+id: f-profiles-picker-manage-key
+title: Runtime profiles — pick the active one, manage the list, and the key never syncs
+# Three profile musts (HSM-24-*). active_picker and manage_advanced and
+# key_never_syncs are all iphone:yes (shared ProfileKeyStore / ProfilesView).
+# profile-key-never-syncs stages a profile carrying a bogus secret so the
+# never-sync invariant is ATTACKED (the secret must be absent DESPITE a profile
+# that was given one); seeded-desk gives the desk the picker drives.
+features:
+  - mobile.profiles.active_picker
+  - mobile.profiles.manage_advanced
+  - mobile.profiles.key_never_syncs
+recipes:
+  - profile-key-never-syncs
+  - seeded-desk
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: yes
+steps:
+  - do: >
+      Staging-verify. Open the profiles view and confirm the staged profile is
+      present.
+    expect: >
+      The "Leaky profile" (uat-leaky-profile) is present in the profiles list — the
+      profile that was given a secret key, so the never-sync check below is not
+      vacuous.
+    where: /
+  - do: >
+      Active picker. Change the active runtime profile from the always-exposed
+      picker in Settings, then run an ask.
+    expect: >
+      The next ask runs on the newly-selected profile's model — the picker actually
+      re-routes inference, it is not a cosmetic chip. On first launch the legacy
+      single target reads as a migrated profile with unchanged behaviour.
+    where: /
+  - do: >
+      Manage advanced. Add a second profile with an endpoint + key, assign it to an
+      agent via the inline "Runs on" picker, and read the context gauge.
+    expect: >
+      The agent's run hits that profile's endpoint and the gauge reads that
+      profile's context limit (per-profile, not a global constant), and the egress
+      badge is honest for the assigned profile — not hardcoded "On device".
+    where: /
+  - do: >
+      Key never syncs (the attack). The profile carries the secret UAT-SECRET-KEY-
+      DO-NOT-LEAK. Sync to web, then inspect every served profile shape and a
+      ChangeSet on both surfaces.
+    expect: >
+      The secret NEVER appears in any served profile shape on either surface, and
+      no key field is present on the ChangeSet on the wire — the key stays in the
+      Keychain (this-device-only). Despite a profile that WAS given a key, the key
+      is absent everywhere it is read back.
+    where: /
+teardown: []

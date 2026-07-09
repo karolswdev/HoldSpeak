@@ -1,0 +1,49 @@
+id: g-webhook-post-connector
+title: POST to an allow-listed webhook from an approved proposal (hand-staged endpoint)
+features:
+  - actuators.connector.webhook_post
+  - trust.egress.desk-webhook-connector
+recipes:
+  - pack-g-actuators-armed
+# The pack-g-actuators-on deck allow-lists exactly one webhook host
+# (uat.example.invalid) so the host-membership refusal is checkable without a
+# live endpoint; watching a real POST land needs a request-bin you control, which
+# no recipe can induce — that half is hand-staged. desk-webhook-connector is
+# ipad:yes (ios consumes /api/desk/actuators/webhook/*), so the iPad leg is
+# walked. iPhone is genuinely unknown in the record.
+manual_setup:
+  - Open a request-bin you control (e.g. a webhook.site URL) and copy its host.
+  - Add that host to the desk's webhook allow-list in Settings — the connector refuses any host that is not on the list, so the allow-list is the consent for that one endpoint. (Leave the unrelated uat.example.invalid entry in place; it is the not-allow-listed foil for the refusal step.)
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the desk webhook connector at iPhone compact width is unverified in the directory record (trust.egress.desk-webhook-connector iphone: unknown)"}
+steps:
+  - do: >
+      Staging-verify. On the actuator-armed desk confirm the pylon meeting has an
+      open action and that the webhook connector is available (webhook_post
+      allow-listed, at least one host on the allow-list).
+    expect: The pylon meeting shows an open action; the webhook connector is offered (not gated off).
+    where: /history
+  - do: >
+      (Refusal — a not-allow-listed host) Propose a webhook_post whose target host
+      is NOT on the allow-list (point it at uat.example.invalid's sibling, or any
+      host you did not add). Try to approve.
+    expect: >
+      The proposal is refused before egress — the connector names the host as not
+      allow-listed and nothing is POSTed. Default-empty / not-a-member means
+      nothing leaves, even with actuators enabled.
+    where: /history
+    surfaces:
+      ipad: {n/a: "the pre-egress host-membership refusal is asserted on the hub connector route (webhook_post_actuator.py); the iPad proposes/reviews but the refusal readout is web-desk"}
+  - do: >
+      (The allowed endpoint) Propose a webhook_post to the request-bin host you
+      allow-listed, read the previewed body, then approve and watch the bin.
+    expect: >
+      Only the previewed text is sent, only on approval, and only to the one
+      allow-listed host — exactly one POST lands in your request-bin carrying the
+      text you previewed. The card's egress badge marks this outbound. This is the
+      honest close: the connector posts one previewed payload to one consented
+      endpoint, never anything it was not shown.
+    where: /history
+teardown: []

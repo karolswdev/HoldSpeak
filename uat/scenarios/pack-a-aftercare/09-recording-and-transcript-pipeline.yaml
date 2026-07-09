@@ -1,0 +1,30 @@
+id: a-recording-and-transcript-pipeline
+title: A file enters the full intelligence pipeline — endpoint-down control vs live treatment
+features:
+  - meetings.import.recording-and-transcript
+recipes:
+  - pack-a-import-endpoint-dead
+  - meeting-just-ended-open-actions
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "import on the iPhone form factor is unverified in the inventory (row iphone: unknown); the iPad row is ipad: yes and is authored below"}
+steps:
+  - do: (Staging beat) Confirm the world — a transcript file was imported on .43 and its intelligence pipeline ran, so a meeting exists in /history marked complete (not stuck importing) with at least one open action.
+    expect: The imported pylon meeting is present in history, intel marked complete, and at least one open action is visible — the pipeline drained, it did not stall.
+    where: /history
+  - do: (Control — intel endpoint dead) Boot the endpoint-dead world, import the same pylon transcript file, and read the meeting's intelligence state.
+    expect: The file parsed and the meeting appears immediately (honestly marked importing, then complete for the parse), but the intelligence state is an honest empty — no typed artifact cards were fabricated and the runtime status names the dead endpoint. No hallucinated summary.
+    where: /history
+    surfaces:
+      ipad: {n/a: "the endpoint-dead boot posture is a web-desk/hub state; the iPad reads the synced pipeline result, it does not boot the runtime broken"}
+    after:
+      - apply_recipe: pack-a-import-endpoint-dead
+  - do: (Treatment — pipeline live on .43) Return to the live meeting and read the artifact cards the full intelligence pipeline produced from the same file.
+    expect: The pipeline produced typed artifact cards the control could not — a concrete artifact for the pylon incident (an incident timeline or an open-actions list), each card carrying a confidence score and a transcript-source reference that resolves to a real segment. Judge on the decision (a headroom/expiry alert), the owner, and the risk surfaced — not on wording.
+    where: /history
+  - do: (iPad leg) On a paired iPad, open the same meeting in the hub client and confirm the imported meeting appears immediately, honestly marked (importing while the hub works, then the completed intelligence).
+    expect: The iPad shows the same meeting the hub imported, with the honest import marker, then the completed pipeline result read back from the hub — the iPad reads the pipeline, it does not run it locally.
+    where: /history
+    surfaces:
+      web: {n/a: "this leg asserts the iPad hub-client read-back specifically (inventory ipad: yes); the web legs are covered above"}

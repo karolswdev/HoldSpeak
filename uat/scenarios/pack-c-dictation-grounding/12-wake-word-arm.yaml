@@ -1,0 +1,31 @@
+id: c-wake-word-arm
+title: Say the wake phrase — HoldSpeak arms hands-free (and only then)
+features:
+  - wakeword.hands_free_arm
+recipes:
+  - pack-c-wake-word-ready
+manual_setup:
+  # Arming from a spoken wake phrase needs a live microphone; no recipe can
+  # induce a real acoustic wake, so the capture is hand-staged. The recipe
+  # stages the reachable desk the wake glue arms on.
+  - The pack-c-wake-word-ready recipe has staged a reachable seeded desk; confirm setup reads ready.
+  - Enable the wake word (Settings -> Voice -> Wake word) and confirm openWakeWord is running (the runtime shows a listening state).
+  - Grant microphone permission and be in a quiet room; have the configured wake phrase ready to speak.
+surfaces:
+  web: yes
+  ipad: {n/a: "directory row: wakeword.hands_free_arm ipad=unknown — hands-free capture is hub-side; the mobile client surfacing the armed state is unverified in the record"}
+  iphone: {n/a: "directory row: wakeword.hands_free_arm iphone=unknown — no on-device armed-state claim in the record"}
+steps:
+  # Staging-verify beat: the wake engine is live and NOT armed yet.
+  - do: Confirm the wake word is enabled and the runtime is listening but idle — HoldSpeak is not armed for capture.
+    where: /
+    expect: The runtime shows a wake-listening state and an un-armed (idle) capture state — it is waiting for the phrase, not already recording.
+  # CONTROL leg — noise / a wrong phrase must NOT arm.
+  - do: Speak something that is NOT the wake phrase (ordinary talking, or a similar-but-wrong phrase).
+    where: /
+    expect: HoldSpeak stays idle — the armed state does NOT flip. Ordinary speech does not trip the wake, so a false arm cannot happen from background talk. This is the control leg.
+  # TREATMENT leg — the actual wake phrase arms it hands-free.
+  - do: Say the configured wake phrase clearly.
+    where: /
+    expect: The runtime-activity state flips to armed hands-free — HoldSpeak begins capturing without any keypress. The only difference from the control beat is the correct phrase, so the arm is attributable to the wake word, not to any noise.
+teardown: []

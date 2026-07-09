@@ -1,0 +1,44 @@
+id: g-mesh-relay-egress
+title: The mesh relay carries only prompt and result — no keys transit, and it fails by name
+features:
+  - trust.egress.mesh-relay
+recipes:
+  - mesh-node-alive
+  - mesh-node-just-died
+# trust.egress.mesh-relay is web:yes, ipad:yes AND iphone:yes in the directory
+# (MODELS.md: on iPhone and iPad the same consent is one switch, "Serve my models
+# to the mesh"; HSM-25 the phone is a live edge). So all three surfaces are
+# authored — no n/a. The relay routing UI is the same across them; a sitting on
+# an iPhone confirms the one-switch consent + the liveness readout.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: yes
+steps:
+  - do: >
+      Staging-verify. Open the profiles / mesh view and confirm the "uat-worker"
+      meshNode reads live — the hub has seen it poll the relay queue (the mesh's
+      only heartbeat).
+    expect: The "uat-worker" node reads live; it is a selectable runs-on target for a mesh dispatch.
+    where: /
+  - do: >
+      Dispatch a small ask/run at the live "uat-worker" node, then inspect what
+      actually crossed the relay for that job (the relay queue / job record).
+    expect: >
+      The relay carried only the prompt and the returned result between hub and the
+      node you named — no API keys, no profile secrets, no local file paths ride
+      the relay. The result comes back badged for where it ran (the named node),
+      never masquerading as local.
+    where: /
+  - do: >
+      Kill the relay node's process group mid-run, refresh, then dispatch again at
+      the now-dead node.
+    expect: >
+      The node reads offline and the forced dispatch refuses fast, BY NAME — it
+      names "uat-worker" as unreachable rather than hanging or silently falling
+      back. Nothing new transits a dead relay. This is the honest close: the relay
+      only ever moved prompt+result, and when its node is gone it says so by name.
+    where: /
+    after:
+      - apply_recipe: mesh-node-just-died
+teardown: []

@@ -1,0 +1,25 @@
+title: Send-to-Slack configured — the URL half of the double opt-in
+description: >
+  Real intel on .43 with the Send-to-Slack incoming-webhook URL SET and the
+  slack actuator on the allow-list. This is the TREATMENT half of the Slack
+  double opt-in: with the URL present the aftercare/export surface is visible.
+  The URL points at an unroutable .invalid host so no real POST can leak in a
+  UAT sitting — the scenario judges the consent gate and the badge, not delivery.
+  golden-43 (empty slack_webhook_url) is the control where the feature is
+  invisible.
+requires: [intel]
+config:
+  config_version: 1
+  model:
+    name: base
+    warm_on_start: false
+  meeting:
+    intel_enabled: true
+    intel_provider: cloud
+    intel_cloud_base_url: http://192.168.1.43:8080/v1
+    intel_cloud_model: Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
+    intent_router_enabled: true
+    mir_profile: balanced
+    allow_actuators: true
+    allowed_actuators: [slack]
+    slack_webhook_url: https://hooks.slack.invalid/services/UAT/FAKE/never-delivered

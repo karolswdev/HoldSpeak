@@ -1,0 +1,36 @@
+id: c-wake-preview
+title: The wake result previews before it types — the consent gate holds
+features:
+  - wakeword.preview_before_type
+recipes:
+  - pack-c-wake-word-ready
+manual_setup:
+  # The wake result comes from a live spoken capture; no recipe can induce a
+  # real acoustic wake, so the capture is hand-staged. The recipe stages the
+  # reachable desk the preview card renders on.
+  - The pack-c-wake-word-ready recipe has staged a reachable seeded desk; confirm setup reads ready.
+  - Enable the wake word AND enable preview-before-type (the consent gate) in Settings -> Voice.
+  - Grant microphone permission; open a foreign app with an empty editable text field and put the cursor in it.
+  - Have the configured wake phrase and a short dictation phrase ready to speak.
+surfaces:
+  web: yes
+  ipad: {n/a: "directory row: wakeword.preview_before_type ipad=unknown — the wake preview card on device is unverified in the record"}
+  iphone: {n/a: "directory row: wakeword.preview_before_type iphone=unknown — no on-device wake-preview claim in the record"}
+steps:
+  # Staging-verify beat: the consent gate (preview) is on before we wake it.
+  - do: Confirm the wake word is enabled and preview-before-type is ON, with the cursor in an empty foreign field.
+    where: /
+    expect: The wake word reads enabled, the preview (consent) gate reads on, and the target field is byte-for-byte empty before you speak.
+  # The load-bearing byte-lock — wake, speak, and NOTHING types.
+  - do: Say the wake phrase, then dictate the short phrase. Watch the foreign field while the preview card appears.
+    where: /
+    expect: A preview card appears with the transcribed/rewritten text, and the target field stays byte-for-byte empty — NOTHING types from the wake capture while the card is armed. The consent gate holds; not a character leaks before you confirm.
+  # Confirm — the previewed text lands verbatim, once.
+  - do: Press "Type it" (confirm) once.
+    where: /
+    expect: Exactly the previewed text lands in the field, verbatim — character-for-character what the card showed. Pressing again does not re-type it; the one-shot token is consumed.
+  # CONTROL of the gate — the off path (discard) is byte-locked too, and client text is ignored.
+  - do: Wake and dictate a second phrase to arm a new preview card, then Discard instead of confirming.
+    where: /
+    expect: The card clears and NOTHING lands in the field — the discarded wake result is gone, the token is burned, and a later capture does not resurrect it. The wake path never types without the consent tap.
+teardown: []

@@ -1,0 +1,41 @@
+id: desk-desktop-presence-hud
+title: The ambient desktop presence HUD reflects dictation state — hand-staged
+# The chromeless /presence HUD driven by the runtime_activity websocket. Whether
+# it reflects LIVE dictation state can only be judged with a real mic capture and
+# the presence page open, so it is hand-staged. Honest close: when nothing is
+# dictating, the HUD reads idle — it does not fake activity.
+features:
+  - presence.desktop.hud
+recipes:
+  - fresh-desk
+manual_setup:
+  - Enable desktop presence in settings for this run (the presence toggle must be ON).
+  - Open the chromeless HUD page (/presence) in one window, and a text input you can dictate into in another.
+  - Grant microphone permission and have a working input mic.
+surfaces:
+  web: yes
+  ipad: {n/a: "the iPad has QueuePresence, a distinct presence concept, not the web /presence HUD (presence.desktop.hud ipad=unknown in the directory record)"}
+  iphone: {n/a: "no desktop presence HUD on iPhone in the directory record (presence.desktop.hud iphone=unknown)"}
+steps:
+  - do: >
+      Staging-verify. With presence ON, open /presence. What does the HUD show at
+      rest, before you dictate?
+    expect: >
+      The /presence HUD renders chromeless and reads an idle/ready state — it is
+      connected to the runtime activity stream but shows no active dictation yet.
+    where: /presence
+  - do: >
+      Start a hold-to-talk dictation (or arm the mic) in the other window and
+      speak. Watch the HUD.
+    expect: >
+      The HUD reflects the live dictation state — it shows listening/transcribing
+      while you speak, driven by the runtime_activity websocket, not a static
+      badge.
+    where: /presence
+  - do: >
+      Honest close. Stop dictating and let the mic go quiet.
+    expect: >
+      The HUD returns to idle when nothing is dictating — it reflects real state
+      both ways, it does not stay stuck "listening" or fake activity when silent.
+    where: /presence
+teardown: []

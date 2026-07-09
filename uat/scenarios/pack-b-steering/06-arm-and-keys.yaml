@@ -1,0 +1,49 @@
+id: b-arm-and-keys
+title: The consent gate for keys — unarmed refuses, armed takes the key
+features:
+  - steering.arm_steer
+  - steering.keys
+recipes:
+  - agent-pane-awaiting-input
+# arm_steer is web:yes (hold-to-arm chip + countdown + coder_steering.deliver)
+# and ipad:yes (DeskSteer hold-to-arm+composer, HSM P27 sim-proven). keys is
+# web:yes (key palette + POST /api/coders/{key}/keys) and ipad:yes (DeskSteer
+# key palette, HSM P27). iPhone genuinely unknown in the record for both.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the arm/steer chip and key palette at iPhone compact width are unknown in the directory record (both rows: iphone unknown)"}
+steps:
+  - do: >
+      Staging-verify. Open the coder pull-out and confirm the pane spawned by
+      staging is awaiting input — it printed AWAITING-MIGRATION-CONFIRM and is
+      idle at its prompt.
+    expect: The pane reads live and awaiting input; its prompt is visible. No grant is held yet.
+    where: /
+  - do: >
+      Control — WITHOUT arming, open the key palette and try to send a keystroke
+      (e.g. Enter, or Ctrl-C) to the pane.
+    expect: >
+      The key is refused — an unarmed pane takes no keystroke. The consent gate
+      holds; nothing reaches the agent. This is the control leg: keys must NOT
+      land without a grant.
+    where: /
+  - do: >
+      Treatment — hold to arm the pane (watch the countdown start), then send the
+      SAME keystroke through the key palette.
+    expect: >
+      The pane reads armed with a live TTL countdown, and this time the key lands
+      — the palette reports the key delivered to the session. The only difference
+      from the control is the arming grant; the gate is what changed, not the key.
+    where: /
+    after:
+      - apply_recipe: agent-pane-armed
+  - do: >
+      Still armed, deliver a one-line steer through the composer (e.g. "confirm
+      the migration"), then read the steering audit.
+    expect: >
+      The steer is accepted while the grant is live, and the audit trail carries
+      the arm and the steer as events (who / when / pane, heads and hashes only)
+      — the steer text itself is never stored.
+    where: /
+teardown: []

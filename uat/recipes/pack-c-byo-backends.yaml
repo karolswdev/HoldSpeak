@@ -1,0 +1,17 @@
+title: Three backends seeded — GGUF in-process, MLX, OpenAI-compatible endpoint
+description: >
+  A first-run desk (no model warm) with three runtime profiles seeded, one per
+  bring-your-own backend the product documents: local GGUF in-process, Apple
+  Silicon MLX, and an OpenAI-compatible endpoint. The desk is genuinely a first
+  run so the model-setup surface is honest, and the three profiles are present
+  so a surface can show every backend and mark the ones it cannot host as
+  unavailable. Idempotent — the profile ids upsert in place.
+deck: golden-local
+requires: []
+seeds:
+  - pack-c-byo-backends
+probe:
+  - setup_reachable: true
+  - profile_exists: uat-seed-profile-gguf
+  - profile_exists: uat-seed-profile-mlx
+  - profile_exists: uat-seed-profile-endpoint

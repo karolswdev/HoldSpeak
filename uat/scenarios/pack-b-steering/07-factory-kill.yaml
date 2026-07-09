@@ -1,0 +1,45 @@
+id: b-factory-kill
+title: Kill a session from the desk — the two-step confirm is the gate
+features:
+  - factory.kill
+recipes:
+  - agent-pane-armed
+# factory.kill is web:yes (two-step-confirm Kill in the armed session row) and
+# ipad:yes (DeskSteer kill, HSM P27 sim-proven). iPhone genuinely unknown in the
+# directory row. The armed pane gives a live session that CAN be killed.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the Kill control at iPhone compact width is unknown in the directory record (factory.kill row: iphone unknown)"}
+steps:
+  - do: >
+      Staging-verify. Open the coder pull-out and confirm the staged pane is live
+      and armed (a grant is held, TTL counting down) — a real session that a Kill
+      would end.
+    expect: The pane reads live and armed; the session row exposes a Kill control.
+    where: /
+  - do: >
+      Control — press Kill ONCE and then stop. Do NOT complete the second
+      confirm.
+    expect: >
+      A single press does not kill anything — the control asks for a second,
+      explicit confirm before acting. The session is still live; nothing was
+      ended. This is the gate holding: kill is consent-gated, not one-click.
+    where: /
+  - do: >
+      Treatment — complete the two-step confirm and let the Kill go through.
+    expect: >
+      Only after the second confirm does the session end — the pane drops from
+      the live list and reads killed/gone. The desk reflects one fewer live
+      session; the two-step confirm was the difference between the control (still
+      live) and this (ended).
+    where: /
+  - do: >
+      Honest-failure close — with the session now gone, try to arm or steer that
+      same killed pane again.
+    expect: >
+      It refuses by name — the killed session is no longer a valid steer target,
+      and the desk says so rather than hanging or silently accepting. A dead
+      session takes no grant.
+    where: /
+teardown: []

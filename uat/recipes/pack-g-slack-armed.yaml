@@ -1,0 +1,16 @@
+title: A proposal-ready meeting with Send-to-Slack configured
+description: >
+  Import the pylon transcript and run real intel on .43, booted on
+  pack-g-slack-configured — the Send-to-Slack incoming-webhook URL is set (to an
+  unroutable .invalid host) and the slack actuator is allow-listed. The TREATMENT
+  half of the Slack double opt-in: the aftercare export surface is visible and a
+  Slack send can be proposed, but the URL points nowhere so no real delivery
+  happens in a sitting. Needs the LAN endpoint.
+deck: pack-g-slack-configured
+requires: [intel]
+seeds:
+  - pylon-incident-meeting
+actions:
+  - process_intel: {parse_timeout: 90, rounds: 4}
+probe:
+  - meeting_with_open_actions: {min_actions: 1, timeout: 180}

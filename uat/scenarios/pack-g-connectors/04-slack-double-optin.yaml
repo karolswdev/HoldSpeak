@@ -1,0 +1,51 @@
+id: g-slack-double-optin
+title: Send to Slack — invisible until configured, then per-send approved (the URL never rides)
+features:
+  - actuators.slack.send
+  - trust.egress.send-to-slack-double-optin
+recipes:
+  - meeting-just-ended-open-actions
+  - pack-g-slack-armed
+# Send-to-Slack is web:yes and ipad:yes in the directory (README: approving a
+# Slack send on iPad carries the cloud mark; ios consumes
+# /api/desk/actuators/slack/*). iPhone is genuinely unknown in the record. The
+# control (no URL) is golden-43; the treatment (URL set) is pack-g-slack-armed —
+# the .invalid host means nothing is really delivered in a sitting.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the approve-Slack-send flow at iPhone form factor is unverified in the directory record (actuators.slack.send iphone: unknown)"}
+steps:
+  - do: >
+      (Control — URL NOT configured) Staging-verify on the default golden-43 desk
+      (meeting-just-ended-open-actions). Open the pylon meeting's aftercare and
+      look for any Send-to-Slack control.
+    expect: >
+      With slack_webhook_url empty, the Send-to-Slack surface is INVISIBLE — no
+      aftercare Slack button, and the export route refuses. The feature does not
+      exist until you consent by configuring it. (Opt-in 1 of 2 is absent.)
+    where: /history
+  - do: >
+      (Treatment — URL configured) Restage on the slack-armed desk (the URL is
+      set). Open the same meeting's aftercare; the Send-to-Slack control is now
+      offered. Compose a digest send and read the proposal BEFORE approving.
+    expect: >
+      The Slack send is now available and produces a per-send proposal showing the
+      exact digest text that would go — but nothing is sent yet. The card's egress
+      badge reads cloud (the send is outbound), never local. The only change from
+      the control is the configured URL. (Opt-in 1 of 2 satisfied; opt-in 2 is the
+      per-send approval still pending.)
+    where: /history
+    after:
+      - apply_recipe: pack-g-slack-armed
+  - do: >
+      Inspect the pending proposal payload / the broadcast it rode in on, and any
+      non-settings API response for the meeting. Then approve the send.
+    expect: >
+      The webhook URL NEVER appears in the proposal payload, the broadcast, or any
+      non-settings response — it stays a credential on the host. Only on per-send
+      approval does the send fire (here the .invalid host means no real delivery,
+      so judge the gate: it required config PLUS approval, and the URL never
+      transited). This is the double opt-in, honest and closed.
+    where: /history
+teardown: []
