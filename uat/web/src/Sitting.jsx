@@ -291,7 +291,7 @@ function DebriefPanel() {
 }
 
 function SittingEnd() {
-  const { sitting, finish, setView, loadHome } = useStore();
+  const { sitting, finish, setView, loadHome, debrief } = useStore();
   const [done, setDone] = useState(sitting.status === "done");
   const cov = sitting.coverage;
 
@@ -340,9 +340,9 @@ function SittingEnd() {
         {done && <span className="pill" style={{ color: "var(--pass)" }}>sitting recorded</span>}
         <button className="ghost" onClick={() => { loadHome(); setView("home"); }}>Back to home</button>
       </div>
-      {done && <div className="banner info" style={{ marginTop: 12 }}>Debrief packet generated under the run's <span className="mono">debrief/</span> dir (md + json). Triage below.</div>}
-      {done && <div className="spacer" />}
-      {done && <DebriefPanel />}
+      {debrief && <div className="banner info" style={{ marginTop: 12 }}>Recorded debrief (md + json under the run's <span className="mono">debrief/</span> dir). Review the findings and triage below — this is where we decide what to fix.</div>}
+      {debrief && <div className="spacer" />}
+      {debrief && <DebriefPanel />}
     </div>
   );
 }
@@ -350,8 +350,11 @@ function SittingEnd() {
 export function Sitting() {
   const { sitting, ensureStaged, staging, stagedIds } = useStore();
   const resume = sitting?.resume;
+  // A finished sitting is always in REVIEW mode (even if some slots went
+  // unanswered); only an in-progress sitting resumes the walkthrough.
+  const reviewing = sitting?.status === "done";
 
-  const scenario = resume ? sitting.scenarios.find((s) => s.id === resume.scenario_id) : null;
+  const scenario = !reviewing && resume ? sitting.scenarios.find((s) => s.id === resume.scenario_id) : null;
 
   useEffect(() => {
     if (scenario && !stagedIds[scenario.id]) {
@@ -360,7 +363,7 @@ export function Sitting() {
   }, [scenario?.id, ensureStaged, stagedIds]); // eslint-disable-line
 
   if (!sitting) return <div className="empty">Loading…</div>;
-  if (!resume) return <SittingEnd />;
+  if (reviewing || !resume) return <SittingEnd />;
 
   const staged = stagedIds[scenario.id];
   return (

@@ -68,10 +68,18 @@ export const useStore = create((set, get) => ({
   },
 
   async open(id) {
-    set({ busy: true, error: null, staging: null, stagedIds: {}, afterRan: {} });
+    set({ busy: true, error: null, staging: null, stagedIds: {}, afterRan: {}, debrief: null, backlog: null });
     try {
       const sitting = await api.getSitting(id);
       set({ sitting, view: "sitting", busy: false });
+      // Re-opening a completed (or already-walked) sitting is a REVIEW: load its
+      // recorded debrief so the findings are there to look at, not just the score.
+      if (sitting.status === "done" || sitting.progress?.complete || sitting.verdicts?.length) {
+        try {
+          const packet = await api.readDebrief(id); // GET returns the packet directly
+          set({ debrief: packet });
+        } catch (_) {}
+      }
     } catch (e) {
       set({ error: String(e.message || e), busy: false });
     }
