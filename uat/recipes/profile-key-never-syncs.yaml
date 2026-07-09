@@ -1,0 +1,19 @@
+title: A profile carries a key that never rides the wire
+description: >
+  Create a runtime profile with a bogus secret key through the public route,
+  then prove the secret NEVER appears in the profiles read-back — the
+  key-never-syncs promise, attacked rather than imagined. Fully local.
+deck: golden-local
+requires: []
+actions:
+  - create_profile:
+      id: uat-leaky-profile
+      name: Leaky profile
+      kind: onDevice
+      requires_key: true
+      api_key: UAT-SECRET-KEY-DO-NOT-LEAK
+probe:
+  # profile_exists forces the create to run (so the absence isn't vacuous —
+  # the secret is absent DESPITE a profile that was given one).
+  - profile_exists: uat-leaky-profile
+  - absent_in_response: {path: /api/profiles, text: UAT-SECRET-KEY-DO-NOT-LEAK}

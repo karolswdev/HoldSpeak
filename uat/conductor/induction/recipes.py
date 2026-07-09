@@ -303,15 +303,26 @@ class RecipeEngine:
                 res = steering.steer(client_, session, str(opts.get("text", "")))
                 return {"action": "steer_pane", "name": name, "result": res}
         if kind == "create_profile":
-            # Register a meshNode profile so the hub surfaces the node's
-            # liveness (GET /api/profiles -> mesh_liveness). Idempotent via id.
-            name = arg["name"] if isinstance(arg, dict) else str(arg)
-            node = arg.get("node", name) if isinstance(arg, dict) else name
+            # Register a profile through the public route. Defaults to a meshNode
+            # (so the hub surfaces its liveness); any field the route accepts —
+            # including a bogus api_key to attack key-never-syncs — passes through.
+            opts = arg if isinstance(arg, dict) else {"name": str(arg)}
+            name = opts.get("name", "profile")
+            body = {"id": opts.get("id", f"uat-profile-{name}"), "name": name, "kind": opts.get("kind", "meshNode")}
+            for k in ("node", "api_key", "requires_key", "profile_id", "avatar", "role", "system_prompt"):
+                if k in opts:
+                    body[k] = opts[k]
+            resp = client.post_json("/api/profiles", body)
+            return {"action": "create_profile", "name": name, "status": resp.status_code}
+        if kind == "teach_correction":
+            # Record a dictation correction so the learned-from-N digest has a
+            # KNOWN count to check honestly against.
+            opts = arg if isinstance(arg, dict) else {}
             resp = client.post_json(
-                "/api/profiles",
-                {"id": f"uat-profile-{name}", "name": name, "kind": "meshNode", "node": node},
+                "/api/dictation/corrections",
+                {"kind": opts.get("kind", "intent"), "text": opts.get("text", "teh"), "value": opts.get("value", "the")},
             )
-            return {"action": "create_profile", "name": name, "node": node, "status": resp.status_code}
+            return {"action": "teach_correction", "status": resp.status_code}
         return {"action": kind, "error": f"unknown action {kind!r}"}
 
 

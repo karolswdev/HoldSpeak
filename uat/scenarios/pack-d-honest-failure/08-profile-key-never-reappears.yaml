@@ -4,6 +4,7 @@ features:
   - trust.secrets.profile-key-never-syncs
 recipes:
   - seeded-desk
+  - profile-key-never-syncs
 # The re-eval's finding #5 + task #19: trust.secrets.profile-key-never-syncs is
 # a MUST, all-three in the directory (web/ipad/iphone: yes), and was written in
 # the imagined voice. This stages the attack: supply a secret to an ingress,

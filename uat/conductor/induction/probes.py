@@ -213,6 +213,29 @@ class ProbeEvaluator:
             time.sleep(2.0)
         return (False, f"timed out after {timeout:.0f}s: {last}")
 
+    # --- dictation learning + trust attacks ------------------------------
+
+    def _check_learning_digest_min(self, arg):
+        n = int(arg if not isinstance(arg, dict) else arg.get("count", 1))
+        try:
+            totals = self.client.get_json("/api/dictation/learning-digest").get("totals", {})
+        except Exception:
+            totals = {}
+        made = int(totals.get("corrections_made") or 0)
+        return (made >= n, f"learning digest corrections_made={made} (need ≥{n})")
+
+    def _check_absent_in_response(self, arg):
+        """A secret/string must NOT appear in a route's response (key-never-syncs,
+        no-secret-leak). arg = {path, text}."""
+        path = str(arg["path"])
+        text = str(arg["text"])
+        try:
+            blob = _json_str(self.client.get_json(path))
+        except Exception as exc:
+            return (False, f"could not read {path}: {exc}")
+        absent = text not in blob
+        return (absent, f"{text!r} {'absent from' if absent else 'LEAKED IN'} {path}")
+
     # --- runtime / first-run ---------------------------------------------
 
     def _check_runtime_endpoint_unreachable(self, _arg):
