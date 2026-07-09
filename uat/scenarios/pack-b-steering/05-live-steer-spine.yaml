@@ -1,0 +1,27 @@
+id: b-live-steer-spine
+title: The live steering spine — peek, the consent gate, arm, audit
+features:
+  - steering.peek
+  - steering.attach_any_pane
+  - trust.steering.arming-grant
+  - steering.audit
+recipes:
+  - agent-pane-awaiting-input
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the terminal/steering surface has no compact iPhone form (directory: mobile.steering.* is iPad, not iPhone)"}
+steps:
+  - do: Open the coder pull-out and peek at the pane that is awaiting input (the staging beat — a real tmux pane was spawned and it printed its prompt).
+    expect: The peek shows the pane live with its prompt visible; watching is free — no grant was needed to read it.
+    where: /
+  - do: Without arming, try to send a keystroke to the pane.
+    expect: It refuses — an unarmed pane takes no keystroke. The consent gate holds before any input reaches the agent.
+    where: /
+  # Arm the pane mid-run (the explicit desk act), then read the audit.
+  - do: Arm the pane, then open the steering audit.
+    expect: The pane reads armed with a live countdown, and the audit trail shows the arm event (who/when/pane), heads and hashes only — the steer text is never stored.
+    where: /
+    after:
+      - apply_recipe: agent-pane-armed
+teardown: []

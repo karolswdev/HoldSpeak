@@ -1,0 +1,14 @@
+title: An agent pane is armed for steering
+description: >
+  The awaiting pane plus an arming grant held — a steer would now be accepted,
+  and the arm is written to the audit trail. Fully local.
+deck: golden-local
+requires: []
+includes:
+  - agent-pane-awaiting-input
+actions:
+  - arm_pane: {name: coder, ttl_seconds: 300}
+  - wait: 1
+probe:
+  - grant_live: coder
+  - audit_min: 1

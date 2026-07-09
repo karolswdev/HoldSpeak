@@ -196,7 +196,7 @@ class RecipeEngine:
 
         client = host.product_client(run_id)
         home = host.run_home(run_id)
-        evaluator = ProbeEvaluator(client, home=home)
+        evaluator = ProbeEvaluator(client, home=home, run_id=run_id)
 
         # The combined probe is the target's own probe (includes stage the world;
         # the target's probe is the authoritative claim). Included recipes still
@@ -281,6 +281,27 @@ class RecipeEngine:
                 if n == 0:
                     break
             return {"action": "process_intel", "processed": total}
+        if kind in ("spawn_pane", "arm_pane", "send_keys", "steer_pane"):
+            from . import steering
+
+            opts = arg if isinstance(arg, dict) else {"name": str(arg)}
+            name = opts.get("name", "coder")
+            session = steering.session_name(run_id, name)
+            if kind == "spawn_pane":
+                command = opts.get("command", "bash -c 'echo AWAITING-INPUT; sleep 1200'")
+                res = host.spawn_pane(run_id, name, command)
+                return {"action": "spawn_pane", "name": name, "session": session, "result": res}
+            client_ = host.product_client(run_id)
+            if kind == "arm_pane":
+                res = steering.arm(client_, session, ttl_seconds=int(opts.get("ttl_seconds", 120)))
+                return {"action": "arm_pane", "name": name, "result": res}
+            if kind == "send_keys":
+                keys = opts.get("keys") or []
+                res = steering.send_keys(client_, session, list(keys))
+                return {"action": "send_keys", "name": name, "keys": keys, "result": res}
+            if kind == "steer_pane":
+                res = steering.steer(client_, session, str(opts.get("text", "")))
+                return {"action": "steer_pane", "name": name, "result": res}
         if kind == "create_profile":
             # Register a meshNode profile so the hub surfaces the node's
             # liveness (GET /api/profiles -> mesh_liveness). Idempotent via id.

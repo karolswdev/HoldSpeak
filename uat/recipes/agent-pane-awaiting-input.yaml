@@ -1,0 +1,15 @@
+title: An agent pane is awaiting input
+description: >
+  Spawn a real tmux coder pane (via the product's factory route) that prints a
+  prompt and waits. Peek shows it live with the prompt, it's listed among the
+  panes, and sending keys while UNARMED refuses — the consent gate. Fully local
+  (tmux + the product's own /api/coders routes); no .43.
+deck: golden-local
+requires: []
+actions:
+  - spawn_pane: {name: coder, command: "bash -c 'echo AWAITING-MIGRATION-CONFIRM; sleep 1200'"}
+  - wait: 2
+probe:
+  - pane_listed: coder
+  - pane_shows: {name: coder, contains: AWAITING-MIGRATION-CONFIRM}
+  - keys_refused_unarmed: coder
