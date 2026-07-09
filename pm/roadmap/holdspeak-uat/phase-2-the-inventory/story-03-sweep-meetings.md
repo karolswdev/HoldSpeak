@@ -57,6 +57,11 @@ enumerates what a sitting should hold it to.
 
 ## Notes / open questions
 
+- **Starting map:** [`directory/20-meetings.md`](./directory/20-meetings.md)
+  — 42 capabilities pre-seeded by the sweep. This story verifies the
+  map on device and reconciles it into the ledger; the trust/egress
+  meeting rows also live in
+  [`directory/40-trust-and-egress.md`](./directory/40-trust-and-egress.md).
 - Actuator rows must carry their consent framing (off by default,
   approval audited) into the scenario hints — a UAT scenario that
   suggests weakening a gate is wrong by construction.

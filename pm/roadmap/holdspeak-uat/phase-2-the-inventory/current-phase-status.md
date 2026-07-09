@@ -1,6 +1,6 @@
 # Phase 2 — The Inventory
 
-**Last updated:** 2026-07-08 (scaffolded, 0/5)
+**Last updated:** 2026-07-08 (scaffolded 0/5; **the directory pre-seed landed** — an 8-agent sweep produced the starting map the sweeps now verify)
 
 ## Goal
 
@@ -71,11 +71,28 @@ Scaffolded 2026-07-08 on the owner's direction, the same conversation
 that added three-surface UAT and the induction engine to Phase 1:
 "a very, very important phase is going to be phase two — us gathering
 what UAT is, us finally making an inventory of what the system can
-do." Sequenced after Phase 1 so the ledger format, the surface axis,
-and the recipe vocabulary exist to inventory *into* — but HSU-2-01
-(the charter) and the sweeps only need the ledger *format* (HSU-1-03),
-not the whole rig, so the two phases can interleave once 1-03 lands.
-Next: nothing actionable until Phase 1 reaches HSU-1-03.
+do." Then, on the owner's explicit call for the agent fleet, an
+**8-agent parallel sweep (Opus 4.8)** pounded the whole record (HS
+0–90, HSM 1–27, the docs corpus) and produced the **directory
+pre-seed** now under [`directory/`](./directory/): **255 capabilities**
+across four domain files, each row carrying per-surface applicability
+*with an evidence pointer*, needed state recipes, a priority hint, and
+an expansion note — plus the sibling planning docs
+[`PROTOCOL-NOTION.md`](./PROTOCOL-NOTION.md),
+[`RECIPE-WORKLIST.md`](./RECIPE-WORKLIST.md), and
+[`PHASE-3-PLAN.md`](./PHASE-3-PLAN.md) (the coverage-pack plan — the
+output that IS Phase 3's input).
+
+The headline finding is the parity gap: the record answers the web
+desk (221/255 present) and the iPad (142 present, 98 unknown) but is
+nearly silent on the **iPhone (25 present, 213 unknown)** — the single
+largest thing the sweeps must resolve on real glass. **This directory
+is a model's reading of the record, not a verdict**; the sweeps
+(HSU-2-02/03/04) now *verify it on device* rather than start blank,
+and HSU-2-05 ranks it with the owner. Nothing is actionable to *close*
+until Phase 1 reaches HSU-1-03 (the ledger format the sweeps write
+into), but the directory means the sweeps arrive with a map, not a
+blank page. Next: Phase 1 → HSU-1-03, then the sweeps verify.
 
 ## Active risks
 

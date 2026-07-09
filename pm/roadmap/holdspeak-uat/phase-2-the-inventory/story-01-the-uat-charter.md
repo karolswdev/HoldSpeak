@@ -65,6 +65,11 @@ jointly, so every sitting after it means the same thing.
 
 ## Notes / open questions
 
+- The charter's sitting-shape rules are pre-drafted in
+  [`../PROTOCOL-NOTION.md`](./PROTOCOL-NOTION.md) (beat spine,
+  control-vs-treatment, honest-failure close, per-surface capture) —
+  distilled from the walks that already worked. The charter formalizes
+  those into canon; this story does not re-derive them.
 - The charter is UAT-side canon; if it ever contradicts
   `docs/internal/POSITIONING.md`, positioning wins and the charter
   updates.

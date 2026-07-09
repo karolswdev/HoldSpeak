@@ -61,6 +61,13 @@ enumerates it. This sweep turns that record into ledger rows.
 
 ## Notes / open questions
 
-- Authored directly (the standing rule: no subagent fan-out for
-  roadmap/PMO content); the surface checks need the real devices in
-  hand.
+- **Starting map:** [`directory/10-input-and-intelligence.md`](./directory/10-input-and-intelligence.md)
+  — 76 capabilities pre-seeded by the 8-agent sweep, with the record's
+  per-surface claim. This story *verifies* that map on real glass
+  (turning ❓ into ✅/— on the devices) and reconciles it into the
+  ledger; it does not start blank. The fleet did the research
+  inventory; the human verifies on device and the agent authors the
+  ledger rows (consistent with the no-fan-out-to-author rule).
+- The biggest ❓ cluster is device-side dictation depth (cockpit,
+  blocks, KB, journal, learning loop on iPad/iPhone) — the surface
+  checks need the real devices in hand.
