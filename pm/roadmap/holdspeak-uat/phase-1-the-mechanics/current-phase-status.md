@@ -1,7 +1,8 @@
 # Phase 1 — The Mechanics
 
-**Last updated:** 2026-07-08 (owner direction folded in pre-build:
-three-surface UAT + the induction engine; still 0/6)
+**Last updated:** 2026-07-09 (HSU-1-01 shipped: the conductor boots,
+health-checks, tears down, and restarts a real isolated HoldSpeak;
+1/6)
 
 ## Goal
 
@@ -79,7 +80,7 @@ sitting run end to end by the owner across all three surfaces.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSU-1-01 | The conductor: hosted runs | backlog | [story-01](./story-01-the-conductor.md) | — |
+| HSU-1-01 | The conductor: hosted runs | done | [story-01](./story-01-the-conductor.md) | [evidence-01](./evidence-story-01.md) |
 | HSU-1-02 | The induction engine: decks, seeds, state recipes | backlog | [story-02](./story-02-the-induction-engine.md) | — |
 | HSU-1-03 | The scenario contract + the feature ledger | backlog | [story-03](./story-03-scenario-contract-and-coverage.md) | — |
 | HSU-1-04 | The guided site | backlog | [story-04](./story-04-the-guided-site.md) | — |
@@ -87,6 +88,25 @@ sitting run end to end by the owner across all three surfaces.
 | HSU-1-06 | Docs + the first sitting | backlog | [story-06](./story-06-docs-and-first-sitting.md) | — |
 
 ## Where we are
+
+**HSU-1-01 is done (2026-07-09).** The conductor exists: a standalone
+FastAPI app (`uv run python -m uat.conductor`, pinned port 8799) that
+boots `holdspeak web --no-open` as a managed subprocess under a fresh
+isolated HOME (`uat/_runs/<run_id>/home/`, the dogfood `_home` recipe
+ported to `uat/conductor/home.py`), polls the auth-exempt `/health`
+route until up, captures the product's stdout/stderr per run, and tears
+it down by process-group (SIGTERM→SIGKILL) with no orphans. Restart-
+with-a-different-overlay is a first-class verb. LAN binding mints the
+run its own web auth token and reports pairing facts. The run DB
+(sqlite, `uat/_runs/uat.db`) lands its full schema here (runs,
+scenario_executions, step_verdicts, findings) though verdict *writes*
+arrive in HSU-1-04. The subprocess boundary is grep- **and** clean-
+import-enforced (`tests/uat/test_no_holdspeak_import.py`). Proven by 20
+harness tests incl. a real-boot integration test that boots, health-
+checks, restarts, and tears down an actual HoldSpeak. Next: HSU-1-02
+(the induction engine — decks, seeds, recipes).
+
+---
 
 Scaffolded 2026-07-08 from the owner's direct ask: a robust UAT
 harness that forces a real human sitting — a guided website with
