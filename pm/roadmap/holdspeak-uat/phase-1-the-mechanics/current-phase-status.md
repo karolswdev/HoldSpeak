@@ -1,8 +1,8 @@
 # Phase 1 — The Mechanics
 
-**Last updated:** 2026-07-09 (HSU-1-03 shipped: the scenario contract +
-the feature ledger (255 keys, every phase mapped) + coverage math + the
-7-scenario smoke pack; 3/6)
+**Last updated:** 2026-07-09 (HSU-1-04 shipped: the guided site — a
+React+Vite SPA that stages the world and walks a pack with per-surface
+verdicts; Playwright-proven; 4/6)
 
 ## Goal
 
@@ -83,11 +83,34 @@ sitting run end to end by the owner across all three surfaces.
 | HSU-1-01 | The conductor: hosted runs | done | [story-01](./story-01-the-conductor.md) | [evidence-01](./evidence-story-01.md) |
 | HSU-1-02 | The induction engine: decks, seeds, state recipes | done | [story-02](./story-02-the-induction-engine.md) | [evidence-02](./evidence-story-02.md) |
 | HSU-1-03 | The scenario contract + the feature ledger | done | [story-03](./story-03-scenario-contract-and-coverage.md) | [evidence-03](./evidence-story-03.md) |
-| HSU-1-04 | The guided site | backlog | [story-04](./story-04-the-guided-site.md) | — |
+| HSU-1-04 | The guided site | done | [story-04](./story-04-the-guided-site.md) | [evidence-04](./evidence-story-04.md) |
 | HSU-1-05 | The debrief + the triage protocol | backlog | [story-05](./story-05-the-debrief.md) | — |
 | HSU-1-06 | Docs + the first sitting | backlog | [story-06](./story-06-docs-and-first-sitting.md) | — |
 
 ## Where we are
+
+**HSU-1-04 is done (2026-07-09).** The guided site is real: a React+Vite
+SPA under `uat/web/` (dark, Signal-grade — home with pack coverage pills and
+past sittings, setup, a staging panel, the beat-by-beat walkthrough, the
+sitting-end tally). Pick a pack → the rig boots an isolated run and stages
+each scenario's recipes, showing the staging honestly (each recipe verified,
+or the failure with the product's own log tail + retry/abort — never a
+spinner). Each step shows *do* / *expect*, an "Open the product" deep-link to
+the run's product URL at `where`, and **one verdict slot per applicable
+surface** (web/iPad/iPhone, each pass/fail/partial/skip + note + screenshot);
+an `n/a` surface renders with its reason and is excluded from the step's
+completion math. Every verdict writes to the run DB the moment cast, keyed
+(scenario, step, surface), so a refresh or a mid-sitting crash resumes at the
+first unanswered slot — nothing lost. Mid-run conductor actions (the mesh
+kill) fire between steps. The backend is `uat/conductor/sittings.py` +
+sitting routes; the built `dist` is committed so `uv run python -m
+uat.conductor` serves the site with no npm step. Proven by 5 vitest store
+tests, the conductor's sitting/verdict/site-serving pytest suite, a real
+full-loop integration test, and a **Playwright drive** of the real site
+(screenshots in `assets/`). The live device-over-LAN cross-view is
+owner-gated (HSU-1-06). 72 local tests. Next: HSU-1-05 (the debrief + triage).
+
+---
 
 **HSU-1-03 is done (2026-07-09).** The scenario contract and the feature
 ledger live under `uat/conductor/contract/`. **The ledger**

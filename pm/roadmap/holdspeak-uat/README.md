@@ -5,7 +5,7 @@
 > source seams, the autonomy contract, and the definition of done. It is written
 > to be executed unattended, end to end.
 
-**Last updated:** 2026-07-09 (HSU-1-03 shipped — the scenario contract + the feature ledger (255 keys, every phase mapped) + coverage math + the smoke pack; Phase 1 at 3/6)
+**Last updated:** 2026-07-09 (HSU-1-04 shipped — the guided site: a React+Vite SPA that stages the world and walks a pack with per-surface verdicts, Playwright-proven; Phase 1 at 4/6)
 **Current phase:** [Phase 1 — The Mechanics](./phase-1-the-mechanics/current-phase-status.md)
 **Status:** active
 
@@ -77,7 +77,7 @@ canon, canon wins.
 
 | Phase | Goal (one line) | Status | Folder |
 |---|---|---|---|
-| 1 | The Mechanics: the conductor (hosted runs reachable by the devices), the induction engine (decks, seeds, idempotent state recipes, mesh hands), the three-surface scenario contract + seed ledger, the guided UAT site with per-surface verdicts, the debrief + triage protocol, proven by one live smoke-pack sitting | in-progress (3/6) | [phase-1-the-mechanics](./phase-1-the-mechanics/) |
+| 1 | The Mechanics: the conductor (hosted runs reachable by the devices), the induction engine (decks, seeds, idempotent state recipes, mesh hands), the three-surface scenario contract + seed ledger, the guided UAT site with per-surface verdicts, the debrief + triage protocol, proven by one live smoke-pack sitting | in-progress (4/6) | [phase-1-the-mechanics](./phase-1-the-mechanics/) |
 | 2 | The Inventory: owner + agent gather what UAT *is* here (the charter) and enumerate everything the system can do into the capability × surface × required-state matrix that Phase 3's coverage pack is authored from. **Directory pre-seeded** by an 8-agent sweep: 255 capabilities, the [directory](./phase-2-the-inventory/directory/), the [protocol notion](./phase-2-the-inventory/PROTOCOL-NOTION.md), the [recipe worklist](./phase-2-the-inventory/RECIPE-WORKLIST.md), and the [Phase 3 plan](./phase-2-the-inventory/PHASE-3-PLAN.md) | planning (0/5) | [phase-2-the-inventory](./phase-2-the-inventory/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)

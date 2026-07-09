@@ -14,14 +14,21 @@ deliberately broken.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .db import Database
 from .runs import RunManager
+from .sittings import SittingError, SittingManager
+
+
+def _site_dist() -> Path:
+    return Path(__file__).resolve().parents[2] / "uat" / "web" / "dist"
 
 
 class CreateRunBody(BaseModel):
@@ -45,12 +52,42 @@ class SpawnNodeBody(BaseModel):
     name: str
 
 
+class CreateSittingBody(BaseModel):
+    pack: str
+    deck: Optional[str] = None
+    lan: bool = False
+
+
+class StageBody(BaseModel):
+    scenario_id: str
+
+
+class VerdictBody(BaseModel):
+    scenario_id: str
+    step_index: int
+    surface: str
+    verdict: str
+    note: Optional[str] = None
+    shot_path: Optional[str] = None
+    started_at: Optional[str] = None
+
+
+class AfterBody(BaseModel):
+    scenario_id: str
+    step_index: int
+
+
 def create_app(manager: RunManager | None = None) -> FastAPI:
     app = FastAPI(title="HoldSpeak UAT Conductor", version="0.1.0")
     app.state.manager = manager or RunManager(Database())
 
     def mgr() -> RunManager:
         return app.state.manager
+
+    app.state.sittings = SittingManager(app.state.manager, app.state.manager.db)
+
+    def sit() -> SittingManager:
+        return app.state.sittings
 
     @app.get("/api/health")
     def conductor_health() -> Any:
@@ -61,17 +98,6 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
             "runs": len(runs),
             "up": sum(1 for r in runs if r.status == "up"),
         }
-
-    @app.get("/")
-    def index() -> Any:
-        # The guided site (HSU-1-04) builds to static assets served here.
-        return JSONResponse(
-            {
-                "service": "HoldSpeak UAT Conductor",
-                "note": "The guided site lands in HSU-1-04. API is under /api.",
-                "health": "/api/health",
-            }
-        )
 
     @app.post("/api/runs", status_code=201)
     def create_run(body: CreateRunBody) -> Any:
@@ -245,8 +271,101 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
             "validation_errors": errors,
         }
 
+    # --- sittings (HSU-1-04) ---------------------------------------------
+
+    @app.post("/api/sittings", status_code=201)
+    def create_sitting(body: CreateSittingBody) -> Any:
+        from .contract.scenarios import ScenarioError
+
+        try:
+            return sit().create(body.pack, deck_override=body.deck, lan=body.lan)
+        except ScenarioError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        except SittingError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+    @app.get("/api/sittings")
+    def list_sittings() -> Any:
+        return {"sittings": sit().list()}
+
+    @app.get("/api/sittings/{sitting_id}")
+    def get_sitting(sitting_id: str) -> Any:
+        try:
+            return sit().get(sitting_id)
+        except SittingError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+
+    @app.post("/api/sittings/{sitting_id}/stage")
+    def stage_sitting(sitting_id: str, body: StageBody) -> Any:
+        try:
+            return sit().stage(sitting_id, body.scenario_id)
+        except SittingError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+
+    @app.post("/api/sittings/{sitting_id}/verdicts")
+    def cast_verdict(sitting_id: str, body: VerdictBody) -> Any:
+        try:
+            return sit().cast_verdict(
+                sitting_id,
+                scenario_id=body.scenario_id,
+                step_index=body.step_index,
+                surface=body.surface,
+                verdict=body.verdict,
+                note=body.note,
+                shot_path=body.shot_path,
+                started_at=body.started_at,
+            )
+        except SittingError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+    @app.post("/api/sittings/{sitting_id}/shots")
+    def upload_shot(
+        sitting_id: str,
+        scenario_id: str = Form(...),
+        step_index: int = Form(...),
+        surface: str = Form(...),
+        file: UploadFile = File(...),
+    ) -> Any:
+        suffix = Path(file.filename or "shot.png").suffix or ".png"
+        data = file.file.read()
+        try:
+            path = sit().save_shot(sitting_id, scenario_id, step_index, surface, data, suffix=suffix)
+        except SittingError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        return {"shot_path": path}
+
+    @app.post("/api/sittings/{sitting_id}/after")
+    def run_after(sitting_id: str, body: AfterBody) -> Any:
+        try:
+            return {"performed": sit().run_after_actions(sitting_id, body.scenario_id, body.step_index)}
+        except SittingError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+
+    @app.post("/api/sittings/{sitting_id}/finish")
+    def finish_sitting(sitting_id: str) -> Any:
+        try:
+            return sit().finish(sitting_id)
+        except SittingError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+
     @app.on_event("shutdown")
     def _shutdown() -> None:
         mgr().teardown_all()
+
+    # The built guided site (uat/web/dist) is served at / when present. Until it
+    # is built, a JSON pointer answers at / so the conductor is still usable.
+    dist = _site_dist()
+    if dist.exists() and (dist / "index.html").exists():
+        app.mount("/", StaticFiles(directory=str(dist), html=True), name="site")
+    else:
+        @app.get("/")
+        def index() -> Any:
+            return JSONResponse(
+                {
+                    "service": "HoldSpeak UAT Conductor",
+                    "note": "The guided site is not built. Run: npm --prefix uat/web install && npm --prefix uat/web run build",
+                    "health": "/api/health",
+                }
+            )
 
     return app

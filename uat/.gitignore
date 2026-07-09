@@ -1,6 +1,12 @@
 # Runs are ephemeral: isolated HOMEs, captured logs, screenshots, the run DB.
 _runs/
 
-# The guided site's build output + deps (HSU-1-04).
+# The guided site's deps (HSU-1-04). The built `web/dist/` is COMMITTED
+# (commit-built posture) so `uv run python -m uat.conductor` serves the site
+# after a plain `git pull` — no npm step for the owner. Rebuild with:
+#   npm --prefix uat/web install && npm --prefix uat/web run build
 web/node_modules/
-web/dist/
+
+# The root .gitignore has a global `dist/`; re-include the committed site build.
+!web/dist/
+!web/dist/**
