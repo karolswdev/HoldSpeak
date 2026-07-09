@@ -1,0 +1,3827 @@
+# The feature ledger — the enumerated shipped surface of HoldSpeak.
+#
+# Derived from the record (Phase-2 inventory + the holdspeak phase index) by
+# uat/tools/build_ledger.py, then reviewed by hand. Scenarios cite these keys;
+# debriefs compute coverage against them. `unknown` surface cells are honest at
+# v1 — Phase 2 (The Inventory) owns making this exhaustive and resolving them.
+#
+# phase_map pins every holdspeak phase to the keys covering it, or the
+# internal/no-uat-surface marker — no phase silently absent.
+#
+# Regenerate: uv run python -m uat.tools.build_ledger
+version: 1
+generated_by: uat/tools/build_ledger.py (proposes; committed YAML is canon)
+source:
+  inventory: pm/roadmap/holdspeak-uat/phase-2-the-inventory/directory/_raw-inventory-rows.json
+  phase_index: pm/roadmap/holdspeak/README.md
+  phases_total: 88
+features:
+- key: activity.candidates.meeting
+  title: Activity-derived meeting candidates
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 9
+  - 13
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-activity-ledger
+  priority: spot
+  status: live
+- key: activity.enrichment.connectors
+  title: Opt-in activity enrichment connectors (GitHub/Jira)
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 9
+  - 11
+  - 13
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-activity-ledger
+  priority: should
+  status: live
+- key: activity.ledger.browser_history
+  title: Private local activity ledger from browser history
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 8
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-activity-ledger
+  priority: should
+  status: live
+- key: activity.prebriefing.dictate_with_this
+  title: '''Dictate with this'' — feed a selected activity record into the next dictation'
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 53
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - intel-endpoint-dead
+  priority: must
+  status: live
+- key: activity.prebriefing.nudges
+  title: Source-cited activity pre-briefing nudges
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 8
+  - 9
+  - 53
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - seeded-activity-ledger
+  - seeded-desk
+  priority: should
+  status: live
+- key: actuators.connector.github_issue
+  title: File a GitHub issue from an approved proposal
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 38
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: actuators.connector.webhook_post
+  title: POST to an allow-listed webhook from an approved proposal
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 38
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: actuators.governance.gate
+  title: Actuators stay off unless master switch + per-project allow-list enable them
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 37
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: actuators.live.pending_actions_panel
+  title: Approve/reject proposals live during a meeting
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 38
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - proposal-pending-approval
+  priority: should
+  status: live
+- key: actuators.proposal.approve_execute
+  title: Approve or reject a proposed side effect (propose→approve→execute)
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 37
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: actuators.slack.send
+  title: Send a meeting digest or follow-up draft to Slack
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 61
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - slack-webhook-configured
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: agents.answer_coder.ai_drafted
+  title: Have AI draft an answer to a coder, then approve-then-inject
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: unknown
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - agent-pane-awaiting-input
+  - model-installed-on-device
+  priority: must
+  status: live
+- key: agents.answer_coder.by_voice
+  title: Answer a waiting coding agent by voice from your device
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - agent-pane-awaiting-input
+  - hub-reachable-on-lan
+  priority: must
+  status: live
+- key: agents.answer_coder.dropped_context
+  title: Answer a coder from dropped meeting/artifact context
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: unknown
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - agent-pane-awaiting-input
+  - seeded-desk
+  priority: should
+  status: live
+- key: agents.companion.board_select_target
+  title: Pick which waiting coder your answer goes to
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - multiple-agents-awaiting
+  priority: should
+  status: live
+- key: agents.companion.meetings_remote_control
+  title: Start and stop desktop meetings from the device
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - hub-reachable-on-lan
+  priority: should
+  status: live
+- key: agents.companion.pair_desktop
+  title: Point the iPad/iPhone at your desktop server as a companion
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - hub-reachable-on-lan
+  priority: must
+  status: live
+- key: agents.desk.live_coders
+  title: See your live coding agents on the desk and their questions
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - agent-pane-awaiting-input
+  - hub-reachable-on-lan
+  priority: must
+  status: live
+- key: agents.dictation.into_your_mac
+  title: Dictate into any focused Mac app from the device
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: unknown
+    iphone: 'yes'
+  recipes:
+  - mesh-node-alive
+  - hub-reachable-on-lan
+  - focused-mac-app
+  priority: must
+  status: live
+- key: agents.mesh.queue_inbox
+  title: See all mesh jobs and pending approvals in one queue
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: unknown
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - proposal-pending-approval
+  - hub-reachable-on-lan
+  priority: must
+  status: live
+- key: agents.mesh.runs_on_dispatch
+  title: Run a workflow step on a chosen mesh node
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: unknown
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - hub-reachable-on-lan
+  - model-installed-on-device
+  priority: should
+  status: live
+- key: ask.atom.lasso_ask_keep
+  title: Ask AI over lassoed context and keep or bin the printed card
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - model-installed-on-device
+  priority: must
+  status: live
+- key: ask.composer.speak_to_fill
+  title: Speak to fill the Ask composer (and any input) by voice
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mic-permission-granted
+  priority: should
+  status: live
+- key: ask.web.ground_this_ask
+  title: Ground an ask with priced references
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 83
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: ask.web.models_door
+  title: The models front door (open a chat on any model)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 83
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: spot
+  status: live
+- key: ask.web.persona_threads
+  title: Persistent persona conversations
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 83
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: should
+  status: live
+- key: ask.web.token_auth_arrival
+  title: Authenticated arrival on a token-guarded hub
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 83
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - token-guarded-hub
+  priority: must
+  status: live
+- key: belt.approval.import_run_chain
+  title: Imported meetings receive typed plugin artifacts
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 80
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - imported-meeting-no-artifacts
+  priority: should
+  status: live
+- key: belt.approval_leg
+  title: 'HANDOFF: approve a story flip from the desk (dw gate)'
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 82
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - proposal-pending-approval
+  - belt-with-registered-rails-repo
+  priority: must
+  status: live
+- key: belt.conveyor
+  title: The delivery belt / mission-control conveyor
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 82
+  - 86
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - belt-with-registered-rails-repo
+  priority: should
+  status: live
+- key: belt.receipts
+  title: Belt station lights + evidence in place
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 86
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - belt-with-registered-rails-repo
+  priority: spot
+  status: live
+- key: config.cockpit.copilot_setup
+  title: Configure every dictation/pipeline knob from the web cockpit (no file editing)
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 40
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: config.memory.curate_corrections
+  title: View, add, delete, and clear persistent corrections
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 40
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: config.settings.searchable
+  title: Sectioned, searchable settings with progressive disclosure
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 42
+  - 43
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: desk.ambient_recorder_agents
+  title: Fire your saved agents and crews against the live transcript
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: unknown
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - recording-in-progress
+  - saved-agent-exists
+  priority: spot
+  status: live
+- key: desk.ask-ai.grounded-on-pile
+  title: Lasso a pile of objects and Ask AI about exactly that pile
+  domain: public-docs-claims
+  phases:
+  - 73
+  - 83
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: desk.coders.agents-on-the-desk
+  title: Live coding agents appear on the desk as objects that demand you when blocked
+  domain: public-docs-claims
+  phases:
+  - 87
+  - 89
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  priority: must
+  status: live
+- key: desk.coders.answer-grounded-or-ai-drafted
+  title: Answer a blocked agent by typing, speaking, dropping a record, or AI-drafting
+  domain: public-docs-claims
+  phases:
+  - 78
+  - 87
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  - meeting-just-ended-open-actions
+  priority: must
+  status: live
+- key: desk.data.schema-safe-upgrades
+  title: Upgrades back your database up before touching it and refuse newer-build data
+  domain: public-docs-claims
+  phases:
+  - 50
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: desk.diorama.front_door
+  title: Open the DeskOS diorama as the app front door
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - fresh-desk
+  priority: must
+  status: live
+- key: desk.diorama.lasso_bundle_file
+  title: Lasso objects into a bundle and file them
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: desk.diorama.meeting_spill
+  title: Spill a meeting into its parts on the desk
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: desk.doctor.honest-readout
+  title: holdspeak doctor reports what is actually broken
+  domain: public-docs-claims
+  phases:
+  - 50
+  - 84
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - first-run-no-model
+  - intel-endpoint-dead
+  priority: must
+  status: live
+- key: desk.front-door.spatial-objects
+  title: 'The Desk is the front door: every mode''s output lives as an object in one world'
+  domain: public-docs-claims
+  phases:
+  - 73
+  - 83
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: desk.knowledge_bases
+  title: Create and use knowledge bases and directories on the desk
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: desk.models.open-a-model-chat
+  title: Open a chat pinned to any model the hub can run
+  domain: public-docs-claims
+  phases:
+  - 84
+  - 85
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: should
+  status: live
+- key: desk.personas.conversation-thread
+  title: 'Talk to your personas: a persistent conversation, each reply badged for where it ran'
+  domain: public-docs-claims
+  phases:
+  - 83
+  - 87
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: desk.presence.qlippy-opt-in
+  title: 'Qlippy the mascot: opt-in desktop presence that only interrupts for moments that need you'
+  domain: public-docs-claims
+  phases:
+  - 41
+  - 56
+  surfaces:
+    web: unknown
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - proposal-pending-approval
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: desk.recipes.in_world_authoring
+  title: Author a recipe (persona/chain) in-world without modals
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: desk.sync.profile-shape-across-surfaces
+  title: Profile shapes sync across your surfaces so the same named profile is available everywhere
+  domain: public-docs-claims
+  phases:
+  - 84
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: desk.web.agent_rail_run
+  title: Run an agent persona from the rail
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 73
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: desk.web.answer_waiting_coder
+  title: Answer a waiting coder by voice
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 78
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  priority: must
+  status: live
+- key: desk.web.create_in_world
+  title: Create a primitive in-world (no dialog)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 73
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: desk.web.four_doors_ia
+  title: Four doors, not fourteen (Home/Dictation/Meetings/Studio)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 70
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - fresh-desk
+  - seeded-desk
+  priority: should
+  status: live
+- key: desk.web.free_placement
+  title: Arrange desk objects by drag, persisted per-device
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 71
+  - 73
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: desk.web.front_door
+  title: The Desk is the web front door
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 71
+  - 73
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  - seeded-desk
+  priority: must
+  status: live
+- key: desk.web.mic_waveform
+  title: Reactive mic waveform meter
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 69
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: desk.web.objects_float
+  title: Primitives render as floating sprites with depth
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 71
+  - 73
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: desk.web.one_arrival
+  title: One first-run arrival (/welcome)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 70
+  - 73
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - first-run-no-model
+  - fresh-desk
+  priority: must
+  status: live
+- key: desk.web.pullout_open
+  title: Open an object into a pull-out
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 73
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: desk.web.qlippy_life
+  title: Qlippy lives on the desk (opt-in)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 71
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: desk.web.queue_hud
+  title: The always-on Queue HUD
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 69
+  - 77
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: desk.web.record_orb
+  title: The Record orb drives the hub recorder
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 73
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: desk.web.transcribe_everywhere
+  title: Hold-to-talk voice on every desk input
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 78
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: desk.web.zones_file_dive
+  title: File objects into zones and dive in
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 71
+  - 73
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: desk.workbench.visual_builder
+  title: Build a visual intelligence workflow on the Workbench
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: devices.audio.remote_ingest
+  title: Remote device audio ingest (AIPI-Lite)
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 14
+  - 17
+  - 21
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - mesh-node-alive
+  - fresh-desk
+  priority: spot
+  status: live
+- key: devices.companion.agent_waiting
+  title: AIPI companion signals a waiting agent
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 20
+  - 22
+  - 23
+  surfaces:
+    web: 'no'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - agent-pane-awaiting-input
+  - mesh-node-alive
+  priority: spot
+  status: live
+- key: devices.health.status
+  title: Device health reporting
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 17
+  - 22
+  - 23
+  - 24
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - mesh-node-alive
+  priority: spot
+  status: live
+- key: dictation.activity-prebriefing.cited-nudges
+  title: Activity pre-briefing offers what you touched recently as source-cited dictation context
+  domain: public-docs-claims
+  phases:
+  - 53
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: dictation.agent_hooks.claude_codex
+  title: Agent hooks report cwd/session/awaiting state
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 18
+  - 19
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  priority: should
+  status: live
+- key: dictation.blocks.author
+  title: Author dictation blocks (intent classes)
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 1
+  - 4
+  - 18
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - dictation-pipeline-enabled
+  priority: should
+  status: live
+- key: dictation.clipboard.token
+  title: Clipboard token injection
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 1
+  - 3
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: spot
+  status: live
+- key: dictation.correction.one-tap-teaches
+  title: One tap on a wrong result teaches the correction memory
+  domain: public-docs-claims
+  phases:
+  - 45
+  - 48
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: dictation.correction.session_memory
+  title: Copilot learns from your corrections and nudges future routing
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 39
+  - 40
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: dictation.journal.review
+  title: Review every dictation in a durable Journal (said→typed timeline)
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 45
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: dictation.journal.said-to-typed
+  title: 'Every dictation lands in the journal: said, typed, route, latency'
+  domain: public-docs-claims
+  phases:
+  - 45
+  - 48
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: dictation.kb.project_facts
+  title: Project KB placeholder enrichment
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 1
+  - 3
+  - 47
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-project-kb
+  priority: should
+  status: live
+- key: dictation.language.99-whisper-languages
+  title: The spoken language setting pins any of Whisper's 99 languages
+  domain: public-docs-claims
+  phases:
+  - 59
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: dictation.learning-digest.honest-count
+  title: The learning digest reports a real learned-from-N-similar count, honest at zero
+  domain: public-docs-claims
+  phases:
+  - 48
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - fresh-desk
+  priority: must
+  status: live
+- key: dictation.learning.digest
+  title: '''What HoldSpeak learned'' digest over your corrections'
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 48
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: dictation.learning.trust_signals
+  title: '''Learned from N similar'' chips inline where you work'
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 48
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: dictation.moment_of_truth.correct_inline
+  title: Correct a dictation in the moment ('Was that right? → Fix it → Taught')
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 45
+  - 48
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: dictation.pipeline.dry_run
+  title: Dry-run / preview a dictation transformation
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 3
+  - 4
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - dictation-pipeline-enabled
+  priority: must
+  status: live
+- key: dictation.pipeline.enable
+  title: Enable the dictation pipeline
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 1
+  - 3
+  - 18
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  - dictation-pipeline-enabled
+  priority: must
+  status: live
+- key: dictation.pipeline.intent-routing
+  title: The dictation pipeline routes rough speech by intent and rewrites for its target
+  domain: public-docs-claims
+  phases:
+  - 52
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: dictation.pipeline.preview-before-type
+  title: Preview mode shows the rewrite first; Type commits, Discard drops it
+  domain: public-docs-claims
+  phases:
+  - 60
+  - 75
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: dictation.preview_before_type
+  title: Preview a dictation before it types
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 75
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: dictation.project_context.hs_files
+  title: Teach a repo via .hs/ project context files
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 3
+  - 18
+  - 19
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-hs-context-repo
+  priority: should
+  status: live
+- key: dictation.punctuation.spoken
+  title: Spoken punctuation words
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 1
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: spot
+  status: live
+- key: dictation.replay.through_current_pipeline
+  title: Replay a past dictation through the current pipeline (before→after)
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 45
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: dictation.replay.watch-routing-change
+  title: Replay an old utterance through the updated pipeline and watch the routing change
+  domain: public-docs-claims
+  phases:
+  - 45
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: dictation.rewrite.multi_pass
+  title: Multi-pass rewrite refinement of dictated text
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 39
+  - 40
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - intel-endpoint-dead
+  priority: should
+  status: live
+- key: dictation.runtime.backend_picker
+  title: Pick the dictation LLM runtime backend
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 1
+  - 3
+  - 18
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: should
+  status: live
+- key: dictation.runtime.openai_compatible
+  title: Route dictation through an OpenAI-compatible endpoint
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 3
+  - 18
+  - 19
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - dictation-pipeline-enabled
+  - intel-endpoint-dead
+  priority: must
+  status: live
+- key: dictation.suggestions.quality_gate
+  title: Project-doc suggestions stop repeating what's already written
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 39
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: dictation.symbol-dictionary.spoken-vocabulary
+  title: The spoken-symbol dictionary types your own vocabulary
+  domain: public-docs-claims
+  phases:
+  - 59
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: dictation.target.model_assisted_detection
+  title: Model-assisted fallback for where dictation gets typed
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 39
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - intel-endpoint-dead
+  priority: should
+  status: live
+- key: dictation.target.profile_detection
+  title: Target-profile detection & override
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 1
+  - 18
+  - 19
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - dictation-pipeline-enabled
+  priority: should
+  status: live
+- key: dictation.telemetry.depth_readiness
+  title: See per-stage dictation latency (p50/p95) and copilot state
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 39
+  - 40
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: dictation.voice-commands.keyword-to-action
+  title: Voice commands map a spoken keyword to a real action
+  domain: public-docs-claims
+  phases:
+  - 52
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: dictation.voice-typing.hold-to-talk
+  title: 'Hold the hotkey, speak, release: text lands in the active app'
+  domain: public-docs-claims
+  phases:
+  - 42
+  - 65
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: dictation.voice_typing.hold_to_talk
+  title: Hold-to-talk voice typing
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 0
+  - 1
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: dictation.wake-word.hands-free-preview
+  title: Say the wake phrase and it listens hands-free, previewed never typed until confirmed
+  domain: public-docs-claims
+  phases:
+  - 60
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: factory.kill
+  title: Kill a session from the desk (consent-gated)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 90
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-session-live
+  - agent-pane-armed
+  priority: must
+  status: live
+- key: factory.spawn_rename
+  title: Spawn and rename sessions from the desk
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 90
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - agent-session-live
+  priority: should
+  status: live
+- key: kb.project.discovery_nudge
+  title: Ambient nudge when a detected project has no knowledge
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 47
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: kb.project.facts_and_context
+  title: 'Teach the copilot about a project: Project Facts + Project Context'
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 47
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: kb.project.guided_setup
+  title: Guided .hs/ setup + copyable 'draft with your coding agent' prompt
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 47
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: spot
+  status: live
+- key: languages.spoken_language
+  title: Pin the spoken transcription language
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 59
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  - non-english-speaker
+  priority: should
+  status: live
+- key: languages.spoken_symbol_dictionary
+  title: Teach spoken words to type as symbols
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 59
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  - seeded-symbol-dictionary
+  priority: should
+  status: live
+- key: macros.voice_commands.board
+  title: Map a spoken keyword to a system action on the Voice Commands board
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 52
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: macros.voice_commands.fire_while_dictating
+  title: Fire a mapped action by speaking its keyword during dictation
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 52
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: meetings.actions.review_edit
+  title: Review and edit accepted action items
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 6
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: meetings.aftercare.action-to-issue
+  title: An accepted action item becomes a human-approved filed issue
+  domain: public-docs-claims
+  phases:
+  - 49
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: meetings.aftercare.close-the-loop
+  title: Meeting aftercare shows what is open, decided, and changed since last time
+  domain: public-docs-claims
+  phases:
+  - 49
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: meetings.aftercare.digest
+  title: '''Your next move'' aftercare digest on the meeting detail'
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 49
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: must
+  status: live
+- key: meetings.aftercare.file_as_issue
+  title: File an accepted meeting action as a GitHub issue (via proposal)
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 49
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: meetings.aftercare.followup_draft
+  title: Draft a local follow-up summary from a meeting (preview + copy)
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 49
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: spot
+  status: live
+- key: meetings.aftercare.show_the_moment
+  title: '''Show me the moment'' — jump to the transcript segment behind a result'
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 49
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: meetings.aftercare.transcript-moment-jump
+  title: Jump to the transcript moment that justifies any result
+  domain: public-docs-claims
+  phases:
+  - 49
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: spot
+  status: live
+- key: meetings.archive.delete
+  title: Delete a meeting from the archive
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 55
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: meetings.archive.facet-search
+  title: The archive is searchable and filterable by date, speaker, tag, and open actions
+  domain: public-docs-claims
+  phases:
+  - 55
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: meetings.archive.faceted_search
+  title: Filter the meeting archive by date/speaker/tag/open-actions
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 55
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk-many-meetings
+  priority: should
+  status: live
+- key: meetings.artifacts.cards
+  title: View meeting artifacts as elevated cards
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 6
+  - 36
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: meetings.capture.live
+  title: Record a live meeting
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 2
+  - 6
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: meetings.capture.live-mic-system-audio
+  title: Capture mic and system audio live with speaker labels
+  domain: public-docs-claims
+  phases:
+  - 36
+  - 55
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: meetings.export.local_handoff
+  title: Export a meeting as local Markdown/JSON
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 7
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: meetings.import.audio
+  title: Import an audio recording as a meeting
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 55
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - intel-endpoint-dead
+  - recording-file-on-disk
+  priority: must
+  status: live
+- key: meetings.import.recording-and-transcript
+  title: Import a recording or transcript file into the full intelligence pipeline
+  domain: public-docs-claims
+  phases:
+  - 55
+  - 57
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: meetings.import.transcript
+  title: Import a .vtt/.srt/.txt transcript as a meeting
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 57
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - transcript-file-on-disk
+  - intel-endpoint-dead
+  priority: must
+  status: live
+- key: meetings.intel.cloud_endpoint
+  title: Run meeting intelligence on a cloud/homelab endpoint
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 2
+  - 16
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - intel-endpoint-dead
+  priority: must
+  status: live
+- key: meetings.intel.intent-scored-chain
+  title: The transcript is intent-scored and a chain of plugins runs per meeting
+  domain: public-docs-claims
+  phases:
+  - 36
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: should
+  status: live
+- key: meetings.intel.multi_intent_routing
+  title: Multi-intent routing over meeting windows
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 2
+  - 27
+  - 36
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: must
+  status: live
+- key: meetings.plugins.14-typed-artifacts
+  title: 14 built-in LLM-backed plugins extract typed artifacts from a transcript
+  domain: public-docs-claims
+  phases:
+  - 36
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: must
+  status: live
+- key: meetings.plugins.fourteen_synthesizers
+  title: 14 built-in LLM meeting synthesizer plugins
+  domain: dictation / meetings / activity / connectors / devices
+  phases:
+  - 16
+  - 27
+  - 28
+  - 29
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: must
+  status: live
+- key: meetings.proposals.review-anywhere
+  title: Review every pending proposal for a meeting wherever it was created
+  domain: public-docs-claims
+  phases:
+  - 49
+  - 61
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: mesh.handoff.node_events_to_hub
+  title: 'HANDOFF: remote node rail-events → hub observer'
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 88
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - mesh-node-alive
+  priority: spot
+  status: live
+- key: mesh.handoff.web_run_to_node
+  title: 'HANDOFF: web run → hub relay → mesh worker'
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 85
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mesh.liveness_everywhere
+  title: Mesh liveness on every surface
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 85
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - mesh-node-just-died
+  priority: should
+  status: live
+- key: mesh.profile_node
+  title: A profile names a mesh node (meshNode kind)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 85
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - mesh-node-just-died
+  priority: must
+  status: live
+- key: mesh.serve_node
+  title: Turn any machine into a mesh edge (holdspeak mesh serve)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 85
+  surfaces:
+    web: unknown
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mobile.artifacts.run_born.materialize
+  title: Run-born artifacts materialize on the iPad desk without duplicating
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: should
+  status: live
+- key: mobile.belt.diorama.render
+  title: The rails belt renders on the iPad diorama
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: should
+  status: live
+- key: mobile.belt.rails.journal
+  title: The rails journal renders on the iPad diorama
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: mobile.capture.airgapped_notetaker
+  title: Run the full meeting notetaker fully offline (airplane mode)
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - first-run-no-model
+  - model-installed-on-device
+  - airplane-mode-on
+  priority: must
+  status: live
+- key: mobile.capture.floating_recorder
+  title: Dock, float, or minimize the recorder as an OS-like widget
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - recording-in-progress
+  priority: spot
+  status: live
+- key: mobile.capture.ink_into_intelligence
+  title: Turn handwritten ink into intelligence (the magic pencil)
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  - meeting-with-ink-notes
+  priority: should
+  status: live
+- key: mobile.capture.live_capture_canvas
+  title: Watch utterances float as bubbles and tack them to a spatial board
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: unknown
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - recording-in-progress
+  priority: should
+  status: live
+- key: mobile.capture.mark_moment
+  title: Mark a moment during recording and jump back to it
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - recording-in-progress
+  priority: should
+  status: live
+- key: mobile.capture.meeting_record
+  title: Record a meeting on the iPad with a live transcript
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  - mic-permission-granted
+  priority: must
+  status: live
+- key: mobile.capture.on_device_diarization
+  title: See who's talking (on-device speaker diarization)
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - two-speaker-recording
+  priority: spot
+  status: live
+- key: mobile.capture.pencil_notebook
+  title: Take Apple Pencil handwritten notes in a per-meeting notebook
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  - meeting-open
+  priority: should
+  status: live
+- key: mobile.capture.pencil_to_mermaid
+  title: Sketch a diagram with the Pencil and get a Mermaid diagram
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: unknown
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: mobile.capture.realtime_mir
+  title: Get live intelligence markers during a meeting
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: unknown
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - recording-in-progress
+  - model-installed-on-device
+  priority: spot
+  status: live
+- key: mobile.capture.voice_correction
+  title: Reject an artifact by voice and have the local model re-route
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: unknown
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - model-installed-on-device
+  priority: spot
+  status: live
+- key: mobile.desk.compact.capture_canvas
+  title: The capture canvas at compact width with tap-to-tack
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: unknown
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: mobile.desk.compact.hold_bar_teleprompter
+  title: The hold-bar teleprompter on the iPhone dictate surface
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mobile.desk.compact.lane
+  title: The desk renders as a filtered lane on the iPhone
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  - fresh-desk
+  priority: must
+  status: live
+- key: mobile.desk.compact.pullout
+  title: The migrating pull-out on compact width
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: mobile.dictation.commandsboard.author
+  title: Author voice-command macros on the iPad CommandsBoard
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: mobile.dictation.language.spoken
+  title: Spoken (non-English) language at every iPad transcription site
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: mobile.dictation.macros.fire
+  title: Voice-command macros fire over the remote relay from iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mobile.dictation.prebriefing.nudge
+  title: Activity pre-briefing nudge cards feed the iPad dictation model
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mobile.dictation.symbols.dictionary
+  title: Spoken-symbol dictionary applies user symbols on iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: mobile.dictation.teleprompter.preview
+  title: iPad voice teleprompter with opt-in preview receipt
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mobile.meeting.aftercare.file_issue
+  title: File a meeting action item as a GitHub issue from the iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - seeded-desk
+  priority: must
+  status: live
+- key: mobile.meeting.archive.facets
+  title: Search and facet the meeting archive on the iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: mobile.meeting.artifact.provenance
+  title: Artifact provenance ring and sources on iPad meeting artifacts
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - seeded-desk
+  priority: spot
+  status: live
+- key: mobile.meeting.import.picker
+  title: Import a meeting recording or transcript from the iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: should
+  status: live
+- key: mobile.meeting.learning.reader
+  title: Read the learning-loop digest on the iPad Dictate tab
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: mobile.meeting.proposals.review
+  title: Approve or reject actuator proposals in the iPad review queue
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - proposal-pending-approval
+  - meeting-just-ended-open-actions
+  priority: must
+  status: live
+- key: mobile.mesh.serve.consent_toggle
+  title: Flip one toggle to serve the mesh from the phone
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - mesh-node-alive
+  - first-run-no-model
+  priority: must
+  status: live
+- key: mobile.mesh.serve.execute_ask
+  title: A desk ask executes on the phone's own model, badged mesh
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mobile.models.import_and_manage
+  title: Import and manage on-device models (Files sideload + AirDrop + HF download)
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - first-run-no-model
+  - model-file-in-files-app
+  priority: must
+  status: live
+- key: mobile.models.inference_mode_setting
+  title: Choose where inference runs (local / homelab / any endpoint)
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: unknown
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - endpoint-reachable
+  - intel-endpoint-dead
+  priority: must
+  status: live
+- key: mobile.models.on_device_inference
+  title: Run meeting intelligence fully on-device (Mode A, local GGUF)
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - model-installed-on-device
+  - meeting-just-ended-open-actions
+  - airplane-mode-on
+  priority: must
+  status: live
+- key: mobile.models.per_device_defaults
+  title: Get the right model tier for your device automatically
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - first-run-no-model
+  priority: spot
+  status: live
+- key: mobile.profiles.active_picker
+  title: Pick the active runtime profile on the iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  - first-run-no-model
+  priority: must
+  status: live
+- key: mobile.profiles.key_never_syncs
+  title: A profile's API key never leaves the device / never syncs
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mobile.profiles.manage_advanced
+  title: Manage the profile list and assign per-agent profiles on the iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: mobile.steering.attach_arm_steer
+  title: Attach, arm, and steer a live agent session from the iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mobile.steering.audit_trail
+  title: Steering actions are audited and readable back on the iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  priority: should
+  status: live
+- key: mobile.steering.factory_lifecycle
+  title: Spawn, rename, and kill agent sessions from the iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mobile.steering.key_palette
+  title: Send raw keys to an agent pane from the iPad key palette
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  priority: must
+  status: live
+- key: mobile.steering.node_relay
+  title: Steer an agent on any machine via the iPad node relay
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - agent-pane-awaiting-input
+  priority: must
+  status: live
+- key: mobile.steering.pane_picker
+  title: Pick and attach to any agent pane from the iPad
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  priority: should
+  status: live
+- key: mobile.trust.egress.badge
+  title: One honest egress badge on every mobile surface
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  - intel-endpoint-dead
+  priority: must
+  status: live
+- key: mobile.trust.github.honesty
+  title: GitHub tile tells the truth about paired vs configured
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: mobile.workbench.graph.author
+  title: Author a runnable graph (blueprint) on the iPad and sync it to the hub
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: mobile.workbench.run.warning
+  title: The run UI renders the hub's warning on unhonored graph features
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: models.byo.three-backends
+  title: 'Bring your own LLM: GGUF in-process, MLX on Apple Silicon, or any OpenAI-compatible endpoint'
+  domain: public-docs-claims
+  phases:
+  - 65
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - first-run-no-model
+  priority: must
+  status: live
+- key: models.mesh.serve-another-machine
+  title: A profile can name another of your machines to execute runs on it
+  domain: public-docs-claims
+  phases:
+  - 85
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - mesh-node-alive
+  - mesh-node-just-died
+  priority: must
+  status: live
+- key: models.profiles.runs-on-per-agent
+  title: 'Runtime profiles: a named target you point work at, per agent'
+  domain: public-docs-claims
+  phases:
+  - 84
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: onboarding.first_dictation.reward
+  title: Guided first-dictation with a live success reward
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 42
+  - 43
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - first-run-no-model
+  priority: should
+  status: live
+- key: onboarding.model.setup_assistant
+  title: Guided runtime model setup with a one-click 'Test my runtime'
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 42
+  - 43
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - first-run-no-model
+  priority: should
+  status: live
+- key: onboarding.trust.privacy_chip
+  title: Ambient Trust & Privacy chip + 'what can leave this machine' panel
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 42
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  - intel-endpoint-dead
+  priority: should
+  status: live
+- key: onboarding.welcome.wizard
+  title: Full-screen /welcome first-run wizard to first dictation
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 42
+  - 43
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - first-run-no-model
+  priority: must
+  status: live
+- key: plugins.authoring.write-your-own
+  title: Write your own meeting plugin or connector against a documented contract
+  domain: public-docs-claims
+  phases:
+  - 38
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: presence.desktop.hud
+  title: Ambient desktop presence HUD showing dictation state
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 41
+  - 43
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: presence.toggle.config_backed
+  title: Turn desktop presence on/off from a settings toggle (live start/stop)
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 43
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: should
+  status: live
+- key: qlippy.decision_cards
+  title: Qlippy sliding cards for four moments
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 56
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - presence-and-mascot-enabled
+  - proposal-pending-approval
+  - meeting-just-ended-open-actions
+  priority: must
+  status: live
+- key: qlippy.native_hud_overlay
+  title: Qlippy native desktop HUD overlay
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 41
+  - 56
+  surfaces:
+    web: unknown
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - presence-and-mascot-enabled
+  - proposal-pending-approval
+  - linux-or-macos-desktop
+  priority: spot
+  status: live
+- key: qlippy.presence_dock
+  title: Qlippy ambient presence dock
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 56
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  - presence-and-mascot-enabled
+  priority: should
+  status: live
+- key: rails.ground_run
+  title: Ground any run on the rails
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 88
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - belt-with-registered-rails-repo
+  - agent-session-live
+  priority: should
+  status: live
+- key: rails.observer_journal
+  title: The ambient rails journal (opt-in)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 88
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - belt-with-registered-rails-repo
+  - mesh-node-alive
+  priority: spot
+  status: live
+- key: release.backup_restore.cli
+  title: Back up and restore the whole HoldSpeak database from the CLI
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 50
+  surfaces:
+    web: 'no'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: release.doctor.database_check
+  title: doctor reports database + config health honestly
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 50
+  surfaces:
+    web: unknown
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: release.schema.safe_upgrade
+  title: 'Safe schema upgrade: backup-then-apply older, refuse newer'
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 50
+  surfaces:
+    web: 'no'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: runtime.doctor_egress
+  title: Honest doctor + one egress badge derivation
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 84
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - intel-endpoint-dead
+  priority: should
+  status: live
+- key: runtime.pick_everywhere
+  title: Meeting-intel and dictation run on a picked profile
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 84
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: should
+  status: live
+- key: runtime.run_born_artifact
+  title: A run answer becomes a real artifact
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 74
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: should
+  status: live
+- key: runtime.web.profiles_editor
+  title: Runtime profiles editor (/profiles)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 84
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: steering.arm_steer
+  title: Arm and steer a session (consent-gated)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 87
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-session-live
+  - agent-pane-armed
+  - agent-pane-recycled
+  priority: must
+  status: live
+- key: steering.attach_any_pane
+  title: Attach to any tmux pane
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 89
+  - 90
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - hand-started-tmux-pane
+  priority: should
+  status: live
+- key: steering.audit
+  title: The steering audit trail
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 87
+  - 89
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - agent-session-live
+  priority: should
+  status: live
+- key: steering.classify
+  title: Classify what a session surfaces
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 87
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  - proposal-pending-approval
+  priority: should
+  status: live
+- key: steering.cross_machine
+  title: 'HANDOFF: steer a session on another machine'
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 89
+  - 90
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - remote-steer-node-alive
+  - remote-steer-node-offline
+  priority: must
+  status: live
+- key: steering.ground
+  title: Ground a steer with a desk object
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 87
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - agent-session-live
+  - agent-pane-armed
+  - seeded-desk
+  priority: must
+  status: live
+- key: steering.keys
+  title: Send any key to a session (key palette)
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 89
+  - 90
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-session-live
+  - agent-pane-armed
+  - agent-runaway
+  priority: must
+  status: live
+- key: steering.peek
+  title: Watch a live agent session from the desk
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 87
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-session-live
+  - agent-pane-awaiting-input
+  priority: must
+  status: live
+- key: sync.capability.model_manifest
+  title: See which of your nodes can run which model
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - model-installed-on-device
+  priority: should
+  status: live
+- key: sync.content.cross_device
+  title: Have a meeting captured on one device appear on another
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - two-devices-paired
+  priority: must
+  status: live
+- key: sync.contracts.parity_spine
+  title: The cross-surface JSON-Schema contract spine (parity foundation)
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: sync.integrity.roundtrip
+  title: All 10 primitive kinds round-trip across the sync wire byte-faithfully
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: must
+  status: live
+- key: sync.organization.kb_directory_travels
+  title: Have knowledge bases and directories flow across surfaces
+  domain: HoldSpeak Mobile
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - two-devices-paired
+  priority: should
+  status: live
+- key: sync.storage.doctor_panel
+  title: The readiness / doctor panel in iPad Settings
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  - first-run-no-model
+  priority: should
+  status: live
+- key: sync.storage.refuse_newer
+  title: The iPad store refuses a newer schema and backs up before migrating
+  domain: HoldSpeak Mobile phases 18-27
+  phases: []
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: trust.architecture_map
+  title: The rendered architecture map
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 66
+  surfaces:
+    web: unknown
+    ipad: unknown
+    iphone: unknown
+  recipes: []
+  priority: skip
+  status: live
+- key: trust.binding.loopback-token-gate
+  title: Web runtime binds loopback by default; off-loopback binds refuse without an auth token
+  domain: public-docs-claims
+  phases:
+  - 41
+  - 50
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: trust.device.psk-audio-link
+  title: Paired device audio link authenticates with a constant-time PSK, same-LAN scope
+  domain: public-docs-claims
+  phases:
+  - 53
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: trust.egress.badge-tells-truth
+  title: The egress badge names local vs the exact endpoint on every card
+  domain: public-docs-claims
+  phases:
+  - 58
+  - 62
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - meeting-just-ended-open-actions
+  priority: must
+  status: live
+- key: trust.egress.cloud-meeting-intel
+  title: Cloud meeting intel egress only on explicit provider choice
+  domain: public-docs-claims
+  phases:
+  - 61
+  - 62
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - intel-endpoint-dead
+  priority: must
+  status: live
+- key: trust.egress.connector-cli-enrichment
+  title: Connector CLI enrichment sends only entity IDs to the user's own gh/jira tools
+  domain: public-docs-claims
+  phases:
+  - 38
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  priority: spot
+  status: live
+- key: trust.egress.deferred-intel-webhook
+  title: Deferred-intel failure webhook sends queue stats only, no transcript, opt-in
+  domain: public-docs-claims
+  phases:
+  - 36
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - intel-endpoint-dead
+  priority: spot
+  status: live
+- key: trust.egress.desk-github-issue
+  title: Desk GitHub issue files title+body through the user's own gh CLI on approval
+  domain: public-docs-claims
+  phases:
+  - 37
+  - 49
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: trust.egress.desk-webhook-connector
+  title: Desk webhook connector sends previewed text to one configured endpoint on per-send approval
+  domain: public-docs-claims
+  phases:
+  - 37
+  - 38
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: trust.egress.mesh-relay
+  title: Mesh relay moves only prompt+result between hub and the node you named, no keys transit
+  domain: public-docs-claims
+  phases:
+  - 85
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - mesh-node-alive
+  - mesh-node-just-died
+  priority: must
+  status: live
+- key: trust.egress.missioncontrol-receipts
+  title: 'Mission-control belt is GET-only: reads open PRs via the user''s own gh, composes nothing'
+  domain: public-docs-claims
+  phases:
+  - 88
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+- key: trust.egress.send-to-slack-double-optin
+  title: Send to Slack requires URL config plus per-send approval, URL never rides payloads
+  domain: public-docs-claims
+  phases:
+  - 61
+  - 62
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - meeting-just-ended-open-actions
+  - proposal-pending-approval
+  priority: must
+  status: live
+- key: trust.egress.wake-model-download
+  title: Wake-word enable triggers a one-time inbound model download, no audio ever egresses
+  domain: public-docs-claims
+  phases:
+  - 60
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - first-run-no-model
+  priority: should
+  status: live
+- key: trust.egress_badge
+  title: Egress badge on every actionable card
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 62
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - proposal-pending-approval
+  - learned-correction-taught
+  - meeting-just-ended-open-actions
+  priority: must
+  status: live
+- key: trust.no-telemetry
+  title: No telemetry, crash reporting, or background beaconing anywhere
+  domain: public-docs-claims
+  phases:
+  - 58
+  - 62
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: trust.positioning_readme
+  title: The README/front-door pitch and comparison
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 58
+  - 64
+  surfaces:
+    web: unknown
+    ipad: unknown
+    iphone: unknown
+  recipes: []
+  priority: spot
+  status: live
+- key: trust.secrets.profile-key-never-syncs
+  title: Runtime profile keys never sync; a key supplied to any ingress never reappears on a read
+  domain: public-docs-claims
+  phases:
+  - 84
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: trust.steering.arming-grant
+  title: Session steering requires an in-memory arming grant, TTL'd and pane-pinned; hub restart disarms
+  domain: public-docs-claims
+  phases:
+  - 87
+  - 89
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  priority: must
+  status: live
+- key: trust.steering.named-key-allowlist
+  title: Only allow-listed named keys reach tmux; an arbitrary string can never become a keystroke
+  domain: public-docs-claims
+  phases:
+  - 89
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  priority: must
+  status: live
+- key: trust.steering.relay-node-owns-grant
+  title: 'Cross-machine steering: the typing node owns the grant and audit; only command+node token cross'
+  domain: public-docs-claims
+  phases:
+  - 89
+  - 90
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - mesh-node-alive
+  - mesh-node-just-died
+  priority: must
+  status: live
+- key: trust.steering.session-factory-gates
+  title: 'Session factory: spawn/rename name-allow-listed, kill gated exactly like a steer'
+  domain: public-docs-claims
+  phases:
+  - 90
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - agent-pane-awaiting-input
+  priority: must
+  status: live
+- key: ui.signal.design_system
+  title: Signal dark-first UI across every web surface
+  domain: HoldSpeak desktop phases 30-53
+  phases:
+  - 30
+  - 44
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  priority: spot
+  status: live
+- key: wakeword.hands_free_arm
+  title: Wake word arms HoldSpeak hands-free
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 60
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - fresh-desk
+  - wake-word-enabled
+  - first-run-no-model
+  priority: must
+  status: live
+- key: wakeword.preview_before_type
+  title: Wake result previews before it types (consent gate)
+  domain: 'HoldSpeak desktop phases 54-67 — productization: meeting/tra'
+  phases:
+  - 60
+  surfaces:
+    web: 'yes'
+    ipad: unknown
+    iphone: unknown
+  recipes:
+  - wake-word-enabled
+  - wake-result-pending-preview
+  priority: must
+  status: live
+- key: workbench.web.generation_theater
+  title: The generation theater
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 69
+  - 81
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  - mesh-node-alive
+  priority: spot
+  status: live
+- key: workbench.web.node_canvas
+  title: The /workbench node canvas
+  domain: HoldSpeak desktop phases 68-90
+  phases:
+  - 69
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: unknown
+  recipes:
+  - seeded-desk
+  priority: should
+  status: live
+phase_map:
+  '0':
+  - dictation.voice_typing.hold_to_talk
+  '1':
+  - dictation.blocks.author
+  - dictation.clipboard.token
+  - dictation.kb.project_facts
+  - dictation.pipeline.enable
+  - dictation.punctuation.spoken
+  - dictation.runtime.backend_picker
+  - dictation.target.profile_detection
+  - dictation.voice_typing.hold_to_talk
+  '2':
+  - meetings.capture.live
+  - meetings.intel.cloud_endpoint
+  - meetings.intel.multi_intent_routing
+  '3':
+  - dictation.clipboard.token
+  - dictation.kb.project_facts
+  - dictation.pipeline.dry_run
+  - dictation.pipeline.enable
+  - dictation.project_context.hs_files
+  - dictation.runtime.backend_picker
+  - dictation.runtime.openai_compatible
+  '4':
+  - dictation.blocks.author
+  - dictation.pipeline.dry_run
+  '5':
+  - internal/no-uat-surface
+  '6':
+  - meetings.actions.review_edit
+  - meetings.artifacts.cards
+  - meetings.capture.live
+  '7':
+  - meetings.export.local_handoff
+  '8':
+  - activity.ledger.browser_history
+  - activity.prebriefing.nudges
+  '9':
+  - activity.candidates.meeting
+  - activity.enrichment.connectors
+  - activity.prebriefing.nudges
+  '10':
+  - internal/no-uat-surface
+  '11':
+  - activity.enrichment.connectors
+  '12':
+  - internal/no-uat-surface
+  '13':
+  - activity.candidates.meeting
+  - activity.enrichment.connectors
+  '14':
+  - devices.audio.remote_ingest
+  '15':
+  - internal/no-uat-surface
+  '16':
+  - meetings.intel.cloud_endpoint
+  - meetings.plugins.fourteen_synthesizers
+  '17':
+  - devices.audio.remote_ingest
+  - devices.health.status
+  '18':
+  - dictation.agent_hooks.claude_codex
+  - dictation.blocks.author
+  - dictation.pipeline.enable
+  - dictation.project_context.hs_files
+  - dictation.runtime.backend_picker
+  - dictation.runtime.openai_compatible
+  - dictation.target.profile_detection
+  '19':
+  - dictation.agent_hooks.claude_codex
+  - dictation.project_context.hs_files
+  - dictation.runtime.openai_compatible
+  - dictation.target.profile_detection
+  '20':
+  - devices.companion.agent_waiting
+  '21':
+  - devices.audio.remote_ingest
+  '22':
+  - devices.companion.agent_waiting
+  - devices.health.status
+  '23':
+  - devices.companion.agent_waiting
+  - devices.health.status
+  '24':
+  - devices.health.status
+  '25':
+  - internal/no-uat-surface
+  '26':
+  - internal/no-uat-surface
+  '27':
+  - meetings.intel.multi_intent_routing
+  - meetings.plugins.fourteen_synthesizers
+  '28':
+  - meetings.plugins.fourteen_synthesizers
+  '29':
+  - meetings.plugins.fourteen_synthesizers
+  '30':
+  - ui.signal.design_system
+  '31':
+  - internal/no-uat-surface
+  '32':
+  - internal/no-uat-surface
+  '33':
+  - internal/no-uat-surface
+  '34':
+  - internal/no-uat-surface
+  '35':
+  - internal/no-uat-surface
+  '36':
+  - meetings.artifacts.cards
+  - meetings.capture.live-mic-system-audio
+  - meetings.intel.intent-scored-chain
+  - meetings.intel.multi_intent_routing
+  - meetings.plugins.14-typed-artifacts
+  - trust.egress.deferred-intel-webhook
+  '37':
+  - actuators.governance.gate
+  - actuators.proposal.approve_execute
+  - trust.egress.desk-github-issue
+  - trust.egress.desk-webhook-connector
+  '38':
+  - actuators.connector.github_issue
+  - actuators.connector.webhook_post
+  - actuators.live.pending_actions_panel
+  - plugins.authoring.write-your-own
+  - trust.egress.connector-cli-enrichment
+  - trust.egress.desk-webhook-connector
+  '39':
+  - dictation.correction.session_memory
+  - dictation.rewrite.multi_pass
+  - dictation.suggestions.quality_gate
+  - dictation.target.model_assisted_detection
+  - dictation.telemetry.depth_readiness
+  '40':
+  - config.cockpit.copilot_setup
+  - config.memory.curate_corrections
+  - dictation.correction.session_memory
+  - dictation.rewrite.multi_pass
+  - dictation.telemetry.depth_readiness
+  '41':
+  - desk.presence.qlippy-opt-in
+  - presence.desktop.hud
+  - qlippy.native_hud_overlay
+  - trust.binding.loopback-token-gate
+  '42':
+  - config.settings.searchable
+  - dictation.voice-typing.hold-to-talk
+  - onboarding.first_dictation.reward
+  - onboarding.model.setup_assistant
+  - onboarding.trust.privacy_chip
+  - onboarding.welcome.wizard
+  '43':
+  - config.settings.searchable
+  - onboarding.first_dictation.reward
+  - onboarding.model.setup_assistant
+  - onboarding.welcome.wizard
+  - presence.desktop.hud
+  - presence.toggle.config_backed
+  '44':
+  - ui.signal.design_system
+  '45':
+  - dictation.correction.one-tap-teaches
+  - dictation.journal.review
+  - dictation.journal.said-to-typed
+  - dictation.moment_of_truth.correct_inline
+  - dictation.replay.through_current_pipeline
+  - dictation.replay.watch-routing-change
+  '46':
+  - internal/no-uat-surface
+  '47':
+  - dictation.kb.project_facts
+  - kb.project.discovery_nudge
+  - kb.project.facts_and_context
+  - kb.project.guided_setup
+  '48':
+  - dictation.correction.one-tap-teaches
+  - dictation.journal.said-to-typed
+  - dictation.learning-digest.honest-count
+  - dictation.learning.digest
+  - dictation.learning.trust_signals
+  - dictation.moment_of_truth.correct_inline
+  '49':
+  - meetings.aftercare.action-to-issue
+  - meetings.aftercare.close-the-loop
+  - meetings.aftercare.digest
+  - meetings.aftercare.file_as_issue
+  - meetings.aftercare.followup_draft
+  - meetings.aftercare.show_the_moment
+  - meetings.aftercare.transcript-moment-jump
+  - meetings.proposals.review-anywhere
+  - trust.egress.desk-github-issue
+  '50':
+  - desk.data.schema-safe-upgrades
+  - desk.doctor.honest-readout
+  - release.backup_restore.cli
+  - release.doctor.database_check
+  - release.schema.safe_upgrade
+  - trust.binding.loopback-token-gate
+  '51':
+  - internal/no-uat-surface
+  '52':
+  - dictation.pipeline.intent-routing
+  - dictation.voice-commands.keyword-to-action
+  - macros.voice_commands.board
+  - macros.voice_commands.fire_while_dictating
+  '53':
+  - activity.prebriefing.dictate_with_this
+  - activity.prebriefing.nudges
+  - dictation.activity-prebriefing.cited-nudges
+  - trust.device.psk-audio-link
+  '54':
+  - internal/no-uat-surface
+  '55':
+  - meetings.archive.delete
+  - meetings.archive.facet-search
+  - meetings.archive.faceted_search
+  - meetings.capture.live-mic-system-audio
+  - meetings.import.audio
+  - meetings.import.recording-and-transcript
+  '56':
+  - desk.presence.qlippy-opt-in
+  - qlippy.decision_cards
+  - qlippy.native_hud_overlay
+  - qlippy.presence_dock
+  '57':
+  - meetings.import.recording-and-transcript
+  - meetings.import.transcript
+  '58':
+  - trust.egress.badge-tells-truth
+  - trust.no-telemetry
+  - trust.positioning_readme
+  '59':
+  - dictation.language.99-whisper-languages
+  - dictation.symbol-dictionary.spoken-vocabulary
+  - languages.spoken_language
+  - languages.spoken_symbol_dictionary
+  '60':
+  - dictation.pipeline.preview-before-type
+  - dictation.wake-word.hands-free-preview
+  - trust.egress.wake-model-download
+  - wakeword.hands_free_arm
+  - wakeword.preview_before_type
+  '61':
+  - actuators.slack.send
+  - meetings.proposals.review-anywhere
+  - trust.egress.cloud-meeting-intel
+  - trust.egress.send-to-slack-double-optin
+  '62':
+  - trust.egress.badge-tells-truth
+  - trust.egress.cloud-meeting-intel
+  - trust.egress.send-to-slack-double-optin
+  - trust.egress_badge
+  - trust.no-telemetry
+  '63':
+  - internal/no-uat-surface
+  '64':
+  - trust.positioning_readme
+  '65':
+  - dictation.voice-typing.hold-to-talk
+  - models.byo.three-backends
+  '66':
+  - trust.architecture_map
+  '67':
+  - internal/no-uat-surface
+  '68':
+  - internal/no-uat-surface
+  '69':
+  - desk.web.mic_waveform
+  - desk.web.queue_hud
+  - workbench.web.generation_theater
+  - workbench.web.node_canvas
+  '70':
+  - desk.web.four_doors_ia
+  - desk.web.one_arrival
+  '71':
+  - desk.web.free_placement
+  - desk.web.front_door
+  - desk.web.objects_float
+  - desk.web.qlippy_life
+  - desk.web.zones_file_dive
+  '72':
+  - internal/no-uat-surface
+  '73':
+  - desk.ask-ai.grounded-on-pile
+  - desk.front-door.spatial-objects
+  - desk.web.agent_rail_run
+  - desk.web.create_in_world
+  - desk.web.free_placement
+  - desk.web.front_door
+  - desk.web.objects_float
+  - desk.web.one_arrival
+  - desk.web.pullout_open
+  - desk.web.record_orb
+  - desk.web.zones_file_dive
+  '74':
+  - runtime.run_born_artifact
+  '75':
+  - dictation.pipeline.preview-before-type
+  - dictation.preview_before_type
+  '76':
+  - internal/no-uat-surface
+  '77':
+  - desk.web.queue_hud
+  '78':
+  - desk.coders.answer-grounded-or-ai-drafted
+  - desk.web.answer_waiting_coder
+  - desk.web.transcribe_everywhere
+  '79':
+  - internal/no-uat-surface
+  '80':
+  - belt.approval.import_run_chain
+  '81':
+  - workbench.web.generation_theater
+  '82':
+  - belt.approval_leg
+  - belt.conveyor
+  '83':
+  - ask.web.ground_this_ask
+  - ask.web.models_door
+  - ask.web.persona_threads
+  - ask.web.token_auth_arrival
+  - desk.ask-ai.grounded-on-pile
+  - desk.front-door.spatial-objects
+  - desk.personas.conversation-thread
+  '84':
+  - desk.doctor.honest-readout
+  - desk.models.open-a-model-chat
+  - desk.sync.profile-shape-across-surfaces
+  - models.profiles.runs-on-per-agent
+  - runtime.doctor_egress
+  - runtime.pick_everywhere
+  - runtime.web.profiles_editor
+  - trust.secrets.profile-key-never-syncs
+  '85':
+  - desk.models.open-a-model-chat
+  - mesh.handoff.web_run_to_node
+  - mesh.liveness_everywhere
+  - mesh.profile_node
+  - mesh.serve_node
+  - models.mesh.serve-another-machine
+  - trust.egress.mesh-relay
+  '86':
+  - belt.conveyor
+  - belt.receipts
+  '87':
+  - desk.coders.agents-on-the-desk
+  - desk.coders.answer-grounded-or-ai-drafted
+  - desk.personas.conversation-thread
+  - steering.arm_steer
+  - steering.audit
+  - steering.classify
+  - steering.ground
+  - steering.peek
+  - trust.steering.arming-grant

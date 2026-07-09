@@ -164,6 +164,87 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail=f"no such node: {name}")
         return {"name": name, "killed": True}
 
+    # --- the scenario contract + feature ledger (HSU-1-03) ---------------
+
+    from .contract.ledger import FeatureLedger
+    from .contract import scenarios as scen_mod
+    from .contract.coverage import pack_coverage
+    from .contract.scenarios import ScenarioError, load_pack, validate_scenario
+
+    def _ledger() -> FeatureLedger:
+        cached = getattr(app.state, "ledger", None)
+        if cached is None:
+            cached = FeatureLedger.load()
+            app.state.ledger = cached
+        return cached
+
+    def _recipe_names() -> set[str]:
+        return set(mgr().recipes.registry.names())
+
+    def _deck_names() -> set[str]:
+        return set(mgr().decks.names())
+
+    @app.get("/api/features")
+    def features() -> Any:
+        ledger = _ledger()
+        return {
+            "version": ledger.raw.get("version"),
+            "feature_count": len(ledger.features),
+            "phases_total": len(ledger.phase_map),
+            "features": [
+                {
+                    "key": f.key,
+                    "title": f.title,
+                    "domain": f.domain,
+                    "phases": f.phases,
+                    "surfaces": f.surfaces,
+                    "priority": f.priority,
+                    "status": f.status,
+                }
+                for f in ledger.features
+            ],
+        }
+
+    @app.get("/api/packs")
+    def packs() -> Any:
+        ledger = _ledger()
+        out = []
+        for name in scen_mod.list_packs():
+            try:
+                scenarios = load_pack(name)
+            except ScenarioError as exc:
+                out.append({"pack": name, "error": str(exc)})
+                continue
+            cov = pack_coverage(scenarios, ledger)
+            out.append(
+                {
+                    "pack": name,
+                    "scenario_count": len(scenarios),
+                    "coverage": {"overall": cov["overall"], "web": cov["web"], "ipad": cov["ipad"], "iphone": cov["iphone"]},
+                    "expected_verdicts": cov["expected_verdicts"],
+                }
+            )
+        return {"packs": out}
+
+    @app.get("/api/packs/{pack}")
+    def pack_detail(pack: str) -> Any:
+        ledger = _ledger()
+        try:
+            scenarios = load_pack(pack)
+        except ScenarioError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        errors: list[str] = []
+        for s in scenarios:
+            errors += validate_scenario(
+                s, ledger_keys=ledger.keys(), recipe_names=_recipe_names(), deck_names=_deck_names()
+            )
+        return {
+            "pack": pack,
+            "scenarios": [s.to_dict() for s in scenarios],
+            "coverage": pack_coverage(scenarios, ledger),
+            "validation_errors": errors,
+        }
+
     @app.on_event("shutdown")
     def _shutdown() -> None:
         mgr().teardown_all()

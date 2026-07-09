@@ -1,0 +1,26 @@
+id: smoke-desk-seeded-walk
+title: A seeded desk, read on all three surfaces
+features:
+  - desk.ask-ai.grounded-on-pile
+  - kb.project.facts_and_context
+recipes:
+  - seeded-desk
+# Three-surface by default; the note-detail view is opted out on iPhone with a
+# stated reason (an honest n/a, never a silent absence).
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: yes
+steps:
+  - do: Open the desk and look at the notes.
+    expect: Three notes are present — "Q3 architecture decisions", "Standup — pylon incident follow-ups", and "Project glossary".
+    where: /
+  - do: Open the "Project glossary" note.
+    expect: The note body shows the three glossary terms (BLUEBIRD, Pylon, Questline).
+    where: /
+    surfaces:
+      iphone: {n/a: "the note-detail view is not confirmed on the iPhone form factor (directory row unknown)"}
+  - do: Open the two knowledge bases on the desk.
+    expect: The Project KB and the Incident runbooks KB are both present and openable.
+    where: /
+teardown: []
