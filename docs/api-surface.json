@@ -662,6 +662,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -672,6 +673,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -692,6 +694,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -702,6 +705,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -712,6 +716,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -722,6 +727,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -732,6 +738,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -795,6 +802,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -805,6 +813,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -837,6 +846,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -847,6 +857,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -857,6 +868,7 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
+        "ios",
         "web"
       ]
     },
