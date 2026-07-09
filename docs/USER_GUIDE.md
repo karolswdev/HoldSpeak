@@ -575,6 +575,19 @@ armed, the pane is re-checked before every key, a recycled pane refuses and drop
 the grant, and every key is audited. There is no autonomous mode; a person is
 behind each keystroke or nothing is sent.
 
+You do all of this from the desk, not a terminal. Open the Panes list at the
+bottom of the desk to see every tmux pane on the machine, and attach to any one.
+Once you arm it, a row of keys appears next to the composer: one tap sends `^C` to
+stop a runaway, or the arrows and `Enter` to drive a menu. A chip in the header
+shows which machine you are steering, this Mac or a paired node.
+
+The desk can also make and end sessions. The Panes list has a field to spawn a
+new session by name (the name is checked, so it can never carry a stray command).
+An armed session shows a Rename control and a Kill control; Kill asks you to
+confirm, because ending a session cannot be undone, and it goes through the same
+armed check as a keystroke. Spawn, steer, rename, and kill each leave their own
+line in the audit.
+
 ## Ground A Run On The Rails
 
 If you plan work with Delivery Workbench, the rails themselves become

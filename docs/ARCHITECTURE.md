@@ -334,6 +334,13 @@ the audit while the hub only relays and names where the key landed. Each additio
 is more reach over the exact same spine: watch free, manipulate armed, re-verify
 every key, refuse and revoke, audit everything.
 
+The lifecycle joins it in `coder_factory.py`: `spawn` and `rename` are
+name-validated audited acts (the name is an allow-list, passed as its own
+argument), and `kill` reuses the steer gate outright, requiring the grant and
+re-verifying the pinned pane before it ends anything. Those verbs live behind the
+web desk's session surface, so a person spawns, drives, renames, and ends a
+session from glass, each act its own line in the audit.
+
 ### The rails as material
 
 The delivery rails are also material a run can ground on. An open phase, a

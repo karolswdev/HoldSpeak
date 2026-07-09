@@ -175,11 +175,23 @@ function NodeChip() {
 export function PanePicker() {
   const panes = useSteering((s) => s.panes);
   const panesState = useSteering((s) => s.panesState);
+  const factoryState = useSteering((s) => s.factoryState);
+  const factoryDetail = useSteering((s) => s.factoryDetail);
   const [open, setOpen] = useState(false);
+  const [spawnName, setSpawnName] = useState("");
   const toggle = () => {
     const next = !open;
     setOpen(next);
     if (next) void useSteering.getState().listPanes();
+  };
+  const doSpawn = async () => {
+    const name = spawnName.trim();
+    if (!name) return;
+    const ok = await useSteering.getState().spawnSession(name);
+    if (ok) {
+      setSpawnName("");
+      setOpen(false); // the new session's pull-out is now open
+    }
   };
   return (
     <div className={"desk-panepicker" + (open ? " is-open" : "")}>
@@ -193,6 +205,30 @@ export function PanePicker() {
       </button>
       {open && (
         <div className="desk-panepicker-list">
+          {/* HS-90-03: spawn a new session from the desk */}
+          <div className="desk-panepicker-spawn">
+            <input
+              className="desk-classify-input"
+              value={spawnName}
+              placeholder="new session name"
+              onChange={(e) => setSpawnName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void doSpawn();
+              }}
+            />
+            <button
+              type="button"
+              className="desk-chip"
+              disabled={!spawnName.trim() || factoryState === "working"}
+              onClick={() => void doSpawn()}
+            >
+              + Spawn
+            </button>
+          </div>
+          {factoryState === "failed" && (
+            <span className="desk-panepicker-empty desk-arm-refusal">✕ {factoryDetail}</span>
+          )}
+          <div className="desk-panepicker-divider" />
           {panesState === "loading" && <span className="desk-panepicker-empty">…</span>}
           {panesState === "error" && (
             <span className="desk-panepicker-empty">tmux unreachable</span>
@@ -206,6 +242,7 @@ export function PanePicker() {
               type="button"
               className={"desk-panepicker-item" + (p.active ? " is-active" : "")}
               onClick={() => {
+                useSteering.setState({ attachedSession: p.session });
                 useSteering.getState().openSession(`pane:${p.paneId}`);
                 setOpen(false);
               }}
@@ -219,6 +256,86 @@ export function PanePicker() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// The factory controls (HS-90-03) — rename + kill the open session, on glass.
+// Rendered only while armed: kill is gated like a steer, and rename rides the
+// same deliberate window. Kill is a two-step confirm (it is irreversible).
+function FactoryControls() {
+  const attachedSession = useSteering((s) => s.attachedSession);
+  const factoryState = useSteering((s) => s.factoryState);
+  const [renaming, setRenaming] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [confirmKill, setConfirmKill] = useState(false);
+
+  return (
+    <div className="desk-factory">
+      <span className="desk-factory-label">Session</span>
+      <div className="desk-factory-row">
+        {renaming ? (
+          <>
+            <input
+              className="desk-classify-input"
+              value={newName}
+              placeholder={attachedSession || "new name"}
+              autoFocus
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <button
+              type="button"
+              className="desk-chip quiet"
+              disabled={!newName.trim() || factoryState === "working"}
+              onClick={async () => {
+                const ok = await useSteering.getState().renameOpen(newName.trim());
+                if (ok) {
+                  setRenaming(false);
+                  setNewName("");
+                }
+              }}
+            >
+              Rename
+            </button>
+            <button type="button" className="desk-chip quiet" onClick={() => setRenaming(false)}>
+              ✕
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="desk-chip quiet"
+            disabled={!attachedSession}
+            title={attachedSession ? `rename ${attachedSession}` : "no session to rename"}
+            onClick={() => setRenaming(true)}
+          >
+            Rename
+          </button>
+        )}
+        {confirmKill ? (
+          <>
+            <button
+              type="button"
+              className="desk-chip desk-kill-confirm"
+              onClick={() => void useSteering.getState().killOpen("session")}
+            >
+              ⌫ Kill session — sure?
+            </button>
+            <button type="button" className="desk-chip quiet" onClick={() => setConfirmKill(false)}>
+              ✕
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="desk-chip desk-kill"
+            title="end this session (armed + confirm)"
+            onClick={() => setConfirmKill(true)}
+          >
+            ⌫ Kill
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -474,6 +591,7 @@ export function SessionPullout() {
         <footer className="desk-pullout-foot">
           <KeyPalette />
           <SteerComposer />
+          <FactoryControls />
         </footer>
       )}
       <footer className="desk-pullout-foot">

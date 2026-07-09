@@ -113,6 +113,16 @@ SQLCipher) becomes warranted and should be its own story.
    that does not answer refuses by name (`node_offline`), never a hang. Both
    chokepoints are pinned by a census test; there is no autonomous path, so a
    person is behind every key.
+
+   **The session factory** (`coder_factory.py`) adds the lifecycle on the same
+   terms. `spawn` and `rename` take a session name, which is user input, so the
+   name is held to a strict allow-list (first character a letter or underscore,
+   so it can never be read as a flag) and passed as its own argument, never a
+   shell string; a bad name refuses by name before tmux runs. `kill` is the most
+   consequential act, so it is gated exactly like a steer: it requires the
+   grant, re-verifies the pinned pane, drops the grant afterward, and audits.
+   The destructive tmux verbs live in that one module, pinned by a census, and
+   every lifecycle act is audited with a plain heading.
 6. **Rails as material** (`grounding_rails.py`, `rails_observer.py`):
    grounding a run on an open phase or story reads the exact file your own
    `dw` command line names, as opaque text; it never re-derives rail state

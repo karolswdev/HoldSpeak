@@ -145,6 +145,15 @@ interface SteeringState {
   targetNode: string | null;
   listNodes(): Promise<void>;
   setTargetNode(node: string | null): void;
+  /** HS-90-03 — the factory on glass. `attachedSession` is the tmux
+   * session behind the open pane (known at spawn / attach time), so
+   * rename + a session-scope kill have a target. */
+  attachedSession: string;
+  factoryState: "idle" | "working" | "done" | "failed";
+  factoryDetail: string;
+  spawnSession(name: string, command?: string): Promise<boolean>;
+  renameOpen(newName: string): Promise<boolean>;
+  killOpen(scope: "pane" | "session"): Promise<boolean>;
 }
 
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -204,6 +213,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
   panesState: "idle",
   nodes: [],
   targetNode: null,
+  attachedSession: "",
+  factoryState: "idle",
+  factoryDetail: "",
 
   openSession(key) {
     if (timer !== null) clearInterval(timer);
@@ -439,6 +451,84 @@ export const useSteering = create<SteeringState>((set, get) => ({
 
   setTargetNode(node) {
     set({ targetNode: node });
+  },
+
+  async spawnSession(name, command) {
+    set({ factoryState: "working", factoryDetail: "" });
+    try {
+      const res = await fetch(`/api/coders/factory/spawn`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(command ? { name, command } : { name }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.status === "spawned") {
+        set({ factoryState: "done" });
+        if (body.pane_id) get().openSession(`pane:${body.pane_id}`);
+        set({ attachedSession: name }); // openSession does not touch this
+        return true;
+      }
+      set({
+        factoryState: "failed",
+        factoryDetail: body.detail || body.status || `HTTP ${res.status}`,
+      });
+      return false;
+    } catch {
+      set({ factoryState: "failed", factoryDetail: "hub unreachable" });
+      return false;
+    }
+  },
+
+  async renameOpen(newName) {
+    const target = get().attachedSession;
+    if (!target) {
+      set({ factoryState: "failed", factoryDetail: "no session to rename" });
+      return false;
+    }
+    set({ factoryState: "working", factoryDetail: "" });
+    try {
+      const res = await fetch(`/api/coders/factory/rename`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target, name: newName }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.status === "renamed") {
+        set({ factoryState: "done", attachedSession: newName });
+        return true;
+      }
+      set({ factoryState: "failed", factoryDetail: body.detail || body.status });
+      return false;
+    } catch {
+      set({ factoryState: "failed", factoryDetail: "hub unreachable" });
+      return false;
+    }
+  },
+
+  async killOpen(scope) {
+    // Kill is gated like a steer (armed + verified %N hub-side). Local only —
+    // cross-machine factory is a deferred rider, so it never routes the relay.
+    const key = get().openKey;
+    if (!key) return false;
+    set({ factoryState: "working", factoryDetail: "" });
+    try {
+      const res = await fetch(`/api/coders/${encodeURIComponent(key)}/kill`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body.status === "killed") {
+        set({ factoryState: "done" });
+        get().closeSession();
+        return true;
+      }
+      set({ factoryState: "failed", factoryDetail: body.detail || body.status });
+      return false;
+    } catch {
+      set({ factoryState: "failed", factoryDetail: "hub unreachable" });
+      return false;
+    }
   },
 
   async refreshGrants() {

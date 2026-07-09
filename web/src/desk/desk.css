@@ -1251,6 +1251,34 @@
 }
 .desk-next .desk-panepicker-meta { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .desk-next .desk-panepicker-empty { padding: 8px 10px; color: var(--text-muted); font-size: 12px; }
+.desk-next .desk-panepicker-spawn { display: flex; gap: 6px; padding: 4px 4px 6px; }
+.desk-next .desk-panepicker-spawn .desk-classify-input { flex: 1; }
+.desk-next .desk-panepicker-divider { height: 1px; background: var(--surface-3); margin: 2px 0 6px; opacity: 0.6; }
+
+/* ── HS-90-03: the factory controls (rename + kill on glass) ── */
+.desk-next .desk-factory { display: flex; align-items: center; gap: 8px; width: 100%; flex-wrap: wrap; }
+.desk-next .desk-factory-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .desk-factory-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex: 1; }
+.desk-next .desk-chip.desk-kill {
+  color: var(--danger-signal);
+  border-color: color-mix(in srgb, var(--danger-signal) 40%, var(--surface-3));
+}
+.desk-next .desk-chip.desk-kill:hover {
+  border-color: var(--danger-signal);
+  background: color-mix(in srgb, var(--danger-signal) 12%, transparent);
+}
+.desk-next .desk-chip.desk-kill-confirm {
+  color: #fff;
+  background: var(--danger-signal);
+  border-color: var(--danger-signal);
+  font-family: var(--font-mono);
+}
 
 /* ── HS-87-05: classify (keep as note, pin to story, flip from here) ── */
 .desk-next .desk-classify { display: flex; flex-direction: column; gap: 6px; width: 100%; }
