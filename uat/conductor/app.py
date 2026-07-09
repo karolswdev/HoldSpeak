@@ -77,6 +77,11 @@ class AfterBody(BaseModel):
     step_index: int
 
 
+class TriageBody(BaseModel):
+    triage_state: str
+    disposition: Optional[str] = None
+
+
 def create_app(manager: RunManager | None = None) -> FastAPI:
     app = FastAPI(title="HoldSpeak UAT Conductor", version="0.1.0")
     app.state.manager = manager or RunManager(Database())
@@ -88,6 +93,13 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
 
     def sit() -> SittingManager:
         return app.state.sittings
+
+    from .debrief import DebriefGenerator
+
+    app.state.debrief = DebriefGenerator(app.state.manager, app.state.manager.db)
+
+    def debrief() -> DebriefGenerator:
+        return app.state.debrief
 
     @app.get("/api/health")
     def conductor_health() -> Any:
@@ -347,6 +359,38 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
             return sit().finish(sitting_id)
         except SittingError as exc:
             raise HTTPException(status_code=404, detail=str(exc))
+
+    # --- debrief + triage (HSU-1-05) -------------------------------------
+
+    @app.post("/api/sittings/{sitting_id}/debrief")
+    def generate_debrief(sitting_id: str) -> Any:
+        try:
+            return debrief().generate(sitting_id)
+        except KeyError:
+            raise HTTPException(status_code=404, detail=f"no such sitting: {sitting_id}")
+
+    @app.get("/api/sittings/{sitting_id}/debrief")
+    def read_debrief(sitting_id: str) -> Any:
+        try:
+            return debrief().read(sitting_id)
+        except KeyError:
+            raise HTTPException(status_code=404, detail=f"no such sitting: {sitting_id}")
+
+    @app.patch("/api/findings/{finding_id}")
+    def triage_finding(finding_id: str, body: TriageBody) -> Any:
+        valid = {"untriaged", "fix", "wont-fix", "by-design", "duplicate"}
+        if body.triage_state not in valid:
+            raise HTTPException(status_code=400, detail=f"triage_state must be one of {sorted(valid)}")
+        if not mgr().db.set_triage(finding_id, body.triage_state, body.disposition):
+            raise HTTPException(status_code=404, detail=f"no such finding: {finding_id}")
+        return mgr().db.get_finding(finding_id)
+
+    @app.get("/api/sittings/{sitting_id}/findings/backlog-block")
+    def backlog_block(sitting_id: str) -> Any:
+        sitting = mgr().db.get_sitting(sitting_id)
+        if sitting is None:
+            raise HTTPException(status_code=404, detail=f"no such sitting: {sitting_id}")
+        return {"block": debrief().backlog_block(sitting["run_id"])}
 
     @app.on_event("shutdown")
     def _shutdown() -> None:

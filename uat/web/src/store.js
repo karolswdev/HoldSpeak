@@ -134,10 +134,34 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  debrief: null,
+  backlog: null,
+
   async finish() {
     try {
       const sitting = await api.finish(get().sitting.id);
       set({ sitting });
+      const res = await api.generateDebrief(sitting.id);
+      set({ debrief: res.packet });
+    } catch (e) {
+      set({ error: String(e.message || e) });
+    }
+  },
+
+  async triage(findingId, state, disposition) {
+    try {
+      await api.triage(findingId, state, disposition);
+      const res = await api.generateDebrief(get().sitting.id);
+      set({ debrief: res.packet });
+    } catch (e) {
+      set({ error: String(e.message || e) });
+    }
+  },
+
+  async loadBacklog() {
+    try {
+      const res = await api.backlogBlock(get().sitting.id);
+      set({ backlog: res.block });
     } catch (e) {
       set({ error: String(e.message || e) });
     }
