@@ -302,6 +302,80 @@ class ProbeEvaluator:
             time.sleep(3.0)
         return (False, f"node {name!r} still reads live within {timeout:.0f}s")
 
+    # --- mesh dispatch (the handoff arc) ----------------------------------
+
+    def _dispatch_sidecar(self, run: str) -> dict | None:
+        """The response a `dispatch_run` action persisted for this run label —
+        the badge/output/claim-delta the ask returned. None when absent."""
+        if self.home is None:
+            return None
+        path = self.home / f"uat-dispatch-{run}.json"
+        if not path.exists():
+            return None
+        import json
+
+        try:
+            return json.loads(path.read_text())
+        except (OSError, ValueError):
+            return None
+
+    def _check_run_returned_badged(self, arg):
+        """A dispatched run returned wearing the expected egress badge — the
+        `⇄ mesh` scope + node host, not a local run. arg = {run, scope, host}."""
+        opts = arg if isinstance(arg, dict) else {"run": str(arg)}
+        run = str(opts.get("run", "handoff"))
+        want_scope = str(opts.get("scope", "mesh"))
+        want_host = opts.get("host")
+        car = self._dispatch_sidecar(run)
+        if car is None:
+            return (False, f"no dispatch sidecar for run {run!r}")
+        if not car.get("ok"):
+            return (False, f"dispatch failed HTTP {car.get('status')}: {car.get('error')}")
+        egress = car.get("egress") or {}
+        scope_ok = egress.get("scope") == want_scope
+        host_ok = want_host is None or egress.get("host") == str(want_host)
+        return (
+            scope_ok and host_ok,
+            f"egress={egress} (want scope={want_scope!r}"
+            + (f" host={want_host!r}" if want_host is not None else "")
+            + ")",
+        )
+
+    def _check_run_output_contains(self, arg):
+        """The dispatched run's OUTPUT surfaces a token — proof the worker's
+        model actually executed the prompt over the note material (the canary
+        only lives in the handoff note). arg = {run, text}."""
+        opts = arg if isinstance(arg, dict) else {}
+        run = str(opts.get("run", "handoff"))
+        text = str(opts.get("text", ""))
+        car = self._dispatch_sidecar(run)
+        if car is None:
+            return (False, f"no dispatch sidecar for run {run!r}")
+        out = str(car.get("output") or "")
+        present = text in out
+        return (present, f"output {'contains' if present else 'MISSING'} {text!r} ({len(out)} chars)")
+
+    def _check_run_claimed_by_worker(self, arg):
+        """Provenance: the worker CLAIMED the job (its log-marker count rose)
+        AND the hub reported a mesh provider — the run moved, the hub loaded no
+        local model. arg = {run}."""
+        opts = arg if isinstance(arg, dict) else {"run": str(arg)}
+        run = str(opts.get("run", "handoff"))
+        car = self._dispatch_sidecar(run)
+        if car is None:
+            return (False, f"no dispatch sidecar for run {run!r}")
+        before = int(car.get("claims_before") or 0)
+        after = int(car.get("claims_after") or 0)
+        moved = after > before
+        provider = str(car.get("provider") or "")
+        scope = str((car.get("egress") or {}).get("scope") or "")
+        hub_no_local = provider == "mesh" or scope == "mesh"
+        return (
+            moved and hub_no_local,
+            f"worker claims {before}→{after} (moved={moved}); "
+            f"hub provider={provider!r} scope={scope!r} (no-local={hub_no_local})",
+        )
+
     # --- live steering (via the product's /api/coders routes) -------------
 
     def _steer_session(self, name: str) -> str:

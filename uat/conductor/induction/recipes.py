@@ -314,6 +314,66 @@ class RecipeEngine:
                     body[k] = opts[k]
             resp = client.post_json("/api/profiles", body)
             return {"action": "create_profile", "name": name, "status": resp.status_code}
+        if kind == "dispatch_run":
+            # The handoff arc's verb: drive a real ask ONTO the mesh worker via
+            # the hub's own /api/ask (profile_id → meshNode → relay). A mesh run
+            # WAITS on the relay queue while the worker claims + executes it, so
+            # use a slow client. Capture the worker's CLAIM-count delta (its own
+            # log) before→after — "the run moved" — and persist the response's
+            # egress badge + output to a sidecar the probes read back.
+            import json as _json
+
+            from .product_client import ProductClient
+
+            opts = arg if isinstance(arg, dict) else {}
+            label = str(opts.get("run", "handoff"))
+            node = str(opts.get("node", "uat-worker"))
+            profile_id = str(opts.get("profile_id", "uat-seed-profile-mesh-edge"))
+            prompt = str(
+                opts.get(
+                    "prompt",
+                    "Summarize the pylon incident from the handoff note. Name the "
+                    "canary token it carries, verbatim.",
+                )
+            )
+            context = opts.get("context") or []
+            timeout = float(opts.get("timeout", 600))
+
+            marker = f"CLAIMED for node {node}"
+            claims_before = host.node_log_text(run_id, node).count(marker)
+
+            slow = ProductClient(client.base_url, token=client.token, timeout=timeout)
+            body: dict[str, Any] = {"prompt": prompt, "profile_id": profile_id, "lens": "Ask"}
+            if context:
+                body["context"] = context
+            resp = slow.post_json("/api/ask", body)
+            data = resp.json() if resp.status_code == 200 else {}
+
+            claims_after = host.node_log_text(run_id, node).count(marker)
+
+            sidecar = {
+                "run": label,
+                "node": node,
+                "profile_id": profile_id,
+                "status": resp.status_code,
+                "ok": resp.status_code == 200,
+                "provider": data.get("provider"),
+                "egress": data.get("egress"),
+                "model": data.get("model"),
+                "output": data.get("output", ""),
+                "error": data.get("error"),
+                "claims_before": claims_before,
+                "claims_after": claims_after,
+            }
+            home = host.run_home(run_id)
+            (home / f"uat-dispatch-{label}.json").write_text(_json.dumps(sidecar))
+            return {
+                "action": "dispatch_run",
+                "run": label,
+                "status": resp.status_code,
+                "egress": sidecar["egress"],
+                "claimed": claims_after > claims_before,
+            }
         if kind == "teach_correction":
             # Record a dictation correction so the learned-from-N digest has a
             # KNOWN count to check honestly against.
@@ -342,3 +402,4 @@ class RecipeHost:  # pragma: no cover - documentation of the required interface
     def run_home(self, run_id: str) -> Path: ...
     def spawn_node(self, run_id: str, name: str) -> dict: ...
     def kill_node(self, run_id: str, name: str) -> bool: ...
+    def node_log_text(self, run_id: str, node: str) -> str: ...

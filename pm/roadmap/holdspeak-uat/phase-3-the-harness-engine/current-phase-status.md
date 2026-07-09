@@ -1,9 +1,8 @@
 # Phase 3 — The Harness Engine (unlock the live-agent + device tier)
 
-**Last updated:** 2026-07-09 (scaffolded — the remaining harness backlog from
-the protocol re-eval, after live steering + honest-count + key-never-syncs
-shipped)
-**Status:** planning (0/5)
+**Last updated:** 2026-07-09 (HSU-3-01 shipped — the mesh handoff arc is
+machine-staged-and-verified live on `.43`)
+**Status:** in-progress (1/5)
 
 ## Goal
 
@@ -40,9 +39,12 @@ machine-verifiable, and the iPhone/iPad columns get a real answer.
 
 ## Exit criteria
 
-- [ ] The mesh handoff arc is machine-staged: a desk-ask driven onto the
+- [x] The mesh handoff arc is machine-staged: a desk-ask driven onto the
       `uat-worker` returns badged `⇄ mesh` with worker-log-claims-it /
       hub-shows-no-model-load provenance; pack-e's handoff beats verdicted.
+      (HSU-3-01 — `dispatch_run` verb + `run_returned_badged` /
+      `run_claimed_by_worker` / `run_output_contains` probes + the
+      `mesh-run-on-worker` recipe; green live on `.43`.)
 - [ ] A cloud-egress card is staged and its egress target read back through a
       probe (or the badge-is-chrome-global mismatch is recorded honestly);
       pack-d/07, pack-d/11, pack-a/04 unblocked.
@@ -62,7 +64,7 @@ machine-verifiable, and the iPhone/iPad columns get a real answer.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HSU-3-01 | Mesh dispatch — the handoff arc | backlog | [story-01](./story-01-mesh-dispatch.md) | — |
+| HSU-3-01 | Mesh dispatch — the handoff arc | done | [story-01](./story-01-mesh-dispatch.md) | [evidence-story-01](./evidence-story-01.md) |
 | HSU-3-02 | Cloud-egress card + per-card probe | backlog | [story-02](./story-02-cloud-egress.md) | — |
 | HSU-3-03 | Trust gate attacks | backlog | [story-03](./story-03-trust-gate-attacks.md) | — |
 | HSU-3-04 | Pipeline-on dictation world | backlog | [story-04](./story-04-dictation-pipeline-on.md) | — |
@@ -78,7 +80,18 @@ attack, all merged and proven live). The re-eval + coverage docs are the input:
 from human-walked to staged-and-verified. Priority order follows the ranking:
 mesh dispatch (the Pack E headline arc) first, then cloud-egress and the trust
 attacks (each unblocks 2–3 beats across packs), then the pipeline-on dictation
-world, then the device pre-flight (partly manual, owner-gated). Next: HSU-3-01.
+world, then the device pre-flight (partly manual, owner-gated).
+
+HSU-3-01 shipped 2026-07-09: the `dispatch_run` verb drives a real ask onto
+`uat-worker` through the hub's own `/api/ask`, and three probes verify the
+return — `run_returned_badged` (scope `mesh`, host `uat-worker`),
+`run_claimed_by_worker` (the worker's CLAIM-marker delta + hub provider `mesh`
+= "the run moved, the model didn't"), and `run_output_contains` (the worker's
+model surfaced `PYLON-CANARY-7`, which only the grounded note carries). The
+`mesh-run-on-worker` recipe composes it over the live-worker stage and tears
+down clean; pack-e `02`/`03`/`06` now cite it with the treatment leg
+machine-verified. Proven live on `.43` (`test_mesh_dispatch.py`, self-skips
+without the LAN). Next: HSU-3-02 (cloud-egress card + per-card probe).
 
 ## Active risks
 

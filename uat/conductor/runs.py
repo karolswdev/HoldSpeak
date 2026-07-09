@@ -352,6 +352,30 @@ class RunManager:
     def list_nodes(self, run_id: str) -> list[dict]:
         return [n.to_dict() for n in self._nodes(run_id).list()]
 
+    def node_log_text(self, run_id: str, node: str) -> str:
+        """The worker's own log for provenance reads — the harness owns the
+        process it spawned, so scanning its log for a job's CLAIM marker is
+        honest provenance, not a poke at the product DB. `mesh serve` logs
+        through the product's file logger (`setup_logging`, non-verbose), which
+        writes to `$HOME/.local/share/holdspeak/holdspeak.log` — the worker's
+        HOME is this run's home — so we read that plus any captured std streams.
+        Returns "" when nothing has been written yet."""
+        home = paths.run_home(run_id)
+        logs = paths.run_logs_dir(run_id)
+        candidates = [
+            home / ".local" / "share" / "holdspeak" / "holdspeak.log",
+            logs / f"node-{node}.stdout.log",
+            logs / f"node-{node}.stderr.log",
+        ]
+        blob = ""
+        for p in candidates:
+            if p.exists():
+                try:
+                    blob += p.read_text(errors="ignore")
+                except OSError:
+                    pass
+        return blob
+
     def apply_recipe(self, run_id: str, name: str, *, allow_intel: bool = True):
         return self.recipes.apply(name, run_id, self, allow_intel=allow_intel)
 

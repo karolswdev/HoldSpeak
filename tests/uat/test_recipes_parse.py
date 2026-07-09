@@ -59,3 +59,24 @@ def test_include_order_is_deps_first(tmp_path):
 def test_unknown_recipe_raises():
     with pytest.raises(RecipeError):
         RecipeRegistry().load("no-such-recipe")
+
+
+def test_mesh_dispatch_recipe_present_and_composes():
+    reg = RecipeRegistry()
+    assert "mesh-run-on-worker" in reg.names()
+    # It rides the live-worker + authored-run stage, so mesh-run-ready folds in.
+    assert reg.resolve_order("mesh-run-on-worker")[:2] == ["mesh-node-alive", "mesh-run-ready"]
+    assert reg.load("mesh-run-on-worker").requires_intel is True
+
+
+def test_every_recipe_probe_kind_resolves():
+    """A recipe naming a probe kind with no `_check_` method would fail only at
+    apply-time on real metal; catch the typo here, no LAN needed."""
+    from uat.conductor.induction.probes import ProbeEvaluator
+    from uat.conductor.induction.recipes import _split_action  # reuse: same single-key shape
+
+    reg = RecipeRegistry()
+    for name in reg.names():
+        for assertion in reg.load(name).probe:
+            kind, _ = _split_action(assertion)
+            assert hasattr(ProbeEvaluator, f"_check_{kind}"), f"{name}: unknown probe {kind!r}"

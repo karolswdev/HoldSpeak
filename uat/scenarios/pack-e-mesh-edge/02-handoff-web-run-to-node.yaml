@@ -5,7 +5,7 @@ features:
   - models.mesh.serve-another-machine
   - models.profiles.runs-on-per-agent
 recipes:
-  - mesh-run-ready
+  - mesh-run-on-worker
 surfaces:
   web: yes
   ipad: {n/a: "mesh.handoff.web_run_to_node is ipad:unknown as a FROM-surface — the inventory row confirms only web enqueues via mesh_relay_jobs; the iPad-origin relay path is not confirmed shipped"}
@@ -23,6 +23,6 @@ steps:
   # TREATMENT: the same ask, pointed at the mesh node. The run must MOVE — the
   # worker claims it, the hub does not load the model, the card returns ⇄ mesh.
   - do: "TREATMENT — Ask the same question again, this time pointed at the \"uat-worker-run\" meshNode profile so the run is dispatched onto the mesh edge. Read the returned card and both logs."
-    expect: The card returns badged ⇄ mesh naming the uat-worker edge; the WORKER's log shows it claimed this run off the relay queue and executed it; the HUB's log shows NO model load for this run (the hub relayed, it did not compute). A result that returns without the worker claiming it, or with the hub loading the model, fails this beat.
+    expect: The card returns badged ⇄ mesh naming the uat-worker edge; the WORKER's log shows it claimed this run off the relay queue and executed it; the HUB's log shows NO model load for this run (the hub relayed, it did not compute). A result that returns without the worker claiming it, or with the hub loading the model, fails this beat. Machine-verified — the mesh-run-on-worker recipe pre-proves this treatment arc; its probe asserts the run returns badged scope mesh on host uat-worker, the worker claimed the job (claim-count delta, hub provider mesh), and the output contains PYLON-CANARY-7. A human confirms the same badge on the real card.
     where: /
 teardown: []
