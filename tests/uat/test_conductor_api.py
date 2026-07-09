@@ -67,3 +67,21 @@ def test_unknown_run_404(client):
     assert client.get("/api/runs/nope").status_code == 404
     assert client.delete("/api/runs/nope").status_code == 404
     assert client.post("/api/runs/nope/restart", json={}).status_code == 404
+
+
+def test_list_decks(client):
+    r = client.get("/api/decks")
+    assert r.status_code == 200
+    names = {d["name"] for d in r.json()["decks"]}
+    assert {"golden-local", "golden-43", "bad-endpoint", "no-model", "mesh-node"} <= names
+
+
+def test_list_recipes(client):
+    r = client.get("/api/recipes")
+    assert r.status_code == 200
+    names = {d["name"] for d in r.json()["recipes"]}
+    assert {"fresh-desk", "seeded-desk", "intel-endpoint-dead"} <= names
+
+
+def test_apply_recipe_unknown_run_404(client):
+    assert client.post("/api/runs/nope/recipes/fresh-desk", json={}).status_code == 404

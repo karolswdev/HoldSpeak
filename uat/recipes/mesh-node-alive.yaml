@@ -1,0 +1,14 @@
+title: A mesh node is alive
+description: >
+  Register a meshNode profile, then spawn a real `holdspeak mesh serve` worker
+  (its own process group) pointed at THIS run as its hub. The worker polls the
+  relay queue — the mesh's only heartbeat — and the hub reports it live through
+  its own /api/profiles mesh_liveness view.
+deck: mesh-node
+requires: [intel]
+actions:
+  - create_profile: {name: uat-worker, node: uat-worker}
+  - spawn_node: {name: uat-worker}
+  - wait: 6
+probe:
+  - mesh_node_live: {name: uat-worker, timeout: 40}

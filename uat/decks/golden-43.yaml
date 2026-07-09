@@ -1,0 +1,31 @@
+title: Golden .43 — real intelligence on the LAN llama.cpp
+description: >
+  Meeting intel and the dictation runtime wired to the 192.168.1.43 llama.cpp
+  endpoint, so a recipe produces REAL pipeline output (artifacts, open
+  actions, grounded rewrites) — not a DB fake. Needs the LAN.
+requires: [intel]
+config:
+  config_version: 1
+  model:
+    name: base
+    warm_on_start: false
+  meeting:
+    intel_enabled: true
+    intel_provider: cloud
+    intel_cloud_base_url: http://192.168.1.43:8080/v1
+    intel_cloud_model: Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
+    intent_router_enabled: true
+    mir_profile: balanced
+    allow_actuators: false
+  dictation:
+    pipeline:
+      enabled: true
+      stages: [intent-router, kb-enricher, project-rewriter]
+      corrections_enabled: true
+      journal_enabled: true
+    runtime:
+      backend: openai_compatible
+      openai_compatible_base_url: http://192.168.1.43:8080/v1
+      openai_compatible_model: Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
+      openai_compatible_api_key_env: OPENAI_API_KEY
+      openai_compatible_timeout_seconds: 30.0

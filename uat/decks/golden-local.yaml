@@ -1,0 +1,12 @@
+title: Golden local — fully local, no LLM
+description: >
+  A product that boots fast with no model warm and no intel endpoint. The
+  rig's demo-without-the-LAN posture and the base for every desk-seeding recipe.
+requires: []
+config:
+  config_version: 1
+  model:
+    name: base
+    warm_on_start: false
+  meeting:
+    intel_enabled: false

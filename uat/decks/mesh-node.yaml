@@ -1,0 +1,19 @@
+title: Mesh node — a hub that can consume a local mesh worker
+description: >
+  Golden-.43 intelligence plus mesh enabled, so the run can spawn a local
+  `holdspeak mesh serve` worker, see it live from the product side
+  (`/api/models`, the mesh info route), and watch it go offline when killed.
+  The `mesh-node-alive` / `mesh-node-just-died` recipes ride this deck.
+requires: [intel]
+config:
+  config_version: 1
+  model:
+    name: base
+    warm_on_start: false
+  meeting:
+    intel_enabled: true
+    intel_provider: cloud
+    intel_cloud_base_url: http://192.168.1.43:8080/v1
+    intel_cloud_model: Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
+  mesh:
+    device_name: uat-hub

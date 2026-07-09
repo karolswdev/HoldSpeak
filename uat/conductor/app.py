@@ -37,6 +37,14 @@ class RestartRunBody(BaseModel):
     lan: Optional[bool] = None
 
 
+class ApplyRecipeBody(BaseModel):
+    allow_intel: bool = True
+
+
+class SpawnNodeBody(BaseModel):
+    name: str
+
+
 def create_app(manager: RunManager | None = None) -> FastAPI:
     app = FastAPI(title="HoldSpeak UAT Conductor", version="0.1.0")
     app.state.manager = manager or RunManager(Database())
@@ -106,6 +114,55 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
         if run is None:
             raise HTTPException(status_code=404, detail=f"no such run: {run_id}")
         return mgr().logs(run_id, n=n)
+
+    # --- induction engine (HSU-1-02) -------------------------------------
+
+    @app.get("/api/decks")
+    def list_decks() -> Any:
+        return {"decks": mgr().decks.all()}
+
+    @app.get("/api/recipes")
+    def list_recipes() -> Any:
+        return {"recipes": mgr().recipes.registry.all()}
+
+    @app.post("/api/runs/{run_id}/recipes/{name}")
+    def apply_recipe(run_id: str, name: str, body: ApplyRecipeBody) -> Any:
+        if mgr().get(run_id) is None:
+            raise HTTPException(status_code=404, detail=f"no such run: {run_id}")
+        from .induction.recipes import RecipeError, RecipeVerifyError
+
+        try:
+            result = mgr().apply_recipe(run_id, name, allow_intel=body.allow_intel)
+        except RecipeVerifyError as exc:
+            # A recipe that cannot verify itself fails loudly — 422 with the
+            # probe report so the caller sees exactly which assertion missed.
+            return JSONResponse(
+                status_code=422,
+                content={"error": str(exc), "result": exc.result.to_dict()},
+            )
+        except RecipeError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        return result.to_dict()
+
+    @app.post("/api/runs/{run_id}/nodes", status_code=201)
+    def spawn_node(run_id: str, body: SpawnNodeBody) -> Any:
+        try:
+            return mgr().spawn_node(run_id, body.name)
+        except KeyError:
+            raise HTTPException(status_code=404, detail=f"no live run: {run_id}")
+
+    @app.get("/api/runs/{run_id}/nodes")
+    def list_nodes(run_id: str) -> Any:
+        if mgr().get(run_id) is None:
+            raise HTTPException(status_code=404, detail=f"no such run: {run_id}")
+        return {"nodes": mgr().list_nodes(run_id)}
+
+    @app.delete("/api/runs/{run_id}/nodes/{name}")
+    def kill_node(run_id: str, name: str) -> Any:
+        killed = mgr().kill_node(run_id, name)
+        if not killed:
+            raise HTTPException(status_code=404, detail=f"no such node: {name}")
+        return {"name": name, "killed": True}
 
     @app.on_event("shutdown")
     def _shutdown() -> None:
