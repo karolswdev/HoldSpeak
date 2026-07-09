@@ -1,0 +1,24 @@
+id: smoke-mesh-node-lifecycle
+title: A mesh node, alive then gone
+features:
+  - mesh.serve_node
+  - mesh.liveness_everywhere
+  - mesh.profile_node
+recipes:
+  - mesh-node-alive
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the mesh profile/liveness surface on iPhone is unverified in the record"}
+steps:
+  - do: Open the profiles view and find the mesh worker.
+    expect: The "uat-worker" node reads live — the hub has seen it poll recently.
+    where: /
+    # A mid-run conductor action: kill the worker's process group before the
+    # next step, so the human watches the world break in real time.
+    after:
+      - apply_recipe: mesh-node-just-died
+  - do: The node has just been stopped. Refresh the profiles view.
+    expect: The "uat-worker" node now reads offline; a forced run against it refuses fast, by name, rather than hanging.
+    where: /
+teardown: []

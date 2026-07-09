@@ -85,3 +85,30 @@ def test_list_recipes(client):
 
 def test_apply_recipe_unknown_run_404(client):
     assert client.post("/api/runs/nope/recipes/fresh-desk", json={}).status_code == 404
+
+
+def test_features_route(client):
+    r = client.get("/api/features")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["feature_count"] > 200
+    assert body["phases_total"] == 88
+
+
+def test_packs_and_pack_detail(client):
+    r = client.get("/api/packs")
+    assert r.status_code == 200
+    packs = {p["pack"]: p for p in r.json()["packs"]}
+    assert "smoke" in packs
+    assert packs["smoke"]["scenario_count"] >= 6
+
+    d = client.get("/api/packs/smoke")
+    assert d.status_code == 200
+    detail = d.json()
+    assert detail["validation_errors"] == []
+    assert len(detail["scenarios"]) >= 6
+    assert detail["coverage"]["overall"]["total"] > 0
+
+
+def test_unknown_pack_404(client):
+    assert client.get("/api/packs/nope").status_code == 404

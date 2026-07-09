@@ -1,0 +1,19 @@
+id: smoke-first-run-no-model
+title: First run truth at N=0
+features:
+  - onboarding.welcome.wizard
+  - onboarding.model.setup_assistant
+recipes:
+  - first-run-no-model
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the first-run onboarding surface on iPhone is unverified in the record"}
+steps:
+  - do: Open the app for the first time on a machine with no model yet.
+    expect: The setup readiness surface says plainly it is not ready — it points at what to do next, and does not pretend a model is present.
+    where: /setup
+  - do: Read what the onboarding proposes.
+    expect: The next step is honest about the missing model (download or configure), with no green checkmark it has not earned.
+    where: /setup
+teardown: []

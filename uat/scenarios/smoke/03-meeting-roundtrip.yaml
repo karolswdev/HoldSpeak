@@ -1,0 +1,23 @@
+id: smoke-meeting-roundtrip
+title: A meeting round-trip — import to open actions
+features:
+  - meetings.import.transcript
+  - meetings.aftercare.digest
+  - meetings.aftercare.show_the_moment
+recipes:
+  - meeting-just-ended-open-actions
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the meeting aftercare surface on iPhone is unverified in the record (HSM built the iPad aftercare; the phone leg is the open question)"}
+steps:
+  - do: Open the meeting history and find the imported meeting.
+    expect: The meeting titled Pylon incident war room (UAT seed) is listed, its intel status reads done, and it shows at least one open action.
+    where: /history
+  - do: Open the meeting and read its intel artifacts.
+    expect: The right artifact types rendered — an action-item list with owners, and the decisions/open questions the war-room surfaced (judge on substance, not exact wording).
+    where: /history
+  - do: Open the aftercare digest and jump to the moment behind one open action.
+    expect: The digest names what is still open and by whom; the moment-jump lands on the transcript segment that produced it.
+    where: /history
+teardown: []

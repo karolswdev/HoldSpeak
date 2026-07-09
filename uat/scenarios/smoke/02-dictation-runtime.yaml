@@ -1,0 +1,19 @@
+id: smoke-dictation-runtime
+title: The dictation pipeline, on a fresh desk
+features:
+  - dictation.pipeline.enable
+  - dictation.pipeline.dry_run
+recipes:
+  - fresh-desk
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the dictation runtime configuration surface is not confirmed on the iPhone form factor (directory row unknown)"}
+steps:
+  - do: Open the dictation runtime settings.
+    expect: The pipeline configuration is shown with its stages; the current posture reads honestly (disabled on the fresh-desk deck).
+    where: /dictation
+  - do: Read the runtime backend the pipeline would route through.
+    expect: The configured backend is named plainly (no LLM is wired on golden-local, and the screen says so rather than implying one).
+    where: /dictation
+teardown: []

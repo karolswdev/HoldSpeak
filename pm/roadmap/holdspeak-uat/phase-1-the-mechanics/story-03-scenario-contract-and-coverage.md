@@ -2,9 +2,9 @@
 
 - **Project:** holdspeak-uat
 - **Phase:** 1
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HSU-1-02
-- **Owner:** unassigned
+- **Owner:** agent
 
 ## Problem
 
@@ -67,26 +67,32 @@ only that we tested what we happened to think of.
 
 ## Acceptance criteria
 
-- [ ] The contract is schema-validated; a malformed scenario fails
-      load with a named error naming the file and field.
-- [ ] Every scenario must cite ≥1 ledger key that exists and ≥1
+- [x] The contract is schema-validated; a malformed scenario fails
+      load with a named error naming the file and field
+      (`ERROR <path>: <issue>`, `test_scenarios.py`).
+- [x] Every scenario must cite ≥1 ledger key that exists and ≥1
       recipe that exists; an unknown key or recipe fails validation.
-- [ ] Surface rules enforced: every scenario resolves to an explicit
+- [x] Surface rules enforced: every scenario resolves to an explicit
       per-surface applicability; `n/a` without a reason fails
-      validation.
-- [ ] `uat/features.yaml` exists with every holdspeak phase (0–90)
-      mapped to at least one ledger entry or an explicit
-      `internal/no-uat-surface` marker — no phase silently absent —
-      and every entry carrying the three applicability columns
-      (`unknown` allowed at v1).
-- [ ] Coverage math is exact and tested, per surface and overall
+      validation; a step with every surface `n/a` fails too.
+- [x] `uat/features.yaml` exists with every holdspeak phase (0–87 —
+      the record's actual span) mapped to at least one ledger entry or
+      an explicit `internal/no-uat-surface` marker — no phase silently
+      absent — and every entry carrying the three applicability columns
+      (`unknown` allowed at v1). Seeded from the directory's 255 rows by
+      `uat/tools/build_ledger.py` (proposes; the committed YAML is canon,
+      freshness-checked in `test_build_ledger.py`).
+- [x] Coverage math is exact and tested, per surface and overall
       (covered, uncovered, retired excluded, `n/a` and `unknown`
-      handled distinctly).
-- [ ] The smoke pack loads clean, cites real ledger keys and recipes,
-      and exercises: both golden decks' postures, both bad decks, a
-      three-surface scenario, an honest `n/a`, and one mid-run
-      conductor action.
-- [ ] Tests green under `uv run pytest -q tests/uat/`.
+      handled distinctly — `test_ledger.py`).
+- [x] The smoke pack (7 scenarios) loads clean, cites real ledger keys
+      and recipes, and exercises: both golden decks' postures
+      (`seeded-desk`/`fresh-desk` + `meeting-just-ended-open-actions`),
+      both bad decks (`intel-endpoint-dead`, `first-run-no-model`), a
+      three-surface scenario, an honest `n/a` with reason, and one
+      mid-run conductor action (the mesh kill).
+- [x] Tests green under `uv run pytest -q tests/uat/` (65 local +
+      2 `.43`-gated).
 
 ## Test plan
 
