@@ -74,8 +74,29 @@ function ProgressStrip() {
   );
 }
 
+function ManualSetup({ scenario }) {
+  const { confirmStaged } = useStore();
+  if (!scenario.manual_setup || scenario.manual_setup.length === 0) return null;
+  return (
+    <div className="card" style={{ borderColor: "var(--partial)" }}>
+      <h2>Stage this by hand</h2>
+      <p className="muted" style={{ marginTop: 0 }}>The harness can't auto-stage this protocol — set it up on the product, then continue.</p>
+      <ol style={{ margin: "0 0 12px", paddingLeft: 20 }}>
+        {scenario.manual_setup.map((s, i) => (
+          <li key={i} style={{ marginBottom: 6 }}>{s}</li>
+        ))}
+      </ol>
+      <button className="primary" onClick={() => confirmStaged(scenario.id)}>I've staged this — continue →</button>
+    </div>
+  );
+}
+
 function StagingPanel({ scenario, staging }) {
   const { retryStage, setView, busy } = useStore();
+  const manualOnly = (!scenario.recipes || scenario.recipes.length === 0) && scenario.manual_setup?.length;
+  if (manualOnly) {
+    return <ManualSetup scenario={scenario} />;
+  }
   if (!staging) {
     return (
       <div className="card">
@@ -94,6 +115,9 @@ function StagingPanel({ scenario, staging }) {
           <span className="muted right">{s.ok ? "verified" : "failed"}</span>
         </div>
       ))}
+      {staging.ok && scenario.manual_setup?.length > 0 && (
+        <div style={{ marginTop: 12 }}><ManualSetup scenario={scenario} /></div>
+      )}
       {!staging.ok && (
         <>
           <div className="banner err">
@@ -354,22 +378,28 @@ export function Sitting() {
   // unanswered); only an in-progress sitting resumes the walkthrough.
   const reviewing = sitting?.status === "done";
 
+  const confirmedIds = useStore((s) => s.confirmedIds);
   const scenario = !reviewing && resume ? sitting.scenarios.find((s) => s.id === resume.scenario_id) : null;
+  const hasRecipes = (scenario?.recipes?.length || 0) > 0;
+  const needsConfirm = (scenario?.manual_setup?.length || 0) > 0;
 
   useEffect(() => {
-    if (scenario && !stagedIds[scenario.id]) {
+    // Only auto-stage when there's a recipe to apply; a manual-setup protocol is
+    // staged by hand (the person confirms in the panel).
+    if (scenario && hasRecipes && !stagedIds[scenario.id]) {
       ensureStaged(scenario.id);
     }
-  }, [scenario?.id, ensureStaged, stagedIds]); // eslint-disable-line
+  }, [scenario?.id, hasRecipes, ensureStaged, stagedIds]); // eslint-disable-line
 
   if (!sitting) return <div className="empty">Loading…</div>;
   if (reviewing || !resume) return <SittingEnd />;
 
-  const staged = stagedIds[scenario.id];
+  const autoStaged = hasRecipes ? !!stagedIds[scenario.id] : true;
+  const ready = autoStaged && (!needsConfirm || confirmedIds[scenario.id]);
   return (
     <div>
       <ProgressStrip />
-      {!staged ? (
+      {!ready ? (
         <StagingPanel scenario={scenario} staging={staging} />
       ) : (
         <Walkthrough scenario={scenario} />
