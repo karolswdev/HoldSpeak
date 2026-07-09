@@ -1,0 +1,10 @@
+title: A fresh desk — booted, isolated, empty
+description: >
+  Boot golden-local into a clean isolated HOME with no seeds. The baseline
+  world: the desk is empty and the product is healthy.
+deck: golden-local
+requires: []
+probe:
+  - notes_empty: true
+  - kbs_empty: true
+  - setup_reachable: true

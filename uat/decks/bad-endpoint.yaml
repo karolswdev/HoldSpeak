@@ -1,0 +1,28 @@
+title: Bad endpoint — intel pointed at a dead port
+description: >
+  Intel and the dictation runtime configured to an unreachable local port
+  (127.0.0.1:9, the discard port — connection refused). The product must
+  boot and RUN, then degrade honestly: doctor names the dead endpoint, a
+  runtime preflight refuses fast (<5s), never a hang or a crash-loop.
+requires: []
+config:
+  config_version: 1
+  model:
+    name: base
+    warm_on_start: false
+  meeting:
+    intel_enabled: true
+    intel_provider: cloud
+    intel_cloud_base_url: http://127.0.0.1:9/v1
+    intel_cloud_model: nonexistent-model.gguf
+  dictation:
+    pipeline:
+      enabled: true
+      stages: [intent-router]
+      journal_enabled: true
+    runtime:
+      backend: openai_compatible
+      openai_compatible_base_url: http://127.0.0.1:9/v1
+      openai_compatible_model: nonexistent-model.gguf
+      openai_compatible_api_key_env: OPENAI_API_KEY
+      openai_compatible_timeout_seconds: 3.0

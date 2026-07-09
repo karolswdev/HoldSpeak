@@ -1,0 +1,36 @@
+# A believable desk: notes + KBs a user would actually keep, tied to the
+# three dogfood mock repos (ledgerline, pylon-infra, questline). Every item
+# carries a deterministic id so re-applying upserts in place — no duplicates.
+notes:
+  - id: uat-seed-note-decisions
+    title: Q3 architecture decisions
+    body_markdown: |
+      ## Decided
+      - Ledgerline moves reconciliation to the streaming path (owner: Priya).
+      - Pylon-infra keeps the incident runbook in `.hs/context`.
+      - Questline defers the save-format migration to Q4.
+
+      ## Open
+      - Who owns the ledgerline backfill? (unassigned)
+    tags: [uat-seed, decisions]
+  - id: uat-seed-note-standup
+    title: Standup — pylon incident follow-ups
+    body_markdown: |
+      - Pager routing fixed; confirm the on-call rotation in pylon-infra.
+      - Add a smoke check for the reconciliation lag metric.
+      - Questline art review still pending.
+    tags: [uat-seed, standup]
+  - id: uat-seed-note-glossary
+    title: Project glossary
+    body_markdown: |
+      - **BLUEBIRD** — the internal codename for the ledgerline streaming rewrite.
+      - **Pylon** — the infra incident-response service.
+      - **Questline** — the game client repo.
+    tags: [uat-seed, glossary]
+kbs:
+  - id: uat-seed-kb-project
+    name: Project KB
+    member_ids: []
+  - id: uat-seed-kb-incidents
+    name: Incident runbooks
+    member_ids: []

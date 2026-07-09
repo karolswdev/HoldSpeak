@@ -1,8 +1,8 @@
 # Phase 1 — The Mechanics
 
-**Last updated:** 2026-07-09 (HSU-1-01 shipped: the conductor boots,
-health-checks, tears down, and restarts a real isolated HoldSpeak;
-1/6)
+**Last updated:** 2026-07-09 (HSU-1-02 shipped: the induction engine —
+decks, seeds, and idempotent self-verifying state recipes, proven live
+on `.43`; 2/6)
 
 ## Goal
 
@@ -81,13 +81,37 @@ sitting run end to end by the owner across all three surfaces.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSU-1-01 | The conductor: hosted runs | done | [story-01](./story-01-the-conductor.md) | [evidence-01](./evidence-story-01.md) |
-| HSU-1-02 | The induction engine: decks, seeds, state recipes | backlog | [story-02](./story-02-the-induction-engine.md) | — |
+| HSU-1-02 | The induction engine: decks, seeds, state recipes | done | [story-02](./story-02-the-induction-engine.md) | [evidence-02](./evidence-story-02.md) |
 | HSU-1-03 | The scenario contract + the feature ledger | backlog | [story-03](./story-03-scenario-contract-and-coverage.md) | — |
 | HSU-1-04 | The guided site | backlog | [story-04](./story-04-the-guided-site.md) | — |
 | HSU-1-05 | The debrief + the triage protocol | backlog | [story-05](./story-05-the-debrief.md) | — |
 | HSU-1-06 | Docs + the first sitting | backlog | [story-06](./story-06-docs-and-first-sitting.md) | — |
 
 ## Where we are
+
+**HSU-1-02 is done (2026-07-09).** The induction engine lives under
+`uat/conductor/induction/`: five **decks** (`golden-local`, `golden-43`,
+`bad-endpoint`, `no-model`, `mesh-node` — each round-tripped through the
+product's own `Config.load` so they can't rot), **seed manifests** applied
+through the product's public routes (`/api/notes`, `/api/kbs`,
+`/api/meetings/import`) with deterministic ids so re-seeding upserts, a
+**probe** layer that reads state back through product `GET` routes, a
+**mesh NodeManager** (real `holdspeak mesh serve` workers as their own
+process groups), and the **recipe** engine: YAML recipes composing
+deck + seeds + actions, closed by a verify probe, **idempotent by
+probe-first contract** (apply checks the probe; already-satisfied is a
+no-op), with `includes:` composition and cycle refusal at load. Seven
+smoke recipes ship (`fresh-desk`, `seeded-desk`, `intel-endpoint-dead`,
+`first-run-no-model`, `meeting-just-ended-open-actions`, `mesh-node-alive`,
+`mesh-node-just-died`). Proven: `seeded-desk` idempotent (twice, no dupes);
+`bad-endpoint` degrading honestly (runtime-test + doctor both name the dead
+port, <5s); a recipe verify-failure raising loudly; **live on `.43`** — a
+real meeting with an open action from real intel, and the mesh node
+spawn→live→kill→offline lifecycle read through `/api/profiles`. 44 local
+tests + 2 `.43`-gated. Next: HSU-1-03 (the scenario contract + feature
+ledger).
+
+---
 
 **HSU-1-01 is done (2026-07-09).** The conductor exists: a standalone
 FastAPI app (`uv run python -m uat.conductor`, pinned port 8799) that
@@ -144,6 +168,8 @@ git/phase record, mechanics + one smoke pack only. Next: HSU-1-01.
 | 2026-07-08 | Three surfaces (web/iPad/iPhone) are the default target of every scenario; verdicts per surface; `n/a` needs a stated reason | "Literally nearly all of the tests should aim for those three targets" — owner, directly | owner |
 | 2026-07-08 | States are induced by named idempotent recipes with verify probes, never staged by hand | "Induce specific states, for a more idempotent, repeatable protocol" — owner, directly | owner |
 | 2026-07-08 | Phase 2 = The Inventory (the joint capability census + charter); the coverage pack moves to Phase 3 | The matrix must exist before scenarios are authored at scale — "really, really big material" | owner |
+| 2026-07-09 | Recipe idempotency is **probe-first**: apply evaluates the verify probe; if the world already holds it is a verified no-op, else it stages then re-verifies. Seeds carry deterministic ids so the staging path upserts, never duplicates | One mechanism gives both idempotency and self-verification; matches the RECIPE-WORKLIST "applied twice = same verified state" contract | agent (HSU-1-02) |
+| 2026-07-09 | Mesh liveness is read through `GET /api/profiles` `mesh_liveness` (a meshNode profile registered per node), the product's own hub-side heartbeat view — not `/api/mesh/info` (identity-only) | The relay claim stamps last-seen hub-side; `/api/profiles` is the public read that surfaces it, so the harness verifies through a real product route | agent (HSU-1-02) |
 
 ## Decisions deferred
 

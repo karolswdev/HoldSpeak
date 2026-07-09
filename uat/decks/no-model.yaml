@@ -1,0 +1,17 @@
+title: No model — a first-run desk with no transcription model
+description: >
+  A minimal, fully-local config for the first-run truth posture. Paired with
+  the `first-run-no-model` recipe, which boots it with model caches UNLINKED
+  so the setup readiness surface honestly reports "not ready yet" at N=0 —
+  the milestone a genuine first run shows, never faked.
+requires: []
+config:
+  config_version: 1
+  model:
+    name: base
+    warm_on_start: false
+  meeting:
+    intel_enabled: false
+  dictation:
+    pipeline:
+      enabled: false

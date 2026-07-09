@@ -25,6 +25,10 @@ from . import home as home_mod
 from . import paths
 from .db import Database
 from .product import ProductProcess
+from .induction.decks import DeckRegistry
+from .induction.nodes import NodeManager
+from .induction.product_client import ProductClient
+from .induction.recipes import RecipeEngine
 
 # Port convention (HANDOVER §runbook): conductor 8799, product-under-test 8788,
 # the real hub's 8765 left untouched so a sitting runs beside the owner's desk.
@@ -90,6 +94,7 @@ class Run:
     pairing_url: str | None = None
     pid: int | None = None
     error: str | None = None
+    boot_link_caches: bool = True
     created_at: str = field(default_factory=_utcnow)
     updated_at: str = field(default_factory=_utcnow)
 
@@ -137,15 +142,36 @@ class RunManager:
         product_port: int = DEFAULT_PRODUCT_PORT,
         boot_timeout: float = 45.0,
         link_caches: bool = True,
+        deck_registry: DeckRegistry | None = None,
+        recipe_engine: RecipeEngine | None = None,
     ) -> None:
         self.db = db or Database()
         self.base_product_port = product_port
         self.boot_timeout = boot_timeout
         self.link_caches = link_caches
+        self.decks = deck_registry or DeckRegistry()
+        self.recipes = recipe_engine or RecipeEngine()
         self._runs: dict[str, tuple[Run, ProductProcess]] = {}
+        self._node_managers: dict[str, NodeManager] = {}
         self._lock = threading.RLock()
 
     # --- creation / boot --------------------------------------------------
+
+    def _resolve_overlay(self, deck: str | None, config: dict | None) -> dict:
+        """A deck name resolves to its overlay; an explicit config overrides/merges.
+
+        With neither, the fully-local golden overlay is used so a run always
+        boots something real.
+        """
+        if deck is not None:
+            base = dict(self.decks.load(deck))
+        elif config is not None:
+            base = {}
+        else:
+            base = dict(GOLDEN_LOCAL_OVERLAY)
+        if config:
+            base = _deep_merge(base, config)
+        return base
 
     def create_run(
         self,
@@ -154,29 +180,34 @@ class RunManager:
         deck: str | None = None,
         lan: bool = False,
         port: int | None = None,
+        link_caches: bool | None = None,
     ) -> Run:
-        overlay = dict(config) if config is not None else dict(GOLDEN_LOCAL_OVERLAY)
+        overlay = self._resolve_overlay(deck, config)
         run = Run(
             id=_new_run_id(),
             deck=deck,
             config=overlay,
             lan=lan,
+            boot_link_caches=self.link_caches if link_caches is None else link_caches,
         )
         with self._lock:
-            self._boot_into(run, overlay, lan=lan, port=port)
+            self._boot_into(run, overlay, lan=lan, port=port, link_caches=run.boot_link_caches)
             return run
 
     def _boot_into(
-        self, run: Run, overlay: dict, *, lan: bool, port: int | None
+        self, run: Run, overlay: dict, *, lan: bool, port: int | None, link_caches: bool | None = None
     ) -> None:
         run.status = "booting"
         run.updated_at = _utcnow()
         run.lan = lan
+        if link_caches is None:
+            link_caches = run.boot_link_caches
+        run.boot_link_caches = link_caches
         run.product_host = "0.0.0.0" if lan else "127.0.0.1"
         run.product_port = _find_free_port(port or self.base_product_port)
 
         home_dir = paths.run_home(run.id)
-        home_mod.assemble_home(home_dir, link_caches=self.link_caches)
+        home_mod.assemble_home(home_dir, link_caches=link_caches)
 
         # A LAN bind is refused by the product without an auth token, so a
         # LAN run gets its own token written into the overlay before boot.
@@ -233,6 +264,7 @@ class RunManager:
         config: dict | None = None,
         deck: str | None = None,
         lan: bool | None = None,
+        link_caches: bool | None = None,
     ) -> Run:
         with self._lock:
             entry = self._runs.get(run_id)
@@ -241,11 +273,74 @@ class RunManager:
             run, product = entry
             product.stop()
             run.pid = None
-            new_overlay = dict(config) if config is not None else dict(run.config)
-            run.deck = deck if deck is not None else run.deck
+            if deck is not None or config is not None:
+                run.deck = deck if deck is not None else run.deck
+                new_overlay = self._resolve_overlay(deck, config)
+            else:
+                new_overlay = dict(run.config)
             new_lan = run.lan if lan is None else lan
-            self._boot_into(run, new_overlay, lan=new_lan, port=None)
+            self._boot_into(run, new_overlay, lan=new_lan, port=None, link_caches=link_caches)
             return run
+
+    # --- induction host interface (RecipeHost) ---------------------------
+
+    def ensure_deck(self, run_id: str, deck: str, *, link_caches: bool = True) -> bool:
+        """Boot the run on ``deck`` + cache posture; restart only if it differs.
+
+        Returns True if a restart happened. This is what makes recipe apply
+        idempotent at the boot layer: applying the same recipe twice does not
+        needlessly recycle the product.
+        """
+        with self._lock:
+            run = self._runs.get(run_id, (None, None))[0]
+            if run is None:
+                raise KeyError(run_id)
+            if run.status == "up" and run.deck == deck and run.boot_link_caches == link_caches:
+                return False
+            self.restart(run_id, deck=deck, link_caches=link_caches)
+            return True
+
+    def product_client(self, run_id: str) -> ProductClient:
+        run = self.get(run_id)
+        if run is None:
+            raise KeyError(run_id)
+        # Conductor→product calls always ride loopback (a LAN run still answers
+        # there); the token is sent regardless so it works either way.
+        return ProductClient(f"http://127.0.0.1:{run.product_port}", token=run.token)
+
+    def run_home(self, run_id: str):
+        return paths.run_home(run_id)
+
+    def _nodes(self, run_id: str) -> NodeManager:
+        nm = self._node_managers.get(run_id)
+        if nm is None:
+            nm = NodeManager()
+            self._node_managers[run_id] = nm
+        return nm
+
+    def spawn_node(self, run_id: str, name: str) -> dict:
+        with self._lock:
+            run = self._runs.get(run_id, (None, None))[0]
+            if run is None:
+                raise KeyError(run_id)
+            node = self._nodes(run_id).spawn(
+                name=name,
+                hub_url=f"http://127.0.0.1:{run.product_port}",
+                home=paths.run_home(run_id),
+                log_dir=paths.run_logs_dir(run_id),
+                token=run.token,
+            )
+            return node.to_dict()
+
+    def kill_node(self, run_id: str, name: str) -> bool:
+        with self._lock:
+            return self._nodes(run_id).kill(name)
+
+    def list_nodes(self, run_id: str) -> list[dict]:
+        return [n.to_dict() for n in self._nodes(run_id).list()]
+
+    def apply_recipe(self, run_id: str, name: str, *, allow_intel: bool = True):
+        return self.recipes.apply(name, run_id, self, allow_intel=allow_intel)
 
     def teardown(self, run_id: str) -> Run | None:
         with self._lock:
@@ -254,6 +349,9 @@ class RunManager:
                 row = self.db.get_run(run_id)
                 return None if row is None else _run_from_row(row)
             run, product = entry
+            nm = self._node_managers.pop(run_id, None)
+            if nm is not None:
+                nm.kill_all()
             product.stop()
             run.status = "down"
             run.pid = None
@@ -313,6 +411,17 @@ class RunManager:
             "stdout": _tail_file(logs_dir / "product.stdout.log", n),
             "stderr": _tail_file(logs_dir / "product.stderr.log", n),
         }
+
+
+def _deep_merge(base: dict, overlay: dict) -> dict:
+    """Recursive dict merge — overlay wins; nested mappings merge, not replace."""
+    out = dict(base)
+    for key, value in overlay.items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = _deep_merge(out[key], value)
+        else:
+            out[key] = value
+    return out
 
 
 def _fail_summary(product: ProductProcess, tail: dict[str, str]) -> str:

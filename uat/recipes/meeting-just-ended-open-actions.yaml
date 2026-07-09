@@ -1,0 +1,14 @@
+title: A meeting just ended, with open actions
+description: >
+  Import a committed transcript on golden-43 and run real intel, so a meeting
+  exists with at least one open action visible through the product's own
+  history/aftercare routes. Real pipeline output, not a DB fake — needs the
+  .43 LAN endpoint.
+deck: golden-43
+requires: [intel]
+seeds:
+  - pylon-incident-meeting
+actions:
+  - process_intel: {parse_timeout: 90, rounds: 4}
+probe:
+  - meeting_with_open_actions: {min_actions: 1, timeout: 180}

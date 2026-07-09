@@ -1,0 +1,15 @@
+title: A seeded desk — believable notes and KBs
+description: >
+  The workhorse world: notes and KBs injected through the product's own
+  /api/desk routes, indistinguishable from user-made ones. Idempotent —
+  applied twice, the probe passes both times and no duplicate desk exists.
+deck: golden-local
+requires: []
+seeds:
+  - dogfood-desk
+probe:
+  - notes_min_count: 3
+  - note_exists: uat-seed-note-decisions
+  - note_exists: uat-seed-note-glossary
+  - kb_exists: uat-seed-kb-project
+  - kb_exists: uat-seed-kb-incidents

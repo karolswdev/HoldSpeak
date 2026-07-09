@@ -1,0 +1,11 @@
+title: First run, no model — the truth at N=0
+description: >
+  Boot no-model with the model caches UNLINKED (a genuine first run), so the
+  setup readiness surface honestly reports "not ready yet" — the first-run
+  truth, never faked green.
+deck: no-model
+requires: []
+boot:
+  link_caches: false
+probe:
+  - setup_not_ready: true

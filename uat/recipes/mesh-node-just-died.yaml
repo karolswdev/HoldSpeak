@@ -1,0 +1,13 @@
+title: The mesh node just died
+description: >
+  A mid-run failure verb (the HSU-1-03 contract invokes it between steps):
+  SIGINT the worker's process group and wait out the hub's 15s liveness
+  window, so the product reports the node offline through /api/profiles.
+  Apply after `mesh-node-alive` on the same run.
+deck: mesh-node
+requires: [intel]
+actions:
+  - kill_node: {name: uat-worker}
+  - wait: 18
+probe:
+  - mesh_node_offline: {name: uat-worker, timeout: 60}

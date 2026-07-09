@@ -2,9 +2,9 @@
 
 - **Project:** holdspeak-uat
 - **Phase:** 1
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HSU-1-01
-- **Owner:** unassigned
+- **Owner:** agent
 
 ## Problem
 
@@ -70,21 +70,24 @@ idempotent, repeatable protocol.*
 
 ## Acceptance criteria
 
-- [ ] Each shipped deck round-trips through `Config.load` in tests;
-      `bad-endpoint` and `no-model` boot a product that *runs* and
-      reports its condition, not a crash-loop.
-- [ ] Every shipped recipe applies, **verifies via its probe**, and is
-      idempotent: applied twice to one run, the probe passes both
-      times and no duplicate state exists (asserted through product
-      `GET` routes, never by poking the product DB).
-- [ ] `meeting-just-ended-open-actions` yields a real meeting with ≥1
-      open action visible via the product's own aftercare/history
-      routes — real pipeline output, not a DB fake.
-- [ ] A recipe with an unsatisfiable probe fails loudly, naming the
-      failed assertion; a recipe cycle refuses at load.
-- [ ] A run can spawn a named local mesh node, see it live from the
-      product side, kill it, and see the product report it offline.
-- [ ] Tests green under `uv run pytest -q tests/uat/`.
+- [x] Each shipped deck round-trips through `Config.load` in tests
+      (`test_decks.py`); `bad-endpoint` and `no-model` boot a product
+      that *runs* and reports its condition, not a crash-loop.
+- [x] Every shipped recipe applies, **verifies via its probe**, and is
+      idempotent: `seeded-desk` applied twice to one run — probe passes
+      both times, note/KB counts unchanged (no duplicate desk), asserted
+      through product `GET` routes, never by poking the product DB.
+- [x] `meeting-just-ended-open-actions` yields a real meeting with ≥1
+      open action visible via the product's own history route — real
+      pipeline output on `.43`, not a DB fake (`.43`-gated test).
+- [x] A recipe with an unsatisfiable probe fails loudly with
+      `RecipeVerifyError` naming the failed assertion; a recipe cycle
+      refuses at load with a named cycle.
+- [x] A run spawns a named local `holdspeak mesh serve` node, the hub
+      reports it live via `/api/profiles` mesh_liveness, killing it
+      flips the hub's view to offline — proven live on `.43`.
+- [x] Tests green under `uv run pytest -q tests/uat/` (44 local +
+      2 `.43`-gated).
 
 ## Test plan
 

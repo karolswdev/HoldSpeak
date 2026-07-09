@@ -1,0 +1,11 @@
+title: Intel endpoint dead — degrade honestly, never hang
+description: >
+  Boot bad-endpoint (intel + dictation runtime pointed at a dead local port).
+  The product runs; the honest posture is proven through its own routes: the
+  runtime preflight refuses fast (<5s) naming the unreachable endpoint, and
+  doctor names the dead endpoint too.
+deck: bad-endpoint
+requires: []
+probe:
+  - runtime_endpoint_unreachable: true
+  - doctor_names_dead_endpoint: true
