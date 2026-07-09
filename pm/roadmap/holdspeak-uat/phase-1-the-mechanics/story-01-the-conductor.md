@@ -30,6 +30,16 @@ substrate turned into a process.
     polls a health route until up, and tears down (SIGTERM, then kill)
     cleanly. Restart-with-a-different-deck is a first-class verb —
     scenarios depend on it.
+  - **Device reachability**: UAT is three-surface (web / iPad /
+    iPhone), so the product under test must be reachable from the
+    devices — the conductor boots it with `HOLDSPEAK_WEB_HOST`
+    LAN-bound (riding the product's existing Phase-25 non-loopback
+    auth-token guard, its own per-run token) and reports the run's
+    **pairing facts** (LAN/tailnet URL + token source) so a device
+    app can be pointed at the run the way it pairs with the real hub.
+    The conductor binds localhost by default; `UAT_HOST` opts it onto
+    the LAN for device sittings (HSU-1-04 needs the walkthrough on
+    the phone) — a dev rig on the trusted LAN, no auth of its own.
   - **Run DB**: sqlite at `uat/_runs/uat.db` — runs, scenario
     executions, step verdicts (schema lands here; verdict *writes*
     land in HSU-1-04). `uat/_runs/` is gitignored.
@@ -59,6 +69,10 @@ substrate turned into a process.
       a different config file, no orphan processes (asserted by pid
       checks in tests).
 - [ ] Product stdout/stderr captured per run and readable via the API.
+- [ ] A run booted LAN-bound answers on the Mac's LAN address with the
+      run's own auth token, and `GET /api/runs/{id}` reports the
+      pairing facts; loopback-only remains the default for decks that
+      don't need devices.
 - [ ] The conductor never imports the `holdspeak` package into its own
       process (subprocess boundary only) — enforced by a test grepping
       `uat/conductor/` imports.

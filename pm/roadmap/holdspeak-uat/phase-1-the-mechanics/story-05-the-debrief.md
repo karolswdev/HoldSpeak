@@ -21,13 +21,17 @@ lands somewhere durable.
 - In:
   - **The debrief packet** — generated at sitting end into
     `uat/_runs/<run_id>/debrief/`: `debrief.md` (the sitting header —
-    date, pack, deck(s), machine, product version/commit; the score;
-    coverage % against the ledger; every non-pass verdict with its
-    step, note, screenshot link, and the product log slice around the
-    step's time window; the pass list collapsed) and `debrief.json`
-    (the same, machine-shaped, stable schema). The log-slice
-    correlation is the agent's head start: a FAIL arrives with the
-    server's own words attached.
+    date, pack, recipes/deck(s), machine, product version/commit,
+    which surfaces sat; the score **per surface and overall**, a
+    surface never sat named as such, not averaged away; coverage %
+    against the ledger per surface; every non-pass verdict with its
+    step, **surface**, note, screenshot link, and the product log
+    slice around the step's time window; the pass list collapsed) and
+    `debrief.json` (the same, machine-shaped, stable schema). The
+    log-slice correlation is the agent's head start: a FAIL arrives
+    with the server's own words attached. Cross-surface disagreement
+    is first-class: a step that passed on web and failed on iPhone is
+    one finding wearing both verdicts — the split IS the signal.
   - **Findings** — each non-pass verdict becomes a finding with a
     stable ID (`UAT-<run>-<n>`), a triage state
     (`untriaged | fix | wont-fix | by-design | duplicate`), and a
@@ -60,7 +64,9 @@ lands somewhere durable.
       screenshot link + a correctly-windowed product log slice.
 - [ ] `debrief.json` is schema-stable and tested (the agent-side
       contract).
-- [ ] Coverage % in the packet matches HSU-1-03's math exactly.
+- [ ] Coverage % in the packet matches HSU-1-03's math exactly, per
+      surface and overall; a cross-surface split renders as one
+      finding carrying both verdicts.
 - [ ] Findings triage round-trips: set `fix` via the API, regenerate,
       the disposition survives.
 - [ ] The backlog block renders in `BACKLOG.md`'s real candidate

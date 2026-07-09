@@ -32,11 +32,14 @@ through the real protocol.
     conductor reuses stay put and documented; anything the absorption
     made dead is deleted, not left to rot.
   - **The first sitting** — the owner runs the smoke pack live:
-    staging on `golden-43`, the walkthrough on real surfaces, the
-    `bad-endpoint` and `no-model` scenarios failing honestly, the
-    mid-run node kill observed, the debrief generated, and the joint
-    triage held — at least one finding dispositioned, and any `fix`
-    landed in `pm/roadmap/holdspeak/BACKLOG.md` through the gate.
+    staging on `golden-43`, the walkthrough on real surfaces
+    **including the three-surface scenario sat on web, iPad, and
+    iPhone** (at least one verdict cast from a device's own browser
+    over LAN), the `bad-endpoint` and `no-model` scenarios failing
+    honestly, the mid-run node kill observed, the debrief generated
+    with its per-surface scores, and the joint triage held — at least
+    one finding dispositioned, and any `fix` landed in
+    `pm/roadmap/holdspeak/BACKLOG.md` through the gate.
   - Evidence: the sitting's debrief packet + walkthrough screenshots
     copied into this phase's evidence assets.
 - Out: fixing any product bug the sitting finds (findings feed
@@ -53,8 +56,10 @@ through the real protocol.
       remain.
 - [ ] The sitting happened on real metal: a completed smoke-pack run
       in the run DB with a generated debrief, every scenario visited,
-      real verdicts (a sitting of ten PASSes cast in ten seconds is
-      not a sitting — timestamps are part of the evidence).
+      the three-surface scenario carrying verdicts on all three
+      surfaces with ≥1 cast from a device, real verdicts (a sitting
+      of ten PASSes cast in ten seconds is not a sitting — timestamps
+      are part of the evidence).
 - [ ] The triage ritual was held per `uat/TRIAGE.md`; ≥1 finding
       dispositioned; any `fix` visible in
       `pm/roadmap/holdspeak/BACKLOG.md`.

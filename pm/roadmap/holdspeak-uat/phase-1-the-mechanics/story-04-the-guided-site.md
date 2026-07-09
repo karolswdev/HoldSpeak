@@ -33,15 +33,29 @@ the sitting is done and the record exists.
   - **The walkthrough** — one step at a time: the `do` instruction,
     the `expect` bar, an "Open the product" affordance (the run's
     product URL, deep-linked to `where` when the scenario names it),
-    the four verdict verbs (pass / fail / partial / skip), a note
-    field, screenshot attach (file drop; stored under
-    `uat/_runs/<run_id>/shots/`), elapsed time per step. Mid-run
-    conductor actions (restart, node kill) execute visibly between
-    steps with their own status line.
+    and **one verdict slot per applicable surface** — a step aimed at
+    web + iPad + iPhone shows three surface chips, each taking its
+    own pass / fail / partial / skip, note, and screenshot (file drop
+    or the device's own camera-roll picker; stored under
+    `uat/_runs/<run_id>/shots/`). A surface marked `n/a` in the
+    scenario renders as such with its reason — visible, never a
+    missing row. Steps advance when every applicable surface has a
+    verdict (skip is a verdict). Elapsed time per step. Mid-run
+    conductor actions (recipe apply, restart, node kill) execute
+    visibly between steps with their own status line.
+  - **The site travels to the device** — the walkthrough is fully
+    usable from the iPad's and iPhone's browser (the conductor serves
+    on the Mac's LAN address for this purpose; verdict-write routes
+    only): you hold the phone, use the app with one hand, and cast
+    the phone-surface verdict on the same open sitting — the run is
+    shared, so a verdict cast from the iPad shows up on the Mac's
+    view live. Responsive to phone width is an acceptance bar, not a
+    nice-to-have.
   - **Verdict persistence** — every verdict written to the run DB the
-    moment it is cast (HSU-1-01 schema); a browser refresh or a
-    product crash mid-sitting loses nothing; the sitting resumes at
-    the first unanswered step.
+    moment it is cast (HSU-1-01 schema), keyed
+    (scenario, step, surface); a browser refresh or a product crash
+    mid-sitting loses nothing; the sitting resumes at the first
+    unanswered (step, surface).
   - **Sitting end** — the score, straight into the debrief (HSU-1-05).
   - Speak-to-fill mic on the note field **when the product under test
     is up** (riding its transcribe route), honestly absent when it is
@@ -55,9 +69,14 @@ the sitting is done and the record exists.
 - [ ] `uat/web/` builds; the conductor serves it; the full loop —
       home → setup → staged world → walkthrough → sitting end — works
       against a real staged run.
-- [ ] Verdicts + notes + screenshots persist per step; killing the
-      browser mid-sitting and reopening resumes at the right step with
-      all prior verdicts intact.
+- [ ] Verdicts + notes + screenshots persist per (step, surface);
+      killing the browser mid-sitting and reopening resumes at the
+      right (step, surface) with all prior verdicts intact.
+- [ ] The walkthrough works from an iPhone-width browser over LAN:
+      cast a verdict from the device, see it appear on the Mac's open
+      view of the same sitting (screenshot evidence from both ends).
+- [ ] An `n/a` surface renders with its reason and is excluded from
+      the step's completion math.
 - [ ] A staging failure (bad deck that cannot even boot) renders
       honestly with the log tail and offers retry/abort — never a
       spinner.
@@ -83,6 +102,7 @@ the sitting is done and the record exists.
 
 - The site talks only to the conductor; the conductor talks to the
   product. One trust boundary, and the site keeps working while the
-  product is being deliberately broken.
+  product is being deliberately broken — including while a device is
+  mid-verdict on it.
 - "No prose in the UI" applies to the chrome (labels state WHAT);
   scenario `do`/`expect` text is content, not chrome.
