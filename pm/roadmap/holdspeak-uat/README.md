@@ -1,6 +1,11 @@
 # HoldSpeak UAT — Roadmap
 
-**Last updated:** 2026-07-08 (Phase 2 directory pre-seeded — an 8-agent sweep produced the 255-capability starting map, the protocol notion, the recipe worklist, and the Phase 3 plan)
+> 🎯 **Next agent, building the framework? START at
+> [`HANDOVER.md`](./HANDOVER.md)** — the explicit goal, the build order, the
+> source seams, the autonomy contract, and the definition of done. It is written
+> to be executed unattended, end to end.
+
+**Last updated:** 2026-07-09 (HANDOVER.md written — the explicit, executable goal for the agent that builds the framework overnight)
 **Current phase:** [Phase 1 — The Mechanics](./phase-1-the-mechanics/current-phase-status.md)
 **Status:** active
 
