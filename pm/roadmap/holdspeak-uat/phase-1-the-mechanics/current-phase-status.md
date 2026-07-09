@@ -1,8 +1,8 @@
 # Phase 1 — The Mechanics
 
-**Last updated:** 2026-07-09 (HSU-1-04 shipped: the guided site — a
-React+Vite SPA that stages the world and walks a pack with per-surface
-verdicts; Playwright-proven; 4/6)
+**Last updated:** 2026-07-09 (HSU-1-05 shipped: the debrief packet
+(md+json, per-surface scores + log slices), the findings/triage
+lifecycle, `uat/TRIAGE.md`, and the BACKLOG-block feed; 5/6)
 
 ## Goal
 
@@ -84,10 +84,32 @@ sitting run end to end by the owner across all three surfaces.
 | HSU-1-02 | The induction engine: decks, seeds, state recipes | done | [story-02](./story-02-the-induction-engine.md) | [evidence-02](./evidence-story-02.md) |
 | HSU-1-03 | The scenario contract + the feature ledger | done | [story-03](./story-03-scenario-contract-and-coverage.md) | [evidence-03](./evidence-story-03.md) |
 | HSU-1-04 | The guided site | done | [story-04](./story-04-the-guided-site.md) | [evidence-04](./evidence-story-04.md) |
-| HSU-1-05 | The debrief + the triage protocol | backlog | [story-05](./story-05-the-debrief.md) | — |
+| HSU-1-05 | The debrief + the triage protocol | done | [story-05](./story-05-the-debrief.md) | [evidence-05](./evidence-story-05.md) |
 | HSU-1-06 | Docs + the first sitting | backlog | [story-06](./story-06-docs-and-first-sitting.md) | — |
 
 ## Where we are
+
+**HSU-1-05 is done (2026-07-09).** The debrief closes the loop from verdicts to
+joint review. At sitting end the conductor generates a packet into
+`uat/_runs/<run>/debrief/`: `debrief.md` (the sitting header, the score **per
+surface and overall** — a surface never sat is named, not averaged away —
+coverage % against the ledger, and every non-pass finding with its step,
+surface, note, screenshot link, and a slice of the product's own log windowed
+around that moment) and `debrief.json` (the same on a stable schema — the
+agent's head start). Each `fail`/`partial` verdict becomes a **finding** with a
+stable id (`UAT-<run>-<n>`) and a triage state that survives regeneration; a
+cross-surface split (passed on web, failed on iPhone) is one finding wearing
+both verdicts — the parity break is the signal. `uat/TRIAGE.md` writes the
+four-step ritual and the disposition vocabulary
+(`untriaged|fix|wont-fix|by-design|duplicate`); a `fix` feeds a paste-ready
+BACKLOG block in the candidate-table format (the harness proposes, the human
+pastes, the commit rides the gate). The site's sitting-end screen renders the
+findings with triage buttons + the BACKLOG block. Conductor API:
+`POST/GET /api/sittings/{id}/debrief`, `PATCH /api/findings/{id}`,
+`GET /api/sittings/{id}/findings/backlog-block`. 81 local tests. Next: HSU-1-06
+(docs + the owner's live sitting — the only owner-gated leg).
+
+---
 
 **HSU-1-04 is done (2026-07-09).** The guided site is real: a React+Vite
 SPA under `uat/web/` (dark, Signal-grade — home with pack coverage pills and

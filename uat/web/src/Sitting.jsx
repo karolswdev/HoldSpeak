@@ -191,6 +191,48 @@ function Walkthrough({ scenario }) {
   );
 }
 
+const TRIAGE_STATES = ["untriaged", "fix", "wont-fix", "by-design", "duplicate"];
+
+function DebriefPanel() {
+  const { debrief, triage, backlog, loadBacklog } = useStore();
+  if (!debrief) return null;
+  const findings = debrief.findings || [];
+  return (
+    <div>
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Findings ({findings.length})</h3>
+        {findings.length === 0 && <div className="muted">No non-pass verdicts. Every applicable surface passed.</div>}
+        {findings.map((f) => (
+          <div key={f.id} className="surface" style={{ marginBottom: 10 }}>
+            <div className="surface-head">
+              <span className="mono">{f.id}</span>
+              <span className={`pill`} style={{ color: f.verdict === "fail" ? "var(--fail)" : "var(--partial)" }}>{f.verdict} · {f.surface}</span>
+            </div>
+            <div style={{ marginBottom: 6 }}>{f.title}</div>
+            {f.note && <div className="muted" style={{ marginBottom: 6 }}>“{f.note}”</div>}
+            {f.cross_surface?.is_split && (
+              <div className="banner info" style={{ margin: "6px 0" }}>Parity break — passed on {f.cross_surface.passed_on.join(", ")}, {f.verdict} on {f.surface}.</div>
+            )}
+            <div className="btn-row">
+              {TRIAGE_STATES.map((t) => (
+                <button key={t} className={`sm ${f.triage_state === t ? "primary" : "ghost"}`} onClick={() => triage(f.id, t, f.disposition)}>{t}</button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="card">
+        <div className="card-row">
+          <h3 style={{ margin: 0 }}>BACKLOG block</h3>
+          <button className="ghost sm" onClick={loadBacklog}>Generate</button>
+        </div>
+        {backlog && <div className="log" style={{ marginTop: 10 }}>{backlog}</div>}
+        <div className="muted" style={{ marginTop: 8, fontSize: 13 }}>Triage findings to <span className="mono">fix</span>, then paste this into <span className="mono">pm/roadmap/holdspeak/BACKLOG.md</span> (the commit rides the PMO gate).</div>
+      </div>
+    </div>
+  );
+}
+
 function SittingEnd() {
   const { sitting, finish, setView, loadHome } = useStore();
   const [done, setDone] = useState(sitting.status === "done");
@@ -241,7 +283,9 @@ function SittingEnd() {
         {done && <span className="pill" style={{ color: "var(--pass)" }}>sitting recorded</span>}
         <button className="ghost" onClick={() => { loadHome(); setView("home"); }}>Back to home</button>
       </div>
-      {done && <div className="banner info" style={{ marginTop: 12 }}>The debrief packet is generated from this sitting (see the conductor's debrief route).</div>}
+      {done && <div className="banner info" style={{ marginTop: 12 }}>Debrief packet generated under the run's <span className="mono">debrief/</span> dir (md + json). Triage below.</div>}
+      {done && <div className="spacer" />}
+      {done && <DebriefPanel />}
     </div>
   );
 }

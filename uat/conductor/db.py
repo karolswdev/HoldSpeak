@@ -81,6 +81,9 @@ CREATE TABLE IF NOT EXISTS findings (
     pack           TEXT,
     scenario_id    TEXT,
     step_index     INTEGER,
+    surface        TEXT,
+    verdict        TEXT,
+    note           TEXT,
     title          TEXT,
     triage_state   TEXT NOT NULL DEFAULT 'untriaged',  -- untriaged|fix|wont-fix|by-design|duplicate
     disposition    TEXT,
@@ -202,5 +205,51 @@ class Database:
                 "SELECT * FROM step_verdicts WHERE run_id = ? "
                 "ORDER BY scenario_id, step_index, surface",
                 (run_id,),
+            )
+            return [dict(r) for r in cur.fetchall()]
+
+    # --- findings ---------------------------------------------------------
+
+    def upsert_finding(self, row: dict) -> None:
+        """Insert a finding, PRESERVING an existing triage_state/disposition.
+
+        Regenerating a debrief re-derives findings; a triage the owner already
+        set must survive (the disposition is the human's, not the generator's).
+        """
+        cols = (
+            "id", "run_id", "pack", "scenario_id", "step_index", "surface",
+            "verdict", "note", "title", "created_at",
+        )
+        placeholders = ", ".join("?" for _ in cols)
+        # On conflict, refresh the derived fields but NOT triage_state/disposition.
+        assignments = ", ".join(
+            f"{c}=excluded.{c}" for c in ("pack", "scenario_id", "step_index",
+                                          "surface", "verdict", "note", "title")
+        )
+        with self.connect() as conn:
+            conn.execute(
+                f"INSERT INTO findings ({', '.join(cols)}) VALUES ({placeholders}) "
+                f"ON CONFLICT(id) DO UPDATE SET {assignments}",
+                [row.get(c) for c in cols],
+            )
+
+    def get_finding(self, finding_id: str) -> dict | None:
+        with self.connect() as conn:
+            cur = conn.execute("SELECT * FROM findings WHERE id = ?", (finding_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+    def set_triage(self, finding_id: str, triage_state: str, disposition: str | None) -> bool:
+        with self.connect() as conn:
+            cur = conn.execute(
+                "UPDATE findings SET triage_state = ?, disposition = ? WHERE id = ?",
+                (triage_state, disposition, finding_id),
+            )
+            return cur.rowcount > 0
+
+    def list_findings(self, run_id: str) -> list[dict]:
+        with self.connect() as conn:
+            cur = conn.execute(
+                "SELECT * FROM findings WHERE run_id = ? ORDER BY id", (run_id,)
             )
             return [dict(r) for r in cur.fetchall()]

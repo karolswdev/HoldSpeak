@@ -34,6 +34,13 @@ export const api = {
       body: JSON.stringify({ scenario_id: scenarioId, step_index: stepIndex }),
     }),
   finish: (id) => req(`/api/sittings/${id}/finish`, { method: "POST" }),
+  generateDebrief: (id) => req(`/api/sittings/${id}/debrief`, { method: "POST" }),
+  triage: (findingId, triageState, disposition) =>
+    req(`/api/findings/${findingId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ triage_state: triageState, disposition: disposition || null }),
+    }),
+  backlogBlock: (id) => req(`/api/sittings/${id}/findings/backlog-block`),
   uploadShot: async (id, scenarioId, stepIndex, surface, file) => {
     const fd = new FormData();
     fd.append("scenario_id", scenarioId);

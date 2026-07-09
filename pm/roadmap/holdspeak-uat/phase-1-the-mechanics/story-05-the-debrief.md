@@ -2,9 +2,9 @@
 
 - **Project:** holdspeak-uat
 - **Phase:** 1
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HSU-1-04
-- **Owner:** unassigned
+- **Owner:** agent
 
 ## Problem
 
@@ -59,20 +59,22 @@ lands somewhere durable.
 
 ## Acceptance criteria
 
-- [ ] A finished sitting generates both packet files; `debrief.md`
-      opens readable with every non-pass finding carrying note +
-      screenshot link + a correctly-windowed product log slice.
-- [ ] `debrief.json` is schema-stable and tested (the agent-side
-      contract).
-- [ ] Coverage % in the packet matches HSU-1-03's math exactly, per
-      surface and overall; a cross-surface split renders as one
-      finding carrying both verdicts.
-- [ ] Findings triage round-trips: set `fix` via the API, regenerate,
-      the disposition survives.
-- [ ] The backlog block renders in `BACKLOG.md`'s real candidate
-      format and cites finding ID + debrief path.
-- [ ] `uat/TRIAGE.md` states the four-step ritual and the disposition
-      vocabulary; tests green under `uv run pytest -q tests/uat/`.
+- [x] A finished sitting generates both packet files (`debrief.md` +
+      `debrief.json`) into `uat/_runs/<run>/debrief/`; `debrief.md` opens
+      readable with every non-pass finding carrying note + screenshot
+      link + a product log slice windowed around the step's timestamp.
+- [x] `debrief.json` is schema-stable and tested — the agent-side
+      contract (`test_debrief.py::test_debrief_json_schema_stable`).
+- [x] Coverage % in the packet is HSU-1-03's `pack_coverage`, per surface
+      and overall; a cross-surface split renders as one finding carrying
+      both verdicts (`cross_surface.passed_on`).
+- [x] Findings triage round-trips: `PATCH /api/findings/<id>` to `fix`,
+      regenerate, the disposition survives (upsert preserves triage).
+- [x] The backlog block renders in `BACKLOG.md`'s real candidate-table
+      format and cites finding ID + debrief path; the harness proposes,
+      the human pastes (gate-committed).
+- [x] `uat/TRIAGE.md` states the four-step ritual and the disposition
+      vocabulary; tests green under `uv run pytest -q tests/uat/` (81 local).
 
 ## Test plan
 
