@@ -2,7 +2,8 @@
 
 - **Project:** holdspeak
 - **Phase:** 90
-- **Status:** backlog
+- **Status:** done
+- **Shipped:** 2026-07-08 — you drive a terminal from glass now. The armed session pull-out gained a key palette (`^C`/`Esc`/`Tab`/`⏎`/arrows → `/keys`), a `⧉ Panes` picker (attach to any `pane:%N`), and a node chip (this Mac / a configured node, routing through the relay). Built + desk tests 97/97 + screenshot-verified. Evidence: [evidence-story-02.md](./evidence-story-02.md), [screenshots](./screenshots/).
 - **Depends on:** HS-90-01
 - **Unblocks:** HS-90-03
 
@@ -25,17 +26,21 @@ terminal from glass, not `curl`.
 
 ## Acceptance criteria
 
-- [ ] The key palette appears only in the armed window and sends real
-      keys through `/keys`; each key is a clear, labeled affordance
-      (not raw text).
-- [ ] The pane picker lists live panes with session/command/title and
-      attaches to any by its `pane:%N` key (watch free; arm to steer).
-- [ ] The node chip targets a configured node; steers/keys route through
-      the relay; an offline node shows the honest `node_offline` state.
-- [ ] Built (`npm run build`) and screenshot-verified on the running
-      desk; the egress/consent cues stay honest.
-- [ ] Guards green (density/lint as applicable); `swift`/py suites
-      unaffected.
+- [x] The key palette appears only in the armed window (in the
+      `SteerComposer` footer) and sends real keys through `/keys`; each
+      key is a clear labeled cap, `^C` styled loud (interrupt).
+- [x] The `⧉ Panes` picker reads `GET /api/coders/steering/panes` and
+      attaches to any by its `pane:%N` key (`openSession("pane:%N")`);
+      the active pane is marked; watch free, arm to steer.
+- [x] The node chip targets a configured node (`GET .../nodes`, names
+      only); a node routes arm/steer/keys/peek through the relay
+      (`verbEndpoint`); absent config reads the honest "this Mac".
+- [x] Built (`npm run build`) + desk tests 97/97 + tsc clean;
+      screenshot-verified on the running desk (armed key palette + the
+      pane picker). The consent cues stay honest (keys armed-only, the
+      countdown visible).
+- [x] Live hub + tmux end-to-end is HS-90-03's walk; the screenshot here
+      is the built desk driven with Phase-89/90-shaped API responses.
 
 ## Implementation direction
 

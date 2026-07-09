@@ -95,6 +95,134 @@ function ArmChip() {
   );
 }
 
+// The key palette (HS-90-02) — full key control on glass. Each button is
+// ONE real key through `/keys`, shown only in the armed window. `^C` is the
+// loud one (interrupt a runaway); the rest drive a TUI.
+const KEY_BUTTONS: Array<{ label: string; key: string; title: string; loud?: boolean }> = [
+  { label: "^C", key: "C-c", title: "interrupt — Ctrl-C", loud: true },
+  { label: "Esc", key: "Escape", title: "Escape" },
+  { label: "Tab", key: "Tab", title: "Tab" },
+  { label: "⏎", key: "Enter", title: "Enter" },
+  { label: "↑", key: "Up", title: "Up" },
+  { label: "↓", key: "Down", title: "Down" },
+  { label: "←", key: "Left", title: "Left" },
+  { label: "→", key: "Right", title: "Right" },
+];
+
+function KeyPalette() {
+  const keyState = useSteering((s) => s.keyState);
+  const keyDetail = useSteering((s) => s.keyDetail);
+  const lastKey = useSteering((s) => s.lastKey);
+  return (
+    <div className="desk-keypad">
+      <span className="desk-keypad-label">Keys</span>
+      <div className="desk-keypad-row">
+        {KEY_BUTTONS.map((k) => (
+          <button
+            key={k.key}
+            type="button"
+            className={"desk-key" + (k.loud ? " is-interrupt" : "")}
+            title={k.title}
+            onClick={() => void useSteering.getState().sendKeys([k.key], k.label)}
+          >
+            {k.label}
+          </button>
+        ))}
+        {keyState === "sent" && (
+          <span className="desk-key-fate desk-steer-sent">✓ {lastKey}</span>
+        )}
+        {keyState === "refused" && (
+          <span className="desk-key-fate desk-arm-refusal">✕ {keyDetail}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// The node chip (HS-90-02) — which machine the steering targets. Tap to
+// cycle this Mac → each configured node; a node routes arm/steer/keys
+// through the relay. Absent config reads the honest "this Mac".
+function NodeChip() {
+  const nodes = useSteering((s) => s.nodes);
+  const targetNode = useSteering((s) => s.targetNode);
+  useEffect(() => {
+    void useSteering.getState().listNodes();
+  }, []);
+  if (nodes.length === 0) {
+    return (
+      <span className="desk-chip quiet desk-node-chip" title="steering targets this Mac">
+        ⧉ this Mac
+      </span>
+    );
+  }
+  const options: (string | null)[] = [null, ...nodes];
+  const next = options[(options.indexOf(targetNode) + 1) % options.length];
+  return (
+    <button
+      type="button"
+      className={"desk-chip desk-node-chip" + (targetNode ? " is-remote" : "")}
+      title="tap to change the target machine"
+      onClick={() => useSteering.getState().setTargetNode(next)}
+    >
+      ⧉ {targetNode || "this Mac"}
+    </button>
+  );
+}
+
+/** The pane picker (HS-90-02) — attach to ANY tmux pane on the machine,
+ * not only a tracked session. Watching is free; arm to steer. A launcher
+ * mounted on the desk beside the session surface. */
+export function PanePicker() {
+  const panes = useSteering((s) => s.panes);
+  const panesState = useSteering((s) => s.panesState);
+  const [open, setOpen] = useState(false);
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    if (next) void useSteering.getState().listPanes();
+  };
+  return (
+    <div className={"desk-panepicker" + (open ? " is-open" : "")}>
+      <button
+        type="button"
+        className="desk-chip desk-panepicker-launch"
+        onClick={toggle}
+        title="attach to any tmux pane"
+      >
+        ⧉ Panes
+      </button>
+      {open && (
+        <div className="desk-panepicker-list">
+          {panesState === "loading" && <span className="desk-panepicker-empty">…</span>}
+          {panesState === "error" && (
+            <span className="desk-panepicker-empty">tmux unreachable</span>
+          )}
+          {panesState === "loaded" && panes.length === 0 && (
+            <span className="desk-panepicker-empty">no tmux panes</span>
+          )}
+          {panes.map((p) => (
+            <button
+              key={p.paneId}
+              type="button"
+              className={"desk-panepicker-item" + (p.active ? " is-active" : "")}
+              onClick={() => {
+                useSteering.getState().openSession(`pane:${p.paneId}`);
+                setOpen(false);
+              }}
+            >
+              <span className="desk-panepicker-id">{p.paneId}</span>
+              <span className="desk-panepicker-meta">
+                {p.session}
+                {p.command ? ` · ${p.command}` : ""}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** The voice-first composer (HS-87-03) — spoken first, typed if you
  * like, Enter its own deliberate chip. Rendered only while armed: the
  * ARM chip in the header IS the unarmed affordance. */
@@ -314,6 +442,7 @@ export function SessionPullout() {
         </span>
         {session?.stale && <span className="desk-chip quiet is-stale">stale</span>}
         {live && <span className="desk-session-live" title="watching">●</span>}
+        <NodeChip />
         <ArmChip />
         <button
           type="button"
@@ -343,6 +472,7 @@ export function SessionPullout() {
 
       {armed && (
         <footer className="desk-pullout-foot">
+          <KeyPalette />
           <SteerComposer />
         </footer>
       )}

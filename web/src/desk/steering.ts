@@ -58,6 +58,40 @@ export function mmss(totalSeconds: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/** A tmux pane from `GET /api/coders/steering/panes` (HS-90-02). */
+export interface PaneInfo {
+  paneId: string;
+  session: string;
+  window: string;
+  command: string;
+  title: string;
+  active: boolean;
+}
+
+/** A key in a sequence: a named tmux key (`"C-c"`) or a literal run
+ * (`{ literal: "…" }`) — matches the hub's `/keys` body. */
+export type KeySeqItem = string | { literal: string };
+
+/** Node-aware endpoint (HS-90-02 / HS-89-03): a targeted node routes through
+ * the relay with the key in the BODY; "this Mac" hits the pane's own route
+ * with the key in the PATH. One helper, so every verb reaches either place. */
+function verbEndpoint(
+  node: string | null,
+  key: string,
+  verb: string,
+): { url: string; wrap: (extra: object) => object } {
+  if (node) {
+    return {
+      url: `/api/coders/relay/${encodeURIComponent(node)}/${verb}`,
+      wrap: (extra) => ({ key, ...extra }),
+    };
+  }
+  return {
+    url: `/api/coders/${encodeURIComponent(key)}/${verb}`,
+    wrap: (extra) => extra,
+  };
+}
+
 interface SteeringState {
   openKey: string | null;
   session: SteeringSession | null;
@@ -95,6 +129,22 @@ interface SteeringState {
   keepAsNote(title?: string): Promise<boolean>;
   pinToStory(key: string, storyId: string): void;
   clearPin(key: string): void;
+  /** HS-90-02 — full key control on glass: send a real key sequence
+   * (`C-c`, arrows, `Escape`) through `/keys`, armed only. */
+  keyState: "idle" | "sending" | "sent" | "refused";
+  keyDetail: string;
+  lastKey: string;
+  sendKeys(seq: KeySeqItem[], label: string): Promise<boolean>;
+  /** HS-90-02 — attach to any pane: the machine's live pane list. */
+  panes: PaneInfo[];
+  panesState: "idle" | "loading" | "loaded" | "error";
+  listPanes(): Promise<void>;
+  /** HS-90-02 — target a machine: the configured node names ("" = this
+   * Mac); when a node is set, arm/steer/keys/peek route through the relay. */
+  nodes: string[];
+  targetNode: string | null;
+  listNodes(): Promise<void>;
+  setTargetNode(node: string | null): void;
 }
 
 let timer: ReturnType<typeof setInterval> | null = null;
@@ -147,6 +197,13 @@ export const useSteering = create<SteeringState>((set, get) => ({
   steerDetail: "",
   manualPins: loadPins(),
   classifyState: "idle",
+  keyState: "idle",
+  keyDetail: "",
+  lastKey: "",
+  panes: [],
+  panesState: "idle",
+  nodes: [],
+  targetNode: null,
 
   openSession(key) {
     if (timer !== null) clearInterval(timer);
@@ -194,10 +251,11 @@ export const useSteering = create<SteeringState>((set, get) => ({
     if (!key) return;
     set({ armError: "" });
     try {
-      const res = await fetch(`/api/coders/${encodeURIComponent(key)}/arm`, {
+      const { url, wrap } = verbEndpoint(get().targetNode, key, "arm");
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify(wrap({})),
       });
       const body = await res.json().catch(() => ({}));
       if (get().openKey !== key) return;
@@ -222,8 +280,11 @@ export const useSteering = create<SteeringState>((set, get) => ({
     const key = get().openKey;
     if (!key) return;
     try {
-      await fetch(`/api/coders/${encodeURIComponent(key)}/disarm`, {
+      const { url, wrap } = verbEndpoint(get().targetNode, key, "disarm");
+      await fetch(url, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(wrap({})),
       });
     } catch {
       /* the grant state re-syncs on the next peek either way */
@@ -238,11 +299,12 @@ export const useSteering = create<SteeringState>((set, get) => ({
     if (!key || !text.trim()) return false;
     set({ steerState: "sending", steerDetail: "" });
     try {
-      const res = await fetch(`/api/coders/${encodeURIComponent(key)}/steer`, {
+      const { url, wrap } = verbEndpoint(get().targetNode, key, "steer");
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          grounding ? { text, submit, grounding } : { text, submit },
+          wrap(grounding ? { text, submit, grounding } : { text, submit }),
         ),
       });
       const body = await res.json().catch(() => ({}));
@@ -302,6 +364,83 @@ export const useSteering = create<SteeringState>((set, get) => ({
     savePins(rest);
   },
 
+  async sendKeys(seq, label) {
+    const key = get().openKey;
+    if (!key || seq.length === 0) return false;
+    set({ keyState: "sending", keyDetail: "", lastKey: label });
+    try {
+      const { url, wrap } = verbEndpoint(get().targetNode, key, "keys");
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(wrap({ keys: seq })),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (get().openKey !== key) return false;
+      if (res.ok && body.status === "delivered") {
+        set({ keyState: "sent", keyDetail: "" });
+        return true;
+      }
+      // A revoking refusal (recycled pane, expiry) drops the grant, exactly
+      // like a text steer — the header chip becomes the answer.
+      const revoking = ["unarmed", "expired", "pane_mismatch", "pane_gone"].includes(
+        body.status,
+      );
+      set({
+        keyState: "refused",
+        keyDetail: body.detail || body.status || `HTTP ${res.status}`,
+        ...(revoking ? grantPatch(key, { armed: false }, get().armedKeys) : {}),
+      });
+      return false;
+    } catch {
+      if (get().openKey === key)
+        set({ keyState: "refused", keyDetail: "hub unreachable" });
+      return false;
+    }
+  },
+
+  async listPanes() {
+    set({ panesState: "loading" });
+    try {
+      const node = get().targetNode;
+      // Node pane discovery isn't relayed yet — a node targets known keys;
+      // the picker lists THIS Mac's panes (honest scope).
+      const res = await fetch(`/api/coders/steering/panes`);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        set({ panesState: "error", panes: [] });
+        return;
+      }
+      const panes: PaneInfo[] = (body.panes || []).map((p: any) => ({
+        paneId: p.pane_id || "",
+        session: p.session || "",
+        window: String(p.window ?? ""),
+        command: p.command || "",
+        title: p.title || "",
+        active: Boolean(p.active),
+      }));
+      set({ panes, panesState: "loaded" });
+      void node; // (kept for when node pane discovery lands)
+    } catch {
+      set({ panesState: "error", panes: [] });
+    }
+  },
+
+  async listNodes() {
+    try {
+      const res = await fetch(`/api/coders/steering/nodes`);
+      if (!res.ok) return;
+      const body = await res.json().catch(() => ({}));
+      set({ nodes: Array.isArray(body.nodes) ? body.nodes : [] });
+    } catch {
+      /* no nodes reachable — the chip stays "this Mac" */
+    }
+  },
+
+  setTargetNode(node) {
+    set({ targetNode: node });
+  },
+
   async refreshGrants() {
     try {
       const res = await fetch("/api/coders/steering/grants");
@@ -324,9 +463,11 @@ export const useSteering = create<SteeringState>((set, get) => ({
     set({ inflight: true });
     try {
       const hash = get().paneHash;
-      const url =
-        `/api/coders/${encodeURIComponent(key)}/peek?lines=${PEEK_LINES}` +
-        (hash ? `&last_hash=${encodeURIComponent(hash)}` : "");
+      const node = get().targetNode;
+      const base = node
+        ? `/api/coders/relay/${encodeURIComponent(node)}/peek?key=${encodeURIComponent(key)}&lines=${PEEK_LINES}`
+        : `/api/coders/${encodeURIComponent(key)}/peek?lines=${PEEK_LINES}`;
+      const url = base + (hash ? `&last_hash=${encodeURIComponent(hash)}` : "");
       const res = await fetch(url);
       const body = await res.json().catch(() => ({}));
       if (get().openKey !== key) return; // closed mid-flight

@@ -51,7 +51,7 @@ human behind every act.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-90-01 | The factory — spawn, rename, kill | **done** (2026-07-08, live) | [story-01-factory](./story-01-factory.md) | [evidence-01](./evidence-story-01.md) |
-| HS-90-02 | The manipulation surface on the web desk | backlog | [story-02-manip-ui](./story-02-manip-ui.md) | - |
+| HS-90-02 | The manipulation surface on the web desk | **done** (2026-07-08, screenshot) | [story-02-manip-ui](./story-02-manip-ui.md) | [evidence-02](./evidence-story-02.md) |
 | HS-90-03 | The factory on glass + the walk + close | backlog | [story-03-factory-glass-walk](./story-03-factory-glass-walk.md) | - |
 
 ## Where we are
@@ -71,7 +71,19 @@ Routes `POST /api/coders/factory/{spawn,rename}` + `POST /api/coders/
 module. Proven live: spawn → rename → arm → steer (`BORN_AND_STEERED`
 landed) → kill (session gone, grant dropped); a payload name
 (`evil; reboot`) refused before tmux; the audit read back all five acts.
-Suite 3514/0. Next: HS-90-02 (the manipulation UI on the web desk).
+Suite 3514/0.
+
+**HS-90-02 done (2026-07-08, screenshot) — you drive a terminal from
+glass now.** The armed session pull-out (`web/src/desk`) gained: a KEY
+PALETTE (`^C`/`Esc`/`Tab`/`⏎`/arrows → `/keys`, `^C` styled loud), shown
+only in the armed window; a `⧉ Panes` picker (`GET .../panes`, attach to
+any `pane:%N`, the active pane marked); a NODE CHIP (this Mac / a
+configured node — a node routes arm/steer/keys/peek through the relay via
+one `verbEndpoint` helper). The store is node-aware end to end. Built +
+desk tests 97/97 + tsc clean; screenshot-verified on the running desk
+(the armed key palette on pane %3, and the pane picker). The live hub +
+tmux end-to-end is HS-90-03's walk. Next: HS-90-03 (the factory on glass
++ the walk + close).
 
 ## Active risks
 
