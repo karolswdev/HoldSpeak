@@ -1,0 +1,6 @@
+# Runs are ephemeral: isolated HOMEs, captured logs, screenshots, the run DB.
+_runs/
+
+# The guided site's build output + deps (HSU-1-04).
+web/node_modules/
+web/dist/

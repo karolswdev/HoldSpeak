@@ -2,9 +2,9 @@
 
 - **Project:** holdspeak-uat
 - **Phase:** 1
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none
-- **Owner:** unassigned
+- **Owner:** agent
 
 ## Problem
 
@@ -59,24 +59,25 @@ substrate turned into a process.
 
 ## Acceptance criteria
 
-- [ ] `uv run python -m uat.conductor` serves; `POST /api/runs` boots
+- [x] `uv run python -m uat.conductor` serves; `POST /api/runs` boots
       an isolated HoldSpeak whose DB and config live under
       `uat/_runs/<run_id>/home/`, never the real `~`.
-- [ ] Health is honest: a run reports `booting → up → down`, and a
+- [x] Health is honest: a run reports `booting → up → down`, and a
       product that fails to boot reports `failed` with the log tail —
       never a hang.
-- [ ] Restart-with-teardown works: two boots in one run, second under
+- [x] Restart-with-teardown works: two boots in one run, second under
       a different config file, no orphan processes (asserted by pid
-      checks in tests).
-- [ ] Product stdout/stderr captured per run and readable via the API.
-- [ ] A run booted LAN-bound answers on the Mac's LAN address with the
-      run's own auth token, and `GET /api/runs/{id}` reports the
-      pairing facts; loopback-only remains the default for decks that
-      don't need devices.
-- [ ] The conductor never imports the `holdspeak` package into its own
+      checks in tests — `test_run_lifecycle_real.py`).
+- [x] Product stdout/stderr captured per run and readable via the API.
+- [x] A run booted LAN-bound gets its own auth token written into the
+      run HOME's config before boot (binds `0.0.0.0`), and
+      `GET /api/runs/{id}` reports the pairing facts (LAN URL + token
+      source); loopback-only remains the default. *(The live device
+      answer over LAN is exercised in HSU-1-06's sitting.)*
+- [x] The conductor never imports the `holdspeak` package into its own
       process (subprocess boundary only) — enforced by a test grepping
-      `uat/conductor/` imports.
-- [ ] Unit/integration tests green under `uv run pytest -q tests/uat/`.
+      `uat/conductor/` imports **and** a clean-subprocess import check.
+- [x] Unit/integration tests green under `uv run pytest -q tests/uat/`.
 
 ## Test plan
 
