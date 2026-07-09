@@ -1,7 +1,56 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useStore, currentStep, stepAnswered, verdictFor } from "./store.js";
+import { Recorder, micSupported } from "./record.js";
 
 const VERDICTS = ["pass", "fail", "partial", "skip"];
+
+// Speak-to-fill mic — rides the product's own transcribe route. Present only
+// when the browser supports capture AND the product under test is up; honestly
+// absent (or an inline error) otherwise.
+function MicButton({ productUp, onText }) {
+  const { transcribeNote } = useStore();
+  const [recording, setRecording] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+  const recRef = useRef(null);
+
+  if (!micSupported() || !productUp) return null;
+
+  const toggle = async () => {
+    setErr(null);
+    if (!recording) {
+      try {
+        recRef.current = new Recorder();
+        await recRef.current.start();
+        setRecording(true);
+      } catch (e) {
+        setErr("mic blocked");
+      }
+      return;
+    }
+    setRecording(false);
+    setBusy(true);
+    try {
+      const wav = await recRef.current.stop();
+      const res = await transcribeNote(wav);
+      if (res.ok) onText(res.text || "");
+      else setErr(res.error || "voice unavailable");
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <span className="shot-row" style={{ marginTop: 0 }}>
+      <button type="button" className={`sm ${recording ? "primary" : "ghost"}`} onClick={toggle} disabled={busy}>
+        {recording ? "◉ stop & fill" : busy ? "transcribing…" : "🎤 speak"}
+      </button>
+      {err && <span className="muted" style={{ color: "var(--partial)" }}>{err}</span>}
+    </span>
+  );
+}
 
 function productUrl(run, where) {
   if (!run || !run.pairing) return "#";
@@ -64,7 +113,7 @@ function StagingPanel({ scenario, staging }) {
   );
 }
 
-function SurfaceCard({ scenario, step, surface, meta }) {
+function SurfaceCard({ scenario, step, surface, meta, productUp }) {
   const { sitting, cast, uploadShot } = useStore();
   const existing = verdictFor(sitting, scenario.id, step.index, surface);
   const [note, setNote] = useState(existing?.note || "");
@@ -123,12 +172,20 @@ function SurfaceCard({ scenario, step, surface, meta }) {
       </div>
       <textarea
         className="note-field"
-        placeholder="Note (what you saw)…"
+        placeholder="Note (what you saw) — type or speak…"
         value={note}
         onChange={(e) => setNote(e.target.value)}
         onBlur={() => existing && pick(existing.verdict)}
       />
       <div className="shot-row">
+        <MicButton
+          productUp={productUp}
+          onText={(text) => {
+            const merged = note ? `${note} ${text}`.trim() : text;
+            setNote(merged);
+            if (existing) cast({ scenario_id: scenario.id, step_index: step.index, surface, verdict: existing.verdict, note: merged, shot_path: shot });
+          }}
+        />
         <label className="linkbtn" style={{ cursor: "pointer" }}>
           {shot ? "Replace screenshot" : "Attach screenshot"}
           <input type="file" accept="image/*" style={{ display: "none" }} onChange={onFile} />
@@ -183,7 +240,7 @@ function Walkthrough({ scenario }) {
 
         <div className="surfaces">
           {["web", "ipad", "iphone"].map((s) => (
-            <SurfaceCard key={s} scenario={scenario} step={step} surface={s} meta={surfaces[s]} />
+            <SurfaceCard key={s} scenario={scenario} step={step} surface={s} meta={surfaces[s]} productUp={run?.status === "up"} />
           ))}
         </div>
       </div>

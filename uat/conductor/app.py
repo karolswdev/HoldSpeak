@@ -17,7 +17,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -350,6 +350,18 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
     def run_after(sitting_id: str, body: AfterBody) -> Any:
         try:
             return {"performed": sit().run_after_actions(sitting_id, body.scenario_id, body.step_index)}
+        except SittingError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+
+    @app.post("/api/sittings/{sitting_id}/transcribe")
+    async def transcribe_note(sitting_id: str, request: Request) -> Any:
+        """Speak-to-fill a note: raw WAV in, transcribed text out, via the run's
+        own transcribe route. Honestly absent when the product cannot transcribe."""
+        wav = await request.body()
+        if not wav:
+            raise HTTPException(status_code=400, detail="An audio body is required.")
+        try:
+            return sit().transcribe(sitting_id, wav)
         except SittingError as exc:
             raise HTTPException(status_code=404, detail=str(exc))
 

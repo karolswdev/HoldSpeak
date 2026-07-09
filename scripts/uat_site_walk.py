@@ -75,8 +75,10 @@ def main() -> int:
             page.screenshot(path=str(out / "site-01-home.png"))
             print("captured home")
 
-            # Start the smoke sitting.
-            page.click("text=Start sitting")
+            # Start the smoke sitting — target its card's button (with 4 packs the
+            # list is sorted, so a bare "Start sitting" would hit whatever sorts
+            # first). Smoke's first scenario is fully local and fast.
+            page.locator(".card", has_text="smoke").get_by_role("button").click()
             # Staging then the first walkthrough step.
             page.wait_for_selector("text=Expect:", timeout=60000)
             page.screenshot(path=str(out / "site-02-walkthrough.png"))

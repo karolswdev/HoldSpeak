@@ -41,6 +41,19 @@ export const api = {
       body: JSON.stringify({ triage_state: triageState, disposition: disposition || null }),
     }),
   backlogBlock: (id) => req(`/api/sittings/${id}/findings/backlog-block`),
+  transcribe: async (id, wavBlob) => {
+    const res = await fetch(`/api/sittings/${id}/transcribe`, {
+      method: "POST",
+      headers: { "Content-Type": "audio/wav" },
+      body: wavBlob,
+    });
+    if (!res.ok) {
+      let detail = res.statusText;
+      try { detail = (await res.json()).detail || detail; } catch (_) {}
+      throw new Error(detail);
+    }
+    return res.json(); // { ok, text } | { ok:false, error }
+  },
   uploadShot: async (id, scenarioId, stepIndex, surface, file) => {
     const fd = new FormData();
     fd.append("scenario_id", scenarioId);
