@@ -5,7 +5,7 @@
 > source seams, the autonomy contract, and the definition of done. It is written
 > to be executed unattended, end to end.
 
-**Last updated:** 2026-07-09 (HSU-1-06 docs + real packs shipped — uat/README+AUTHORING, dogfood supersession, Packs D/A/C. The framework is complete and running; the one remaining beat is the owner's live sitting. Phase 1 at 5/6 + docs)
+**Last updated:** 2026-07-09 (framework complete + two follow-throughs: speak-to-fill **voice notes** on every feedback field, and an ad-hoc staging CLI (`python -m uat.stage`) + generic seeding of ALL desk primitives (zones/KBs/recipes/…). A flotilla **re-evaluated the test protocols** — see [PROTOCOL-REEVALUATION](./phase-2-the-inventory/PROTOCOL-REEVALUATION.md): right discipline, thin intelligence + parity coverage; a punch-list for the next authorship round. Phase 1 at 5/6 + docs; the owner's live sitting remains)
 **Current phase:** [Phase 1 — The Mechanics](./phase-1-the-mechanics/current-phase-status.md)
 **Status:** active
 

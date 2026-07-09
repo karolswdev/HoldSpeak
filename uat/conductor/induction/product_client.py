@@ -42,6 +42,10 @@ class ProductClient:
         with httpx.Client(timeout=self.timeout) as c:
             return c.post(self.base_url + path, json=body or {}, headers=self._headers())
 
+    def put(self, path: str, body: dict | None = None) -> httpx.Response:
+        with httpx.Client(timeout=self.timeout) as c:
+            return c.put(self.base_url + path, json=body, headers=self._headers())
+
     def post_bytes(self, path: str, data: bytes, content_type: str = "application/octet-stream") -> httpx.Response:
         with httpx.Client(timeout=self.timeout) as c:
             headers = {**self._headers(), "Content-Type": content_type}

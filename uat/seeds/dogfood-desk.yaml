@@ -34,3 +34,12 @@ kbs:
   - id: uat-seed-kb-incidents
     name: Incident runbooks
     member_ids: []
+directories:               # a desk zone with the seeded notes filed into it
+  - id: uat-seed-zone-decisions
+    name: Decisions & standups
+    member_ids: [uat-seed-note-decisions, uat-seed-note-standup]
+recipes:                   # a saved desk recipe (persona/instruction primitive)
+  - id: uat-seed-recipe-pm
+    name: Summarize like a PM
+    role: A pragmatic PM
+    system_prompt: Summarize the input as decisions, owners, and risks.

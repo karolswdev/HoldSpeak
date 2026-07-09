@@ -127,4 +127,18 @@ npm --prefix uat/web run build
 - `npm --prefix uat/web test` — the site's store tests.
 - `uv run python scripts/uat_site_walk.py` — a Playwright drive of the real site.
 
+## Drive it ad-hoc (no sitting)
+
+To induce a world and poke it — create a KB, a zone, a meeting; boot a broken
+deck; spawn a mesh node — without running a full sitting:
+
+```bash
+uv run python -m uat.stage --list                       # what you can invoke
+uv run python -m uat.stage --recipe seeded-desk         # boot + seed, stays up
+uv run python -m uat.stage --seed desk-zones-demo --deck golden-local
+```
+
+It prints the run's product URL to open. See [`AUTHORING.md`](./AUTHORING.md)
+§"Drive the harness ad-hoc" for the CLI and the equivalent conductor-API calls.
+
 See [`AUTHORING.md`](./AUTHORING.md) to add a scenario, deck, seed, or recipe.
