@@ -1,0 +1,26 @@
+id: e-mesh-run-grounded-substance
+title: The mesh-executed run is real intelligence, not a stub (control vs treatment)
+features:
+  - mobile.mesh.serve.execute_ask
+  - mesh.handoff.web_run_to_node
+recipes:
+  - mesh-run-ready
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the ask-executes-on-this-device leg is iphone:yes in the inventory, but forcing it requires the device pre-flight block (model-installed-on-device, hub-reachable-on-lan) that is not staged in this run"}
+steps:
+  - do: Confirm the worker is live and the handoff-intent note (carrying PYLON-CANARY-7) is on the desk (the staging beat).
+    expect: The "uat-worker" node reads live and the note "Handoff run intent (PYLON-CANARY-7)" is present; the token exists in exactly one place the model could read.
+    where: /
+  # CONTROL: run WITHOUT the note as grounding. The mesh worker still executes,
+  # but with no context it cannot know a token that lives only in that note.
+  - do: "CONTROL — dispatch onto the mesh worker an ask for the incident's canary token with NO grounding attached (no note, no KB). Read the ⇄ mesh card."
+    expect: The card returns badged ⇄ mesh (the run did land on the edge) but the answer says it does not have that context / cannot find a canary token — it does NOT invent PYLON-CANARY-7. Judge on substance, not wording.
+    where: /
+  # TREATMENT: same worker, same edge, WITH the note grounded. Now the model
+  # running on the mesh edge must surface the token only that note carries.
+  - do: "TREATMENT — dispatch the same ask onto the same mesh worker, this time grounding the run on the handoff-intent note. Read the ⇄ mesh card."
+    expect: The card is badged ⇄ mesh AND the answer names PYLON-CANARY-7 — the exact token the control could not know. This proves the run executed a real model on the edge over the grounded context, not a fallback or an echo. Naming a different or generic token fails the beat.
+    where: /
+teardown: []

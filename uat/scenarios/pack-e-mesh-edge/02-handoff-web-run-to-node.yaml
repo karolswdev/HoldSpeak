@@ -1,0 +1,28 @@
+id: e-handoff-web-run-to-node
+title: The handoff arc — a run moves onto the mesh worker and returns badged
+features:
+  - mesh.handoff.web_run_to_node
+  - models.mesh.serve-another-machine
+  - models.profiles.runs-on-per-agent
+recipes:
+  - mesh-run-ready
+surfaces:
+  web: yes
+  ipad: {n/a: "mesh.handoff.web_run_to_node is ipad:unknown as a FROM-surface — the inventory row confirms only web enqueues via mesh_relay_jobs; the iPad-origin relay path is not confirmed shipped"}
+  iphone: {n/a: "mesh.handoff.web_run_to_node is iphone:unknown as a FROM-surface in the inventory row"}
+steps:
+  - do: Confirm the world before the run (the staging beat) — the profiles view shows the "uat-worker" node live and the "uat-worker-run" meshNode profile ready to dispatch to.
+    expect: The node reads live and a profile of the meshNode kind named at it is present; the run has somewhere real to go.
+    where: /
+  # CONTROL: the same ask run LOCALLY on the hub (default profile, not the mesh
+  # node). This proves the badge/provenance we assert in the treatment is not
+  # decoration that shows regardless of where the run executed.
+  - do: "CONTROL — Ask AI the handoff-intent question with the run pointed at the LOCAL hub (default profile, not the mesh node). Watch the returned card's badge and where the run executed."
+    expect: The card returns badged as running LOCALLY (on-device / hub), NOT ⇄ mesh; the hub's own log shows the model load / the ask executing on the hub, and the mesh worker's log shows NO claim for this run. This is the leg that must NOT show the mesh badge.
+    where: /
+  # TREATMENT: the same ask, pointed at the mesh node. The run must MOVE — the
+  # worker claims it, the hub does not load the model, the card returns ⇄ mesh.
+  - do: "TREATMENT — Ask the same question again, this time pointed at the \"uat-worker-run\" meshNode profile so the run is dispatched onto the mesh edge. Read the returned card and both logs."
+    expect: The card returns badged ⇄ mesh naming the uat-worker edge; the WORKER's log shows it claimed this run off the relay queue and executed it; the HUB's log shows NO model load for this run (the hub relayed, it did not compute). A result that returns without the worker claiming it, or with the hub loading the model, fails this beat.
+    where: /
+teardown: []

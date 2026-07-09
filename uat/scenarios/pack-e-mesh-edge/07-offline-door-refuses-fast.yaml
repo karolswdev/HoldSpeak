@@ -1,0 +1,27 @@
+id: e-offline-door-refuses-fast
+title: The offline door — the edge dies mid-run, the desk refuses fast by name
+features:
+  - mesh.liveness_everywhere
+  - mesh.serve_node
+  - mesh.handoff.web_run_to_node
+recipes:
+  - mesh-run-ready
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "mesh liveness / serve on iphone is iphone:unknown in the inventory — the Apple worker was an HSM follow-up, not confirmed shipped"}
+steps:
+  - do: Confirm the worker reads live before breaking it (the staging beat).
+    expect: The "uat-worker" node reads live — the hub has seen it poll recently.
+    where: /
+    # The honest-failure close: SIGINT the worker's process group mid-run and
+    # wait out the hub's ~15s liveness window, so the world breaks in real time.
+    after:
+      - apply_recipe: mesh-node-just-died
+  - do: The node has just been stopped. Refresh the liveness view (profiles + models rows).
+    expect: The node now reads OFFLINE on every surface that renders it — the profiles sidecar flips offline, the models rows drop it, the rail dims it as a dead edge. Offline reads offline everywhere, not stale-live.
+    where: /
+  - do: Force a run against the now-dead node anyway.
+    expect: The run REFUSES FAST — in under five seconds, naming the uat-worker node as offline — rather than hanging on a dead worker. "Refuse fast, by name" is the pass bar; a hang, a spinner, or a silent drop fails this beat.
+    where: /
+teardown: []

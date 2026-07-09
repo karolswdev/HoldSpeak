@@ -1,0 +1,16 @@
+title: A mesh worker is live with an authored run ready to dispatch
+description: >
+  The handoff arc's stage: a real `holdspeak mesh serve` worker polling this run
+  as its hub (folded in from mesh-node-alive), PLUS the author-on-iPad side laid
+  down as public-route state — a meshNode-kind profile named at the worker and a
+  note carrying the PYLON-CANARY-7 token the worker's model must surface when the
+  run actually lands on the edge. Verifies the worker is live AND the authored
+  profile exists, so a scenario can drive a run onto it.
+deck: mesh-node
+requires: [intel]
+includes: [mesh-node-alive]
+seeds: [mesh-authored-run]
+probe:
+  - mesh_node_live: {name: uat-worker, timeout: 40}
+  - profile_exists: uat-seed-profile-mesh-edge
+  - note_exists: uat-seed-note-handoff-intent

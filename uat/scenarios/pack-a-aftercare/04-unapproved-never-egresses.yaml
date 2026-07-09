@@ -3,17 +3,23 @@ title: An unapproved proposal never egresses (the honest-failure close)
 features:
   - trust.egress.cloud-meeting-intel
   - meetings.aftercare.action-to-issue
+  - meetings.proposals.review-anywhere
 recipes:
   - meeting-just-ended-open-actions
 surfaces:
   web: yes
   ipad: yes
-  iphone: {n/a: "the proposal/egress surface on iPhone is unverified in the record"}
+  iphone: {n/a: "the proposal/egress surface on iPhone is unverified in the inventory (row iphone: unknown)"}
 steps:
-  - do: Read the egress badge on each aftercare card.
-    expect: Each card's badge tells the truth about where its content went (the meeting intel was cloud on golden-43, and the badge says so).
+  - do: (Staging beat) Confirm a pending proposal exists for the meeting, unexecuted.
+    expect: At least one proposal is in the proposed state — created but not yet approved, nothing filed.
     where: /history
-  - do: Leave a proposal unapproved and confirm nothing left the machine.
-    expect: An unapproved proposal never egresses — no issue is filed, no webhook fires, until a human approves. This is the pack's close, the product staying honest when nothing has been consented to.
+  - do: Read the egress badge on the aftercare card whose intel ran on the cloud endpoint.
+    expect: The badge tells the truth about where that content went — the pylon intel ran cloud on golden-43, so the badge reads cloud (or names the runs-on target), never local, and never prose.
+    where: /history
+    surfaces:
+      ipad: {n/a: "the intel egress badge is asserted on the web card chrome; the iPad row for trust.egress.cloud-meeting-intel is ipad: unknown (sets provider via /api/settings, badge on device unverified)"}
+  - do: Review the pending proposal wherever it was created, then leave it unapproved and confirm nothing left the machine.
+    expect: An unapproved proposal never egresses — no issue is filed and no webhook fires until a human approves. The proposal is reviewable but stays in the proposed state. This is the pack's close — the product stays honest when nothing has been consented to.
     where: /history
 teardown: []

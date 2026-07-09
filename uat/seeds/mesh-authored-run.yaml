@@ -1,0 +1,19 @@
+# The "author-on-iPad" side of the handoff arc, staged as public-route state:
+# a runtime profile that NAMES the mesh worker (meshNode kind, egress scope
+# 'mesh') plus a note carrying the run's intent and a repo-specific token the
+# worker's model must surface when the run actually lands on it. Deterministic
+# ids so re-applying upserts in place.
+profiles:
+  - id: uat-seed-profile-mesh-edge
+    name: uat-worker-run
+    kind: meshNode
+    node: uat-worker
+notes:
+  - id: uat-seed-note-handoff-intent
+    title: Handoff run intent (PYLON-CANARY-7)
+    body_markdown: |
+      ## Run to dispatch onto the mesh worker
+      Summarize the pylon incident, naming the canary token PYLON-CANARY-7 that
+      only appears in this note. The run should execute on the mesh edge, not
+      the hub, and return badged.
+    tags: [uat-seed, mesh-handoff]

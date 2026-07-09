@@ -1,0 +1,16 @@
+title: A seeded symbol dictionary on .43 — spoken symbols + grounded glossary
+description: >
+  The dogfood desk plus a spoken-symbol dictionary note and a glossary KB,
+  booted on golden-43 so a grounded rewrite runs live against the LAN
+  endpoint. Stages the deterministic spoken-symbol beats (including the
+  double-substitution adversarial trap) and the glossary token the grounded
+  rewrite can cite. Idempotent — the deterministic ids upsert in place.
+deck: golden-43
+requires: [intel]
+seeds:
+  - dogfood-desk
+  - dict-symbol-dictionary
+probe:
+  - note_exists: uat-seed-note-symbols
+  - kb_exists: uat-seed-kb-glossary
+  - note_exists: uat-seed-note-glossary

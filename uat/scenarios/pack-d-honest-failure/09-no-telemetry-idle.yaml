@@ -1,0 +1,25 @@
+id: d-no-telemetry-idle
+title: No telemetry — an idle desk beacons nowhere
+features:
+  - trust.no-telemetry
+recipes:
+  - fresh-desk
+# The re-eval's task #19: trust.no-telemetry is a MUST, written in the imagined
+# voice and never attacked. This stages the observation: boot a fresh isolated
+# desk, leave it idle under a network capture, and assert zero outbound beacons.
+# The pass bar is behavioural (an empty capture), not a promise in prose.
+surfaces:
+  web: yes
+  ipad: {n/a: "network-capture of the runtime process is taken on the host running the web runtime; the ipad is a client of it, not the process under capture (trust.no-telemetry ipad: unknown)"}
+  iphone: {n/a: "same as ipad — the beacon check is on the host runtime process, not the phone client (trust.no-telemetry iphone: unknown)"}
+steps:
+  - do: Boot the fresh desk and confirm it is idle and healthy (the staging beat).
+    expect: The desk is empty and the setup surface reads reachable; nothing is mid-run.
+    where: /
+  - do: Start a network capture on the runtime host (e.g. tcpdump / a proxy), then leave the desk idle for a fixed window without touching it.
+    expect: The capture window is running and the desk remains untouched — no dictation, no intel, no send — so any outbound packet in the window is unrequested.
+    where: /
+  - do: Read the capture after the idle window.
+    expect: The capture shows NO outbound connections to any telemetry/crash-reporting/analytics host — zero unrequested beacons; the only traffic (if any) is loopback to the tester's own browser. A beacon to any third-party host fails the beat.
+    where: /
+teardown: []

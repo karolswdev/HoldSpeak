@@ -1,0 +1,26 @@
+id: c-spoken-language
+title: The spoken language pins the transcription path
+features:
+  - languages.spoken_language
+  - dictation.language.99-whisper-languages
+  - mobile.dictation.language.spoken
+recipes:
+  - seeded-desk-43
+surfaces:
+  web: yes
+  ipad: yes      # directory: mobile.dictation.language.spoken ipad=yes (HSM-18-03, WhisperLanguage.configuredCode() at all three call sites)
+  iphone: yes    # directory: mobile.dictation.language.spoken iphone=yes (same resolver serves the aux apps regardless of form factor)
+steps:
+  # Staging-verify beat: the language selector is present and defaulted.
+  - do: Open the Voice-typing / language settings on the seeded desk and read the current spoken language.
+    expect: A language selector is present and shows the pinned language (the default), drawn from the Whisper language registry — not an empty or missing control.
+    where: /
+  # CONTROL leg: with the language left on the default, a non-default utterance mis-transcribes.
+  - do: With the language pinned to the default (e.g. English), transcribe a short utterance spoken in a different Whisper language (e.g. a Spanish or German phrase).
+    expect: The transcription is off — the words come out anglicised or garbled because the language is pinned to the wrong one. This is the control leg, where the setting is doing nothing yet.
+    where: /
+  # TREATMENT leg: pinning the matching language fixes the transcription path.
+  - do: Change the spoken language to the language actually spoken, then transcribe the same utterance again.
+    expect: The transcription now reflects the spoken language correctly — the change to the language knob measurably changed the transcription path, one of Whisper's 99 languages, not just a cosmetic label.
+    where: /
+teardown: []

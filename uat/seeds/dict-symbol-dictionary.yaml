@@ -1,0 +1,27 @@
+# A believable spoken-symbol dictionary plus the glossary note the grounded
+# rewrite must be able to cite. Deterministic ids so re-applying upserts in
+# place. The symbol note carries the exact adversarial phrase the double-
+# substitution trap (Phase-59 combined-matcher regression) must survive.
+notes:
+  - id: uat-seed-note-symbols
+    title: Spoken-symbol dictionary (UAT)
+    body_markdown: |
+      The words a user teaches to type as characters. The matcher runs one
+      combined longest-first pass so a phrase can never double-substitute.
+
+      | spoken          | types |
+      |-----------------|-------|
+      | at sign         | @     |
+      | hash            | #     |
+      | percent sign    | %     |
+      | arrow           | ->    |
+      | double dash     | --    |
+
+      Adversarial phrase (must land ONCE, not twice):
+      "double dash arrow" -> `-- ->`  (a two-pass matcher would re-eat the
+      dash it just wrote and mangle this).
+    tags: [uat-seed, symbols, languages]
+kbs:
+  - id: uat-seed-kb-glossary
+    name: Project glossary KB
+    member_ids: [uat-seed-note-symbols]

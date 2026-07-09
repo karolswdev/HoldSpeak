@@ -5,7 +5,7 @@
 > source seams, the autonomy contract, and the definition of done. It is written
 > to be executed unattended, end to end.
 
-**Last updated:** 2026-07-09 (framework complete + two follow-throughs: speak-to-fill **voice notes** on every feedback field, and an ad-hoc staging CLI (`python -m uat.stage`) + generic seeding of ALL desk primitives (zones/KBs/recipes/…). A flotilla **re-evaluated the test protocols** — see [PROTOCOL-REEVALUATION](./phase-2-the-inventory/PROTOCOL-REEVALUATION.md): right discipline, thin intelligence + parity coverage; a punch-list for the next authorship round. Phase 1 at 5/6 + docs; the owner's live sitting remains)
+**Last updated:** 2026-07-09 (the **test protocol** authored by a 6-agent flotilla — 53 scenarios across 7 packs (dictation, meetings, trust, desk, mesh, steering + smoke), all contract-clean, 14 control-vs-treatment beats, ~40% of the 115 must-tests covered. See [PROTOCOL-COVERAGE](./phase-2-the-inventory/PROTOCOL-COVERAGE.md) for coverage + the harness backlog. Framework complete; owner's live sitting remains) + generic seeding of ALL desk primitives (zones/KBs/recipes/…). A flotilla **re-evaluated the test protocols** — see [PROTOCOL-REEVALUATION](./phase-2-the-inventory/PROTOCOL-REEVALUATION.md): right discipline, thin intelligence + parity coverage; a punch-list for the next authorship round. Phase 1 at 5/6 + docs; the owner's live sitting remains)
 **Current phase:** [Phase 1 — The Mechanics](./phase-1-the-mechanics/current-phase-status.md)
 **Status:** active
 

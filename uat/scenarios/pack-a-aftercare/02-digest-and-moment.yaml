@@ -1,19 +1,33 @@
 id: a-digest-and-moment
-title: The aftercare digest and the moment jump
+title: The aftercare digest delta (control vs treatment) and the moment jump
 features:
   - meetings.aftercare.digest
+  - meetings.aftercare.close-the-loop
   - meetings.aftercare.show_the_moment
 recipes:
-  - meeting-just-ended-open-actions
+  - pack-a-two-meetings
 surfaces:
   web: yes
   ipad: yes
-  iphone: {n/a: "the phone aftercare leg is the open question — HSM built the iPad aftercare, the phone is unverified"}
+  iphone: {n/a: "iPhone aftercare is the open question — HSM built the iPad aftercare (close-the-loop ipad: yes); the phone row is iphone: unknown"}
 steps:
-  - do: Open the aftercare digest for the meeting.
-    expect: The digest names what is still open and by whom, what was decided, and the delta since the previous meeting; it stays quiet when there is nothing open rather than padding.
+  - do: (Staging beat) Confirm the two-meeting world — the pylon incident AND the ledgerline sync are both in history with intel complete.
+    expect: Two meetings are present with intel complete (neither stuck importing), each with at least one open action — a prior meeting exists for the delta to reference.
+    where: /history
+  - do: (Control — delta context OFF) Open the aftercare digest for the ledgerline meeting WITH the prior-meeting delta context disabled, so the digest can only see this one meeting.
+    expect: The digest names what is open and by whom for this meeting alone; it CANNOT name anything carried over from a previous meeting, because it was given no prior-meeting context. No invented cross-meeting delta.
+    where: /history
+  - do: (Treatment — delta context ON) Open the same aftercare digest WITH the prior-meeting delta context enabled.
+    expect: The digest now names a specific carried-over item across the two meetings that the control could not — a repo-specific token (an open action like LL-118 still open, or a decision/owner from the earlier meeting) attributed to the prior meeting. Judge on whether it names the real carried-over open action/owner, not on wording.
+    where: /history
+    surfaces:
+      ipad: {n/a: "toggling the digest's prior-meeting delta context off vs on is a hub-side generation posture; the iPad reads the close-the-loop result, it does not drive the context switch"}
+  - do: (Empty-quiet control) Open the aftercare digest on a meeting with nothing left open.
+    expect: The digest stays quiet — it reports there is nothing open rather than padding with filler or inventing an action.
     where: /history
   - do: Jump to the moment behind one open action.
     expect: The moment jump lands on the transcript segment that produced the action, not a generic top-of-meeting scroll.
     where: /history
+    surfaces:
+      ipad: {n/a: "jump-to-moment is not claimed on the iPad in the inventory (meetings.aftercare.show_the_moment ipad: unknown; transcript-moment-jump ipad: unknown)"}
 teardown: []

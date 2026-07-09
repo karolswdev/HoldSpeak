@@ -1,0 +1,28 @@
+id: desk-ask-on-pile-grounded
+title: Ask AI on a lassoed pile — control (groundless) vs treatment (grounded)
+# The pack's control-vs-treatment spine. The ONLY scenario that invokes Ask AI,
+# so it is the ONLY one citing desk.ask-ai.grounded-on-pile (the smoke-01
+# inflation fix). Beat 1 is the groundless CONTROL: same lasso, same question,
+# no model / no pile context, asserted separately. Beat 2 is the grounded
+# TREATMENT on .43, asserted separately, and must name a token the control
+# could not. Beat 3 is the unknown-id refusal close.
+features:
+  - desk.ask-ai.grounded-on-pile
+  - desk.diorama.lasso_bundle_file
+recipes:
+  - desk-primitives-43
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "Ask-on-pile on iPhone is unconfirmed in the record (desk.ask-ai.grounded-on-pile ph=?)"}
+steps:
+  - do: "CONTROL. With grounding OFF (no pile fed to the model), ask: “What is BLUEBIRD and who owns the backfill?” Judge this beat alone."
+    expect: The control cannot answer — it says it does not have that context, or guesses generically, and does NOT correctly name BLUEBIRD as the ledgerline streaming rewrite or Priya as the owner. A no-answer here is the point; do not read the treatment yet.
+    where: /
+  - do: "TREATMENT. Lasso the Ledgerline zone's two notes into a pile, turn grounding ON, and ask the SAME question against that pile. Judge this beat alone."
+    expect: "The answer is grounded in the pile: it names BLUEBIRD as the ledgerline streaming/reconciliation rewrite AND surfaces the open risk that the backfill has no owner (or names Priya as owner). Judge structurally — the decision/owner/risk must be right, not the exact wording. This is the token the control could not know."
+    where: /
+  - do: "Ask about a name that is NOT in the pile or on the desk (for example “What is FALCON-9?”)."
+    expect: The answer refuses honestly — it says that name is not in the pile / it has no such object, rather than inventing a definition. Refusing by name beats a confident hallucination.
+    where: /
+teardown: []
