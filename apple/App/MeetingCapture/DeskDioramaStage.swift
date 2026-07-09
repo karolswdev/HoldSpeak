@@ -2985,6 +2985,8 @@ struct DioStage: View {
     @State private var coderGrounding: CoderGrounding? = nil   // HSM-17-04: dropped-context for the open composer
     @State private var beltState: BeltState? = nil             // HSM-26-02: the delivery belt (mission control)
     @State private var beltPoll: Task<Void, Never>? = nil      // HSM-26-02: the belt poll (read-only presence)
+    @State private var steerSheet: SteerSheetState? = nil      // HSM-27-02: the terminal surface (peek/arm/keys/factory)
+    @State private var steerPoll: Task<Void, Never>? = nil     // HSM-27-02: the peek poll while the sheet is open
     @State private var journalEntries: [RailsJournalEntry] = [] // HSM-26-04: the ambient observer's rail journal
     @State private var journalPoll: Task<Void, Never>? = nil   // HSM-26-04: the journal poll
     @State private var coderWasWaiting: Set<String> = []       // rising-edge memory: glare once per flip into waiting
@@ -4012,6 +4014,13 @@ struct DioStage: View {
                         }
                     }
                 }
+                // HSM-27-02: seed the terminal surface so the diorama SHOWS it offline
+                // (no poll under the seed — the sheet renders the sample directly).
+                if ProcessInfo.processInfo.environment["HS_DESK_STEER"] != nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { steerSheet = SteerSheetState.sample() }
+                    }
+                }
                 if ProcessInfo.processInfo.environment["HS_DESK_TRANSCRIPT"] == "1" {
                     let segs = [
                         Segment(text: "Welcome everyone to the Q3 kickoff. Big bet this quarter is the desk on the web.", speaker: "Speaker 1", startTime: 0, endTime: 5),
@@ -4318,6 +4327,22 @@ struct DioStage: View {
                           onDelete: { deleteZone(z.path) },
                           onCancel: { withAnimation { editingZone = nil } })
                 .id(z.path).zIndex(147).transition(.opacity)
+        }
+        // HSM-27-02 — the terminal surface: attach, arm, key, steer, kill on glass.
+        if let ss = steerSheet {
+            DioSteerSheet(
+                state: ss, maxW: camera.cardWidth(460, in: w), maxH: min(620, h - h * 0.10),
+                onArm: { steerArm() },
+                onDisarm: { steerDisarm() },
+                onKey: { key, label in steerSendKey(key, label) },
+                onSteer: { text, submit in steerSend(text, submit) },
+                onSpawn: { name in steerSpawn(name) },
+                onAttach: { key in steerAttach(key) },
+                onKill: { steerKill() },
+                onCycleNode: { steerCycleNode() },
+                onClose: { steerPoll?.cancel(); withAnimation { steerSheet = nil } },
+                startPanesOpen: ProcessInfo.processInfo.environment["HS_DESK_STEER"] == "panes")
+                .id(ss.paneKey).zIndex(151).transition(.opacity)
         }
         // Notes + KBs are edited IN-WORLD on the desk (see `level`), never in a dimmed modal.
         // the live "running coder" feed — replay the session, approve / answer inline (HSM-17-03)
@@ -5740,6 +5765,115 @@ struct DioStage: View {
         if entries != journalEntries {
             withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { journalEntries = entries }
         }
+    }
+
+    // MARK: HSM-27-02 — the terminal surface handlers (drive HSM-27-01's client)
+
+    /// Open the terminal sheet on a pane/session key, and start the peek poll.
+    private func openSteer(_ key: String, title: String) {
+        steerSheet = SteerSheetState(paneKey: key, title: title, lines: [], question: nil,
+                                     armed: false, remaining: 0, node: "", nodes: [], panes: [],
+                                     fate: "", fateOK: true)
+        steerPoll?.cancel()
+        steerPoll = Task { @MainActor in
+            if let client = desktopClient, let nodes = try? await client.steeringNodes() {
+                steerSheet?.nodes = nodes
+            }
+            while !Task.isCancelled, steerSheet != nil {
+                await steerPeekTick()
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+            }
+        }
+    }
+
+    @MainActor private func steerPeekTick() async {
+        guard let client = desktopClient, let ss = steerSheet else { return }
+        let node = ss.node.isEmpty ? nil : ss.node
+        guard let peek = try? await client.coderPeek(key: ss.paneKey, node: node) else { return }
+        steerSheet?.lines = peek.peek.lines ?? steerSheet?.lines ?? []
+        steerSheet?.question = peek.awaitingResponse ? peek.question : nil
+        steerSheet?.armed = peek.grant.armed
+        steerSheet?.remaining = peek.grant.expiresInSeconds ?? 0
+    }
+
+    private func steerArm() {
+        steerSheet?.armed = true; steerSheet?.remaining = 900; steerSheet?.fate = ""
+        guard let client = desktopClient, let ss = steerSheet else { return }
+        let key = ss.paneKey, node = ss.node.isEmpty ? nil : ss.node
+        Task { @MainActor in
+            if let r = try? await client.armCoder(key: key, node: node) {
+                steerSheet?.armed = r.isArmed
+                steerSheet?.remaining = r.expiresInSeconds ?? 900
+                if !r.isArmed { steerSheet?.fate = r.detail ?? r.status; steerSheet?.fateOK = false }
+            }
+        }
+    }
+
+    private func steerDisarm() {
+        steerSheet?.armed = false
+        guard let client = desktopClient, let ss = steerSheet else { return }
+        Task { _ = try? await client.disarmCoder(key: ss.paneKey) }
+    }
+
+    private func steerSendKey(_ key: SteerKey, _ label: String) {
+        steerSheet?.fate = label; steerSheet?.fateOK = true
+        guard let client = desktopClient, let ss = steerSheet else { return }
+        let node = ss.node.isEmpty ? nil : ss.node
+        Task { @MainActor in
+            if let r = try? await client.coderKeys(key: ss.paneKey, keys: [key], node: node) {
+                steerSheet?.fate = r.isDelivered ? label : (r.detail ?? r.status)
+                steerSheet?.fateOK = r.isDelivered
+                if r.didRevoke { steerSheet?.armed = false }
+            }
+        }
+    }
+
+    private func steerSend(_ text: String, _ submit: Bool) {
+        steerSheet?.fate = "steered"; steerSheet?.fateOK = true
+        guard let client = desktopClient, let ss = steerSheet else { return }
+        let node = ss.node.isEmpty ? nil : ss.node
+        Task { @MainActor in
+            if let r = try? await client.steerCoder(key: ss.paneKey, text: text, submit: submit, node: node) {
+                steerSheet?.fate = r.isDelivered ? "steered" : (r.detail ?? r.status)
+                steerSheet?.fateOK = r.isDelivered
+                if r.didRevoke { steerSheet?.armed = false }
+            }
+        }
+    }
+
+    private func steerSpawn(_ name: String) {
+        guard let client = desktopClient else { steerSheet?.fate = "spawn: no desktop"; steerSheet?.fateOK = false; return }
+        Task { @MainActor in
+            if let r = try? await client.spawnSession(name: name), r.isOk, let key = r.paneKey {
+                openSteer(key, title: "pane · \(r.paneId ?? name)")
+            } else {
+                steerSheet?.fate = "spawn refused"; steerSheet?.fateOK = false
+            }
+        }
+    }
+
+    private func steerAttach(_ key: String) {
+        let title = key.hasPrefix("pane:") ? "pane · \(key.dropFirst(5))" : key
+        openSteer(key, title: title)
+    }
+
+    private func steerKill() {
+        guard let client = desktopClient, let ss = steerSheet else { steerPoll?.cancel(); steerSheet = nil; return }
+        Task { @MainActor in
+            if let r = try? await client.killCoder(key: ss.paneKey, scope: "session"), r.isKilled {
+                steerPoll?.cancel(); withAnimation { steerSheet = nil }
+            } else {
+                steerSheet?.fate = "kill refused"; steerSheet?.fateOK = false
+            }
+        }
+    }
+
+    private func steerCycleNode() {
+        guard var ss = steerSheet else { return }
+        let options = [""] + ss.nodes
+        let idx = options.firstIndex(of: ss.node) ?? 0
+        ss.node = options[(idx + 1) % options.count]
+        steerSheet = ss
     }
 
     /// remote changes (offline-safe; never on the author path). Triggered on desk load,

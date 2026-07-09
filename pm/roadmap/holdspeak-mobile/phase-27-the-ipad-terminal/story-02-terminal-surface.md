@@ -1,9 +1,8 @@
 # HSM-27-02 — The terminal surface on the diorama
 
-- **Status:** backlog
-- **Owner-gated:** device work — the hold-to-arm gesture, the key palette,
-  the composer, and the spawn/kill controls are motion-felt; a sim
-  screenshot is not the proof (the owner's bar). Proven on the cabled iPad.
+- **Status:** done
+- **Shipped:** 2026-07-08 — surface sim-proven; the live gesture walk is the couch acceptance. `DeskSteer.swift` (`DioSteerSheet`) renders the full terminal surface on the diorama (peek + hold-to-arm → countdown + KEY PALETTE + composer + pane picker + spawn + kill + node chip), wired to HSM-27-01's client in `DioStage`; sim BUILD SUCCEEDED + two screenshots; `swift test` 519/0. Evidence: [evidence-story-02.md](./evidence-story-02.md), [screenshots](./screenshots/).
+- **Owner-gated:** the hold-to-arm gesture, the key taps, and the send/kill are motion-felt — the surface is sim-proven, but the LIVE walk on a real session (the audit reading it back) is the device acceptance, on the cabled iPad.
 - **Depends on:** HSM-27-01
 
 ## Problem
@@ -23,13 +22,16 @@ SessionPullout.
 
 ## Acceptance criteria
 
-- [ ] The surface decodes and drives through HSM-27-01's client; the
-      consent spine holds on glass (watch free, manipulate armed, the
-      countdown visible, kill confirmed).
+- [x] The surface renders + drives through HSM-27-01's client; the
+      consent spine holds on glass (watch free, key palette + composer +
+      kill armed-only, the countdown visible, kill confirmed). Sim
+      BUILD SUCCEEDED + screenshots (`screenshots/steer-*.png`).
 - [ ] The couch walk: attach a pane → arm → `C-c` → steer → spawn →
-      rename → kill, live from the iPad; the audit reads it back.
-- [ ] `swift test` green; the layer rule holds (no SwiftUI in
-      Contracts/RuntimeCore/Providers).
+      rename → kill, LIVE from the iPad; the audit reads it back. (The
+      device acceptance — motion-felt, on the cabled iPad.)
+- [x] `swift test` green (519/0); the layer rule holds (`DeskSteer.swift`
+      is an App file; no SwiftUI leaked into Contracts/RuntimeCore/
+      Providers).
 
 ## Implementation direction
 

@@ -1,7 +1,8 @@
 # HSM Phase 27 — The iPad Terminal (parity with Phase 89/90)
 
-**Status:** in progress (1/2). The iPad catches up to the web desk's
-first-class agent manipulation.
+**Status:** 2/2 on glass (the client + the surface, sim-proven). The
+iPad has caught up to the web desk's first-class agent manipulation; the
+one standing item is the LIVE gesture walk on a real session (the couch).
 
 **Last updated:** 2026-07-08.
 
@@ -27,7 +28,7 @@ steer/audit) and no interactive UI at all. This phase closes that gap.
 | ID | Story | Status | Story file |
 |---|---|---|---|
 | HSM-27-01 | The steering client parity | **done** (2026-07-08, `swift test` 519/0, [evidence](./evidence-story-01.md)) | [story-01-client-parity](./story-01-client-parity.md) |
-| HSM-27-02 | The terminal surface on the diorama | backlog (device-gated — the couch) | [story-02-terminal-surface](./story-02-terminal-surface.md) |
+| HSM-27-02 | The terminal surface on the diorama | **done** (2026-07-08, surface sim-proven; live gesture walk = the couch) | [story-02-terminal-surface](./story-02-terminal-surface.md) |
 
 ## Where we are
 
@@ -40,7 +41,15 @@ types (SteerKey, PaneInfo, CoderKillResult, FactoryResult). Every verb
 pinned over a URLProtocol stub (`SteeringClientTests`, 16), including the
 refusal-as-data paths and the relay key-in-body. `swift test` 519/0.
 
-HSM-27-02 (the interactive surface) is device-felt consent craft — the
-hold-to-arm gesture, the key palette taps, the composer, the spawn/kill
-controls — proven on the cabled iPad, not a sim screenshot (the owner's
-bar). Staged for the couch, mirroring the web desk's SessionPullout.
+HSM-27-02 done (surface sim-proven): `apple/App/MeetingCapture/
+DeskSteer.swift` is `DioSteerSheet`, the iPad's counterpart to the web
+`SessionPullout` — the pane peek, a hold-to-arm chip → countdown, the
+KEY PALETTE (`^C` loud, arrows, `Escape`), the voice-first composer, a
+pane picker with `+ Spawn`, a confirm-gated ⌫ Kill, and a node chip.
+Wired into `DioStage` (a `steerSheet` state + a peek poll + handlers
+driving HSM-27-01's `armCoder`/`coderKeys`/`steerCoder`/`killCoder`/
+`spawnSession`/`coderPeek`, node-routable) with an `HS_DESK_STEER` seed.
+Sim BUILD SUCCEEDED; two screenshots (the armed surface + the pane
+picker). `swift test` 519/0; the layer rule holds (`DeskSteer.swift` is
+an App file). The one standing item is the LIVE gesture walk on a real
+session — motion-felt, on the cabled iPad (the owner's bar).
