@@ -208,6 +208,15 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         _sweep_and_frame()
         return JSONResponse({"grants": coder_steering.active_grants()})
 
+    @router.get("/api/coders/steering/nodes")
+    async def api_coder_nodes() -> Any:
+        """The configured steering nodes, NAMES ONLY (HS-90-02) — never the
+        base URL or token. The desk's node chip lists these to target a
+        machine; an empty list means "this Mac only"."""
+        from .... import coder_steering_relay
+
+        return JSONResponse({"nodes": sorted(coder_steering_relay.load_nodes().keys())})
+
     @router.get("/api/coders/steering/panes")
     async def api_coder_panes() -> Any:
         """Every tmux pane on the machine (HS-89-02) — the discovery behind

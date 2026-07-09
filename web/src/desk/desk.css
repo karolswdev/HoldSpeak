@@ -1162,6 +1162,124 @@
 .desk-next .desk-steer-sent { color: var(--ok); font-size: 11px; font-family: var(--font-mono); }
 .desk-next .desk-steer-grounded { color: var(--text-faint); font-size: 10px; }
 
+/* ── HS-90-02: the key palette (full key control on glass) ── */
+.desk-next .desk-keypad { display: flex; align-items: center; gap: 8px; width: 100%; flex-wrap: wrap; }
+.desk-next .desk-keypad-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .desk-keypad-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.desk-next .desk-key {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 7px;
+  border: 1px solid var(--surface-3);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color var(--duration-short) var(--ease-standard),
+    background var(--duration-short) var(--ease-standard),
+    transform var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-key:hover { border-color: var(--accent); background: var(--surface-2); }
+.desk-next .desk-key:active { transform: translateY(1px); border-bottom-width: 1px; }
+.desk-next .desk-key.is-interrupt {
+  color: var(--danger-signal);
+  border-color: color-mix(in srgb, var(--danger-signal) 45%, var(--surface-3));
+}
+.desk-next .desk-key.is-interrupt:hover {
+  border-color: var(--danger-signal);
+  background: color-mix(in srgb, var(--danger-signal) 12%, transparent);
+}
+.desk-next .desk-key-fate { font-size: 11px; margin-left: 2px; }
+
+/* ── HS-90-02: the node chip (which machine steering targets) ── */
+.desk-next .desk-node-chip { font-family: var(--font-mono); letter-spacing: 0.04em; }
+.desk-next .desk-node-chip.is-remote {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-glow);
+}
+
+/* ── HS-90-02: the pane picker (attach to any tmux pane) ── */
+.desk-next .desk-panepicker { position: fixed; left: 16px; bottom: 16px; z-index: 60; }
+.desk-next .desk-panepicker-launch { font-family: var(--font-mono); }
+.desk-next .desk-panepicker.is-open .desk-panepicker-launch { border-color: var(--accent); color: var(--accent); }
+.desk-next .desk-panepicker-list {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  min-width: 260px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--surface-3);
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface-2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+.desk-next .desk-panepicker-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 9px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-panepicker-item:hover { background: var(--surface-1); }
+.desk-next .desk-panepicker-item.is-active { box-shadow: inset 2px 0 0 0 var(--accent); }
+.desk-next .desk-panepicker-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  min-width: 34px;
+}
+.desk-next .desk-panepicker-meta { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desk-next .desk-panepicker-empty { padding: 8px 10px; color: var(--text-muted); font-size: 12px; }
+.desk-next .desk-panepicker-spawn { display: flex; gap: 6px; padding: 4px 4px 6px; }
+.desk-next .desk-panepicker-spawn .desk-classify-input { flex: 1; }
+.desk-next .desk-panepicker-divider { height: 1px; background: var(--surface-3); margin: 2px 0 6px; opacity: 0.6; }
+
+/* ── HS-90-03: the factory controls (rename + kill on glass) ── */
+.desk-next .desk-factory { display: flex; align-items: center; gap: 8px; width: 100%; flex-wrap: wrap; }
+.desk-next .desk-factory-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .desk-factory-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; flex: 1; }
+.desk-next .desk-chip.desk-kill {
+  color: var(--danger-signal);
+  border-color: color-mix(in srgb, var(--danger-signal) 40%, var(--surface-3));
+}
+.desk-next .desk-chip.desk-kill:hover {
+  border-color: var(--danger-signal);
+  background: color-mix(in srgb, var(--danger-signal) 12%, transparent);
+}
+.desk-next .desk-chip.desk-kill-confirm {
+  color: #fff;
+  background: var(--danger-signal);
+  border-color: var(--danger-signal);
+  font-family: var(--font-mono);
+}
+
 /* ── HS-87-05: classify (keep as note, pin to story, flip from here) ── */
 .desk-next .desk-classify { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 .desk-next .desk-classify-label {

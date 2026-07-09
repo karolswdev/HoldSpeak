@@ -661,7 +661,9 @@
         "POST"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/factory/spawn",
@@ -669,7 +671,9 @@
         "POST"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/pin",
@@ -687,7 +691,9 @@
         "POST"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/relay/{node}/disarm",
@@ -695,7 +701,9 @@
         "POST"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/relay/{node}/keys",
@@ -703,7 +711,9 @@
         "POST"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/relay/{node}/peek",
@@ -711,7 +721,9 @@
         "GET"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/relay/{node}/steer",
@@ -719,7 +731,9 @@
         "POST"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/select",
@@ -760,11 +774,22 @@
       ],
       "module": "web.routes.system.coder_steering_routes",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
       "path": "/api/coders/steering/grants",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.coder_steering_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/coders/steering/nodes",
       "methods": [
         "GET"
       ],
@@ -779,7 +804,9 @@
         "GET"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/{key}/arm",
@@ -819,7 +846,9 @@
         "POST"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/{key}/kill",
@@ -827,7 +856,9 @@
         "POST"
       ],
       "module": "web.routes.system.coder_steering_routes",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/{key}/peek",

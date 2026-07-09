@@ -2,7 +2,8 @@
 
 - **Project:** holdspeak
 - **Phase:** 90
-- **Status:** backlog
+- **Status:** done
+- **Shipped:** 2026-07-08 — the full lifecycle is on glass. The picker gained a `+ Spawn` row; the armed pull-out a SESSION row (Rename + a two-step-confirm ⌫ Kill). The walk passed 8/8 live through the desk's exact routes (spawn → picker → arm → C-c → steer → rename → kill → audit). Docs + final-summary shipped. **Phase 90 CLOSED 3/3.** Evidence: [evidence-story-03.md](./evidence-story-03.md), [screenshots](./screenshots/).
 - **Depends on:** HS-90-01, HS-90-02
 - **Unblocks:** —
 
@@ -23,12 +24,16 @@ lifecycle on glass — and the phase closes on a live walk.
 
 ## Acceptance criteria
 
-- [ ] Spawn from the desk creates a session that appears in the pane
-      picker; rename relabels it; kill (armed + confirm) ends it.
-- [ ] The walk: spawn → arm → steer (a key + text) → rename → kill, live,
-      captured (screens + the audit trail).
-- [ ] Docs shipped in canon voice (no dashes / roadmap vocab in
-      user-facing docs); final-summary written; suite + guards green.
+- [x] Spawn from the desk creates a session that appears in the pane
+      picker; rename relabels it; kill (armed + a two-step confirm) ends
+      it. Screenshot-verified (`screenshots/factory-*.png`).
+- [x] The walk (`evidence-story-03.md`, 8/8 live through the desk's exact
+      routes): spawn → in the picker → arm → `C-c` → steer
+      (`WALKED_FROM_GLASS` landed) → rename → kill (session gone) → the
+      audit read it all back.
+- [x] Docs shipped in canon voice (no dashes / roadmap vocab, voice guard
+      green): USER_GUIDE, SECURITY, ARCHITECTURE; final-summary written;
+      suite + guards green.
 
 ## Implementation direction
 

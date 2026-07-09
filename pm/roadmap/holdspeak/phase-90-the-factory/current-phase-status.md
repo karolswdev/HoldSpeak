@@ -1,6 +1,10 @@
 # Phase 90 — The Factory (session lifecycle + the manipulation UI)
 
-**Last updated:** 2026-07-08 (phase scaffolded).
+**Status: CLOSED 3/3 — 2026-07-08 (scaffolded and shipped the same day).**
+The lifecycle rides the spine; the manipulation and factory are on glass;
+the walk passed 8/8 live through the desk's own routes.
+
+**Last updated:** 2026-07-08 (phase CLOSED 3/3).
 
 ## Goal
 
@@ -34,25 +38,25 @@ human behind every act.
 
 ## Exit criteria (evidence required)
 
-- [ ] Spawn creates a real detached session and returns its pane; rename
+- [x] Spawn creates a real detached session and returns its pane; rename
       relabels it; kill (armed) terminates the verified pane; a recycled
-      pane refuses+revokes the kill — every act audited (HS-90-01, live).
-- [ ] The web desk drives a real pane: a key palette sends `C-c`/arrows,
-      a pane picker attaches to any pane, a node chip targets a machine —
-      screenshot-proven (HS-90-02).
-- [ ] The factory is on glass: spawn/kill/rename from the desk, with the
-      kill guarded by the arm (HS-90-03), screenshot-proven.
-- [ ] The walk: spawn → steer → rename → kill, live, from the desk;
-      the audit answers who/what/where; suite + guards green; docs
-      shipped (HS-90-03).
+      pane refuses+revokes the kill; every act audited (HS-90-01, live).
+- [x] The web desk drives a real pane: a key palette sends `C-c`/arrows,
+      a pane picker attaches to any pane, a node chip targets a machine
+      (HS-90-02, screenshot).
+- [x] The factory is on glass: spawn/kill/rename from the desk, the kill
+      guarded by the arm + a confirm (HS-90-03, screenshot).
+- [x] The walk: spawn → arm → `C-c` → steer → rename → kill, live through
+      the desk's routes; the audit answers who/what/where; suite + guards
+      green; docs shipped (HS-90-03).
 
 ## Story status
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-90-01 | The factory — spawn, rename, kill | **done** (2026-07-08, live) | [story-01-factory](./story-01-factory.md) | [evidence-01](./evidence-story-01.md) |
-| HS-90-02 | The manipulation surface on the web desk | backlog | [story-02-manip-ui](./story-02-manip-ui.md) | - |
-| HS-90-03 | The factory on glass + the walk + close | backlog | [story-03-factory-glass-walk](./story-03-factory-glass-walk.md) | - |
+| HS-90-02 | The manipulation surface on the web desk | **done** (2026-07-08, screenshot) | [story-02-manip-ui](./story-02-manip-ui.md) | [evidence-02](./evidence-story-02.md) |
+| HS-90-03 | The factory on glass + the walk + close | **done** (2026-07-08, walk 8/8 live) | [story-03-factory-glass-walk](./story-03-factory-glass-walk.md) | [evidence-03](./evidence-story-03.md) |
 
 ## Where we are
 
@@ -71,7 +75,30 @@ Routes `POST /api/coders/factory/{spawn,rename}` + `POST /api/coders/
 module. Proven live: spawn → rename → arm → steer (`BORN_AND_STEERED`
 landed) → kill (session gone, grant dropped); a payload name
 (`evil; reboot`) refused before tmux; the audit read back all five acts.
-Suite 3514/0. Next: HS-90-02 (the manipulation UI on the web desk).
+Suite 3514/0.
+
+**HS-90-02 done (2026-07-08, screenshot) — you drive a terminal from
+glass now.** The armed session pull-out (`web/src/desk`) gained: a KEY
+PALETTE (`^C`/`Esc`/`Tab`/`⏎`/arrows → `/keys`, `^C` styled loud), shown
+only in the armed window; a `⧉ Panes` picker (`GET .../panes`, attach to
+any `pane:%N`, the active pane marked); a NODE CHIP (this Mac / a
+configured node — a node routes arm/steer/keys/peek through the relay via
+one `verbEndpoint` helper). The store is node-aware end to end. Built +
+desk tests 97/97 + tsc clean; screenshot-verified on the running desk
+(the armed key palette on pane %3, and the pane picker).
+
+**HS-90-03 done (2026-07-08) — PHASE CLOSED 3/3.** The factory is on
+glass: the picker gained a `+ Spawn` row, and the armed pull-out a
+SESSION row with Rename and a two-step-confirm ⌫ Kill. The walk passed
+8/8 live through the desk's EXACT routes: spawn → the pane in the picker
+→ arm → `C-c` → steer (`WALKED_FROM_GLASS` landed) → rename → kill
+(session gone) → the audit read it all back. Docs shipped (USER_GUIDE the
+manipulation + factory on glass, SECURITY the lifecycle acts, ARCHITECTURE
+the factory paragraph); [final-summary.md](./final-summary.md) records the
+riders (the iPad catch-up, cross-machine factory, agent-into-a-pane). The
+owner's fast follow — the factory AND the UI — is delivered: spawn, drive
+(any key), rename, and kill a terminal from glass, all on the one consent
+spine.
 
 ## Active risks
 

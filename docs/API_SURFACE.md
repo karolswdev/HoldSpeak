@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 269 (plus static mounts). iOS-consumed: 64. Web-consumed: 186.
+Routes: 270 (plus static mounts). iOS-consumed: 64. Web-consumed: 198.
 
 ## device_audio_ws
 
@@ -446,21 +446,22 @@ Routes: 269 (plus static mounts). iOS-consumed: 64. Web-consumed: 186.
 
 | Method | Path | Consumers |
 |---|---|---|
-| POST | `/api/coders/factory/rename` | server only |
-| POST | `/api/coders/factory/spawn` | server only |
-| POST | `/api/coders/relay/{node}/arm` | server only |
-| POST | `/api/coders/relay/{node}/disarm` | server only |
-| POST | `/api/coders/relay/{node}/keys` | server only |
-| GET | `/api/coders/relay/{node}/peek` | server only |
-| POST | `/api/coders/relay/{node}/steer` | server only |
-| GET | `/api/coders/steering/audit` | ios |
+| POST | `/api/coders/factory/rename` | web |
+| POST | `/api/coders/factory/spawn` | web |
+| POST | `/api/coders/relay/{node}/arm` | web |
+| POST | `/api/coders/relay/{node}/disarm` | web |
+| POST | `/api/coders/relay/{node}/keys` | web |
+| GET | `/api/coders/relay/{node}/peek` | web |
+| POST | `/api/coders/relay/{node}/steer` | web |
+| GET | `/api/coders/steering/audit` | ios, web |
 | GET | `/api/coders/steering/grants` | web |
-| GET | `/api/coders/steering/panes` | server only |
+| GET | `/api/coders/steering/nodes` | web |
+| GET | `/api/coders/steering/panes` | web |
 | POST | `/api/coders/{key}/arm` | ios, web |
 | POST | `/api/coders/{key}/disarm` | ios, web |
 | POST | `/api/coders/{key}/keep-note` | web |
-| POST | `/api/coders/{key}/keys` | server only |
-| POST | `/api/coders/{key}/kill` | server only |
+| POST | `/api/coders/{key}/keys` | web |
+| POST | `/api/coders/{key}/kill` | web |
 | GET | `/api/coders/{key}/peek` | ios, web |
 | POST | `/api/coders/{key}/steer` | ios, web |
 
