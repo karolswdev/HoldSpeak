@@ -1,0 +1,19 @@
+id: d-key-never-syncs
+title: The key never syncs; the door is loopback-gated
+features:
+  - onboarding.trust.privacy_chip
+  - trust.binding.loopback-token-gate
+recipes:
+  - fresh-desk
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: yes
+steps:
+  - do: Read the privacy chip's three promises on the desk.
+    expect: The chip states the answers plainly (local by default, what leaves and when, the key never syncs) without marketing.
+    where: /
+  - do: Confirm the run answers on loopback without a token, and would require one off-loopback.
+    expect: The loopback door is open for local use; a non-loopback bind is gated by the run's own token — the promise the chip makes is the behaviour.
+    where: /
+teardown: []

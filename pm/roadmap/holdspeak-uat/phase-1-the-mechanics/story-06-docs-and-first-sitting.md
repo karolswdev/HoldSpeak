@@ -2,9 +2,9 @@
 
 - **Project:** holdspeak-uat
 - **Phase:** 1
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HSU-1-05
-- **Owner:** unassigned
+- **Owner:** agent (docs + packs) / owner (the live sitting)
 
 ## Problem
 
@@ -49,23 +49,32 @@ through the real protocol.
 
 ## Acceptance criteria
 
-- [ ] Both docs exist and are sufficient: a cold reader can start the
-      conductor, run a sitting, and author a scenario without reading
-      harness source.
-- [ ] `dogfood/PROTOCOL.md` points here; no dead absorbed files
-      remain.
-- [ ] The sitting happened on real metal: a completed smoke-pack run
-      in the run DB with a generated debrief, every scenario visited,
-      the three-surface scenario carrying verdicts on all three
-      surfaces with ≥1 cast from a device, real verdicts (a sitting
-      of ten PASSes cast in ten seconds is not a sitting — timestamps
-      are part of the evidence).
-- [ ] The triage ritual was held per `uat/TRIAGE.md`; ≥1 finding
-      dispositioned; any `fix` visible in
-      `pm/roadmap/holdspeak/BACKLOG.md`.
-- [ ] Phase exit criteria in `current-phase-status.md` all check;
-      final summary written with the Phase-2 handoff (uncovered ledger
-      keys as the scenario backlog).
+- [x] Both docs exist and are sufficient: `uat/README.md` (with the
+      owner wake-up runbook at the top, the port map, the sitting flow,
+      per-deck prerequisites, and an honest "Known state") + a cold
+      reader can author a scenario/deck/seed/recipe from
+      `uat/AUTHORING.md` without reading harness source.
+- [x] `dogfood/PROTOCOL.md` points here as the way UAT is now run; no
+      dead absorbed files remain (the substrate — `_home` recipe, mock
+      repos, transcripts, `make_fixtures.py` — is reused and documented).
+- [x] **Real scenario packs authored** (beyond the smoke pack, so the rig
+      puts the app through its paces): **Pack D — Honest Failure & Trust**
+      (6 scenarios, fully local, demos without the LAN), **Pack A —
+      Meeting Aftercare** and **Pack C — Dictation Grounding** (`.43`
+      web legs). All validate clean; Pack D stages locally end to end
+      (`test_packs.py`).
+- [ ] **OWNER-GATED — the live human sitting.** The rig is built up to
+      the sitting; the sitting itself cannot be delegated to an agent or
+      a simulator (that is the point of the project). Left for the owner:
+      a completed pack run in the run DB with a generated debrief, the
+      three-surface scenario carrying real verdicts on all three surfaces
+      with ≥1 cast from a device.
+- [ ] **OWNER-GATED — the joint triage** per `uat/TRIAGE.md`; ≥1 finding
+      dispositioned; any `fix` landed in `pm/roadmap/holdspeak/BACKLOG.md`
+      through the gate.
+- [ ] **OWNER-GATED — phase close.** Phase exit criteria checked and the
+      final summary written (with the Phase-2 handoff: the ledger's
+      uncovered keys are Phase 3's scenario backlog) after the sitting.
 
 ## Test plan
 

@@ -1,0 +1,23 @@
+id: d-mesh-offline-door
+title: The offline door — a node dies, the desk refuses fast
+features:
+  - mesh.liveness_everywhere
+  - mesh.serve_node
+recipes:
+  - mesh-node-alive
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the mesh profile/liveness surface on iPhone is unverified in the record"}
+steps:
+  - do: Open the profiles view; confirm the worker reads live (the staging beat).
+    expect: The "uat-worker" node reads live — the hub has seen it poll recently.
+    where: /
+    # The honest-failure close: kill the worker's process group mid-run, then
+    # watch the world degrade correctly.
+    after:
+      - apply_recipe: mesh-node-just-died
+  - do: The node has just been stopped. Refresh the profiles view.
+    expect: The node now reads offline; a forced run against it refuses fast, by name, rather than hanging on a dead worker.
+    where: /
+teardown: []

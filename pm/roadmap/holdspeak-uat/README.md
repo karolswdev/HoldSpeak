@@ -5,7 +5,7 @@
 > source seams, the autonomy contract, and the definition of done. It is written
 > to be executed unattended, end to end.
 
-**Last updated:** 2026-07-09 (HSU-1-05 shipped — the debrief packet (md+json, per-surface scores + log slices) + findings/triage lifecycle + TRIAGE.md + the BACKLOG feed; Phase 1 at 5/6)
+**Last updated:** 2026-07-09 (HSU-1-06 docs + real packs shipped — uat/README+AUTHORING, dogfood supersession, Packs D/A/C. The framework is complete and running; the one remaining beat is the owner's live sitting. Phase 1 at 5/6 + docs)
 **Current phase:** [Phase 1 — The Mechanics](./phase-1-the-mechanics/current-phase-status.md)
 **Status:** active
 

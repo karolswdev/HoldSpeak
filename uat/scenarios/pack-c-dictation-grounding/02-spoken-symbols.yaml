@@ -1,0 +1,15 @@
+id: c-spoken-symbols
+title: Spoken symbols land as symbols
+features:
+  - languages.spoken_symbol_dictionary
+recipes:
+  - seeded-desk-43
+surfaces:
+  web: yes
+  ipad: {n/a: "iPad dictation depth is unverified in the record"}
+  iphone: {n/a: "iPhone dictation depth is unverified in the record"}
+steps:
+  - do: Dictate a phrase using the spoken-symbol words (for example "at sign", "hash", "percent sign").
+    expect: Each spoken symbol lands as its character with the configured spacing, not as the words — one combined matcher pass, no double substitution.
+    where: /
+teardown: []

@@ -1,0 +1,19 @@
+id: a-unapproved-never-egresses
+title: An unapproved proposal never egresses (the honest-failure close)
+features:
+  - trust.egress.cloud-meeting-intel
+  - meetings.aftercare.action-to-issue
+recipes:
+  - meeting-just-ended-open-actions
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the proposal/egress surface on iPhone is unverified in the record"}
+steps:
+  - do: Read the egress badge on each aftercare card.
+    expect: Each card's badge tells the truth about where its content went (the meeting intel was cloud on golden-43, and the badge says so).
+    where: /history
+  - do: Leave a proposal unapproved and confirm nothing left the machine.
+    expect: An unapproved proposal never egresses — no issue is filed, no webhook fires, until a human approves. This is the pack's close, the product staying honest when nothing has been consented to.
+    where: /history
+teardown: []
