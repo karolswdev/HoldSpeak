@@ -33,26 +33,45 @@ Every deck is round-tripped through the product's `Config.load` in
 `tests/uat/test_decks.py` so it can't rot. Add yours to `REQUIRED_DECKS` there
 if it's load-bearing.
 
-## Add a seed manifest
+## Add a seed manifest — create any desk primitive
 
-Seeds carry a **deterministic `id`** so re-applying upserts in place (no
-duplicate desk). Meetings import a committed transcript.
+A seed manifest creates desk state through the product's own public routes, so a
+seeded object is indistinguishable from a user-made one. It covers **every
+primitive type the product exposes a create route for**. Every item carries a
+**deterministic `id`** so re-applying upserts in place (no duplicate desk).
 
 ```yaml
 # uat/seeds/my-seed.yaml
-notes:
-  - id: uat-seed-my-note        # deterministic → idempotent
+notes:                    # -> POST /api/notes
+  - id: uat-seed-my-note
     title: A note
     body_markdown: "…"
     tags: [uat-seed]
-kbs:
+kbs:                      # knowledge blocks -> POST /api/kbs   (alias: knowledge_blocks:)
   - id: uat-seed-my-kb
     name: My KB
-meetings:
+directories:              # the desk ZONES -> POST /api/directories   (alias: zones:)
+  - id: uat-seed-my-zone
+    name: My zone
+    member_ids: [uat-seed-my-note]   # files primitives into the zone
+recipes:                  # desk recipe primitives -> POST /api/recipes
+  - id: uat-seed-my-recipe
+    name: Summarize like a PM
+    system_prompt: "Summarize as decisions, owners, risks."
+chains:                   # -> POST /api/chains          (steps: [...])
+workflows:                # -> POST /api/workflows        (prompt:, graph_json:)
+profiles:                 # runtime profiles -> POST /api/profiles   (kind:, node:)
+  - id: uat-seed-my-profile
+    name: Local profile
+    kind: onDevice
+meetings:                 # transcript import -> POST /api/meetings/import
   - transcript: dogfood/transcripts/pylon-incident.vtt
     title: My meeting (UAT seed)
     tags: [uat-seed]
 ```
+
+Each item's fields are passed straight through to its route, so any field the
+route accepts works. `uat/seeds/desk-zones-demo.yaml` is the worked example.
 
 ## Add a state recipe
 
@@ -131,6 +150,46 @@ wording.
 **No pack is all-green-happy-path.** Open with a staging-verify beat and close
 with an honest-failure or control beat. If a pack has no beat that could fail
 loudly, it is a demo, not a test.
+
+## Drive the harness ad-hoc (no sitting)
+
+The conductor + guided site are for a *sitting*. To just **induce a world and
+poke it** — create a KB, a zone, a meeting; boot a broken deck; spawn a mesh
+node — use the staging CLI:
+
+```bash
+# See everything you can invoke (decks, recipes, seeds)
+uv run python -m uat.stage --list
+
+# A seeded desk on golden-local; opens a product URL you can poke, stays up
+uv run python -m uat.stage --recipe seeded-desk
+
+# Create specific things: apply one or more seeds (KBs, zones, notes, …)
+uv run python -m uat.stage --deck golden-local --seed desk-zones-demo
+
+# A real meeting with open actions (needs .43), then tear down at once
+uv run python -m uat.stage --recipe meeting-just-ended-open-actions --once
+
+# Bind LAN so an iPad/iPhone can pair with the run
+uv run python -m uat.stage --recipe seeded-desk --lan
+```
+
+It boots an isolated HoldSpeak, applies the recipes/seeds, prints the run's
+product URL (and token, if LAN), and holds the run up until Ctrl-C.
+
+**Or drive it over the conductor API** (same verbs the site uses) — start
+`uv run python -m uat.conductor`, then:
+
+```bash
+RUN=$(curl -s -XPOST localhost:8799/api/runs -d '{"deck":"golden-local"}' | jq -r .id)
+curl -s -XPOST localhost:8799/api/runs/$RUN/recipes/seeded-desk        # apply a recipe
+curl -s -XPOST localhost:8799/api/runs/$RUN/seeds/desk-zones-demo      # create zones/KBs/…
+curl -s -XPOST localhost:8799/api/runs/$RUN/nodes -d '{"name":"w1"}'   # spawn a mesh node
+curl -s localhost:8799/api/runs/$RUN                                    # pairing facts + status
+curl -s -XDELETE localhost:8799/api/runs/$RUN                           # tear down
+```
+
+`GET /api/decks`, `GET /api/recipes`, `GET /api/seeds` enumerate what's available.
 
 ## Validate before you commit
 

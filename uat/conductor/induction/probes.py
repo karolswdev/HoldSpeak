@@ -125,6 +125,53 @@ class ProbeEvaluator:
         ids = {k.get("id") for k in self._kbs()}
         return (wanted in ids, f"KB {wanted!r} {'present' if wanted in ids else 'absent'}")
 
+    # --- other desk primitives (verify seeded state) ----------------------
+
+    def _list_ids(self, path: str, key: str) -> set:
+        try:
+            return {x.get("id") for x in self.client.get_json(path).get(key, [])}
+        except Exception:
+            return set()
+
+    def _check_recipe_exists(self, arg):
+        wanted = str(arg)
+        present = wanted in self._list_ids("/api/recipes", "recipes")
+        return (present, f"recipe {wanted!r} {'present' if present else 'absent'}")
+
+    def _check_chain_exists(self, arg):
+        wanted = str(arg)
+        present = wanted in self._list_ids("/api/chains", "chains")
+        return (present, f"chain {wanted!r} {'present' if present else 'absent'}")
+
+    def _check_workflow_exists(self, arg):
+        wanted = str(arg)
+        present = wanted in self._list_ids("/api/workflows", "workflows")
+        return (present, f"workflow {wanted!r} {'present' if present else 'absent'}")
+
+    def _check_directory_exists(self, arg):
+        """A desk zone (directory) is present. arg = id, or {id, members: [ids]}."""
+        wanted = str(arg if not isinstance(arg, dict) else arg.get("id"))
+        try:
+            dirs = self.client.get_json("/api/directories").get("directories", [])
+        except Exception:
+            dirs = []
+        match = next((d for d in dirs if d.get("id") == wanted), None)
+        if match is None:
+            return (False, f"zone {wanted!r} absent")
+        if isinstance(arg, dict) and arg.get("members"):
+            have = set(match.get("member_ids", []))
+            want = set(arg["members"])
+            return (want <= have, f"zone {wanted!r} members {sorted(have)} (need {sorted(want)})")
+        return (True, f"zone {wanted!r} present")
+
+    # Alias — a "zone" reads more naturally in a recipe than "directory".
+    _check_zone_exists = _check_directory_exists
+
+    def _check_profile_exists(self, arg):
+        wanted = str(arg)
+        present = wanted in self._list_ids("/api/profiles", "profiles")
+        return (present, f"profile {wanted!r} {'present' if present else 'absent'}")
+
     # --- meetings ---------------------------------------------------------
 
     def _check_meeting_with_open_actions(self, arg):

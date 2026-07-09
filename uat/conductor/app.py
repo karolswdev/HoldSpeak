@@ -163,6 +163,21 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
     def list_recipes() -> Any:
         return {"recipes": mgr().recipes.registry.all()}
 
+    @app.get("/api/seeds")
+    def list_seeds() -> Any:
+        return {"seeds": mgr().seed_names()}
+
+    @app.post("/api/runs/{run_id}/seeds/{name}")
+    def apply_seed(run_id: str, name: str) -> Any:
+        if mgr().get(run_id) is None:
+            raise HTTPException(status_code=404, detail=f"no such run: {run_id}")
+        from .induction.seeds import SeedError
+
+        try:
+            return mgr().apply_seed(run_id, name)
+        except SeedError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
     @app.post("/api/runs/{run_id}/recipes/{name}")
     def apply_recipe(run_id: str, name: str, body: ApplyRecipeBody) -> Any:
         if mgr().get(run_id) is None:

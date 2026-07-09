@@ -342,6 +342,16 @@ class RunManager:
     def apply_recipe(self, run_id: str, name: str, *, allow_intel: bool = True):
         return self.recipes.apply(name, run_id, self, allow_intel=allow_intel)
 
+    def apply_seed(self, run_id: str, name: str) -> dict:
+        """Apply a seed manifest to a booted run ad-hoc (outside a full recipe)."""
+        from .induction.seeds import Seeder
+
+        manifest = self.recipes.seed_registry.load(name)
+        return Seeder(self.product_client(run_id)).apply(manifest).to_dict()
+
+    def seed_names(self) -> list[str]:
+        return self.recipes.seed_registry.names()
+
     def teardown(self, run_id: str) -> Run | None:
         with self._lock:
             entry = self._runs.get(run_id)

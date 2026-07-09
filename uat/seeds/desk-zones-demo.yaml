@@ -1,0 +1,29 @@
+# Demonstrates the full seed vocabulary — knowledge blocks, zones (directories
+# with filed members), notes, a recipe primitive, and a profile — all created
+# through the product's own public routes, all idempotent via deterministic ids.
+# Used by uat/AUTHORING.md as the worked example of "create X, and so on".
+kbs:                       # knowledge blocks
+  - id: uat-seed-kb-demo
+    name: Demo project KB
+notes:
+  - id: uat-seed-note-z1
+    title: Filed note A
+    body_markdown: The first note filed into the demo zone.
+    tags: [uat-seed, demo]
+  - id: uat-seed-note-z2
+    title: Filed note B
+    body_markdown: The second note filed into the demo zone.
+    tags: [uat-seed, demo]
+directories:               # the desk ZONES (alias: `zones:`)
+  - id: uat-seed-zone-demo
+    name: Demo zone
+    member_ids: [uat-seed-note-z1, uat-seed-note-z2]
+recipes:                   # a desk recipe primitive (a saved persona/instruction)
+  - id: uat-seed-recipe-demo
+    name: Summarize like a PM
+    role: A pragmatic PM
+    system_prompt: Summarize the input as decisions, owners, and risks.
+profiles:                  # a runtime profile
+  - id: uat-seed-profile-demo
+    name: Local profile
+    kind: onDevice

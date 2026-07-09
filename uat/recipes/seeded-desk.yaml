@@ -13,3 +13,5 @@ probe:
   - note_exists: uat-seed-note-glossary
   - kb_exists: uat-seed-kb-project
   - kb_exists: uat-seed-kb-incidents
+  - zone_exists: {id: uat-seed-zone-decisions, members: [uat-seed-note-decisions, uat-seed-note-standup]}
+  - recipe_exists: uat-seed-recipe-pm
