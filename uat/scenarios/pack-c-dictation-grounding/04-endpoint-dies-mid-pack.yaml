@@ -1,0 +1,21 @@
+id: c-endpoint-dies-mid-pack
+title: The endpoint dies mid-pack — the rewrite degrades honestly
+features:
+  - dictation.pipeline.dry_run
+recipes:
+  - seeded-desk-43
+surfaces:
+  web: yes
+  ipad: {n/a: "iPad dictation depth is unverified in the record"}
+  iphone: {n/a: "iPhone dictation depth is unverified in the record"}
+steps:
+  - do: Dictate once while the endpoint is healthy (the staging beat — grounded rewrite works).
+    expect: The rewrite runs and returns a grounded result.
+    where: /
+    # The honest-failure close: kill the intel endpoint mid-pack.
+    after:
+      - apply_recipe: intel-endpoint-dead
+  - do: The intel endpoint is now dead. Dictate the same phrase again.
+    expect: The pipeline degrades to the raw transcript, honestly and fast — the DIR-01 invariant holds (you always get your words back), and the surface says the rewrite is unavailable rather than hanging or dropping the text.
+    where: /
+teardown: []

@@ -1,0 +1,15 @@
+id: a-import-to-artifacts
+title: Import to intel artifacts (structural verdict)
+features:
+  - meetings.import.transcript
+recipes:
+  - meeting-just-ended-open-actions
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the meeting intel surface on iPhone is unverified in the record"}
+steps:
+  - do: Open the imported meeting and read its intel artifacts (the staging beat — a meeting just ended with open actions).
+    expect: The right artifact types rendered — an action-item list with owners, and the decisions or open questions the war-room surfaced. Judge on substance (did it surface the decision, the owner, the risk), not on exact wording.
+    where: /history
+teardown: []

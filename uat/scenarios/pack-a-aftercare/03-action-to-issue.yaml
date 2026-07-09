@@ -1,0 +1,19 @@
+id: a-action-to-issue
+title: Action to issue — propose, approve, execute
+features:
+  - meetings.aftercare.action-to-issue
+  - meetings.aftercare.file_as_issue
+recipes:
+  - meeting-just-ended-open-actions
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: {n/a: "the action-to-issue actuator surface on iPhone is unverified in the record"}
+steps:
+  - do: Turn one open action into an issue proposal.
+    expect: A proposal is queued, unexecuted, and shows exactly what would be filed and where; nothing has been sent yet.
+    where: /history
+  - do: Approve the proposal, then read the audit.
+    expect: Only on approval does it execute; the audit records who approved it and what was filed — the off-by-default actuator flow, honestly gated.
+    where: /history
+teardown: []

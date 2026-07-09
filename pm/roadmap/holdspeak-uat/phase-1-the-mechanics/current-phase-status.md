@@ -1,8 +1,9 @@
 # Phase 1 — The Mechanics
 
-**Last updated:** 2026-07-09 (HSU-1-05 shipped: the debrief packet
-(md+json, per-surface scores + log slices), the findings/triage
-lifecycle, `uat/TRIAGE.md`, and the BACKLOG-block feed; 5/6)
+**Last updated:** 2026-07-09 (HSU-1-06 docs + real scenario packs
+shipped — `uat/README.md`/`AUTHORING.md`, dogfood supersession, Packs
+D/A/C; the engine + web loop are complete. **The one thing left is the
+owner's live sitting** (HSU-1-06's owner-gated beat); 5/6 + docs)
 
 ## Goal
 
@@ -85,9 +86,28 @@ sitting run end to end by the owner across all three surfaces.
 | HSU-1-03 | The scenario contract + the feature ledger | done | [story-03](./story-03-scenario-contract-and-coverage.md) | [evidence-03](./evidence-story-03.md) |
 | HSU-1-04 | The guided site | done | [story-04](./story-04-the-guided-site.md) | [evidence-04](./evidence-story-04.md) |
 | HSU-1-05 | The debrief + the triage protocol | done | [story-05](./story-05-the-debrief.md) | [evidence-05](./evidence-story-05.md) |
-| HSU-1-06 | Docs + the first sitting | backlog | [story-06](./story-06-docs-and-first-sitting.md) | — |
+| HSU-1-06 | Docs + the first sitting | in-progress (docs+packs done; sitting owner-gated) | [story-06](./story-06-docs-and-first-sitting.md) | — |
 
 ## Where we are
+
+**HSU-1-06 docs + real scenario packs shipped (2026-07-09); the live sitting
+is the owner's.** `uat/README.md` carries the owner wake-up runbook, the port
+map, the sitting flow, per-deck prerequisites, and an honest "Known state";
+`uat/AUTHORING.md` teaches adding a scenario/deck/seed/recipe; `dogfood/
+PROTOCOL.md` now points here as the way UAT is run (its substrate reused, none
+dead). Beyond the smoke pack, **real coverage packs** are authored so the rig
+puts the app through its paces: **Pack D — Honest Failure & Trust** (6
+scenarios, fully local — the owner's no-LAN wake-up path, staged end to end in
+CI), **Pack A — Meeting Aftercare** and **Pack C — Dictation Grounding** (`.43`
+web legs, control-vs-treatment + honest-failure closes). All 4 packs validate
+clean (21 scenarios). **The framework is complete and running** — the engine,
+the guided site, the debrief — proven by 86 local tests + the `.43` live
+proofs + a Playwright drive. The one remaining beat is **the owner's live
+sitting** (owner-gated: only the owner casts a real verdict, and device
+verdicts need a device in hand), after which the joint triage runs and the
+phase's final summary is written.
+
+---
 
 **HSU-1-05 is done (2026-07-09).** The debrief closes the loop from verdicts to
 joint review. At sitting end the conductor generates a packet into

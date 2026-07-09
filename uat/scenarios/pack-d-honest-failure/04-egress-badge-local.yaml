@@ -1,0 +1,21 @@
+id: d-egress-badge-local
+title: The egress badge reads local, on all three surfaces
+features:
+  - trust.egress.badge-tells-truth
+  - mobile.trust.egress.badge
+recipes:
+  - seeded-desk
+# The egress badge is explicitly all-three in the directory — a genuine
+# three-surface trust check.
+surfaces:
+  web: yes
+  ipad: yes
+  iphone: yes
+steps:
+  - do: Find the egress badge on the desk (the staging beat — the desk is seeded and fully local).
+    expect: The badge reads local in one word; nothing on this desk leaves the machine, and the badge says so without a paragraph of prose.
+    where: /
+  - do: Open a seeded note and confirm its egress posture.
+    expect: The note's badge still reads local; no cloud badge appears for local-only content.
+    where: /
+teardown: []

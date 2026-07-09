@@ -1,5 +1,17 @@
 # HoldSpeak Dogfood Protocol
 
+> **Superseded by the UAT rig.** UAT is now run through the web-based framework
+> at [`../uat/`](../uat/README.md): `uv run python -m uat.conductor` boots an
+> isolated HoldSpeak, stages named idempotent state recipes, and walks you
+> through a pack beat by beat with a verdict per surface landing in a run DB — a
+> guided site instead of this fillable checklist (which sat on the shelf, the
+> exact failure mode UAT exists to prevent). This file's **substrate is reused**
+> by the rig — the isolated `_home` recipe (ported to `uat/conductor/home.py`),
+> the mock repos under `repos/`, the committed transcripts under `transcripts/`,
+> and `make_fixtures.py` — so nothing here is dead; it is the conductor's
+> foundation. Keep this document as the manual fallback and the substrate's home;
+> **run UAT from `../uat/`.**
+
 The end-to-end exercise. You drive a real, isolated HoldSpeak against believable
 data — three mock repos with `.hs/` context and completed-stage history, plus
 meetings and dictation rendered through the macOS `say` voices — and you check

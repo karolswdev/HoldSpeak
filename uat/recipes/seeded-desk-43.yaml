@@ -1,0 +1,13 @@
+title: A seeded desk on .43 — grounded rewrites run live
+description: >
+  The seeded desk (dogfood notes + KBs) booted on golden-43, so the dictation
+  runtime and intel are wired to the LAN endpoint and a grounded rewrite
+  actually runs. The control-vs-treatment spine of Pack C rides this world.
+deck: golden-43
+requires: [intel]
+seeds:
+  - dogfood-desk
+probe:
+  - notes_min_count: 3
+  - note_exists: uat-seed-note-glossary
+  - kb_exists: uat-seed-kb-project

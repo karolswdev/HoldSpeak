@@ -1,0 +1,16 @@
+id: c-correction-ritual
+title: The correction ritual teaches, and the count is honest
+features:
+  - dictation.correction.one-tap-teaches
+  - dictation.correction.session_memory
+recipes:
+  - seeded-desk-43
+surfaces:
+  web: yes
+  ipad: {n/a: "iPad dictation depth is unverified in the record"}
+  iphone: {n/a: "iPhone dictation depth is unverified in the record"}
+steps:
+  - do: Correct one word the rewrite got wrong, then dictate again.
+    expect: The one-tap correction is applied and the next dictation reflects it; the learned-from-N chip reads the real count of corrections, not an inflated one.
+    where: /
+teardown: []

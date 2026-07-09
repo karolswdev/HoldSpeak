@@ -1,0 +1,16 @@
+id: c-grounded-rewrite
+title: A grounded rewrite (control vs treatment)
+features:
+  - dictation.pipeline.intent-routing
+  - dictation.kb.project_facts
+recipes:
+  - seeded-desk-43
+surfaces:
+  web: yes
+  ipad: {n/a: "iPad dictation depth is the biggest open cluster in the directory — confirm at the review sitting"}
+  iphone: {n/a: "iPhone dictation depth is unverified in the record"}
+steps:
+  - do: Dictate the same instruction twice — once with grounding OFF (control), once with grounding ON (treatment) against the seeded project KB.
+    expect: The treatment output names a repo-specific token the control cannot know (a glossary term like BLUEBIRD, or a project fact from the KB); the control says it does not have that context. A no-LLM pass alone is insufficient — the treatment must surface what the control cannot.
+    where: /
+teardown: []
