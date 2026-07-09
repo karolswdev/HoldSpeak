@@ -3504,11 +3504,18 @@ struct DioStage: View {
                 }
                 // a desk-native settings entry (no bouncing to an old screen)
                 if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty {
-                    Button { haptic(.light); showSettings = true } label: {
-                        Image(systemName: "gearshape.fill").font(.system(size: 16, weight: .bold)).foregroundStyle(DioPal.text.opacity(0.85))
-                            .frame(width: 42, height: 42).background(Circle().fill(.white.opacity(0.08)).overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1)))
-                    }.buttonStyle(.plain)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(.top, topInset + 8).padding(.leading, 18).zIndex(70)
+                    VStack(spacing: 10) {
+                        Button { haptic(.light); showSettings = true } label: {
+                            Image(systemName: "gearshape.fill").font(.system(size: 16, weight: .bold)).foregroundStyle(DioPal.text.opacity(0.85))
+                                .frame(width: 42, height: 42).background(Circle().fill(.white.opacity(0.08)).overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1)))
+                        }.buttonStyle(.plain)
+                        // HSM-27-02 — the terminal entry: attach to a pane and steer it.
+                        Button { haptic(.medium); openSteerPicker() } label: {
+                            Image(systemName: "terminal.fill").font(.system(size: 15, weight: .bold)).foregroundStyle(DioPal.violet)
+                                .frame(width: 42, height: 42).background(Circle().fill(DioPal.violet.opacity(0.14)).overlay(Circle().strokeBorder(DioPal.violet.opacity(0.35), lineWidth: 1)))
+                        }.buttonStyle(.plain)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(.top, topInset + 8).padding(.leading, 18).zIndex(70)
                 }
                 // THE SYNC STATUS — port your primitives to/from the paired Mac (hub), FELT.
                 // A premium ambient pill that wears the live state (syncing / synced·"2m ago" /
@@ -4341,7 +4348,7 @@ struct DioStage: View {
                 onKill: { steerKill() },
                 onCycleNode: { steerCycleNode() },
                 onClose: { steerPoll?.cancel(); withAnimation { steerSheet = nil } },
-                startPanesOpen: ProcessInfo.processInfo.environment["HS_DESK_STEER"] == "panes")
+                startPanesOpen: ss.paneKey.isEmpty || ProcessInfo.processInfo.environment["HS_DESK_STEER"] == "panes")
                 .id(ss.paneKey).zIndex(151).transition(.opacity)
         }
         // Notes + KBs are edited IN-WORLD on the desk (see `level`), never in a dimmed modal.
@@ -5768,6 +5775,22 @@ struct DioStage: View {
     }
 
     // MARK: HSM-27-02 — the terminal surface handlers (drive HSM-27-01's client)
+
+    /// Open the terminal sheet with the pane PICKER first (no pane chosen yet):
+    /// list the paired Mac's panes + configured nodes, then attach or spawn.
+    private func openSteerPicker() {
+        steerSheet = SteerSheetState(paneKey: "", title: "Terminal", lines: [], question: nil,
+                                     armed: false, remaining: 0, node: "", nodes: [], panes: [],
+                                     fate: "", fateOK: true)
+        steerPoll?.cancel()
+        steerPoll = Task { @MainActor in
+            guard let client = desktopClient else {
+                steerSheet?.fate = "pair your desktop to attach"; steerSheet?.fateOK = false; return
+            }
+            if let panes = try? await client.steeringPanes() { steerSheet?.panes = panes }
+            if let nodes = try? await client.steeringNodes() { steerSheet?.nodes = nodes }
+        }
+    }
 
     /// Open the terminal sheet on a pane/session key, and start the peek poll.
     private func openSteer(_ key: String, title: String) {
