@@ -1,6 +1,6 @@
 # HoldSpeak UAT — Roadmap
 
-**Last updated:** 2026-07-08 (owner direction folded in: three-surface UAT + the induction engine; Phase 2 — The Inventory — scaffolded)
+**Last updated:** 2026-07-08 (Phase 2 directory pre-seeded — an 8-agent sweep produced the 255-capability starting map, the protocol notion, the recipe worklist, and the Phase 3 plan)
 **Current phase:** [Phase 1 — The Mechanics](./phase-1-the-mechanics/current-phase-status.md)
 **Status:** active
 
@@ -73,7 +73,7 @@ canon, canon wins.
 | Phase | Goal (one line) | Status | Folder |
 |---|---|---|---|
 | 1 | The Mechanics: the conductor (hosted runs reachable by the devices), the induction engine (decks, seeds, idempotent state recipes, mesh hands), the three-surface scenario contract + seed ledger, the guided UAT site with per-surface verdicts, the debrief + triage protocol, proven by one live smoke-pack sitting | in-progress (0/6) | [phase-1-the-mechanics](./phase-1-the-mechanics/) |
-| 2 | The Inventory: owner + agent gather what UAT *is* here (the charter) and enumerate everything the system can do — dictation, meetings, the desk, the mesh, steering, KB/handoff — into the capability × surface × required-state matrix that Phase 3's coverage pack is authored from | planning (0/5) | [phase-2-the-inventory](./phase-2-the-inventory/) |
+| 2 | The Inventory: owner + agent gather what UAT *is* here (the charter) and enumerate everything the system can do into the capability × surface × required-state matrix that Phase 3's coverage pack is authored from. **Directory pre-seeded** by an 8-agent sweep: 255 capabilities, the [directory](./phase-2-the-inventory/directory/), the [protocol notion](./phase-2-the-inventory/PROTOCOL-NOTION.md), the [recipe worklist](./phase-2-the-inventory/RECIPE-WORKLIST.md), and the [Phase 3 plan](./phase-2-the-inventory/PHASE-3-PLAN.md) | planning (0/5) | [phase-2-the-inventory](./phase-2-the-inventory/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

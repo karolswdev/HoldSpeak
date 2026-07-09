@@ -59,6 +59,12 @@ first, at what depth, and what is consciously skipped.
 
 ## Notes / open questions
 
+- The Phase 3 pack skeleton is already drafted in
+  [`../PHASE-3-PLAN.md`](./PHASE-3-PLAN.md) (five packs grouped by
+  shared staged world, must-tests first, three-surface with the
+  iPhone leg as the open information). The review sitting *ranks and
+  amends* that skeleton into committed Phase 3 scope — it does not
+  author it from nothing.
 - Grouping the Phase 3 backlog by shared recipes is deliberate: a
   sitting's cost is dominated by staging, and the matrix should buy
   each staged world several scenarios.

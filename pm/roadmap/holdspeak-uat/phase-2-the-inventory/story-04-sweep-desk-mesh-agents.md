@@ -68,6 +68,13 @@ material the owner called out by name, and the least-inventoried.
 
 ## Notes / open questions
 
+- **Starting map:** [`directory/30-desk-mesh-agents.md`](./directory/30-desk-mesh-agents.md)
+  — 113 capabilities pre-seeded by the sweep (the largest domain), with
+  the handoff arcs already enumerated as their own rows
+  (`mesh.handoff.*`, `steering.cross_machine`, `sync.*`,
+  `agents.*` companion). This story verifies the map on device — the
+  cross-machine and two-device arcs need a real second machine and a
+  paired phone — and reconciles it into the ledger.
 - This domain moves weekly (Phases 86–90 were one week); the sweep
   records the *current* truth and the ledger's phase column is the
   audit trail for what arrived after.
