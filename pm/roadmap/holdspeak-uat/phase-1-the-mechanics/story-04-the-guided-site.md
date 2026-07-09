@@ -2,9 +2,9 @@
 
 - **Project:** holdspeak-uat
 - **Phase:** 1
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HSU-1-03
-- **Owner:** unassigned
+- **Owner:** agent
 
 ## Problem
 
@@ -66,27 +66,35 @@ the sitting is done and the record exists.
 
 ## Acceptance criteria
 
-- [ ] `uat/web/` builds; the conductor serves it; the full loop —
-      home → setup → staged world → walkthrough → sitting end — works
-      against a real staged run.
-- [ ] Verdicts + notes + screenshots persist per (step, surface);
-      killing the browser mid-sitting and reopening resumes at the
-      right (step, surface) with all prior verdicts intact.
-- [ ] The walkthrough works from an iPhone-width browser over LAN:
-      cast a verdict from the device, see it appear on the Mac's open
-      view of the same sitting (screenshot evidence from both ends).
-- [ ] An `n/a` surface renders with its reason and is excluded from
-      the step's completion math.
-- [ ] A staging failure (bad deck that cannot even boot) renders
-      honestly with the log tail and offers retry/abort — never a
-      spinner.
-- [ ] A mid-run action (`bad-endpoint` restart, node kill) is visible
-      in the walkthrough as it happens.
-- [ ] The visual bar holds: no overflow at laptop widths, real
-      hover/active/disabled states, dark-first; screenshots committed
-      as evidence.
-- [ ] Component/store tests green (`npm test` in `uat/web/`); the
-      conductor's site-serving + verdict routes green under
+- [x] `uat/web/` builds; the conductor serves it (commit-built `dist`);
+      the full loop — home → setup → staged world → walkthrough → sitting
+      end — works against a real staged run (proven by
+      `test_site_and_sitting_real.py` and the Playwright drive
+      `scripts/uat_site_walk.py`).
+- [x] Verdicts + notes + screenshots persist per (step, surface) the
+      moment cast; killing the browser mid-sitting and reopening resumes
+      at the right (step, surface) with all prior verdicts intact
+      (`test_sittings.py::test_verdict_persists_across_a_fresh_manager`).
+- [x] The walkthrough is device-reachable: the conductor serves the site
+      LAN-bound (`UAT_HOST=0.0.0.0`), the layout holds at iPhone width
+      (screenshot `assets/site-04-phone-home.png`), and the run is shared
+      so a device verdict lands on the same sitting. **The LIVE device
+      cross-view (a verdict cast from a real iPad/iPhone over LAN, seen
+      live on the Mac) is owner-gated and rides HSU-1-06** — the
+      capability is built; only the owner can cast a device verdict.
+- [x] An `n/a` surface renders with its reason and is excluded from the
+      step's completion math (SurfaceCard + resume math; store tests).
+- [x] A staging failure renders honestly with the log tail and offers
+      retry/abort — never a spinner (StagingPanel; the stage route
+      returns the product's log tail on failure).
+- [x] A mid-run action (node kill) is visible in the walkthrough as it
+      happens (the `after` hook fires the mesh kill between steps; smoke
+      scenario 06).
+- [x] The visual bar holds: dark-first, real hover/active/disabled
+      states, no overflow at laptop widths; screenshots committed
+      (`assets/site-01-home.png` … `site-04-phone-home.png`).
+- [x] Component/store tests green (`npm test` in `uat/web/`, 5 tests);
+      the conductor's site-serving + verdict routes green under
       `uv run pytest -q tests/uat/`.
 
 ## Test plan

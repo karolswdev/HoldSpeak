@@ -37,6 +37,17 @@ CREATE TABLE IF NOT EXISTS runs (
     error         TEXT                    -- failure summary + log tail when status=failed
 );
 
+CREATE TABLE IF NOT EXISTS sittings (
+    id           TEXT PRIMARY KEY,
+    run_id       TEXT REFERENCES runs(id) ON DELETE SET NULL,
+    pack         TEXT NOT NULL,
+    deck         TEXT,
+    status       TEXT NOT NULL DEFAULT 'staging',   -- staging|walking|done|aborted
+    created_at   TEXT NOT NULL,
+    updated_at   TEXT NOT NULL,
+    finished_at  TEXT
+);
+
 CREATE TABLE IF NOT EXISTS scenario_executions (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     run_id       TEXT NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
@@ -140,3 +151,56 @@ class Database:
     def delete_run(self, run_id: str) -> None:
         with self.connect() as conn:
             conn.execute("DELETE FROM runs WHERE id = ?", (run_id,))
+
+    # --- sittings ---------------------------------------------------------
+
+    def upsert_sitting(self, row: dict) -> None:
+        cols = ("id", "run_id", "pack", "deck", "status", "created_at", "updated_at", "finished_at")
+        placeholders = ", ".join("?" for _ in cols)
+        assignments = ", ".join(f"{c}=excluded.{c}" for c in cols if c != "id")
+        with self.connect() as conn:
+            conn.execute(
+                f"INSERT INTO sittings ({', '.join(cols)}) VALUES ({placeholders}) "
+                f"ON CONFLICT(id) DO UPDATE SET {assignments}",
+                [row.get(c) for c in cols],
+            )
+
+    def get_sitting(self, sitting_id: str) -> dict | None:
+        with self.connect() as conn:
+            cur = conn.execute("SELECT * FROM sittings WHERE id = ?", (sitting_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+
+    def list_sittings(self) -> list[dict]:
+        with self.connect() as conn:
+            cur = conn.execute("SELECT * FROM sittings ORDER BY created_at DESC")
+            return [dict(r) for r in cur.fetchall()]
+
+    # --- verdicts ---------------------------------------------------------
+
+    def cast_verdict(self, row: dict) -> None:
+        """Upsert one (run, pack, scenario, step, surface) verdict — the moment cast."""
+        cols = (
+            "run_id", "pack", "scenario_id", "step_index", "surface",
+            "verdict", "note", "shot_path", "started_at", "created_at",
+        )
+        placeholders = ", ".join("?" for _ in cols)
+        assignments = ", ".join(
+            f"{c}=excluded.{c}" for c in ("verdict", "note", "shot_path", "created_at")
+        )
+        with self.connect() as conn:
+            conn.execute(
+                f"INSERT INTO step_verdicts ({', '.join(cols)}) VALUES ({placeholders}) "
+                f"ON CONFLICT(run_id, pack, scenario_id, step_index, surface) "
+                f"DO UPDATE SET {assignments}",
+                [row.get(c) for c in cols],
+            )
+
+    def list_verdicts(self, run_id: str) -> list[dict]:
+        with self.connect() as conn:
+            cur = conn.execute(
+                "SELECT * FROM step_verdicts WHERE run_id = ? "
+                "ORDER BY scenario_id, step_index, surface",
+                (run_id,),
+            )
+            return [dict(r) for r in cur.fetchall()]
