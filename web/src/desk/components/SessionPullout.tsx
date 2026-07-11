@@ -39,6 +39,7 @@ function ArmChip() {
   const armed = useSteering((s) => s.armed);
   const armedUntil = useSteering((s) => s.armedUntil);
   const armError = useSteering((s) => s.armError);
+  const armCommitment = useSteering((s) => s.armCommitment);
   const stale = useSteering((s) => Boolean(s.session?.stale));
   const [remaining, setRemaining] = useState(0);
   const [holding, setHolding] = useState(false);
@@ -77,7 +78,7 @@ function ArmChip() {
       <button
         type="button"
         className={"desk-chip desk-arm-chip" + (holding ? " is-holding" : "")}
-        title={stale ? "stale — arming will refuse" : "hold to arm steering"}
+        title={stale ? "stale — arming will refuse" : `Hold to ${armCommitment.toLowerCase()}`}
         onPointerDown={() => {
           setHolding(true);
           holdTimer.current = setTimeout(() => {
@@ -88,7 +89,7 @@ function ArmChip() {
         onPointerUp={cancelHold}
         onPointerLeave={cancelHold}
       >
-        ARM
+        {armCommitment}
       </button>
       {armError && <span className="desk-arm-refusal">✕ {armError}</span>}
     </span>

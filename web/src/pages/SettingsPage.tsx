@@ -230,11 +230,13 @@ function SettingsFields({
 
 export default function SettingsPage() {
   const resource = useResource<JsonRecord>("/api/settings", {});
+  const authority = useResource<JsonRecord>("/api/authority/policy", {});
   const [active, setActive] = useState("");
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
   const [secretDrafts, setSecretDrafts] = useState<Record<string, string>>({});
   const [secretBusy, setSecretBusy] = useState("");
+  const [authorityBusy, setAuthorityBusy] = useState(false);
   const [message, setMessage] = useState<{
     error?: boolean;
     text: string;
@@ -331,6 +333,25 @@ export default function SettingsPage() {
     }
   };
 
+  const setControlMode = async (controlMode: string) => {
+    setAuthorityBusy(true);
+    setMessage(null);
+    try {
+      const result = await apiFetch<JsonRecord>("/api/authority/control-mode", {
+        method: "PUT",
+        json: { control_mode: controlMode },
+      });
+      authority.setData({ ...authority.data, ...result });
+      setMessage({
+        text: `ControlMode is now ${controlMode}. Existing runs and grants were not widened.`,
+      });
+    } catch (error) {
+      setMessage({ error: true, text: readableError(error) });
+    } finally {
+      setAuthorityBusy(false);
+    }
+  };
+
   return (
     <div className="page-wrap">
       <PageHero
@@ -350,6 +371,32 @@ export default function SettingsPage() {
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
+        <Panel title="Control mode" eyebrow="Future-operation authority">
+          <Field
+            label="Preset"
+            description="Safe reviews more, Neutral respects configured previews and cadence, and YOLO permits only fixed destinations with scoped grants. Authentication, secret custody, destination/payload binding, pane identity, audit, configuration, and schema checks never change."
+          >
+            {({ id, describedBy }) => (
+              <Select
+                id={id}
+                aria-describedby={describedBy}
+                value={String(authority.data.control_mode ?? "neutral")}
+                disabled={authorityBusy || authority.loading}
+                onChange={(event) => void setControlMode(event.target.value)}
+              >
+                <option value="safe">Safe</option>
+                <option value="neutral">Neutral</option>
+                <option value="yolo">YOLO</option>
+              </Select>
+            )}
+          </Field>
+          <p>
+            Source: {String(authority.data.source ?? "config")} · precedence:{" "}
+            {Array.isArray(authority.data.precedence)
+              ? authority.data.precedence.join(" → ")
+              : "hard invariants → grants → mode → feature default"}
+          </p>
+        </Panel>
         <Panel title="Hub configuration" eyebrow="Signal editor">
           <Field
             label="Find a setting"

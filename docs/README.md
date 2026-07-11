@@ -107,6 +107,9 @@ rail, file things into zones). The rooms hang off its menu: the two modes
 
 - **[Security & Privacy](./SECURITY.md)**: the threat model. What's stored, the trust
   boundaries, and exactly what can (and can't) leave your machine.
+- **[Control modes, decisions, and grants](./AUTHORITY.md)**: what Safe, Neutral,
+  and YOLO change, how review/authority/execution stay separate, and which hard
+  invariants no mode can weaken.
 
 ## Internal / historical plans
 

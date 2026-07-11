@@ -33,6 +33,7 @@ class _ProposalDecisionRequest(BaseModel):
     # only flips DB state — execution is HS-37-04. `decided_by` records the actor.
     decision: str  # "approved" or "rejected"
     decided_by: Optional[str] = None
+    grant_id: Optional[str] = None
 
 
 class _ActionItemEditRequest(BaseModel):

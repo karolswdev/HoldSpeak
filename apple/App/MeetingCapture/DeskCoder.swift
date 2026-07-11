@@ -342,7 +342,7 @@ struct DioCoderSession: View {
     private func footer(_ q: String) -> some View {
         HStack(spacing: 11) {
             Button(action: onApprove) {
-                HStack(spacing: 7) { Image(systemName: "checkmark"); Text("Approve").font(.system(size: 14.5, weight: .heavy, design: .rounded)) }
+                HStack(spacing: 7) { Image(systemName: "checkmark"); Text(approvalCommitment).font(.system(size: 14.5, weight: .heavy, design: .rounded)) }
                     .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
                     .background(Capsule().fill(LinearGradient(colors: [DioPal.mint, DioPal.mint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
             }.buttonStyle(.plain)
@@ -354,6 +354,15 @@ struct DioCoderSession: View {
         }
         .padding(.horizontal, 16).padding(.vertical, 13)
         .background(Rectangle().fill(.black.opacity(0.2)).overlay(Rectangle().fill(.white.opacity(0.03))))
+    }
+
+    private var approvalCommitment: String {
+        for event in session.events.reversed() {
+            if case .approval(_, let command) = event.kind, command != nil {
+                return "Run shell command"
+            }
+        }
+        return "Approve coder request"
     }
 }
 

@@ -87,6 +87,78 @@ def test_execute_approved_proposal(tmp_path) -> None:
     assert "payload" in (audit[-1].detail or "")
 
 
+def test_execute_with_scoped_grant_consumes_one_visible_use(tmp_path) -> None:
+    from holdspeak.operation_policy import operation_for_proposal
+
+    db = _db(tmp_path)
+    proposed = db.actuators.record_proposal(
+        meeting_id="m1", window_id="w1", plugin_id="followup_ticket_actuator",
+        plugin_version="1.0.0", idempotency_key="grant-exec",
+        target="github", action="create_issue", preview="Open a follow-up issue",
+        payload={"repo": "acme/app", "title": "Follow up"}, reversible=True,
+        required_capabilities=["actuator"],
+    )
+    operation = operation_for_proposal(proposed, actor="executor")
+    grant = db.actuators.issue_grant(
+        actor=operation.actor, operation_family=operation.family,
+        effect_class=operation.effect_class, destination=operation.destination,
+        data_classes=list(operation.data_classes), project_scope=operation.project_scope,
+        resource_scope=operation.resource_scope, ttl_seconds=600, max_uses=2,
+        control_mode="yolo",
+    )
+    approved = db.actuators.transition_proposal(
+        proposed.id, to_status="approved", actor="executor", grant_id=grant.id,
+        policy_snapshot={"mode": "yolo", "outcome": "allowed"},
+    )
+
+    result = ActuatorExecutor(
+        db, connector=_SpyConnector(), allow_actuators=True, actor="executor"
+    ).execute(approved.id)
+
+    assert result.status == "executed"
+    refreshed = db.actuators.get_grant(grant.id)
+    assert refreshed is not None and refreshed.remaining_uses == 1
+    assert db.actuators.list_grant_uses(grant.id)[0]["operation_id"] == operation.operation_id
+
+
+def test_grant_revoked_during_atomic_consume_refuses_before_connector(
+    tmp_path, monkeypatch
+) -> None:
+    from holdspeak.operation_policy import operation_for_proposal
+
+    db = _db(tmp_path)
+    proposed = db.actuators.record_proposal(
+        meeting_id="m1", window_id="w1", plugin_id="followup_ticket_actuator",
+        plugin_version="1", idempotency_key="grant-race", target="github",
+        action="create_issue", preview="Create issue",
+        payload={"repo": "acme/app", "title": "Follow up"},
+    )
+    operation = operation_for_proposal(proposed, actor="executor")
+    grant = db.actuators.issue_grant(
+        actor="executor", operation_family=operation.family,
+        effect_class=operation.effect_class, destination=operation.destination,
+        data_classes=list(operation.data_classes), project_scope=operation.project_scope,
+        resource_scope=operation.resource_scope, ttl_seconds=600, max_uses=2,
+        control_mode="yolo",
+    )
+    approved = db.actuators.transition_proposal(
+        proposed.id, to_status="approved", actor="executor", grant_id=grant.id,
+    )
+    monkeypatch.setattr(
+        db.actuators, "consume_grant",
+        lambda *args, **kwargs: (_ for _ in ()).throw(PermissionError("revoked")),
+    )
+    connector = _SpyConnector()
+
+    result = ActuatorExecutor(
+        db, connector=connector, allow_actuators=True, actor="executor"
+    ).execute(approved.id)
+
+    assert result.status == "failed"
+    assert connector.calls == []
+    assert "no side effect" in (result.error or "")
+
+
 # ──────────────────────────── Status gate ─────────────────────────────
 
 

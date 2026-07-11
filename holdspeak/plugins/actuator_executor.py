@@ -32,6 +32,7 @@ from __future__ import annotations
 from typing import Any, Callable, Iterable, Optional
 
 from ..actuator_authority import AuthorityBinding, authority_binding, payload_hash
+from ..operation_policy import grant_matches, operation_for_proposal
 from ..logging_config import get_logger
 from .actuators import ActuatorProposal
 
@@ -149,6 +150,39 @@ class ActuatorExecutor:
             return updated
 
         current_hash = current_binding.payload_hash
+
+        # A reusable authorization is independently bound and revocable. A
+        # per-action human approval has no grant id and proceeds under its
+        # captured policy snapshot. Grant mismatch revokes before any egress.
+        if getattr(proposal, "grant_id", None):
+            grant = self._db.actuators.get_grant(proposal.grant_id)
+            operation = operation_for_proposal(proposal, actor=self._actor)
+            if grant is None or not grant_matches(grant.to_dict(), operation):
+                if grant is not None:
+                    self._db.actuators.revoke_grant(
+                        proposal.grant_id, reason="operation_or_identity_changed"
+                    )
+                updated = self._db.actuators.transition_proposal(
+                    proposal_id, to_status="failed", actor=self._actor,
+                    detail="scoped grant mismatch or revoked",
+                    error="grant authority check failed — no side effect performed",
+                )
+                self._notify_result(updated)
+                return updated
+            try:
+                self._db.actuators.consume_grant(
+                    proposal.grant_id, operation_id=operation.operation_id
+                )
+            except (KeyError, PermissionError) as exc:
+                updated = self._db.actuators.transition_proposal(
+                    proposal_id, to_status="failed", actor=self._actor,
+                    detail="scoped grant changed before consumption",
+                    error=f"grant authority check failed — {exc}; no side effect performed",
+                )
+                self._notify_result(updated)
+                return updated
+
+        self._db.actuators.mark_execution_state(proposal_id, "running")
 
         # 4. egress via the injected connector (never a socket from here). The
         #    side effect is built from the stored payload, not any caller input.

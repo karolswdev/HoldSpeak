@@ -37,13 +37,23 @@ public struct MeshInboxProposal: Codable, Equatable, Sendable, Identifiable {
     public var preview: String?
     public var status: String?
     public var createdAt: String?   // ISO string — the timestamps rule (never Date)
+    public var commitment: MeshProposalCommitment?
 
     public init(id: String, origin: String? = nil, meetingId: String? = nil,
                 target: String? = nil, action: String? = nil, preview: String? = nil,
-                status: String? = nil, createdAt: String? = nil) {
+                status: String? = nil, createdAt: String? = nil,
+                commitment: MeshProposalCommitment? = nil) {
         self.id = id; self.origin = origin; self.meetingId = meetingId
         self.target = target; self.action = action; self.preview = preview
-        self.status = status; self.createdAt = createdAt
+        self.status = status; self.createdAt = createdAt; self.commitment = commitment
+    }
+}
+
+public struct MeshProposalCommitment: Codable, Equatable, Sendable {
+    public var approve: String?
+    public var reject: String?
+    public init(approve: String? = nil, reject: String? = nil) {
+        self.approve = approve; self.reject = reject
     }
 }
 

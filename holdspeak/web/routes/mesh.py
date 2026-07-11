@@ -94,8 +94,12 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
                     "attempts": int(job.attempts or 0),
                 })
 
-            proposals = [
-                {
+            from ...operation_policy import commitment_labels, operation_for_proposal
+
+            proposals = []
+            for p in db.actuators.list_pending_proposals(limit=50):
+                operation = operation_for_proposal(p)
+                proposals.append({
                     "id": p.id,
                     "origin": p.origin,
                     "meeting_id": p.meeting_id,
@@ -103,10 +107,13 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
                     "action": p.action,
                     "preview": p.preview,
                     "status": p.status,
+                    "review_decision": p.review_decision,
+                    "authorization_state": p.authorization_state,
+                    "execution_state": p.execution_state,
+                    "operation": operation.to_dict(),
+                    "commitment": commitment_labels(operation),
                     "created_at": p.created_at,
-                }
-                for p in db.actuators.list_pending_proposals(limit=50)
-            ]
+                })
 
             return JSONResponse({
                 "jobs": jobs,

@@ -67,3 +67,6 @@ def test_runtime_gate_reflects_config():
 
     assert _Stub(False)._cadence_enabled() is False
     assert _Stub(True)._cadence_enabled() is True
+    strict = _Stub(True)
+    strict.config.control_mode = "safe"
+    assert strict._cadence_enabled() is False

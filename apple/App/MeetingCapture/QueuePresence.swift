@@ -387,7 +387,8 @@ struct QueueHUD: View {
                 tactile()
                 Task { await store.decideMesh(proposal, approved: true) }
             } label: {
-                Text("Approve").font(.system(size: 11, weight: .heavy))
+                Text(proposal.commitment?.approve ?? "Approve for \(proposal.target ?? "executor")")
+                    .font(.system(size: 11, weight: .heavy)).lineLimit(1)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 11).padding(.vertical, 6)
                     .background(Sig.accentGradient, in: Capsule())

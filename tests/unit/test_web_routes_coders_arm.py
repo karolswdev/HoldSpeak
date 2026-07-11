@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 
 import holdspeak.agent_context as agent_context
 from holdspeak import coder_steering
+from holdspeak.config import Config
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.system.coder_steering_routes import (
     build_coder_steering_router,
@@ -44,7 +45,10 @@ def _session(**kw) -> SimpleNamespace:
 
 
 @pytest.fixture(autouse=True)
-def _fresh_grants():
+def _fresh_grants(monkeypatch):
+    monkeypatch.setattr(
+        Config, "load", classmethod(lambda cls: SimpleNamespace(control_mode="neutral"))
+    )
     coder_steering.clear_grants()
     yield
     coder_steering.clear_grants()
@@ -147,7 +151,19 @@ def test_arm_unknown_session_is_404(monkeypatch, client) -> None:
     assert client.post("/api/coders/claude:nope/arm", json={}).status_code == 404
 
 
-def test_arm_accepts_a_clamped_ttl(monkeypatch, client) -> None:
+def test_neutral_caps_future_arm_at_its_mode_preset(monkeypatch, client) -> None:
+    _register(monkeypatch, _session())
+    _pin_identity(monkeypatch)
+    res = client.post("/api/coders/claude:abc/arm", json={"ttl_seconds": 999_999})
+    assert res.json()["expires_in_seconds"] == coder_steering.ARM_DEFAULT_TTL_SECONDS
+    assert res.json()["control_mode"] == "neutral"
+    assert res.json()["commitment"] == "Arm pane %3 for 15 minutes"
+
+
+def test_yolo_allows_the_hard_one_hour_arm_ceiling(monkeypatch, client) -> None:
+    monkeypatch.setattr(
+        Config, "load", classmethod(lambda cls: SimpleNamespace(control_mode="yolo"))
+    )
     _register(monkeypatch, _session())
     _pin_identity(monkeypatch)
     res = client.post("/api/coders/claude:abc/arm", json={"ttl_seconds": 999_999})

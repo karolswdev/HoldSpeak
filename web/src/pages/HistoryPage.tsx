@@ -393,7 +393,10 @@ function MeetingDetail({
                       disabled={row.status !== "proposed"}
                       onClick={() => void decide(row, "approved")}
                     >
-                      Approve
+                      {String(
+                        (row.commitment as JsonRecord | undefined)?.approve ??
+                          `Approve for ${String(row.target ?? "executor")}`,
+                      )}
                     </Button>
                     <Button
                       dense
@@ -401,7 +404,10 @@ function MeetingDetail({
                       disabled={row.status !== "proposed"}
                       onClick={() => void decide(row, "rejected")}
                     >
-                      Decline
+                      {String(
+                        (row.commitment as JsonRecord | undefined)?.reject ??
+                          "Reject proposed action",
+                      )}
                     </Button>
                   </div>
                 </li>

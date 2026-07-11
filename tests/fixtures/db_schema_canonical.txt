@@ -33,6 +33,10 @@ index idx_actuator_proposals_status: CREATE INDEX idx_actuator_proposals_status 
 index idx_artifact_sources_ref: CREATE INDEX idx_artifact_sources_ref ON artifact_sources(source_type, source_ref)
 index idx_artifacts_meeting: CREATE INDEX idx_artifacts_meeting ON artifacts(meeting_id, created_at DESC)
 index idx_artifacts_type: CREATE INDEX idx_artifacts_type ON artifacts(artifact_type, created_at DESC)
+index idx_authority_grant_uses_grant: CREATE INDEX idx_authority_grant_uses_grant
+ON authority_grant_uses(grant_id, used_at DESC)
+index idx_authority_grants_active: CREATE INDEX idx_authority_grants_active
+ON authority_grants(actor, operation_family, effect_class, destination, expires_at)
 index idx_bookmarks_meeting: CREATE INDEX idx_bookmarks_meeting ON bookmarks(meeting_id)
 index idx_cadence_evidence_loop: CREATE INDEX idx_cadence_evidence_loop ON cadence_evidence_refs(loop_id)
 index idx_cadence_loops_source: CREATE UNIQUE INDEX idx_cadence_loops_source ON cadence_loops(source_type, source_id)
@@ -221,6 +225,12 @@ table actuator_proposals: CREATE TABLE actuator_proposals (
     plugin_version TEXT NOT NULL DEFAULT 'unknown',
     idempotency_key TEXT NOT NULL UNIQUE,
     status TEXT NOT NULL DEFAULT 'proposed',
+    review_decision TEXT NOT NULL DEFAULT 'unreviewed'
+        CHECK (review_decision IN ('unreviewed','accepted','dismissed')),
+    authorization_state TEXT NOT NULL DEFAULT 'proposed'
+        CHECK (authorization_state IN ('not_requested','proposed','approved','rejected','expired','revoked')),
+    execution_state TEXT NOT NULL DEFAULT 'not_started'
+        CHECK (execution_state IN ('not_started','queued','running','succeeded','failed','cancelled','unavailable')),
     target TEXT NOT NULL,
     action TEXT NOT NULL,
     preview TEXT NOT NULL,
@@ -234,6 +244,9 @@ table actuator_proposals: CREATE TABLE actuator_proposals (
     preview_renderer_version TEXT,
     effect_class TEXT,
     policy_version TEXT,
+    operation_json TEXT NOT NULL DEFAULT '{}',
+    policy_snapshot_json TEXT NOT NULL DEFAULT '{}',
+    grant_id TEXT,
     result_json TEXT,
     error TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -266,6 +279,35 @@ table artifacts: CREATE TABLE artifacts (
     plugin_version TEXT NOT NULL DEFAULT 'unknown',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table authority_grant_uses: CREATE TABLE authority_grant_uses (
+    id TEXT PRIMARY KEY,
+    grant_id TEXT NOT NULL REFERENCES authority_grants(id) ON DELETE CASCADE,
+    operation_id TEXT NOT NULL,
+    actor TEXT NOT NULL,
+    effect_class TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    outcome TEXT NOT NULL DEFAULT 'consumed',
+    used_at TEXT NOT NULL
+)
+table authority_grants: CREATE TABLE authority_grants (
+    id TEXT PRIMARY KEY,
+    actor TEXT NOT NULL,
+    operation_family TEXT NOT NULL,
+    effect_class TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    data_classes_json TEXT NOT NULL DEFAULT '[]',
+    project_scope TEXT,
+    resource_scope TEXT,
+    issued_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    max_uses INTEGER NOT NULL DEFAULT 1,
+    remaining_uses INTEGER NOT NULL DEFAULT 1,
+    revoked_at TEXT,
+    revoke_reason TEXT,
+    binding_hash TEXT NOT NULL,
+    control_mode TEXT NOT NULL DEFAULT 'neutral'
+        CHECK (control_mode IN ('safe','neutral','yolo'))
 )
 table bookmarks: CREATE TABLE bookmarks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -379,6 +379,9 @@ class ActuatorProposalRecord:
     plugin_version: str
     idempotency_key: str
     status: str
+    review_decision: str
+    authorization_state: str
+    execution_state: str
     target: str
     action: str
     preview: str
@@ -392,12 +395,64 @@ class ActuatorProposalRecord:
     preview_renderer_version: Optional[str]
     effect_class: Optional[str]
     policy_version: Optional[str]
+    operation: dict[str, Any]
+    policy_snapshot: dict[str, Any]
+    grant_id: Optional[str]
     result: Optional[dict[str, Any]]
     error: Optional[str]
     created_at: str
     decided_at: Optional[str]
     executed_at: Optional[str]
     updated_at: str
+
+
+@dataclass
+class AuthorityGrantRecord:
+    """A revocable actor/effect/destination/data/scope/time/count grant."""
+
+    id: str
+    actor: str
+    operation_family: str
+    effect_class: str
+    destination: str
+    data_classes: list[str]
+    project_scope: Optional[str]
+    resource_scope: Optional[str]
+    issued_at: str
+    expires_at: str
+    max_uses: int
+    remaining_uses: int
+    revoked_at: Optional[str]
+    revoke_reason: Optional[str]
+    binding_hash: str
+    control_mode: str
+
+    @property
+    def state(self) -> str:
+        if self.revoked_at:
+            return "revoked"
+        try:
+            if datetime.fromisoformat(self.expires_at) <= datetime.now():
+                return "expired"
+        except ValueError:
+            return "expired"
+        if self.remaining_uses <= 0:
+            return "exhausted"
+        return "active"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id, "actor": self.actor,
+            "operation_family": self.operation_family,
+            "effect_class": self.effect_class, "destination": self.destination,
+            "data_classes": list(self.data_classes),
+            "project_scope": self.project_scope, "resource_scope": self.resource_scope,
+            "issued_at": self.issued_at, "expires_at": self.expires_at,
+            "max_uses": self.max_uses, "remaining_uses": self.remaining_uses,
+            "revoked_at": self.revoked_at, "revoke_reason": self.revoke_reason,
+            "binding_hash": self.binding_hash, "control_mode": self.control_mode,
+            "state": self.state,
+        }
 
 
 @dataclass

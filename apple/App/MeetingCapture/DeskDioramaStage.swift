@@ -2746,7 +2746,7 @@ struct DioSendCard: View {
                     Button(action: onApprove) {
                         HStack(spacing: 6) {
                             if sending { ProgressView().tint(.white) } else { Image(systemName: "checkmark").font(.system(size: 14, weight: .bold)) }
-                            Text(sending ? "Sending…" : "Approve & send").font(.system(size: 14.5, weight: .heavy, design: .rounded))
+                            Text(sending ? "Sending…" : "Approve and send to \(connName)").font(.system(size: 14.5, weight: .heavy, design: .rounded))
                         }.foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 46)
                             .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0x7AA2F7), DioPal.cobalt], startPoint: .top, endPoint: .bottom)))
                     }.buttonStyle(.plain).disabled(sending)

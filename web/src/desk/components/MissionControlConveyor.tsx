@@ -315,7 +315,7 @@ function ProposalCard() {
           className="desk-mc-btn approve"
           onClick={() => void decide("approved")}
         >
-          Approve
+          Approve status change
         </button>
         <button className="desk-mc-btn" onClick={() => void decide("rejected")}>
           Reject

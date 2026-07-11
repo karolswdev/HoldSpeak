@@ -106,6 +106,7 @@ interface SteeringState {
   armed: boolean;
   armedUntil: number | null;
   armError: string;
+  armCommitment: string;
   /** Armed state for every pin on the desk: key → epoch ms expiry. */
   armedKeys: Record<string, number>;
   /** The last steer's fate (HS-87-03), rendered in place. */
@@ -210,6 +211,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
   armed: false,
   armedUntil: null,
   armError: "",
+  armCommitment: "Arm this pane",
   armedKeys: {},
   steerState: "idle",
   steerDetail: "",
@@ -238,6 +240,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
       armed: false,
       armedUntil: null,
       armError: "",
+      armCommitment: "Arm this pane",
       steerState: "idle",
       steerDetail: "",
       classifyState: "idle",
@@ -261,6 +264,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
       armed: false,
       armedUntil: null,
       armError: "",
+      armCommitment: "Arm this pane",
       steerState: "idle",
       steerDetail: "",
       classifyState: "idle",
@@ -605,7 +609,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
       const session = fromWireSteeringSession(body);
       const grant = grantPatch(key, body.grant, get().armedKeys);
       if (peek.status === "not_modified") {
-        set({ session, paneStatus: "live", ...grant }); // the view stays; the gate held
+        set({ session, paneStatus: "live", armCommitment: body.arm_commitment || "Arm this pane", ...grant }); // the view stays; the gate held
         return;
       }
       if (peek.status === "live") {
@@ -615,6 +619,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
           paneLines: peek.lines || [],
           paneHash: peek.hash || null,
           paneDetail: "",
+          armCommitment: body.arm_commitment || "Arm this pane",
           ...grant,
         });
         return;
@@ -625,6 +630,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
         paneDetail: peek.detail || "",
         paneLines: [],
         paneHash: null,
+        armCommitment: body.arm_commitment || "Arm this pane",
         ...grant,
       });
     } catch {

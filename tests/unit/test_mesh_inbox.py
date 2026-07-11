@@ -93,6 +93,8 @@ def test_inbox_aggregates_jobs_and_pending_proposals(env) -> None:
     assert desk_row["meeting_id"] is None
     assert desk_row["target"] == "slack"
     assert desk_row["preview"] == "Digest → #eng-updates"
+    assert desk_row["commitment"]["approve"] == "Approve and send to Slack"
+    assert desk_row["authorization_state"] == "proposed"
     for p in body["proposals"]:
         assert "payload" not in p
 

@@ -17,7 +17,25 @@ log = get_logger("runtime.cadence")
 
 class CadenceMixin:
     def _cadence_enabled(self) -> bool:
-        return bool(getattr(getattr(self.config, "cadence", None), "enabled", False))
+        configured = bool(getattr(getattr(self.config, "cadence", None), "enabled", False))
+        if not configured:
+            return False
+        from ..operation_policy import describe_operation, resolve_policy
+
+        operation = describe_operation(
+            operation_id="cadence:background-loop",
+            family="sync_cadence",
+            effect_class="cadence/tick",
+            actor="runtime",
+            destination="local_cadence_store",
+            data_classes=("loop_metadata",),
+            consequence="queue_executor",
+        )
+        return resolve_policy(
+            operation,
+            mode=getattr(self.config, "control_mode", "neutral"),
+            source="config",
+        ).outcome == "allowed"
 
     def _cadence_service(self):
         """Lazily build a CadenceService bound to the shared DB + config."""

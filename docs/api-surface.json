@@ -446,6 +446,74 @@
       ]
     },
     {
+      "path": "/api/authority/control-mode",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.authority",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/authority/evaluate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.authority",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/authority/grants",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.authority",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/authority/grants",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.authority",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/authority/grants/{grant_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.authority",
+      "consumers": []
+    },
+    {
+      "path": "/api/authority/grants/{grant_id}/uses",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.authority",
+      "consumers": []
+    },
+    {
+      "path": "/api/authority/policy",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.authority",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
       "path": "/api/bookmark",
       "methods": [
         "POST"

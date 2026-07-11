@@ -21,6 +21,24 @@ _GITHUB_RUNNER = None
 
 
 def proposal_to_dict(proposal: Any) -> dict[str, Any]:
+    from ...operation_policy import commitment_labels, operation_for_proposal
+
+    operation = getattr(proposal, "operation", None) or operation_for_proposal(proposal).to_dict()
+    from ...operation_policy import OperationDescriptor
+
+    descriptor = OperationDescriptor(
+        operation_id=str(operation.get("operation_id") or f"actuator:{proposal.id}"),
+        family=str(operation.get("family") or "external_write"),
+        effect_class=str(operation.get("effect_class") or f"{proposal.target}/{proposal.action}"),
+        actor=str(operation.get("actor") or "owner"),
+        destination=str(operation.get("destination") or proposal.target),
+        data_classes=tuple(operation.get("data_classes") or []),
+        project_scope=operation.get("project_scope"),
+        resource_scope=operation.get("resource_scope"),
+        fixed_destination=bool(operation.get("fixed_destination")),
+        consequence=str(operation.get("consequence") or "execute_now"),
+        version=int(operation.get("version") or 1),
+    )
     return {
         "id": proposal.id,
         "origin": getattr(proposal, "origin", "meeting"),
@@ -29,6 +47,9 @@ def proposal_to_dict(proposal: Any) -> dict[str, Any]:
         "plugin_id": proposal.plugin_id,
         "plugin_version": proposal.plugin_version,
         "status": proposal.status,
+        "review_decision": getattr(proposal, "review_decision", "unreviewed"),
+        "authorization_state": getattr(proposal, "authorization_state", "proposed"),
+        "execution_state": getattr(proposal, "execution_state", "not_started"),
         "target": proposal.target,
         "action": proposal.action,
         "preview": proposal.preview,
@@ -44,6 +65,10 @@ def proposal_to_dict(proposal: Any) -> dict[str, Any]:
             "effect_class": proposal.effect_class,
             "policy_version": proposal.policy_version,
         } if proposal.approved_payload_hash else None,
+        "operation": operation,
+        "policy_snapshot": getattr(proposal, "policy_snapshot", {}),
+        "grant_id": getattr(proposal, "grant_id", None),
+        "commitment": commitment_labels(descriptor),
         "result": proposal.result,
         "error": proposal.error,
         "created_at": proposal.created_at,
@@ -76,6 +101,7 @@ def decide_proposal(
     actor: str,
     belongs: Any,
     executors: dict[str, Any],
+    grant_id: str | None = None,
 ) -> tuple[Any, str | None, int]:
     """ONE propose→approve→execute decision lifecycle (Phase 72).
 
@@ -101,8 +127,25 @@ def decide_proposal(
     if existing is None or not belongs(existing):
         return None, "Proposal not found", 404
     try:
+        policy_snapshot = None
+        if clean == "approved":
+            from ...config import Config
+            from ...operation_policy import operation_for_proposal, resolve_policy
+
+            operation = operation_for_proposal(existing, actor=actor)
+            grant_record = db.actuators.get_grant(grant_id) if grant_id else None
+            grant = grant_record.to_dict() if grant_record else None
+            policy_decision = resolve_policy(
+                operation, mode=Config.load().control_mode, source="config", grant=grant,
+                explicit_authorization=True,
+            )
+            if grant_id and policy_decision.reason_code != "fixed_destination_grant_active":
+                raise ValueError("scoped grant is not active for this exact operation and mode")
+            policy_snapshot = policy_decision.to_dict()
+            policy_snapshot["authorization_basis"] = "scoped_grant" if grant_id else "per_action_decision"
         updated = db.actuators.transition_proposal(
-            proposal_id, to_status=clean, actor=actor
+            proposal_id, to_status=clean, actor=actor,
+            policy_snapshot=policy_snapshot, grant_id=grant_id,
         )
     except ValueError as ve:
         # Illegal lifecycle transition (e.g. already executed/rejected).

@@ -512,6 +512,7 @@ class MeetingWebServer:
         from .web.context import WebContext
         from .web.routes import (
             build_activity_router,
+            build_authority_router,
             build_cadence_router,
             build_core_router,
             build_dictation_router,
@@ -572,6 +573,7 @@ class MeetingWebServer:
             web_auth_token=self.auth_token,
         )
         app.include_router(build_core_router(web_ctx))
+        app.include_router(build_authority_router(web_ctx))
         app.include_router(build_cadence_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))
         app.include_router(build_desk_actuators_router(web_ctx))

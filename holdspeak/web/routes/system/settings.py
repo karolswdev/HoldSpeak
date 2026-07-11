@@ -714,6 +714,26 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             )
             updated.save()
 
+            # Destination and policy configuration are part of authority. A
+            # settings mutation conservatively invalidates reusable grants;
+            # per-action approvals retain their own exact snapshots.
+            authority_before = (
+                current.meeting.slack_webhook_url,
+                current.meeting.companion_webhook_url,
+                current.meeting.companion_github_repo,
+            )
+            authority_after = (
+                updated.meeting.slack_webhook_url,
+                updated.meeting.companion_webhook_url,
+                updated.meeting.companion_github_repo,
+            )
+            if authority_before != authority_after:
+                from ....db import get_database
+
+                get_database().actuators.revoke_active_grants(
+                    reason="destination_configuration_changed"
+                )
+
             if ctx.on_settings_applied is not None:
                 try:
                     ctx.on_settings_applied(updated)

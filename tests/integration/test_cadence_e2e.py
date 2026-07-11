@@ -80,6 +80,9 @@ def test_master_off_switch_keeps_the_thread_from_starting():
 
     assert _Stub(False)._cadence_enabled() is False  # master off-switch
     assert _Stub(True)._cadence_enabled() is True
+    strict = _Stub(True)
+    strict.config.control_mode = "safe"
+    assert strict._cadence_enabled() is False  # safe requires explicit run-now
 
 
 def test_run_now_works_even_when_disabled(db):

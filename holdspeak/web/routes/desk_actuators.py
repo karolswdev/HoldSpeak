@@ -150,6 +150,7 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
                 actor=(payload.decided_by or "companion").strip() or "companion",
                 belongs=lambda p: p.origin == "desk" and p.target == "slack",
                 executors={"slack": execute_slack_proposal},
+                grant_id=payload.grant_id,
             )
             if err is not None:
                 return JSONResponse({"success": False, "error": err}, status_code=status)
@@ -211,6 +212,7 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
                 actor=(payload.decided_by or "companion").strip() or "companion",
                 belongs=lambda p: p.origin == "desk" and p.target == "webhook",
                 executors={"webhook": execute_webhook_proposal},
+                grant_id=payload.grant_id,
             )
             if err is not None:
                 return JSONResponse({"success": False, "error": err}, status_code=status)
@@ -281,6 +283,7 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
                 actor=(payload.decided_by or "companion").strip() or "companion",
                 belongs=lambda p: p.origin == "desk" and p.target == "github",
                 executors={"github": execute_github_proposal},
+                grant_id=payload.grant_id,
             )
             if err is not None:
                 return JSONResponse({"success": False, "error": err}, status_code=status)

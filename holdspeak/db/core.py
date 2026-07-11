@@ -44,7 +44,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 18  # v18: named actual-placement receipts (HS-92-07)
+SCHEMA_VERSION = 19  # v19: separated authority axes + scoped grants (HS-92-08)
 
 
 class SchemaVersionError(RuntimeError):
@@ -458,6 +458,12 @@ CREATE TABLE IF NOT EXISTS actuator_proposals (
     plugin_version TEXT NOT NULL DEFAULT 'unknown',
     idempotency_key TEXT NOT NULL UNIQUE,
     status TEXT NOT NULL DEFAULT 'proposed',
+    review_decision TEXT NOT NULL DEFAULT 'unreviewed'
+        CHECK (review_decision IN ('unreviewed','accepted','dismissed')),
+    authorization_state TEXT NOT NULL DEFAULT 'proposed'
+        CHECK (authorization_state IN ('not_requested','proposed','approved','rejected','expired','revoked')),
+    execution_state TEXT NOT NULL DEFAULT 'not_started'
+        CHECK (execution_state IN ('not_started','queued','running','succeeded','failed','cancelled','unavailable')),
     target TEXT NOT NULL,
     action TEXT NOT NULL,
     preview TEXT NOT NULL,
@@ -471,6 +477,9 @@ CREATE TABLE IF NOT EXISTS actuator_proposals (
     preview_renderer_version TEXT,
     effect_class TEXT,
     policy_version TEXT,
+    operation_json TEXT NOT NULL DEFAULT '{}',
+    policy_snapshot_json TEXT NOT NULL DEFAULT '{}',
+    grant_id TEXT,
     result_json TEXT,
     error TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -493,6 +502,44 @@ CREATE TABLE IF NOT EXISTS actuator_proposal_audit (
 CREATE INDEX IF NOT EXISTS idx_actuator_proposals_meeting ON actuator_proposals(meeting_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_actuator_proposals_status ON actuator_proposals(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_actuator_proposal_audit_proposal ON actuator_proposal_audit(proposal_id, created_at);
+
+-- HS-92-08: revocable, bounded authority. A grant never contains a secret or
+-- payload; it binds WHO may perform WHICH effect, WHERE, with WHAT data/scope,
+-- until WHEN and for HOW MANY uses.
+CREATE TABLE IF NOT EXISTS authority_grants (
+    id TEXT PRIMARY KEY,
+    actor TEXT NOT NULL,
+    operation_family TEXT NOT NULL,
+    effect_class TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    data_classes_json TEXT NOT NULL DEFAULT '[]',
+    project_scope TEXT,
+    resource_scope TEXT,
+    issued_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    max_uses INTEGER NOT NULL DEFAULT 1,
+    remaining_uses INTEGER NOT NULL DEFAULT 1,
+    revoked_at TEXT,
+    revoke_reason TEXT,
+    binding_hash TEXT NOT NULL,
+    control_mode TEXT NOT NULL DEFAULT 'neutral'
+        CHECK (control_mode IN ('safe','neutral','yolo'))
+);
+CREATE INDEX IF NOT EXISTS idx_authority_grants_active
+ON authority_grants(actor, operation_family, effect_class, destination, expires_at);
+
+CREATE TABLE IF NOT EXISTS authority_grant_uses (
+    id TEXT PRIMARY KEY,
+    grant_id TEXT NOT NULL REFERENCES authority_grants(id) ON DELETE CASCADE,
+    operation_id TEXT NOT NULL,
+    actor TEXT NOT NULL,
+    effect_class TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    outcome TEXT NOT NULL DEFAULT 'consumed',
+    used_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_authority_grant_uses_grant
+ON authority_grant_uses(grant_id, used_at DESC);
 
 -- Project knowledge bases
 CREATE TABLE IF NOT EXISTS projects (
@@ -1430,6 +1477,36 @@ class Database:
             conn.execute(
                 "ALTER TABLE capability_attempts "
                 "ADD COLUMN actual_placement_json TEXT NOT NULL DEFAULT '{}'"
+            )
+        # v19 (HS-92-08): keep the legacy aggregate ``status`` as a projection
+        # while making review, authorization, and execution independently
+        # queryable. Existing rows are deterministically backfilled.
+        actuator_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(actuator_proposals)").fetchall()
+        }
+        authority_columns = {
+            "review_decision": "TEXT NOT NULL DEFAULT 'unreviewed'",
+            "authorization_state": "TEXT NOT NULL DEFAULT 'proposed'",
+            "execution_state": "TEXT NOT NULL DEFAULT 'not_started'",
+            "operation_json": "TEXT NOT NULL DEFAULT '{}'",
+            "policy_snapshot_json": "TEXT NOT NULL DEFAULT '{}'",
+            "grant_id": "TEXT",
+        }
+        for column, sql_type in authority_columns.items():
+            if actuator_cols and column not in actuator_cols:
+                conn.execute(f"ALTER TABLE actuator_proposals ADD COLUMN {column} {sql_type}")
+        if actuator_cols:
+            conn.execute(
+                """UPDATE actuator_proposals SET
+                    review_decision = 'unreviewed',
+                    authorization_state = CASE
+                        WHEN status IN ('approved','executed','failed') THEN 'approved'
+                        WHEN status = 'rejected' THEN 'rejected'
+                        ELSE 'proposed' END,
+                    execution_state = CASE
+                        WHEN status = 'executed' THEN 'succeeded'
+                        WHEN status = 'failed' THEN 'failed'
+                        ELSE 'not_started' END"""
             )
         conn.execute(
             """

@@ -23,10 +23,11 @@ from holdspeak.runtime.dictation_capture import DictationCaptureMixin
 class _Rig:
     """A fake runtime `self` exercising the REAL mixin methods unbound."""
 
-    def __init__(self, *, preview: bool) -> None:
+    def __init__(self, *, preview: bool, mode: str = "neutral") -> None:
         import threading
 
         self.config = Config()
+        self.config.control_mode = mode
         self.config.dictation.preview_before_type = preview
         self.transcription_lock = threading.Lock()
         self.state_lock = threading.Lock()
@@ -139,6 +140,19 @@ def test_agent_reply_sessions_never_preview() -> None:
     rig._transcribe_and_type(AUDIO, agent_reply_session=SimpleNamespace(id="s1"))
     assert rig.dictation_previews == {}, "answering the coder stays immediate"
     assert rig.typed == ["hello world"]
+
+
+def test_safe_forces_review_and_yolo_uses_future_operation_preset() -> None:
+    safe = _Rig(preview=False, mode="safe")
+    safe._transcribe_and_type(AUDIO)
+    assert safe.typed == []
+    assert len(safe.dictation_previews) == 1
+    assert safe.runtime_status["last_operation_policy"]["policy"]["mode"] == "safe"
+
+    yolo = _Rig(preview=True, mode="yolo")
+    yolo._transcribe_and_type(AUDIO)
+    assert yolo.typed == ["hello world"]
+    assert yolo.runtime_status["last_operation_policy"]["policy"]["mode"] == "yolo"
 
 
 def test_the_routes_enforce_the_one_shot_contract() -> None:

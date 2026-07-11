@@ -87,7 +87,8 @@ SQLCipher) becomes warranted and should be its own story.
    machine), gated by a consent model rather than an egress row. Watching is
    free: the pull-out's peek is read-only, hash-gated, never a keystroke.
    Steering requires an **arming grant**: issued per session by an explicit
-   desk act, TTL'd (15 min default, 60 min hard cap), pinned to the pane's
+   desk act, TTL'd by ControlMode (5 min Safe, 15 min Neutral, 60 min YOLO;
+   60 min hard cap), pinned to the pane's
    unique tmux `%N` identity at grant time, and held **in memory only**, so a
    hub restart disarms everything. Every keystroke re-verifies that the
    registry's current pane still resolves to the pinned identity; a recycled

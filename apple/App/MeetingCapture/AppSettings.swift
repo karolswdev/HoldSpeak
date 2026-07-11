@@ -25,6 +25,8 @@ struct SettingsView: View {
     @State private var storeHealth: StoreHealth?              // HSM-23-03 — the readiness panel
     @State private var micPermission = ""
     @State private var hubProbe: HubProbe = .idle
+    @State private var controlMode = "neutral"
+    @State private var controlModeState = ""
     enum Field: Hashable { case url, key }
     enum FetchState: Equatable { case idle, loading, ok(Int), fail }
     enum HubProbe: Equatable { case idle, loading, ok(SetupStatus), fail }
@@ -58,6 +60,8 @@ struct SettingsView: View {
                     if !cfg.isLocal { endpointCard }
                     egressRow
                     meshServeCard
+                    label("CONTROL MODE")
+                    controlModeCard
                     label("TRANSCRIPTION")
                     whisperCard
                     languageCard
@@ -87,7 +91,7 @@ struct SettingsView: View {
         .toolbar(.hidden, for: .navigationBar)
         .tint(Sig.accent)
         .onTapGesture { focused = nil }
-        .onAppear { refreshLocalModels(); loadSymbolRows(); probeReadiness() }
+        .onAppear { refreshLocalModels(); loadSymbolRows(); probeReadiness(); loadControlMode() }
         .sheet(isPresented: $showModels, onDismiss: { refreshLocalModels() }) { NavigationStack { ModelsView() }.preferredColorScheme(.dark) }
         .sheet(isPresented: $showProfiles) { NavigationStack { ProfilesView() }.preferredColorScheme(.dark) }
     }
@@ -163,6 +167,62 @@ struct SettingsView: View {
 
     private func label(_ s: String) -> some View {
         Text(s).font(.system(size: 11, weight: .heavy)).tracking(1.4).foregroundStyle(Sig.faint).padding(.leading, 2).padding(.top, 4)
+    }
+
+    private var controlModeCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                ForEach(["safe", "neutral", "yolo"], id: \.self) { mode in
+                    Button {
+                        tactile()
+                        setControlMode(mode)
+                    } label: {
+                        Text(mode == "yolo" ? "YOLO" : mode.capitalized)
+                            .font(.system(size: 13, weight: .heavy, design: .rounded))
+                            .foregroundStyle(controlMode == mode ? Color.black : Sig.text)
+                            .frame(maxWidth: .infinity).frame(height: 40)
+                            .background(controlMode == mode ? AnyShapeStyle(Sig.accentGradient) : AnyShapeStyle(Sig.s2), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(controlModeState == "saving" || !peer.isPaired)
+                }
+            }
+            Text("Future operations only · hard authentication, secret, destination, payload, pane, audit, configuration, and schema checks never change.")
+                .font(.system(size: 11.5, weight: .medium, design: .rounded))
+                .foregroundStyle(Sig.faint)
+            if !controlModeState.isEmpty && controlModeState != "saving" {
+                Text(controlModeState).font(.system(size: 11, weight: .heavy, design: .rounded))
+                    .foregroundStyle(controlModeState == "saved" ? Sig.ok : Sig.warn)
+            }
+        }
+        .padding(16).signalCard(radius: 20)
+    }
+
+    private func loadControlMode() {
+        guard let client = peer.client() else { controlModeState = "Pair a desktop to change its mode"; return }
+        Task {
+            do {
+                let policy = try await client.authorityPolicy()
+                controlMode = policy.controlMode
+                controlModeState = ""
+            } catch {
+                controlModeState = "Desktop policy unavailable"
+            }
+        }
+    }
+
+    private func setControlMode(_ mode: String) {
+        guard let client = peer.client() else { return }
+        controlModeState = "saving"
+        Task {
+            do {
+                let policy = try await client.setControlMode(mode)
+                controlMode = policy.controlMode
+                controlModeState = "saved"
+            } catch {
+                controlModeState = "Mode change refused"
+            }
+        }
     }
 
     private func targetCard(_ m: RuntimeMode, _ title: String, _ sub: String, _ glyph: String, _ g: LinearGradient) -> some View {

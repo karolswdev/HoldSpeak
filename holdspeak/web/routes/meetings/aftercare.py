@@ -152,6 +152,7 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
                 actor=(payload.decided_by or "web-user").strip() or "web-user",
                 belongs=lambda p: p.origin == "meeting" and p.meeting_id == meeting_id,
                 executors={"slack": actuator_shared.execute_slack_proposal},
+                grant_id=payload.grant_id,
             )
             if err is not None:
                 return JSONResponse({"success": False, "error": err}, status_code=status)

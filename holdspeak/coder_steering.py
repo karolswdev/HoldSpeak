@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import threading
 import time
+from datetime import datetime
 from typing import Any, Callable, Optional
 
 Runner = Callable[..., "subprocess.CompletedProcess[str]"]
@@ -274,6 +275,7 @@ def arm(
     target: str,
     *,
     ttl_seconds: int = ARM_DEFAULT_TTL_SECONDS,
+    control_mode: str = "neutral",
     runner: Optional[Runner] = None,
     clock: Clock = time.monotonic,
 ) -> dict[str, Any]:
@@ -293,7 +295,15 @@ def arm(
             "pane_id": identity["pane_id"],
             "target": str(target),
             "granted_at": now,
+            "issued_at": datetime.now().isoformat(),
             "expires_at": now + ttl,
+            "actor": "owner",
+            "operation_family": "coder_steering",
+            "effect_class": "terminal/type_text_and_keys",
+            "destination": identity["pane_id"],
+            "data_classes": ["typed_text", "key_events"],
+            "resource_scope": key,
+            "control_mode": str(control_mode or "neutral"),
         }
     return {
         "status": "armed",
@@ -333,6 +343,14 @@ def active_grants(*, clock: Clock = time.monotonic) -> dict[str, dict[str, Any]]
             key: {
                 "pane_id": grant["pane_id"],
                 "expires_in_seconds": max(0, int(grant["expires_at"] - now)),
+                "issued_at": grant["issued_at"],
+                "actor": grant["actor"],
+                "operation_family": grant["operation_family"],
+                "effect_class": grant["effect_class"],
+                "destination": grant["destination"],
+                "data_classes": list(grant["data_classes"]),
+                "resource_scope": grant["resource_scope"],
+                "control_mode": grant["control_mode"],
             }
             for key, grant in _GRANTS.items()
         }

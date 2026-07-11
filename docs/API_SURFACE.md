@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 296 (plus static mounts). iOS-consumed: 77. Web-consumed: 207.
+Routes: 303 (plus static mounts). iOS-consumed: 79. Web-consumed: 212.
 
 ## device_audio_ws
 
@@ -97,6 +97,18 @@ Routes: 296 (plus static mounts). iOS-consumed: 77. Web-consumed: 207.
 | POST | `/api/activity/project-rules/preview` | web |
 | DELETE | `/api/activity/project-rules/{rule_id}` | web |
 | PUT | `/api/activity/project-rules/{rule_id}` | web |
+
+## web.routes.authority
+
+| Method | Path | Consumers |
+|---|---|---|
+| PUT | `/api/authority/control-mode` | ios, web |
+| POST | `/api/authority/evaluate` | web |
+| GET | `/api/authority/grants` | web |
+| POST | `/api/authority/grants` | web |
+| DELETE | `/api/authority/grants/{grant_id}` | server only |
+| GET | `/api/authority/grants/{grant_id}/uses` | server only |
+| GET | `/api/authority/policy` | ios, web |
 
 ## web.routes.cadence
 

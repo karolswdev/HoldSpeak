@@ -135,6 +135,10 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         if target is None:
             envelope["peek"] = {"status": "no_pane"}
             return JSONResponse(envelope)
+        from ....config import Config
+        from ....operation_policy import steering_ttl_for_mode
+        preset_ttl = steering_ttl_for_mode(Config.load().control_mode)
+        envelope["arm_commitment"] = f"Arm pane {target} for {preset_ttl // 60} minutes"
         envelope["peek"] = await asyncio.to_thread(
             coder_steering.peek_pane, target, lines=lines, last_hash=last_hash
         )
@@ -178,14 +182,21 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
                 status_code=409,
             )
         body = payload if isinstance(payload, dict) else {}
+        from ....config import Config
+        from ....operation_policy import steering_ttl_for_mode
+
+        control_mode = Config.load().control_mode
         ttl = coder_steering.clamp_ttl(
-            body.get("ttl_seconds", coder_steering.ARM_DEFAULT_TTL_SECONDS)
+            steering_ttl_for_mode(control_mode, body.get("ttl_seconds"))
         )
         result = await asyncio.to_thread(
-            coder_steering.arm, key, target, ttl_seconds=ttl
+            coder_steering.arm, key, target, ttl_seconds=ttl, control_mode=control_mode
         )
         if result["status"] != "armed":
             return JSONResponse(result, status_code=409)
+        result["control_mode"] = control_mode
+        result["commitment"] = f"Arm pane {result['pane_id']} for {ttl // 60} minutes"
+        result["policy_version"] = "operation-policy/v1"
         _coder_frame(ctx, key)
         return JSONResponse(result)
 

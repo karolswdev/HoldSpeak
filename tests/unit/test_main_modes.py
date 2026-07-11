@@ -91,3 +91,32 @@ def test_meeting_subcommand_is_unchanged(monkeypatch: pytest.MonkeyPatch) -> Non
     assert calls[0].setup is True
     assert calls[0].list_devices is False
     assert verbose_calls == [True]
+
+
+def test_control_mode_cli_sets_future_policy_and_reports_precedence(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    config = main_module.Config()
+    saved: list[str] = []
+    monkeypatch.setattr(
+        main_module.Config, "load", classmethod(lambda cls: config)
+    )
+    monkeypatch.setattr(config, "save", lambda: saved.append(config.control_mode))
+    monkeypatch.setattr(
+        "holdspeak.db.get_database",
+        lambda: SimpleNamespace(
+            actuators=SimpleNamespace(revoke_active_grants=lambda **kwargs: 0)
+        ),
+    )
+    _patch_logging(monkeypatch)
+    monkeypatch.setattr("sys.argv", ["holdspeak", "control-mode", "safe"])
+
+    with pytest.raises(SystemExit) as exc:
+        main_module.main()
+
+    assert exc.value.code == 0
+    assert saved == ["safe"]
+    output = capsys.readouterr().out
+    assert "ControlMode: safe" in output
+    assert "future operations only" in output
+    assert "Hard invariants:" in output

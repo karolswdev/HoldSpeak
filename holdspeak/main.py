@@ -286,6 +286,17 @@ Logs are written to: {LOG_FILE}
     )
     cadence_audit_parser.add_argument("--out", metavar="FILE", help="Write the audit JSON to FILE")
 
+    # HS-92-08: inspect or change the preset applied to future operations.
+    control_mode_parser = subparsers.add_parser(
+        "control-mode",
+        help="Show or set authority policy for future operations",
+    )
+    control_mode_parser.add_argument(
+        "mode", nargs="?", choices=["safe", "neutral", "yolo"],
+        help="New mode (omit to inspect the current policy)",
+    )
+    control_mode_parser.add_argument("--json", action="store_true", help="Emit JSON")
+
     # device-psk subcommand (HS-14-03)
     device_psk_parser = subparsers.add_parser(
         "device-psk",
@@ -423,6 +434,9 @@ Logs are written to: {LOG_FILE}
     if args.command == "cadence":
         raise SystemExit(run_cadence_command(args))
 
+    if args.command == "control-mode":
+        raise SystemExit(_run_control_mode_command(args))
+
     # Handle device-psk subcommand (HS-14-03)
     if args.command == "device-psk":
         raise SystemExit(run_device_psk_command(args))
@@ -467,6 +481,45 @@ def _run_web_mode(*, no_open: bool = False) -> None:
     from .web_runtime import run_web_runtime
 
     run_web_runtime(no_open=no_open)
+
+
+def _run_control_mode_command(args) -> int:
+    """CLI control for the same persisted policy used by Web and Swift."""
+    import json
+
+    from .operation_policy import HARD_INVARIANTS, INITIAL_FAMILIES, POLICY_VERSION
+
+    config = Config.load()
+    previous = config.control_mode
+    if getattr(args, "mode", None):
+        config.control_mode = args.mode
+        config.save()
+        if previous != config.control_mode:
+            from .db import get_database
+
+            get_database().actuators.revoke_active_grants(reason="control_mode_changed")
+    payload = {
+        "control_mode": config.control_mode,
+        "previous_control_mode": previous if args.mode else None,
+        "applies_to": "future_operations_only",
+        "source": "config",
+        "precedence": [
+            "hard_invariants", "revocation", "scoped_grant",
+            "control_mode", "feature_default",
+        ],
+        "policy_version": POLICY_VERSION,
+        "supported_families": sorted(INITIAL_FAMILIES),
+        "hard_invariants": list(HARD_INVARIANTS),
+    }
+    if getattr(args, "json", False):
+        print(json.dumps(payload, sort_keys=True))
+    else:
+        change = f" (was {previous})" if args.mode and previous != config.control_mode else ""
+        print(f"ControlMode: {config.control_mode}{change}")
+        print("Applies to future operations only.")
+        print("Precedence: " + " > ".join(payload["precedence"]))
+        print("Hard invariants: " + ", ".join(HARD_INVARIANTS))
+    return 0
 
 
 def _run_meeting_mode(args):

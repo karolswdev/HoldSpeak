@@ -154,10 +154,12 @@ class DictationCaptureMixin:
                 # never previewed — answering the coder is an explicit,
                 # targeted act (the companion flow stays immediate). Off by
                 # default this block is inert: byte-identical typing.
-                if (
-                    agent_reply_session is None
-                    and getattr(self.config.dictation, "preview_before_type", False)
-                ):
+                from ..operation_policy import resolve_dictation_policy
+
+                policy_snapshot, dictation_policy = resolve_dictation_policy(self.config)
+                with self.state_lock:
+                    self.runtime_status["last_operation_policy"] = policy_snapshot
+                if agent_reply_session is None and dictation_policy.requires_review:
                     self._arm_dictation_preview(text)
                     if on_complete is not None:
                         on_complete(text)
