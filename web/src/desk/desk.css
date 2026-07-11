@@ -2211,3 +2211,163 @@
   box-shadow: inset 0 0 0 1px var(--text-faint);
   border-style: dashed;
 }
+
+/* ── HS-92-09: attention stays on the Desk; receipts open as one drawer. ── */
+.desk-next .desk-attention-launch {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 75;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--surface-3);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-1) 94%, transparent);
+  color: var(--text);
+  box-shadow: 0 12px 36px rgb(0 0 0 / 0.36);
+  font: 700 12px var(--font-mono);
+  backdrop-filter: blur(18px);
+}
+.desk-next .desk-attention-launch strong {
+  display: grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--danger-signal);
+  color: white;
+}
+.desk-next .desk-attention-drawer {
+  position: fixed;
+  inset: 12px 12px 12px auto;
+  z-index: 90;
+  display: flex;
+  width: min(460px, calc(100vw - 24px));
+  max-width: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--surface-3);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--surface-0) 96%, transparent);
+  color: var(--text);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.58);
+  backdrop-filter: blur(24px);
+}
+.desk-next .desk-attention-drawer > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  border-bottom: 1px solid var(--surface-3);
+}
+.desk-next .desk-attention-drawer h2,
+.desk-next .desk-receipt-detail h3 { margin: 3px 0 0; }
+.desk-next .desk-attention-drawer small { color: var(--text-muted); }
+.desk-next .desk-attention-drawer > header button,
+.desk-next .desk-receipt-detail > button {
+  min-width: 40px;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+}
+.desk-next .desk-attention-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 18px;
+}
+.desk-next .desk-attention-counts span {
+  min-width: 0;
+  padding: 9px;
+  border-radius: 12px;
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.desk-next .desk-attention-counts b { display: block; color: var(--text); font-size: 18px; }
+.desk-next .desk-attention-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px auto;
+  gap: 8px;
+  padding: 0 18px 12px;
+}
+.desk-next .desk-attention-filters label { min-width: 0; color: var(--text-muted); font-size: 10px; }
+.desk-next .desk-attention-filters label span { display: block; margin-bottom: 4px; }
+.desk-next .desk-attention-filters input,
+.desk-next .desk-attention-filters select,
+.desk-next .desk-attention-filters button,
+.desk-next .desk-attention-more {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--surface-3);
+  border-radius: 10px;
+  background: var(--surface-1);
+  color: var(--text);
+}
+.desk-next .desk-attention-filters button { align-self: end; width: auto; padding: 0 12px; }
+.desk-next .desk-attention-list {
+  min-height: 0;
+  margin: 0;
+  padding: 0 12px 14px;
+  overflow: auto;
+  list-style: none;
+}
+.desk-next .desk-attention-list button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 10px minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px 8px;
+  border: 0;
+  border-bottom: 1px solid var(--surface-3);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+.desk-next .desk-attention-list button > span:last-child { min-width: 0; }
+.desk-next .desk-attention-list strong,
+.desk-next .desk-attention-list em { display: block; overflow-wrap: anywhere; }
+.desk-next .desk-attention-list em { margin-top: 3px; color: var(--text-muted); font-size: 11px; font-style: normal; }
+.desk-next .desk-projection-mark { width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: var(--accent); }
+.desk-next .desk-projection-mark.is-warning { background: var(--warn-signal); }
+.desk-next .desk-projection-mark.is-error { background: var(--danger-signal); }
+.desk-next .desk-receipt-detail { min-height: 0; padding: 0 18px 18px; overflow: auto; }
+.desk-next .desk-receipt-detail dl div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--surface-3); }
+.desk-next .desk-receipt-detail dt { color: var(--text-muted); }
+.desk-next .desk-receipt-detail dd { margin: 0; overflow-wrap: anywhere; }
+.desk-next .desk-receipt-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 14px; }
+.desk-next .desk-receipt-actions a,
+.desk-next .desk-receipt-actions button,
+.desk-next .desk-attention-error button { min-height: 40px; padding: 0 12px; border: 1px solid var(--surface-3); border-radius: 10px; background: var(--surface-1); color: var(--text); }
+.desk-next .desk-attention-error,
+.desk-next .desk-attention-empty { margin: 0 18px 12px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--danger-signal) 12%, var(--surface-1)); }
+.desk-next .desk-attention-more { width: auto; margin: 0 18px 18px; }
+.desk-next .desk-obj-attention {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 2px solid var(--surface-0);
+  border-radius: 999px;
+  background: var(--danger-signal);
+  color: white;
+  font: 800 10px var(--font-mono);
+}
+@media (max-width: 540px) {
+  .desk-next .desk-attention-drawer { inset: 6px; width: auto; border-radius: 18px; }
+  .desk-next .desk-attention-filters { grid-template-columns: 1fr; }
+  .desk-next .desk-attention-filters button { width: 100%; }
+  .desk-next .desk-receipt-detail dl div { grid-template-columns: 1fr; gap: 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-obj-lift,
+  .desk-next .desk-obj-glow,
+  .desk-next .desk-session-live { animation: none !important; }
+}

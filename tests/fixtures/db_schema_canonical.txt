@@ -53,6 +53,8 @@ ON capability_invocations(state, created_at DESC)
 index idx_chains_modified: CREATE INDEX idx_chains_modified ON chains(last_modified DESC)
 index idx_connector_runs_connector_started: CREATE INDEX idx_connector_runs_connector_started
 ON connector_runs(connector_id, started_at DESC)
+index idx_desk_projection_state_attention: CREATE INDEX idx_desk_projection_state_attention
+ON desk_projection_state(attention_state, dismissed_at, updated_at DESC)
 index idx_dictation_corrections_recent: CREATE INDEX idx_dictation_corrections_recent
 ON dictation_corrections(created_at DESC, id DESC)
 index idx_dictation_journal_recent: CREATE INDEX idx_dictation_journal_recent
@@ -427,6 +429,13 @@ table connector_runs: CREATE TABLE connector_runs (
     annotation_count INTEGER NOT NULL DEFAULT 0,
     candidate_count INTEGER NOT NULL DEFAULT 0,
     command_count INTEGER NOT NULL DEFAULT 0
+)
+table desk_projection_state: CREATE TABLE desk_projection_state (
+    projection_id TEXT PRIMARY KEY,
+    attention_state TEXT NOT NULL DEFAULT 'unseen'
+        CHECK (attention_state IN ('unseen','acknowledged')),
+    dismissed_at TEXT,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
 table dictation_corrections: CREATE TABLE dictation_corrections (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

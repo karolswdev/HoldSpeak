@@ -105,7 +105,7 @@ authority, and retained results without rewriting the underlying systems.
 | HS-92-06 | Capabilities make findable results | in-progress | [story-06](./story-06-capabilities-make-results.md) | Invocation/attempt/result envelopes, readiness, no-lowering refusal, Web Workbench return, and Swift receipt decode green; native focused-room/cancellation/manual walks pending |
 | HS-92-07 | Every run names where it happens | in-progress | [story-07](./story-07-every-run-names-where.md) | InferenceTarget/Profile alias, five destination classes, shared Web/native picker, named refusal, actual-placement Artifact receipts, docs/doctor, and no borrowed keys green; five physical destination walks pending |
 | HS-92-08 | Decisions say what happens next | in-progress | [story-08](./story-08-decisions-say-what-happens.md) | Separate review/authority/execution axes, central four-family ControlMode policy, exact commitment verbs, bounded/revocable grants with use receipts, and Web/Swift/CLI controls green; physical mode/grant/revocation walks pending |
-| HS-92-09 | The Desk remembers what needs you | backlog | [story-09](./story-09-the-desk-remembers.md) | — |
+| HS-92-09 | The Desk remembers what needs you | in-progress | [story-09](./story-09-the-desk-remembers.md) | Schema v20 additive projection index, non-sensitive adapters, presentation-only state, Web Desk/Qlippy/Mission Control and native Queue HUD green; forced-failure/device/VoiceOver/next-day walks pending |
 | HS-92-10 | The owner walk and evidence close | backlog | [story-10](./story-10-owner-walk-evidence-close.md) | — |
 
 ## Where we are

@@ -22,6 +22,7 @@ from .mesh import build_mesh_router
 from .missioncontrol import build_missioncontrol_router
 from .pages import build_pages_router
 from .primitives import build_primitives_router
+from .projections import build_projections_router
 from .projects import build_projects_router
 from .setup import build_setup_router
 from .sync import build_sync_router
@@ -40,6 +41,7 @@ __all__ = [
     "build_missioncontrol_router",
     "build_pages_router",
     "build_primitives_router",
+    "build_projections_router",
     "build_projects_router",
     "build_setup_router",
     "build_sync_router",

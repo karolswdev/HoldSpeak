@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
 import { useRuntimeBus, useRuntimeFrame } from "../runtime/RuntimeBus";
+import { useProjections } from "../desk/projections";
 import { Button, InlineMessage, StatusPill } from "./signal/Signal";
 
 type Preview = { token?: string; text?: string; kind?: "wake" | "preview" };
@@ -105,6 +106,7 @@ function QueueHud() {
 
 function Qlippy() {
   const { subscribe } = useRuntimeBus();
+  const projections = useProjections((state) => state.ambient);
   const [enabled, setEnabled] = useState(false);
   const [cards, setCards] = useState<Array<JsonRecord & { frameType: string }>>(
     [],
@@ -137,6 +139,12 @@ function Qlippy() {
           typeof frame.data !== "object"
         )
           return;
+        // Runtime frames are only wake-up hints. Qlippy's actionable wording
+        // comes from the same durable projection used by the Desk and HUD.
+        if (frame.type !== "learning_event") {
+          void useProjections.getState().refreshAmbient();
+          return;
+        }
         setCards((current) =>
           [
             ...current.filter(
@@ -148,11 +156,17 @@ function Qlippy() {
       }),
     [subscribe],
   );
+  useEffect(() => {
+    if (enabled) void useProjections.getState().refreshAmbient();
+  }, [enabled]);
+  const projection = projections.find(
+    (row) => row.attention_state === "needs_attention" || row.attention_state === "unseen",
+  );
   const card = cards[0];
-  if (!enabled || !card) return null;
+  if (!enabled || (!projection && !card)) return null;
   const dismiss = () => setCards((current) => current.slice(1));
   const decide = async (decision: "approved" | "rejected") => {
-    if (!card.meeting_id || !card.id) return dismiss();
+    if (!card?.meeting_id || !card.id) return dismiss();
     setBusy(true);
     try {
       await apiFetch(
@@ -171,27 +185,31 @@ function Qlippy() {
       </div>
       <div>
         <span className="signal-eyebrow">
-          {card.frameType.replace(/_/g, " ")}
+          {projection ? `${projection.projection_kind} · ${projection.subject_label}` : card!.frameType.replace(/_/g, " ")}
         </span>
         <strong>
-          {String(
-            card.title ??
-              card.label ??
-              (card.frameType === "learning_event"
+          {projection?.title ?? String(
+            card?.title ??
+              card?.label ??
+              (card?.frameType === "learning_event"
                 ? "HoldSpeak learned"
                 : "Something is ready"),
           )}
         </strong>
         <p>
-          {String(
-            card.preview ??
-              card.detail ??
-              card.body ??
+          {projection?.summary ?? String(
+            card?.preview ??
+              card?.detail ??
+              card?.body ??
               "Review this moment when you are ready.",
           )}
         </p>
         <div className="button-row">
-          {card.frameType === "actuator_proposed" ? (
+          {projection ? (
+            <Button dense variant="primary" onClick={() => { window.location.href = projection.detail_url; }}>
+              Review source
+            </Button>
+          ) : card!.frameType === "actuator_proposed" ? (
             <>
               <Button
                 dense
@@ -210,7 +228,13 @@ function Qlippy() {
               </Button>
             </>
           ) : null}
-          <Button dense variant="ghost" onClick={dismiss}>
+          <Button
+            dense
+            variant="ghost"
+            onClick={() => projection
+              ? void useProjections.getState().present(projection.id, "dismiss")
+              : dismiss()}
+          >
             Dismiss
           </Button>
         </div>

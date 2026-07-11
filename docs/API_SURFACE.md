@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 303 (plus static mounts). iOS-consumed: 79. Web-consumed: 212.
+Routes: 305 (plus static mounts). iOS-consumed: 81. Web-consumed: 214.
 
 ## device_audio_ws
 
@@ -440,6 +440,13 @@ Routes: 303 (plus static mounts). iOS-consumed: 79. Web-consumed: 212.
 | GET | `/api/workflows/{workflow_id}` | web |
 | PUT | `/api/workflows/{workflow_id}` | web |
 | POST | `/api/workflows/{workflow_id}/run` | ios, web |
+
+## web.routes.projections
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/desk/projections` | ios, web |
+| PUT | `/api/desk/projections/{projection_id}/presentation` | ios, web |
 
 ## web.routes.projects
 

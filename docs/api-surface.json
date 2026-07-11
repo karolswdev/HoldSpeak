@@ -1054,6 +1054,28 @@
       ]
     },
     {
+      "path": "/api/desk/projections",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projections",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/desk/projections/{projection_id}/presentation",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.projections",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
       "path": "/api/desk/relationships/{resource_ref:path}",
       "methods": [
         "GET"

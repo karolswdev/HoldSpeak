@@ -8,6 +8,8 @@ import { useDrag } from "@use-gesture/react";
 import { spriteUrl } from "../sprites";
 import { objGlow, objMotion, objUnit, type WorldObject } from "../world";
 import { useDesk } from "../store";
+import { qualifiedRef } from "../api";
+import { useProjections } from "../projections";
 
 export function DeskObject({
   o,
@@ -39,6 +41,12 @@ export function DeskObject({
   const isNew = newIds.includes(o.id);
   const editing = editingId === o.id;
   const selected = selectedIds.includes(o.id);
+  const projectionSubject = o.kind === "coder"
+    ? `coder_session:${String(o.ref.agent || "claude")}:${o.id}`
+    : qualifiedRef(o.kind, o.id);
+  const projectionCounts = useProjections(
+    (state) => state.subject_counts[projectionSubject],
+  );
 
   const onClick = (e: React.MouseEvent) => {
     // A completed drag never opens (the HS-71-06 discrimination: the drag
@@ -106,6 +114,15 @@ export function DeskObject({
     <div
       {...bind()}
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openPullout(o.id);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`${o.title}${projectionCounts?.needs_attention ? `, ${projectionCounts.needs_attention} need attention` : ""}`}
       data-obj-id={o.id}
       className={
         "desk-obj" +
@@ -131,6 +148,11 @@ export function DeskObject({
         <div className="desk-obj-glow" aria-hidden="true" />
         <div className="desk-obj-ring" aria-hidden="true" />
         {isNew && <span className="desk-obj-new">NEW</span>}
+        {projectionCounts?.needs_attention ? (
+          <span className="desk-obj-attention" aria-hidden="true">
+            {projectionCounts.needs_attention}
+          </span>
+        ) : null}
         <img
           className="desk-obj-sprite"
           src={spriteUrl(o.kind, o.id)}

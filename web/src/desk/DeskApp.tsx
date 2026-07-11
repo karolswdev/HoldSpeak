@@ -14,6 +14,8 @@ import { RecipeRail } from "./components/RecipeRail";
 import { PersonaChat } from "./components/PersonaChat";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
 import { SessionPullout, PanePicker } from "./components/SessionPullout";
+import { AttentionDrawer } from "./components/AttentionDrawer";
+import { useProjections } from "./projections";
 import "./desk.css";
 
 export default function DeskApp() {
@@ -28,6 +30,7 @@ export default function DeskApp() {
       const open = new URLSearchParams(window.location.search).get("open");
       if (open) useDesk.getState().openPullout(open.includes(":") ? open.split(":", 2)[1] : open);
     });
+    void useProjections.getState().refresh(true);
   }, []);
 
   const total = Object.values(items).reduce((n, l) => n + l.length, 0);
@@ -47,6 +50,7 @@ export default function DeskApp() {
       <MissionControlConveyor />
       <PanePicker />
       <SessionPullout />
+      <AttentionDrawer />
     </div>
   );
 }

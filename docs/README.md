@@ -19,6 +19,8 @@ rail, file things into zones). The rooms hang off its menu: the two modes
   your first hold-to-talk dictation in another app.
 - **[The Desk](./WEB_DESK.md)**: the front door itself. The world, its
   objects, and every verb (create, open, file, record, ask, preview).
+- **[Desk memory](./DESK_MEMORY.md)**: the shared attention and receipt read
+  model, its privacy boundary, contextual badges, pagination, and source links.
 
 ## Understand the system
 

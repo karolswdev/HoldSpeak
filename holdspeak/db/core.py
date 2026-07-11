@@ -14,6 +14,7 @@ from .meetings import MeetingRepository
 from .intel import IntelRepository
 from .mesh_relay import MeshRelayRepository
 from .steering import SteeringAuditRepository
+from .projections import ProjectionRepository
 from .plugins import PluginArtifactRepository
 from .projects import ProjectRepository
 from .activity import ActivityRepository
@@ -44,7 +45,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 19  # v19: separated authority axes + scoped grants (HS-92-08)
+SCHEMA_VERSION = 20  # v20: non-mutating Desk projection presentation state (HS-92-09)
 
 
 class SchemaVersionError(RuntimeError):
@@ -540,6 +541,18 @@ CREATE TABLE IF NOT EXISTS authority_grant_uses (
 );
 CREATE INDEX IF NOT EXISTS idx_authority_grant_uses_grant
 ON authority_grant_uses(grant_id, used_at DESC);
+
+-- HS-92-09: presentation state only. Receipt/attention content is projected
+-- from authoritative source tables and is never copied into a second audit.
+CREATE TABLE IF NOT EXISTS desk_projection_state (
+    projection_id TEXT PRIMARY KEY,
+    attention_state TEXT NOT NULL DEFAULT 'unseen'
+        CHECK (attention_state IN ('unseen','acknowledged')),
+    dismissed_at TEXT,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_desk_projection_state_attention
+ON desk_projection_state(attention_state, dismissed_at, updated_at DESC);
 
 -- Project knowledge bases
 CREATE TABLE IF NOT EXISTS projects (
@@ -1187,6 +1200,7 @@ class Database:
         self.model_manifests = ModelManifestRepository(self._connection, self)
         self.mesh_relay = MeshRelayRepository(self._connection, self)
         self.steering = SteeringAuditRepository(self._connection, self)
+        self.projections = ProjectionRepository(self._connection, self)
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

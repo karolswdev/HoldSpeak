@@ -24,6 +24,7 @@ import {
   useMissionControl,
 } from "../missioncontrol";
 import { isCoderFrame, useSteering } from "../steering";
+import { useProjections } from "../projections";
 
 const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
 
@@ -373,6 +374,7 @@ export function MissionControlConveyor() {
   const updatedAt = useMissionControl((s) => s.updatedAt);
   const open = useMissionControl((s) => s.open);
   const pinMap = useSteering((s) => s.manualPins);
+  const attentionCount = useProjections((s) => s.ambientTotal);
   const { refresh, toggle } = useMissionControl.getState();
   const [picked, setPicked] = useState<PickTarget | null>(null);
 
@@ -380,6 +382,7 @@ export function MissionControlConveyor() {
     const tick = () => {
       void refresh();
       void useSteering.getState().refreshGrants(); // the pins' armed rings
+      void useProjections.getState().refreshAmbient();
     };
     tick();
     const timer = setInterval(tick, POLL_MS);
@@ -405,7 +408,7 @@ export function MissionControlConveyor() {
   if (!open) {
     return (
       <button className="desk-mc-tab" onClick={toggle} title="mission control">
-        ▦ rails{awaitingCount > 0 ? ` 🙋${awaitingCount}` : ""}
+        ▦ rails{awaitingCount > 0 ? ` 🙋${awaitingCount}` : ""}{attentionCount > 0 ? ` ◎${attentionCount}` : ""}
       </button>
     );
   }
@@ -418,6 +421,15 @@ export function MissionControlConveyor() {
     <div className="desk-mc">
       <div className="desk-mc-head">
         <span className="desk-mc-title">▦ mission control</span>
+        {attentionCount > 0 ? (
+          <button
+            type="button"
+            className="desk-mc-btn"
+            onClick={() => useProjections.getState().setOpen(true)}
+          >
+            ◎ {attentionCount} shared attention
+          </button>
+        ) : null}
         <button className="desk-mc-close" onClick={toggle} title="collapse">
           ▾
         </button>

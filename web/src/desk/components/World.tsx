@@ -204,9 +204,19 @@ function ZoneTray({
     <div
       className={"desk-zone" + (hoverZoneId === z.id ? " drop-ready" : "")}
       data-zone-id={z.id}
+      role="button"
+      tabIndex={0}
+      aria-label={`${z.title} zone, ${memberIds.length} ${memberIds.length === 1 ? "item" : "items"}`}
       style={{ ...style, "--zk": tint } as React.CSSProperties}
       onClick={() => {
         if (!renaming && !focusRename) diveInto(z.id);
+      }}
+      onKeyDown={(event) => {
+        if (event.currentTarget !== event.target) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          if (!renaming && !focusRename) diveInto(z.id);
+        }
       }}
     >
       {renaming || focusRename ? (

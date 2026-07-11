@@ -69,6 +69,10 @@ struct WaitingAgent: Identifiable, Equatable {
     // every origin — the transparency + approval spine, on the glass in your hand.
     @Published var meshJobs: [MeshInboxJob] = []
     @Published var meshProposals: [MeshInboxProposal] = []
+    @Published var deskProjections: [DeskProjectionDTO] = []
+    @Published var projectionCounts: [String: Int] = [:]
+    @Published var projectionTotal = 0
+    @Published var projectionHasMore = false
     /// The peer can't be reached — a FIRST-CLASS state: the last-known rows stay,
     /// degraded to blocked (`auto-resumes`), never an error spinner.
     @Published var meshUnreachable = false
@@ -83,7 +87,8 @@ struct WaitingAgent: Identifiable, Equatable {
     var live: Int { working + queued + blocked }
     /// The HUD is visible whenever there's a job, an agent waiting, or mesh content.
     var hasContent: Bool {
-        !jobs.isEmpty || !waitingAgents.isEmpty || !meshJobs.isEmpty || !meshProposals.isEmpty
+        !jobs.isEmpty || !waitingAgents.isEmpty || !meshJobs.isEmpty ||
+            !meshProposals.isEmpty || !deskProjections.isEmpty
     }
     /// Active jobs first (working → blocked → queued), then recently finished.
     var ordered: [QueuedJob] {
@@ -124,6 +129,28 @@ struct WaitingAgent: Identifiable, Equatable {
         } else {
             meshUnreachable = true
         }
+        if let envelope = try? await client.deskProjections() {
+            deskProjections = envelope.projections
+            projectionCounts = envelope.counts
+            projectionTotal = envelope.page.total
+            projectionHasMore = envelope.page.hasMore
+        }
+    }
+
+    func loadOlderProjections() async {
+        guard let client = meshClient, projectionHasMore else { return }
+        if let envelope = try? await client.deskProjections(offset: deskProjections.count) {
+            deskProjections += envelope.projections
+            projectionCounts = envelope.counts
+            projectionTotal = envelope.page.total
+            projectionHasMore = envelope.page.hasMore
+        }
+    }
+
+    func setProjectionPresentation(_ projection: DeskProjectionDTO, action: String) async {
+        guard let client = meshClient else { return }
+        try? await client.updateProjectionPresentation(id: projection.id, action: action)
+        await pollMesh()
     }
 
     /// Decide a pending proposal FROM THE HUD — one act, the same decision routes
@@ -174,6 +201,7 @@ struct QueueHUD: View {
     @ObservedObject private var store = RunQueueStore.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pulse = false
+    @State private var selectedProjection: DeskProjectionDTO?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -190,6 +218,9 @@ struct QueueHUD: View {
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: store.meshProposals.count)
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: store.meshJobs.count)
         .onAppear { pulse = true }
+        .sheet(item: $selectedProjection) { projection in
+            NavigationStack { projectionDetail(projection) }.preferredColorScheme(.dark)
+        }
     }
 
     // Collapsed: a glanceable status pill, Dynamic-Island-style, under the status bar.
@@ -219,6 +250,16 @@ struct QueueHUD: View {
                     .foregroundStyle(Sig.warn)
                     .padding(.horizontal, 7).padding(.vertical, 3).background(Sig.warn.opacity(0.16), in: Capsule())
                 }
+                if (store.projectionCounts["needs_attention"] ?? 0) > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "exclamationmark.bubble.fill").font(.system(size: 9, weight: .black))
+                        Text("\(store.projectionCounts["needs_attention"] ?? 0) need you")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundStyle(Sig.warn)
+                    .padding(.horizontal, 7).padding(.vertical, 3)
+                    .background(Sig.warn.opacity(0.16), in: Capsule())
+                }
                 if store.blocked > 0 {
                     Text("\(store.blocked) blocked").font(.system(size: 11, weight: .bold)).foregroundStyle(Sig.warn)
                         .padding(.horizontal, 7).padding(.vertical, 3).background(Sig.warn.opacity(0.16), in: Capsule())
@@ -247,13 +288,23 @@ struct QueueHUD: View {
             }
             .padding(.horizontal, 16).padding(.top, 14).padding(.bottom, 10)
 
-            VStack(spacing: 8) {
-                ForEach(store.waitingAgents) { agent in agentLaneRow(agent) }
-                ForEach(store.meshProposals) { proposal in proposalRow(proposal) }
-                ForEach(store.ordered) { job in jobRow(job) }
-                ForEach(store.meshJobs) { job in meshJobRow(job) }
+            ScrollView {
+                VStack(spacing: 8) {
+                    ForEach(store.deskProjections) { projection in projectionRow(projection) }
+                    ForEach(store.waitingAgents) { agent in agentLaneRow(agent) }
+                    ForEach(store.meshProposals) { proposal in proposalRow(proposal) }
+                    ForEach(store.ordered) { job in jobRow(job) }
+                    ForEach(store.meshJobs) { job in meshJobRow(job) }
+                    if store.projectionHasMore {
+                        Button("Load older (\(max(0, store.projectionTotal - store.deskProjections.count)) remain)") {
+                            Task { await store.loadOlderProjections() }
+                        }
+                        .font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.accent)
+                    }
+                }
+                .padding(.horizontal, 12).padding(.bottom, 12)
             }
-            .padding(.horizontal, 12).padding(.bottom, 12)
+            .frame(maxHeight: 520)
 
             if store.meshUnreachable {
                 HStack(spacing: 7) {
@@ -276,6 +327,66 @@ struct QueueHUD: View {
         .shadow(color: .black.opacity(0.55), radius: 28, y: 14)
         .padding(.horizontal, 14)
         .transition(.move(edge: .top).combined(with: .opacity))
+    }
+
+    private func projectionRow(_ projection: DeskProjectionDTO) -> some View {
+        Button { tactile(); selectedProjection = projection } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle().fill(projection.attentionState == "needs_attention" ? Sig.warn.opacity(0.16) : Sig.ok.opacity(0.14))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: projection.projectionKind == "receipt" ? "checkmark.seal.fill" : "exclamationmark.bubble.fill")
+                        .font(.system(size: 14, weight: .black))
+                        .foregroundStyle(projection.attentionState == "needs_attention" ? Sig.warn : Sig.ok)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(projection.title).font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.text).lineLimit(2)
+                    Text("\(projection.subjectLabel) · \(projection.actualDestination ?? projection.outcome)")
+                        .font(.system(size: 11, weight: .semibold)).foregroundStyle(Sig.faint).lineLimit(2)
+                }
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold)).foregroundStyle(Sig.faint)
+            }
+            .padding(11).background(Sig.s2, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+        }
+        .buttonStyle(PressableCard())
+        .accessibilityLabel("\(projection.subjectLabel), \(projection.title), \(projection.outcome)")
+        .accessibilityHint("Opens destination, authority, attempt, outcome, and source receipt details")
+    }
+
+    private func projectionDetail(_ projection: DeskProjectionDTO) -> some View {
+        List {
+            Section("\(projection.projectionKind == "receipt" ? "Receipt" : "Attention") · \(projection.subjectLabel)") {
+                Text(projection.title).font(.headline)
+                Text(projection.summary).foregroundStyle(.secondary)
+            }
+            Section("What happened") {
+                LabeledContent("Reason", value: projection.reasonCode)
+                LabeledContent("Decision", value: projection.decisionKind)
+                LabeledContent("Destination", value: projection.actualDestination ?? "Not reached")
+                LabeledContent("Authority", value: projection.authorityBasis ?? "Not required")
+                LabeledContent("Attempt", value: projection.attempt.map(String.init) ?? "—")
+                LabeledContent("Outcome", value: projection.outcome)
+                LabeledContent("Source", value: "\(projection.sourceKind) · \(projection.sourceId)")
+            }
+            Section {
+                if projection.attentionState == "needs_attention" {
+                    Button("Acknowledge") {
+                        tactile(); selectedProjection = nil
+                        Task { await store.setProjectionPresentation(projection, action: "acknowledge") }
+                    }
+                }
+                Button("Dismiss this card") {
+                    tactile(); selectedProjection = nil
+                    Task { await store.setProjectionPresentation(projection, action: "dismiss") }
+                }
+            } footer: {
+                Text("Dismissal changes only this Desk projection. The source record and subject remain unchanged.")
+            }
+        }
+        .navigationTitle("Desk memory")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func jobRow(_ job: QueuedJob) -> some View {
