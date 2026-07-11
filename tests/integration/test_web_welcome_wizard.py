@@ -33,7 +33,7 @@ def test_welcome_is_the_same_one_step_first_value_surface_as_the_desk() -> None:
 
 def test_basic_value_precedes_optional_runs_on_setup() -> None:
     first_words = (_REPO / "web/src/desk/components/FirstWords.tsx").read_text()
-    assert "Say one sentence" in first_words
+    assert "Dictate one sentence" in first_words
     assert "decisions: 0" in first_words and "steps: 1" in first_words
     assert "Add an intelligent rewrite · choose Runs on" in first_words
     assert 'to="/profiles"' in first_words

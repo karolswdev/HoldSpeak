@@ -376,7 +376,7 @@ struct DioRecipeBuilder: View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("STEP \(step + 1) OF 2").font(.system(size: 11, weight: .black, design: .rounded)).tracking(1).foregroundStyle(tint)
-                Text(step == 0 ? "What should it do?" : "Name & face").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                Text(step == 0 ? "Instructions" : "Name and icon").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
             }
             Spacer(minLength: 0)
             Button { onCancel() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 26)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
@@ -387,10 +387,10 @@ struct DioRecipeBuilder: View {
     // STEP 1 — what it does: describe it, or tap a recipe (which jumps straight to naming).
     private var step1Behavior: some View {
         VStack(alignment: .leading, spacing: 22) {
-            section("DESCRIBE IT, IN YOUR WORDS") {
+            section("INSTRUCTIONS") {
                 editor($draft.systemPrompt, placeholder: "e.g. a sharp researcher who pulls out the facts, names and open questions…", minH: 92)
             }
-            section("OR START FROM A RECIPE") {
+            section("START FROM A TEMPLATE") {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
                     ForEach(RecipePresets.all, id: \.name) { p in
                         Button { applyPreset(p); advance() } label: { recipeCard(p) }.buttonStyle(.plain)
@@ -435,7 +435,7 @@ struct DioRecipeBuilder: View {
         VStack(alignment: .leading, spacing: 22) {
             heroRow
             section("NAME") { field("Name", text: $draft.name, placeholder: "e.g. Scout") }
-            section("VIBE · ONE LINE") { field("Vibe", text: $draft.role, placeholder: "e.g. digs for the facts") }
+            section("DESCRIPTION") { field("Description", text: $draft.role, placeholder: "e.g. Finds concrete facts") }
             runsOnSection
             knowsSection
             personality
@@ -452,7 +452,7 @@ struct DioRecipeBuilder: View {
             ContextGauge(used: groundingTokens, limit: effectiveLimit)
                 .padding(11)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.04)).overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.07), lineWidth: 1)))
-            Text("KNOWLEDGE BASE").font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted.opacity(0.8)).padding(.top, 2)
+            Text("KNOWLEDGE").font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted.opacity(0.8)).padding(.top, 2)
             if knowledgeBases.isEmpty {
                 Text("Create Knowledge on the Desk, then connect this Persona to it.")
                     .font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8))
@@ -467,7 +467,7 @@ struct DioRecipeBuilder: View {
                 }
             }
             Text("NOTES").font(.system(size: 9.5, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted.opacity(0.8)).padding(.top, 6)
-            editor($draft.manualContext, placeholder: "Facts it should always have on hand — names, preferences, project context…", minH: 64)
+            editor($draft.manualContext, placeholder: "Reference notes for every run — names, preferences, project context…", minH: 64)
             Toggle(isOn: $draft.useZoneContext) {
                 Text("Read this zone's meetings").font(.system(size: 13.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
             }.tint(tint).padding(.top, 2)
@@ -773,7 +773,7 @@ struct DioRecipeChat: View {
             }
             VStack(alignment: .leading, spacing: 1) {
                 Text(recipe.name).font(.system(size: 18, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
-                Text(thinking ? "thinking…" : (recipe.role.isEmpty ? "your Persona" : recipe.role))
+                Text(thinking ? "Running…" : (recipe.role.isEmpty ? "Persona" : recipe.role))
                     .font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(thinking ? tint : DioPal.muted)
             }
             Spacer(minLength: 0)
@@ -806,7 +806,7 @@ struct DioRecipeChat: View {
     private var emptyState: some View {
         VStack(spacing: 11) {
             RecipeAvatarView(avatarId: recipe.avatar, size: 66)
-            Text("Say hi to \(recipe.name)").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+            Text("Start a conversation with \(recipe.name).").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
             if hasContext {
                 HStack(spacing: 7) {
                     if recipe.useZoneContext { tag("This zone", "tray.full.fill") }
@@ -815,7 +815,7 @@ struct DioRecipeChat: View {
                     if !grounding.isEmpty { tag(grounding.summaryLabel, "square.stack.3d.up.fill") }
                 }
             }
-            Text("Long-press a desk card to use \(recipe.name).")
+            Text("Use selected Desk material with \(recipe.name).")
                 .font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8)).multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity).padding(.top, 28)
@@ -942,8 +942,8 @@ struct ChainPrimitive: DeskPrimitive {
     var color: Color { DioPal.accent }
     var base: CGFloat { 110 }
     var title: String { rec.name.isEmpty ? ProductLanguage.label(.sequence) : rec.name }
-    var subtitle: String { "\(rec.steps.count)-Persona Sequence · drop to run" }
-    var preview: String? { "drop to run" }
+    var subtitle: String { "\(rec.steps.count)-Persona Sequence" }
+    var preview: String? { "Runs on selected Desk material" }
     var sections: [PrimitiveSection] {
         [.init(label: "CAPABILITY", tint: DioPal.accent, body: .chips([
             "Run \(rec.name.isEmpty ? "Sequence" : rec.name)", "Input · text or Desk object",
@@ -1008,7 +1008,7 @@ struct DioChainSheet: View {
                     Button { onClose() } label: { Image(systemName: "xmark.circle.fill").font(.system(size: 22)).foregroundStyle(DioPal.muted) }.buttonStyle(.plain)
                 }
                 flowPreview
-                Text("WHAT SHOULD THE CHAIN WORK ON?").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted)
+                Text("MATERIAL FOR THIS SEQUENCE").font(.system(size: 10, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.muted)
                 ZStack(alignment: .topLeading) {
                     if input.isEmpty { Text("e.g. our Q3 plan, the rough idea, the notes…").font(.system(size: 14, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.6)).padding(.horizontal, 16).padding(.top, 13).allowsHitTesting(false) }
                     TextEditor(text: $input).font(.system(size: 14, design: .rounded)).foregroundStyle(DioPal.text).scrollContentBackground(.hidden).padding(.horizontal, 11).padding(.vertical, 6).frame(height: 80)
@@ -1020,7 +1020,7 @@ struct DioChainSheet: View {
                         .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom)))
                         .opacity(ready ? 1 : 0.45)
                 }.buttonStyle(.plain)
-                Text("Long-press a Desk card to run this Sequence.").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8))
+                Text("Run this Sequence on selected Desk material.").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted.opacity(0.8))
             }
             .padding(20)
         }
@@ -1101,7 +1101,7 @@ struct DioChainBuilder: View {
                                 }
                             }
                         }
-                        sec("ADD A RECIPE") {
+                        sec("ADD A PERSONA") {
                             if recipes.isEmpty {
                                 Text("Create a Persona first.").font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                             } else {
@@ -1151,7 +1151,7 @@ struct DioChainRelay: View {
         ZStack {
             Color.black.opacity(0.8).ignoresSafeArea()
             VStack(spacing: 18) {
-                Text(step >= members.count ? "Done" : "Running \(chain.name)…").font(.system(size: 18, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
+                Text(step >= members.count ? "Sequence succeeded" : "Running \(chain.name)…").font(.system(size: 18, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
                 VStack(spacing: 0) {
                     ForEach(Array(members.enumerated()), id: \.offset) { i, a in
                         HStack(spacing: 12) {

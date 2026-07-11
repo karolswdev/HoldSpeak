@@ -863,13 +863,13 @@ struct MeetingListView: View {
         .padding(15).frame(maxWidth: .infinity, alignment: .leading).signalCard(radius: 20)
     }
 
-    // The Agent Desk — your live coding agents and the question each is asking.
+    // Live Coder sessions and the question each session is asking.
     private var agentDeskCta: some View {
         HStack(spacing: 14) {
             GlyphChip(system: "cpu.fill", gradient: Sig.localGradient, size: 50)
             VStack(alignment: .leading, spacing: 3) {
-                Text("Agent Desk").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Your live agents").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                Text("Coder sessions").font(.system(size: 17, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Live coding work").font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
             }
             Spacer()
             Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.faint)
@@ -878,7 +878,7 @@ struct MeetingListView: View {
     }
 
     // The flagship mesh tile — talk on this iPad, the words land in whatever's focused on your desktop.
-    // Peer-named when paired; invites pairing when not. Wears the ON-DEVICE / local-mesh badge.
+    // Peer-named when paired; invites pairing when not. The badge names the paired boundary.
     private var dictateCta: some View {
         let paired = peers.isPaired
         return HStack(spacing: 14) {
@@ -889,7 +889,7 @@ struct MeetingListView: View {
                 if paired {
                     HStack(spacing: 6) {
                         Image(systemName: "lock.fill").font(.system(size: 8, weight: .black))
-                        Text("ON-DEVICE · LOCAL MESH").font(.system(size: 10, weight: .heavy)).tracking(0.9)
+                        Text("PAIRED · \(peers.displayName.uppercased())").font(.system(size: 10, weight: .heavy)).tracking(0.9)
                     }
                     .foregroundStyle(Sig.local)
                     .padding(.horizontal, 8).padding(.vertical, 3)
@@ -1441,7 +1441,7 @@ struct LiveCaptureCanvas: View {
             } else {
                 pixelAsset("qlippy", size: 58, fallback: "mic.circle.fill", tint: Sig.faint)
             }
-            Text(model.recording ? "Listening… your words will float up here." : "Press Record — your meeting comes alive here.")
+            Text(model.recording ? "Recording speech for this Meeting." : "Press Record to start a Meeting.")
                 .font(.callout).foregroundStyle(Sig.faint).multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity).padding(.bottom, 18)
@@ -1926,7 +1926,7 @@ struct MeetingDetailView: View {
                             Text(review.hasGeneratedArtifacts ? "Regenerate" : "Generate")
                         }
                         .font(.subheadline.weight(.semibold))
-                        Text("Through the \(review.profile.rawValue.capitalized) lens")
+                        Text("Review focus · \(review.profile.rawValue.capitalized)")
                             .font(.system(size: 11, weight: .bold)).opacity(0.65)
                     }
                     .foregroundStyle(.black)
@@ -1971,7 +1971,7 @@ struct MeetingDetailView: View {
     private func flourishBanner(_ n: Int) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "sparkles").font(.system(size: 16, weight: .bold))
-            Text("\(n) insight\(n == 1 ? "" : "s") ready").font(.system(size: 15, weight: .heavy))
+            Text("\(n) result\(n == 1 ? "" : "s") ready for review").font(.system(size: 15, weight: .heavy))
             Spacer()
             Image(systemName: "checkmark.circle.fill").font(.system(size: 17, weight: .bold))
         }
@@ -1999,7 +1999,7 @@ struct MeetingDetailView: View {
             if a.status == .draft || a.status == .needsReview {
                 HStack(spacing: 10) {
                     Button { review.approve(a.id) } label: {
-                        Label("Approve", systemImage: "checkmark.circle.fill").font(.caption.weight(.semibold))
+                        Label("Accept Artifact", systemImage: "checkmark.circle.fill").font(.caption.weight(.semibold))
                             .foregroundStyle(.black).padding(.horizontal, 12).padding(.vertical, 7)
                             .background(Sig.ok, in: Capsule())
                     }
@@ -2026,10 +2026,10 @@ struct MeetingDetailView: View {
     private func statusChip(_ s: ArtifactStatus) -> some View {
         let (label, color): (String, Color) = {
             switch s {
-            case .accepted: ("Approved", Sig.ok)
+            case .accepted: ("Accepted", Sig.ok)
             case .rejected: ("Dismissed", Sig.faint)
-            case .needsReview: ("Review", Sig.warn)
-            case .draft: ("Proposed", Sig.local)
+            case .needsReview: ("Needs review", Sig.warn)
+            case .draft: ("Draft", Sig.local)
             }
         }()
         return Text(label).font(.caption2.weight(.bold)).foregroundStyle(color)

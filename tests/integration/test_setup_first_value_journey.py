@@ -69,10 +69,15 @@ def test_first_value_receipt_never_accepts_or_stores_phrase_content(isolated) ->
     assert "text" not in attempt and "transcript" not in attempt
 
     with isolated._connection() as conn:
-        columns = {
+        attempt_columns = {
             row[1] for row in conn.execute("PRAGMA table_info(first_value_attempts)")
         }
-    assert not {"text", "phrase", "transcript", "content", "audio"}.intersection(columns)
+        event_columns = {
+            row[1] for row in conn.execute("PRAGMA table_info(first_value_events)")
+        }
+    forbidden = {"text", "phrase", "transcript", "content", "audio"}
+    assert not forbidden.intersection(attempt_columns)
+    assert not forbidden.intersection(event_columns)
 
 
 def test_success_records_mechanics_and_closes_arrival_exactly_once(isolated) -> None:
@@ -99,6 +104,8 @@ def test_success_records_mechanics_and_closes_arrival_exactly_once(isolated) -> 
     assert status["arrival_required"] is False
     latest = status["onboarding"]["latest_first_value"]
     assert latest["steps"] == 1 and latest["decisions"] == 0
+    assert latest["event_count"] == 1
+    assert latest["elapsed_ms"] >= 0
     assert latest["destination"] == "this_machine"
     assert latest["failure_category"] is None
 
@@ -132,3 +139,57 @@ def test_failure_category_is_bounded_and_retained_without_content(isolated) -> N
     assert replay.json()["attempt"] == failed.json()["attempt"]
     assert isolated.milestones.is_set(FIRST_DICTATION_SUCCESS) is False
     assert isolated.onboarding.disposition() is None
+
+
+def test_first_value_mechanics_derive_from_bounded_events_not_client_counts(
+    isolated,
+) -> None:
+    client = _client()
+    attempt_id = client.post(
+        "/api/setup/first-value/start", json={"destination": "this_machine"}
+    ).json()["attempt"]["id"]
+
+    leaked = client.post(
+        f"/api/setup/first-value/{attempt_id}/event",
+        json={
+            "event_id": f"{attempt_id}:1:capture_started",
+            "kind": "capture_started",
+            "text": "this must never enter measurement",
+        },
+    )
+    assert leaked.status_code == 400
+
+    event = {
+        "event_id": f"{attempt_id}:1:capture_started",
+        "kind": "capture_started",
+    }
+    first = client.post(f"/api/setup/first-value/{attempt_id}/event", json=event)
+    replay = client.post(f"/api/setup/first-value/{attempt_id}/event", json=event)
+    assert first.status_code == replay.status_code == 201
+    assert first.json()["event"] == replay.json()["event"]
+
+    kept = client.post(
+        f"/api/setup/first-value/{attempt_id}/event",
+        json={
+            "event_id": f"{attempt_id}:2:keep_selected",
+            "kind": "keep_selected",
+        },
+    )
+    assert kept.status_code == 201
+
+    finished = client.post(
+        f"/api/setup/first-value/{attempt_id}/finish",
+        json={
+            "outcome": "success",
+            # Deliberately false client assertions: the event ledger wins.
+            "steps": 20,
+            "decisions": 20,
+            "destination": "this_machine",
+        },
+    )
+    assert finished.status_code == 200
+    receipt = finished.json()["attempt"]
+    assert receipt["event_count"] == 3
+    assert receipt["steps"] == 2  # dictation requested + Keep as Note
+    assert receipt["decisions"] == 1
+    assert receipt["elapsed_ms"] >= 0

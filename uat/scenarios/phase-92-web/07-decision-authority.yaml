@@ -5,7 +5,7 @@ features: [phase92.journey.decision-authority]
 recipes: [functional-proposal-review]
 form_factors: [desktop, tablet_viewport]
 steps:
-  - do: Review content, inspect a proposed external action, and compare Safe, Neutral, and YOLO behavior before authorizing anything.
+  - do: Review content, inspect a proposed external action, and compare Secure, Normal, and YOLO behavior before authorizing anything.
     expect: Content review grants no execution authority; each mode explains its policy; auth, secrets, immutable destination/payload, pane identity, and audit invariants never weaken.
     where: /settings
     verifies: [phase92.journey.decision-authority]

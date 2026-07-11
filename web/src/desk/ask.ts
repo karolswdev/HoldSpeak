@@ -45,11 +45,19 @@ export const ASK_LENSES: Array<{ name: string; instruction: string }> = [
 /** Resolve the selected ids to ask contexts (id + kind + live title). */
 export function askContexts(items: Items, selectedIds: string[]): AskContext[] {
   const out: AskContext[] = [];
-  for (const id of selectedIds) {
+  for (const selected of selectedIds) {
     for (const kind of Object.keys(items) as Array<keyof Items>) {
-      const hit = (items[kind] || []).find((x: DeskItem) => x.id === id);
+      const hit = (items[kind] || []).find(
+        (item: DeskItem) =>
+          selected === item.id || selected === qualifiedRef(kind, item.id),
+      );
       if (hit) {
-        out.push({ id, kind, ref: qualifiedRef(kind, id), title: String(hit.title || hit.name || id) });
+        out.push({
+          id: hit.id,
+          kind,
+          ref: qualifiedRef(kind, hit.id),
+          title: String(hit.title || hit.name || hit.id),
+        });
         break;
       }
     }

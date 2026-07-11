@@ -102,8 +102,8 @@ struct DeskHome: View {
                     newFolderName = ""
                 }
                 Button("Cancel", role: .cancel) { newFolderName = "" }
-            } message: { Text(newIsKB ? "A knowledge base classifies what you file into it; open it to spill its contents."
-                                       : "Place meetings in a Zone you organize yourself.") }
+            } message: { Text(newIsKB ? "Knowledge collects material used to ground answers."
+                                       : "A Zone gives Desk items a findable place.") }
         }
         .tint(Sig.accent)
         .onAppear { model.refresh() }
@@ -136,7 +136,7 @@ struct DeskHome: View {
                 }
                 if folder == .knowledge, activeUserFolder == nil, selectedIDs.isEmpty {
                     Button { tactile(.medium); fileAfterCreate = false; newIsKB = true; newFolderName = ""; showNewFolder = true } label: {
-                        HStack(spacing: 8) { Image(systemName: "plus").font(.system(size: 13, weight: .black)); Text("New Knowledge Base").font(.system(size: 14, weight: .heavy)) }
+                        HStack(spacing: 8) { Image(systemName: "plus").font(.system(size: 13, weight: .black)); Text("New Knowledge").font(.system(size: 14, weight: .heavy)) }
                             .foregroundStyle(.white).padding(.horizontal, 18).padding(.vertical, 12)
                             .background(Capsule().fill(Sig.accentGradient).shadow(color: Sig.accent.opacity(0.45), radius: 14, y: 5))
                     }.buttonStyle(PressableCard()).position(x: geo.size.width * 0.5, y: geo.size.height - 86)
@@ -314,15 +314,15 @@ struct DeskHome: View {
         if activeUserFolder == nil, folder == .models {
             return ModelFiles.installed().map {
                 DeskCardData(id: "model:\($0.id)", title: $0.name.replacingOccurrences(of: ".gguf", with: ""),
-                             sub: "loaded · on device", sprite: "cartridge", tintHex: 0x5B8DEF, mode: modeFor("model:\($0.id)"),
-                             snippet: "On-device model — meetings and dictation can run through it.")
+                             sub: "Ready · This device", sprite: "cartridge", tintHex: 0x5B8DEF, mode: modeFor("model:\($0.id)"),
+                             snippet: "Runs Meetings and dictation on this device.")
             }
         }
         if activeUserFolder == nil, folder == .knowledge {
             let kbCards = knowledgeBases.map { name in
-                DeskCardData(id: "kb:\(name)", title: name, sub: "\(kbCount(name)) item\(kbCount(name) == 1 ? "" : "s") · knowledge base",
+                DeskCardData(id: "kb:\(name)", title: name, sub: "\(kbCount(name)) item\(kbCount(name) == 1 ? "" : "s") · Knowledge",
                              sprite: "crystal", tintHex: 0x9B8CFF, mode: modeFor("kb:\(name)"),
-                             snippet: "Tap to spill what's filed here onto the desk.")
+                             snippet: "Contains material used to ground answers.")
             }
             return kbCards + spilledCards     // tapping a KB spills its members alongside
         }
@@ -565,7 +565,7 @@ struct DeskSidebar: View {
             }
             HStack(spacing: 6) {
                 Image(systemName: "lock.fill").font(.system(size: 9, weight: .black))
-                Text("ON-DEVICE").font(.system(size: 9, weight: .heavy)).tracking(1.2)
+                Text("THIS DEVICE").font(.system(size: 9, weight: .heavy)).tracking(1.2)
             }.foregroundStyle(Sig.local).padding(.leading, 6).padding(.top, 10).padding(.bottom, 6)
         }
         .padding(.horizontal, 12).padding(.vertical, 18)
@@ -856,7 +856,7 @@ struct DeskEmptyHint: View {
             VStack(spacing: 10) {
                 Image(systemName: "square.dashed").font(.system(size: 28, weight: .bold)).foregroundStyle(Sig.faint)
                 Text("“\(z)” is empty.").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Climb out (double-tap the desk), drag cards in,\nor draw a sub-zone to nest deeper.")
+                Text("Return to the parent Zone or move Desk items here.")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted).multilineTextAlignment(.center)
             }.frame(width: 320)
         } else { standard }
@@ -864,12 +864,12 @@ struct DeskEmptyHint: View {
     private var standard: some View {
         VStack(spacing: 10) {
             Image(systemName: folder.icon).font(.system(size: 28, weight: .bold)).foregroundStyle(Sig.faint)
-            Text(folder == .all ? "Your desk is empty." : "Nothing in \(folder.label) yet.").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
+            Text(folder == .all ? "Your Desk is empty." : "Nothing in \(folder.label) yet.").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
             if folder == .knowledge {
-                Text("A knowledge base classifies what you file into it.\nMake one, then lasso cards and File them in.")
+                Text("Knowledge collects material used to ground answers.")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted).multilineTextAlignment(.center)
             } else if folder != .models {
-                Text("Tap the mic to record — it lands here as a card\nyou can fling, arrange, and tidy.")
+                Text("Record a Meeting or create a Desk item.")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.muted).multilineTextAlignment(.center)
             }
         }.frame(width: 320)

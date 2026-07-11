@@ -41,6 +41,37 @@ log = get_logger("web.routes.desk_actuators")
 _COMPANION_GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
 
 
+def _source_binding(
+    payload: _CompanionSlackRequest, db: Any
+) -> tuple[str, dict[str, Any]]:
+    """Return a bounded source identity for Desk-origin proposal receipts."""
+
+    raw_ref = str(payload.source_ref or "").strip()
+    if not raw_ref:
+        return "", {}
+    from ...db.relationships import qualified_ref
+
+    source_ref = qualified_ref(raw_ref)
+    source_kind, source_id = source_ref.split(":", 1)
+    if source_kind == "meeting":
+        source = db.meetings.get_meeting(source_id)
+    elif source_kind == "note":
+        source = db.notes.get(source_id)
+    elif source_kind == "artifact":
+        source = db.plugins.get_artifact(source_id)
+    else:
+        raise ValueError("source_ref must identify a Meeting, Note, or Artifact")
+    if source is None:
+        raise ValueError(f"Unknown {source_kind.title()} source: {source_id}")
+    source_label = str(source.title or source_id).strip()[:160]
+    return source_ref, {
+        "_source": {
+            "ref": source_ref,
+            "label": source_label or source_ref.split(":", 1)[1],
+        }
+    }
+
+
 def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -96,19 +127,24 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
             from ...plugins.builtin.webhook_post_actuator import WebhookPostActuator
 
             db = get_database()
+            source_ref, source_payload = _source_binding(payload, db)
             body = f"*{payload.title.strip()}*\n{text}" if (payload.title or "").strip() else text
             content_key = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
             proposal = db.actuators.record_proposal(
                 meeting_id=None,
                 origin="desk",
-                window_id="companion:slack",
+                window_id=source_ref or "companion:slack",
                 plugin_id=WebhookPostActuator.id,
                 plugin_version=WebhookPostActuator.version,
-                idempotency_key=f"companion-slack:{content_key}",
+                idempotency_key=(
+                    f"companion-slack:{source_ref}:{content_key}"
+                    if source_ref
+                    else f"companion-slack:{content_key}"
+                ),
                 target="slack",
                 action="post_message",
                 preview=body,
-                payload={"body": {"text": body}},
+                payload={"body": {"text": body}, **source_payload},
                 reversible=False,
                 required_capabilities=["actuator"],
             )
@@ -126,6 +162,8 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
                 },
             )
             return JSONResponse({"success": True, "proposal": proposal_to_dict(proposal)})
+        except ValueError as e:
+            return JSONResponse({"success": False, "error": str(e)}, status_code=400)
         except Exception as e:
             return error_500(e, log, "Failed to propose desk Slack send")
 
@@ -182,14 +220,20 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
             from ...plugins.builtin.webhook_post_actuator import WebhookPostActuator
 
             db = get_database()
+            source_ref, source_payload = _source_binding(payload, db)
             body = f"*{payload.title.strip()}*\n{text}" if (payload.title or "").strip() else text
             content_key = hashlib.sha256(body.encode("utf-8")).hexdigest()[:16]
             proposal = db.actuators.record_proposal(
-                meeting_id=None, origin="desk", window_id="companion:webhook",
+                meeting_id=None, origin="desk", window_id=source_ref or "companion:webhook",
                 plugin_id=WebhookPostActuator.id, plugin_version=WebhookPostActuator.version,
-                idempotency_key=f"companion-webhook:{content_key}",
+                idempotency_key=(
+                    f"companion-webhook:{source_ref}:{content_key}"
+                    if source_ref
+                    else f"companion-webhook:{content_key}"
+                ),
                 target="webhook", action="post_message", preview=body,
-                payload={"body": {"text": body}}, reversible=False, required_capabilities=["actuator"],
+                payload={"body": {"text": body}, **source_payload},
+                reversible=False, required_capabilities=["actuator"],
             )
             ctx.broadcast("actuator_proposed", {
                 "id": proposal.id, "meeting_id": proposal.meeting_id, "plugin_id": proposal.plugin_id,
@@ -197,6 +241,8 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
                 "preview": proposal.preview, "reversible": bool(proposal.reversible),
             })
             return JSONResponse({"success": True, "proposal": proposal_to_dict(proposal)})
+        except ValueError as e:
+            return JSONResponse({"success": False, "error": str(e)}, status_code=400)
         except Exception as e:
             return error_500(e, log, "Failed to propose desk webhook send")
 
@@ -251,15 +297,20 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
             from ...plugins.builtin.github_issue_actuator import GithubIssueActuator
 
             db = get_database()
+            source_ref, source_payload = _source_binding(payload, db)
             title = str(payload.title or "").strip() or (text.splitlines()[0][:72] if text else "Desk issue")
             preview = f"Open a GitHub issue in {repo}: “{title}”"
             content_key = hashlib.sha256(f"{repo}|{title}|{text}".encode("utf-8")).hexdigest()[:16]
             proposal = db.actuators.record_proposal(
-                meeting_id=None, origin="desk", window_id="companion:github",
+                meeting_id=None, origin="desk", window_id=source_ref or "companion:github",
                 plugin_id=GithubIssueActuator.id, plugin_version=GithubIssueActuator.version,
-                idempotency_key=f"companion-github:{content_key}",
+                idempotency_key=(
+                    f"companion-github:{source_ref}:{content_key}"
+                    if source_ref
+                    else f"companion-github:{content_key}"
+                ),
                 target="github", action="create_issue", preview=preview,
-                payload={"repo": repo, "title": title, "body": text}, reversible=False,
+                payload={"repo": repo, "title": title, "body": text, **source_payload}, reversible=False,
                 required_capabilities=["actuator"],
             )
             ctx.broadcast("actuator_proposed", {
@@ -268,6 +319,8 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
                 "preview": proposal.preview, "reversible": bool(proposal.reversible),
             })
             return JSONResponse({"success": True, "proposal": proposal_to_dict(proposal)})
+        except ValueError as e:
+            return JSONResponse({"success": False, "error": str(e)}, status_code=400)
         except Exception as e:
             return error_500(e, log, "Failed to propose desk GitHub issue")
 

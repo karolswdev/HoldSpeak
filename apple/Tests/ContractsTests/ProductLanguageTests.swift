@@ -22,7 +22,30 @@ final class ProductLanguageTests: XCTestCase {
         XCTAssertEqual(Set(registry.decisionKinds), Set(ProductDecisionKind.allCases))
         XCTAssertEqual(Set(registry.controlModes), Set(ControlMode.allCases))
         XCTAssertEqual(registry.lifecycleAxes, ProductLanguage.lifecycleAxes)
+        XCTAssertEqual(
+            registry.controlModeLabels,
+            Dictionary(uniqueKeysWithValues: ControlMode.allCases.map {
+                ($0.rawValue, ProductLanguage.controlModeLabels[$0]!)
+            })
+        )
+        XCTAssertEqual(
+            registry.controlModeDescriptions,
+            Dictionary(uniqueKeysWithValues: ControlMode.allCases.map {
+                ($0.rawValue, ProductLanguage.controlModeDescriptions[$0]!)
+            })
+        )
+        XCTAssertEqual(
+            registry.destinationClassLabels,
+            Dictionary(uniqueKeysWithValues: ProductDestinationClass.allCases.map {
+                ($0.rawValue, ProductLanguage.destinationClassLabels[$0]!)
+            })
+        )
+        XCTAssertEqual(registry.lifecycleLabels, ProductLanguage.lifecycleLabels)
         XCTAssertEqual(registry.meetingProjections, ProductLanguage.meetingProjections)
+        XCTAssertEqual(registry.copyContract.version, 1)
+        XCTAssertTrue(registry.compatibilityExceptions.allSatisfy {
+            $0.registryVersion == ProductLanguage.version && !$0.id.isEmpty
+        })
 
         for term in CanonicalProductTerm.allCases {
             let source = try XCTUnwrap(registry.terms[term.rawValue])
@@ -45,5 +68,16 @@ final class ProductLanguageTests: XCTestCase {
             ControlMode.self,
             from: Data("\"reckless\"".utf8)
         ))
+    }
+
+    func testProductLabelsPreserveWireCompatibility() throws {
+        XCTAssertEqual(try ProductLanguage.controlMode(for: "Secure"), .safe)
+        XCTAssertEqual(try ProductLanguage.controlMode(for: "normal"), .neutral)
+        XCTAssertEqual(ProductLanguage.controlModeLabel("safe"), "Secure")
+        XCTAssertEqual(ProductLanguage.controlModeDescription("yolo"),
+                       "Runs eligible configured work without HoldSpeak approval prompts.")
+        XCTAssertEqual(ProductLanguage.destinationClassLabel(.pairedDevice), "Paired device")
+        XCTAssertEqual(ProductLanguage.lifecycleLabel(axis: "review", value: "unreviewed"),
+                       "Needs review")
     }
 }

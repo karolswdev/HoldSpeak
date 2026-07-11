@@ -43,11 +43,11 @@ comes back as typed, reviewable artifacts:
 
 Launch `holdspeak` and the browser opens on the Desk: everything the two
 modes produce, living as objects in one spatial world. Meetings, notes,
-knowledge bases, recipes, and their artifacts float on the stage; zones are
+Knowledge, Personas, and their Artifacts appear on the Desk; Zones are
 shelves you drag things onto; tap anything and it opens in place.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects (meetings as cassettes, notes, a knowledge-base plant, an artifact page) floating on a warm dark stage; a Q3 release zone tray holding one filed meeting; agent avatars on a right-edge rail; a record orb bottom-center; a compact HoldSpeak menu and an egress badge top-left." width="760">
+  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects (meetings as cassettes, notes, a Knowledge plant, an Artifact page) floating on a warm dark stage; a Q3 release Zone tray holding one filed Meeting; Coder session avatars on a right-edge rail; a record orb bottom-center; a compact HoldSpeak menu and an egress badge top-left." width="760">
 </p>
 <p align="center"><em>The front door: the world your voice work lives in. The orb records, the rail asks, the tray files.</em></p>
 
@@ -55,37 +55,37 @@ The Desk is where the loops close. Press the orb and the hub records a
 meeting; when it ends, the meeting lands on the stage as an object. Rope a
 few objects together with the lasso and **Ask AI** about exactly that pile:
 the answer prints as a card you keep or bin, and a kept card records every
-object it read plus your instruction. The egress badge in the corner is the
-one trust answer: local, or
-exactly which endpoint. See [The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md).
+object it read plus your instruction. The boundary badge names This device,
+a paired device, a private endpoint, or an external service. See
+[The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md).
 
 **Ground this ask.** The composer carries an attach control: pick meetings,
 expand each one to its digest, its transcript, or any artifact it produced,
-and the gauge prices the selection against the model's window before you
+and the gauge measures the selection against the model's window before you
 run. The question is answered from those records (the hub reads them from
 its own store), the kept card names them, and an unknown reference refuses
 with its id instead of guessing.
 
-**Talk to your personas.** Tap an avatar on the rail and it opens a
+**Talk to your Personas.** Tap an avatar on the rail and it opens a
 conversation, not a one-shot prompt: turns accumulate, the thread survives a
 reload, each reply wears the badge for where that turn actually ran, and any
-reply can be saved to the desk as an artifact. The attach control rides the
+reply can be kept on the Desk as an Artifact. The attach control rides the
 chat composer too, so a conversation can be grounded on the meetings it is
 about.
 
 **Open a model.** The rail also lists every model the hub can run: its own
-engine and each profile's model. One tap opens a chat pinned to that model,
+engine and each Runs on destination's model. One tap opens a chat pinned to that model,
 through the same conversation surface, grounding included.
 
-## Why it's different
+## Data boundaries
 
-- **Everything is local, including the intelligence.** Whisper transcribes on
-  your machine, in any of its 99 languages, and the LLM is yours: GGUF in-process, MLX on Apple Silicon, or
-  any OpenAI-compatible endpoint you choose, including one on your own LAN.
-  Name those as reusable **runtime profiles** and run a different one per agent;
-  the profile shape syncs across your surfaces while the API key stays on each
-  one, never synced. A profile can even name another of your machines: run
-  `holdspeak mesh serve` there and every run against that profile executes on
+- **Every run names its destination.** Transcription and model-backed work can
+  run on this device, a paired device, a private endpoint, or an external
+  OpenAI-compatible service.
+  Name those as reusable **Runs on destinations** and assign one per Persona;
+  the destination definition syncs across your surfaces while the API key stays
+  on each one. A destination can name another of your machines: run
+  `holdspeak mesh serve` there and every run against that destination executes on
   that node, with its own model and keys.
   See [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 - **It learns how you work, and shows you the receipts.** The dictation
@@ -246,7 +246,7 @@ Record a meeting live, or bring one you already have: import a recording
 (`.vtt`, `.srt`, `.txt`) from the archive page or with `holdspeak import
 call.wav`, and it becomes a real meeting, run through the same intelligence.
 The transcript is scored for intent (architecture, delivery, product,
-incident, comms), a chain of plugins runs, and each one calls your LLM to
+incident, comms), a sequence of plugins runs, and each one calls your LLM to
 produce a typed artifact. The results render read-only at `/history`.
 HoldSpeak ships 14 built-in plugins, all real and backed by an LLM.
 
@@ -292,18 +292,17 @@ into the hub's full intelligence pipeline (the new meeting appears
 immediately, honestly marked importing), reads the learning digest and the
 dictation journal with their real "learned from N similar" reach, and pulls
 activity pre-briefing nudges whose "Dictate with this" grounds the next
-utterance in the cited record. Your live coding agents live on its desk too:
+utterance in the cited record. Live Coder sessions appear on its Desk too:
 with the hooks installed (one command, reversible), every running Claude Code
-or Codex session appears as an object that sits calm while the agent works
-and demands you when it blocks on a question. You answer from the couch by
-typing, by speaking, by dropping a meeting or note onto the agent so the
+or Codex session appears as an object with its current status and question. You
+can answer by typing, speaking, or using a Meeting or Note as grounding so the
 reply is grounded in that record, or by letting the AI draft the reply for
-you (on device or on your configured endpoint, and the badge says which).
+you (on this device or a configured endpoint, with the destination named).
 Nothing sends itself: a draft lands editable, and only your explicit send
 delivers it into the live session on your Mac. Its trust surface is the same one badge the
 desktop wears: every desk object carries its real posture (a connector reads
-cloud with its target named, dictation to your desktop reads local plus that
-machine, a note reads on device), the app's header states the desktop's
+an external service with its target named, dictation to your desktop names the
+paired device, and a Note stored here reads This device), the app's header states the desktop's
 posture in the web chip's own four words, and a guard holds Apple product
 copy to the same canonical names and no-privacy-prose rule as the docs and
 the web. Its on-device storage is schema safe the same
@@ -323,7 +322,7 @@ yet; the screens and the typed client layer they ride on are built and tested.
 
 AIPI-Lite is an optional ESPHome-based device you can carry between rooms. Put it
 on Wi-Fi (a phone hotspot works), and it gives you meeting-capture controls and
-status feedback. With Claude/Codex hooks on, it tells you when an agent is waiting
+status feedback. With Claude/Codex hooks on, it shows when a Coder session is waiting
 so you can speak the reply back into the coding session. Buy the hardware from the
 [official page](https://aipi.com/products/aipi-lite) or the
 [Amazon listing](https://www.amazon.com/dp/B0FQNNVV36); firmware and bridge setup
@@ -346,8 +345,8 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 | Use meeting mode and configure AI intelligence | [Meeting Mode Guide](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md) |
 | Drive HoldSpeak from another device | [Companions](#companions) |
 | Wire up the AIPI-Lite companion | [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AIPI_LITE_DEV_WORKFLOW.md) |
-| Put your coding agents on the desk | [Agent Hook Install](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
-| Install Claude / Codex agent hooks | [Agent Hook Install](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
+| Put Coder sessions on the Desk | [Claude/Codex automation hooks](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
+| Install Claude / Codex automation hooks | [Claude/Codex automation hooks](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
 | Understand what's stored and what can leave my machine | [Security & Privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) |
 
 ## Configuration

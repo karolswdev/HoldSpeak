@@ -93,7 +93,7 @@ export default function ActivityPage() {
   return (
     <div className="page-wrap">
       <PageHero
-        eyebrow="Local context"
+        eyebrow="This-device context"
         title="Activity"
         actions={
           <div className="button-row">
@@ -116,8 +116,7 @@ export default function ActivityPage() {
           </div>
         }
       >
-        The local ledger, its privacy controls, and the rules that turn browsing
-        into useful context.
+        Review captured browsing context, privacy controls, and project rules.
       </PageHero>
       {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
       <Panel

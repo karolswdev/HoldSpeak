@@ -138,7 +138,7 @@ public struct MG_Memory: View {
             overlayCard {
                 VStack(spacing: 7) {
                     Image(systemName: "xmark.octagon.fill").font(.system(size: 24, weight: .bold)).foregroundStyle(Color(hex: 0xFF4D6D))
-                    Text(game.round > best ? "New best!" : "Broke the chain")
+                    Text(game.round > best ? "New best!" : "Sequence ended")
                         .font(.system(size: 17, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
                     Text("reached round \(game.round)")
                         .font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(game.round > best ? DioPal.mint : DioPal.muted)

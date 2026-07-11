@@ -237,6 +237,21 @@ final class DesktopClientTests: XCTestCase {
         catch { XCTFail("wrong error: \(error)") }
     }
 
+    func testPairedDeliveryIdentityRidesAndCachedReceiptDecodes() async throws {
+        StubProtocol.routes = ["/api/dictation/remote": (200,
+            Data(#"{"success":true,"final_text":"ship it","delivered":true,"delivery_id":"device:1","deduplicated":true}"#.utf8))]
+
+        let result = try await client().sendRemoteDictation(
+            text: "ship it", target: .focused, raw: false, deliveryID: "device:1")
+        let body = try XCTUnwrap(JSONSerialization.jsonObject(
+            with: XCTUnwrap(StubProtocol.lastBody)) as? [String: Any])
+
+        XCTAssertEqual(body["delivery_id"] as? String, "device:1")
+        XCTAssertEqual(body["target_mode"] as? String, "focused")
+        XCTAssertEqual(result.deliveryID, "device:1")
+        XCTAssertEqual(result.deduplicated, true)
+    }
+
     // MARK: raw (verbatim) delivery for a previewed receipt (HSM-18-01)
 
     func testRawRidesTheWireOnlyWhenTrue() async throws {
@@ -254,6 +269,7 @@ final class DesktopClientTests: XCTestCase {
         body = try XCTUnwrap(JSONSerialization.jsonObject(
             with: XCTUnwrap(StubProtocol.lastBody)) as? [String: Any])
         XCTAssertNil(body["raw"])
+        XCTAssertNil(body["delivery_id"])
     }
 
     // MARK: hub runs return the run-born artifact id (HSM-18-07)

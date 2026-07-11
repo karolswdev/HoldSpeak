@@ -3,6 +3,20 @@
  * port of the original desk's `egressBadge()` (the ONE structured badge that
  * replaces privacy prose; POSITIONING canon). */
 
+export interface TrustDestination {
+  id: string;
+  name: string;
+  operation: string;
+  enabled: boolean;
+  destination: string;
+  boundary: string;
+  data_class: string;
+  authority_basis: string;
+  background_ability: string;
+  revoke_action: string;
+  last_receipt?: Record<string, unknown> | null;
+}
+
 export interface SetupStatus {
   first_run?: boolean;
   arrival_required?: boolean;
@@ -16,6 +30,7 @@ export interface SetupStatus {
     actuators_enabled?: boolean;
     transcript_egress?: string;
     configured_endpoints?: string[];
+    destinations?: TrustDestination[];
   };
   [key: string]: unknown;
 }
@@ -43,14 +58,14 @@ export function egressBadge(setup: SetupStatus | null): EgressBadge {
   if (t.actuators_enabled || (offLoopback && !t.auth_token_set)) {
     return {
       scope: "mixed",
-      text: "⌂+☁ Local + cloud",
+      text: "→ External reach enabled",
       title:
-        "Local plus a configured cloud reach. Writes still need your approval.",
+        "Configured destinations can receive data after authority is granted.",
     };
   }
   if (t.transcript_egress && t.transcript_egress !== "none") {
     const ep = (t.configured_endpoints && t.configured_endpoints[0]) || "";
-    const label = ep ? `Cloud · ${ep}` : "Configured endpoint";
+    const label = ep ? `Leaves device · ${ep}` : "Configured endpoint";
     return {
       scope: "cloud",
       text: `☁ ${label}`,
@@ -59,7 +74,7 @@ export function egressBadge(setup: SetupStatus | null): EgressBadge {
   }
   return {
     scope: "local",
-    text: "⌂ Local only",
-    title: "Everything stays on this machine.",
+    text: "⌂ This device",
+    title: "Transcript processing stays on this device.",
   };
 }

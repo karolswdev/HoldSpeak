@@ -72,16 +72,14 @@ bridge, vLLM, llama.cpp-server, LM Studio, LiteLLM, or an actual cloud API. The
 endpoint owns model loading; HoldSpeak needs no local weights.
 
 - **Install:** `uv pip install -e '.[dictation-openai]'` (dictation side)
-- **Configure:** author the endpoint **once as a runtime profile** (web:
-  `/profiles`; give it a name, the base URL, and the model), then pick it
-  wherever work should run on it:
-  - **Meeting intel:** Settings → Cloud & advanced → **Runs on**.
-  - **Dictation:** Dictation → Runtime → **Runs on profile**. Picking a
-    profile also selects the endpoint backend; clear it to return to the
-    local backend configured above.
-  - **Agents:** the agent editor's profile picker, per agent.
-- **Configure (by hand, the fallback):** the same shape lives in
-  `config.json` and still works when no profile is picked:
+- **Configure:** author the endpoint once as a **Runs on destination**. The
+  compatibility route remains `/profiles`; give it a name, base URL, and
+  model, then choose it where work runs:
+  - **Meeting intelligence:** Settings → **Runs on**.
+  - **Dictation:** Dictation → Runtime → **Runs on**.
+  - **Personas:** use the Persona editor's **Runs on** picker.
+- **Configure by hand:** the compatibility shape lives in `config.json` and
+  still works when no destination is selected:
   `dictation.runtime.openai_compatible_base_url` + `_model` + `_api_key_env`
   for dictation; `meeting.intel_provider: "cloud"` (or `"auto"` for
   local-first with endpoint fallback) + `meeting.intel_cloud_base_url` +
@@ -95,40 +93,41 @@ endpoint owns model loading; HoldSpeak needs no local weights.
 
 ---
 
-## Runtime profiles: where each agent runs
+## Runs on destinations
 
-The three backends above answer *how* an LLM runs. A **runtime profile**
-answers *where*: a named, reusable target you can point work at.
+The three backends above answer *how* an LLM runs. A **Runs on destination**
+answers *where*: a named, reusable target for model-backed work. API and
+persistence contracts retain the `profile` compatibility name.
 
-- **Basic.** Pick one active profile. This is the single-target experience:
+- **Basic.** Pick one active destination. This is the single-target experience:
   one model, app wide. Most users never need more.
-- **Advanced.** Keep a list of named profiles (on-device, or any
+- **Advanced.** Keep a list of named destinations (this device, or any
   OpenAI-compatible endpoint such as OpenRouter or Claude) and assign one
-  **per agent**. Scout can run on-device while Editor runs on a cloud endpoint
+  **per Persona**. Scout can run on this device while Editor runs on an endpoint
   and Critic runs on a third. Every place that touches a model shows a small
   "Runs on" control with the resolved default already selected and changeable
   at the point of use.
 
-A profile carries only its **shape**: name, kind, endpoint, model, and the
-usable context window. It never carries the API key. The shape syncs across
-your surfaces (desktop hub, iPad, iPhone, web) so the same named profile is
-available everywhere; a surface that cannot host a kind (an on-device GGUF in
+A destination carries only its definition: name, kind, endpoint, model, and
+usable context window. It never carries the API key. The definition syncs across
+your surfaces (desktop hub, iPad, iPhone, web) so the same named destination is
+available everywhere; a surface that cannot host a kind (a this-device GGUF in
 a browser) shows it as unavailable rather than pretending. The key stays with
 each surface and is joined only at request time. See
 [Security & privacy](SECURITY.md#5-secrets-handling).
 
-Profiles also drive the desktop hub's own pipelines: meeting intelligence and
+Runs on destinations also drive the desktop hub's pipelines: meeting intelligence and
 the dictation rewrite each carry a "Runs on" picker (Settings → Cloud &
-advanced, and Dictation → Runtime), so one profile authored once can serve
-your agents, your meetings, and your dictation. `holdspeak doctor` reports
-which profile each pipeline resolves to, warns when an assigned profile is
+advanced, and Dictation → Runtime), so one destination can serve
+Personas, Meetings, and dictation. `holdspeak doctor` reports
+which destination each pipeline resolves to, warns when an assigned destination is
 missing, and names the exact `HOLDSPEAK_PROFILE_<ID>_KEY` variable to export
-when a profile needs a key on this machine.
+when a destination needs a key on this machine.
 
 ### The mesh edge: run on another node
 
-A profile can name a NODE instead of an endpoint: pick the **Mesh node**
-kind and type the node's name. A run against that profile relays through
+A Runs on destination can name a node instead of an endpoint: pick the **Mesh
+node** kind and type the node's name. A run against that destination relays through
 the hub to the node's worker, which executes it on the node's own provider
 and keys. The model and the key never move; the request does. Any machine
 becomes an edge with one command:
@@ -140,18 +139,18 @@ HOLDSPEAK_HUB_TOKEN=<the hub token> holdspeak mesh serve --hub http://<hub>:8765
 Running the command is the consent; Ctrl-C stops it and the node reads
 offline within seconds. On iPhone and iPad the same consent is one switch,
 Settings → "Serve my models to the mesh": while the app is open, runs
-against a profile naming that device execute on its own model.
+against a destination naming that device execute on its own model.
 Availability is honest: a node is live only while
 its worker polls, so pickers and the models list show its state, a run
 against an offline node refuses immediately and names the node, and
 `holdspeak doctor` lists every edge with its age under "Mesh edges". The
 serving machine needs a real provider of its own (a local model or an
-endpoint) in its config; the hub-side profile only names where the run
-goes. Relay runs are chat, agent, meeting-intelligence, and dictation
+endpoint) in its config; the hub-side destination only names where the run
+goes. Relay runs are chat, Persona, meeting-intelligence, and dictation
 rewrites; the prompt travels only between the hub and the executing node.
 
-Manage profiles on the web at `/profiles`, or on iPad and iPhone under
-Settings; assign an agent to one in the agent editor.
+Manage Runs on destinations on the Web compatibility route `/profiles`, or in
+native Settings; assign a Persona in the Persona editor.
 
 ## Current suggestions (a moving target)
 

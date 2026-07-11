@@ -1,4 +1,9 @@
 import { apiFetch } from "./api";
+import {
+  clearPendingVoice,
+  loadPendingVoice,
+  savePendingVoice,
+} from "./pendingVoice";
 
 type Capture = {
   stream: MediaStream;
@@ -106,16 +111,34 @@ export function toWav16kMono(
   return buffer;
 }
 
-export async function stopAndTranscribe(): Promise<string> {
-  const captured = teardown();
-  if (!captured?.chunks.length) return "";
+export async function transcribeWav(audio: ArrayBuffer): Promise<string> {
   const result = await apiFetch<{ success?: boolean; text?: string }>(
     "/api/dictation/transcribe",
     {
       method: "POST",
       headers: { "Content-Type": "application/octet-stream" },
-      body: toWav16kMono(captured.chunks, captured.rate),
+      body: audio,
     },
   );
   return String(result.text ?? "");
+}
+
+export async function retryPendingTranscription(
+  scope: string,
+): Promise<string | null> {
+  const audio = await loadPendingVoice(scope);
+  if (!audio) return null;
+  const text = await transcribeWav(audio);
+  await clearPendingVoice(scope);
+  return text;
+}
+
+export async function stopAndTranscribe(scope?: string): Promise<string> {
+  const captured = teardown();
+  if (!captured?.chunks.length) return "";
+  const audio = toWav16kMono(captured.chunks, captured.rate);
+  if (scope) await savePendingVoice(scope, audio);
+  const text = await transcribeWav(audio);
+  if (scope) await clearPendingVoice(scope);
+  return text;
 }

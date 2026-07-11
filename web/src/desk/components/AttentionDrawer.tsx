@@ -44,14 +44,14 @@ export function AttentionDrawer() {
         >
           <header>
             <div>
-              <small>THE DESK REMEMBERS</small>
-              <h2>Attention & receipts</h2>
+              <small>DESK ACTIVITY</small>
+              <h2>Attention and Receipts</h2>
             </div>
             <button type="button" onClick={() => store.setOpen(false)} aria-label="Close Desk memory">×</button>
           </header>
           <div className="desk-attention-counts" aria-live="polite">
-            <span><b>{needs}</b> need you</span>
-            <span><b>{store.counts.receipts || 0}</b> receipts</span>
+            <span><b>{needs}</b> need attention</span>
+            <span><b>{store.counts.receipts || 0}</b> Receipts</span>
             <span><b>{store.page.total}</b> matching</span>
           </div>
           <form
@@ -97,7 +97,7 @@ export function AttentionDrawer() {
                 <div><dt>Source</dt><dd>{selected.source_kind} · {selected.source_id}</dd></div>
               </dl>
               <div className="desk-receipt-actions">
-                <a href={selected.detail_url}>Open subject / source</a>
+                <a href={selected.detail_url}>Open source</a>
                 {selected.attention_state === "needs_attention" ? (
                   <button type="button" onClick={() => void store.present(selected.id, "acknowledge")}>Acknowledge</button>
                 ) : null}

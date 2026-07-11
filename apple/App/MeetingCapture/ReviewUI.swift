@@ -452,7 +452,7 @@ struct SwipeableArtifactCard: View {
             HStack {
                 sideAction("xmark.circle.fill", "Dismiss", Sig.bad, active: dragX > 55, lead: true)
                 Spacer()
-                sideAction("checkmark.circle.fill", "Approve", Sig.ok, active: dragX < -55, lead: false)
+                sideAction("checkmark.circle.fill", "Accept", Sig.ok, active: dragX < -55, lead: false)
             }
             face
                 .blur(radius: regenerating ? 3 : 0)
@@ -516,7 +516,7 @@ struct SwipeableArtifactCard: View {
             VStack(spacing: 9) {
                 Image(systemName: "sparkles").font(.system(size: 24, weight: .bold)).foregroundStyle(tint)
                     .symbolEffect(.variableColor.iterative.reversing, options: .repeating)
-                Text("Re-thinking with your note…").font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Updating from your note…").font(.system(size: 13, weight: .heavy)).foregroundStyle(Sig.text)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -560,7 +560,7 @@ struct SwipeableArtifactCard: View {
             HStack(spacing: 6) {
                 if actionable {
                     Image(systemName: "hand.draw.fill").font(.system(size: 11, weight: .bold))
-                    Text("swipe → approve  ·  ← dismiss").font(.system(size: 12, weight: .semibold))
+                    Text("swipe → accept  ·  ← dismiss").font(.system(size: 12, weight: .semibold))
                 }
                 Spacer()
                 Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 11, weight: .bold))
@@ -579,7 +579,7 @@ struct SwipeableArtifactCard: View {
 
     @ViewBuilder private var statusView: some View {
         switch artifact.status {
-        case .accepted: pill("Approved", Sig.ok)
+        case .accepted: pill("Accepted", Sig.ok)
         case .rejected: pill("Dismissed", Sig.faint)
         default: Image(systemName: "circle.dashed").font(.system(size: 14, weight: .semibold)).foregroundStyle(Sig.faint)
         }
@@ -966,7 +966,7 @@ struct GenerationTheater: View {
             VStack(spacing: 5) {
                 Text(headline).font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
                     .contentTransition(.opacity).id(headline)
-                Text("Through the \(lens.rawValue.capitalized) lens")
+                Text("Review focus · \(lens.rawValue.capitalized)")
                     .font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.accent)
             }
             if !types.isEmpty { constellation }

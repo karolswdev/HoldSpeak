@@ -58,10 +58,11 @@ holdspeak
   larger models give better intel at the cost of speed.
 - Optional endpoint mode: `intel_provider: "cloud"` (or `auto` fallback) points
   at **any OpenAI-compatible endpoint**: a self-hosted LAN server, Ollama, vLLM,
-  llama.cpp-server, or a real cloud API. Author the endpoint once as a runtime
-  profile (web: `/profiles`) and pick it under Settings → Cloud & advanced →
-  **Runs on**; the API key is optional for keyless self-hosted endpoints. The
-  `intel_cloud_base_url` config field still works when no profile is picked.
+  llama.cpp-server, or a hosted API. Author the endpoint once as a Runs on
+  destination (the Web compatibility route is `/profiles`) and pick it under
+  Settings → **Runs on**; the API key is optional for keyless self-hosted
+  endpoints. The `intel_cloud_base_url` config field still works when no
+  destination is selected.
 
 ### For Web Interfaces
 - **FastAPI + Uvicorn** - Web server dependencies
@@ -170,7 +171,7 @@ Use this during an active meeting for real-time operations:
 Use this during or after meetings for cross-session management:
 - Search meetings by transcript content
 - Track action items across meetings, toggle status, review/accept, and edit
-- Inspect and update speaker profiles (name/avatar) with speaking history
+- Inspect and update speaker identities (name/avatar) with speaking history
 - Manage deferred-intel queue (list jobs, process now, retry meeting jobs)
 - Manage deferred MIR plugin queue (list jobs, process due jobs, force retry scheduled jobs, retry/cancel individual jobs)
 - Run MIR CLI dry-run and manual reroute flows for saved meetings
@@ -238,11 +239,11 @@ MIR is on by default. To disable it:
 { "meeting": { "mir_enabled": false } }
 ```
 
-**Routing Profiles**
+**Intent Routing Presets**
 
-The active profile sets which intents are weighted most heavily and which plugin runs are triggered:
+The active preset sets which intents are weighted most heavily and which plugin runs are triggered:
 
-| Profile | Focus |
+| Preset | Focus |
 |---------|-------|
 | `balanced` | All categories equally weighted (default) |
 | `architect` | Architecture decisions, trade-offs, technical design |
@@ -250,7 +251,7 @@ The active profile sets which intents are weighted most heavily and which plugin
 | `product` | Requirements, user feedback, roadmap |
 | `incident` | Timeline reconstruction, impact, root-cause analysis |
 
-Change the profile from the web dashboard (profile selector in the live meeting view) or in config:
+Change the preset from the web dashboard (Intent routing preset in the live meeting view) or in config:
 
 ```json
 { "meeting": { "mir_profile": "architect" } }
@@ -258,7 +259,7 @@ Change the profile from the web dashboard (profile selector in the live meeting 
 
 **During a Meeting**
 
-The live dashboard shows the current intent breakdown. The MIR routing controls (profile picker, override, dry-run preview) are in the dashboard sidebar. Use **profile override** to force a specific intent set when automatic classification is wrong:
+The live dashboard shows the current intent breakdown. The MIR controls (preset picker, override, dry-run preview) are in the dashboard sidebar. Use the **preset override** to force a specific intent set when automatic classification is wrong:
 
 ```
 PUT /api/intents/profile   → change active profile
@@ -272,7 +273,7 @@ The `/history` view exposes the intent timeline for each saved meeting: a chrono
 
 ### MIR CLI Dry-Run and Re-Route
 
-Use saved meeting transcripts to preview deterministic MIR routing (dry run), or persist a manual profile-override reroute window:
+Use saved meeting transcripts to preview deterministic MIR routing (dry run), or persist a manual preset-override reroute window:
 
 ```bash
 holdspeak intel --route-dry-run <MEETING_ID> --profile architect
@@ -288,12 +289,12 @@ Notes:
 For local-first capture plus remote intel on your LAN:
 
 1. Run an OpenAI-compatible endpoint on homelab (for example vLLM/Ollama-compatible API).
-2. Author it as a runtime profile (web: `/profiles`, with the endpoint's
-   `http://host:port/v1` URL) and pick it under Settings → Cloud & advanced →
-   **Runs on**. Setting `intel_cloud_base_url` by hand still works when no
-   profile is picked.
+2. Author it as a Runs on destination (the Web compatibility route is
+   `/profiles`, with the endpoint's `http://host:port/v1` URL) and pick it
+   under Settings → **Runs on**. Setting `intel_cloud_base_url` by hand still
+   works when no destination is selected.
 3. Keep `intel_deferred_enabled: true` so meetings continue when the homelab is temporarily unavailable.
-4. Export your API key env var and run `holdspeak doctor` to preflight reachability + model availability; its "Runtime profiles" line names the profile each pipeline resolves to.
+4. Export your API key environment variable and run `holdspeak doctor` to preflight reachability and model availability; its Runs on line names the destination each pipeline resolves to.
 
 ### What It Extracts
 
@@ -651,8 +652,8 @@ Health check endpoint.
 - `GET /api/state` - current meeting state
 - `POST /api/meeting/start` - start meeting from web runtime control plane
 - `POST /api/meeting/stop` - stop active meeting and persist it
-- `GET /api/intents/control` - MIR routing control state (enabled/profile/override/preview)
-- `PUT /api/intents/profile` - update MIR routing profile
+- `GET /api/intents/control` - MIR routing control state (enabled/preset/override/preview)
+- `PUT /api/intents/profile` - update the MIR routing preset
 - `PUT /api/intents/override` - update manual intent override set
 - `POST /api/intents/preview` - deterministic route preview from transcript/tags/scores
 - `POST /api/bookmark` - add bookmark

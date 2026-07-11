@@ -7,9 +7,9 @@ import XCTest
 final class EgressScopeTests: XCTestCase {
 
     func testLabelsAreTheCanonicalGrammar() {
-        XCTAssertEqual(EgressScope.local.label, "On device")
-        XCTAssertEqual(EgressScope.mixed("your desktop").label, "Local + your desktop")
-        XCTAssertEqual(EgressScope.cloud("slack").label, "Cloud · slack")
+        XCTAssertEqual(EgressScope.local.label, "This device")
+        XCTAssertEqual(EgressScope.mixed("your desktop").label, "Paired · your desktop")
+        XCTAssertEqual(EgressScope.cloud("slack").label, "Leaves device · slack")
     }
 
     func testSymbolsPerPosture() {

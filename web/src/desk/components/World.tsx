@@ -5,7 +5,7 @@
 import { useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
-  allObjects,
+  objectByRef,
   objGlow,
   objUnit,
   worldObjects,
@@ -42,9 +42,7 @@ export function World() {
   const editingIdx = objects.findIndex((o) => o.id === editingId);
   const editing = editingIdx >= 0 ? objects[editingIdx] : null;
   const pulloutId = useDesk((s) => s.pulloutId);
-  const pullout = pulloutId
-    ? allObjects(items).find((x) => x.id === pulloutId) || null
-    : null;
+  const pullout = pulloutId ? objectByRef(items, pulloutId) : null;
   const askOpen = useDesk((s) => s.askOpen);
 
   // The lasso (HSM-16-09's gesture on pointer metal): press the empty desk,
@@ -243,7 +241,10 @@ function ZoneTray({
               }
             }}
           />
-          <MicButton onText={(t) => setName(t)} />
+          <MicButton
+            draftScope={`zone-rename:${z.id}`}
+            onText={(t) => setName(t)}
+          />
         </span>
       ) : (
         <span

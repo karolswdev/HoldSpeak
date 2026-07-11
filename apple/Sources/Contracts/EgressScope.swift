@@ -7,12 +7,10 @@ import Foundation
 /// type is pure data (label + SF Symbol name + a tint key) so the UI-free layers
 /// can carry it and each app renders it with its own chrome:
 ///
-///   - `.local`          → "On device"          (nothing leaves the device)
-///   - `.mixed(target)`  → "Local + \(target)"  (on-device work, plus a named
-///                          target it talks to — e.g. dictation heard on-device,
-///                          the text typed on your desktop)
-///   - `.cloud(target)`  → "Cloud · \(target)"  (leaves the machine to a named
-///                          target — e.g. an approved Slack send)
+///   - `.local`          → "This device"         (nothing leaves the device)
+///   - `.mixed(target)`  → "Paired · \(target)" (work crosses to a named peer)
+///   - `.cloud(target)`  → "Leaves device · \(target)" (work crosses to a named
+///                          endpoint or external service)
 ///
 /// A `mixed` or `cloud` posture must NEVER wear the local treatment — that is
 /// the drift this type exists to kill.
@@ -24,9 +22,9 @@ public enum EgressScope: Equatable, Sendable {
     /// The badge text — the same words on every surface.
     public var label: String {
         switch self {
-        case .local: return "On device"
-        case .mixed(let target): return "Local + \(target)"
-        case .cloud(let target): return "Cloud · \(target)"
+        case .local: return "This device"
+        case .mixed(let target): return "Paired · \(target)"
+        case .cloud(let target): return "Leaves device · \(target)"
         }
     }
 

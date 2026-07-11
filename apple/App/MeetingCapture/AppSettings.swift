@@ -107,7 +107,7 @@ struct SettingsView: View {
     private var onDeviceModelCard: some View {
         VStack(alignment: .leading, spacing: 11) {
             HStack(spacing: 8) {
-                Text("ON-DEVICE MODEL").font(.system(size: 10, weight: .heavy)).tracking(0.8).foregroundStyle(Sig.faint)
+                Text("THIS-DEVICE MODEL").font(.system(size: 10, weight: .heavy)).tracking(0.8).foregroundStyle(Sig.faint)
                 Spacer()
                 Text("\(localModels.count) installed").font(.system(size: 10, weight: .heavy)).foregroundStyle(Sig.faint)
             }
@@ -172,12 +172,12 @@ struct SettingsView: View {
     private var controlModeCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
-                ForEach(["safe", "neutral", "yolo"], id: \.self) { mode in
+                ForEach(ControlMode.allCases.map(\.rawValue), id: \.self) { mode in
                     Button {
                         tactile()
                         setControlMode(mode)
                     } label: {
-                        Text(mode == "yolo" ? "YOLO" : mode.capitalized)
+                        Text(ProductLanguage.controlModeLabel(mode))
                             .font(.system(size: 13, weight: .heavy, design: .rounded))
                             .foregroundStyle(controlMode == mode ? Color.black : Sig.text)
                             .frame(maxWidth: .infinity).frame(height: 40)
@@ -187,26 +187,29 @@ struct SettingsView: View {
                     .disabled(controlModeState == "saving" || !peer.isPaired)
                 }
             }
-            Text("Future operations only · hard authentication, secret, destination, payload, pane, audit, configuration, and schema checks never change.")
+            Text(ProductLanguage.controlModeDescription(controlMode) ?? "Choose how future operations request authority.")
+                .font(.system(size: 11.5, weight: .semibold, design: .rounded))
+                .foregroundStyle(Sig.text)
+            Text("Future operations only · authentication, secrets, destination and payload binding, pane identity, receipts, configuration, and schema checks never change.")
                 .font(.system(size: 11.5, weight: .medium, design: .rounded))
                 .foregroundStyle(Sig.faint)
             if !controlModeState.isEmpty && controlModeState != "saving" {
                 Text(controlModeState).font(.system(size: 11, weight: .heavy, design: .rounded))
-                    .foregroundStyle(controlModeState == "saved" ? Sig.ok : Sig.warn)
+                    .foregroundStyle(controlModeState == "Control mode updated" ? Sig.ok : Sig.warn)
             }
         }
         .padding(16).signalCard(radius: 20)
     }
 
     private func loadControlMode() {
-        guard let client = peer.client() else { controlModeState = "Pair a desktop to change its mode"; return }
+        guard let client = peer.client() else { controlModeState = "Pair a desktop to change Control mode."; return }
         Task {
             do {
                 let policy = try await client.authorityPolicy()
                 controlMode = policy.controlMode
                 controlModeState = ""
             } catch {
-                controlModeState = "Desktop policy unavailable"
+                controlModeState = "Control mode unavailable on the paired desktop. Check the connection and retry."
             }
         }
     }
@@ -218,9 +221,9 @@ struct SettingsView: View {
             do {
                 let policy = try await client.setControlMode(mode)
                 controlMode = policy.controlMode
-                controlModeState = "saved"
+                controlModeState = "Control mode updated"
             } catch {
-                controlModeState = "Mode change refused"
+                controlModeState = "Control mode was not changed. Check the paired desktop and retry."
             }
         }
     }

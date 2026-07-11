@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Button,
   Disclosure,
@@ -14,6 +15,12 @@ import {
   Toolbar,
 } from "../components/signal/Signal";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
+import {
+  DICTATION_FAILURES,
+  dictationFailure,
+  type DictationFailure,
+} from "../lib/dictationRecovery";
+import { useDurableDraft } from "../lib/durableDraft";
 import {
   ConfirmAction,
   PageHero,
@@ -111,12 +118,19 @@ function Readiness() {
 }
 
 function DryRun() {
-  const [utterance, setUtterance] = useState("");
+  const {
+    value: utterance,
+    setDraft: setUtterance,
+    recovered: utteranceRecovered,
+    clearPersisted,
+  } = useDurableDraft("dictation-dry-run");
   const [projectRoot, setProjectRoot] = useState(
     () => localStorage.getItem("holdspeak.projectRootOverride") ?? "",
   );
   const [result, setResult] = useState<JsonRecord | null>(null);
   const [error, setError] = useState("");
+  const [failure, setFailure] = useState<DictationFailure | null>(null);
+  const [recoveryMessage, setRecoveryMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [correctionKind, setCorrectionKind] = useState("target");
   const [correctionValue, setCorrectionValue] = useState("");
@@ -125,6 +139,8 @@ function DryRun() {
   const run = async () => {
     setBusy(true);
     setError("");
+    setFailure(null);
+    setRecoveryMessage("");
     setVerdict("");
     setTaught("");
     try {
@@ -139,9 +155,30 @@ function DryRun() {
       );
       localStorage.setItem("holdspeak.projectRootOverride", projectRoot);
     } catch (reason) {
-      setError(readableError(reason));
+      const category = dictationFailure(reason);
+      setFailure(category);
+      setError(DICTATION_FAILURES[category].message);
     } finally {
       setBusy(false);
+    }
+  };
+  const keepDraft = async () => {
+    if (!utterance.trim()) return;
+    try {
+      await apiFetch("/api/notes", {
+        method: "POST",
+        json: {
+          title: "Retained dictation draft",
+          body_markdown: utterance,
+          tags: ["dictation"],
+        },
+      });
+      clearPersisted();
+      setRecoveryMessage("Kept as a Note on your Desk.");
+    } catch (reason) {
+      setRecoveryMessage(
+        `The Note was not kept. Your draft remains editable. ${readableError(reason)}`,
+      );
     }
   };
   const teach = async () => {
@@ -210,9 +247,40 @@ function DryRun() {
           disabled={!utterance.trim()}
           onClick={run}
         >
-          Run dry test
+          {error ? "Retry dry test" : "Run dry test"}
         </Button>
         {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
+        {utteranceRecovered && !error ? (
+          <InlineMessage tone="info">
+            Recovered your local dictation draft after relaunch.
+          </InlineMessage>
+        ) : null}
+        {error ? (
+          <div className="button-row">
+            <Button
+              dense
+              disabled={!utterance.trim()}
+              onClick={() => void navigator.clipboard.writeText(utterance)}
+            >
+              Copy
+            </Button>
+            <Button dense disabled={!utterance.trim()} onClick={keepDraft}>
+              Keep as Note
+            </Button>
+            {failure && DICTATION_FAILURES[failure].setup ? (
+              <Link className="btn btn--secondary" to="/setup">
+                Setup
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+        {recoveryMessage ? (
+          <InlineMessage
+            tone={recoveryMessage.startsWith("Kept") ? "success" : "error"}
+          >
+            {recoveryMessage}
+          </InlineMessage>
+        ) : null}
       </Panel>
       <Panel className="span-8" title="Pipeline result" eyebrow="Trace">
         {result ? (
@@ -611,7 +679,7 @@ function Journal() {
   return (
     <Panel
       title="Dictation journal"
-      eyebrow={`${rows.length} local entries`}
+      eyebrow={`${rows.length} this-device entries`}
       actions={
         <Button
           dense
@@ -701,7 +769,7 @@ function Journal() {
             ? "Clear the journal?"
             : "Delete this journal entry?"
         }
-        detail="This local history cannot be restored."
+        detail="This device's dictation history will be deleted and cannot be restored."
         onConfirm={remove}
         onClose={() => setDeleting(null)}
       />

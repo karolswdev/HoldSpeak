@@ -2,7 +2,7 @@
 
 The gap between what you say and what you meant to type is where dictation
 tools usually stop; the dictation pipeline is HoldSpeak crossing it. It
-routes an utterance through local rules, project context, agent context, and
+routes an utterance through local rules, project context, Coder session context, and
 an optional LLM rewrite stage before inserting text, so rough speech lands
 as useful text for the active app.
 
@@ -128,10 +128,10 @@ Config file shape:
 }
 ```
 
-Endpoints are also available as runtime profiles: author the endpoint once
-(web: `/profiles`), then pick it under Dictation → Runtime → **Runs on
-profile**. A picked profile supplies the endpoint and model and selects this
-backend; the fields above remain the fallback when nothing is picked. See
+Endpoints are also available as Runs on destinations: author the endpoint once
+(the Web compatibility route is `/profiles`), then pick it under Dictation →
+Runtime → **Runs on**. A selected destination supplies the endpoint and model;
+the fields above remain the fallback when nothing is selected. See
 [MODELS.md](./MODELS.md).
 
 HoldSpeak reads the API key from the named environment variable. Do not put API
@@ -173,13 +173,13 @@ client package is missing, install:
 uv pip install -e '.[dictation-openai]'
 ```
 
-## 4. Set The Target Profile
+## 4. Set The Output Target
 
 HoldSpeak tries to detect the active app automatically. If detection is wrong,
 set a manual target override in:
 
 ```text
-/dictation -> Runtime -> Target profile override
+/dictation -> Runtime -> Output target override
 ```
 
 Options:
@@ -254,7 +254,7 @@ effect when you enable the rewrite stage (Runtime). Open:
 
 The fastest start is the **Set up project knowledge** panel on that tab: "Use a
 starter set" scaffolds the files below (you review before they write), or "Draft
-with your coding agent" gives you a copiable prompt so Claude or Codex writes the
+with a Coder session" gives you a copiable prompt so Claude or Codex writes the
 `.hs/` files for this repo, which you then review in the tab. To do it by hand,
 create a small `.hs/` directory in your repo:
 
@@ -301,19 +301,19 @@ Write policy:
 - Suggested `.hs/.../*.md` updates require explicit review and apply.
 - Secret-looking content is skipped or rejected.
 
-## 6. Install Claude/Codex Agent Hooks
+## 6. Install Claude/Codex Automation Hooks
 
-Agent hooks let Claude Code and Codex tell HoldSpeak their current `cwd`,
+Automation hooks let Claude Code and Codex tell HoldSpeak their current `cwd`,
 session id, transcript path, and recent assistant state. This is how HoldSpeak
 can know which project an LLM CLI is working in.
 
-Use [Claude/Codex Agent Hook Install](AGENT_HOOK_INSTALL.md) for the full
+Use [Claude/Codex automation hook install](AGENT_HOOK_INSTALL.md) for the full
 machine-level install, verification, capture-mode, and AIPI companion checks.
 
 Open:
 
 ```text
-/dictation -> Agent Hooks
+/dictation -> Hooks
 ```
 
 Copy the template for the tool you use. Or generate templates from the CLI:
@@ -323,7 +323,7 @@ holdspeak agent-hook templates --agent claude
 holdspeak agent-hook templates --agent codex
 ```
 
-To let HoldSpeak capture the latest assistant message and detect when the agent
+To let HoldSpeak capture the latest assistant message and detect when the Coder session
 is waiting for your reply:
 
 ```bash
@@ -400,8 +400,8 @@ under:
 | --- | --- | --- |
 | Runtime unavailable | Missing extra/model/server | Open Readiness and Runtime; run `holdspeak doctor` |
 | Dry-run preserves original text | Stage fallback or no project context | Check dry-run telemetry and `.hs/instructions.md` |
-| Target says `unknown` | Active-window hints unavailable | Set Target profile override |
-| Codex/Claude cwd is missing | Hooks not installed/firing | Open Agent Hooks and copy templates again |
+| Output target says `unknown` | Active-window hints unavailable | Set Output target override |
+| Codex/Claude cwd is missing | Hooks not installed/firing | Open Hooks and copy templates again |
 | Suggestions are noisy | Context too broad or prompt too generic | Narrow `.hs/instructions.md` and `.hs/targets.md` |
 | Endpoint times out | Model/server too slow | Increase timeout or use a smaller/faster model |
 
@@ -430,7 +430,7 @@ confidence threshold.](assets/cockpit/copilot-depth.png)
 | --- | --- | --- | --- |
 | **Rewrite passes** (segmented 1-5) | `rewrite_passes` | `1` | Project-rewriter passes (draft → critique → refine). `1` is single-pass. Extra passes are skipped if they would breach `max_total_latency_ms`. |
 | **Learn from my corrections** (toggle) | `corrections_enabled` | `false` | Consult the **correction memory** when routing: a correction you made earlier nudges a similar later utterance. |
-| **Infer the target when unsure** (toggle) | `target_detect_llm_enabled` | `false` | When window/app detection is unsure, ask the LLM to infer the **target profile** from your words. A manual override always wins. |
+| **Infer the target when unsure** (toggle) | `target_detect_llm_enabled` | `false` | When window/app detection is unsure, ask the LLM to infer the **output target** from your words. A manual override always wins. |
 | **Ask the model below confidence** (slider) | `target_detect_llm_below` | `0.8` | The heuristic-confidence threshold below which the LLM fallback fires. |
 
 The **"Save & test in dry-run"** button saves the config and jumps straight to
@@ -888,12 +888,43 @@ holdspeak dictation dry-run "ask codex to summarize what changed and suggest a n
 > round-trip; only enable it when an OpenAI-compatible runtime is configured and
 > you have populated `.hs/instructions.md`.
 
+## Verification lanes
+
+Default automation never opens a real microphone, loads an operator-selected
+model, or types through the active keyboard. Tests marked `metal` are skipped by
+name unless the explicit hardware flag is present.
+
+Run the bounded default lane:
+
+```bash
+.venv/bin/pytest -q tests/unit tests/integration
+cd web && npm run check
+swift test --package-path apple
+```
+
+The Web scripts cap Vitest at two workers so the default gate remains stable on
+machines already running local models or simulators. Swift's real-endpoint,
+model-download, and model-metal proofs remain opt-in through their documented
+environment variables; the ordinary package suite skips them by name.
+
+Run the opt-in dictation hardware lane on macOS:
+
+```bash
+.venv/bin/pytest -q tests/e2e/test_metal.py -m metal --run-metal -s
+```
+
+The hardware lane requires microphone permission, PortAudio, and the local
+Whisper/model assets named by the test. It may type through the active target;
+close sensitive applications and use a disposable document. Evidence should
+record the build, audio route, model, destination, elapsed time, and outcome,
+but never the dictated phrase.
+
 ## See also
 
 - [Getting Started](GETTING_STARTED.md): install and basic voice typing first.
 - [The Dictation Copilot](DICTATION_COPILOT.md): see the pipeline turn rough speech
   into a project-grounded task, end to end.
 - [Models (bring your own)](MODELS.md): choosing and pointing at an LLM.
-- [Agent Hook Install](AGENT_HOOK_INSTALL.md): feed Claude/Codex context into the
+- [Claude/Codex automation hooks](AGENT_HOOK_INSTALL.md): feed Claude/Codex context into the
   rewriter.
 - [Security & Privacy](SECURITY.md): what's stored and what can leave your machine.

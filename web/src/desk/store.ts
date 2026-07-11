@@ -5,7 +5,15 @@
  * hand-arranged desk survives the React unification byte-for-byte. */
 import { create } from "zustand";
 import { apiRequest } from "../lib/api";
-import { EMPTY_ITEMS, loadAll, qualifiedRef, type InferenceTarget, type Items, type Status } from "./api";
+import {
+  EMPTY_ITEMS,
+  loadAll,
+  qualifiedRef,
+  type InferenceTarget,
+  type Items,
+  type ProjectSummary,
+  type Status,
+} from "./api";
 import { buildLinearGraph } from "./graph";
 import { loadSetup, type SetupStatus } from "./setup";
 
@@ -35,6 +43,7 @@ function savePositions(positions: Record<string, UnitPos>) {
 interface DeskState {
   items: Items;
   profiles: Array<Record<string, unknown>>;
+  projects: ProjectSummary[];
   inferenceTargets: InferenceTarget[];
   /** HS-83-03 — the hub's runnable models (the ask allow-list). */
   models: Array<{
@@ -68,6 +77,11 @@ interface DeskState {
   askOpen: boolean;
   /** HS-83-02 — the persona whose CONVERSATION is open (null = none). */
   chatPersonaId: string | null;
+  /** Non-document Desk tool/resource shown in the shared inspector. */
+  toolInspector: {
+    kind: "project" | "integration" | "target";
+    id: string;
+  } | null;
 
   refresh(): Promise<void>;
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
@@ -127,6 +141,11 @@ interface DeskState {
   openAsk(): void;
   openChat(personaId: string): void;
   closeChat(): void;
+  openToolInspector(
+    kind: "project" | "integration" | "target",
+    id: string,
+  ): void;
+  closeToolInspector(): void;
   closeAsk(): void;
   setPosition(id: string, pos: UnitPos): void;
   persistPositions(): void;
@@ -138,6 +157,7 @@ interface DeskState {
 export const useDesk = create<DeskState>((set, get) => ({
   items: { ...EMPTY_ITEMS },
   profiles: [],
+  projects: [],
   inferenceTargets: [],
   models: [],
   status: {},
@@ -157,14 +177,18 @@ export const useDesk = create<DeskState>((set, get) => ({
   selectedIds: [],
   askOpen: false,
   chatPersonaId: null,
+  toolInspector: null,
 
   async refresh() {
     set({ loading: true, error: "" });
-    const [{ items, profiles, inferenceTargets, models, status, error }, setup] =
-      await Promise.all([loadAll(), loadSetup()]);
+    const [
+      { items, profiles, projects, inferenceTargets, models, status, error },
+      setup,
+    ] = await Promise.all([loadAll(), loadSetup()]);
     set({
       items,
       profiles,
+      projects,
       inferenceTargets,
       models,
       status,
@@ -234,7 +258,12 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
 
   openEditor(id) {
-    set({ editingId: id, pulloutId: null, pulloutBackId: null });
+    set({
+      editingId: id,
+      pulloutId: null,
+      pulloutBackId: null,
+      toolInspector: null,
+    });
   },
   closeEditor() {
     set({ editingId: null });
@@ -306,6 +335,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       pulloutId: null,
       pulloutBackId: null,
       editingId: null,
+      toolInspector: null,
     });
   },
   surface() {
@@ -320,6 +350,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       // go back to (an artifact row inside a meeting's drawer).
       pulloutBackId: current && current !== id ? current : null,
       editingId: null,
+      toolInspector: null,
     });
   },
   closePullout() {
@@ -385,11 +416,15 @@ export const useDesk = create<DeskState>((set, get) => ({
       // Preserve warnings from older hubs; current hubs refuse unsupported graphs.
       const warning = data.warning ? String(data.warning) : null;
       const invocationId = String(data.invocation_id || "") || null;
-      const resultRef = String(data.result_ref || data.invocation?.result_ref || "") || null;
-      const state = String(data.invocation?.state || (res.ok ? "succeeded" : "failed"));
-      const actualPlacement = data.actual_placement && typeof data.actual_placement === "object"
-        ? data.actual_placement as Record<string, unknown>
-        : data.invocation?.attempts?.at(-1)?.actual_placement || null;
+      const resultRef =
+        String(data.result_ref || data.invocation?.result_ref || "") || null;
+      const state = String(
+        data.invocation?.state || (res.ok ? "succeeded" : "failed"),
+      );
+      const actualPlacement =
+        data.actual_placement && typeof data.actual_placement === "object"
+          ? (data.actual_placement as Record<string, unknown>)
+          : data.invocation?.attempts?.at(-1)?.actual_placement || null;
       if (artifactId) {
         // The result is a REAL artifact now — it lands on the desk in
         // front of you, wearing the beat (the HS-73-06 grammar).
@@ -408,10 +443,27 @@ export const useDesk = create<DeskState>((set, get) => ({
         }
         get().markNew(artifactId);
       }
-      return { ok: res.ok, output, artifactId, warning, invocationId, resultRef, state, actualPlacement };
+      return {
+        ok: res.ok,
+        output,
+        artifactId,
+        warning,
+        invocationId,
+        resultRef,
+        state,
+        actualPlacement,
+      };
     } catch (e) {
-      return { ok: false, output: String(e), artifactId: null, warning: null,
-        invocationId: null, resultRef: null, state: "failed", actualPlacement: null };
+      return {
+        ok: false,
+        output: String(e),
+        artifactId: null,
+        warning: null,
+        invocationId: null,
+        resultRef: null,
+        state: "failed",
+        actualPlacement: null,
+      };
     }
   },
 
@@ -470,6 +522,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       pulloutId: null,
       pulloutBackId: null,
       editingId: null,
+      toolInspector: null,
     });
   },
   closeAsk() {
@@ -484,10 +537,24 @@ export const useDesk = create<DeskState>((set, get) => ({
       pulloutId: null,
       pulloutBackId: null,
       editingId: null,
+      toolInspector: null,
     });
   },
   closeChat() {
     set({ chatPersonaId: null });
+  },
+  openToolInspector(kind, id) {
+    set({
+      toolInspector: { kind, id },
+      askOpen: false,
+      chatPersonaId: null,
+      pulloutId: null,
+      pulloutBackId: null,
+      editingId: null,
+    });
+  },
+  closeToolInspector() {
+    set({ toolInspector: null });
   },
   setPosition(id, pos) {
     set({ positions: { ...get().positions, [id]: pos } });

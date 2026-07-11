@@ -361,6 +361,49 @@ private struct AgentDeskCard: View {
 /// the paired Mac via `POST /api/dictation/remote` with `target_mode: focused` — the desktop runs it
 /// through the full pipeline and free-types it into whatever app is focused. The transcription is
 /// LOCAL; only the finished words cross the LAN. An unreachable Mac is a rendered state, never an error.
+private final class DictationAudioRecoveryStore {
+    private static let maxBytes = 16_000_000
+    private let url: URL
+
+    init(fileManager: FileManager = .default) {
+        let root = (try? fileManager.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true)) ?? fileManager.temporaryDirectory
+        let directory = root.appendingPathComponent("HoldSpeak", isDirectory: true)
+        try? fileManager.createDirectory(
+            at: directory, withIntermediateDirectories: true)
+        url = directory.appendingPathComponent("dictation-recovery.pcm16")
+    }
+
+    var hasAudio: Bool {
+        guard let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize else {
+            return false
+        }
+        return size > 0 && size <= Self.maxBytes && size.isMultiple(of: 2)
+    }
+
+    func save(_ chunks: [AudioChunk]) {
+        var samples = chunks.flatMap(\.samples).map(\.littleEndian)
+        guard !samples.isEmpty else { return }
+        let byteCount = samples.count * MemoryLayout<Int16>.size
+        guard byteCount <= Self.maxBytes else { return }
+        let data = samples.withUnsafeMutableBytes { Data($0) }
+        try? data.write(to: url, options: .atomic)
+    }
+
+    func load() -> [AudioChunk]? {
+        guard hasAudio, let data = try? Data(contentsOf: url) else { return nil }
+        var samples = [Int16](repeating: 0, count: data.count / 2)
+        _ = samples.withUnsafeMutableBytes { data.copyBytes(to: $0) }
+        samples = samples.map { Int16(littleEndian: $0) }
+        return [AudioChunk(samples: samples, sequence: 0)]
+    }
+
+    func clear() { try? FileManager.default.removeItem(at: url) }
+}
+
 @MainActor final class DictateModel: ObservableObject {
     /// Reachability of the paired Mac — a first-class state, not an error wall.
     enum Reach: Equatable { case unknown, reachable, asleep, unpaired }
@@ -368,10 +411,21 @@ private struct AgentDeskCard: View {
     /// phrase itself remains only in `recoveryText`, never in telemetry.
     enum Failure: Equatable {
         case permissionDenied, missingModel, rejectedToken, deliveryConflict
-        case unreachableDesktop, noSpeech
+        case deliveryPending, unreachableDesktop, noSpeech, recoveredDraft, recoveredAudio
     }
     /// One delivered line in the read-back: the words + whether the desktop confirmed delivery.
-    struct Line: Identifiable, Equatable { let id = UUID(); let text: String; var delivered: Bool }
+    struct Line: Identifiable, Equatable {
+        let id = UUID()
+        let deliveryID: String
+        let text: String
+        var delivered: Bool
+
+        init(text: String, delivered: Bool, deliveryID: String = UUID().uuidString) {
+            self.deliveryID = deliveryID
+            self.text = text
+            self.delivered = delivered
+        }
+    }
 
     @Published var listening = false
     @Published var handsFree = false        // hands-free keeps the mic open between utterances
@@ -382,7 +436,12 @@ private struct AgentDeskCard: View {
     @Published var reach: Reach = .unknown
     @Published var lastDelivered = false     // the quiet confirmation tick
     @Published var failure: Failure?
-    @Published var recoveryText = ""         // editable; survives every failed send
+    @Published var recoveryText = "" {       // editable; survives failure/background/relaunch
+        didSet {
+            guard !restoringRecovery else { return }
+            persistRecovery(text: recoveryText, raw: false)
+        }
+    }
     // HSM-18-01 — the dictation-pipeline contract, surfaced:
     @Published var readiness: DictationReadiness?   // the hub's own verdict for the strip
     @Published var pending: DictationDryRun?        // the armed receipt awaiting Send
@@ -403,12 +462,32 @@ private struct AgentDeskCard: View {
     private let sink = ChunkSink()
     private let meter = LevelMeter()
     private var levelTicker: Task<Void, Never>?
+    private let recoveryStore: DictationRecoveryStore
+    private let audioRecoveryStore = DictationAudioRecoveryStore()
+    private var recoveryDeliveryID = ""
+    private var recoveryDeliveryText = ""
+    private var recoveryRaw = false
+    private var restoringRecovery = false
+
+    init(recoveryStore: DictationRecoveryStore = DictationRecoveryStore()) {
+        self.recoveryStore = recoveryStore
+        if let recovered = recoveryStore.load() {
+            recoveryText = recovered.text
+            recoveryDeliveryID = recovered.deliveryID
+            recoveryDeliveryText = recovered.text
+            recoveryRaw = recovered.raw
+            failure = .recoveredDraft
+        } else if audioRecoveryStore.hasAudio {
+            failure = .recoveredAudio
+        }
+    }
 
     // HSM-21-01: the one grammar — on-device hearing, the words cross the LAN to the
     // named Mac. A mixed posture, from the Contracts EgressScope.
     var egressScope: EgressScope { .mixed(peers.displayName) }
     var isPaired: Bool { peers.isPaired }
     var macName: String { peers.displayName }
+    var hasRecoverableAudio: Bool { audioRecoveryStore.hasAudio }
 
     /// Probe the Mac so the surface opens honest. Never throws — maps to a rendered Reach.
     /// A reachable hub also yields the dictation readiness snapshot for the strip
@@ -465,13 +544,20 @@ private struct AgentDeskCard: View {
         try? capture.stop()
         listening = false
         levelTicker?.cancel(); levelTicker = nil; level = 0
+        let chunks = sink.drain()
+        audioRecoveryStore.save(chunks)
+        await transcribeAndDeliver(chunks)
+    }
+
+    private func transcribeAndDeliver(_ chunks: [AudioChunk]) async {
         transcribing = true; defer { transcribing = false }
         let said: String
         do {
-            let segs = try await WhisperKitTranscriber(chunks: sink.drain(), model: "base").transcribe()
+            let segs = try await WhisperKitTranscriber(chunks: chunks, model: "base").transcribe()
             said = segs.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
         } catch { failure = .missingModel; return }
         guard !said.isEmpty else { failure = .noSpeech; return }
+        audioRecoveryStore.clear()
         recoveryText = said
         // HSM-18-01 — preview mode arms a receipt instead of typing: the dry-run shows
         // exactly what would land BEFORE a keystroke leaves the iPad.
@@ -512,20 +598,31 @@ private struct AgentDeskCard: View {
     /// then flips its tick from the desktop's `RemoteDictationResult.delivered`. Unreachable → the
     /// line stays (un-ticked) and Reach goes `.asleep`; never a thrown error at the user.
     func deliver(_ text: String, raw: Bool = false) async {
-        var line = Line(text: text, delivered: false)
-        lines.append(line)
-        if lines.count > 6 { lines.removeFirst(lines.count - 6) }
+        let deliveryID = persistRecovery(text: text, raw: raw)
+        restoringRecovery = true
         recoveryText = text
+        restoringRecovery = false
+        var line: Line
+        if let existing = lines.first(where: { $0.deliveryID == deliveryID }) {
+            line = existing
+        } else {
+            line = Line(text: text, delivered: false, deliveryID: deliveryID)
+            lines.append(line)
+            if lines.count > 6 { lines.removeFirst(lines.count - 6) }
+        }
         guard let client = peers.client() else {
             failure = .unreachableDesktop; reach = .asleep; return
         }
         do {
-            let result = try await client.sendRemoteDictation(text: text, target: .focused, raw: raw)
+            let result = try await client.sendRemoteDictation(
+                text: text, target: .focused, raw: raw, deliveryID: deliveryID)
             line.delivered = result.delivered
-            if let i = lines.firstIndex(where: { $0.id == line.id }) { lines[i].delivered = result.delivered }
+            if let i = lines.firstIndex(where: { $0.deliveryID == deliveryID }) {
+                lines[i].delivered = result.delivered
+            }
             lastDelivered = result.delivered
             reach = .reachable
-            if result.delivered { recoveryText = ""; failure = nil }
+            if result.delivered { clearRecovery(); failure = nil }
             else { failure = .deliveryConflict }
             // The hub consumed the one-shot pin with this dictation (HSM-18-05).
             groundedNudge = nil
@@ -533,6 +630,11 @@ private struct AgentDeskCard: View {
                     where status == 401 || status == 403 {
             failure = .rejectedToken
         } catch HTTPDesktopClient.DesktopClientError.http(let status) where status == 409 {
+            failure = .deliveryConflict
+        } catch HTTPDesktopClient.DesktopClientError.http(let status) where status == 425 {
+            failure = .deliveryPending
+        } catch HTTPDesktopClient.DesktopClientError.http(let status)
+                    where status == 500 || status == 502 {
             failure = .deliveryConflict
         } catch {
             failure = .unreachableDesktop; reach = .asleep
@@ -543,9 +645,57 @@ private struct AgentDeskCard: View {
     /// invocation calls the remote contract once; no local Meeting is created.
     func retryRecovery() async {
         let text = recoveryText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let retriesAudio = failure == .missingModel || failure == .noSpeech
+            || failure == .recoveredAudio || text.isEmpty
+        if retriesAudio, let chunks = audioRecoveryStore.load() {
+            failure = nil
+            await transcribeAndDeliver(chunks)
+            return
+        }
         guard !text.isEmpty else { return }
+        if failure == .deliveryConflict {
+            recoveryDeliveryID = UUID().uuidString
+            recoveryDeliveryText = text
+            recoveryRaw = false
+            recoveryStore.save(DictationRecoveryDraft(
+                text: text, deliveryID: recoveryDeliveryID,
+                destination: macName))
+        }
         failure = nil
         await deliver(text)
+    }
+
+    @discardableResult
+    private func persistRecovery(text: String, raw: Bool) -> String {
+        guard !text.isEmpty else {
+            recoveryStore.clear()
+            recoveryDeliveryID = ""
+            recoveryDeliveryText = ""
+            recoveryRaw = false
+            return ""
+        }
+        if recoveryDeliveryID.isEmpty || recoveryDeliveryText != text || recoveryRaw != raw {
+            recoveryDeliveryID = UUID().uuidString
+        }
+        recoveryDeliveryText = text
+        recoveryRaw = raw
+        recoveryStore.save(DictationRecoveryDraft(
+            text: text,
+            deliveryID: recoveryDeliveryID,
+            raw: raw,
+            destination: macName))
+        return recoveryDeliveryID
+    }
+
+    private func clearRecovery() {
+        recoveryStore.clear()
+        audioRecoveryStore.clear()
+        recoveryDeliveryID = ""
+        recoveryDeliveryText = ""
+        recoveryRaw = false
+        restoringRecovery = true
+        recoveryText = ""
+        restoringRecovery = false
     }
 
     #if targetEnvironment(simulator)
@@ -860,7 +1010,9 @@ struct DictateView: View {
                         .strokeBorder(Sig.line, lineWidth: 1))
                 HStack(spacing: 9) {
                     Button("Retry") { tactile(.medium); Task { await model.retryRecovery() } }
-                        .disabled(model.recoveryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(
+                            model.recoveryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            && !model.hasRecoverableAudio)
                     Button("Copy") {
                         #if canImport(UIKit)
                         UIPasteboard.general.string = model.recoveryText
@@ -887,8 +1039,11 @@ struct DictateView: View {
         case .missingModel: return "On-device transcription is not ready · your draft stays here"
         case .rejectedToken: return "The desktop rejected this connection · edit or open Setup"
         case .deliveryConflict: return "Delivery conflicted · edit and retry"
+        case .deliveryPending: return "Delivery is still pending · retry the same draft"
         case .unreachableDesktop: return "Desktop unreachable · edit and retry"
         case .noSpeech: return "No words detected · type here or hold to try again"
+        case .recoveredDraft: return "Draft recovered after relaunch · edit or retry"
+        case .recoveredAudio: return "Captured audio recovered after relaunch · retry transcription"
         }
     }
 

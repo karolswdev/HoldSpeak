@@ -28,11 +28,13 @@ def test_policy_and_control_mode_are_one_future_operation_contract(rig) -> None:
     policy = client.get("/api/authority/policy")
     assert policy.status_code == 200
     assert policy.json()["control_mode"] == "neutral"
+    assert policy.json()["control_mode_label"] == "Normal"
     assert policy.json()["precedence"][0] == "hard_invariants"
     assert "schema_safety" in policy.json()["hard_invariants"]
 
-    changed = client.put("/api/authority/control-mode", json={"control_mode": "safe"})
+    changed = client.put("/api/authority/control-mode", json={"control_mode": "Secure"})
     assert changed.status_code == 200
+    assert changed.json()["control_mode_label"] == "Secure"
     assert changed.json()["applies_to"] == "future_operations_only"
     assert client.get("/api/authority/policy").json()["control_mode"] == "safe"
     assert (

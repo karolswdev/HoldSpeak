@@ -28,6 +28,7 @@ import {
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
 import { RunsOnPicker } from "./RunsOnPicker";
+import { useDurableDraft } from "../../lib/durableDraft";
 
 const turnId = () =>
   `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
@@ -59,7 +60,11 @@ export function PersonaChat(props: { personaId: string }) {
   const [grounding, setGrounding] = useState<GroundingSelection>(() =>
     loadChatGrounding(personaId),
   );
-  const [input, setInput] = useState("");
+  const {
+    value: input,
+    setDraft: setInput,
+    recovered: inputRecovered,
+  } = useDurableDraft(`persona-chat:${personaId}`);
   const [thinking, setThinking] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [inferenceTargetId, setInferenceTargetId] = useState("this_machine");
@@ -68,7 +73,6 @@ export function PersonaChat(props: { personaId: string }) {
   useEffect(() => {
     setTurns(loadThread(personaId));
     setGrounding(loadChatGrounding(personaId));
-    setInput("");
     setInferenceTargetId(String(persona?.profileId || "this_machine"));
   }, [personaId, persona?.profileId]);
 
@@ -108,7 +112,13 @@ export function PersonaChat(props: { personaId: string }) {
     setInput("");
     setThinking(true);
     const r = isModelChat(personaId)
-      ? await runModelChatTurn(modelChatName(personaId), q, history, grounding, inferenceTargetId)
+      ? await runModelChatTurn(
+          modelChatName(personaId),
+          q,
+          history,
+          grounding,
+          inferenceTargetId,
+        )
       : await runChatTurn(personaId, q, history, grounding, inferenceTargetId);
     const reply: ChatTurn = r.ok
       ? {
@@ -158,16 +168,16 @@ export function PersonaChat(props: { personaId: string }) {
       ? t.egress.scope === "local"
         ? {
             scope: "local",
-            text: t.model ? `⌂ ${t.model}` : "⌂ On this machine",
+            text: t.model ? `⌂ This device · ${t.model}` : "⌂ This device",
           }
         : t.egress.scope === "mesh"
           ? {
               scope: "mesh",
-              text: `⇄ ${["mesh", t.egress.host, t.model].filter(Boolean).join(" · ")}`,
+              text: `⇄ ${["Paired", t.egress.host, t.model].filter(Boolean).join(" · ")}`,
             }
           : {
               scope: "cloud",
-              text: `☁ ${[t.model, t.egress.host].filter(Boolean).join(" · ")}`,
+              text: `→ ${["Leaves device", t.egress.host, t.model].filter(Boolean).join(" · ")}`,
             }
       : null;
 
@@ -213,7 +223,7 @@ export function PersonaChat(props: { personaId: string }) {
       <div className="desk-pullout-body desk-chat-scroll">
         {turns.length === 0 && !thinking && (
           <p className="desk-chat-empty">
-            Say hi to {String(persona.name || "your persona")}
+            Start a conversation with {String(persona.name || "this Persona")}.
           </p>
         )}
         {turns.map((t) => (
@@ -233,8 +243,14 @@ export function PersonaChat(props: { personaId: string }) {
                 )}
                 {t.actualPlacement && (
                   <span className="quiet">
-                    Ran on {String(t.actualPlacement.target_name || t.actualPlacement.target_id)}
-                    {t.actualPlacement.boundary ? ` · ${String(t.actualPlacement.boundary)}` : ""}
+                    Ran on{" "}
+                    {String(
+                      t.actualPlacement.target_name ||
+                        t.actualPlacement.target_id,
+                    )}
+                    {t.actualPlacement.boundary
+                      ? ` · ${String(t.actualPlacement.boundary)}`
+                      : ""}
                   </span>
                 )}
                 <button
@@ -242,7 +258,7 @@ export function PersonaChat(props: { personaId: string }) {
                   className="desk-chip quiet"
                   onClick={() => void harvest(t)}
                 >
-                  {savedId === t.id ? "Saved" : "Save to desk"}
+                  {savedId === t.id ? "Saved to Desk" : "Keep as Artifact"}
                 </button>
               </div>
             )}
@@ -274,7 +290,10 @@ export function PersonaChat(props: { personaId: string }) {
           limitTokens={limitTokens}
         />
         <div className="desk-chat-composer">
-          <MicButton onText={(t) => setInput((v) => (v ? v + " " + t : t))} />
+          <MicButton
+            draftScope={`persona-chat:${personaId}`}
+            onText={(t) => setInput((v) => (v ? v + " " + t : t))}
+          />
           <input
             autoFocus
             value={input}
@@ -290,7 +309,7 @@ export function PersonaChat(props: { personaId: string }) {
             disabled={!input.trim() || thinking || overBudget}
             title={
               overBudget
-                ? "Grounding is past the window — pick less"
+                ? "Grounding exceeds the context limit. Remove material."
                 : undefined
             }
             onClick={() => void send()}
@@ -298,9 +317,12 @@ export function PersonaChat(props: { personaId: string }) {
             {thinking ? "…" : "Send"}
           </button>
         </div>
+        {inputRecovered ? (
+          <span className="quiet">Recovered local message draft.</span>
+        ) : null}
         {!groundingIsEmpty(grounding) && overBudget && (
           <p className="desk-run-warning">
-            ⚠ Grounding is past the window — pick less
+            Grounding exceeds the context limit. Remove material.
           </p>
         )}
       </footer>

@@ -64,6 +64,82 @@ def test_processes_through_pipeline_and_delivers():
     assert delivered == ["[corrected] ship it friday"]
 
 
+def test_delivery_identity_returns_cached_receipt_without_typing_twice(tmp_path):
+    from holdspeak.db import Database
+
+    database = Database(tmp_path / "delivery.db")
+    delivered: list[str] = []
+    ctx = _ctx(
+        on_remote_dictation=lambda text: delivered.append(text),
+        dictation_deliveries=database.dictation_deliveries,
+    )
+    client = _client(ctx)
+    payload = {"text": "ship it friday", "delivery_id": "device:attempt-1"}
+
+    first = client.post("/api/dictation/remote", json=payload)
+    reconnect = client.post("/api/dictation/remote", json=payload)
+
+    assert first.status_code == reconnect.status_code == 200
+    assert first.json()["deduplicated"] is False
+    assert reconnect.json()["deduplicated"] is True
+    assert reconnect.json()["delivery_id"] == "device:attempt-1"
+    assert reconnect.json()["final_text"] == "[corrected] ship it friday"
+    assert delivered == ["[corrected] ship it friday"]
+
+
+def test_delivery_identity_refuses_silent_retargeting(tmp_path):
+    from holdspeak.db import Database
+
+    database = Database(tmp_path / "delivery.db")
+    delivered: list[str] = []
+    client = _client(
+        _ctx(
+            on_remote_dictation=lambda text: delivered.append(text),
+            dictation_deliveries=database.dictation_deliveries,
+        )
+    )
+    assert client.post(
+        "/api/dictation/remote",
+        json={"text": "first words", "delivery_id": "same-id"},
+    ).status_code == 200
+
+    conflict = client.post(
+        "/api/dictation/remote",
+        json={"text": "different words", "delivery_id": "same-id"},
+    )
+
+    assert conflict.status_code == 409
+    assert conflict.json()["failure_category"] == "delivery_conflict"
+    assert delivered == ["[corrected] first words"]
+
+
+def test_failed_delivery_identity_never_replays_implicitly(tmp_path):
+    from holdspeak.db import Database
+
+    database = Database(tmp_path / "delivery.db")
+    calls = 0
+
+    def fail_after_one_call(_text: str) -> None:
+        nonlocal calls
+        calls += 1
+        raise RuntimeError("target stopped")
+
+    client = _client(
+        _ctx(
+            on_remote_dictation=fail_after_one_call,
+            dictation_deliveries=database.dictation_deliveries,
+        )
+    )
+    payload = {"text": "keep this", "delivery_id": "failed-id"}
+    first = client.post("/api/dictation/remote", json=payload)
+    replay = client.post("/api/dictation/remote", json=payload)
+
+    assert first.status_code == replay.status_code == 425
+    assert first.json()["error_code"] == "delivery_pending"
+    assert replay.json()["error_code"] == "delivery_pending"
+    assert calls == 1
+
+
 def test_without_delivery_hook_processes_only():
     r = _client(_ctx()).post("/api/dictation/remote", json={"text": "hello"})
     assert r.status_code == 200
@@ -257,7 +333,6 @@ def test_selection_pin_grounds_the_remote_dictation(monkeypatch):
     """HSM-18-05 — the pre-briefing loop closes on the remote lane. A pending
     "Dictate with this" pin is consumed (one-shot) and its activity context is
     threaded into the pipeline call, exactly as the local runner does (HS-53-07)."""
-    import holdspeak.web.routes.dictation.pipeline as pipeline_mod
     from holdspeak.dictation_selection import clear_selected_record, set_selected_record
 
     seen: dict = {}

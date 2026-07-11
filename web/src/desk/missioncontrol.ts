@@ -338,7 +338,7 @@ export const useMissionControl = create<McState>((set, get) => ({
   events: [],
   updatedAt: null,
   inflight: false,
-  open: true,
+  open: false,
   proposal: null,
   proposalError: "",
   evidence: null,

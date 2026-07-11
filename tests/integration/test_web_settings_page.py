@@ -56,7 +56,9 @@ def test_no_interim_settings_drawer_in_live_source() -> None:
 
 def test_topnav_gear_links_to_settings_route() -> None:
     topnav = (_REPO / "web" / "src" / "components" / "AppShell.tsx").read_text()
-    assert '<NavLink to="/settings">Settings</NavLink>' in topnav
+    assert '["/settings", "Settings"]' in topnav
+    assert "PRIMARY_NAV.map(([to, label])" in topnav
+    assert '<NavLink key={to} to={to}' in topnav
 
 
 def test_settings_is_sectioned_searchable_and_progressive() -> None:

@@ -27,7 +27,7 @@ Use these guides depending on what you are setting up:
 | Dictation pipeline | Routes and rewrites dictated text with local rules and optional LLM stages | `/dictation`, `holdspeak dictation ...` |
 | Project facts | Keeps a `kb:` map in `.holdspeak/project.yaml`; exact values stamped into dictation verbatim, no LLM | `/dictation` -> Project Facts |
 | Project context | Keeps repo-local `.hs/` files that guide intelligent rewrites (optional LLM stage) | `/dictation` -> Project Context |
-| Agent hooks | Lets Claude Code and Codex report current cwd/session state to HoldSpeak | `/dictation` -> Agent Hooks |
+| Automation hooks | Lets Claude Code and Codex report current cwd/session state to HoldSpeak | `/dictation` -> Hooks |
 | Meeting mode | Captures microphone plus optional system audio | Dashboard, `holdspeak meeting` command |
 | Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts | Dashboard and `/history` |
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
@@ -39,7 +39,7 @@ Use these guides depending on what you are setting up:
 | Speak | Review | Refine |
 | --- | --- | --- |
 | ![Pixel art microphone with hold-to-talk waves](assets/pixellab/hold-to-talk-microphone.png) | ![Pixel art meeting notebook with action items](assets/pixellab/meeting-intelligence-notebook.png) | ![Pixel art code editor connected to local context](assets/pixellab/project-aware-typing.png) |
-| Hold the configured hotkey and dictate into the focused app. | Capture meetings, search transcripts, and curate action items. | Let project context and agent state improve dictated prompts. |
+| Hold the configured hotkey and dictate into the focused app. | Capture meetings, search transcripts, and curate action items. | Let project context and Coder session state improve dictated prompts. |
 
 <p align="center">
   <img src="assets/pixellab/operator-working-loop.gif" alt="Animated pixel art operator working at a terminal while companion and task cards update" width="280">
@@ -259,10 +259,10 @@ Use `openai_compatible` when the model is served somewhere else:
 - LiteLLM
 - OpenAI or another hosted compatible API
 
-The picker path: author the endpoint once as a runtime profile (web:
-`/profiles`), then pick it under Dictation → Runtime → **Runs on profile**.
-Picking a profile also selects this backend. The configuration shape below
-still works when no profile is picked:
+The picker path: author the endpoint once as a Runs on destination (the Web
+compatibility route is `/profiles`), then pick it under Dictation → Runtime →
+**Runs on**. The configuration shape below still works when no destination is
+selected:
 
 ```json
 {
@@ -343,17 +343,17 @@ Claude: product/design discussion is acceptable, but include concrete repo conte
 Terminal: preserve command syntax exactly.
 ```
 
-## Agent Hooks For Claude And Codex
+## Automation Hooks For Claude And Codex
 
-Operating systems do not reliably expose the current working directory of a terminal app. Agent hooks solve that by letting Claude Code or Codex report their own `cwd`, session id, transcript path, and tool state to HoldSpeak.
+Operating systems do not reliably expose the current working directory of a terminal app. Automation hooks let Claude Code or Codex report their own `cwd`, session id, transcript path, and tool state to HoldSpeak.
 
 For the full install and verification flow, see
-[Claude/Codex Agent Hook Install](AGENT_HOOK_INSTALL.md).
+[Claude/Codex automation hook install](AGENT_HOOK_INSTALL.md).
 
 Open:
 
 ```text
-/dictation -> Agent Hooks
+/dictation -> Hooks
 ```
 
 The tab shows:
@@ -430,10 +430,10 @@ Local-first behavior:
 Cloud or homelab behavior:
 
 - If you set `meeting.intel_provider` to `cloud` or configure `intel_cloud_base_url`, meeting text may be sent to that endpoint for analysis.
-- The picker path: author the endpoint once as a runtime profile (web: `/profiles`), then pick it under Settings → Cloud & advanced → **Runs on**.
-- Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and auth configuration; its "Runtime profiles" line names the profile each pipeline resolves to.
+- The picker path: author the endpoint once as a Runs on destination (the Web compatibility route is `/profiles`), then pick it under Settings → **Runs on**.
+- Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and authentication; its Runs on line names the destination each pipeline resolves to.
 
-Example cloud/homelab config (the fallback shape when no profile is picked):
+Example cloud/homelab config (the fallback shape when no Runs on destination is picked):
 
 ```json
 {
@@ -492,7 +492,7 @@ are in the [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md).
 
 If you plan work with [Delivery Workbench](https://github.com/karolswdev/delivery-workbench),
 the desk renders your repositories as a conveyor: one belt per project, phases
-as segments, the current phase's stories riding it, and live agent sessions
+as segments, the current phase's stories riding it, and live Coder sessions
 pinned to the story they are working. Name your repositories in
 `~/.holdspeak/delivery_workbench.json` and the belt appears at the foot of the
 desk.
@@ -515,7 +515,7 @@ Watching is free; steering is armed; every steer is audited. Nothing here
 leaves your machine.
 
 Click any session pin on the belt, or the "Watch live" chip in a coder card,
-and the session pull-out opens with a live view of that agent's terminal pane.
+and the session pull-out opens with a live view of that Coder session's terminal pane.
 The view is read only: it updates on its own, marks itself stale when the
 session has gone quiet, and never sends a keystroke.
 
@@ -529,17 +529,17 @@ disarms everything.
 
 Once armed, the composer appears. Speak your reply by holding the mic, or type
 it. The paper-plane toggle chooses whether a return is pressed after the text
-lands, so a multi-part steer can stay in the agent's input box. Send, and the
+lands, so a multi-part steer can stay in the Coder session's input box. Send, and the
 reply lands in the pane exactly as you composed it.
 
 You can carry desk objects into a steer. Open the grounding picker in the
 composer, choose a meeting or an artifact, and its content rides in ahead of
-your message under a labeled header, capped so it fits what the agent can read
+your message under a labeled header, capped so it fits what the Coder session can read
 in one go. The composer shows the exact text before it sends, and refuses at
 compose time if the context is too large, naming the size.
 
 Triage what a session surfaces, three ways, all from the pull-out. Keep the
-agent's current question as a desk note, its lineage naming the session and the
+Coder session's current question as a Desk Note, its lineage naming the session and the
 moment. Pin an off-rails session to a story yourself, a manual mark the belt
 shows with a hollow ring so it never reads as the rails' own verdict. Or flip a
 correlated story's status through the same proposal the belt uses, the commit
@@ -634,7 +634,7 @@ Local by default:
 - Meeting history.
 - Dictation block configuration.
 - `.hs/` project context.
-- Agent-session registry.
+- Coder session registry.
 - Captured assistant-message snippets, if enabled.
 
 Leaves the machine only when configured:
@@ -667,8 +667,8 @@ Common issues:
 | System audio missing | No BlackHole/Pulse monitor configured | Run `holdspeak meeting --setup` |
 | Dictation LLM unavailable | Missing optional backend or model | Open `/dictation` -> Readiness or Runtime |
 | Project context not detected | Wrong cwd or no project marker | Set Project root in `/dictation` |
-| Claude/Codex context missing | Hooks not installed or not firing | Open `/dictation` -> Agent Hooks |
-| Captured agent question looks stale | Last prompt did not clear it | Use Clear on the agent banner |
+| Claude/Codex context missing | Hooks not installed or not firing | Open `/dictation` -> Hooks |
+| Captured Coder session question looks stale | Last prompt did not clear it | Use Clear on the Coder session banner |
 
 ## Recommended First Setup
 
@@ -677,7 +677,7 @@ Common issues:
 3. Open `/dictation`.
 4. Set the Project root for your active repo.
 5. Create `.hs/instructions.md`, `.hs/context.md`, `.hs/workflows.md`, and `.hs/targets.md`.
-6. Open Agent Hooks and copy the Claude/Codex templates you use.
+6. Open Hooks and copy the Claude/Codex templates you use.
 7. Enable the dictation pipeline and run a dry-run.
 8. Start using voice typing in your editor or LLM CLI.
 
@@ -685,7 +685,7 @@ Common issues:
 
 - [README](../README.md): install, platform notes, configuration reference.
 - [Getting Started](GETTING_STARTED.md): first-run setup and basic voice typing.
-- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): dictation pipeline, project context, target override, OpenAI-compatible endpoints, and agent hooks.
+- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): dictation pipeline, project context, output-target override, OpenAI-compatible endpoints, and automation hooks.
 - [Dictation runtime setup](../web/src/pages/RuntimeDocsPage.tsx): source for the local Web runtime setup page.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and troubleshooting.
 - [Firefox Extension Guide](FIREFOX_EXTENSION_GUIDE.md): local companion extension install.

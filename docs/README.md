@@ -1,14 +1,12 @@
 # HoldSpeak documentation
 
-HoldSpeak is one local copilot with two modes: dictation that types in any
-app and learns how you work, and meetings that end with decisions, actions,
-and follow-ups instead of a recording. Everything runs on your machine,
-including the LLM. This page is the map. Pick a journey.
+HoldSpeak provides voice typing, meeting capture, retained results, and
+recovery. Work can run on this device, a paired device, a private endpoint, or
+an external service; each operational surface names the applicable boundary.
 
-The web app opens on **the Desk**: everything the two modes produce, living
-as objects in one spatial world (record from the orb, ask an agent from the
-rail, file things into zones). The rooms hang off its menu: the two modes
-(**Dictation**, **Meetings**) and a **Studio** tier for the advanced tools.
+The Web app opens on the **Desk**, where Meetings, Notes, Artifacts, Projects,
+Personas, Workflows, Integrations, Coder sessions, attention, and Receipts are
+available. Dictation, Meetings, Studio, and Settings are focused workrooms.
 
 > New here? Start with the [main README](../README.md) for the pitch and a
 > quickstart, then follow **Start here** below.
@@ -37,13 +35,13 @@ rail, file things into zones). The rooms hang off its menu: the two modes
   word (hands-free entry, previewed before it types), the spoken language
   setting (any of Whisper's 99 languages), and the spoken-symbol dictionary.
 - **[Dictation Pipeline Setup](./DICTATION_PIPELINE_GUIDE.md)**: the project-aware
-  pipeline. Intent routing, project-facts enrichment, target profiles, LLM rewriting.
+  pipeline. Intent routing, project facts, Runs on destinations, and LLM rewriting.
 - **[Project knowledge: facts + context](./DICTATION_PIPELINE_GUIDE.md#5-set-up-project-knowledge)**:
   teach the copilot about a repo. Facts (the `project.yaml` KB, stamped in verbatim)
   and context (the `.hs/` files an optional rewrite reads) are two different things;
   this is what each is and how to set up both.
 - **[The Dictation Copilot](./DICTATION_COPILOT.md)**: see it work. Rough speech
-  becomes a project-grounded coding-agent task, with a demo you can reproduce.
+  becomes a project-grounded task for a Coder session, with a demo you can reproduce.
 - **[Voice Commands](./VOICE_COMMANDS.md)**: map a spoken keyword to a real action.
   Say a keyword while dictating and HoldSpeak opens a URL, launches an app, runs a
   shell command, or types a snippet instead of typing the words. Off by default, you
@@ -54,11 +52,9 @@ rail, file things into zones). The rooms hang off its menu: the two modes
   dictation can use it as context. Gated by the activity tracking toggle: off means
   no cards.
 
-- **[The Cadence Engine](./CADENCE.md)**: the local-first technical chief-of-staff.
-  It turns your meetings, pending proposals, and waiting coding agents into
-  evidence-backed nudges with a prepared next move, on the CLI, the `/cadence` web
-  page, or Telegram. Off by default. It pushes with receipts, never acts without your
-  approval, and writes a telemetry-free local audit of everything it did.
+- **[Cadence](./CADENCE.md)**: reviews Meetings, proposed actions, and waiting
+  Coder sessions, then prepares source-linked next actions. It is off by
+  default and records each use.
 - **[The learning loop: journal, correct, see what it learned, replay](./DICTATION_PIPELINE_GUIDE.md#12-dictation-journal-corrections--replay)**:
   the local-only loop that gets better at your voice. Fix a misfire in one tap, see
   the honest "learned from N similar" count in the "What HoldSpeak learned" digest,
@@ -67,10 +63,9 @@ rail, file things into zones). The rooms hang off its menu: the two modes
   an opt-in, native, focus-safe status surface (a macOS HUD, a Linux tray and
   notification) that shows whether it's listening, transcribing, or typing while you
   dictate elsewhere. Optionally with
-  **[Qlippy, the mascot](./DICTATION_PIPELINE_GUIDE.md#qlippy-the-mascot-optional)**:
-  an ambient pixel-art dock plus one-at-a-time cards for the moments that need
-  you (approvals, results, learning, meeting follow-ups), each carrying an
-  egress badge that shows where its data goes. He never acts on his own.
+  **[Qlippy](./DICTATION_PIPELINE_GUIDE.md#qlippy-the-mascot-optional)**:
+  an optional visual presence for one source-linked attention card at a time.
+  Operational copy and authority remain the same as other Desk surfaces.
 - **[Models (bring your own)](./MODELS.md)**: the model contract. GGUF in-process,
   MLX on Apple Silicon, or any OpenAI-compatible endpoint.
 
@@ -89,15 +84,15 @@ rail, file things into zones). The rooms hang off its menu: the two modes
 
 ## Extend: build on it
 
- (meetings,
-  notes, KBs, agents, chains, workflows). Arrange objects by hand, file them into
-  shelf-zones, and dive through, all from your local hub.
+- **[The Desk](./WEB_DESK.md)**: work with Meetings, Notes, Knowledge,
+  Personas, Sequences, Workflows, Artifacts, and Coder sessions; place durable
+  items in Zones and inspect their results and Receipts.
 - **[Plugin Authoring](./PLUGIN_AUTHORING.md)**: write a meeting-intel plugin. The
-  `HostPlugin` contract, prompt to LLM to structured output, rendering, chains, and
+  `HostPlugin` contract, prompt to LLM to structured output, rendering, sequences, and
   the actuator propose/approve/execute flow.
 - **[Connector Development](./CONNECTOR_DEVELOPMENT.md)**: build a local activity
   connector (the `cli_enrichment` / `pipeline` / other kinds).
-- **[Agent Hook Install](./AGENT_HOOK_INSTALL.md)**: wire Claude/Codex agent hooks
+- **[Claude/Codex automation hooks](./AGENT_HOOK_INSTALL.md)**: wire Claude/Codex automation hooks
   into the intelligent-typing layer.
 - **[Firefox Extension Guide](./FIREFOX_EXTENSION_GUIDE.md)**: the browser activity
   connector.
@@ -109,7 +104,7 @@ rail, file things into zones). The rooms hang off its menu: the two modes
 
 - **[Security & Privacy](./SECURITY.md)**: the threat model. What's stored, the trust
   boundaries, and exactly what can (and can't) leave your machine.
-- **[Control modes, decisions, and grants](./AUTHORITY.md)**: what Safe, Neutral,
+- **[Control modes, decisions, and grants](./AUTHORITY.md)**: what Secure, Normal,
   and YOLO change, how review/authority/execution stay separate, and which hard
   invariants no mode can weaken.
 

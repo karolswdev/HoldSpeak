@@ -117,6 +117,44 @@
   margin: 0;
   color: var(--text-muted);
 }
+.workroom-bar {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 7px 8px 7px var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+.workroom-bar strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.workroom-bar > span:not(.signal-eyebrow) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workroom-bar a {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  background: var(--surface-2);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.workroom-bar a:hover {
+  background: var(--surface-hover);
+}
 .page-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -1115,6 +1153,15 @@
   .page-hero {
     grid-template-columns: 1fr;
     align-items: start;
+  }
+  .workroom-bar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .workroom-bar a {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
   }
   .signal-panel > header,
   .signal-panel-body {

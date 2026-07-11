@@ -5,14 +5,18 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-11 — **Phase 91, One React Surface, IN PROGRESS
-(9/10); Phase 92, The Coalescence, PLANNED with HS-92-01 through HS-92-06 pre-close work in
-progress by direct owner instruction.** The entire Web is now one Vite/React 19
-tree and its desktop/compact browser audit is green. Phase 91 closure still
-waits on the real owner workflow and actual Swift DeskOS parity evidence;
-responsive Web screenshots do not waive that gate. Phase 92 is not the current
-phase: its language, trust, first-value, meeting, relationship, and capability
-convergence slices have automated proof, while their manual/device walks and all later stories
-remain gated behind HS-91-10.
+(9/10); Phase 92, The Coalescence, PLANNED with all ten stories carrying
+pre-close implementation but no accepted owner/device outcome; Phase 93,
+Effortless HoldSpeak, IN PROGRESS with HS-93-01 through HS-93-05 carrying
+automated implementation evidence but not yet accepted.** The Web is
+one Vite/React 19 tree and Phase 92 added substantial language, trust,
+first-value, capture, relationship, capability, destination, authority, and
+Desk-memory substrate. The experience audit found that the product is not yet
+demonstrably streamlined, robust in lived use, or easier to understand. Phase
+91 closure still waits on the real owner workflow and actual Swift DeskOS parity
+evidence; the current pointer remains unchanged. Phase 93 turns the substrate
+into visible subtraction and real daily reliability rather than treating more
+contracts as the user outcome.
 
 **Current phase:** [**Phase 91 — One React Surface**](./phase-91-one-react-surface/current-phase-status.md)
 — **IN PROGRESS (9/10)**. HS-91-01 through HS-91-09 are done. HS-91-10 remains
@@ -159,6 +163,7 @@ canon, canon wins.
 | 90 | The Factory: spawn, rename, drive, and kill terminal sessions from glass on the one consent spine | done | [phase-90-the-factory](./phase-90-the-factory/) |
 | 91 | One React Surface: one Vite/React application carrying DeskOS craft across every Web route; owner/Swift parity close gate remains | in-progress | [phase-91-one-react-surface](./phase-91-one-react-surface/) |
 | 92 | Make HoldSpeak feel like one powerful, understandable product by converging Web and native journeys on the Desk's shared objects, destinations, attention, authority, and retained results without rewriting the underlying systems. | planning | [phase-92-the-coalescence](./phase-92-the-coalescence/) |
+| 93 | Effortless HoldSpeak: make the Desk a rich, learnable AI operating system through visible subtraction, coherent OS affordances, contextual power, real failure recovery, accessibility, and sustained owner use across Web and flagship Swift. | in-progress | [phase-93-effortless-holdspeak](./phase-93-effortless-holdspeak/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

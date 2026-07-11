@@ -36,14 +36,17 @@ export function DeskObject({
   } = useDesk.getState();
 
   const u = objUnit(o, i, n, positions);
+  const selectionRef = qualifiedRef(o.kind, o.id);
   const m = objMotion(o);
   const dragging = draggingId === o.id;
   const isNew = newIds.includes(o.id);
   const editing = editingId === o.id;
-  const selected = selectedIds.includes(o.id);
-  const projectionSubject = o.kind === "coder"
-    ? `coder_session:${String(o.ref.agent || "claude")}:${o.id}`
-    : qualifiedRef(o.kind, o.id);
+  const selected =
+    selectedIds.includes(selectionRef) || selectedIds.includes(o.id);
+  const projectionSubject =
+    o.kind === "coder"
+      ? `coder_session:${String(o.ref.agent || "claude")}:${o.id}`
+      : qualifiedRef(o.kind, o.id);
   const projectionCounts = useProjections(
     (state) => state.subject_counts[projectionSubject],
   );
@@ -55,7 +58,7 @@ export function DeskObject({
     // Shift/cmd-click ropes the object into the Ask context (HSM-16-04) —
     // the pointer's word for the lasso's single-object case.
     if (e.shiftKey || e.metaKey || e.ctrlKey) {
-      toggleSelected(o.id);
+      toggleSelected(selectionRef);
       return;
     }
     openPullout(o.id);
@@ -123,7 +126,7 @@ export function DeskObject({
       role="button"
       tabIndex={0}
       aria-label={`${o.title}${projectionCounts?.needs_attention ? `, ${projectionCounts.needs_attention} need attention` : ""}`}
-      data-obj-id={o.id}
+      data-obj-id={selectionRef}
       className={
         "desk-obj" +
         (dragging ? " dragging" : "") +

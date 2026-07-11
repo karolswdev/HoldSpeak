@@ -207,9 +207,22 @@ public struct RemoteDictationResult: Sendable, Equatable, Decodable {
     public var success: Bool
     public var finalText: String      // the pipeline-processed text (not raw transcript)
     public var delivered: Bool        // true if a desktop dictation target received it
+    public var deliveryId: String?     // snake_case decoder maps delivery_id here
+    public var deliveryID: String? {
+        get { deliveryId }
+        set { deliveryId = newValue }
+    }
+    public var deduplicated: Bool?     // true when this response is a cached Receipt
 
-    public init(success: Bool, finalText: String, delivered: Bool) {
+    public init(
+        success: Bool,
+        finalText: String,
+        delivered: Bool,
+        deliveryID: String? = nil,
+        deduplicated: Bool? = nil
+    ) {
         self.success = success; self.finalText = finalText; self.delivered = delivered
+        self.deliveryId = deliveryID; self.deduplicated = deduplicated
     }
 }
 

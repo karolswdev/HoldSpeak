@@ -84,7 +84,7 @@ export const PRODUCT_ROUTES: ProductRoute[] = [
   },
   {
     path: "/profiles",
-    label: "Profiles",
+    label: "Runs on",
     section: "studio",
     component: Profiles,
   },

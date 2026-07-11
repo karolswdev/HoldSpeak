@@ -109,8 +109,11 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             attempt = database.onboarding.finish_attempt(
                 attempt_id,
                 outcome=outcome,
-                steps=int((payload or {}).get("steps", 1)),
-                decisions=int((payload or {}).get("decisions", 0)),
+                # The repository derives these from its content-free event
+                # ledger. Legacy counters are accepted at the wire boundary
+                # but cannot overwrite observed mechanics.
+                steps=(payload or {}).get("steps"),
+                decisions=(payload or {}).get("decisions"),
                 destination=str((payload or {}).get("destination") or "this_machine"),
                 failure_category=(payload or {}).get("failure_category"),
             )
@@ -127,6 +130,35 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
         except Exception as exc:
             return error_500(exc, log, "Failed to finish first-value receipt")
+
+    @router.post("/api/setup/first-value/{attempt_id}/event")
+    async def api_first_value_event(attempt_id: str, payload: dict[str, Any]) -> Any:
+        """Record one bounded interaction event without accepting owner content."""
+        allowed = {"event_id", "kind"}
+        extra = set(payload or {}).difference(allowed)
+        if extra:
+            return JSONResponse(
+                {
+                    "success": False,
+                    "error": "First-value events accept only event_id and kind.",
+                },
+                status_code=400,
+            )
+        try:
+            from ...db import get_database
+
+            event = get_database().onboarding.record_event(
+                attempt_id,
+                event_id=str((payload or {}).get("event_id") or ""),
+                kind=str((payload or {}).get("kind") or ""),
+            )
+            return JSONResponse({"success": True, "event": event}, status_code=201)
+        except KeyError as exc:
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=404)
+        except ValueError as exc:
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to record first-value event")
 
     @router.get("/api/setup/runtime-options")
     async def api_runtime_options() -> Any:

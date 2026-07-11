@@ -178,12 +178,25 @@ public struct HTTPDesktopClient: IDesktopClient {
     // MARK: - Answer the coder (HSM-13-01)
 
     public func sendRemoteDictation(text: String, target: DictationTarget, raw: Bool) async throws -> RemoteDictationResult {
+        try await sendRemoteDictation(
+            text: text, target: target, raw: raw, deliveryID: nil)
+    }
+
+    /// HS-93-05: paired dictation supplies a stable request identity. Older
+    /// callers keep the three-argument method and therefore the old payload.
+    public func sendRemoteDictation(
+        text: String,
+        target: DictationTarget,
+        raw: Bool,
+        deliveryID: String?
+    ) async throws -> RemoteDictationResult {
         // `target_mode` rides as a plain string the desktop validates against
         // ("agent" | "focused"). `.agent` keeps the HSM-13 payload byte-identical.
         // `raw` (HSM-18-01) rides only when true, so the default payload stays
         // byte-identical and the hub types the receipt verbatim.
         var body: [String: Any] = ["text": text, "target_mode": target.rawValue]
         if raw { body["raw"] = true }
+        if let deliveryID, !deliveryID.isEmpty { body["delivery_id"] = deliveryID }
         let data = try await send(makeJSONRequest(path: "api/dictation/remote", body: body))
         do { return try HoldSpeakContracts.decoder().decode(RemoteDictationResult.self, from: data) }
         catch { throw DesktopClientError.malformed }

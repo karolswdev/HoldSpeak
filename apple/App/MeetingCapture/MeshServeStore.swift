@@ -30,7 +30,7 @@ import SwiftUI
     var refusal: String? {
         let kind = InferenceConfigStore.shared.activeProfile.kind
         guard kind == .meshNode || kind == .desktop else { return nil }
-        return "this device's profile runs elsewhere — serving needs an on-device model or an endpoint"
+        return "Serving failed. The selected Runs on destination is unavailable to this device. Choose a this-device model or configured endpoint."
     }
 
     /// Follow the consent flag (and the foreground): the toggle's didSet, the

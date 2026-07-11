@@ -5,9 +5,9 @@ import { PageHero } from "./pageSupport";
 export default function RuntimeDocsPage() {
   return (
     <article className="page-wrap docs-page">
-      <PageHero eyebrow="Local guide" title="Dictation runtime setup">
-        Choose one intelligence path. Basic voice typing works without an LLM;
-        rewrites and routing depth need a runtime.
+      <PageHero eyebrow="Setup guide" title="Dictation runtime setup">
+        Basic voice typing works without an LLM. Rewrites and routing require a
+        configured Runs on destination.
       </PageHero>
       <InlineMessage tone="info">
         API keys are environment variables on the hub. They never belong in a
@@ -42,15 +42,16 @@ export default function RuntimeDocsPage() {
         </Disclosure>
         <Disclosure title="OpenAI-compatible endpoint">
           <p>
-            Create a Runtime Profile with the server URL and model. If it needs
-            a key, set <code>HOLDSPEAK_PROFILE_&lt;ID&gt;_KEY</code> on the hub.
+            Create a Runs on destination with the server URL and model. If it
+            needs a key, set <code>HOLDSPEAK_PROFILE_&lt;ID&gt;_KEY</code> on the
+            hub.
           </p>
           <pre className="code-block">
             uv pip install -e '.[dictation-openai]'
           </pre>
         </Disclosure>
       </Panel>
-      <Panel title="Verify" eyebrow="Honest health">
+      <Panel title="Verify" eyebrow="Readiness">
         <ol>
           <li>
             Open <Link to="/setup">Setup</Link> and run the runtime test.

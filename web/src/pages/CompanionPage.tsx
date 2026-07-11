@@ -33,7 +33,7 @@ export default function CompanionPage() {
   return (
     <div className="page-wrap">
       <PageHero eyebrow="Companion" title="Personas and coder sessions">
-        Your recipes and the coders that need you, on the desk your iPad shares.
+        Saved Personas and waiting Coder sessions on the shared Desk.
       </PageHero>
       {sessions.length ? (
         <Panel title="Needs you" eyebrow="Live coding sessions">
@@ -59,7 +59,7 @@ export default function CompanionPage() {
                       )}
                     </small>
                   </div>
-                  <StatusPill tone="warning">awaiting</StatusPill>
+                  <StatusPill tone="warning">Awaiting response</StatusPill>
                 </li>
               );
             })}

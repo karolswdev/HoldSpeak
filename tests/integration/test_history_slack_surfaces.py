@@ -3,7 +3,7 @@
 The conditions under test: the aftercare response carries the capability
 flag (a bool, never the URL); the history page's buttons are gated on that
 flag, so an unconfigured install renders no Slack affordance at all; the
-buttons wire to the export route through `exportToSlack`; the settings field
+buttons wire to the export route through `proposeSlack`; the settings field
 ships with the honest copy (what is sent, only after approval, only to this
 URL's host, stored locally).
 """
@@ -24,11 +24,11 @@ from fastapi.testclient import TestClient
 
 pytestmark = [pytest.mark.requires_meeting]
 
-import holdspeak.config as config_module
-from holdspeak.config import Config
-from holdspeak.db import Database, get_database, reset_database
-from holdspeak.meeting_session import IntelSnapshot, MeetingState
-from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+import holdspeak.config as config_module  # noqa: E402
+from holdspeak.config import Config  # noqa: E402
+from holdspeak.db import Database, get_database, reset_database  # noqa: E402
+from holdspeak.meeting_session import IntelSnapshot, MeetingState  # noqa: E402
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks  # noqa: E402
 
 _REPO = Path(__file__).resolve().parents[2]
 URL = "https://hooks.slack.com/services/T0/B0/secret-credential"
@@ -121,19 +121,24 @@ def test_aftercare_flag_is_true_and_never_the_url(client, db, settings_path, see
 
 
 def test_history_buttons_are_gated_on_the_flag():
-    page = (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
+    page = " ".join(
+        (_REPO / "web/src/pages/HistoryPage.tsx").read_text().split()
+    )
     assert "Send digest to Slack" in page and "Send follow-up to Slack" in page
     assert "aftercare.slack_configured" in page
     assert 'proposeSlack("digest")' in page and 'proposeSlack("followup")' in page
-    assert "Each creates an exact-message proposal" in page
+    assert "Each creates an exact-message proposed action" in page
+    assert "configured Slack destination" in page
 
 
 def test_proposal_guard_copy_tells_the_per_target_truth():
     # The guard copy tells the per-target truth, in one short line each
     # (HS-62-02 swept the "Nothing runs without your approval" preamble).
-    page = (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
-    assert "configured Slack host" in page
-    assert "Rendering one never sends it" in page
+    page = " ".join(
+        (_REPO / "web/src/pages/HistoryPage.tsx").read_text().split()
+    )
+    assert "Approval sends it to the configured Slack destination" in page
+    assert "Proposed external actions appear here before execution" in page
 
 
 def test_history_app_wires_the_export_route():

@@ -28,6 +28,15 @@ import { useProjections } from "../projections";
 
 const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
 
+function repositoryState(value: string): string {
+  const labels: Record<string, string> = {
+    unreachable: "Repository unavailable",
+    schema_drift: "Repository schema mismatch",
+    unauthorized: "Repository authorization failed",
+  };
+  return labels[value] || `Repository ${value.replace(/_/g, " ")}`;
+}
+
 interface PickTarget {
   repo: string;
   project: string;
@@ -237,7 +246,9 @@ function RepoBlock({
     return (
       <div className="desk-mc-honest">
         <span className="desk-mc-slug">{repo.name}</span>
-        <span className={"desk-mc-state " + repo.status}>✕ {repo.status}</span>
+        <span className={"desk-mc-state " + repo.status}>
+          ✕ {repositoryState(repo.status)}
+        </span>
         {repo.detail && <span className="desk-mc-detail">{repo.detail}</span>}
       </div>
     );
@@ -302,7 +313,7 @@ function ProposalCard() {
       <div className="desk-mc-proposal failed">
         <span className="desk-mc-refusal">✕ {proposalError}</span>
         <button className="desk-mc-btn" onClick={dismissProposal}>
-          dismiss
+          Dismiss
         </button>
       </div>
     );
@@ -319,7 +330,7 @@ function ProposalCard() {
           Approve status change
         </button>
         <button className="desk-mc-btn" onClick={() => void decide("rejected")}>
-          Reject
+          Reject status change
         </button>
       </div>
     );
@@ -328,7 +339,7 @@ function ProposalCard() {
     return (
       <div className="desk-mc-proposal failed">
         <span className="desk-mc-refusal">
-          ✕ the rails refused: {proposal.error}
+          Status change failed. {proposal.error}
         </span>
         <button className="desk-mc-btn" onClick={dismissProposal}>
           dismiss
@@ -339,10 +350,12 @@ function ProposalCard() {
   return (
     <div className="desk-mc-proposal">
       <span className="desk-mc-executed">
-        {proposal.status === "executed" ? "✓ executed" : proposal.status}
+        {proposal.status === "executed"
+          ? "Status change executed"
+          : `Status change ${proposal.status}`}
       </span>
       <button className="desk-mc-btn" onClick={dismissProposal}>
-        dismiss
+        Dismiss
       </button>
     </div>
   );
@@ -407,8 +420,9 @@ export function MissionControlConveyor() {
 
   if (!open) {
     return (
-      <button className="desk-mc-tab" onClick={toggle} title="mission control">
-        ▦ rails{awaitingCount > 0 ? ` 🙋${awaitingCount}` : ""}{attentionCount > 0 ? ` ◎${attentionCount}` : ""}
+      <button className="desk-mc-tab" onClick={toggle} title="Background runs">
+        ▦ Background runs{awaitingCount > 0 ? ` 🙋${awaitingCount}` : ""}
+        {attentionCount > 0 ? ` ◎${attentionCount}` : ""}
       </button>
     );
   }
@@ -420,7 +434,7 @@ export function MissionControlConveyor() {
   return (
     <div className="desk-mc">
       <div className="desk-mc-head">
-        <span className="desk-mc-title">▦ mission control</span>
+        <span className="desk-mc-title">▦ Background runs</span>
         {attentionCount > 0 ? (
           <button
             type="button"

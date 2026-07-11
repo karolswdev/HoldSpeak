@@ -444,7 +444,7 @@ struct QueueHUD: View {
                         .animation(reduceMotion ? nil : .easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: pulse)
                 }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(agentName(agent.agent)) is waiting").font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
+                    Text("Coder session · \(agentName(agent.agent)) is waiting").font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
                     HStack(spacing: 5) {
                         Image(systemName: "cpu").font(.system(size: 9, weight: .bold))
                         Text(agent.repo).font(.system(size: 11, weight: .semibold))
@@ -475,7 +475,7 @@ struct QueueHUD: View {
                 Image(systemName: "checkmark.seal.fill").font(.system(size: 14, weight: .black)).foregroundStyle(Sig.warn)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(proposal.preview ?? proposal.action ?? "Proposal")
+                Text(proposal.preview ?? proposal.action ?? "Proposed action")
                     .font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.text).lineLimit(1)
                 HStack(spacing: 5) {
                     Image(systemName: "desktopcomputer").font(.system(size: 9, weight: .bold))
@@ -489,7 +489,7 @@ struct QueueHUD: View {
                 tactile()
                 Task { await store.decideMesh(proposal, approved: false) }
             } label: {
-                Text("Reject").font(.system(size: 11, weight: .heavy))
+                Text("Reject proposed action").font(.system(size: 11, weight: .heavy))
                     .foregroundStyle(Sig.muted)
                     .padding(.horizontal, 11).padding(.vertical, 6)
                     .background(Sig.s3, in: Capsule())
@@ -498,7 +498,7 @@ struct QueueHUD: View {
                 tactile()
                 Task { await store.decideMesh(proposal, approved: true) }
             } label: {
-                Text(proposal.commitment?.approve ?? "Approve for \(proposal.target ?? "executor")")
+                Text(proposal.commitment?.approve ?? "Approve and run on \(proposal.target ?? "executor")")
                     .font(.system(size: 11, weight: .heavy)).lineLimit(1)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 11).padding(.vertical, 6)
@@ -744,7 +744,7 @@ private struct PresenceNudgeCard: View {
                 Button { tactile(.light); onMute() } label: {
                     Image(systemName: "bell.slash.fill").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
                         .frame(width: 32, height: 32).background(Sig.s3, in: Circle())
-                }.buttonStyle(PressableCard()).accessibilityLabel("Mute this agent")
+                }.buttonStyle(PressableCard()).accessibilityLabel("Mute this Coder session")
                 Button { tactile(.light); onDismiss() } label: {
                     Image(systemName: "xmark").font(.system(size: 12, weight: .black)).foregroundStyle(Sig.muted)
                         .frame(width: 32, height: 32).background(Sig.s3, in: Circle())

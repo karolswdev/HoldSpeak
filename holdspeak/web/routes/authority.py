@@ -34,6 +34,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
             INITIAL_FAMILIES,
             POLICY_VERSION,
         )
+        from ...product_language import control_mode_label
 
         mode = Config.load().control_mode
         return JSONResponse(
@@ -41,6 +42,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
                 "version": 1,
                 "policy_version": POLICY_VERSION,
                 "control_mode": mode,
+                "control_mode_label": control_mode_label(mode),
                 "source": "config",
                 "precedence": [
                     "hard_invariants",
@@ -60,10 +62,17 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
         body = await _body(request)
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
-        requested = str(body.get("control_mode") or "").strip().lower()
-        if requested not in {"safe", "neutral", "yolo"}:
+        from ...product_language import (
+            ProductLanguageError,
+            control_mode_label,
+            control_mode_wire,
+        )
+
+        try:
+            requested = control_mode_wire(str(body.get("control_mode") or ""))
+        except ProductLanguageError:
             return JSONResponse(
-                {"error": "control_mode must be safe, neutral, or yolo"},
+                {"error": "Control mode must be Secure, Normal, or YOLO."},
                 status_code=400,
             )
         try:
@@ -85,7 +94,9 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(
                 {
                     "control_mode": requested,
+                    "control_mode_label": control_mode_label(requested),
                     "previous_control_mode": previous,
+                    "previous_control_mode_label": control_mode_label(previous),
                     "applies_to": "future_operations_only",
                     "source": "config",
                     "revoked_grants": revoked,
@@ -185,7 +196,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
             if control_mode != "yolo":
                 return JSONResponse(
                     {
-                        "error": "Reusable external-write grants require ControlMode yolo; approve this action directly"
+                        "error": "Reusable external-write grants require YOLO. Approve this exact action instead."
                     },
                     status_code=409,
                 )

@@ -109,7 +109,7 @@ def test_control_mode_cli_sets_future_policy_and_reports_precedence(
         ),
     )
     _patch_logging(monkeypatch)
-    monkeypatch.setattr("sys.argv", ["holdspeak", "control-mode", "safe"])
+    monkeypatch.setattr("sys.argv", ["holdspeak", "control-mode", "secure"])
 
     with pytest.raises(SystemExit) as exc:
         main_module.main()
@@ -117,6 +117,6 @@ def test_control_mode_cli_sets_future_policy_and_reports_precedence(
     assert exc.value.code == 0
     assert saved == ["safe"]
     output = capsys.readouterr().out
-    assert "ControlMode: safe" in output
+    assert "Control mode: Secure" in output
     assert "future operations only" in output
     assert "Hard invariants:" in output

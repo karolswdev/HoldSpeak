@@ -8,6 +8,8 @@ detected project-doc suggestions into the shared store owned by
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 from pathlib import Path
 from typing import Any, Optional
 
@@ -333,6 +335,122 @@ def build_pipeline_router(
                 status_code=400,
             )
 
+        # HS-93-05: new companion clients choose a stable id before sending.
+        # Claim it before pipeline/macro/delivery work so reconnect retries can
+        # read the original terminal response without repeating the effect.
+        delivery_id_value = payload.get("delivery_id") if isinstance(payload, dict) else None
+        delivery_id = ""
+        delivery_repo = None
+        if delivery_id_value is not None:
+            if not isinstance(delivery_id_value, str) or not delivery_id_value.strip():
+                return JSONResponse(
+                    {"error": "delivery_id must be a non-empty identifier"},
+                    status_code=400,
+                )
+            delivery_id = delivery_id_value.strip()
+            request_shape = {
+                "text": text,
+                "target": target_hints,
+                "target_mode": target_mode,
+                "raw": bool(payload.get("raw")),
+            }
+            request_hash = hashlib.sha256(
+                json.dumps(
+                    request_shape, separators=(",", ":"), sort_keys=True
+                ).encode("utf-8")
+            ).hexdigest()
+            if ctx.dictation_deliveries is not None:
+                delivery_repo = ctx.dictation_deliveries
+            else:
+                from ....db import get_database
+
+                delivery_repo = get_database().dictation_deliveries
+            try:
+                claim = delivery_repo.claim(
+                    delivery_id, request_hash=request_hash
+                )
+            except ValueError as exc:
+                return JSONResponse(
+                    {
+                        "error": str(exc),
+                        "failure_category": "delivery_conflict",
+                        "delivery_id": delivery_id,
+                    },
+                    status_code=409,
+                )
+            claim_state = claim.get("claim_state")
+            if claim_state in {"succeeded", "failed"}:
+                cached = dict(claim.get("response") or {})
+                cached["delivery_id"] = delivery_id
+                cached["deduplicated"] = True
+                return JSONResponse(
+                    cached,
+                    status_code=int(claim.get("response_status") or 200),
+                )
+            if claim_state == "pending":
+                return JSONResponse(
+                    {
+                        "error": "Delivery is still pending. The draft remains on the sending device; retry this delivery id.",
+                        "error_code": "delivery_pending",
+                        "failure_category": "delivery_conflict",
+                        "delivery_id": delivery_id,
+                    },
+                    status_code=425,
+                )
+
+        def terminal_response(
+            body: dict[str, Any], *, status_code: int = 200
+        ) -> JSONResponse:
+            response_body = dict(body)
+            if delivery_id and delivery_repo is not None:
+                response_body["delivery_id"] = delivery_id
+                response_body["deduplicated"] = False
+                try:
+                    if 200 <= status_code < 300:
+                        delivery_repo.complete(
+                            delivery_id,
+                            response_status=status_code,
+                            response=response_body,
+                        )
+                    else:
+                        delivery_repo.fail(
+                            delivery_id,
+                            response_status=status_code,
+                            response=response_body,
+                            error=str(response_body.get("error") or "delivery failed"),
+                        )
+                except Exception as exc:  # pragma: no cover - defensive persistence fault
+                    log.error(f"Remote dictation receipt persistence failed: {exc}")
+                    return JSONResponse(
+                        {
+                            "error": "Delivery outcome could not be recorded. The draft remains on the sending device.",
+                            "error_code": "delivery_pending",
+                            "failure_category": "delivery_conflict",
+                            "delivery_id": delivery_id,
+                        },
+                        status_code=425,
+                    )
+            return JSONResponse(response_body, status_code=status_code)
+
+        def uncertain_delivery(
+            body: dict[str, Any], *, legacy_status: int = 502
+        ) -> JSONResponse:
+            """Refuse to replay an effect whose hook outcome is ambiguous."""
+            if not delivery_id or delivery_repo is None:
+                return JSONResponse(body, status_code=legacy_status)
+            pending = dict(body)
+            pending.update(
+                {
+                    "error_code": "delivery_pending",
+                    "failure_category": "delivery_conflict",
+                    "delivery_id": delivery_id,
+                    "deduplicated": False,
+                }
+            )
+            # Deliberately leave the pre-effect claim in `pending`. A retry of
+            # this id reads that state and never invokes the hook again.
+            return JSONResponse(pending, status_code=425)
+
         # HSM-18-01 — verbatim delivery for a client holding a dry-run receipt.
         # A previewed `final_text` has already been through the pipeline; running
         # it again would make the receipt a lie (the rewrite is not idempotent).
@@ -349,11 +467,12 @@ def build_pipeline_router(
                     delivered = True
                 except Exception as exc:
                     log.error(f"Remote dictation delivery failed: {exc}")
-                    return JSONResponse(
+                    return uncertain_delivery(
                         {"error": f"delivery failed: {exc}", "final_text": text, "delivered": False},
-                        status_code=502,
                     )
-            return JSONResponse({"success": True, "final_text": text, "delivered": delivered})
+            return terminal_response(
+                {"success": True, "final_text": text, "delivered": delivered}
+            )
 
         # HSM-18-02 — voice command macros must fire on the remote relay too, exactly
         # as they do on the local dictation path (dictation_capture._maybe_dispatch_
@@ -380,7 +499,7 @@ def build_pipeline_router(
             log.error(f"Remote voice-command dispatch failed: {exc}")
             fired = None
         if fired is not None and fired.handled:
-            return JSONResponse(
+            return terminal_response(
                 {
                     "success": True,
                     "fired": {
@@ -433,7 +552,7 @@ def build_pipeline_router(
             )
         except Exception as exc:
             log.error(f"Remote dictation pipeline failed: {exc}")
-            return JSONResponse({"error": str(exc)}, status_code=500)
+            return terminal_response({"error": str(exc)}, status_code=500)
 
         final_text = (
             processed.get("final_text", text) if isinstance(processed, dict) else text
@@ -450,11 +569,12 @@ def build_pipeline_router(
                 delivered = True
             except Exception as exc:
                 log.error(f"Remote dictation delivery failed: {exc}")
-                return JSONResponse(
+                return uncertain_delivery(
                     {"error": f"delivery failed: {exc}", "final_text": final_text, "delivered": False},
-                    status_code=502,
                 )
-        return JSONResponse({"success": True, "final_text": final_text, "delivered": delivered})
+        return terminal_response(
+            {"success": True, "final_text": final_text, "delivered": delivered}
+        )
 
     @router.get("/api/dictation/corrections")
     async def api_dictation_corrections_list() -> Any:

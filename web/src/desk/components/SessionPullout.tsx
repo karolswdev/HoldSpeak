@@ -18,6 +18,7 @@ import {
 } from "../grounding";
 import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
+import { useDurableDraft } from "../../lib/durableDraft";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -78,7 +79,11 @@ function ArmChip() {
       <button
         type="button"
         className={"desk-chip desk-arm-chip" + (holding ? " is-holding" : "")}
-        title={stale ? "stale — arming will refuse" : `Hold to ${armCommitment.toLowerCase()}`}
+        title={
+          stale
+            ? "stale — arming will refuse"
+            : `Hold to ${armCommitment.toLowerCase()}`
+        }
         onPointerDown={() => {
           setHolding(true);
           holdTimer.current = setTimeout(() => {
@@ -377,8 +382,13 @@ function FactoryControls() {
 function SteerComposer() {
   const steerState = useSteering((s) => s.steerState);
   const steerDetail = useSteering((s) => s.steerDetail);
+  const openKey = useSteering((s) => s.openKey);
   const meetings = useDesk((s) => s.items.meeting);
-  const [text, setText] = useState("");
+  const {
+    value: text,
+    setDraft: setText,
+    recovered: textRecovered,
+  } = useDurableDraft(`steer:${openKey || "unattached"}`);
   const [submitOn, setSubmitOn] = useState(true);
   const [grounding, setGrounding] =
     useState<GroundingSelection>(emptyGrounding());
@@ -400,6 +410,7 @@ function SteerComposer() {
       <div className="desk-steer-row">
         <MicButton
           label="Hold to speak"
+          draftScope={`steer:${openKey || "unattached"}`}
           onText={(t) => setText((prev) => (prev ? `${prev} ${t}` : t))}
         />
         <textarea
@@ -426,6 +437,9 @@ function SteerComposer() {
           {steerState === "sending" ? "…" : "Send"}
         </button>
       </div>
+      {textRecovered ? (
+        <span className="quiet">Recovered local steer draft.</span>
+      ) : null}
       <GroundingSection
         meetings={(meetings || []).map((m) => ({
           id: m.id,
@@ -521,6 +535,7 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
           <>
             <MicButton
               label="Pin to story"
+              draftScope={`story-pin:${sessionKey}`}
               onText={(t) => setPinInput(t.trim())}
             />
             <input

@@ -1,5 +1,5 @@
 {
-  "registry_version": 1,
+  "registry_version": 2,
   "product": "HoldSpeak",
   "terms": {
     "desk": {
@@ -159,31 +159,183 @@
   ],
   "decision_kinds": ["review", "approval", "grant"],
   "control_modes": ["safe", "neutral", "yolo"],
+  "control_mode_labels": {
+    "safe": "Secure",
+    "neutral": "Normal",
+    "yolo": "YOLO"
+  },
+  "control_mode_descriptions": {
+    "safe": "Reviews consequential work before it runs.",
+    "neutral": "Runs routine configured work and asks at consequential boundaries.",
+    "yolo": "Runs eligible configured work without HoldSpeak approval prompts."
+  },
+  "destination_class_labels": {
+    "this_device": "This device",
+    "paired_device": "Paired device",
+    "private_endpoint": "Private endpoint",
+    "external_service": "External service"
+  },
+  "lifecycle_labels": {
+    "readiness": {
+      "unconfigured": "Not set up",
+      "configured": "Configured",
+      "ready": "Ready",
+      "unavailable": "Unavailable"
+    },
+    "availability": {
+      "offline": "Offline",
+      "connecting": "Connecting",
+      "available": "Available",
+      "degraded": "Degraded"
+    },
+    "sync": {
+      "local_only": "This device only",
+      "pending_sync": "Pending sync",
+      "synced": "Synced",
+      "sync_error": "Sync failed"
+    },
+    "work": {
+      "queued": "Queued",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "review": {
+      "unreviewed": "Needs review",
+      "accepted": "Accepted",
+      "dismissed": "Dismissed"
+    },
+    "authority": {
+      "not_requested": "No authority requested",
+      "proposed": "Needs approval",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "attention": {
+      "unseen": "New",
+      "needs_attention": "Needs attention",
+      "acknowledged": "Acknowledged",
+      "resolved": "Resolved"
+    }
+  },
   "meeting_projections": ["summary", "action_items", "transcript", "topics"],
   "guarded_terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+  "copy_contract": {
+    "version": 1,
+    "classifications": [
+      "label",
+      "state",
+      "supporting_line",
+      "detail",
+      "error_recovery",
+      "marketing_sdk_exception"
+    ],
+    "generic_consequential_verbs": ["Approve", "Apply", "Open", "Run"],
+    "prohibited_operational_patterns": [
+      {
+        "id": "legacy-product-nouns",
+        "pattern": "\\b(?:Agent Desk|Agents?|Profiles?|Recipes?|Chains?|Knowledge Base)\\b",
+        "reason": "Primary UI uses Coder session, Runs on, Persona, Sequence, and Knowledge."
+      },
+      {
+        "id": "raw-control-mode-labels",
+        "pattern": "\\b(?-i:ControlMode|Safe|Neutral)\\b",
+        "reason": "Product UI renders Control mode with Secure, Normal, and YOLO labels."
+      },
+      {
+        "id": "unqualified-state",
+        "pattern": "^(?:pending|local|complete)$",
+        "reason": "State and boundary copy must name its axis."
+      },
+      {
+        "id": "promotional-narration",
+        "pattern": "\\b(?:magical|revolutionary|powerful|beautiful|cinematic|quest-like|congratulations?|powerhouse|superpower)\\b|(?:comes alive|ready when you are|say hi to|something went wrong|you're all set|we've got this|living conversation|the desk remembers)",
+        "reason": "Operational copy stays factual and task-first."
+      },
+      {
+        "id": "paired-as-local",
+        "pattern": "(?:paired|mesh|desktop).{0,32}(?:local|on-device)|(?:local|on-device).{0,32}(?:paired|mesh|desktop)",
+        "reason": "Paired work crosses a device boundary and must name it."
+      }
+    ],
+    "failure_requirements": [
+      "failed_operation",
+      "retained_work",
+      "next_action",
+      "destination_when_relevant"
+    ],
+    "primary_surfaces": {
+      "web": [
+        "web/src/**/*.tsx",
+        "web/src/lib/productLanguage.ts"
+      ],
+      "swift": [
+        "apple/App/**/*.swift",
+        "apple/Sources/Contracts/{ProductLanguage,EgressScope}.swift"
+      ],
+      "cli_and_guides": [
+        "holdspeak/main.py",
+        "README.md",
+        "docs/{README,AUTHORITY,SECURITY,MODELS,USER_GUIDE,WEB_DESK,DICTATION_COPILOT,DICTATION_PIPELINE_GUIDE,MEETING_MODE_GUIDE}.md",
+        "uat/scenarios/phase-92-{web,native}/07-decision-authority.yaml"
+      ]
+    },
+    "exceptions": [
+      {
+        "id": "swift-artifact-open-v1",
+        "path": "apple/App/MeetingCapture/ReviewUI.swift",
+        "literals": ["Open"],
+        "reason": "Open reveals read-only Artifact detail and has no external, destructive, queued, or authority-changing effect."
+      },
+      {
+        "id": "swift-desk-open-v1",
+        "path": "apple/App/MeetingCapture/DeskDioramaStage.swift",
+        "literals": ["Open"],
+        "reason": "Open reveals the selected Desk item's local inspector and does not execute or queue an effect."
+      }
+    ]
+  },
   "compatibility_exceptions": [
     {
-      "path": "holdspeak/db/**",
+      "id": "python-persistence-wire-v2",
+      "registry_version": 2,
+      "kind": "wire",
+      "path": "holdspeak/db/{models,core,actuators}.py",
       "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
       "reason": "Persistence model and legacy wire names remain stable during the additive language migration."
     },
     {
-      "path": "holdspeak/web/routes/**",
+      "id": "python-http-wire-v2",
+      "registry_version": 2,
+      "kind": "wire",
+      "path": "holdspeak/web/routes/{authority,actuator_shared,mesh,primitives/*.py}",
       "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
       "reason": "Public API compatibility and qualified architectural identifiers retain their existing wire names."
     },
     {
+      "id": "web-desk-adapter-v2",
+      "registry_version": 2,
+      "kind": "migration",
       "path": "web/src/desk/api.ts",
       "terms": ["Profile", "Agent"],
       "reason": "The API adapter consumes legacy recipe/profile wires but emits canonical product labels."
     },
     {
-      "path": "apple/Sources/Contracts/**",
+      "id": "swift-contract-wire-v2",
+      "registry_version": 2,
+      "kind": "wire",
+      "path": "apple/Sources/Contracts/{Models,Primitives,ProductLanguage,InferenceTarget}.swift",
       "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
       "reason": "Codable compatibility types preserve public wire identifiers."
     },
     {
-      "path": "apple/Sources/RuntimeCore/**",
+      "id": "swift-runtime-types-v2",
+      "registry_version": 2,
+      "kind": "sdk",
+      "path": "apple/Sources/RuntimeCore/{Companion/*.swift,Desk/ContextEnvelope.swift}",
       "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
       "reason": "Qualified implementation types remain internal and are not product labels."
     }

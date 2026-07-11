@@ -4,9 +4,11 @@
 // desk; Escape / click-elsewhere closes.
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
+import { Link } from "react-router-dom";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
 import { apiRequest } from "../../lib/api";
+import { useDurableDraft } from "../../lib/durableDraft";
 import { useDesk } from "../store";
 import { parseLinearGraph, stepLabel } from "../graph";
 import { MicButton } from "./MicButton";
@@ -15,6 +17,11 @@ import { useSteering } from "../steering";
 import { objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
+import { workroomHref } from "../../workrooms/context";
+import {
+  contextualCapabilityActions,
+  contextualCoderSessions,
+} from "../contextual";
 
 const FILABLE = new Set([
   "meeting",
@@ -36,10 +43,22 @@ interface MeetingDetail {
   [key: string]: unknown;
 }
 
+function intelligenceState(value: string): string {
+  const labels: Record<string, string> = {
+    pending: "queued",
+    complete: "succeeded",
+    partial: "incomplete",
+    failed: "failed",
+    running: "running",
+  };
+  return labels[value] || value.replace(/_/g, " ");
+}
+
 export function Pullout({ o }: { o: WorldObject }) {
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
   const inferenceTargets = useDesk((s) => s.inferenceTargets);
+  const selectedIds = useDesk((s) => s.selectedIds);
   const backId = useDesk((s) => s.pulloutBackId);
   const {
     closePullout,
@@ -49,11 +68,12 @@ export function Pullout({ o }: { o: WorldObject }) {
     removeFromDir,
     answerCoder,
     speakToCoder,
+    openChat,
+    openToolInspector,
   } = useDesk.getState();
   const ref = useRef<HTMLDivElement | null>(null);
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [artifacts, setArtifacts] = useState<any[]>([]);
-  const [runInput, setRunInput] = useState("");
   const [runBusy, setRunBusy] = useState(false);
   const [runOut, setRunOut] = useState("");
   const [runWarning, setRunWarning] = useState("");
@@ -63,7 +83,10 @@ export function Pullout({ o }: { o: WorldObject }) {
   const [runTargetId, setRunTargetId] = useState(
     String((o.ref as any).profileId || "this_machine"),
   );
-  const [actualPlacement, setActualPlacement] = useState<Record<string, unknown> | null>(null);
+  const [actualPlacement, setActualPlacement] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const [filing, setFiling] = useState(false);
   const [relationships, setRelationships] = useState<any>(null);
   const [knowledgeChoices, setKnowledgeChoices] = useState<any[]>([]);
@@ -72,6 +95,27 @@ export function Pullout({ o }: { o: WorldObject }) {
   const [answered, setAnswered] = useState<
     "selected" | "sent" | "failed" | null
   >(null);
+  const contextualAction = contextualCapabilityActions(items, selectedIds).find(
+    (action) => action.id === o.id && action.kind === o.kind,
+  );
+  const contextualCoderAction = contextualCoderSessions(
+    items,
+    selectedIds,
+  ).find((action) => action.id === o.id);
+  const {
+    value: runInput,
+    setDraft: setRunInput,
+    recovered: runInputRecovered,
+  } = useDurableDraft(
+    `capability:${o.kind}:${o.id}`,
+    contextualAction?.input || "",
+  );
+  const coderSessionId = String((o.ref as any).sessionId || o.id);
+  const {
+    value: coderDraft,
+    setDraft: setCoderDraft,
+    recovered: coderDraftRecovered,
+  } = useDurableDraft(`coder-reply:${coderSessionId}`);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -107,7 +151,9 @@ export function Pullout({ o }: { o: WorldObject }) {
     if (!FILABLE.has(o.kind)) return;
     try {
       const [axesRes, knowledgeRes, projectRes] = await Promise.all([
-        apiRequest(`/api/desk/relationships/${encodeURIComponent(resourceRef)}`),
+        apiRequest(
+          `/api/desk/relationships/${encodeURIComponent(resourceRef)}`,
+        ),
         apiRequest("/api/kbs"),
         apiRequest("/api/projects"),
       ]);
@@ -118,7 +164,9 @@ export function Pullout({ o }: { o: WorldObject }) {
       ]);
       setRelationships(axes);
       setKnowledgeChoices((knowledge.kbs || []).filter((k: any) => !k.deleted));
-      setProjectChoices((projects.projects || []).filter((p: any) => !p.is_archived));
+      setProjectChoices(
+        (projects.projects || []).filter((p: any) => !p.is_archived),
+      );
       setRelationshipError("");
     } catch (error) {
       setRelationshipError(String(error));
@@ -186,17 +234,30 @@ export function Pullout({ o }: { o: WorldObject }) {
 
   const ir = o.ref as any;
   const capability = ir.capability || {};
-  const readiness = capability.readiness || { state: "ready", detail: "" };
-  const selectedTarget = inferenceTargets.find((target) => target.id === runTargetId)
-    || inferenceTargets[0];
-  const runLabel = capability.action_label ||
+  const readiness = capability.readiness || {
+    state: "unavailable",
+    detail: "Capability contract unavailable.",
+  };
+  const capabilityCanRun =
+    readiness.state === "ready" &&
+    capability.input_schema?.required?.includes("input") &&
+    capability.effect_classes?.includes("creates_artifact");
+  const selectedTarget =
+    inferenceTargets.find((target) => target.id === runTargetId) ||
+    inferenceTargets[0];
+  const runLabel =
+    contextualAction?.label ||
+    capability.action_label ||
     (o.kind === "recipe" ? `Ask ${o.title}` : `Run ${o.title}`);
+  const coderWaiting =
+    o.kind === "coder" &&
+    (String(ir.state || "") === "waiting" || Boolean(ir.question));
   const zones = items.directory || [];
   const lin = lineage(items, ir.sources);
   const profile = profiles.find((p) => p.id === ir.profileId);
   const egress = profile
     ? (profile.kind || "onDevice") === "onDevice"
-      ? { scope: "local", text: "⌂ On device" }
+      ? { scope: "local", text: "⌂ This device" }
       : {
           scope: "cloud",
           text: `☁ ${
@@ -249,17 +310,26 @@ export function Pullout({ o }: { o: WorldObject }) {
           </span>
         )}
         {o.kind === "meeting" && (
-          <a
+          <Link
             className="desk-chip quiet"
-            href={`/history?meeting=${encodeURIComponent(o.id)}`}
+            to={workroomHref("/history", {
+              action: "review-meeting",
+              subjectRef: resourceRef,
+            })}
           >
-            Open full
-          </a>
+            Review meeting
+          </Link>
         )}
         {o.kind === "workflow" && (
-          <a className="desk-chip quiet" href="/workbench">
-            Open full
-          </a>
+          <Link
+            className="desk-chip quiet"
+            to={workroomHref("/workbench", {
+              action: "edit-workflow",
+              subjectRef: resourceRef,
+            })}
+          >
+            Edit Workflow
+          </Link>
         )}
         <button
           type="button"
@@ -294,8 +364,8 @@ export function Pullout({ o }: { o: WorldObject }) {
                 <h3>Intelligence</h3>
                 <p className="quiet">
                   {detail?.intel_status?.state
-                    ? `Intelligence ${detail.intel_status.state}`
-                    : "Intelligence pending"}
+                    ? `Intelligence ${intelligenceState(detail.intel_status.state)}`
+                    : "Intelligence queued"}
                 </p>
               </section>
             )}
@@ -376,6 +446,13 @@ export function Pullout({ o }: { o: WorldObject }) {
             <pre className="desk-pullout-md">
               {String(ir.systemPrompt || "")}
             </pre>
+            <button
+              type="button"
+              className="desk-chip"
+              onClick={() => openChat(o.id)}
+            >
+              Chat with {o.title}
+            </button>
           </section>
         )}
 
@@ -407,38 +484,95 @@ export function Pullout({ o }: { o: WorldObject }) {
               <pre className="desk-pullout-md">{String(ir.question)}</pre>
             ) : null}
             <div className="desk-coder-answer">
-              <MicButton
-                label="Hold to answer"
-                onText={(t) => {
-                  setAnswered(null);
-                  void speakToCoder(
-                    String(ir.agent || "claude"),
-                    String(ir.sessionId || o.id),
-                    t,
-                  ).then((ok) => setAnswered(ok ? "sent" : "failed"));
-                }}
-              />
-              <span className="quiet desk-coder-answer-state">
-                {answered === "sent"
-                  ? "Sent"
-                  : answered === "failed"
-                    ? "Retry"
-                    : "Hold to answer"}
-              </span>
-              <button
-                type="button"
-                className="desk-chip quiet"
-                onClick={() => {
-                  void answerCoder(
-                    String(ir.agent || "claude"),
-                    String(ir.sessionId || o.id),
-                  ).then((ok) => setAnswered(ok ? "selected" : "failed"));
-                }}
-              >
-                {answered === "selected"
-                  ? "Dictation target"
-                  : "Use the hotkey"}
-              </button>
+              {coderWaiting ? (
+                <>
+                  {contextualCoderAction ? (
+                    <div className="desk-coder-context">
+                      <strong>
+                        Selected source · {contextualCoderAction.source.title}
+                      </strong>
+                      <pre>{contextualCoderAction.source.text}</pre>
+                      <button
+                        type="button"
+                        className="desk-chip"
+                        onClick={() => {
+                          setAnswered(null);
+                          void speakToCoder(
+                            String(ir.agent || "claude"),
+                            String(ir.sessionId || o.id),
+                            contextualCoderAction.source.text,
+                          ).then((ok) => setAnswered(ok ? "sent" : "failed"));
+                        }}
+                      >
+                        {answered === "sent"
+                          ? `Sent ${contextualCoderAction.source.title}`
+                          : answered === "failed"
+                            ? `Retry sending ${contextualCoderAction.source.title}`
+                            : contextualCoderAction.label}
+                      </button>
+                    </div>
+                  ) : null}
+                  <MicButton
+                    label="Hold to answer"
+                    draftScope={`coder-reply:${coderSessionId}`}
+                    onText={(t) =>
+                      setCoderDraft((current) =>
+                        current ? `${current} ${t}` : t,
+                      )
+                    }
+                  />
+                  <textarea
+                    className="desk-coder-draft-input"
+                    aria-label="Coder reply draft"
+                    value={coderDraft}
+                    placeholder="Reply"
+                    rows={3}
+                    onChange={(event) => setCoderDraft(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="desk-chip"
+                    disabled={!coderDraft.trim()}
+                    onClick={() => {
+                      setAnswered(null);
+                      const retained = coderDraft.trim();
+                      void speakToCoder(
+                        String(ir.agent || "claude"),
+                        coderSessionId,
+                        retained,
+                      ).then((ok) => {
+                        setAnswered(ok ? "sent" : "failed");
+                        if (ok) setCoderDraft("");
+                      });
+                    }}
+                  >
+                    {answered === "failed" ? "Retry reply" : "Send reply"}
+                  </button>
+                  <span className="quiet desk-coder-answer-state" role="status">
+                    {answered === "sent"
+                      ? "Sent"
+                      : answered === "failed"
+                        ? "Delivery failed. Your reply remains editable."
+                        : coderDraftRecovered
+                          ? "Recovered local reply draft."
+                          : "Hold to fill or type a reply."}
+                  </span>
+                  <button
+                    type="button"
+                    className="desk-chip quiet"
+                    onClick={() => {
+                      void answerCoder(
+                        String(ir.agent || "claude"),
+                        String(ir.sessionId || o.id),
+                      ).then((ok) => setAnswered(ok ? "selected" : "failed"));
+                    }}
+                  >
+                    {answered === "selected"
+                      ? "Dictation target"
+                      : "Use the hotkey"}
+                  </button>
+                </>
+              ) : null}
               <button
                 type="button"
                 className="desk-chip quiet"
@@ -460,21 +594,56 @@ export function Pullout({ o }: { o: WorldObject }) {
         {["recipe", "chain", "workflow"].includes(o.kind) && (
           <section>
             <div className="desk-capability-contract">
-              <strong>{o.kind === "recipe" ? "Persona" : o.kind === "chain" ? "Sequence" : "Workflow"}</strong>
+              <strong>
+                {o.kind === "recipe"
+                  ? "Persona"
+                  : o.kind === "chain"
+                    ? "Sequence"
+                    : "Workflow"}
+              </strong>
               <span className={`desk-chip quiet is-${readiness.state}`}>
                 {readiness.state === "ready" ? "Ready" : "Unavailable here"}
               </span>
-              <p className="quiet">{capability.input_help || "Choose the material this capability should work on."}</p>
-              {readiness.detail && <p className="desk-run-warning">{readiness.detail}</p>}
               <p className="quiet">
-                Runs on {(capability.supported_placements || ["this_machine"]).join(" · ")}
-                {capability.effect_classes?.length ? ` · ${capability.effect_classes.join(" · ")}` : ""}
+                {capability.input_help ||
+                  "Choose the material this capability should work on."}
               </p>
-              {o.kind === "chain" && <p className="quiet">Sequence is the linear compatibility form.</p>}
+              {readiness.detail && (
+                <p className="desk-run-warning">{readiness.detail}</p>
+              )}
+              <p className="quiet">
+                Runs on{" "}
+                {(capability.supported_placements || ["this_machine"]).join(
+                  " · ",
+                )}
+                {capability.effect_classes?.length
+                  ? ` · ${capability.effect_classes.join(" · ")}`
+                  : ""}
+              </p>
+              <Link
+                className="desk-chip quiet"
+                to={workroomHref("/profiles", {
+                  action: "configure-runs-on",
+                  subjectRef: resourceRef,
+                })}
+              >
+                Configure Runs on
+              </Link>
+              {o.kind === "chain" && (
+                <p className="quiet">
+                  Sequence is the linear compatibility form.
+                </p>
+              )}
               {o.kind === "workflow" && (
-                <a className="desk-chip quiet" href={`/workbench?workflow=${encodeURIComponent(o.id)}`}>
-                  Open this Workflow in Workbench
-                </a>
+                <Link
+                  className="desk-chip quiet"
+                  to={workroomHref("/workbench", {
+                    action: "edit-workflow",
+                    subjectRef: resourceRef,
+                  })}
+                >
+                  Edit this Workflow
+                </Link>
               )}
             </div>
             <div className="desk-pullout-run">
@@ -484,35 +653,73 @@ export function Pullout({ o }: { o: WorldObject }) {
                 onChange={setRunTargetId}
                 disabled={runBusy}
               />
+              <MicButton
+                label={`Hold to fill ${runLabel.toLowerCase()} material`}
+                draftScope={`capability:${o.kind}:${o.id}`}
+                onText={(text) =>
+                  setRunInput((current) =>
+                    current ? `${current} ${text}` : text,
+                  )
+                }
+              />
               <input
                 value={runInput}
                 placeholder="Material"
                 aria-label="Run material"
                 onChange={(e) => setRunInput(e.target.value)}
               />
+              {runInputRecovered ? (
+                <span className="quiet">Recovered local run material.</span>
+              ) : null}
               <button
                 type="button"
                 className="desk-chip"
                 onClick={() => void run()}
-                disabled={runBusy || readiness.state !== "ready" || !selectedTarget?.readiness.available}
+                disabled={
+                  runBusy ||
+                  !capabilityCanRun ||
+                  !runInput.trim() ||
+                  !selectedTarget?.readiness.available
+                }
               >
-                {runBusy ? "Running…" : runState === "failed" || runState === "empty" ? `Retry ${runLabel}` : runLabel}
+                {runBusy
+                  ? "Running…"
+                  : runState === "failed" || runState === "empty"
+                    ? `Retry ${runLabel}`
+                    : runLabel}
               </button>
             </div>
             {runWarning && <p className="desk-run-warning">⚠ {runWarning}</p>}
             {runOut && <pre className="desk-pullout-md">{runOut}</pre>}
             {runArtifactId && (
-              <button type="button" className="desk-chip" onClick={() => openPullout(runArtifactId)}>
+              <button
+                type="button"
+                className="desk-chip"
+                onClick={() => openPullout(runArtifactId)}
+              >
                 Open kept Artifact
               </button>
             )}
             {runInvocationId && (
               <p className="quiet desk-run-receipt">
-                Receipt · {String(actualPlacement?.target_name || actualPlacement?.target_id || runTargetId)}
-                {actualPlacement?.engine ? ` · ${String(actualPlacement.engine)}` : ""}
-                {actualPlacement?.model ? ` · ${String(actualPlacement.model)}` : ""}
-                {actualPlacement?.boundary ? ` · ${String(actualPlacement.boundary)}` : ""}
-                {actualPlacement?.fallback_reason ? ` · fallback: ${String(actualPlacement.fallback_reason)}` : ""}
+                Receipt ·{" "}
+                {String(
+                  actualPlacement?.target_name ||
+                    actualPlacement?.target_id ||
+                    runTargetId,
+                )}
+                {actualPlacement?.engine
+                  ? ` · ${String(actualPlacement.engine)}`
+                  : ""}
+                {actualPlacement?.model
+                  ? ` · ${String(actualPlacement.model)}`
+                  : ""}
+                {actualPlacement?.boundary
+                  ? ` · ${String(actualPlacement.boundary)}`
+                  : ""}
+                {actualPlacement?.fallback_reason
+                  ? ` · fallback: ${String(actualPlacement.fallback_reason)}`
+                  : ""}
                 {` · ${runInvocationId}`}
               </p>
             )}
@@ -520,10 +727,17 @@ export function Pullout({ o }: { o: WorldObject }) {
         )}
 
         {FILABLE.has(o.kind) && relationships && (
-          <section className="desk-relationship-axes" aria-label="Organization and context">
+          <section
+            className="desk-relationship-axes"
+            aria-label="Organization and context"
+          >
             <h3>Where it belongs</h3>
             <p className="quiet">{relationships.explanations?.zone}</p>
-            <p>{relationships.zone ? `Zone: ${relationships.zone.directory_id}` : "Desk root"}</p>
+            <p>
+              {relationships.zone
+                ? `Zone: ${relationships.zone.directory_id}`
+                : "Desk root"}
+            </p>
 
             <h3>Knowledge</h3>
             <p className="quiet">{relationships.explanations?.knowledge}</p>
@@ -538,13 +752,18 @@ export function Pullout({ o }: { o: WorldObject }) {
                     type="button"
                     className={`desk-chip quiet${active ? " in-zone" : ""}`}
                     aria-pressed={active}
-                    onClick={() => void toggleRelationship("knowledge", knowledge.id, active)}
+                    onClick={() =>
+                      void toggleRelationship("knowledge", knowledge.id, active)
+                    }
                   >
-                    {active ? "✓ " : "+ "}{knowledge.name}
+                    {active ? "✓ " : "+ "}
+                    {knowledge.name}
                   </button>
                 );
               })}
-              {!knowledgeChoices.length && <span className="quiet">No Knowledge yet</span>}
+              {!knowledgeChoices.length && (
+                <span className="quiet">No Knowledge yet</span>
+              )}
             </div>
 
             <h3>Projects</h3>
@@ -555,25 +774,68 @@ export function Pullout({ o }: { o: WorldObject }) {
                   (row: any) => row.project_id === project.id,
                 );
                 return (
-                  <button
-                    key={project.id}
-                    type="button"
-                    className={`desk-chip quiet${active ? " in-zone" : ""}`}
-                    aria-pressed={active}
-                    onClick={() => void toggleRelationship("projects", project.id, active)}
-                  >
-                    {active ? "✓ " : "+ "}{project.name}
-                  </button>
+                  <span className="desk-project-choice" key={project.id}>
+                    <button
+                      type="button"
+                      className={`desk-chip quiet${active ? " in-zone" : ""}`}
+                      aria-label={`${active ? "Remove from" : "Assign to"} ${project.name} Project`}
+                      aria-pressed={active}
+                      onClick={() =>
+                        void toggleRelationship("projects", project.id, active)
+                      }
+                    >
+                      {active ? "✓ " : "+ "}
+                      {project.name}
+                    </button>
+                    <button
+                      type="button"
+                      className="desk-chip quiet"
+                      aria-label={`Inspect ${project.name} Project`}
+                      onClick={() =>
+                        openToolInspector("project", String(project.id))
+                      }
+                    >
+                      Inspect
+                    </button>
+                  </span>
                 );
               })}
-              {!projectChoices.length && <span className="quiet">No Projects yet</span>}
+              {!projectChoices.length && (
+                <span className="quiet">No Projects yet</span>
+              )}
             </div>
           </section>
         )}
-        {relationshipError && <p className="desk-run-warning" role="alert">{relationshipError}</p>}
+        {relationshipError && (
+          <p className="desk-run-warning" role="alert">
+            {relationshipError}
+          </p>
+        )}
       </div>
 
       <footer className="desk-pullout-foot">
+        {FILABLE.has(o.kind) && (
+          <Link
+            className="desk-chip quiet"
+            to={workroomHref("/dictation", {
+              action: "dictate-about-subject",
+              subjectRef: resourceRef,
+            })}
+          >
+            Dictate about this
+          </Link>
+        )}
+        {o.kind === "meeting" && (
+          <Link
+            className="desk-chip quiet"
+            to={workroomHref("/live", {
+              action: "record-follow-up",
+              subjectRef: resourceRef,
+            })}
+          >
+            Record follow-up
+          </Link>
+        )}
         {EDITABLE.has(o.kind) && (
           <button
             type="button"
@@ -595,7 +857,8 @@ export function Pullout({ o }: { o: WorldObject }) {
             {filing &&
               zones.map((z) => {
                 const members = ((z as any).memberIds as string[]) || [];
-                const inZone = members.includes(o.id) || members.includes(resourceRef);
+                const inZone =
+                  members.includes(o.id) || members.includes(resourceRef);
                 return (
                   <button
                     key={String(z.id)}

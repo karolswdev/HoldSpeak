@@ -30,6 +30,7 @@ import { GroundingSection } from "./GroundingSection";
 import { RailsPicker } from "./RailsPicker";
 import { MicButton } from "./MicButton";
 import { apiRequest } from "../../lib/api";
+import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
 
@@ -40,7 +41,11 @@ export function AskPanel() {
   const { closeAsk, clearSelection, refresh, markNew } = useDesk.getState();
 
   const [lens, setLens] = useState(ASK_LENSES[0].name);
-  const [prompt, setPrompt] = useState(ASK_LENSES[0].instruction);
+  const {
+    value: prompt,
+    setDraft: setPrompt,
+    recovered: promptRecovered,
+  } = useDurableDraft("desk-ask", ASK_LENSES[0].instruction);
   const [profileId, setProfileId] = useState("this_machine");
   const [phase, setPhase] = useState<"compose" | "routing" | "printed">(
     "compose",
@@ -51,7 +56,9 @@ export function AskPanel() {
   const [grounding, setGrounding] =
     useState<GroundingSelection>(emptyGrounding());
   const [rails, setRails] = useState<RailsPick[]>([]);
-  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>(
+    [],
+  );
   const ref = useRef<HTMLDivElement | null>(null);
 
   const context = useMemo(
@@ -59,16 +66,44 @@ export function AskPanel() {
     [items, selectedIds],
   );
   useEffect(() => {
-    apiRequest("/api/projects").then((response) => response.json())
-      .then((body) => setProjects((body.projects || []).filter((project: any) => !project.is_archived)))
+    apiRequest("/api/projects")
+      .then((response) => response.json())
+      .then((body) =>
+        setProjects(
+          (body.projects || []).filter((project: any) => !project.is_archived),
+        ),
+      )
       .catch(() => setProjects([]));
   }, []);
-  const groundableResources = useMemo(() => [
-    ...(items.note || []).map((item) => ({ ref: qualifiedRef("note", item.id), kind: "Note", id: item.id, title: String(item.title || item.id) })),
-    ...(items.kb || []).map((item) => ({ ref: qualifiedRef("kb", item.id), kind: "Knowledge", id: item.id, title: String(item.name || item.id) })),
-    ...(items.directory || []).map((item) => ({ ref: qualifiedRef("directory", item.id), kind: "Zone", id: item.id, title: String(item.name || item.id) })),
-    ...projects.map((project) => ({ ref: `project:${project.id}`, kind: "Project", id: project.id, title: project.name || project.id })),
-  ], [items, projects]);
+  const groundableResources = useMemo(
+    () => [
+      ...(items.note || []).map((item) => ({
+        ref: qualifiedRef("note", item.id),
+        kind: "Note",
+        id: item.id,
+        title: String(item.title || item.id),
+      })),
+      ...(items.kb || []).map((item) => ({
+        ref: qualifiedRef("kb", item.id),
+        kind: "Knowledge",
+        id: item.id,
+        title: String(item.name || item.id),
+      })),
+      ...(items.directory || []).map((item) => ({
+        ref: qualifiedRef("directory", item.id),
+        kind: "Zone",
+        id: item.id,
+        title: String(item.name || item.id),
+      })),
+      ...projects.map((project) => ({
+        ref: `project:${project.id}`,
+        kind: "Project",
+        id: project.id,
+        title: project.name || project.id,
+      })),
+    ],
+    [items, projects],
+  );
   // The context is pinned at print time so keep records what was actually read
   // even if the selection changes underneath. Grounding rows join it at print
   // time (the receipts rule): the kept ask names what grounded the answer.
@@ -77,7 +112,9 @@ export function AskPanel() {
   // The gauge's budget comes from the same destination view model as the picker.
   const limitTokens = useMemo(() => {
     const target = inferenceTargets.find((x) => x.id === profileId);
-    return Number(target?.context_limit) > 0 ? Number(target?.context_limit) : 16_384;
+    return Number(target?.context_limit) > 0
+      ? Number(target?.context_limit)
+      : 16_384;
   }, [profileId, inferenceTargets]);
   const groundTokens = groundingTokens(grounding) + railsTokens(rails);
   const overBudget = groundTokens > limitTokens;
@@ -145,7 +182,9 @@ export function AskPanel() {
       markNew(artifactId);
     } else {
       setKept(false);
-      setError("Keep failed — the hub did not store it.");
+      setError(
+        "Artifact was not saved. The Result remains open. Retry Keep as Artifact.",
+      );
     }
   };
 
@@ -158,16 +197,18 @@ export function AskPanel() {
     ? result.egress.scope === "local"
       ? {
           scope: "local",
-          text: result.model ? `⌂ ${result.model}` : "⌂ On this machine",
+          text: result.model
+            ? `⌂ This device · ${result.model}`
+            : "⌂ This device",
         }
       : result.egress.scope === "mesh"
         ? {
             scope: "mesh",
-            text: `⇄ ${["mesh", result.egress.host, result.model].filter(Boolean).join(" · ")}`,
+            text: `⇄ ${["Paired", result.egress.host, result.model].filter(Boolean).join(" · ")}`,
           }
         : {
             scope: "cloud",
-            text: `☁ ${[result.model, result.egress.host].filter(Boolean).join(" · ")}`,
+            text: `→ ${["Leaves device", result.egress.host, result.model].filter(Boolean).join(" · ")}`,
           }
     : null;
 
@@ -249,9 +290,13 @@ export function AskPanel() {
                 onChange={(e) => setPrompt(e.target.value)}
               />
               <MicButton
+                draftScope="desk-ask"
                 onText={(t) => setPrompt((v) => (v ? v + " " + t : t))}
               />
             </div>
+            {promptRecovered ? (
+              <span className="quiet">Recovered local Ask draft.</span>
+            ) : null}
             <RunsOnPicker
               targets={inferenceTargets}
               selectedId={profileId}
@@ -283,12 +328,23 @@ export function AskPanel() {
             <pre className="desk-pullout-md">{result.output}</pre>
             {result.actualPlacement && (
               <p className="quiet desk-run-receipt">
-                Ran on {String(result.actualPlacement.target_name || result.actualPlacement.target_id)}
-                {result.actualPlacement.engine ? ` · ${String(result.actualPlacement.engine)}` : ""}
-                {result.actualPlacement.model ? ` · ${String(result.actualPlacement.model)}` : ""}
-                {result.actualPlacement.boundary ? ` · ${String(result.actualPlacement.boundary)}` : ""}
+                Ran on{" "}
+                {String(
+                  result.actualPlacement.target_name ||
+                    result.actualPlacement.target_id,
+                )}
+                {result.actualPlacement.engine
+                  ? ` · ${String(result.actualPlacement.engine)}`
+                  : ""}
+                {result.actualPlacement.model
+                  ? ` · ${String(result.actualPlacement.model)}`
+                  : ""}
+                {result.actualPlacement.boundary
+                  ? ` · ${String(result.actualPlacement.boundary)}`
+                  : ""}
                 {result.actualPlacement.fallback_reason
-                  ? ` · fallback: ${String(result.actualPlacement.fallback_reason)}` : ""}
+                  ? ` · fallback: ${String(result.actualPlacement.fallback_reason)}`
+                  : ""}
               </p>
             )}
           </div>

@@ -327,7 +327,7 @@ struct ConnectorPrimitive: DeskPrimitive {
         [PrimitiveAction(label: configured ? "Your desktop ·\(detail)" : (paired ? "Set up on your desktop" : "Pair your desktop"),
                          icon: "desktopcomputer", role: .custom("connect"))]
     }
-    var accepts: [PrimitiveKind] { configured ? [.artifact, .summary, .actions, .topics, .meeting] : [] }
+    var accepts: [PrimitiveKind] { configured ? [.artifact, .summary, .actions, .topics, .meeting, .note] : [] }
     // A connector's whole purpose is egress: the send leaves via the paired desktop to the
     // named target. It must never wear the local badge (HSM-21-01).
     var egress: EgressScope { .cloud(name.lowercased()) }
@@ -359,6 +359,13 @@ struct WorkflowPrimitive: DeskPrimitive {
             "Effect · creates Artifact", rec.contract.graphJson == nil ? "Ready · prompt Workflow" : "Readiness · checked by host",
         ])))
         return rows
+    }
+    var actions: [PrimitiveAction] {
+        [PrimitiveAction(
+            label: "Edit Workflow",
+            icon: "point.3.connected.trianglepath.dotted",
+            role: .custom("workbench")
+        )]
     }
     var accepts: [PrimitiveKind] { [.meeting, .summary, .actions, .topics, .artifact] }
 }

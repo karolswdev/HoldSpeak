@@ -34,16 +34,16 @@ const stamp = new Date()
   .slice(0, 19);
 const outDir = process.env.SHOTS_DIR || resolve(webRoot, ".shots", stamp);
 
-// name, path (relative to BASE), width, height, fullPage
+// name, canonical BrowserRouter path, width, height, fullPage
 const ROUTES = [
   ["runtime", "/", 1440, 900, true],
-  ["dictation", "/dictation/", 1440, 1100, true],
-  ["history", "/history/", 1440, 1100, true],
-  ["activity", "/activity/", 1440, 1100, true],
-  ["companion", "/companion/", 1440, 1000, true],
-  ["components", "/design/components/", 1440, 1200, true],
-  ["settings", "/settings/", 1440, 1100, true],
-  ["setup", "/setup/", 1440, 1100, true],
+  ["dictation", "/dictation", 1440, 1100, true],
+  ["history", "/history", 1440, 1100, true],
+  ["activity", "/activity", 1440, 1100, true],
+  ["companion", "/companion", 1440, 1000, true],
+  ["components", "/design/components", 1440, 1200, true],
+  ["settings", "/settings", 1440, 1100, true],
+  ["setup", "/setup", 1440, 1100, true],
   ["runtime-mobile", "/", 560, 1000, false],
 ];
 
@@ -84,15 +84,39 @@ async function main() {
 
     for (const [name, path, w, h, fullPage] of ROUTES) {
       await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
-      const url = `${ORIGIN}${BASE}${path}`;
+      const url = `${ORIGIN}${BASE}/`;
       try {
         await page.goto(url, { waitUntil: "networkidle2", timeout: 25000 });
+        // Vite's preview base is an asset path, while the production BrowserRouter
+        // owns canonical root routes such as /dictation. Move through browser
+        // history after boot so a route capture cannot silently become the Desk.
+        if (path !== "/") {
+          await page.evaluate((route) => {
+            window.history.replaceState({}, "", route);
+            window.dispatchEvent(new PopStateEvent("popstate"));
+          }, path);
+        }
         await sleep(1200); // let React lazy routes and webfonts settle
         await page.screenshot({
           path: resolve(outDir, `${name}.png`),
           fullPage,
         });
         console.log(`  ✓ ${name.padEnd(18)} ${path}`);
+        if (name === "runtime" || name === "runtime-mobile") {
+          await page.click(".desk-create-button");
+          await sleep(180);
+          await page.screenshot({
+            path: resolve(outDir, `${name}-create.png`),
+            fullPage,
+          });
+          await page.keyboard.press("Escape");
+          await page.click(".desk-tools-launch");
+          await sleep(180);
+          await page.screenshot({
+            path: resolve(outDir, `${name}-tools.png`),
+            fullPage,
+          });
+        }
       } catch (e) {
         console.log(`  ✗ ${name.padEnd(18)} ${path} — ${e.message}`);
       }

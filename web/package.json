@@ -9,9 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "shots": "vite build && node scripts/shoot.mjs",
-    "test:desk": "vitest run src/desk",
+    "test:desk": "vitest run src/desk --maxWorkers=2",
     "typecheck": "tsc --noEmit",
-    "test:web": "vitest run",
+    "test:web": "vitest run --maxWorkers=2",
     "guard:architecture": "node scripts/guard-architecture.mjs",
     "check": "npm run guard:architecture && npm run typecheck && npm run test:web && npm run build"
   },
