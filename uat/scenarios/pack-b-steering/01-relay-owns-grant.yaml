@@ -1,18 +1,12 @@
 id: b-relay-owns-grant
+execution_target: web_react
 title: The relay node owns the grant — it dies, the far steer refuses by name
 features:
   - trust.steering.relay-node-owns-grant
   - steering.cross_machine
 recipes:
   - mesh-node-alive
-# Cross-machine steering and its relay routing are ipad:yes in the directory
-# (DeskSteer node chip + relay routing, HSM P27 sim-proven; web SessionPullout).
-# iPhone is genuinely unknown in the record (form factor unproven), so it is the
-# honest n/a here — not the ipad leg.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the node-relay steering surface at iPhone compact width is unknown in the directory record"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Open the profiles / mesh view and confirm the "uat-worker"

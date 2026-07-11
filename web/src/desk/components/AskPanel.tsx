@@ -10,12 +10,22 @@ import { motion } from "motion/react";
 import { useDesk } from "../store";
 import { egressBadge } from "../setup";
 import {
-  ASK_LENSES, askContexts, askLineageLine, keepAsk, runAsk,
+  ASK_LENSES,
+  askContexts,
+  askLineageLine,
+  keepAsk,
+  runAsk,
   type AskRunResult,
 } from "../ask";
 import {
-  buildGrounding, emptyGrounding, groundingIsEmpty, groundingReceiptRows, groundingTokens,
-  railsTokens, type GroundingSelection, type RailsPick,
+  buildGrounding,
+  emptyGrounding,
+  groundingIsEmpty,
+  groundingReceiptRows,
+  groundingTokens,
+  railsTokens,
+  type GroundingSelection,
+  type RailsPick,
 } from "../grounding";
 import { GroundingSection } from "./GroundingSection";
 import { RailsPicker } from "./RailsPicker";
@@ -31,15 +41,21 @@ export function AskPanel() {
   const [lens, setLens] = useState(ASK_LENSES[0].name);
   const [prompt, setPrompt] = useState(ASK_LENSES[0].instruction);
   const [profileId, setProfileId] = useState("");
-  const [phase, setPhase] = useState<"compose" | "routing" | "printed">("compose");
+  const [phase, setPhase] = useState<"compose" | "routing" | "printed">(
+    "compose",
+  );
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [error, setError] = useState("");
   const [kept, setKept] = useState(false);
-  const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding());
+  const [grounding, setGrounding] =
+    useState<GroundingSelection>(emptyGrounding());
   const [rails, setRails] = useState<RailsPick[]>([]);
   const ref = useRef<HTMLDivElement | null>(null);
 
-  const context = useMemo(() => askContexts(items, selectedIds), [items, selectedIds]);
+  const context = useMemo(
+    () => askContexts(items, selectedIds),
+    [items, selectedIds],
+  );
   // The context is pinned at print time so keep records what was actually read
   // even if the selection changes underneath. Grounding rows join it at print
   // time (the receipts rule): the kept ask names what grounded the answer.
@@ -70,7 +86,14 @@ export function AskPanel() {
       if (p) {
         const cloud = (p.kind || "onDevice") !== "onDevice";
         return cloud
-          ? { scope: "cloud", text: `☁ ${String(p.base_url || "endpoint").replace(/^https?:\/\//, "").split("/")[0]}` }
+          ? {
+              scope: "cloud",
+              text: `☁ ${
+                String(p.base_url || "endpoint")
+                  .replace(/^https?:\/\//, "")
+                  .split("/")[0]
+              }`,
+            }
           : { scope: "local", text: "⌂ On device" };
       }
     }
@@ -90,7 +113,9 @@ export function AskPanel() {
         .map((g) => ({ id: g.id, kind: "grounding", title: g.title })),
     ];
     const r = await runAsk({
-      prompt: prompt.trim(), lens, context,
+      prompt: prompt.trim(),
+      lens,
+      context,
       profileId: profileId || undefined,
       grounding: buildGrounding(grounding, rails),
     });
@@ -107,7 +132,10 @@ export function AskPanel() {
     if (!result || kept) return;
     setKept(true);
     const artifactId = await keepAsk({
-      lens, prompt: prompt.trim(), output: result.output, context: printedContext.current,
+      lens,
+      prompt: prompt.trim(),
+      output: result.output,
+      context: printedContext.current,
     });
     if (artifactId) {
       // The kept card is a REAL artifact — it lands on the desk wearing the
@@ -129,10 +157,19 @@ export function AskPanel() {
 
   const printedEgress = result?.egress
     ? result.egress.scope === "local"
-      ? { scope: "local", text: result.model ? `⌂ ${result.model}` : "⌂ On this machine" }
+      ? {
+          scope: "local",
+          text: result.model ? `⌂ ${result.model}` : "⌂ On this machine",
+        }
       : result.egress.scope === "mesh"
-        ? { scope: "mesh", text: `⇄ ${["mesh", result.egress.host, result.model].filter(Boolean).join(" · ")}` }
-        : { scope: "cloud", text: `☁ ${[result.model, result.egress.host].filter(Boolean).join(" · ")}` }
+        ? {
+            scope: "mesh",
+            text: `⇄ ${["mesh", result.egress.host, result.model].filter(Boolean).join(" · ")}`,
+          }
+        : {
+            scope: "cloud",
+            text: `☁ ${[result.model, result.egress.host].filter(Boolean).join(" · ")}`,
+          }
     : null;
 
   return (
@@ -145,17 +182,30 @@ export function AskPanel() {
       onPointerDown={(e) => e.stopPropagation()}
     >
       <header className="desk-pullout-head">
-        <span className="desk-ask-glyph" aria-hidden="true">✦</span>
+        <span className="desk-ask-glyph" aria-hidden="true">
+          ✦
+        </span>
         <span className="desk-pullout-title">
-          {phase === "printed" ? askLineageLine(printedContext.current, lens) : "Ask AI"}
+          {phase === "printed"
+            ? askLineageLine(printedContext.current, lens)
+            : "Ask AI"}
         </span>
         {phase === "printed" && printedEgress ? (
-          <span className={`egress-badge is-${printedEgress.scope}`}>{printedEgress.text}</span>
+          <span className={`egress-badge is-${printedEgress.scope}`}>
+            {printedEgress.text}
+          </span>
         ) : (
-          <span className={`egress-badge is-${composeEgress.scope}`}>{composeEgress.text}</span>
+          <span className={`egress-badge is-${composeEgress.scope}`}>
+            {composeEgress.text}
+          </span>
         )}
         {phase !== "routing" && (
-          <button type="button" className="desk-pullout-close" onClick={bin} aria-label="Close">
+          <button
+            type="button"
+            className="desk-pullout-close"
+            onClick={bin}
+            aria-label="Close"
+          >
             ✕
           </button>
         )}
@@ -167,7 +217,9 @@ export function AskPanel() {
             {context.length > 0 && (
               <div className="desk-ask-context">
                 {context.map((c) => (
-                  <span key={c.id} className="desk-chip quiet">{c.title}</span>
+                  <span key={c.id} className="desk-chip quiet">
+                    {c.title}
+                  </span>
                 ))}
               </div>
             )}
@@ -176,8 +228,14 @@ export function AskPanel() {
                 <button
                   key={l.name}
                   type="button"
-                  className={"desk-chip" + (lens === l.name ? " desk-ask-lens-on" : " quiet")}
-                  onClick={() => { setLens(l.name); setPrompt(l.instruction); }}
+                  className={
+                    "desk-chip" +
+                    (lens === l.name ? " desk-ask-lens-on" : " quiet")
+                  }
+                  onClick={() => {
+                    setLens(l.name);
+                    setPrompt(l.instruction);
+                  }}
                 >
                   {l.name}
                 </button>
@@ -191,7 +249,9 @@ export function AskPanel() {
                 autoFocus
                 onChange={(e) => setPrompt(e.target.value)}
               />
-              <MicButton onText={(t) => setPrompt((v) => (v ? v + " " + t : t))} />
+              <MicButton
+                onText={(t) => setPrompt((v) => (v ? v + " " + t : t))}
+              />
             </div>
             {profiles.length > 0 && (
               <select
@@ -210,13 +270,19 @@ export function AskPanel() {
             )}
             <GroundingSection
               meetings={(items.meeting || []).map((m) => ({
-                id: m.id, title: String(m.title || "Untitled meeting"), startedAt: (m as any).startedAt,
+                id: m.id,
+                title: String(m.title || "Untitled meeting"),
+                startedAt: (m as any).startedAt,
               }))}
               selection={grounding}
               onChange={setGrounding}
               limitTokens={limitTokens}
             />
-            <RailsPicker picks={rails} onChange={setRails} limitTokens={limitTokens} />
+            <RailsPicker
+              picks={rails}
+              onChange={setRails}
+              limitTokens={limitTokens}
+            />
             {error && <p className="desk-run-warning">⚠ {error}</p>}
           </>
         )}
@@ -238,20 +304,31 @@ export function AskPanel() {
               type="button"
               className="desk-chip"
               disabled={!prompt.trim() || overBudget}
-              title={overBudget ? "Grounding is past the window — pick less" : undefined}
+              title={
+                overBudget
+                  ? "Grounding is past the window — pick less"
+                  : undefined
+              }
               onClick={() => void ask()}
             >
               Ask
             </button>
           </>
         )}
-        {phase === "routing" && <span className="desk-ask-routing">routing…</span>}
+        {phase === "routing" && (
+          <span className="desk-ask-routing">routing…</span>
+        )}
         {phase === "printed" && (
           <>
             <button type="button" className="desk-chip quiet" onClick={bin}>
               Bin
             </button>
-            <button type="button" className="desk-chip" disabled={kept} onClick={() => void keep()}>
+            <button
+              type="button"
+              className="desk-chip"
+              disabled={kept}
+              onClick={() => void keep()}
+            >
               {kept ? "…" : "Keep"}
             </button>
           </>
@@ -271,12 +348,19 @@ export function AskBar() {
   return (
     <div className="desk-askbar" onPointerDown={(e) => e.stopPropagation()}>
       <span className="desk-askbar-count">
-        {selectedIds.length === 1 ? "1 selected" : `${selectedIds.length} selected`}
+        {selectedIds.length === 1
+          ? "1 selected"
+          : `${selectedIds.length} selected`}
       </span>
       <button type="button" className="desk-chip" onClick={openAsk}>
         ✦ Ask AI
       </button>
-      <button type="button" className="desk-chip quiet" onClick={clearSelection} aria-label="Clear selection">
+      <button
+        type="button"
+        className="desk-chip quiet"
+        onClick={clearSelection}
+        aria-label="Clear selection"
+      >
         ✕
       </button>
     </div>

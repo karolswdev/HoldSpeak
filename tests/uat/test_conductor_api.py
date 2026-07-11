@@ -92,7 +92,7 @@ def test_features_route(client):
     assert r.status_code == 200
     body = r.json()
     assert body["feature_count"] > 200
-    assert body["phases_total"] == 88
+    assert body["phases_total"] == 92
 
 
 def test_packs_and_pack_detail(client):
@@ -101,6 +101,27 @@ def test_packs_and_pack_detail(client):
     packs = {p["pack"]: p for p in r.json()["packs"]}
     assert "smoke" in packs
     assert packs["smoke"]["scenario_count"] >= 6
+    assert packs["ios-flagship-smoke"]["requires_device"] is True
+    owner = packs["owner-01-local-foundation"]
+    assert owner["is_campaign"] is True
+    assert owner["sequence"] == 1
+    assert owner["estimated_minutes"] == 45
+    assert owner["bootstrap"]["automatic"] == owner["scenario_count"]
+    assert owner["bootstrap"]["manual"] == 0
+    assert owner["requires_device"] is False
+    assert owner["required_targets"] == ["web_react"]
+
+    flagship = packs["owner-05-flagship-native"]
+    assert flagship["requires_device"] is True
+    assert flagship["required_targets"] == ["ios_flagship_swift"]
+    assert flagship["requires_intel"] is True
+
+    secondary = packs["owner-07-secondary-native-shells"]
+    assert secondary["requires_device"] is True
+    assert secondary["required_targets"] == [
+        "ios_classic_swift",
+        "ios_companion_swift",
+    ]
 
     d = client.get("/api/packs/smoke")
     assert d.status_code == 200
@@ -108,7 +129,20 @@ def test_packs_and_pack_detail(client):
     assert detail["validation_errors"] == []
     assert len(detail["scenarios"]) >= 6
     assert detail["coverage"]["overall"]["total"] > 0
+    assert set(detail["coverage"]["slots"]) == {"web_react:desktop"}
 
 
 def test_unknown_pack_404(client):
     assert client.get("/api/packs/nope").status_code == 404
+
+
+def test_native_pack_requires_lan_device_mode(client):
+    refused = client.post("/api/sittings", json={"pack": "ios-flagship-smoke"})
+    assert refused.status_code == 400
+    assert "requires a device sitting" in refused.json()["detail"]
+
+    created = client.post(
+        "/api/sittings", json={"pack": "ios-flagship-smoke", "lan": True}
+    )
+    assert created.status_code == 201, created.text
+    assert created.json()["run"]["lan"] is True

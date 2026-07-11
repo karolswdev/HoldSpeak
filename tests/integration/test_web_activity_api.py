@@ -42,36 +42,15 @@ def test_client(activity_db: Database) -> TestClient:
 
 
 def test_activity_page_serves_browser_surface(test_client: TestClient) -> None:
-    """HS-10-07: page rebuilt on AppLayout. Title text + every DOM ID
-    the activity-app.js module reads must still be present. The
-    /api/activity/* endpoint strings now live in the bundled JS chunk
-    (referenced from the served HTML) rather than inline."""
-    import re
-
+    """The route returns the React shell and its typed source owns every panel."""
     response = test_client.get("/activity")
     assert response.status_code == 200
-    body = response.text
-
-    # HS-70-04: retitled "Activity ledger" (a Dictation sub-view).
-    assert "Activity ledger" in body
-    assert 'id="enabled-pill"' in body
-    assert 'id="candidate-status-filter"' in body
-    assert 'id="candidates-message"' in body
-    assert 'id="record-count"' in body
-    assert 'id="rule-project"' in body
-    assert 'id="meeting-candidates"' in body
-
-    # HS-9-12: connectors panel container is present.
-    assert 'id="connectors"' in body
-    assert 'id="connectors-message"' in body
-
-    # Bundled JS still calls the existing /api/activity endpoints, plus
-    # the new HS-9-12 connector endpoints.
-    match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', body)
-    assert match, "expected activity JS chunk reference"
-    js = test_client.get(match.group(1)).text
+    assert '<div id="root"></div>' in response.text
+    js = (Path(__file__).resolve().parents[2] / "web/src/pages/ActivityPage.tsx").read_text()
+    for marker in ("records", "rules", "candidates", "connectors"):
+        assert f'"{marker}"' in js
     assert "/api/activity/status" in js
-    assert "/api/activity/meeting-candidates/preview" in js
+    assert "/api/activity/meeting-candidates" in js
     assert "/api/activity/enrichment/connectors" in js
 
 

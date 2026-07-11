@@ -1,0 +1,20 @@
+id: ios-flagship-deskos-production-root-first-boot
+execution_target: ios_flagship_swift
+title: The installed flagship opens the production DioStage root and completes first boot
+features:
+  - desk.diorama.front_door
+  - desk.front-door.spatial-objects
+recipes:
+  - fresh-desk
+manual_setup:
+  - Install the exact flagship build under acceptance on a physical device; do not enable an environment-only classic/demo root.
+  - Clear this app's local first-boot state by deleting and reinstalling the build, then record device model, iOS version, bundle identifier, and build number in the verdict note.
+form_factors: [ipad, iphone]
+steps:
+  - do: Cold-launch the installed flagship from its home-screen icon and identify the first screen before tapping anything.
+    expect: The native production DioStage root renders with the Desk first-boot guidance; it is not the React Desk in a browser, CompanionShell, classic MeetingCapture root, a blank view, or a crash.
+  - do: Read the native first-boot guidance, complete or dismiss it using only the controls it presents, and inspect the resulting root.
+    expect: The guidance explains objects, the AI core, and zones, then yields to a usable native Desk with its create controls visible; there is no navigation loop or hidden prerequisite.
+  - do: Force-quit and cold-launch the same installed build again.
+    expect: The production DioStage Desk returns directly and remains usable; completed first-boot guidance does not trap the owner or silently switch roots.
+teardown: []

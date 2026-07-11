@@ -1,7 +1,6 @@
 """HS-42-02: the global /settings route + the interim-drawer retirement guard."""
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -27,16 +26,11 @@ def _client() -> TestClient:
 def test_settings_route_serves_the_settings_page() -> None:
     resp = _client().get("/settings")
     assert resp.status_code == 200
-    # Build-agnostic: when the bundle is built the route serves the real
-    # settings page; the Unit Tests CI job runs without the gitignored bundle
-    # and gets the 200 "not built" fallback. Assert the right one for the state.
-    built = (
-        pages._HOLDSPEAK_DIR / "static" / "_built" / "settings" / "index.html"
-    ).exists()
+    built = (pages._HOLDSPEAK_DIR / "static" / "_built" / "index.html").exists()
     if built:
-        assert "settingsApp" in resp.text  # the page's Alpine factory
+        assert '<div id="root"></div>' in resp.text
     else:
-        assert "HoldSpeak Settings" in resp.text
+        assert "npm run build" in resp.text
 
 
 def test_no_interim_settings_drawer_in_live_source() -> None:
@@ -49,7 +43,7 @@ def test_no_interim_settings_drawer_in_live_source() -> None:
     markers = ("consolidating", "settings-interim", "data-settings-open", "data-settings-overlay")
     offenders: list[str] = []
     web_src = _REPO / "web" / "src"
-    for path in [*web_src.rglob("*.astro"), *web_src.rglob("*.js"), *web_src.rglob("*.css")]:
+    for path in [*web_src.rglob("*.tsx"), *web_src.rglob("*.ts"), *web_src.rglob("*.css")]:
         text = path.read_text(encoding="utf-8")
         for lineno, line in enumerate(text.splitlines(), 1):
             if any(m in line for m in markers):
@@ -61,22 +55,16 @@ def test_no_interim_settings_drawer_in_live_source() -> None:
 
 
 def test_topnav_gear_links_to_settings_route() -> None:
-    topnav = (_REPO / "web" / "src" / "components" / "TopNav.astro").read_text()
-    # The gear is a real link to /settings (not the old drawer button).
-    assert re.search(r'href="/settings"', topnav)
+    topnav = (_REPO / "web" / "src" / "components" / "AppShell.tsx").read_text()
+    assert '<NavLink to="/settings">Settings</NavLink>' in topnav
 
 
 def test_settings_is_sectioned_searchable_and_progressive() -> None:
-    """HS-43-05: the form dump is gone — sectioned nav + search + Common/Advanced
-    + the config-backed presence toggle."""
-    page = (_REPO / "web" / "src" / "pages" / "settings.astro").read_text()
-    app = (_REPO / "web" / "src" / "scripts" / "settings-app.js").read_text()
-    # sectioned left-nav + search + progressive disclosure (view-model).
-    for marker in ("sections", "fieldVisible", "showAdvanced", "searching"):
-        assert marker in app
-    assert "set-nav" in page and "Search settings" in page and "Show advanced" in page
-    # the five sections.
-    for sec in ("appearance", "voice", "presence", "meetings", "cloud"):
-        assert f'"{sec}"' in app
-    # the presence toggle lives in settings, bound to the config flag.
-    assert 'role="switch"' in page and "settings.presence.enabled" in page
+    """The React editor stays sectioned and searchable while reflecting every
+    safe field returned by the hub."""
+    page = (_REPO / "web" / "src" / "pages" / "SettingsPage.tsx").read_text()
+    assert "SECTION_ORDER" in page and "Find a setting" in page
+    assert "SettingsFields" in page and "<Tabs" in page
+    for section in ("ui", "hotkey", "model", "dictation", "presence", "meeting"):
+        assert f'"{section}"' in page
+    assert '>("/api/settings"' in page

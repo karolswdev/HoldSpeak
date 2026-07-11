@@ -613,10 +613,8 @@ class MeetingWebServer:
             await self._ws.close_all()
             log.debug("Meeting web server shutdown complete")
 
-        # HS-10-01: serve the Astro-built design-system output. The web/
-        # source builds into static/_built/; legacy hand-authored pages
-        # remain at static/*.html and are served by the explicit handlers
-        # below until each route's rebuild story migrates it.
+        # HS-91-09: serve the one Vite/React build. Explicit browser routes
+        # return its index shell; this mount owns hashed assets and public art.
         _BUILT_DIR = Path(__file__).resolve().parent / "static" / "_built"
         if _BUILT_DIR.is_dir():
             app.mount(

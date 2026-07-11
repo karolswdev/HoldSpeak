@@ -1,17 +1,21 @@
 import { create } from "zustand";
 import { api } from "./api.js";
 
-// Given a sitting + a scenario, the lowest step whose applicable surfaces are
-// not all answered (the step the human is on). Null = scenario complete.
+function stepSlotIds(step) {
+  return (step.execution_slots || []).map((slot) => slot.id);
+}
+
+// Given a sitting + a scenario, return the first step whose explicit execution
+// slots are not all answered. An empty slot list fails closed instead of
+// silently completing an invalid protocol.
 export function currentStep(sitting, scenario) {
   const answered = new Set(
-    sitting.verdicts.map((v) => `${v.scenario_id}|${v.step_index}|${v.surface}`)
+    sitting.verdicts.map((v) => `${v.scenario_id}|${v.step_index}|${v.slot_id}`)
   );
   for (const step of scenario.steps) {
-    const applicable = Object.entries(step.surfaces)
-      .filter(([, v]) => v.applicable)
-      .map(([s]) => s);
-    const done = applicable.every((s) => answered.has(`${scenario.id}|${step.index}|${s}`));
+    const slotIds = stepSlotIds(step);
+    if (slotIds.length === 0) return step;
+    const done = slotIds.every((slotId) => answered.has(`${scenario.id}|${step.index}|${slotId}`));
     if (!done) return step;
   }
   return null;
@@ -19,17 +23,15 @@ export function currentStep(sitting, scenario) {
 
 export function stepAnswered(sitting, scenario, step) {
   const answered = new Set(
-    sitting.verdicts.map((v) => `${v.scenario_id}|${v.step_index}|${v.surface}`)
+    sitting.verdicts.map((v) => `${v.scenario_id}|${v.step_index}|${v.slot_id}`)
   );
-  const applicable = Object.entries(step.surfaces)
-    .filter(([, v]) => v.applicable)
-    .map(([s]) => s);
-  return applicable.every((s) => answered.has(`${scenario.id}|${step.index}|${s}`));
+  const slotIds = stepSlotIds(step);
+  return slotIds.length > 0 && slotIds.every((slotId) => answered.has(`${scenario.id}|${step.index}|${slotId}`));
 }
 
-export function verdictFor(sitting, scenarioId, stepIndex, surface) {
+export function verdictFor(sitting, scenarioId, stepIndex, slotId) {
   return sitting.verdicts.find(
-    (v) => v.scenario_id === scenarioId && v.step_index === stepIndex && v.surface === surface
+    (v) => v.scenario_id === scenarioId && v.step_index === stepIndex && v.slot_id === slotId
   );
 }
 
@@ -58,10 +60,10 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  async start(pack, deck) {
+  async start(pack, deck, lan = false) {
     set({ busy: true, error: null, staging: null, stagedIds: {}, afterRan: {} });
     try {
-      const sitting = await api.createSitting(pack, deck);
+      const sitting = await api.createSitting(pack, deck, lan);
       set({ sitting, view: "sitting", busy: false });
     } catch (e) {
       set({ error: String(e.message || e), busy: false });
@@ -75,7 +77,7 @@ export const useStore = create((set, get) => ({
       set({ sitting, view: "sitting", busy: false });
       // Re-opening a completed (or already-walked) sitting is a REVIEW: load its
       // recorded debrief so the findings are there to look at, not just the score.
-      if (sitting.status === "done" || sitting.progress?.complete || sitting.verdicts?.length) {
+      if (sitting.status === "done" || sitting.legacy_invalid || sitting.progress?.complete || sitting.verdicts?.length) {
         try {
           const packet = await api.readDebrief(id); // GET returns the packet directly
           set({ debrief: packet });
@@ -110,8 +112,16 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  confirmStaged(scenarioId) {
-    set((st) => ({ confirmedIds: { ...st.confirmedIds, [scenarioId]: true } }));
+  async confirmStaged(scenarioId) {
+    try {
+      const sitting = await api.confirmManual(get().sitting.id, scenarioId);
+      set((state) => ({
+        sitting,
+        confirmedIds: { ...state.confirmedIds, [scenarioId]: true },
+      }));
+    } catch (e) {
+      set({ error: String(e.message || e) });
+    }
   },
 
   retryStage(scenarioId) {
@@ -129,8 +139,23 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  async uploadShot(scenarioId, stepIndex, surface, file) {
-    return api.uploadShot(get().sitting.id, scenarioId, stepIndex, surface, file);
+  async uploadShot(scenarioId, stepIndex, slotId, file) {
+    return api.uploadShot(get().sitting.id, scenarioId, stepIndex, slotId, file);
+  },
+
+  async registerDeviceSession(body) {
+    set({ error: null });
+    try {
+      const result = await api.createDeviceSession(get().sitting.id, body);
+      // The endpoint may return the refreshed sitting directly or a created
+      // attestation. A GET keeps the UI correct in both cases.
+      if (result?.scenarios && result?.device_sessions) set({ sitting: result });
+      else await get().refresh();
+      return result;
+    } catch (e) {
+      set({ error: String(e.message || e) });
+      throw e;
+    }
   },
 
   // Speak-to-fill: WAV in, transcribed text out via the run's own transcribe
@@ -140,9 +165,7 @@ export const useStore = create((set, get) => ({
   },
 
   async runAfter(scenarioId, stepIndex) {
-    const key = `${scenarioId}|${stepIndex}`;
-    if (get().afterRan[key]) return;
-    set((st) => ({ afterRan: { ...st.afterRan, [key]: true }, busy: true }));
+    set({ busy: true, error: null });
     try {
       await api.runAfter(get().sitting.id, scenarioId, stepIndex);
       await get().refresh();

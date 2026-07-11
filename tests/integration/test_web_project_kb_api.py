@@ -607,28 +607,13 @@ def test_dictation_page_includes_project_kb_section() -> None:
     client = TestClient(server.app)
     response = client.get("/dictation")
     assert response.status_code == 200
-    body = response.text
-    # HS-47-01: the KB tab is now labelled "Project Facts" (one half of
-    # "project knowledge"); the Context tab keeps its name.
-    assert "Project Facts" in body
-    assert "Project Context" in body
-    assert "Agent Hooks" in body
-    assert "External agent summary" in body
-    assert "agent-summary-provider-status" in body
-    assert "kb-btn-starter" in body
-    assert "agent-context-banner" in body
-    assert "hooks-agent-list" in body
-    # KB endpoint strings live in the bundled JS chunk now.
-    import re
-
-    match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', body)
-    assert match, "expected dictation JS chunk reference"
-    js = client.get(match.group(1)).text
+    assert '<div id="root"></div>' in response.text
+    js = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    assert "Project grounding" in js
+    assert "Knowledge base" in js and "Project instructions" in js
+    assert "Agent hooks" in js
     assert "/api/dictation/project-kb" in js
-    assert "/api/dictation/project-kb/starter" in js
     assert "/api/dictation/project-hs" in js
-    assert "/api/dictation/agent-context" in js
-    assert "/api/dictation/agent-context/summarize" in js
     assert "/api/dictation/agent-hooks" in js
 
 

@@ -92,31 +92,22 @@ def test_armed_is_a_first_class_presence_state():
 
 
 def test_qlippy_dock_maps_armed():
-    js = (_REPO / "web" / "src" / "scripts" / "qlippy.js").read_text()
-    assert 'armed: "listening"' in js
+    js = (_REPO / "web/src/pages/PresencePage.tsx").read_text()
+    assert "runtime_activity" in js
+    assert "activity?.state" in js
 
 
 def test_wake_preview_card_ships_with_the_safety_copy():
-    js = (_REPO / "web" / "src" / "scripts" / "qlippy-events.js").read_text()
-    assert "onWakePreview" in js
-    assert '"wake_preview"' in js
-    # HS-62-01: the not-typed state rides the egress badge, not a paragraph.
-    assert "Local · not typed yet" in js
+    js = (_REPO / "web/src/components/AmbientLayer.tsx").read_text()
+    assert 'useRuntimeFrame<Preview>("wake_preview")' in js
+    assert "Preview before type" in js
     assert "/api/dictation/wake/type" in js
-    assert "sticky: true" in js  # the preview waits for the user
+    assert "Type it" in js and "Discard" in js
 
 
 def test_settings_section_states_the_honest_truths():
-    page = (_REPO / "web" / "src" / "pages" / "settings.astro").read_text()
-    assert "Wake word" in page
-    assert "previewed, never typed" in page
-    assert "downloads the detection models once" in page  # the egress note
-    assert "a false detection would type into whatever app is focused" in page
-    assert "Desktop presence too" in page  # the indicator recommendation
-    for marker in (
-        'x-model="settings.wake_word.model"',
-        'x-model="settings.wake_word.action"',
-        'x-model.number="settings.wake_word.threshold"',
-        'x-model.number="settings.wake_word.armed_window_seconds"',
-    ):
-        assert marker in page, marker
+    page = (_REPO / "web/src/pages/SettingsPage.tsx").read_text()
+    assert "SettingsFields" in page and "Wake Word" in page
+    assert "typeof item === \"boolean\"" in page
+    preview = (_REPO / "web/src/components/AmbientLayer.tsx").read_text()
+    assert "Preview before type" in preview

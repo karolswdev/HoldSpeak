@@ -314,6 +314,207 @@ class RecipeEngine:
                     body[k] = opts[k]
             resp = client.post_json("/api/profiles", body)
             return {"action": "create_profile", "name": name, "status": resp.status_code}
+        if kind == "dispatch_run":
+            # The handoff arc's verb: drive a real ask ONTO the mesh worker via
+            # the hub's own /api/ask (profile_id → meshNode → relay). A mesh run
+            # WAITS on the relay queue while the worker claims + executes it, so
+            # use a slow client. Capture the worker's CLAIM-count delta (its own
+            # log) before→after — "the run moved" — and persist the response's
+            # egress badge + output to a sidecar the probes read back.
+            import json as _json
+
+            from .product_client import ProductClient
+
+            opts = arg if isinstance(arg, dict) else {}
+            label = str(opts.get("run", "handoff"))
+            node = str(opts.get("node", "uat-worker"))
+            profile_id = str(opts.get("profile_id", "uat-seed-profile-mesh-edge"))
+            prompt = str(
+                opts.get(
+                    "prompt",
+                    "Summarize the pylon incident from the handoff note. Name the "
+                    "canary token it carries, verbatim.",
+                )
+            )
+            context = opts.get("context") or []
+            timeout = float(opts.get("timeout", 600))
+
+            marker = f"CLAIMED for node {node}"
+            claims_before = host.node_log_text(run_id, node).count(marker)
+
+            slow = ProductClient(client.base_url, token=client.token, timeout=timeout)
+            body: dict[str, Any] = {"prompt": prompt, "profile_id": profile_id, "lens": "Ask"}
+            if context:
+                body["context"] = context
+            resp = slow.post_json("/api/ask", body)
+            data = resp.json() if resp.status_code == 200 else {}
+
+            claims_after = host.node_log_text(run_id, node).count(marker)
+
+            sidecar = {
+                "run": label,
+                "node": node,
+                "profile_id": profile_id,
+                "status": resp.status_code,
+                "ok": resp.status_code == 200,
+                "provider": data.get("provider"),
+                "egress": data.get("egress"),
+                "model": data.get("model"),
+                "output": data.get("output", ""),
+                "error": data.get("error"),
+                "claims_before": claims_before,
+                "claims_after": claims_after,
+            }
+            home = host.run_home(run_id)
+            (home / f"uat-dispatch-{label}.json").write_text(_json.dumps(sidecar))
+            return {
+                "action": "dispatch_run",
+                "run": label,
+                "status": resp.status_code,
+                "egress": sidecar["egress"],
+                "claimed": claims_after > claims_before,
+            }
+        if kind == "sync_meeting":
+            # Stage a deterministic meeting through the product's cross-device
+            # sync ingress. This is the public route a paired iPad uses, and it
+            # gives fully-local recipes a real meeting/action-item world without
+            # manufacturing product DB rows or requiring an LLM to word an
+            # action exactly. The fixed timestamp makes a repeated apply a
+            # last-write-wins no-op.
+            opts = arg if isinstance(arg, dict) else {"id": str(arg)}
+            meeting_id = str(opts.get("id", "uat-synced-meeting"))
+            action_id = str(opts.get("action_id", f"{meeting_id}-action"))
+            stamp = str(opts.get("timestamp", "2035-01-15T10:00:00Z"))
+            title = str(opts.get("title", "UAT synced meeting"))
+            task = str(opts.get("task", "Verify the staged acceptance world"))
+            owner = opts.get("owner", "UAT owner")
+            raw_action_items = opts.get("action_items")
+            if isinstance(raw_action_items, list) and raw_action_items:
+                action_items = []
+                for index, raw_item in enumerate(raw_action_items):
+                    item = raw_item if isinstance(raw_item, dict) else {}
+                    action_items.append(
+                        {
+                            "id": str(
+                                item.get("id") or f"{meeting_id}-action-{index + 1}"
+                            ),
+                            "task": str(item.get("task") or task),
+                            "owner": item.get("owner", owner),
+                            "due": item.get("due"),
+                            "status": str(item.get("status", "pending")),
+                            "review_state": str(
+                                item.get("review_state", "accepted")
+                            ),
+                            "source_timestamp": float(
+                                item.get("source_timestamp", 0.0)
+                            ),
+                            "created_at": stamp,
+                        }
+                    )
+            else:
+                action_items = [
+                    {
+                        "id": action_id,
+                        "task": task,
+                        "owner": owner,
+                        "due": None,
+                        "status": "pending",
+                        "review_state": str(
+                            opts.get("review_state", "accepted")
+                        ),
+                        "source_timestamp": 0.0,
+                        "created_at": stamp,
+                    }
+                ]
+            record = {
+                "meta": {
+                    "id": meeting_id,
+                    "kind": "meeting",
+                    "last_modified": stamp,
+                    "deleted": False,
+                },
+                "value": {
+                    "id": meeting_id,
+                    "started_at": stamp,
+                    "ended_at": stamp,
+                    "title": title,
+                    "tags": ["uat-seed", "sync-staged"],
+                    "segments": [
+                        {
+                            "text": task,
+                            "speaker": "UAT owner",
+                            "speaker_id": None,
+                            "start_time": 0.0,
+                            "end_time": 2.0,
+                            "is_bookmarked": False,
+                            "device_id": "uat-harness",
+                        }
+                    ],
+                    "bookmarks": [],
+                    "intel": {
+                        "timestamp": 2.0,
+                        "topics": ["UAT"],
+                        "action_items": action_items,
+                        "summary": str(
+                            opts.get(
+                                "summary",
+                                "A deterministic meeting staged through the sync API.",
+                            )
+                        ),
+                    },
+                    "intel_status": {
+                        "state": "complete",
+                        "detail": "UAT sync-staged fixture",
+                        "requested_at": stamp,
+                        "completed_at": stamp,
+                    },
+                    "mic_label": "Me",
+                    "remote_label": "Remote",
+                    "web_url": None,
+                },
+            }
+            resp = client.post_json("/api/sync/push", {"meetings": [record]})
+            data = resp.json() if resp.status_code == 200 else {}
+            return {
+                "action": "sync_meeting",
+                "meeting_id": meeting_id,
+                "action_id": action_items[0]["id"],
+                "action_ids": [item["id"] for item in action_items],
+                "status": resp.status_code,
+                "merged": (data.get("received") or {}).get("meetings"),
+                **(
+                    {"error": data.get("error") or resp.text[:200]}
+                    if resp.status_code != 200
+                    else {}
+                ),
+            }
+        if kind == "propose_github_card":
+            # Create, but deliberately do not approve, the aftercare proposal.
+            # The product's proposal read route is the probe seam; no connector
+            # executes and no network egress occurs during staging.
+            opts = arg if isinstance(arg, dict) else {}
+            meeting_id = str(opts.get("meeting_id", "uat-egress-meeting"))
+            action_id = str(opts.get("action_item_id", "uat-egress-action"))
+            repo = str(opts.get("repo", "acme/holdspeak-uat"))
+            resp = client.post_json(
+                f"/api/meetings/{meeting_id}/aftercare/file-issue",
+                {"action_item_id": action_id, "repo": repo},
+            )
+            data = resp.json() if resp.status_code == 200 else {}
+            proposal = data.get("proposal") or {}
+            return {
+                "action": "propose_github_card",
+                "meeting_id": meeting_id,
+                "proposal_id": proposal.get("id"),
+                "target": proposal.get("target"),
+                "proposal_status": proposal.get("status"),
+                "status": resp.status_code,
+                **(
+                    {"error": data.get("error") or resp.text[:200]}
+                    if resp.status_code != 200
+                    else {}
+                ),
+            }
         if kind == "teach_correction":
             # Record a dictation correction so the learned-from-N digest has a
             # KNOWN count to check honestly against.
@@ -342,3 +543,4 @@ class RecipeHost:  # pragma: no cover - documentation of the required interface
     def run_home(self, run_id: str) -> Path: ...
     def spawn_node(self, run_id: str, name: str) -> dict: ...
     def kill_node(self, run_id: str, name: str) -> bool: ...
+    def node_log_text(self, run_id: str, node: str) -> str: ...

@@ -1,4 +1,5 @@
 id: f-steering-arm-keys-factory
+execution_target: ios_flagship_swift
 title: Steer a live agent from the iPad — arm to send, the key palette, and the factory
 # Three steering musts (HSM-27-02). attach_arm_steer, key_palette, and
 # factory_lifecycle are all ipad:yes, iphone:unknown. agent-pane-awaiting-input
@@ -12,14 +13,10 @@ features:
   - mobile.steering.key_palette
   - mobile.steering.factory_lifecycle
 recipes:
-  - agent-pane-awaiting-input
-  - mesh-node-alive
+  - agent-pane-mesh
 manual_setup:
   - The pane is real (tmux via the product's factory routes); to judge the hold-to-arm MOTION and haptic, walk it on a real iPad against the live session, not sim-static.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "directory rows: attach_arm_steer + key_palette + factory_lifecycle iphone=unknown — DioSteerSheet at compact width is not proven; a phone-column gap, not a genuine absence"}
+form_factors: [ipad]
 steps:
   - do: >
       Staging-verify. Peek the staged coder pane and confirm it is live and awaiting
@@ -27,14 +24,12 @@ steps:
     expect: >
       The "coder" pane is listed and its peek shows the live prompt
       (AWAITING-MIGRATION-CONFIRM) — a real session waiting, not a static mock.
-    where: /
   - do: >
       Consent gate (unarmed). With the pane NOT armed, try the key palette and try
       to send a steer.
     expect: >
       The key palette is disabled and keys are refused while unarmed — nothing
       reaches the pane. This is the consent control: unarmed sends must NOT land.
-    where: /
   - do: >
       Attach + arm + steer. Peek the pane, hold-to-arm through the countdown, then
       speak / send a voice-first steer message.
@@ -43,14 +38,12 @@ steps:
       RECEIVES the steer message — the armed send lands where the unarmed send was
       refused. On a recycled/revoked pane the surface re-offers ARM from the
       refusal-as-data shape.
-    where: /
   - do: >
       Key palette (armed). With the pane armed, tap ^C in the palette, then send an
       arrow and Escape.
     expect: >
       The loud ^C interrupt reaches the pane and the arrow / Escape keys land as
       literal keys — the palette sends raw keys only because the pane is armed.
-    where: /
   - do: >
       Factory lifecycle. Tap + Spawn to create a new session, rename it, then tap
       ⌫ Kill.
@@ -58,5 +51,4 @@ steps:
       + Spawn creates a new session; rename updates the label; ⌫ Kill shows a
       confirm gate BEFORE the session dies (kill reuses the steer/consent gate) —
       the destructive action is confirm-gated, not one-tap.
-    where: /
 teardown: []

@@ -1,4 +1,5 @@
 id: desk-answer-waiting-coder-by-voice
+execution_target: web_react
 title: Answer a waiting coder by voice — hand-staged, real mic
 # The voice-answer path. No recipe can induce a live mic capture, so the capture
 # beats are hand-staged. The blocked coder is auto-stageable (agent-pane recipe),
@@ -9,22 +10,19 @@ features:
 recipes:
   - agent-pane-awaiting-input
 manual_setup:
-  - Grant the browser (or the iPad app) microphone permission for this run's origin.
+  - Grant the desktop browser microphone permission for this run's origin.
   - Have a working input microphone and be somewhere you can speak a short sentence out loud.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "answering a coder by voice at iPhone compact width is unverified in the directory record (desk.web.answer_waiting_coder iphone=unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. A coder pane is awaiting input. Open the desk, find the
-      blocked coder, and open its answer composer.
+      blocked coder, open the live session pullout, and arm the session.
     expect: >
-      The blocked coder is present and its answer composer has a hold-to-talk mic
-      affordance on the input.
+      The blocked coder is present; after explicit arming, the live session
+      composer and its hold-to-talk mic are available.
     where: /
   - do: >
-      Hold the mic on the answer composer and speak a short instruction to the
+      Hold the mic on the ARMED live-session composer and speak a short instruction to the
       coder ("go ahead and run the migration"). Release.
     expect: >
       Your speech is transcribed into the composer as editable text — it is NOT
@@ -32,8 +30,7 @@ steps:
       substance, not exact punctuation).
     where: /
   - do: >
-      Review the transcribed answer, then confirm to inject it into the waiting
-      pane.
+      Review the transcribed answer, then press Send to inject it into the waiting pane.
     expect: >
       Only after your explicit confirm does the answer reach the coder's pane —
       the pane advances past its prompt. Voice fills the box; you still commit.

@@ -1,13 +1,11 @@
 id: d-forced-run-refuses-fast
+execution_target: web_react
 title: A forced run refuses fast, by name
 features:
   - dictation.pipeline.dry_run
 recipes:
   - intel-endpoint-dead
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the dictation runtime test on iPhone is unverified in the record"}
+form_factors: [desktop]
 steps:
   - do: Run the dictation runtime test against the dead endpoint.
     expect: It refuses in under five seconds and names the unreachable endpoint; it does not hang and does not silently fall through to a wrong result.

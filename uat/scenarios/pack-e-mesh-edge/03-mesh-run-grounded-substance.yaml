@@ -1,14 +1,12 @@
 id: e-mesh-run-grounded-substance
+execution_target: web_react
 title: The mesh-executed run is real intelligence, not a stub (control vs treatment)
 features:
   - mobile.mesh.serve.execute_ask
   - mesh.handoff.web_run_to_node
 recipes:
-  - mesh-run-ready
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the ask-executes-on-this-device leg is iphone:yes in the inventory, but forcing it requires the device pre-flight block (model-installed-on-device, hub-reachable-on-lan) that is not staged in this run"}
+  - mesh-run-on-worker
+form_factors: [desktop]
 steps:
   - do: Confirm the worker is live and the handoff-intent note (carrying PYLON-CANARY-7) is on the desk (the staging beat).
     expect: The "uat-worker" node reads live and the note "Handoff run intent (PYLON-CANARY-7)" is present; the token exists in exactly one place the model could read.
@@ -21,6 +19,6 @@ steps:
   # TREATMENT: same worker, same edge, WITH the note grounded. Now the model
   # running on the mesh edge must surface the token only that note carries.
   - do: "TREATMENT — dispatch the same ask onto the same mesh worker, this time grounding the run on the handoff-intent note. Read the ⇄ mesh card."
-    expect: The card is badged ⇄ mesh AND the answer names PYLON-CANARY-7 — the exact token the control could not know. This proves the run executed a real model on the edge over the grounded context, not a fallback or an echo. Naming a different or generic token fails the beat.
+    expect: The card is badged ⇄ mesh AND the answer names PYLON-CANARY-7 — the exact token the control could not know. This proves the run executed a real model on the edge over the grounded context, not a fallback or an echo. Naming a different or generic token fails the beat. (Machine-verified — the mesh-run-on-worker recipe dispatches exactly this grounded ask and its probe asserts run_output_contains PYLON-CANARY-7 alongside the ⇄ mesh badge; the human confirms the substance live.)
     where: /
 teardown: []

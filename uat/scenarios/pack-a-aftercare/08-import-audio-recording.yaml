@@ -1,4 +1,5 @@
 id: a-import-audio-recording
+execution_target: web_react
 title: Import an audio recording — Whisper transcribes, intel runs (control vs treatment)
 features:
   - meetings.import.audio
@@ -7,10 +8,7 @@ manual_setup:
   - Have a real meeting recording on disk — use the committed fixture dogfood/_audio/meeting-pylon-incident-warroom.wav (a warroom recording of the pylon expiry-headroom incident), or a fresh capture of your own.
   - For the CONTROL beat, be able to point the meeting-intelligence runtime at a dead endpoint (the bad-endpoint posture) so intel cannot run after the audio transcribes.
 recipes: []
-surfaces:
-  web: yes
-  ipad: {n/a: "audio import is a web-desk/hub feature; no apple/ import UI was found in the inventory (row ipad: unknown) — the iPad reads the resulting meeting back, it does not run the importer"}
-  iphone: {n/a: "same as iPad — no apple/ audio-import UI found in the inventory (row iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: (Staging beat) Open /history and confirm the desk is ready to import audio — the readiness/setup panel reads ready (a transcriber can be constructed) and no pylon-warroom meeting exists yet.
     expect: Setup reads ready and /history has no pre-existing pylon-warroom recording, so the import that follows is provably novel — not a stale replay.

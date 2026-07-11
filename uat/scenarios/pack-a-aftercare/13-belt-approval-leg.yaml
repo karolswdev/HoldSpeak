@@ -1,4 +1,5 @@
 id: a-belt-approval-leg
+execution_target: web_react
 title: Approve a story flip from the desk — the belt's gated approval leg
 features:
   - belt.approval_leg
@@ -7,10 +8,7 @@ manual_setup:
   - Stage a proposal on the belt that, when approved, flips one story to done and stamps a commit — i.e. a proposal whose approval invokes the two-argv, path-allow-listed dw gate connector (decide_proposal).
   - Have the desk's actuator/connector policy in its shipped default (off / consent-required) so the approval is genuinely gated, not auto-firing.
 recipes: []
-surfaces:
-  web: yes
-  ipad: {n/a: "the belt approval leg (decide_proposal → dw gate connector) is web-desk only in the inventory (row ipad: unknown); the iPad reads the belt but does not drive the gated flip"}
-  iphone: {n/a: "same as iPad — no iPhone belt-approval surface in the inventory (row iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: (Staging beat) Open the belt / conveyor and confirm the pending proposal is present, unexecuted, against the registered rails repo — and that nothing has been committed yet.
     expect: The proposal sits in the proposed state, the registered rails repo is named, and the target story is still open (not done) — the flip has not happened, so the approval that follows is provably the cause.

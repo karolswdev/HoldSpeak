@@ -1,5 +1,11 @@
 # HANDOVER — Build the HoldSpeak UAT Framework (overnight, autonomous)
 
+> **Historical specification:** This document preserves the framework-build
+> brief as executed. Its web/iPad/iPhone “three surfaces” model is superseded by
+> protocol v2 in `uat/CHARTER.md`: implementation target and form factor are
+> separate, responsive React is never Swift evidence, and parity joins
+> independently executed target-specific legs.
+
 > **You are the next agent. This is your goal, not a suggestion.** Read this
 > whole file, then the linked roadmap, then start building. You are expected to
 > **design, dig deeper, plan, and EXECUTE** — end to end, unattended, through

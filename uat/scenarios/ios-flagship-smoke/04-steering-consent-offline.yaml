@@ -1,0 +1,27 @@
+id: ios-flagship-steering-consent-offline
+title: Native steering — consent gate, armed send, then an honest offline close
+execution_target: ios_flagship_swift
+features:
+  - mobile.steering.attach_arm_steer
+  - mobile.steering.key_palette
+  - mobile.steering.factory_lifecycle
+recipes:
+  - agent-pane-mesh
+manual_setup:
+  - Pair the flagship app to this run and open the production terminal/steering sheet; record the device form factor and build.
+form_factors: [ipad, iphone]
+steps:
+  - do: Open the staged coder session while it is unarmed and inspect the available controls.
+    expect: The live AWAITING-MIGRATION-CONFIRM pane is readable, while steer/key/destructive controls are absent or disabled; an unarmed request cannot land.
+  - do: Hold through the full arm gesture, send "proceed with the migration", then send one harmless key from the armed palette.
+    expect: The countdown/haptic makes consent explicit and the exact message/key reaches the staged pane only after arming; an audit row identifies the action.
+    verifies:
+      - mobile.steering.attach_arm_steer
+      - mobile.steering.key_palette
+  - do: Spawn a separate disposable session, rename it, then request Kill and confirm the destructive action.
+    expect: Spawn and rename read back; Kill requires confirmation before the disposable session disappears, without killing the original staged pane.
+    verifies: [mobile.steering.factory_lifecycle]
+    after:
+      - apply_recipe: mesh-node-just-died
+  - do: Refresh after the worker has been stopped and try to force another remote action.
+    expect: The node/session reads offline and the forced action refuses fast by name; it does not spin, silently reroute, or claim success.

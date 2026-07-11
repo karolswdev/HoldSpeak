@@ -1,4 +1,5 @@
 id: desk-token-auth-arrival
+execution_target: web_react
 title: Authenticated arrival on a token-guarded hub — hand-staged
 # The token-gated arrival. No registry recipe binds a token-guarded hub, so this
 # is hand-staged: bind the run to the LAN with a token and arrive via the
@@ -10,10 +11,7 @@ manual_setup:
   - "Boot this run LAN-bound with a token (for example: uv run python -m uat.stage --recipe seeded-desk --lan) and copy the printed product URL with its ?token=... query."
   - Have a second browser profile / private window with no prior session for this run's origin (so there is no cached token).
 recipes: []
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "token-guarded arrival at iPhone compact width is unverified in the directory record (ask.web.token_auth_arrival iphone=unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Open the printed ?token=... arrival URL in the clean

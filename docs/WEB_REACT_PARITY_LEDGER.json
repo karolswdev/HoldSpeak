@@ -1,0 +1,199 @@
+{
+  "phase": 91,
+  "version": 2,
+  "updated": "2026-07-10",
+  "verification": {
+    "automated": {
+      "status": "pass",
+      "architecture": "zero legacy framework dependencies, directives, source files, selector bootstraps, or request-client bypasses",
+      "deep_links": "every SPA_ROUTES entry returns the same Vite/React shell",
+      "browser_audit": "34/34 desktop and compact-Web loads returned 200 with zero console errors, unnamed controls, sub-24 px targets, native select fallbacks, or horizontal overflow",
+      "frontend": "109 Vitest tests, TypeScript, and the production build pass",
+      "evidence": "pm/roadmap/holdspeak/phase-91-one-react-surface/evidence/web-audit/report.json"
+    },
+    "owner_uat": {
+      "status": "pending",
+      "reason": "Requires the owner, real microphone/model workflows, and actual Swift DeskOS captures; responsive Web screenshots cannot substitute."
+    }
+  },
+  "invariants": {
+    "shell": "One Vite/React index is served for every product URL.",
+    "auth": "The query token is captured into sessionStorage hs.web.token, scrubbed from the URL, and forwarded by apiFetch and RuntimeBus.",
+    "secrets": "API keys are hub environment variables and never appear in a Web form, response, localStorage, or sessionStorage.",
+    "runtime_bus": "RuntimeBusProvider owns the only /ws connection in the React tree.",
+    "focus": "Native links and controls retain browser focus; Dialog traps focus and restores the opener; route main is programmatically focusable."
+  },
+  "routes": [
+    {
+      "path": "/",
+      "name": "Desk",
+      "verbs": ["create/edit/file note, KB, recipe, zone and workflow", "record meeting", "ask/keep", "chat/keep", "attach/steer terminal", "run capability"],
+      "endpoints": ["/api/setup/status", "/api/meetings", "/api/sync/pull", "/api/notes", "/api/recipes", "/api/kbs", "/api/directories", "/api/chains", "/api/workflows", "/api/profiles", "/api/models", "/api/coders/*", "/api/ask*", "/api/meeting/*", "/api/missioncontrol/*"],
+      "states": ["loading", "empty", "partial/unreachable", "live", "editing", "running", "awaiting approval"],
+      "storage": ["hs.diorama.pos", "hs.desk.chats", "hs.desk.chatgrounding", "hs.desk.pins"],
+      "websocket": ["runtime_activity via RuntimeBus"],
+      "focus": ["inline editor focuses its field", "pullouts and ask remain on the stage"]
+    },
+    {
+      "path": "/welcome",
+      "name": "Arrival",
+      "verbs": ["inspect permissions", "discover local/endpoint models", "save runtime choice", "test first dictation", "continue or go back"],
+      "endpoints": ["/api/setup/status", "/api/setup/runtime-options", "/api/setup/discover-models", "/api/profiles", "/api/settings"],
+      "states": ["loading", "partial checks", "no models", "one/many models", "unreachable endpoint", "saving", "dictation complete"],
+      "storage": [],
+      "websocket": ["runtime_activity via RuntimeBus"],
+      "focus": ["step heading receives focus", "Back and Continue remain available"]
+    },
+    {
+      "path": "/setup",
+      "name": "Setup",
+      "verbs": ["refresh doctor", "test runtime", "continue arrival/open Desk"],
+      "endpoints": ["/api/setup/status", "/api/setup/runtime-test"],
+      "states": ["ready", "degraded", "blocked", "unknown", "test success/error"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["retry and primary next action are named"]
+    },
+    {
+      "path": "/settings",
+      "name": "Settings",
+      "verbs": ["search", "edit every returned section", "save", "discard/reload"],
+      "endpoints": ["GET /api/settings", "PUT /api/settings"],
+      "states": ["loading", "unreachable", "editing", "validation/server error", "saved"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["associated labels/descriptions", "section tabs"]
+    },
+    {
+      "path": "/profiles",
+      "name": "Runtime Profiles",
+      "verbs": ["create", "edit", "delete"],
+      "endpoints": ["GET/POST /api/profiles", "PUT/DELETE /api/profiles/{id}"],
+      "states": ["empty", "loading", "unreachable", "local", "endpoint", "mesh live/offline", "saving/error"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["profile dialog traps/restores", "delete confirmation restores"]
+    },
+    {
+      "path": "/dictation",
+      "name": "Dictation",
+      "verbs": ["read readiness", "dry run", "create block", "forget correction", "edit project KB/instructions", "search/replay/delete/clear journal", "select runtime", "inspect hooks", "select/dismiss nudge"],
+      "endpoints": ["/api/dictation/readiness", "/api/dictation/dry-run", "/api/dictation/blocks*", "/api/dictation/corrections*", "/api/dictation/learning-digest", "/api/dictation/project-kb*", "/api/dictation/project-hs*", "/api/dictation/journal*", "/api/dictation/agent-hooks", "/api/activity/nudges*", "/api/settings", "/api/profiles"],
+      "states": ["ready/warnings", "dry-run trace/error", "empty/invalid blocks", "empty memory", "missing project", "empty journal", "runtime save/error", "nudge empty/error"],
+      "storage": ["holdspeak.projectRootOverride"],
+      "websocket": [],
+      "focus": ["tabs expose selected state", "confirmations restore focus"]
+    },
+    {
+      "path": "/activity",
+      "name": "Activity",
+      "verbs": ["pause/resume", "refresh", "clear records", "filter", "delete rule", "dry-run connector", "start meeting candidate"],
+      "endpoints": ["/api/activity/status", "/api/activity/records", "/api/activity/settings", "/api/activity/refresh", "/api/activity/project-rules*", "/api/activity/meeting-candidates*", "/api/activity/enrichment/connectors*"],
+      "states": ["watching/paused", "empty", "loading", "unreachable", "busy", "error"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["clear confirmation restores", "dense actions >=36px"]
+    },
+    {
+      "path": "/commands",
+      "name": "Voice Commands",
+      "verbs": ["enable/disable", "create/edit/delete macro", "test macro"],
+      "endpoints": ["GET/PUT /api/settings", "POST /api/commands/test"],
+      "states": ["off", "empty", "editing", "test success/failure", "save failure", "delete confirmation"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["editor dialog and delete confirmation restore"]
+    },
+    {
+      "path": "/cadence",
+      "name": "Cadence",
+      "verbs": ["run now", "snooze", "close", "kill", "reply", "review history"],
+      "endpoints": ["/api/cadence/status", "/api/cadence/loops", "/api/cadence/history", "/api/cadence/run-now", "/api/cadence/loops/{id}/*"],
+      "states": ["disabled", "empty", "needs review", "agent question", "busy", "runtime error"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["destructive confirmation", "reply has named textarea"]
+    },
+    {
+      "path": "/live",
+      "name": "Live Meeting",
+      "verbs": ["start", "stop/finalize", "bookmark", "edit title/tags", "read transcript/intel"],
+      "endpoints": ["/api/state", "/api/meeting/start", "/api/meeting/stop", "/api/bookmark", "PATCH /api/meeting"],
+      "states": ["idle", "starting", "recording", "stopping", "connected/reconnecting/offline", "long transcript", "intel idle/running/error"],
+      "storage": [],
+      "websocket": ["all meeting/runtime frames via RuntimeBus"],
+      "focus": ["metadata dialog restores", "transcript append preserves scroll ownership"]
+    },
+    {
+      "path": "/history",
+      "aliases": ["/meetings"],
+      "name": "Meetings Archive",
+      "verbs": ["search", "import audio/transcript", "open/delete meeting", "review transcript/artifacts/aftercare/routing/proposals", "approve/decline", "export", "retry queue"],
+      "endpoints": ["/api/meetings*", "/api/all-action-items", "/api/speakers", "/api/projects", "/api/intel/*", "/api/plugin-jobs*"],
+      "states": ["empty", "loading", "failed import", "partial detail", "proposal pending/decided", "queue pending/running/failed/complete", "export error"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["import/detail/delete dialogs trap and restore", "search is recoverable"]
+    },
+    {
+      "path": "/studio",
+      "name": "Studio",
+      "verbs": ["navigate to every advanced tool"],
+      "endpoints": [],
+      "states": ["static available"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["cards are links with visible focus"]
+    },
+    {
+      "path": "/workbench",
+      "name": "Workbench",
+      "verbs": ["select preset", "add node", "drag node", "edit prompt", "close inspector"],
+      "endpoints": [],
+      "states": ["preset", "selected", "dragging", "read-only source/output"],
+      "storage": ["hs.workflows.v1"],
+      "websocket": [],
+      "focus": ["canvas and every node are keyboard focusable", "inspector uses labeled field"]
+    },
+    {
+      "path": "/companion",
+      "name": "Agent Desk",
+      "verbs": ["review waiting coders", "open recipe on Desk", "reveal pairing guidance"],
+      "endpoints": ["/api/recipes", "/api/coders/status"],
+      "states": ["empty recipes", "waiting coder", "unreachable", "loading"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["native disclosure and links"]
+    },
+    {
+      "path": "/presence",
+      "name": "Presence HUD",
+      "verbs": ["read ambient runtime state"],
+      "endpoints": [],
+      "states": ["idle", "recording", "working", "complete", "error", "reconnecting"],
+      "storage": [],
+      "websocket": ["runtime_activity via RuntimeBus"],
+      "focus": ["non-interactive status live region"]
+    },
+    {
+      "path": "/docs/dictation-runtime",
+      "name": "Runtime Guide",
+      "verbs": ["reveal install paths", "navigate to setup/dictation"],
+      "endpoints": [],
+      "states": ["static available"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["native disclosures"]
+    },
+    {
+      "path": "/design/components",
+      "name": "Signal Components",
+      "verbs": ["review control, field, choice, status, feedback, tabs, disclosure, toolbar, empty and dialog states"],
+      "endpoints": [],
+      "states": ["default", "hover/focus", "selected", "disabled", "loading", "success", "warning", "error"],
+      "storage": [],
+      "websocket": [],
+      "focus": ["labels/descriptions/errors", "dialog return", "tab semantics", "reduced motion"]
+    }
+  ]
+}

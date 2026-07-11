@@ -70,18 +70,279 @@ body {
   color: var(--text);
 }
 
+/* ============================================================
+ * Signal controls — the shared editor language.
+ *
+ * Cards and navigation already carry HoldSpeak's visual identity; forms used
+ * to fall back to browser chrome. These opt-in primitives give editors the
+ * same top-lit depth, deliberate focus, and quiet motion as Signal cards.
+ * Existing `.input` / `.select` controls adopt the foundation automatically.
+ * ============================================================ */
+:where(.input, .select, .hs-control) {
+  width: 100%;
+  min-height: 44px;
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-3);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 52%),
+    var(--surface-1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 1px 2px rgba(0, 0, 0, 0.24);
+  color: var(--text);
+  padding: 0.68rem 0.85rem;
+  font: 500 var(--font-size-sm) / 1.35 var(--font-ui);
+  transition:
+    border-color var(--duration-short) var(--ease-standard),
+    background var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard),
+    transform var(--duration-short) var(--ease-standard);
+}
+
+:where(.input, .select, .hs-control)::placeholder {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+:where(.input, .select, .hs-control):hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 55%),
+    var(--surface-2);
+}
+
+:where(.input, .select, .hs-control):focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 3px var(--accent-tint),
+    0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+:where(.input, .select, .hs-control):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--surface-1);
+}
+
+/* Canonical action grammar. This baseline intentionally lives globally:
+ * controls rendered by any route must never degrade to platform-default
+ * buttons. Page styles
+ * may arrange actions, but should not reinvent their dimensions or states. */
+:where(.btn) {
+  min-height: 44px;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--text);
+  font: 600 var(--font-size-sm) / 1 var(--font-ui);
+  letter-spacing: var(--letter-spacing-loose);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard),
+    transform var(--duration-short) var(--ease-standard);
+}
+
+:where(.btn--sm) {
+  min-height: 36px;
+  padding-inline: var(--space-3);
+  font-size: var(--font-size-xs);
+}
+
+:where(.btn--primary, .btn.primary) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-on);
+  box-shadow: var(--glow-accent);
+}
+
+:where(.btn--secondary) {
+  border-color: var(--line-strong);
+  background: var(--canvas-raised);
+}
+
+:where(.btn--ghost) {
+  border-color: transparent;
+  background: transparent;
+}
+
+:where(.btn.danger, .btn--danger) {
+  border-color: var(--danger-fill);
+  background: var(--danger-fill);
+  color: #fff;
+}
+
+:where(.btn):hover:not(:disabled) {
+  border-color: var(--accent);
+  background-color: var(--surface-3);
+}
+
+:where(.btn--primary, .btn.primary):hover:not(:disabled) {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+:where(.btn.danger, .btn--danger):hover:not(:disabled) {
+  border-color: var(--danger-strong);
+  background: var(--danger-strong);
+}
+
+:where(.btn):active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+:where(.btn):focus-visible {
+  outline: var(--focus-outline-width) solid var(--accent);
+  outline-offset: var(--focus-outline-offset);
+}
+
+:where(.btn):disabled {
+  border-color: var(--disabled-border);
+  background: var(--disabled-bg);
+  box-shadow: none;
+  color: var(--disabled-fg);
+  cursor: not-allowed;
+}
+
+:where(select.select, select.input, select.hs-control, .hs-select) {
+  appearance: none;
+  padding-right: 2.65rem;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239BA2B0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 52%);
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    right 0.8rem center,
+    0 0;
+  background-color: var(--surface-1);
+}
+
+.hs-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.hs-field-label {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.hs-field-hint {
+  color: var(--text-faint);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-relaxed);
+}
+
+/* Canonical checkbox: one size, one alignment contract, no platform-blue
+ * browser chrome. `.check` is included while older settings forms migrate. */
+.hs-check {
+  display: inline-grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  margin: 0;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+:where(.toggle-field, .facet-toggle, .set-adv-toggle) {
+  cursor: pointer;
+}
+
+:where(
+  .hs-checkbox,
+  .hs-check input[type="checkbox"],
+  .check input[type="checkbox"],
+  .check-label input[type="checkbox"],
+  .toggle-field input[type="checkbox"],
+  .facet-toggle input[type="checkbox"],
+  .set-adv-toggle input[type="checkbox"]
+) {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  appearance: none;
+  margin: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent),
+    var(--surface-1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-short) var(--ease-standard),
+    background var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard),
+    transform var(--duration-short) var(--ease-standard);
+}
+
+:where(
+  .hs-checkbox,
+  .hs-check input[type="checkbox"],
+  .check input[type="checkbox"],
+  .check-label input[type="checkbox"],
+  .toggle-field input[type="checkbox"],
+  .facet-toggle input[type="checkbox"],
+  .set-adv-toggle input[type="checkbox"]
+):hover {
+  border-color: var(--accent);
+}
+
+:where(
+  .hs-checkbox,
+  .hs-check input[type="checkbox"],
+  .check input[type="checkbox"],
+  .check-label input[type="checkbox"],
+  .toggle-field input[type="checkbox"],
+  .facet-toggle input[type="checkbox"],
+  .set-adv-toggle input[type="checkbox"]
+):checked {
+  border-color: var(--accent);
+  background-color: var(--accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230E0F13' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 4 4L19 6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow:
+    0 0 0 3px var(--accent-tint),
+    0 5px 14px var(--accent-glow);
+}
+
+:where(
+  .hs-checkbox,
+  .hs-check input[type="checkbox"],
+  .check input[type="checkbox"],
+  .check-label input[type="checkbox"],
+  .toggle-field input[type="checkbox"],
+  .facet-toggle input[type="checkbox"],
+  .set-adv-toggle input[type="checkbox"]
+):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 code,
 kbd,
 samp,
 pre {
   font-family: var(--font-mono);
-}
-
-/* HS-10-06: Alpine.js cloak directive. Elements marked x-cloak stay
- * hidden until Alpine has finished initializing them, which prevents
- * the brief flash of pre-evaluated x-show / x-text content on load. */
-[x-cloak] {
-  display: none !important;
 }
 
 /* HS-10-12: live-status pulse. A single keyframe animation applied
@@ -95,9 +356,18 @@ pre {
  * forces animation-duration to 0ms, so this pulse stops cleanly
  * without per-rule overrides. */
 @keyframes hs-pulse {
-  0%   { opacity: 1;   transform: scale(1); }
-  50%  { opacity: 0.4; transform: scale(0.78); }
-  100% { opacity: 1;   transform: scale(1); }
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.78);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .pill-dot.is-live,
@@ -116,9 +386,8 @@ pre {
  * gradient (iPad `Sig.topHairline`, :425-427), NOT the dimmer flat
  * `inset white .04` the old `--elev-1` carried.
  *
- * Authored GLOBAL (not Astro component-scoped) on purpose: some cockpit
- * cards are rendered at runtime by JS/Alpine, so a scoped class can
- * silently fail to apply. Global rules apply wherever the class lands.
+ * Authored globally so every route and runtime-rendered card shares the
+ * same material contract. Component styles still own interactions.
  * Surface + elevation only — never sets a status colour (web-wins).
  * ============================================================ */
 .signal-card {
@@ -130,7 +399,7 @@ pre {
    * so they keep their contrast against the parent while still gaining the
    * top-lit hairline + elevation. HS-69-02 broadening (Wave B). */
   background: var(--signal-card-surface, var(--surface-1));
-  border: 1px solid transparent;     /* the visible edge is the ::before hairline */
+  border: 1px solid transparent; /* the visible edge is the ::before hairline */
   border-radius: var(--radius-5);
   box-shadow: var(--elev-2);
 }
@@ -154,10 +423,10 @@ pre {
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
-          mask:
+  mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
-          mask-composite: exclude;
+  mask-composite: exclude;
   pointer-events: none;
 }
 
@@ -176,14 +445,19 @@ pre {
   color: #fff;
   box-shadow: 0 4px 14px var(--accent-glow);
 }
-.glyph-chip svg { width: 55%; height: 55%; }
+.glyph-chip svg {
+  width: 55%;
+  height: 55%;
+}
 
 /* HS-69-02: a pressable scale-on-press feedback (iPad `PressableCard`,
  * :466-474; web spec .98 vs iPad .975, cosmetic). Opt-in. */
 .is-pressable {
   transition: transform var(--duration-short) var(--ease-standard);
 }
-.is-pressable:active { transform: scale(0.98); }
+.is-pressable:active {
+  transform: scale(0.98);
+}
 
 /* ============================================================
  * HS-69-04 — materialize + stagger motion.
@@ -202,7 +476,10 @@ pre {
   0% {
     opacity: 0;
     transform: translateY(6px) scale(0.985);
-    box-shadow: var(--elev-2), 0 0 0 1px var(--accent-glow), 0 4px 22px var(--accent-glow);
+    box-shadow:
+      var(--elev-2),
+      0 0 0 1px var(--accent-glow),
+      0 4px 22px var(--accent-glow);
   }
   60% {
     opacity: 1;
@@ -239,9 +516,8 @@ pre {
  * The canonical, structured `{scope, label}` chip — POSITIONING's
  * one-glance privacy badge, NEVER a sentence. Lifted off `/presence`'s
  * `.q-egress` (its visual source of truth) into a reusable class so the
- * SAME badge rides the cockpit cards. Global-scoped on purpose: the cards
- * it lands on are Alpine/JS-rendered, so a scoped style would not apply
- * (the standing Astro-scoped-CSS-on-JS-DOM gotcha).
+ * SAME badge rides the cockpit cards. Global-scoped on purpose because this
+ * state signal is shared across route and HUD compositions.
  *
  * Colors honor the web-wins status palette: local = `--ok` (cobalt-green
  * "stays here"), local+cloud / cloud = `--accent` ("leaves, with a target").
@@ -272,7 +548,7 @@ pre {
 
 /* HS-70-07: the shared guiding empty-state primitive. Used app-wide so a
  * fresh surface reads as "here's what this is + the one thing to do", never a
- * scary blank. Global (applies to Alpine/JS-injected DOM too). Copy stays
+ * scary blank. Global so route-level empty states share the contract. Copy stays
  * labels-not-manuals: a short title + one guiding line + at most one action. */
 .empty-state {
   display: flex;

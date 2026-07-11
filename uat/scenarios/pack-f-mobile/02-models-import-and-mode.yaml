@@ -1,4 +1,5 @@
 id: f-models-import-and-mode
+execution_target: ios_flagship_swift
 title: Import a model, then choose where inference runs — and the dead-endpoint control
 # Two device musts: the on-device model store (Files sideload + AirDrop + HF
 # download) and the runtime-mode setting (local / homelab / any endpoint). The
@@ -14,17 +15,13 @@ manual_setup:
   - Know one reachable OpenAI-compatible endpoint URL (e.g. the .43 llama-server) for the endpoint-mode treatment.
 recipes:
   - intel-endpoint-dead
-surfaces:
-  web: {n/a: "directory rows: models.import_and_manage web=no (device model store) and inference_mode_setting web=unknown (web has its own runtime; this setting is the device's) — not the web surface"}
-  ipad: yes
-  iphone: {n/a: "directory rows: import_and_manage + inference_mode_setting iphone=unknown — the same core, but the iPhone Settings/model surface is not separately evidenced in this slice"}
+form_factors: [ipad]
 steps:
   - do: >
       Staging-verify. Open the model manager and read the installed list.
     expect: >
       The model manager opens and shows an honest list of installed models (or an
       honest empty state) with sizes — not a spinner and not a fabricated entry.
-    where: /
   - do: Download the pinned catalog model from Hugging Face and watch the progress.
     expect: >
       Progress moves 0 → 100% with real bytes (not a fake indeterminate bar); when
@@ -49,5 +46,4 @@ steps:
       A real result comes back and the egress badge names the real host (cloud /
       endpoint, not "On device") — the badge tells the truth about where the run
       went. The reachable endpoint produces what the dead one could not.
-    where: /
 teardown: []

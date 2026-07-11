@@ -1,4 +1,5 @@
 id: b-ai-drafted-answer
+execution_target: ios_unclassified_swift
 title: AI drafts the answer to a blocked coder — approve, then inject
 features:
   - agents.answer_coder.ai_drafted
@@ -18,10 +19,7 @@ recipes: []
 # agents.answer_coder.ai_drafted is ipad:yes (CoderAnswer.draft on a fresh
 # resolved provider, violet Draft-with-AI action + its own egress chip, live
 # endpoint proof 0.52s). web is unknown in the record; iphone unknown.
-surfaces:
-  web: {n/a: "directory row: web unknown — the Draft-with-AI action is evidenced on iPad (CoderAnswer.draft), not on the web desk"}
-  ipad: yes
-  iphone: {n/a: "directory row: iphone unknown — no device claim for the AI-draft action on iPhone in the record"}
+form_factors: [ipad]
 steps:
   - do: >
       Manual-staging verify. On the iPad Agent Desk, confirm the blocked coder

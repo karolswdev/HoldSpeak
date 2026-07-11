@@ -1,17 +1,12 @@
 id: d-egress-badge-local
-title: The egress badge reads local, on all three surfaces
+execution_target: web_react
+title: The React Desk egress badge reads local
 features:
   - trust.egress.badge-tells-truth
   - mobile.trust.egress.badge
 recipes:
   - seeded-desk
-# The egress badge is explicitly all-three in the directory (mobile.trust.egress.badge
-# is iphone: yes) — a genuine three-surface trust check. This scenario walks the
-# LOCAL direction only; the falsifiable cloud FLIP is walked in 07-egress-cloud-flip.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: yes
+form_factors: [desktop]
 steps:
   - do: Find the egress badge on the desk (the staging beat — the desk is seeded and fully local).
     expect: The badge reads local in one word; nothing on this desk leaves the machine, and the badge says so without a paragraph of prose.

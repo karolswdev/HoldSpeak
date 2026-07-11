@@ -1,4 +1,5 @@
 id: c-hold-to-talk
+execution_target: web_react
 title: Hold the hotkey, speak, release — text lands in the active app
 features:
   - dictation.voice-typing.hold-to-talk
@@ -11,10 +12,7 @@ manual_setup:
   - Open a plain foreign app with an editable text field (a notes app / editor) and put the cursor in an empty field.
   - Have a short spoken phrase ready to say, e.g. "ship the ledgerline rewrite on Friday".
 recipes: []
-surfaces:
-  web: yes
-  ipad: yes      # directory: dictation.voice-typing.hold-to-talk ipad=yes (README iPad 'dictates an answer into your desk, the hub runs that text through the full dictation pipeline and types the result')
-  iphone: yes    # directory: dictation.voice-typing.hold-to-talk iphone=unknown; but dictation.voice_typing.hold_to_talk iphone=yes and the Apple app serves both — hand-stage the iPhone form-factor hold-to-talk rather than false-n/a it
+form_factors: [desktop]
 steps:
   # Staging-verify beat: prove the world is armed before the human speaks.
   - do: Confirm the model is ready and the hold-to-talk hotkey is bound, with the cursor in an empty foreign field.
@@ -25,10 +23,4 @@ steps:
   # Honest-degradation close — the hold gesture must not silently drop.
   - do: Hold the hotkey and release it immediately without speaking.
     expect: Nothing garbled types — an empty capture lands nothing (or a clearly-empty result), it does not paste stale text from the previous capture or hang the hotkey.
-  # iPhone form-factor leg — the flipped-from-unknown column, hand-walked.
-  - do: On iPhone, hold the dictation control, speak the phrase, release, and let the hub run it through the pipeline.
-    expect: The result types into the active desk field on the phone form factor — the same hold-to-talk gesture works on the smaller Apple app, proving the iphone=yes claim on dictation.voice_typing.hold_to_talk is real.
-    surfaces:
-      web: {n/a: "this beat is the iPhone form-factor hold-to-talk specifically; the web/desktop hotkey is covered by the steps above"}
-      ipad: {n/a: "this beat is the iPhone form-factor specifically; the iPad remote-dictation path is covered by the surface-wide walk"}
 teardown: []

@@ -1,0 +1,34 @@
+title: "6 · Sync, mesh, and integrations"
+purpose: >
+  Exercise user-visible cross-device sync, remote execution, companion handoff,
+  proposal approval, GitHub, webhook, Slack, and the delivery-belt action. This
+  is functional connectivity work, not database/network hardening.
+sequence: 6
+tier: extended
+estimated_minutes: 135
+prerequisites:
+  - LAN access, a second device or companion build, tmux, and the .43 endpoint.
+  - Authenticated gh against a throwaway repository, plus disposable webhook and Slack destinations.
+  - A disposable Delivery Workbench repository for the belt approval leg.
+exit_gate:
+  - Synced state and remote work remain understandable, attributable, and reviewable from the initiating surface.
+  - External actions must be aimed only at the disposable destinations named in the preflight.
+scenarios:
+  - pack-a-aftercare/a-sync-cross-device
+  - pack-b-steering/b-pair-desktop-companion
+  - pack-b-steering/b-dictate-into-mac
+  - pack-b-steering/b-relay-owns-grant
+  - pack-b-steering/b-answer-coder-relay
+  - pack-a-aftercare/a-action-to-issue
+  - pack-a-aftercare/a-belt-approval-leg
+  - pack-e-mesh-edge/e-node-serves-and-reads-live
+  - pack-e-mesh-edge/e-handoff-web-run-to-node
+  - pack-e-mesh-edge/e-mesh-run-grounded-substance
+  - pack-e-mesh-edge/e-profile-shape-syncs
+  - pack-e-mesh-edge/e-node-events-to-hub
+  - pack-e-mesh-edge/e-dispatch-and-inbox
+  - pack-e-mesh-edge/e-offline-door-refuses-fast
+  - pack-g-connectors/g-governance-gate
+  - pack-g-connectors/g-github-issue-connector
+  - pack-g-connectors/g-webhook-post-connector
+  - pack-g-connectors/g-slack-double-optin

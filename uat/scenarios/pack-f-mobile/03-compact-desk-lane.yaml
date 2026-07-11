@@ -1,0 +1,33 @@
+id: f-compact-desk-lane
+execution_target: ios_flagship_swift
+title: The flagship Swift Desk crosses between its compact lane and wide diorama
+features:
+  - mobile.desk.compact.lane
+recipes:
+  - seeded-desk
+manual_setup:
+  - Use the exact production flagship build on a physical iPhone and iPad; record both device/build identities in the verdict notes.
+  - Pair both flagship installs to this isolated run and complete native sync before judging layout.
+form_factors: [ipad, iphone]
+steps:
+  - do: >
+      Staging-verify. In the production flagship's DioStage, confirm the seeded primitives
+      arrived (notes, KBs, a zone) so the lane has something to filter.
+    expect: >
+      The seeded desk reads back — the dogfood notes, the Project KB, and the
+      Ledgerline zone are present. The lane is populated, not empty.
+    form_factors: [ipad, iphone]
+  - do: >
+      On the iPhone (compact width) read how the desk renders.
+    expect: >
+      The diorama becomes a full-width primitive lane with a kind-filter chip rail
+      and an accent create FAB — not a squeezed diorama. Tapping a kind chip
+      filters the list to that primitive kind.
+    form_factors: [iphone]
+  - do: On the flagship iPad, use the wide Desk layout and confirm the native diorama is present.
+    expect: >
+      At wide width the diorama is restored with every primitive's position intact
+      (byte-equivalent) — the flagship compact lane and wide DioStage diorama are
+      two native layouts over the same desk, with nothing lost between devices.
+    form_factors: [ipad]
+teardown: []

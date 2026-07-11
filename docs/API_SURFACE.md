@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
+Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 
 ## device_audio_ws
 
@@ -33,35 +33,35 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 | DELETE | `/api/activity/meeting-candidates` | web |
 | GET | `/api/activity/meeting-candidates` | web |
 | POST | `/api/activity/meeting-candidates` | web |
-| GET | `/api/activity/meeting-candidates/preview` | web |
+| GET | `/api/activity/meeting-candidates/preview` | server only |
 | POST | `/api/activity/meeting-candidates/{candidate_id}/start` | web |
-| PUT | `/api/activity/meeting-candidates/{candidate_id}/status` | web |
+| PUT | `/api/activity/meeting-candidates/{candidate_id}/status` | server only |
 
 ## web.routes.activity.enrichment
 
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/activity/annotations` | server only |
-| GET | `/api/activity/briefing` | ios, web |
+| GET | `/api/activity/briefing` | ios |
 | GET | `/api/activity/enrichment/connectors` | web |
-| PUT | `/api/activity/enrichment/connectors/{connector_id}` | web |
-| DELETE | `/api/activity/enrichment/connectors/{connector_id}/annotations` | web |
-| DELETE | `/api/activity/enrichment/connectors/{connector_id}/candidates` | web |
+| PUT | `/api/activity/enrichment/connectors/{connector_id}` | server only |
+| DELETE | `/api/activity/enrichment/connectors/{connector_id}/annotations` | server only |
+| DELETE | `/api/activity/enrichment/connectors/{connector_id}/candidates` | server only |
 | GET | `/api/activity/enrichment/connectors/{connector_id}/dry-run` | web |
 | GET | `/api/activity/enrichment/connectors/{connector_id}/runs` | server only |
 | GET | `/api/activity/enrichment/github/preview` | server only |
 | POST | `/api/activity/enrichment/github/run` | server only |
 | GET | `/api/activity/enrichment/jira/preview` | server only |
 | POST | `/api/activity/enrichment/jira/run` | server only |
-| POST | `/api/activity/enrichment/pipelines/{pipeline_id}/run` | web |
+| POST | `/api/activity/enrichment/pipelines/{pipeline_id}/run` | server only |
 | POST | `/api/activity/extension/events` | server only |
 
 ## web.routes.activity.ledger
 
 | Method | Path | Consumers |
 |---|---|---|
-| POST | `/api/activity/domains` | web |
-| DELETE | `/api/activity/domains/{domain}` | web |
+| POST | `/api/activity/domains` | server only |
+| DELETE | `/api/activity/domains/{domain}` | server only |
 | DELETE | `/api/activity/records` | web |
 | GET | `/api/activity/records` | web |
 | POST | `/api/activity/refresh` | web |
@@ -74,8 +74,8 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 |---|---|---|
 | GET | `/api/activity/nudges` | ios, web |
 | POST | `/api/activity/nudges/select` | ios, web |
-| POST | `/api/activity/nudges/select/clear` | web |
-| POST | `/api/activity/nudges/{nudge_id}/dismiss` | ios, web |
+| POST | `/api/activity/nudges/select/clear` | server only |
+| POST | `/api/activity/nudges/{nudge_id}/dismiss` | ios |
 
 ## web.routes.activity.plugin_jobs
 
@@ -84,8 +84,8 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 | GET | `/api/plugin-jobs` | web |
 | POST | `/api/plugin-jobs/process` | web |
 | GET | `/api/plugin-jobs/summary` | web |
-| POST | `/api/plugin-jobs/{job_id}/cancel` | web |
-| POST | `/api/plugin-jobs/{job_id}/retry-now` | web |
+| POST | `/api/plugin-jobs/{job_id}/cancel` | server only |
+| POST | `/api/plugin-jobs/{job_id}/retry-now` | server only |
 
 ## web.routes.activity.rules
 
@@ -106,15 +106,15 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 | GET | `/api/cadence/brief` | server only |
 | GET | `/api/cadence/closeout` | server only |
 | POST | `/api/cadence/closeout/apply` | server only |
-| GET | `/api/cadence/history` | server only |
-| GET | `/api/cadence/loops` | server only |
+| GET | `/api/cadence/history` | web |
+| GET | `/api/cadence/loops` | web |
 | GET | `/api/cadence/loops/{loop_id}` | server only |
-| POST | `/api/cadence/loops/{loop_id}/close` | server only |
-| POST | `/api/cadence/loops/{loop_id}/kill` | server only |
-| POST | `/api/cadence/loops/{loop_id}/reply` | server only |
-| POST | `/api/cadence/loops/{loop_id}/snooze` | server only |
-| POST | `/api/cadence/run-now` | server only |
-| GET | `/api/cadence/status` | server only |
+| POST | `/api/cadence/loops/{loop_id}/close` | web |
+| POST | `/api/cadence/loops/{loop_id}/kill` | web |
+| POST | `/api/cadence/loops/{loop_id}/reply` | web |
+| POST | `/api/cadence/loops/{loop_id}/snooze` | web |
+| POST | `/api/cadence/run-now` | web |
+| GET | `/api/cadence/status` | web |
 
 ## web.routes.core
 
@@ -139,9 +139,9 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/dictation/agent-context` | web |
-| POST | `/api/dictation/agent-context/clear` | web |
-| POST | `/api/dictation/agent-context/summarize` | web |
+| GET | `/api/dictation/agent-context` | server only |
+| POST | `/api/dictation/agent-context/clear` | server only |
+| POST | `/api/dictation/agent-context/summarize` | server only |
 | GET | `/api/dictation/agent-hooks` | web |
 | GET | `/api/dictation/project-context` | ios, web |
 
@@ -149,19 +149,19 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/dictation/block-templates` | ios, web |
+| GET | `/api/dictation/block-templates` | ios |
 | GET | `/api/dictation/blocks` | ios, web |
 | POST | `/api/dictation/blocks` | ios, web |
-| POST | `/api/dictation/blocks/from-template` | ios, web |
-| DELETE | `/api/dictation/blocks/{block_id}` | ios, web |
-| PUT | `/api/dictation/blocks/{block_id}` | ios, web |
+| POST | `/api/dictation/blocks/from-template` | ios |
+| DELETE | `/api/dictation/blocks/{block_id}` | ios |
+| PUT | `/api/dictation/blocks/{block_id}` | ios |
 
 ## web.routes.dictation.intents
 
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/intents/control` | web |
-| PUT | `/api/intents/override` | web |
+| PUT | `/api/intents/override` | server only |
 | POST | `/api/intents/preview` | web |
 | PUT | `/api/intents/profile` | web |
 
@@ -172,7 +172,7 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 | DELETE | `/api/dictation/project-kb` | web |
 | GET | `/api/dictation/project-kb` | web |
 | PUT | `/api/dictation/project-kb` | web |
-| POST | `/api/dictation/project-kb/starter` | web |
+| POST | `/api/dictation/project-kb/starter` | server only |
 
 ## web.routes.dictation.pipeline
 
@@ -197,8 +197,8 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/dictation/project-doc-suggestion` | web |
-| POST | `/api/dictation/project-doc-suggestion/apply` | web |
-| POST | `/api/dictation/project-doc-suggestion/dismiss` | web |
+| POST | `/api/dictation/project-doc-suggestion/apply` | server only |
+| POST | `/api/dictation/project-doc-suggestion/dismiss` | server only |
 | GET | `/api/dictation/project-hs` | web |
 | PUT | `/api/dictation/project-hs` | web |
 
@@ -212,22 +212,22 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 
 | Method | Path | Consumers |
 |---|---|---|
-| PATCH | `/api/action-items/{item_id}` | web |
-| PATCH | `/api/action-items/{item_id}/edit` | web |
-| PATCH | `/api/action-items/{item_id}/review` | web |
+| PATCH | `/api/action-items/{item_id}` | server only |
+| PATCH | `/api/action-items/{item_id}/edit` | server only |
+| PATCH | `/api/action-items/{item_id}/review` | server only |
 | GET | `/api/all-action-items` | web |
-| PATCH | `/api/all-action-items/{item_id}` | web |
-| PATCH | `/api/all-action-items/{item_id}/edit` | web |
-| PATCH | `/api/all-action-items/{item_id}/review` | web |
+| PATCH | `/api/all-action-items/{item_id}` | server only |
+| PATCH | `/api/all-action-items/{item_id}/edit` | server only |
+| PATCH | `/api/all-action-items/{item_id}/review` | server only |
 
 ## web.routes.meetings.aftercare
 
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/meetings/{meeting_id}/aftercare` | ios, web |
-| POST | `/api/meetings/{meeting_id}/aftercare/file-issue` | ios, web |
+| POST | `/api/meetings/{meeting_id}/aftercare/file-issue` | ios |
 | POST | `/api/meetings/{meeting_id}/export/slack` | web |
-| GET | `/api/meetings/{meeting_id}/followup-draft` | web |
+| GET | `/api/meetings/{meeting_id}/followup-draft` | server only |
 | GET | `/api/meetings/{meeting_id}/proposals` | ios, web |
 | POST | `/api/meetings/{meeting_id}/proposals/{proposal_id}/decision` | ios, web |
 
@@ -247,16 +247,16 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 |---|---|---|
 | GET | `/api/meetings/{meeting_id}/artifacts` | web |
 | GET | `/api/meetings/{meeting_id}/intent-timeline` | web |
-| GET | `/api/meetings/{meeting_id}/plugin-runs` | web |
+| GET | `/api/meetings/{meeting_id}/plugin-runs` | server only |
 
 ## web.routes.meetings.intel
 
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/intel/jobs` | web |
-| POST | `/api/intel/process` | web |
-| POST | `/api/intel/retry/{meeting_id}` | web |
-| GET | `/api/intel/summary` | web |
+| POST | `/api/intel/process` | server only |
+| POST | `/api/intel/retry/{meeting_id}` | server only |
+| GET | `/api/intel/summary` | server only |
 
 ## web.routes.meetings.live
 
@@ -273,8 +273,8 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/speakers` | web |
-| GET | `/api/speakers/{speaker_id}` | web |
-| PATCH | `/api/speakers/{speaker_id}` | web |
+| GET | `/api/speakers/{speaker_id}` | server only |
+| PATCH | `/api/speakers/{speaker_id}` | server only |
 
 ## web.routes.mesh
 
@@ -310,6 +310,7 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 | GET | `/cadence` | server only |
 | GET | `/commands` | server only |
 | GET | `/companion` | server only |
+| GET | `/design/components` | server only |
 | GET | `/desk` | server only |
 | GET | `/dictation` | server only |
 | GET | `/docs/dictation-runtime` | server only |
@@ -417,21 +418,23 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 | GET | `/api/meetings/{meeting_id}/projects` | server only |
 | GET | `/api/projects` | web |
 | POST | `/api/projects` | web |
-| DELETE | `/api/projects/{project_id}` | web |
-| GET | `/api/projects/{project_id}` | web |
-| PATCH | `/api/projects/{project_id}` | web |
-| GET | `/api/projects/{project_id}/action-items` | web |
-| GET | `/api/projects/{project_id}/artifacts` | web |
-| GET | `/api/projects/{project_id}/briefings` | web |
-| GET | `/api/projects/{project_id}/meetings` | web |
+| DELETE | `/api/projects/{project_id}` | server only |
+| GET | `/api/projects/{project_id}` | server only |
+| PATCH | `/api/projects/{project_id}` | server only |
+| GET | `/api/projects/{project_id}/action-items` | server only |
+| GET | `/api/projects/{project_id}/artifacts` | server only |
+| GET | `/api/projects/{project_id}/briefings` | server only |
+| GET | `/api/projects/{project_id}/meetings` | server only |
 | DELETE | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
 | POST | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
-| GET | `/api/projects/{project_id}/summary` | web |
+| GET | `/api/projects/{project_id}/summary` | server only |
 
 ## web.routes.setup
 
 | Method | Path | Consumers |
 |---|---|---|
+| POST | `/api/setup/discover-models` | web |
+| GET | `/api/setup/runtime-options` | web |
 | POST | `/api/setup/runtime-test` | web |
 | GET | `/api/setup/status` | ios, web |
 
@@ -480,7 +483,7 @@ Routes: 270 (plus static mounts). iOS-consumed: 76. Web-consumed: 198.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/devices/health` | server only |
+| GET | `/api/devices/health` | web |
 | GET | `/api/runtime/status` | ios, web |
 
 ## web.routes.system.settings

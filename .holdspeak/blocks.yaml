@@ -1,0 +1,20 @@
+version: 1
+default_match_confidence: 0.6
+blocks:
+- id: project_facts_context
+  description: User is dictating a prompt for an AI assistant and wants the project's
+    facts attached.
+  match:
+    examples:
+    - help me refactor the payments module
+    - write a test for this endpoint
+    - explain how this service is wired together
+    negative_examples:
+    - remind me to buy milk
+    threshold: 0.7
+  inject:
+    mode: append
+    template: '
+
+
+      Project stack: {project.kb.stack}'

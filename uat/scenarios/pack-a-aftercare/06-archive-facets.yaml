@@ -1,14 +1,12 @@
 id: a-archive-facets
+execution_target: web_react
 title: Facet the two-meeting archive by tag and open actions
 features:
   - meetings.archive.facet-search
   - meetings.archive.faceted_search
 recipes:
   - pack-a-two-meetings
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "iPhone facet-search at compact width is unverified in the inventory (archive.facet-search iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: (Staging beat) Confirm both meetings are in the archive so the facets have more than one meeting to narrow.
     expect: The archive lists the pylon incident AND the ledgerline sync — two distinct meetings, each with its tags and open-action count.
@@ -19,6 +17,5 @@ steps:
   - do: (Honest-empty control) Filter by a facet value no meeting has (a speaker or tag that does not exist in either transcript).
     expect: The archive returns an honest empty result — zero meetings, no error and no stale rows left showing. An empty facet reads empty, not the unfiltered list.
     where: /history
-    surfaces:
-      ipad: {n/a: "the faceted_search variant (meetings.archive.faceted_search) is ipad: unknown; the iPad facet leg is covered by facet-search above, the empty-result edge is asserted on the web history filter row"}
+    form_factors: [desktop]
 teardown: []

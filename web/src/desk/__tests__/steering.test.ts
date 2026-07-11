@@ -85,7 +85,10 @@ describe("the steering slice (attach)", () => {
     stubPeek(hits);
     useSteering.getState().openSession("claude:abc123");
     await vi.advanceTimersByTimeAsync(0);
-    stubPeek(hits, { ...LIVE_BODY, peek: { status: "not_modified", hash: "h1" } });
+    stubPeek(hits, {
+      ...LIVE_BODY,
+      peek: { status: "not_modified", hash: "h1" },
+    });
     await vi.advanceTimersByTimeAsync(PEEK_POLL_MS);
     expect(hits[1]).toContain("last_hash=h1");
     const st = useSteering.getState();
@@ -135,9 +138,18 @@ describe("the arming grant (HS-87-02)", () => {
     vi.stubGlobal("fetch", (url: string, opts?: any) => {
       const body =
         String(url).includes("/arm") && opts?.method === "POST"
-          ? { status: "armed", key: "claude:abc123", pane_id: "%5", expires_in_seconds: 900 }
+          ? {
+              status: "armed",
+              key: "claude:abc123",
+              pane_id: "%5",
+              expires_in_seconds: 900,
+            }
           : LIVE_BODY;
-      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(body) });
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(body),
+      });
     });
     useSteering.setState({ openKey: "claude:abc123" });
     await useSteering.getState().arm();
@@ -155,7 +167,8 @@ describe("the arming grant (HS-87-02)", () => {
         json: () =>
           Promise.resolve({
             status: "stale_session",
-            detail: "registry record is 2700s old — a stale session cannot be armed",
+            detail:
+              "registry record is 2700s old — a stale session cannot be armed",
           }),
       }),
     );
@@ -168,7 +181,11 @@ describe("the arming grant (HS-87-02)", () => {
 
   it("disarm clears the grant immediately", async () => {
     vi.stubGlobal("fetch", () =>
-      Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) }),
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({}),
+      }),
     );
     useSteering.setState({
       openKey: "claude:abc123",
@@ -207,7 +224,9 @@ describe("the arming grant (HS-87-02)", () => {
         status: 200,
         json: () =>
           Promise.resolve({
-            grants: { "claude:abc123": { pane_id: "%5", expires_in_seconds: 120 } },
+            grants: {
+              "claude:abc123": { pane_id: "%5", expires_in_seconds: 120 },
+            },
           }),
       }),
     );
@@ -227,7 +246,10 @@ describe("the steer action (HS-87-03)", () => {
   it("a delivered steer reports sent and carries the submit flag", async () => {
     const posts: any[] = [];
     vi.stubGlobal("fetch", (url: string, opts?: any) => {
-      posts.push({ url: String(url), body: opts?.body ? JSON.parse(opts.body) : null });
+      posts.push({
+        url: String(url),
+        body: opts?.body ? JSON.parse(opts.body) : null,
+      });
       return Promise.resolve({
         ok: true,
         status: 200,
@@ -247,8 +269,7 @@ describe("the steer action (HS-87-03)", () => {
       Promise.resolve({
         ok: false,
         status: 409,
-        json: () =>
-          Promise.resolve({ status: "expired", revoked: true }),
+        json: () => Promise.resolve({ status: "expired", revoked: true }),
       }),
     );
     useSteering.setState({
@@ -294,7 +315,11 @@ describe("the steer action (HS-87-03)", () => {
     useSteering.setState({ openKey: "claude:abc123", armed: true });
     const refs = { meeting_ids: ["m1"], artifact_ids: [], expand: "summary" };
     await useSteering.getState().steer("with context", false, refs);
-    expect(posts[0]).toEqual({ text: "with context", submit: false, grounding: refs });
+    expect(posts[0]).toEqual({
+      text: "with context",
+      submit: false,
+      grounding: refs,
+    });
   });
 
   it("an over-cap refusal keeps the grant and names the size (HS-87-04)", async () => {
@@ -332,7 +357,10 @@ describe("classify (HS-87-05)", () => {
     const posts: string[] = [];
     vi.stubGlobal("fetch", (url: string) => {
       posts.push(String(url));
-      return Promise.resolve({ status: 201, json: () => Promise.resolve({ note: { id: "n1" } }) });
+      return Promise.resolve({
+        status: 201,
+        json: () => Promise.resolve({ note: { id: "n1" } }),
+      });
     });
     useSteering.setState({ openKey: "claude:abc123" });
     const ok = await useSteering.getState().keepAsNote();
@@ -343,7 +371,10 @@ describe("classify (HS-87-05)", () => {
 
   it("keepAsNote reports failed on a non-201", async () => {
     vi.stubGlobal("fetch", () =>
-      Promise.resolve({ status: 400, json: () => Promise.resolve({ error: "nothing to keep" }) }),
+      Promise.resolve({
+        status: 400,
+        json: () => Promise.resolve({ error: "nothing to keep" }),
+      }),
     );
     useSteering.setState({ openKey: "claude:abc123" });
     expect(await useSteering.getState().keepAsNote()).toBe(false);
@@ -366,7 +397,9 @@ describe("coder frames on the one bus", () => {
     expect(
       isCoderFrame({ type: "intel_status", data: { scope: "belt" } }),
     ).toBe(false);
-    expect(isCoderFrame({ type: "duration", data: { scope: "coder" } })).toBe(false);
+    expect(isCoderFrame({ type: "duration", data: { scope: "coder" } })).toBe(
+      false,
+    );
     expect(isCoderFrame(null)).toBe(false);
   });
 });

@@ -121,6 +121,13 @@ def test_replay_after_target_correction_changes_routing(
 ) -> None:
     """The payoff: correct the target, replay, and the routing changes — offline."""
     _use_config(monkeypatch, corrections_enabled=True)
+    import holdspeak.target_profile as target_profile_module
+
+    monkeypatch.setattr(
+        target_profile_module,
+        "collect_active_target_hints",
+        lambda: {"app": "Terminal", "process": "zsh"},
+    )
     entry = persistent_db.dictation_journal.record(
         source="dictation",
         transcript="send the weekly digest to the browser tab",
@@ -168,14 +175,8 @@ def test_journal_card_has_replay_action(persistent_db: Database) -> None:
     """The Replay action + before/after styles ship in the page/bundle."""
     client = _client(persistent_db)
     body = client.get("/dictation").text
-    built = (
-        Path(__file__).resolve().parents[2]
-        / "holdspeak" / "static" / "_built" / "_astro"
-    )
-    js = "\n".join(p.read_text() for p in built.glob("dictation.astro_astro_type_script*.js"))
-    assert "data-journal-replay" in js  # the per-entry Replay action
-    assert "replayJournalEntry" in js
-    css = "\n".join(p.read_text() for p in built.glob("dictation*.css"))
-    assert "replay-row" in css  # the before/after diff styles
-    # Re-insert is focus-safe: preview + copy, never OS-typing from the web.
-    assert "Preview only" in js
+    assert '<div id="root"></div>' in body
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    assert "/replay" in source and "replayResult" in source
+    assert "Preview only" in source and "Copy result" in source
+    assert "navigator.clipboard.writeText" in source

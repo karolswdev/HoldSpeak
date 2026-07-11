@@ -1,20 +1,12 @@
 id: g-slack-double-optin
+execution_target: web_react
 title: Send to Slack — invisible until configured, then per-send approved (the URL never rides)
 features:
   - actuators.slack.send
   - trust.egress.send-to-slack-double-optin
 recipes:
   - meeting-just-ended-open-actions
-  - pack-g-slack-armed
-# Send-to-Slack is web:yes and ipad:yes in the directory (README: approving a
-# Slack send on iPad carries the cloud mark; ios consumes
-# /api/desk/actuators/slack/*). iPhone is genuinely unknown in the record. The
-# control (no URL) is golden-43; the treatment (URL set) is pack-g-slack-armed —
-# the .invalid host means nothing is really delivered in a sitting.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the approve-Slack-send flow at iPhone form factor is unverified in the directory record (actuators.slack.send iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       (Control — URL NOT configured) Staging-verify on the default golden-43 desk
@@ -25,6 +17,8 @@ steps:
       aftercare Slack button, and the export route refuses. The feature does not
       exist until you consent by configuring it. (Opt-in 1 of 2 is absent.)
     where: /history
+    after:
+      - apply_recipe: pack-g-slack-armed
   - do: >
       (Treatment — URL configured) Restage on the slack-armed desk (the URL is
       set). Open the same meeting's aftercare; the Send-to-Slack control is now
@@ -36,8 +30,6 @@ steps:
       the control is the configured URL. (Opt-in 1 of 2 satisfied; opt-in 2 is the
       per-send approval still pending.)
     where: /history
-    after:
-      - apply_recipe: pack-g-slack-armed
   - do: >
       Inspect the pending proposal payload / the broadcast it rode in on, and any
       non-settings API response for the meeting. Then approve the send.

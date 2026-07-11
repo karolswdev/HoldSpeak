@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-uat
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** none (rides the shipped `mesh-node-alive` recipe)
 - **Owner:** unassigned
 
@@ -34,14 +34,22 @@ The re-eval ranks this the core of Pack E (`PROTOCOL-COVERAGE.md` §3.3).
 
 ## Acceptance criteria
 
-- [ ] `dispatch_run` drives a real ask onto `uat-worker` and the response reads
-      badged `⇄ mesh` (not a local run).
-- [ ] The provenance probe shows the worker claimed the job and the hub loaded no
-      model (worker-completion delta before→after).
-- [ ] `mesh-run-on-worker` applies + verifies on `.43`, and tears the worker down
-      cleanly (no orphan process).
-- [ ] The unblocked pack-e beats cite the recipe and carry real verdicts; the
-      `.43`-gated test self-skips without the LAN.
+- [x] `dispatch_run` drives a real ask onto `uat-worker` and the response reads
+      badged `⇄ mesh` (not a local run). — `run_returned_badged` asserts
+      `egress.scope == mesh`, `host == uat-worker`; green live on `.43`.
+- [x] The provenance probe shows the worker claimed the job and the hub loaded no
+      model (worker-completion delta before→after). — `run_claimed_by_worker`
+      reads the worker's own CLAIM-marker delta (`node_log_text`, the shared
+      `holdspeak.log`) and the hub's `provider == mesh`; "the run moved, the
+      model didn't."
+- [x] `mesh-run-on-worker` applies + verifies on `.43`, and tears the worker down
+      cleanly (no orphan process). — `test_run_dispatched_onto_the_worker_returns_badged`
+      applies the recipe, verifies all three probes, then `teardown` and asserts
+      the run is not up (10 passed, 52.86s — see `evidence-story-01.md`).
+- [x] The unblocked pack-e beats cite the recipe and carry real verdicts; the
+      `.43`-gated test self-skips without the LAN. — pack-e `02`/`03`/`06` now
+      cite `mesh-run-on-worker` with the treatment leg marked machine-verified;
+      `test_mesh_dispatch.py` self-skips when `.43` is unreachable.
 
 ## Test plan
 

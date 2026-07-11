@@ -208,19 +208,12 @@ def test_dry_run_returns_journal_id(persistent_db: Database, tmp_path, monkeypat
 def test_moment_affordance_present_and_focus_safe(persistent_db: Database) -> None:
     client = _client(persistent_db)
     body = client.get("/dictation").text
-    assert 'id="dry-moment"' in body  # the in-moment host element
+    assert '<div id="root"></div>' in body
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    assert "Correct this result" in source
+    assert "Teach correction" in source
+    assert "/api/dictation/corrections" in source
     # Focus-safe: the in-moment surface must never auto-focus an input (the same
     # invariant as desktop presence — the dictation flow is sacred).
-    assert "autofocus" not in body.lower()
-    # The dictation app script (which owns the in-moment fix) never calls
-    # `.focus()` — focus stays where the user put it. Scope to the dictation
-    # script bundle, not shared chunks (skip links etc. legitimately focus).
-    astro = (
-        Path(__file__).resolve().parents[2]
-        / "holdspeak" / "static" / "_built" / "_astro"
-    )
-    dict_js = list(astro.glob("dictation.astro_astro_type_script*.js"))
-    if dict_js:
-        bundle = "\n".join(p.read_text() for p in dict_js)
-        assert "submitMomentFix" in bundle  # the fix handler shipped
-        assert ".focus()" not in bundle  # never programmatically steals focus
+    assert "autofocus" not in source.lower()
+    assert ".focus()" not in source

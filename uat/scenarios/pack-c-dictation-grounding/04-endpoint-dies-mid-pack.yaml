@@ -1,14 +1,12 @@
 id: c-endpoint-dies-mid-pack
+execution_target: web_react
 title: The endpoint dies mid-pack — the rewrite degrades honestly
 features:
   - dictation.pipeline.dry_run
   - dictation.runtime.openai_compatible
 recipes:
   - seeded-desk-43
-surfaces:
-  web: yes
-  ipad: yes   # directory: dictation.pipeline.dry_run ipad=yes (iPad previews the rewrite before typing, verbatim receipt — README.md:273)
-  iphone: {n/a: "directory row: dictation.pipeline.dry_run iphone=unknown — Apple app form-factor UI unconfirmed in the record"}
+form_factors: [desktop]
 steps:
   # Staging-verify beat: the healthy path works before we break it.
   - do: Dictate once while the endpoint is healthy — the grounded rewrite runs against .43.

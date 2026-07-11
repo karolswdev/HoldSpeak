@@ -79,21 +79,11 @@ def _run_intel(self, transcript: str) -> None:
                 self._web_server.broadcast("intel_complete", chunk.to_dict())
 ```
 
-**File:** `holdspeak/static/dashboard.html`
+**File:** `web/src/pages/LivePage.tsx`
 
-Add streaming display in Alpine.js:
-```javascript
-// Handle streaming tokens
-case 'intel_token':
-    this.intelBuffer += data;
-    this.intelStreaming = true;
-    break;
-case 'intel_complete':
-    this.intel = data;
-    this.intelBuffer = '';
-    this.intelStreaming = false;
-    break;
-```
+Consume `intel_token` and `intel_complete` through the shared React
+`RuntimeBusProvider`; keep the streaming buffer in route-local typed state and
+render it through the shared status/feedback components.
 
 **Tasks:**
 - [ ] Modify `_run_intel()` to use streaming

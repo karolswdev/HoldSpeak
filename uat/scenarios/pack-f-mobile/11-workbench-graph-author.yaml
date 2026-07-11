@@ -1,19 +1,15 @@
 id: f-workbench-graph-author
-title: Author a graph on the iPad and run it byte-faithfully on the hub
+execution_target: ios_classic_swift
+title: Author a graph in the classic iPad shell and run it byte-faithfully
 # HSM-22-01: build a node graph (blueprint) on the iPad with runs-on per node,
-# save it, and have it sync and run on the desktop hub byte-faithfully — the
-# cross-surface parity crown. mesh-node-alive stages the hub-side node the
-# authored graph runs against; seeded-desk gives real primitives to wire. The web
-# authors linear only (honest scope), so the multi-node authoring leg is the iPad's.
+# save it, and have the classic app dispatch it to the desktop hub byte-faithfully.
+# mesh-node-alive stages the hub-side node the authored graph runs against;
+# seeded-desk gives real primitives to wire.
 features:
   - mobile.workbench.graph.author
 recipes:
-  - seeded-desk
-  - mesh-node-alive
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "directory row mobile.workbench.graph.author iphone=unknown — compact-width authoring is not proven; a phone-column gap, not a genuine absence"}
+  - seeded-desk-mesh
+form_factors: [ipad]
 steps:
   - do: >
       Staging-verify. Open the workbench and confirm the seeded primitives and the
@@ -22,7 +18,6 @@ steps:
       The workbench opens; the seeded desk objects are pickable as node inputs and
       the uat-worker node reads live as a runs-on target — a real world to author
       against, not an empty canvas.
-    where: /
   - do: >
       Author a multi-node graph on the iPad with runs-on set per node, then Save
       and sync it to the hub.
@@ -30,16 +25,12 @@ steps:
       The graph saves and syncs; the hub receives it with its wiring, control flow,
       failure_policy, and per-node runs_on intact. Authoring is real (multi-node on
       iPad), not a linear-only stub.
-    where: /
-    surfaces:
-      web: {n/a: "the web workbench authors a LINEAR graph only (honest scope, 22-03); the multi-node per-node-runs-on authoring is the iPad leg"}
+    form_factors: [ipad]
   - do: >
-      Run the authored graph from the hub, and separately author on iPad then run
-      on web.
+      From the classic iPad workbench, tap Run on the saved graph and inspect its
+      native execution receipt plus the hub run it dispatched.
     expect: >
-      Run from the hub executes the wired flow (not a re-derived default), and the
-      iPad-authored graph run on web honors the SAME graph — control flow,
-      failure_policy, and runs_on match byte-faithfully across surfaces. Structural
-      check: the same wiring produced the same execution order on both.
-    where: /
+      The classic app's run executes the saved wired flow rather than a re-derived
+      default. Its native receipt and the dispatched hub run preserve the same
+      control flow, failure_policy, runs_on targets, and execution order.
 teardown: []

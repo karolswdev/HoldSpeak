@@ -34,9 +34,13 @@ export function RecipeRail() {
         <div key={a.id} className="desk-rail-slot">
           <button
             type="button"
-            className={"desk-rail-avatar" + (chatPersonaId === a.id ? " open" : "")}
+            className={
+              "desk-rail-avatar" + (chatPersonaId === a.id ? " open" : "")
+            }
             title={String(a.name || a.id)}
-            onClick={() => (chatPersonaId === a.id ? closeChat() : openChat(a.id))}
+            onClick={() =>
+              chatPersonaId === a.id ? closeChat() : openChat(a.id)
+            }
           >
             <span aria-hidden="true">{String(a.avatar || "🤖")}</span>
             {egressDot(a)}
@@ -45,7 +49,9 @@ export function RecipeRail() {
       ))}
       {/* HS-83-03 — the models front door: every model the hub can run is a
           chat you can open (the /api/models allow-list; hub row first). */}
-      {models.length > 0 && agents.length > 0 && <div className="desk-rail-rule" aria-hidden="true" />}
+      {models.length > 0 && agents.length > 0 && (
+        <div className="desk-rail-rule" aria-hidden="true" />
+      )}
       {models.map((m) => {
         const id = modelChatId(m.name);
         // HS-85-04: a mesh model shows LIVENESS, not existence
@@ -65,7 +71,9 @@ export function RecipeRail() {
                 (offline ? " is-offline" : "")
               }
               title={m.name + mesh}
-              onClick={() => (chatPersonaId === id ? closeChat() : openChat(id))}
+              onClick={() =>
+                chatPersonaId === id ? closeChat() : openChat(id)
+              }
             >
               <span aria-hidden="true">🖥️</span>
             </button>

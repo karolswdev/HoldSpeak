@@ -1,26 +1,23 @@
 id: smoke-desk-seeded-walk
-title: A seeded desk, read on all three surfaces
+execution_target: web_react
+title: A seeded React Desk, read in a desktop browser
 features:
-  - desk.ask-ai.grounded-on-pile
-  - kb.project.facts_and_context
+  - desk.front-door.spatial-objects
+  - desk.knowledge_bases
 recipes:
   - seeded-desk
-# Three-surface by default; the note-detail view is opted out on iPhone with a
-# stated reason (an honest n/a, never a silent absence).
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: yes
+form_factors: [desktop]
 steps:
   - do: Open the desk and look at the notes.
     expect: Three notes are present — "Q3 architecture decisions", "Standup — pylon incident follow-ups", and "Project glossary".
     where: /
+    verifies: [desk.front-door.spatial-objects]
   - do: Open the "Project glossary" note.
     expect: The note body shows the three glossary terms (BLUEBIRD, Pylon, Questline).
     where: /
-    surfaces:
-      iphone: {n/a: "the note-detail view is not confirmed on the iPhone form factor (directory row unknown)"}
+    form_factors: [desktop]
   - do: Open the two knowledge bases on the desk.
     expect: The Project KB and the Incident runbooks KB are both present and openable.
     where: /
+    verifies: [desk.knowledge_bases]
 teardown: []

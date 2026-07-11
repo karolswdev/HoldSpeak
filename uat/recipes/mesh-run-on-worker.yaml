@@ -1,0 +1,29 @@
+title: A run dispatched onto the mesh worker, returned badged
+description: >
+  The handoff arc's live proof (HSU-3-01). Folds in a live `holdspeak mesh serve`
+  worker + the authored profile & PYLON-CANARY-7 note (mesh-run-ready), then
+  DISPATCHES a real ask ONTO uat-worker via the hub's own /api/ask — the hub
+  relays it to the edge and waits on the relay queue. Verifies the return is
+  badged `⇄ mesh` (scope=mesh, host=uat-worker), the worker's own log shows it
+  CLAIMED the job (claim-count delta), the hub reported a mesh provider (no local
+  model load), and the output surfaces the canary that only the note carries —
+  the run moved, the model didn't. Tears the worker down cleanly on teardown.
+deck: mesh-node
+requires: [intel]
+includes: [mesh-run-ready]
+actions:
+  - dispatch_run:
+      run: handoff
+      profile_id: uat-seed-profile-mesh-edge
+      node: uat-worker
+      prompt: >
+        Summarize the pylon incident from the handoff note in one sentence, then
+        name the canary token the note carries, verbatim.
+      context:
+        - {id: uat-seed-note-handoff-intent, kind: note}
+      timeout: 600
+probe:
+  - mesh_node_live: {name: uat-worker, timeout: 40}
+  - run_returned_badged: {run: handoff, scope: mesh, host: uat-worker}
+  - run_claimed_by_worker: {run: handoff}
+  - run_output_contains: {run: handoff, text: PYLON-CANARY-7}

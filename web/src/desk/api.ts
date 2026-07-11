@@ -1,11 +1,19 @@
-/** The desk's typed data layer (HS-73-01) — the faithful port of the Alpine
+/** The desk's typed data layer (HS-73-01) — the faithful port of the original
  * factory's loaders (`desk-app.js loadAll` + `fromWire*`): same endpoints,
  * same normalized shapes, same tolerance. The wire is snake_case; the in-app
  * shapes are the camelCase view shapes the world renders. */
+import { apiFetch } from "../lib/api";
 
 export type Kind =
-  | "meeting" | "artifact" | "note" | "recipe" | "kb"
-  | "directory" | "chain" | "workflow" | "coder";
+  | "meeting"
+  | "artifact"
+  | "note"
+  | "recipe"
+  | "kb"
+  | "directory"
+  | "chain"
+  | "workflow"
+  | "coder";
 
 export interface DeskItem {
   kind: Kind;
@@ -34,15 +42,19 @@ export interface LoadResult {
 }
 
 export const EMPTY_ITEMS: Items = {
-  meeting: [], artifact: [], note: [], recipe: [], kb: [],
-  directory: [], chain: [], workflow: [], coder: [],
+  meeting: [],
+  artifact: [],
+  note: [],
+  recipe: [],
+  kb: [],
+  directory: [],
+  chain: [],
+  workflow: [],
+  coder: [],
 };
 
 async function fetchJson(url: string, opts?: RequestInit): Promise<any> {
-  const res = await fetch(url, opts);
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error || body.detail || `HTTP ${res.status}`);
-  return body;
+  return apiFetch<any>(url, opts);
 }
 
 /** Unwrap {meta,value} change-set records, dropping tombstones. */
@@ -54,53 +66,88 @@ export function liveValues(records: any[]): any[] {
 }
 
 export const fromWireNote = (n: any): DeskItem => ({
-  kind: "note", id: n.id, title: n.title,
-  bodyMarkdown: n.body_markdown, tags: n.tags || [], createdAt: n.created_at,
+  kind: "note",
+  id: n.id,
+  title: n.title,
+  bodyMarkdown: n.body_markdown,
+  tags: n.tags || [],
+  createdAt: n.created_at,
 });
 
 export const fromWireRecipe = (a: any): DeskItem => ({
-  kind: "recipe", id: a.id, name: a.name, avatar: a.avatar || "🤖",
-  role: a.role || "", systemPrompt: a.system_prompt || "",
-  userTemplate: a.user_template || "", tools: a.tools || [],
-  kbId: a.kb_id || null, profileId: a.profile_id || "",
+  kind: "recipe",
+  id: a.id,
+  name: a.name,
+  avatar: a.avatar || "🤖",
+  role: a.role || "",
+  systemPrompt: a.system_prompt || "",
+  userTemplate: a.user_template || "",
+  tools: a.tools || [],
+  kbId: a.kb_id || null,
+  profileId: a.profile_id || "",
 });
 
 export const fromWireKb = (k: any): DeskItem => ({
-  kind: "kb", id: k.id, name: k.name,
-  memberIds: k.member_ids || [], createdAt: k.created_at,
+  kind: "kb",
+  id: k.id,
+  name: k.name,
+  memberIds: k.member_ids || [],
+  createdAt: k.created_at,
 });
 
 export const fromWireDirectory = (d: any): DeskItem => ({
-  kind: "directory", id: d.id, name: d.name, parentId: d.parent_id || null,
+  kind: "directory",
+  id: d.id,
+  name: d.name,
+  parentId: d.parent_id || null,
   memberIds: d.member_ids || (d.members ? Object.keys(d.members) : []),
   createdAt: d.created_at,
 });
 
 export const fromWireChain = (c: any): DeskItem => ({
-  kind: "chain", id: c.id, name: c.name, steps: c.steps || [],
+  kind: "chain",
+  id: c.id,
+  name: c.name,
+  steps: c.steps || [],
 });
 
 export const fromWireWorkflow = (w: any): DeskItem => {
   const graph = w.graph_json;
-  const hasGraph = graph && typeof graph === "object" && Object.keys(graph).length > 0;
+  const hasGraph =
+    graph && typeof graph === "object" && Object.keys(graph).length > 0;
   return {
-    kind: "workflow", id: w.id, name: w.name, prompt: w.prompt || "",
-    hasGraph: Boolean(hasGraph), graphJson: graph,
+    kind: "workflow",
+    id: w.id,
+    name: w.name,
+    prompt: w.prompt || "",
+    hasGraph: Boolean(hasGraph),
+    graphJson: graph,
   };
 };
 
 const fromWireMeeting = (m: any): DeskItem => ({
-  kind: "meeting", id: m.id, title: m.title || "Untitled meeting",
-  startedAt: m.started_at, endedAt: m.ended_at, segmentCount: m.segment_count,
-  actionItemCount: m.action_item_count, durationSeconds: m.duration_seconds,
-  tags: m.tags || [], intelStatus: m.intel_status,
+  kind: "meeting",
+  id: m.id,
+  title: m.title || "Untitled meeting",
+  startedAt: m.started_at,
+  endedAt: m.ended_at,
+  segmentCount: m.segment_count,
+  actionItemCount: m.action_item_count,
+  durationSeconds: m.duration_seconds,
+  tags: m.tags || [],
+  intelStatus: m.intel_status,
 });
 
 const fromWireArtifact = (a: any): DeskItem => ({
-  kind: "artifact", id: a.id, meetingId: a.meeting_id,
-  artifactType: a.artifact_type, title: a.title || a.artifact_type || "Artifact",
-  bodyMarkdown: a.body_markdown || "", status: a.status,
-  confidence: a.confidence, sources: a.sources || [],
+  kind: "artifact",
+  id: a.id,
+  meetingId: a.meeting_id,
+  artifactType: a.artifact_type,
+  title: a.title || a.artifact_type || "Artifact",
+  bodyMarkdown: a.body_markdown || "",
+  status: a.status,
+  confidence: a.confidence,
+  sources: a.sources || [],
 });
 
 /** Resolve the session-items array from the real (nested) coders status. */
@@ -126,7 +173,9 @@ export const fromCoderStatus = (data: any): DeskItem[] =>
       model: s.model || "",
       state: s.state || (s.awaiting_response ? "waiting" : "running"),
       question:
-        identity.question || s.question || s.last_question ||
+        identity.question ||
+        s.question ||
+        s.last_question ||
         s.last_assistant_text ||
         (s.awaiting_response ? identity.prompt || null : null),
       selected: Boolean(item.selected),
@@ -135,7 +184,7 @@ export const fromCoderStatus = (data: any): DeskItem[] =>
     };
   });
 
-/** Load every kind — the same allSettled sweep the Alpine desk ran. */
+/** Load every kind — the same allSettled sweep the original desk ran. */
 export async function loadAll(): Promise<LoadResult> {
   const items: Items = { ...EMPTY_ITEMS };
   const status: Status = {};
@@ -149,43 +198,91 @@ export async function loadAll(): Promise<LoadResult> {
 
   await Promise.allSettled([
     fetchJson("/api/meetings?limit=24")
-      .then((d) => { items.meeting = (d.meetings || []).map(fromWireMeeting); status.meeting = "live"; })
+      .then((d) => {
+        items.meeting = (d.meetings || []).map(fromWireMeeting);
+        status.meeting = "live";
+      })
       .catch((e) => fail("meeting", "Meetings", e)),
     fetchJson("/api/sync/pull?limit=50")
-      .then((d) => { items.artifact = liveValues(d.artifacts).slice(0, 24).map(fromWireArtifact); status.artifact = "live"; })
+      .then((d) => {
+        items.artifact = liveValues(d.artifacts)
+          .slice(0, 24)
+          .map(fromWireArtifact);
+        status.artifact = "live";
+      })
       .catch((e) => fail("artifact", "Artifacts", e)),
     fetchJson("/api/notes")
-      .then((d) => { items.note = (d.notes || []).filter((n: any) => !n.deleted).map(fromWireNote); status.note = "live"; })
+      .then((d) => {
+        items.note = (d.notes || [])
+          .filter((n: any) => !n.deleted)
+          .map(fromWireNote);
+        status.note = "live";
+      })
       .catch((e) => fail("note", "Notes", e)),
     fetchJson("/api/recipes")
-      .then((d) => { items.recipe = (d.recipes || []).filter((a: any) => !a.deleted).map(fromWireRecipe); status.recipe = "live"; })
+      .then((d) => {
+        items.recipe = (d.recipes || [])
+          .filter((a: any) => !a.deleted)
+          .map(fromWireRecipe);
+        status.recipe = "live";
+      })
       .catch((e) => fail("recipe", "Recipes", e)),
     fetchJson("/api/kbs")
-      .then((d) => { items.kb = (d.kbs || []).filter((k: any) => !k.deleted).map(fromWireKb); status.kb = "live"; })
+      .then((d) => {
+        items.kb = (d.kbs || []).filter((k: any) => !k.deleted).map(fromWireKb);
+        status.kb = "live";
+      })
       .catch((e) => fail("kb", "KBs", e)),
     fetchJson("/api/directories")
       .then((d) => {
         const raw = d.directories || liveValues(d);
-        items.directory = (raw || []).filter((x: any) => !x.deleted).map(fromWireDirectory);
+        items.directory = (raw || [])
+          .filter((x: any) => !x.deleted)
+          .map(fromWireDirectory);
         status.directory = "live";
       })
       .catch((e) => fail("directory", "Directories", e)),
     fetchJson("/api/chains")
-      .then((d) => { items.chain = (d.chains || []).filter((c: any) => !c.deleted).map(fromWireChain); status.chain = "live"; })
+      .then((d) => {
+        items.chain = (d.chains || [])
+          .filter((c: any) => !c.deleted)
+          .map(fromWireChain);
+        status.chain = "live";
+      })
       .catch((e) => fail("chain", "Chains", e)),
     fetchJson("/api/workflows")
-      .then((d) => { items.workflow = (d.workflows || []).filter((w: any) => !w.deleted).map(fromWireWorkflow); status.workflow = "live"; })
+      .then((d) => {
+        items.workflow = (d.workflows || [])
+          .filter((w: any) => !w.deleted)
+          .map(fromWireWorkflow);
+        status.workflow = "live";
+      })
       .catch((e) => fail("workflow", "Workflows", e)),
     fetchJson("/api/profiles")
-      .then((d) => { profiles = (d.profiles || []).filter((p: any) => !p.deleted); status.profile = "live"; })
-      .catch(() => { profiles = []; status.profile = "unreachable"; }),
+      .then((d) => {
+        profiles = (d.profiles || []).filter((p: any) => !p.deleted);
+        status.profile = "live";
+      })
+      .catch(() => {
+        profiles = [];
+        status.profile = "unreachable";
+      }),
     // HS-83-03 — the runnable allow-list (what a `model` override accepts).
     fetchJson("/api/models")
-      .then((d) => { models = Array.isArray(d.models) ? d.models : []; })
-      .catch(() => { models = []; /* older hub = honest empty door */ }),
+      .then((d) => {
+        models = Array.isArray(d.models) ? d.models : [];
+      })
+      .catch(() => {
+        models = []; /* older hub = honest empty door */
+      }),
     fetchJson("/api/coders/status")
-      .then((d) => { items.coder = fromCoderStatus(d); status.coder = "live"; })
-      .catch(() => { items.coder = []; /* companion off = honest empty lane */ }),
+      .then((d) => {
+        items.coder = fromCoderStatus(d);
+        status.coder = "live";
+      })
+      .catch(() => {
+        items.coder = []; /* companion off = honest empty lane */
+      }),
   ]);
 
   return { items, profiles, models, status, error };

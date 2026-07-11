@@ -1,4 +1,5 @@
 id: b-dictate-into-mac
+execution_target: ios_classic_swift
 title: Dictate from the phone into the focused Mac app — and when nothing is focused
 features:
   - agents.dictation.into_your_mac
@@ -17,10 +18,7 @@ recipes: []
 # hold-bar teleprompter, phase 20 HSM-20-04, on the same seam). web is NO (the
 # device is the mic, the Mac is the target). ipad is in-progress (DictateView
 # built + Simulator-proven, live LAN trace owner-gated HSM-15-01) — still walked.
-surfaces:
-  web: {n/a: "directory row: web no — the device is the mic and the Mac is the target; there is no web surface for dictating INTO a Mac"}
-  ipad: yes
-  iphone: yes
+form_factors: [ipad, iphone]
 steps:
   - do: >
       Manual-staging verify. On the phone/iPad, confirm the dictation surface is

@@ -5,6 +5,12 @@ per-surface note field takes a 🎤 mic riding the run's own transcribe
 route; the HSU-1-04 deferred decision is resolved. Engine + web loop
 complete. **The one thing left is the owner's live sitting**; 5/6 + docs)
 
+> **Historical contract notice (2026-07-09):** This phase records the original
+> web/iPad/iPhone “three-surface” design accurately, but that design is
+> superseded by protocol v2. Current scenarios use implementation target × form
+> factor. A React viewport/device browser never substitutes for a Swift app, and
+> parity joins independently executed React and Swift legs.
+
 ## Goal
 
 Build the UAT rig itself — the conductor that hosts HoldSpeak on this

@@ -1,4 +1,5 @@
 id: a-followup-draft-export
+execution_target: web_react
 title: Draft a local follow-up and export the meeting (local handoff)
 features:
   - meetings.aftercare.followup_draft
@@ -6,11 +7,7 @@ features:
   - meetings.actions.review_edit
 recipes:
   - meeting-just-ended-open-actions
-  - pack-a-import-endpoint-dead
-surfaces:
-  web: yes
-  ipad: {n/a: "follow-up draft and local export are web-desk routes (meetings.aftercare.followup_draft ipad: unknown; meetings.export.local_handoff ipad: unknown)"}
-  iphone: {n/a: "same web-desk routes; the follow-up draft and export are not claimed on iPhone in the inventory"}
+form_factors: [desktop]
 steps:
   - do: (Staging beat) Confirm the live pylon meeting with intel complete and at least one open action.
     expect: The pylon meeting is present with intel complete and at least one accepted action item to review.
@@ -21,9 +18,9 @@ steps:
   - do: Export the meeting as local Markdown/JSON and confirm the handoff is a real file, not an empty stub.
     expect: The export produces local Markdown/JSON carrying the transcript and artifacts — a real handoff a human can read, saved locally with nothing sent off the machine.
     where: /history
+    after:
+      - apply_recipe: pack-a-import-endpoint-dead
   - do: (Honest-failure control) Boot the endpoint-dead world, import the pylon transcript, and try to draft a follow-up before any intel has run.
     expect: The follow-up draft degrades honestly — it either refuses fast naming the dead endpoint or drafts only from the parsed transcript with no fabricated intel; it never invents artifacts the dead endpoint could not produce. This is the pack's honest-failure close for the local-handoff surface.
     where: /history
-    after:
-      - apply_recipe: pack-a-import-endpoint-dead
 teardown: []

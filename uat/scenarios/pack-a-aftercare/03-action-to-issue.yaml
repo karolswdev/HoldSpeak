@@ -1,17 +1,17 @@
 id: a-action-to-issue
+execution_target: web_react
 title: Action to issue — propose, approve, execute (off-by-default actuator)
 features:
   - meetings.aftercare.action-to-issue
   - meetings.aftercare.file_as_issue
 recipes:
-  - meeting-just-ended-open-actions
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the action-to-issue actuator surface on iPhone is unverified in the inventory (row iphone: unknown)"}
+  - functional-aftercare-review
+manual_setup:
+  - Have an authenticated `gh` pointed at a throwaway repository you own; record the owner/name in the first note and use only that repository for the execution leg.
+form_factors: [desktop]
 steps:
-  - do: (Staging beat) Confirm a meeting with at least one accepted, open action exists.
-    expect: The pylon meeting shows at least one open action item with an owner, ready to be turned into an issue.
+  - do: (Staging beat) Open "Owner functional review (UAT seed)" and find the exact accepted action staged for this test.
+    expect: The meeting shows "File the accepted owner verification action" as accepted and owned by Karol, ready to become an issue; the separate pending action is still visibly gated.
     where: /history
   - do: Turn one open action into a GitHub-issue proposal, typed against a repo you name inline.
     expect: A proposal is queued, unexecuted, showing exactly what would be filed and against which repo; nothing has been sent — the proposal sits in the proposed state.
@@ -19,6 +19,5 @@ steps:
   - do: Approve the proposal, then read the audit.
     expect: Only on approval does it execute; the audit records who approved it and what was filed against the named repo — the off-by-default actuator flow, honestly gated.
     where: /history
-    surfaces:
-      ipad: {n/a: "the file-as-issue execute + audit route is web-desk (POST aftercare/file-issue; meetings.aftercare.file_as_issue ipad: unknown); the iPad proposes and reviews (mobile.meeting.aftercare.file_issue is proposed-only), execution/audit stays on the hub"}
+    form_factors: [desktop]
 teardown: []

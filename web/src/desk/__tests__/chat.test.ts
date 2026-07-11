@@ -4,8 +4,14 @@
 // (test_web_routes_recipe_chat.py); this locks what the web SENDS and KEEPS.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  clearThread, keepReply, loadChatGrounding, loadThread, runChatTurn,
-  saveChatGrounding, saveThread, type ChatTurn,
+  clearThread,
+  keepReply,
+  loadChatGrounding,
+  loadThread,
+  runChatTurn,
+  saveChatGrounding,
+  saveThread,
+  type ChatTurn,
 } from "../chat";
 import { emptyGrounding, type GroundingSelection } from "../grounding";
 
@@ -20,7 +26,11 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-const turn = (role: "you" | "agent", text: string): ChatTurn => ({ id: text, role, text });
+const turn = (role: "you" | "agent", text: string): ChatTurn => ({
+  id: text,
+  role,
+  text,
+});
 
 describe("device-local threads", () => {
   it("round-trips per persona and clears cleanly", () => {
@@ -34,10 +44,20 @@ describe("device-local threads", () => {
   });
   it("per-conversation grounding persists and empties away", () => {
     const sel: GroundingSelection = {
-      meetings: [{
-        id: "m1", title: "Kickoff", day: "", hasIntel: true, includeIntel: true,
-        transcriptLines: 0, includeTranscript: false, intelChars: 10, transcriptChars: 0, artifacts: [],
-      }],
+      meetings: [
+        {
+          id: "m1",
+          title: "Kickoff",
+          day: "",
+          hasIntel: true,
+          includeIntel: true,
+          transcriptLines: 0,
+          includeTranscript: false,
+          intelChars: 10,
+          transcriptChars: 0,
+          artifacts: [],
+        },
+      ],
     };
     saveChatGrounding("scout", sel);
     expect(loadChatGrounding("scout").meetings[0].id).toBe("m1");
@@ -52,34 +72,61 @@ describe("the turn wire", () => {
     vi.stubGlobal("fetch", (url: string, init: any) => {
       expect(url).toBe("/api/recipes/scout/chat");
       sent = JSON.parse(init.body);
-      return Promise.resolve(new Response(JSON.stringify({
-        output: "BLUE LANTERN", egress: { scope: "cloud", host: "192.168.1.43" }, model: "Qwen",
-      })));
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            output: "BLUE LANTERN",
+            egress: { scope: "cloud", host: "192.168.1.43" },
+            model: "Qwen",
+          }),
+        ),
+      );
     });
     const history = Array.from({ length: 15 }, (_, i) => turn("you", `t${i}`));
     const r = await runChatTurn("scout", "codename?", history, {
-      meetings: [{
-        id: "m1", title: "Kickoff", day: "", hasIntel: true, includeIntel: true,
-        transcriptLines: 2, includeTranscript: true, intelChars: 10, transcriptChars: 100, artifacts: [],
-      }],
+      meetings: [
+        {
+          id: "m1",
+          title: "Kickoff",
+          day: "",
+          hasIntel: true,
+          includeIntel: true,
+          transcriptLines: 2,
+          includeTranscript: true,
+          intelChars: 10,
+          transcriptChars: 100,
+          artifacts: [],
+        },
+      ],
     });
     expect(sent.question).toBe("codename?");
     expect(sent.history).toHaveLength(12);
     expect(sent.history[0]).toEqual({ role: "you", text: "t3" });
-    expect(sent.grounding).toEqual({ meeting_ids: ["m1"], artifact_ids: [], expand: "full" });
+    expect(sent.grounding).toEqual({
+      meeting_ids: ["m1"],
+      artifact_ids: [],
+      expand: "full",
+    });
     expect(r).toEqual({
-      ok: true, output: "BLUE LANTERN",
-      egress: { scope: "cloud", host: "192.168.1.43" }, model: "Qwen",
+      ok: true,
+      output: "BLUE LANTERN",
+      egress: { scope: "cloud", host: "192.168.1.43" },
+      model: "Qwen",
     });
   });
   it("omits grounding when nothing is selected and names refusals verbatim", async () => {
     let sent: any = null;
     vi.stubGlobal("fetch", (_u: string, init: any) => {
       sent = JSON.parse(init.body);
-      return Promise.resolve(new Response(
-        JSON.stringify({ error: "grounding ids not on this hub", unknown_ids: ["ghost"] }),
-        { status: 400 },
-      ));
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            error: "grounding ids not on this hub",
+            unknown_ids: ["ghost"],
+          }),
+          { status: 400 },
+        ),
+      );
     });
     const r = await runChatTurn("scout", "hi", [], emptyGrounding());
     expect("grounding" in sent).toBe(false);
@@ -99,8 +146,13 @@ describe("model chats (HS-83-03)", () => {
   it("packs the conversation client-side (no role/context — a model persona has none)", async () => {
     const { packModelTurn } = await import("../chat");
     expect(packModelTurn("Qwen", "codename?", [])).toBe("[USER]\ncodename?");
-    const packed = packModelTurn("Qwen", "and now?", [turn("you", "hi"), turn("agent", "hello")]);
-    expect(packed).toBe("[CONVERSATION SO FAR]\nUser: hi\nQwen: hello\n\n[USER]\nand now?");
+    const packed = packModelTurn("Qwen", "and now?", [
+      turn("you", "hi"),
+      turn("agent", "hello"),
+    ]);
+    expect(packed).toBe(
+      "[CONVERSATION SO FAR]\nUser: hi\nQwen: hello\n\n[USER]\nand now?",
+    );
   });
   it("a model turn rides /api/ask pinned to THAT model, grounding refs along", async () => {
     const { runModelChatTurn } = await import("../chat");
@@ -108,20 +160,45 @@ describe("model chats (HS-83-03)", () => {
     vi.stubGlobal("fetch", (url: string, init: any) => {
       expect(url).toBe("/api/ask");
       sent = JSON.parse(init.body);
-      return Promise.resolve(new Response(JSON.stringify({
-        output: "OK", egress: { scope: "cloud", host: "192.168.1.43" }, model: "Qwen3.5-9B",
-      })));
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            output: "OK",
+            egress: { scope: "cloud", host: "192.168.1.43" },
+            model: "Qwen3.5-9B",
+          }),
+        ),
+      );
     });
-    const r = await runModelChatTurn("Qwen3.5-9B", "codename?", [turn("you", "hi")], {
-      meetings: [{
-        id: "m1", title: "Kickoff", day: "", hasIntel: true, includeIntel: true,
-        transcriptLines: 0, includeTranscript: false, intelChars: 10, transcriptChars: 0, artifacts: [],
-      }],
-    });
+    const r = await runModelChatTurn(
+      "Qwen3.5-9B",
+      "codename?",
+      [turn("you", "hi")],
+      {
+        meetings: [
+          {
+            id: "m1",
+            title: "Kickoff",
+            day: "",
+            hasIntel: true,
+            includeIntel: true,
+            transcriptLines: 0,
+            includeTranscript: false,
+            intelChars: 10,
+            transcriptChars: 0,
+            artifacts: [],
+          },
+        ],
+      },
+    );
     expect(sent.model).toBe("Qwen3.5-9B");
     expect(sent.lens).toBe("Chat");
     expect(sent.prompt).toContain("[CONVERSATION SO FAR]\nUser: hi");
-    expect(sent.grounding).toEqual({ meeting_ids: ["m1"], artifact_ids: [], expand: "summary" });
+    expect(sent.grounding).toEqual({
+      meeting_ids: ["m1"],
+      artifact_ids: [],
+      expand: "summary",
+    });
     expect(r.ok).toBe(true);
     expect(r.model).toBe("Qwen3.5-9B");
   });
@@ -133,9 +210,15 @@ describe("harvest", () => {
     vi.stubGlobal("fetch", (url: string, init: any) => {
       expect(url).toBe("/api/recipes/scout/keep");
       sent = JSON.parse(init.body);
-      return Promise.resolve(new Response(JSON.stringify({ artifact_id: "artifact_9" }), { status: 201 }));
+      return Promise.resolve(
+        new Response(JSON.stringify({ artifact_id: "artifact_9" }), {
+          status: 201,
+        }),
+      );
     });
-    expect(await keepReply("scout", "codename?", "BLUE LANTERN.")).toBe("artifact_9");
+    expect(await keepReply("scout", "codename?", "BLUE LANTERN.")).toBe(
+      "artifact_9",
+    );
     expect(sent).toEqual({ question: "codename?", output: "BLUE LANTERN." });
   });
 });

@@ -1,0 +1,31 @@
+title: "1 · React Web Desk foundation — desktop"
+purpose: >
+  Prove the React Web Desk's desktop arrival, readiness, navigation, spatial
+  behavior, primitive CRUD, project context, profiles, and visual builder. This
+  campaign earns web_react × desktop evidence only; native Swift Desk acceptance
+  belongs to the flagship campaign.
+sequence: 1
+tier: core
+estimated_minutes: 45
+prerequisites:
+  - No LAN model or physical device is required.
+  - Use a desktop browser at normal desktop width against this isolated UAT run.
+  - Do not use responsive emulation as evidence for iPad, iPhone, or any Swift implementation.
+exit_gate:
+  - In the React desktop implementation, the owner can arrive, understand where to go, create and reopen work, and recover from an unavailable runtime without assistance.
+  - Any navigation loop, dead control, lost object, or unclear state is recorded before proceeding.
+scenarios:
+  - smoke/smoke-first-run-no-model
+  - pack-desk/desk-one-arrival-welcome
+  - pack-desk/desk-seeded-reads-back
+  - pack-desk/desk-zones-file-and-dive
+  - pack-desk/desk-create-in-world
+  - pack-desk/desk-front-door-spatial
+  - pack-desk/desk-workbench-blueprint
+  - pack-desk/desk-project-kb-facts
+  - pack-desk/desk-profiles-editor
+  - smoke/smoke-dictation-runtime
+  - pack-b-steering/b-factory-gate-off-by-default
+  - pack-b-steering/b-ground-a-steer
+  - pack-b-steering/b-voice-commands-board
+  - pack-desk/desk-doctor-honest-close

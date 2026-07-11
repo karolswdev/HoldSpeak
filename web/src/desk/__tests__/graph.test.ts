@@ -6,7 +6,12 @@
  * surfaces, or nothing travels.
  */
 import { describe, expect, it } from "vitest";
-import { buildLinearGraph, parseLinearGraph, stepLabel, STEP_PALETTE } from "../graph";
+import {
+  buildLinearGraph,
+  parseLinearGraph,
+  stepLabel,
+  STEP_PALETTE,
+} from "../graph";
 
 describe("buildLinearGraph", () => {
   it("emits the canonical tagged-union wire the hub linearizes", () => {
@@ -21,9 +26,16 @@ describe("buildLinearGraph", () => {
     expect(g.entry).toBe("entry");
     expect(g.data_edges).toEqual([]);
     // The chain: entry → source → n1…n5 → out, one exec edge per hop.
-    expect(g.nodes.map((n) => n.id)).toEqual(
-      ["entry", "source", "n1", "n2", "n3", "n4", "n5", "out"],
-    );
+    expect(g.nodes.map((n) => n.id)).toEqual([
+      "entry",
+      "source",
+      "n1",
+      "n2",
+      "n3",
+      "n4",
+      "n5",
+      "out",
+    ]);
     expect(g.exec_edges).toEqual([
       { from: { node: "entry", name: "then" }, to: "source" },
       { from: { node: "source", name: "then" }, to: "n1" },
@@ -49,7 +61,9 @@ describe("buildLinearGraph", () => {
 
   it("an empty llm prompt still runs (the {input} passthrough)", () => {
     const g = buildLinearGraph("wf-2", "W", [{ kind: "llm", prompt: "   " }]);
-    expect(g.nodes[2].kind).toEqual({ llm: { name: "LLM call", prompt: "{input}" } });
+    expect(g.nodes[2].kind).toEqual({
+      llm: { name: "LLM call", prompt: "{input}" },
+    });
   });
 });
 
@@ -66,10 +80,15 @@ describe("parseLinearGraph", () => {
 
   it("refuses control flow (read-only, like the hub refuses to run it)", () => {
     const g = {
-      id: "x", name: "Branchy", entry: "e1",
+      id: "x",
+      name: "Branchy",
+      entry: "e1",
       nodes: [
         { id: "e1", kind: { entry: {} } },
-        { id: "br", kind: { branch: { condition: { contains: { keyword: "x" } } } } },
+        {
+          id: "br",
+          kind: { branch: { condition: { contains: { keyword: "x" } } } },
+        },
       ],
       exec_edges: [{ from: { node: "e1", name: "then" }, to: "br" }],
       data_edges: [],
@@ -79,12 +98,16 @@ describe("parseLinearGraph", () => {
 
   it("refuses fan-out and cycles", () => {
     const fanOut = buildLinearGraph("wf-4", "F", [{ kind: "summarize" }]);
-    fanOut.exec_edges.push({ from: { node: "source", name: "then" }, to: "out" });
+    fanOut.exec_edges.push({
+      from: { node: "source", name: "then" },
+      to: "out",
+    });
     expect(parseLinearGraph(fanOut)).toBeNull();
 
     const cycle = buildLinearGraph("wf-5", "C", [{ kind: "summarize" }]);
     cycle.exec_edges[cycle.exec_edges.length - 1] = {
-      from: { node: "n1", name: "then" }, to: "entry",
+      from: { node: "n1", name: "then" },
+      to: "entry",
     };
     expect(parseLinearGraph(cycle)).toBeNull();
   });

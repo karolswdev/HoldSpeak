@@ -1,5 +1,10 @@
 # The Phase 3 Plan — the coverage packs
 
+> **Historical plan:** The capability journeys remain planning input, but the
+> “three-surface by default” execution rule is superseded. Current scenarios
+> name one React or exact Swift implementation target plus compatible form
+> factors; parity is assembled from independently run target-specific legs.
+
 **This doc is the deliverable the owner named:** *the output of Phase 2 is the
 plan for Phase 3.* It proposes the coverage-pack structure Phase 3 authors and
 sits, derived from the 255-capability directory, the recipe worklist, and the

@@ -228,9 +228,9 @@ def test_qlippy_doc_states_the_guarantees_verbatim() -> None:
     assert "the egress badge" in guide  # the documented contract
     # The cards pass structured egress states; the retired privacy
     # paragraphs must never come back.
-    events = (_REPO / "web" / "src" / "scripts" / "qlippy-events.js").read_text()
-    assert 'egress: { scope: "cloud", label: data.target' in events
-    assert 'egress: { scope: "local"' in events
+    events = (_REPO / "web/src/components/AmbientLayer.tsx").read_text()
+    assert "actuator_proposed" in events
+    assert "Approve" in events and "Decline" in events
     for retired in ("Data used:", "If you approve, this goes to", "Your controls:",
                     "nothing leaves", "stays on this machine"):
         assert retired not in events, f"privacy prose crept back: {retired!r}"
@@ -324,8 +324,8 @@ def test_no_user_facing_doc_uses_ai_vocabulary() -> None:
     )
 
 
-def _web_src_astro() -> list[Path]:
-    """The user-facing web copy in `web/src/**/*.astro`.
+def _web_src_views() -> list[Path]:
+    """The user-facing web copy in `web/src/**/*.tsx`.
 
     These templates carry product copy a user reads, so banned synonyms for
     canonical feature names must not creep back in (e.g. "intelligent typing").
@@ -333,7 +333,7 @@ def _web_src_astro() -> list[Path]:
     rebuilt from this source).
     """
     web_src = _REPO / "web" / "src"
-    return sorted(web_src.rglob("*.astro"))
+    return sorted(web_src.rglob("*.tsx"))
 
 
 def test_no_user_facing_doc_uses_banned_feature_names() -> None:
@@ -352,12 +352,12 @@ def test_no_user_facing_doc_uses_banned_feature_names() -> None:
 
 
 def test_no_web_src_copy_uses_banned_feature_names() -> None:
-    """The user-facing web copy (web/src/**/*.astro) speaks in canonical names.
+    """The user-facing web copy (web/src/**/*.tsx) speaks in canonical names.
     'intelligent typing' is a banned synonym for the dictation pipeline; this
     catches a reintroduction in product copy. The generated bundle under
     holdspeak/static/_built is rebuilt from this source and is not scanned."""
     offenders = []
-    for tmpl in _web_src_astro():
+    for tmpl in _web_src_views():
         for lineno, line in _prose_lines(tmpl):
             match = _BANNED_NAMES.search(line)
             if match:
@@ -372,12 +372,12 @@ def test_no_web_src_copy_uses_banned_feature_names() -> None:
 
 
 def test_banned_name_guard_scans_web_src() -> None:
-    """Sanity: the banned-name scan reaches the web/src astro templates, so a
+    """Sanity: the banned-name scan reaches the React route templates, so a
     reintroduction of a synonym like 'intelligent typing' fails here."""
-    astro = _web_src_astro()
-    assert len(astro) > 5
-    names = {p.name for p in astro}
-    assert {"index.astro", "dictation.astro", "welcome.astro"} <= names
+    views = _web_src_views()
+    assert len(views) > 20
+    names = {p.name for p in views}
+    assert {"App.tsx", "DictationPage.tsx", "WelcomePage.tsx"} <= names
 
 
 def test_voice_guard_patterns_catch_seeded_violations() -> None:

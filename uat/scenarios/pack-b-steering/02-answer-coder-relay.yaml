@@ -1,17 +1,12 @@
 id: b-answer-coder-relay
+execution_target: web_react
 title: Answer a coder across the mesh — the relay path, then it goes dark
 features:
   - agents.answer_coder.by_voice
   - mobile.steering.node_relay
 recipes:
   - mesh-node-alive
-# answer_coder.by_voice is web:yes + ipad:yes (CompanionAnswerApp on iPad Air M4,
-# HSM-13-04; web /companion portal). node_relay is web:yes + ipad:yes (node param
-# routes through the relay, DioSteerSheet node chip). iPhone genuinely unknown.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "answering a coder over the relay at iPhone compact width is chartered but unproven in the record"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Confirm the "uat-worker" relay node reads live in the

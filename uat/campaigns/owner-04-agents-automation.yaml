@@ -1,0 +1,28 @@
+title: "4 · Agents, steering, and automation"
+purpose: >
+  Test live coder discovery, peek, grounded answers, typed and spoken steering,
+  arm/key/kill consent, persona runs, and Qlippy's decision-card interruption as
+  one user journey rather than isolated backend checks.
+sequence: 4
+tier: core
+estimated_minutes: 100
+prerequisites:
+  - tmux installed; the harness creates and removes only its own UAT sessions.
+  - A microphone for the spoken-answer scenario.
+  - The .43 endpoint reachable for grounded drafting and persona treatment beats.
+exit_gate:
+  - The owner can see what needs attention, understand the target, intervene deliberately, and verify what happened.
+  - Wrong-target input, unclear consent, silent execution, or an untraceable result is a stop-and-triage defect.
+scenarios:
+  - pack-b-steering/b-live-coders-on-desk
+  - pack-b-steering/b-live-steer-spine
+  - pack-b-steering/b-arm-and-keys
+  - pack-b-steering/b-factory-kill
+  - pack-b-steering/b-ai-drafted-answer
+  - pack-desk/desk-coders-on-the-desk
+  - pack-desk/desk-answer-blocked-agent
+  - pack-desk/desk-answer-waiting-coder-by-voice
+  - pack-desk/desk-agent-rail-run
+  - pack-desk/desk-ask-on-pile-grounded
+  - pack-desk/desk-lasso-ask-keep
+  - pack-desk/desk-qlippy-decision-cards

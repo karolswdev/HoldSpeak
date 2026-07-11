@@ -1,4 +1,5 @@
 id: c-wake-word-arm
+execution_target: web_react
 title: Say the wake phrase — HoldSpeak arms hands-free (and only then)
 features:
   - wakeword.hands_free_arm
@@ -11,10 +12,7 @@ manual_setup:
   - The pack-c-wake-word-ready recipe has staged a reachable seeded desk; confirm setup reads ready.
   - Enable the wake word (Settings -> Voice -> Wake word) and confirm openWakeWord is running (the runtime shows a listening state).
   - Grant microphone permission and be in a quiet room; have the configured wake phrase ready to speak.
-surfaces:
-  web: yes
-  ipad: {n/a: "directory row: wakeword.hands_free_arm ipad=unknown — hands-free capture is hub-side; the mobile client surfacing the armed state is unverified in the record"}
-  iphone: {n/a: "directory row: wakeword.hands_free_arm iphone=unknown — no on-device armed-state claim in the record"}
+form_factors: [desktop]
 steps:
   # Staging-verify beat: the wake engine is live and NOT armed yet.
   - do: Confirm the wake word is enabled and the runtime is listening but idle — HoldSpeak is not armed for capture.

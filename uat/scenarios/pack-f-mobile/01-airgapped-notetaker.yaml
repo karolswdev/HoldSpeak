@@ -1,4 +1,5 @@
 id: f-airgapped-notetaker
+execution_target: ios_flagship_swift
 title: The air-gapped notetaker — record, transcribe, and reason with no network
 # The charter's headline paradigm (Gate 8): the iPad in a room with NO network
 # does capture → live transcript → on-device intelligence end to end. No recipe
@@ -17,10 +18,7 @@ manual_setup:
   - Have a real microphone available and a short scripted meeting to speak (two speakers if diarization is being judged).
 recipes:
   - first-run-no-model
-surfaces:
-  web: {n/a: "directory row mobile.capture.airgapped_notetaker web=no — on-device Mode-A inference is the point; the web desk consumes synced content, it does not record or run the device engine"}
-  ipad: yes
-  iphone: {n/a: "directory rows: airgapped_notetaker + on_device_inference iphone=unknown — iPhone air-gapped parity is chartered (Amendment 1.1 Q4) but the closing device walk is not evidenced in this slice; a phone-column gap, not a genuine absence"}
+form_factors: [ipad]
 steps:
   - do: >
       Staging-verify. With airplane mode ON, open Settings and confirm the runtime
@@ -30,7 +28,6 @@ steps:
       reads local; there is no network target configured. If NO model were
       installed the readiness surface would honestly say "not ready yet" (the
       first-run-no-model control), so a green here means a real device model.
-    where: /
   - do: >
       Press Record and speak the scripted meeting for a minute or two, watching
       the transcript pane.
@@ -66,5 +63,4 @@ steps:
       The surface refuses honestly and fast — it says there is no model to run
       on-device rather than hanging or silently returning the transcript dressed
       as intelligence. The offline promise fails loud, not quietly.
-    where: /
 teardown: []

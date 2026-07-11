@@ -1,18 +1,12 @@
 id: b-fire-while-dictating
+execution_target: web_react
 title: Speak the keyword mid-dictation and it fires the action, not types it
 features:
   - macros.voice_commands.fire_while_dictating
   - macros.voice_commands.board
 recipes:
   - seeded-desk
-# fire_while_dictating is web:yes (dispatch_voice_command on the carved
-# dictation_runner seam); ipad/iphone unknown (CommandsBoard configures, but the
-# on-device dictation-fire path is unconfirmed in the record). board rides along
-# to stage the mapping the fire consumes; board is affirmed all-surfaces.
-surfaces:
-  web: yes
-  ipad: {n/a: "directory row: fire_while_dictating ipad unknown — CommandsBoard configures the mapping on device, but the on-device dictation-fire path is unconfirmed in the record"}
-  iphone: {n/a: "directory row: fire_while_dictating iphone unknown — same on-device dictation-fire gap as iPad"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. On the seeded desk, open the Voice Commands board and bind a

@@ -1,0 +1,22 @@
+id: ios-flagship-deskos-zones-file-dive-free-placement
+execution_target: ios_flagship_swift
+title: The flagship iPad DioStage arranges, files, dives, and restores spatial state
+features:
+  - desk.web.zones_file_dive
+  - desk.web.free_placement
+recipes:
+  - desk-primitives
+manual_setup:
+  - Use the production flagship on a physical iPad in its wide native DioStage layout, paired and synced to this isolated run.
+  - Capture a screenshot before moving anything so placement and membership changes can be compared after relaunch.
+form_factors: [ipad]
+steps:
+  - do: Drag the "Questline save-format note" to a clearly different free position on the wide native Desk, then release it.
+    expect: The Swift card follows the finger, lands at the chosen position without snapping onto another object, and remains interactive there.
+  - do: Create a native zone named "NATIVE-ZONE-7" and drag the Questline note into that zone.
+    expect: The zone appears as a native spatial area and gives visible drop feedback; after release, Questline is filed into NATIVE-ZONE-7 rather than duplicated or left ambiguously at the root.
+  - do: Tap NATIVE-ZONE-7 to dive into it, open the filed Questline note, then use the native breadcrumb/climb control to return to the Desk root.
+    expect: The dive transition lands inside the named zone, the filed note opens with its seeded content, and climbing out returns to the same root Desk without losing context.
+  - do: Force-quit and relaunch the production flagship, then inspect NATIVE-ZONE-7 and the moved object.
+    expect: The zone, its filed membership, and the free-placement change survive relaunch; no object jumps back, escapes its zone, or appears twice.
+teardown: []

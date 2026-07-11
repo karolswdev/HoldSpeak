@@ -1,5 +1,10 @@
 # HSU-1-03 — The scenario contract + the feature ledger
 
+> **Superseded contract notice:** This story accurately records protocol v1.
+> Protocol v2 forbids its default-all-yes `surfaces` model and instead requires
+> one explicit implementation target plus compatible explicit form factors.
+> See `uat/AUTHORING.md`; do not author new scenarios from the schema below.
+
 - **Project:** holdspeak-uat
 - **Phase:** 1
 - **Status:** done

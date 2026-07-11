@@ -1,4 +1,5 @@
 id: c-spoken-language
+execution_target: web_react
 title: The spoken language pins the transcription path
 features:
   - languages.spoken_language
@@ -6,10 +7,7 @@ features:
   - mobile.dictation.language.spoken
 recipes:
   - seeded-desk-43
-surfaces:
-  web: yes
-  ipad: yes      # directory: mobile.dictation.language.spoken ipad=yes (HSM-18-03, WhisperLanguage.configuredCode() at all three call sites)
-  iphone: yes    # directory: mobile.dictation.language.spoken iphone=yes (same resolver serves the aux apps regardless of form factor)
+form_factors: [desktop]
 steps:
   # Staging-verify beat: the language selector is present and defaulted.
   - do: Open the Voice-typing / language settings on the seeded desk and read the current spoken language.

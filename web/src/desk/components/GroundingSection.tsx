@@ -5,11 +5,16 @@
 // past-budget selection refuses here, before any run.
 import { useState } from "react";
 import {
-  fetchGroundingMeeting, groundingIsEmpty, groundingLabel, groundingTokens,
-  type GroundingMeeting, type GroundingSelection,
+  fetchGroundingMeeting,
+  groundingIsEmpty,
+  groundingLabel,
+  groundingTokens,
+  type GroundingMeeting,
+  type GroundingSelection,
 } from "../grounding";
 
-const fmt = (n: number): string => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+const fmt = (n: number): string =>
+  n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 
 export function GroundingSection(props: {
   meetings: Array<{ id: string; title: string; startedAt?: string }>;
@@ -28,7 +33,11 @@ export function GroundingSection(props: {
 
   const picked = (id: string) => selection.meetings.find((m) => m.id === id);
 
-  const toggleMeeting = async (row: { id: string; title: string; startedAt?: string }) => {
+  const toggleMeeting = async (row: {
+    id: string;
+    title: string;
+    startedAt?: string;
+  }) => {
     if (picked(row.id)) {
       onChange({ meetings: selection.meetings.filter((m) => m.id !== row.id) });
       return;
@@ -39,60 +48,126 @@ export function GroundingSection(props: {
     onChange({ meetings: [...selection.meetings, m] });
   };
 
-  const mutate = (id: string, change: (m: GroundingMeeting) => GroundingMeeting) => {
-    onChange({ meetings: selection.meetings.map((m) => (m.id === id ? change({ ...m }) : m)) });
+  const mutate = (
+    id: string,
+    change: (m: GroundingMeeting) => GroundingMeeting,
+  ) => {
+    onChange({
+      meetings: selection.meetings.map((m) =>
+        m.id === id ? change({ ...m }) : m,
+      ),
+    });
   };
 
   return (
     <div className={"desk-ground" + (open ? " is-open" : "")}>
-      <button type="button" className="desk-ground-head" onClick={() => setOpen((v) => !v)}>
-        <span className={"desk-ground-glyph" + (groundingIsEmpty(selection) ? "" : " is-on")} aria-hidden="true">▤</span>
+      <button
+        type="button"
+        className="desk-ground-head"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span
+          className={
+            "desk-ground-glyph" + (groundingIsEmpty(selection) ? "" : " is-on")
+          }
+          aria-hidden="true"
+        >
+          ▤
+        </span>
         <span className="desk-ground-title">
-          {groundingIsEmpty(selection) ? "Ground this ask" : `Grounded on ${groundingLabel(selection)}`}
+          {groundingIsEmpty(selection)
+            ? "Ground this ask"
+            : `Grounded on ${groundingLabel(selection)}`}
         </span>
         {!groundingIsEmpty(selection) && (
-          <span className={"desk-ground-tokens is-" + tone}>{fmt(used)} / {fmt(limitTokens)} tok</span>
+          <span className={"desk-ground-tokens is-" + tone}>
+            {fmt(used)} / {fmt(limitTokens)} tok
+          </span>
         )}
-        <span className="desk-ground-chev" aria-hidden="true">{open ? "▴" : "▾"}</span>
+        <span className="desk-ground-chev" aria-hidden="true">
+          {open ? "▴" : "▾"}
+        </span>
       </button>
 
       {open && (
         <div className="desk-ground-body">
           {!groundingIsEmpty(selection) && (
-            <div className="desk-ground-gauge" role="meter" aria-valuenow={used} aria-valuemax={limitTokens}>
-              <span className={"desk-ground-fill is-" + tone} style={{ width: `${Math.round(frac * 100)}%` }} />
+            <div
+              className="desk-ground-gauge"
+              role="meter"
+              aria-valuenow={used}
+              aria-valuemax={limitTokens}
+            >
+              <span
+                className={"desk-ground-fill is-" + tone}
+                style={{ width: `${Math.round(frac * 100)}%` }}
+              />
             </div>
           )}
-          {over && <p className="desk-run-warning">⚠ Past the window — drop the transcript or pick less</p>}
-          {meetings.length === 0 && <p className="desk-ground-empty">No meetings on this desk yet</p>}
+          {over && (
+            <p className="desk-run-warning">
+              ⚠ Past the window — drop the transcript or pick less
+            </p>
+          )}
+          {meetings.length === 0 && (
+            <p className="desk-ground-empty">No meetings on this desk yet</p>
+          )}
           <ul className="desk-ground-list">
             {meetings.map((row) => {
               const sel = picked(row.id);
               return (
-                <li key={row.id} className={"desk-ground-row" + (sel ? " is-picked" : "")}>
-                  <button type="button" className="desk-ground-pick" onClick={() => void toggleMeeting(row)}>
-                    <span className="desk-ground-check" aria-hidden="true">{sel ? "●" : "○"}</span>
+                <li
+                  key={row.id}
+                  className={"desk-ground-row" + (sel ? " is-picked" : "")}
+                >
+                  <button
+                    type="button"
+                    className="desk-ground-pick"
+                    onClick={() => void toggleMeeting(row)}
+                  >
+                    <span className="desk-ground-check" aria-hidden="true">
+                      {sel ? "●" : "○"}
+                    </span>
                     <span className="desk-ground-name">{row.title}</span>
-                    {loading === row.id && <span className="desk-ground-loading">…</span>}
-                    {sel?.day && <span className="desk-ground-day">{sel.day}</span>}
+                    {loading === row.id && (
+                      <span className="desk-ground-loading">…</span>
+                    )}
+                    {sel?.day && (
+                      <span className="desk-ground-day">{sel.day}</span>
+                    )}
                   </button>
                   {sel && (
                     <div className="desk-ground-expand">
                       <button
                         type="button"
-                        className={"desk-chip" + (sel.includeIntel ? "" : " quiet")}
+                        className={
+                          "desk-chip" + (sel.includeIntel ? "" : " quiet")
+                        }
                         disabled={!sel.hasIntel}
-                        onClick={() => mutate(row.id, (m) => ({ ...m, includeIntel: !m.includeIntel }))}
+                        onClick={() =>
+                          mutate(row.id, (m) => ({
+                            ...m,
+                            includeIntel: !m.includeIntel,
+                          }))
+                        }
                       >
                         {sel.includeIntel ? "✓ " : ""}Digest
                       </button>
                       <button
                         type="button"
-                        className={"desk-chip" + (sel.includeTranscript ? "" : " quiet")}
+                        className={
+                          "desk-chip" + (sel.includeTranscript ? "" : " quiet")
+                        }
                         disabled={sel.transcriptLines === 0}
-                        onClick={() => mutate(row.id, (m) => ({ ...m, includeTranscript: !m.includeTranscript }))}
+                        onClick={() =>
+                          mutate(row.id, (m) => ({
+                            ...m,
+                            includeTranscript: !m.includeTranscript,
+                          }))
+                        }
                       >
-                        {sel.includeTranscript ? "✓ " : ""}Transcript · {sel.transcriptLines}
+                        {sel.includeTranscript ? "✓ " : ""}Transcript ·{" "}
+                        {sel.transcriptLines}
                       </button>
                       {sel.artifacts.map((a) => (
                         <button
@@ -102,11 +177,14 @@ export function GroundingSection(props: {
                           onClick={() =>
                             mutate(row.id, (m) => ({
                               ...m,
-                              artifacts: m.artifacts.map((x) => (x.id === a.id ? { ...x, on: !x.on } : x)),
+                              artifacts: m.artifacts.map((x) =>
+                                x.id === a.id ? { ...x, on: !x.on } : x,
+                              ),
                             }))
                           }
                         >
-                          {a.on ? "✓ " : ""}{a.title}
+                          {a.on ? "✓ " : ""}
+                          {a.title}
                         </button>
                       ))}
                     </div>

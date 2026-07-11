@@ -1,14 +1,12 @@
 id: d-mesh-offline-door
+execution_target: web_react
 title: The offline door — a node dies, the desk refuses fast
 features:
   - mesh.liveness_everywhere
   - mesh.serve_node
 recipes:
   - mesh-node-alive
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the mesh profile/liveness surface on iPhone is unverified in the record"}
+form_factors: [desktop]
 steps:
   - do: Open the profiles view; confirm the worker reads live (the staging beat).
     expect: The "uat-worker" node reads live — the hub has seen it poll recently.

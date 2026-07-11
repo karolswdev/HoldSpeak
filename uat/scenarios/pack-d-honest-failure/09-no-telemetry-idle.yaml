@@ -1,4 +1,5 @@
 id: d-no-telemetry-idle
+execution_target: web_react
 title: No telemetry — an idle desk beacons nowhere
 features:
   - trust.no-telemetry
@@ -8,10 +9,7 @@ recipes:
 # voice and never attacked. This stages the observation: boot a fresh isolated
 # desk, leave it idle under a network capture, and assert zero outbound beacons.
 # The pass bar is behavioural (an empty capture), not a promise in prose.
-surfaces:
-  web: yes
-  ipad: {n/a: "network-capture of the runtime process is taken on the host running the web runtime; the ipad is a client of it, not the process under capture (trust.no-telemetry ipad: unknown)"}
-  iphone: {n/a: "same as ipad — the beacon check is on the host runtime process, not the phone client (trust.no-telemetry iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: Boot the fresh desk and confirm it is idle and healthy (the staging beat).
     expect: The desk is empty and the setup surface reads reachable; nothing is mid-run.

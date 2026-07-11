@@ -1,25 +1,29 @@
 id: a-unapproved-never-egresses
+execution_target: web_react
 title: An unapproved proposal never egresses (the honest-failure close)
 features:
   - trust.egress.cloud-meeting-intel
   - meetings.aftercare.action-to-issue
   - meetings.proposals.review-anywhere
 recipes:
-  - meeting-just-ended-open-actions
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the proposal/egress surface on iPhone is unverified in the inventory (row iphone: unknown)"}
+  - egress-cloud-card
+form_factors: [desktop]
 steps:
   - do: (Staging beat) Confirm a pending proposal exists for the meeting, unexecuted.
-    expect: At least one proposal is in the proposed state — created but not yet approved, nothing filed.
+    expect: “Cloud egress review (UAT seed)” has one GitHub proposal in the proposed state — created but not approved, nothing filed.
     where: /history
-  - do: Read the egress badge on the aftercare card whose intel ran on the cloud endpoint.
-    expect: The badge tells the truth about where that content went — the pylon intel ran cloud on golden-43, so the badge reads cloud (or names the runs-on target), never local, and never prose.
+    verifies:
+      - meetings.aftercare.action-to-issue
+      - meetings.proposals.review-anywhere
+  - do: >
+      Read both structured egress readouts: the desk chrome's selected
+      meeting-intel target and the pending proposal's per-card target.
+    expect: The chrome names api.openai.com because the cloud provider was explicitly selected for this world; the proposal reads “☁ GitHub” and its preview names acme/holdspeak-uat. The sync-staged meeting itself makes no claim that intel already ran.
     where: /history
-    surfaces:
-      ipad: {n/a: "the intel egress badge is asserted on the web card chrome; the iPad row for trust.egress.cloud-meeting-intel is ipad: unknown (sets provider via /api/settings, badge on device unverified)"}
+    verifies:
+      - trust.egress.cloud-meeting-intel
+    form_factors: [desktop]
   - do: Review the pending proposal wherever it was created, then leave it unapproved and confirm nothing left the machine.
-    expect: An unapproved proposal never egresses — no issue is filed and no webhook fires until a human approves. The proposal is reviewable but stays in the proposed state. This is the pack's close — the product stays honest when nothing has been consented to.
+    expect: An unapproved proposal never egresses — no issue is filed until a human approves. The card stays proposed with no executed_at or result. This is the pack's close — the product stays honest when nothing has been consented to.
     where: /history
 teardown: []

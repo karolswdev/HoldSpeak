@@ -1,0 +1,22 @@
+id: f-holdbar-teleprompter
+execution_target: ios_classic_swift
+title: The classic Swift dictate shell uses the compact hold-bar teleprompter
+features:
+  - mobile.desk.compact.hold_bar_teleprompter
+recipes: []
+manual_setup:
+  - Install the classic/demo MeetingCapture root on a physical iPhone and record its bundle identifier and build before testing.
+  - Pair that classic shell to this isolated run, grant microphone permission, and open DictateView with an empty target field.
+form_factors: [iphone]
+steps:
+  - do: >
+      In the classic Swift DictateView, press and HOLD the bottom-edge HOLD BAR,
+      speak a sentence, and watch the live partial while the bar remains held.
+    expect: >
+      The live partial reflows bottom-up with the newest words nearest the thumb —
+      a teleprompter, not a top-anchored field. No text commits while the bar is held.
+  - do: Release the HOLD BAR.
+    expect: >
+      Release commits the utterance exactly once with a heavy haptic. The words
+      that were previewed land, and a second release cannot duplicate them.
+teardown: []

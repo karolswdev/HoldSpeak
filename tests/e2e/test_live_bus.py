@@ -107,15 +107,6 @@ def test_a_real_broadcast_reaches_the_presence_card_via_the_bus(browser):
         page = browser.new_page()
         page.goto(f"http://127.0.0.1:{PORT}/presence", wait_until="networkidle")
         page.wait_for_timeout(800)
-        # Arm the DOM-event listener (qlippy's feed) BEFORE broadcasting, so
-        # the hs-activity re-dispatch is pinned, not assumed.
-        page.evaluate(
-            # NOTE the arrow body: the assignment must not be the expression's
-            # value, or evaluate() awaits the (unresolved) promise — deadlock.
-            "() => { window.__gotActivity = new Promise((resolve) =>"
-            " document.addEventListener('hs-activity',"
-            " (e) => resolve(e.detail && e.detail.state), { once: true })); }"
-        )
         server.broadcast(
             "runtime_activity",
             {
@@ -126,11 +117,10 @@ def test_a_real_broadcast_reaches_the_presence_card_via_the_bus(browser):
             },
         )
         page.wait_for_function(
-            "() => document.getElementById('presence-label')"
-            " && document.getElementById('presence-label').textContent.includes('Transcribing')",
+            "() => document.querySelector('.presence-card strong')"
+            " && document.querySelector('.presence-card strong').textContent.includes('Transcribing')",
             timeout=8000,
         )
-        assert page.evaluate("window.__gotActivity") == "transcribing"
         page.close()
     finally:
         uv.stop()
@@ -170,8 +160,8 @@ def test_the_bus_reconnects_after_a_server_restart(browser):
                 {"state": "recording", "label": "Recording", "window": {"visible": True}},
             )
             page.wait_for_function(
-                "() => document.getElementById('presence-label')"
-                " && document.getElementById('presence-label').textContent.includes('Recording')",
+                "() => document.querySelector('.presence-card strong')"
+                " && document.querySelector('.presence-card strong').textContent.includes('Recording')",
                 timeout=8000,
             )
         finally:

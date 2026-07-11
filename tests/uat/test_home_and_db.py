@@ -48,7 +48,15 @@ def test_db_schema_tables_exist(tmp_path):
                 "SELECT name FROM sqlite_master WHERE type='table'"
             ).fetchall()
         }
-    assert {"runs", "scenario_executions", "step_verdicts", "findings"} <= names
+    assert {
+        "runs",
+        "scenario_executions",
+        "scenario_stages",
+        "step_verdicts",
+        "step_transitions",
+        "device_sessions",
+        "findings",
+    } <= names
 
 
 def test_db_run_upsert_roundtrip(tmp_path):

@@ -1,5 +1,9 @@
 # The Protocol Notion — how a HoldSpeak UAT sitting is shaped
 
+> **Historical protocol notion:** The beat/control/failure discipline below
+> remains useful. Its “three-surface scenario” framing is superseded by protocol
+> v2 target × form-factor slots. Phone/iPad width never identifies a Swift root.
+
 **Derived 2026-07-08** from the proof artifacts this repo already accumulated:
 the Phase-67 dogfood `PROTOCOL.md`, the live phase-closing walks
 (`scripts/walk_*.py`, `scripts/rails_walk_*.py`), the spoken-meeting e2e, and

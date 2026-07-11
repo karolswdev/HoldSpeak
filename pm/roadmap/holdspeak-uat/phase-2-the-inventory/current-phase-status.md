@@ -2,6 +2,11 @@
 
 **Last updated:** 2026-07-08 (scaffolded 0/5; **the directory pre-seed landed** — an 8-agent sweep produced the starting map the sweeps now verify)
 
+> **Historical inventory notice (2026-07-09):** The web/iPad/iPhone columns
+> below preserve the original record-level census; they are not protocol-v2
+> execution identity. Current UAT maps claims to `web_react` or an exact Swift
+> root plus a compatible form factor. Width alone is never native evidence.
+
 ## Goal
 
 Before scenarios can be authored at scale, two things must exist that

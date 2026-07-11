@@ -13,7 +13,14 @@ import pytest
 
 from uat.conductor.induction.decks import DeckError, DeckRegistry
 
-REQUIRED_DECKS = {"golden-local", "golden-43", "bad-endpoint", "no-model", "mesh-node"}
+REQUIRED_DECKS = {
+    "golden-local",
+    "golden-43",
+    "bad-endpoint",
+    "no-model",
+    "mesh-node",
+    "cloud-egress",
+}
 
 
 def _load_config(overlay: dict, tmp_path):
@@ -54,6 +61,14 @@ def test_golden_43_wired_to_the_lan(tmp_path):
 def test_no_model_is_local_and_quiet(tmp_path):
     cfg = _load_config(DeckRegistry().load("no-model"), tmp_path)
     assert cfg.meeting.intel_enabled is False
+
+
+def test_cloud_egress_names_endpoint_but_keeps_actuators_closed(tmp_path):
+    cfg = _load_config(DeckRegistry().load("cloud-egress"), tmp_path)
+    assert cfg.meeting.intel_enabled is True
+    assert cfg.meeting.intel_provider == "cloud"
+    assert cfg.meeting.intel_cloud_base_url == "https://api.openai.com/v1"
+    assert cfg.meeting.allow_actuators is False
 
 
 def test_unknown_deck_raises():

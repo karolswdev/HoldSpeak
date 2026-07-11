@@ -1,13 +1,11 @@
 id: e-node-events-to-hub
+execution_target: web_react
 title: Remote node rail-events surface on the hub observer
 features:
   - mesh.handoff.node_events_to_hub
 recipes:
   - mesh-run-ready
-surfaces:
-  web: yes
-  ipad: {n/a: "mesh.handoff.node_events_to_hub is ipad:no in the inventory — the remote-events observer merge is a hub/web to-surface only"}
-  iphone: {n/a: "mesh.handoff.node_events_to_hub is iphone:no in the inventory — no phone observer surface"}
+form_factors: [desktop]
 steps:
   - do: Confirm the worker is live before driving any run (the staging beat).
     expect: The "uat-worker" node reads live on the hub.

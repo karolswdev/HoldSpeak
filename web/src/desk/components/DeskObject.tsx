@@ -5,12 +5,14 @@
 import { useDrag } from "@use-gesture/react";
 // @ts-ignore — shared ESM module (see sprites.d.ts); the SAME picker the
 // legacy desk uses, for exact per-id sprite parity.
-import { spriteUrl } from "../../scripts/desk/sprites.js";
+import { spriteUrl } from "../sprites";
 import { objGlow, objMotion, objUnit, type WorldObject } from "../world";
 import { useDesk } from "../store";
 
 export function DeskObject({
-  o, i, n,
+  o,
+  i,
+  n,
 }: {
   o: WorldObject;
   i: number;
@@ -21,7 +23,15 @@ export function DeskObject({
   const newIds = useDesk((s) => s.newIds);
   const editingId = useDesk((s) => s.editingId);
   const selectedIds = useDesk((s) => s.selectedIds);
-  const { setPosition, persistPositions, setDragging, openPullout, setHoverZone, fileIntoDir, toggleSelected } = useDesk.getState();
+  const {
+    setPosition,
+    persistPositions,
+    setDragging,
+    openPullout,
+    setHoverZone,
+    fileIntoDir,
+    toggleSelected,
+  } = useDesk.getState();
 
   const u = objUnit(o, i, n, positions);
   const m = objMotion(o);
@@ -61,13 +71,10 @@ export function DeskObject({
           y: Math.min(0.96, Math.max(0.04, (py - r.top) / r.height)),
         });
         // The drop affordance: hit-test FRESH zone rects each move.
-        let over: string | null = null;
-        document.querySelectorAll(".desk-zone").forEach((el) => {
-          const zr = el.getBoundingClientRect();
-          if (px >= zr.left && px <= zr.right && py >= zr.top && py <= zr.bottom) {
-            over = (el as HTMLElement).dataset.zoneId || null;
-          }
-        });
+        const zone = document
+          .elementFromPoint(px, py)
+          ?.closest<HTMLElement>(".desk-zone");
+        const over = zone?.dataset.zoneId || null;
         setHoverZone(over);
       }
       if (last) {

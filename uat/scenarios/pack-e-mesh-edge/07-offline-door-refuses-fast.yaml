@@ -1,4 +1,5 @@
 id: e-offline-door-refuses-fast
+execution_target: web_react
 title: The offline door — the edge dies mid-run, the desk refuses fast by name
 features:
   - mesh.liveness_everywhere
@@ -6,10 +7,7 @@ features:
   - mesh.handoff.web_run_to_node
 recipes:
   - mesh-run-ready
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "mesh liveness / serve on iphone is iphone:unknown in the inventory — the Apple worker was an HSM follow-up, not confirmed shipped"}
+form_factors: [desktop]
 steps:
   - do: Confirm the worker reads live before breaking it (the staging beat).
     expect: The "uat-worker" node reads live — the hub has seen it poll recently.

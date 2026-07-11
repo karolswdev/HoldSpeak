@@ -69,7 +69,7 @@ def test_malformed_symbol_refused_with_400(client):
 
 def test_default_is_empty_and_editor_ships():
     assert Config().dictation.spoken_symbols == []
-    page = (_REPO / "web" / "src" / "pages" / "settings.astro").read_text()
+    page = (_REPO / "web/src/pages/SettingsPage.tsx").read_text()
     assert "Spoken-symbol dictionary" in page
-    for marker in ("sym-row", "sym-add", "sym-remove", 'x-model="entry.attach"'):
+    for marker in ("symbol-row", "Add spoken symbol", "Remove", "Attachment"):
         assert marker in page, marker

@@ -1,0 +1,71 @@
+version: 1
+# Explicit native feature ownership. Web React inherits the legacy web column;
+# an old ipad/iphone=yes cell never chooses a Swift binary on its own.
+features:
+  release.backup_restore.cli:
+    cli_python: [local_shell]
+  release.doctor.database_check:
+    cli_python: [local_shell]
+  release.schema.safe_upgrade:
+    cli_python: [local_shell]
+  agents.companion.pair_desktop:
+    ios_companion_swift: [ipad]
+    ios_flagship_swift: [ipad, iphone]
+  agents.dictation.into_your_mac:
+    ios_classic_swift: [ipad, iphone]
+  desk.diorama.front_door:
+    ios_flagship_swift: [ipad, iphone]
+  desk.front-door.spatial-objects:
+    ios_flagship_swift: [ipad, iphone]
+  desk.knowledge_bases:
+    ios_flagship_swift: [ipad, iphone]
+  desk.web.create_in_world:
+    ios_flagship_swift: [ipad, iphone]
+  desk.web.free_placement:
+    ios_flagship_swift: [ipad]
+  desk.web.zones_file_dive:
+    ios_flagship_swift: [ipad]
+  mobile.capture.airgapped_notetaker:
+    ios_flagship_swift: [ipad]
+  mobile.capture.meeting_record:
+    ios_flagship_swift: [ipad, iphone]
+  mobile.capture.on_device_diarization:
+    ios_flagship_swift: [ipad]
+  mobile.capture.realtime_mir:
+    ios_flagship_swift: [ipad]
+  mobile.desk.compact.hold_bar_teleprompter:
+    ios_classic_swift: [iphone]
+  mobile.desk.compact.lane:
+    ios_flagship_swift: [ipad, iphone]
+  mobile.dictation.macros.fire:
+    ios_classic_swift: [ipad]
+  mobile.dictation.prebriefing.nudge:
+    ios_classic_swift: [ipad]
+  mobile.meeting.aftercare.file_issue:
+    ios_companion_swift: [ipad]
+  mobile.meeting.proposals.review:
+    ios_companion_swift: [ipad]
+  mobile.mesh.serve.consent_toggle:
+    ios_flagship_swift: [ipad, iphone]
+  mobile.models.import_and_manage:
+    ios_flagship_swift: [ipad]
+  mobile.models.inference_mode_setting:
+    ios_flagship_swift: [ipad]
+  mobile.models.on_device_inference:
+    ios_flagship_swift: [ipad]
+  mobile.profiles.active_picker:
+    ios_flagship_swift: [ipad, iphone]
+  mobile.profiles.key_never_syncs:
+    ios_flagship_swift: [ipad, iphone]
+  mobile.profiles.manage_advanced:
+    ios_flagship_swift: [ipad, iphone]
+  mobile.steering.attach_arm_steer:
+    ios_flagship_swift: [ipad, iphone]
+  mobile.steering.factory_lifecycle:
+    ios_flagship_swift: [ipad, iphone]
+  mobile.steering.key_palette:
+    ios_flagship_swift: [ipad, iphone]
+  mobile.workbench.graph.author:
+    ios_classic_swift: [ipad]
+  sync.contracts.parity_spine:
+    ios_flagship_swift: [ipad, iphone]

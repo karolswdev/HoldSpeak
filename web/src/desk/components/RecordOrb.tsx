@@ -6,9 +6,8 @@
 // anywhere (the /live page, the CLI, the iPad) shows here and the orb can
 // only stop it — never double-start.
 import { useEffect, useRef, useState } from "react";
-// The one live bus (Phase 72): the island subscribes like every consumer.
-// @ts-ignore — plain ESM shared with the shell widgets.
-import { seedState, subscribe } from "../../scripts/runtime-bus.js";
+import { apiFetch } from "../../lib/api";
+import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDesk } from "../store";
 
 type OrbState = "idle" | "recording" | "busy";
@@ -20,6 +19,7 @@ export function RecordOrb() {
   const [elapsed, setElapsed] = useState("");
   const meetingsBefore = useRef<Set<string>>(new Set());
   const { refresh, markNew } = useDesk.getState();
+  const { subscribe } = useRuntimeBus();
 
   // Live truth: any meeting_live/runtime_activity frame flips the orb.
   useEffect(() => {
@@ -40,8 +40,12 @@ export function RecordOrb() {
         setExternal(false);
       }
     };
-    const unsub = subscribe("runtime_activity", apply);
-    void seedState();
+    const unsub = subscribe("runtime_activity", (frame) => apply(frame.data));
+    void apiFetch<any>("/api/state")
+      .then((snapshot) =>
+        apply(snapshot?.activity || snapshot?.runtime?.activity),
+      )
+      .catch(() => null);
     return unsub;
   }, []);
 
@@ -64,11 +68,7 @@ export function RecordOrb() {
     );
     try {
       // /live's exact call — the hub's recorder, never a browser mic.
-      const resp = await fetch("/api/meeting/start", {
-        method: "POST",
-        headers: { accept: "application/json" },
-      });
-      if (!resp.ok) throw new Error("start_failed");
+      await apiFetch("/api/meeting/start", { method: "POST" });
       setExternal(false);
       setStartedAt(Date.now());
       setState("recording");
@@ -80,10 +80,7 @@ export function RecordOrb() {
   const stop = async () => {
     setState("busy");
     try {
-      await fetch("/api/meeting/stop", {
-        method: "POST",
-        headers: { accept: "application/json" },
-      });
+      await apiFetch("/api/meeting/stop", { method: "POST" });
     } catch {
       /* the state frame settles the orb either way */
     }
@@ -100,12 +97,18 @@ export function RecordOrb() {
   const recording = state === "recording";
   return (
     <div className="desk-orb-wrap">
-      {recording && external && <span className="desk-orb-note">live elsewhere</span>}
-      {recording && elapsed && <span className="desk-orb-elapsed">{elapsed}</span>}
+      {recording && external && (
+        <span className="desk-orb-note">live elsewhere</span>
+      )}
+      {recording && elapsed && (
+        <span className="desk-orb-elapsed">{elapsed}</span>
+      )}
       <button
         type="button"
         className={`desk-orb is-${state}`}
-        onClick={() => (recording ? void stop() : state === "idle" ? void start() : undefined)}
+        onClick={() =>
+          recording ? void stop() : state === "idle" ? void start() : undefined
+        }
         aria-label={recording ? "Stop recording" : "Record a meeting"}
         title={recording ? "Stop recording" : "Record a meeting"}
         disabled={state === "busy"}

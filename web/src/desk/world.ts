@@ -1,5 +1,5 @@
 /** The world's pure layout math (HS-73-01) — bit-faithful ports of the
- * Alpine desk's `worldObjects` / `worldZones` / `objUnit` (looseHome) /
+ * original desk's `worldObjects` / `worldZones` / `objUnit` (looseHome) /
  * `objGlow`, so the island lays the same desk out the same way. */
 import { oh } from "./hash";
 import type { DeskItem, Items, Kind } from "./api";
@@ -13,7 +13,14 @@ export interface WorldObject {
 }
 
 const ORDER: Kind[] = [
-  "meeting", "note", "kb", "recipe", "artifact", "chain", "workflow", "coder",
+  "meeting",
+  "note",
+  "kb",
+  "recipe",
+  "artifact",
+  "chain",
+  "workflow",
+  "coder",
 ];
 
 /** Every primitive as a world object, unfiltered — the lookup surface for
@@ -35,7 +42,10 @@ export function allObjects(items: Items): WorldObject[] {
   return out;
 }
 
-export function worldObjects(items: Items, divedZone: string | null): WorldObject[] {
+export function worldObjects(
+  items: Items,
+  divedZone: string | null,
+): WorldObject[] {
   const out = allObjects(items);
   if (divedZone) {
     const dir = (items.directory || []).find((d) => d.id === divedZone);
@@ -48,7 +58,7 @@ export function worldObjects(items: Items, divedZone: string | null): WorldObjec
   // filed and always show.)
   const filed = new Set<string>();
   for (const d of items.directory || []) {
-    for (const mid of (((d as any).memberIds as string[]) || [])) filed.add(mid);
+    for (const mid of ((d as any).memberIds as string[]) || []) filed.add(mid);
   }
   return out.filter((o) => o.kind === "coder" || !filed.has(o.id));
 }
@@ -60,7 +70,10 @@ export interface WorldZone {
   ref: DeskItem;
 }
 
-export function worldZones(items: Items, divedZone: string | null): WorldZone[] {
+export function worldZones(
+  items: Items,
+  divedZone: string | null,
+): WorldZone[] {
   if (divedZone) return [];
   return (items.directory || []).map((d) => ({
     id: String(d.id),
@@ -72,22 +85,35 @@ export function worldZones(items: Items, divedZone: string | null): WorldZone[] 
 
 export function objGlow(kind: string): string {
   return (
-    {
-      meeting: "#56C7F5", note: "#34D399", kb: "#FBBF24", recipe: "#FF6B35",
-      artifact: "#FF9E64", chain: "#A78BFA", workflow: "#56C7F5",
-      directory: "#E0A458", coder: "#FF6B35",
-    } as Record<string, string>
-  )[kind] || "#FF6B35";
+    (
+      {
+        meeting: "#56C7F5",
+        note: "#34D399",
+        kb: "#FBBF24",
+        recipe: "#FF6B35",
+        artifact: "#FF9E64",
+        chain: "#A78BFA",
+        workflow: "#56C7F5",
+        directory: "#E0A458",
+        coder: "#FF6B35",
+      } as Record<string, string>
+    )[kind] || "#FF6B35"
+  );
 }
 
 /** A saved drag position, else the density-aware `looseHome` grid. */
 export function objUnit(
-  o: WorldObject, i: number, n: number,
+  o: WorldObject,
+  i: number,
+  n: number,
   positions: Record<string, UnitPos>,
 ): UnitPos {
   const saved = positions[o.id];
   if (saved && typeof saved.x === "number") return saved;
-  const cols = Math.max(2, Math.min(6, Math.ceil(Math.sqrt(Math.max(1, n) * 1.25))));
+  const cols = Math.max(
+    2,
+    Math.min(6, Math.ceil(Math.sqrt(Math.max(1, n) * 1.25))),
+  );
   const rows = Math.max(1, Math.ceil(n / cols));
   const col = i % cols;
   const row = Math.floor(i / cols);
@@ -109,6 +135,9 @@ export function objMotion(o: WorldObject) {
 }
 
 export function worldRows(n: number): number {
-  const cols = Math.max(2, Math.min(6, Math.ceil(Math.sqrt(Math.max(1, n) * 1.25))));
+  const cols = Math.max(
+    2,
+    Math.min(6, Math.ceil(Math.sqrt(Math.max(1, n) * 1.25))),
+  );
   return Math.max(1, Math.ceil(n / cols));
 }

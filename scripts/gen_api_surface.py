@@ -125,12 +125,27 @@ def extract_ios_calls() -> set[str]:
 
 def extract_web_calls() -> set[str]:
     web_src = REPO / "web" / "src"
-    files = [p for suffix in ("*.js", "*.ts", "*.astro") for p in web_src.rglob(suffix)]
+    files = [
+        p
+        for suffix in ("*.js", "*.ts", "*.tsx", "*.astro")
+        for p in web_src.rglob(suffix)
+        if not p.name.endswith((".test.js", ".test.ts", ".test.tsx"))
+        and "__tests__" not in p.parts
+    ]
     return _extract(files, _WEB_LITERAL)
 
 
 def _segments(path: str) -> list[str]:
     return [s for s in path.split("/") if s]
+
+
+def _segment_matches(call_segment: str, route_segment: str) -> bool:
+    if call_segment == WILD or route_segment.startswith("{"):
+        return True
+    if WILD in call_segment:
+        pattern = re.escape(call_segment).replace(r"\*", ".*")
+        return re.fullmatch(pattern, route_segment) is not None
+    return call_segment == route_segment
 
 
 def _route_matches(call: str, route_path: str) -> bool:
@@ -144,9 +159,7 @@ def _route_matches(call: str, route_path: str) -> bool:
     if len(call_segs) != len(route_segs):
         return False
     for c, r in zip(call_segs, route_segs):
-        if c == WILD or r.startswith("{"):
-            continue
-        if c != r:
+        if not _segment_matches(c, r):
             return False
     return True
 
@@ -158,9 +171,7 @@ def _prefix_matches(call: str, route_path: str) -> bool:
     if not call_segs or len(call_segs) > len(route_segs):
         return False
     for c, r in zip(call_segs, route_segs[: len(call_segs)]):
-        if c == WILD or r.startswith("{"):
-            continue
-        if c != r:
+        if not _segment_matches(c, r):
             return False
     return True
 

@@ -195,17 +195,7 @@ def test_correct_response_secret_filtered_teaches_nothing(
 # ── page content / global CSS guard ──────────────────────────────────────────
 
 def test_trust_chip_css_is_global(persistent_db: Database, settings_path: Path) -> None:
-    """The chip is injected into JS-rendered DOM (dry-run, journal, memory), so
-    its CSS must be global (is:global), not Astro-scoped."""
-    built = (
-        Path(__file__).resolve().parents[2]
-        / "holdspeak" / "static" / "_built" / "dictation" / "index.html"
-    )
-    if not built.exists():
-        pytest.skip("web bundle not built")
-    css = "\n".join(p.read_text() for p in built.parent.parent.glob("_astro/dictation*.css"))
-    assert ".learn-sig{" in css.replace(" ", ""), (
-        "learn-sig chip styles must be global (is:global) — scoped CSS does not "
-        "apply to the JS-injected dry-run/journal/memory chips"
-    )
-    assert "learn-sig[data-astro-cid" not in css, "learn-sig is scoped — move it into <style is:global>"
+    """Trust feedback is React-owned and uses the shared Signal grammar."""
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    assert "InlineMessage" in source and "StatusPill" in source
+    assert "dangerouslySetInnerHTML" not in source

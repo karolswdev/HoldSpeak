@@ -5,14 +5,20 @@
 export function EmptyDesk() {
   return (
     <div className="desk-empty">
-      <div className="desk-empty-mark" aria-hidden="true">◍</div>
+      <div className="desk-empty-mark" aria-hidden="true">
+        ◍
+      </div>
       <h1 className="desk-empty-word">HoldSpeak</h1>
       <p className="desk-empty-line">
         Hold a key, speak, it types. Record a meeting, it closes the loop.
       </p>
       <p className="desk-empty-next">
-        <a className="desk-chip" href="/dictation">Set up dictation</a>
-        <a className="desk-chip" href="/history">Record a meeting</a>
+        <a className="desk-chip" href="/dictation">
+          Set up dictation
+        </a>
+        <a className="desk-chip" href="/history">
+          Record a meeting
+        </a>
       </p>
     </div>
   );

@@ -1,7 +1,7 @@
 """Capture HS-10-03 component-gallery screenshots in two viewports.
 
 Spawns a tiny Python http.server against `holdspeak/static/` (which the
-Astro pipeline emits into) so the `/_built` base prefix resolves
+Vite pipeline emits into) so the `/_built` base prefix resolves
 without the FastAPI runtime running. Hits `/_built/design/components/`
 at 1440 and 420 wide and writes PNGs into the phase folder.
 
@@ -18,6 +18,7 @@ import socketserver
 import threading
 from contextlib import contextmanager
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from playwright.sync_api import sync_playwright
 
@@ -57,10 +58,18 @@ SHOTS = [
 
 @contextmanager
 def serve(directory: Path, port: int = 0):
-    handler = lambda *args, **kw: http.server.SimpleHTTPRequestHandler(
-        *args, directory=str(directory), **kw
-    )
-    httpd = socketserver.TCPServer(("127.0.0.1", port), handler)
+    class SpaHandler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=str(directory), **kwargs)
+
+        def do_GET(self):  # noqa: N802 - stdlib handler contract
+            path = urlsplit(self.path).path
+            target = directory / path.lstrip("/")
+            if path.startswith("/_built/") and not target.is_file():
+                self.path = "/_built/index.html"
+            super().do_GET()
+
+    httpd = socketserver.TCPServer(("127.0.0.1", port), SpaHandler)
     actual_port = httpd.server_address[1]
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
@@ -89,92 +98,6 @@ def main() -> None:
                 shot_url = base_url.rstrip("/") + route
                 page.goto(shot_url, wait_until="networkidle")
                 page.wait_for_timeout(400)
-
-                # Story-06: synthesize meeting states by mutating
-                # Alpine's x-data on the runtime page directly. The
-                # backend is not running for capture, so this is the
-                # only way to render non-idle hero hierarchy.
-                if "_tab=" in route:
-                    # HS-10-08: drive the history tab system without
-                    # the FastAPI backend running. setTab() triggers
-                    # tab-specific loaders that hit /api/* — they will
-                    # fail, but `tab` flips synchronously and the
-                    # corresponding panel renders skeleton/empty state.
-                    tab = route.split("_tab=")[-1]
-                    page.evaluate(
-                        """(tab) => {
-                          const root = document.querySelector('[x-data]');
-                          if (!root || !window.Alpine) return;
-                          const data = window.Alpine.$data(root);
-                          // Seed a minimal settings object so the
-                          // settings panel renders without a backend.
-                          data.loadingSettings = false;
-                          data.settings = {
-                            ui: { theme: 'dark', history_lines: 25, show_audio_meter: true },
-                            hotkey: { key: 'alt_r' },
-                            model: { name: 'small' },
-                            meeting: {
-                              mic_label: 'Mic', remote_label: 'Remote',
-                              export_format: 'markdown', intel_provider: 'local',
-                              mir_profile: 'balanced',
-                              intel_realtime_model: '/Users/karol/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf',
-                              intel_summary_model: '',
-                              mic_device: '', system_audio_device: '',
-                              auto_export: true, mir_enabled: true,
-                              intel_cloud_model: 'gpt-4.1-mini',
-                              intel_cloud_api_key_env: 'OPENAI_API_KEY',
-                              intel_cloud_reasoning_effort: '',
-                              intel_cloud_base_url: 'https://api.openai.com/v1',
-                              intel_queue_poll_seconds: 30,
-                              intel_retry_base_seconds: 5,
-                              intel_retry_max_seconds: 600,
-                              intel_retry_max_attempts: 6,
-                              intel_retry_failure_alert_percent: 25,
-                              intel_retry_failure_hysteresis_minutes: 5,
-                              intel_retry_failure_webhook_url: '',
-                              intel_retry_failure_webhook_header_name: '',
-                              intel_retry_failure_webhook_header_value: '',
-                              similarity_threshold: 0.7,
-                              intel_enabled: true, intel_deferred_enabled: true,
-                              intel_cloud_store: false,
-                              web_auto_open: false, diarization_enabled: false,
-                              diarize_mic: false, cross_meeting_recognition: false,
-                            },
-                          };
-                          data.tab = tab;
-                        }""",
-                        tab,
-                    )
-                    page.wait_for_timeout(400)
-                if "_state=" in route:
-                    state = route.split("_state=")[-1]
-                    page.evaluate(
-                        """(state) => {
-                          const root = document.querySelector('[x-data]');
-                          if (!root || !window.Alpine) return;
-                          const data = window.Alpine.$data(root);
-                          data.meetingTitle = 'Architecture sync';
-                          data.meetingTags = ['planning', 'pluggable-pipeline'];
-                          if (state === 'active') {
-                            data.meetingActive = true;
-                            data.duration = '00:24:18';
-                            data.segments = new Array(31);
-                            data.entries = [
-                              { id: 'b1', kind: 'bookmark', label: 'Decision: defer light-mode tokens to phase 12.', timestamp: '00:09:42' },
-                              { id: 's1', kind: 'segment', speaker: 'A', text: 'OK so the connector ecosystem moves to phase 11, design phase becomes phase 10.', start: '00:23:51', end: '00:23:58' },
-                              { id: 's2', kind: 'segment', speaker: 'B', text: 'And we keep Alpine for now — the JS data layer is fine, we are rebuilding the visuals.', start: '00:24:01', end: '00:24:09' },
-                            ];
-                          }
-                          if (state === 'stopping') {
-                            data.meetingActive = true;
-                            data.stopInProgress = true;
-                            data.duration = '00:38:02';
-                            data.segments = new Array(58);
-                          }
-                        }""",
-                        state,
-                    )
-                    page.wait_for_timeout(400)
 
                 target = out_dir / filename
                 # story-10 captures only the CommandPreview section

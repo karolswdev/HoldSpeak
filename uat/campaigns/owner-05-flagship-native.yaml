@@ -1,0 +1,31 @@
+title: "5 · Flagship iPhone and iPad"
+purpose: >
+  Verify the actually installed flagship Swift root on physical glass: exact
+  production DioStage arrival, native Desk foundation and CRUD, pair and sync,
+  capture/save/reopen, iPad diarization and live intelligence, consented steering,
+  offline/on-device use, models, profiles, and mesh serving.
+sequence: 5
+tier: core
+estimated_minutes: 145
+prerequisites:
+  - Start the conductor with UAT_HOST=0.0.0.0 and select Device sitting.
+  - A physical iPhone and iPad with the exact flagship build; record build and OS in the first note.
+  - Microphone and Local Network permissions, an installed local GGUF, and .43 reachable for homelab treatment beats.
+exit_gate:
+  - Every verdict is ios_flagship_swift × iPad/iPhone evidence from the named flagship app and device, never from a browser or a different native shell.
+  - Pairing, capture persistence, offline use, or consent failures block the native pass.
+scenarios:
+  - ios-flagship-deskos/ios-flagship-deskos-production-root-first-boot
+  - ios-flagship-deskos/ios-flagship-deskos-seeded-primitives-sync-read
+  - ios-flagship-deskos/ios-flagship-deskos-native-note-kb-crud
+  - ios-flagship-deskos/ios-flagship-deskos-zones-file-dive-free-placement
+  - pack-f-mobile/f-compact-desk-lane
+  - ios-flagship-smoke/ios-flagship-install-pair-sync
+  - ios-flagship-smoke/ios-flagship-record-save-reopen
+  - ios-flagship-smoke/ios-flagship-ipad-diarization-live-intel
+  - ios-flagship-smoke/ios-flagship-steering-consent-offline
+  - pack-f-mobile/f-airgapped-notetaker
+  - pack-f-mobile/f-models-import-and-mode
+  - pack-f-mobile/f-mesh-serve-toggle
+  - pack-f-mobile/f-profiles-picker-manage-key
+  - pack-f-mobile/f-steering-arm-keys-factory

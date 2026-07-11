@@ -4,7 +4,12 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 
-from holdspeak.setup_runtime import probe_runtime, runtime_choices
+from holdspeak.setup_runtime import (
+    discover_endpoint_models,
+    discover_local_models,
+    probe_runtime,
+    runtime_choices,
+)
 
 
 def _cfg(*, enabled=True, backend="llama_cpp", **runtime_kw) -> SimpleNamespace:
@@ -92,3 +97,38 @@ def test_openai_endpoint_unconfigured(monkeypatch) -> None:
 def test_runtime_choices_cover_the_four_paths() -> None:
     ids = {c["id"] for c in runtime_choices()}
     assert ids == {"basic", "mlx", "llama_cpp", "openai_compatible"}
+
+
+def test_endpoint_discovery_returns_real_model_ids() -> None:
+    calls = {}
+
+    def get(url, *, headers, timeout):
+        calls.update(url=url, headers=headers, timeout=timeout)
+        return 200, b'{"data":[{"id":"zeta"},{"id":"Alpha"},{"id":"zeta"}]}'
+
+    result = discover_endpoint_models(
+        "http://lan:8000/v1/", api_key="secret", http_get=get
+    )
+    assert result["ok"] is True
+    assert result["models"] == ["Alpha", "zeta"]
+    assert calls["url"] == "http://lan:8000/v1/models"
+    assert calls["headers"]["Authorization"] == "Bearer secret"
+
+
+def test_endpoint_discovery_rejects_invalid_address() -> None:
+    result = discover_endpoint_models("lan:8000/v1")
+    assert result["ok"] is False
+    assert result["models"] == []
+
+
+def test_local_discovery_lists_mlx_directories_and_gguf_files(tmp_path) -> None:
+    mlx = tmp_path / "Models" / "mlx" / "Qwen-MLX"
+    mlx.mkdir(parents=True)
+    gguf = tmp_path / "Models" / "gguf" / "Qwen.gguf"
+    gguf.parent.mkdir(parents=True)
+    gguf.write_bytes(b"model")
+
+    result = discover_local_models(tmp_path)
+    assert result["mlx"] == [{"label": "Qwen-MLX", "value": str(mlx)}]
+    assert result["gguf"] == [{"label": "Qwen.gguf", "value": str(gguf)}]
+    assert 8192 in result["context_presets"]

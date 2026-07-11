@@ -1,4 +1,5 @@
 id: c-wake-preview
+execution_target: web_react
 title: The wake result previews before it types — the consent gate holds
 features:
   - wakeword.preview_before_type
@@ -12,10 +13,7 @@ manual_setup:
   - Enable the wake word AND enable preview-before-type (the consent gate) in Settings -> Voice.
   - Grant microphone permission; open a foreign app with an empty editable text field and put the cursor in it.
   - Have the configured wake phrase and a short dictation phrase ready to speak.
-surfaces:
-  web: yes
-  ipad: {n/a: "directory row: wakeword.preview_before_type ipad=unknown — the wake preview card on device is unverified in the record"}
-  iphone: {n/a: "directory row: wakeword.preview_before_type iphone=unknown — no on-device wake-preview claim in the record"}
+form_factors: [desktop]
 steps:
   # Staging-verify beat: the consent gate (preview) is on before we wake it.
   - do: Confirm the wake word is enabled and preview-before-type is ON, with the cursor in an empty foreign field.

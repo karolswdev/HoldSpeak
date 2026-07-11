@@ -1,4 +1,5 @@
 id: c-preview-before-type
+execution_target: web_react
 title: Preview before it types — nothing lands until you confirm
 features:
   - dictation.pipeline.preview-before-type
@@ -6,10 +7,7 @@ features:
   - mobile.dictation.teleprompter.preview
 recipes:
   - seeded-desk-43
-surfaces:
-  web: yes
-  ipad: yes      # directory: dictation.pipeline.preview-before-type ipad=yes + mobile.dictation.teleprompter.preview ipad=yes (HSM-18-01, 'Preview first' receipt, live-hub proven)
-  iphone: yes    # directory: mobile.dictation.teleprompter.preview iphone=yes (HSM-20-04 hold-bar teleprompter, DictateView.laneBody)
+form_factors: [desktop]
 steps:
   # Staging-verify beat: preview mode is actually armed.
   - do: Enable preview mode (Settings → Voice, or the preview toggle) and confirm it is on before dictating.
@@ -27,10 +25,4 @@ steps:
   - do: Dictate a second phrase to arm a new preview card, then press "Discard".
     expect: The card clears and NOTHING lands in the field — the discarded text is gone, the token is burned, and a later dictation does not resurrect it.
     where: /
-  # iPad preview-verbatim receipt beat (the flipped-from-false-n/a column).
-  - do: On iPad, dictate through the voice teleprompter with the 'Preview first' receipt on; approve the previewed text.
-    expect: What you approve is exactly what lands, verbatim — the iPad receipt shows the same text that types, with no silent second rewrite between preview and commit.
-    where: /
-    surfaces:
-      web: {n/a: "this beat is the iPad/iPhone teleprompter receipt specifically; the web byte-lock is covered by the steps above"}
 teardown: []

@@ -8,6 +8,7 @@
  */
 
 import { create } from "zustand";
+import { apiRequest } from "../lib/api";
 
 export type PaneStatus =
   | "live"
@@ -43,9 +44,9 @@ export const fromWireSteeringSession = (body: any): SteeringSession => ({
 export function isCoderFrame(frame: any): boolean {
   return Boolean(
     frame &&
-      frame.type === "intel_status" &&
-      frame.data &&
-      frame.data.scope === "coder",
+    frame.type === "intel_status" &&
+    frame.data &&
+    frame.data.scope === "coder",
   );
 }
 
@@ -124,7 +125,11 @@ interface SteeringState {
   steer(
     text: string,
     submit: boolean,
-    grounding?: { meeting_ids: string[]; artifact_ids: string[]; expand: string } | null,
+    grounding?: {
+      meeting_ids: string[];
+      artifact_ids: string[];
+      expand: string;
+    } | null,
   ): Promise<boolean>;
   keepAsNote(title?: string): Promise<boolean>;
   pinToStory(key: string, storyId: string): void;
@@ -177,7 +182,11 @@ function savePins(pins: Record<string, string>) {
 }
 
 /** The grant riding the peek envelope → the store's armed shape. */
-function grantPatch(key: string, grant: any, armedKeys: Record<string, number>) {
+function grantPatch(
+  key: string,
+  grant: any,
+  armedKeys: Record<string, number>,
+) {
   const armed = Boolean(grant && grant.armed);
   const expiresIn = armed ? Number(grant.expires_in_seconds || 0) : 0;
   const nextKeys = { ...armedKeys };
@@ -264,7 +273,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
     set({ armError: "" });
     try {
       const { url, wrap } = verbEndpoint(get().targetNode, key, "arm");
-      const res = await fetch(url, {
+      const res = await apiRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(wrap({})),
@@ -293,7 +302,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
     if (!key) return;
     try {
       const { url, wrap } = verbEndpoint(get().targetNode, key, "disarm");
-      await fetch(url, {
+      await apiRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(wrap({})),
@@ -312,7 +321,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
     set({ steerState: "sending", steerDetail: "" });
     try {
       const { url, wrap } = verbEndpoint(get().targetNode, key, "steer");
-      const res = await fetch(url, {
+      const res = await apiRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
@@ -329,10 +338,14 @@ export const useSteering = create<SteeringState>((set, get) => ({
       // the armed flag drops here and the header chip is the answer.
       // A grounding-over-cap or unknown-ref refusal keeps the grant —
       // it is a composition problem, not a consent one.
-      const refusal = body.detail || body.error || body.status || `HTTP ${res.status}`;
-      const revoking = ["unarmed", "expired", "pane_mismatch", "pane_gone"].includes(
-        body.status,
-      );
+      const refusal =
+        body.detail || body.error || body.status || `HTTP ${res.status}`;
+      const revoking = [
+        "unarmed",
+        "expired",
+        "pane_mismatch",
+        "pane_gone",
+      ].includes(body.status);
       set({
         steerState: "refused",
         steerDetail: body.detail || refusal,
@@ -350,11 +363,14 @@ export const useSteering = create<SteeringState>((set, get) => ({
     const key = get().openKey;
     if (!key) return false;
     try {
-      const res = await fetch(`/api/coders/${encodeURIComponent(key)}/keep-note`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(title ? { title } : {}),
-      });
+      const res = await apiRequest(
+        `/api/coders/${encodeURIComponent(key)}/keep-note`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(title ? { title } : {}),
+        },
+      );
       const ok = res.status === 201;
       if (get().openKey === key) set({ classifyState: ok ? "kept" : "failed" });
       return ok;
@@ -382,7 +398,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
     set({ keyState: "sending", keyDetail: "", lastKey: label });
     try {
       const { url, wrap } = verbEndpoint(get().targetNode, key, "keys");
-      const res = await fetch(url, {
+      const res = await apiRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(wrap({ keys: seq })),
@@ -395,9 +411,12 @@ export const useSteering = create<SteeringState>((set, get) => ({
       }
       // A revoking refusal (recycled pane, expiry) drops the grant, exactly
       // like a text steer — the header chip becomes the answer.
-      const revoking = ["unarmed", "expired", "pane_mismatch", "pane_gone"].includes(
-        body.status,
-      );
+      const revoking = [
+        "unarmed",
+        "expired",
+        "pane_mismatch",
+        "pane_gone",
+      ].includes(body.status);
       set({
         keyState: "refused",
         keyDetail: body.detail || body.status || `HTTP ${res.status}`,
@@ -417,7 +436,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
       const node = get().targetNode;
       // Node pane discovery isn't relayed yet — a node targets known keys;
       // the picker lists THIS Mac's panes (honest scope).
-      const res = await fetch(`/api/coders/steering/panes`);
+      const res = await apiRequest(`/api/coders/steering/panes`);
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         set({ panesState: "error", panes: [] });
@@ -440,7 +459,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
 
   async listNodes() {
     try {
-      const res = await fetch(`/api/coders/steering/nodes`);
+      const res = await apiRequest(`/api/coders/steering/nodes`);
       if (!res.ok) return;
       const body = await res.json().catch(() => ({}));
       set({ nodes: Array.isArray(body.nodes) ? body.nodes : [] });
@@ -456,7 +475,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
   async spawnSession(name, command) {
     set({ factoryState: "working", factoryDetail: "" });
     try {
-      const res = await fetch(`/api/coders/factory/spawn`, {
+      const res = await apiRequest(`/api/coders/factory/spawn`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(command ? { name, command } : { name }),
@@ -487,7 +506,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
     }
     set({ factoryState: "working", factoryDetail: "" });
     try {
-      const res = await fetch(`/api/coders/factory/rename`, {
+      const res = await apiRequest(`/api/coders/factory/rename`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ target, name: newName }),
@@ -497,7 +516,10 @@ export const useSteering = create<SteeringState>((set, get) => ({
         set({ factoryState: "done", attachedSession: newName });
         return true;
       }
-      set({ factoryState: "failed", factoryDetail: body.detail || body.status });
+      set({
+        factoryState: "failed",
+        factoryDetail: body.detail || body.status,
+      });
       return false;
     } catch {
       set({ factoryState: "failed", factoryDetail: "hub unreachable" });
@@ -512,18 +534,24 @@ export const useSteering = create<SteeringState>((set, get) => ({
     if (!key) return false;
     set({ factoryState: "working", factoryDetail: "" });
     try {
-      const res = await fetch(`/api/coders/${encodeURIComponent(key)}/kill`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scope }),
-      });
+      const res = await apiRequest(
+        `/api/coders/${encodeURIComponent(key)}/kill`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scope }),
+        },
+      );
       const body = await res.json().catch(() => ({}));
       if (res.ok && body.status === "killed") {
         set({ factoryState: "done" });
         get().closeSession();
         return true;
       }
-      set({ factoryState: "failed", factoryDetail: body.detail || body.status });
+      set({
+        factoryState: "failed",
+        factoryDetail: body.detail || body.status,
+      });
       return false;
     } catch {
       set({ factoryState: "failed", factoryDetail: "hub unreachable" });
@@ -533,13 +561,14 @@ export const useSteering = create<SteeringState>((set, get) => ({
 
   async refreshGrants() {
     try {
-      const res = await fetch("/api/coders/steering/grants");
+      const res = await apiRequest("/api/coders/steering/grants");
       if (!res.ok) return;
       const body = await res.json().catch(() => ({}));
       const now = Date.now();
       const armedKeys: Record<string, number> = {};
       for (const [key, grant] of Object.entries(body.grants || {})) {
-        armedKeys[key] = now + Number((grant as any).expires_in_seconds || 0) * 1000;
+        armedKeys[key] =
+          now + Number((grant as any).expires_in_seconds || 0) * 1000;
       }
       set({ armedKeys });
     } catch {
@@ -558,7 +587,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
         ? `/api/coders/relay/${encodeURIComponent(node)}/peek?key=${encodeURIComponent(key)}&lines=${PEEK_LINES}`
         : `/api/coders/${encodeURIComponent(key)}/peek?lines=${PEEK_LINES}`;
       const url = base + (hash ? `&last_hash=${encodeURIComponent(hash)}` : "");
-      const res = await fetch(url);
+      const res = await apiRequest(url);
       const body = await res.json().catch(() => ({}));
       if (get().openKey !== key) return; // closed mid-flight
       if (res.status === 404) {
@@ -566,7 +595,10 @@ export const useSteering = create<SteeringState>((set, get) => ({
         return;
       }
       if (!res.ok) {
-        set({ paneStatus: "error", paneDetail: body.error || `HTTP ${res.status}` });
+        set({
+          paneStatus: "error",
+          paneDetail: body.error || `HTTP ${res.status}`,
+        });
         return;
       }
       const peek = body.peek || {};
@@ -596,7 +628,8 @@ export const useSteering = create<SteeringState>((set, get) => ({
         ...grant,
       });
     } catch {
-      if (get().openKey === key) set({ paneStatus: "unreachable", paneDetail: "" });
+      if (get().openKey === key)
+        set({ paneStatus: "unreachable", paneDetail: "" });
     } finally {
       set({ inflight: false });
     }

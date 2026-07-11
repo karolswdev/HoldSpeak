@@ -1,17 +1,11 @@
 id: b-voice-commands-board
+execution_target: web_react
 title: Map a spoken keyword to an action on the Voice Commands board
 features:
   - macros.voice_commands.board
 recipes:
   - seeded-desk
-# macros.voice_commands.board is web:yes (/commands route + commands.astro; POST
-# /api/commands/test), ipad:yes AND iphone:yes (the same CommandsBoard.swift +
-# VoiceCommands contract + CommandsClient serves both form factors). All three
-# surfaces are affirmed in the directory row — no n/a here.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: yes
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Open the seeded desk and confirm it is up (notes and KBs

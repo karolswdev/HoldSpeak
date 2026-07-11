@@ -1,22 +1,17 @@
 id: e-dispatch-and-inbox
+execution_target: ios_unclassified_swift
 title: Pick the node to run on, and see the mesh queue in one inbox
 features:
   - agents.mesh.runs_on_dispatch
   - agents.mesh.queue_inbox
 recipes:
-  - mesh-run-ready
-surfaces:
-  web: {n/a: "agents.mesh.queue_inbox and runs_on_dispatch are web:unknown in the inventory — the hub aggregates /api/mesh/inbox but the web surfacing is not confirmed shipped"}
-  ipad: yes
-  iphone: {n/a: "agents.mesh.queue_inbox / runs_on_dispatch are iphone:unknown (phase 20) in the inventory"}
+  - mesh-run-on-worker
+form_factors: [ipad]
 steps:
   - do: Confirm the "uat-worker" node reads live before dispatching (the staging beat).
     expect: The node inspector lists uat-worker as a live target to run on.
-    where: /
   - do: Pin a run's step to the "uat-worker" node from the node inspector and dispatch it.
-    expect: The step runs on the chosen node — the returned result carries an honest ranOn / mesh label naming uat-worker, not the local device. The dispatch chose the node the human picked.
-    where: /
+    expect: The step runs on the chosen node — the returned result carries an honest ranOn / mesh label naming uat-worker, not the local device. The dispatch chose the node the human picked. (Machine-verified — the mesh-run-on-worker recipe dispatches onto uat-worker and its probe asserts the ⇄ mesh badge names that edge with worker-claimed provenance; this beat confirms the node-picker UI drives that same dispatch.)
   - do: Open the mesh inbox (GET /api/mesh/inbox) and read the queue.
     expect: The dispatched job and any pending approvals appear in ONE queue, each row named by its peer node; an unreachable node's rows read blocked rather than vanishing. The inbox aggregates the whole mesh, not just local jobs.
-    where: /
 teardown: []

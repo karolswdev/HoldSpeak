@@ -5,7 +5,8 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl } from "../../scripts/desk/sprites.js";
+import { spriteUrl } from "../sprites";
+import { apiRequest } from "../../lib/api";
 import { useDesk } from "../store";
 import { parseLinearGraph, stepLabel } from "../graph";
 import { MicButton } from "./MicButton";
@@ -13,7 +14,15 @@ import { lineage } from "../lineage";
 import { useSteering } from "../steering";
 import { objGlow, type WorldObject } from "../world";
 
-const FILABLE = new Set(["meeting", "artifact", "note", "recipe", "chain", "workflow", "kb"]);
+const FILABLE = new Set([
+  "meeting",
+  "artifact",
+  "note",
+  "recipe",
+  "chain",
+  "workflow",
+  "kb",
+]);
 const EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
 
 interface MeetingDetail {
@@ -26,7 +35,15 @@ export function Pullout({ o }: { o: WorldObject }) {
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
   const backId = useDesk((s) => s.pulloutBackId);
-  const { closePullout, openPullout, openEditor, fileIntoDir, removeFromDir, answerCoder, speakToCoder } = useDesk.getState();
+  const {
+    closePullout,
+    openPullout,
+    openEditor,
+    fileIntoDir,
+    removeFromDir,
+    answerCoder,
+    speakToCoder,
+  } = useDesk.getState();
   const ref = useRef<HTMLDivElement | null>(null);
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [artifacts, setArtifacts] = useState<any[]>([]);
@@ -35,14 +52,17 @@ export function Pullout({ o }: { o: WorldObject }) {
   const [runOut, setRunOut] = useState("");
   const [runWarning, setRunWarning] = useState("");
   const [filing, setFiling] = useState(false);
-  const [answered, setAnswered] = useState<"selected" | "sent" | "failed" | null>(null);
+  const [answered, setAnswered] = useState<
+    "selected" | "sent" | "failed" | null
+  >(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closePullout();
     };
     const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) closePullout();
+      if (ref.current && !ref.current.contains(e.target as Node))
+        closePullout();
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onDown);
@@ -55,11 +75,11 @@ export function Pullout({ o }: { o: WorldObject }) {
   useEffect(() => {
     if (o.kind !== "meeting") return;
     // The detail payload nests intel_status (the repo's documented gotcha).
-    fetch(`/api/meetings/${encodeURIComponent(o.id)}`)
+    apiRequest(`/api/meetings/${encodeURIComponent(o.id)}`)
       .then((r) => r.json())
       .then(setDetail)
       .catch(() => setDetail(null));
-    fetch(`/api/meetings/${encodeURIComponent(o.id)}/artifacts`)
+    apiRequest(`/api/meetings/${encodeURIComponent(o.id)}/artifacts`)
       .then((r) => r.json())
       .then((d) => setArtifacts(d.artifacts || []))
       .catch(() => setArtifacts([]));
@@ -86,7 +106,14 @@ export function Pullout({ o }: { o: WorldObject }) {
   const egress = profile
     ? (profile.kind || "onDevice") === "onDevice"
       ? { scope: "local", text: "⌂ On device" }
-      : { scope: "cloud", text: `☁ ${String(profile.base_url || "endpoint").replace(/^https?:\/\//, "").split("/")[0]}` }
+      : {
+          scope: "cloud",
+          text: `☁ ${
+            String(profile.base_url || "endpoint")
+              .replace(/^https?:\/\//, "")
+              .split("/")[0]
+          }`,
+        }
     : null;
 
   const artifactRow = (a: any) => (
@@ -96,7 +123,9 @@ export function Pullout({ o }: { o: WorldObject }) {
       className="desk-pullout-row"
       onClick={() => openPullout(a.id)}
     >
-      <span className="desk-pullout-row-type">{a.artifact_type || a.artifactType}</span>
+      <span className="desk-pullout-row-type">
+        {a.artifact_type || a.artifactType}
+      </span>
       <span className="desk-pullout-row-title">{a.title}</span>
     </button>
   );
@@ -113,17 +142,26 @@ export function Pullout({ o }: { o: WorldObject }) {
     >
       <header className="desk-pullout-head">
         {backId && (
-          <button type="button" className="desk-chip quiet" onClick={() => openPullout(backId)}>
+          <button
+            type="button"
+            className="desk-chip quiet"
+            onClick={() => openPullout(backId)}
+          >
             ←
           </button>
         )}
         <img src={spriteUrl(o.kind, o.id)} alt="" width={30} height={30} />
         <span className="desk-pullout-title">{o.title}</span>
         {egress && (
-          <span className={`egress-badge is-${egress.scope}`}>{egress.text}</span>
+          <span className={`egress-badge is-${egress.scope}`}>
+            {egress.text}
+          </span>
         )}
         {o.kind === "meeting" && (
-          <a className="desk-chip quiet" href={`/history?meeting=${encodeURIComponent(o.id)}`}>
+          <a
+            className="desk-chip quiet"
+            href={`/history?meeting=${encodeURIComponent(o.id)}`}
+          >
             Open full
           </a>
         )}
@@ -132,7 +170,12 @@ export function Pullout({ o }: { o: WorldObject }) {
             Open full
           </a>
         )}
-        <button type="button" className="desk-pullout-close" onClick={closePullout} aria-label="Close">
+        <button
+          type="button"
+          className="desk-pullout-close"
+          onClick={closePullout}
+          aria-label="Close"
+        >
           ✕
         </button>
       </header>
@@ -148,19 +191,28 @@ export function Pullout({ o }: { o: WorldObject }) {
             ) : (
               <section>
                 <h3>Intelligence</h3>
-                <p className="quiet">{detail?.intel_status?.state || "pending"}</p>
+                <p className="quiet">
+                  {detail?.intel_status?.state || "pending"}
+                </p>
               </section>
             )}
-            {detail?.intel?.action_items && detail.intel.action_items.length > 0 && (
-              <section>
-                <h3>Actions</h3>
-                <ul>
-                  {detail.intel.action_items.slice(0, 8).map((a: any, i: number) => (
-                    <li key={i}>{typeof a === "string" ? a : a.task || a.text || a.title || ""}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
+            {detail?.intel?.action_items &&
+              detail.intel.action_items.length > 0 && (
+                <section>
+                  <h3>Actions</h3>
+                  <ul>
+                    {detail.intel.action_items
+                      .slice(0, 8)
+                      .map((a: any, i: number) => (
+                        <li key={i}>
+                          {typeof a === "string"
+                            ? a
+                            : a.task || a.text || a.title || ""}
+                        </li>
+                      ))}
+                  </ul>
+                </section>
+              )}
             {artifacts.length > 0 && (
               <section>
                 <h3>Artifacts</h3>
@@ -174,13 +226,17 @@ export function Pullout({ o }: { o: WorldObject }) {
           <>
             <section>
               <h3>{String(ir.artifactType || "artifact")}</h3>
-              <pre className="desk-pullout-md">{String(ir.bodyMarkdown || "")}</pre>
+              <pre className="desk-pullout-md">
+                {String(ir.bodyMarkdown || "")}
+              </pre>
             </section>
             {lin.any && (
               <section>
                 <h3>Lineage</h3>
                 <div className="desk-pullout-lineage">
-                  {lin.via && <span className="desk-chip quiet">via {lin.via.label}</span>}
+                  {lin.via && (
+                    <span className="desk-chip quiet">via {lin.via.label}</span>
+                  )}
                   {lin.from.map((f) => (
                     <button
                       key={f.ref}
@@ -200,7 +256,13 @@ export function Pullout({ o }: { o: WorldObject }) {
         {(o.kind === "note" || o.kind === "kb") && (
           <section>
             <pre className="desk-pullout-md">
-              {String(ir.bodyMarkdown || (ir.memberIds || []).map((m: string) => `· ${m}`).join("\n") || "")}
+              {String(
+                ir.bodyMarkdown ||
+                  (ir.memberIds || [])
+                    .map((m: string) => `· ${m}`)
+                    .join("\n") ||
+                  "",
+              )}
             </pre>
           </section>
         )}
@@ -208,7 +270,9 @@ export function Pullout({ o }: { o: WorldObject }) {
         {o.kind === "recipe" && (
           <section>
             <p className="quiet">{String(ir.role || "")}</p>
-            <pre className="desk-pullout-md">{String(ir.systemPrompt || "")}</pre>
+            <pre className="desk-pullout-md">
+              {String(ir.systemPrompt || "")}
+            </pre>
           </section>
         )}
 
@@ -218,7 +282,9 @@ export function Pullout({ o }: { o: WorldObject }) {
             <ul>
               {(
                 (o.kind === "workflow" && ir.graphJson
-                  ? parseLinearGraph(ir.graphJson)?.map(stepLabel) ?? ["Graphed on iPad"]
+                  ? (parseLinearGraph(ir.graphJson)?.map(stepLabel) ?? [
+                      "Graphed on iPad",
+                    ])
                   : null) ||
                 (ir.steps as string[]) ||
                 (ir.prompt ? [ir.prompt] : [])
@@ -231,8 +297,12 @@ export function Pullout({ o }: { o: WorldObject }) {
 
         {o.kind === "coder" && (
           <section>
-            <p className="quiet">{String(ir.model || "")} · {String(ir.state || "")}</p>
-            {ir.question ? <pre className="desk-pullout-md">{String(ir.question)}</pre> : null}
+            <p className="quiet">
+              {String(ir.model || "")} · {String(ir.state || "")}
+            </p>
+            {ir.question ? (
+              <pre className="desk-pullout-md">{String(ir.question)}</pre>
+            ) : null}
             <div className="desk-coder-answer">
               <MicButton
                 label="Hold to answer"
@@ -246,18 +316,25 @@ export function Pullout({ o }: { o: WorldObject }) {
                 }}
               />
               <span className="quiet desk-coder-answer-state">
-                {answered === "sent" ? "Sent" : answered === "failed" ? "Retry" : "Hold to answer"}
+                {answered === "sent"
+                  ? "Sent"
+                  : answered === "failed"
+                    ? "Retry"
+                    : "Hold to answer"}
               </span>
               <button
                 type="button"
                 className="desk-chip quiet"
                 onClick={() => {
-                  void answerCoder(String(ir.agent || "claude"), String(ir.sessionId || o.id)).then(
-                    (ok) => setAnswered(ok ? "selected" : "failed"),
-                  );
+                  void answerCoder(
+                    String(ir.agent || "claude"),
+                    String(ir.sessionId || o.id),
+                  ).then((ok) => setAnswered(ok ? "selected" : "failed"));
                 }}
               >
-                {answered === "selected" ? "Dictation target" : "Use the hotkey"}
+                {answered === "selected"
+                  ? "Dictation target"
+                  : "Use the hotkey"}
               </button>
               <button
                 type="button"
@@ -266,7 +343,9 @@ export function Pullout({ o }: { o: WorldObject }) {
                   closePullout();
                   useSteering
                     .getState()
-                    .openSession(`${String(ir.agent || "claude")}:${String(ir.sessionId || o.id)}`);
+                    .openSession(
+                      `${String(ir.agent || "claude")}:${String(ir.sessionId || o.id)}`,
+                    );
                 }}
               >
                 Watch live
@@ -283,7 +362,12 @@ export function Pullout({ o }: { o: WorldObject }) {
                 placeholder="Ask"
                 onChange={(e) => setRunInput(e.target.value)}
               />
-              <button type="button" className="desk-chip" onClick={() => void run()} disabled={runBusy}>
+              <button
+                type="button"
+                className="desk-chip"
+                onClick={() => void run()}
+                disabled={runBusy}
+              >
                 {runBusy ? "…" : "Run"}
               </button>
             </div>
@@ -295,18 +379,28 @@ export function Pullout({ o }: { o: WorldObject }) {
 
       <footer className="desk-pullout-foot">
         {EDITABLE.has(o.kind) && (
-          <button type="button" className="desk-chip" onClick={() => openEditor(o.id)}>
+          <button
+            type="button"
+            className="desk-chip"
+            onClick={() => openEditor(o.id)}
+          >
             Edit
           </button>
         )}
         {FILABLE.has(o.kind) && zones.length > 0 && (
           <div className="desk-pullout-file">
-            <button type="button" className="desk-chip quiet" onClick={() => setFiling((v) => !v)}>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              onClick={() => setFiling((v) => !v)}
+            >
               Move to…
             </button>
             {filing &&
               zones.map((z) => {
-                const inZone = (((z as any).memberIds as string[]) || []).includes(o.id);
+                const inZone = (
+                  ((z as any).memberIds as string[]) || []
+                ).includes(o.id);
                 return (
                   <button
                     key={String(z.id)}
@@ -314,10 +408,13 @@ export function Pullout({ o }: { o: WorldObject }) {
                     className={"desk-chip quiet" + (inZone ? " in-zone" : "")}
                     onClick={() => {
                       setFiling(false);
-                      void (inZone ? removeFromDir(o.id, String(z.id)) : fileIntoDir(o.id, String(z.id)));
+                      void (inZone
+                        ? removeFromDir(o.id, String(z.id))
+                        : fileIntoDir(o.id, String(z.id)));
                     }}
                   >
-                    {inZone ? "✓ " : ""}{String(z.name || z.id)}
+                    {inZone ? "✓ " : ""}
+                    {String(z.name || z.id)}
                   </button>
                 );
               })}

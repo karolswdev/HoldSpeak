@@ -1,4 +1,5 @@
 id: a-capture-live-meeting
+execution_target: web_react
 title: Record a live meeting — mic and system audio with speaker labels
 features:
   - meetings.capture.live
@@ -8,10 +9,7 @@ manual_setup:
   - Route system audio into HoldSpeak so both sides of the conversation are captured — macOS via BlackHole, Linux via a PulseAudio/PipeWire monitor source (README two-modes / platform table). A real mic must also be available.
   - Have a short two-voice conversation ready to speak (two people, or one person plus audio playing from another app so system audio has content) so speaker labels have something to separate.
 recipes: []
-surfaces:
-  web: yes
-  ipad: {n/a: "the iPad reads a meeting back but capture-start is a desktop action per README.md:273 (inventory ipad: partial/unknown); live mic+system-audio capture on iPad is not claimed"}
-  iphone: {n/a: "live capture on iPhone is unverified in the inventory (row iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: (Staging beat) Open the meeting dashboard and confirm the desk is ready to capture — setup reads ready, a mic device is selected, and a system-audio source (BlackHole / a Pulse/PipeWire monitor) is bound.
     expect: Setup reads ready, a mic input is listed, and a system-audio capture source is bound — the two capture modes the README names are both wired before any recording starts.

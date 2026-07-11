@@ -36,10 +36,10 @@ def client() -> TestClient:
 def test_commands_route_serves_board(client: TestClient) -> None:
     res = client.get("/commands")
     assert res.status_code == 200
-    body = res.text
-    # The built board markup (CI builds the web bundle before pytest).
-    assert "Voice Commands" in body
-    assert "data-vc-board" in body
+    assert '<div id="root"></div>' in res.text
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/CommandsPage.tsx").read_text()
+    assert "Command board" in source and "Voice commands" in source
+    assert "/api/commands/test" in source and "/api/settings" in source
 
 
 def test_test_endpoint_type_text_returns_preview(client: TestClient, settings_path: Path) -> None:

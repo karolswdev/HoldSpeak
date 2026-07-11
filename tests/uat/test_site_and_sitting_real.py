@@ -1,7 +1,7 @@
 """The whole guided-site loop, driven the way the browser drives it.
 
 Serves the built SPA, then drives a real staged run through the conductor's
-sitting API — create → stage → cast a verdict per surface → resume advances.
+sitting API — create → stage → cast a verdict per exact slot → resume advances.
 This is a harness self-test (the verdicts are cast by the test, NOT a sitting).
 Self-skips if the product cannot boot here.
 """
@@ -52,28 +52,28 @@ def test_full_sitting_loop_stages_and_advances(real_client):
     if not body["ok"]:
         pytest.skip(f"staging needs the LAN or failed: {body}")
 
-    # Cast a verdict for every applicable surface of the current step.
+    # Cast a verdict for every exact execution slot of the current step.
     sitting = real_client.get(f"/api/sittings/{sid}").json()
     resume = sitting["resume"]
     scenario = next(s for s in sitting["scenarios"] if s["id"] == resume["scenario_id"])
     step = scenario["steps"][resume["step_index"]]
-    applicable = [s for s, v in step["surfaces"].items() if v["applicable"]]
-    assert applicable, "step must have an applicable surface"
+    slots = step["execution_slots"]
+    assert slots, "step must have an execution slot"
 
     last = sitting
-    for surface in applicable:
+    for slot in slots:
         last = real_client.post(
             f"/api/sittings/{sid}/verdicts",
             json={
                 "scenario_id": scenario["id"],
                 "step_index": step["index"],
-                "surface": surface,
+                "slot_id": slot["id"],
                 "verdict": "pass",
-                "note": f"harness self-test on {surface}",
+                "note": f"harness self-test on {slot['id']}",
             },
         ).json()
 
     # The step is fully answered → resume advanced past it.
-    assert last["progress"]["cast"] >= len(applicable)
+    assert last["progress"]["cast"] >= len(slots)
     new_resume = last["resume"]
     assert new_resume != resume  # moved on (next step or next scenario)

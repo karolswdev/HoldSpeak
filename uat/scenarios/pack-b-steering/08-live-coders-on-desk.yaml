@@ -1,16 +1,11 @@
 id: b-live-coders-on-desk
+execution_target: web_react
 title: Live coders on the desk — the one that is blocked demands you
 features:
   - agents.desk.live_coders
 recipes:
   - agent-pane-awaiting-input
-# agents.desk.live_coders is web:yes (Agent Desk, phase 69; /api/coders/sessions)
-# and ipad:yes (AgentSessionPrimitive .coder, waiting glares, DioCoderSession
-# replay, live-hub sim proof HSM-17-03). iPhone unknown (compact reflow phase 20).
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the coder session objects at iPhone compact width are unknown in the directory record (row: iphone unknown, compact reflow phase 20)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Open the desk and confirm the staged coding agent appears

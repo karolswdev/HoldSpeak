@@ -1,10 +1,10 @@
 id: d-cloud-intel-opt-in
+execution_target: web_react
 title: Cloud meeting intel only ever egresses on an explicit provider choice
 features:
   - trust.egress.cloud-meeting-intel
 recipes:
   - seeded-desk
-  - intel-endpoint-dead
 # The re-eval: trust.egress.cloud-meeting-intel is a MUST. This is the
 # control-vs-treatment pair for the cloud-egress boundary, judged structurally:
 #   control (OFF)  = no cloud provider chosen -> a transcript's intel never
@@ -13,18 +13,28 @@ recipes:
 #   treatment (ON) = the tester EXPLICITLY selects a cloud provider -> the intel
 #                    egress is now named and badged with that provider's target.
 # Two ORDERED, separately-verdicted steps — one verdict each.
-surfaces:
-  web: yes
-  ipad: {n/a: "cloud meeting-intel provider selection is a web-runtime setting; the directory marks trust.egress.cloud-meeting-intel with no ipad surface"}
-  iphone: {n/a: "same — provider selection is host/web side (trust.egress.cloud-meeting-intel iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: Confirm no cloud intel provider is configured (the staging beat — the default posture).
     expect: The meeting-intel egress posture reads local/none; no cloud provider is selected and the desk is seeded and healthy.
     where: /
-  - do: CONTROL (cloud off) — with the local intel endpoint dead and no cloud provider chosen, run intel on a transcript.
-    expect: Intel does NOT reach out to any cloud — it refuses fast naming the dead LOCAL endpoint, or degrades honestly; nothing egresses because no provider was chosen.
+    verifies:
+      - trust.egress.cloud-meeting-intel
+    after:
+      - apply_recipe: intel-endpoint-dead
+  - do: CONTROL (cloud off) — open Setup and run the runtime check against the deliberately dead local endpoint.
+    expect: The check refuses fast and names the dead LOCAL endpoint; the egress posture remains local/none because no cloud provider was chosen.
     where: /
-  - do: TREATMENT (cloud on) — explicitly select a cloud intel provider in settings, then look at the meeting-intel egress posture.
-    expect: The egress posture flips to NOT-local and names the chosen provider as the target; the flip happened only because the tester made the explicit choice, never by default.
+    verifies:
+      - trust.egress.cloud-meeting-intel
+    after:
+      - apply_recipe: egress-cloud-card
+  - do: >
+      TREATMENT (cloud on) — inspect the egress posture after the staged
+      explicit provider selection, then open the “Cloud egress review (UAT
+      seed)” proposal in History.
+    expect: The chrome flips to cloud and names api.openai.com; the proposal separately reads “☁ GitHub” and names acme/holdspeak-uat. Both are structured targets, and the proposal remains unexecuted.
     where: /
+    verifies:
+      - trust.egress.cloud-meeting-intel
 teardown: []

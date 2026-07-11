@@ -1,0 +1,16 @@
+title: A grounded .43 desk with a real coder pane awaiting input
+description: >
+  Composite world for answer-the-coder treatment legs. The run stays on the
+  golden-43 deck while the dogfood desk is seeded and a real, unarmed tmux pane
+  waits for input. This avoids the last-recipe-wins deck reset that would turn
+  the intended LLM treatment back into golden-local.
+deck: golden-43
+requires: [intel]
+includes:
+  - seeded-desk-43
+  - agent-pane-awaiting-input
+probe:
+  - note_exists: uat-seed-note-glossary
+  - pane_listed: coder
+  - pane_shows: {name: coder, contains: AWAITING-MIGRATION-CONFIRM}
+  - keys_refused_unarmed: coder

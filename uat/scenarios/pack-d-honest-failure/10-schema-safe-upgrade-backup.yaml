@@ -1,4 +1,5 @@
 id: d-schema-safe-upgrade-backup
+execution_target: cli_python
 title: Safe schema upgrade and a real backup — the DB is never silently mangled
 features:
   - release.schema.safe_upgrade
@@ -6,26 +7,12 @@ features:
   - release.doctor.database_check
 recipes:
   - seeded-desk
-# The re-eval's task #19: release.schema.safe_upgrade is a MUST, backup_restore a
-# should, doctor.database_check a spot — all CLI-side release-safety claims that
-# were asserted nowhere. Staged do-then-attack on the DB: back it up, prove
-# restore round-trips, and confront the loader with a crafted NEWER schema to
-# prove it REFUSES rather than corrupting. The directory marks the CLI backup +
-# schema rows web:no because they are not web-UI features — the tester runs them
-# on the host that carries the desktop runtime, so the "web" verdict here is the
-# host-CLI leg; ipad/iphone genuinely lack the CLI (no row).
-surfaces:
-  web: yes
-  ipad: {n/a: "backup/restore and schema-migration are host CLI operations; the directory marks release.backup_restore.cli and release.schema.safe_upgrade with no ipad CLI surface"}
-  iphone: {n/a: "same — no host CLI on iphone (release.backup_restore.cli / release.schema.safe_upgrade have no iphone surface)"}
+form_factors: [local_shell]
 steps:
   - do: On the seeded desk, run doctor and confirm it reads the database + config health (the staging beat).
     expect: doctor names the database and its schema version and reports it healthy; the seeded desk's notes/KBs are counted honestly, no false green.
-    where: /
   - do: Take a backup of the whole database via the backup CLI, then restore it into a clean location.
     expect: The backup writes a real artifact and the restore round-trips — the restored DB carries the same seeded notes and KBs (counts match); backup/restore is a real operation, not a no-op.
-    where: /
   - do: Confront the loader with a DB whose schema version is set NEWER than this build understands (a crafted-forward DB).
     expect: The product REFUSES the newer schema and leaves the file untouched — it does not silently downgrade, migrate, or corrupt it; the refusal names the version mismatch. An older-schema DB is instead backed-up-then-migrated, not refused.
-    where: /
 teardown: []

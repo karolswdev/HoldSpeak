@@ -1,4 +1,5 @@
 id: f-prebriefing-nudge
+execution_target: ios_classic_swift
 title: A cited pre-briefing nudge arms the dictate model — control vs treatment
 # HSM-18-05: source-cited nudge cards; "Dictate with this" arms the dictate
 # surface with that grounding, and the remote relay consumes the Phase-53 pin.
@@ -9,10 +10,7 @@ features:
   - mobile.dictation.prebriefing.nudge
 recipes:
   - seeded-desk-43
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "directory row mobile.dictation.prebriefing.nudge iphone=unknown — compact-width nudge rendering is not documented in Phase 20; a phone-column gap, not a genuine absence"}
+form_factors: [ipad]
 steps:
   - do: >
       Staging-verify. Open the dictate tab with recent activity on .43 and confirm
@@ -20,7 +18,6 @@ steps:
     expect: >
       Source-cited nudge cards appear (each names the desk object / activity it
       draws from), and the runtime status reads reachable — not a dead endpoint.
-    where: /
   - do: >
       Control (no nudge armed). With NO nudge armed, dictate a phrase that leans on
       the repo, e.g. "summarise the ledgerline rewrite status".
@@ -28,7 +25,6 @@ steps:
       The rewrite runs but cannot name the internal codename — it does not print
       BLUEBIRD or any KB-only fact, and says it has no project context to draw on.
       This is the control leg; the grounded token must be ABSENT here.
-    where: /
   - do: >
       Treatment. Tap "Dictate with this" on the relevant cited nudge to arm the
       dictate surface with that grounding, then dictate the SAME phrase.
@@ -38,5 +34,4 @@ steps:
       codename for the ledgerline rewrite) or another KB-only fact. A no-LLM pass
       is insufficient; the treatment must surface what the control cannot, and the
       change is attributable to the armed nudge.
-    where: /
 teardown: []

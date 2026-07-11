@@ -1,14 +1,12 @@
 id: smoke-bad-endpoint-honest-failure
+execution_target: web_react
 title: A dead endpoint, named honestly
 features:
   - desk.doctor.honest-readout
   - dictation.pipeline.dry_run
 recipes:
   - intel-endpoint-dead
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the doctor/runtime-test surface on iPhone is unverified in the record"}
+form_factors: [desktop]
 steps:
   - do: Open the setup readiness screen and read the runtime state.
     expect: The runtime is reported as unreachable and the dead endpoint is named — no spinner, no false green.

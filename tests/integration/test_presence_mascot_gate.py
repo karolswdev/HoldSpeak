@@ -82,15 +82,11 @@ def test_presence_config_dataclass_default():
 
 
 def test_settings_page_has_the_subordinate_sub_toggle():
-    page = (_REPO / "web" / "src" / "pages" / "settings.astro").read_text()
-    assert "Qlippy, the mascot" in page
-    assert "settings.presence.mascot" in page
-    # Subordinate: inert when presence itself is off; guarded click.
-    assert "mascot-subfield" in page
-    assert "is-inert" in page
-    assert "settings.presence.enabled && (settings.presence.mascot" in page
-    # Honest copy: he only offers (HS-62-02 swept the reassurance tail).
-    assert "He only ever offers." in page
+    page = (_REPO / "web/src/pages/SettingsPage.tsx").read_text()
+    assert "SettingsFields" in page and "presence" in page
+    ambient = (_REPO / "web/src/components/AmbientLayer.tsx").read_text()
+    assert "function Qlippy" in ambient
+    assert "Approve" in ambient and "Decline" in ambient and "Dismiss" in ambient
 
 
 def test_assets_are_vendored_with_provenance():

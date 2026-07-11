@@ -71,20 +71,26 @@ def main() -> int:
             # Desktop first.
             page = browser.new_page(viewport={"width": 1100, "height": 860})
             page.goto(base, wait_until="networkidle")
-            page.wait_for_selector("text=Choose a pack", timeout=10000)
+            page.wait_for_selector("text=Run the functional verification", timeout=10000)
             page.screenshot(path=str(out / "site-01-home.png"))
             print("captured home")
 
-            # Start the smoke sitting — target its card's button (with 4 packs the
-            # list is sorted, so a bare "Start sitting" would hit whatever sorts
-            # first). Smoke's first scenario is fully local and fast.
-            page.locator(".card", has_text="smoke").get_by_role("button").click()
+            # Start the first owner campaign by its human title. Its opening
+            # first-run/no-model world is fully local and fast.
+            first_campaign = page.locator(".card").filter(
+                has=page.get_by_role(
+                    "heading",
+                    name="1 · React Web Desk foundation — desktop",
+                    exact=True,
+                )
+            )
+            first_campaign.get_by_role("button", name="Start").click()
             # Staging then the first walkthrough step.
             page.wait_for_selector("text=Expect:", timeout=60000)
             page.screenshot(path=str(out / "site-02-walkthrough.png"))
             print("captured walkthrough")
 
-            # Cast a pass on the first applicable surface, capture the answered state.
+            # Cast a harness-only pass on the explicit web_react:desktop slot.
             page.click("button.vb.pass >> nth=0")
             page.wait_for_timeout(600)
             page.screenshot(path=str(out / "site-03-verdict-cast.png"))
@@ -93,7 +99,8 @@ def main() -> int:
             # Phone-width responsive proof.
             phone = browser.new_page(viewport={"width": 390, "height": 800})
             phone.goto(base, wait_until="networkidle")
-            phone.wait_for_selector("text=Choose a pack", timeout=10000)
+            phone.wait_for_selector("text=Run the functional verification", timeout=10000)
+            phone.evaluate("window.scrollTo(0, 0)")
             phone.screenshot(path=str(out / "site-04-phone-home.png"))
             print("captured phone home")
 

@@ -23,9 +23,7 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/action-items/{item_id}/edit",
@@ -33,9 +31,7 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/action-items/{item_id}/review",
@@ -43,9 +39,7 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/annotations",
@@ -62,8 +56,7 @@
       ],
       "module": "web.routes.activity.enrichment",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -72,9 +65,7 @@
         "POST"
       ],
       "module": "web.routes.activity.ledger",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/domains/{domain}",
@@ -82,9 +73,7 @@
         "DELETE"
       ],
       "module": "web.routes.activity.ledger",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/enrichment/connectors",
@@ -102,9 +91,7 @@
         "PUT"
       ],
       "module": "web.routes.activity.enrichment",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/enrichment/connectors/{connector_id}/annotations",
@@ -112,9 +99,7 @@
         "DELETE"
       ],
       "module": "web.routes.activity.enrichment",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/enrichment/connectors/{connector_id}/candidates",
@@ -122,9 +107,7 @@
         "DELETE"
       ],
       "module": "web.routes.activity.enrichment",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/enrichment/connectors/{connector_id}/dry-run",
@@ -182,9 +165,7 @@
         "POST"
       ],
       "module": "web.routes.activity.enrichment",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/extension/events",
@@ -230,9 +211,7 @@
         "GET"
       ],
       "module": "web.routes.activity.candidates",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/meeting-candidates/{candidate_id}/start",
@@ -250,9 +229,7 @@
         "PUT"
       ],
       "module": "web.routes.activity.candidates",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/nudges",
@@ -282,9 +259,7 @@
         "POST"
       ],
       "module": "web.routes.activity.nudges",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/activity/nudges/{nudge_id}/dismiss",
@@ -293,8 +268,7 @@
       ],
       "module": "web.routes.activity.nudges",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -423,9 +397,7 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/all-action-items/{item_id}/edit",
@@ -433,9 +405,7 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/all-action-items/{item_id}/review",
@@ -443,9 +413,7 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/ask",
@@ -516,7 +484,9 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/loops",
@@ -524,7 +494,9 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/loops/{loop_id}",
@@ -540,7 +512,9 @@
         "POST"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/loops/{loop_id}/kill",
@@ -548,7 +522,9 @@
         "POST"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/loops/{loop_id}/reply",
@@ -556,7 +532,9 @@
         "POST"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/loops/{loop_id}/snooze",
@@ -564,7 +542,9 @@
         "POST"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/run-now",
@@ -572,7 +552,9 @@
         "POST"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/status",
@@ -580,7 +562,9 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/chains",
@@ -989,7 +973,9 @@
         "GET"
       ],
       "module": "web.routes.system.health",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/dictation/agent-context",
@@ -997,9 +983,7 @@
         "GET"
       ],
       "module": "web.routes.dictation.agent",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/agent-context/clear",
@@ -1007,9 +991,7 @@
         "POST"
       ],
       "module": "web.routes.dictation.agent",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/agent-context/summarize",
@@ -1017,9 +999,7 @@
         "POST"
       ],
       "module": "web.routes.dictation.agent",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/agent-hooks",
@@ -1038,8 +1018,7 @@
       ],
       "module": "web.routes.dictation.blocks",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -1071,8 +1050,7 @@
       ],
       "module": "web.routes.dictation.blocks",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -1082,8 +1060,7 @@
       ],
       "module": "web.routes.dictation.blocks",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -1093,8 +1070,7 @@
       ],
       "module": "web.routes.dictation.blocks",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -1258,9 +1234,7 @@
         "POST"
       ],
       "module": "web.routes.dictation.project_docs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/project-doc-suggestion/dismiss",
@@ -1268,9 +1242,7 @@
         "POST"
       ],
       "module": "web.routes.dictation.project_docs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/project-hs",
@@ -1328,9 +1300,7 @@
         "POST"
       ],
       "module": "web.routes.dictation.kb",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/dictation/readiness",
@@ -1468,9 +1438,7 @@
         "POST"
       ],
       "module": "web.routes.meetings.intel",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/intel/retry/{meeting_id}",
@@ -1478,9 +1446,7 @@
         "POST"
       ],
       "module": "web.routes.meetings.intel",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/intel/summary",
@@ -1488,9 +1454,7 @@
         "GET"
       ],
       "module": "web.routes.meetings.intel",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/intents/control",
@@ -1508,9 +1472,7 @@
         "PUT"
       ],
       "module": "web.routes.dictation.intents",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/intents/preview",
@@ -1687,8 +1649,7 @@
       ],
       "module": "web.routes.meetings.aftercare",
       "consumers": [
-        "ios",
-        "web"
+        "ios"
       ]
     },
     {
@@ -1727,9 +1688,7 @@
         "GET"
       ],
       "module": "web.routes.meetings.aftercare",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/meetings/{meeting_id}/intent-timeline",
@@ -1747,9 +1706,7 @@
         "GET"
       ],
       "module": "web.routes.meetings.insights",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/meetings/{meeting_id}/projects",
@@ -2026,9 +1983,7 @@
         "POST"
       ],
       "module": "web.routes.activity.plugin_jobs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/plugin-jobs/{job_id}/retry-now",
@@ -2036,9 +1991,7 @@
         "POST"
       ],
       "module": "web.routes.activity.plugin_jobs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/profiles",
@@ -2116,9 +2069,7 @@
         "DELETE"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}",
@@ -2126,9 +2077,7 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}",
@@ -2136,9 +2085,7 @@
         "PATCH"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/action-items",
@@ -2146,9 +2093,7 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/artifacts",
@@ -2156,9 +2101,7 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/briefings",
@@ -2166,9 +2109,7 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/meetings",
@@ -2176,9 +2117,7 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/projects/{project_id}/meetings/{meeting_id}",
@@ -2202,9 +2141,7 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/recipes",
@@ -2321,6 +2258,26 @@
       ]
     },
     {
+      "path": "/api/setup/discover-models",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/setup/runtime-options",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/setup/runtime-test",
       "methods": [
         "POST"
@@ -2357,9 +2314,7 @@
         "GET"
       ],
       "module": "web.routes.meetings.speakers",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/speakers/{speaker_id}",
@@ -2367,9 +2322,7 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.speakers",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/state",
@@ -2489,6 +2442,14 @@
     },
     {
       "path": "/companion",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.pages",
+      "consumers": []
+    },
+    {
+      "path": "/design/components",
       "methods": [
         "GET"
       ],

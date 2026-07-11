@@ -1,0 +1,21 @@
+id: ios-flagship-deskos-native-note-kb-crud
+execution_target: ios_flagship_swift
+title: Create, edit, reopen, and delete a note and knowledge base in DioStage
+features:
+  - desk.knowledge_bases
+  - desk.web.create_in_world
+recipes:
+  - seeded-desk
+manual_setup:
+  - Use the production flagship build already paired to this isolated run; perform every action in the Swift DioStage or compact native lane.
+form_factors: [ipad, iphone]
+steps:
+  - do: Use the native Desk create control to make a note titled "NATIVE-NOTE-7" with body "violet lighthouse", then close its in-world editor.
+    expect: A note primitive appears in the current native Desk level without navigating to a browser or a separate app; reopening it shows the exact title and body.
+  - do: Edit that note body to "violet lighthouse edited", close it, force-quit the app, relaunch, and reopen the note.
+    expect: The native note survives relaunch with the edited body exactly once; the original body is not resurrected and the primitive is not duplicated.
+  - do: Use the native Desk create control to make a knowledge base named "NATIVE-KB-7", add a short fact "harbor token", then close and reopen it.
+    expect: A distinct KB primitive appears and reopens with its name and fact intact; it is not rendered or stored as the note created above.
+  - do: Delete NATIVE-NOTE-7 and NATIVE-KB-7 from the native Desk, confirm the destructive controls, then force-quit and relaunch.
+    expect: Both test primitives remain absent after relaunch while the pre-seeded primitives remain; deletion does not erase unrelated Desk content.
+teardown: []

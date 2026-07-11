@@ -1,22 +1,20 @@
 id: desk-project-kb-facts
-title: The project KB holds facts the copilot can be taught
+execution_target: web_react
+title: Project Facts are taught on the detected-project dictation surface
 features:
   - kb.project.facts_and_context
-  - desk.knowledge_bases
 recipes:
-  - desk-primitives
-surfaces:
-  web: yes
-  ipad: {n/a: "Project Facts + Project Context is a web-only surface in the directory (kb.project.facts_and_context ip=?)"}
-  iphone: {n/a: "Project Facts + Project Context is a web-only surface in the directory (kb.project.facts_and_context ph=?)"}
+  - fresh-desk
+form_factors: [desktop]
 steps:
-  - do: Open the "Project KB" knowledge base.
-    expect: The KB opens and is empty of facts to start — an honest empty state, not a spinner or an error.
-    where: /
-  - do: Add a project fact to the Project KB — a name and its meaning (for example, that BLUEBIRD is the ledgerline streaming rewrite).
-    expect: The fact is saved to the KB and reads back verbatim after a reload; nothing is silently reworded.
-    where: /
-  - do: Open the "Incident runbooks" KB and confirm it is a distinct block from the Project KB.
-    expect: The two KBs are separate — a fact added to Project KB does not appear in Incident runbooks.
-    where: /
+  - do: Open /dictation and expand Project Facts for the detected HoldSpeak project.
+    expect: The Project Facts editor names the detected project and shows key/value fact rows; this is distinct from Desk knowledge-base membership.
+    where: /dictation
+  - do: Add the fact UAT_CANARY = "BLUEBIRD is the ledgerline streaming rewrite", then save.
+    expect: The fact is accepted as an explicit key/value entry and reads back verbatim; it is not silently rewritten into a Desk KB object.
+    where: /dictation
+    verifies: [kb.project.facts_and_context]
+  - do: Reload /dictation, verify UAT_CANARY, then remove it and reload once more.
+    expect: The saved fact survives the first reload and is absent after deletion, proving both persistence and cleanup in the project-local fact store.
+    where: /dictation
 teardown: []

@@ -5,8 +5,13 @@
 > source seams, the autonomy contract, and the definition of done. It is written
 > to be executed unattended, end to end.
 
-**Last updated:** 2026-07-09 (**every must-do capability now has a protocol** — a 2nd flotilla authored the 66 uncovered must-tests, auto-staged or hand-staged (`manual_setup`); independently verified **115/115 must-tests cited, 105 scenarios / 9 packs, 0 contract errors**. See [MUST-TEST-COVERAGE](./phase-2-the-inventory/MUST-TEST-COVERAGE.md). 26 new scenarios are hand-staged — walkable, proof deferred to a sitting), honest learning-count, key-never-syncs attack — then **Phase 3 scaffolded** for the remaining engine work (mesh dispatch, cloud-egress, trust attacks, pipeline-on dictation, device pre-flight)), all contract-clean, 14 control-vs-treatment beats, ~40% of the 115 must-tests covered. See [PROTOCOL-COVERAGE](./phase-2-the-inventory/PROTOCOL-COVERAGE.md) for coverage + the harness backlog. Framework complete; owner's live sitting remains) + generic seeding of ALL desk primitives (zones/KBs/recipes/…). A flotilla **re-evaluated the test protocols** — see [PROTOCOL-REEVALUATION](./phase-2-the-inventory/PROTOCOL-REEVALUATION.md): right discipline, thin intelligence + parity coverage; a punch-list for the next authorship round. Phase 1 at 5/6 + docs; the owner's live sitting remains)
-**Current phase:** [Phase 1 — The Mechanics](./phase-1-the-mechanics/current-phase-status.md)
+**Last updated:** 2026-07-09 — Phase 4 is 1/3: seven ordered owner campaigns
+turn the broad corpus into an executable functional/usability pass, with exact
+meeting/action/proposal bootstrap for UI mechanics and real `.43`/mic/device
+boundaries retained where they are the behavior under test. Phase 3 paused at
+2/5; its drift/schema/network-hardening story is explicitly unscheduled by the
+owner.
+**Current phase:** [Phase 4 — The Owner Functional Pass](./phase-4-the-owner-functional-pass/current-phase-status.md)
 **Status:** active
 
 ## Vision
@@ -42,15 +47,14 @@ Four principles anchor it:
    git history — into a feature ledger every scenario cites, so a
    debrief can honestly state what fraction of the product a sitting
    touched and what has never been sat through.
-3. **Three surfaces, one script.** The iPad, the iPhone, and the web
-   desk are the product's **claimed parity set** — that parity is the
-   experience HoldSpeak is building, and UAT is the instrument that
-   holds the product to the claim. Nearly every scenario aims at all
-   three, a verdict is cast *per surface* (with `n/a` an honest
-   first-class answer, reason stated), and a cross-surface verdict
-   split is a **parity break** — a first-class finding class. A
-   sitting that only touched the web is a partial sitting and the
-   record says so.
+3. **Target first, form factor second (protocol v2).** The former
+   “web/iPad/iPhone—three surfaces, one script” doctrine is superseded because
+   it could treat a resized React browser as native evidence. Scenarios now name
+   one implementation target (`web_react`, `ios_flagship_swift`,
+   `ios_companion_swift`, or `ios_classic_swift`) and explicit compatible form
+   factors. React Desk and Swift Desk are executed independently; parity is the
+   join of qualified target-specific legs, never an inference from viewport
+   width or shared backend state.
 4. **States are induced, not stumbled into.** A scenario's
    precondition is a named, idempotent **state recipe** the conductor
    executes and *verifies* ("a meeting just ended with three open
@@ -77,15 +81,17 @@ canon, canon wins.
 
 | Phase | Goal (one line) | Status | Folder |
 |---|---|---|---|
-| 1 | The Mechanics: the conductor (hosted runs reachable by the devices), the induction engine (decks, seeds, idempotent state recipes, mesh hands), the three-surface scenario contract + seed ledger, the guided UAT site with per-surface verdicts, the debrief + triage protocol, proven by one live smoke-pack sitting | in-progress (5/6) | [phase-1-the-mechanics](./phase-1-the-mechanics/) |
+| 1 | The Mechanics: conductor, induction engine, original surface contract, guided site, debrief, and triage. Its “three surfaces” contract is historical and superseded by protocol v2 target × form-factor slots. | in-progress (5/6) | [phase-1-the-mechanics](./phase-1-the-mechanics/) |
 | 2 | The Inventory: owner + agent gather what UAT *is* here (the charter) and enumerate everything the system can do into the capability × surface × required-state matrix that Phase 3's coverage pack is authored from. **Directory pre-seeded** by an 8-agent sweep: 255 capabilities, the [directory](./phase-2-the-inventory/directory/), the [protocol notion](./phase-2-the-inventory/PROTOCOL-NOTION.md), the [recipe worklist](./phase-2-the-inventory/RECIPE-WORKLIST.md), and the [Phase 3 plan](./phase-2-the-inventory/PHASE-3-PLAN.md) | planning (0/5) | [phase-2-the-inventory](./phase-2-the-inventory/) |
-| 3 | The Harness Engine: the remaining induction verbs + probes to unlock the live-agent + on-device tier (mesh dispatch, cloud-egress, the trust-gate attacks, a pipeline-on dictation world, the device pre-flight) — flipping the authored-but-human-walked scenarios to staged-and-verified. Grounded in [PROTOCOL-COVERAGE](./phase-2-the-inventory/PROTOCOL-COVERAGE.md) §3 | planning (0/5) | [phase-3-the-harness-engine](./phase-3-the-harness-engine/) |
+| 3 | The Harness Engine: the remaining induction verbs + probes to unlock the live-agent + on-device tier (mesh dispatch, cloud-egress, the trust-gate attacks, a pipeline-on dictation world, the device pre-flight) — flipping the authored-but-human-walked scenarios to staged-and-verified. Grounded in [PROTOCOL-COVERAGE](./phase-2-the-inventory/PROTOCOL-COVERAGE.md) §3 | paused (2/5) | [phase-3-the-harness-engine](./phase-3-the-harness-engine/) |
+| 4 | The Owner Functional Pass: seven ordered, resumable sittings across Desk, voice, meetings, agents, flagship native, connectivity, and conditional secondary shells; deterministic per-test bootstrap and an explicit usability bar | in-progress (1/3) | [phase-4-the-owner-functional-pass](./phase-4-the-owner-functional-pass/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
-Phase 3 (not yet scaffolded) is the coverage pack: scenario authorship
-across the whole inventory matrix, sat through end to end on all three
-surfaces.
+Phase 4 is actively converting authored protocols into a functional campaign
+the owner can execute. Human verdicts—especially on real devices—remain the
+acceptance evidence; harness probes establish exact preconditions but never
+stand in for usability judgment.
 
 ## Operating cadence
 
@@ -121,11 +127,13 @@ commit on a fresh `.tmp/CONTRACT.md`.
   conductor runs to induce a described world state (a deck + seeds +
   process/mesh actions, closed by a verify probe read back through
   product APIs). The unit of repeatability.
-- **Surface** — where the human meets the product: `web`, `ipad`,
-  `iphone`. Scenarios declare per-surface applicability; verdicts are
-  cast per surface.
-- **Scenario** — a declarative script: state recipe(s) + surfaces +
-  ordered steps, each step an instruction, an expectation, and a
+- **Execution target** — the implementation/root under test: `web_react`,
+  `ios_flagship_swift`, `ios_companion_swift`, or `ios_classic_swift`.
+- **Form factor** — the environment carrying that target. Browser factors are
+  `desktop`, `ipad_browser`, `iphone_browser`, and `tablet_viewport`; native
+  factors are `ipad` and `iphone`. The pair is one execution slot.
+- **Scenario** — a declarative script: state recipe(s) + one target + form
+  factors + ordered steps, each step an instruction, an expectation, and a
   verdict prompt.
 - **Pack** — a curated set of scenarios run as one sitting.
 - **Sitting** — one human UAT run of a pack, end to end, on real metal.
@@ -135,5 +143,6 @@ commit on a fresh `.tmp/CONTRACT.md`.
 - **Feature ledger** — `uat/features.yaml`: the enumerated shipped
   capabilities; scenarios cite its keys; debriefs compute coverage
   against it. Phase 1 seeds it mechanically from the holdspeak phase
-  index; Phase 2's inventory makes it exhaustive and adds the
-  per-surface applicability + required-state columns (the matrix).
+  index; Phase 2's historical inventory added web/iPad/iPhone applicability and
+  required-state columns. Protocol v2 qualifies those claims through the
+  target/form-factor overlay before they can become executable evidence.

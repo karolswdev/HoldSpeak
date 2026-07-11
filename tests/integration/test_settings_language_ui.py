@@ -70,14 +70,9 @@ def test_unknown_language_refused_actionably(client):
 
 
 def test_settings_page_language_list_matches_the_registry():
-    """The UI's option list and the Python registry cannot drift apart."""
-    page = (_REPO / "web" / "src" / "pages" / "settings.astro").read_text()
-    assert "Spoken language" in page
-    match = re.search(r"const WHISPER_LANGUAGES = \[(.*?)\];", page, re.DOTALL)
-    assert match, "settings.astro lost its WHISPER_LANGUAGES list"
-    ui_codes = set(re.findall(r'code: "([a-z]+)"', match.group(1)))
-    assert ui_codes == set(WHISPER_LANGUAGES), (
-        "settings.astro's language list drifted from holdspeak/languages.py: "
-        f"ui-only={sorted(ui_codes - set(WHISPER_LANGUAGES))} "
-        f"registry-only={sorted(set(WHISPER_LANGUAGES) - ui_codes)}"
-    )
+    """The React settings editor reflects the server-owned language field;
+    validation stays in the one Python registry rather than duplicating it."""
+    page = (_REPO / "web/src/pages/SettingsPage.tsx").read_text()
+    assert "SettingsFields" in page and "model" in page
+    assert "WHISPER_LANGUAGES" not in page
+    assert len(WHISPER_LANGUAGES) > 90

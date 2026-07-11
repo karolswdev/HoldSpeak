@@ -1,4 +1,5 @@
 id: desk-schema-safe-upgrades
+execution_target: web_react
 title: Upgrades back the database up, and refuse a newer-build store
 # The data-safety promise, attacked not imagined. A fresh desk stages a real
 # store. The backup-before-migrate and refuse-newer-build behaviours are
@@ -12,10 +13,7 @@ recipes:
 manual_setup:
   - Locate this run's isolated HoldSpeak database file (the run prints its HOME; the store is under it).
   - Make a copy of that DB file and hand-edit its recorded schema/build version to a value HIGHER than this build's (simulating a store written by a newer HoldSpeak).
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the on-device store readiness section at iPhone compact width is unverified in the directory record (desk.data.schema-safe-upgrades iphone=unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. A fresh desk booted on a real store. Open the desk (or the
@@ -32,8 +30,7 @@ steps:
       live store — the upgrade names the backup it made, it does not migrate in
       place unbacked.
     where: /
-    surfaces:
-      ipad: {n/a: "the backup CLI is a desktop/on-device operation; the iPad store's own backup-before-migrate is covered by the next beat's readiness check"}
+    form_factors: [desktop]
   - do: >
       Honest-failure close. Point HoldSpeak at the hand-doctored copy whose build
       version is newer than this build, and open it (via doctor / the readiness

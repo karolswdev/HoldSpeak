@@ -7,10 +7,13 @@ injectable so the default test suite never makes a real outbound call.
 """
 from __future__ import annotations
 
+import json
 import os
+import platform
 from pathlib import Path
 from typing import Any, Callable, Optional
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 from .logging_config import get_logger
@@ -22,6 +25,122 @@ def _default_http_get(url: str, *, headers: dict[str, str], timeout: float) -> i
     req = Request(url, headers=headers, method="GET")
     with urlopen(req, timeout=timeout) as resp:  # noqa: S310 - explicit http(s) preflight
         return int(getattr(resp, "status", 200) or 200)
+
+
+def _default_http_json(
+    url: str, *, headers: dict[str, str], timeout: float
+) -> tuple[int, bytes]:
+    req = Request(url, headers=headers, method="GET")
+    with urlopen(req, timeout=timeout) as resp:  # noqa: S310 - user-requested model discovery
+        return int(getattr(resp, "status", 200) or 200), resp.read()
+
+
+CONTEXT_WINDOW_PRESETS = [8192, 16384, 32768, 65536, 131072, 200000, 1000000]
+
+
+def discover_endpoint_models(
+    base_url: str,
+    *,
+    api_key: str | None = None,
+    timeout_seconds: float = 4.0,
+    http_get: Optional[Callable[..., tuple[int, bytes]]] = None,
+) -> dict[str, Any]:
+    """Ask an OpenAI-compatible ``/models`` endpoint for its real model ids."""
+    base = str(base_url or "").strip().rstrip("/")
+    parsed = urlparse(base)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return {
+            "ok": False,
+            "models": [],
+            "detail": "Enter a complete http:// or https:// server address.",
+        }
+    if parsed.username or parsed.password:
+        return {
+            "ok": False,
+            "models": [],
+            "detail": "Do not put credentials in the server address.",
+        }
+
+    models_url = f"{base}/models"
+    headers = {"Accept": "application/json"}
+    if str(api_key or "").strip():
+        headers["Authorization"] = f"Bearer {str(api_key).strip()}"
+    getter = http_get or _default_http_json
+    try:
+        code, raw = getter(models_url, headers=headers, timeout=timeout_seconds)
+    except HTTPError as exc:
+        if exc.code in {401, 403}:
+            detail = "The server requires a key. Save the connection, set its hub key, then try again."
+        elif exc.code == 404:
+            detail = "The server has no /models route. Check whether the address should end in /v1."
+        else:
+            detail = f"The server returned HTTP {exc.code} for /models."
+        return {"ok": False, "models": [], "detail": detail, "status": exc.code}
+    except (URLError, OSError, TimeoutError, ValueError) as exc:
+        return {
+            "ok": False,
+            "models": [],
+            "detail": f"Could not reach the model server: {exc}",
+        }
+    if not 200 <= int(code) < 300:
+        return {
+            "ok": False,
+            "models": [],
+            "detail": f"The server returned HTTP {code} for /models.",
+            "status": int(code),
+        }
+    try:
+        payload = json.loads(raw.decode("utf-8", errors="replace"))
+    except (AttributeError, json.JSONDecodeError):
+        return {
+            "ok": False,
+            "models": [],
+            "detail": "The server answered, but /models did not return JSON.",
+        }
+    rows = payload.get("data") if isinstance(payload, dict) else None
+    models = sorted(
+        {
+            str(row.get("id") or "").strip()
+            for row in rows or []
+            if isinstance(row, dict) and str(row.get("id") or "").strip()
+        },
+        key=str.casefold,
+    )
+    return {
+        "ok": True,
+        "models": models,
+        "detail": (
+            f"Found {len(models)} model{'s' if len(models) != 1 else ''}."
+            if models
+            else "Connected, but the server reported no models. You can enter one manually."
+        ),
+        "status": int(code),
+    }
+
+
+def discover_local_models(home: Path | None = None) -> dict[str, Any]:
+    """List real MLX directories and GGUF files visible to this product run."""
+    root = (home or Path.home()).expanduser()
+    mlx_root = root / "Models" / "mlx"
+    gguf_root = root / "Models" / "gguf"
+    mlx = sorted(
+        (path for path in mlx_root.iterdir() if path.is_dir()),
+        key=lambda path: path.name.casefold(),
+    ) if mlx_root.is_dir() else []
+    gguf = sorted(
+        (path for path in gguf_root.rglob("*.gguf") if path.is_file()),
+        key=lambda path: path.name.casefold(),
+    )[:200] if gguf_root.is_dir() else []
+    return {
+        "platform": {
+            "system": platform.system().lower(),
+            "machine": platform.machine().lower(),
+            "apple_silicon": platform.system() == "Darwin" and platform.machine().lower() in {"arm64", "aarch64"},
+        },
+        "mlx": [{"label": path.name, "value": str(path)} for path in mlx],
+        "gguf": [{"label": path.name, "value": str(path)} for path in gguf],
+        "context_presets": CONTEXT_WINDOW_PRESETS,
+    }
 
 
 def probe_runtime(

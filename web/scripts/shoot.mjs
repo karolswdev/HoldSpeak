@@ -1,7 +1,7 @@
 // HoldSpeak route screenshot harness (HS-30 follow-up).
 //
 // One command — `npm run shots` — builds the site, serves the built
-// output with `astro preview`, drives a headless browser over every
+// output with `vite preview`, drives a headless browser over every
 // route + a couple of states/viewports, writes PNGs to a timestamped
 // folder under web/.shots/, then tears the server down.
 //
@@ -14,7 +14,7 @@
 // Env knobs:
 //   SHOTS_DIR=path   override the output directory
 //   SHOTS_PORT=4321  override the preview port
-//   SHOTS_BASE=/_built  override the base path (must match astro.config)
+//   SHOTS_BASE=/_built  override the base path (must match vite.config)
 
 import { spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -65,10 +65,10 @@ async function waitForServer(url, tries = 60) {
 async function main() {
   mkdirSync(outDir, { recursive: true });
 
-  // Serve the already-built output. `astro build` runs first via the
-  // npm script, so preview just hosts ../holdspeak/static/_built.
-  const astroBin = resolve(webRoot, "node_modules", ".bin", "astro");
-  const server = spawn(astroBin, ["preview", "--port", PORT], {
+  // Serve the already-built output. `vite build` runs first via the npm
+  // script, so preview hosts ../holdspeak/static/_built at the configured base.
+  const viteBin = resolve(webRoot, "node_modules", ".bin", "vite");
+  const server = spawn(viteBin, ["preview", "--port", PORT], {
     cwd: webRoot,
     stdio: "ignore",
   });
@@ -87,8 +87,11 @@ async function main() {
       const url = `${ORIGIN}${BASE}${path}`;
       try {
         await page.goto(url, { waitUntil: "networkidle2", timeout: 25000 });
-        await sleep(1200); // let Alpine / webfonts settle
-        await page.screenshot({ path: resolve(outDir, `${name}.png`), fullPage });
+        await sleep(1200); // let React lazy routes and webfonts settle
+        await page.screenshot({
+          path: resolve(outDir, `${name}.png`),
+          fullPage,
+        });
         console.log(`  ✓ ${name.padEnd(18)} ${path}`);
       } catch (e) {
         console.log(`  ✗ ${name.padEnd(18)} ${path} — ${e.message}`);
