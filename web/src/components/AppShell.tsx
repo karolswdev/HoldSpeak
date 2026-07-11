@@ -5,18 +5,12 @@ import { useRuntimeBus } from "../runtime/RuntimeBus";
 import { Button, Dialog, StatusPill } from "./signal/Signal";
 import { AmbientLayer } from "./AmbientLayer";
 
-const DAILY = [
+export const PRIMARY_NAV = [
   ["/", "Desk"],
   ["/dictation", "Dictation"],
   ["/history", "Meetings"],
-] as const;
-
-const STUDIO = [
   ["/studio", "Studio"],
-  ["/activity", "Activity"],
-  ["/commands", "Commands"],
-  ["/cadence", "Cadence"],
-  ["/workbench", "Workbench"],
+  ["/settings", "Settings"],
 ] as const;
 
 type TrustDestination = {
@@ -72,8 +66,12 @@ export function AppShell({
       </>
     );
 
-  const enabledDestinations = trust?.destinations?.filter((item) => item.enabled) ?? [];
-  const egress = trust?.transcript_egress === "none" ? "local" : "local+external";
+  const enabledDestinations =
+    trust?.destinations?.filter((item) => item.enabled) ?? [];
+  const egress =
+    trust?.transcript_egress === "none"
+      ? "this device"
+      : "this device + external";
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">
@@ -97,19 +95,11 @@ export function AppShell({
           className={menuOpen ? "is-open" : ""}
           aria-label="Primary navigation"
         >
-          {DAILY.map(([to, label]) => (
+          {PRIMARY_NAV.map(([to, label]) => (
             <NavLink key={to} to={to} end={to === "/"}>
               {label}
             </NavLink>
           ))}
-          <div className="app-studio-menu">
-            {STUDIO.map(([to, label]) => (
-              <NavLink key={to} to={to}>
-                {label}
-              </NavLink>
-            ))}
-          </div>
-          <NavLink to="/settings">Settings</NavLink>
         </nav>
         <div className="app-status">
           <StatusPill
@@ -143,11 +133,12 @@ export function AppShell({
       >
         <p>
           {trust?.summary ??
-            "HoldSpeak reports its current egress posture from the local hub."}
+            "Current data boundaries and enabled destinations."}
         </p>
         {enabledDestinations.length > 0 ? (
           <p role="alert">
-            External destinations are enabled. Review each authority boundary and revoke action below.
+            External destinations are enabled. Review each authority boundary
+            and revoke action below.
           </p>
         ) : null}
         <dl className="signal-facts">
@@ -168,14 +159,38 @@ export function AppShell({
                 {destination.enabled ? "Enabled" : "Off"}
               </StatusPill>
               <dl className="signal-facts">
-                <div><dt>Destination</dt><dd>{destination.destination}</dd></div>
-                <div><dt>Operation</dt><dd>{destination.operation}</dd></div>
-                <div><dt>Boundary</dt><dd>{destination.boundary}</dd></div>
-                <div><dt>Data</dt><dd>{destination.data_class}</dd></div>
-                <div><dt>Authority</dt><dd>{destination.authority_basis}</dd></div>
-                <div><dt>Background</dt><dd>{destination.background_ability}</dd></div>
-                <div><dt>Revoke</dt><dd>{destination.revoke_action}</dd></div>
-                <div><dt>Last receipt</dt><dd>{destination.last_receipt ?? "None recorded"}</dd></div>
+                <div>
+                  <dt>Destination</dt>
+                  <dd>{destination.destination}</dd>
+                </div>
+                <div>
+                  <dt>Operation</dt>
+                  <dd>{destination.operation}</dd>
+                </div>
+                <div>
+                  <dt>Boundary</dt>
+                  <dd>{destination.boundary}</dd>
+                </div>
+                <div>
+                  <dt>Data</dt>
+                  <dd>{destination.data_class}</dd>
+                </div>
+                <div>
+                  <dt>Authority</dt>
+                  <dd>{destination.authority_basis}</dd>
+                </div>
+                <div>
+                  <dt>Background</dt>
+                  <dd>{destination.background_ability}</dd>
+                </div>
+                <div>
+                  <dt>Revoke</dt>
+                  <dd>{destination.revoke_action}</dd>
+                </div>
+                <div>
+                  <dt>Last receipt</dt>
+                  <dd>{destination.last_receipt ?? "None recorded"}</dd>
+                </div>
               </dl>
             </article>
           ))}

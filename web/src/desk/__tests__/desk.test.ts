@@ -12,7 +12,7 @@ import {
   loadAll,
 } from "../api";
 import { lineage } from "../lineage";
-import { objUnit, worldObjects } from "../world";
+import { objectByRef, objUnit, worldObjects } from "../world";
 import { oh } from "../hash";
 import type { Items } from "../api";
 
@@ -199,5 +199,25 @@ describe("world math", () => {
     expect(oh("n1")).toBeGreaterThanOrEqual(0);
     expect(oh("n1")).toBeLessThan(1);
     expect(oh("n1")).toEqual(oh("n1"));
+  });
+});
+
+describe("qualified pull-out identity", () => {
+  const items = {
+    meeting: [],
+    note: [{ kind: "note", id: "same", title: "Note" }],
+    artifact: [{ kind: "artifact", id: "same", title: "Artifact" }],
+    recipe: [{ kind: "recipe", id: "scout", name: "Scout" }],
+    kb: [],
+    directory: [],
+    chain: [],
+    workflow: [],
+    coder: [],
+  } as Items;
+
+  it("resolves collisions and canonical capability aliases exactly", () => {
+    expect(objectByRef(items, "artifact:same")?.title).toBe("Artifact");
+    expect(objectByRef(items, "note:same")?.title).toBe("Note");
+    expect(objectByRef(items, "persona:scout")?.title).toBe("Scout");
   });
 });

@@ -103,7 +103,7 @@ struct ProfileEditor: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(existing == nil ? "New Runs on destination" : "Edit Runs on destination").font(.system(size: 26, weight: .heavy)).foregroundStyle(Sig.text)
                     field("NAME", text: $name, placeholder: "e.g. Claude, OpenRouter, Studio box")
-                    Picker("", selection: $isLocal) { Text("On-device").tag(true); Text("OpenAI-compatible").tag(false) }
+                    Picker("", selection: $isLocal) { Text("This device").tag(true); Text("OpenAI-compatible").tag(false) }
                         .pickerStyle(.segmented)
                     if isLocal {
                         label("MODEL")

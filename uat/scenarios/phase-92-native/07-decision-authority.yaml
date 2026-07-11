@@ -7,7 +7,7 @@ manual_setup:
   - Pair the flagship app and provide one pending content review, one proposed effect, and one waiting Coder pane.
 form_factors: [ipad, iphone]
 steps:
-  - do: With VoiceOver, review content, inspect a proposal, and compare Safe, Neutral, and YOLO controls without executing.
+  - do: With VoiceOver, review content, inspect a proposal, and compare Secure, Normal, and YOLO controls without executing.
     expect: Review grants no authority; commitment actions name consequence and target; mode descriptions preserve auth, secret, payload/destination, pane, audit, and schema invariants.
     verifies: [phase92.journey.decision-authority]
   - do: Create, use, exhaust, and revoke bounded grants; relaunch and inspect use receipts.

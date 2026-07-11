@@ -990,7 +990,8 @@
       ],
       "module": "web.routes.desk_actuators",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1000,7 +1001,8 @@
       ],
       "module": "web.routes.desk_actuators",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1010,7 +1012,8 @@
       ],
       "module": "web.routes.desk_actuators",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1020,7 +1023,8 @@
       ],
       "module": "web.routes.desk_actuators",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1040,7 +1044,8 @@
       ],
       "module": "web.routes.desk_actuators",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1050,7 +1055,8 @@
       ],
       "module": "web.routes.desk_actuators",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -2406,7 +2412,9 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/resources/{resource_ref:path}",
@@ -2588,6 +2596,16 @@
     },
     {
       "path": "/api/setup/first-value/start",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/setup/first-value/{attempt_id}/event",
       "methods": [
         "POST"
       ],

@@ -11,14 +11,16 @@ Approving an effect does not claim that it ran. Every proposed action API return
 all three axes, its typed operation, the policy snapshot used for the decision,
 and a commitment label such as **Approve and send to Slack**.
 
-## ControlMode
+## Control mode
 
-`safe`, `neutral`, and `yolo` are presets for future operations. Change the mode
-in Web Settings, native Settings on a paired device, or the CLI:
+Secure, Normal, and YOLO are presets for future operations. The persisted wire
+values remain `safe`, `neutral`, and `yolo`. Change the mode in Web Settings,
+native Settings on a paired device, or the CLI:
 
 ```console
 holdspeak control-mode
-holdspeak control-mode safe
+holdspeak control-mode secure
+holdspeak control-mode normal
 holdspeak control-mode yolo --json
 ```
 
@@ -27,13 +29,13 @@ The resolver always applies the same precedence:
 1. hard invariants;
 2. revocation;
 3. an exact scoped grant;
-4. ControlMode;
+4. Control mode;
 5. the feature default.
 
 Unsupported operation families keep their current behavior. They never inherit
 a permissive YOLO default.
 
-| Family | Safe | Neutral | YOLO |
+| Family | Secure | Normal | YOLO |
 |---|---|---|---|
 | Dictation commit | Preview before typing | Follow the configured preview setting | Commit directly |
 | Coder steering | Exact pane grant, up to 5 min | Exact pane grant, up to 15 min | Exact pane grant, up to 60 min |

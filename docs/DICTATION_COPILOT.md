@@ -2,7 +2,7 @@
 
 Transcription gets your words onto the screen; the dictation pipeline gets
 your *intent* there. It turns rough, rambling speech into a precise,
-**project-grounded** task for your coding agent, using a model you run.
+**project-grounded** task for a Coder session, using a model you run.
 This page shows it working end to end against a real local LLM, then tells
 you how to turn it on and run the same demo yourself.
 
@@ -95,20 +95,20 @@ flowchart LR
 
     D --> E["① intent-router<br/>LLM classify<br/>+ correction nudge ②"]
     E --> F["kb-enricher ④<br/>inject project facts<br/>for the matched block"]
-    F --> G["project-rewriter ①<br/>multi-pass draft → critique → refine<br/>uses .hs context + target profile"]
+    F --> G["project-rewriter ①<br/>multi-pass draft → critique → refine<br/>uses .hs context + output target"]
     G --> H["✍️ typed:<br/>project-grounded task"]
     G -.->|optional| I[".hs/* context-<br/>preservation suggestion"]
 
     E -.->|"any stage fails / LLM down"| D
 ```
 
-The **target profile** (where the text is headed: Claude Code, Codex, a
+The **output target** (where the text is headed: Claude Code, Codex, a
 browser, an editor) is resolved in parallel and shapes the rewrite. That's
 where correction memory (②) and model-assisted detection (③) decide together:
 
 ```mermaid
 flowchart TD
-    T1["window / app hints"] --> T2["heuristic profile<br/>+ confidence"]
+    T1["window / app hints"] --> T2["heuristic output target<br/>+ confidence"]
     T2 --> T3{"manual override<br/>or a user correction ②?"}
     T3 -- yes --> TW["use it (always wins)"]
     T3 -- no --> T4{"confidence &lt; threshold?"}
@@ -185,9 +185,9 @@ at any local or LAN [OpenAI-compatible / GGUF / MLX endpoint](./MODELS.md)):
 }
 ```
 
-Prefer the picker: author the endpoint once as a runtime profile (web:
-`/profiles`), then pick it under Dictation → Runtime → **Runs on profile**.
-The fields above remain the fallback when nothing is picked.
+Prefer the picker: author the endpoint once as a Runs on destination (the Web
+compatibility route is `/profiles`), then pick it under Dictation → Runtime →
+**Runs on**. The fields above remain the fallback when nothing is selected.
 
 </details>
 
@@ -213,7 +213,7 @@ hosted CI) and runs for real wherever your endpoint is reachable.
 ## See also
 
 - [Dictation Pipeline Guide](./DICTATION_PIPELINE_GUIDE.md): the full setup,
-  `.hs/` conventions, target profiles, agent hooks, and every config knob.
+  `.hs/` conventions, output targets, automation hooks, and every config knob.
 - [The learning loop](./DICTATION_PIPELINE_GUIDE.md#12-dictation-journal-corrections--replay):
   what feature ② becomes over time. Correct a misfire in one tap, watch the "What
   HoldSpeak learned" digest count the honest reach, and replay to prove it improved.

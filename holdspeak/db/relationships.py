@@ -16,7 +16,7 @@ from .base import BaseRepository
 
 RESOURCE_KINDS = frozenset({
     "meeting", "transcript", "artifact", "note", "knowledge", "zone",
-    "project", "persona", "workflow", "sequence",
+    "project", "persona", "workflow", "sequence", "integration",
 })
 
 

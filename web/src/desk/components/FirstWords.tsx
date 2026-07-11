@@ -1,90 +1,93 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, InlineMessage, TextArea } from "../../components/signal/Signal";
-import { ApiError, apiFetch, readableError } from "../../lib/api";
+import {
+  Button,
+  InlineMessage,
+  TextArea,
+} from "../../components/signal/Signal";
+import { apiFetch, readableError } from "../../lib/api";
+import {
+  DICTATION_FAILURES,
+  dictationFailure,
+  type DictationFailure,
+} from "../../lib/dictationRecovery";
+import { useDurableDraft } from "../../lib/durableDraft";
+import { loadPendingVoice } from "../../lib/pendingVoice";
 import {
   cancelCapture,
+  retryPendingTranscription,
   speakToFillSupported,
   startCapture,
   stopAndTranscribe,
 } from "../../lib/speakToFill";
+import { FirstValueTracker } from "../firstValue";
 
-type CaptureState = "idle" | "listening" | "transcribing" | "success" | "failed";
-type FailureCategory =
-  | "permission_denied"
-  | "missing_model"
-  | "rejected_token"
-  | "unreachable_hub"
-  | "delivery_conflict"
-  | "transcription_failed"
-  | "no_speech"
-  | "unknown";
-
-function failureCategory(error: unknown): FailureCategory {
-  if (error instanceof DOMException && error.name === "NotAllowedError")
-    return "permission_denied";
-  if (error instanceof ApiError) {
-    if (error.status === 401 || error.status === 403) return "rejected_token";
-    if (error.status === 409) return "delivery_conflict";
-    if (error.status === 503) return "missing_model";
-    return "transcription_failed";
-  }
-  if (error instanceof TypeError) return "unreachable_hub";
-  return "unknown";
-}
-
-const FAILURE_COPY: Record<FailureCategory, string> = {
-  permission_denied: "Microphone access is off. Your text is still here.",
-  missing_model: "Local transcription is not ready. Your text is still here.",
-  rejected_token: "This hub rejected the connection. Your text is still here.",
-  unreachable_hub: "The hub could not be reached. Your text is still here.",
-  delivery_conflict: "That delivery conflicted with another request. Your text is still here.",
-  transcription_failed: "Transcription did not finish. Your text is still here.",
-  no_speech: "No words were detected. Type below or hold to try again.",
-  unknown: "That did not finish. Your text is still here.",
-};
-
-export function FirstWords({ onDismiss }: { onDismiss?: () => void }) {
-  const [text, setText] = useState("");
+type CaptureState =
+  "idle" | "listening" | "transcribing" | "success" | "failed";
+export function FirstWords({
+  onDismiss,
+  embedded = false,
+}: {
+  onDismiss?: () => void;
+  embedded?: boolean;
+}) {
+  const {
+    value: text,
+    setDraft: setText,
+    recovered,
+    clearPersisted,
+  } = useDurableDraft("first-words");
   const [state, setState] = useState<CaptureState>("idle");
-  const [failure, setFailure] = useState<FailureCategory | null>(null);
+  const [failure, setFailure] = useState<DictationFailure | null>(null);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
-  const attempt = useRef("");
+  const tracker = useRef<FirstValueTracker | null>(null);
+  if (!tracker.current) tracker.current = new FirstValueTracker();
   const listening = useRef(false);
   const holding = useRef(false);
+  const draftEdited = useRef(false);
+
+  useEffect(() => {
+    let mounted = true;
+    void loadPendingVoice("first-words").then((audio) => {
+      if (!mounted || !audio) return;
+      setFailure("transcription_failed");
+      setState("failed");
+      setMessage("Captured audio was recovered on this browser for Retry.");
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const startAttempt = async () => {
-    const result = await apiFetch<{ attempt?: { id?: string } }>(
-      "/api/setup/first-value/start",
-      { method: "POST", json: { destination: "this_machine" } },
-    );
-    attempt.current = String(result.attempt?.id ?? "");
+    await tracker.current?.start("this_machine");
   };
 
   const finishAttempt = async (
     outcome: "success" | "failure",
-    category?: FailureCategory,
+    category?: DictationFailure,
   ) => {
-    if (!attempt.current) return;
-    const id = attempt.current;
-    attempt.current = "";
-    await apiFetch(`/api/setup/first-value/${encodeURIComponent(id)}/finish`, {
-      method: "POST",
-      json: {
-        outcome,
-        steps: 1,
-        decisions: 0,
-        destination: "this_machine",
-        ...(category ? { failure_category: category } : {}),
-      },
-    });
+    await tracker.current?.finish(outcome, category);
   };
 
-  const fail = (category: FailureCategory) => {
+  const fail = (category: DictationFailure) => {
     setFailure(category);
     setState("failed");
     void finishAttempt("failure", category).catch(() => undefined);
+  };
+
+  const acceptTranscript = async (result: string) => {
+    const clean = result.trim();
+    if (!clean) {
+      fail("no_speech");
+      return;
+    }
+    setText(clean);
+    setState("success");
+    setFailure(null);
+    void tracker.current?.event("transcript_received");
+    await finishAttempt("success").catch(() => undefined);
   };
 
   const begin = async () => {
@@ -94,6 +97,11 @@ export function FirstWords({ onDismiss }: { onDismiss?: () => void }) {
     setMessage("");
     try {
       await startAttempt();
+      const recovered = await retryPendingTranscription("first-words");
+      if (recovered !== null) {
+        await acceptTranscript(recovered);
+        return;
+      }
       await startCapture();
       if (!holding.current) {
         await cancelCapture();
@@ -102,8 +110,9 @@ export function FirstWords({ onDismiss }: { onDismiss?: () => void }) {
       }
       listening.current = true;
       setState("listening");
+      void tracker.current?.event("capture_started");
     } catch (error) {
-      fail(failureCategory(error));
+      fail(dictationFailure(error));
     }
   };
 
@@ -112,18 +121,12 @@ export function FirstWords({ onDismiss }: { onDismiss?: () => void }) {
     if (!listening.current) return;
     listening.current = false;
     setState("transcribing");
+    void tracker.current?.event("capture_released");
     try {
-      const result = (await stopAndTranscribe()).trim();
-      if (!result) {
-        fail("no_speech");
-        return;
-      }
-      setText(result);
-      setState("success");
-      setFailure(null);
-      await finishAttempt("success").catch(() => undefined);
+      await acceptTranscript(await stopAndTranscribe("first-words"));
     } catch (error) {
-      fail(failureCategory(error));
+      fail(dictationFailure(error));
+      setMessage("Captured audio is retained on this browser for Retry.");
     }
   };
 
@@ -154,6 +157,7 @@ export function FirstWords({ onDismiss }: { onDismiss?: () => void }) {
           tags: ["dictation"],
         },
       });
+      clearPersisted();
       setMessage("Kept as a note on your Desk.");
     } catch (error) {
       setMessage(readableError(error));
@@ -163,16 +167,28 @@ export function FirstWords({ onDismiss }: { onDismiss?: () => void }) {
   };
 
   const supported = speakToFillSupported();
+  const failureContract = failure ? DICTATION_FAILURES[failure] : null;
+  const Heading = embedded ? "h2" : "h1";
   return (
     <section className="desk-first-words" aria-labelledby="first-words-title">
-      <span className="signal-eyebrow">Your first words</span>
-      <h1 id="first-words-title">Say one sentence</h1>
+      <span className="signal-eyebrow">Dictation</span>
+      <Heading id="first-words-title">Dictate one sentence</Heading>
       <p>Hold to speak. Your words stay editable here before you use them.</p>
       <button
         type="button"
         className={`desk-first-talk is-${state}`}
-        disabled={!supported || state === "transcribing"}
-        aria-label={state === "failed" ? "Hold to retry dictation" : "Hold to dictate"}
+        disabled={
+          !supported ||
+          state === "transcribing" ||
+          Boolean(failureContract && !failureContract.retry)
+        }
+        aria-label={
+          state === "failed" && failureContract?.retry
+            ? "Hold to retry dictation"
+            : state === "failed"
+              ? "Dictation unavailable until setup is fixed"
+              : "Hold to dictate"
+        }
         onPointerDown={(event) => {
           event.preventDefault();
           void begin();
@@ -198,54 +214,94 @@ export function FirstWords({ onDismiss }: { onDismiss?: () => void }) {
           ? "Listening… release when done"
           : state === "transcribing"
             ? "Writing your words…"
-            : state === "failed"
+            : state === "failed" && failureContract?.retry
               ? "Hold to retry"
-              : "Hold to speak"}
+              : state === "failed"
+                ? "Open Setup to continue"
+                : "Hold to speak"}
       </button>
       {!supported ? (
         <InlineMessage tone="error">
-          Browser microphone capture is unavailable. You can type below or open Setup.
+          Browser microphone capture is unavailable. You can type below or open
+          Setup.
         </InlineMessage>
       ) : null}
-      {failure ? (
-        <InlineMessage tone="error">{FAILURE_COPY[failure]}</InlineMessage>
+      {failureContract ? (
+        <InlineMessage tone="error">{failureContract.message}</InlineMessage>
+      ) : recovered ? (
+        <InlineMessage tone="info">
+          Recovered your local draft after relaunch. It remains editable below.
+        </InlineMessage>
       ) : null}
       <TextArea
         aria-label="Your dictated text"
         rows={4}
         value={text}
-        onChange={(event) => setText(event.target.value)}
+        onChange={(event) => {
+          setText(event.target.value);
+          if (!draftEdited.current) {
+            draftEdited.current = true;
+            void tracker.current?.event("draft_edited");
+          }
+        }}
         placeholder="Your words will appear here—or type them now."
       />
       {message ? <InlineMessage tone="info">{message}</InlineMessage> : null}
       <div className="button-row">
         <Button
           disabled={!text.trim()}
-          onClick={() => void navigator.clipboard.writeText(text)}
+          onClick={() => {
+            void tracker.current?.event("copy_selected");
+            void navigator.clipboard.writeText(text);
+          }}
         >
           Copy
         </Button>
-        <Button disabled={!text.trim()} loading={saving} onClick={() => void keep()}>
+        <Button
+          disabled={!text.trim()}
+          loading={saving}
+          onClick={() => {
+            void tracker.current?.event("keep_selected");
+            void keep();
+          }}
+        >
           Keep as Note
         </Button>
-        <Link className="btn btn--secondary" to="/setup">
-          Setup
-        </Link>
+        {!failureContract || failureContract.setup ? (
+          <Link
+            className="btn btn--secondary"
+            to="/setup"
+            onClick={() => void tracker.current?.event("setup_selected")}
+          >
+            Setup
+          </Link>
+        ) : null}
       </div>
       {state === "success" ? (
         <div className="desk-first-success">
-          <strong>It worked on this machine.</strong>
+          <strong>Dictation is ready on this machine.</strong>
           <Link className="btn btn--ghost" to="/profiles">
-            Add an intelligent rewrite · choose Runs on
+            Configure rewrite destination
           </Link>
         </div>
       ) : null}
       <div className="button-row">
-        <Button variant="ghost" loading={saving} onClick={() => void dismiss("dismissed")}>
+        <Button
+          variant="ghost"
+          loading={saving}
+          onClick={() => {
+            void tracker.current?.event("continue_later_selected");
+            void dismiss("dismissed");
+          }}
+        >
           Continue later
         </Button>
         {failure ? (
-          <Button variant="ghost" loading={saving} onClick={() => void dismiss("needs_help")}>
+          <Button
+            variant="ghost"
+            loading={saving}
+            onClick={() => void dismiss("needs_help")}
+          >
             I need help
           </Button>
         ) : null}

@@ -109,15 +109,14 @@ export default function ProfilesPage() {
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <Panel title="Destinations" eyebrow="Shape, never secrets">
+        <Panel title="Destinations" eyebrow="Stored definitions">
           {message ? (
             <InlineMessage tone="error">{message}</InlineMessage>
           ) : null}
           {!profiles.length ? (
             <EmptyState title="No saved destinations">
-              Add this device, a paired device, a private endpoint, a mesh node,
-              or an external service. The hub keeps any
-              required key.
+              Add a paired device, private endpoint, mesh node, or external
+              service. The hub keeps required keys.
             </EmptyState>
           ) : (
             <ul className="data-list">
@@ -136,7 +135,7 @@ export default function ProfilesPage() {
                           ? String(profile.base_url ?? "Endpoint")
                           : kind === "meshNode"
                             ? `mesh · ${node}`
-                            : String(profile.model_file ?? "On device")}
+                            : String(profile.model_file ?? "This device")}
                       </small>
                     </div>
                     <div className="button-row">
@@ -210,7 +209,7 @@ export default function ProfilesPage() {
                   <option value="openAICompatible">
                     OpenAI-compatible endpoint
                   </option>
-                  <option value="onDevice">On device</option>
+                  <option value="onDevice">This device</option>
                   <option value="desktop">Paired device</option>
                   <option value="meshNode">Mesh node</option>
                 </Select>

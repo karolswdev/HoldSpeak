@@ -24,7 +24,20 @@ export interface DeskItem {
 }
 
 export type Items = Record<Kind, DeskItem[]>;
-export type Status = Partial<Record<Kind | "profile", "live" | "unreachable">>;
+export type Status = Partial<
+  Record<Kind | "profile" | "project", "live" | "unreachable">
+>;
+
+export interface ProjectSummary {
+  id: string;
+  name: string;
+  description: string;
+  keywords: string[];
+  team_members: string[];
+  is_archived: boolean;
+  meeting_count: number;
+  updated_at: string;
+}
 
 /** One runnable model (HS-83-03): what a `model` override on /api/ask accepts. */
 export interface HubModel {
@@ -65,6 +78,7 @@ export interface InferenceTarget {
 export interface LoadResult {
   items: Items;
   profiles: Array<Record<string, unknown>>;
+  projects: ProjectSummary[];
   inferenceTargets: InferenceTarget[];
   models: HubModel[];
   status: Status;
@@ -233,10 +247,11 @@ export async function loadAll(): Promise<LoadResult> {
   const items: Items = { ...EMPTY_ITEMS };
   const status: Status = {};
   let profiles: Array<Record<string, unknown>> = [];
+  let projects: ProjectSummary[] = [];
   let inferenceTargets: InferenceTarget[] = [];
   let models: HubModel[] = [];
   let error = "";
-  const fail = (kind: Kind | "profile", label: string, e: any) => {
+  const fail = (kind: Kind | "profile" | "project", label: string, e: any) => {
     status[kind] = "unreachable";
     if (!error) error = `${label}: ${e?.message || e}`;
   };
@@ -312,28 +327,44 @@ export async function loadAll(): Promise<LoadResult> {
         profiles = [];
         status.profile = "unreachable";
       }),
+    fetchJson("/api/projects")
+      .then((d) => {
+        projects = (d.projects || []).filter(
+          (project: ProjectSummary) => !project.is_archived,
+        );
+        status.project = "live";
+      })
+      .catch((e) => {
+        projects = [];
+        fail("project", "Projects", e);
+      }),
     fetchJson("/api/inference-targets")
       .then((d) => {
         inferenceTargets = Array.isArray(d.targets) ? d.targets : [];
       })
       .catch(() => {
         // Compatibility with an older hub: one explicitly local destination.
-        inferenceTargets = [{
-          version: 1,
-          id: "this_machine",
-          profile_id: null,
-          name: "This device",
-          kind: "this_device",
-          boundary: "same_device",
-          owner: "you",
-          transport: "in_process",
-          data_scope: { sent: ["instruction", "selected_context", "grounding"], returned: ["generated_output"] },
-          engine: "local",
-          model: "",
-          context_limit: 16_384,
-          readiness: { state: "ready", available: true, reason: "" },
-          secret: { required: false, present: false },
-        }];
+        inferenceTargets = [
+          {
+            version: 1,
+            id: "this_machine",
+            profile_id: null,
+            name: "This device",
+            kind: "this_device",
+            boundary: "same_device",
+            owner: "you",
+            transport: "in_process",
+            data_scope: {
+              sent: ["instruction", "selected_context", "grounding"],
+              returned: ["generated_output"],
+            },
+            engine: "local",
+            model: "",
+            context_limit: 16_384,
+            readiness: { state: "ready", available: true, reason: "" },
+            secret: { required: false, present: false },
+          },
+        ];
       }),
     // HS-83-03 — the runnable allow-list (what a `model` override accepts).
     fetchJson("/api/models")
@@ -353,5 +384,5 @@ export async function loadAll(): Promise<LoadResult> {
       }),
   ]);
 
-  return { items, profiles, inferenceTargets, models, status, error };
+  return { items, profiles, projects, inferenceTargets, models, status, error };
 }

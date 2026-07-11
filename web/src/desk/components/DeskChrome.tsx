@@ -1,25 +1,33 @@
-// The arrival chrome (HS-73-02): the world owns the viewport; chrome is a
-// floating minimal cluster, iPad-style. Top-left: the mark, a compact menu
-// (the rooms), the hub dot, the egress badge. Top-right: the create chips +
-// Tidy/Refresh. Bottom: ONE whispered hint. No header stack, no prose.
+// The Desk's floating system chrome. The room menu stays compact; the opposite
+// cluster exposes the three daily starts, one searchable tool shelf, layout,
+// and refresh. A fresh Desk renders the same starts centrally instead.
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { workroomHref } from "../../workrooms/context";
 import { useDesk } from "../store";
 import { egressBadge } from "../setup";
+import { DeskStartActions } from "./DeskStartActions";
+import { DeskToolShelf } from "./DeskToolShelf";
 
 const ROOMS = [
-  { label: "Dictation", href: "/dictation" },
-  { label: "Meetings", href: "/history" },
-  { label: "Studio", href: "/studio" },
-  { label: "Settings", href: "/settings" },
+  { label: "Desk", href: "/", action: "return-to-desk" },
+  { label: "Dictation", href: "/dictation", action: "dictate" },
+  { label: "Meetings", href: "/history", action: "review-meetings" },
+  { label: "Studio", href: "/studio", action: "configure-tools" },
+  { label: "Settings", href: "/settings", action: "configure-settings" },
 ];
 
-export function DeskChrome() {
+export function DeskChrome({
+  showDailyStarts = true,
+}: {
+  showDailyStarts?: boolean;
+}) {
   const status = useDesk((s) => s.status);
   const error = useDesk((s) => s.error);
   const setup = useDesk((s) => s.setup);
   const loading = useDesk((s) => s.loading);
   const positions = useDesk((s) => s.positions);
-  const { refresh, tidyDesk, createPrimitive } = useDesk.getState();
+  const { refresh, tidyDesk } = useDesk.getState();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const anyLive = Object.values(status).some((v) => v === "live");
@@ -56,9 +64,17 @@ export function DeskChrome() {
               onMouseLeave={() => setMenuOpen(false)}
             >
               {ROOMS.map((r) => (
-                <a key={r.href} role="menuitem" href={r.href}>
+                <Link
+                  key={r.href}
+                  role="menuitem"
+                  to={
+                    r.href === "/"
+                      ? "/"
+                      : workroomHref(r.href, { action: r.action })
+                  }
+                >
                   {r.label}
-                </a>
+                </Link>
               ))}
             </nav>
           )}
@@ -74,41 +90,8 @@ export function DeskChrome() {
       </div>
 
       <div className="desk-chrome desk-chrome-tr">
-        <button
-          type="button"
-          className="desk-chip"
-          onClick={() => void createPrimitive("note")}
-        >
-          + Note
-        </button>
-        <button
-          type="button"
-          className="desk-chip"
-          onClick={() => void createPrimitive("kb")}
-        >
-          + Knowledge
-        </button>
-        <button
-          type="button"
-          className="desk-chip"
-          onClick={() => void createPrimitive("recipe")}
-        >
-          + Persona
-        </button>
-        <button
-          type="button"
-          className="desk-chip"
-          onClick={() => void createPrimitive("zone")}
-        >
-          + Zone
-        </button>
-        <button
-          type="button"
-          className="desk-chip"
-          onClick={() => void createPrimitive("workflow")}
-        >
-          + Workflow
-        </button>
+        {showDailyStarts ? <DeskStartActions compact /> : null}
+        <DeskToolShelf />
         {Object.keys(positions).length > 0 && (
           <button
             type="button"
@@ -116,7 +99,7 @@ export function DeskChrome() {
             onClick={tidyDesk}
             title="Reset the desk layout"
           >
-            Tidy
+            Arrange
           </button>
         )}
         <button
@@ -125,13 +108,15 @@ export function DeskChrome() {
           onClick={() => void refresh()}
           disabled={loading}
           aria-busy={loading}
-          title="Refresh from hub"
+          title="Refresh Desk from hub"
+          aria-label="Refresh Desk from hub"
         >
           ↻
         </button>
       </div>
-
-      <div className="desk-hint">drag to arrange</div>
+      {showDailyStarts ? (
+        <div className="desk-hint">Select an item for actions</div>
+      ) : null}
     </>
   );
 }

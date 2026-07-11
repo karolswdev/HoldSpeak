@@ -292,8 +292,13 @@ Logs are written to: {LOG_FILE}
         help="Show or set authority policy for future operations",
     )
     control_mode_parser.add_argument(
-        "mode", nargs="?", choices=["safe", "neutral", "yolo"],
-        help="New mode (omit to inspect the current policy)",
+        "mode",
+        nargs="?",
+        choices=["secure", "normal", "yolo", "safe", "neutral"],
+        help=(
+            "New mode: secure, normal, or yolo. The legacy safe/neutral wire "
+            "names remain accepted."
+        ),
     )
     control_mode_parser.add_argument("--json", action="store_true", help="Emit JSON")
 
@@ -488,11 +493,12 @@ def _run_control_mode_command(args) -> int:
     import json
 
     from .operation_policy import HARD_INVARIANTS, INITIAL_FAMILIES, POLICY_VERSION
+    from .product_language import control_mode_label, control_mode_wire
 
     config = Config.load()
     previous = config.control_mode
     if getattr(args, "mode", None):
-        config.control_mode = args.mode
+        config.control_mode = control_mode_wire(args.mode)
         config.save()
         if previous != config.control_mode:
             from .db import get_database
@@ -500,7 +506,11 @@ def _run_control_mode_command(args) -> int:
             get_database().actuators.revoke_active_grants(reason="control_mode_changed")
     payload = {
         "control_mode": config.control_mode,
+        "control_mode_label": control_mode_label(config.control_mode),
         "previous_control_mode": previous if args.mode else None,
+        "previous_control_mode_label": (
+            control_mode_label(previous) if args.mode else None
+        ),
         "applies_to": "future_operations_only",
         "source": "config",
         "precedence": [
@@ -514,8 +524,12 @@ def _run_control_mode_command(args) -> int:
     if getattr(args, "json", False):
         print(json.dumps(payload, sort_keys=True))
     else:
-        change = f" (was {previous})" if args.mode and previous != config.control_mode else ""
-        print(f"ControlMode: {config.control_mode}{change}")
+        change = (
+            f" (was {control_mode_label(previous)})"
+            if args.mode and previous != config.control_mode
+            else ""
+        )
+        print(f"Control mode: {control_mode_label(config.control_mode)}{change}")
         print("Applies to future operations only.")
         print("Precedence: " + " > ".join(payload["precedence"]))
         print("Hard invariants: " + ", ".join(HARD_INVARIANTS))
@@ -546,7 +560,7 @@ def _run_meeting_mode(args):
             else:
                 print("BlackHole is installed and ready!")
             print(f"  Device: {device.name} (index {device.index})")
-            print(f"\nYou can start meeting mode with: holdspeak meeting")
+            print("\nYou can start meeting mode with: holdspeak meeting")
         else:
             print(status["setup_instructions"])
         return
@@ -578,8 +592,8 @@ def _run_meeting_mode(args):
     # Initialize recorder
     recorder = MeetingRecorder(
         system_device=config.meeting.system_audio_device,
-        on_mic_level=lambda l: None,  # Suppress for now
-        on_system_level=lambda l: None,
+        on_mic_level=lambda level: None,  # Suppress for now
+        on_system_level=lambda level: None,
     )
 
     mic_label = config.meeting.mic_label

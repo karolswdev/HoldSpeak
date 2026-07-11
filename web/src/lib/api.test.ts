@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, apiFetch } from "./api";
+import { ApiError, apiFetch, readableError } from "./api";
 
 describe("apiFetch", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -38,5 +38,9 @@ describe("apiFetch", () => {
     const error = await apiFetch("/api/example").catch((reason) => reason);
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({ status: 503, message: "Model unavailable" });
+  });
+
+  it("uses factual fallback copy for an unknown failure", () => {
+    expect(readableError(null)).toBe("Request failed. Retry the action.");
   });
 });

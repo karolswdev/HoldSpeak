@@ -43,6 +43,16 @@ export function allObjects(items: Items): WorldObject[] {
   return out;
 }
 
+/** Resolve a pull-out/source identity without collapsing cross-kind id collisions. */
+export function objectByRef(items: Items, ref: string): WorldObject | null {
+  return (
+    allObjects(items).find(
+      (object) =>
+        object.id === ref || qualifiedRef(object.kind, object.id) === ref,
+    ) ?? null
+  );
+}
+
 export function worldObjects(
   items: Items,
   divedZone: string | null,
@@ -51,7 +61,9 @@ export function worldObjects(
   if (divedZone) {
     const dir = (items.directory || []).find((d) => d.id === divedZone);
     const members = new Set(((dir as any)?.memberIds as string[]) || []);
-    return out.filter((o) => members.has(o.id) || members.has(qualifiedRef(o.kind, o.id)));
+    return out.filter(
+      (o) => members.has(o.id) || members.has(qualifiedRef(o.kind, o.id)),
+    );
   }
   // The iPad grammar (owner feedback, 2026-07-02): a filed object lives on
   // its shelf, not on the open desk — the root stage shows only unfiled
@@ -62,7 +74,9 @@ export function worldObjects(
     for (const mid of ((d as any).memberIds as string[]) || []) filed.add(mid);
   }
   return out.filter(
-    (o) => o.kind === "coder" || (!filed.has(o.id) && !filed.has(qualifiedRef(o.kind, o.id))),
+    (o) =>
+      o.kind === "coder" ||
+      (!filed.has(o.id) && !filed.has(qualifiedRef(o.kind, o.id))),
   );
 }
 

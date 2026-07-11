@@ -63,6 +63,8 @@ index idx_directories_modified: CREATE INDEX idx_directories_modified ON directo
 index idx_directory_memberships_dir: CREATE INDEX idx_directory_memberships_dir ON directory_memberships(directory_id)
 index idx_first_value_attempts_started: CREATE INDEX idx_first_value_attempts_started
 ON first_value_attempts(started_at DESC)
+index idx_first_value_events_attempt: CREATE INDEX idx_first_value_events_attempt
+ON first_value_events(attempt_id, occurred_at)
 index idx_intel_job_attempts_meeting: CREATE INDEX idx_intel_job_attempts_meeting ON intel_job_attempts(meeting_id, created_at DESC)
 index idx_intel_jobs_status: CREATE INDEX idx_intel_jobs_status ON intel_jobs(status, requested_at)
 index idx_intent_window_scores_meeting: CREATE INDEX idx_intent_window_scores_meeting ON intent_window_scores(meeting_id, window_id)
@@ -90,6 +92,8 @@ index idx_project_resources_modified: CREATE INDEX idx_project_resources_modifie
 index idx_project_resources_resource: CREATE INDEX idx_project_resources_resource ON project_resources(resource_ref, deleted)
 index idx_projects_archived: CREATE INDEX idx_projects_archived ON projects(is_archived, name)
 index idx_recipes_modified: CREATE INDEX idx_recipes_modified ON recipes(last_modified DESC)
+index idx_remote_dictation_deliveries_updated: CREATE INDEX idx_remote_dictation_deliveries_updated
+ON remote_dictation_deliveries(updated_at DESC)
 index idx_segments_meeting: CREATE INDEX idx_segments_meeting ON segments(meeting_id)
 index idx_segments_speaker: CREATE INDEX idx_segments_speaker ON segments(speaker)
 index idx_segments_speaker_id: CREATE INDEX idx_segments_speaker_id ON segments(speaker_id)
@@ -487,6 +491,12 @@ table first_value_attempts: CREATE TABLE first_value_attempts (
     failure_category TEXT,
     finished_at TEXT
 )
+table first_value_events: CREATE TABLE first_value_events (
+    event_id TEXT PRIMARY KEY,
+    attempt_id TEXT NOT NULL REFERENCES first_value_attempts(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    occurred_at TEXT NOT NULL
+)
 table intel_job_attempts: CREATE TABLE intel_job_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
@@ -742,6 +752,16 @@ table recipes: CREATE TABLE recipes (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0
+)
+table remote_dictation_deliveries: CREATE TABLE remote_dictation_deliveries (
+    delivery_id TEXT PRIMARY KEY,
+    request_hash TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'succeeded', 'failed')),
+    response_status INTEGER,
+    response_json TEXT,
+    error TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 )
 table schema_version: CREATE TABLE schema_version (
     version INTEGER PRIMARY KEY,

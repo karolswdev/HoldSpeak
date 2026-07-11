@@ -1,53 +1,45 @@
 import { Link } from "react-router-dom";
+import { workroomHref } from "../workrooms/context";
 import { PageHero } from "./pageSupport";
 
 const TOOLS = [
-  [
-    "/workbench",
-    "Workbench",
-    "Wire primitives into a runnable workflow on a node canvas.",
-  ],
-  [
-    "/",
-    "Desk",
-    "Author meetings, notes, Personas and more in a spatial world.",
-  ],
+  ["/workbench", "Workflow editor", "Build or edit a Workflow."],
   [
     "/companion",
     "Personas and coders",
-    "See your Personas and the coder sessions waiting on you.",
+    "Configure Personas and inspect Coder sessions.",
   ],
-  [
-    "/cadence",
-    "Cadence",
-    "A background chief-of-staff that pushes with receipts.",
-  ],
-  ["/commands", "Commands", "Map a spoken keyword to an explicit action."],
-  [
-    "/profiles",
-    "Runs on",
-    "Name model and runtime destinations without exposing keys.",
-  ],
+  ["/cadence", "Cadence", "Configure scheduled background work."],
+  ["/commands", "Commands", "Map spoken phrases to registered actions."],
+  ["/profiles", "Runs on", "Configure model and runtime destinations."],
   [
     "/activity",
     "Activity",
-    "Review local work context, sources, rules and records.",
+    "Inspect work context, sources, rules, and records.",
   ],
 ] as const;
 export default function StudioPage() {
   return (
     <div className="page-wrap">
-      <PageHero eyebrow="Advanced" title="Studio">
-        Power tools for when you want them. Optional; the two daily modes need
-        none of this.
+      <PageHero eyebrow="Focused workspace" title="Studio">
+        Build and configure reusable Desk tools.
       </PageHero>
       <div className="studio-grid">
         {TOOLS.map(([href, name, what]) => (
-          <Link className="studio-card" to={href} key={href}>
+          <Link
+            className="studio-card"
+            to={workroomHref(href, {
+              action: `configure-${name
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/-$/g, "")}`,
+            })}
+            key={href}
+          >
             <span aria-hidden="true">◇</span>
             <strong>{name}</strong>
             <p>{what}</p>
-            <b>Open →</b>
+            <b>Configure →</b>
           </Link>
         ))}
       </div>

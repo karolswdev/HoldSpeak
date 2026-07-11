@@ -184,11 +184,6 @@ struct SyncCueBadge: View {
     }
 }
 
-// THE FIRST BOOT — an empty desk is not a void; it is a desk that teaches itself. A calm guided
-// spine orients you to the spatial model (objects · the AI core · zones) and points to the one
-// action that begins everything: record. Felt in motion — a breathing core, a staggered spine.
-struct DioFirstBootStep: Identifiable { let id: Int; let glyph: String; let tint: Color; let title: String; let line: String }
-
 // An empty zone you dived into. You file meetings INTO a zone from the desk (drag onto its tray), so the
 // honest guidance from inside is: file from your desk, or nest a sub-zone here. Never a blank dead-end.
 struct DioZoneEmpty: View {
@@ -231,69 +226,21 @@ struct DioZoneEmpty: View {
 }
 
 struct DioFirstBoot: View {
-    let w: CGFloat; let h: CGFloat
-    @State private var shown = false
-    private let steps: [DioFirstBootStep] = [
-        DioFirstBootStep(id: 0, glyph: "rectangle.stack.fill", tint: DioPal.accent, title: "Meetings become objects", line: "Capture one and it lands right here."),
-        DioFirstBootStep(id: 1, glyph: "cpu",                  tint: DioPal.cobalt, title: "Your AI core waits below", line: "Drop an object on it to ask."),
-        DioFirstBootStep(id: 2, glyph: "square.dashed",        tint: DioPal.violet, title: "Zones file your work", line: "Drag a meeting into a place to keep it."),
-    ]
-
     var body: some View {
-        TimelineView(.animation) { tl in
-            let t = tl.date.timeIntervalSinceReferenceDate
-            let breathe = 1 + CGFloat(sin(t * 1.1) * 0.022)
-            VStack(spacing: 0) {
-                Text("HoldSpeak").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
-                    .padding(.bottom, 18)
-                // the hero core — a quiet, ready pulse
-                ZStack {
-                    ForEach(0..<3) { i in
-                        Circle().strokeBorder(DioPal.accent.opacity(0.20 - Double(i) * 0.055), lineWidth: 1.4)
-                            .frame(width: 78 + CGFloat(i) * 30, height: 78 + CGFloat(i) * 30).scaleEffect(breathe)
-                    }
-                    Circle().fill(RadialGradient(colors: [DioPal.accent.opacity(0.9), DioPal.accent.opacity(0.18)], center: .center, startRadius: 1, endRadius: 40))
-                        .frame(width: 58, height: 58)
-                    Circle().fill(.white.opacity(0.92)).frame(width: 13, height: 13).shadow(color: DioPal.accent, radius: 9)
-                }
-                .frame(height: 140)
-                VStack(spacing: 6) {
-                    Text("Your desk is ready").font(.system(size: 21, weight: .black, design: .rounded)).foregroundStyle(DioPal.text)
-                    Text("Record your first meeting.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
-                }
-                .padding(.bottom, 26)
-                // the guided spine
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(steps) { s in
-                        HStack(alignment: .top, spacing: 14) {
-                            VStack(spacing: 0) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 13, style: .continuous)
-                                        .fill(LinearGradient(colors: [s.tint.opacity(0.34), Color(hex: 0x14121C)], startPoint: .top, endPoint: .bottom))
-                                        .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(s.tint.opacity(0.72), lineWidth: 1.3))
-                                        .frame(width: 46, height: 46)
-                                    Image(systemName: s.glyph).font(.system(size: 19, weight: .bold)).foregroundStyle(.white)
-                                }
-                                if s.id < steps.count - 1 {
-                                    Rectangle().fill(LinearGradient(colors: [s.tint.opacity(0.55), steps[s.id + 1].tint.opacity(0.55)], startPoint: .top, endPoint: .bottom))
-                                        .frame(width: 2, height: 24)
-                                }
-                            }
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(s.title).font(.system(size: 15.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                                Text(s.line).font(.system(size: 12.5, weight: .medium, design: .rounded)).foregroundStyle(DioPal.muted)
-                            }.padding(.top, 4)
-                            Spacer(minLength: 0)
-                        }
-                        .opacity(shown ? 1 : 0).offset(y: shown ? 0 : 14)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.78).delay(0.15 + Double(s.id) * 0.12), value: shown)
-                    }
-                }
-                .frame(maxWidth: 326, alignment: .leading)
-            }
-            .frame(maxWidth: .infinity)
+        VStack(spacing: 8) {
+            Image(systemName: "circle.grid.2x2.fill")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(DioPal.accent)
+                .accessibilityHidden(true)
+            Text("Start on your Desk")
+                .font(.system(size: 23, weight: .black, design: .rounded))
+                .foregroundStyle(DioPal.text)
+            Text("Dictate text, record a meeting, or create a Desk item.")
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundStyle(DioPal.muted)
+                .multilineTextAlignment(.center)
         }
-        .onAppear { shown = true }
+        .frame(maxWidth: 360)
     }
 }
 
@@ -991,7 +938,7 @@ struct DioInlineKBCard: View {
         VStack(alignment: .leading, spacing: 11) {
             HStack(spacing: 9) {
                 DeskSprite(name: "crystal", size: 26)
-                Text("KNOWLEDGE BASE").font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1.6).foregroundStyle(tint)
+                Text("KNOWLEDGE").font(.system(size: 10.5, weight: .black, design: .rounded)).tracking(1.6).foregroundStyle(tint)
                 Spacer(minLength: 0)
                 Text("\(kb.items) item\(kb.items == 1 ? "" : "s")").font(.system(size: 11.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
             }
@@ -1509,6 +1456,7 @@ struct DioRelationshipPanel: View {
     let projectIds: Set<String>
     let onKnowledge: (String) -> Void
     let onProject: (String) -> Void
+    let onOpenProject: (Project) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -1526,8 +1474,7 @@ struct DioRelationshipPanel: View {
             if !projects.filter({ !$0.isArchived }).isEmpty {
                 Text("PROJECTS").font(.system(size: 9.5, weight: .black, design: .rounded))
                     .tracking(1.2).foregroundStyle(DioPal.cobalt)
-                chips(projects.filter { !$0.isArchived }.map { ($0.id, $0.name) },
-                      active: projectIds, action: onProject)
+                projectChips(projects.filter { !$0.isArchived })
             }
         }
         .padding(13)
@@ -1555,6 +1502,116 @@ struct DioRelationshipPanel: View {
                 .accessibilityLabel("\(selected ? "Remove from" : "Add to") \(name)")
                 .accessibilityAddTraits(selected ? .isSelected : [])
             }
+        }
+    }
+
+    private func projectChips(_ rows: [Project]) -> some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 156), spacing: 8)],
+            alignment: .leading,
+            spacing: 8
+        ) {
+            ForEach(rows) { project in
+                let active = projectIds.contains(project.id)
+                HStack(spacing: 3) {
+                    Button { onProject(project.id) } label: {
+                        Label(
+                            project.name,
+                            systemImage: active ? "checkmark.circle.fill" : "plus.circle"
+                        )
+                        .font(.system(size: 11.5, weight: .heavy, design: .rounded))
+                        .lineLimit(1).padding(.leading, 9).frame(height: 32)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(
+                        "\(active ? "Remove from" : "Assign to") \(project.name) Project"
+                    )
+                    .accessibilityAddTraits(active ? .isSelected : [])
+                    Button { onOpenProject(project) } label: {
+                        Image(systemName: "info.circle")
+                            .frame(width: 32, height: 32)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Inspect \(project.name) Project")
+                }
+                .background(
+                    Capsule().fill(active ? DioPal.mint.opacity(0.16) : .white.opacity(0.05))
+                )
+            }
+        }
+    }
+}
+
+struct DioProjectInspector: View {
+    let project: Project
+    let resources: [(ref: String, title: String)]
+    let onUseContext: () -> Void
+    let onClose: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.7).ignoresSafeArea().onTapGesture(perform: onClose)
+            VStack(alignment: .leading, spacing: 13) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("PROJECT")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .tracking(1.3).foregroundStyle(DioPal.cobalt)
+                        Text(project.name)
+                            .font(.system(size: 20, weight: .heavy, design: .rounded))
+                            .foregroundStyle(DioPal.text)
+                    }
+                    Spacer(minLength: 8)
+                    Button(action: onClose) {
+                        Image(systemName: "xmark").frame(width: 36, height: 36)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Close \(project.name) Project")
+                }
+                if !project.description.isEmpty {
+                    Text(project.description)
+                        .font(.system(size: 12.5, weight: .semibold, design: .rounded))
+                        .foregroundStyle(DioPal.muted)
+                }
+                Text("RELATED DESK MATERIAL")
+                    .font(.system(size: 9.5, weight: .black, design: .rounded))
+                    .tracking(1.2).foregroundStyle(DioPal.muted)
+                if resources.isEmpty {
+                    Text("No Desk material is assigned.")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(DioPal.muted)
+                } else {
+                    ForEach(resources, id: \.ref) { resource in
+                        HStack {
+                            Text(resource.title)
+                                .font(.system(size: 12.5, weight: .heavy, design: .rounded))
+                                .foregroundStyle(DioPal.text).lineLimit(1)
+                            Spacer(minLength: 8)
+                            Text(resource.ref.split(separator: ":").first.map(String.init) ?? "")
+                                .font(.system(size: 9.5, weight: .bold, design: .rounded))
+                                .foregroundStyle(DioPal.muted).textCase(.uppercase)
+                        }
+                        .padding(.horizontal, 11).frame(height: 38)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(.white.opacity(0.04)))
+                    }
+                }
+                Button(action: onUseContext) {
+                    Text("Use Project context")
+                        .font(.system(size: 13, weight: .heavy, design: .rounded))
+                        .frame(maxWidth: .infinity).frame(height: 42)
+                        .background(Capsule().fill(DioPal.cobalt.opacity(0.8)))
+                        .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(19).frame(maxWidth: 430)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Color(hex: 0x12101A))
+                    .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(.white.opacity(0.09)))
+            )
+            .padding(.horizontal, 18)
         }
     }
 }
@@ -1782,7 +1839,7 @@ struct DioConstellationWeave: View {
                     .scaleEffect(active ? 1.0 + 0.03 : 1)
                 }
                 Spacer(minLength: 0)
-                HStack(spacing: 4) { Image(systemName: "lock.fill").font(.system(size: 8, weight: .bold)); Text("on device").font(.system(size: 9, weight: .heavy, design: .rounded)) }.foregroundStyle(DioPal.mint)
+                HStack(spacing: 4) { Image(systemName: "lock.fill").font(.system(size: 8, weight: .bold)); Text("This device").font(.system(size: 9, weight: .heavy, design: .rounded)) }.foregroundStyle(DioPal.mint)
             }.frame(width: 300)
         }
         .padding(15)
@@ -2182,11 +2239,10 @@ struct DioWindowSlider: View {
                 Slider(value: $minutes, in: 0.5...5, step: 0.5).tint(tint)
                 HStack { Text("0:30").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted); Spacer(); Text("5:00").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted) }
                 Button { onGo() } label: {
-                    HStack(spacing: 7) { Image(systemName: "sparkles"); Text("Go").font(.system(size: 16, weight: .heavy, design: .rounded)) }
+                    HStack(spacing: 7) { Image(systemName: "sparkles"); Text("Run \(title)").font(.system(size: 16, weight: .heavy, design: .rounded)) }
                         .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 50)
                         .background(Capsule().fill(LinearGradient(colors: [tint, tint.opacity(0.6)], startPoint: .top, endPoint: .bottom)))
                 }.buttonStyle(.plain)
-                Text("Runs now.").font(.system(size: 10.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).frame(maxWidth: .infinity, alignment: .center)
             }
             .padding(20).frame(width: 322)
             .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(Color(hex: 0x15121C)).overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.12), lineWidth: 1)))
@@ -2232,7 +2288,7 @@ struct DioTranscriptTape: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: "waveform").font(.system(size: 10, weight: .bold)).foregroundStyle(DioPal.accent)
-                Text("JUST HEARD").font(.system(size: 10, weight: .heavy, design: .rounded)).tracking(2).foregroundStyle(DioPal.muted)
+                Text("RECENT TRANSCRIPT").font(.system(size: 10, weight: .heavy, design: .rounded)).tracking(2).foregroundStyle(DioPal.muted)
                 Spacer(minLength: 0)
                 Button(action: onExpand) {
                     HStack(spacing: 4) { Text("Expand").font(.system(size: 11, weight: .heavy, design: .rounded)); Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 9, weight: .black)) }
@@ -2240,7 +2296,7 @@ struct DioTranscriptTape: View {
                 }.buttonStyle(.plain)
             }
             if segments.isEmpty && partial.isEmpty {
-                Text("…nothing yet").font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                Text("No transcript yet").font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
             } else {
                 ForEach(Array(segments.enumerated()), id: \.offset) { i, s in
                     HStack(alignment: .top, spacing: 8) {
@@ -2297,7 +2353,7 @@ struct DioLiveTranscriptModal: View {
                     .onAppear { withAnimation { proxy.scrollTo("tail", anchor: .bottom) } }
                 }
                 HStack(spacing: 6) {
-                    Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold)); Text("Still recording · on device").font(.system(size: 10.5, weight: .heavy, design: .rounded))
+                    Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold)); Text("Still recording · This device").font(.system(size: 10.5, weight: .heavy, design: .rounded))
                 }.foregroundStyle(DioPal.mint).padding(.horizontal, 11).frame(height: 28).background(Capsule().fill(DioPal.mint.opacity(0.14))).padding(.bottom, 22)
             }
             .frame(maxWidth: .infinity).frame(height: geo.size.height * 0.62)
@@ -2313,25 +2369,173 @@ struct DioLiveTranscriptModal: View {
 struct DioRecordOrb: View {
     let onTap: () -> Void
     var body: some View {
-        TimelineView(.animation) { tl in
-            let t = tl.date.timeIntervalSinceReferenceDate
+        Button(action: onTap) {
             ZStack {
-                ForEach(0..<2) { i in
-                    let p = (sin(t * 1.3 + Double(i) * 1.6) * 0.5 + 0.5)
-                    Circle().stroke(DioPal.accent.opacity(0.28 * (1 - p)), lineWidth: 1.5)
-                        .frame(width: 60 + CGFloat(p) * 26, height: 60 + CGFloat(p) * 26)
-                }
-                // The disc matches the New FAB's 64pt circle so the two bottom controls read as a pair
-                // (owner: the Record circle looked optically smaller than New — it was 46 vs 64).
+                Circle().stroke(DioPal.accent.opacity(0.28), lineWidth: 1.5)
+                    .frame(width: 72, height: 72)
                 Circle().fill(RadialGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent, Color(hex: 0xC23C16)],
                                              center: .init(x: 0.4, y: 0.35), startRadius: 1, endRadius: 34))
                     .frame(width: 64, height: 64).shadow(color: DioPal.accent.opacity(0.55), radius: 12, y: 4)
                 Image(systemName: "mic.fill").font(.system(size: 24, weight: .bold)).foregroundStyle(.white)
             }
-            .scaleEffect(1 + CGFloat(sin(t * 2) * 0.02)).frame(width: 72, height: 72).contentShape(Circle())
+            .frame(width: 72, height: 72)
+            .contentShape(Circle())
         }
-        .onTapGesture(perform: onTap)
+        .buttonStyle(.plain)
+        .accessibilityLabel("Record")
     }
+}
+
+// Phase 93's daily-start grammar. The same three actions lead the empty Desk
+// and remain available after work accumulates. Create is one progressive menu,
+// with a named semantic action for every choice.
+struct DioDailyStarts: View {
+    let compact: Bool
+    let onDictate: () -> Void
+    let onRecord: () -> Void
+    let onCreateNote: () -> Void
+    let onCreateZone: () -> Void
+    let onCreateKnowledge: () -> Void
+    let onCreatePersona: () -> Void
+    let onCreateWorkflow: () -> Void
+
+    var body: some View {
+        HStack(spacing: compact ? 24 : 38) {
+            VStack(spacing: 4) {
+                Button(action: onDictate) {
+                    Image(systemName: "waveform")
+                        .font(.system(size: 23, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 64, height: 64)
+                        .background(Circle().fill(DioPal.cobalt).shadow(color: DioPal.cobalt.opacity(0.45), radius: 12, y: 4))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Dictate")
+                Text("Dictate").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+            }
+
+            VStack(spacing: 4) {
+                DioRecordOrb(onTap: onRecord)
+                Text("Record").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+            }
+
+            VStack(spacing: 4) {
+                Menu {
+                    Button(action: onCreateNote) {
+                        Label("Note · write or dictate", systemImage: "square.and.pencil")
+                    }
+                    Button(action: onCreateZone) {
+                        Label("Zone · place related items", systemImage: "square.dashed")
+                    }
+                    Button(action: onCreateKnowledge) {
+                        Label("Knowledge · gather context", systemImage: "diamond.fill")
+                    }
+                    Button(action: onCreatePersona) {
+                        Label("Persona · save behavior", systemImage: "person.crop.circle.badge.plus")
+                    }
+                    Button(action: onCreateWorkflow) {
+                        Label("Workflow · build repeatable steps", systemImage: "point.3.connected.trianglepath.dotted")
+                    }
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 24, weight: .black))
+                        .foregroundStyle(.white)
+                        .frame(width: 64, height: 64)
+                        .background(Circle().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom))
+                            .shadow(color: DioPal.accent.opacity(0.5), radius: 12, y: 4))
+                }
+                .accessibilityLabel("Create")
+                Text("Create").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+}
+
+/// Compact orientation shared by native focused rooms. The room remains a
+/// modal child of the Desk; dismissing it always reveals the originating Desk.
+struct DioWorkroomBar: View {
+    let context: WorkroomContext
+    let subjectTitle: String?
+
+    private var actionLabel: String {
+        context.action
+            .replacingOccurrences(of: "-", with: " ")
+            .replacingOccurrences(of: "_", with: " ")
+            .capitalized
+    }
+
+    var body: some View {
+        HStack(spacing: 9) {
+            Text("FROM DESK")
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .tracking(1)
+                .foregroundStyle(DioPal.accent)
+            if let subject = subjectTitle ?? context.subjectRef?.rawValue {
+                Text(subject)
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(DioPal.text)
+                    .lineLimit(1)
+            }
+            Text(actionLabel)
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(DioPal.muted)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            Text("Close returns to Desk")
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(DioPal.muted)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 16)
+        .frame(minHeight: 40)
+        .background(Color(hex: 0x111018))
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(.white.opacity(0.08)).frame(height: 1)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+struct DioWorkroomContainer<Content: View>: View {
+    let context: WorkroomContext?
+    let subjectTitle: String?
+    private let content: Content
+
+    init(
+        context: WorkroomContext?,
+        subjectTitle: String?,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.context = context
+        self.subjectTitle = subjectTitle
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if let context {
+                DioWorkroomBar(context: context, subjectTitle: subjectTitle)
+                    .zIndex(2)
+            }
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .zIndex(1)
+        }
+    }
+}
+
+struct DioWorkroomRoute: Identifiable {
+    let id = UUID()
+    let context: WorkroomContext
+    let subjectTitle: String?
+}
+
+struct DioMeetingWorkroomRoute: Identifiable {
+    var id: String { meeting.id }
+    let meeting: Meeting
+    let context: WorkroomContext
+    let subjectTitle: String
 }
 
 // THE ROUTE SHEET — drop a primitive on the AI core → pick a lens (or write a prompt) → Ask.
@@ -2481,14 +2685,14 @@ struct DioRouteSheet: View {
                 HStack(spacing: 9) {
                     DeskSprite(name: "cartridge", size: 34)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Route through the AI core").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                        Text("Run on selected material").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
                         Text(sourceTitle).font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted).lineLimit(1)
                     }
                     Spacer(minLength: 0)
                     // Honest egress for the CHOSEN profile (was hardcoded "On device").
                     HStack(spacing: 5) {
                         Image(systemName: resolvedProfile.isLocal ? "lock.fill" : "cloud.fill").font(.system(size: 9, weight: .bold))
-                        Text(resolvedProfile.isLocal ? "On device" : (resolvedProfile.egressHost ?? "endpoint")).font(.system(size: 10, weight: .heavy, design: .rounded))
+                        Text(resolvedProfile.isLocal ? "This device" : "Leaves device · \(resolvedProfile.egressHost ?? "endpoint")").font(.system(size: 10, weight: .heavy, design: .rounded))
                     }.foregroundStyle(resolvedProfile.isLocal ? DioPal.mint : DioPal.accent)
                         .padding(.horizontal, 9).frame(height: 26)
                         .background(Capsule().fill((resolvedProfile.isLocal ? DioPal.mint : DioPal.accent).opacity(0.14)))
@@ -2574,8 +2778,8 @@ struct DioRoutingTheater: View {
                 }
             }
             VStack(spacing: 3) {
-                Text("Routing \(sourceTitle)").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                Text("\(lens) · \(local ? "on this \(DeviceLabel.current) · no network" : "endpoint")").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                Text("Running \(lens) on \(sourceTitle)").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
+                Text(local ? "This \(DeviceLabel.current) · no network" : "Configured endpoint").font(.system(size: 11.5, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
             }
             .padding(.horizontal, 16).padding(.vertical, 9).background(Capsule().fill(.black.opacity(0.55)))
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, 130)
@@ -2730,7 +2934,7 @@ struct DioSendCard: View {
                         .frame(width: 36, height: 36).background(Circle().fill(DioPal.cobalt))
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Send to \(connName)").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                        Text("you approve every send").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
+                        Text("Approval sends this exact content.").font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                     }
                     Spacer(minLength: 0)
                     EgressBadge(scope: .cloud(connName))
@@ -2885,9 +3089,20 @@ struct DeskHostLink {
                 "github": obj["github_configured"] as? Bool ?? false]
     }
     /// Propose an arbitrary-text send on the host for a target ("slack"/"webhook") → (proposalId, preview).
-    func propose(target: String, title: String, text: String) async throws -> (id: String, preview: String) {
-        var body: [String: Any] = ["text": text]
-        if !title.isEmpty { body["title"] = title }
+    func propose(
+        target: String, title: String, text: String,
+        sourceRef: String? = nil, sourceLabel: String? = nil
+    ) async throws -> (id: String, preview: String) {
+        let request = DeskIntegrationProposalRequest(
+            text: text,
+            title: title.isEmpty ? nil : title,
+            sourceRef: sourceRef.flatMap(QualifiedRef.init(rawValue:)),
+            sourceLabel: sourceLabel
+        )
+        let encoded = try JSONEncoder().encode(request)
+        guard let body = try JSONSerialization.jsonObject(with: encoded) as? [String: Any] else {
+            throw HostError.message("The Integration proposal could not be prepared.")
+        }
         let (data, resp) = try await post("api/desk/actuators/\(target)/propose", body)
         try Self.check(data, resp, "Your desktop refused the send.")
         let p = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["proposal"] as? [String: Any]
@@ -3024,7 +3239,11 @@ struct DioStage: View {
     @State private var weaveCancel = false            // user hit "skip to desk"
     @State private var arrivedIds: Set<String> = []   // the freshly-produced meeting + deliverables, glaringly highlighted
     @State private var showRecordPicker = false       // the meeting-vs-desktop hovering choice
-    @State private var showDesktopDictation = false  // the real paired-desktop dictation room
+    @State private var dictationWorkroom: DioWorkroomRoute?
+    @State private var settingsWorkroom: DioWorkroomRoute?
+    @State private var workbenchWorkroom: DioWorkroomRoute?
+    @State private var workroomContext: WorkroomContext?
+    @State private var workroomSubjectTitle: String?
     @State private var captureDesktop = false         // this capture is a "talk to the desktop" dictation
     @State private var liveCards: [LiveIntelCard] = [] // live-intelligence results floating by the mic
     @State private var liveTimeline: [(t: Double, len: Int)] = []  // (elapsed, transcript length) samples → time windows
@@ -3055,8 +3274,8 @@ struct DioStage: View {
     @State private var coderWasWaiting: Set<String> = []       // rising-edge memory: glare once per flip into waiting
     @State private var answeringCoder: CoderSession? = nil     // the answer composer is open on this session
     @State private var openCoderSession: CoderSession? = nil   // the live "running coder" feed is open
-    @State private var showSettings = false
-    @State private var openMeeting: Meeting? = nil
+    @State private var openProject: Project? = nil
+    @State private var meetingWorkroom: DioMeetingWorkroomRoute?
     @State private var positions: [String: CGPoint] = [:]
     @State private var zones: [ZoneRec] = []
     @State private var filed: [String: String] = [:]
@@ -3121,8 +3340,8 @@ struct DioStage: View {
     // refreshed on every sync. nil = not read yet (an older hub / no read) → the tile keeps
     // the paired-only behavior rather than guessing in either direction.
     @State private var connConfigured: [String: Bool]? = nil
-    @State private var sendOverride: (title: String, text: String)? = nil   // act-on-item: send THIS, not a whole card
-    @State private var actItem: (title: String, text: String, source: String)? = nil   // the row being acted on
+    @State private var sendOverride: (title: String, text: String, sourceRef: String?)? = nil
+    @State private var actItem: (title: String, text: String, source: String, sourceRef: String?)? = nil
     @State private var showActSheet = false
     @State private var showSendCard = false
     @State private var sending = false
@@ -3350,11 +3569,86 @@ struct DioStage: View {
         if let u = positions[id] { return CGPoint(x: w * u.x, y: h * u.y) }
         return fallback
     }
-    // the record button's tucked-away corner home (bottom-left), shared by the button + the first-boot trail
-    // The bottom controls hug the bottom safe edge, not a 0.9·h fraction (which left a big dead band
-    // below them — owner: "so much farther than the base bottom line"). `h` is the safe height, so the
-    // safe bottom is y == h; sit the orb+label VStack just above it.
+    // The three daily starts share one bottom baseline after first use.
+    private func dailyStartY(_ h: CGFloat) -> CGFloat { h - 24 }
+    // Active capture remains anchored to the lower-left so its live controls do
+    // not cover Desk objects or the centered daily-start dock.
     private func orbPos(_ w: CGFloat, _ h: CGFloat) -> CGPoint { CGPoint(x: 58, y: h - 24) }
+
+    private func orientWorkroom(action: String, subjectRef: String? = nil, title: String? = nil) {
+        let subject = subjectRef.flatMap { QualifiedRef(rawValue: $0) }
+        if subjectRef != nil && subject == nil { return }
+        guard let context = WorkroomContext(subjectRef: subject, action: action) else { return }
+        workroomContext = context
+        workroomSubjectTitle = title
+    }
+
+    private func clearWorkroom() {
+        workroomContext = nil
+        workroomSubjectTitle = nil
+    }
+
+    private func presentDictationWorkroom(
+        action: String = "dictate", subjectRef: String? = nil, title: String? = nil
+    ) {
+        let subject = subjectRef.flatMap { QualifiedRef(rawValue: $0) }
+        if subjectRef != nil && subject == nil { return }
+        guard let context = WorkroomContext(subjectRef: subject, action: action) else { return }
+        dictationWorkroom = DioWorkroomRoute(context: context, subjectTitle: title)
+    }
+
+    private func presentSettingsWorkroom() {
+        guard let context = WorkroomContext(action: "configure-settings") else { return }
+        settingsWorkroom = DioWorkroomRoute(context: context, subjectTitle: nil)
+    }
+
+    private func presentWorkbenchWorkroom(
+        action: String,
+        subjectRef: String? = nil,
+        title: String? = nil
+    ) {
+        let subject = subjectRef.flatMap { QualifiedRef(rawValue: $0) }
+        if subjectRef != nil && subject == nil { return }
+        guard let context = WorkroomContext(subjectRef: subject, action: action) else { return }
+        workbenchWorkroom = DioWorkroomRoute(context: context, subjectTitle: title)
+    }
+
+    private func presentMeetingWorkroom(_ meeting: Meeting, title: String? = nil) {
+        guard let subject = QualifiedRef(rawValue: "meeting:\(meeting.id)"),
+              let context = WorkroomContext(subjectRef: subject, action: "review-meeting") else { return }
+        meetingWorkroom = DioMeetingWorkroomRoute(
+            meeting: meeting,
+            context: context,
+            subjectTitle: title ?? meeting.title ?? "Meeting"
+        )
+    }
+
+    private func dailyStarts(compact: Bool) -> some View {
+        DioDailyStarts(
+            compact: compact,
+            onDictate: {
+                haptic(.medium)
+                presentDictationWorkroom()
+            },
+            onRecord: { startCapture(desktop: false) },
+            onCreateNote: { createNote() },
+            onCreateZone: {
+                haptic(.light)
+                namingZone = true
+            },
+            onCreateKnowledge: { createKBInline() },
+            onCreatePersona: {
+                haptic(.medium)
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                    editingAgent = RecipeRecord.blank()
+                }
+            },
+            onCreateWorkflow: {
+                haptic(.medium)
+                presentWorkbenchWorkroom(action: "create-workflow")
+            }
+        )
+    }
 
     private var diveTransition: AnyTransition {
         diveDir >= 0
@@ -3413,23 +3707,17 @@ struct DioStage: View {
                 .opacity(landed && selected == nil && path.isEmpty && !firstRun && camera.isWide ? 1 : 0)
                 .frame(maxHeight: .infinity, alignment: .top).padding(.top, h * 0.05)
 
-                // THE FIRST BOOT — the cold-start ritual: an empty desk that teaches itself
+                // A fresh Desk presents the same three daily starts as the Web Desk.
                 if firstRun && landed && selected == nil && summonSource == nil {
-                    DioFirstBoot(w: w, h: h)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                        .padding(.top, h * 0.035).transition(.opacity).zIndex(5)
-                    // the guiding trail — energy flows from the lesson down to the corner record button
-                    TimelineView(.animation) { tl in
-                        let phase = tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1) * -10
-                        let orb = orbPos(w, h)
-                        Path { p in p.move(to: CGPoint(x: w * 0.5, y: h * 0.52)); p.addQuadCurve(to: CGPoint(x: orb.x, y: orb.y - 46), control: CGPoint(x: w * 0.30, y: h * 0.72)) }
-                            .stroke(LinearGradient(colors: [DioPal.violet.opacity(0.0), DioPal.violet.opacity(0.55), DioPal.accent.opacity(0.8)], startPoint: .top, endPoint: .bottom),
-                                    style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [2.5, 8], dashPhase: phase))
+                    VStack(spacing: 28) {
+                        DioFirstBoot()
+                        dailyStarts(compact: camera.isLane)
                     }
-                    .allowsHitTesting(false).zIndex(5)
-                    Text("Tap to record your first meeting")
-                        .font(.system(size: 12.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                        .position(x: min(w - 130, orbPos(w, h).x + 96), y: orbPos(w, h).y - 4).zIndex(6).allowsHitTesting(false)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.horizontal, 18)
+                    .padding(.bottom, camera.isLane ? 100 + botInset : 40)
+                    .transition(.opacity)
+                    .zIndex(75)
                 }
 
                 // an empty zone you dived into — teach how to fill it (you file from the desk; or nest deeper).
@@ -3516,7 +3804,7 @@ struct DioStage: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom).padding(.bottom, h * 0.12).zIndex(116)
                 }
 
-                // THE LANE CONTROL DOCK — the Record orb (bottom-left) and the New FAB (bottom-right)
+                // THE LANE CONTROL DOCK — the three daily starts float over the card column.
                 // float over the scrolling card column; mid-scroll, rows used to collide with them. A
                 // SOLID bottom base (the desk colour, seamless with the bg) OCCLUDES the column under
                 // the controls, with a short gradient lip for softness — so a row scrolling past simply
@@ -3541,41 +3829,21 @@ struct DioStage: View {
                     DioCompanion(landed: landed, excited: selected != nil)
                         .position(x: w * 0.9, y: h * 0.86)
                 }
-                if landed && selected == nil && summonSource == nil && !capturing
+                if landed && selected == nil && summonSource == nil && !capturing && !firstRun
                     && editingNote == nil && editingKB == nil && !connecting
                     && !showRouteSheet && !routing && printed == nil && !showSendCard && !showActSheet {
-                    VStack(spacing: 4) {
-                        DioRecordOrb { haptic(.medium); withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { showRecordPicker = true } }
-                        Text("Record").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
-                    }
-                    .position(orbPos(w, h)).transition(.scale.combined(with: .opacity)).zIndex(72)
-                }
-                // THE LANE FAB — the create cluster lives in `level` (which the lane replaces), so on
-                // iPhone the accent FAB carries New Note / New KB / New Zone. A native Menu, not a
-                // dimmed sheet (the no-modal law governs primitive editing; a system menu is allowed).
-                if camera.isLane && landed && selected == nil && summonSource == nil && !capturing
-                    && editingNote == nil && editingKB == nil && !connecting && !showRouteSheet && !routing
-                    && printed == nil && !showSendCard && !showActSheet && !firstRun {
-                    VStack(spacing: 4) {
-                        Menu {
-                            Button { createNote() } label: { Label("New Note", systemImage: "square.and.pencil") }
-                            Button { createKBInline() } label: { Label("New Knowledge", systemImage: "diamond.fill") }
-                            Button { haptic(.light); namingZone = true } label: { Label("New Zone", systemImage: "plus.circle.fill") }
-                        } label: {
-                            Image(systemName: "plus").font(.system(size: 24, weight: .black)).foregroundStyle(.white)
-                                .frame(width: 64, height: 64)
-                                .background(Circle().fill(LinearGradient(colors: [Color(hex: 0xFF8A5B), DioPal.accent], startPoint: .top, endPoint: .bottom))
-                                    .shadow(color: DioPal.accent.opacity(0.5), radius: 12, y: 4))
-                        }.simultaneousGesture(TapGesture().onEnded { haptic(.medium) })
-                        Text("New").font(.system(size: 10, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted).tracking(0.5)
-                    }
-                    // mirror the Record orb (bottom-left) on the bottom-right, same baseline
-                    .position(x: w - 58, y: orbPos(w, h).y).zIndex(73)
+                    dailyStarts(compact: camera.isLane)
+                        .position(x: w * 0.5, y: dailyStartY(h))
+                        .transition(.scale.combined(with: .opacity))
+                        .zIndex(73)
                 }
                 // a desk-native settings entry (no bouncing to an old screen)
                 if landed && selected == nil && summonSource == nil && !capturing && path.isEmpty {
                     VStack(spacing: 10) {
-                        Button { haptic(.light); showSettings = true } label: {
+                        Button {
+                            haptic(.light)
+                            presentSettingsWorkroom()
+                        } label: {
                             Image(systemName: "gearshape.fill").font(.system(size: 16, weight: .bold)).foregroundStyle(DioPal.text.opacity(0.85))
                                 .frame(width: 42, height: 42).background(Circle().fill(.white.opacity(0.08)).overlay(Circle().strokeBorder(.white.opacity(0.12), lineWidth: 1)))
                         }.buttonStyle(.plain)
@@ -3673,7 +3941,7 @@ struct DioStage: View {
                                                 // Mac delivery surface; the meeting recorder's stop
                                                 // path intentionally creates a local Meeting.
                                                 withAnimation { showRecordPicker = false }
-                                                showDesktopDictation = true
+                                                presentDictationWorkroom()
                                             }
                                         },
                                         onClose: { withAnimation { showRecordPicker = false } })
@@ -3789,20 +4057,39 @@ struct DioStage: View {
                 // catcher dismisses it on a tap-away; the card itself carries Connect / Test / Forget.
                 if connecting {
                     Color.clear.contentShape(Rectangle()).ignoresSafeArea()
-                        .onTapGesture { withAnimation { connecting = false } }.zIndex(151)
-                    DioConnectCard(name: peerName, host: peerHost, port: peerPort.isEmpty ? "8765" : peerPort, token: peerToken,
-                                   maxW: camera.cardWidth(380, in: w), paired: hostLink != nil,
-                                   models: remoteMeshModels(),
-                                   onChatModel: { m in openModelChat(m) },
-                                   onConnect: { hh, pp, tt, nn in savePeerFull(host: hh, port: pp, token: tt, name: nn) },
-                                   onForget: { forgetPeer() },
-                                   onCancel: { withAnimation { connecting = false } },
-                                   onTest: { hh, pp, tt in
-                                       guard let p = Int(pp.trimmingCharacters(in: .whitespaces)), p > 0 else {
-                                           return (false, "port must be a number")
-                                       }
-                                       return await DeskHostLink(host: hh.trimmingCharacters(in: .whitespaces), port: p, token: tt).probe()
-                                   })
+                        .onTapGesture {
+                            withAnimation { connecting = false }
+                            clearWorkroom()
+                        }.zIndex(151)
+                    VStack(spacing: 8) {
+                        if let context = workroomContext {
+                            DioWorkroomBar(context: context, subjectTitle: workroomSubjectTitle)
+                                .frame(width: camera.cardWidth(380, in: w))
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                        DioConnectCard(name: peerName, host: peerHost, port: peerPort.isEmpty ? "8765" : peerPort, token: peerToken,
+                                       maxW: camera.cardWidth(380, in: w), paired: hostLink != nil,
+                                       models: remoteMeshModels(),
+                                       onChatModel: { m in openModelChat(m) },
+                                       onConnect: { hh, pp, tt, nn in
+                                           savePeerFull(host: hh, port: pp, token: tt, name: nn)
+                                           clearWorkroom()
+                                       },
+                                       onForget: {
+                                           forgetPeer()
+                                           clearWorkroom()
+                                       },
+                                       onCancel: {
+                                           withAnimation { connecting = false }
+                                           clearWorkroom()
+                                       },
+                                       onTest: { hh, pp, tt in
+                                           guard let p = Int(pp.trimmingCharacters(in: .whitespaces)), p > 0 else {
+                                               return (false, "port must be a number")
+                                           }
+                                           return await DeskHostLink(host: hh.trimmingCharacters(in: .whitespaces), port: p, token: tt).probe()
+                                       })
+                    }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         .padding(.top, h * 0.08).zIndex(152).transition(.scale(scale: 0.92).combined(with: .opacity))
                 }
@@ -3824,7 +4111,9 @@ struct DioStage: View {
                 #if targetEnvironment(simulator)
                 if let s = ProcessInfo.processInfo.environment["HS_DESK_SETTINGS"], s == "1" || s == "local" {
                     if s == "local" { InferenceConfigStore.shared.mode = .local }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { showSettings = true }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        presentSettingsWorkroom()
+                    }
                 }
                 // Open the connect card on launch so the sim can SHOW it — the card must be
                 // screenshot-verified before an upload (the build-4 lesson: a green build is
@@ -4250,26 +4539,54 @@ struct DioStage: View {
                 TextField("Tool name (e.g. Risks, Brief)", text: $toolName)
                 Button("Cancel", role: .cancel) { routeSourceId = nil }
                 Button("Save") { saveTool(); routeSourceId = nil }
-            } message: { Text("Becomes a reusable tile on your desk.") }
+            } message: { Text("Creates a reusable tool on the Desk.") }
             .alert("New zone", isPresented: $namingZone) {
                 TextField("Name", text: $newZoneName)
                 Button("Cancel", role: .cancel) { newZoneName = ""; pendingFileId = nil }
                 Button("Create") { createZone(newZoneName); newZoneName = "" }
-            } message: { Text(path.isEmpty ? "A place on your desk that holds meetings." : "A sub-zone inside \(name(of: pathKey)).") }
-            .alert("New knowledge base", isPresented: $namingKB) {
+            } message: { Text(path.isEmpty ? "A Zone gives Meetings a findable place on the Desk." : "Creates a sub-zone inside \(name(of: pathKey)).") }
+            .alert("New Knowledge", isPresented: $namingKB) {
                 TextField("Name", text: $newKBName)
                 Button("Cancel", role: .cancel) { newKBName = "" }
                 Button("Create") { createKB(newKBName); newKBName = "" }
-            } message: { Text("A container for notes you can ask over.") }
-            .sheet(isPresented: Binding(get: { openMeeting != nil }, set: { if !$0 { openMeeting = nil } })) {
-                if let m = openMeeting { NavigationStack { MeetingDetailView(meeting: m) }.preferredColorScheme(.dark) }
+            } message: { Text("Collects material used to ground answers.") }
+            .sheet(item: $meetingWorkroom) { route in
+                DioWorkroomContainer(
+                    context: route.context,
+                    subjectTitle: route.subjectTitle
+                ) {
+                    NavigationStack { MeetingDetailView(meeting: route.meeting) }
+                }
+                .preferredColorScheme(.dark)
             }
-            .sheet(isPresented: $showSettings) { NavigationStack { SettingsView() }.preferredColorScheme(.dark) }
+            .sheet(item: $settingsWorkroom) { route in
+                DioWorkroomContainer(
+                    context: route.context,
+                    subjectTitle: route.subjectTitle
+                ) {
+                    NavigationStack { SettingsView() }
+                }
+                .preferredColorScheme(.dark)
+            }
         }
         .preferredColorScheme(.dark)
-        .fullScreenCover(isPresented: $showDesktopDictation) {
-            NavigationStack { DictateView() }
-                .preferredColorScheme(.dark)
+        .fullScreenCover(item: $dictationWorkroom) { route in
+            DioWorkroomContainer(
+                context: route.context,
+                subjectTitle: route.subjectTitle
+            ) {
+                NavigationStack { DictateView() }
+            }
+            .preferredColorScheme(.dark)
+        }
+        .fullScreenCover(item: $workbenchWorkroom) { route in
+            DioWorkroomContainer(
+                context: route.context,
+                subjectTitle: route.subjectTitle
+            ) {
+                NavigationStack { WorkbenchView() }
+            }
+            .preferredColorScheme(.dark)
         }
     }
 
@@ -4447,6 +4764,22 @@ struct DioStage: View {
                             onClose: { withAnimation { openCoderSession = nil } })
                 .id(c.id).zIndex(149).transition(.opacity)
         }
+        if let project = openProject {
+            DioProjectInspector(
+                project: project,
+                resources: projectResourceRows(project),
+                onUseContext: {
+                    withAnimation { openProject = nil }
+                    presentDictationWorkroom(
+                        action: "use-project-context",
+                        subjectRef: "project:\(project.id)",
+                        title: project.name
+                    )
+                },
+                onClose: { withAnimation { openProject = nil } }
+            )
+            .id(project.id).zIndex(150).transition(.opacity)
+        }
         // the coder answer composer — reply into a live Claude/Codex session (HSM-17-04)
         if let c = answeringCoder {
             DioCoderAnswer(session: c, maxW: camera.cardWidth(400, in: w),
@@ -4560,29 +4893,6 @@ struct DioStage: View {
                             onEdit: { editingZone = z })
                     .position(x: w * z.cx, y: h * z.cy)
             }
-            // The create cluster is always at hand when nothing is selected or being edited — a notes
-            // product should never make you hunt for "New Note". (Was gated off on empty/first-run.)
-            if selected == nil && editingNote == nil && editingKB == nil {
-                HStack(spacing: 8) {
-                    Button { createNote() } label: {
-                        HStack(spacing: 6) { Image(systemName: "square.and.pencil").font(.system(size: 13, weight: .bold)); Text("New Note").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
-                            .foregroundStyle(DioPal.mint).padding(.horizontal, 12).frame(height: 36)
-                            .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.mint.opacity(0.4)))
-                    }.buttonStyle(.plain)
-                    Button { createKBInline() } label: {
-                        HStack(spacing: 6) { Image(systemName: "diamond.fill").font(.system(size: 12, weight: .bold)); Text("New Knowledge").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
-                            .foregroundStyle(DioPal.violet).padding(.horizontal, 12).frame(height: 36)
-                            .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.violet.opacity(0.4)))
-                    }.buttonStyle(.plain)
-                    Button { haptic(.light); namingZone = true } label: {
-                        HStack(spacing: 6) { Image(systemName: "plus.circle.fill").font(.system(size: 14, weight: .bold)); Text("New Zone").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
-                            .foregroundStyle(DioPal.muted).padding(.horizontal, 12).frame(height: 36)
-                            .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.muted.opacity(0.45)))
-                    }.buttonStyle(.plain)
-                }.opacity(landed ? 0.9 : 0)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).padding(.top, h * 0.12).padding(.trailing, 20)
-            }
-
             // A transparent (NOT dimmed) catcher behind the lifted editor card: tapping the desk
             // commits the in-world edit. No scrim — the desk stays fully visible around the card.
             if editingNote != nil || editingKB != nil {
@@ -4700,8 +5010,22 @@ struct DioStage: View {
             knowledgeIds: knowledgeIds,
             projectIds: projectIds,
             onKnowledge: { toggleKnowledge($0, resourceRef: ref) },
-            onProject: { toggleProject($0, resourceRef: ref) }
+            onProject: { toggleProject($0, resourceRef: ref) },
+            onOpenProject: { project in
+                select(nil)
+                withAnimation { openProject = project }
+            }
         ))
+    }
+
+    private func projectResourceRows(_ project: Project) -> [(ref: String, title: String)] {
+        projectRelationships
+            .filter { !$0.deleted && $0.projectId == project.id }
+            .map { relationship in
+                let title = groundingTextForRef(relationship.resourceRef)?.title
+                    ?? relationship.resourceRef
+                return (relationship.resourceRef, title)
+            }
     }
 
     private func toggleKnowledge(_ knowledgeId: String, resourceRef: String) {
@@ -4748,10 +5072,28 @@ struct DioStage: View {
     private func handle(_ act: PrimitiveAction, on prim: any DeskPrimitive) {
         switch act.role {
         case .openEditor:
-            if let m = meeting(forObj: prim.id) { openMeeting = m }
+            if let m = meeting(forObj: prim.id) { presentMeetingWorkroom(m, title: prim.title) }
             else if let n = notes.first(where: { "note:\($0.id)" == prim.id }) { select(nil); withAnimation { editingNote = n } }
             else if let k = kbs.first(where: { "kb:\($0.id)" == prim.id }) { select(nil); withAnimation { editingKB = k } }
-        case .custom("connect"): select(nil); withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { connecting = true }
+        case .custom("workbench"):
+            presentWorkbenchWorkroom(
+                action: "edit-workflow",
+                subjectRef: qualifiedDeskRef(prim.id),
+                title: prim.title
+            )
+            select(nil)
+        case .custom("connect"):
+            if let connector = prim as? ConnectorPrimitive {
+                orientWorkroom(
+                    action: "configure-integration",
+                    subjectRef: "integration:\(connector.connId)",
+                    title: connector.title
+                )
+            } else {
+                orientWorkroom(action: "connect-desktop")
+            }
+            select(nil)
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { connecting = true }
         case .custom("delete"):
             if prim.id.hasPrefix("note:") { deleteNote(prim.id) }
             else if prim.id.hasPrefix("out:") { deleteOutput(prim.id) }
@@ -4866,7 +5208,11 @@ struct DioStage: View {
             })
         }
         if p.kind == .meeting {
-            items.append(DioMenuItem(label: "Open full editor", icon: "rectangle.expand.vertical") { if let m = meeting(forObj: p.id) { openMeeting = m } })
+            items.append(DioMenuItem(label: "Review meeting", icon: "rectangle.expand.vertical") {
+                if let m = meeting(forObj: p.id) {
+                    presentMeetingWorkroom(m, title: p.title)
+                }
+            })
         }
         return items
     }
@@ -5251,7 +5597,10 @@ struct DioStage: View {
     // act on a single action row: turn it into tracked work (a connector) or keep it as a card
     private func beginActOnItem(from prim: any DeskPrimitive, task: String, text: String) {
         haptic(.light)
-        actItem = (title: task, text: text, source: prim.title)
+        actItem = (
+            title: task, text: text, source: prim.title,
+            sourceRef: qualifiedDeskRef(prim.id)
+        )
         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { showActSheet = true }
     }
     /// True when a send through this connector can actually complete: paired AND the host
@@ -5273,7 +5622,9 @@ struct DioStage: View {
         guard let item = actItem else { return }
         withAnimation { showActSheet = false }
         sendTargetConn = connId; sendTargetName = name
-        sendOverride = (title: item.title, text: item.text); sendSourceId = nil
+        sendOverride = (
+            title: item.title, text: item.text, sourceRef: item.sourceRef
+        ); sendSourceId = nil
         haptic(.medium)
         withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { showSendCard = true }
     }
@@ -5295,6 +5646,7 @@ struct DioStage: View {
         }
         sending = true
         let target = sendTargetName
+        let sourceRef = sendOverride?.sourceRef ?? sendSourceId.flatMap(qualifiedDeskRef)
         Task { @MainActor in
             if await link.reachable() == false {
                 sending = false; withAnimation { showSendCard = false }; sendOverride = nil
@@ -5303,7 +5655,10 @@ struct DioStage: View {
             }
             do {
                 // propose → approve → execute, all on the host (the credential never leaves the Mac)
-                let proposal = try await link.propose(target: sendTargetConn, title: title, text: text)
+                let proposal = try await link.propose(
+                    target: sendTargetConn, title: title, text: text,
+                    sourceRef: sourceRef, sourceLabel: title
+                )
                 let decision = try await link.decide(target: sendTargetConn, id: proposal.id, approved: true)
                 sending = false; withAnimation { showSendCard = false }; sendSourceId = nil; sendOverride = nil
                 if decision.status == "executed" {

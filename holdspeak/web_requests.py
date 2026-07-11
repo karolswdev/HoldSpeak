@@ -66,6 +66,11 @@ class _CompanionSlackRequest(BaseModel):
     text: str = ""
     title: Optional[str] = None
     repo: Optional[str] = None  # GitHub only: owner/name; defaults to the host's companion_github_repo
+    # HS-93-04: optional Desk source identity. It carries no authority and is
+    # used only to return the Receipt to the originating subject; the hub
+    # resolves the canonical label. Older clients keep Integration scope.
+    source_ref: Optional[str] = None
+    source_label: Optional[str] = None
 
 
 class _UpdateMeetingRequest(BaseModel):

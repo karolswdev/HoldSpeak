@@ -156,7 +156,7 @@ export default function ComponentsPage() {
           <Field label="Filter">
             {({ id }) => <TextInput id={id} type="search" />}
           </Field>
-          <Button>Apply</Button>
+          <Button>Apply filter</Button>
           <Button variant="ghost">Reset</Button>
         </Toolbar>
       </Panel>
@@ -170,7 +170,7 @@ export default function ComponentsPage() {
       </Panel>
       <Dialog
         open={dialog}
-        title="Focus-safe dialog"
+        title="Dialog with focus return"
         onClose={() => setDialog(false)}
       >
         <p>
@@ -178,7 +178,7 @@ export default function ComponentsPage() {
           opened it.
         </p>
         <Button variant="primary" onClick={() => setDialog(false)}>
-          Complete
+          Close dialog
         </Button>
       </Dialog>
     </div>

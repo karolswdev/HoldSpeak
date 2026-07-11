@@ -10,11 +10,11 @@ import { World } from "./components/World";
 import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
 import { RecordOrb } from "./components/RecordOrb";
-import { RecipeRail } from "./components/RecipeRail";
 import { PersonaChat } from "./components/PersonaChat";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
 import { SessionPullout, PanePicker } from "./components/SessionPullout";
 import { AttentionDrawer } from "./components/AttentionDrawer";
+import { DeskToolInspector } from "./components/DeskToolInspector";
 import { useProjections } from "./projections";
 import "./desk.css";
 
@@ -28,25 +28,26 @@ export default function DeskApp() {
   useEffect(() => {
     void refresh().then(() => {
       const open = new URLSearchParams(window.location.search).get("open");
-      if (open) useDesk.getState().openPullout(open.includes(":") ? open.split(":", 2)[1] : open);
+      if (open) useDesk.getState().openPullout(open);
     });
     void useProjections.getState().refresh(true);
   }, []);
 
   const total = Object.values(items).reduce((n, l) => n + l.length, 0);
+  const empty = updatedAt !== null && total === 0;
 
   return (
     <div className="desk-next">
       <Stage />
-      <DeskChrome />
-      {updatedAt !== null && total === 0 ? (
+      <DeskChrome showDailyStarts={!empty} />
+      {empty ? (
         <EmptyDesk arrivalRequired={setup?.arrival_required === true} />
       ) : (
         <World />
       )}
-      <RecordOrb />
-      <RecipeRail />
+      {!empty ? <RecordOrb /> : null}
       {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
+      <DeskToolInspector />
       <MissionControlConveyor />
       <PanePicker />
       <SessionPullout />

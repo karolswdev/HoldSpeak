@@ -107,11 +107,11 @@ extension BeltPrimitive {
             BeltRepo(name: "delivery-workbench", path: "/repos/dw", status: "live", feed: BeltFeed(projects: [
                 BeltProject(
                     slug: "work-log-automation", prefix: "WLA",
-                    currentPhase: BeltPhase(number: 17, title: "Agent Sync",
+                    currentPhase: BeltPhase(number: 17, title: "Coder session sync",
                                             status: "open", storiesDone: 2, storiesTotal: 5),
                     nextStory: BeltStoryRef(storyId: "WLA-17-03", title: "The synth pack", status: "ready"),
                     stories: [
-                        BeltStory(storyId: "WLA-17-01", title: "The persona recipe", status: "done", phase: 17, evidenceExists: true),
+                        BeltStory(storyId: "WLA-17-01", title: "The Persona setup", status: "done", phase: 17, evidenceExists: true),
                         BeltStory(storyId: "WLA-17-02", title: "Sync the roster", status: "done", phase: 17, evidenceExists: true),
                         BeltStory(storyId: "WLA-17-03", title: "The synth pack", status: "ready", phase: 17, evidenceExists: false),
                         BeltStory(storyId: "WLA-17-04", title: "The audit trail", status: "in-progress", phase: 17, evidenceExists: false),

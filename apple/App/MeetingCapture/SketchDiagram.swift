@@ -714,7 +714,7 @@ struct SketchToDiagramView: View {
     func makeMeshServeProvider() throws -> ILLMProvider {
         let p = activeProfile
         if p.kind == .meshNode || p.kind == .desktop {
-            throw MeshServeRefusal("this device's profile runs elsewhere — serving needs an on-device model or an endpoint")
+            throw MeshServeRefusal("Serving failed. The selected Runs on destination is unavailable to this device. Choose a this-device model or configured endpoint.")
         }
         return try makeProvider(profile: p, localModelPath: MeetingReviewState.localGGUF(), context: 16_384)
     }

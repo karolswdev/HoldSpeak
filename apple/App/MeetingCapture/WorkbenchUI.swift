@@ -699,7 +699,7 @@ private struct GraphCanvasView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: model.running ? "stop.fill" : "play.fill").font(.system(size: 12, weight: .black))
-                Text(model.running ? "Running" : "Run").font(.system(size: 14, weight: .heavy))
+                Text(model.running ? "Stop Workflow" : "Run Workflow").font(.system(size: 14, weight: .heavy))
             }
             .foregroundStyle(.black)
             .padding(.horizontal, 16).padding(.vertical, 10)
@@ -1681,7 +1681,7 @@ private struct BPPlaced: Identifiable, Equatable {
 
     // MARK: Lower the canvas to the engine `Blueprint`
 
-    func lower(name: String = "Blueprint run") -> Blueprint {
+    func lower(name: String = "Workflow run") -> Blueprint {
         Blueprint(id: blueprintID, name: name, entry: entry,
                   nodes: placed.map(\.node), execEdges: execEdges, dataEdges: dataEdges)
     }
@@ -1713,11 +1713,11 @@ private struct BPSeededProvider: ILLMProvider {
     func complete(prompt: String) async throws -> String {
         try? await Task.sleep(for: stepDelay)
         let p = prompt.lowercased()
-        if p.contains("decision") { return "Decision: ship the Blueprints canvas.\nDecision: keep the model behind ILLMProvider." }
-        if p.contains("action")   { return "[ ] Wire Run to BlueprintInterpreter — owner: mobile\n[ ] Drive the live trace off ExecutionEvent" }
+        if p.contains("decision") { return "Decision: ship the Workflow canvas.\nDecision: keep the model behind ILLMProvider." }
+        if p.contains("action")   { return "[ ] Connect Run Workflow to the runner — owner: mobile\n[ ] Drive the live trace from execution events" }
         if p.contains("question") { return "Open question: when do we need a real diamond merge?\nQuestion: should loops fan out on the mesh?" }
         if p.contains("summar")   { return "The Workbench is a real visual program: exec + typed data wires, control flow, a live trace." }
-        if p.contains("rewrite")  { return "We shipped the Blueprints canvas; runs reflect the real interpreter, branch and loop included." }
+        if p.contains("rewrite")  { return "The Workflow canvas reflects the active branch and bounded loop." }
         return "Risk: a branch only lights the taken path.\nRisk: loops must stay bounded."
     }
 }
@@ -1796,8 +1796,8 @@ private struct BlueprintCanvasView: View {
                     .animation(reduceMotion ? nil : .linear(duration: 18).repeatForever(autoreverses: false), value: spin)
             }
             VStack(alignment: .leading, spacing: 1) {
-                Text("BLUEPRINTS").font(.system(size: 9, weight: .heavy)).tracking(1.8).foregroundStyle(Sig.accent)
-                Text("Compose intelligence").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
+                Text("WORKFLOWS").font(.system(size: 9, weight: .heavy)).tracking(1.8).foregroundStyle(Sig.accent)
+                Text("Build a Workflow").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text).lineLimit(1)
             }
             Spacer(minLength: 6)
             runButton
@@ -1813,7 +1813,7 @@ private struct BlueprintCanvasView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: model.running ? "stop.fill" : "play.fill").font(.system(size: 12, weight: .black))
-                Text(model.running ? "Running" : "Run").font(.system(size: 14, weight: .heavy))
+                Text(model.running ? "Stop Workflow" : "Run Workflow").font(.system(size: 14, weight: .heavy))
             }
             .foregroundStyle(.black)
             .padding(.horizontal, 16).padding(.vertical, 10)
@@ -1972,7 +1972,7 @@ private struct BlueprintCanvasView: View {
             Spacer()
             HStack(spacing: 9) {
                 Image(systemName: "checkmark.seal.fill").font(.system(size: 16, weight: .bold)).foregroundStyle(Sig.ok)
-                Text("Run complete").font(.system(size: 15, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Workflow succeeded").font(.system(size: 15, weight: .heavy)).foregroundStyle(Sig.text)
             }
             .padding(.horizontal, 18).padding(.vertical, 12)
             .background(.ultraThinMaterial, in: Capsule())
@@ -2059,7 +2059,7 @@ private struct BlueprintCanvasView: View {
         withAnimation(.easeInOut(duration: 0.3)) { model.running = true }
         flourish = false
         let blueprint = model.lower()
-        let sourceText = "Standup transcript. Decision: ship the Blueprints canvas. "
+        let sourceText = "Standup transcript. Decision: ship the Workflow canvas. "
             + "Risk: branching graphs only light the taken path. Action: wire Run to the interpreter. "
             + "Risk: loops must stay bounded. Open question: do we need a true diamond merge?"
         let provider = makeRunProvider()
@@ -2075,7 +2075,7 @@ private struct BlueprintCanvasView: View {
     ///   • runFinished   → completion flourish + haptic
     private func consume(blueprint: Blueprint, sourceText: String, provider: ILLMProvider) async {
         let queue = RunQueueStore.shared
-        let runName = "Blueprint run"
+        let runName = "Workflow run"
         let target = InferenceConfigStore.shared.isLocal ? "On-device" : "Endpoint"
         let interp = BlueprintInterpreter(provider: provider, policy: RunPolicy(maxRetries: 1, failurePolicy: .skip))
 

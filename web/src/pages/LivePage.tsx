@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Button,
   Dialog,
@@ -40,6 +41,7 @@ export default function LivePage() {
   const [tags, setTags] = useState("");
   const [previewText, setPreviewText] = useState("");
   const [previewResult, setPreviewResult] = useState<JsonRecord | null>(null);
+  const [retainedMeetingId, setRetainedMeetingId] = useState("");
 
   useEffect(() => {
     setState(initial.data);
@@ -94,14 +96,19 @@ export default function LivePage() {
     setMessage("");
     try {
       const value = await apiFetch<JsonRecord>(path, { method: "POST", json });
-      if (path.endsWith("start"))
+      if (path.endsWith("start")) {
+        setRetainedMeetingId("");
         setState((current) => ({
           ...current,
           ...((value.meeting as JsonRecord) ?? {}),
           active: true,
         }));
-      if (path.endsWith("stop"))
+      }
+      if (path.endsWith("stop")) {
+        const meetingId = String(state.id ?? state.meeting_id ?? "");
+        if (meetingId) setRetainedMeetingId(meetingId);
         setState((current) => ({ ...current, active: false }));
+      }
       return value;
     } catch (error) {
       setMessage(readableError(error));
@@ -166,7 +173,7 @@ export default function LivePage() {
     <div className="page-wrap">
       <PageHero
         eyebrow="Meeting room"
-        title={String(state.title ?? "Ready when you are")}
+        title={String(state.title ?? "Ready to record")}
         actions={
           <Button
             variant={active ? "danger" : "primary"}
@@ -179,10 +186,19 @@ export default function LivePage() {
           </Button>
         }
       >
-        Real-time transcript, bookmarks, routing and intelligence in one calm
-        workspace.
+        Record a meeting, review its transcript, and keep the result.
       </PageHero>
       {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
+      {retainedMeetingId ? (
+        <InlineMessage tone="success">
+          Meeting saved.{" "}
+          <Link
+            to={`/?open=${encodeURIComponent(`meeting:${retainedMeetingId}`)}`}
+          >
+            Return to saved Meeting
+          </Link>
+        </InlineMessage>
+      ) : null}
       <div className="metric-grid">
         <div className="metric">
           <strong>
@@ -215,7 +231,7 @@ export default function LivePage() {
         <Panel
           className="span-8 live-transcript"
           title="Transcript"
-          eyebrow="Live, local text"
+          eyebrow="Live transcript"
           actions={
             active ? (
               <Button dense onClick={() => setMetaOpen(true)}>
@@ -295,7 +311,7 @@ export default function LivePage() {
                 (runtimeStatus.data.intel_egress as JsonRecord | undefined)
                   ?.label ??
                   runtimeStatus.data.intel_egress ??
-                  "Local",
+                  "This device",
               )}
             </small>
           </Panel>

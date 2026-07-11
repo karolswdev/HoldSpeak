@@ -23,6 +23,7 @@ from .corrections import DictationCorrectionRepository
 from .journal import DictationJournalRepository
 from .milestones import MilestoneRepository
 from .onboarding import OnboardingRepository
+from .dictation_delivery import DictationDeliveryRepository
 from .cadence import CadenceRepository
 from .primitives import (
     RecipeRepository,
@@ -45,7 +46,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 20  # v20: non-mutating Desk projection presentation state (HS-92-09)
+SCHEMA_VERSION = 21  # v21: content-free first-value events + idempotent paired delivery (HS-93-05)
 
 
 class SchemaVersionError(RuntimeError):
@@ -802,6 +803,35 @@ CREATE TABLE IF NOT EXISTS first_value_attempts (
 CREATE INDEX IF NOT EXISTS idx_first_value_attempts_started
 ON first_value_attempts(started_at DESC);
 
+-- Phase 93 (HS-93-05): first-value mechanics come from observed, bounded
+-- interaction events. No payload/content column exists by construction.
+CREATE TABLE IF NOT EXISTS first_value_events (
+    event_id TEXT PRIMARY KEY,
+    attempt_id TEXT NOT NULL REFERENCES first_value_attempts(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL,
+    occurred_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_first_value_events_attempt
+ON first_value_events(attempt_id, occurred_at);
+
+-- Phase 93 (HS-93-05): a companion supplies one durable delivery identity.
+-- The hub claims it before touching the delivery hook and caches the terminal
+-- response, so a reconnect can read the Receipt without typing a second time.
+CREATE TABLE IF NOT EXISTS remote_dictation_deliveries (
+    delivery_id TEXT PRIMARY KEY,
+    request_hash TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('pending', 'succeeded', 'failed')),
+    response_status INTEGER,
+    response_json TEXT,
+    error TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_remote_dictation_deliveries_updated
+ON remote_dictation_deliveries(updated_at DESC);
+
 -- Phase 45 (HS-45-01): the dictation journal. A durable, local-only, private
 -- record of each dictation/dry-run pipeline run — what was said, how it routed,
 -- what got typed, and per-stage latency — so the daily-driver dictation loop
@@ -1184,6 +1214,7 @@ class Database:
         self.dictation_journal = DictationJournalRepository(self._connection, self)
         self.milestones = MilestoneRepository(self._connection, self)
         self.onboarding = OnboardingRepository(self._connection, self)
+        self.dictation_deliveries = DictationDeliveryRepository(self._connection, self)
         self.cadence = CadenceRepository(self._connection, self)  # CAD-1-01
         # Primitive Framework: the desk's synced first-class primitives.
         self.notes = NoteRepository(self._connection, self)

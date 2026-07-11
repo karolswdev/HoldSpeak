@@ -61,6 +61,10 @@ class WebContext:
     # ("agent" | "focused", HSM-15-01a). The default-mode call site passes the
     # text positionally only, so a plain ``Callable[[str], Any]`` hook still works.
     on_remote_dictation: Optional[Callable[..., Any]] = None
+    # HS-93-05: optional durable request-identity ledger for paired dictation.
+    # Tests may inject an isolated repository; the production route resolves
+    # the database repository lazily when this field is absent.
+    dictation_deliveries: Optional[Any] = None
 
     # HS-26-04: deferred plugin-job queue processing for the activity routes.
     # The activity-intelligence reads close over no server state; the meeting-

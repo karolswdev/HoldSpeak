@@ -1,7 +1,7 @@
 # HoldSpeak Security & Privacy Posture
 
 **Status:** living document.
-**Last updated:** 2026-05-31.
+**Last updated:** 2026-07-11.
 
 This document is the threat model for HoldSpeak: what data it holds, where that
 data lives, what can leave the machine, and the decisions behind its at-rest
@@ -22,8 +22,14 @@ make that promise auditable rather than aspirational.
 | **Speaker voice embeddings** | same DB, `speakers.embedding` (256-dim float32 BLOB) | High (biometric-adjacent) | Used for cross-meeting diarization. A voiceprint, not raw audio. |
 | **Meeting intelligence** | same DB (`intel_snapshots`, `topics`, `action_items`, `artifacts`) | Medium-High | LLM-derived topics/actions/summaries + plugin artifacts. |
 | **Activity ledger** | same DB (`activity_records`, `activity_annotations`, `activity_meeting_candidates`) | Medium | Browser-history-derived URLs/titles/entity IDs (GitHub/Jira/etc.). |
-| **Raw audio** | In-memory buffers during a meeting only | High | Not persisted; discarded after transcription. |
+| **Raw meeting audio** | Apple Documents, `meeting-audio/<meeting-id>.wav`, plus a PCM journal while capture is recoverable | High | The flagship app checkpoints the take on device and finalizes it to a replayable WAV. Recovery manifests and partial PCM are removed after successful finalization; the WAV remains until its app data is removed. |
 | **Config** | `~/.config/holdspeak/config.json` | Medium | Includes the **device PSK** and **web auth token** (secrets); the cloud API key is referenced by *env-var name*, not stored. |
+| **Web recovery drafts** | Browser `localStorage`, under versioned `hs.draft.v1.*` keys | High | Editable First Words, Dictation, Ask, Persona, capability, Coder session reply, and steering drafts. Written synchronously in this browser's storage; cleared after a confirmed retaining action where the surface has one. |
+| **Web pending voice capture** | Browser IndexedDB, `holdspeak-voice-recovery` | High | One bounded WAV per voice-to-fill scope, retained only when transcription has not confirmed text. A retry reuses this local audio; successful transcription deletes it. No capture enters first-value measurement. |
+| **Native paired-dictation recovery draft** | Apple `UserDefaults`, `hs.dictate.recovery.v1` | High | The editable words, named destination, raw/processed flag, and opaque delivery id. Cleared only after the desktop confirms delivery. |
+| **Native pending voice capture** | Apple Application Support, `HoldSpeak/dictation-recovery.pcm16` | High | Bounded 16 kHz mono PCM retained when on-device transcription fails or the app relaunches before text exists; deleted after transcription succeeds. |
+| **First-value mechanics** | same DB (`first_value_attempts`, `first_value_events`) | Low | Bounded event names, ids, destination class, timing, counts, and failure category. The schema has no phrase, transcript, content, or audio column. |
+| **Paired-delivery receipts** | same DB (`remote_dictation_deliveries`) | High | Opaque delivery id, request hash, lifecycle, and terminal HTTP Receipt. A successful Receipt may contain the processed final text so reconnect can return the exact prior result without typing again. |
 
 All persistent state is under the user's home directory and protected by normal
 filesystem permissions. There is **no telemetry, crash reporting, or background
@@ -82,12 +88,12 @@ SQLCipher) becomes warranted and should be its own story.
    (`connector_runtime.py`) is an *honesty* mechanism, **not a security sandbox**:
    a malicious pack can call `subprocess.run` directly. Only install packs you
    trust.
-5. **Session steering** (`coder_steering.py` → a local tmux pane): typing into
-   a live agent session is a local consequential act (nothing leaves the
+5. **Session steering** (`coder_steering.py` → a this-device tmux pane): typing into
+   a live Coder session is a this-device consequential act (nothing leaves the
    machine), gated by a consent model rather than an egress row. Watching is
    free: the pull-out's peek is read-only, hash-gated, never a keystroke.
    Steering requires an **arming grant**: issued per session by an explicit
-   desk act, TTL'd by ControlMode (5 min Safe, 15 min Neutral, 60 min YOLO;
+   Desk act, TTL'd by Control mode (5 min Secure, 15 min Normal, 60 min YOLO;
    60 min hard cap), pinned to the pane's
    unique tmux `%N` identity at grant time, and held **in memory only**, so a
    hub restart disarms everything. Every keystroke re-verifies that the
@@ -157,9 +163,10 @@ adds implementation detail but is not a second product inventory.
 | **Desk GitHub issue** (`web/routes/desk_actuators.py` → `gh issue create`) | The GitHub connector is enabled AND you approve one specific proposal | The issue title and body, exactly as previewed, through your own `gh` CLI | Opt-in + per-action approval; runs your authenticated `gh`, never a stored token of ours. Distinct from the read-only enrichment row below. |
 | **Connector CLI enrichment** (`gh`, `jira` via subprocess) | User enables the connector pack | Entity IDs (PR/issue/ticket numbers) to the user's own CLI tools, which call their services | Opt-in + manifest permissions (`shell:exec`, `network:outbound`). |
 | **Mission-control receipts** (`missioncontrol_bridge.py` → `gh pr list`) | A rails repo is named in your project map (`~/.holdspeak/delivery_workbench.json`) and the desk conveyor is open | Nothing composed: a read of that repo's open pull requests through your own authenticated `gh` CLI (GitHub learns which repo asked) | The map is yours to author; the belt's routes are GET-only end to end (fitness-tested); `gh` missing or failing renders as a typed absence, never a retry loop. |
-| **Mesh relay** (`intel/mesh_relay.py` → the hub relay queue) | A run against a profile whose kind is `meshNode` | The prompt and the result, between the hub and the machine you named (both yours; the worker authenticates with the hub token) | You author the profile, and the node serves only while `holdspeak mesh serve` runs on it (stopping it reads offline within seconds). No key ever transits: the node resolves the run through its own config and env. |
+| **Mesh relay** (`intel/mesh_relay.py` → the hub relay queue) | A run against a Runs on destination whose compatibility kind is `meshNode` | The prompt and the result, between the hub and the machine you named (both yours; the worker authenticates with the hub token) | You author the destination, and the node serves only while `holdspeak mesh serve` runs on it (stopping it reads offline within seconds). No key ever transits: the node resolves the run through its own config and env. |
 | **Web runtime responses** | A client requests data | Whatever the API returns (transcripts, action items, etc.) | Loopback by default; token-gated off-loopback. |
 | **Device audio link** | A paired device streams audio | Audio in; status/LCD text out | PSK; same-LAN today. |
+| **Paired dictation delivery** (`POST /api/dictation/remote`) | The owner releases the native dictation control or explicitly sends a preview/recovery draft | Finalized text plus an opaque delivery id to the named desktop; raw audio never crosses | Direct LAN/Tailscale peer, bearer-token gated off-loopback. The hub claims the id before delivery and caches the terminal Receipt; reconnecting with the same request returns that Receipt without typing twice. A different payload under the same id is refused. |
 
 Browser history reads (`activity_*`) make **no network calls**; they are
 read-only against local SQLite snapshots. The activity ledger never leaves the
@@ -181,15 +188,15 @@ machine except via the connector CLIs above (entity IDs only).
   a credential everywhere else: shown only on the Settings page, never on a
   proposal record, a broadcast, or any other API response (the connector
   joins it to the POST in memory at execution time).
-- **Runtime profile keys**: a runtime profile (the named "where intelligence
-  runs" target) stores only its shape: name, kind, endpoint, model, context
-  window. The API key is **never** part of the profile and **never syncs**.
-  Each surface holds its own key for a shared profile: the device Keychain on
+- **Runs on destination keys**: a Runs on destination stores only its
+  definition: name, kind, endpoint, model, and context window. The API retains
+  the `profile` compatibility name. The API key is **never** part of the
+  destination and **never syncs**. Each surface holds its own key for a shared destination: the device Keychain on
   iPad and iPhone, the hub's environment secret on the desktop
   (`HOLDSPEAK_PROFILE_<id>_KEY`). The key is joined to the request only at run
   time, never written to the synced shape, a ChangeSet, or any API response. A
   regression test asserts a key supplied to any ingress (a sync push or a REST
-  body) never reappears on a read surface (the sync pull or the profile routes).
+  body) never reappears on a read surface (the sync pull or `/api/profiles`).
 - Bridge/firmware secrets (AIPI-Lite) live in gitignored `bridge.env` /
   `secrets.yaml`; `.example` templates are checked in.
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Button,
   Dialog,
@@ -22,6 +23,11 @@ import {
   rowId,
   useResource,
 } from "./pageSupport";
+import {
+  decodeWorkroomContext,
+  workroomHref,
+  workroomSubjectId,
+} from "../workrooms/context";
 
 const ARCHIVE_TABS = [
   "meetings",
@@ -37,6 +43,25 @@ const DETAIL_TABS = [
   "routing",
   "proposals",
 ].map((id) => ({ id, label: id[0].toUpperCase() + id.slice(1) }));
+
+function displayState(value: unknown): string {
+  const state = String(value ?? "").trim();
+  const known: Record<string, string> = {
+    pending: "Queued",
+    complete: "Succeeded",
+    capture_failed: "Capture failed",
+    import_failed: "Import failed",
+    recoverable: "Recovery available",
+    recording: "Recording",
+    finalized: "Saved",
+  };
+  return (
+    known[state] ||
+    state
+      .replace(/_/g, " ")
+      .replace(/^./, (character) => character.toUpperCase())
+  );
+}
 
 function download(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
@@ -143,7 +168,7 @@ function ImportDialog({
           disabled={!file}
           onClick={submit}
         >
-          Import locally
+          Import to this device
         </Button>
       </div>
     </Dialog>
@@ -328,14 +353,16 @@ function MeetingDetail({
                   <li className="data-row" key={rowId(row, index)}>
                     <div>
                       <strong>
-                        {String(row.text ?? row.title ?? "Action")}
+                        {String(row.text ?? row.title ?? "Action item")}
                       </strong>
                       <small>{String(row.owner ?? row.status ?? "")}</small>
                     </div>
                     <StatusPill
                       tone={row.status === "done" ? "success" : "warning"}
                     >
-                      {String(row.status ?? "open")}
+                      {row.status === "done"
+                        ? "Action item complete"
+                        : "Open action item"}
                     </StatusPill>
                   </li>
                 ))}
@@ -361,8 +388,8 @@ function MeetingDetail({
                   Send follow-up to Slack
                 </Button>
                 <small>
-                  Each creates an exact-message proposal. Approving sends it to
-                  the configured Slack host.
+                  Each creates an exact-message proposed action. Approval sends
+                  it to the configured Slack destination.
                 </small>
               </div>
             ) : null}
@@ -380,7 +407,7 @@ function MeetingDetail({
                 <li className="data-row" key={rowId(row, index)}>
                   <div>
                     <strong>
-                      {String(row.title ?? row.kind ?? "Proposal")}
+                      {String(row.title ?? row.kind ?? "Proposed action")}
                     </strong>
                     <small>
                       {String(row.preview ?? row.body ?? row.status ?? "")}
@@ -415,7 +442,7 @@ function MeetingDetail({
             </ul>
           ) : (
             <EmptyState title="No proposals">
-              Approval-gated actions appear here. Rendering one never sends it.
+              Proposed external actions appear here before execution.
             </EmptyState>
           )
         ) : null}
@@ -448,6 +475,10 @@ function MeetingDetail({
 }
 
 export default function HistoryPage() {
+  const workroom = decodeWorkroomContext(window.location.search);
+  const requestedMeetingId =
+    workroomSubjectId(workroom, "meeting") ??
+    new URLSearchParams(window.location.search).get("meeting");
   const [active, setActive] = useState("meetings");
   const [query, setQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -457,6 +488,10 @@ export default function HistoryPage() {
   const [openActions, setOpenActions] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [selected, setSelected] = useState<JsonRecord | null>(null);
+  const [openedRequestedMeetingId, setOpenedRequestedMeetingId] = useState<
+    string | null
+  >(null);
+  const [requestedMeetingError, setRequestedMeetingError] = useState("");
   const [queueStatus, setQueueStatus] = useState("pending");
   const meetingParams = new URLSearchParams({ limit: "100" });
   if (query) meetingParams.set("q", query);
@@ -515,24 +550,92 @@ export default function HistoryPage() {
       plugin.data,
     ],
   );
+  const requestedMeeting = useMemo(
+    () =>
+      requestedMeetingId
+        ? (asRows(meetings.data, ["meetings"]).find(
+            (row) => String(row.id) === requestedMeetingId,
+          ) ?? null)
+        : null,
+    [meetings.data, requestedMeetingId],
+  );
+  useEffect(() => {
+    if (
+      !requestedMeetingId ||
+      openedRequestedMeetingId === requestedMeetingId ||
+      meetings.loading
+    )
+      return;
+    setOpenedRequestedMeetingId(requestedMeetingId);
+    setRequestedMeetingError("");
+    setActive("meetings");
+    if (requestedMeeting) {
+      setSelected(requestedMeeting);
+      return;
+    }
+    void apiFetch<JsonRecord>(
+      `/api/meetings/${encodeURIComponent(requestedMeetingId)}`,
+    )
+      .then(setSelected)
+      .catch((reason) => setRequestedMeetingError(readableError(reason)));
+  }, [
+    meetings.loading,
+    openedRequestedMeetingId,
+    requestedMeeting,
+    requestedMeetingId,
+  ]);
+  const orientedMeeting =
+    requestedMeeting ??
+    (requestedMeetingId && String(selected?.id ?? "") === requestedMeetingId
+      ? selected
+      : null);
   return (
     <div className="page-wrap">
       <PageHero
         eyebrow="Meeting memory"
         title="Meetings"
+        workroomSubject={
+          orientedMeeting
+            ? String(orientedMeeting.title ?? "Meeting")
+            : undefined
+        }
         actions={
           <div className="button-row">
             <Button variant="primary" onClick={() => setImportOpen(true)}>
               Import
             </Button>
-            <a className="btn btn--secondary" href="/live">
-              Start live
-            </a>
+            <Link
+              className="btn btn--secondary"
+              to={workroomHref("/live", {
+                action: workroom?.subject_ref
+                  ? "record-follow-up"
+                  : "record-meeting",
+                subjectRef: workroom?.subject_ref,
+                returnRef: workroom?.return_ref,
+              })}
+            >
+              Record meeting
+            </Link>
           </div>
         }
       >
-        Search, review, import, approve, and export from one durable archive.
+        Review meetings, import recordings, and export retained work.
       </PageHero>
+      {requestedMeetingError ? (
+        <InlineMessage tone="error">
+          {requestedMeetingError}{" "}
+          <Button
+            dense
+            variant="ghost"
+            onClick={() => {
+              setRequestedMeetingError("");
+              setOpenedRequestedMeetingId(null);
+            }}
+          >
+            Try again
+          </Button>
+        </InlineMessage>
+      ) : null}
       <Panel title="Archive" eyebrow={`${rows.length} visible`}>
         <Tabs
           label="Archive sections"
@@ -619,7 +722,9 @@ export default function HistoryPage() {
                   <strong>Open actions</strong>
                 </span>
               </label>
-              <Button onClick={() => void meetings.reload()}>Apply</Button>
+              <Button onClick={() => void meetings.reload()}>
+                Apply filters
+              </Button>
               <Button
                 variant="ghost"
                 onClick={() => {
@@ -653,7 +758,7 @@ export default function HistoryPage() {
                 <option value="pending">Queued</option>
                 <option value="running">Running</option>
                 <option value="failed">Failed</option>
-                <option value="complete">Complete</option>
+                <option value="complete">Succeeded</option>
               </Select>
             )}
           </Field>
@@ -702,7 +807,7 @@ export default function HistoryPage() {
                           : "neutral"
                     }
                   >
-                    {String(
+                    {displayState(
                       (row.capture_status !== "finalized"
                         ? row.capture_status
                         : row.intel_status) ??
@@ -713,7 +818,7 @@ export default function HistoryPage() {
                   </StatusPill>
                   {active === "meetings" ? (
                     <Button dense onClick={() => setSelected(row)}>
-                      Open
+                      Review meeting
                     </Button>
                   ) : null}
                   {active === "meetings" &&
@@ -742,7 +847,9 @@ export default function HistoryPage() {
                         ).then(() => source.reload())
                       }
                     >
-                      Retry
+                      {row.meeting_id
+                        ? "Retry intelligence"
+                        : "Retry background work"}
                     </Button>
                   ) : null}
                 </div>

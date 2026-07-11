@@ -7,7 +7,7 @@
  * to a canonical product term before reaching UI copy.
  */
 
-export const PRODUCT_LANGUAGE_VERSION = 1 as const;
+export const PRODUCT_LANGUAGE_VERSION = 2 as const;
 
 export const PRODUCT_TERMS = {
   desk: ["Desk", "Desks"],
@@ -63,6 +63,27 @@ export type DecisionKind = (typeof DECISION_KINDS)[number];
 export const CONTROL_MODES = ["safe", "neutral", "yolo"] as const;
 export type ControlMode = (typeof CONTROL_MODES)[number];
 
+export const CONTROL_MODE_LABELS = {
+  safe: "Secure",
+  neutral: "Normal",
+  yolo: "YOLO",
+} as const satisfies Record<ControlMode, string>;
+
+export const CONTROL_MODE_DESCRIPTIONS = {
+  safe: "Reviews consequential work before it runs.",
+  neutral:
+    "Runs routine configured work and asks at consequential boundaries.",
+  yolo:
+    "Runs eligible configured work without HoldSpeak approval prompts.",
+} as const satisfies Record<ControlMode, string>;
+
+export const DESTINATION_CLASS_LABELS = {
+  this_device: "This device",
+  paired_device: "Paired device",
+  private_endpoint: "Private endpoint",
+  external_service: "External service",
+} as const satisfies Record<DestinationClass, string>;
+
 export const LIFECYCLE_AXES = {
   readiness: ["unconfigured", "configured", "ready", "unavailable"],
   availability: ["offline", "connecting", "available", "degraded"],
@@ -78,6 +99,53 @@ export const LIFECYCLE_AXES = {
     "revoked",
   ],
   attention: ["unseen", "needs_attention", "acknowledged", "resolved"],
+} as const;
+
+export const LIFECYCLE_LABELS = {
+  readiness: {
+    unconfigured: "Not set up",
+    configured: "Configured",
+    ready: "Ready",
+    unavailable: "Unavailable",
+  },
+  availability: {
+    offline: "Offline",
+    connecting: "Connecting",
+    available: "Available",
+    degraded: "Degraded",
+  },
+  sync: {
+    local_only: "This device only",
+    pending_sync: "Pending sync",
+    synced: "Synced",
+    sync_error: "Sync failed",
+  },
+  work: {
+    queued: "Queued",
+    running: "Running",
+    succeeded: "Succeeded",
+    failed: "Failed",
+    cancelled: "Cancelled",
+  },
+  review: {
+    unreviewed: "Needs review",
+    accepted: "Accepted",
+    dismissed: "Dismissed",
+  },
+  authority: {
+    not_requested: "No authority requested",
+    proposed: "Needs approval",
+    approved: "Approved",
+    rejected: "Rejected",
+    expired: "Expired",
+    revoked: "Revoked",
+  },
+  attention: {
+    unseen: "New",
+    needs_attention: "Needs attention",
+    acknowledged: "Acknowledged",
+    resolved: "Resolved",
+  },
 } as const;
 
 export const MEETING_PROJECTIONS = [
@@ -104,6 +172,44 @@ export function canonicalProductTerm(value: string): CanonicalProductTerm {
 
 export function productLabel(value: string, plural = false): string {
   return PRODUCT_TERMS[canonicalProductTerm(value)][plural ? 1 : 0];
+}
+
+export function controlModeWire(value: string): ControlMode {
+  const normalized = value.trim().toLowerCase();
+  const byLabel = Object.entries(CONTROL_MODE_LABELS).find(
+    ([, label]) => label.toLowerCase() === normalized,
+  )?.[0];
+  return requireCanonicalValue(
+    byLabel ?? normalized,
+    CONTROL_MODES,
+    "control mode",
+  );
+}
+
+export function controlModeLabel(value: string): string {
+  return CONTROL_MODE_LABELS[controlModeWire(value)];
+}
+
+export function controlModeDescription(value: string): string {
+  return CONTROL_MODE_DESCRIPTIONS[controlModeWire(value)];
+}
+
+export function destinationClassLabel(value: string): string {
+  return DESTINATION_CLASS_LABELS[
+    requireCanonicalValue(value, DESTINATION_CLASSES, "destination class")
+  ];
+}
+
+export function lifecycleLabel<Axis extends keyof typeof LIFECYCLE_AXES>(
+  axis: Axis,
+  value: string,
+): string {
+  const canonical = requireCanonicalValue(
+    value,
+    LIFECYCLE_AXES[axis],
+    `${axis} lifecycle value`,
+  );
+  return (LIFECYCLE_LABELS[axis] as Record<string, string>)[canonical];
 }
 
 export function requireCanonicalValue<T extends string>(

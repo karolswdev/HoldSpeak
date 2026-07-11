@@ -198,24 +198,44 @@ class ProjectionRepository(BaseRepository):
             status = str(row["status"])
             target = str(row["target"])
             meeting_id = row["meeting_id"]
-            subject_ref = f"meeting:{meeting_id}" if meeting_id else f"integration:{target}"
-            subject_label = meetings.get(str(meeting_id), "Untitled meeting") if meeting_id else target.title()
+            payload = self._json_loads_dict(row["payload_json"])
+            source = payload.get("_source") if isinstance(payload.get("_source"), dict) else {}
+            source_ref = str(source.get("ref") or "").strip()
+            if meeting_id:
+                subject_ref = f"meeting:{meeting_id}"
+                subject_label = meetings.get(str(meeting_id), "Untitled meeting")
+            elif source_ref:
+                subject_ref = source_ref
+                subject_label = str(source.get("label") or source_ref.split(":", 1)[-1])
+            else:
+                subject_ref = f"integration:{target}"
+                subject_label = target.title()
             policy = self._json_loads_dict(row["policy_snapshot_json"])
             operation = self._json_loads_dict(row["operation_json"])
             needs = status in {"proposed", "approved", "failed"}
+            action_names = {
+                "slack": ("send to Slack", "Slack send"),
+                "webhook": ("post to Custom webhook", "Custom webhook post"),
+                "github": ("create GitHub issue", "GitHub issue creation"),
+            }
+            commitment, noun = action_names.get(target, (f"run {target} action", f"{target.title()} action"))
             titles = {
-                "proposed": f"Approve {target} action",
-                "approved": f"{target.title()} action awaits execution",
-                "executed": f"{target.title()} action completed",
-                "failed": f"{target.title()} action failed",
-                "rejected": f"{target.title()} action rejected",
+                "proposed": f"Approve and {commitment}",
+                "approved": f"{noun} awaits execution",
+                "executed": f"{noun} succeeded",
+                "failed": f"{noun} failed",
+                "rejected": f"{noun} rejected",
             }
             result.append(DeskProjection(
                 id=f"actuator:{row['id']}:{status}",
                 projection_kind="attention" if needs else "receipt",
                 subject_ref=subject_ref, subject_label=subject_label,
                 title=titles.get(status, f"{target.title()} action: {status}"),
-                summary="The exact proposed effect remains in its source record.",
+                summary=(
+                    "The exact proposed effect and source remain on this Receipt."
+                    if source_ref
+                    else "The exact proposed effect remains in its source record."
+                ),
                 reason_code=f"effect_{status}", decision_kind="authorization",
                 attention_state="needs_attention" if needs else "resolved",
                 actual_destination=str(row["approved_destination"] or operation.get("destination") or target),
@@ -223,8 +243,16 @@ class ProjectionRepository(BaseRepository):
                 attempt=None, outcome=str(row["execution_state"] or status),
                 timestamp=str(row["updated_at"]), correlation_id=f"actuator:{row['id']}",
                 source_kind="actuator_proposal", source_id=str(row["id"]),
-                source_api=(f"/api/meetings/{meeting_id}/proposals" if meeting_id else "/api/mesh/inbox"),
-                detail_url=(f"/history?meeting={meeting_id}" if meeting_id else "/"),
+                source_api=(
+                    f"/api/meetings/{meeting_id}/proposals"
+                    if meeting_id
+                    else "/api/desk/projections" if source_ref else "/api/mesh/inbox"
+                ),
+                detail_url=(
+                    f"/history?meeting={meeting_id}"
+                    if meeting_id
+                    else f"/?open={source_ref}" if source_ref else "/"
+                ),
                 severity="error" if status == "failed" else "normal",
             ))
         return result

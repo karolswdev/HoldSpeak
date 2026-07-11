@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 305 (plus static mounts). iOS-consumed: 81. Web-consumed: 214.
+Routes: 306 (plus static mounts). iOS-consumed: 81. Web-consumed: 222.
 
 ## device_audio_ws
 
@@ -139,13 +139,13 @@ Routes: 305 (plus static mounts). iOS-consumed: 81. Web-consumed: 214.
 
 | Method | Path | Consumers |
 |---|---|---|
-| POST | `/api/desk/actuators/github/propose` | ios |
-| POST | `/api/desk/actuators/github/{proposal_id}/decision` | ios |
-| POST | `/api/desk/actuators/slack/propose` | ios |
-| POST | `/api/desk/actuators/slack/{proposal_id}/decision` | ios |
+| POST | `/api/desk/actuators/github/propose` | ios, web |
+| POST | `/api/desk/actuators/github/{proposal_id}/decision` | ios, web |
+| POST | `/api/desk/actuators/slack/propose` | ios, web |
+| POST | `/api/desk/actuators/slack/{proposal_id}/decision` | ios, web |
 | GET | `/api/desk/actuators/status` | ios |
-| POST | `/api/desk/actuators/webhook/propose` | ios |
-| POST | `/api/desk/actuators/webhook/{proposal_id}/decision` | ios |
+| POST | `/api/desk/actuators/webhook/propose` | ios, web |
+| POST | `/api/desk/actuators/webhook/{proposal_id}/decision` | ios, web |
 
 ## web.routes.dictation.agent
 
@@ -465,7 +465,7 @@ Routes: 305 (plus static mounts). iOS-consumed: 81. Web-consumed: 214.
 | GET | `/api/projects/{project_id}/meetings` | server only |
 | DELETE | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
 | POST | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
-| GET | `/api/projects/{project_id}/resources` | server only |
+| GET | `/api/projects/{project_id}/resources` | web |
 | DELETE | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
 | PUT | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
 | GET | `/api/projects/{project_id}/summary` | server only |
@@ -476,6 +476,7 @@ Routes: 305 (plus static mounts). iOS-consumed: 81. Web-consumed: 214.
 |---|---|---|
 | POST | `/api/setup/discover-models` | web |
 | POST | `/api/setup/first-value/start` | web |
+| POST | `/api/setup/first-value/{attempt_id}/event` | web |
 | POST | `/api/setup/first-value/{attempt_id}/finish` | web |
 | PUT | `/api/setup/onboarding` | web |
 | GET | `/api/setup/runtime-options` | web |

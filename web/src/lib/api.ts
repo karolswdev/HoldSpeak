@@ -75,5 +75,5 @@ export async function apiBlob(input: string): Promise<Blob> {
 export function readableError(error: unknown): string {
   return error instanceof Error
     ? error.message
-    : "Something went wrong. Try again.";
+    : "Request failed. Retry the action.";
 }

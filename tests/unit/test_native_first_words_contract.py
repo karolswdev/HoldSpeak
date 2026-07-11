@@ -14,10 +14,12 @@ def _between(source: str, start: str, end: str) -> str:
 def test_desktop_choice_presents_real_dictation_and_never_starts_a_meeting() -> None:
     source = STAGE.read_text(encoding="utf-8")
     desktop_choice = _between(source, "onDesktop: {", "onClose:")
-    assert "showDesktopDictation = true" in desktop_choice
+    assert "presentDictationWorkroom()" in desktop_choice
+    assert "dictationWorkroom = DioWorkroomRoute" in source
     assert "startCapture" not in desktop_choice
     assert "stopCapture" not in desktop_choice
-    assert ".fullScreenCover(isPresented: $showDesktopDictation)" in source
+    assert ".fullScreenCover(item: $dictationWorkroom)" in source
+    assert "DioWorkroomContainer" in source
     assert "NavigationStack { DictateView() }" in source
 
 
@@ -32,6 +34,8 @@ def test_release_commits_one_remote_delivery_without_local_meeting_creation() ->
     assert stop.index("listening = false") < stop.index("await WhisperKitTranscriber")
     assert deliver.count("sendRemoteDictation(") == 1
     assert "target: .focused" in deliver
+    assert "deliveryID: deliveryID" in deliver
+    assert "persistRecovery(text: text" in deliver
     assert "Meeting(" not in stop
     assert "Meeting(" not in deliver
 
@@ -50,6 +54,13 @@ def test_native_failures_keep_an_editable_recovery_draft() -> None:
     assert 'Button("Retry")' in source
     assert 'Button("Copy")' in source
     assert 'Button("Setup")' in source
+    assert "DictationRecoveryStore" in source
+    assert "recoveryStore.load()" in source
+    assert "clearRecovery()" in source
+    assert "DictationAudioRecoveryStore" in source
+    assert "audioRecoveryStore.save(chunks)" in source
+    assert "audioRecoveryStore.load()" in source
+    assert "dictation-recovery.pcm16" in source
     for category in (
         "permissionDenied", "missingModel", "rejectedToken",
         "deliveryConflict", "unreachableDesktop", "noSpeech",

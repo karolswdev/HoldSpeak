@@ -331,6 +331,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
         )}
         <div className="desk-editor-foot">
           <MicButton
+            draftScope={`inline:${o.kind}:${o.id}`}
             onText={(t) => {
               // Fill the primary text field for the kind: a note's body,
               // otherwise the name/title.

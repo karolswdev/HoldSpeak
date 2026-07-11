@@ -281,6 +281,15 @@ def mock_llama():
 # ============================================================
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--run-metal",
+        action="store_true",
+        default=False,
+        help="run opt-in tests that require a real microphone/model/keyboard",
+    )
+
+
 def pytest_configure(config):
     """Register custom markers."""
     config.addinivalue_line("markers", "slow: marks tests as slow-running")
@@ -301,11 +310,16 @@ def pytest_collection_modifyitems(config, items):
     import sys
 
     skip_macos = pytest.mark.skip(reason="requires macOS")
+    skip_metal = pytest.mark.skip(
+        reason="real hardware lane; rerun with -m metal --run-metal"
+    )
 
     for item in items:
         # Skip macOS tests on other platforms
         if "requires_macos" in item.keywords and sys.platform != "darwin":
             item.add_marker(skip_macos)
+        if "metal" in item.keywords and not config.getoption("--run-metal"):
+            item.add_marker(skip_metal)
 
 
 @pytest.fixture(autouse=True)

@@ -10,7 +10,13 @@ import {
   TextInput,
 } from "../components/signal/Signal";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
+import {
+  CONTROL_MODES,
+  controlModeDescription,
+  controlModeLabel,
+} from "../lib/productLanguage";
 import { PageHero, ResourceState, useResource } from "./pageSupport";
+import { decodeWorkroomContext, workroomSubjectId } from "../workrooms/context";
 
 const SECTION_ORDER = [
   "ui",
@@ -229,6 +235,8 @@ function SettingsFields({
 }
 
 export default function SettingsPage() {
+  const workroom = decodeWorkroomContext(window.location.search);
+  const integrationSubject = workroomSubjectId(workroom, "integration");
   const resource = useResource<JsonRecord>("/api/settings", {});
   const authority = useResource<JsonRecord>("/api/authority/policy", {});
   const [active, setActive] = useState("");
@@ -343,7 +351,7 @@ export default function SettingsPage() {
       });
       authority.setData({ ...authority.data, ...result });
       setMessage({
-        text: `ControlMode is now ${controlMode}. Existing runs and grants were not widened.`,
+        text: `Control mode is now ${controlModeLabel(controlMode)}. Existing operations and grants did not change.`,
       });
     } catch (error) {
       setMessage({ error: true, text: readableError(error) });
@@ -357,24 +365,29 @@ export default function SettingsPage() {
       <PageHero
         eyebrow="Configuration"
         title="Settings"
+        workroomSubject={
+          integrationSubject ? "Integration destinations" : undefined
+        }
         actions={
           <Button variant="primary" loading={saving} onClick={save}>
             Save settings
           </Button>
         }
       >
-        Search the full configuration without losing the product's grouped
-        mental model.
+        Find and update settings by task.
       </PageHero>
       <ResourceState
         loading={resource.loading}
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <Panel title="Control mode" eyebrow="Future-operation authority">
+        <Panel title="Control mode" eyebrow="Future operations">
           <Field
             label="Preset"
-            description="Safe reviews more, Neutral respects configured previews and cadence, and YOLO permits only fixed destinations with scoped grants. Authentication, secret custody, destination/payload binding, pane identity, audit, configuration, and schema checks never change."
+            description={`${CONTROL_MODES.map(
+              (mode) =>
+                `${controlModeLabel(mode)}: ${controlModeDescription(mode)}`,
+            ).join(" ")} Authentication, secret custody, destination and payload binding, pane identity, receipts, configuration, and schema checks never change.`}
           >
             {({ id, describedBy }) => (
               <Select
@@ -384,9 +397,11 @@ export default function SettingsPage() {
                 disabled={authorityBusy || authority.loading}
                 onChange={(event) => void setControlMode(event.target.value)}
               >
-                <option value="safe">Safe</option>
-                <option value="neutral">Neutral</option>
-                <option value="yolo">YOLO</option>
+                {CONTROL_MODES.map((mode) => (
+                  <option key={mode} value={mode}>
+                    {controlModeLabel(mode)}
+                  </option>
+                ))}
               </Select>
             )}
           </Field>
