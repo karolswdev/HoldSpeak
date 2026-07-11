@@ -162,7 +162,11 @@ class ProbeEvaluator:
         if isinstance(arg, dict) and arg.get("members"):
             have = set(match.get("member_ids", []))
             want = set(arg["members"])
-            return (want <= have, f"zone {wanted!r} members {sorted(have)} (need {sorted(want)})")
+            have_ids = have | {value.split(":", 1)[-1] for value in have}
+            return (
+                want <= have_ids,
+                f"zone {wanted!r} members {sorted(have)} (need {sorted(want)})",
+            )
         return (True, f"zone {wanted!r} present")
 
     # Alias — a "zone" reads more naturally in a recipe than "directory".

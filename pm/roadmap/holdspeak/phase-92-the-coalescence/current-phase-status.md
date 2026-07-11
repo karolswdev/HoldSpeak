@@ -2,11 +2,10 @@
 
 **Status:** PRE-CLOSE IMPLEMENTATION (0/10). Phase 91 remains active.
 
-**Last updated:** 2026-07-11 (the owner explicitly continued through HS-92-08 as
-bounded pre-close work; destination identity and actual-placement receipts now
-feed separate decision axes, exact commitment verbs, central ControlMode policy,
-and scoped Grant receipts with automated proof, while Phase 91's HS-91-10 owner/physical-Swift close
-gate and all eight Phase-92 manual walks remain).
+**Last updated:** 2026-07-11 (the owner explicitly continued through HS-92-10 as
+bounded pre-close work; all ten convergence journeys now have separate measured
+Web and flagship-native UAT protocols, while Phase 91's HS-91-10 owner and
+physical Swift close gate and the actual Phase-92 owner/device campaigns remain).
 
 ## Goal
 
@@ -106,13 +105,13 @@ authority, and retained results without rewriting the underlying systems.
 | HS-92-07 | Every run names where it happens | in-progress | [story-07](./story-07-every-run-names-where.md) | InferenceTarget/Profile alias, five destination classes, shared Web/native picker, named refusal, actual-placement Artifact receipts, docs/doctor, and no borrowed keys green; five physical destination walks pending |
 | HS-92-08 | Decisions say what happens next | in-progress | [story-08](./story-08-decisions-say-what-happens.md) | Separate review/authority/execution axes, central four-family ControlMode policy, exact commitment verbs, bounded/revocable grants with use receipts, and Web/Swift/CLI controls green; physical mode/grant/revocation walks pending |
 | HS-92-09 | The Desk remembers what needs you | in-progress | [story-09](./story-09-the-desk-remembers.md) | Schema v20 additive projection index, non-sensitive adapters, presentation-only state, Web Desk/Qlippy/Mission Control and native Queue HUD green; forced-failure/device/VoiceOver/next-day walks pending |
-| HS-92-10 | The owner walk and evidence close | backlog | [story-10](./story-10-owner-walk-evidence-close.md) | — |
+| HS-92-10 | The owner walk and evidence close | in-progress | [story-10](./story-10-owner-walk-evidence-close.md) | Ten-journey Web/flagship campaigns, required raw measurements, generated ledger additions, qualified seeding, and UAT harness automation green; genuine owner/device execution pending |
 
 ## Where we are
 
 Phase 91 remains the actual current phase, with HS-91-10 open for owner
 workflows and actual Swift parity evidence. By direct owner instruction,
-HS-92-01 through HS-92-05 have started as bounded pre-close work by the owner's
+HS-92-01 through HS-92-10 have started as bounded pre-close work by the owner's
 explicit continuation instructions. The versioned language registry,
 compatibility seam, fixture-verified client mappings, primary label migration,
 and terminology guard are implemented. The trust slice now adds authenticated
@@ -140,8 +139,11 @@ typed OperationDescriptor/PolicyDecision resolver, schema-v19 independent
 review/authorization/execution axes, atomic actor/effect/destination/data/scope/
 time/count Grants with visible use receipts, ControlMode behavior for dictation,
 steering, fixed connector writes, and cadence, plus matching Web/Swift/CLI
-controls and consequence-specific commitment verbs. All eight stories stay open
-for their remaining native/manual and physical-device walks. This does
+controls and consequence-specific commitment verbs. HS-92-09 adds contextual
+attention and source-linked Receipt projections without copying domain payloads.
+HS-92-10 adds two target-qualified ten-journey close campaigns and makes raw
+exit measurements a required, durable part of substantive UAT verdicts. All ten
+stories stay open for their remaining manual and physical-device walks. This does
 not close Phase 91 or advance the current pointer.
 
 ## Active risks
@@ -210,6 +212,13 @@ not close Phase 91 or advance the current pointer.
   grants are YOLO-only, fixed-destination, exact-scope, expiring, count-bounded,
   revocable, and use-receipted. Automated and simulator proof may advance;
   physical mode/grant/revocation walks remain open.
+- 2026-07-11 — Direct owner instruction continued through HS-92-09 and
+  HS-92-10 and required delivery to `main`. Desk attention remains an additive
+  non-sensitive read model with presentation-only dismissal. Phase closure uses
+  separate production-Web and physical-flagship campaigns for the same ten
+  journeys, and substantive UAT verdicts must carry their prompted raw measures.
+  No story is marked done, no device verdict is inferred, and Phase 91 remains
+  the current pointer.
 
 ## Decisions deferred
 

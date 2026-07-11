@@ -20,7 +20,7 @@ from typing import Any, Optional
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .db import Database
 from .runs import RunManager
@@ -75,6 +75,7 @@ class VerdictBody(BaseModel):
     shot_path: Optional[str] = None
     started_at: Optional[str] = None
     device_session_id: Optional[str] = None
+    measurements: dict[str, Any] = Field(default_factory=dict)
 
 
 class DeviceSessionBody(BaseModel):
@@ -425,6 +426,7 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
                 shot_path=body.shot_path,
                 started_at=body.started_at,
                 device_session_id=body.device_session_id,
+                measurements=body.measurements,
             )
         except SittingError as exc:
             raise HTTPException(status_code=400, detail=str(exc))

@@ -1,0 +1,20 @@
+id: phase92-native-first-value
+execution_target: ios_flagship_swift
+title: "Phase 92 · Native · Desk arrival to first dictated text"
+features: [phase92.journey.first-value]
+recipes: [fresh-desk]
+manual_setup:
+  - Install the exact flagship build on physical iPhone and iPad, pair it to this isolated run, grant microphone and Local Network permissions, and focus a disposable Mac text field.
+form_factors: [ipad, iphone]
+steps:
+  - do: Reinstall or clear first-boot state, start a stopwatch at cold launch, and use the production Desk root to dictate one canary into the focused Mac app.
+    expect: The real desktop Dictate route delivers once to the named Mac, not a Meeting recorder; basic transcription requires no model-placement decision and returns a content-free success Receipt.
+    verifies: [phase92.journey.first-value]
+    measurements:
+      - {key: elapsed_seconds, label: Seconds from cold launch to landed text, unit: seconds}
+      - {key: product_steps, label: Product actions before landed text, unit: actions}
+      - {key: placement_decisions, label: Inference placement decisions, unit: decisions}
+      - {key: technical_nouns, label: Technical nouns introduced before success, unit: nouns}
+  - do: Remove microphone permission and then take the Mac offline while an editable canary is ready.
+    expect: The draft remains editable with Retry, Copy, and Keep; permission and peer-offline failures are distinct and neither creates a Meeting or false delivery.
+teardown: []

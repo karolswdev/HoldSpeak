@@ -13,6 +13,7 @@ site can read while a verdict writes.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
@@ -75,6 +76,7 @@ CREATE TABLE IF NOT EXISTS step_verdicts (
     note          TEXT,
     shot_path     TEXT,
     started_at    TEXT,                   -- when the human landed on the step
+    measurements_json TEXT NOT NULL DEFAULT '{}', -- typed raw exit measurements
     created_at    TEXT NOT NULL,          -- when the verdict was cast
     UNIQUE(run_id, pack, scenario_id, step_index, surface)
 );
@@ -179,6 +181,9 @@ class Database:
             self._ensure_column(conn, "step_verdicts", "form_factor", "TEXT")
             self._ensure_column(conn, "step_verdicts", "slot_id", "TEXT")
             self._ensure_column(conn, "step_verdicts", "device_session_id", "TEXT")
+            self._ensure_column(
+                conn, "step_verdicts", "measurements_json", "TEXT NOT NULL DEFAULT '{}'"
+            )
             self._ensure_column(conn, "findings", "execution_target", "TEXT")
             self._ensure_column(conn, "findings", "form_factor", "TEXT")
             self._ensure_column(conn, "findings", "slot_id", "TEXT")
@@ -269,12 +274,13 @@ class Database:
             "run_id", "pack", "scenario_id", "step_index", "surface",
             "execution_target", "form_factor", "slot_id", "device_session_id",
             "verdict", "note", "shot_path", "started_at", "created_at",
+            "measurements_json",
         )
         placeholders = ", ".join("?" for _ in cols)
         assignments = ", ".join(
             f"{c}=excluded.{c}" for c in (
                 "execution_target", "form_factor", "slot_id", "device_session_id",
-                "verdict", "note", "shot_path", "created_at"
+                "verdict", "note", "shot_path", "created_at", "measurements_json"
             )
         )
         with self.connect() as conn:
@@ -292,7 +298,15 @@ class Database:
                 "ORDER BY scenario_id, step_index, slot_id",
                 (run_id,),
             )
-            return [dict(r) for r in cur.fetchall()]
+            rows = []
+            for raw in cur.fetchall():
+                row = dict(raw)
+                try:
+                    row["measurements"] = json.loads(row.get("measurements_json") or "{}")
+                except (TypeError, ValueError):
+                    row["measurements"] = {}
+                rows.append(row)
+            return rows
 
     # --- native device attestations --------------------------------------
 

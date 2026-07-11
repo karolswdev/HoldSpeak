@@ -1,0 +1,21 @@
+id: phase92-web-capability-result
+execution_target: web_react
+title: "Phase 92 · Web · Persona and Workflow runs become findable Artifacts"
+features: [phase92.journey.capability-result]
+recipes: [seeded-desk]
+form_factors: [desktop, tablet_viewport]
+steps:
+  - do: Select a seeded Note, run the seeded Persona from its contextual door, and inspect the destination before committing.
+    expect: The action names the Persona and source, exposes Runs on without forcing a target choice, and prints a Result with actual placement.
+    where: /
+    verifies: [phase92.journey.capability-result]
+  - do: Keep the Result, return to the Desk, then run the seeded Workflow on the same source and deliberately cancel one attempt.
+    expect: The kept Persona result is an Artifact beside its source; the Workflow either materializes a supported Artifact or retains a refusal/cancellation Receipt with no prompt lowering.
+    where: /
+  - do: Reload and search Desk memory for both runs.
+    expect: Artifact lineage and Run/Attempt receipts survive reload and link to their authoritative details.
+    where: /
+    measurements:
+      - {key: findable_artifacts, label: Completed runs returning one findable Artifact, unit: runs}
+      - {key: missing_lineage, label: Kept Artifacts without source and run lineage, unit: artifacts}
+teardown: []

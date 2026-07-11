@@ -1,0 +1,20 @@
+id: phase92-web-integration
+execution_target: web_react
+title: "Phase 92 · Web · One Integration completes the proposal-to-Receipt arc"
+features: [phase92.journey.integration]
+recipes: [functional-proposal-review]
+manual_setup:
+  - Use only a disposable allow-listed destination and disposable credentials.
+form_factors: [desktop, tablet_viewport]
+steps:
+  - do: From a Meeting action, choose one configured Integration and prepare an external effect.
+    expect: The proposed action names immutable payload meaning, actual destination, data scope, authority need, and whether approval executes immediately.
+    where: /history
+    verifies: [phase92.journey.integration]
+  - do: Reject once, recreate, approve with its consequence-specific verb, and verify the disposable destination.
+    expect: Rejection never egresses; approval binds the reviewed effect and destination; execution occurs once and returns an outcome Receipt to the Meeting and Integration subject.
+    where: /history
+    measurements:
+      - {key: external_effect_count, label: Effects observed at disposable destination, unit: effects}
+      - {key: ambiguous_commitment_verbs, label: Consequential generic verbs without adjacent consequence, unit: verbs}
+teardown: []

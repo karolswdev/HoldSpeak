@@ -1,0 +1,20 @@
+id: phase92-web-next-day-memory
+execution_target: web_react
+title: "Phase 92 · Web · Returning tomorrow answers what needs me and what ran"
+features: [phase92.journey.next-day-memory]
+recipes: [seeded-desk]
+manual_setup:
+  - Before ending the first sitting, create one waiting, failed, running, and completed source record and leave them until the next calendar day.
+form_factors: [desktop, tablet_viewport]
+steps:
+  - do: On the next calendar day, cold-open the Desk without first visiting History, Activity, Cadence, Queue, or Settings.
+    expect: Contextual badges and Desk memory show what waits, failed, ran, and completed, ordered and searchable with no 24-item cutoff or compact overflow.
+    where: /
+    verifies: [phase92.journey.next-day-memory]
+    measurements:
+      - {key: detached_surfaces_visited, label: Other history or queue surfaces required before understanding state, unit: surfaces}
+      - {key: desk_return_pct, label: Primary journeys with a findable Desk return or Receipt, unit: percent}
+  - do: Inspect destination, authority, attempt, outcome, and source; dismiss one card; filter and paginate through at least 1,000 mixed projections.
+    expect: Source journals remain reachable, dismissal changes no subject, badges ignore drawer filters, and pagination reaches every row without copied sensitive payloads.
+    where: /
+teardown: []

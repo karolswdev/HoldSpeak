@@ -1,0 +1,20 @@
+id: phase92-native-failure-recovery
+execution_target: ios_flagship_swift
+title: "Phase 92 · Native · Forced failures preserve work and recovery"
+features: [phase92.journey.failure-recovery]
+recipes: [intel-endpoint-dead]
+manual_setup:
+  - Use an isolated hub, network conditioning, permission controls, low-storage staging, and disposable canary input on the exact flagship devices.
+form_factors: [ipad, iphone]
+steps:
+  - do: Force 400, 401/403, 409, 500, timeout, offline, disk-full, malformed response, and partial completion through their matching native actions.
+    expect: Each category retains draft or durable subject, names the cause, offers correct retry/auth/resolve/copy/keep action, and never labels failed or partial work complete.
+    verifies: [phase92.journey.failure-recovery]
+    measurements:
+      - {key: categories_exercised, label: Distinct forced-failure categories completed, unit: categories}
+      - {key: silent_failures, label: Failures with no visible state or next action, unit: failures}
+      - {key: lost_inputs, label: Canary inputs or captures requiring re-entry, unit: inputs}
+      - {key: false_completions, label: Failed or partial work labelled complete, unit: states}
+  - do: Cold-launch after each representative failure and recover without deleting app data or recreating the subject.
+    expect: Work returns exactly once; recovery advances the authoritative record and adds a new Receipt while prior failure truth remains inspectable.
+teardown: []

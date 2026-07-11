@@ -1,0 +1,22 @@
+id: phase92-web-first-value
+execution_target: web_react
+title: "Phase 92 · Web · Desk arrival to first dictated text"
+features: [phase92.journey.first-value]
+recipes: [fresh-desk]
+manual_setup:
+  - Use a production desktop browser with a real microphone and a disposable text target.
+form_factors: [desktop, tablet_viewport]
+steps:
+  - do: Start a stopwatch at the first Desk paint, then complete one basic local dictation without opening Settings or choosing an inference destination.
+    expect: Text lands once in the intended target, the Desk records success, and no model-placement decision blocks basic transcription.
+    where: /
+    verifies: [phase92.journey.first-value]
+    measurements:
+      - {key: elapsed_seconds, label: Seconds from first paint to landed text, unit: seconds}
+      - {key: product_steps, label: Product actions before landed text, unit: actions}
+      - {key: placement_decisions, label: Inference placement decisions, unit: decisions}
+      - {key: technical_nouns, label: Technical nouns introduced before success, unit: nouns}
+  - do: Deny microphone access, type an editable canary into the first-value surface, attempt delivery, then recover without retyping.
+    expect: The canary remains available with Retry, Copy, and Keep; the failure names microphone permission and creates no false success.
+    where: /
+teardown: []

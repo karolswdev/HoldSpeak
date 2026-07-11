@@ -1,0 +1,17 @@
+id: phase92-native-destination-truth
+execution_target: ios_flagship_swift
+title: "Phase 92 · Native · Runs on names every real boundary"
+features: [phase92.journey.destination-truth]
+recipes: [seeded-desk]
+manual_setup:
+  - Provide available This device, named paired device, private endpoint, mesh node, and external service targets; keep one unavailable.
+form_factors: [ipad, iphone]
+steps:
+  - do: With VoiceOver on, inspect the native Runs on picker and choose each available destination class before a run.
+    expect: Every option exposes identity, boundary, owner, transport, data scope, readiness, and recovery in the native sheet without conflating engine/model with destination.
+    verifies: [phase92.journey.destination-truth]
+    measurements:
+      - {key: destination_classes_walked, label: Distinct destination classes directly exercised, unit: classes}
+  - do: Start a run, make its selected target unavailable, and inspect the Result or Receipt.
+    expect: The app names selected and actual placement, retains the request, and offers explicit retry or alternate choice without silent retargeting or borrowed credentials.
+teardown: []

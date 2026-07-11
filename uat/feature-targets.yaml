@@ -2,6 +2,26 @@ version: 1
 # Explicit native feature ownership. Web React inherits the legacy web column;
 # an old ipad/iphone=yes cell never chooses a Swift binary on its own.
 features:
+  phase92.journey.first-value:
+    ios_flagship_swift: [ipad, iphone]
+  phase92.journey.meeting-return:
+    ios_flagship_swift: [ipad, iphone]
+  phase92.journey.capability-result:
+    ios_flagship_swift: [ipad, iphone]
+  phase92.journey.destination-truth:
+    ios_flagship_swift: [ipad, iphone]
+  phase92.journey.pair-sync:
+    ios_flagship_swift: [ipad, iphone]
+  phase92.journey.integration:
+    ios_flagship_swift: [ipad, iphone]
+  phase92.journey.decision-authority:
+    ios_flagship_swift: [ipad, iphone]
+  phase92.journey.coder:
+    ios_flagship_swift: [ipad, iphone]
+  phase92.journey.failure-recovery:
+    ios_flagship_swift: [ipad, iphone]
+  phase92.journey.next-day-memory:
+    ios_flagship_swift: [ipad, iphone]
   release.backup_restore.cli:
     cli_python: [local_shell]
   release.doctor.database_check:
@@ -68,4 +88,6 @@ features:
   mobile.workbench.graph.author:
     ios_classic_swift: [ipad]
   sync.contracts.parity_spine:
+    ios_flagship_swift: [ipad, iphone]
+  sync.content.cross_device:
     ios_flagship_swift: [ipad, iphone]

@@ -5,10 +5,12 @@ the product feels like and whether its user journeys work. Database drift,
 packet-capture/no-telemetry proof, crafted-schema attacks, and token-gate attack
 work are not part of this pass by owner decision.
 
-The guided site exposes seven ordered campaigns assembled from the canonical
+The guided site exposes nine ordered campaigns assembled from the canonical
 scenario files. Campaigns 1–5 are the core owner pass. Campaign 6 is the
 user-visible connectivity/integration extension. Campaign 7 is conditional on
-having the two non-flagship native builds installed.
+having the two non-flagship native builds installed. Campaigns 8 and 9 are the
+Phase 92 convergence close: the same ten journeys on production Web and the
+physical flagship Swift root, with required raw measurements.
 
 This protocol uses implementation target × form factor. Campaign 1 is the
 `web_react:desktop` Desk leg. Campaign 5 contains the separately executed
@@ -38,7 +40,7 @@ sitting** for any campaign containing a Swift target or a cross-device leg
 database. Verdicts persist immediately; reopening the sitting resumes at the
 first unanswered target/form-factor slot.
 
-Do not run the seven campaigns as one marathon. End a sitting, review its
+Do not run the nine campaigns as one marathon. End a sitting, review its
 findings, and take a real break before the next campaign. The total core pass is
 about 8 hours of deliberate human work.
 
@@ -53,6 +55,8 @@ about 8 hours of deliberate human work.
 | 5 | Flagship Swift iPhone and iPad, including Desk | 145m | 14 / 85 | assisted/native | `ios_flagship_swift`; physical devices and exact flagship build |
 | 6 | Sync, mesh, and integrations | 135m | 18 / 56 | mixed | Explicit React/Swift handoff legs, LAN, second device, disposable targets |
 | 7 | Secondary Swift shells | 70m | 6 / 17 | 3 automatic, 3 assisted | Exact companion/classic builds; conditional |
+| 8 | Phase 92 ten-journey Web close | 210m | 10 measured journeys | mixed | React desktop + compact; cannot earn Swift evidence |
+| 9 | Phase 92 ten-journey flagship close | 300m | 10 measured journeys | assisted/native | Physical flagship iPhone + iPad; exact build attestations |
 
 The site shows each campaign's full preflight before it starts. A campaign's
 time is a planning estimate, not a target to race.
@@ -210,6 +214,15 @@ result are joined as cross-target evidence only after both legs were executed.
 Run only when both exact non-flagship builds are intentionally installed. Their
 results remain labeled companion/classic and never count as flagship evidence.
 
+### 8–9. Phase 92 convergence close
+
+Run campaign 8 on production React and campaign 9 on physical flagship iPhone
+and iPad. Every prompted measurement is required for a substantive verdict and
+is exported as raw debrief data. Neither campaign can borrow verdicts from the
+other. Do not generate Phase 92 story evidence or a final summary until both
+debriefs pass, all findings are triaged, Phase 91 is closed, and the Delivery
+Workbench close gates are genuinely satisfied.
+
 ## Stop, triage, and resume
 
 Stop the current campaign after a severity-1 event (data loss, input sent to the
@@ -228,6 +241,8 @@ At campaign end:
 The MVP functional pass is complete when campaigns 1–5 have no untriaged result
 and every core user journey has a direct owner verdict. Campaign 6 is the
 extended connected-product pass. Campaign 7 is explicitly conditional.
+Phase 92 is not closed by that MVP bar: campaigns 8 and 9 must independently
+pass with raw measurements and the Delivery Workbench close conditions above.
 
 ## Explicitly outside this pass
 

@@ -1,0 +1,28 @@
+title: "8 · Phase 92 ten-journey Web close"
+purpose: >
+  Execute the ten convergence journeys on the production React Desk at desktop
+  and compact widths, with required raw measurements. This authored campaign
+  does not close the phase until its independent flagship-native peer passes.
+sequence: 8
+tier: close
+estimated_minutes: 210
+prerequisites:
+  - Phase 91 is closed before this campaign is credited to a Phase 92 close.
+  - Start with UAT_HOST=0.0.0.0 and Device sitting enabled so the pairing/sync leg can reach this isolated run.
+  - Use the exact production Web build and an isolated UAT run; record browser, viewport, commit, microphone, model, and endpoint provenance.
+  - Use 1440x1000 for desktop and 430x932 for the compact Web leg; neither is native evidence.
+  - Prepare real microphone/system audio, five destination classes, one disposable Integration, one paired flagship device, and next-day continuity.
+exit_gate:
+  - All ten web_react journeys have direct desktop and compact verdicts, every required raw measurement is present, and no failure/partial/skip is waived.
+  - Web audit, keyboard-only path, term census, forced-failure matrix, and Desk return are attached to the sitting debrief.
+scenarios:
+  - phase-92-web/phase92-web-first-value
+  - phase-92-web/phase92-web-meeting-return
+  - phase-92-web/phase92-web-capability-result
+  - phase-92-web/phase92-web-destination-truth
+  - phase-92-web/phase92-web-pair-sync
+  - phase-92-web/phase92-web-integration
+  - phase-92-web/phase92-web-decision-authority
+  - phase-92-web/phase92-web-coder
+  - phase-92-web/phase92-web-failure-recovery
+  - phase-92-web/phase92-web-next-day-memory

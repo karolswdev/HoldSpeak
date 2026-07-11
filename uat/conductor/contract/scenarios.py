@@ -57,6 +57,22 @@ def _parse_form_factors(value: Any, *, path: Path, context: str) -> list[str]:
 
 
 @dataclass
+class MeasurementPrompt:
+    key: str
+    label: str
+    unit: str = ""
+    required: bool = True
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "key": self.key,
+            "label": self.label,
+            "unit": self.unit,
+            "required": self.required,
+        }
+
+
+@dataclass
 class Step:
     index: int
     do: str
@@ -65,6 +81,7 @@ class Step:
     form_factors: list[str] | None = None
     after: list[Any] = field(default_factory=list)
     verifies: list[str] = field(default_factory=list)
+    measurements: list[MeasurementPrompt] = field(default_factory=list)
 
     def execution_slots(self, scenario: "Scenario") -> list[ExecutionSlot]:
         forms = self.form_factors or scenario.form_factors
@@ -115,6 +132,7 @@ class Scenario:
                     "execution_slots": [slot.to_dict() for slot in s.execution_slots(self)],
                     "after": s.after,
                     "verifies": s.verifies,
+                    "measurements": [item.to_dict() for item in s.measurements],
                 }
                 for s in self.steps
             ],
@@ -176,6 +194,7 @@ def load_scenario(path: Path, pack: str | None = None) -> Scenario:
             form_factors=step_forms,
             after=list(raw.get("after") or []),
             verifies=[str(key) for key in (raw.get("verifies") or [])],
+            measurements=_parse_measurements(raw.get("measurements"), path, i),
         )
         steps.append(step)
 
@@ -228,6 +247,9 @@ def scenario_from_dict(doc: dict[str, Any]) -> Scenario:
                 form_factors=step_forms or None,
                 after=list(raw.get("after") or []),
                 verifies=[str(key) for key in (raw.get("verifies") or [])],
+                measurements=_parse_measurements(
+                    raw.get("measurements"), Path(str(doc.get("source") or "snapshot")), index
+                ),
             )
         )
     return Scenario(
@@ -325,6 +347,11 @@ def validate_scenario(
                     f"ERROR {src}: step {step.index} verifies {key!r}, but the key "
                     "is not declared in scenario.features"
                 )
+        measurement_keys = [item.key for item in step.measurements]
+        if len(measurement_keys) != len(set(measurement_keys)):
+            errors.append(
+                f"ERROR {src}: step {step.index} contains duplicate measurement keys"
+            )
 
     mapped = {key for step in scenario.steps for key in step.verifies}
     if mapped:
@@ -336,6 +363,34 @@ def validate_scenario(
             )
 
     return errors
+
+
+def _parse_measurements(value: Any, path: Path, step_index: int) -> list[MeasurementPrompt]:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ScenarioError(f"ERROR {path}: step {step_index} measurements must be a list")
+    prompts: list[MeasurementPrompt] = []
+    for raw in value:
+        if not isinstance(raw, dict):
+            raise ScenarioError(
+                f"ERROR {path}: step {step_index} measurement must be a mapping"
+            )
+        key = str(raw.get("key") or "").strip()
+        label = str(raw.get("label") or "").strip()
+        if not key or not label:
+            raise ScenarioError(
+                f"ERROR {path}: step {step_index} measurement needs key and label"
+            )
+        if not key.replace("_", "").isalnum():
+            raise ScenarioError(
+                f"ERROR {path}: step {step_index} measurement key {key!r} is invalid"
+            )
+        prompts.append(MeasurementPrompt(
+            key=key, label=label, unit=str(raw.get("unit") or "").strip(),
+            required=bool(raw.get("required", True)),
+        ))
+    return prompts
 
 
 def _validate_action(action: Any, src: str, step_index: int, recipe_names, deck_names) -> list[str]:

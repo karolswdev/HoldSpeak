@@ -1,0 +1,22 @@
+id: phase92-web-failure-recovery
+execution_target: web_react
+title: "Phase 92 · Web · Forced failures preserve work and name recovery"
+features: [phase92.journey.failure-recovery]
+recipes: [intel-endpoint-dead]
+manual_setup:
+  - Use browser/network controls and the isolated run to induce each named response without touching owner data.
+form_factors: [desktop, tablet_viewport]
+steps:
+  - do: With unique canary input, force 400, 401/403, 409, 500, timeout, offline, disk-full, malformed response, and partial completion across their matching primary actions.
+    expect: Every category is distinct, retains the canary or durable primary record, offers the correct retry/auth/resolve/copy/keep action, and never reports false completion.
+    where: /
+    verifies: [phase92.journey.failure-recovery]
+    measurements:
+      - {key: categories_exercised, label: Distinct forced-failure categories completed, unit: categories}
+      - {key: silent_failures, label: Failures with no visible state or next action, unit: failures}
+      - {key: lost_inputs, label: Canary inputs or captures requiring re-entry, unit: inputs}
+      - {key: false_completions, label: Failed or partial work labelled complete, unit: states}
+  - do: Reload after each failure and recover at least one example without clearing site data or recreating its subject.
+    expect: Work survives reload exactly once and recovery advances the authoritative source plus a new Receipt instead of rewriting the prior failure.
+    where: /
+teardown: []

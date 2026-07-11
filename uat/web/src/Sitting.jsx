@@ -289,12 +289,14 @@ function ExecutionSlotCard({ scenario, step, slot, productUp }) {
   const deviceSession = matchingDeviceSession(slot, sitting.device_sessions);
   const locked = slot.native && !deviceSession;
   const [note, setNote] = useState(existing?.note || "");
+  const [measurements, setMeasurements] = useState(existing?.measurements || {});
   const [shot, setShot] = useState(existing?.shot_path || null);
   const [uploading, setUploading] = useState(false);
   const [startedAt] = useState(() => new Date().toISOString());
 
   useEffect(() => {
     setNote(existing?.note || "");
+    setMeasurements(existing?.measurements || {});
     setShot(existing?.shot_path || null);
   }, [existing?.verdict, scenario.id, step.index, slot.id]); // eslint-disable-line
 
@@ -306,6 +308,7 @@ function ExecutionSlotCard({ scenario, step, slot, productUp }) {
     note,
     shot_path: shot,
     started_at: startedAt,
+    measurements,
     ...(slot.native ? { device_session_id: deviceSession?.id || deviceSession?.device_session_id } : {}),
     ...overrides,
   });
@@ -369,6 +372,32 @@ function ExecutionSlotCard({ scenario, step, slot, productUp }) {
         onBlur={() => existing && pick(existing.verdict)}
         disabled={locked}
       />
+      {step.measurements?.length > 0 && (
+        <fieldset className="measurement-fields">
+          <legend>Raw measurements</legend>
+          {step.measurements.map((measurement) => (
+            <label key={measurement.key}>
+              <span>
+                {measurement.label}
+                {measurement.required ? " *" : ""}
+              </span>
+              <span className="measurement-input">
+                <input
+                  value={measurements[measurement.key] || ""}
+                  onChange={(event) => setMeasurements((current) => ({
+                    ...current,
+                    [measurement.key]: event.target.value,
+                  }))}
+                  onBlur={() => existing && pick(existing.verdict)}
+                  disabled={locked}
+                  aria-required={measurement.required}
+                />
+                {measurement.unit ? <small>{measurement.unit}</small> : null}
+              </span>
+            </label>
+          ))}
+        </fieldset>
+      )}
       <div className="shot-row">
         <MicButton
           productUp={productUp && !locked}

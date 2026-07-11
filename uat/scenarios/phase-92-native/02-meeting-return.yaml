@@ -1,0 +1,21 @@
+id: phase92-native-meeting-return
+execution_target: ios_flagship_swift
+title: "Phase 92 · Native · Meeting capture survives and comes home"
+features: [phase92.journey.meeting-return]
+recipes: [fresh-desk]
+manual_setup:
+  - Use the exact flagship build, a real microphone/audio route, enough free storage, and Xcode or Instruments memory readings.
+form_factors: [ipad, iphone]
+steps:
+  - do: Start a uniquely titled Meeting offline and immediately background then reopen the app.
+    expect: One provisional Meeting exists from Record with a durable audio journal and visible recording/recovery truth.
+    verifies: [phase92.journey.meeting-return]
+  - do: Capture for at least five minutes, record memory, force-kill during speech, relaunch, Recover, and inspect partial processing.
+    expect: Memory remains bounded, checkpoint loss is bounded, the same Meeting returns once, saved work is labelled partial, and Retry/Skip names incomplete intelligence.
+    measurements:
+      - {key: capture_minutes, label: Capture duration, unit: minutes}
+      - {key: resident_memory_mb, label: Resident memory near end, unit: MB}
+      - {key: recovery_loss_seconds, label: Audio or transcript lost after force-kill, unit: seconds}
+  - do: Reconnect, sync twice, and inspect the Meeting plus child Artifact on native and Web Desk.
+    expect: One canonical Meeting carries provenance, transcript timing, aftercare, conflict truth, and source-linked receipts across both clients.
+teardown: []

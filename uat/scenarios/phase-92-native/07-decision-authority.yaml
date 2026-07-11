@@ -1,0 +1,18 @@
+id: phase92-native-decision-authority
+execution_target: ios_flagship_swift
+title: "Phase 92 · Native · Review, authority, execution, grants, and modes stay distinct"
+features: [phase92.journey.decision-authority]
+recipes: [functional-proposal-review]
+manual_setup:
+  - Pair the flagship app and provide one pending content review, one proposed effect, and one waiting Coder pane.
+form_factors: [ipad, iphone]
+steps:
+  - do: With VoiceOver, review content, inspect a proposal, and compare Safe, Neutral, and YOLO controls without executing.
+    expect: Review grants no authority; commitment actions name consequence and target; mode descriptions preserve auth, secret, payload/destination, pane, audit, and schema invariants.
+    verifies: [phase92.journey.decision-authority]
+  - do: Create, use, exhaust, and revoke bounded grants; relaunch and inspect use receipts.
+    expect: Actor, operations, target, data scope, expiry, and remaining count stay visible; each use is atomic; invalid reuse refuses and receipts persist.
+    measurements:
+      - {key: ambiguous_commitment_verbs, label: Consequential generic verbs without adjacent consequence, unit: verbs}
+      - {key: mode_invariant_failures, label: Hard invariants that varied by Control mode, unit: failures}
+teardown: []

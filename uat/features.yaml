@@ -1,6 +1,6 @@
 # The feature ledger — the enumerated shipped surface of HoldSpeak.
 #
-# Derived from the record (Phase-2 inventory + the holdspeak phase index) by
+# Derived from the record (Phase-2 inventory + reviewed additions + the phase index) by
 # uat/tools/build_ledger.py, then reviewed by hand. Scenarios cite these keys;
 # debriefs compute coverage against them. `unknown` surface cells are honest at
 # v1 — Phase 2 (The Inventory) owns making this exhaustive and resolving them.
@@ -13,6 +13,7 @@ version: 1
 generated_by: uat/tools/build_ledger.py (proposes; committed YAML is canon)
 source:
   inventory: pm/roadmap/holdspeak-uat/phase-2-the-inventory/directory/_raw-inventory-rows.json
+  additions: uat/feature-additions.yaml
   phase_index: pm/roadmap/holdspeak/README.md
   phases_total: 93
 features:
@@ -2697,6 +2698,136 @@ features:
   - first-run-no-model
   priority: must
   status: live
+- key: phase92.journey.capability-result
+  title: Persona and Workflow runs return findable Artifacts with lineage
+  domain: Phase 92 convergence journeys
+  phases:
+  - 92
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: phase92.journey.coder
+  title: A waiting Coder can be inspected and steered through a bounded grant
+  domain: Phase 92 convergence journeys
+  phases:
+  - 92
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - agent-pane-awaiting-input
+  priority: must
+  status: live
+- key: phase92.journey.decision-authority
+  title: Review, approval, grants, and Control modes preserve separate semantics
+  domain: Phase 92 convergence journeys
+  phases:
+  - 92
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - functional-proposal-review
+  priority: must
+  status: live
+- key: phase92.journey.destination-truth
+  title: Runs name selected and actual inference destinations and data scope
+  domain: Phase 92 convergence journeys
+  phases:
+  - 92
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: phase92.journey.failure-recovery
+  title: Forced failures retain work and offer the correct next action
+  domain: Phase 92 convergence journeys
+  phases:
+  - 92
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - intel-endpoint-dead
+  priority: must
+  status: live
+- key: phase92.journey.first-value
+  title: Desk arrival to first successful dictation with retained failure recovery
+  domain: Phase 92 convergence journeys
+  phases:
+  - 92
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: phase92.journey.integration
+  title: One Integration proposes, authorizes, executes, and returns a Receipt
+  domain: Phase 92 convergence journeys
+  phases:
+  - 92
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - functional-proposal-review
+  priority: must
+  status: live
+- key: phase92.journey.meeting-return
+  title: Durable Meeting capture, recovery, aftercare, sync, and Desk return
+  domain: Phase 92 convergence journeys
+  phases:
+  - 92
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - meeting-just-ended-open-actions
+  priority: must
+  status: live
+- key: phase92.journey.next-day-memory
+  title: Returning later shows subject-centered attention and source-linked Receipts
+  domain: Phase 92 convergence journeys
+  phases:
+  - 92
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: phase92.journey.pair-sync
+  title: Named pairing and per-object sync remain honest through reconnect and conflict
+  domain: Phase 92 convergence journeys
+  phases:
+  - 92
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
 - key: plugins.authoring.write-your-own
   title: Write your own meeting plugin or connector against a documented contract
   domain: public-docs-claims
@@ -3850,4 +3981,13 @@ phase_map:
   '91':
   - internal/no-uat-surface
   '92':
-  - internal/no-uat-surface
+  - phase92.journey.capability-result
+  - phase92.journey.coder
+  - phase92.journey.decision-authority
+  - phase92.journey.destination-truth
+  - phase92.journey.failure-recovery
+  - phase92.journey.first-value
+  - phase92.journey.integration
+  - phase92.journey.meeting-return
+  - phase92.journey.next-day-memory
+  - phase92.journey.pair-sync

@@ -131,6 +131,7 @@ class DebriefGenerator:
             "coverage": coverage,
             "protocol_coverage": protocol_coverage,
             "findings": findings_out,
+            "verdicts": verdicts,
             "verdict_totals": totals,
             "acceptance_status": _acceptance_status(
                 totals, complete=complete, protocol_valid=protocol_valid
@@ -344,6 +345,22 @@ class DebriefGenerator:
             lines += ["", "```text", slice_text, "```", ""]
         t = packet["verdict_totals"]
         lines += [
+            "## Raw measurements",
+            "",
+        ]
+        measured = [verdict for verdict in packet.get("verdicts", []) if verdict.get("measurements")]
+        if not measured:
+            lines.append("- none")
+        for verdict in measured:
+            values = ", ".join(
+                f"{key}={value}" for key, value in sorted(verdict["measurements"].items())
+            )
+            lines.append(
+                f"- `{verdict['scenario_id']}` step {verdict['step_index'] + 1} "
+                f"· `{verdict['slot_id']}` · {values}"
+            )
+        lines += [
+            "",
             "## Totals",
             "",
             f"{t['pass']} pass · {t['fail']} fail · {t['partial']} partial · "

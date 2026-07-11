@@ -46,6 +46,8 @@ steps:
     expect: The thing happened
     where: /
     form_factors: [desktop]
+    measurements:
+      - {key: elapsed_seconds, label: Elapsed time, unit: seconds}
 """,
         ),
         pack="smoke",
@@ -62,7 +64,39 @@ steps:
         "web_react:desktop"
     ]
     assert scenario.expected_verdict_count() == 1
+    assert scenario.steps[0].measurements[0].to_dict() == {
+        "key": "elapsed_seconds", "label": "Elapsed time",
+        "unit": "seconds", "required": True,
+    }
+    assert scenario.to_dict()["steps"][0]["measurements"][0]["key"] == "elapsed_seconds"
     assert _errors(scenario) == []
+
+
+def test_measurements_require_valid_unique_keys(tmp_path):
+    duplicate = _write(
+        tmp_path,
+        """
+id: measured
+title: Measured
+execution_target: web_react
+form_factors: [desktop]
+features: [feat.one]
+recipes: [seeded-desk]
+steps:
+  - do: x
+    expect: y
+    measurements:
+      - {key: seconds, label: First}
+      - {key: seconds, label: Duplicate}
+""",
+    )
+    scenario = load_scenario(duplicate)
+    assert any("duplicate measurement keys" in error for error in _errors(scenario))
+
+    invalid = duplicate.read_text().replace("key: seconds", "key: elapsed-seconds", 1)
+    duplicate.write_text(invalid)
+    with pytest.raises(ScenarioError, match="measurement key"):
+        load_scenario(duplicate)
 
 
 @pytest.mark.parametrize("missing", ["execution_target", "form_factors"])

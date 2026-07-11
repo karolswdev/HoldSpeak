@@ -34,6 +34,7 @@ INVENTORY = (
 )
 PHASE_INDEX = REPO / "pm/roadmap/holdspeak/README.md"
 LEDGER = REPO / "uat/features.yaml"
+ADDITIONS = REPO / "uat/feature-additions.yaml"
 
 NO_UAT_MARKER = "internal/no-uat-surface"
 
@@ -100,6 +101,29 @@ def build_entries(rows: list[dict]) -> list[dict]:
     return sorted(by_key.values(), key=lambda e: e["key"])
 
 
+def load_additions() -> list[dict]:
+    """Reviewed post-inventory feature keys, in the emitted ledger shape."""
+    import yaml
+
+    doc = yaml.safe_load(ADDITIONS.read_text()) or {}
+    entries = doc.get("features") or []
+    if not isinstance(entries, list) or any(not isinstance(item, dict) for item in entries):
+        raise ValueError(f"{ADDITIONS} must contain a features list of mappings")
+    return entries
+
+
+def merge_entries(derived: list[dict], additions: list[dict]) -> list[dict]:
+    merged = {entry["key"]: entry for entry in derived}
+    for entry in additions:
+        key = str(entry.get("key") or "").strip()
+        if not key:
+            raise ValueError(f"{ADDITIONS} contains an entry without a key")
+        if key in merged:
+            raise ValueError(f"{ADDITIONS} duplicates inventory feature {key!r}")
+        merged[key] = entry
+    return [merged[key] for key in sorted(merged)]
+
+
 def _domain_slug(domain: str) -> str:
     # The inventory's domain is a long prose string; keep a short leading token.
     head = domain.split("(")[0].strip()
@@ -126,6 +150,7 @@ def render_yaml(entries: list[dict], phase_map: dict[str, list[str]], phase_inde
         "generated_by": "uat/tools/build_ledger.py (proposes; committed YAML is canon)",
         "source": {
             "inventory": str(INVENTORY.relative_to(REPO)),
+            "additions": str(ADDITIONS.relative_to(REPO)),
             "phase_index": str(PHASE_INDEX.relative_to(REPO)),
             "phases_total": len(phase_index),
         },
@@ -135,7 +160,7 @@ def render_yaml(entries: list[dict], phase_map: dict[str, list[str]], phase_inde
     header = (
         "# The feature ledger — the enumerated shipped surface of HoldSpeak.\n"
         "#\n"
-        "# Derived from the record (Phase-2 inventory + the holdspeak phase index) by\n"
+        "# Derived from the record (Phase-2 inventory + reviewed additions + the phase index) by\n"
         "# uat/tools/build_ledger.py, then reviewed by hand. Scenarios cite these keys;\n"
         "# debriefs compute coverage against them. `unknown` surface cells are honest at\n"
         "# v1 — Phase 2 (The Inventory) owns making this exhaustive and resolving them.\n"
@@ -151,7 +176,7 @@ def render_yaml(entries: list[dict], phase_map: dict[str, list[str]], phase_inde
 def generate() -> str:
     rows = json.loads(INVENTORY.read_text())
     phase_index = load_phase_index()
-    entries = build_entries(rows)
+    entries = merge_entries(build_entries(rows), load_additions())
     phase_map = build_phase_map(entries, phase_index)
     return render_yaml(entries, phase_map, phase_index)
 

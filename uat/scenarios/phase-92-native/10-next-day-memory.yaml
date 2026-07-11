@@ -1,0 +1,18 @@
+id: phase92-native-next-day-memory
+execution_target: ios_flagship_swift
+title: "Phase 92 · Native · Next-day Queue HUD remembers what needs the owner"
+features: [phase92.journey.next-day-memory]
+recipes: [seeded-desk]
+manual_setup:
+  - Before ending day one, create one waiting, failed, running, and complete source record, then leave the paired flagship app closed until the next calendar day.
+form_factors: [ipad, iphone]
+steps:
+  - do: On the next day, cold-launch the flagship Desk without first opening feature histories or Settings.
+    expect: Native Queue HUD and contextual Desk state show waiting, failed, running, and completed work with an ordered semantic list that survives large text and orientation changes.
+    verifies: [phase92.journey.next-day-memory]
+    measurements:
+      - {key: detached_surfaces_visited, label: Other history or queue surfaces required before understanding state, unit: surfaces}
+      - {key: desk_return_pct, label: Primary journeys with a findable Desk return or Receipt, unit: percent}
+  - do: With VoiceOver inspect reason, decision, destination, authority, attempt, outcome, time, and source; acknowledge and dismiss separate cards; reconnect after offline.
+    expect: Presentation actions mutate no subject, source truth remains reachable, offline retains last-known rows, and fresh authoritative projections return after reconnect.
+teardown: []

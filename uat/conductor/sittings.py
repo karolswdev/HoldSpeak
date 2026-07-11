@@ -22,6 +22,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 from . import paths
 from .contract.coverage import execution_coverage, pack_coverage
@@ -435,6 +436,7 @@ class SittingManager:
         shot_path: str | None = None,
         started_at: str | None = None,
         device_session_id: str | None = None,
+        measurements: dict[str, Any] | None = None,
     ) -> dict:
         if verdict not in ("pass", "fail", "partial", "observe", "skip"):
             raise SittingError(f"invalid verdict: {verdict!r}")
@@ -453,6 +455,28 @@ class SittingManager:
                 f"invalid step {step_index} for scenario {scenario_id!r}"
             )
         step = scenario.steps[step_index]
+        supplied_measurements = measurements or {}
+        expected_measurements = {item.key: item for item in step.measurements}
+        unknown_measurements = set(supplied_measurements) - set(expected_measurements)
+        if unknown_measurements:
+            raise SittingError(
+                "unknown measurement keys: " + ", ".join(sorted(unknown_measurements))
+            )
+        missing_measurements = [
+            item.key for item in step.measurements
+            if item.required and str(supplied_measurements.get(item.key, "")).strip() == ""
+        ]
+        # Never prevent an owner from recording a fail/partial. Required raw
+        # values gate substantive pass/observe credit, not defect capture.
+        if verdict in {"pass", "observe"} and missing_measurements:
+            raise SittingError(
+                "required measurements missing: " + ", ".join(missing_measurements)
+            )
+        clean_measurements = {
+            key: str(value).strip()[:500]
+            for key, value in supplied_measurements.items()
+            if str(value).strip()
+        }
         stage = self.db.get_scenario_stage(
             sitting["run_id"], sitting["pack"], scenario_id
         )
@@ -520,6 +544,7 @@ class SittingManager:
             "shot_path": shot_path,
             "started_at": started_at,
             "created_at": _utcnow(),
+            "measurements_json": json.dumps(clean_measurements, sort_keys=True),
         })
         verdict_index = {
             (item["scenario_id"], item["step_index"], item["slot_id"]): item

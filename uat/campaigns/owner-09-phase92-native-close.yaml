@@ -1,0 +1,27 @@
+title: "9 · Phase 92 ten-journey flagship close"
+purpose: >
+  Execute the same ten convergence journeys on the canonical flagship Swift
+  root on physical iPhone and iPad. Native verdicts remain locked to exact
+  pairing-verified device attestations and cannot be supplied by simulator or Web.
+sequence: 9
+tier: close
+estimated_minutes: 300
+prerequisites:
+  - Phase 91 is closed before this campaign is credited to a Phase 92 close.
+  - Start with UAT_HOST=0.0.0.0 and Device sitting enabled; install the exact flagship build on physical iPhone and iPad.
+  - Record device, OS, bundle, build, install source, orientation, permissions, audio route, model, endpoint, peer, and pairing facts.
+  - Prepare real microphones, five destination classes, one disposable Integration, one waiting Coder, low-storage/network faults, and next-day continuity.
+exit_gate:
+  - All ten ios_flagship_swift journeys pass independently on physical iPhone and iPad with every required raw measurement present.
+  - VoiceOver screen-curtain, Reduce Motion, accessibility text, orientation, lock, route change, offline, capture, sync, model run, approval, and steering evidence is direct and unwaived.
+scenarios:
+  - phase-92-native/phase92-native-first-value
+  - phase-92-native/phase92-native-meeting-return
+  - phase-92-native/phase92-native-capability-result
+  - phase-92-native/phase92-native-destination-truth
+  - phase-92-native/phase92-native-pair-sync
+  - phase-92-native/phase92-native-integration
+  - phase-92-native/phase92-native-decision-authority
+  - phase-92-native/phase92-native-coder
+  - phase-92-native/phase92-native-failure-recovery
+  - phase-92-native/phase92-native-next-day-memory

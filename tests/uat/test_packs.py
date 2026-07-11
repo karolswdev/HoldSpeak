@@ -135,6 +135,26 @@ def test_owner_campaigns_are_strictly_partitioned_by_implementation():
     )
 
 
+def test_phase92_close_campaigns_are_ten_measured_journeys_per_real_target():
+    web = load_pack("owner-08-phase92-web-close")
+    native = load_pack("owner-09-phase92-native-close")
+    assert len(web) == len(native) == 10
+    assert {scenario.execution_target for scenario in web} == {"web_react"}
+    assert {scenario.execution_target for scenario in native} == {
+        "ios_flagship_swift"
+    }
+    assert {form for scenario in web for form in scenario.form_factors} == {
+        "desktop", "tablet_viewport"
+    }
+    assert {form for scenario in native for form in scenario.form_factors} == {
+        "ipad", "iphone"
+    }
+    assert all(
+        any(step.measurements for step in scenario.steps)
+        for scenario in web + native
+    )
+
+
 @pytest.fixture
 def real_client(tmp_path, monkeypatch):
     monkeypatch.setenv("UAT_RUNS_ROOT", str(tmp_path / "_runs"))

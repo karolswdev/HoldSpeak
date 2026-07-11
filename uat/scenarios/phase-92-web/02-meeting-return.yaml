@@ -1,0 +1,24 @@
+id: phase92-web-meeting-return
+execution_target: web_react
+title: "Phase 92 · Web · Meeting survives, finishes honestly, and returns"
+features: [phase92.journey.meeting-return]
+recipes: [fresh-desk]
+manual_setup:
+  - Use real microphone and system-audio sources; keep Activity Monitor available for resident-memory readings.
+form_factors: [desktop, tablet_viewport]
+steps:
+  - do: Start a uniquely titled Meeting from the Desk and immediately reload the Desk in a second tab.
+    expect: One provisional Meeting already exists with recording state and a recoverable checkpoint; Record did not leave identity only in memory.
+    where: /
+    verifies: [phase92.journey.meeting-return]
+  - do: Speak for at least five minutes with system audio active, record resident memory, stop, and inspect processing plus aftercare.
+    expect: Memory remains bounded, the Meeting stays saved if intelligence is partial, incomplete work is named, and aftercare links to source moments.
+    where: /live
+    measurements:
+      - {key: capture_minutes, label: Capture duration, unit: minutes}
+      - {key: resident_memory_mb, label: Resident memory near end, unit: MB}
+      - {key: recovery_loss_seconds, label: Audio or transcript lost after interruption, unit: seconds}
+  - do: Return to the Desk, open the Meeting and one child Artifact, then refresh twice.
+    expect: One durable Meeting and its retained results remain findable exactly once with lineage and a source-linked Receipt.
+    where: /
+teardown: []

@@ -58,7 +58,9 @@ def test_seed_all_primitive_types_against_real_product(real_manager):
     # The zone exists with both notes filed into it (read back through the route).
     dirs = client.get_json("/api/directories")["directories"]
     zone = next(d for d in dirs if d["id"] == "uat-seed-zone-demo")
-    assert set(zone.get("member_ids", [])) == {"uat-seed-note-z1", "uat-seed-note-z2"}
+    assert set(zone.get("member_ids", [])) == {
+        "note:uat-seed-note-z1", "note:uat-seed-note-z2"
+    }
     # And the primitives are all there, indistinguishable from user-made.
     assert any(n["id"] == "uat-seed-note-z1" for n in client.get_json("/api/notes")["notes"])
     assert any(k["id"] == "uat-seed-kb-demo" for k in client.get_json("/api/kbs")["kbs"])

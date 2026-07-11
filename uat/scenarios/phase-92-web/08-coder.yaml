@@ -1,0 +1,20 @@
+id: phase92-web-coder
+execution_target: web_react
+title: "Phase 92 · Web · A waiting Coder can be answered without pointer dexterity"
+features: [phase92.journey.coder]
+recipes: [agent-pane-awaiting-input]
+manual_setup:
+  - Keep the staged tmux pane visible so wrong-pane or duplicate delivery can be observed directly.
+form_factors: [desktop, tablet_viewport]
+steps:
+  - do: Using keyboard only, find the waiting Coder on the Desk, inspect it freely, create a bounded Arm grant, and send one answer.
+    expect: Watch is authority-free; Arm names exact pane, operations, TTL, and count; one answer reaches the intended pane exactly once and creates a source-linked Receipt.
+    where: /
+    verifies: [phase92.journey.coder]
+  - do: Change pane identity, retry, revoke, and attempt a key action without a valid grant.
+    expect: Every invalid attempt refuses by name, retains drafted text, and offers a correct re-arm or pane-selection action; nothing reaches another pane.
+    where: /
+    measurements:
+      - {key: wrong_pane_deliveries, label: Inputs delivered to a non-authorized pane, unit: deliveries}
+      - {key: pointer_only_actions, label: Primary actions with no keyboard equivalent, unit: actions}
+teardown: []

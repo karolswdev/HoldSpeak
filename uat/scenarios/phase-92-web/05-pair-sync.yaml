@@ -1,0 +1,20 @@
+id: phase92-web-pair-sync
+execution_target: web_react
+title: "Phase 92 · Web · Pairing and sync stay honest per object"
+features: [phase92.journey.pair-sync]
+recipes: [seeded-desk]
+manual_setup:
+  - Pair the exact flagship Swift build to this isolated LAN run and record the named peer and sync scope.
+form_factors: [desktop, tablet_viewport]
+steps:
+  - do: Inspect pairing, disconnect the device, edit one Note and one Meeting on separate sides, then reconnect and sync twice.
+    expect: Paired and Connected remain separate states; each object shows pending/synced/conflict truth and the second sync creates no duplicate.
+    where: /settings
+    verifies: [phase92.journey.pair-sync]
+  - do: Create equal-clock divergent edits, reconnect, and resolve the surfaced conflict without choosing keep-both.
+    expect: The deterministic winner remains canonical, the losing value is recoverable in one conflict record, and neither client silently loses or duplicates the object.
+    where: /
+    measurements:
+      - {key: duplicate_objects, label: Duplicate canonical objects after two syncs, unit: objects}
+      - {key: silent_conflicts, label: Divergences with no visible conflict or receipt, unit: conflicts}
+teardown: []

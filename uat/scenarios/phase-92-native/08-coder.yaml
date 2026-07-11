@@ -1,0 +1,18 @@
+id: phase92-native-coder
+execution_target: ios_flagship_swift
+title: "Phase 92 · Native · Waiting Coder is operable with VoiceOver"
+features: [phase92.journey.coder]
+recipes: [agent-pane-awaiting-input]
+manual_setup:
+  - Pair the flagship app and keep the staged tmux pane visible for exact delivery observation.
+form_factors: [ipad, iphone]
+steps:
+  - do: With screen curtain and VoiceOver, find the waiting Coder, inspect it, Arm the exact pane, dictate an answer, and send once.
+    expect: Watch is free; Arm exposes scope, TTL, count, and revoke; the intended pane receives one answer and the Queue HUD exposes a source-linked Receipt.
+    verifies: [phase92.journey.coder]
+  - do: Change pane identity, retry without re-arming, revoke, and attempt a key action; repeat with Reduce Motion and accessibility text.
+    expect: Invalid actions refuse by name and retain drafts; no wrong pane receives input; large text preserves state and actions; continuous decorative motion stops.
+    measurements:
+      - {key: wrong_pane_deliveries, label: Inputs delivered to a non-authorized pane, unit: deliveries}
+      - {key: gesture_only_actions, label: Primary actions with no VoiceOver equivalent, unit: actions}
+teardown: []

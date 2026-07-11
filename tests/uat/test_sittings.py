@@ -107,6 +107,46 @@ def test_sitting_verdict_resume_flow_uses_slot_id(client):
     assert verdict["form_factor"] == "desktop"
 
 
+def test_required_measurements_fail_closed_and_persist_as_structured_data(client):
+    response = client.post(
+        "/api/sittings", json={"pack": "owner-08-phase92-web-close"}
+    )
+    assert response.status_code == 201, response.text
+    sitting = response.json()
+    scenario_id, step_index, slot_id = _first_step_slot(sitting)
+    _mark_staged(client, sitting, scenario_id, manual_confirmed=1)
+    body = {
+        "scenario_id": scenario_id,
+        "step_index": step_index,
+        "slot_id": slot_id,
+        "verdict": "pass",
+    }
+    missing = client.post(f"/api/sittings/{sitting['id']}/verdicts", json=body)
+    assert missing.status_code == 400
+    assert "required measurements missing" in missing.json()["detail"]
+
+    recorded_failure = client.post(
+        f"/api/sittings/{sitting['id']}/verdicts",
+        json={**body, "verdict": "fail", "note": "instrument unavailable"},
+    )
+    assert recorded_failure.status_code == 200, recorded_failure.text
+
+    measurements = {
+        "elapsed_seconds": "18.4", "product_steps": "2",
+        "placement_decisions": "0", "technical_nouns": "1",
+    }
+    accepted = client.post(
+        f"/api/sittings/{sitting['id']}/verdicts",
+        json={**body, "measurements": measurements},
+    )
+    assert accepted.status_code == 200, accepted.text
+    verdict = next(
+        item for item in accepted.json()["verdicts"]
+        if item["scenario_id"] == scenario_id and item["slot_id"] == slot_id
+    )
+    assert verdict["measurements"] == measurements
+
+
 def test_verdict_persists_across_a_fresh_manager(client):
     created = client.post("/api/sittings", json={"pack": "smoke"}).json()
     scenario_id, step_index, slot_id = _first_step_slot(created)

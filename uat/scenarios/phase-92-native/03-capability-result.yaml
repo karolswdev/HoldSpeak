@@ -1,0 +1,18 @@
+id: phase92-native-capability-result
+execution_target: ios_flagship_swift
+title: "Phase 92 · Native · Persona and Workflow results return to the Desk"
+features: [phase92.journey.capability-result]
+recipes: [seeded-desk]
+manual_setup:
+  - Pair and sync the staged Persona, Workflow, Note, and available inference target into the flagship Desk.
+form_factors: [ipad, iphone]
+steps:
+  - do: Open the seeded Note, run the Persona with the displayed Runs on target, and keep its Result.
+    expect: The source, Persona, selected target, and actual target are visible; Keep materializes one Artifact with lineage beside the source.
+    verifies: [phase92.journey.capability-result]
+  - do: Run the Workflow on the same source, cancel once, then run again and cold-launch the app.
+    expect: Cancellation retains a receipt; supported completion returns a findable Artifact; unsupported graph behavior refuses explicitly without prompt lowering; both survive relaunch.
+    measurements:
+      - {key: findable_artifacts, label: Completed runs returning one findable Artifact, unit: runs}
+      - {key: missing_lineage, label: Kept Artifacts without source and run lineage, unit: artifacts}
+teardown: []

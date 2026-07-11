@@ -44,6 +44,10 @@ PRIMITIVE_ROUTES: dict[str, str] = {
 
 # Friendly aliases accepted in a manifest.
 _ALIASES = {"zones": "directories", "knowledge_blocks": "kbs"}
+_RESOURCE_KINDS = {
+    "directories": "zone", "kbs": "knowledge", "notes": "note",
+    "recipes": "persona", "chains": "sequence", "workflows": "workflow",
+}
 
 
 def seeds_dir() -> Path:
@@ -126,14 +130,24 @@ class Seeder:
 
     def apply(self, manifest: SeedManifest) -> SeedOutcome:
         out = SeedOutcome(manifest=manifest.name)
+        refs = {
+            str(item["id"]): f"{_RESOURCE_KINDS[ptype]}:{item['id']}"
+            for ptype, items in manifest.primitives.items()
+            if ptype in _RESOURCE_KINDS
+            for item in items
+            if isinstance(item, dict) and item.get("id")
+        }
         for ptype, route in PRIMITIVE_ROUTES.items():
             for item in manifest.primitives.get(ptype, []):
-                self._apply_primitive(ptype, route, item, out)
+                self._apply_primitive(ptype, route, item, out, refs)
         for meeting in manifest.meetings:
             self._apply_meeting(meeting, out)
         return out
 
-    def _apply_primitive(self, ptype: str, route: str, item: Any, out: SeedOutcome) -> None:
+    def _apply_primitive(
+        self, ptype: str, route: str, item: Any, out: SeedOutcome,
+        refs: dict[str, str],
+    ) -> None:
         if not isinstance(item, dict):
             out.errors.append(f"{ptype} item is not a mapping: {item!r}")
             return
@@ -151,7 +165,10 @@ class Seeder:
         if resp.status_code in (200, 201):
             out.bump(ptype)
             for mid in member_ids or []:
-                r = self.client.put(f"/api/directories/{item['id']}/members/{mid}")
+                member_ref = str(mid) if ":" in str(mid) else refs.get(str(mid), str(mid))
+                r = self.client.put(
+                    f"/api/directories/{item['id']}/members/{member_ref}"
+                )
                 if r.status_code not in (200, 201):
                     out.errors.append(f"zone {item['id']} file {mid}: HTTP {r.status_code}")
         else:

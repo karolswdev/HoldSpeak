@@ -136,6 +136,39 @@ a.linkbtn:hover { color: var(--accent-hot); text-decoration: underline; }
   border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 9px 11px; font-family: var(--font); font-size: 14px; resize: vertical; min-height: 44px;
 }
+
+.measurement-fields {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.measurement-fields legend {
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.measurement-fields label,
+.measurement-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.measurement-input input {
+  width: min(180px, 45vw);
+}
+
+.measurement-input small {
+  min-width: 54px;
+  color: var(--muted);
+}
 .note-field:focus { outline: none; border-color: var(--accent); }
 .shot-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--text-dim); }
 .na-reason { color: var(--text-faint); font-size: 13px; font-style: italic; }

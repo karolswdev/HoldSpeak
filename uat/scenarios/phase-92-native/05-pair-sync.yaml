@@ -1,0 +1,18 @@
+id: phase92-native-pair-sync
+execution_target: ios_flagship_swift
+title: "Phase 92 · Native · Pairing and sync remain honest per object"
+features: [phase92.journey.pair-sync]
+recipes: [seeded-desk]
+manual_setup:
+  - Start from an unpaired flagship install, keep the isolated hub LAN URL and token available, and use a second Web client for divergent edits.
+form_factors: [ipad, iphone]
+steps:
+  - do: Pair to the named hub, verify the token is in Keychain, disconnect, create/edit a Note and Meeting, reconnect, and sync twice.
+    expect: Paired differs from Connected and Synced; per-object pending state survives relaunch; one of each object appears on Web and the second sync is idempotent.
+    verifies: [phase92.journey.pair-sync]
+  - do: Create equal-clock divergent edits on Web and native, reconnect, and inspect conflict recovery.
+    expect: One deterministic winner remains canonical, one losing value is recoverable, and no UI claims a duplicate keep-both object.
+    measurements:
+      - {key: duplicate_objects, label: Duplicate canonical objects after two syncs, unit: objects}
+      - {key: silent_conflicts, label: Divergences with no visible conflict or receipt, unit: conflicts}
+teardown: []

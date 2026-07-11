@@ -366,7 +366,8 @@
   padding: var(--space-5);
 }
 .desk-first-words {
-  width: min(620px, calc(100vw - 32px));
+  width: 100%;
+  max-width: 620px;
   display: grid;
   gap: var(--space-3);
   text-align: left;

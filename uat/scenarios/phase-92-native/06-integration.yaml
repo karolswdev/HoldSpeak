@@ -1,0 +1,18 @@
+id: phase92-native-integration
+execution_target: ios_flagship_swift
+title: "Phase 92 · Native · Integration effect returns one Receipt"
+features: [phase92.journey.integration]
+recipes: [functional-proposal-review]
+manual_setup:
+  - Pair the flagship app, configure one disposable Integration on the hub, and use only a disposable allow-listed destination.
+form_factors: [ipad, iphone]
+steps:
+  - do: From the native Meeting/action context, prepare an external effect and inspect it before approval.
+    expect: The card names immutable effect, destination, data scope, authority basis, and exact commitment rather than a generic Approve action.
+    verifies: [phase92.journey.integration]
+  - do: Reject once, recreate, approve using the consequence-specific native action, and check the disposable destination plus Queue HUD.
+    expect: Rejection never egresses; approval executes once; source and Integration retain the same outcome Receipt with attempt and actual destination.
+    measurements:
+      - {key: external_effect_count, label: Effects observed at disposable destination, unit: effects}
+      - {key: ambiguous_commitment_verbs, label: Consequential generic verbs without adjacent consequence, unit: verbs}
+teardown: []

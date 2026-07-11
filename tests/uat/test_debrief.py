@@ -88,7 +88,9 @@ def test_debrief_generates_both_files_and_findings(client):
 def test_debrief_json_schema_stable(client):
     sid, *_ = _sitting_with_verdicts(client)
     packet = _generate(client, sid)["packet"]
-    assert set(packet.keys()) >= {"header", "scores", "coverage", "findings", "verdict_totals"}
+    assert set(packet.keys()) >= {
+        "header", "scores", "coverage", "findings", "verdicts", "verdict_totals"
+    }
     assert set(packet["verdict_totals"].keys()) == {
         "pass", "fail", "partial", "observe", "skip"
     }

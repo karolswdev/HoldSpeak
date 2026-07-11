@@ -1,0 +1,18 @@
+id: phase92-web-decision-authority
+execution_target: web_react
+title: "Phase 92 · Web · Review, approval, grants, and modes remain separate"
+features: [phase92.journey.decision-authority]
+recipes: [functional-proposal-review]
+form_factors: [desktop, tablet_viewport]
+steps:
+  - do: Review content, inspect a proposed external action, and compare Safe, Neutral, and YOLO behavior before authorizing anything.
+    expect: Content review grants no execution authority; each mode explains its policy; auth, secrets, immutable destination/payload, pane identity, and audit invariants never weaken.
+    where: /settings
+    verifies: [phase92.journey.decision-authority]
+  - do: Create a one-use bounded Grant, consume it once, attempt a second use, revoke another Grant, and inspect receipts.
+    expect: Scope, actor, operation, target, data, expiry, and count are visible; use is atomic; exhausted and revoked grants refuse with reason; every use has a Receipt.
+    where: /
+    measurements:
+      - {key: ambiguous_commitment_verbs, label: Consequential generic verbs without adjacent consequence, unit: verbs}
+      - {key: mode_invariant_failures, label: Hard invariants that varied by Control mode, unit: failures}
+teardown: []

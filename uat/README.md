@@ -35,7 +35,7 @@ uv run python -m uat.conductor           # opens the UAT site; note the URL it p
 
 Then, in the browser (it prints `http://localhost:8799`):
 
-1. Start **1 · React Web Desk foundation — desktop**. The seven numbered owner
+1. Start **1 · React Web Desk foundation — desktop**. The nine numbered owner
    campaigns are the execution protocol; ordinary packs remain below them as
    reference/diagnostic material.
 2. Walk the beats: each says *do this*, *expect this*. Use **Open the product**

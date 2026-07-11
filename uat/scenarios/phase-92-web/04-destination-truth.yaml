@@ -1,0 +1,19 @@
+id: phase92-web-destination-truth
+execution_target: web_react
+title: "Phase 92 · Web · Every run says where it happens"
+features: [phase92.journey.destination-truth]
+recipes: [seeded-desk]
+manual_setup:
+  - Configure available examples of This device, Paired device, Private endpoint, Mesh node, and External service without storing disposable secrets in notes.
+form_factors: [desktop, tablet_viewport]
+steps:
+  - do: Open the Runs on picker for one consequential run and inspect all five destination classes plus an unavailable target.
+    expect: Each target names boundary, owner, transport, data sent/returned, readiness, and recovery; unavailable means refusal or explicit alternate, never silent retargeting.
+    where: /
+    verifies: [phase92.journey.destination-truth]
+    measurements:
+      - {key: destination_classes_walked, label: Distinct destination classes directly exercised, unit: classes}
+  - do: Execute on each available class, force one target to disappear after selection, and inspect the resulting Artifact or Receipt.
+    expect: Selected and actual destinations are both visible; disappearance preserves the request and names the failed target and next action.
+    where: /workbench
+teardown: []
