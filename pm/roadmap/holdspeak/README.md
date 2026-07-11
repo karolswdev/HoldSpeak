@@ -7,8 +7,10 @@
 **Last updated:** 2026-07-11 — **Phase 91, One React Surface, IN PROGRESS
 (9/10); Phase 92, The Coalescence, PLANNED with all ten stories carrying
 pre-close implementation but no accepted owner/device outcome; Phase 93,
-Effortless HoldSpeak, IN PROGRESS with HS-93-01 through HS-93-05 carrying
-automated implementation evidence but not yet accepted.** The Web is
+Effortless HoldSpeak, IN PROGRESS with HS-93-01 through HS-93-06 carrying
+automated implementation evidence but not yet accepted. HS-93-06 now exposes
+an explicit, atomic choice between retained Meeting sync-conflict versions on
+History and the Desk.** The Web is
 one Vite/React 19 tree and Phase 92 added substantial language, trust,
 first-value, capture, relationship, capability, destination, authority, and
 Desk-memory substrate. The experience audit found that the product is not yet

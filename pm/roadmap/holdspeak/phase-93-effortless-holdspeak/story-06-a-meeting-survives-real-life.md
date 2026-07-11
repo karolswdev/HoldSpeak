@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** backlog
+- **Status:** in progress — explicit Web/Hub conflict recovery is verified;
+  long-run, fault, partial-intelligence, offline-sync, owner, and physical-device
+  gates remain open
 - **Depends on:** HS-93-02, HS-93-03
 - **Unblocks:** HS-93-08, HS-93-09
 - **Owner:** unassigned
@@ -64,6 +66,27 @@ offline sync, and conflict recovery work on physical clients.
 
 Approximately flat memory requires a documented tolerance derived from observed
 steady-state behavior; do not invent a threshold before the first trace.
+
+## Implementation progress — 2026-07-11
+
+The first vertical slice closes the previously stored-but-unusable Meeting
+sync-conflict loop. Equal-clock divergence now remains unresolved until the
+owner explicitly chooses `Keep current Meeting` or `Use synced Meeting` from
+either History or the Meeting's Desk pull-out. Both versions show title,
+capture state, transcript count/latest text, tags, and provenance before the
+choice. An incoming tombstone is named as the destructive `Delete this Meeting
+from this device` action; there is no fictitious keep-both option.
+
+The hub applies an incoming version and marks the conflict resolved in one
+SQLite transaction, preserving the same Meeting identity. Either retained
+choice advances beyond the contested sync clock so the next pass converges on
+the owner's decision. A mismatched or unreadable incoming value refuses without
+changing either version. The API surface manifest and focused Python/React
+regression proof are captured in [progress-story-06.md](./progress-story-06.md).
+
+This does not satisfy the story's physical conflict walk or any long-capture,
+fault, partial-intelligence, offline-sync, or owner gate. No acceptance checkbox
+is changed.
 
 Bundling note: this initial Phase-93 scaffold is intentionally committed with
 the HS-93-01 through HS-93-05 in-progress implementation slices because the

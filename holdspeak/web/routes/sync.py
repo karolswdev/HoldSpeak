@@ -234,7 +234,7 @@ def _parse_dt(value: Any) -> Any:
     return parsed.replace(tzinfo=None) if parsed.tzinfo is not None else parsed
 
 
-def _meeting_state_from_value(value: dict[str, Any]) -> Any:
+def meeting_state_from_sync_value(value: dict[str, Any]) -> Any:
     """A pushed meeting `value` (the `MeetingState.to_dict` wire shape) → a
     `MeetingState`, ready to hand to ``MeetingRepository.save_meeting``.
 
@@ -350,7 +350,7 @@ def _merge_meetings(db: Any, records: list[dict[str, Any]]) -> int:
                 continue
             if local_lm == incoming_lm:
                 incoming_compare = (
-                    _meeting_state_from_value({**value, "id": rec_id}).to_dict()
+                    meeting_state_from_sync_value({**value, "id": rec_id}).to_dict()
                     if isinstance(value, dict) else {}
                 )
                 local_compare = existing.to_dict()
@@ -373,7 +373,7 @@ def _merge_meetings(db: Any, records: list[dict[str, Any]]) -> int:
             continue
         if not isinstance(value, dict):
             continue
-        state = _meeting_state_from_value({**value, "id": rec_id})
+        state = meeting_state_from_sync_value({**value, "id": rec_id})
         state.sync_modified_at = incoming_lm
         if not state.id:
             continue

@@ -770,6 +770,63 @@
 .signal-dialog:has(.meeting-detail) {
   width: min(1040px, calc(100vw - 32px));
 }
+.meeting-conflict-recovery,
+.meeting-conflict {
+  display: grid;
+  gap: var(--space-3);
+}
+.meeting-conflict {
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--border));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--warn) 7%, var(--surface-2));
+}
+.meeting-conflict h3,
+.meeting-conflict h4,
+.meeting-conflict p,
+.meeting-conflict dl,
+.meeting-conflict dd {
+  margin: 0;
+}
+.meeting-conflict > div:first-child p,
+.meeting-conflict-version p {
+  color: var(--text-muted);
+}
+.meeting-conflict-versions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.meeting-conflict-version {
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.meeting-conflict-version.is-deletion {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+}
+.meeting-conflict-version dl {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.meeting-conflict-version dl > div {
+  display: grid;
+  grid-template-columns: minmax(72px, 0.35fr) minmax(0, 1fr);
+  gap: var(--space-2);
+}
+.meeting-conflict-version dt {
+  color: var(--text-faint);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.meeting-conflict-version dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 
 .studio-grid {
   display: grid;
@@ -1143,6 +1200,9 @@
   .page-grid > .span-8,
   .page-grid > .span-4 {
     grid-column: 1 / -1;
+  }
+  .meeting-conflict-versions {
+    grid-template-columns: 1fr;
   }
 }
 

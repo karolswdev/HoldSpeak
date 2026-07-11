@@ -18,6 +18,7 @@ import { objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
 import { workroomHref } from "../../workrooms/context";
+import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
 import {
   contextualCapabilityActions,
   contextualCoderSessions,
@@ -354,6 +355,17 @@ export function Pullout({ o }: { o: WorldObject }) {
                 </p>
               </section>
             ) : null}
+            <MeetingConflictRecovery
+              meetingId={o.id}
+              onResolved={async (result) => {
+                if (result.deleted) {
+                  closePullout();
+                } else if (result.meeting) {
+                  setDetail(result.meeting as MeetingDetail);
+                }
+                await useDesk.getState().refresh();
+              }}
+            />
             {detail?.intel?.summary ? (
               <section>
                 <h3>Summary</h3>

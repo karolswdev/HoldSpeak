@@ -15,6 +15,7 @@ import {
   Toolbar,
 } from "../components/signal/Signal";
 import { apiBlob, apiFetch, readableError, type JsonRecord } from "../lib/api";
+import { MeetingConflictRecovery } from "../meetings/MeetingConflictRecovery";
 import {
   ConfirmAction,
   PageHero,
@@ -305,6 +306,17 @@ function MeetingDetail({
             {`Meeting saved · ${String(detail.capture_status)}${detail.capture_failure ? ` · ${String(detail.capture_failure)}` : ""}. The transcript below is the last durable checkpoint, not false completion.`}
           </InlineMessage>
         ) : null}
+        <MeetingConflictRecovery
+          meetingId={id}
+          onResolved={(result) => {
+            onDeleted();
+            if (result.deleted) {
+              onClose();
+            } else if (result.meeting) {
+              setDetail(result.meeting);
+            }
+          }}
+        />
         {active === "transcript" ? (
           segments.length ? (
             <ol className="transcript-list">

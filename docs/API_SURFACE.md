@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 306 (plus static mounts). iOS-consumed: 81. Web-consumed: 222.
+Routes: 307 (plus static mounts). iOS-consumed: 81. Web-consumed: 224.
 
 ## device_audio_ws
 
@@ -253,7 +253,8 @@ Routes: 306 (plus static mounts). iOS-consumed: 81. Web-consumed: 222.
 | GET | `/api/meetings/{meeting_id}` | ios, web |
 | POST | `/api/meetings/{meeting_id}/capture/recover` | web |
 | GET | `/api/meetings/{meeting_id}/export` | web |
-| GET | `/api/meetings/{meeting_id}/sync-conflicts` | server only |
+| GET | `/api/meetings/{meeting_id}/sync-conflicts` | web |
+| POST | `/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve` | web |
 
 ## web.routes.meetings.insights
 

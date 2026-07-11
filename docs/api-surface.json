@@ -1999,7 +1999,19 @@
         "GET"
       ],
       "module": "web.routes.meetings.crud",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/mesh/inbox",
