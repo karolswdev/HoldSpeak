@@ -343,7 +343,9 @@ def _apply_runtime_profile(
     env = profile_key_env(profile_id)
     return EffectiveEndpoint(
         model=str(getattr(prof, "model", "") or "").strip() or legacy.model,
-        api_key_env=env if os.environ.get(env) else legacy.api_key_env,
+        # A destination may use only its own key slot. Borrowing the legacy
+        # endpoint's key would be a silent credential/placement change.
+        api_key_env=env,
         base_url=base_url,
         profile_id=profile_id,
         profile_name=str(getattr(prof, "name", "") or "").strip() or profile_id,
@@ -405,10 +407,10 @@ def build_meeting_intel_for_profile(
 ) -> "MeetingIntel":
     """Build a `MeetingIntel` for a specific RuntimeProfile (Phase 24).
 
-    An ``openAICompatible`` profile runs on its endpoint, with the key resolved from the hub's
-    secrets — a per-profile env var (``HOLDSPEAK_PROFILE_<ID>_KEY``), falling back to the default
-    cloud key env. An ``onDevice`` (or unknown) profile falls back to the hub's configured default
-    (the hub can't host another device's GGUF — honest n/a, never a crash).
+    An ``openAICompatible`` profile runs on its endpoint, with only its own
+    per-profile secret name (``HOLDSPEAK_PROFILE_<ID>_KEY``). A key from an
+    unrelated default destination is never borrowed. ``onDevice`` is
+    local-only, so the legacy ``auto`` setting cannot silently cross a boundary.
     """
     from .engine import MeetingIntel
 
@@ -418,13 +420,21 @@ def build_meeting_intel_for_profile(
         return MeshRelayIntel(node=str(node).strip(), model_hint=str(model or ""))  # type: ignore[return-value]
     if kind == "openAICompatible" and str(base_url or "").strip():
         env = profile_key_env(profile_id)
-        key_env = env if os.environ.get(env) else DEFAULT_INTEL_CLOUD_API_KEY_ENV
         return MeetingIntel(
             provider="cloud",
             cloud_model=(model or DEFAULT_INTEL_CLOUD_MODEL),
             cloud_base_url=str(base_url).strip(),
-            cloud_api_key_env=key_env,
+            cloud_api_key_env=env,
         )
+    if kind == "onDevice":
+        from ..config import Config
+
+        meeting = Config.load().meeting
+        kwargs: dict[str, Any] = {"provider": "local"}
+        model_path = getattr(meeting, "intel_realtime_model", None)
+        if model_path:
+            kwargs["model_path"] = model_path
+        return MeetingIntel(**kwargs)
     return build_configured_meeting_intel()
 
 

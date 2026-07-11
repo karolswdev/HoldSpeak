@@ -340,6 +340,7 @@ table capability_attempts: CREATE TABLE capability_attempts (
     invocation_id TEXT NOT NULL REFERENCES capability_invocations(id) ON DELETE CASCADE,
     attempt_index INTEGER NOT NULL,
     destination TEXT NOT NULL,
+    actual_placement_json TEXT NOT NULL DEFAULT '{}',
     provider TEXT,
     state TEXT NOT NULL DEFAULT 'running'
         CHECK (state IN ('running','succeeded','failed','cancelled','empty')),

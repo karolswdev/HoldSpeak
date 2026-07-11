@@ -324,6 +324,24 @@ public struct OutputRecord: Codable, Identifiable, Equatable, Sendable {
         }
     }
 
+    /// Freeze the hub-reported actual placement beside the invocation id so the
+    /// kept Artifact can answer where this run happened after sync.
+    public mutating func setPlacementReceipt(_ receipt: InferencePlacementReceipt) {
+        var value: [String: JSONValue] = [
+            "target_id": .string(receipt.targetId),
+            "target_name": .string(receipt.targetName),
+            "target_kind": .string(receipt.targetKind),
+            "boundary": .string(receipt.boundary),
+            "owner": .string(receipt.owner),
+            "transport": .string(receipt.transport),
+            "data_classes": .array(receipt.dataClasses.map(JSONValue.string)),
+            "engine": .string(receipt.engine),
+            "model": .string(receipt.model),
+        ]
+        value["fallback_reason"] = receipt.fallbackReason.map(JSONValue.string) ?? .null
+        setStructured("actual_placement", .object(value))
+    }
+
     public init(contract a: Artifact, path: String = "") {
         self.contract = a; self.path = path
     }

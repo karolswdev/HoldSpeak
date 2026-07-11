@@ -56,6 +56,7 @@ class CapabilityInvocationRepository(BaseRepository):
         attempt_id: str,
         destination: str,
         provider: Optional[str] = None,
+        actual_placement: Optional[dict[str, Any]] = None,
     ) -> CapabilityAttemptRecord:
         now = _now_iso()
         with self._connection() as conn:
@@ -65,9 +66,13 @@ class CapabilityInvocationRepository(BaseRepository):
             ).fetchone()
             conn.execute(
                 """INSERT INTO capability_attempts
-                   (id,invocation_id,attempt_index,destination,provider,state,started_at)
-                   VALUES (?,?,?,?,?,'running',?)""",
-                (attempt_id, invocation_id, int(row["n"]), destination, provider, now),
+                   (id,invocation_id,attempt_index,destination,actual_placement_json,
+                    provider,state,started_at)
+                   VALUES (?,?,?,?,?,?,'running',?)""",
+                (
+                    attempt_id, invocation_id, int(row["n"]), destination,
+                    self._json_dumps(actual_placement or {}, fallback="{}"), provider, now,
+                ),
             )
         return self._get_attempt(attempt_id)  # type: ignore[return-value]
 
@@ -79,6 +84,7 @@ class CapabilityInvocationRepository(BaseRepository):
         provider: Optional[str] = None,
         error: Optional[str] = None,
         result_ref: Optional[str] = None,
+        actual_placement: Optional[dict[str, Any]] = None,
     ) -> CapabilityAttemptRecord:
         if state not in VALID_CAPABILITY_ATTEMPT_STATES - {"running"}:
             raise ValueError(f"invalid attempt state: {state}")
@@ -86,9 +92,16 @@ class CapabilityInvocationRepository(BaseRepository):
         with self._connection() as conn:
             conn.execute(
                 """UPDATE capability_attempts
-                   SET state=?,provider=COALESCE(?,provider),error=?,result_ref=?,completed_at=?
+                   SET state=?,provider=COALESCE(?,provider),error=?,result_ref=?,
+                       actual_placement_json=CASE WHEN ? IS NULL THEN actual_placement_json ELSE ? END,
+                       completed_at=?
                    WHERE id=?""",
-                (state, provider, error, result_ref, now, attempt_id),
+                (
+                    state, provider, error, result_ref,
+                    None if actual_placement is None else 1,
+                    self._json_dumps(actual_placement or {}, fallback="{}"),
+                    now, attempt_id,
+                ),
             )
         row = self._get_attempt(attempt_id)
         if row is None:
@@ -148,6 +161,7 @@ class CapabilityInvocationRepository(BaseRepository):
         return CapabilityAttemptRecord(
             id=row["id"], invocation_id=row["invocation_id"],
             attempt_index=int(row["attempt_index"]), destination=row["destination"],
+            actual_placement=self._json_loads_dict(row["actual_placement_json"]),
             provider=row["provider"], state=row["state"], error=row["error"],
             result_ref=row["result_ref"], started_at=row["started_at"],
             completed_at=row["completed_at"],

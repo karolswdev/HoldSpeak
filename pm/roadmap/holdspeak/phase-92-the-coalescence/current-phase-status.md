@@ -2,11 +2,11 @@
 
 **Status:** PRE-CLOSE IMPLEMENTATION (0/10). Phase 91 remains active.
 
-**Last updated:** 2026-07-11 (the owner explicitly continued into HS-92-06 as
-bounded pre-close work; durable capability invocations/attempts, readiness and
-host-support negotiation, contextual Desk actions, Web Workbench return, and
-native receipt decoding now have automated proof, while Phase 91's HS-91-10
-owner/physical-Swift close gate and all six Phase-92 manual walks remain).
+**Last updated:** 2026-07-11 (the owner explicitly continued through HS-92-07 as
+bounded pre-close work; destination identity, shared Runs-on controls, named
+no-retarget refusal, no-borrowed-key resolution, and actual-placement receipts
+now have automated proof, while Phase 91's HS-91-10 owner/physical-Swift close
+gate and all seven Phase-92 manual walks remain).
 
 ## Goal
 
@@ -103,7 +103,7 @@ authority, and retained results without rewriting the underlying systems.
 | HS-92-04 | A meeting survives and comes home | in-progress | [story-04](./story-04-a-meeting-comes-home.md) | Provisional/journal/bounded-memory/sync/conflict/recovery automated proof green; long-run fault and physical cross-device walks pending |
 | HS-92-05 | One place for every useful thing | in-progress | [story-05](./story-05-one-place-for-everything.md) | Qualified independent axes, both-client actions/pickers/kept snapshots, Project/relationship sync and conflict API automated proof green; owner-visible conflict recovery and physical round-trip pending |
 | HS-92-06 | Capabilities make findable results | in-progress | [story-06](./story-06-capabilities-make-results.md) | Invocation/attempt/result envelopes, readiness, no-lowering refusal, Web Workbench return, and Swift receipt decode green; native focused-room/cancellation/manual walks pending |
-| HS-92-07 | Every run names where it happens | backlog | [story-07](./story-07-every-run-names-where.md) | — |
+| HS-92-07 | Every run names where it happens | in-progress | [story-07](./story-07-every-run-names-where.md) | InferenceTarget/Profile alias, five destination classes, shared Web/native picker, named refusal, actual-placement Artifact receipts, docs/doctor, and no borrowed keys green; five physical destination walks pending |
 | HS-92-08 | Decisions say what happens next | backlog | [story-08](./story-08-decisions-say-what-happens.md) | — |
 | HS-92-09 | The Desk remembers what needs you | backlog | [story-09](./story-09-the-desk-remembers.md) | — |
 | HS-92-10 | The owner walk and evidence close | backlog | [story-10](./story-10-owner-walk-evidence-close.md) | — |
@@ -131,10 +131,13 @@ snapshots, and additive relationship sync contracts. Automated checks pass;
 HS-92-06 adds schema-v17 Invocation/Attempt receipts without replacing domain
 job tables, visible capability readiness/placement/effect metadata, exact Web
 Workflow loading and return, native Artifact receipt lineage, and hard refusal
-instead of prompt lowering for unsupported graphs. All six stories stay open
-for their remaining native/manual and
-physical-device walks. This does not close Phase 91 or advance the current
-pointer.
+instead of prompt lowering for unsupported graphs. HS-92-07 adds the versioned
+InferenceTarget API over ProfileRecord, five non-conflated destination classes,
+non-probing readiness, shared Web/native Runs-on selection, explicit alternate
+recovery without silent retargeting, local-only same-device execution, and
+schema-v18 actual-placement receipts retained on Artifacts. All seven stories
+stay open for their remaining native/manual and physical-device walks. This does
+not close Phase 91 or advance the current pointer.
 
 ## Active risks
 
@@ -188,6 +191,14 @@ pointer.
   Attempts and an Artifact result ref; capability readiness is visible before
   Run; an unsupported graph is unavailable and never lowered to a prompt.
   Native Workbench entry/cancellation and manual/physical-device gates remain.
+- 2026-07-11 — Direct owner instruction continued to HS-92-07 and required the
+  work land on `main`. InferenceTarget is an additive v1 API over ProfileRecord;
+  Profile and sync shapes remain supported aliases until no earlier than target
+  contract v3. This device, paired device, private endpoint, mesh node, and
+  external service stay distinct from engine/model, and unavailable or failed
+  remote destinations refuse by name with an explicit alternate rather than
+  borrowing credentials or silently retargeting. Five physical destination
+  control/treatment walks remain open.
 
 ## Decisions deferred
 

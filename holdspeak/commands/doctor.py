@@ -803,6 +803,45 @@ def _check_runtime_profiles(config: Config) -> DoctorCheck:
     )
 
 
+def _check_inference_targets() -> DoctorCheck:
+    """HS-92-07: list named destination readiness without probing a network."""
+    try:
+        from ..db import get_database
+        from ..inference_targets import list_inference_targets
+
+        targets = list_inference_targets(get_database())
+    except Exception as exc:
+        return DoctorCheck(
+            name="Runs on destinations",
+            status="WARN",
+            detail=f"destination inventory unavailable ({exc.__class__.__name__})",
+            fix="Run `holdspeak doctor` after the database is available.",
+        )
+    labels = {
+        "this_device": "this device",
+        "paired_device": "paired device",
+        "private_endpoint": "private endpoint",
+        "mesh_node": "mesh node",
+        "external_service": "external service",
+        "unsupported": "unsupported destination",
+    }
+    unavailable = [target for target in targets if not target.ready]
+    lines = [
+        f"{target.name}: {labels.get(target.kind, target.kind)} · {target.boundary}"
+        + (f" · unavailable ({target.readiness_reason})" if not target.ready else " · ready")
+        for target in targets
+    ]
+    return DoctorCheck(
+        name="Runs on destinations",
+        status="WARN" if unavailable else "PASS",
+        detail="; ".join(lines),
+        fix=(
+            "Choose another Runs on destination, or repair the named key, node, endpoint, or manifest."
+            if unavailable else None
+        ),
+    )
+
+
 def _check_mesh_edges(config: Config) -> DoctorCheck:
     """HS-85-04: which mesh edges are alive right now.
 
@@ -1191,6 +1230,7 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_meeting_intel_egress(config),
         _check_trust_destinations(config),
         _check_runtime_profiles(config),
+        _check_inference_targets(),
         _check_mesh_edges(config),
         _check_meeting_intel_cloud_preflight(config, skip_network=skip_network),
         _check_dictation_project_context(config),

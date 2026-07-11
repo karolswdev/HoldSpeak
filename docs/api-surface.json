@@ -1474,6 +1474,56 @@
       ]
     },
     {
+      "path": "/api/inference-targets",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.profiles",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference-targets",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.profiles",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference-targets/{target_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.profiles",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference-targets/{target_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.profiles",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference-targets/{target_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.profiles",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/intel/jobs",
       "methods": [
         "GET"

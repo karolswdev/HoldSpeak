@@ -40,11 +40,11 @@ struct SettingsView: View {
                     header
                     label("WHERE INTELLIGENCE RUNS")
                     // The active profile is the default for everything not overridden inline — always exposed.
-                    RunsOnPicker(selectedId: $cfg.activeProfileId, label: "Active profile")
+                    RunsOnPicker(selectedId: $cfg.activeProfileId, label: "Runs on")
                     Button { tactile(); showProfiles = true } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "rectangle.stack.fill").font(.system(size: 13, weight: .bold)).foregroundStyle(Sig.accent)
-                            Text("Manage profiles").font(.system(size: 13.5, weight: .heavy)).foregroundStyle(Sig.text)
+                            Text("Manage destinations").font(.system(size: 13.5, weight: .heavy)).foregroundStyle(Sig.text)
                             Text("\(cfg.profiles.count)").font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.faint)
                             Spacer(); Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(Sig.faint)
                         }

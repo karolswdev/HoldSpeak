@@ -44,7 +44,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 17  # v17: durable capability invocation/attempt envelopes (HS-92-06)
+SCHEMA_VERSION = 18  # v18: named actual-placement receipts (HS-92-07)
 
 
 class SchemaVersionError(RuntimeError):
@@ -871,6 +871,7 @@ CREATE TABLE IF NOT EXISTS capability_attempts (
     invocation_id TEXT NOT NULL REFERENCES capability_invocations(id) ON DELETE CASCADE,
     attempt_index INTEGER NOT NULL,
     destination TEXT NOT NULL,
+    actual_placement_json TEXT NOT NULL DEFAULT '{}',
     provider TEXT,
     state TEXT NOT NULL DEFAULT 'running'
         CHECK (state IN ('running','succeeded','failed','cancelled','empty')),
@@ -1419,6 +1420,17 @@ class Database:
                 """
             )
             conn.execute("PRAGMA foreign_keys = ON")
+        # v18 (HS-92-07): attempts retain the canonical actual target, boundary,
+        # data classes, engine/model, and fallback reason as one additive JSON
+        # receipt. ``destination`` remains the version-1 alias for old clients.
+        attempt_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(capability_attempts)").fetchall()
+        }
+        if attempt_cols and "actual_placement_json" not in attempt_cols:
+            conn.execute(
+                "ALTER TABLE capability_attempts "
+                "ADD COLUMN actual_placement_json TEXT NOT NULL DEFAULT '{}'"
+            )
         conn.execute(
             """
             INSERT OR IGNORE INTO activity_privacy_settings

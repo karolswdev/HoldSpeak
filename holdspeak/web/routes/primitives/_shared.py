@@ -4,12 +4,10 @@ from __future__ import annotations
 import uuid
 from typing import Any, Optional
 
-from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi import Request
 
 from ....logging_config import get_logger
 from ...context import WebContext
-from ...runtime_support import error_500
 
 log = get_logger("web.routes.primitives")
 
@@ -94,6 +92,7 @@ class RunLifecycle:
         self.invocation_id = invocation_id
         self.definition_ref = definition_ref
         self.attempt_id: Optional[str] = None
+        self.target: Any = None
 
     @classmethod
     def begin(
@@ -118,36 +117,67 @@ class RunLifecycle:
             definition_ref=definition_ref,
             initiator=str(body.get("initiator") or "owner"),
             grounding_refs=list(dict.fromkeys(refs)),
-            requested_placement=str(body.get("requested_placement") or default_placement),
+            requested_placement=str(
+                body.get("inference_target_id")
+                or body.get("requested_placement")
+                or default_placement
+            ),
             input_snapshot=snapshot,
         )
         return cls(db, invocation_id, definition_ref)
 
-    def start_attempt(self, *, destination: str, provider: Optional[str] = None) -> str:
+    def start_attempt(
+        self,
+        *,
+        destination: str,
+        provider: Optional[str] = None,
+        target: Any = None,
+    ) -> str:
         self.attempt_id = _new_id("attempt")
+        self.target = target
         self.db.capability_invocations.start_attempt(
             invocation_id=self.invocation_id,
             attempt_id=self.attempt_id,
             destination=destination,
             provider=provider,
+            actual_placement=target.placement_receipt(provider=provider) if target else None,
         )
         return self.attempt_id
 
-    def fail(self, error: str, *, state: str = "failed", provider: Optional[str] = None) -> dict[str, Any]:
+    def fail(
+        self,
+        error: str,
+        *,
+        state: str = "failed",
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> dict[str, Any]:
         if self.attempt_id:
             self.db.capability_invocations.finish_attempt(
                 self.attempt_id, state="failed" if state != "empty" else "empty",
                 provider=provider, error=error,
+                actual_placement=self.target.placement_receipt(
+                    provider=provider, model=model
+                ) if self.target else None,
             )
         return self.db.capability_invocations.finish(
             self.invocation_id, state=state, error=error,
         ).to_dict()
 
-    def succeed(self, artifact_id: str, *, provider: Optional[str] = None) -> dict[str, Any]:
+    def succeed(
+        self,
+        artifact_id: str,
+        *,
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> dict[str, Any]:
         result_ref = f"artifact:{artifact_id}"
         if self.attempt_id:
             self.db.capability_invocations.finish_attempt(
                 self.attempt_id, state="succeeded", provider=provider, result_ref=result_ref,
+                actual_placement=self.target.placement_receipt(
+                    provider=provider, model=model
+                ) if self.target else None,
             )
         return self.db.capability_invocations.finish(
             self.invocation_id, state="succeeded", result_ref=result_ref,
@@ -259,4 +289,3 @@ def _persist_run_artifact(
     except Exception as exc:
         log.error(f"Failed to persist run artifact: {exc}")
         return None
-

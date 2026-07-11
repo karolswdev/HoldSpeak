@@ -27,6 +27,7 @@ import {
 } from "../grounding";
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
+import { RunsOnPicker } from "./RunsOnPicker";
 
 const turnId = () =>
   `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
@@ -35,6 +36,7 @@ export function PersonaChat(props: { personaId: string }) {
   const { personaId } = props;
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
+  const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const { closeChat, refresh, markNew } = useDesk.getState();
 
   // HS-83-03: a model chat is one of THESE threads — a synthetic persona
@@ -60,13 +62,15 @@ export function PersonaChat(props: { personaId: string }) {
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [inferenceTargetId, setInferenceTargetId] = useState("this_machine");
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setTurns(loadThread(personaId));
     setGrounding(loadChatGrounding(personaId));
     setInput("");
-  }, [personaId]);
+    setInferenceTargetId(String(persona?.profileId || "this_machine"));
+  }, [personaId, persona?.profileId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -104,8 +108,8 @@ export function PersonaChat(props: { personaId: string }) {
     setInput("");
     setThinking(true);
     const r = isModelChat(personaId)
-      ? await runModelChatTurn(modelChatName(personaId), q, history, grounding)
-      : await runChatTurn(personaId, q, history, grounding);
+      ? await runModelChatTurn(modelChatName(personaId), q, history, grounding, inferenceTargetId)
+      : await runChatTurn(personaId, q, history, grounding, inferenceTargetId);
     const reply: ChatTurn = r.ok
       ? {
           id: turnId(),
@@ -113,6 +117,7 @@ export function PersonaChat(props: { personaId: string }) {
           text: r.output,
           egress: r.egress,
           model: r.model,
+          actualPlacement: r.actualPlacement,
         }
       : { id: turnId(), role: "agent", text: r.output, error: true };
     const done = [...withMine, reply];
@@ -226,6 +231,12 @@ export function PersonaChat(props: { personaId: string }) {
                     {badge(t)!.text}
                   </span>
                 )}
+                {t.actualPlacement && (
+                  <span className="quiet">
+                    Ran on {String(t.actualPlacement.target_name || t.actualPlacement.target_id)}
+                    {t.actualPlacement.boundary ? ` · ${String(t.actualPlacement.boundary)}` : ""}
+                  </span>
+                )}
                 <button
                   type="button"
                   className="desk-chip quiet"
@@ -246,6 +257,12 @@ export function PersonaChat(props: { personaId: string }) {
       </div>
 
       <footer className="desk-chat-foot">
+        <RunsOnPicker
+          targets={inferenceTargets}
+          selectedId={inferenceTargetId}
+          onChange={setInferenceTargetId}
+          disabled={thinking}
+        />
         <GroundingSection
           meetings={(items.meeting || []).map((m: any) => ({
             id: m.id,

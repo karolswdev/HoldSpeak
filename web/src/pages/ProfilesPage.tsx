@@ -109,13 +109,14 @@ export default function ProfilesPage() {
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <Panel title="Runtime destinations" eyebrow="Shape, never secrets">
+        <Panel title="Destinations" eyebrow="Shape, never secrets">
           {message ? (
             <InlineMessage tone="error">{message}</InlineMessage>
           ) : null}
           {!profiles.length ? (
-            <EmptyState title="No runtime destinations">
-              Add a local model, model server, or mesh node. The hub keeps any
+            <EmptyState title="No saved destinations">
+              Add this device, a paired device, a private endpoint, a mesh node,
+              or an external service. The hub keeps any
               required key.
             </EmptyState>
           ) : (
@@ -153,8 +154,15 @@ export default function ProfilesPage() {
                             ? "live"
                             : "offline"
                           : kind === "openAICompatible"
-                            ? "cloud-capable"
-                            : "on device"}
+                            ? (() => {
+                                const host = (() => {
+                                  try { return new URL(String(profile.base_url || "")).hostname; }
+                                  catch { return ""; }
+                                })();
+                                return /^(localhost|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)
+                                  ? "private endpoint" : "external service";
+                              })()
+                            : kind === "desktop" ? "paired device" : "this device"}
                       </StatusPill>
                       <Button dense onClick={() => setEditing({ ...profile })}>
                         Edit
@@ -203,6 +211,7 @@ export default function ProfilesPage() {
                     OpenAI-compatible endpoint
                   </option>
                   <option value="onDevice">On device</option>
+                  <option value="desktop">Paired device</option>
                   <option value="meshNode">Mesh node</option>
                 </Select>
               )}
@@ -231,7 +240,7 @@ export default function ProfilesPage() {
                   )}
                 </Field>
                 <Checkbox
-                  label="Key is configured on the hub"
+                  label="Requires its own key on the hub"
                   checked={Boolean(editing.requires_key)}
                   onChange={(event) =>
                     field("requires_key", event.target.checked)
@@ -281,7 +290,7 @@ export default function ProfilesPage() {
             ) : null}
             <div className="button-row">
               <Button variant="primary" loading={busy} onClick={save}>
-                Save profile
+                Save destination
               </Button>
               <Button variant="ghost" onClick={() => setEditing(null)}>
                 Cancel

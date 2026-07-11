@@ -524,6 +524,7 @@ public struct CapabilityAttempt: Codable, Equatable, Sendable, Identifiable {
     public var invocationId: String
     public var attemptIndex: Int
     public var destination: String
+    public var actualPlacement: InferencePlacementReceipt?
     public var provider: String?
     public var state: String
     public var error: String?

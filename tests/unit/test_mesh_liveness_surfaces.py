@@ -90,7 +90,7 @@ def test_ask_against_offline_mesh_node_is_an_immediate_400(env) -> None:
     db, client = env
     prof = _mesh_profile(db)
     resp = client.post("/api/ask", json={"prompt": "Go", "profile_id": prof.id})
-    assert resp.status_code == 400
+    assert resp.status_code == 409
     assert "mesh node 'walk-edge' is offline (no worker has ever polled)" in resp.json()["error"]
     # NOTHING was queued — refusal, not queue-then-timeout
     assert db.mesh_relay.claim_next("walk-edge") is None

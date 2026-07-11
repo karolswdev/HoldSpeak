@@ -772,6 +772,8 @@ def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) ->
         "name": "OpenRouter", "kind": "openAICompatible",
         "base_url": "https://openrouter.ai/api/v1", "model": "x", "requires_key": True,
     }).json()["profile"]["id"]
+    from holdspeak.intel.providers import profile_key_env
+    monkeypatch.setenv(profile_key_env(pid), "test-key")
     aid = client.post("/api/recipes", json={
         "name": "Scout", "system_prompt": "S", "user_template": "{input}", "profile_id": pid,
     }).json()["recipe"]["id"]
@@ -799,18 +801,18 @@ def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) ->
     assert seen == {"kind": "openAICompatible", "base_url": "https://openrouter.ai/api/v1", "profile_id": pid}
 
 
-def test_run_agent_falls_back_when_profile_missing(client: TestClient, monkeypatch) -> None:
-    """A dangling profile_id (e.g. deleted) falls back to the hub default, reporting profile_id=None."""
+def test_run_agent_refuses_when_destination_missing(client: TestClient, monkeypatch) -> None:
+    """A dangling destination refuses by name; it never silently retargets."""
     aid = client.post("/api/recipes", json={
         "name": "Ghost", "system_prompt": "S", "user_template": "{input}", "profile_id": "gone",
     }).json()["recipe"]["id"]
 
-    class _FakeIntel:
-        active_provider = "local"
-        def run_prompt(self, **kwargs):
-            return "OUT"
-
-    monkeypatch.setattr("holdspeak.intel.providers.build_configured_meeting_intel", lambda: _FakeIntel())
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_configured_meeting_intel",
+        lambda: (_ for _ in ()).throw(AssertionError("missing destination must not build an engine")),
+    )
     resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hi"})
-    assert resp.status_code == 200, resp.text
-    assert resp.json()["profile_id"] is None
+    assert resp.status_code == 409, resp.text
+    assert resp.json()["code"] == "inference_target_unavailable"
+    assert resp.json()["alternate_target_id"] == "this_machine"
+    assert resp.json()["invocation"]["state"] == "unavailable"

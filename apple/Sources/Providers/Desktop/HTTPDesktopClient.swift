@@ -235,7 +235,10 @@ public struct HTTPDesktopClient: IDesktopClient {
     /// the Mac; a non-2xx (e.g. 502 no model loaded) throws `DesktopClientError.http`
     /// so the desk surfaces an honest failure, never a silent empty card.
     public func runRecipe(id: String, input: String) async throws -> HubRunResult {
-        let data = try await send(makeJSONRequest(path: "api/recipes/\(id)/run", body: ["input": input]))
+        let data = try await send(makeJSONRequest(
+            path: "api/recipes/\(id)/run",
+            body: ["input": input, "inference_target_id": "paired_device"]
+        ))
         do { return try HoldSpeakContracts.decoder().decode(HubRunResult.self, from: data) }
         catch { throw DesktopClientError.malformed }
     }
@@ -243,7 +246,10 @@ public struct HTTPDesktopClient: IDesktopClient {
     /// `POST /api/chains/{id}/run` body `{input}` → `{output, steps}`. The crew runs
     /// agent-by-agent on the Mac; the per-step trail rides back in `steps`.
     public func runChain(id: String, input: String) async throws -> HubRunResult {
-        let data = try await send(makeJSONRequest(path: "api/chains/\(id)/run", body: ["input": input]))
+        let data = try await send(makeJSONRequest(
+            path: "api/chains/\(id)/run",
+            body: ["input": input, "inference_target_id": "paired_device"]
+        ))
         do { return try HoldSpeakContracts.decoder().decode(HubRunResult.self, from: data) }
         catch { throw DesktopClientError.malformed }
     }

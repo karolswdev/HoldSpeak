@@ -5,7 +5,6 @@ Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipli
 from __future__ import annotations
 
 import asyncio
-import uuid
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request
@@ -14,12 +13,12 @@ from fastapi.responses import JSONResponse
 from ....logging_config import get_logger
 from ...context import WebContext
 from ...runtime_support import error_500
-
-log = get_logger("web.routes.primitives")
 from ._shared import (
     RunLifecycle, _json_body, _new_id, _persist_run_artifact, _render_user_prompt,
     _run_frame, capability_descriptor,
 )
+
+log = get_logger("web.routes.primitives")
 
 
 def build_chains_router(ctx: WebContext) -> APIRouter:
@@ -168,14 +167,32 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             max_tokens = body.get("max_tokens")
             temperature = body.get("temperature")
 
-            from ....intel.providers import build_configured_meeting_intel
             from ....intel.models import MeetingIntelError
-
-            intel = build_configured_meeting_intel()
-            lifecycle.start_attempt(
-                destination=str(body.get("requested_placement") or "this_machine"),
-                provider=getattr(intel, "active_provider", None),
+            from ....inference_targets import (
+                build_intel_for_target,
+                resolve_inference_target,
+                target_refusal,
+                target_runtime_error,
             )
+
+            target = resolve_inference_target(
+                db,
+                body.get("inference_target_id")
+                or body.get("requested_placement")
+                or "this_machine",
+            )
+            lifecycle.start_attempt(
+                destination=target.id,
+                target=target,
+            )
+            if not target.ready:
+                invocation = lifecycle.fail(target.readiness_reason, state="unavailable")
+                return JSONResponse(
+                    {**target_refusal(target), "chain_id": chain_id,
+                     "invocation": invocation, "invocation_id": lifecycle.invocation_id},
+                    status_code=409,
+                )
+            intel = build_intel_for_target(target, db)
 
             _run_frame(ctx, "running", kind="chain", ref=chain_id, name=chain.name or chain_id)
             current_input = str(body.get("input") or "")
@@ -208,11 +225,12 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                         max_tokens=int(max_tokens) if max_tokens is not None else None,
                     )
                 except MeetingIntelError as exc:
+                    error = target_runtime_error(target, exc)
                     _run_frame(ctx, "error", kind="chain", ref=chain_id,
-                               name=chain.name or chain_id, error=str(exc))
-                    invocation = lifecycle.fail(str(exc), provider=getattr(intel, "active_provider", None))
+                               name=chain.name or chain_id, error=error)
+                    invocation = lifecycle.fail(error, provider=getattr(intel, "active_provider", None))
                     return JSONResponse(
-                        {"error": str(exc), "chain_id": chain_id, "recipe_id": agent.id,
+                        {"error": error, "chain_id": chain_id, "recipe_id": agent.id,
                          "invocation": invocation, "invocation_id": lifecycle.invocation_id},
                         status_code=502,
                     )
@@ -256,7 +274,9 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                 return JSONResponse({"error": invocation["error"], "chain_id": chain_id,
                                      "invocation": invocation,
                                      "invocation_id": lifecycle.invocation_id}, status_code=500)
-            invocation = lifecycle.succeed(artifact_id, provider=top_provider)
+            invocation = lifecycle.succeed(
+                artifact_id, provider=top_provider, model=target.model
+            )
             return JSONResponse({
                 "chain_id": chain_id,
                 "steps": run_steps,
@@ -268,6 +288,8 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                 "invocation_id": lifecycle.invocation_id,
                 "correlation_id": lifecycle.invocation_id,
                 "invocation": invocation,
+                "inference_target": target.to_dict(),
+                "actual_placement": invocation["attempts"][-1]["actual_placement"],
             })
         except Exception as exc:
             if lifecycle is not None:

@@ -241,21 +241,13 @@ def build_profile_summarizer(profile_id: str = "") -> SummarizeFn:
 
     def summarize(system_prompt: str, user_prompt: str) -> str:
         from .db import get_database
+        from .inference_targets import build_intel_for_target, resolve_inference_target
 
-        prof = None
-        if profile_id:
-            prof = get_database().profiles.get(profile_id)
-        if prof is not None and not prof.deleted:
-            from .intel.providers import build_meeting_intel_for_profile
-
-            intel = build_meeting_intel_for_profile(
-                kind=prof.kind, base_url=prof.base_url, model=prof.model,
-                profile_id=prof.id, node=getattr(prof, "node", ""),
-            )
-        else:
-            from .intel.providers import build_configured_meeting_intel
-
-            intel = build_configured_meeting_intel()
+        db = get_database()
+        target = resolve_inference_target(db, profile_id or "this_machine")
+        if not target.ready:
+            raise RuntimeError(target.readiness_reason)
+        intel = build_intel_for_target(target, db)
         return intel.run_prompt(
             system_prompt=system_prompt, user_prompt=user_prompt,
             temperature=0.2, max_tokens=220,

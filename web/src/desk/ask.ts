@@ -71,6 +71,8 @@ export interface AskRunResult {
   egress: { scope: "local" | "mesh" | "cloud"; host?: string } | null;
   model: string;
   profileId: string | null;
+  inferenceTarget: Record<string, unknown> | null;
+  actualPlacement: Record<string, unknown> | null;
   /** The lineage the hub actually read — grounding rows folded in (HS-83-01). */
   contextIds: string[];
   contextTitles: string[];
@@ -84,6 +86,7 @@ export async function runAsk(opts: {
   lens: string;
   context: AskContext[];
   profileId?: string;
+  inferenceTargetId?: string;
   grounding?: {
     meeting_ids: string[];
     artifact_ids: string[];
@@ -100,6 +103,8 @@ export async function runAsk(opts: {
     egress: null,
     model: "",
     profileId: null,
+    inferenceTarget: null,
+    actualPlacement: null,
     contextIds: [],
     contextTitles: [],
   });
@@ -117,6 +122,7 @@ export async function runAsk(opts: {
           ref: c.ref || qualifiedRef(c.kind, c.id),
         })),
         ...(opts.profileId ? { profile_id: opts.profileId } : {}),
+        ...(opts.inferenceTargetId ? { inference_target_id: opts.inferenceTargetId } : {}),
         ...(opts.grounding ? { grounding: opts.grounding } : {}),
         ...(opts.model ? { model: opts.model } : {}),
       }),
@@ -135,6 +141,10 @@ export async function runAsk(opts: {
       egress: data.egress && data.egress.scope ? data.egress : null,
       model: String(data.model || ""),
       profileId: data.profile_id ? String(data.profile_id) : null,
+      inferenceTarget: data.inference_target && typeof data.inference_target === "object"
+        ? data.inference_target : null,
+      actualPlacement: data.actual_placement && typeof data.actual_placement === "object"
+        ? data.actual_placement : null,
       contextIds: Array.isArray(data.context_ids)
         ? data.context_ids.map(String)
         : [],

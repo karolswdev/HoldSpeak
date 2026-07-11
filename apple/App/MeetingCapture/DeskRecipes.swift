@@ -418,7 +418,7 @@ struct DioRecipeBuilder: View {
     // profile. The gauge below reads THIS profile's window — Scout on Claude vs a local 3B differ.
     private var runsOnSection: some View {
         section("RUNS ON") {
-            RunsOnPicker(selectedId: $draft.profileId, allowsDefault: true, label: "Model")
+            RunsOnPicker(selectedId: $draft.profileId, allowsDefault: true, label: "Runs on")
         }
     }
 

@@ -5,7 +5,7 @@
  * hand-arranged desk survives the React unification byte-for-byte. */
 import { create } from "zustand";
 import { apiRequest } from "../lib/api";
-import { EMPTY_ITEMS, loadAll, qualifiedRef, type Items, type Status } from "./api";
+import { EMPTY_ITEMS, loadAll, qualifiedRef, type InferenceTarget, type Items, type Status } from "./api";
 import { buildLinearGraph } from "./graph";
 import { loadSetup, type SetupStatus } from "./setup";
 
@@ -35,6 +35,7 @@ function savePositions(positions: Record<string, UnitPos>) {
 interface DeskState {
   items: Items;
   profiles: Array<Record<string, unknown>>;
+  inferenceTargets: InferenceTarget[];
   /** HS-83-03 — the hub's runnable models (the ask allow-list). */
   models: Array<{
     name: string;
@@ -109,6 +110,7 @@ interface DeskState {
     kind: "recipe" | "chain" | "workflow",
     id: string,
     input: string,
+    inferenceTargetId: string,
   ): Promise<{
     ok: boolean;
     output: string;
@@ -117,6 +119,7 @@ interface DeskState {
     invocationId: string | null;
     resultRef: string | null;
     state: string;
+    actualPlacement: Record<string, unknown> | null;
   }>;
   toggleSelected(id: string): void;
   setSelected(ids: string[]): void;
@@ -135,6 +138,7 @@ interface DeskState {
 export const useDesk = create<DeskState>((set, get) => ({
   items: { ...EMPTY_ITEMS },
   profiles: [],
+  inferenceTargets: [],
   models: [],
   status: {},
   error: "",
@@ -156,11 +160,12 @@ export const useDesk = create<DeskState>((set, get) => ({
 
   async refresh() {
     set({ loading: true, error: "" });
-    const [{ items, profiles, models, status, error }, setup] =
+    const [{ items, profiles, inferenceTargets, models, status, error }, setup] =
       await Promise.all([loadAll(), loadSetup()]);
     set({
       items,
       profiles,
+      inferenceTargets,
       models,
       status,
       error,
@@ -362,7 +367,7 @@ export const useDesk = create<DeskState>((set, get) => ({
     }
   },
 
-  async runCapability(kind, id, input) {
+  async runCapability(kind, id, input, inferenceTargetId) {
     const routes = {
       recipe: `/api/recipes/${encodeURIComponent(id)}/run`,
       chain: `/api/chains/${encodeURIComponent(id)}/run`,
@@ -372,7 +377,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       const res = await apiRequest(routes[kind], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input }),
+        body: JSON.stringify({ input, inference_target_id: inferenceTargetId }),
       });
       const data = await res.json().catch(() => ({}));
       const output = String(data.output || data.error || `HTTP ${res.status}`);
@@ -382,6 +387,9 @@ export const useDesk = create<DeskState>((set, get) => ({
       const invocationId = String(data.invocation_id || "") || null;
       const resultRef = String(data.result_ref || data.invocation?.result_ref || "") || null;
       const state = String(data.invocation?.state || (res.ok ? "succeeded" : "failed"));
+      const actualPlacement = data.actual_placement && typeof data.actual_placement === "object"
+        ? data.actual_placement as Record<string, unknown>
+        : data.invocation?.attempts?.at(-1)?.actual_placement || null;
       if (artifactId) {
         // The result is a REAL artifact now — it lands on the desk in
         // front of you, wearing the beat (the HS-73-06 grammar).
@@ -400,10 +408,10 @@ export const useDesk = create<DeskState>((set, get) => ({
         }
         get().markNew(artifactId);
       }
-      return { ok: res.ok, output, artifactId, warning, invocationId, resultRef, state };
+      return { ok: res.ok, output, artifactId, warning, invocationId, resultRef, state, actualPlacement };
     } catch (e) {
       return { ok: false, output: String(e), artifactId: null, warning: null,
-        invocationId: null, resultRef: null, state: "failed" };
+        invocationId: null, resultRef: null, state: "failed", actualPlacement: null };
     }
   },
 

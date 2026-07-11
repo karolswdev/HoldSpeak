@@ -21,6 +21,7 @@ export interface ChatTurn {
   /** The turn's HONEST egress — the hub's answer, never inferred. */
   egress?: { scope: "local" | "mesh" | "cloud"; host?: string } | null;
   model?: string;
+  actualPlacement?: Record<string, unknown> | null;
 }
 
 const THREADS_KEY = "hs.desk.chats";
@@ -78,6 +79,7 @@ export interface ChatTurnResult {
   output: string;
   egress: { scope: "local" | "mesh" | "cloud"; host?: string } | null;
   model: string;
+  actualPlacement: Record<string, unknown> | null;
 }
 
 /** One conversational turn. The history windows server-side (12); we still
@@ -87,12 +89,14 @@ export async function runChatTurn(
   question: string,
   history: ChatTurn[],
   grounding: GroundingSelection,
+  inferenceTargetId = "this_machine",
 ): Promise<ChatTurnResult> {
   const fail = (output: string): ChatTurnResult => ({
     ok: false,
     output,
     egress: null,
     model: "",
+    actualPlacement: null,
   });
   try {
     const res = await apiRequest(
@@ -108,6 +112,7 @@ export async function runChatTurn(
           ...(hubGrounding(grounding)
             ? { grounding: hubGrounding(grounding) }
             : {}),
+          inference_target_id: inferenceTargetId,
         }),
       },
     );
@@ -124,6 +129,8 @@ export async function runChatTurn(
       output: String(data.output || ""),
       egress: data.egress && data.egress.scope ? data.egress : null,
       model: String(data.model || ""),
+      actualPlacement: data.actual_placement && typeof data.actual_placement === "object"
+        ? data.actual_placement : null,
     };
   } catch (e) {
     return fail(String(e));
@@ -169,6 +176,7 @@ export async function runModelChatTurn(
   question: string,
   history: ChatTurn[],
   grounding: GroundingSelection,
+  inferenceTargetId = "this_machine",
 ): Promise<ChatTurnResult> {
   const { runAsk } = await import("./ask");
   const r = await runAsk({
@@ -177,8 +185,12 @@ export async function runModelChatTurn(
     context: [],
     grounding: hubGrounding(grounding),
     model,
+    inferenceTargetId,
   });
-  return { ok: r.ok, output: r.output, egress: r.egress, model: r.model };
+  return {
+    ok: r.ok, output: r.output, egress: r.egress, model: r.model,
+    actualPlacement: r.actualPlacement,
+  };
 }
 
 /** Harvest one reply onto the desk — the hub mints the run-born artifact. */

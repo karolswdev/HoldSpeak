@@ -27,6 +27,14 @@ struct RunsOnPicker: View {
     }
     private var isDefault: Bool { allowsDefault && selectedId.isEmpty }
     private var paired: Bool { !peerHost.trimmingCharacters(in: .whitespaces).isEmpty }
+    private func target(_ profile: RuntimeProfile) -> InferenceTarget {
+        profile.inferenceTarget(
+            keyPresent: ProfileKeyStore.get(profile.id)?.trimmingCharacters(in: .whitespaces).isEmpty == false,
+            paired: paired,
+            modelAdvertised: profile.model.isEmpty || hubModels.contains(profile.model)
+        )
+    }
+    private var selectedTarget: InferenceTarget { target(resolved) }
 
     /// The hub's models by name — only rows the hub itself holds (node "desktop"); a
     /// model some OTHER phone pushed is not runnable there and never listed.
@@ -41,16 +49,20 @@ struct RunsOnPicker: View {
     var body: some View {
         Menu {
             if allowsDefault {
-                Button { selectedId = ""; tactile() } label: { pickLabel("Default · \(cfg.activeProfile.name)", on: selectedId.isEmpty) }
+                Button { selectedId = ""; tactile() } label: {
+                    pickLabel(target(cfg.activeProfile), on: selectedId.isEmpty)
+                }
             }
             ForEach(cfg.profiles.filter { $0.kind != .desktop }) { p in
-                Button { selectedId = p.id; tactile() } label: { pickLabel(p.name, on: selectedId == p.id) }
+                let destination = target(p)
+                Button { selectedId = p.id; tactile() } label: {
+                    pickLabel(destination, on: selectedId == p.id)
+                }.disabled(!destination.readiness.available)
             }
-            if paired || !hubModels.isEmpty {
-                Section(peerName.isEmpty ? "Your desktop" : "Your desktop · \(peerName)") {
+            Section(peerName.isEmpty ? "Paired device" : "Paired device · \(peerName)") {
                     if hubModels.isEmpty {
                         // Paired but no manifest yet (no pull has landed): the honest row.
-                        Label(paired ? "No models synced yet — sync first" : "blocked · no desktop paired",
+                        Label(paired ? "Unavailable · no models synced yet" : "Unavailable · no paired device",
                               systemImage: "desktopcomputer.trianglebadge.exclamationmark")
                     } else {
                         ForEach(hubModels, id: \.self) { name in
@@ -63,18 +75,21 @@ struct RunsOnPicker: View {
                             .disabled(!paired)
                         }
                         if !paired {
-                            Label("blocked · no desktop paired", systemImage: "exclamationmark.triangle")
+                            Label("Unavailable · no paired device", systemImage: "exclamationmark.triangle")
                         }
                     }
-                }
             }
         } label: {
             HStack(spacing: 7) {
                 Image(systemName: chipSymbol).font(.system(size: 11, weight: .bold))
                 VStack(alignment: .leading, spacing: 0) {
                     Text(label.uppercased()).font(.system(size: 8.5, weight: .black, design: .rounded)).tracking(0.8).foregroundStyle(Sig.faint)
-                    Text(isDefault ? "Default · \(cfg.activeProfile.name)" : resolved.name)
+                    Text(isDefault ? cfg.activeProfile.name : resolved.name)
                         .font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(Sig.text).lineLimit(1)
+                    Text("\(kindLabel(selectedTarget.kind)) · \(selectedTarget.boundary) · sends instruction + context")
+                        .font(.system(size: 8.5, weight: .semibold, design: .rounded))
+                        .foregroundStyle(selectedTarget.readiness.available ? Sig.faint : .orange)
+                        .lineLimit(1)
                 }
                 Spacer(minLength: 4)
                 Image(systemName: "chevron.up.chevron.down").font(.system(size: 10, weight: .bold)).foregroundStyle(Sig.faint)
@@ -95,7 +110,31 @@ struct RunsOnPicker: View {
         }
     }
 
-    private func pickLabel(_ name: String, on: Bool) -> some View {
-        Label(name, systemImage: on ? "checkmark" : (resolved.isLocal ? "iphone" : "cloud.fill"))
+    private func pickLabel(_ target: InferenceTarget, on: Bool) -> some View {
+        Label("\(target.name) · \(kindLabel(target.kind))" +
+              (target.readiness.available ? "" : " · \(target.readiness.reason)"),
+              systemImage: on ? "checkmark" : symbol(target.kind))
+    }
+
+    private func kindLabel(_ kind: InferenceTarget.Kind) -> String {
+        switch kind {
+        case .thisDevice: return "This device"
+        case .pairedDevice: return "Paired device"
+        case .privateEndpoint: return "Private endpoint"
+        case .meshNode: return "Mesh node"
+        case .externalService: return "External service"
+        case .unsupported: return "Unsupported"
+        }
+    }
+
+    private func symbol(_ kind: InferenceTarget.Kind) -> String {
+        switch kind {
+        case .thisDevice: return "iphone"
+        case .pairedDevice: return "desktopcomputer"
+        case .privateEndpoint: return "network"
+        case .meshNode: return "antenna.radiowaves.left.and.right"
+        case .externalService: return "arrow.up.forward.app.fill"
+        case .unsupported: return "exclamationmark.triangle"
+        }
     }
 }

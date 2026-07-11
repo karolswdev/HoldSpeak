@@ -51,7 +51,7 @@ def test_valid_endpoint_profile_shapes_the_llm_leg(monkeypatch) -> None:
     eff = effective_dictation_llm(runtime, get_profile=lambda pid: _profile())
     assert eff.base_url == "http://192.168.1.43:8080/v1"
     assert eff.model == "Qwen3.5-9B-Q6_K"
-    assert eff.api_key_env == "OPENAI_API_KEY"  # no per-profile key ⇒ legacy env
+    assert eff.api_key_env == profile_key_env("p-43")
     assert eff.profile_id == "p-43"
 
 
@@ -109,7 +109,7 @@ def test_assembly_adopted_profile_selects_the_endpoint_backend(monkeypatch) -> N
     assert captured["openai_compatible_model"] == "Qwen3.5-9B-Q6_K"
 
 
-def test_assembly_dangling_profile_keeps_the_configured_backend(monkeypatch) -> None:
+def test_assembly_dangling_destination_refuses_without_retargeting(monkeypatch) -> None:
     monkeypatch.setattr(
         "holdspeak.intel.providers._lookup_profile_record", lambda pid: None
     )
@@ -117,9 +117,10 @@ def test_assembly_dangling_profile_keeps_the_configured_backend(monkeypatch) -> 
     cfg.runtime.backend = "mlx"
     cfg.runtime.profile_id = "gone"
     captured: dict = {}
-    _try_build_runtime(cfg, _capture_factory(captured))
-    assert captured["backend"] == "mlx"
-    assert captured["openai_compatible_base_url"] == "http://127.0.0.1:8000/v1"
+    runtime, status, detail = _try_build_runtime(cfg, _capture_factory(captured))
+    assert runtime is None and status == "unavailable"
+    assert "assigned profile missing: gone" in detail
+    assert captured == {}
 
 
 # ── the probe and status report the effective endpoint ──────────────────

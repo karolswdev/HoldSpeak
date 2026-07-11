@@ -33,9 +33,39 @@ export interface HubModel {
   profile_id: string | null;
 }
 
+/** HS-92-07 — destination identity, separate from engine/model selection. */
+export interface InferenceTarget {
+  version: number;
+  id: string;
+  profile_id: string | null;
+  name: string;
+  kind:
+    | "this_device"
+    | "paired_device"
+    | "private_endpoint"
+    | "mesh_node"
+    | "external_service"
+    | "unsupported";
+  boundary: string;
+  owner: string;
+  transport: string;
+  data_scope: { sent: string[]; returned: string[] };
+  engine: string;
+  model: string;
+  context_limit: number;
+  readiness: {
+    state: string;
+    available: boolean;
+    reason: string;
+    recovery?: { action: string; alternate_target_id: string };
+  };
+  secret: { required: boolean; present: boolean };
+}
+
 export interface LoadResult {
   items: Items;
   profiles: Array<Record<string, unknown>>;
+  inferenceTargets: InferenceTarget[];
   models: HubModel[];
   status: Status;
   error: string;
@@ -203,6 +233,7 @@ export async function loadAll(): Promise<LoadResult> {
   const items: Items = { ...EMPTY_ITEMS };
   const status: Status = {};
   let profiles: Array<Record<string, unknown>> = [];
+  let inferenceTargets: InferenceTarget[] = [];
   let models: HubModel[] = [];
   let error = "";
   const fail = (kind: Kind | "profile", label: string, e: any) => {
@@ -281,6 +312,29 @@ export async function loadAll(): Promise<LoadResult> {
         profiles = [];
         status.profile = "unreachable";
       }),
+    fetchJson("/api/inference-targets")
+      .then((d) => {
+        inferenceTargets = Array.isArray(d.targets) ? d.targets : [];
+      })
+      .catch(() => {
+        // Compatibility with an older hub: one explicitly local destination.
+        inferenceTargets = [{
+          version: 1,
+          id: "this_machine",
+          profile_id: null,
+          name: "This device",
+          kind: "this_device",
+          boundary: "same_device",
+          owner: "you",
+          transport: "in_process",
+          data_scope: { sent: ["instruction", "selected_context", "grounding"], returned: ["generated_output"] },
+          engine: "local",
+          model: "",
+          context_limit: 16_384,
+          readiness: { state: "ready", available: true, reason: "" },
+          secret: { required: false, present: false },
+        }];
+      }),
     // HS-83-03 — the runnable allow-list (what a `model` override accepts).
     fetchJson("/api/models")
       .then((d) => {
@@ -299,5 +353,5 @@ export async function loadAll(): Promise<LoadResult> {
       }),
   ]);
 
-  return { items, profiles, models, status, error };
+  return { items, profiles, inferenceTargets, models, status, error };
 }

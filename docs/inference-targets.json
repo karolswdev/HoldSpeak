@@ -1,0 +1,32 @@
+{
+  "contract": "InferenceTarget",
+  "version": 1,
+  "profile_alias": {
+    "resource": "profile",
+    "version": 1,
+    "status": "supported",
+    "removal": "not_before_inference_target_v3"
+  },
+  "identity_kinds": [
+    "this_device",
+    "paired_device",
+    "private_endpoint",
+    "mesh_node",
+    "external_service"
+  ],
+  "placement_receipt": [
+    "target_id",
+    "target_name",
+    "target_kind",
+    "boundary",
+    "owner",
+    "transport",
+    "data_classes",
+    "engine",
+    "model",
+    "fallback_reason"
+  ],
+  "secret_policy": "Secret values never appear in InferenceTarget, ProfileRecord, sync, or receipts.",
+  "selection_policy": "Unavailable targets refuse by name and offer an explicit alternate; no silent retargeting.",
+  "same_device_policy": "A this_device selection is local-only and never falls back across a boundary."
+}

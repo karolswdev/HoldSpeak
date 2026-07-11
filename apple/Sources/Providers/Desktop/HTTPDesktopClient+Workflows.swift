@@ -58,7 +58,8 @@ extension HTTPDesktopClient {
     /// a non-2xx throws `DesktopClientError.http`.
     public func runWorkflow(id: String, input: String) async throws -> HubWorkflowRunResult {
         let data = try await sendWorkflowRun(makeWorkflowRunRequest(
-            path: "api/workflows/\(id)/run", body: ["input": input]))
+            path: "api/workflows/\(id)/run",
+            body: ["input": input, "inference_target_id": "paired_device"]))
         do { return try HoldSpeakContracts.decoder().decode(HubWorkflowRunResult.self, from: data) }
         catch { throw DesktopClientError.malformed }
     }

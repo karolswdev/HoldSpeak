@@ -745,6 +745,7 @@ class CapabilityAttemptRecord:
     invocation_id: str
     attempt_index: int
     destination: str
+    actual_placement: dict[str, Any]
     provider: Optional[str]
     state: str
     error: Optional[str]
@@ -758,6 +759,7 @@ class CapabilityAttemptRecord:
             "invocation_id": self.invocation_id,
             "attempt_index": self.attempt_index,
             "destination": self.destination,
+            "actual_placement": dict(self.actual_placement),
             "provider": self.provider,
             "state": self.state,
             "error": self.error,

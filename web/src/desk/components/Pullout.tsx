@@ -14,6 +14,7 @@ import { lineage } from "../lineage";
 import { useSteering } from "../steering";
 import { objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
+import { RunsOnPicker } from "./RunsOnPicker";
 
 const FILABLE = new Set([
   "meeting",
@@ -38,6 +39,7 @@ interface MeetingDetail {
 export function Pullout({ o }: { o: WorldObject }) {
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
+  const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const backId = useDesk((s) => s.pulloutBackId);
   const {
     closePullout,
@@ -58,6 +60,10 @@ export function Pullout({ o }: { o: WorldObject }) {
   const [runState, setRunState] = useState("");
   const [runArtifactId, setRunArtifactId] = useState<string | null>(null);
   const [runInvocationId, setRunInvocationId] = useState<string | null>(null);
+  const [runTargetId, setRunTargetId] = useState(
+    String((o.ref as any).profileId || "this_machine"),
+  );
+  const [actualPlacement, setActualPlacement] = useState<Record<string, unknown> | null>(null);
   const [filing, setFiling] = useState(false);
   const [relationships, setRelationships] = useState<any>(null);
   const [knowledgeChoices, setKnowledgeChoices] = useState<any[]>([]);
@@ -121,6 +127,8 @@ export function Pullout({ o }: { o: WorldObject }) {
 
   useEffect(() => {
     setRelationships(null);
+    setRunTargetId(String((o.ref as any).profileId || "this_machine"));
+    setActualPlacement(null);
     void refreshRelationships();
   }, [o.kind, o.id]);
 
@@ -157,21 +165,30 @@ export function Pullout({ o }: { o: WorldObject }) {
     setRunState("running");
     setRunArtifactId(null);
     setRunInvocationId(null);
+    setActualPlacement(null);
     const result = await useDesk
       .getState()
-      .runCapability(o.kind as "recipe" | "chain" | "workflow", o.id, runInput);
+      .runCapability(
+        o.kind as "recipe" | "chain" | "workflow",
+        o.id,
+        runInput,
+        runTargetId,
+      );
     setRunOut(result.output);
     // Older hubs may still send a warning; current hubs refuse unsupported graphs.
     setRunWarning(result.warning || "");
     setRunState(result.state);
     setRunArtifactId(result.artifactId);
     setRunInvocationId(result.invocationId);
+    setActualPlacement(result.actualPlacement);
     setRunBusy(false);
   };
 
   const ir = o.ref as any;
   const capability = ir.capability || {};
   const readiness = capability.readiness || { state: "ready", detail: "" };
+  const selectedTarget = inferenceTargets.find((target) => target.id === runTargetId)
+    || inferenceTargets[0];
   const runLabel = capability.action_label ||
     (o.kind === "recipe" ? `Ask ${o.title}` : `Run ${o.title}`);
   const zones = items.directory || [];
@@ -461,6 +478,12 @@ export function Pullout({ o }: { o: WorldObject }) {
               )}
             </div>
             <div className="desk-pullout-run">
+              <RunsOnPicker
+                targets={inferenceTargets}
+                selectedId={runTargetId}
+                onChange={setRunTargetId}
+                disabled={runBusy}
+              />
               <input
                 value={runInput}
                 placeholder="Material"
@@ -471,7 +494,7 @@ export function Pullout({ o }: { o: WorldObject }) {
                 type="button"
                 className="desk-chip"
                 onClick={() => void run()}
-                disabled={runBusy || readiness.state !== "ready"}
+                disabled={runBusy || readiness.state !== "ready" || !selectedTarget?.readiness.available}
               >
                 {runBusy ? "Running…" : runState === "failed" || runState === "empty" ? `Retry ${runLabel}` : runLabel}
               </button>
@@ -484,7 +507,14 @@ export function Pullout({ o }: { o: WorldObject }) {
               </button>
             )}
             {runInvocationId && (
-              <p className="quiet desk-run-receipt">Receipt · {runInvocationId}</p>
+              <p className="quiet desk-run-receipt">
+                Receipt · {String(actualPlacement?.target_name || actualPlacement?.target_id || runTargetId)}
+                {actualPlacement?.engine ? ` · ${String(actualPlacement.engine)}` : ""}
+                {actualPlacement?.model ? ` · ${String(actualPlacement.model)}` : ""}
+                {actualPlacement?.boundary ? ` · ${String(actualPlacement.boundary)}` : ""}
+                {actualPlacement?.fallback_reason ? ` · fallback: ${String(actualPlacement.fallback_reason)}` : ""}
+                {` · ${runInvocationId}`}
+              </p>
             )}
           </section>
         )}

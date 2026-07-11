@@ -5,7 +5,6 @@ Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipli
 from __future__ import annotations
 
 import asyncio
-import uuid
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request
@@ -14,12 +13,12 @@ from fastapi.responses import JSONResponse
 from ....logging_config import get_logger
 from ...context import WebContext
 from ...runtime_support import error_500
-
-log = get_logger("web.routes.primitives")
 from ._shared import (
     RunLifecycle, _json_body, _new_id, _persist_run_artifact, _render_user_prompt,
     _run_frame, canonical_source_type, capability_descriptor,
 )
+
+log = get_logger("web.routes.primitives")
 
 
 def build_recipes_router(ctx: WebContext) -> APIRouter:
@@ -156,31 +155,34 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             max_tokens = body.get("max_tokens")
             temperature = body.get("temperature")
 
-            from ....intel.providers import (
-                build_configured_meeting_intel,
-                build_meeting_intel_for_profile,
-            )
             from ....intel.models import MeetingIntelError
-
-            # Phase 24: run on the recipe's assigned profile when set (its endpoint, key from the
-            # hub's secrets), else the hub's configured default.
-            ran_profile_id = (recipe.profile_id or "").strip() or None
-            if ran_profile_id:
-                prof = get_database().profiles.get(ran_profile_id)
-                if prof is not None and not prof.deleted:
-                    intel = build_meeting_intel_for_profile(
-                        kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id,
-                    node=getattr(prof, "node", "")
-                    )
-                else:
-                    ran_profile_id = None
-                    intel = build_configured_meeting_intel()
-            else:
-                intel = build_configured_meeting_intel()
-            lifecycle.start_attempt(
-                destination=f"profile:{ran_profile_id}" if ran_profile_id else "this_machine",
-                provider=getattr(intel, "active_provider", None),
+            from ....inference_targets import (
+                build_intel_for_target,
+                resolve_inference_target,
+                target_refusal,
+                target_runtime_error,
             )
+
+            requested_target_id = str(
+                body.get("inference_target_id")
+                or body.get("requested_placement")
+                or recipe.profile_id
+                or "this_machine"
+            ).strip()
+            target = resolve_inference_target(db, requested_target_id)
+            ran_profile_id = target.profile_id
+            lifecycle.start_attempt(
+                destination=target.id,
+                target=target,
+            )
+            if not target.ready:
+                invocation = lifecycle.fail(target.readiness_reason, state="unavailable")
+                return JSONResponse(
+                    {**target_refusal(target), "recipe_id": recipe_id,
+                     "invocation": invocation, "invocation_id": lifecycle.invocation_id},
+                    status_code=409,
+                )
+            intel = build_intel_for_target(target, db)
             _run_frame(ctx, "running", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
             try:
                 # off the event loop: a mesh run WAITS on the relay queue, and
@@ -193,11 +195,12 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                     max_tokens=int(max_tokens) if max_tokens is not None else None,
                 )
             except MeetingIntelError as exc:
+                error = target_runtime_error(target, exc)
                 _run_frame(ctx, "error", kind="recipe", ref=recipe_id,
-                           name=recipe.name or recipe_id, error=str(exc))
-                invocation = lifecycle.fail(str(exc), provider=getattr(intel, "active_provider", None))
+                           name=recipe.name or recipe_id, error=error)
+                invocation = lifecycle.fail(error, provider=getattr(intel, "active_provider", None))
                 return JSONResponse(
-                    {"error": str(exc), "recipe_id": recipe_id,
+                    {"error": error, "recipe_id": recipe_id,
                      "invocation": invocation, "invocation_id": lifecycle.invocation_id}, status_code=502
                 )
             if not str(output or "").strip():
@@ -236,12 +239,18 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 return JSONResponse({"error": invocation["error"], "recipe_id": recipe_id,
                                      "invocation": invocation,
                                      "invocation_id": lifecycle.invocation_id}, status_code=500)
-            invocation = lifecycle.succeed(artifact_id, provider=getattr(intel, "active_provider", None))
+            invocation = lifecycle.succeed(
+                artifact_id,
+                provider=getattr(intel, "active_provider", None),
+                model=target.model,
+            )
             return JSONResponse({
                 "recipe_id": recipe_id,
                 "output": output,
                 "provider": intel.active_provider,
                 "profile_id": ran_profile_id,
+                "inference_target": target.to_dict(),
+                "actual_placement": invocation["attempts"][-1]["actual_placement"],
                 "sources": sources,
                 "artifact_id": artifact_id,
                 "result_ref": f"artifact:{artifact_id}",
@@ -297,9 +306,11 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         try:
             from ....db import get_database
             from ....intel.models import MeetingIntelError
-            from ....intel.providers import (
-                build_configured_meeting_intel,
-                build_meeting_intel_for_profile,
+            from ....inference_targets import (
+                build_intel_for_target,
+                resolve_inference_target,
+                target_refusal,
+                target_runtime_error,
             )
             from .ask import (
                 _GROUNDING_EXPANDS, _GROUNDING_MAX_REFS, _hydrate_grounding, _run_egress,
@@ -372,17 +383,15 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 blocks.append("[CONVERSATION SO FAR]\n" + convo)
             blocks.append("[USER]\n" + question[:6000] + f"\n\nReply as {name}.")
 
-            ran_profile_id = (recipe.profile_id or "").strip() or None
+            target = resolve_inference_target(
+                db,
+                body.get("inference_target_id") or recipe.profile_id or "this_machine",
+            )
+            if not target.ready:
+                return JSONResponse(target_refusal(target), status_code=409)
+            ran_profile_id = target.profile_id
             prof = db.profiles.get(ran_profile_id) if ran_profile_id else None
-            if prof is not None and not prof.deleted:
-                intel = build_meeting_intel_for_profile(
-                    kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id,
-                    node=getattr(prof, "node", "")
-                )
-            else:
-                ran_profile_id = None
-                prof = None
-                intel = build_configured_meeting_intel()
+            intel = build_intel_for_target(target, db)
 
             system_prompt = (recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant."
             _run_frame(ctx, "running", kind="recipe", ref=recipe_id, name=name)
@@ -393,8 +402,13 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                     user_prompt="\n\n".join(blocks),
                 )
             except MeetingIntelError as exc:
-                _run_frame(ctx, "error", kind="recipe", ref=recipe_id, name=name, error=str(exc))
-                return JSONResponse({"error": str(exc), "recipe_id": recipe_id}, status_code=502)
+                error = target_runtime_error(target, exc)
+                _run_frame(ctx, "error", kind="recipe", ref=recipe_id, name=name, error=error)
+                return JSONResponse(
+                    {"error": error, "recipe_id": recipe_id,
+                     "inference_target": target.to_dict(), "alternate_target_id": "this_machine"},
+                    status_code=502,
+                )
             _run_frame(ctx, "ready", kind="recipe", ref=recipe_id, name=name)
 
             # The turn's HONEST egress — the 16-09 grammar, the same ONE
@@ -406,6 +420,10 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 "output": output,
                 "provider": intel.active_provider,
                 "profile_id": ran_profile_id,
+                "inference_target": target.to_dict(),
+                "actual_placement": target.placement_receipt(
+                    provider=intel.active_provider, model=model
+                ),
                 "egress": egress,
                 "model": model,
                 "context_ids": context_ids,

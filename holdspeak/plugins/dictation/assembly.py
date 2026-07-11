@@ -127,6 +127,8 @@ def _try_build_runtime(
     from ...intel.providers import effective_dictation_llm
 
     effective = effective_dictation_llm(cfg.runtime)
+    if effective.reason:
+        return None, "unavailable", effective.reason
     if effective.node:
         # a meshNode profile: the LLM legs run on that node's provider via the
         # relay queue, wrapped in the same counting/cold-start delegate.

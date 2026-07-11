@@ -107,11 +107,13 @@ describe("the turn wire", () => {
       artifact_ids: [],
       expand: "full",
     });
+    expect(sent.inference_target_id).toBe("this_machine");
     expect(r).toEqual({
       ok: true,
       output: "BLUE LANTERN",
       egress: { scope: "cloud", host: "192.168.1.43" },
       model: "Qwen",
+      actualPlacement: null,
     });
   });
   it("omits grounding when nothing is selected and names refusals verbatim", async () => {

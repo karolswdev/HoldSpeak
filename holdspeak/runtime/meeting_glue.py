@@ -11,8 +11,6 @@ import time
 from datetime import datetime
 from typing import Optional
 
-import numpy as np
-
 from ..device_status import (
     push_intel_to_devices,
     push_segment_to_devices,
@@ -235,7 +233,7 @@ class MeetingGlueMixin:
 
         effective_cloud = effective_intel_cloud(self.config.meeting)
         if effective_cloud.reason:
-            log.warning("meeting intel profile fallback: %s", effective_cloud.reason)
+            log.warning("meeting intel destination unavailable: %s", effective_cloud.reason)
 
         try:
             session = MeetingSession(
@@ -250,7 +248,7 @@ class MeetingGlueMixin:
                 on_intel=self._on_meeting_intel,
                 on_settings_applied=self._apply_updated_config,
                 on_broadcast=self._on_meeting_broadcast,
-                intel_enabled=self.config.meeting.intel_enabled,
+                intel_enabled=self.config.meeting.intel_enabled and not effective_cloud.reason,
                 intel_model_path=self.config.meeting.intel_realtime_model,
                 intel_provider=self.config.meeting.intel_provider,
                 intel_cloud_model=effective_cloud.model,
@@ -268,6 +266,9 @@ class MeetingGlueMixin:
                 mir_segment_probe=segment_probe,
             )
             state = session.start()
+            if self.config.meeting.intel_enabled and effective_cloud.reason:
+                session._set_intel_status("error", effective_cloud.reason)
+                state = session.state or state
             with self.state_lock:
                 title_override = self.pending_title
                 tags_override = list(self.pending_tags) if self.pending_tags is not None else None

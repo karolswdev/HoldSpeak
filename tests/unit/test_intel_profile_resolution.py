@@ -73,8 +73,8 @@ def test_valid_endpoint_profile_shapes_the_cloud_leg(monkeypatch) -> None:
     )
     assert eff.base_url == "http://192.168.1.43:8080/v1"
     assert eff.model == "Qwen3.5-9B-Q6_K"
-    # no per-profile key in the env ⇒ the legacy env is the fallback
-    assert eff.api_key_env == "LEGACY_KEY_ENV"
+    # the destination owns one key slot; another endpoint's key is never borrowed
+    assert eff.api_key_env == profile_key_env("p-43")
     assert eff.profile_id == "p-43" and eff.profile_name == "LAN llama"
     assert eff.reason is None
 

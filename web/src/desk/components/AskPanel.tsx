@@ -8,7 +8,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { useDesk } from "../store";
-import { egressBadge } from "../setup";
 import {
   ASK_LENSES,
   askContexts,
@@ -32,17 +31,17 @@ import { RailsPicker } from "./RailsPicker";
 import { MicButton } from "./MicButton";
 import { apiRequest } from "../../lib/api";
 import { qualifiedRef } from "../api";
+import { RunsOnPicker } from "./RunsOnPicker";
 
 export function AskPanel() {
   const items = useDesk((s) => s.items);
-  const profiles = useDesk((s) => s.profiles);
-  const setup = useDesk((s) => s.setup);
+  const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const selectedIds = useDesk((s) => s.selectedIds);
   const { closeAsk, clearSelection, refresh, markNew } = useDesk.getState();
 
   const [lens, setLens] = useState(ASK_LENSES[0].name);
   const [prompt, setPrompt] = useState(ASK_LENSES[0].instruction);
-  const [profileId, setProfileId] = useState("");
+  const [profileId, setProfileId] = useState("this_machine");
   const [phase, setPhase] = useState<"compose" | "routing" | "printed">(
     "compose",
   );
@@ -75,12 +74,11 @@ export function AskPanel() {
   // time (the receipts rule): the kept ask names what grounded the answer.
   const printedContext = useRef(context);
 
-  // The gauge's budget: the picked profile's window, else the ceiling the iPad
-  // assumes for an endpoint it doesn't control.
+  // The gauge's budget comes from the same destination view model as the picker.
   const limitTokens = useMemo(() => {
-    const p = profiles.find((x) => x.id === profileId);
-    return Number(p?.context_limit) > 0 ? Number(p?.context_limit) : 16_384;
-  }, [profileId, profiles]);
+    const target = inferenceTargets.find((x) => x.id === profileId);
+    return Number(target?.context_limit) > 0 ? Number(target?.context_limit) : 16_384;
+  }, [profileId, inferenceTargets]);
   const groundTokens = groundingTokens(grounding) + railsTokens(rails);
   const overBudget = groundTokens > limitTokens;
 
@@ -92,28 +90,15 @@ export function AskPanel() {
     return () => document.removeEventListener("keydown", onKey);
   }, [phase]);
 
-  // The compose-time egress chip: the picked profile's target, else the hub's
-  // app-wide badge (the run answers with where it ACTUALLY went).
+  // Before execution this names the selected boundary; the printed receipt is
+  // the hub's actual placement, never a client-side inference.
   const composeEgress = useMemo(() => {
-    if (profileId) {
-      const p = profiles.find((x) => x.id === profileId);
-      if (p) {
-        const cloud = (p.kind || "onDevice") !== "onDevice";
-        return cloud
-          ? {
-              scope: "cloud",
-              text: `☁ ${
-                String(p.base_url || "endpoint")
-                  .replace(/^https?:\/\//, "")
-                  .split("/")[0]
-              }`,
-            }
-          : { scope: "local", text: "⌂ On device" };
-      }
-    }
-    const b = egressBadge(setup);
-    return { scope: b.scope, text: b.text };
-  }, [profileId, profiles, setup]);
+    const target = inferenceTargets.find((item) => item.id === profileId);
+    return {
+      scope: target?.boundary === "same_device" ? "local" : "cloud",
+      text: `${target?.boundary === "same_device" ? "⌂" : "→"} ${target?.name || "This device"}`,
+    };
+  }, [profileId, inferenceTargets]);
 
   const ask = async () => {
     if (!prompt.trim() || phase === "routing" || overBudget) return;
@@ -130,7 +115,7 @@ export function AskPanel() {
       prompt: prompt.trim(),
       lens,
       context,
-      profileId: profileId || undefined,
+      inferenceTargetId: profileId,
       grounding: buildGrounding(grounding, rails),
     });
     if (!r.ok) {
@@ -267,21 +252,12 @@ export function AskPanel() {
                 onText={(t) => setPrompt((v) => (v ? v + " " + t : t))}
               />
             </div>
-            {profiles.length > 0 && (
-              <select
-                className="desk-ask-runson"
-                value={profileId}
-                aria-label="Runs on"
-                onChange={(e) => setProfileId(e.target.value)}
-              >
-                <option value="">Hub default</option>
-                {profiles.map((p) => (
-                  <option key={String(p.id)} value={String(p.id)}>
-                    {String(p.name || p.id)}
-                  </option>
-                ))}
-              </select>
-            )}
+            <RunsOnPicker
+              targets={inferenceTargets}
+              selectedId={profileId}
+              onChange={setProfileId}
+              disabled={phase === "routing"}
+            />
             <GroundingSection
               meetings={(items.meeting || []).map((m) => ({
                 id: m.id,
@@ -305,6 +281,16 @@ export function AskPanel() {
         {phase === "printed" && result && (
           <div className="desk-ask-card">
             <pre className="desk-pullout-md">{result.output}</pre>
+            {result.actualPlacement && (
+              <p className="quiet desk-run-receipt">
+                Ran on {String(result.actualPlacement.target_name || result.actualPlacement.target_id)}
+                {result.actualPlacement.engine ? ` · ${String(result.actualPlacement.engine)}` : ""}
+                {result.actualPlacement.model ? ` · ${String(result.actualPlacement.model)}` : ""}
+                {result.actualPlacement.boundary ? ` · ${String(result.actualPlacement.boundary)}` : ""}
+                {result.actualPlacement.fallback_reason
+                  ? ` · fallback: ${String(result.actualPlacement.fallback_reason)}` : ""}
+              </p>
+            )}
           </div>
         )}
       </div>

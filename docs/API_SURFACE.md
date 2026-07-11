@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 291 (plus static mounts). iOS-consumed: 77. Web-consumed: 202.
+Routes: 296 (plus static mounts). iOS-consumed: 77. Web-consumed: 207.
 
 ## device_audio_ws
 
@@ -394,6 +394,11 @@ Routes: 291 (plus static mounts). iOS-consumed: 77. Web-consumed: 202.
 
 | Method | Path | Consumers |
 |---|---|---|
+| GET | `/api/inference-targets` | web |
+| POST | `/api/inference-targets` | web |
+| DELETE | `/api/inference-targets/{target_id}` | web |
+| GET | `/api/inference-targets/{target_id}` | web |
+| PUT | `/api/inference-targets/{target_id}` | web |
 | GET | `/api/profiles` | web |
 | POST | `/api/profiles` | web |
 | DELETE | `/api/profiles/{profile_id}` | web |

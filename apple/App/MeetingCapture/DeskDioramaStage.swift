@@ -5789,16 +5789,19 @@ struct DioStage: View {
                 let artifactId: String?
                 let invocationId: String?
                 let resultRef: String?
+                let placement: InferencePlacementReceipt?
                 var warning: String?
                 switch run.kind {
                 case .recipe(let a):
                     let result = try await client.runRecipe(id: a.id, input: input)
                     output = result.output; artifactId = result.artifactId
                     invocationId = result.invocationId; resultRef = result.resultRef
+                    placement = result.invocation?.attempts.last?.actualPlacement
                 case .chain(let c):
                     let result = try await client.runChain(id: c.id, input: input)
                     output = result.output; artifactId = result.artifactId
                     invocationId = result.invocationId; resultRef = result.resultRef
+                    placement = result.invocation?.attempts.last?.actualPlacement
                 case .workflow(let w):
                     // HSM-22-04 — the travelling graph runs where it synced to. A
                     // refused graph's honest `warning` rides onto the card, never
@@ -5806,6 +5809,7 @@ struct DioStage: View {
                     let result = try await client.runWorkflow(id: w.id, input: input)
                     output = result.output ?? ""; artifactId = result.artifactId
                     invocationId = result.invocationId; resultRef = result.resultRef
+                    placement = result.invocation?.attempts.last?.actualPlacement
                     warning = result.warning
                 }
                 withAnimation { routing = false }
@@ -5829,8 +5833,9 @@ struct DioStage: View {
                                             path: zpath,
                                             provenance: run.provenance)
                     if let invocationId { card.setInvocationReceipt(invocationId, resultRef: resultRef) }
+                    if let placement { card.setPlacementReceipt(placement) }
                     printed = card
-                    printedEgress = .cloud("your desktop")
+                    printedEgress = .mixed(placement?.targetName ?? "paired device")
                 }
                 selectedSet = []
             } catch {

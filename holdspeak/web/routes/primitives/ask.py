@@ -251,10 +251,6 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
         try:
             from ....db import get_database
             from ....intel.models import MeetingIntelError
-            from ....intel.providers import (
-                build_configured_meeting_intel,
-                build_meeting_intel_for_profile,
-            )
 
             db = get_database()
             material, context_ids, context_titles = _assemble_material(db, context)
@@ -327,15 +323,24 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
             if envelope:
                 user_prompt += "\n\nGrounding:\n" + envelope
 
-            # Phase 24: run on the requested profile when set (its endpoint, the
-            # key from the hub's secrets), else the hub's configured default.
-            ran_profile_id: Optional[str] = str(body.get("profile_id") or "").strip() or None
-            prof = None
-            if ran_profile_id:
-                prof = db.profiles.get(ran_profile_id)
-                if prof is None or prof.deleted:
-                    ran_profile_id = None
-                    prof = None
+            # HS-92-07: the target is resolved before execution, without a
+            # network probe. Missing/unready choices refuse by name and offer a
+            # deliberate alternate; they never collapse to the default engine.
+            from ....inference_targets import (
+                build_intel_for_target,
+                resolve_inference_target,
+                target_refusal,
+                target_runtime_error,
+            )
+
+            requested_target_id = str(
+                body.get("inference_target_id") or body.get("profile_id") or "this_machine"
+            ).strip()
+            target = resolve_inference_target(db, requested_target_id)
+            ran_profile_id: Optional[str] = target.profile_id
+            prof = db.profiles.get(ran_profile_id) if ran_profile_id else None
+            if not target.ready:
+                return JSONResponse(target_refusal(target), status_code=409)
 
             # HSM-15-11: a manifest-bounded model override — "run THIS model on
             # the hub". The allow-list is what the hub can actually run: its own
@@ -351,8 +356,10 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                     pass  # the requested profile already runs it
                 elif (by_model := next((p for p in profiles if (p.model or "") == override), None)) is not None:
                     prof, ran_profile_id = by_model, by_model.id
+                    target = resolve_inference_target(db, by_model.id)
                 elif override == hub_model:
                     prof, ran_profile_id = None, None  # the hub's own engine IS this model
+                    target = resolve_inference_target(db, "this_machine")
                 else:
                     allowed = sorted({r["name"] for r in _runnable_models(ctx, db)})
                     return JSONResponse(
@@ -381,13 +388,7 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                         status_code=400,
                     )
 
-            if prof is not None:
-                intel = build_meeting_intel_for_profile(
-                    kind=prof.kind, base_url=prof.base_url, model=prof.model, profile_id=prof.id,
-                    node=getattr(prof, "node", "")
-                )
-            else:
-                intel = build_configured_meeting_intel()
+            intel = build_intel_for_target(target, db)
 
             max_tokens = body.get("max_tokens")
             temperature = body.get("temperature")
@@ -403,8 +404,12 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                     max_tokens=int(max_tokens) if max_tokens is not None else None,
                 )
             except MeetingIntelError as exc:
-                _run_frame(ctx, "error", kind="ask", ref="ask", name=lens, error=str(exc))
-                return JSONResponse({"error": str(exc)}, status_code=502)
+                error = target_runtime_error(target, exc)
+                _run_frame(ctx, "error", kind="ask", ref="ask", name=lens, error=error)
+                return JSONResponse(
+                    {"error": error, "inference_target": target.to_dict(),
+                     "alternate_target_id": "this_machine"}, status_code=502
+                )
             _run_frame(ctx, "ready", kind="ask", ref="ask", name=lens)
 
             # The run's HONEST egress (the 16-09 grammar: state where THIS run
@@ -416,6 +421,10 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                 "lens": lens,
                 "provider": intel.active_provider,
                 "profile_id": ran_profile_id,
+                "inference_target": target.to_dict(),
+                "actual_placement": target.placement_receipt(
+                    provider=intel.active_provider, model=model
+                ),
                 "egress": egress,
                 "model": model,
                 "context_ids": context_ids,

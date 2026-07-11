@@ -5,7 +5,6 @@ Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipli
 from __future__ import annotations
 
 import asyncio
-import uuid
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request
@@ -14,12 +13,12 @@ from fastapi.responses import JSONResponse
 from ....logging_config import get_logger
 from ...context import WebContext
 from ...runtime_support import error_500
-
-log = get_logger("web.routes.primitives")
 from ._shared import (
     RunLifecycle, _json_body, _new_id, _persist_run_artifact, _render_user_prompt,
     _run_frame, capability_descriptor,
 )
+
+log = get_logger("web.routes.primitives")
 
 
 def build_workflows_router(ctx: WebContext) -> APIRouter:
@@ -185,8 +184,13 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
             max_tokens = body.get("max_tokens")
             temperature = body.get("temperature")
 
-            from ....intel.providers import build_configured_meeting_intel
             from ....intel.models import MeetingIntelError
+            from ....inference_targets import (
+                build_intel_for_target,
+                resolve_inference_target,
+                target_refusal,
+                target_runtime_error,
+            )
             from ..workflow_graph import (
                 apply_pure_transform,
                 build_node_prompt,
@@ -201,6 +205,20 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                 {"source_type": "workflow", "source_ref": workflow_id}
             ]
             wf_name = workflow.name or workflow_id
+            target = resolve_inference_target(
+                db,
+                body.get("inference_target_id")
+                or body.get("requested_placement")
+                or "this_machine",
+            )
+            if not target.ready:
+                lifecycle.start_attempt(destination=target.id, target=target)
+                invocation = lifecycle.fail(target.readiness_reason, state="unavailable")
+                return JSONResponse(
+                    {**target_refusal(target), "workflow_id": workflow_id,
+                     "invocation": invocation, "invocation_id": lifecycle.invocation_id},
+                    status_code=409,
+                )
 
             # ── 1) Try the linear graph runner ─────────────────────────────
             plan = linearize(workflow.graph_json) if workflow.graph_json else None
@@ -221,10 +239,10 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
             if plan is not None and plan.linearizable:
                 # Seed the chain with the rendered request input (variables applied).
                 current = _render_user_prompt("", variables or {}, user_input)
-                intel = build_configured_meeting_intel()
+                intel = build_intel_for_target(target, db)
                 lifecycle.start_attempt(
-                    destination=str(body.get("requested_placement") or "this_machine"),
-                    provider=getattr(intel, "active_provider", None),
+                    destination=target.id,
+                    target=target,
                 )
                 run_steps: list[dict[str, Any]] = []
                 ran_a_model_op = False
@@ -244,6 +262,7 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                                 max_tokens=int(max_tokens) if max_tokens is not None else None,
                             )
                         except MeetingIntelError as exc:
+                            error = target_runtime_error(target, exc)
                             # Honour a faithful subset of the node's failure policy:
                             # `skip` / `fallbackOnDevice` carry the input through and
                             # continue; `retryThenQueue` / unset surface the error.
@@ -251,12 +270,12 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                             if handled is None:
                                 _run_frame(ctx, "error", kind="workflow",
                                            ref=workflow_id, name=wf_name,
-                                           error=str(exc))
+                                           error=error)
                                 invocation = lifecycle.fail(
-                                    str(exc), provider=getattr(intel, "active_provider", None)
+                                    error, provider=getattr(intel, "active_provider", None)
                                 )
                                 return JSONResponse(
-                                    {"error": str(exc), "workflow_id": workflow_id,
+                                    {"error": error, "workflow_id": workflow_id,
                                      "node_id": gnode.id,
                                      "failure_policy": resolved_failure_policy(gnode),
                                      "invocation": invocation,
@@ -276,7 +295,7 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                                     if resolved_failure_policy(gnode) == "skip"
                                     else "fell_back"
                                 ),
-                                "error": str(exc),
+                                "error": error,
                             })
                             continue
                         current = out
@@ -338,7 +357,11 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                     return JSONResponse({"error": invocation["error"], "workflow_id": workflow_id,
                                          "invocation": invocation,
                                          "invocation_id": lifecycle.invocation_id}, status_code=500)
-                invocation = lifecycle.succeed(artifact_id, provider=getattr(intel, "active_provider", None))
+                invocation = lifecycle.succeed(
+                    artifact_id,
+                    provider=getattr(intel, "active_provider", None),
+                    model=target.model,
+                )
                 return JSONResponse({
                     "workflow_id": workflow_id,
                     "output": current,
@@ -350,6 +373,8 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                     "invocation_id": lifecycle.invocation_id,
                     "correlation_id": lifecycle.invocation_id,
                     "invocation": invocation,
+                    "inference_target": target.to_dict(),
+                    "actual_placement": invocation["attempts"][-1]["actual_placement"],
                 })
 
             # ── 2) Prompt-only compatibility path ──────────────────────────
@@ -369,10 +394,10 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                     status_code=409,
                 )
 
-            intel = build_configured_meeting_intel()
+            intel = build_intel_for_target(target, db)
             lifecycle.start_attempt(
-                destination=str(body.get("requested_placement") or "this_machine"),
-                provider=getattr(intel, "active_provider", None),
+                destination=target.id,
+                target=target,
             )
             try:
                 output = await asyncio.to_thread(
@@ -383,11 +408,12 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                     max_tokens=int(max_tokens) if max_tokens is not None else None,
                 )
             except MeetingIntelError as exc:
+                error = target_runtime_error(target, exc)
                 _run_frame(ctx, "error", kind="workflow", ref=workflow_id,
-                           name=wf_name, error=str(exc))
-                invocation = lifecycle.fail(str(exc), provider=getattr(intel, "active_provider", None))
+                           name=wf_name, error=error)
+                invocation = lifecycle.fail(error, provider=getattr(intel, "active_provider", None))
                 return JSONResponse(
-                    {"error": str(exc), "workflow_id": workflow_id,
+                    {"error": error, "workflow_id": workflow_id,
                      "invocation": invocation,
                      "invocation_id": lifecycle.invocation_id}, status_code=502
                 )
@@ -412,7 +438,11 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                 return JSONResponse({"error": invocation["error"], "workflow_id": workflow_id,
                                      "invocation": invocation,
                                      "invocation_id": lifecycle.invocation_id}, status_code=500)
-            invocation = lifecycle.succeed(artifact_id, provider=getattr(intel, "active_provider", None))
+            invocation = lifecycle.succeed(
+                artifact_id,
+                provider=getattr(intel, "active_provider", None),
+                model=target.model,
+            )
             result: dict[str, Any] = {
                 "workflow_id": workflow_id,
                 "output": output,
@@ -423,6 +453,8 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                 "invocation_id": lifecycle.invocation_id,
                 "correlation_id": lifecycle.invocation_id,
                 "invocation": invocation,
+                "inference_target": target.to_dict(),
+                "actual_placement": invocation["attempts"][-1]["actual_placement"],
             }
             return JSONResponse(result)
         except Exception as exc:
