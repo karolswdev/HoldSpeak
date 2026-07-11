@@ -15,4 +15,5 @@ steps:
     measurements:
       - {key: ambiguous_commitment_verbs, label: Consequential generic verbs without adjacent consequence, unit: verbs}
       - {key: mode_invariant_failures, label: Hard invariants that varied by Control mode, unit: failures}
+      - {key: registry_term_parity_pct, label: Registry-governed UI terms matching the canonical census, unit: percent}
 teardown: []

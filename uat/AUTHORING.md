@@ -314,3 +314,26 @@ uv run pytest -q tests/uat/test_scenarios.py tests/uat/test_smoke_pack.py
 
 Or load a pack directly: `GET /api/packs/<pack>` returns the scenarios,
 coverage, and any `validation_errors`.
+
+## Author a multi-campaign closeout
+
+A file in `uat/closeouts/<id>.yaml` can join independent campaign debriefs
+without weakening their target identity. Name every required campaign and its
+exact execution slots, then give every required scenario measurement a policy:
+`present`, `eq`, `lte`, or `gte`. Policy loading fails when a required prompt
+has no rule or a rule no longer belongs to any prompt; this turns scenario drift
+into an explicit contract error.
+
+Closeout evaluates only the newest packet for each campaign on one clean Git
+commit. It requires the complete current verdict matrix, protocol-v2 hash,
+executed journey coverage, permitted verdict/triage states, numeric thresholds,
+and configured physical-device attestations. Repository prerequisites can name
+a relative file plus an exact line prefix/required substring. Paths are confined
+to the repository root. Do not use a closeout to generate evidence or mutate PM
+state; it reports readiness and gaps only.
+
+```bash
+uv run python scripts/uat_closeout.py <id>
+uv run python scripts/uat_closeout.py <id> --json
+curl -s localhost:8799/api/closeouts/<id> | jq
+```

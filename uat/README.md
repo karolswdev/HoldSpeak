@@ -88,6 +88,20 @@ the isolated product run and preserves its pairing token across deck changes.
 4. At the end the **debrief packet** (`uat/_runs/<run_id>/debrief/debrief.md` +
    `.json`) generates.
 
+For a multi-campaign release gate, run:
+
+```bash
+uv run python scripts/uat_closeout.py phase-92
+```
+
+The closeout is a read-only, fail-closed join over debrief packets. It selects
+the newest required campaign result only for the repository's exact clean
+commit, rechecks the current scenario/slot/measurement matrix, enforces metric
+thresholds and physical-device attestations, and names every missing
+prerequisite. It never writes evidence or changes a story/phase status. The
+same report is available at `GET /api/closeouts/phase-92`; policies live under
+`uat/closeouts/` so future releases can reuse the primitive.
+
 Each sitting snapshots its normalized scenarios, ledger, recipe/deck asset
 hashes, and git commit into `protocol-snapshot.json`. Debrief coverage means
 **executed** coverage; authored pack coverage is reported separately.
@@ -98,6 +112,8 @@ hashes, and git commit into `protocol-snapshot.json`. Debrief coverage means
 - Debrief packets: `uat/_runs/<run_id>/debrief/`.
 - Decks: `uat/decks/`. Seeds: `uat/seeds/`. Recipes: `uat/recipes/`.
 - Scenarios: `uat/scenarios/<pack>/`. The feature ledger: `uat/features.yaml`.
+- Multi-campaign gate policies: `uat/closeouts/` (reports are computed, never
+  persisted as evidence by the conductor).
 
 ## Prerequisites per deck
 

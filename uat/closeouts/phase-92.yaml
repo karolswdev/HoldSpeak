@@ -1,0 +1,52 @@
+schema: 1
+id: phase-92
+title: "Phase 92 · The Coalescence acceptance closeout"
+description: >
+  Join the independent production Web and physical flagship-native campaigns
+  only when they exercised the same clean product commit. This report is a
+  fail-closed acceptance gate; it never creates evidence or changes PM state.
+allowed_acceptance_statuses: [passed, passed-with-observations]
+allowed_verdicts: [pass, observe]
+allowed_finding_triage: [wont-fix, by-design, duplicate]
+repository_requirements:
+  - id: phase-91-closed
+    path: pm/roadmap/holdspeak/phase-91-one-react-surface/current-phase-status.md
+    line_prefix: "**Status:**"
+    contains: CLOSED
+  - id: phase-91-final-summary
+    path: pm/roadmap/holdspeak/phase-91-one-react-surface/final-summary.md
+    exists: true
+campaigns:
+  - pack: owner-08-phase92-web-close
+    required_slots: [web_react:desktop, web_react:tablet_viewport]
+  - pack: owner-09-phase92-native-close
+    required_slots: [ios_flagship_swift:ipad, ios_flagship_swift:iphone]
+    require_paired_device_attestations: true
+    device_attestation_fields: [device_name, os_version, bundle_id, build_number, install_source]
+metric_policies:
+  elapsed_seconds: {operator: present}
+  product_steps: {operator: lte, threshold: 3}
+  placement_decisions: {operator: eq, threshold: 0}
+  technical_nouns: {operator: lte, threshold: 2}
+  capture_minutes: {operator: gte, threshold: 5}
+  resident_memory_mb: {operator: present}
+  recovery_loss_seconds: {operator: present}
+  findable_artifacts: {operator: gte, threshold: 1}
+  missing_lineage: {operator: eq, threshold: 0}
+  destination_classes_walked: {operator: gte, threshold: 5}
+  duplicate_objects: {operator: eq, threshold: 0}
+  silent_conflicts: {operator: eq, threshold: 0}
+  false_synced_classes: {operator: eq, threshold: 0}
+  external_effect_count: {operator: eq, threshold: 1}
+  ambiguous_commitment_verbs: {operator: eq, threshold: 0}
+  mode_invariant_failures: {operator: eq, threshold: 0}
+  registry_term_parity_pct: {operator: eq, threshold: 100}
+  wrong_pane_deliveries: {operator: eq, threshold: 0}
+  pointer_only_actions: {operator: eq, threshold: 0}
+  gesture_only_actions: {operator: eq, threshold: 0}
+  categories_exercised: {operator: gte, threshold: 9}
+  silent_failures: {operator: eq, threshold: 0}
+  lost_inputs: {operator: eq, threshold: 0}
+  false_completions: {operator: eq, threshold: 0}
+  detached_surfaces_visited: {operator: eq, threshold: 0}
+  desk_return_pct: {operator: eq, threshold: 100}

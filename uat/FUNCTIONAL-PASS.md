@@ -223,6 +223,15 @@ other. Do not generate Phase 92 story evidence or a final summary until both
 debriefs pass, all findings are triaged, Phase 91 is closed, and the Delivery
 Workbench close gates are genuinely satisfied.
 
+After both debriefs exist, run `uv run python scripts/uat_closeout.py phase-92`.
+The gate uses only the newest campaign-8 and campaign-9 packet for the exact
+clean repository commit. It rechecks all scenario/step/slot cells, every raw
+measurement against the Phase-92 thresholds, executed journey coverage,
+observation triage, paired physical iPhone/iPad attestations, and the Phase-91
+close prerequisite. A blocked report is a gap list, not evidence and not a
+waiver. The independent Delivery Workbench close gates still apply after this
+UAT report becomes ready.
+
 ## Stop, triage, and resume
 
 Stop the current campaign after a severity-1 event (data loss, input sent to the

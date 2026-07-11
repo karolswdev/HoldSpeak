@@ -15,4 +15,5 @@ steps:
     measurements:
       - {key: duplicate_objects, label: Duplicate canonical objects after two syncs, unit: objects}
       - {key: silent_conflicts, label: Divergences with no visible conflict or receipt, unit: conflicts}
+      - {key: false_synced_classes, label: Omitted object classes represented as synced, unit: classes}
 teardown: []

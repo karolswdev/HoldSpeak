@@ -112,11 +112,16 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
         return app.state.sittings
 
     from .debrief import DebriefGenerator
+    from .closeouts import CloseoutError, CloseoutEvaluator
 
     app.state.debrief = DebriefGenerator(app.state.manager, app.state.manager.db)
+    app.state.closeouts = CloseoutEvaluator()
 
     def debrief() -> DebriefGenerator:
         return app.state.debrief
+
+    def closeouts() -> CloseoutEvaluator:
+        return app.state.closeouts
 
     @app.get("/api/health")
     def conductor_health() -> Any:
@@ -545,6 +550,24 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
         if sitting is None:
             raise HTTPException(status_code=404, detail=f"no such sitting: {sitting_id}")
         return {"block": debrief().backlog_block(sitting["run_id"])}
+
+    # --- read-only multi-campaign closeout -------------------------------
+
+    @app.get("/api/closeouts")
+    def list_closeouts() -> Any:
+        try:
+            return {"closeouts": closeouts().list()}
+        except CloseoutError as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
+
+    @app.get("/api/closeouts/{closeout_id}")
+    def evaluate_closeout(closeout_id: str) -> Any:
+        try:
+            return closeouts().evaluate(closeout_id)
+        except KeyError:
+            raise HTTPException(status_code=404, detail=f"no such closeout: {closeout_id}")
+        except CloseoutError as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
 
     @app.on_event("shutdown")
     def _shutdown() -> None:

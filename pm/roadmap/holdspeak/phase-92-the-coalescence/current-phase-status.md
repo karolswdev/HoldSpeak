@@ -105,7 +105,7 @@ authority, and retained results without rewriting the underlying systems.
 | HS-92-07 | Every run names where it happens | in-progress | [story-07](./story-07-every-run-names-where.md) | InferenceTarget/Profile alias, five destination classes, shared Web/native picker, named refusal, actual-placement Artifact receipts, docs/doctor, and no borrowed keys green; five physical destination walks pending |
 | HS-92-08 | Decisions say what happens next | in-progress | [story-08](./story-08-decisions-say-what-happens.md) | Separate review/authority/execution axes, central four-family ControlMode policy, exact commitment verbs, bounded/revocable grants with use receipts, and Web/Swift/CLI controls green; physical mode/grant/revocation walks pending |
 | HS-92-09 | The Desk remembers what needs you | in-progress | [story-09](./story-09-the-desk-remembers.md) | Schema v20 additive projection index, non-sensitive adapters, presentation-only state, Web Desk/Qlippy/Mission Control and native Queue HUD green; forced-failure/device/VoiceOver/next-day walks pending |
-| HS-92-10 | The owner walk and evidence close | in-progress | [story-10](./story-10-owner-walk-evidence-close.md) | Ten-journey Web/flagship campaigns, required raw measurements, generated ledger additions, qualified seeding, and UAT harness automation green; genuine owner/device execution pending |
+| HS-92-10 | The owner walk and evidence close | in-progress | [story-10](./story-10-owner-walk-evidence-close.md) | Ten-journey Web/flagship campaigns, raw measurements, fail-closed same-commit closeout API/CLI, generated ledger additions, qualified seeding, and UAT harness automation green; genuine owner/device execution pending |
 
 ## Where we are
 
@@ -141,10 +141,13 @@ time/count Grants with visible use receipts, ControlMode behavior for dictation,
 steering, fixed connector writes, and cadence, plus matching Web/Swift/CLI
 controls and consequence-specific commitment verbs. HS-92-09 adds contextual
 attention and source-linked Receipt projections without copying domain payloads.
-HS-92-10 adds two target-qualified ten-journey close campaigns and makes raw
-exit measurements a required, durable part of substantive UAT verdicts. All ten
-stories stay open for their remaining manual and physical-device walks. This does
-not close Phase 91 or advance the current pointer.
+HS-92-10 adds two target-qualified ten-journey close campaigns, makes raw exit
+measurements a required durable part of substantive UAT verdicts, and adds a
+read-only closeout evaluator that refuses mixed commits, dirty bytes, stale or
+incomplete matrices, threshold misses, untriaged observations, missing physical
+attestations, and an open Phase 91. All ten stories stay open for their remaining
+manual and physical-device walks. This does not close Phase 91 or advance the
+current pointer.
 
 ## Active risks
 

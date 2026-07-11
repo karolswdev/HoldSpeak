@@ -72,3 +72,22 @@ baseline. Responsive Web screenshots cannot waive native acceptance.
 If any primary journey fails, keep the story and phase open. Defects discovered
 here belong in this story only when they are necessary to meet an existing
 acceptance criterion; unrelated discoveries become later candidates.
+
+### Pre-close implementation delivered 2026-07-11
+
+- `uat/closeouts/phase-92.yaml` now declares the exact two-campaign/four-slot
+  close policy, all raw metric thresholds, paired-device provenance, and the
+  Phase-91 close prerequisite.
+- `uat.conductor.closeouts` is a reusable read-only evaluator. It selects the
+  newest packet per campaign only on one clean Git commit, re-derives the exact
+  scenario/step/slot and required-measurement matrix from the current authored
+  packs, requires protocol hashes and executed feature credit, and reports
+  structured gaps for incomplete verdicts, unresolved observations, threshold
+  misses, or missing physical attestations.
+- `GET /api/closeouts/{id}` and `scripts/uat_closeout.py` expose the same report.
+  Neither path writes an evidence asset, alters a sitting, or changes delivery
+  state. The current honest result remains blocked on Phase 91 plus the genuine
+  Web and physical flagship campaigns.
+- The controlled term census and false-sync-class assertions are now required
+  measurements on both Web and native close campaigns, covering two measurable
+  phase outcomes that previously existed only in prose.
