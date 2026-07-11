@@ -83,6 +83,8 @@ final class SlidingWindowTests: XCTestCase {
         XCTAssertLessThanOrEqual(Double(rec.maxFrames), mc.maxActiveWindowSeconds,
                                  "per-tick audio never exceeds the bound (constant cost regardless of length)")
         XCTAssertLessThan(rec.maxFrames, 24, "and far below the 24-frame full-meeting cost windowing replaces")
+        XCTAssertLessThanOrEqual(Double(mc.bufferedFrames), mc.maxActiveWindowSeconds,
+                                 "captured PCM itself is pruned with the committed prefix")
     }
 
     // Acceptance #2 + #5: the persisted meeting = committed prefix + a final pass over the bounded

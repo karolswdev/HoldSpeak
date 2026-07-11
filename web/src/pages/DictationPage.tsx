@@ -97,7 +97,11 @@ function Readiness() {
             </InlineMessage>
           ))}
         </Panel>
-        <Panel className="span-4" title="Resolved target" eyebrow="Context">
+        <Panel
+          className="span-4"
+          title="Resolved delivery"
+          eyebrow="Project context"
+        >
           <JsonFacts value={resource.data.target} />
           <JsonFacts value={resource.data.depth} />
         </Panel>
@@ -246,7 +250,7 @@ function DryRun() {
                         setCorrectionKind(event.target.value)
                       }
                     >
-                      <option value="target">Target</option>
+                      <option value="target">Delivery target</option>
                       <option value="intent">Intent</option>
                     </Select>
                   )}
@@ -539,7 +543,7 @@ function Knowledge() {
         ) : null}
       </Panel>
       <Panel
-        title="Knowledge base"
+        title="Knowledge"
         eyebrow={String(kb.data.path ?? "PROJECT_KB.md")}
       >
         <TextArea
@@ -736,7 +740,7 @@ function Runtime() {
     }
   };
   return (
-    <Panel title="Dictation runtime" eyebrow="One runtime profile">
+    <Panel title="Dictation runtime" eyebrow="One Runs on destination">
       <Field label="Backend">
         {({ id }) => (
           <Select
@@ -751,7 +755,7 @@ function Runtime() {
           </Select>
         )}
       </Field>
-      <Field label="Runtime profile">
+      <Field label="Runs on">
         {({ id }) => (
           <Select
             id={id}
@@ -804,7 +808,7 @@ function Hooks() {
     {},
   );
   return (
-    <Panel title="Agent hooks" eyebrow="Project-aware context">
+    <Panel title="Automation hooks" eyebrow="Project-aware context">
       <ResourceState
         loading={resource.loading}
         error={resource.error}

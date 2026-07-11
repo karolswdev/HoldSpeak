@@ -289,6 +289,76 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500(e, log, "Failed to get project meetings")
 
+    @router.get("/api/projects/{project_id}/resources")
+    async def api_project_resources(project_id: str) -> Any:
+        try:
+            from ...db import get_database
+            db = get_database()
+            if db.projects.get_project(project_id) is None:
+                return JSONResponse({"error": f"Unknown Project: {project_id}"}, status_code=404)
+            rows = db.project_relationships.list_for_project(project_id)
+            return JSONResponse({"resources": [row.to_dict() for row in rows]})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list Project resources")
+
+    @router.put("/api/projects/{project_id}/resources/{resource_ref:path}")
+    async def api_add_project_resource(
+        project_id: str, resource_ref: str, payload: dict[str, Any] | None = None
+    ) -> Any:
+        try:
+            from ...db import get_database
+            body = payload or {}
+            row = get_database().project_relationships.upsert(
+                project_id=project_id,
+                resource_ref=resource_ref,
+                relationship=str(body.get("relationship") or "member"),
+                source="manual",
+                confidence=1.0,
+            )
+            return JSONResponse({"resource": row.to_dict()})
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to add Project resource")
+
+    @router.delete("/api/projects/{project_id}/resources/{resource_ref:path}")
+    async def api_remove_project_resource(project_id: str, resource_ref: str) -> Any:
+        try:
+            from ...db import get_database
+            removed = get_database().project_relationships.delete(project_id, resource_ref)
+            return JSONResponse({"success": True, "removed": removed})
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to remove Project resource")
+
+    @router.get("/api/desk/relationships/{resource_ref:path}")
+    async def api_resource_relationships(resource_ref: str) -> Any:
+        """Return the three independent Desk axes without conflating them."""
+        try:
+            from ...db import get_database
+            from ...db.relationships import qualified_ref
+            db = get_database()
+            ref = qualified_ref(resource_ref)
+            placement = db.directory_memberships.get(ref)
+            knowledge = db.knowledge_memberships.list_for_resource(ref)
+            projects = db.project_relationships.list_for_resource(ref)
+            return JSONResponse({
+                "resource_ref": ref,
+                "zone": placement.to_dict() if placement else None,
+                "knowledge": [row.to_dict() for row in knowledge],
+                "projects": [row.to_dict() for row in projects],
+                "explanations": {
+                    "zone": "Where this object lives; exactly one Zone or the Desk root.",
+                    "knowledge": "Reusable collections this object informs; membership does not move it.",
+                    "projects": "Work this object supports; a relationship does not file or copy it.",
+                },
+            })
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to inspect Desk relationships")
+
     @router.post("/api/projects/{project_id}/meetings/{meeting_id}")
     async def api_associate_meeting(project_id: str, meeting_id: str) -> Any:
         try:

@@ -56,6 +56,78 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:  # pragma: no cover - defensive
             return error_500(exc, log, "Failed to test runtime")
 
+    @router.put("/api/setup/onboarding")
+    async def api_onboarding_disposition(payload: dict[str, Any]) -> Any:
+        """Persist completed/dismissed/needs-help independently of success."""
+        try:
+            from ...db import get_database
+
+            state = get_database().onboarding.set_disposition(
+                str((payload or {}).get("disposition") or "")
+            )
+            return {"success": True, "onboarding": state}
+        except ValueError as exc:
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to update onboarding disposition")
+
+    @router.post("/api/setup/first-value/start")
+    async def api_first_value_start(payload: dict[str, Any]) -> Any:
+        """Start local, content-free first-value measurement."""
+        forbidden = {"text", "phrase", "transcript", "content", "audio"}
+        if forbidden.intersection(payload or {}):
+            return JSONResponse(
+                {"success": False, "error": "First-value receipts never accept phrase content."},
+                status_code=400,
+            )
+        try:
+            from ...db import get_database
+
+            attempt = get_database().onboarding.start_attempt(
+                destination=str((payload or {}).get("destination") or "this_machine")
+            )
+            return JSONResponse({"success": True, "attempt": attempt}, status_code=201)
+        except ValueError as exc:
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to start first-value receipt")
+
+    @router.post("/api/setup/first-value/{attempt_id}/finish")
+    async def api_first_value_finish(attempt_id: str, payload: dict[str, Any]) -> Any:
+        """Finish one measurement and close onboarding on verified success."""
+        forbidden = {"text", "phrase", "transcript", "content", "audio"}
+        if forbidden.intersection(payload or {}):
+            return JSONResponse(
+                {"success": False, "error": "First-value receipts never accept phrase content."},
+                status_code=400,
+            )
+        try:
+            from ...db import FIRST_DICTATION_SUCCESS, get_database
+
+            database = get_database()
+            outcome = str((payload or {}).get("outcome") or "")
+            attempt = database.onboarding.finish_attempt(
+                attempt_id,
+                outcome=outcome,
+                steps=int((payload or {}).get("steps", 1)),
+                decisions=int((payload or {}).get("decisions", 0)),
+                destination=str((payload or {}).get("destination") or "this_machine"),
+                failure_category=(payload or {}).get("failure_category"),
+            )
+            # `finish_attempt` is idempotent: a repeated request returns the
+            # stored terminal receipt. Only that receipt may promote success;
+            # a late/replayed "success" must never overwrite a prior failure.
+            if attempt.get("succeeded_at"):
+                database.milestones.mark(FIRST_DICTATION_SUCCESS)
+                database.onboarding.set_disposition("completed")
+            return {"success": True, "attempt": attempt}
+        except KeyError as exc:
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=404)
+        except (TypeError, ValueError) as exc:
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to finish first-value receipt")
+
     @router.get("/api/setup/runtime-options")
     async def api_runtime_options() -> Any:
         """Real local model choices plus human-friendly context presets."""

@@ -4,12 +4,15 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-10 — **Phase 91, One React Surface, IN PROGRESS
-(9/10).** The entire Web is now one Vite/React 19 tree: all route cohorts,
-Signal controls, typed API/runtime seams, direct links, the component gallery,
-the hard deletion, selected backend contracts, and the desktop/compact browser
-audit are green. Closure waits on the real owner workflow and actual Swift
-DeskOS parity evidence; responsive Web screenshots do not waive that gate.
+**Last updated:** 2026-07-11 — **Phase 91, One React Surface, IN PROGRESS
+(9/10); Phase 92, The Coalescence, PLANNED with HS-92-01 through HS-92-06 pre-close work in
+progress by direct owner instruction.** The entire Web is now one Vite/React 19
+tree and its desktop/compact browser audit is green. Phase 91 closure still
+waits on the real owner workflow and actual Swift DeskOS parity evidence;
+responsive Web screenshots do not waive that gate. Phase 92 is not the current
+phase: its language, trust, first-value, meeting, relationship, and capability
+convergence slices have automated proof, while their manual/device walks and all later stories
+remain gated behind HS-91-10.
 
 **Current phase:** [**Phase 91 — One React Surface**](./phase-91-one-react-surface/current-phase-status.md)
 — **IN PROGRESS (9/10)**. HS-91-01 through HS-91-09 are done. HS-91-10 remains
@@ -155,6 +158,7 @@ canon, canon wins.
 | 89 | Take the Terminal: first-class, consent-gated manipulation of any pane on configured machines | done | [phase-89-take-the-terminal](./phase-89-take-the-terminal/) |
 | 90 | The Factory: spawn, rename, drive, and kill terminal sessions from glass on the one consent spine | done | [phase-90-the-factory](./phase-90-the-factory/) |
 | 91 | One React Surface: one Vite/React application carrying DeskOS craft across every Web route; owner/Swift parity close gate remains | in-progress | [phase-91-one-react-surface](./phase-91-one-react-surface/) |
+| 92 | Make HoldSpeak feel like one powerful, understandable product by converging Web and native journeys on the Desk's shared objects, destinations, attention, authority, and retained results without rewriting the underlying systems. | planning | [phase-92-the-coalescence](./phase-92-the-coalescence/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

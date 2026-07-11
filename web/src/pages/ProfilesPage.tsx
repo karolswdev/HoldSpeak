@@ -54,7 +54,7 @@ export default function ProfilesPage() {
     setEditing((current) => (current ? { ...current, [key]: value } : current));
   const save = async () => {
     if (!editing || !String(editing.name ?? "").trim()) {
-      setMessage("A profile needs a name.");
+      setMessage("A Runs on destination needs a name.");
       return;
     }
     setBusy(true);
@@ -94,10 +94,10 @@ export default function ProfilesPage() {
     <div className="page-wrap">
       <PageHero
         eyebrow="Runtime"
-        title="Profiles"
+        title="Runs on"
         actions={
           <Button variant="primary" onClick={() => setEditing(blank())}>
-            New profile
+            New destination
           </Button>
         }
       >
@@ -114,7 +114,7 @@ export default function ProfilesPage() {
             <InlineMessage tone="error">{message}</InlineMessage>
           ) : null}
           {!profiles.length ? (
-            <EmptyState title="No runtime profiles">
+            <EmptyState title="No runtime destinations">
               Add a local model, model server, or mesh node. The hub keeps any
               required key.
             </EmptyState>
@@ -128,7 +128,7 @@ export default function ProfilesPage() {
                   <li className="data-row" key={rowId(profile, index)}>
                     <div>
                       <strong>
-                        {String(profile.name ?? "Untitled profile")}
+                        {String(profile.name ?? "Untitled destination")}
                       </strong>
                       <small>
                         {kind === "openAICompatible"
@@ -176,7 +176,9 @@ export default function ProfilesPage() {
       </ResourceState>
       <Dialog
         open={Boolean(editing)}
-        title={editing?.id ? "Edit runtime profile" : "New runtime profile"}
+        title={
+          editing?.id ? "Edit Runs on destination" : "New Runs on destination"
+        }
         onClose={() => setEditing(null)}
       >
         {editing ? (
@@ -290,8 +292,8 @@ export default function ProfilesPage() {
       </Dialog>
       <ConfirmAction
         open={Boolean(deleting)}
-        title="Delete runtime profile?"
-        detail={`Delete ${String(deleting?.name ?? "this profile")}. Any hub configuration that refers to it will need another destination.`}
+        title="Delete Runs on destination?"
+        detail={`Delete ${String(deleting?.name ?? "this destination")}. Any hub configuration that refers to it will need another destination.`}
         busy={busy}
         onConfirm={remove}
         onClose={() => setDeleting(null)}

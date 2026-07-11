@@ -41,7 +41,8 @@ log = get_logger("web.routes.sync")
 # repository on the hub. Keep this in lockstep with the mobile/web SyncKind enum.
 SYNC_KINDS = frozenset(
     {"meeting", "artifact", "note", "kb", "recipe", "chain", "workflow",
-     "directory", "directory_membership", "profile", "model"}
+     "directory", "directory_membership", "knowledge_membership",
+     "project", "project_relationship", "profile", "model"}
 )
 
 # Repository-backed primitives the push route merges into the live store (the key
@@ -89,8 +90,18 @@ _BUCKET_KIND = {
     "meetings": "meeting", "artifacts": "artifact", "notes": "note",
     "kbs": "kb", "recipes": "recipe", "chains": "chain", "workflows": "workflow",
     "directories": "directory", "directory_memberships": "directory_membership",
+    "knowledge_memberships": "knowledge_membership",
+    "project_relationships": "project_relationship",
+    "projects": "project",
     "profiles": "profile", "models": "model",
 }
+
+
+class _EmptySyncRepo:
+    """Compatibility view for older embedded/test hubs during additive rollout."""
+
+    def list(self, **_: Any) -> list[Any]:
+        return []
 
 
 def _iso(value: Any) -> Any:
@@ -108,7 +119,17 @@ def _iso(value: Any) -> Any:
         if s.endswith("+00:00"):
             return s[:-6] + "Z"
         return s if s.endswith("Z") else s + "Z"
-    return str(value)
+    raw = str(value).strip()
+    if not raw:
+        return raw
+    try:
+        from datetime import datetime, timezone
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    except ValueError:
+        return raw
 
 
 def _records_valid(records: Any) -> bool:
@@ -157,14 +178,37 @@ def _primitive_record(rec: Any, kind: str) -> dict[str, Any]:
     on tombstones, violating its own contract).
     """
     deleted = bool(rec.deleted)
+    value = rec.to_dict()
+    for key in ("created_at", "updated_at", "last_modified"):
+        if value.get(key):
+            value[key] = _iso(value[key])
     return {
         "meta": {
             "id": rec.id,
             "kind": kind,
-            "last_modified": rec.last_modified,
+            "last_modified": _iso(rec.last_modified),
             "deleted": deleted,
         },
-        "value": None if deleted else rec.to_dict(),
+        "value": None if deleted else value,
+    }
+
+
+def _project_record(project: Any) -> dict[str, Any]:
+    modified = _iso(project.updated_at)
+    value = {
+        "id": project.id,
+        "name": project.name,
+        "description": project.description,
+        "is_archived": bool(project.is_archived),
+        "created_at": _iso(project.created_at),
+        "updated_at": modified,
+        "last_modified": modified,
+        "deleted": False,
+    }
+    return {
+        "meta": {"id": project.id, "kind": "project",
+                 "last_modified": modified, "deleted": False},
+        "value": value,
     }
 
 
@@ -274,15 +318,22 @@ def _meeting_state_from_value(value: dict[str, Any]) -> Any:
         mic_label=str(value.get("mic_label") or "Me"),
         remote_label=str(value.get("remote_label") or "Remote"),
         web_url=value.get("web_url"),
+        capture_status=str(value.get("capture_status") or (
+            "finalized" if value.get("ended_at") else "recoverable"
+        )),
+        capture_failure=value.get("capture_failure"),
+        capture_checkpoint_at=_parse_dt(value.get("capture_checkpoint_at")),
+        capture_checkpoint_seconds=float(value.get("capture_checkpoint_seconds") or 0.0),
+        provenance=str(value.get("provenance") or "native"),
+        sync_modified_at=_parse_dt(value.get("sync_modified_at")),
     )
 
 
 def _merge_meetings(db: Any, records: list[dict[str, Any]]) -> int:
     """Live-merge pushed meeting records (LWW on `last_modified`, tombstone-aware).
 
-    The LWW stamp for the stored copy is the meeting's `started_at` ISO — exactly
-    the field ``pull`` emits as the meeting's `last_modified`, so the conflict key
-    is symmetric across surfaces.
+    Equal-clock divergent values keep local as the deterministic winner and save
+    the incoming value in ``meeting_sync_conflicts`` for explicit recovery.
     """
     merged = 0
     for rec in records:
@@ -292,22 +343,48 @@ def _merge_meetings(db: Any, records: list[dict[str, Any]]) -> int:
             continue
         incoming_lm = _parse_dt(meta.get("last_modified"))
         existing = db.meetings.get_meeting(rec_id)
+        value = rec.get("value") or {}
         if existing is not None and incoming_lm is not None:
-            # The stored copy's LWW key is `started_at` — the field `pull` emits
-            # as the meeting's `last_modified`, so the conflict key is symmetric.
-            if existing.started_at >= incoming_lm:
+            local_lm = getattr(existing, "sync_modified_at", None) or existing.started_at
+            if local_lm > incoming_lm:
+                continue
+            if local_lm == incoming_lm:
+                incoming_compare = (
+                    _meeting_state_from_value({**value, "id": rec_id}).to_dict()
+                    if isinstance(value, dict) else {}
+                )
+                local_compare = existing.to_dict()
+                # Computed presentation fields and the transport clock are not
+                # authored content and cannot create a false conflict.
+                for payload in (incoming_compare, local_compare):
+                    payload.pop("duration", None)
+                    payload.pop("formatted_duration", None)
+                    payload.pop("sync_modified_at", None)
+                if meta.get("deleted") or incoming_compare != local_compare:
+                    db.meetings.record_sync_conflict(
+                        rec_id,
+                        local_value=existing.to_dict(),
+                        incoming_value={"deleted": bool(meta.get("deleted")), **incoming_compare},
+                    )
                 continue
         if meta.get("deleted"):
             db.meetings.delete_meeting(rec_id)
             merged += 1
             continue
-        value = rec.get("value") or {}
         if not isinstance(value, dict):
             continue
         state = _meeting_state_from_value({**value, "id": rec_id})
+        state.sync_modified_at = incoming_lm
         if not state.id:
             continue
-        db.meetings.save_meeting(state)
+        try:
+            db.meetings.save_meeting(state, sync_modified_at=incoming_lm)
+        except TypeError as exc:
+            # Compatibility with narrow repository fakes/adapters that predate
+            # the optional clock keyword; the canonical repository accepts it.
+            if "sync_modified_at" not in str(exc):
+                raise
+            db.meetings.save_meeting(state)
         merged += 1
     return merged
 
@@ -405,9 +482,10 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
             meetings.append({
                 "meta": {
                     "id": summary.id, "kind": "meeting",
-                    # NOTE: started_at as last_modified is a transport-grade stamp;
-                    # conflict-grade last-modified (updated_at) is HSM-10-03.
-                    "last_modified": _iso(summary.started_at), "deleted": False,
+                    "last_modified": _iso(
+                        getattr(state, "sync_modified_at", None) or summary.started_at
+                    ),
+                    "deleted": False,
                 },
                 "value": state.to_dict(),
             })
@@ -454,6 +532,22 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
             _primitive_record(m, "directory_membership")
             for m in db.directory_memberships.list(include_deleted=True, limit=bounded)
         ]
+        knowledge_memberships = [
+            _primitive_record(m, "knowledge_membership")
+            for m in getattr(db, "knowledge_memberships", _EmptySyncRepo()).list(
+                include_deleted=True, limit=bounded
+            )
+        ]
+        project_relationships = [
+            _primitive_record(m, "project_relationship")
+            for m in getattr(db, "project_relationships", _EmptySyncRepo()).list(
+                include_deleted=True, limit=bounded
+            )
+        ]
+        projects = [
+            _project_record(project)
+            for project in db.projects.list_projects(include_archived=True)
+        ] if hasattr(db, "projects") else []
 
         # Model MANIFESTS (HSM-16-08): every node's pushed rows, PLUS the hub's own
         # model as a live virtual row (computed from config, never stored) — so a
@@ -484,6 +578,9 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
             "profiles": profiles,
             "directories": directories,
             "directory_memberships": directory_memberships,
+            "knowledge_memberships": knowledge_memberships,
+            "project_relationships": project_relationships,
+            "projects": projects,
             "models": models,
         })
 
@@ -540,6 +637,102 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
             received["meetings"], len(meeting_records),
             received["artifacts"], len(artifact_records),
         )
+
+        project_records = body.get("projects") or []
+        merged_projects = 0
+        for rec in project_records:
+            meta, value = rec["meta"], rec.get("value") or {}
+            project_id = str(meta["id"])
+            existing = db.projects.get_project(project_id)
+            incoming = str(meta.get("last_modified") or "")
+            if existing is not None and incoming:
+                local_clock, incoming_clock = _iso(existing.updated_at), _iso(incoming)
+                if local_clock == incoming_clock:
+                    if (existing.name != str(value.get("name") or existing.name)
+                            or existing.description != str(value.get("description") or existing.description)
+                            or existing.is_archived != bool(meta.get("deleted") or value.get("is_archived"))):
+                        return JSONResponse({
+                            "success": False, "error": "project conflict at equal sync clock",
+                            "conflict": {"kind": "project", "id": project_id,
+                                         "last_modified": incoming_clock},
+                        }, status_code=409)
+                    continue
+                if local_clock > incoming_clock:
+                    continue
+            if existing is None and not meta.get("deleted"):
+                db.projects.create_project(
+                    project_id=project_id,
+                    name=str(value.get("name") or project_id),
+                    description=str(value.get("description") or ""),
+                )
+            elif existing is not None:
+                db.projects.update_project(
+                    project_id,
+                    name=str(value.get("name") or existing.name),
+                    description=str(value.get("description") or existing.description),
+                    is_archived=bool(meta.get("deleted") or value.get("is_archived")),
+                )
+            merged_projects += 1
+        received["projects"] = merged_projects
+
+        # Independent relationship axes use composite ids and therefore merge
+        # through their purpose-built repositories instead of `_MERGEABLE`.
+        for bucket, repo_name, owner_key in (
+            ("knowledge_memberships", "knowledge_memberships", "knowledge_id"),
+            ("project_relationships", "project_relationships", "project_id"),
+        ):
+            merged = 0
+            records = body.get(bucket) or []
+            repo = getattr(db, repo_name, None)
+            if repo is None and records:
+                return JSONResponse(
+                    {"success": False, "error": f"hub does not support {bucket}"},
+                    status_code=409,
+                )
+            for rec in records:
+                meta, value = rec["meta"], rec.get("value") or {}
+                owner = str(value.get(owner_key) or "").strip()
+                ref = str(value.get("resource_ref") or "").strip()
+                if not owner or not ref:
+                    continue
+                existing = repo.get(owner, ref, include_deleted=True)
+                incoming = str(meta.get("last_modified") or "")
+                if existing is not None and incoming:
+                    local_clock, incoming_clock = _iso(existing.last_modified), _iso(incoming)
+                    if local_clock == incoming_clock:
+                        relationship_changed = (
+                            bool(existing.deleted) != bool(meta.get("deleted"))
+                            or (bucket == "project_relationships" and (
+                                existing.relationship != str(value.get("relationship") or "member")
+                                or existing.source != str(value.get("source") or "manual")
+                                or existing.confidence != float(value.get("confidence", 1.0))
+                            ))
+                        )
+                        if relationship_changed:
+                            return JSONResponse({
+                                "success": False,
+                                "error": "relationship conflict at equal sync clock",
+                                "conflict": {"kind": _BUCKET_KIND[bucket],
+                                             "id": str(meta["id"]),
+                                             "last_modified": incoming_clock},
+                            }, status_code=409)
+                        continue
+                    if local_clock > incoming_clock:
+                        continue
+                kwargs: dict[str, Any] = {
+                    owner_key: owner, "resource_ref": ref,
+                    "last_modified": incoming or None,
+                    "deleted": bool(meta.get("deleted")),
+                }
+                if bucket == "project_relationships":
+                    kwargs.update(
+                        relationship=value.get("relationship") or "member",
+                        source=value.get("source") or "manual",
+                        confidence=value.get("confidence", 1.0),
+                    )
+                repo.upsert(**kwargs)
+                merged += 1
+            received[bucket] = merged
 
         # Desk primitives: merge into the live store, last-write-wins on
         # last_modified, tombstone deletes.

@@ -10,7 +10,7 @@ public enum ContextEnvelope {
     /// One grounded block. `detail` is the meeting's date, or an artifact's
     /// parent meeting title; empty detail drops the suffix.
     public struct Block: Equatable, Sendable {
-        public enum Kind: String, Sendable { case meeting, artifact, note, kb }
+        public enum Kind: String, Sendable { case meeting, artifact, note, kb, zone, project }
         public var kind: Kind
         public var title: String
         public var detail: String
@@ -83,16 +83,36 @@ public struct GroundingSelection: Codable, Equatable, Sendable {
         }
     }
 
+    public struct Resource: Codable, Equatable, Sendable {
+        public var ref: String
+        public var kind: String
+        public var title: String
+        public init(ref: String, kind: String, title: String) {
+            self.ref = ref; self.kind = kind; self.title = title
+        }
+    }
+
     public var meetings: [Meeting]
+    public var resources: [Resource]
 
-    public init(meetings: [Meeting] = []) { self.meetings = meetings }
+    public init(meetings: [Meeting] = [], resources: [Resource] = []) {
+        self.meetings = meetings; self.resources = resources
+    }
 
-    public var isEmpty: Bool { meetings.isEmpty }
+    private enum CodingKeys: String, CodingKey { case meetings, resources }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        meetings = try c.decodeIfPresent([Meeting].self, forKey: .meetings) ?? []
+        resources = try c.decodeIfPresent([Resource].self, forKey: .resources) ?? []
+    }
+
+    public var isEmpty: Bool { meetings.isEmpty && resources.isEmpty }
 
     /// The wire half (HSM-15-11 pairing): a desktop run ships REFERENCES and
     /// the hub hydrates from its own store — ids, never bodies, over DERP.
     public var hubMeetingIds: [String] { meetings.map(\.id) }
     public var hubArtifactIds: [String] { meetings.flatMap(\.artifactIds) }
+    public var hubRefs: [String] { resources.map(\.ref) }
     public var hubExpand: String { meetings.contains(where: \.includeTranscript) ? "full" : "summary" }
 
     /// The picker chip's label: `Grounded on 2 meetings · 3 artifacts`.
@@ -101,6 +121,7 @@ public struct GroundingSelection: Codable, Equatable, Sendable {
         var parts = ["\(meetings.count) meeting" + (meetings.count == 1 ? "" : "s")]
         let arts = hubArtifactIds.count
         if arts > 0 { parts.append("\(arts) artifact" + (arts == 1 ? "" : "s")) }
+        if !resources.isEmpty { parts.append("\(resources.count) object" + (resources.count == 1 ? "" : "s")) }
         return parts.joined(separator: " · ")
     }
 }

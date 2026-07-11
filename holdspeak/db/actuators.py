@@ -18,6 +18,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Optional
 
+from ..actuator_authority import authority_binding
 from ..logging_config import get_logger
 from .base import BaseRepository
 from .models import (
@@ -253,14 +254,55 @@ class ActuatorRepository(BaseRepository):
             )
             new_error = error if error is not None else row["error"]
 
+            binding = None
+            if target_status == "approved":
+                binding = authority_binding(
+                    target=row["target"],
+                    action=row["action"],
+                    preview=row["preview"],
+                    payload=self._json_loads_dict(row["payload_json"]),
+                )
+                binding_detail = (
+                    "authority bound: "
+                    f"payload={binding.payload_hash[:12]} "
+                    f"destination={binding.normalized_destination} "
+                    f"preview={binding.preview_hash[:12]} "
+                    f"renderer={binding.preview_renderer_version} "
+                    f"effect={binding.effect_class} policy={binding.policy_version}"
+                )
+                detail = f"{detail}; {binding_detail}" if detail else binding_detail
+
+            approved_payload_hash = (
+                binding.payload_hash if binding else row["approved_payload_hash"]
+            )
+            approved_destination = (
+                binding.normalized_destination if binding else row["approved_destination"]
+            )
+            approved_preview_hash = (
+                binding.preview_hash if binding else row["approved_preview_hash"]
+            )
+            preview_renderer_version = (
+                binding.preview_renderer_version if binding else row["preview_renderer_version"]
+            )
+            approved_effect_class = binding.effect_class if binding else row["effect_class"]
+            policy_version = binding.policy_version if binding else row["policy_version"]
+
             conn.execute(
                 """
                 UPDATE actuator_proposals
                 SET status = ?, decided_by = ?, decided_at = ?, executed_at = ?,
+                    approved_payload_hash = ?, approved_destination = ?,
+                    approved_preview_hash = ?, preview_renderer_version = ?,
+                    effect_class = ?, policy_version = ?,
                     result_json = ?, error = ?, updated_at = ?
                 WHERE id = ?
                 """,
-                (target_status, decided_by, decided_at, executed_at, result_json, new_error, now, pid),
+                (
+                    target_status, decided_by, decided_at, executed_at,
+                    approved_payload_hash, approved_destination, approved_preview_hash,
+                    preview_renderer_version, approved_effect_class, policy_version,
+                    result_json, new_error, now, pid,
+                ),
             )
             conn.execute(
                 """
@@ -300,6 +342,19 @@ class ActuatorRepository(BaseRepository):
             for row in rows
         ]
 
+    def last_execution_receipt(self, target: str) -> Optional[str]:
+        """Latest durable successful receipt time for one egress target."""
+        with self._connection() as conn:
+            row = conn.execute(
+                """
+                SELECT executed_at FROM actuator_proposals
+                WHERE target = ? AND status = 'executed' AND executed_at IS NOT NULL
+                ORDER BY executed_at DESC, id DESC LIMIT 1
+                """,
+                (str(target).strip(),),
+            ).fetchone()
+        return str(row["executed_at"]) if row is not None else None
+
     def _row_to_proposal(self, row: Any) -> ActuatorProposalRecord:
         return ActuatorProposalRecord(
             id=row["id"],
@@ -317,6 +372,12 @@ class ActuatorRepository(BaseRepository):
             reversible=bool(row["reversible"]),
             required_capabilities=[str(c) for c in self._json_loads_list(row["required_capabilities_json"])],
             decided_by=row["decided_by"],
+            approved_payload_hash=row["approved_payload_hash"],
+            approved_destination=row["approved_destination"],
+            approved_preview_hash=row["approved_preview_hash"],
+            preview_renderer_version=row["preview_renderer_version"],
+            effect_class=row["effect_class"],
+            policy_version=row["policy_version"],
             result=self._json_loads_dict(row["result_json"]) if row["result_json"] else None,
             error=row["error"],
             created_at=row["created_at"],

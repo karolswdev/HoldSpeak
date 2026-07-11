@@ -24,6 +24,7 @@ from typing import Any, Optional
 
 from ..logging_config import get_logger
 from .base import BaseRepository
+from .relationships import qualified_ref
 from .models import (
     RecipeRecord,
     ChainRecord,
@@ -198,6 +199,37 @@ class KBRepository(BaseRepository):
                     1 if deleted else 0,
                 ),
             )
+            # Qualified clients write the independent many-to-many edge store.
+            # Raw legacy lists remain readable; their kind cannot be guessed.
+            if member_ids is not None:
+                refs: list[str] = []
+                try:
+                    refs = [qualified_ref(value) for value in member_ids]
+                except ValueError:
+                    refs = []
+                else:
+                    desired = set(refs)
+                    if desired:
+                        marks = ",".join("?" for _ in desired)
+                        conn.execute(
+                            "UPDATE knowledge_memberships SET deleted=1,last_modified=? "
+                            f"WHERE knowledge_id=? AND deleted=0 AND resource_ref NOT IN ({marks})",
+                            (last_modified or now, clean_id, *sorted(desired)),
+                        )
+                    else:
+                        conn.execute(
+                            "UPDATE knowledge_memberships SET deleted=1,last_modified=? "
+                            "WHERE knowledge_id=? AND deleted=0",
+                            (last_modified or now, clean_id),
+                        )
+                    for ref in sorted(desired):
+                        conn.execute(
+                            """INSERT INTO knowledge_memberships
+                               (knowledge_id,resource_ref,created_at,last_modified,deleted)
+                               VALUES (?,?,?,?,0) ON CONFLICT(knowledge_id,resource_ref)
+                               DO UPDATE SET last_modified=excluded.last_modified,deleted=0""",
+                            (clean_id, ref, now, last_modified or now),
+                        )
         return self.get(clean_id, include_deleted=True)  # type: ignore[return-value]
 
     def get(self, kb_id: str, *, include_deleted: bool = False) -> Optional[KBRecord]:
@@ -892,6 +924,19 @@ class DirectoryRepository(BaseRepository):
                 "UPDATE directories SET deleted = 1, last_modified = ? WHERE id = ? AND deleted = 0",
                 (now, clean_id),
             )
+            if cur.rowcount:
+                # Deleting a Zone returns its contents to the Desk root and its
+                # child Zones to the root; nothing can become silently stranded.
+                conn.execute(
+                    "UPDATE directory_memberships SET deleted = 1, last_modified = ? "
+                    "WHERE directory_id = ? AND deleted = 0",
+                    (now, clean_id),
+                )
+                conn.execute(
+                    "UPDATE directories SET parent_id = NULL, last_modified = ? "
+                    "WHERE parent_id = ? AND deleted = 0",
+                    (now, clean_id),
+                )
             return bool(cur.rowcount and cur.rowcount > 0)
 
     def purge(self, directory_id: str) -> bool:

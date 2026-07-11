@@ -289,6 +289,24 @@ final class CaptureModel: ObservableObject {
 
     func refresh() { meetings = mc?.meetings() ?? [] }
 
+    func recover(_ meeting: Meeting) {
+        do { _ = try mc?.recover(id: meeting.id); refresh() }
+        catch { self.error = "Recovery failed; the original is still retained: \(error)" }
+    }
+
+    func discard(_ meeting: Meeting) {
+        do { try mc?.discard(id: meeting.id); refresh() }
+        catch { self.error = "Discard failed; the Meeting was retained: \(error)" }
+    }
+
+    func applySyncedMeetings(_ incoming: [Meeting], modified: [String: Date],
+                             tombstones: [String: Date]) {
+        do {
+            try mc?.applySyncedMeetings(incoming, modified: modified, tombstones: tombstones)
+            refresh()
+        } catch { self.error = "Meeting sync retained locally for retry: \(error)" }
+    }
+
     /// HSM-14-17 — the diarize closure handed to `MeetingCapture`. Lazily loads the bundled Core ML
     /// embedder once (on first use, off the main thread by the time `stop()` calls it), and gates on
     /// the live opt-in setting: when OFF it returns the segments untouched, so capture behaves exactly
@@ -322,6 +340,9 @@ final class CaptureModel: ObservableObject {
                 try? await Task.sleep(nanoseconds: 700_000_000)   // poll cadence; the bounded ~10s window keeps each tick cheap
                 await mc.tick()
                 if case .recording(let t) = mc.state { await MainActor.run { self?.liveTranscript = t; self?.ingest(t) } }
+                if case .recoverable(_, let reason) = mc.state {
+                    await MainActor.run { self?.error = "Meeting saved through the last checkpoint. \(reason) · Stop to retry." }
+                }
             }
         }
         // Fast, independent poll of the mic amplitude (20 Hz) — the waveform reacts to sound the
@@ -348,6 +369,7 @@ final class CaptureModel: ObservableObject {
         notebook?.save()           // final flush of the meeting's notes
         _ = await mc.stop()
         if case .failed(let r) = mc.state { error = r }
+        if case .recoverable(_, let r) = mc.state { error = r }
         refresh()
     }
 
@@ -698,6 +720,18 @@ struct MeetingListView: View {
                             ForEach(Array(model.meetings.enumerated()), id: \.element.id) { i, m in
                                 NavigationLink { MeetingDetailView(meeting: m) } label: { meetingRow(m) }
                                     .buttonStyle(PressableCard())
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        if m.captureStatus != nil && m.captureStatus != "finalized" && m.captureStatus != "recovered" {
+                                            Button("Discard", role: .destructive) { model.discard(m) }
+                                            Button("Recover") { model.recover(m) }.tint(Sig.local)
+                                        }
+                                    }
+                                    .contextMenu {
+                                        if m.captureStatus != nil && m.captureStatus != "finalized" && m.captureStatus != "recovered" {
+                                            Button("Recover saved work") { model.recover(m) }
+                                            Button("Discard interrupted Meeting", role: .destructive) { model.discard(m) }
+                                        }
+                                    }
                                     .opacity(appeared ? 1 : 0)
                                     .offset(y: appeared ? 0 : 14)
                                     .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.82)
@@ -941,6 +975,11 @@ struct MeetingListView: View {
                     .foregroundStyle(Sig.text).lineLimit(1)
                 Text(m.startedAt.formatted(date: .abbreviated, time: .shortened))
                     .font(.system(size: 12, weight: .medium)).foregroundStyle(Sig.faint)
+                if let status = m.captureStatus, status != "finalized" {
+                    Text(status == "recovered" ? "SAVED PARTIAL" : "RECOVER OR DISCARD")
+                        .font(.system(size: 9, weight: .heavy)).tracking(0.7)
+                        .foregroundStyle(status == "recovered" ? Sig.warn : Sig.bad)
+                }
             }
             Spacer()
             Text("\(m.segments.count) segs").font(.system(size: 11, weight: .heavy).monospacedDigit())

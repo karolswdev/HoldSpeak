@@ -3,7 +3,7 @@
  * → a card prints → keep it (a real synced Artifact with full lineage) or bin
  * it. The hub assembles the material from the canonical store and answers
  * with the run's HONEST egress — the badge states where THIS run went. */
-import type { DeskItem, Items } from "./api";
+import { qualifiedRef, type DeskItem, type Items } from "./api";
 import { apiRequest } from "../lib/api";
 
 /** One lasso'd card, as the ask reads it. */
@@ -11,6 +11,7 @@ export interface AskContext {
   id: string;
   kind: string;
   title: string;
+  ref?: string;
 }
 
 /** The prompt presets — the iPad's `RouteLenses.all`, verbatim. */
@@ -48,7 +49,7 @@ export function askContexts(items: Items, selectedIds: string[]): AskContext[] {
     for (const kind of Object.keys(items) as Array<keyof Items>) {
       const hit = (items[kind] || []).find((x: DeskItem) => x.id === id);
       if (hit) {
-        out.push({ id, kind, title: String(hit.title || hit.name || id) });
+        out.push({ id, kind, ref: qualifiedRef(kind, id), title: String(hit.title || hit.name || id) });
         break;
       }
     }
@@ -86,6 +87,7 @@ export async function runAsk(opts: {
   grounding?: {
     meeting_ids: string[];
     artifact_ids: string[];
+    refs?: string[];
     expand: "summary" | "full";
   } | null;
   /** HS-83-03: pin one of the hub's runnable models (the /api/models set);
@@ -112,6 +114,7 @@ export async function runAsk(opts: {
           id: c.id,
           kind: c.kind,
           title: c.title,
+          ref: c.ref || qualifiedRef(c.kind, c.id),
         })),
         ...(opts.profileId ? { profile_id: opts.profileId } : {}),
         ...(opts.grounding ? { grounding: opts.grounding } : {}),
@@ -160,7 +163,12 @@ export async function keepAsk(opts: {
         lens: opts.lens,
         prompt: opts.prompt,
         output: opts.output,
-        context: opts.context.map((c) => ({ id: c.id, title: c.title })),
+        context: opts.context.map((c) => ({
+          id: c.id,
+          kind: c.kind,
+          ref: c.ref || qualifiedRef(c.kind, c.id),
+          title: c.title,
+        })),
       }),
     });
     if (!res.ok) return null;

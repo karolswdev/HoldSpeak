@@ -9,13 +9,13 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
+Routes: 291 (plus static mounts). iOS-consumed: 77. Web-consumed: 202.
 
 ## device_audio_ws
 
 | Method | Path | Consumers |
 |---|---|---|
-| WS | `/api/devices/audio` | server only |
+| WS | `/api/devices/audio` | web |
 
 ## fastapi.applications
 
@@ -41,8 +41,8 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/activity/annotations` | server only |
-| GET | `/api/activity/briefing` | ios |
+| GET | `/api/activity/annotations` | web |
+| GET | `/api/activity/briefing` | ios, web |
 | GET | `/api/activity/enrichment/connectors` | web |
 | PUT | `/api/activity/enrichment/connectors/{connector_id}` | server only |
 | DELETE | `/api/activity/enrichment/connectors/{connector_id}/annotations` | server only |
@@ -60,7 +60,7 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 
 | Method | Path | Consumers |
 |---|---|---|
-| POST | `/api/activity/domains` | server only |
+| POST | `/api/activity/domains` | web |
 | DELETE | `/api/activity/domains/{domain}` | server only |
 | DELETE | `/api/activity/records` | web |
 | GET | `/api/activity/records` | web |
@@ -102,9 +102,9 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/cadence/audit` | server only |
-| GET | `/api/cadence/brief` | server only |
-| GET | `/api/cadence/closeout` | server only |
+| GET | `/api/cadence/audit` | web |
+| GET | `/api/cadence/brief` | web |
+| GET | `/api/cadence/closeout` | web |
 | POST | `/api/cadence/closeout/apply` | server only |
 | GET | `/api/cadence/history` | web |
 | GET | `/api/cadence/loops` | web |
@@ -139,7 +139,7 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/dictation/agent-context` | server only |
+| GET | `/api/dictation/agent-context` | web |
 | POST | `/api/dictation/agent-context/clear` | server only |
 | POST | `/api/dictation/agent-context/summarize` | server only |
 | GET | `/api/dictation/agent-hooks` | web |
@@ -149,7 +149,7 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/dictation/block-templates` | ios |
+| GET | `/api/dictation/block-templates` | ios, web |
 | GET | `/api/dictation/blocks` | ios, web |
 | POST | `/api/dictation/blocks` | ios, web |
 | POST | `/api/dictation/blocks/from-template` | ios |
@@ -161,7 +161,7 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/intents/control` | web |
-| PUT | `/api/intents/override` | server only |
+| PUT | `/api/intents/override` | web |
 | POST | `/api/intents/preview` | web |
 | PUT | `/api/intents/profile` | web |
 
@@ -212,11 +212,11 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 
 | Method | Path | Consumers |
 |---|---|---|
-| PATCH | `/api/action-items/{item_id}` | server only |
+| PATCH | `/api/action-items/{item_id}` | web |
 | PATCH | `/api/action-items/{item_id}/edit` | server only |
 | PATCH | `/api/action-items/{item_id}/review` | server only |
 | GET | `/api/all-action-items` | web |
-| PATCH | `/api/all-action-items/{item_id}` | server only |
+| PATCH | `/api/all-action-items/{item_id}` | web |
 | PATCH | `/api/all-action-items/{item_id}/edit` | server only |
 | PATCH | `/api/all-action-items/{item_id}/review` | server only |
 
@@ -239,7 +239,9 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 | GET | `/api/meetings/facets` | ios, web |
 | DELETE | `/api/meetings/{meeting_id}` | ios, web |
 | GET | `/api/meetings/{meeting_id}` | ios, web |
+| POST | `/api/meetings/{meeting_id}/capture/recover` | web |
 | GET | `/api/meetings/{meeting_id}/export` | web |
+| GET | `/api/meetings/{meeting_id}/sync-conflicts` | server only |
 
 ## web.routes.meetings.insights
 
@@ -254,9 +256,9 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/intel/jobs` | web |
-| POST | `/api/intel/process` | server only |
+| POST | `/api/intel/process` | web |
 | POST | `/api/intel/retry/{meeting_id}` | server only |
-| GET | `/api/intel/summary` | server only |
+| GET | `/api/intel/summary` | web |
 
 ## web.routes.meetings.live
 
@@ -273,15 +275,15 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/speakers` | web |
-| GET | `/api/speakers/{speaker_id}` | server only |
-| PATCH | `/api/speakers/{speaker_id}` | server only |
+| GET | `/api/speakers/{speaker_id}` | web |
+| PATCH | `/api/speakers/{speaker_id}` | web |
 
 ## web.routes.mesh
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/mesh/inbox` | ios |
-| GET | `/api/mesh/info` | ios |
+| GET | `/api/mesh/inbox` | ios, web |
+| GET | `/api/mesh/info` | ios, web |
 | POST | `/api/mesh/relay/claim` | ios |
 | POST | `/api/mesh/relay/{job_id}/complete` | ios |
 | POST | `/api/mesh/relay/{job_id}/fail` | ios |
@@ -331,6 +333,7 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 |---|---|---|
 | POST | `/api/ask` | ios, web |
 | POST | `/api/ask/keep` | web |
+| POST | `/api/grounding/resolve` | web |
 | GET | `/api/models` | web |
 
 ## web.routes.primitives.chains
@@ -339,9 +342,9 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 |---|---|---|
 | GET | `/api/chains` | web |
 | POST | `/api/chains` | web |
-| DELETE | `/api/chains/{chain_id}` | server only |
-| GET | `/api/chains/{chain_id}` | server only |
-| PUT | `/api/chains/{chain_id}` | server only |
+| DELETE | `/api/chains/{chain_id}` | web |
+| GET | `/api/chains/{chain_id}` | web |
+| PUT | `/api/chains/{chain_id}` | web |
 | POST | `/api/chains/{chain_id}/run` | ios, web |
 
 ## web.routes.primitives.directories
@@ -354,8 +357,15 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 | GET | `/api/directories/{directory_id}` | web |
 | PUT | `/api/directories/{directory_id}` | web |
 | GET | `/api/directories/{directory_id}/members` | server only |
-| DELETE | `/api/directories/{directory_id}/members/{primitive_id}` | web |
-| PUT | `/api/directories/{directory_id}/members/{primitive_id}` | web |
+| DELETE | `/api/directories/{directory_id}/members/{primitive_id:path}` | web |
+| PUT | `/api/directories/{directory_id}/members/{primitive_id:path}` | web |
+
+## web.routes.primitives.invocations
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/invocations` | server only |
+| GET | `/api/invocations/{invocation_id}` | web |
 
 ## web.routes.primitives.kbs
 
@@ -366,6 +376,9 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 | DELETE | `/api/kbs/{kb_id}` | web |
 | GET | `/api/kbs/{kb_id}` | web |
 | PUT | `/api/kbs/{kb_id}` | web |
+| GET | `/api/kbs/{kb_id}/members` | server only |
+| DELETE | `/api/kbs/{kb_id}/members/{resource_ref:path}` | server only |
+| PUT | `/api/kbs/{kb_id}/members/{resource_ref:path}` | server only |
 
 ## web.routes.primitives.notes
 
@@ -415,18 +428,22 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 
 | Method | Path | Consumers |
 |---|---|---|
+| GET | `/api/desk/relationships/{resource_ref:path}` | web |
 | GET | `/api/meetings/{meeting_id}/projects` | server only |
 | GET | `/api/projects` | web |
 | POST | `/api/projects` | web |
-| DELETE | `/api/projects/{project_id}` | server only |
-| GET | `/api/projects/{project_id}` | server only |
-| PATCH | `/api/projects/{project_id}` | server only |
+| DELETE | `/api/projects/{project_id}` | web |
+| GET | `/api/projects/{project_id}` | web |
+| PATCH | `/api/projects/{project_id}` | web |
 | GET | `/api/projects/{project_id}/action-items` | server only |
 | GET | `/api/projects/{project_id}/artifacts` | server only |
 | GET | `/api/projects/{project_id}/briefings` | server only |
 | GET | `/api/projects/{project_id}/meetings` | server only |
 | DELETE | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
 | POST | `/api/projects/{project_id}/meetings/{meeting_id}` | server only |
+| GET | `/api/projects/{project_id}/resources` | server only |
+| DELETE | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
+| PUT | `/api/projects/{project_id}/resources/{resource_ref:path}` | server only |
 | GET | `/api/projects/{project_id}/summary` | server only |
 
 ## web.routes.setup
@@ -434,6 +451,9 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 | Method | Path | Consumers |
 |---|---|---|
 | POST | `/api/setup/discover-models` | web |
+| POST | `/api/setup/first-value/start` | web |
+| POST | `/api/setup/first-value/{attempt_id}/finish` | web |
+| PUT | `/api/setup/onboarding` | web |
 | GET | `/api/setup/runtime-options` | web |
 | POST | `/api/setup/runtime-test` | web |
 | GET | `/api/setup/status` | ios, web |
@@ -443,7 +463,7 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/sync/pull` | ios, web |
-| POST | `/api/sync/push` | ios |
+| POST | `/api/sync/push` | ios, web |
 
 ## web.routes.system.coder_steering_routes
 
@@ -472,11 +492,11 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 
 | Method | Path | Consumers |
 |---|---|---|
-| POST | `/api/coders/clear-stale` | server only |
-| POST | `/api/coders/dismiss` | ios |
-| POST | `/api/coders/pin` | ios |
+| POST | `/api/coders/clear-stale` | web |
+| POST | `/api/coders/dismiss` | ios, web |
+| POST | `/api/coders/pin` | ios, web |
 | POST | `/api/coders/select` | ios, web |
-| GET | `/api/coders/sessions` | ios |
+| GET | `/api/coders/sessions` | ios, web |
 | GET | `/api/coders/status` | ios, web |
 
 ## web.routes.system.health
@@ -493,6 +513,14 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 | GET | `/api/settings` | ios, web |
 | PUT | `/api/settings` | ios, web |
 
+## web.routes.system.settings_secrets
+
+| Method | Path | Consumers |
+|---|---|---|
+| DELETE | `/api/settings/secrets/{secret_id}` | web |
+| PUT | `/api/settings/secrets/{secret_id}` | web |
+| POST | `/api/settings/secrets/{secret_id}/rotate` | web |
+
 ## web.routes.system.voice
 
 | Method | Path | Consumers |
@@ -507,4 +535,4 @@ Routes: 273 (plus static mounts). iOS-consumed: 76. Web-consumed: 163.
 
 | Method | Path | Consumers |
 |---|---|---|
-| WS | `/ws` | web |
+| WS | `/ws` | ios, web |

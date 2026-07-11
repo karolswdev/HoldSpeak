@@ -32,7 +32,7 @@ export default function CompanionPage() {
   );
   return (
     <div className="page-wrap">
-      <PageHero eyebrow="Companion" title="The Agent Desk">
+      <PageHero eyebrow="Companion" title="Personas and coder sessions">
         Your recipes and the coders that need you, on the desk your iPad shares.
       </PageHero>
       {sessions.length ? (
@@ -48,7 +48,7 @@ export default function CompanionPage() {
                         session.project ??
                           session.cwd ??
                           session.session_id ??
-                          "Coder",
+                          "Coder session",
                       )}
                     </strong>
                     <small>
@@ -66,7 +66,7 @@ export default function CompanionPage() {
           </ul>
         </Panel>
       ) : null}
-      <Panel title="Recipes" eyebrow={`${recipeRows.length} agents`}>
+      <Panel title="Personas" eyebrow={`${recipeRows.length} personas`}>
         <ResourceState
           loading={recipes.loading}
           error={recipes.error}
@@ -81,7 +81,7 @@ export default function CompanionPage() {
                 key={rowId(recipe, index)}
               >
                 <span aria-hidden="true">{String(recipe.avatar ?? "🤖")}</span>
-                <strong>{String(recipe.name ?? "Agent")}</strong>
+                <strong>{String(recipe.name ?? "Persona")}</strong>
                 <p>{String(recipe.role ?? "")}</p>
                 <b>Open on Desk →</b>
               </Link>

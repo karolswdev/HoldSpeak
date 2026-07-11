@@ -40,6 +40,12 @@ index idx_cadence_loops_status: CREATE INDEX idx_cadence_loops_status ON cadence
 index idx_cadence_next_actions_loop: CREATE INDEX idx_cadence_next_actions_loop ON cadence_next_actions(loop_id)
 index idx_cadence_nudges_loop: CREATE INDEX idx_cadence_nudges_loop ON cadence_nudges(loop_id)
 index idx_cadence_nudges_status: CREATE INDEX idx_cadence_nudges_status ON cadence_nudges(status)
+index idx_capability_attempts_invocation: CREATE INDEX idx_capability_attempts_invocation
+ON capability_attempts(invocation_id, attempt_index)
+index idx_capability_invocations_definition: CREATE INDEX idx_capability_invocations_definition
+ON capability_invocations(definition_ref, created_at DESC)
+index idx_capability_invocations_state: CREATE INDEX idx_capability_invocations_state
+ON capability_invocations(state, created_at DESC)
 index idx_chains_modified: CREATE INDEX idx_chains_modified ON chains(last_modified DESC)
 index idx_connector_runs_connector_started: CREATE INDEX idx_connector_runs_connector_started
 ON connector_runs(connector_id, started_at DESC)
@@ -49,13 +55,19 @@ index idx_dictation_journal_recent: CREATE INDEX idx_dictation_journal_recent
 ON dictation_journal(created_at DESC, id DESC)
 index idx_directories_modified: CREATE INDEX idx_directories_modified ON directories(last_modified DESC)
 index idx_directory_memberships_dir: CREATE INDEX idx_directory_memberships_dir ON directory_memberships(directory_id)
+index idx_first_value_attempts_started: CREATE INDEX idx_first_value_attempts_started
+ON first_value_attempts(started_at DESC)
 index idx_intel_job_attempts_meeting: CREATE INDEX idx_intel_job_attempts_meeting ON intel_job_attempts(meeting_id, created_at DESC)
 index idx_intel_jobs_status: CREATE INDEX idx_intel_jobs_status ON intel_jobs(status, requested_at)
 index idx_intent_window_scores_meeting: CREATE INDEX idx_intent_window_scores_meeting ON intent_window_scores(meeting_id, window_id)
 index idx_intent_windows_meeting: CREATE INDEX idx_intent_windows_meeting ON intent_windows(meeting_id, start_seconds, created_at)
 index idx_kbs_modified: CREATE INDEX idx_kbs_modified ON kbs(last_modified DESC)
+index idx_knowledge_memberships_modified: CREATE INDEX idx_knowledge_memberships_modified ON knowledge_memberships(last_modified)
+index idx_knowledge_memberships_resource: CREATE INDEX idx_knowledge_memberships_resource ON knowledge_memberships(resource_ref, deleted)
 index idx_meeting_projects_meeting: CREATE INDEX idx_meeting_projects_meeting ON meeting_projects(meeting_id)
 index idx_meeting_projects_project: CREATE INDEX idx_meeting_projects_project ON meeting_projects(project_id, detected_at DESC)
+index idx_meeting_sync_conflicts_open: CREATE INDEX idx_meeting_sync_conflicts_open
+ON meeting_sync_conflicts(meeting_id, resolved_at, detected_at DESC)
 index idx_meetings_date: CREATE INDEX idx_meetings_date ON meetings(started_at)
 index idx_mesh_relay_jobs_node_status: CREATE INDEX idx_mesh_relay_jobs_node_status
     ON mesh_relay_jobs(node, status)
@@ -68,6 +80,8 @@ index idx_plugin_runs_status: CREATE INDEX idx_plugin_runs_status ON plugin_runs
 index idx_plugin_runs_window: CREATE INDEX idx_plugin_runs_window ON plugin_runs(meeting_id, window_id, created_at DESC)
 index idx_project_detection_log_meeting: CREATE INDEX idx_project_detection_log_meeting ON project_detection_log(meeting_id, created_at DESC)
 index idx_project_detection_log_project: CREATE INDEX idx_project_detection_log_project ON project_detection_log(project_id, created_at DESC)
+index idx_project_resources_modified: CREATE INDEX idx_project_resources_modified ON project_resources(last_modified)
+index idx_project_resources_resource: CREATE INDEX idx_project_resources_resource ON project_resources(resource_ref, deleted)
 index idx_projects_archived: CREATE INDEX idx_projects_archived ON projects(is_archived, name)
 index idx_recipes_modified: CREATE INDEX idx_recipes_modified ON recipes(last_modified DESC)
 index idx_segments_meeting: CREATE INDEX idx_segments_meeting ON segments(meeting_id)
@@ -214,6 +228,12 @@ table actuator_proposals: CREATE TABLE actuator_proposals (
     reversible INTEGER NOT NULL DEFAULT 0,
     required_capabilities_json TEXT NOT NULL DEFAULT '[]',
     decided_by TEXT,
+    approved_payload_hash TEXT,
+    approved_destination TEXT,
+    approved_preview_hash TEXT,
+    preview_renderer_version TEXT,
+    effect_class TEXT,
+    policy_version TEXT,
     result_json TEXT,
     error TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -315,6 +335,36 @@ table cadence_policies: CREATE TABLE cadence_policies (
     config_json TEXT NOT NULL DEFAULT '{}',
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
+table capability_attempts: CREATE TABLE capability_attempts (
+    id TEXT PRIMARY KEY,
+    invocation_id TEXT NOT NULL REFERENCES capability_invocations(id) ON DELETE CASCADE,
+    attempt_index INTEGER NOT NULL,
+    destination TEXT NOT NULL,
+    provider TEXT,
+    state TEXT NOT NULL DEFAULT 'running'
+        CHECK (state IN ('running','succeeded','failed','cancelled','empty')),
+    error TEXT,
+    result_ref TEXT,
+    started_at TEXT NOT NULL,
+    completed_at TEXT,
+    UNIQUE(invocation_id, attempt_index)
+)
+table capability_invocations: CREATE TABLE capability_invocations (
+    id TEXT PRIMARY KEY,
+    correlation_id TEXT NOT NULL UNIQUE,
+    definition_ref TEXT NOT NULL,
+    initiator TEXT NOT NULL DEFAULT 'owner',
+    grounding_refs_json TEXT NOT NULL DEFAULT '[]',
+    requested_placement TEXT NOT NULL DEFAULT 'this_machine',
+    input_snapshot_json TEXT NOT NULL DEFAULT '{}',
+    state TEXT NOT NULL DEFAULT 'running'
+        CHECK (state IN ('running','succeeded','failed','cancelled','unavailable','empty')),
+    result_ref TEXT,
+    error TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    completed_at TEXT
+)
 table chains: CREATE TABLE chains (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL DEFAULT '',
@@ -374,6 +424,16 @@ table directory_memberships: CREATE TABLE directory_memberships (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0
+)
+table first_value_attempts: CREATE TABLE first_value_attempts (
+    id TEXT PRIMARY KEY,
+    started_at TEXT NOT NULL,
+    succeeded_at TEXT,
+    steps INTEGER NOT NULL DEFAULT 0,
+    decisions INTEGER NOT NULL DEFAULT 0,
+    destination TEXT NOT NULL CHECK (destination IN ('this_machine', 'paired_desktop')),
+    failure_category TEXT,
+    finished_at TEXT
 )
 table intel_job_attempts: CREATE TABLE intel_job_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -435,6 +495,14 @@ table kbs: CREATE TABLE kbs (
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0
 )
+table knowledge_memberships: CREATE TABLE knowledge_memberships (
+    knowledge_id TEXT NOT NULL REFERENCES kbs(id) ON DELETE CASCADE,
+    resource_ref TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (knowledge_id, resource_ref)
+)
 table meeting_projects: CREATE TABLE meeting_projects (
     meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
     project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -442,6 +510,15 @@ table meeting_projects: CREATE TABLE meeting_projects (
     confidence REAL NOT NULL DEFAULT 0.0,
     detected_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (meeting_id, project_id)
+)
+table meeting_sync_conflicts: CREATE TABLE meeting_sync_conflicts (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    local_json TEXT NOT NULL,
+    incoming_json TEXT NOT NULL,
+    winner TEXT NOT NULL DEFAULT 'local',
+    detected_at TEXT NOT NULL DEFAULT (datetime('now')),
+    resolved_at TEXT
 )
 table meeting_tags: CREATE TABLE meeting_tags (
     meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
@@ -461,6 +538,12 @@ table meetings: CREATE TABLE meetings (
     mic_label TEXT NOT NULL DEFAULT 'Me',
     remote_label TEXT NOT NULL DEFAULT 'Remote',
     web_url TEXT,
+    capture_status TEXT NOT NULL DEFAULT 'finalized',
+    capture_failure TEXT,
+    capture_checkpoint_at TEXT,
+    capture_checkpoint_seconds REAL NOT NULL DEFAULT 0,
+    provenance TEXT NOT NULL DEFAULT 'desktop',
+    sync_modified_at TEXT NOT NULL DEFAULT (datetime('now')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
@@ -507,6 +590,11 @@ table notes: CREATE TABLE notes (
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0
+)
+table onboarding_state: CREATE TABLE onboarding_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    disposition TEXT NOT NULL CHECK (disposition IN ('completed', 'dismissed', 'needs_help')),
+    updated_at TEXT NOT NULL
 )
 table plugin_run_jobs: CREATE TABLE plugin_run_jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -561,6 +649,17 @@ table project_detection_log: CREATE TABLE project_detection_log (
     keyword_hits_json TEXT NOT NULL DEFAULT '[]',
     member_hits_json TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table project_resources: CREATE TABLE project_resources (
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    resource_ref TEXT NOT NULL,
+    relationship TEXT NOT NULL DEFAULT 'member',
+    source TEXT NOT NULL DEFAULT 'manual',
+    confidence REAL NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (project_id, resource_ref)
 )
 table projects: CREATE TABLE projects (
     id TEXT PRIMARY KEY,

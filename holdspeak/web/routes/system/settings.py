@@ -4,19 +4,23 @@ Bodies moved verbatim from routes/system.py (HS-79-02, the Phase-63 discipline).
 """
 from __future__ import annotations
 
-import json
 import re
 from copy import deepcopy
-from datetime import datetime, timezone
+from dataclasses import replace
 from typing import Any, Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
 from ...context import WebContext
 from ...runtime_support import error_500
+from .settings_secrets import (
+    redacted_settings,
+    register_settings_secret_routes,
+    strip_secret_mutations,
+)
 
 log = get_logger("web.routes.system")
 
@@ -25,6 +29,7 @@ log = get_logger("web.routes.system")
 _HTTP_HEADER_NAME_RE = re.compile(r"^[A-Za-z0-9-]+$")
 # HSM-14: a GitHub `owner/name` slug for the companion GitHub connector.
 _GITHUB_REPO_RE = re.compile(r"^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$")
+
 def _validate_cloud_base_url(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
@@ -45,9 +50,6 @@ def _merge_dict(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:
             dst[key] = value
     return dst
 
-
-
-
 def build_settings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -58,7 +60,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
             from ....plugins.dictation.runtime_counters import get_counters, get_session_status
 
             config = Config.load()
-            payload = config.to_dict()
+            payload = redacted_settings(config)
             # WFS-CFG-004: surface runtime counters + session-disabled state
             # alongside the persisted config. Read-only — clients should
             # not echo this back on PUT.
@@ -95,7 +97,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
 
             current = Config.load()
             merged = deepcopy(current.to_dict())
-            _merge_dict(merged, payload or {})
+            _merge_dict(merged, strip_secret_mutations(payload or {}))
 
             hotkey_data = merged.get("hotkey", {})
             model_data = merged.get("model", {})
@@ -699,7 +701,8 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                     status_code=400,
                 )
 
-            updated = Config(
+            updated = replace(
+                current,
                 hotkey=HotkeyConfig(**hotkey_data),
                 model=ModelConfig(**model_data),
                 ui=UIConfig(**ui_data),
@@ -717,10 +720,12 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 except Exception as e:
                     log.error(f"on_settings_applied failed: {e}")
 
-            return JSONResponse({"success": True, "settings": updated.to_dict()})
+            return JSONResponse(
+                {"success": True, "settings": redacted_settings(updated)}
+            )
         except Exception as e:
             log.error(f"Failed to update settings: {e}")
             return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
-
+    register_settings_secret_routes(router, ctx)
     return router

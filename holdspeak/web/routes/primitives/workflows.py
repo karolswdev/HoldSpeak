@@ -16,18 +16,46 @@ from ...context import WebContext
 from ...runtime_support import error_500
 
 log = get_logger("web.routes.primitives")
-from ._shared import _json_body, _new_id, _persist_run_artifact, _render_user_prompt, _run_frame, canonical_source_type
+from ._shared import (
+    RunLifecycle, _json_body, _new_id, _persist_run_artifact, _render_user_prompt,
+    _run_frame, capability_descriptor,
+)
 
 
 def build_workflows_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
+
+    def _payload(workflow: Any) -> dict[str, Any]:
+        from ..workflow_graph import linearize
+
+        plan = linearize(workflow.graph_json) if workflow.graph_json else None
+        if plan is not None and plan.linearizable:
+            readiness, detail, support = "ready", "", "linear_graph"
+        elif plan is not None:
+            readiness = "unavailable"
+            detail = f"This graph needs a Workbench host that supports it: {plan.reason}."
+            support = "unsupported_graph"
+        elif str(workflow.prompt or "").strip():
+            readiness, detail, support = "ready", "", "prompt_workflow"
+        else:
+            readiness, detail, support = (
+                "unavailable", "Add a runnable graph or prompt in Workbench.", "empty"
+            )
+        row = workflow.to_dict()
+        row["capability"] = capability_descriptor(
+            kind="workflow", name=workflow.name or workflow.id,
+            readiness=readiness, detail=detail,
+            action_label=f"Run {workflow.name or 'Workflow'}",
+            support=support,
+        )
+        return row
 
     @router.get("/api/workflows")
     async def api_list_workflows() -> Any:
         try:
             from ....db import get_database
             workflows = get_database().workflows.list()
-            return JSONResponse({"workflows": [w.to_dict() for w in workflows]})
+            return JSONResponse({"workflows": [_payload(w) for w in workflows]})
         except Exception as exc:
             return error_500(exc, log, "Failed to list workflows")
 
@@ -46,7 +74,7 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                 prompt=str(body.get("prompt") or ""),
                 graph_json=dict(body.get("graph_json") or {}),
             )
-            return JSONResponse({"workflow": workflow.to_dict()}, status_code=201)
+            return JSONResponse({"workflow": _payload(workflow)}, status_code=201)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -59,7 +87,7 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
             workflow = get_database().workflows.get(workflow_id)
             if workflow is None:
                 return JSONResponse({"error": f"Unknown workflow: {workflow_id}"}, status_code=404)
-            return JSONResponse({"workflow": workflow.to_dict()})
+            return JSONResponse({"workflow": _payload(workflow)})
         except Exception as exc:
             return error_500(exc, log, "Failed to get workflow")
 
@@ -80,7 +108,7 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                 prompt=str(body["prompt"]) if "prompt" in body else existing.prompt,
                 graph_json=dict(body["graph_json"]) if "graph_json" in body else existing.graph_json,
             )
-            return JSONResponse({"workflow": workflow.to_dict()})
+            return JSONResponse({"workflow": _payload(workflow)})
         except Exception as exc:
             return error_500(exc, log, "Failed to update workflow")
 
@@ -108,13 +136,12 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
            topological order, threading each node's output into the next node's
            input through the same engine path personas use. The per-node trail is
            returned as `steps`.
-        2. **Prompt.** Otherwise, if the workflow has a `prompt`, run it through
+        2. **Prompt.** If the workflow has no graph and has a `prompt`, run it through
            the engine with an empty system prompt rendered against `{input}` +
            `variables`.
-        3. **Refused graph fallback.** If the graph contains control flow / fan-out
-           we cannot linearize (and there's no/empty prompt), we DO NOT guess an
-           order — we run the prompt fallback and return an honest `warning`
-           naming why the graph could not run.
+        3. **Unsupported graph.** If the graph contains control flow / fan-out the
+           hub cannot execute, refuse it before Run. It is never lowered to a prompt;
+           the exact graph remains available to a capable Workbench host.
 
         Per-node provenance: the iPad Blueprint carries a per-node `failure_policy`
         (retryThenQueue / fallbackOnDevice / skip) and a `runs_on` model preference
@@ -141,12 +168,17 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
         and a `sources` lineage array).
         """
         body = await _json_body(request) or {}
+        lifecycle: Optional[RunLifecycle] = None
         try:
             from ....db import get_database
             db = get_database()
             workflow = db.workflows.get(workflow_id)
             if workflow is None:
                 return JSONResponse({"error": f"Unknown workflow: {workflow_id}"}, status_code=404)
+
+            lifecycle = RunLifecycle.begin(
+                db, definition_ref=f"workflow:{workflow_id}", body=body,
+            )
 
             variables = body.get("variables") if isinstance(body.get("variables"), dict) else {}
             user_input = str(body.get("input") or "")
@@ -169,15 +201,31 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                 {"source_type": "workflow", "source_ref": workflow_id}
             ]
             wf_name = workflow.name or workflow_id
-            _run_frame(ctx, "running", kind="workflow", ref=workflow_id, name=wf_name)
 
             # ── 1) Try the linear graph runner ─────────────────────────────
-            warning: Optional[str] = None
             plan = linearize(workflow.graph_json) if workflow.graph_json else None
+            if plan is not None and not plan.linearizable:
+                error = (
+                    "This Workflow is unavailable on this host: " + plan.reason
+                    + ". Open it in a compatible Workbench; it was not lowered to a prompt."
+                )
+                invocation = lifecycle.fail(error, state="unavailable")
+                return JSONResponse(
+                    {"error": error, "workflow_id": workflow_id,
+                     "support": "unsupported_graph", "invocation": invocation,
+                     "invocation_id": lifecycle.invocation_id},
+                    status_code=409,
+                )
+
+            _run_frame(ctx, "running", kind="workflow", ref=workflow_id, name=wf_name)
             if plan is not None and plan.linearizable:
                 # Seed the chain with the rendered request input (variables applied).
                 current = _render_user_prompt("", variables or {}, user_input)
                 intel = build_configured_meeting_intel()
+                lifecycle.start_attempt(
+                    destination=str(body.get("requested_placement") or "this_machine"),
+                    provider=getattr(intel, "active_provider", None),
+                )
                 run_steps: list[dict[str, Any]] = []
                 ran_a_model_op = False
                 for gnode in plan.ordered:
@@ -204,10 +252,15 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                                 _run_frame(ctx, "error", kind="workflow",
                                            ref=workflow_id, name=wf_name,
                                            error=str(exc))
+                                invocation = lifecycle.fail(
+                                    str(exc), provider=getattr(intel, "active_provider", None)
+                                )
                                 return JSONResponse(
                                     {"error": str(exc), "workflow_id": workflow_id,
                                      "node_id": gnode.id,
-                                     "failure_policy": resolved_failure_policy(gnode)},
+                                     "failure_policy": resolved_failure_policy(gnode),
+                                     "invocation": invocation,
+                                     "invocation_id": lifecycle.invocation_id},
                                     status_code=502,
                                 )
                             current = handled
@@ -251,23 +304,41 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                     # pass-through nodes (entry/source/merge/output) carry `current`.
 
                 if not run_steps:
+                    error = (
+                        "Nothing executable ran; the Workflow input is retained for Retry."
+                    )
+                    invocation = lifecycle.fail(error, state="empty")
                     return JSONResponse(
                         {
-                            "error": (
-                                "nothing to run: the graph linearized but produced "
-                                "no executable steps; provide `input` or node prompts"
-                            ),
+                            "error": error,
                             "workflow_id": workflow_id,
+                            "invocation": invocation,
+                            "invocation_id": lifecycle.invocation_id,
                         },
                         status_code=400,
                     )
 
+                if not str(current or "").strip():
+                    error = "Workflow returned no output; the input is retained for Retry."
+                    _run_frame(ctx, "error", kind="workflow", ref=workflow_id, name=wf_name, error=error)
+                    invocation = lifecycle.fail(error, state="empty", provider=getattr(intel, "active_provider", None))
+                    return JSONResponse({"error": error, "workflow_id": workflow_id,
+                                         "invocation": invocation,
+                                         "invocation_id": lifecycle.invocation_id}, status_code=502)
+
+                sources.extend(lifecycle.lineage())
                 _run_frame(ctx, "ready", kind="workflow", ref=workflow_id, name=wf_name)
                 artifact_id = _persist_run_artifact(
                     kind="workflow", name=workflow.name or workflow_id,
                     user_input=str(body.get("input") or ""),
                     output=str(current or ""), sources=sources,
                 )
+                if not artifact_id:
+                    invocation = lifecycle.fail("The result could not be kept as an Artifact.")
+                    return JSONResponse({"error": invocation["error"], "workflow_id": workflow_id,
+                                         "invocation": invocation,
+                                         "invocation_id": lifecycle.invocation_id}, status_code=500)
+                invocation = lifecycle.succeed(artifact_id, provider=getattr(intel, "active_provider", None))
                 return JSONResponse({
                     "workflow_id": workflow_id,
                     "output": current,
@@ -275,31 +346,34 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
                     "steps": run_steps,
                     "sources": sources,
                     "artifact_id": artifact_id,
+                    "result_ref": f"artifact:{artifact_id}",
+                    "invocation_id": lifecycle.invocation_id,
+                    "correlation_id": lifecycle.invocation_id,
+                    "invocation": invocation,
                 })
 
-            # ── 2/3) Prompt path (+ honest warning if a graph was refused) ──
+            # ── 2) Prompt-only compatibility path ──────────────────────────
             prompt = str(workflow.prompt or "").strip()
-            if plan is not None and not plan.linearizable:
-                # The graph exists but we won't guess an order for it. Be honest.
-                warning = (
-                    "graph execution skipped (" + plan.reason + "); "
-                    "ran the prompt fallback"
-                )
 
             user_prompt = _render_user_prompt(prompt, variables or {}, user_input)
             if not user_prompt.strip():
+                error = "This Workflow has no runnable graph or prompt; its input is retained."
+                invocation = lifecycle.fail(error, state="unavailable")
                 return JSONResponse(
                     {
-                        "error": (
-                            "nothing to run: the workflow has no runnable graph and "
-                            "no prompt; provide `input` or a prompt"
-                        ),
+                        "error": error,
                         "workflow_id": workflow_id,
+                        "invocation": invocation,
+                        "invocation_id": lifecycle.invocation_id,
                     },
-                    status_code=400,
+                    status_code=409,
                 )
 
             intel = build_configured_meeting_intel()
+            lifecycle.start_attempt(
+                destination=str(body.get("requested_placement") or "this_machine"),
+                provider=getattr(intel, "active_provider", None),
+            )
             try:
                 output = await asyncio.to_thread(
                     intel.run_prompt,
@@ -311,26 +385,52 @@ def build_workflows_router(ctx: WebContext) -> APIRouter:
             except MeetingIntelError as exc:
                 _run_frame(ctx, "error", kind="workflow", ref=workflow_id,
                            name=wf_name, error=str(exc))
+                invocation = lifecycle.fail(str(exc), provider=getattr(intel, "active_provider", None))
                 return JSONResponse(
-                    {"error": str(exc), "workflow_id": workflow_id}, status_code=502
+                    {"error": str(exc), "workflow_id": workflow_id,
+                     "invocation": invocation,
+                     "invocation_id": lifecycle.invocation_id}, status_code=502
                 )
 
+            if not str(output or "").strip():
+                error = "Workflow returned no output; the input is retained for Retry."
+                _run_frame(ctx, "error", kind="workflow", ref=workflow_id, name=wf_name, error=error)
+                invocation = lifecycle.fail(error, state="empty", provider=getattr(intel, "active_provider", None))
+                return JSONResponse({"error": error, "workflow_id": workflow_id,
+                                     "invocation": invocation,
+                                     "invocation_id": lifecycle.invocation_id}, status_code=502)
+
+            sources.extend(lifecycle.lineage())
             _run_frame(ctx, "ready", kind="workflow", ref=workflow_id, name=wf_name)
+            artifact_id = _persist_run_artifact(
+                kind="workflow", name=workflow.name or workflow_id,
+                user_input=str(body.get("input") or ""),
+                output=output, sources=sources,
+            )
+            if not artifact_id:
+                invocation = lifecycle.fail("The result could not be kept as an Artifact.")
+                return JSONResponse({"error": invocation["error"], "workflow_id": workflow_id,
+                                     "invocation": invocation,
+                                     "invocation_id": lifecycle.invocation_id}, status_code=500)
+            invocation = lifecycle.succeed(artifact_id, provider=getattr(intel, "active_provider", None))
             result: dict[str, Any] = {
                 "workflow_id": workflow_id,
                 "output": output,
                 "provider": intel.active_provider,
                 "sources": sources,
-                "artifact_id": _persist_run_artifact(
-                    kind="workflow", name=workflow.name or workflow_id,
-                    user_input=str(body.get("input") or ""),
-                    output=output, sources=sources,
-                ),
+                "artifact_id": artifact_id,
+                "result_ref": f"artifact:{artifact_id}",
+                "invocation_id": lifecycle.invocation_id,
+                "correlation_id": lifecycle.invocation_id,
+                "invocation": invocation,
             }
-            if warning:
-                result["warning"] = warning
             return JSONResponse(result)
         except Exception as exc:
+            if lifecycle is not None:
+                try:
+                    lifecycle.fail(str(exc))
+                except Exception:
+                    pass
             return error_500(exc, log, "Failed to run workflow")
 
     # ── Directories (the canonical organization container; iPad "zone") ────

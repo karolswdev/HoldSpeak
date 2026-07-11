@@ -38,7 +38,7 @@ public extension Blueprint {
 
     /// This Blueprint as a syncable `WorkflowDefinition` (the desk's workflow
     /// primitive): `graphJson` carries the graph; `prompt` stays the caller's
-    /// fallback text (the hub runs it when it must refuse a non-linear graph).
+    /// prompt-only compatibility text; a host must never lower an unsupported graph to it.
     func workflowDefinition(id: String? = nil, prompt: String? = nil,
                             createdAt: Date = Date(), updatedAt: Date = Date()) throws -> WorkflowDefinition {
         var definition = WorkflowDefinition(id: id ?? self.id.uuidString.lowercased(),

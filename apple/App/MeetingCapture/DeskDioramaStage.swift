@@ -1353,6 +1353,7 @@ struct DioPullout: View {
     var onActItem: ((String, String) -> Void)? = nil      // act on a single action row → send/file
     var onOpenDerivative: ((String) -> Void)? = nil       // tap a derivative card → open its own drawer
     var onChangeIcon: (() -> Void)? = nil                 // tap the header sprite → pick a different icon
+    var relationshipPanel: AnyView? = nil
     private func sectionText(_ body: SectionBody) -> String {
         switch body {
         case .text(let s): return s
@@ -1410,6 +1411,7 @@ struct DioPullout: View {
                         Text("Nothing here yet.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
                             .frame(maxWidth: .infinity, alignment: .center).padding(.vertical, 24)
                     }
+                    if let relationshipPanel { relationshipPanel }
                     ForEach(Array(prim.actions.enumerated()), id: \.offset) { _, act in
                         Button { onAction(act) } label: {
                             HStack(spacing: 7) {
@@ -1493,6 +1495,65 @@ struct DioPullout: View {
                             .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.10), lineWidth: 1)))
                     }.buttonStyle(.plain)
                 }
+            }
+        }
+    }
+}
+
+/// The native contextual equivalent of Web's three-axis pull-out. Every change
+/// is a named Button, so drag filing always has keyboard/VoiceOver parity.
+struct DioRelationshipPanel: View {
+    let knowledge: [KBRecord]
+    let projects: [Project]
+    let knowledgeIds: Set<String>
+    let projectIds: Set<String>
+    let onKnowledge: (String) -> Void
+    let onProject: (String) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("WHERE IT BELONGS")
+                .font(.system(size: 10, weight: .black, design: .rounded))
+                .tracking(1.3).foregroundStyle(DioPal.muted)
+            Text("A Zone is where this object lives. Knowledge is reusable context. A Project is work it supports; neither moves it.")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(DioPal.muted).fixedSize(horizontal: false, vertical: true)
+            if !knowledge.isEmpty {
+                Text("KNOWLEDGE").font(.system(size: 9.5, weight: .black, design: .rounded))
+                    .tracking(1.2).foregroundStyle(DioPal.violet)
+                chips(knowledge.map { ($0.id, $0.name) }, active: knowledgeIds, action: onKnowledge)
+            }
+            if !projects.filter({ !$0.isArchived }).isEmpty {
+                Text("PROJECTS").font(.system(size: 9.5, weight: .black, design: .rounded))
+                    .tracking(1.2).foregroundStyle(DioPal.cobalt)
+                chips(projects.filter { !$0.isArchived }.map { ($0.id, $0.name) },
+                      active: projectIds, action: onProject)
+            }
+        }
+        .padding(13)
+        .background(RoundedRectangle(cornerRadius: 15, style: .continuous)
+            .fill(.white.opacity(0.035))
+            .overlay(RoundedRectangle(cornerRadius: 15).strokeBorder(.white.opacity(0.08))))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Zone, Knowledge, and Project relationships")
+    }
+
+    private func chips(
+        _ rows: [(String, String)], active: Set<String>, action: @escaping (String) -> Void
+    ) -> some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 112), spacing: 8)], alignment: .leading, spacing: 8) {
+            ForEach(rows, id: \.0) { id, name in
+                let selected = active.contains(id)
+                Button { action(id) } label: {
+                    Label(name, systemImage: selected ? "checkmark.circle.fill" : "plus.circle")
+                        .font(.system(size: 11.5, weight: .heavy, design: .rounded))
+                        .lineLimit(1).padding(.horizontal, 9).frame(height: 32)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Capsule().fill(selected ? DioPal.mint.opacity(0.16) : .white.opacity(0.05)))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(selected ? "Remove from" : "Add to") \(name)")
+                .accessibilityAddTraits(selected ? .isSelected : [])
             }
         }
     }
@@ -2290,7 +2351,7 @@ struct PendingHubRun: Identifiable, Equatable {
     let input: String
     let inputId: String            // the routed primitive's id — the lineage's "from" card
     let inputTitle: String
-    var name: String { switch kind { case .recipe(let a): return a.name.isEmpty ? "Agent" : a.name
+    var name: String { switch kind { case .recipe(let a): return a.name.isEmpty ? ProductLanguage.label(.persona) : a.name
                                       case .chain(let c): return c.name.isEmpty ? "Crew" : c.name
                                       case .workflow(let w): return w.name.isEmpty ? "Workflow" : w.name } }
     var isChain: Bool { if case .chain = kind { return true }; return false }
@@ -2602,7 +2663,7 @@ struct DioLineageRow: View {
             HStack(spacing: 5) {
                 Image(systemName: viaIsChain ? "arrow.triangle.branch" : (viaIsAsk ? "wand.and.stars" : "sparkles"))
                     .font(.system(size: 9, weight: .bold)).foregroundStyle(DioPal.mint)
-                Text(provenance.viaName.isEmpty ? (viaIsChain ? "a crew" : (viaIsAsk ? "an ask" : "an agent")) : provenance.viaName)
+                Text(provenance.viaName.isEmpty ? (viaIsChain ? "a Sequence" : (viaIsAsk ? "an ask" : "a Persona")) : provenance.viaName)
                     .font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.mint).lineLimit(1)
             }
             .padding(.horizontal, 9).frame(height: 24)
@@ -2938,6 +2999,7 @@ struct DioStage: View {
     // The ONE width authority (HSM-20-01). Read the size class here; the camera is derived
     // per-frame inside the body's GeometryReader where the live width is known.
     @Environment(\.horizontalSizeClass) private var hSizeClass
+    @ObservedObject private var pairedPeer = DictatePeerStore.shared
     @StateObject private var model = CaptureModel()
     @AppStorage("hs.diorama.pos") private var posCSV = ""
     @AppStorage("hs.diorama.zones") private var zonesCSV = ""
@@ -2962,6 +3024,7 @@ struct DioStage: View {
     @State private var weaveCancel = false            // user hit "skip to desk"
     @State private var arrivedIds: Set<String> = []   // the freshly-produced meeting + deliverables, glaringly highlighted
     @State private var showRecordPicker = false       // the meeting-vs-desktop hovering choice
+    @State private var showDesktopDictation = false  // the real paired-desktop dictation room
     @State private var captureDesktop = false         // this capture is a "talk to the desktop" dictation
     @State private var liveCards: [LiveIntelCard] = [] // live-intelligence results floating by the mic
     @State private var liveTimeline: [(t: Double, len: Int)] = []  // (elapsed, transcript length) samples → time windows
@@ -3044,8 +3107,9 @@ struct DioStage: View {
     // Routed through the paired host PC — the iPad holds no credential. Reuses the desk's Mac pairing.
     @AppStorage("hs.peer.host") private var peerHost = ""
     @AppStorage("hs.peer.port") private var peerPort = "8000"
-    @AppStorage("hs.peer.token") private var peerToken = ""   // hub web auth token (LAN bind requires it)
     @AppStorage("hs.peer.name") private var peerName = ""     // friendly name for the paired Mac
+    // Read the hub bearer token through the one Keychain-backed peer store.
+    private var peerToken: String { pairedPeer.token }
     // The remembered RUNS-ON choice (Phase-15 fluid compute) — "" = unset (sensible default),
     // "device" = on this iPad, "mac" = on your desktop. The picker still opens; it just pre-honors
     // the last pick so the user isn't re-choosing every run. Falls back to on-device when unpaired.
@@ -3089,8 +3153,14 @@ struct DioStage: View {
     // the iPad's `updatedAt` projection is a side map id→instant (layout never syncs).
     @AppStorage("hs.diorama.synctimes") private var syncTimesJSON = ""   // id → last_modified
     @AppStorage("hs.diorama.tombstones") private var tombstonesJSON = "" // "kind:id" → deleted_at
+    @AppStorage("hs.diorama.knowledgeMemberships") private var knowledgeMembershipsJSON = ""
+    @AppStorage("hs.diorama.projectRelationships") private var projectRelationshipsJSON = ""
+    @AppStorage("hs.diorama.projects") private var projectsJSON = ""
     @State private var syncModified: [String: Date] = [:]
     @State private var syncTombstones: [String: Date] = [:]
+    @State private var knowledgeMemberships: [KnowledgeMembership] = []
+    @State private var projectRelationships: [ProjectRelationship] = []
+    @State private var projects: [Project] = []
     @State private var syncing = false
     @State private var lastSyncSummary: String? = nil
     // the FELT sync status (drives DioSyncStatus): the last pass outcome + when it landed,
@@ -3489,7 +3559,7 @@ struct DioStage: View {
                     VStack(spacing: 4) {
                         Menu {
                             Button { createNote() } label: { Label("New Note", systemImage: "square.and.pencil") }
-                            Button { createKBInline() } label: { Label("New KB", systemImage: "diamond.fill") }
+                            Button { createKBInline() } label: { Label("New Knowledge", systemImage: "diamond.fill") }
                             Button { haptic(.light); namingZone = true } label: { Label("New Zone", systemImage: "plus.circle.fill") }
                         } label: {
                             Image(systemName: "plus").font(.system(size: 24, weight: .black)).foregroundStyle(.white)
@@ -3594,7 +3664,18 @@ struct DioStage: View {
                 if showRecordPicker && !capturing {
                     DioRecordModePicker(anchor: orbPos(w, h),
                                         onMeeting: { startCapture(desktop: false) },
-                                        onDesktop: { if hostLink == nil { withAnimation { showRecordPicker = false; connecting = true } } else { startCapture(desktop: true) } },
+                                        onDesktop: {
+                                            if hostLink == nil {
+                                                withAnimation { showRecordPicker = false; connecting = true }
+                                            } else {
+                                                // HS-92-03: desktop dictation is not a Meeting.
+                                                // Present the canonical on-device Whisper -> paired
+                                                // Mac delivery surface; the meeting recorder's stop
+                                                // path intentionally creates a local Meeting.
+                                                withAnimation { showRecordPicker = false }
+                                                showDesktopDictation = true
+                                            }
+                                        },
                                         onClose: { withAnimation { showRecordPicker = false } })
                         .zIndex(116)
                 }
@@ -3659,7 +3740,8 @@ struct DioStage: View {
                                onRouteSection: { t, x in routeFacet(t, x, w, h) },
                                onActItem: { task, text in beginActOnItem(from: p, task: task, text: text) },
                                onOpenDerivative: { id in haptic(.medium); withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) { select(id) } },
-                               onChangeIcon: spriteKinds.contains(p.kind) ? { haptic(.light); iconPick = IconPickTarget(id: p.id, kind: p.kind, title: p.title) } : nil)
+                               onChangeIcon: spriteKinds.contains(p.kind) ? { haptic(.light); iconPick = IconPickTarget(id: p.id, kind: p.kind, title: p.title) } : nil,
+                               relationshipPanel: relationshipPanel(for: p))
                         .frame(width: lane ? camera.cardWidth(560, in: w, margin: 8) : min(560, w * 0.62),
                                height: lane ? h * 0.74 : nil)
                         .overlay(alignment: .top) {
@@ -3796,7 +3878,7 @@ struct DioStage: View {
                     outputs = [OutputRecord(id: "delivNew", title: "Summary", body: "Shipping the desk to the web is the Q3 bet; Karol owns mesh sync and the approval contract; air-gapped proof due Friday.", source: "Q3 kickoff", lens: "Summary", path: ""),
                                // A run-born card (HSM-18-07): no meeting anchor, so it
                                // sits loose on the desk instead of a meeting's drawer.
-                               OutputRecord(id: "runNew", title: "Scout: the mesh risks", body: "Top risk: the approval contract drifts between surfaces. Lock it with the parity guard before the air-gapped proof.", source: "your ask", lens: "Agent · your desktop", path: "")]
+                               OutputRecord(id: "runNew", title: "Scout: the mesh risks", body: "Top risk: the approval contract drifts between surfaces. Lock it with the parity guard before the air-gapped proof.", source: "your ask", lens: "Persona · your desktop", path: "")]
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { withAnimation(.spring(response: 0.55, dampingFraction: 0.7)) { arrivedIds = ["m:demoNew", "out:delivNew", "out:runNew"]; flash = 0.5 }; withAnimation(.easeOut(duration: 0.9)) { flash = 0 } }
                 }
                 // THE ASK-AI ATOM demos (HSM-16-09) — the same states the lasso drives.
@@ -3964,7 +4046,7 @@ struct DioStage: View {
                     notes = [NoteRecord(id: "n1", title: "Follow up with Karol", body: "Confirm the mesh-sync approval contract owner and the air-gapped proof date before Friday's demo.", path: "")]
                     kbs = [KBRecord(id: "k1", name: "Architecture", path: "", items: 7),
                            KBRecord(id: "k2", name: "Onboarding", path: "", items: 3)]
-                    outputs = [OutputRecord(id: "o1", title: "Scout · reply", body: "Three facts: mesh sync is riskiest, proof due Friday, egress badge copy needs an owner.", source: "Scout", lens: "Agent", path: "")]
+                    outputs = [OutputRecord(id: "o1", title: "Scout · reply", body: "Three facts: mesh sync is riskiest, proof due Friday, egress badge copy needs an owner.", source: "Scout", lens: "Persona", path: "")]
                     placedGames = [GameRecord(gameId: "merge", path: ""), GameRecord(gameId: "reflex", path: "")]
                     UserDefaults.standard.set(4096, forKey: "hs.mg.merge.best")
                     if pv == "note" { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { if let n = notes.first { withAnimation { editingNote = n } } } }
@@ -4093,7 +4175,7 @@ struct DioStage: View {
                             printedEgress = .cloud("your desktop")
                             withAnimation { printed = OutputRecord(id: "hubdemo", title: "Scout",
                                 body: "Three concrete facts: the mesh-sync approval contract is the riskiest piece, the air-gapped proof is due Friday, and the egress badge copy still has no owner.",
-                                source: "Q3 kickoff", lens: "Agent · your desktop", path: "",
+                                source: "Q3 kickoff", lens: "Persona · your desktop", path: "",
                                 provenance: RunProvenance(sourceCardId: "mtg.q3", sourceCardTitle: "Q3 kickoff",
                                                           viaId: "seed1", viaName: "Scout", viaKind: "agent")) }
                         }
@@ -4185,6 +4267,10 @@ struct DioStage: View {
             .sheet(isPresented: $showSettings) { NavigationStack { SettingsView() }.preferredColorScheme(.dark) }
         }
         .preferredColorScheme(.dark)
+        .fullScreenCover(isPresented: $showDesktopDictation) {
+            NavigationStack { DictateView() }
+                .preferredColorScheme(.dark)
+        }
     }
 
     // MARK: - The lane (HSM-20-02): the desk reflowed to a one-thumb card column on iPhone.
@@ -4284,6 +4370,7 @@ struct DioStage: View {
         if let convo = groundingPickerFor {
             GroundingPicker(meetings: meetings,
                             artifactsFor: { derivativesOf($0) },
+                            resources: groundingResources(),
                             contextLimit: recipeContextLimit(),
                             tokensFor: { groundingTokens($0) },
                             selection: Binding(
@@ -4381,9 +4468,9 @@ struct DioStage: View {
 
     private func laneBucketLabel(_ key: String) -> String {
         switch key {
-        case "meetings": return "Meetings"; case "notes": return "Notes"; case "kb": return "KB"
-        case "tools": return "Tools"; case "recipes": return "Recipes"
-        case "coders": return "Coders"; case "play": return "Play"
+        case "meetings": return "Meetings"; case "notes": return "Notes"; case "kb": return "Knowledge"
+        case "tools": return "Integrations"; case "recipes": return "Personas"
+        case "coders": return "Coder sessions"; case "play": return "Play"
         default: return key.capitalized
         }
     }
@@ -4483,7 +4570,7 @@ struct DioStage: View {
                             .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.mint.opacity(0.4)))
                     }.buttonStyle(.plain)
                     Button { createKBInline() } label: {
-                        HStack(spacing: 6) { Image(systemName: "diamond.fill").font(.system(size: 12, weight: .bold)); Text("New KB").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
+                        HStack(spacing: 6) { Image(systemName: "diamond.fill").font(.system(size: 12, weight: .bold)); Text("New Knowledge").font(.system(size: 12.5, weight: .heavy, design: .rounded)) }
                             .foregroundStyle(DioPal.violet).padding(.horizontal, 12).frame(height: 36)
                             .background(Capsule().strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).foregroundStyle(DioPal.violet.opacity(0.4)))
                     }.buttonStyle(.plain)
@@ -4564,6 +4651,93 @@ struct DioStage: View {
     private func commitNote() { if let n = editingNote { saveNote(n) } }
     private func commitKB() { if let k = editingKB { renameKB(k) } else { withAnimation { editingKB = nil } } }
     private func commitInlineEdit() { if editingNote != nil { commitNote() } else if editingKB != nil { commitKB() } }
+
+    private func qualifiedDeskRef(_ id: String) -> String? {
+        let canonical = ["meeting:", "transcript:", "artifact:", "note:", "knowledge:",
+                         "zone:", "project:", "persona:", "workflow:", "sequence:"]
+        if canonical.contains(where: { id.hasPrefix($0) }) { return id }
+        let aliases = [
+            "m:": "meeting:", "out:": "artifact:", "note:": "note:",
+            "kb:": "knowledge:", "agent:": "persona:",
+            "chain:": "sequence:", "wf:": "workflow:",
+        ]
+        for (legacy, canonical) in aliases where id.hasPrefix(legacy) {
+            return canonical + String(id.dropFirst(legacy.count))
+        }
+        return nil
+    }
+
+    private func relationshipLineage(
+        provenance: RunProvenance?, grounding: GroundingSelection?
+    ) -> (refs: [String], axes: [String: RelationshipAxisSnapshot]) {
+        var candidates = provenance?.contextIds.compactMap(qualifiedDeskRef) ?? []
+        if let grounding {
+            candidates += grounding.meetings.map { "meeting:\($0.id)" }
+            candidates += grounding.hubArtifactIds.map { "artifact:\($0)" }
+            candidates += grounding.hubRefs
+        }
+        var refs: [String] = []
+        for ref in candidates where !refs.contains(ref) { refs.append(ref) }
+        let placement = unifiedMembership()
+        var axes: [String: RelationshipAxisSnapshot] = [:]
+        for ref in refs {
+            axes[ref] = RelationshipAxisSnapshot(
+                zoneId: placement[ref],
+                knowledgeIds: knowledgeMemberships.filter { !$0.deleted && $0.resourceRef == ref }.map(\.knowledgeId).sorted(),
+                projectIds: projectRelationships.filter { !$0.deleted && $0.resourceRef == ref }.map(\.projectId).sorted()
+            )
+        }
+        return (refs, axes)
+    }
+
+    private func relationshipPanel(for primitive: any DeskPrimitive) -> AnyView? {
+        guard let ref = qualifiedDeskRef(primitive.id), isFileable(primitive.kind) else { return nil }
+        let knowledgeIds = Set(knowledgeMemberships.filter { !$0.deleted && $0.resourceRef == ref }.map(\.knowledgeId))
+        let projectIds = Set(projectRelationships.filter { !$0.deleted && $0.resourceRef == ref }.map(\.projectId))
+        return AnyView(DioRelationshipPanel(
+            knowledge: kbs,
+            projects: projects,
+            knowledgeIds: knowledgeIds,
+            projectIds: projectIds,
+            onKnowledge: { toggleKnowledge($0, resourceRef: ref) },
+            onProject: { toggleProject($0, resourceRef: ref) }
+        ))
+    }
+
+    private func toggleKnowledge(_ knowledgeId: String, resourceRef: String) {
+        let edgeId = "\(knowledgeId)|\(resourceRef)"; let now = Date()
+        if let index = knowledgeMemberships.firstIndex(where: { $0.id == edgeId }) {
+            knowledgeMemberships.remove(at: index)
+            syncModified[edgeId] = nil
+            syncTombstones["\(SyncKind.knowledgeMembership.rawValue):\(edgeId)"] = now
+        } else {
+            knowledgeMemberships.append(KnowledgeMembership(
+                knowledgeId: knowledgeId, resourceRef: resourceRef,
+                createdAt: now, lastModified: now
+            ))
+            syncModified[edgeId] = now
+            syncTombstones["\(SyncKind.knowledgeMembership.rawValue):\(edgeId)"] = nil
+        }
+        syncConfirmed.remove(edgeId); persistRelationships(); persistSyncMaps(); haptic(.light)
+    }
+
+    private func toggleProject(_ projectId: String, resourceRef: String) {
+        let edgeId = "\(projectId)|\(resourceRef)"; let now = Date()
+        if let index = projectRelationships.firstIndex(where: { $0.id == edgeId }) {
+            projectRelationships.remove(at: index)
+            syncModified[edgeId] = nil
+            syncTombstones["\(SyncKind.projectRelationship.rawValue):\(edgeId)"] = now
+        } else {
+            projectRelationships.append(ProjectRelationship(
+                id: edgeId, projectId: projectId, resourceRef: resourceRef,
+                relationship: "member", source: "manual", confidence: 1,
+                createdAt: now, lastModified: now, deleted: false
+            ))
+            syncModified[edgeId] = now
+            syncTombstones["\(SyncKind.projectRelationship.rawValue):\(edgeId)"] = nil
+        }
+        syncConfirmed.remove(edgeId); persistRelationships(); persistSyncMaps(); haptic(.light)
+    }
 
     private func crumbs() -> [(String, Color)] {
         var out: [(String, Color)] = [("Desk", DioPal.accent)]; var acc: [String] = []
@@ -5159,14 +5333,14 @@ struct DioStage: View {
         guard !h.isEmpty, (Int(p) ?? 0) > 0 else { return }
         haptic(.medium)
         peerHost = h; peerPort = p
-        peerToken = token.trimmingCharacters(in: .whitespaces)
+        pairedPeer.token = token.trimmingCharacters(in: .whitespaces)
         peerName = name.trimmingCharacters(in: .whitespaces)
         withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { connecting = false }
         syncDesk(reason: "paired")
     }
     private func forgetPeer() {
         haptic(.medium)
-        peerHost = ""; peerToken = ""; peerName = ""
+        peerHost = ""; pairedPeer.token = ""; peerName = ""
         withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { connecting = false }
     }
     private func toast(_ s: String) {
@@ -5221,8 +5395,12 @@ struct DioStage: View {
         case .refused(let needed, let budget):
             routeError = "Grounding needs ~\(needed) tokens; the window is \(budget). Pick less."
             return
+        case .stale(let refs):
+            routeError = "Grounding changed or was deleted: \(refs.joined(separator: ", ")). Pick it again."
+            return
         }
         runningLocal = prof.isLocal
+        let keptLineage = relationshipLineage(provenance: provenance, grounding: grounding)
         haptic(.heavy)
         withAnimation { routing = true }
         Task { @MainActor in
@@ -5235,8 +5413,14 @@ struct DioStage: View {
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 #endif
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    printed = OutputRecord(id: UUID().uuidString, title: lens, body: clean.isEmpty ? "(the model returned nothing)" : clean,
-                                           source: source, lens: lens, path: zpath, provenance: provenance)
+                    var output = OutputRecord(id: UUID().uuidString, title: lens, body: clean.isEmpty ? "(the model returned nothing)" : clean,
+                                              source: source, lens: lens, path: zpath, provenance: provenance)
+                    if !keptLineage.refs.isEmpty {
+                        output.setRelationshipLineage(
+                            qualifiedRefs: keptLineage.refs, snapshot: keptLineage.axes
+                        )
+                    }
+                    printed = output
                     printedEgress = runEgress(prof, turn: turn)
                 }
                 selectedSet = []
@@ -5325,7 +5509,69 @@ struct DioStage: View {
                 blocks.append(.init(kind: .artifact, title: art.title, detail: title, body: art.body))
             }
         }
+        for resource in sel.resources {
+            if let block = groundingResourceBlock(resource) { blocks.append(block) }
+        }
         return blocks
+    }
+
+    private func groundingResources() -> [GroundingSelection.Resource] {
+        var rows = outputs.map { GroundingSelection.Resource(ref: "artifact:\($0.id)", kind: "Artifact", title: $0.title) }
+        rows += notes.map { .init(ref: "note:\($0.id)", kind: "Note", title: $0.title) }
+        rows += kbs.map { .init(ref: "knowledge:\($0.id)", kind: "Knowledge", title: $0.name) }
+        rows += zones.map { .init(ref: "zone:\($0.path)", kind: "Zone", title: name(of: $0.path)) }
+        rows += projects.filter { !$0.isArchived }.map { .init(ref: "project:\($0.id)", kind: "Project", title: $0.name) }
+        return rows
+    }
+
+    private func groundingTextForRef(_ ref: String) -> (title: String, body: String)? {
+        let parts = ref.split(separator: ":", maxSplits: 1).map(String.init)
+        guard parts.count == 2 else { return nil }
+        switch parts[0] {
+        case "meeting":
+            guard let row = meetings.first(where: { $0.id == parts[1] }) else { return nil }
+            let primitive = MeetingPrimitive(meeting: row, index: 0)
+            return (primitive.title, primitive.routableText)
+        case "artifact":
+            guard let row = outputs.first(where: { $0.id == parts[1] }) else { return nil }
+            return (row.title, row.body)
+        case "note":
+            guard let row = notes.first(where: { $0.id == parts[1] }) else { return nil }
+            return (row.title, row.body)
+        default: return nil
+        }
+    }
+
+    private func groundingResourceBlock(_ resource: GroundingSelection.Resource) -> ContextEnvelope.Block? {
+        let parts = resource.ref.split(separator: ":", maxSplits: 1).map(String.init)
+        guard parts.count == 2 else { return nil }
+        let kind = parts[0], id = parts[1]
+        switch kind {
+        case "artifact":
+            guard let row = outputs.first(where: { $0.id == id }) else { return nil }
+            return .init(kind: .artifact, title: row.title, body: row.body)
+        case "note":
+            guard let row = notes.first(where: { $0.id == id }) else { return nil }
+            return .init(kind: .note, title: row.title, body: row.body)
+        case "knowledge":
+            guard let kb = kbs.first(where: { $0.id == id }) else { return nil }
+            var refs = knowledgeMemberships.filter { !$0.deleted && $0.knowledgeId == id }.map(\.resourceRef)
+            if refs.isEmpty { refs = kb.contract.memberIds }
+            let text = refs.compactMap { groundingTextForRef($0) }
+                .map { "## \($0.title)\n\($0.body)" }.joined(separator: "\n\n")
+            return ContextEnvelope.kbBlock(name: kb.name, content: text)
+        case "zone":
+            guard zones.contains(where: { $0.path == id }) else { return nil }
+            let text = membersOf(id).map { "## \($0.title)\n\($0.routableText)" }.joined(separator: "\n\n")
+            return .init(kind: .zone, title: resource.title, body: text)
+        case "project":
+            guard projects.contains(where: { $0.id == id && !$0.isArchived }) else { return nil }
+            let refs = projectRelationships.filter { !$0.deleted && $0.projectId == id }.map(\.resourceRef)
+            let text = refs.compactMap { groundingTextForRef($0) }
+                .map { "## \($0.title)\n\($0.body)" }.joined(separator: "\n\n")
+            return .init(kind: .project, title: resource.title, body: text)
+        default: return nil
+        }
     }
 
     /// The gauge's live price for a selection (same estimator the run refusal uses).
@@ -5341,13 +5587,23 @@ struct DioStage: View {
         case hub(HubGrounding)
         case inline(String)
         case refused(needed: Int, budget: Int)
+        case stale([String])
     }
     private func groundingForRun(_ sel: GroundingSelection?, profileId: String?) -> RunGrounding {
         guard let sel, !sel.isEmpty else { return .none }
+        var missing = sel.meetings.filter { gm in !meetings.contains(where: { $0.id == gm.id }) }
+            .map { "meeting:\($0.id)" }
+        for meeting in sel.meetings {
+            missing += meeting.artifactIds.filter { id in !outputs.contains(where: { $0.id == id }) }
+                .map { "artifact:\($0)" }
+        }
+        missing += sel.resources.filter { groundingResourceBlock($0) == nil }.map(\.ref)
+        if !missing.isEmpty { return .stale(missing) }
         let prof = InferenceConfigStore.shared.resolveProfile(recipeProfileId: profileId)
         if prof.kind == .desktop {
             return .hub(HubGrounding(meetingIds: sel.hubMeetingIds,
-                                     artifactIds: sel.hubArtifactIds, expand: sel.hubExpand))
+                                     artifactIds: sel.hubArtifactIds,
+                                     refs: sel.hubRefs, expand: sel.hubExpand))
         }
         switch ContextEnvelope.assemble(envelopeBlocks(sel), budgetTokens: recipeContextLimit()) {
         case .success(let env): return env.isEmpty ? .none : .inline(env)
@@ -5363,6 +5619,7 @@ struct DioStage: View {
                 if let art = outputs.first(where: { $0.id == aid }) { rows.append(("out:\(aid)", art.title)) }
             }
         }
+        rows += sel.resources.map { ($0.ref, $0.title) }
         return rows
     }
 
@@ -5406,6 +5663,8 @@ struct DioStage: View {
         case .inline(let env): blocks.append("[GROUNDING]\n" + env)
         case .refused(let needed, let budget):
             return "⚠️ Grounding needs ~\(needed) tokens; the window is \(budget). Pick less."
+        case .stale(let refs):
+            return "⚠️ Grounding changed or was deleted: \(refs.joined(separator: ", ")). Pick it again."
         }
         if !history.isEmpty {
             let convo = history.suffix(12).map { ($0.isYou ? "User: " : "\(a.name): ") + $0.text }.joined(separator: "\n")
@@ -5446,7 +5705,7 @@ struct DioStage: View {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             #endif
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                printed = OutputRecord(id: UUID().uuidString, title: c.name, body: carry, source: inputTitle, lens: "Chain", path: zpath, provenance: provenance)
+                printed = OutputRecord(id: UUID().uuidString, title: c.name, body: carry, source: inputTitle, lens: "Sequence", path: zpath, provenance: provenance)
                 // Chains may mix targets per step (profileId is per-recipe) — any
                 // desktop step means the chain's material visited the hub.
                 let cfg = InferenceConfigStore.shared
@@ -5528,20 +5787,25 @@ struct DioStage: View {
             do {
                 let output: String
                 let artifactId: String?
+                let invocationId: String?
+                let resultRef: String?
                 var warning: String?
                 switch run.kind {
                 case .recipe(let a):
                     let result = try await client.runRecipe(id: a.id, input: input)
                     output = result.output; artifactId = result.artifactId
+                    invocationId = result.invocationId; resultRef = result.resultRef
                 case .chain(let c):
                     let result = try await client.runChain(id: c.id, input: input)
                     output = result.output; artifactId = result.artifactId
+                    invocationId = result.invocationId; resultRef = result.resultRef
                 case .workflow(let w):
                     // HSM-22-04 — the travelling graph runs where it synced to. A
                     // refused graph's honest `warning` rides onto the card, never
                     // dropped (the same truth the web run surface shows).
                     let result = try await client.runWorkflow(id: w.id, input: input)
                     output = result.output ?? ""; artifactId = result.artifactId
+                    invocationId = result.invocationId; resultRef = result.resultRef
                     warning = result.warning
                 }
                 withAnimation { routing = false }
@@ -5556,14 +5820,16 @@ struct DioStage: View {
                     // The hub persisted this run as a run-born artifact (v6) —
                     // the card shares its id so Keep reconciles on sync instead
                     // of duplicating.
-                    printed = OutputRecord(id: artifactId ?? UUID().uuidString,
-                                           title: title,
-                                           body: clean.isEmpty ? "(your desktop returned nothing)" : clean,
-                                           source: source,
-                                           lens: run.isChain ? "Chain · your desktop"
-                                               : (run.isWorkflow ? "Workflow · your desktop" : "Agent · your desktop"),
-                                           path: zpath,
-                                           provenance: run.provenance)
+                    var card = OutputRecord(id: artifactId ?? UUID().uuidString,
+                                            title: title,
+                                            body: clean.isEmpty ? "(your desktop returned nothing)" : clean,
+                                            source: source,
+                                            lens: run.isChain ? "Sequence · your desktop"
+                                                : (run.isWorkflow ? "Workflow · your desktop" : "Persona · your desktop"),
+                                            path: zpath,
+                                            provenance: run.provenance)
+                    if let invocationId { card.setInvocationReceipt(invocationId, resultRef: resultRef) }
+                    printed = card
                     printedEgress = .cloud("your desktop")
                 }
                 selectedSet = []
@@ -5581,7 +5847,8 @@ struct DioStage: View {
             switch e {
             case .http(502), .http(503): return "Your desktop has no model loaded — start the desktop runtime and try again."
             case .http(400): return "Your desktop doesn’t have that model — pick another in Runs on."
-            case .http(404): return "That agent, crew, or workflow isn’t on your desktop yet — sync first, then run on the hub."
+            case .http(409): return "That Workflow is not supported on your desktop. Open it in Workbench to choose a compatible host."
+            case .http(404): return "That Persona, Sequence, or Workflow isn’t on your desktop yet — sync first, then run on the hub."
             case .http(let code): return "Your desktop refused the run (status \(code))."
             case .malformed: return "Your desktop sent back something the desk couldn’t read."
             }
@@ -5634,9 +5901,12 @@ struct DioStage: View {
     }
     /// The desk's syncable records as a flat snapshot the store reads.
     private func currentDeskRecords() -> DeskRecords {
-        DeskRecords(notes: notes, recipes: recipes, kbs: kbs, outputs: outputs,
+        DeskRecords(meetings: model.meetings, notes: notes, recipes: recipes, kbs: kbs, outputs: outputs,
                     chains: chains, workflows: workflows,
                     zones: zones, membership: unifiedMembership(),
+                    knowledgeMemberships: knowledgeMemberships,
+                    projectRelationships: projectRelationships,
+                    projects: projects,
                     modified: syncModified, tombstones: syncTombstones)
     }
     /// The desk's filing as one synced map: primitiveId → directoryId (a zone path). Unifies the
@@ -5644,11 +5914,12 @@ struct DioStage: View {
     /// omitted — only a real filing is an edge worth syncing.
     private func unifiedMembership() -> [String: String] {
         var m: [String: String] = [:]
-        for (id, z) in filed where !z.isEmpty { m[id] = z }
-        for rec in outputs where !rec.path.isEmpty { m["out:\(rec.id)"] = rec.path }
+        for (id, z) in filed where !z.isEmpty {
+            if id.hasPrefix("m:") { m["meeting:\(id.dropFirst(2))"] = z }
+        }
+        for rec in outputs where !rec.path.isEmpty { m["artifact:\(rec.id)"] = rec.path }
         for rec in notes where !rec.path.isEmpty { m["note:\(rec.id)"] = rec.path }
-        for rec in kbs where !rec.path.isEmpty { m["kb:\(rec.id)"] = rec.path }
-        for rec in placedGames where !rec.path.isEmpty { m["game:\(rec.gameId)"] = rec.path }
+        for rec in kbs where !rec.path.isEmpty { m["knowledge:\(rec.id)"] = rec.path }
         return m
     }
     /// Reconcile an incoming unified membership map back into the desk's two filing surfaces:
@@ -5658,25 +5929,43 @@ struct DioStage: View {
         // meetings → the filed map (keep only meeting keys; clear then reapply)
         var f = filed
         for k in f.keys where k.hasPrefix("m:") { f[k] = nil }
-        for (id, z) in m where id.hasPrefix("m:") { f[id] = z }
+        for (id, z) in m {
+            if id.hasPrefix("meeting:") { f["m:\(id.dropFirst(8))"] = z }
+            else if id.hasPrefix("m:") { f[id] = z } // pre-HS-92-05 migration
+        }
         filed = f
-        for i in outputs.indices { outputs[i].path = m["out:\(outputs[i].id)"] ?? "" }
+        for i in outputs.indices { outputs[i].path = m["artifact:\(outputs[i].id)"] ?? m["out:\(outputs[i].id)"] ?? "" }
         for i in notes.indices { notes[i].path = m["note:\(notes[i].id)"] ?? "" }
-        for i in kbs.indices { kbs[i].path = m["kb:\(kbs[i].id)"] ?? "" }
-        for i in placedGames.indices { placedGames[i].path = m["game:\(placedGames[i].gameId)"] ?? "" }
+        for i in kbs.indices { kbs[i].path = m["knowledge:\(kbs[i].id)"] ?? m["kb:\(kbs[i].id)"] ?? "" }
     }
     /// Write a merged record set back into the desk's @AppStorage-backed arrays + persist.
     private func applyDeskRecords(_ r: DeskRecords) {
+        model.applySyncedMeetings(r.meetings, modified: r.modified, tombstones: r.tombstones)
         notes = r.notes; recipes = r.recipes; kbs = r.kbs
         outputs = r.outputs; chains = r.chains; workflows = r.workflows
         zones = r.zones
+        knowledgeMemberships = r.knowledgeMemberships
+        projectRelationships = r.projectRelationships
+        projects = r.projects
         syncModified = r.modified; syncTombstones = r.tombstones
         // membership reconciles back into the filed map + each record's path (it overwrites the
         // record-path writes above for the filed surfaces — applied last so it wins).
         applyMembership(r.membership)
         persistNotes(); persistRecipes(); persistKBs()
         persistOutputs(); persistChains(); persistWorkflows()
-        persistZones(); persistFiled(); persistSyncMaps()
+        persistZones(); persistFiled(); persistRelationships(); persistSyncMaps()
+    }
+    private func persistRelationships() {
+        let encoder = JSONEncoder(); encoder.dateEncodingStrategy = .iso8601
+        if let data = try? encoder.encode(knowledgeMemberships) {
+            knowledgeMembershipsJSON = String(decoding: data, as: UTF8.self)
+        }
+        if let data = try? encoder.encode(projectRelationships) {
+            projectRelationshipsJSON = String(decoding: data, as: UTF8.self)
+        }
+        if let data = try? encoder.encode(projects) {
+            projectsJSON = String(decoding: data, as: UTF8.self)
+        }
     }
     /// Run one real sync pass against the paired hub: push the local snapshot + pull/apply
     // MARK: HSM-17-03 — live coders on the desk
@@ -6034,7 +6323,7 @@ struct DioStage: View {
     // harvest a reply onto the desk as a routable output card.
     private func saveAgentReply(_ text: String, from a: RecipeRecord) {
         haptic(.medium)
-        let rec = OutputRecord(id: UUID().uuidString, title: "\(a.name) · reply", body: text, source: a.name, lens: "Agent", path: pathKey)
+        let rec = OutputRecord(id: UUID().uuidString, title: "\(a.name) · reply", body: text, source: a.name, lens: "Persona", path: pathKey)
         withAnimation(focusSpring) { outputs.append(rec) }
         persistOutputs(); stampSync(rec.id)
         withAnimation { sentToast = "Saved to desk" }
@@ -6069,7 +6358,7 @@ struct DioStage: View {
         if profile.kind == .desktop {
             guard let client = desktopClient else { return .failure(DesktopRunError.notPaired) }
             do {
-                let r = try await client.runStep(prompt: prompt, lens: "Agent", model: profile.model, grounding: grounding)
+                let r = try await client.runStep(prompt: prompt, lens: "Persona", model: profile.model, grounding: grounding)
                 let text = (r.output ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !text.isEmpty else { return .failure(DesktopRunError.emptyAnswer) }
                 return .success(LLMTurn(text: text, hubEgress: r.egress, hubModel: r.model))
@@ -6374,6 +6663,19 @@ struct DioStage: View {
         if let data = agentChatsJSON.data(using: .utf8), let d = try? JSONDecoder().decode([String: [RecipeMessage]].self, from: data) { agentChats = d }
         if let data = chatGroundingJSON.data(using: .utf8), let d = try? JSONDecoder().decode([String: GroundingSelection].self, from: data) { chatGrounding = d }
         if let data = chainsJSON.data(using: .utf8), let arr = try? JSONDecoder().decode([ChainRecord].self, from: data) { chains = arr }
+        let relationshipDecoder = JSONDecoder(); relationshipDecoder.dateDecodingStrategy = .iso8601
+        if let data = knowledgeMembershipsJSON.data(using: .utf8),
+           let rows = try? relationshipDecoder.decode([KnowledgeMembership].self, from: data) {
+            knowledgeMemberships = rows
+        }
+        if let data = projectRelationshipsJSON.data(using: .utf8),
+           let rows = try? relationshipDecoder.decode([ProjectRelationship].self, from: data) {
+            projectRelationships = rows
+        }
+        if let data = projectsJSON.data(using: .utf8),
+           let rows = try? relationshipDecoder.decode([Project].self, from: data) {
+            projects = rows
+        }
         loadSyncMaps()
     }
 }

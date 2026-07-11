@@ -3,9 +3,7 @@
 // React + Vite in the one Web tree. Full-bleed: the world owns the viewport;
 // chrome is the floating
 // minimal cluster (DeskChrome); a fresh desk shows the guiding empty state.
-// Arrival routing is owned by this route so a brand-new user reaches /welcome.
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useDesk } from "./store";
 import { Stage } from "./components/Stage";
 import { World } from "./components/World";
@@ -24,17 +22,13 @@ export default function DeskApp() {
   const chatPersonaId = useDesk((s) => s.chatPersonaId);
   const setup = useDesk((s) => s.setup);
   const { refresh } = useDesk.getState();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    void refresh();
+    void refresh().then(() => {
+      const open = new URLSearchParams(window.location.search).get("open");
+      if (open) useDesk.getState().openPullout(open.includes(":") ? open.split(":", 2)[1] : open);
+    });
   }, []);
-
-  useEffect(() => {
-    if (setup?.first_run) navigate("/welcome", { replace: true });
-    else if (setup?.overall === "blocked")
-      navigate("/setup", { replace: true });
-  }, [navigate, setup]);
 
   const total = Object.values(items).reduce((n, l) => n + l.length, 0);
 
@@ -42,7 +36,11 @@ export default function DeskApp() {
     <div className="desk-next">
       <Stage />
       <DeskChrome />
-      {updatedAt !== null && total === 0 ? <EmptyDesk /> : <World />}
+      {updatedAt !== null && total === 0 ? (
+        <EmptyDesk arrivalRequired={setup?.arrival_required === true} />
+      ) : (
+        <World />
+      )}
       <RecordOrb />
       <RecipeRail />
       {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}

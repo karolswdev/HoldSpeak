@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { authenticatedHeaders, bootstrapAuth, websocketUrl } from "./auth";
+import {
+  authenticatedHeaders,
+  bootstrapAuth,
+  websocketProtocols,
+  websocketUrl,
+} from "./auth";
 
 describe("auth bootstrap", () => {
   beforeEach(() => {
@@ -21,9 +26,13 @@ describe("auth bootstrap", () => {
     );
   });
 
-  it("forwards the session token to the WebSocket handshake", () => {
+  it("forwards the session token in a protocol header, never the URL", () => {
     sessionStorage.setItem("hs.web.token", "tab-token");
     bootstrapAuth();
-    expect(websocketUrl()).toContain("token=tab-token");
+    expect(websocketUrl()).not.toContain("tab-token");
+    expect(websocketProtocols()).toEqual([
+      "holdspeak.v1",
+      "holdspeak.auth.v1.dGFiLXRva2Vu",
+    ]);
   });
 });

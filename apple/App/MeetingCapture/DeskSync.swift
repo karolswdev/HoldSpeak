@@ -32,6 +32,7 @@ import Foundation
 /// this in (read) and gets a mutated copy back (apply), so the store stays free of any
 /// SwiftUI/@AppStorage coupling and is unit-testable in isolation.
 struct DeskRecords: Equatable {
+    var meetings: [Meeting] = []
     var notes: [NoteRecord] = []
     var recipes: [RecipeRecord] = []
     var kbs: [KBRecord] = []
@@ -47,6 +48,10 @@ struct DeskRecords: Equatable {
     /// the unified view of the desk's `filed` map (meetings/games) + each output/note/kb record's
     /// `path`. It is ORGANIZATION and syncs (it was wrongly treated as per-device layout before).
     var membership: [String: String] = [:]
+    /// Independent synced context axes; unlike Zone membership these are many-to-many.
+    var knowledgeMemberships: [KnowledgeMembership] = []
+    var projectRelationships: [ProjectRelationship] = []
+    var projects: [Project] = []
     /// id → last-modified instant (the iPad's `updatedAt` projection; maps to meta.last_modified).
     var modified: [String: Date] = [:]
     /// id → deleted-at instant for propagated deletes (tombstones; record is gone locally).
@@ -65,6 +70,13 @@ struct DeskSyncStore {
     /// + tombstones for propagated deletes. Each record's instant comes from the side map.
     func snapshot(_ r: DeskRecords, now: Date = Date()) -> ChangeSet {
         func t(_ id: String) -> Date { r.modified[id] ?? now }
+
+        let meetings = r.meetings.map {
+            Synced<Meeting>.live(
+                $0, id: $0.id, kind: .meeting,
+                modifiedAt: r.modified[$0.id] ?? $0.endedAt ?? $0.startedAt
+            )
+        } + tombstones(in: r, kind: .meeting) as [Synced<Meeting>]
 
         let notes = r.notes.map { $0.synced(at: t($0.id)) }
             + tombstones(in: r, kind: .note) as [Synced<Note>]
@@ -93,8 +105,30 @@ struct DeskSyncStore {
                          id: pid, kind: .membership, modifiedAt: at)
         } + tombstones(in: r, kind: .membership) as [Synced<Membership>]
 
-        return ChangeSet(meetings: [], artifacts: artifacts, notes: notes, kbs: kbs,
+        let knowledgeMemberships = r.knowledgeMemberships.map {
+            Synced<KnowledgeMembership>.live(
+                $0, id: $0.id, kind: .knowledgeMembership,
+                modifiedAt: r.modified[$0.id] ?? $0.lastModified
+            )
+        } + tombstones(in: r, kind: .knowledgeMembership) as [Synced<KnowledgeMembership>]
+        let projectRelationships = r.projectRelationships.map {
+            Synced<ProjectRelationship>.live(
+                $0, id: $0.id, kind: .projectRelationship,
+                modifiedAt: r.modified[$0.id] ?? $0.lastModified
+            )
+        } + tombstones(in: r, kind: .projectRelationship) as [Synced<ProjectRelationship>]
+        let projects = r.projects.map {
+            Synced<Project>.live(
+                $0, id: $0.id, kind: .project,
+                modifiedAt: r.modified[$0.id] ?? $0.updatedAt
+            )
+        } + tombstones(in: r, kind: .project) as [Synced<Project>]
+
+        return ChangeSet(meetings: meetings, artifacts: artifacts, notes: notes, kbs: kbs,
                          directories: directories, directoryMemberships: memberships,
+                         knowledgeMemberships: knowledgeMemberships,
+                         projectRelationships: projectRelationships,
+                         projects: projects,
                          recipes: recipes, chains: chains, workflows: workflows)
     }
 
@@ -111,6 +145,17 @@ struct DeskSyncStore {
     func apply(_ cs: ChangeSet, to start: DeskRecords) -> (records: DeskRecords, report: ApplyReport) {
         var r = start
         var report = ApplyReport()
+
+        for rec in cs.meetings {
+            mergeOne(&r, &report, meta: rec.meta, value: rec.value,
+                     find: { $0.meetings.firstIndex { $0.id == rec.meta.id } },
+                     upsert: { recs, value in
+                         if let i = recs.meetings.firstIndex(where: { $0.id == value.id }) {
+                             recs.meetings[i] = value
+                         } else { recs.meetings.append(value) }
+                     },
+                     remove: { recs in recs.meetings.removeAll { $0.id == rec.meta.id } })
+        }
 
         for rec in cs.notes {
             mergeOne(&r, &report, meta: rec.meta, value: rec.value,
@@ -203,9 +248,36 @@ struct DeskSyncStore {
                 report.applied += 1
             } else { report.skipped += 1 }
         }
-        // meetings are read-only on the desk (owned by the capture model), so the desk
-        // never applies incoming meeting records here — it pushes its own primitives and
-        // pulls the durable ones it authors. (Meetings flow via the capture pipeline.)
+        for rec in cs.knowledgeMemberships {
+            mergeOne(&r, &report, meta: rec.meta, value: rec.value,
+                     find: { $0.knowledgeMemberships.firstIndex { $0.id == rec.meta.id } },
+                     upsert: { recs, value in
+                         if let i = recs.knowledgeMemberships.firstIndex(where: { $0.id == value.id }) {
+                             recs.knowledgeMemberships[i] = value
+                         } else { recs.knowledgeMemberships.append(value) }
+                     },
+                     remove: { recs in recs.knowledgeMemberships.removeAll { $0.id == rec.meta.id } })
+        }
+        for rec in cs.projectRelationships {
+            mergeOne(&r, &report, meta: rec.meta, value: rec.value,
+                     find: { $0.projectRelationships.firstIndex { $0.id == rec.meta.id } },
+                     upsert: { recs, value in
+                         if let i = recs.projectRelationships.firstIndex(where: { $0.id == value.id }) {
+                             recs.projectRelationships[i] = value
+                         } else { recs.projectRelationships.append(value) }
+                     },
+                     remove: { recs in recs.projectRelationships.removeAll { $0.id == rec.meta.id } })
+        }
+        for rec in cs.projects {
+            mergeOne(&r, &report, meta: rec.meta, value: rec.value,
+                     find: { $0.projects.firstIndex { $0.id == rec.meta.id } },
+                     upsert: { recs, value in
+                         if let i = recs.projects.firstIndex(where: { $0.id == value.id }) {
+                             recs.projects[i] = value
+                         } else { recs.projects.append(value) }
+                     },
+                     remove: { recs in recs.projects.removeAll { $0.id == rec.meta.id } })
+        }
         return (r, report)
     }
 

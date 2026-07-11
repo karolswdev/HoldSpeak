@@ -6,6 +6,8 @@ by the Database container, sharing its connection.
 from __future__ import annotations
 
 import sqlite3
+import hashlib
+import json
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional, Any
 
@@ -63,7 +65,62 @@ class MeetingRepository(BaseRepository):
 
     # === Meeting CRUD ===
 
-    def save_meeting(self, state: "MeetingState") -> None:
+    def record_sync_conflict(
+        self,
+        meeting_id: str,
+        *,
+        local_value: dict[str, Any],
+        incoming_value: dict[str, Any],
+    ) -> str:
+        """Keep an equal-clock losing Meeting version recoverable and idempotent."""
+        local_value = dict(local_value)
+        incoming_value = dict(incoming_value)
+        for payload in (local_value, incoming_value):
+            payload.pop("duration", None)
+            payload.pop("formatted_duration", None)
+            payload.pop("sync_modified_at", None)
+        incoming_json = json.dumps(incoming_value, sort_keys=True, separators=(",", ":"))
+        local_json = json.dumps(local_value, sort_keys=True, separators=(",", ":"))
+        conflict_id = hashlib.sha256(
+            f"{meeting_id}\0{local_json}\0{incoming_json}".encode("utf-8")
+        ).hexdigest()[:24]
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO meeting_sync_conflicts
+                    (id, meeting_id, local_json, incoming_json, winner)
+                VALUES (?, ?, ?, ?, 'local')
+                """,
+                (conflict_id, meeting_id, local_json, incoming_json),
+            )
+        return conflict_id
+
+    def list_sync_conflicts(self, meeting_id: str) -> list[dict[str, Any]]:
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT * FROM meeting_sync_conflicts
+                   WHERE meeting_id = ? AND resolved_at IS NULL
+                   ORDER BY detected_at DESC""",
+                (meeting_id,),
+            ).fetchall()
+        return [
+            {
+                "id": row["id"],
+                "meeting_id": row["meeting_id"],
+                "local": json.loads(row["local_json"]),
+                "incoming": json.loads(row["incoming_json"]),
+                "winner": row["winner"],
+                "detected_at": row["detected_at"],
+            }
+            for row in rows
+        ]
+
+    def save_meeting(
+        self,
+        state: "MeetingState",
+        *,
+        sync_modified_at: Optional[datetime] = None,
+    ) -> None:
         """Save or update a meeting and all related data."""
 
         with self._connection() as conn:
@@ -71,8 +128,10 @@ class MeetingRepository(BaseRepository):
             conn.execute("""
                 INSERT INTO meetings (id, started_at, ended_at, title,
                     duration_seconds, intel_status, intel_status_detail,
-                    intel_requested_at, intel_completed_at, mic_label, remote_label, web_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    intel_requested_at, intel_completed_at, mic_label, remote_label, web_url,
+                    capture_status, capture_failure, capture_checkpoint_at,
+                    capture_checkpoint_seconds, provenance, sync_modified_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     ended_at = excluded.ended_at,
                     title = excluded.title,
@@ -81,6 +140,15 @@ class MeetingRepository(BaseRepository):
                     intel_status_detail = excluded.intel_status_detail,
                     intel_requested_at = excluded.intel_requested_at,
                     intel_completed_at = excluded.intel_completed_at,
+                    mic_label = excluded.mic_label,
+                    remote_label = excluded.remote_label,
+                    web_url = excluded.web_url,
+                    capture_status = excluded.capture_status,
+                    capture_failure = excluded.capture_failure,
+                    capture_checkpoint_at = excluded.capture_checkpoint_at,
+                    capture_checkpoint_seconds = excluded.capture_checkpoint_seconds,
+                    provenance = excluded.provenance,
+                    sync_modified_at = excluded.sync_modified_at,
                     updated_at = datetime('now')
             """, (
                 state.id,
@@ -95,6 +163,12 @@ class MeetingRepository(BaseRepository):
                 state.mic_label,
                 state.remote_label,
                 state.web_url,
+                state.capture_status,
+                state.capture_failure,
+                state.capture_checkpoint_at.isoformat() if state.capture_checkpoint_at else None,
+                state.capture_checkpoint_seconds,
+                state.provenance,
+                (sync_modified_at or datetime.now()).isoformat(),
             ))
 
             # Save tags
@@ -326,6 +400,18 @@ class MeetingRepository(BaseRepository):
             mic_label=row['mic_label'],
             remote_label=row['remote_label'],
             web_url=row['web_url'],
+            capture_status=row['capture_status'] or "finalized",
+            capture_failure=row['capture_failure'],
+            capture_checkpoint_at=(
+                datetime.fromisoformat(row['capture_checkpoint_at'])
+                if row['capture_checkpoint_at'] else None
+            ),
+            capture_checkpoint_seconds=float(row['capture_checkpoint_seconds'] or 0.0),
+            provenance=row['provenance'] or "desktop",
+            sync_modified_at=(
+                datetime.fromisoformat(row['sync_modified_at'])
+                if row['sync_modified_at'] else None
+            ),
         )
 
     def _load_latest_intel(
@@ -445,9 +531,28 @@ class MeetingRepository(BaseRepository):
                     tags=r['tags'].split(',') if r['tags'] else [],
                     intel_status=r["intel_status"] or "disabled",
                     intel_status_detail=r["intel_status_detail"],
+                    capture_status=r["capture_status"] or "finalized",
+                    capture_failure=r["capture_failure"],
+                    capture_checkpoint_seconds=float(r["capture_checkpoint_seconds"] or 0.0),
+                    provenance=r["provenance"] or "desktop",
                 )
                 for r in conn.execute(query, params)
             ]
+
+    def recover_capture(self, meeting_id: str) -> Optional["MeetingState"]:
+        """Finalize the last atomic checkpoint of an interrupted capture."""
+        meeting = self.get_meeting(meeting_id)
+        if meeting is None:
+            return None
+        if meeting.capture_status == "finalized":
+            return meeting
+        meeting.ended_at = meeting.capture_checkpoint_at or datetime.now()
+        if meeting.ended_at < meeting.started_at:
+            meeting.ended_at = datetime.now()
+        meeting.capture_status = "recovered"
+        meeting.capture_failure = None
+        self.save_meeting(meeting)
+        return meeting
 
     def list_facet_values(self) -> dict:
         """Distinct speakers + tags across the archive (HS-55-04 filter row)."""

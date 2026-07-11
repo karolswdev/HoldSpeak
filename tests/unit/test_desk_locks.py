@@ -82,5 +82,6 @@ def test_the_front_door_is_the_desk_with_the_guard() -> None:
     routes = (REPO / "web/src/routes.tsx").read_text(encoding="utf-8")
     desk = (REPO / "web/src/desk/DeskApp.tsx").read_text(encoding="utf-8")
     assert 'path: "/"' in routes and 'label: "Desk"' in routes
-    assert "setup?.first_run" in desk, "the first-run guard left the front door"
-    assert "/welcome" in desk and "/setup" in desk
+    assert "setup?.arrival_required" in desk, "the first-value state left the front door"
+    assert "arrivalRequired" in desk
+    assert 'navigate("/welcome"' not in desk

@@ -63,6 +63,7 @@ from .intel_analysis import IntelAnalysisMixin
 from .mutations import MeetingMutationsMixin
 from .persistence import PersistenceMixin
 from .transcribe_loop import TranscribeLoopMixin
+from .bookmarks import BookmarkViewsMixin
 
 
 class MeetingSession(
@@ -70,6 +71,7 @@ class MeetingSession(
     IntelAnalysisMixin,
     PersistenceMixin,
     MeetingMutationsMixin,
+    BookmarkViewsMixin,
 ):
     """Manages a background meeting recording session.
 
@@ -201,6 +203,7 @@ class MeetingSession(
 
         self._state: Optional[MeetingState] = None
         self._recorder: Optional[MeetingRecorder] = None
+        self._capture_journal: Optional[Any] = None
         self._lock = threading.Lock()
         self._transcribe_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
@@ -443,6 +446,8 @@ class MeetingSession(
                 started_at=datetime.now(),
                 mic_label=self.mic_label,
                 remote_label=self.remote_label,
+                capture_status="provisional",
+                provenance="desktop",
             )
 
             if self.intel_enabled:
@@ -546,16 +551,52 @@ class MeetingSession(
                     log.error(f"Failed to initialize speaker diarization: {e}")
                     self._diarizer = None
 
+            # HS-92-04: make the Meeting durable before an audio device is
+            # opened. If this transaction fails, no audio is accepted and the
+            # caller gets an actionable start failure rather than a ghost take.
+            from ..db import get_database
+
+            try:
+                get_database().meetings.save_meeting(self._state)
+            except Exception as exc:
+                self._state.capture_status = "capture_failed"
+                self._state.capture_failure = f"Could not create the Meeting: {exc}"
+                raise RuntimeError(self._state.capture_failure) from exc
+
             # Create recorder
+            from ..meeting_capture_journal import MeetingCaptureJournal
+
+            try:
+                self._capture_journal = MeetingCaptureJournal(self._state.id)
+            except Exception as exc:
+                self._state.capture_status = "capture_failed"
+                self._state.capture_failure = f"Audio journal unavailable: {exc}"
+                get_database().meetings.save_meeting(self._state)
+                raise RuntimeError(self._state.capture_failure) from exc
+
             self._recorder = MeetingRecorder(
                 mic_device=self.mic_device,
                 system_device=self.system_device,
                 on_mic_level=self.on_mic_level,
                 on_system_level=self.on_system_level,
+                on_audio_chunk=lambda chunk: self._capture_journal.append(
+                    chunk.source, chunk.audio
+                ) if self._capture_journal is not None else None,
             )
 
             # Start recording
-            self._recorder.start()
+            try:
+                self._recorder.start()
+            except Exception as exc:
+                self._state.capture_status = "capture_failed"
+                self._state.capture_failure = str(exc)
+                self._state.capture_checkpoint_at = datetime.now()
+                get_database().meetings.save_meeting(self._state)
+                raise
+            self._state.capture_status = "recording"
+            self._state.capture_failure = None
+            self._state.capture_checkpoint_at = datetime.now()
+            get_database().meetings.save_meeting(self._state)
             self._stop_event.clear()
             self._last_transcribe_time = 0.0
 
@@ -710,86 +751,39 @@ class MeetingSession(
 
             # Mark as ended
             self._state.ended_at = datetime.now()
+            self._state.capture_status = "finalized"
+            self._state.capture_failure = None
+            self._state.capture_checkpoint_at = datetime.now()
+            self._state.capture_checkpoint_seconds = self._state.duration
             final_state = self._state
 
         assert final_state is not None
 
+        # Stop is itself a durable checkpoint; the later compatibility JSON and
+        # aftercare work may fail without losing or duplicating the Meeting.
+        journal_error: Optional[Exception] = None
+        if self._capture_journal is not None:
+            try:
+                self._capture_journal.finalize()
+            except Exception as exc:
+                journal_error = exc
+
+        if journal_error is not None:
+            with self._lock:
+                final_state.capture_status = "recoverable"
+                final_state.capture_failure = f"Audio finalization failed: {journal_error}"
+            log.error(final_state.capture_failure)
+            if self._capture_journal is not None:
+                self._capture_journal.mark_recoverable(final_state.capture_failure)
+        try:
+            from ..db import get_database
+
+            get_database().meetings.save_meeting(final_state)
+        except Exception as exc:
+            with self._lock:
+                final_state.capture_status = "recoverable"
+                final_state.capture_failure = f"Final Meeting checkpoint failed: {exc}"
+            log.error(final_state.capture_failure)
+
         log.info(f"Meeting stopped: {final_state.id}, duration={final_state.format_duration()}")
         return final_state
-
-    def add_bookmark(self, label: str = "", auto_label: bool = True) -> Optional[Bookmark]:
-        """Add a bookmark at the current time.
-
-        Args:
-            label: Optional label for the bookmark. If empty and auto_label=True,
-                   a label will be generated from context.
-            auto_label: If True and label is empty, generate a label from context.
-
-        Returns:
-            The created bookmark, or None if no meeting active.
-        """
-        with self._lock:
-            if self._state is None or not self._state.is_active:
-                return None
-
-            timestamp = self._state.duration
-
-            # Format timestamp for fallback label
-            mins = int(timestamp // 60)
-            secs = int(timestamp % 60)
-            timestamp_label = f"Bookmark @ {mins:02d}:{secs:02d}"
-
-            bookmark = Bookmark(
-                timestamp=timestamp,
-                label=label or timestamp_label,
-            )
-            self._state.bookmarks.append(bookmark)
-            log.info(f"Bookmark added at {bookmark.timestamp:.1f}s: {bookmark.label}")
-
-            # Try to generate a better label asynchronously if not provided
-            if not label and auto_label and self._intel is not None:
-                context = self._state.get_context_around(timestamp, window=10.0)
-                if context:
-                    thread = threading.Thread(
-                        target=self._generate_bookmark_label,
-                        args=(bookmark, context),
-                        daemon=True,
-                    )
-                    thread.start()
-                # If no context, keep the timestamp label (already set above)
-
-            return bookmark
-
-    def _generate_bookmark_label(self, bookmark: Bookmark, context: str) -> None:
-        """Generate and update bookmark label in background."""
-        try:
-            if self._intel is None:
-                return
-            label = self._intel.generate_bookmark_label(context)
-            if label:
-                with self._lock:
-                    bookmark.label = label
-                log.info(f"Bookmark label updated: {label}")
-        except Exception as exc:
-            log.error(f"Bookmark label generation failed: {exc}")
-
-    def get_transcript(self) -> list[TranscriptSegment]:
-        """Get all transcript segments."""
-        with self._lock:
-            if self._state is None:
-                return []
-            return list(self._state.segments)
-
-    def get_bookmarks(self) -> list[Bookmark]:
-        """Get all bookmarks."""
-        with self._lock:
-            if self._state is None:
-                return []
-            return list(self._state.bookmarks)
-
-    def get_formatted_transcript(self) -> str:
-        """Get transcript as formatted string."""
-        segments = self.get_transcript()
-        if not segments:
-            return ""
-        return "\n".join(str(s) for s in segments)

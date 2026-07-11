@@ -557,6 +557,21 @@ struct SettingsView: View {
                                  detail: section.detail ?? "") { sectionChip(section.status ?? "unknown") }
                 }
             }
+            if case .ok(let s) = hubProbe,
+               let destinations = s.trust?.destinations, !destinations.isEmpty {
+                let enabled = destinations.filter { $0.enabled == true }
+                if !enabled.isEmpty {
+                    HStack(spacing: 7) {
+                        Image(systemName: "exclamationmark.shield.fill")
+                        Text("External destinations are enabled")
+                    }
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(Sig.warn)
+                }
+                ForEach(Array(destinations.enumerated()), id: \.offset) { _, destination in
+                    destinationTrustRow(destination)
+                }
+            }
         }
         .padding(15).background(Sig.s1, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
@@ -574,6 +589,39 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 13).padding(.vertical, 10)
         .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func destinationTrustRow(_ destination: TrustDestination) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack {
+                Text(destination.name ?? "Destination")
+                    .font(.system(size: 13.5, weight: .heavy)).foregroundStyle(Sig.text)
+                Spacer()
+                chip(destination.enabled == true ? "enabled" : "off",
+                     destination.enabled == true ? "exclamationmark.triangle.fill" : "checkmark",
+                     destination.enabled == true ? Sig.warn : Sig.ok)
+            }
+            trustDetail("Destination", destination.destination)
+            trustDetail("Operation", destination.operation)
+            trustDetail("Boundary", destination.boundary)
+            trustDetail("Data", destination.dataClass)
+            trustDetail("Authority", destination.authorityBasis)
+            trustDetail("Background", destination.backgroundAbility)
+            trustDetail("Revoke", destination.revokeAction)
+            trustDetail("Last receipt", destination.lastReceipt ?? "None recorded")
+        }
+        .padding(13)
+        .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    @ViewBuilder private func trustDetail(_ label: String, _ value: String?) -> some View {
+        if let value, !value.isEmpty {
+            HStack(alignment: .top, spacing: 8) {
+                Text(label).font(.system(size: 10, weight: .heavy)).foregroundStyle(Sig.faint)
+                    .frame(width: 76, alignment: .leading)
+                Text(value).font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.muted)
+            }
+        }
     }
 
     @ViewBuilder private var storeChip: some View {

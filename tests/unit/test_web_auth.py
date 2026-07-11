@@ -56,6 +56,16 @@ def test_extract_request_token_priority_and_bearer():
     assert web_auth.extract_request_token(authorization="Basic xyz") is None
 
 
+def test_websocket_token_uses_a_header_protocol_not_a_url():
+    encoded = web_auth.websocket_auth_protocol("secret-token")
+    assert encoded.startswith("holdspeak.auth.v1.")
+    assert web_auth.extract_websocket_token(f"holdspeak.v1, {encoded}") == "secret-token"
+    unusual = web_auth.websocket_auth_protocol("spaces / unicode café")
+    assert web_auth.extract_websocket_token(unusual) == "spaces / unicode café"
+    assert web_auth.extract_websocket_token("holdspeak.auth.v1.***") is None
+    assert web_auth.extract_websocket_token("holdspeak.v1") is None
+
+
 def test_ensure_web_token_generates_and_persists_once():
     saved: list[object] = []
     config = SimpleNamespace(

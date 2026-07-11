@@ -55,8 +55,11 @@ extension HTTPDesktopClient {
         var body: [String: Any] = ["prompt": prompt, "lens": lens, "context": []]
         if let model, !model.isEmpty { body["model"] = model }
         if let g = grounding, !g.isEmpty {
-            body["grounding"] = ["meeting_ids": g.meetingIds, "artifact_ids": g.artifactIds,
-                                 "expand": g.expand]
+            var refs: [String: Any] = ["meeting_ids": g.meetingIds,
+                                       "artifact_ids": g.artifactIds,
+                                       "expand": g.expand]
+            if !g.refs.isEmpty { refs["refs"] = g.refs }
+            body["grounding"] = refs
         }
         let data = try await sendAsk(makeAskRequest(path: "api/ask", body: body))
         do { return try HoldSpeakContracts.decoder().decode(HubStepResult.self, from: data) }

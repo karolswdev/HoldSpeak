@@ -86,14 +86,14 @@ export function DeskChrome() {
           className="desk-chip"
           onClick={() => void createPrimitive("kb")}
         >
-          + KB
+          + Knowledge
         </button>
         <button
           type="button"
           className="desk-chip"
           onClick={() => void createPrimitive("recipe")}
         >
-          + Recipe
+          + Persona
         </button>
         <button
           type="button"

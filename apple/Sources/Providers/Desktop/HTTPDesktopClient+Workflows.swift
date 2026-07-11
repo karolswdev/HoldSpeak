@@ -21,7 +21,7 @@ public struct HubWorkflowRunStep: Codable, Equatable, Sendable {
 }
 
 /// The graph run's envelope: the threaded output, the per-node trail, the honest
-/// `warning` when the hub refused the graph and ran the prompt fallback, and the
+/// legacy `warning` from older hubs, plus the
 /// persisted run-born artifact id (reuse it — the 18-07 duplicate-on-sync lesson).
 public struct HubWorkflowRunResult: Codable, Equatable, Sendable {
     public var output: String?
@@ -29,23 +29,33 @@ public struct HubWorkflowRunResult: Codable, Equatable, Sendable {
     public var steps: [HubWorkflowRunStep]?
     public var warning: String?
     public var artifactId: String?
+    public var resultRef: String?
+    public var invocationId: String?
+    public var correlationId: String?
+    public var invocation: CapabilityInvocation?
 
     public init(output: String? = nil, provider: String? = nil,
                 steps: [HubWorkflowRunStep]? = nil, warning: String? = nil,
-                artifactId: String? = nil) {
+                artifactId: String? = nil, resultRef: String? = nil,
+                invocationId: String? = nil, correlationId: String? = nil,
+                invocation: CapabilityInvocation? = nil) {
         self.output = output
         self.provider = provider
         self.steps = steps
         self.warning = warning
         self.artifactId = artifactId
+        self.resultRef = resultRef
+        self.invocationId = invocationId
+        self.correlationId = correlationId
+        self.invocation = invocation
     }
 }
 
 extension HTTPDesktopClient {
 
     /// `POST /api/workflows/{id}/run` body `{input}` → the graph run envelope. The
-    /// hub runs the synced graph's faithful subset (or the prompt fallback with an
-    /// honest `warning`); a non-2xx throws `DesktopClientError.http`.
+    /// hub runs its faithful subset and returns 409 before execution when unsupported;
+    /// a non-2xx throws `DesktopClientError.http`.
     public func runWorkflow(id: String, input: String) async throws -> HubWorkflowRunResult {
         let data = try await sendWorkflowRun(makeWorkflowRunRequest(
             path: "api/workflows/\(id)/run", body: ["input": input]))

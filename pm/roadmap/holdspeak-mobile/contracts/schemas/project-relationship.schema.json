@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/project-relationship.schema.json",
+  "title": "ProjectRelationship",
+  "description": "An independent many-to-many Project relationship using a qualified resource reference.",
+  "x-sync-kind": "project_relationship",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "project_id", "resource_ref", "relationship", "source", "confidence", "created_at", "last_modified", "deleted"],
+  "properties": {
+    "id": { "type": "string", "minLength": 3 },
+    "project_id": { "type": "string", "minLength": 1 },
+    "resource_ref": { "type": "string", "pattern": "^[a-z_]+:.+$" },
+    "relationship": { "enum": ["member", "source", "output", "related"] },
+    "source": { "type": "string", "minLength": 1 },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "last_modified": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" }
+  }
+}

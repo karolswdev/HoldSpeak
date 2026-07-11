@@ -43,9 +43,10 @@ def test_trust_view_module_maps_postures() -> None:
     src = (_REPO / "web/src/components/AppShell.tsx").read_text()
     for marker in (
         "/api/setup/status",
-        'mode === "cloud"',
-        'mode === "local+cloud"',
-        '"local"',
-        "egress?.target",
+        'transcript_egress === "none"',
+        "enabledDestinations",
+        "authority_basis",
+        "revoke_action",
+        "last_receipt",
     ):
         assert marker in src

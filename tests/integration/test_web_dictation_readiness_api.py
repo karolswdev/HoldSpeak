@@ -336,7 +336,7 @@ def test_dictation_page_includes_readiness_panel() -> None:
     assert '<div id="root"></div>' in response.text
     js = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
     assert "/api/dictation/readiness" in js
-    assert "Pipeline readiness" in js and "Resolved target" in js
+    assert "Pipeline readiness" in js and "Runs on" in js
     assert "warnings" in js
 
 

@@ -22,6 +22,7 @@ scenarios:
   - pack-f-mobile/f-compact-desk-lane
   - ios-flagship-smoke/ios-flagship-install-pair-sync
   - ios-flagship-smoke/ios-flagship-record-save-reopen
+  - ios-flagship-smoke/ios-flagship-capture-kill-recover-return
   - ios-flagship-smoke/ios-flagship-ipad-diarization-live-intel
   - ios-flagship-smoke/ios-flagship-steering-consent-offline
   - pack-f-mobile/f-airgapped-notetaker

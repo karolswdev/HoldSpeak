@@ -297,7 +297,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
                   value={f.kbId}
                   onChange={(e) => set("kbId", "kb_id", e.target.value)}
                 >
-                  <option value="">No KB</option>
+                  <option value="">No Knowledge</option>
                   {(items.kb || []).map((k) => (
                     <option key={String(k.id)} value={String(k.id)}>
                       {String(k.name || k.id)}
@@ -310,7 +310,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
                     set("profileId", "profile_id", e.target.value)
                   }
                 >
-                  <option value="">Hub default</option>
+                  <option value="">Default Runs on</option>
                   {profiles.map((p) => (
                     <option key={String(p.id)} value={String(p.id)}>
                       {String(p.name || p.id)}

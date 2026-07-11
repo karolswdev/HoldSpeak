@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/knowledge-membership.schema.json",
+  "title": "KnowledgeMembership",
+  "description": "An independent many-to-many Knowledge membership using a qualified resource reference.",
+  "x-sync-kind": "knowledge_membership",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "knowledge_id", "resource_ref", "created_at", "last_modified", "deleted"],
+  "properties": {
+    "id": { "type": "string", "minLength": 3 },
+    "knowledge_id": { "type": "string", "minLength": 1 },
+    "resource_ref": { "type": "string", "pattern": "^[a-z_]+:.+$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "last_modified": { "type": "string", "format": "date-time" },
+    "deleted": { "type": "boolean" }
+  }
+}

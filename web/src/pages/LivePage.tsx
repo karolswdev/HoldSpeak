@@ -301,7 +301,7 @@ export default function LivePage() {
           </Panel>
         </div>
         <Panel className="span-8" title="Intent routing" eyebrow="Live control">
-          <Field label="Routing profile">
+          <Field label="Intent routing preset">
             {({ id }) => (
               <Select
                 id={id}

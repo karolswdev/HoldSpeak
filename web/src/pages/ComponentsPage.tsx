@@ -29,7 +29,7 @@ export default function ComponentsPage() {
         One review surface for semantics, focus, motion, density, validation,
         and every interaction state.
       </PageHero>
-      <Panel title="Actions" eyebrow="44 px primary · 36 px dense">
+      <Panel title="Buttons" eyebrow="44 px primary · 36 px dense">
         <div className="gallery-row">
           <Button variant="primary">Primary</Button>
           <Button>Secondary</Button>

@@ -140,6 +140,7 @@ class MeetingRecorder:
         chunk_duration: float = 2.0,  # Process in 2-second chunks
         on_mic_level: Optional[Callable[[float], None]] = None,
         on_system_level: Optional[Callable[[float], None]] = None,
+        on_audio_chunk: Optional[Callable[[AudioChunk], None]] = None,
     ) -> None:
         """Initialize the meeting recorder.
 
@@ -155,6 +156,7 @@ class MeetingRecorder:
         self.chunk_duration = chunk_duration
         self.on_mic_level = on_mic_level
         self.on_system_level = on_system_level
+        self.on_audio_chunk = on_audio_chunk
 
         # Resolve devices
         self._mic_device = self._resolve_mic_device(mic_device)
@@ -387,6 +389,15 @@ class MeetingRecorder:
         """
         return self._buffer.get_chunks_since(since)
 
+    def trim_before(self, timestamp: float) -> None:
+        """Release checkpointed audio while retaining the active overlap window.
+
+        MeetingSession calls this only after the corresponding transcript state
+        has committed to SQLite.  Recorder memory is therefore bounded by one
+        transcription interval plus overlap, independent of meeting length.
+        """
+        self._buffer.trim_before(timestamp)
+
     # ------------------------------------------------------------------
     # Phase 14: device stream coordination (HS-14-06)
     # ------------------------------------------------------------------
@@ -488,6 +499,8 @@ class MeetingRecorder:
 
             duration = len(chunk) / self.sample_rate
             self._buffer.add_mic_chunk(chunk, timestamp, duration)
+            if self.on_audio_chunk is not None:
+                self.on_audio_chunk(AudioChunk(chunk, timestamp, "mic", duration))
 
             # Level callback
             if self.on_mic_level is not None:
@@ -530,6 +543,8 @@ class MeetingRecorder:
 
             duration = len(chunk) / self.sample_rate
             self._buffer.add_system_chunk(chunk, timestamp, duration)
+            if self.on_audio_chunk is not None:
+                self.on_audio_chunk(AudioChunk(chunk, timestamp, "system", duration))
 
             # Level callback
             if self.on_system_level is not None:
@@ -672,6 +687,8 @@ class MeetingRecorder:
                     duration = len(chunk) / self.sample_rate
                     timestamp = max(0.0, (time.time() - start_time) - duration)
                     self._buffer.add_system_chunk(chunk, timestamp, duration)
+                    if self.on_audio_chunk is not None:
+                        self.on_audio_chunk(AudioChunk(chunk, timestamp, "system", duration))
 
                     if self.on_system_level is not None:
                         level = self._level_from_audio(chunk)

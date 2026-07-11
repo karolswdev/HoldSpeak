@@ -11,7 +11,10 @@ class FakeSocket extends EventTarget {
   send = vi.fn();
   close = vi.fn(() => this.dispatchEvent(new CloseEvent("close")));
 
-  constructor(readonly url: string) {
+  constructor(
+    readonly url: string,
+    readonly protocols?: string | string[],
+  ) {
     super();
     FakeSocket.instances.push(this);
     queueMicrotask(() => {
@@ -54,6 +57,8 @@ describe("RuntimeBusProvider", () => {
     );
     await screen.findByText("connected:");
     expect(FakeSocket.instances).toHaveLength(1);
+    expect(FakeSocket.instances[0].url).not.toContain("token=");
+    expect(FakeSocket.instances[0].protocols).toEqual(["holdspeak.v1"]);
     FakeSocket.instances[0].dispatchEvent(
       new MessageEvent("message", {
         data: JSON.stringify({

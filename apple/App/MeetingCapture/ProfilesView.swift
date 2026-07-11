@@ -19,15 +19,15 @@ struct ProfilesView: View {
                             .font(.system(size: 15, weight: .bold)).foregroundStyle(Sig.muted).padding(.vertical, 8)
                     }
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Profiles").font(.system(size: 32, weight: .heavy)).foregroundStyle(Sig.text)
-                        Text("Where your agents run. Set one as the default; pick per-agent in the builder.")
+                        Text(ProductLanguage.label(.runsOn)).font(.system(size: 32, weight: .heavy)).foregroundStyle(Sig.text)
+                        Text("Where intelligence runs. Set one default or choose a destination for each Persona.")
                             .font(.system(size: 14)).foregroundStyle(Sig.faint)
                     }
                     ForEach(cfg.profiles) { p in row(p) }
                     Button { editing = nil; showEditor = true; tactile() } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "plus.circle.fill").font(.system(size: 20, weight: .bold)).foregroundStyle(Sig.accent)
-                            Text("New profile").font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
+                            Text("New destination").font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
                             Spacer()
                         }
                         .padding(16).frame(maxWidth: .infinity)
@@ -101,7 +101,7 @@ struct ProfileEditor: View {
             Sig.bg.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(existing == nil ? "New profile" : "Edit profile").font(.system(size: 26, weight: .heavy)).foregroundStyle(Sig.text)
+                    Text(existing == nil ? "New Runs on destination" : "Edit Runs on destination").font(.system(size: 26, weight: .heavy)).foregroundStyle(Sig.text)
                     field("NAME", text: $name, placeholder: "e.g. Claude, OpenRouter, Studio box")
                     Picker("", selection: $isLocal) { Text("On-device").tag(true); Text("OpenAI-compatible").tag(false) }
                         .pickerStyle(.segmented)
@@ -123,7 +123,7 @@ struct ProfileEditor: View {
                         } label: { pickerChip("\(contextLimit / 1000)k tokens") }
                     }
                     Button { save() } label: {
-                        Text("Save profile").font(.system(size: 16, weight: .heavy)).foregroundStyle(.black)
+                        Text("Save destination").font(.system(size: 16, weight: .heavy)).foregroundStyle(.black)
                             .frame(maxWidth: .infinity).frame(height: 52).background(Sig.accent, in: Capsule())
                             .opacity(canSave ? 1 : 0.4)
                     }.disabled(!canSave)

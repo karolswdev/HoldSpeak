@@ -76,6 +76,10 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
                         "tags": m.tags,
                         "intel_status": m.intel_status,
                         "intel_status_detail": m.intel_status_detail,
+                        "capture_status": m.capture_status,
+                        "capture_failure": m.capture_failure,
+                        "capture_checkpoint_seconds": m.capture_checkpoint_seconds,
+                        "provenance": m.provenance,
                     }
                     for m in meetings
                 ],
@@ -138,6 +142,30 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(
                 {"error": str(e)}, status_code=500
             )
+
+    @router.post("/api/meetings/{meeting_id}/capture/recover")
+    async def api_recover_meeting_capture(meeting_id: str) -> Any:
+        """Keep the last atomic checkpoint as an honestly partial Meeting."""
+        try:
+            from ....db import get_database
+
+            meeting = get_database().meetings.recover_capture(meeting_id)
+            if meeting is None:
+                return JSONResponse({"error": "Meeting not found"}, status_code=404)
+            return JSONResponse({"meeting": meeting.to_dict(), "recovered": True})
+        except Exception as exc:
+            return JSONResponse(
+                {"error": f"Recovery failed; original retained: {exc}"},
+                status_code=500,
+            )
+
+    @router.get("/api/meetings/{meeting_id}/sync-conflicts")
+    async def api_meeting_sync_conflicts(meeting_id: str) -> Any:
+        from ....db import get_database
+
+        return JSONResponse({
+            "conflicts": get_database().meetings.list_sync_conflicts(meeting_id)
+        })
 
     @router.get("/api/meetings/{meeting_id}/export")
     async def api_export_meeting(

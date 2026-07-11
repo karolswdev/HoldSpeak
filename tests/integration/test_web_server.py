@@ -1846,7 +1846,7 @@ class TestCompanionUiSmoke:
 
         assert '<div id="root"></div>' in response.text
         source = (Path(__file__).resolve().parents[2] / "web/src/pages/CompanionPage.tsx").read_text()
-        for marker in ("The Agent Desk", "Needs you", "Recipes", "How it connects", "no autonomous send"):
+        for marker in ("Personas and coder sessions", "Needs you", "Personas", "How it connects", "no autonomous send"):
             assert marker in source
 
 
@@ -1895,6 +1895,17 @@ class TestSettingsApiEndpoints:
         assert get_response.status_code == 200
         assert get_response.json()["meeting"]["intel_provider"] in {"local", "cloud", "auto"}
 
+        # Credentials are write-only and use their dedicated operations.
+        assert client.put(
+            "/api/settings/secrets/failure_webhook_url",
+            json={"value": "https://ops.example.com/hooks/holdspeak"},
+        ).status_code == 200
+        assert client.put(
+            "/api/settings/secrets/failure_webhook_credential",
+            json={"value": "Bearer test-token", "header_name": "Authorization"},
+        ).status_code == 200
+        on_settings_applied.reset_mock()
+
         payload = {
             "model": {
                 "name": "small",
@@ -1906,9 +1917,6 @@ class TestSettingsApiEndpoints:
                 "intel_cloud_api_key_env": "OPENAI_API_KEY",
                 "intel_cloud_base_url": "https://api.openai.com/v1",
                 "intel_queue_poll_seconds": 30,
-                "intel_retry_failure_webhook_url": "https://ops.example.com/hooks/holdspeak",
-                "intel_retry_failure_webhook_header_name": "Authorization",
-                "intel_retry_failure_webhook_header_value": "Bearer test-token",
                 "similarity_threshold": 0.82,
             }
         }
@@ -1921,8 +1929,9 @@ class TestSettingsApiEndpoints:
         assert data["settings"]["meeting"]["intel_provider"] == "cloud"
         assert data["settings"]["meeting"]["intel_cloud_base_url"] == "https://api.openai.com/v1"
         assert data["settings"]["meeting"]["intel_queue_poll_seconds"] == 30
-        assert data["settings"]["meeting"]["intel_retry_failure_webhook_header_name"] == "Authorization"
-        assert data["settings"]["meeting"]["intel_retry_failure_webhook_header_value"] == "Bearer test-token"
+        assert "intel_retry_failure_webhook_header_value" not in data["settings"]["meeting"]
+        assert data["settings"]["_secrets"]["failure_webhook_url"]["configured"] is True
+        assert data["settings"]["_secrets"]["failure_webhook_credential"]["configured"] is True
         assert data["settings"]["meeting"]["similarity_threshold"] == pytest.approx(0.82)
         on_settings_applied.assert_called_once()
 
@@ -1953,15 +1962,15 @@ class TestSettingsApiEndpoints:
 
         monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
         response = test_client.put(
-            "/api/settings",
-            json={"meeting": {"intel_retry_failure_webhook_url": "ftp://example.com/hook"}},
+            "/api/settings/secrets/failure_webhook_url",
+            json={"value": "ftp://example.com/hook"},
         )
         assert response.status_code == 400
         payload = response.json()
         assert payload["success"] is False
         assert "webhook" in payload["error"].lower()
 
-    def test_settings_put_rejects_partial_retry_webhook_header(self, tmp_path, monkeypatch, test_client):
+    def test_settings_put_ignores_partial_retry_webhook_header(self, tmp_path, monkeypatch, test_client):
         import holdspeak.config as config_module
 
         monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
@@ -1969,28 +1978,23 @@ class TestSettingsApiEndpoints:
             "/api/settings",
             json={"meeting": {"intel_retry_failure_webhook_header_name": "Authorization"}},
         )
-        assert response.status_code == 400
-        payload = response.json()
-        assert payload["success"] is False
-        assert "both be set" in payload["error"]
+        assert response.status_code == 200
+        from holdspeak.config import Config
+
+        assert Config.load(tmp_path / "config.json").meeting.intel_retry_failure_webhook_header_name is None
 
     def test_settings_put_rejects_invalid_retry_webhook_header_name(self, tmp_path, monkeypatch, test_client):
         import holdspeak.config as config_module
 
         monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
         response = test_client.put(
-            "/api/settings",
-            json={
-                "meeting": {
-                    "intel_retry_failure_webhook_header_name": "Authorization:",
-                    "intel_retry_failure_webhook_header_value": "Bearer test-token",
-                }
-            },
+            "/api/settings/secrets/failure_webhook_credential",
+            json={"header_name": "Authorization:", "value": "Bearer test-token"},
         )
         assert response.status_code == 400
         payload = response.json()
         assert payload["success"] is False
-        assert "header_name" in payload["error"]
+        assert "header name" in payload["error"]
 
 
 @pytest.mark.integration

@@ -121,6 +121,74 @@ public struct Membership: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+/// A collision-safe identity shared by Web, native, persistence, and grounding.
+public struct QualifiedRef: RawRepresentable, Codable, Equatable, Hashable, Sendable {
+    public let rawValue: String
+
+    public init?(rawValue: String) {
+        let parts = rawValue.split(separator: ":", maxSplits: 1)
+        guard parts.count == 2, !parts[0].isEmpty, !parts[1].isEmpty else { return nil }
+        self.rawValue = rawValue
+    }
+
+    public init(kind: String, id: String) {
+        self.rawValue = "\(kind):\(id)"
+    }
+}
+
+/// Knowledge membership is independent of Zone placement and Project scope.
+public struct KnowledgeMembership: Codable, Equatable, Sendable, Identifiable {
+    public var id: String
+    public var knowledgeId: String
+    public var resourceRef: String
+    public var createdAt: Date
+    public var lastModified: Date
+    public var deleted: Bool
+
+    public init(knowledgeId: String, resourceRef: String, createdAt: Date,
+                lastModified: Date, deleted: Bool = false) {
+        self.id = "\(knowledgeId)|\(resourceRef)"
+        self.knowledgeId = knowledgeId
+        self.resourceRef = resourceRef
+        self.createdAt = createdAt
+        self.lastModified = lastModified
+        self.deleted = deleted
+    }
+}
+
+/// Project context is independent of both filing and Knowledge membership.
+public struct ProjectRelationship: Codable, Equatable, Sendable, Identifiable {
+    public var id: String
+    public var projectId: String
+    public var resourceRef: String
+    public var relationship: String
+    public var source: String
+    public var confidence: Double
+    public var createdAt: Date
+    public var lastModified: Date
+    public var deleted: Bool
+}
+
+/// A named endeavor; membership remains in `ProjectRelationship` edges.
+public struct Project: Codable, Equatable, Sendable, Identifiable {
+    public var id: String
+    public var name: String
+    public var description: String
+    public var isArchived: Bool
+    public var createdAt: Date
+    public var updatedAt: Date
+
+    public init(id: String, name: String, description: String = "",
+                isArchived: Bool = false, createdAt: Date, updatedAt: Date) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.isArchived = isArchived
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+}
+
 // MARK: - KB (organization / synced) — a named container of member primitive refs
 
 public struct KB: Codable, Equatable, Sendable, Identifiable {
@@ -346,13 +414,14 @@ public struct ModelManifest: Codable, Equatable, Sendable, Identifiable {
 public struct HubGrounding: Codable, Equatable, Sendable {
     public var meetingIds: [String]
     public var artifactIds: [String]
+    public var refs: [String]
     public var expand: String            // "summary" | "full"
 
-    public init(meetingIds: [String] = [], artifactIds: [String] = [], expand: String = "summary") {
-        self.meetingIds = meetingIds; self.artifactIds = artifactIds; self.expand = expand
+    public init(meetingIds: [String] = [], artifactIds: [String] = [], refs: [String] = [], expand: String = "summary") {
+        self.meetingIds = meetingIds; self.artifactIds = artifactIds; self.refs = refs; self.expand = expand
     }
 
-    public var isEmpty: Bool { meetingIds.isEmpty && artifactIds.isEmpty }
+    public var isEmpty: Bool { meetingIds.isEmpty && artifactIds.isEmpty && refs.isEmpty }
 }
 
 /// Pure mapping from the legacy single inference config (one mode + one endpoint) to a profile list
@@ -398,8 +467,8 @@ public enum RuntimeProfileMigration {
 // one-directional + lossy by design: a Workbench graph lowers into this type's `graphJson` to
 // travel (HSM-22-01: `Blueprint.graphJSONValue()` through the canonical coder — the exact shape
 // the hub's `workflow_graph.linearize()` parses, golden-pinned by `contracts/fixtures/`
-// `blueprint-*.json`), and the desk's saved-Ask carries `prompt` (also the hub's honest
-// fallback when it must refuse a non-linear graph). A receiving surface rehydrates a runnable
+// `blueprint-*.json`), and the desk's saved-Ask carries `prompt` only when it is a
+// prompt Workflow. A graph is never lowered to that prompt. A receiving surface rehydrates a runnable
 // graph from `graphJson` when (and only when) it has the engine.
 public struct WorkflowDefinition: Codable, Equatable, Sendable, Identifiable {
     public var id: String
@@ -430,4 +499,52 @@ public struct WorkflowDefinition: Codable, Equatable, Sendable, Identifiable {
         createdAt = try c.decode(Date.self, forKey: .createdAt)
         updatedAt = try c.decodeIfPresent(Date.self, forKey: .updatedAt) ?? createdAt
     }
+}
+
+// MARK: - Capability presentation and durable run receipts (HS-92-06)
+
+public struct CapabilityReadiness: Codable, Equatable, Sendable {
+    public var state: String
+    public var detail: String
+}
+
+public struct CapabilityPresentation: Codable, Equatable, Sendable {
+    public var kind: String
+    public var inputSchema: JSONValue
+    public var inputHelp: String
+    public var supportedPlacements: [String]
+    public var effectClasses: [String]
+    public var readiness: CapabilityReadiness
+    public var actionLabel: String
+    public var support: String
+}
+
+public struct CapabilityAttempt: Codable, Equatable, Sendable, Identifiable {
+    public var id: String
+    public var invocationId: String
+    public var attemptIndex: Int
+    public var destination: String
+    public var provider: String?
+    public var state: String
+    public var error: String?
+    public var resultRef: String?
+    public var startedAt: Date
+    public var completedAt: Date?
+}
+
+public struct CapabilityInvocation: Codable, Equatable, Sendable, Identifiable {
+    public var id: String
+    public var correlationId: String
+    public var definitionRef: String
+    public var initiator: String
+    public var groundingRefs: [String]
+    public var requestedPlacement: String
+    public var inputSnapshot: JSONValue
+    public var state: String
+    public var resultRef: String?
+    public var error: String?
+    public var createdAt: Date
+    public var updatedAt: Date
+    public var completedAt: Date?
+    public var attempts: [CapabilityAttempt]
 }

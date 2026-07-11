@@ -133,6 +133,17 @@ class MeetingState:
     mic_label: str = "Me"
     remote_label: str = "Remote"
     web_url: Optional[str] = None  # URL of web dashboard
+    # HS-92-04: capture durability is first-class meeting truth.  A meeting is
+    # inserted as ``provisional`` before an audio device is opened, advances to
+    # ``recording`` while checkpoints land, and becomes ``finalized`` only after
+    # Stop has durably saved the same id.  Interrupted/failed captures therefore
+    # remain visible and recoverable instead of masquerading as completed work.
+    capture_status: str = "finalized"
+    capture_failure: Optional[str] = None
+    capture_checkpoint_at: Optional[datetime] = None
+    capture_checkpoint_seconds: float = 0.0
+    provenance: str = "desktop"
+    sync_modified_at: Optional[datetime] = None
     # Phase 14: registered AIPI-Lite devices contributing audio to
     # this meeting. Captured at attach time; ``DeviceDescriptor.id``
     # is what surfaces on each ``TranscriptSegment.device_id``.
@@ -206,6 +217,17 @@ class MeetingState:
             "mic_label": self.mic_label,
             "remote_label": self.remote_label,
             "web_url": self.web_url,
+            "capture_status": self.capture_status,
+            "capture_failure": self.capture_failure,
+            "capture_checkpoint_at": (
+                self.capture_checkpoint_at.isoformat()
+                if self.capture_checkpoint_at else None
+            ),
+            "capture_checkpoint_seconds": self.capture_checkpoint_seconds,
+            "provenance": self.provenance,
+            "sync_modified_at": (
+                self.sync_modified_at.isoformat() if self.sync_modified_at else None
+            ),
             "devices": [_device_descriptor_to_dict(d) for d in self.devices],
         }
 

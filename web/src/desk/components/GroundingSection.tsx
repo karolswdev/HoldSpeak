@@ -6,6 +6,7 @@
 import { useState } from "react";
 import {
   fetchGroundingMeeting,
+  fetchGroundingResource,
   groundingIsEmpty,
   groundingLabel,
   groundingTokens,
@@ -18,11 +19,12 @@ const fmt = (n: number): string =>
 
 export function GroundingSection(props: {
   meetings: Array<{ id: string; title: string; startedAt?: string }>;
+  resources?: Array<{ ref: string; kind: string; id: string; title: string }>;
   selection: GroundingSelection;
   onChange: (s: GroundingSelection) => void;
   limitTokens: number;
 }) {
-  const { meetings, selection, onChange, limitTokens } = props;
+  const { meetings, resources = [], selection, onChange, limitTokens } = props;
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -39,13 +41,25 @@ export function GroundingSection(props: {
     startedAt?: string;
   }) => {
     if (picked(row.id)) {
-      onChange({ meetings: selection.meetings.filter((m) => m.id !== row.id) });
+      onChange({ ...selection, meetings: selection.meetings.filter((m) => m.id !== row.id) });
       return;
     }
     setLoading(row.id);
     const m = await fetchGroundingMeeting(row.id, row.title, row.startedAt);
     setLoading(null);
-    onChange({ meetings: [...selection.meetings, m] });
+    onChange({ ...selection, meetings: [...selection.meetings, m] });
+  };
+
+  const toggleResource = async (row: { ref: string; kind: string; id: string; title: string }) => {
+    const current = selection.resources || [];
+    if (current.some((resource) => resource.ref === row.ref)) {
+      onChange({ ...selection, resources: current.filter((resource) => resource.ref !== row.ref) });
+      return;
+    }
+    setLoading(row.ref);
+    const resolved = await fetchGroundingResource(row.ref, row.kind, row.id, row.title);
+    setLoading(null);
+    if (resolved) onChange({ ...selection, resources: [...current, resolved] });
   };
 
   const mutate = (
@@ -53,6 +67,7 @@ export function GroundingSection(props: {
     change: (m: GroundingMeeting) => GroundingMeeting,
   ) => {
     onChange({
+      ...selection,
       meetings: selection.meetings.map((m) =>
         m.id === id ? change({ ...m }) : m,
       ),
@@ -193,6 +208,27 @@ export function GroundingSection(props: {
               );
             })}
           </ul>
+          {resources.length > 0 && (
+            <>
+              <p className="desk-ground-empty">Desk objects and collections</p>
+              <ul className="desk-ground-list">
+                {resources.map((row) => {
+                  const selected = (selection.resources || []).some((resource) => resource.ref === row.ref);
+                  return (
+                    <li key={row.ref} className={`desk-ground-row${selected ? " is-picked" : ""}`}>
+                      <button type="button" className="desk-ground-pick"
+                        aria-pressed={selected} onClick={() => void toggleResource(row)}>
+                        <span className="desk-ground-check" aria-hidden="true">{selected ? "●" : "○"}</span>
+                        <span className="desk-ground-name">{row.title}</span>
+                        <span className="desk-ground-day">{row.kind}</span>
+                        {loading === row.ref && <span className="desk-ground-loading">…</span>}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
         </div>
       )}
     </div>

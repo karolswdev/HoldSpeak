@@ -275,6 +275,11 @@ function MeetingDetail({
           onChange={setActive}
         />
         {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
+        {detail?.capture_status && detail.capture_status !== "finalized" ? (
+          <InlineMessage tone="warning">
+            {`Meeting saved · ${String(detail.capture_status)}${detail.capture_failure ? ` · ${String(detail.capture_failure)}` : ""}. The transcript below is the last durable checkpoint, not false completion.`}
+          </InlineMessage>
+        ) : null}
         {active === "transcript" ? (
           segments.length ? (
             <ol className="transcript-list">
@@ -639,7 +644,7 @@ export default function HistoryPage() {
                   });
                 }}
               >
-                <option value="pending">Pending</option>
+                <option value="pending">Queued</option>
                 <option value="running">Running</option>
                 <option value="failed">Failed</option>
                 <option value="complete">Complete</option>
@@ -681,7 +686,10 @@ export default function HistoryPage() {
                   <StatusPill
                     tone={
                       row.status === "failed" ||
-                      row.intel_status === "import_failed"
+                      row.intel_status === "import_failed" ||
+                      ["capture_failed", "recoverable", "recording"].includes(
+                        String(row.capture_status ?? ""),
+                      )
                         ? "error"
                         : row.status === "complete"
                           ? "success"
@@ -689,7 +697,9 @@ export default function HistoryPage() {
                     }
                   >
                     {String(
-                      row.intel_status ??
+                      (row.capture_status !== "finalized"
+                        ? row.capture_status
+                        : row.intel_status) ??
                         row.status ??
                         row.kind ??
                         active.slice(0, -1),
@@ -698,6 +708,22 @@ export default function HistoryPage() {
                   {active === "meetings" ? (
                     <Button dense onClick={() => setSelected(row)}>
                       Open
+                    </Button>
+                  ) : null}
+                  {active === "meetings" &&
+                  ["capture_failed", "recoverable", "recording"].includes(
+                    String(row.capture_status ?? ""),
+                  ) ? (
+                    <Button
+                      dense
+                      onClick={() =>
+                        void apiFetch(
+                          `/api/meetings/${encodeURIComponent(String(row.id))}/capture/recover`,
+                          { method: "POST" },
+                        ).then(() => source.reload())
+                      }
+                    >
+                      Recover saved work
                     </Button>
                   ) : null}
                   {active === "queues" && row.status === "failed" ? (

@@ -4,8 +4,7 @@ Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipli
 """
 from __future__ import annotations
 
-import uuid
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -13,9 +12,9 @@ from fastapi.responses import JSONResponse
 from ....logging_config import get_logger
 from ...context import WebContext
 from ...runtime_support import error_500
+from ._shared import _json_body, _new_id
 
 log = get_logger("web.routes.primitives")
-from ._shared import _json_body, _new_id
 
 
 def build_kbs_router(ctx: WebContext) -> APIRouter:
@@ -91,6 +90,42 @@ def build_kbs_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": True})
         except Exception as exc:
             return error_500(exc, log, "Failed to delete kb")
+
+    @router.get("/api/kbs/{kb_id}/members")
+    async def api_list_kb_members(kb_id: str) -> Any:
+        try:
+            from ....db import get_database
+            db = get_database()
+            if db.kbs.get(kb_id) is None:
+                return JSONResponse({"error": f"Unknown Knowledge: {kb_id}"}, status_code=404)
+            members = db.knowledge_memberships.list_for_knowledge(kb_id)
+            return JSONResponse({"members": [member.to_dict() for member in members]})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list Knowledge members")
+
+    @router.put("/api/kbs/{kb_id}/members/{resource_ref:path}")
+    async def api_add_kb_member(kb_id: str, resource_ref: str) -> Any:
+        try:
+            from ....db import get_database
+            member = get_database().knowledge_memberships.upsert(
+                knowledge_id=kb_id, resource_ref=resource_ref
+            )
+            return JSONResponse({"member": member.to_dict()})
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to add Knowledge member")
+
+    @router.delete("/api/kbs/{kb_id}/members/{resource_ref:path}")
+    async def api_remove_kb_member(kb_id: str, resource_ref: str) -> Any:
+        try:
+            from ....db import get_database
+            removed = get_database().knowledge_memberships.delete(kb_id, resource_ref)
+            return JSONResponse({"success": True, "removed": removed})
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to remove Knowledge member")
 
     # ── Chains (crews) ────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
 /**
- * The DeskOS Primitive Framework — the canonical web-side contract.
+ * The DeskOS Primitive Framework — the canonical web-side wire contract.
  *
  * One framework, every surface (desktop · iPad · web) implements THIS
  * identically. Every primitive is first-class and authorable on the web
@@ -11,7 +11,10 @@
  * Keep this in lock-step with the iPad/desktop object models — when the
  * shape changes here, it changes there. The `SyncClass` of each primitive
  * decides how the hub reconciles it.
+ * Product labels come from `productLanguage.ts`; legacy discriminators remain
+ * unchanged so existing hubs and clients keep syncing.
  */
+import { productLabel } from "./productLanguage";
 
 /** How the desktop hub reconciles a primitive across devices. */
 export type SyncClass =
@@ -125,8 +128,8 @@ export interface KB {
 
 // ── capability ─────────────────────────────────────────────────────────
 
-/** NEW primitive — a tailored persona that runs your intelligence. */
-export interface Agent {
+/** A saved Persona. The `recipe` discriminator is a compatibility wire name. */
+export interface Persona {
   kind: "recipe";
   id: string;
   name: string;
@@ -229,7 +232,7 @@ export type Primitive =
   | Note
   | Directory
   | KB
-  | Agent
+  | Persona
   | Chain
   | Workflow
   | Coder
@@ -271,27 +274,27 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
   },
   directory: {
     kind: "directory",
-    label: "Directory",
-    plural: "Directories",
+    label: productLabel("zone"),
+    plural: productLabel("zone", true),
     syncClass: "organization",
-    blurb: "A folder that holds primitives — the iPad zone, filed and synced.",
+    blurb: "A findable Desk placement for items, filed and synced.",
     // an open folder holding contents (24×24 stroke path)
     icon: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 11h18",
     authorable: true,
   },
   kb: {
     kind: "kb",
-    label: "Knowledge base",
-    plural: "Knowledge bases",
+    label: productLabel("knowledge"),
+    plural: productLabel("knowledge", true),
     syncClass: "organization",
-    blurb: "A named grouping that gives an agent its grounding.",
+    blurb: "A named collection of material used to ground answers.",
     icon: "M2 7l10-4 10 4-10 4zM2 7v10l10 4 10-4V7M2 12l10 4 10-4",
     authorable: true,
   },
   recipe: {
     kind: "recipe",
-    label: "Agent",
-    plural: "Agents",
+    label: productLabel("persona"),
+    plural: productLabel("persona", true),
     syncClass: "capability",
     blurb:
       "A tailored persona — prompt, tools, and grounding — that runs your intelligence.",
@@ -300,10 +303,11 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
   },
   chain: {
     kind: "chain",
-    label: "Chain",
-    plural: "Chains",
+    label: productLabel("sequence"),
+    plural: productLabel("sequence", true),
     syncClass: "capability",
-    blurb: "An ordered run of recipes, output flowing into the next.",
+    blurb:
+      "An advanced linear Workflow whose output flows through ordered steps.",
     icon: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1",
     authorable: true,
   },
@@ -318,8 +322,8 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
   },
   coder: {
     kind: "coder",
-    label: "Coder",
-    plural: "Coder sessions",
+    label: productLabel("coder_session"),
+    plural: productLabel("coder_session", true),
     syncClass: "presence",
     blurb: "A live Claude or Codex session — answer the coder by voice.",
     icon: "M16 18l6-6-6-6M8 6l-6 6 6 6",
@@ -344,6 +348,9 @@ export const PRIMITIVES: Record<PrimitiveKind, PrimitiveDescriptor> = {
     authorable: false,
   },
 };
+
+/** @deprecated Compatibility name for code that still mirrors the recipe wire. */
+export type Agent = Persona;
 
 /** Order of the Desk's primitive sections, grouped by sync class. */
 export const DESK_GROUPS: { label: string; kinds: PrimitiveKind[] }[] = [

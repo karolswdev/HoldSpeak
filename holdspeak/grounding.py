@@ -12,7 +12,9 @@ discipline).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
+
+from .db.relationships import qualified_ref
 
 from .logging_config import get_logger
 
@@ -57,7 +59,11 @@ def meeting_digest(state: Any) -> str:
 
 
 def hydrate_refs(
-    db: Any, meeting_ids: list[str], artifact_ids: list[str], expand: str
+    db: Any,
+    meeting_ids: list[str],
+    artifact_ids: list[str],
+    expand: str,
+    qualified_refs: Optional[list[str]] = None,
 ) -> tuple[list[GroundingBlock], list[str]]:
     """Load the referenced meetings/artifacts into raw blocks.
 
@@ -114,21 +120,123 @@ def hydrate_refs(
         blocks.append(
             GroundingBlock(kind="artifact", ref=aid, title=title, subtitle=of, text=body)
         )
+    # HS-92-05: the same qualified resolver serves Ask, steer, Web, and native.
+    # Containers resolve their real current members recursively; any stale leaf
+    # makes the whole request unknown so callers can refuse rather than pretend.
+    visited: set[str] = set()
+    for raw_ref in qualified_refs or []:
+        try:
+            ref = qualified_ref(raw_ref)
+        except ValueError:
+            unknown.append(str(raw_ref))
+            continue
+        more, missing = _hydrate_qualified(db, ref, expand, visited)
+        blocks.extend(more)
+        unknown.extend(missing)
     return blocks, unknown
 
 
+def _hydrate_qualified(
+    db: Any, ref: str, expand: str, visited: set[str]
+) -> tuple[list[GroundingBlock], list[str]]:
+    if ref in visited:
+        return [], []
+    visited.add(ref)
+    kind, resource_id = ref.split(":", 1)
+    if kind in {"meeting", "transcript"}:
+        try:
+            state = db.meetings.get_meeting(resource_id)
+        except Exception:
+            state = None
+        if state is None:
+            return [], [ref]
+        day = ""
+        try:
+            day = state.started_at.date().isoformat()
+        except Exception:
+            pass
+        full = kind == "transcript" or expand == "full"
+        text = (
+            "\n".join(f"{s.speaker}: {s.text}" for s in state.segments)
+            if full else meeting_digest(state)
+        )
+        if len(text) > GROUNDING_TRANSCRIPT_CAP:
+            text = text[:GROUNDING_TRANSCRIPT_CAP] + "\n[content cut at grounding cap]"
+        return [GroundingBlock(kind, resource_id, state.title or resource_id, day, text)], []
+    if kind == "artifact":
+        try:
+            art = db.plugins.get_artifact(resource_id)
+        except Exception:
+            art = None
+        if art is None:
+            return [], [ref]
+        return [GroundingBlock(kind, resource_id, art.title or resource_id, "", str(art.body_markdown or ""))], []
+    if kind == "note":
+        note = db.notes.get(resource_id)
+        if note is None:
+            return [], [ref]
+        return [GroundingBlock(kind, resource_id, note.title or resource_id, "", note.body_markdown)], []
+    if kind == "knowledge":
+        kb = db.kbs.get(resource_id)
+        if kb is None:
+            return [], [ref]
+        members = [row.resource_ref for row in db.knowledge_memberships.list_for_knowledge(resource_id)]
+        if not members:
+            members = [value for value in kb.member_ids if ":" in value]
+        return _hydrate_container(db, kind, resource_id, kb.name, members, expand, visited)
+    if kind == "zone":
+        zone = db.directories.get(resource_id)
+        if zone is None:
+            return [], [ref]
+        members = [row.primitive_id for row in db.directory_memberships.list_for_directory(resource_id)]
+        return _hydrate_container(db, kind, resource_id, zone.name, members, expand, visited)
+    if kind == "project":
+        project = db.projects.get_project(resource_id)
+        if project is None:
+            return [], [ref]
+        members = [row.resource_ref for row in db.project_relationships.list_for_project(resource_id)]
+        return _hydrate_container(db, kind, resource_id, project.name, members, expand, visited)
+    return [], [ref]
+
+
+def _hydrate_container(
+    db: Any, kind: str, resource_id: str, title: str, members: list[str],
+    expand: str, visited: set[str],
+) -> tuple[list[GroundingBlock], list[str]]:
+    children: list[GroundingBlock] = []
+    unknown: list[str] = []
+    for member in members[:GROUNDING_MAX_REFS]:
+        try:
+            canonical = qualified_ref(member)
+        except ValueError:
+            unknown.append(member)
+            continue
+        blocks, missing = _hydrate_qualified(db, canonical, expand, visited)
+        children.extend(blocks)
+        unknown.extend(missing)
+    text = "\n\n".join(
+        f"[{block.kind.upper()}: {block.title}]\n{block.text}" for block in children
+    )
+    container = GroundingBlock(kind, resource_id, title or resource_id,
+                               f"{len(members)} member(s)", text)
+    return [container], unknown
+
+
 def hydrate_grounding_blocks(
-    db: Any, meeting_ids: list[str], artifact_ids: list[str], expand: str
+    db: Any, meeting_ids: list[str], artifact_ids: list[str], expand: str,
+    qualified_refs: Optional[list[str]] = None,
 ) -> tuple[list[str], list[str], list[str], list[str]]:
     """Ask's formatting: `(blocks, ids, titles, unknown_ids)` with the
     `[MEETING: …]` / `[ARTIFACT: …]` headers baked in. A thin format
     over `hydrate_refs` — byte-identical to the pre-factoring helper."""
-    hydrated, unknown = hydrate_refs(db, meeting_ids, artifact_ids, expand)
+    hydrated, unknown = hydrate_refs(
+        db, meeting_ids, artifact_ids, expand, qualified_refs=qualified_refs
+    )
     out_blocks: list[str] = []
     ids: list[str] = []
     titles: list[str] = []
     for b in hydrated:
-        label = "MEETING" if b.kind == "meeting" else "ARTIFACT"
+        label = b.kind.upper()
         header = (
             f"[{label}: {b.title} — {b.subtitle}]"
             if b.subtitle

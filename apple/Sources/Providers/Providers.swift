@@ -137,15 +137,25 @@ public protocol IDesktopClient: Sendable {
 /// is the chain's per-recipe trail when the hub returns it. Keys arrive snake_case.
 public struct HubRunResult: Sendable, Equatable, Decodable {
     public var output: String
-    public var steps: [String]?
+    /// Sequence steps are objects on current hubs; older hubs returned strings.
+    /// JSONValue keeps both wire generations decodable without inventing data.
+    public var steps: [JSONValue]?
     /// v6 (Phase 74): the hub persists the run's output as a run-born artifact
     /// and returns its id. Optional so an older hub still decodes. The desk
     /// card minted from this result must reuse it — a locally-invented id
     /// would duplicate against the hub's own artifact on the next sync.
     public var artifactId: String?
+    public var resultRef: String?
+    public var invocationId: String?
+    public var correlationId: String?
+    public var invocation: CapabilityInvocation?
 
-    public init(output: String, steps: [String]? = nil, artifactId: String? = nil) {
+    public init(output: String, steps: [JSONValue]? = nil, artifactId: String? = nil,
+                resultRef: String? = nil, invocationId: String? = nil,
+                correlationId: String? = nil, invocation: CapabilityInvocation? = nil) {
         self.output = output; self.steps = steps; self.artifactId = artifactId
+        self.resultRef = resultRef; self.invocationId = invocationId
+        self.correlationId = correlationId; self.invocation = invocation
     }
 }
 

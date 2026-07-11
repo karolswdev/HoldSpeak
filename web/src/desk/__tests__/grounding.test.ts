@@ -96,9 +96,9 @@ describe("labels + receipts", () => {
   });
   it("receipt rows name the meetings and the ON artifacts", () => {
     expect(groundingReceiptRows(sel())).toEqual([
-      { id: "m1", title: "Q3 kickoff" },
-      { id: "m2", title: "Deep dive" },
-      { id: "a1", title: "Decisions" },
+      { id: "m1", kind: "meeting", ref: "meeting:m1", title: "Q3 kickoff" },
+      { id: "m2", kind: "meeting", ref: "meeting:m2", title: "Deep dive" },
+      { id: "a1", kind: "artifact", ref: "artifact:a1", title: "Decisions" },
     ]);
   });
 });

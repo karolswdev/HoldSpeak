@@ -13,6 +13,7 @@ import { MicButton } from "./MicButton";
 import { lineage } from "../lineage";
 import { useSteering } from "../steering";
 import { objGlow, type WorldObject } from "../world";
+import { qualifiedRef } from "../api";
 
 const FILABLE = new Set([
   "meeting",
@@ -28,6 +29,9 @@ const EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
 interface MeetingDetail {
   intel?: { summary?: string; action_items?: any[]; topics?: string[] } | null;
   intel_status?: { state?: string } | null;
+  capture_status?: string;
+  capture_failure?: string | null;
+  provenance?: string;
   [key: string]: unknown;
 }
 
@@ -51,7 +55,14 @@ export function Pullout({ o }: { o: WorldObject }) {
   const [runBusy, setRunBusy] = useState(false);
   const [runOut, setRunOut] = useState("");
   const [runWarning, setRunWarning] = useState("");
+  const [runState, setRunState] = useState("");
+  const [runArtifactId, setRunArtifactId] = useState<string | null>(null);
+  const [runInvocationId, setRunInvocationId] = useState<string | null>(null);
   const [filing, setFiling] = useState(false);
+  const [relationships, setRelationships] = useState<any>(null);
+  const [knowledgeChoices, setKnowledgeChoices] = useState<any[]>([]);
+  const [projectChoices, setProjectChoices] = useState<any[]>([]);
+  const [relationshipError, setRelationshipError] = useState("");
   const [answered, setAnswered] = useState<
     "selected" | "sent" | "failed" | null
   >(null);
@@ -85,21 +96,84 @@ export function Pullout({ o }: { o: WorldObject }) {
       .catch(() => setArtifacts([]));
   }, [o.kind, o.id]);
 
+  const resourceRef = qualifiedRef(o.kind, o.id);
+  const refreshRelationships = async () => {
+    if (!FILABLE.has(o.kind)) return;
+    try {
+      const [axesRes, knowledgeRes, projectRes] = await Promise.all([
+        apiRequest(`/api/desk/relationships/${encodeURIComponent(resourceRef)}`),
+        apiRequest("/api/kbs"),
+        apiRequest("/api/projects"),
+      ]);
+      const [axes, knowledge, projects] = await Promise.all([
+        axesRes.json(),
+        knowledgeRes.json(),
+        projectRes.json(),
+      ]);
+      setRelationships(axes);
+      setKnowledgeChoices((knowledge.kbs || []).filter((k: any) => !k.deleted));
+      setProjectChoices((projects.projects || []).filter((p: any) => !p.is_archived));
+      setRelationshipError("");
+    } catch (error) {
+      setRelationshipError(String(error));
+    }
+  };
+
+  useEffect(() => {
+    setRelationships(null);
+    void refreshRelationships();
+  }, [o.kind, o.id]);
+
+  const toggleRelationship = async (
+    axis: "knowledge" | "projects",
+    ownerId: string,
+    active: boolean,
+  ) => {
+    const base = axis === "knowledge" ? "kbs" : "projects";
+    try {
+      await apiRequest(
+        `/api/${base}/${encodeURIComponent(ownerId)}/${axis === "knowledge" ? "members" : "resources"}/${encodeURIComponent(resourceRef)}`,
+        {
+          method: active ? "DELETE" : "PUT",
+          ...(axis === "projects" && !active
+            ? {
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ relationship: "member" }),
+              }
+            : {}),
+        },
+      );
+      await refreshRelationships();
+      await useDesk.getState().refresh();
+    } catch (error) {
+      setRelationshipError(String(error));
+    }
+  };
+
   const run = async () => {
     setRunBusy(true);
     setRunOut("");
     setRunWarning("");
+    setRunState("running");
+    setRunArtifactId(null);
+    setRunInvocationId(null);
     const result = await useDesk
       .getState()
       .runCapability(o.kind as "recipe" | "chain" | "workflow", o.id, runInput);
     setRunOut(result.output);
-    // HSM-22-03 — the hub's honest refusal (graph ran as the prompt fallback)
-    // reaches the reader instead of being dropped.
+    // Older hubs may still send a warning; current hubs refuse unsupported graphs.
     setRunWarning(result.warning || "");
+    setRunState(result.state);
+    setRunArtifactId(result.artifactId);
+    setRunInvocationId(result.invocationId);
     setRunBusy(false);
   };
 
   const ir = o.ref as any;
+  const capability = ir.capability || {};
+  const readiness = capability.readiness || { state: "ready", detail: "" };
+  const runLabel = capability.action_label ||
+    (o.kind === "recipe" ? `Ask ${o.title}` : `Run ${o.title}`);
   const zones = items.directory || [];
   const lin = lineage(items, ir.sources);
   const profile = profiles.find((p) => p.id === ir.profileId);
@@ -183,6 +257,16 @@ export function Pullout({ o }: { o: WorldObject }) {
       <div className="desk-pullout-body">
         {o.kind === "meeting" && (
           <>
+            {detail?.capture_status && detail.capture_status !== "finalized" ? (
+              <section>
+                <h3>Saved, incomplete</h3>
+                <p className="quiet">
+                  {detail.capture_status}
+                  {detail.capture_failure ? ` · ${detail.capture_failure}` : ""}
+                  {detail.provenance ? ` · from ${detail.provenance}` : ""}
+                </p>
+              </section>
+            ) : null}
             {detail?.intel?.summary ? (
               <section>
                 <h3>Summary</h3>
@@ -192,14 +276,16 @@ export function Pullout({ o }: { o: WorldObject }) {
               <section>
                 <h3>Intelligence</h3>
                 <p className="quiet">
-                  {detail?.intel_status?.state || "pending"}
+                  {detail?.intel_status?.state
+                    ? `Intelligence ${detail.intel_status.state}`
+                    : "Intelligence pending"}
                 </p>
               </section>
             )}
             {detail?.intel?.action_items &&
               detail.intel.action_items.length > 0 && (
                 <section>
-                  <h3>Actions</h3>
+                  <h3>Action items</h3>
                   <ul>
                     {detail.intel.action_items
                       .slice(0, 8)
@@ -356,25 +442,105 @@ export function Pullout({ o }: { o: WorldObject }) {
 
         {["recipe", "chain", "workflow"].includes(o.kind) && (
           <section>
+            <div className="desk-capability-contract">
+              <strong>{o.kind === "recipe" ? "Persona" : o.kind === "chain" ? "Sequence" : "Workflow"}</strong>
+              <span className={`desk-chip quiet is-${readiness.state}`}>
+                {readiness.state === "ready" ? "Ready" : "Unavailable here"}
+              </span>
+              <p className="quiet">{capability.input_help || "Choose the material this capability should work on."}</p>
+              {readiness.detail && <p className="desk-run-warning">{readiness.detail}</p>}
+              <p className="quiet">
+                Runs on {(capability.supported_placements || ["this_machine"]).join(" · ")}
+                {capability.effect_classes?.length ? ` · ${capability.effect_classes.join(" · ")}` : ""}
+              </p>
+              {o.kind === "chain" && <p className="quiet">Sequence is the linear compatibility form.</p>}
+              {o.kind === "workflow" && (
+                <a className="desk-chip quiet" href={`/workbench?workflow=${encodeURIComponent(o.id)}`}>
+                  Open this Workflow in Workbench
+                </a>
+              )}
+            </div>
             <div className="desk-pullout-run">
               <input
                 value={runInput}
-                placeholder="Ask"
+                placeholder="Material"
+                aria-label="Run material"
                 onChange={(e) => setRunInput(e.target.value)}
               />
               <button
                 type="button"
                 className="desk-chip"
                 onClick={() => void run()}
-                disabled={runBusy}
+                disabled={runBusy || readiness.state !== "ready"}
               >
-                {runBusy ? "…" : "Run"}
+                {runBusy ? "Running…" : runState === "failed" || runState === "empty" ? `Retry ${runLabel}` : runLabel}
               </button>
             </div>
             {runWarning && <p className="desk-run-warning">⚠ {runWarning}</p>}
             {runOut && <pre className="desk-pullout-md">{runOut}</pre>}
+            {runArtifactId && (
+              <button type="button" className="desk-chip" onClick={() => openPullout(runArtifactId)}>
+                Open kept Artifact
+              </button>
+            )}
+            {runInvocationId && (
+              <p className="quiet desk-run-receipt">Receipt · {runInvocationId}</p>
+            )}
           </section>
         )}
+
+        {FILABLE.has(o.kind) && relationships && (
+          <section className="desk-relationship-axes" aria-label="Organization and context">
+            <h3>Where it belongs</h3>
+            <p className="quiet">{relationships.explanations?.zone}</p>
+            <p>{relationships.zone ? `Zone: ${relationships.zone.directory_id}` : "Desk root"}</p>
+
+            <h3>Knowledge</h3>
+            <p className="quiet">{relationships.explanations?.knowledge}</p>
+            <div className="desk-pullout-lineage">
+              {knowledgeChoices.map((knowledge) => {
+                const active = (relationships.knowledge || []).some(
+                  (row: any) => row.knowledge_id === knowledge.id,
+                );
+                return (
+                  <button
+                    key={knowledge.id}
+                    type="button"
+                    className={`desk-chip quiet${active ? " in-zone" : ""}`}
+                    aria-pressed={active}
+                    onClick={() => void toggleRelationship("knowledge", knowledge.id, active)}
+                  >
+                    {active ? "✓ " : "+ "}{knowledge.name}
+                  </button>
+                );
+              })}
+              {!knowledgeChoices.length && <span className="quiet">No Knowledge yet</span>}
+            </div>
+
+            <h3>Projects</h3>
+            <p className="quiet">{relationships.explanations?.projects}</p>
+            <div className="desk-pullout-lineage">
+              {projectChoices.map((project) => {
+                const active = (relationships.projects || []).some(
+                  (row: any) => row.project_id === project.id,
+                );
+                return (
+                  <button
+                    key={project.id}
+                    type="button"
+                    className={`desk-chip quiet${active ? " in-zone" : ""}`}
+                    aria-pressed={active}
+                    onClick={() => void toggleRelationship("projects", project.id, active)}
+                  >
+                    {active ? "✓ " : "+ "}{project.name}
+                  </button>
+                );
+              })}
+              {!projectChoices.length && <span className="quiet">No Projects yet</span>}
+            </div>
+          </section>
+        )}
+        {relationshipError && <p className="desk-run-warning" role="alert">{relationshipError}</p>}
       </div>
 
       <footer className="desk-pullout-foot">
@@ -398,9 +564,8 @@ export function Pullout({ o }: { o: WorldObject }) {
             </button>
             {filing &&
               zones.map((z) => {
-                const inZone = (
-                  ((z as any).memberIds as string[]) || []
-                ).includes(o.id);
+                const members = ((z as any).memberIds as string[]) || [];
+                const inZone = members.includes(o.id) || members.includes(resourceRef);
                 return (
                   <button
                     key={String(z.id)}
@@ -409,8 +574,8 @@ export function Pullout({ o }: { o: WorldObject }) {
                     onClick={() => {
                       setFiling(false);
                       void (inZone
-                        ? removeFromDir(o.id, String(z.id))
-                        : fileIntoDir(o.id, String(z.id)));
+                        ? removeFromDir(o.id, String(z.id), o.kind)
+                        : fileIntoDir(o.id, String(z.id), o.kind));
                     }}
                   >
                     {inZone ? "✓ " : ""}

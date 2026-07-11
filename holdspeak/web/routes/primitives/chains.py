@@ -16,18 +16,39 @@ from ...context import WebContext
 from ...runtime_support import error_500
 
 log = get_logger("web.routes.primitives")
-from ._shared import _json_body, _new_id, _persist_run_artifact, _render_user_prompt, _run_frame, canonical_source_type
+from ._shared import (
+    RunLifecycle, _json_body, _new_id, _persist_run_artifact, _render_user_prompt,
+    _run_frame, capability_descriptor,
+)
 
 
 def build_chains_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
+    def _payload(db: Any, chain: Any) -> dict[str, Any]:
+        missing = [rid for rid in chain.steps if db.recipes.get(str(rid)) is None]
+        ready = bool(chain.steps) and not missing
+        detail = ""
+        if not chain.steps:
+            detail = "Add at least one Persona to this linear Sequence."
+        elif missing:
+            detail = "Missing Personas: " + ", ".join(map(str, missing))
+        row = chain.to_dict()
+        row["capability"] = capability_descriptor(
+            kind="sequence", name=chain.name or chain.id,
+            readiness="ready" if ready else "unavailable", detail=detail,
+            action_label=f"Run {chain.name or 'Sequence'}",
+            support="linear_compatibility",
+        )
+        return row
+
     @router.get("/api/chains")
     async def api_list_chains() -> Any:
         try:
             from ....db import get_database
-            chains = get_database().chains.list()
-            return JSONResponse({"chains": [c.to_dict() for c in chains]})
+            db = get_database()
+            chains = db.chains.list()
+            return JSONResponse({"chains": [_payload(db, c) for c in chains]})
         except Exception as exc:
             return error_500(exc, log, "Failed to list chains")
 
@@ -40,12 +61,13 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "chain name is required"}, status_code=400)
         try:
             from ....db import get_database
-            chain = get_database().chains.upsert(
+            db = get_database()
+            chain = db.chains.upsert(
                 chain_id=str(body.get("id") or _new_id("chain")),
                 name=str(body.get("name") or ""),
                 steps=list(body.get("steps") or []),
             )
-            return JSONResponse({"chain": chain.to_dict()}, status_code=201)
+            return JSONResponse({"chain": _payload(db, chain)}, status_code=201)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -55,10 +77,11 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
     async def api_get_chain(chain_id: str) -> Any:
         try:
             from ....db import get_database
-            chain = get_database().chains.get(chain_id)
+            db = get_database()
+            chain = db.chains.get(chain_id)
             if chain is None:
                 return JSONResponse({"error": f"Unknown chain: {chain_id}"}, status_code=404)
-            return JSONResponse({"chain": chain.to_dict()})
+            return JSONResponse({"chain": _payload(db, chain)})
         except Exception as exc:
             return error_500(exc, log, "Failed to get chain")
 
@@ -78,7 +101,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                 name=str(body["name"]) if "name" in body else existing.name,
                 steps=list(body["steps"]) if "steps" in body else existing.steps,
             )
-            return JSONResponse({"chain": chain.to_dict()})
+            return JSONResponse({"chain": _payload(db, chain)})
         except Exception as exc:
             return error_500(exc, log, "Failed to update chain")
 
@@ -106,6 +129,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
         empty). Returns the per-step trail plus the last step's output.
         """
         body = await _json_body(request) or {}
+        lifecycle: Optional[RunLifecycle] = None
         try:
             from ....db import get_database
             db = get_database()
@@ -113,10 +137,18 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             if chain is None:
                 return JSONResponse({"error": f"Unknown chain: {chain_id}"}, status_code=404)
 
+            lifecycle = RunLifecycle.begin(
+                db, definition_ref=f"sequence:{chain_id}", body=body,
+            )
+
             steps = list(chain.steps or [])
             if not steps:
+                invocation = lifecycle.fail(
+                    "This Sequence has no Personas. Add one before running.", state="unavailable"
+                )
                 return JSONResponse(
-                    {"error": f"chain {chain_id} has no steps to run"}, status_code=400
+                    {"error": "This Sequence has no Personas. Add one before running.",
+                     "invocation": invocation, "invocation_id": lifecycle.invocation_id}, status_code=409
                 )
 
             # Resolve every agent up front so a missing one 404s before any run.
@@ -124,8 +156,11 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             for recipe_id in steps:
                 agent = db.recipes.get(str(recipe_id))
                 if agent is None:
+                    error = f"Persona {recipe_id} is unavailable; repair this Sequence before running."
+                    invocation = lifecycle.fail(error, state="unavailable")
                     return JSONResponse(
-                        {"error": f"Unknown recipe in chain: {recipe_id}"}, status_code=404
+                        {"error": error, "invocation": invocation,
+                         "invocation_id": lifecycle.invocation_id}, status_code=409
                     )
                 agents.append(agent)
 
@@ -137,6 +172,10 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             from ....intel.models import MeetingIntelError
 
             intel = build_configured_meeting_intel()
+            lifecycle.start_attempt(
+                destination=str(body.get("requested_placement") or "this_machine"),
+                provider=getattr(intel, "active_provider", None),
+            )
 
             _run_frame(ctx, "running", kind="chain", ref=chain_id, name=chain.name or chain_id)
             current_input = str(body.get("input") or "")
@@ -146,14 +185,15 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                     agent.user_template, variables or {}, current_input
                 )
                 if not user_prompt.strip():
+                    error = f"Nothing to run for {agent.name or agent.id}; input is retained for Retry."
+                    invocation = lifecycle.fail(error, state="empty", provider=getattr(intel, "active_provider", None))
                     return JSONResponse(
                         {
-                            "error": (
-                                f"nothing to run for step {agent.id}: provide `input` "
-                                "or an agent user_template"
-                            ),
+                            "error": error,
                             "chain_id": chain_id,
                             "recipe_id": agent.id,
+                            "invocation": invocation,
+                            "invocation_id": lifecycle.invocation_id,
                         },
                         status_code=400,
                     )
@@ -170,10 +210,18 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                 except MeetingIntelError as exc:
                     _run_frame(ctx, "error", kind="chain", ref=chain_id,
                                name=chain.name or chain_id, error=str(exc))
+                    invocation = lifecycle.fail(str(exc), provider=getattr(intel, "active_provider", None))
                     return JSONResponse(
-                        {"error": str(exc), "chain_id": chain_id, "recipe_id": agent.id},
+                        {"error": str(exc), "chain_id": chain_id, "recipe_id": agent.id,
+                         "invocation": invocation, "invocation_id": lifecycle.invocation_id},
                         status_code=502,
                     )
+                if not str(output or "").strip():
+                    error = f"{agent.name or 'Persona'} returned no output; input is retained for Retry."
+                    invocation = lifecycle.fail(error, state="empty", provider=getattr(intel, "active_provider", None))
+                    return JSONResponse({"error": error, "chain_id": chain_id,
+                                         "recipe_id": agent.id, "invocation": invocation,
+                                         "invocation_id": lifecycle.invocation_id}, status_code=502)
                 run_steps.append({
                     "recipe_id": agent.id,
                     "output": output,
@@ -194,6 +242,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                 sources.append(
                     {"source_type": "recipe", "source_ref": str(step["recipe_id"])}
                 )
+            sources.extend(lifecycle.lineage())
 
             _run_frame(ctx, "ready", kind="chain", ref=chain_id, name=chain.name or chain_id)
             artifact_id = _persist_run_artifact(
@@ -202,6 +251,12 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                 output=run_steps[-1]["output"] if run_steps else "",
                 sources=sources,
             )
+            if not artifact_id:
+                invocation = lifecycle.fail("The result could not be kept as an Artifact.")
+                return JSONResponse({"error": invocation["error"], "chain_id": chain_id,
+                                     "invocation": invocation,
+                                     "invocation_id": lifecycle.invocation_id}, status_code=500)
+            invocation = lifecycle.succeed(artifact_id, provider=top_provider)
             return JSONResponse({
                 "chain_id": chain_id,
                 "steps": run_steps,
@@ -209,8 +264,17 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                 "provider": top_provider,
                 "sources": sources,
                 "artifact_id": artifact_id,
+                "result_ref": f"artifact:{artifact_id}",
+                "invocation_id": lifecycle.invocation_id,
+                "correlation_id": lifecycle.invocation_id,
+                "invocation": invocation,
             })
         except Exception as exc:
+            if lifecycle is not None:
+                try:
+                    lifecycle.fail(str(exc))
+                except Exception:
+                    pass
             return error_500(exc, log, "Failed to run chain")
 
     # ── Workflows ─────────────────────────────────────────────────────────

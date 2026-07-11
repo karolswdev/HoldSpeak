@@ -103,6 +103,15 @@ final class MeetingCaptureTests: XCTestCase {
         if case .failed = mc.state {} else { XCTFail("expected failed on mic error") }
     }
 
+    func testMeetingIsDurableBeforeCaptureAcceptsAudio() {
+        let cap = PushCapture(); let store = MemStore(); let mc = make(cap, store)
+        mc.start()
+        XCTAssertEqual(cap.started, 1)
+        XCTAssertEqual(store.saved["m-1"]?.endedAt, nil)
+        XCTAssertEqual(store.saved["m-1"]?.captureStatus, "recording")
+        XCTAssertEqual(store.saved["m-1"]?.provenance, "native")
+    }
+
     func testSaveFailureFails() async {
         let cap = PushCapture(); let store = MemStore(); store.failSave = true
         let mc = make(cap, store)

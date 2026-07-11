@@ -36,6 +36,22 @@ const FRIENDLY: Record<string, string> = {
   cadence: "Cadence",
   commands: "Commands",
 };
+const SECRET_LABELS: Record<string, string> = {
+  web_token: "Web pairing token",
+  device_psk: "Device audio key",
+  telegram_bot_token: "Telegram bot token",
+  telegram_pairing_code: "Telegram pairing code",
+  failure_webhook_url: "Failure alert webhook",
+  failure_webhook_credential: "Failure alert credential",
+  slack_webhook_url: "Slack webhook",
+  companion_webhook_url: "Custom webhook",
+};
+const ROTATABLE_SECRETS = new Set([
+  "web_token",
+  "device_psk",
+  "telegram_pairing_code",
+]);
+type SecretState = { configured?: boolean; destination?: string };
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -217,6 +233,8 @@ export default function SettingsPage() {
   const [active, setActive] = useState("");
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
+  const [secretDrafts, setSecretDrafts] = useState<Record<string, string>>({});
+  const [secretBusy, setSecretBusy] = useState("");
   const [message, setMessage] = useState<{
     error?: boolean;
     text: string;
@@ -226,6 +244,7 @@ export default function SettingsPage() {
       Object.keys(resource.data)
         .filter(
           (key) =>
+            !key.startsWith("_") &&
             resource.data[key] &&
             typeof resource.data[key] === "object" &&
             !Array.isArray(resource.data[key]),
@@ -239,6 +258,7 @@ export default function SettingsPage() {
   );
   const selected =
     active && sections.includes(active) ? active : (sections[0] ?? "");
+  const secrets = (resource.data._secrets ?? {}) as Record<string, SecretState>;
 
   const update = (path: string[], next: unknown) => {
     const draft = clone(resource.data);
@@ -267,6 +287,47 @@ export default function SettingsPage() {
       setMessage({ error: true, text: readableError(error) });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const changeSecret = async (
+    secretId: string,
+    action: "replace" | "rotate" | "delete",
+  ) => {
+    setSecretBusy(secretId);
+    setMessage(null);
+    try {
+      if (action === "replace") {
+        const value = secretDrafts[secretId]?.trim() ?? "";
+        if (!value) throw new Error("Enter a replacement value first.");
+        await apiFetch(`/api/settings/secrets/${secretId}`, {
+          method: "PUT",
+          json: { value },
+        });
+      } else if (action === "rotate") {
+        await apiFetch(`/api/settings/secrets/${secretId}/rotate`, {
+          method: "POST",
+        });
+      } else {
+        await apiFetch(`/api/settings/secrets/${secretId}`, {
+          method: "DELETE",
+        });
+      }
+      setSecretDrafts((drafts) => ({ ...drafts, [secretId]: "" }));
+      await resource.reload();
+      setMessage({
+        text: `${SECRET_LABELS[secretId] ?? title(secretId)} ${
+          action === "delete"
+            ? "deleted"
+            : action === "rotate"
+              ? "rotated"
+              : "replaced"
+        }. The value was not returned by the hub.`,
+      });
+    } catch (error) {
+      setMessage({ error: true, text: readableError(error) });
+    } finally {
+      setSecretBusy("");
     }
   };
 
@@ -352,6 +413,66 @@ export default function SettingsPage() {
             <Button variant="ghost" onClick={() => void resource.reload()}>
               Discard changes
             </Button>
+          </div>
+        </Panel>
+        <Panel title="Credentials" eyebrow="Write-only secrets">
+          <p>
+            Values stay on this hub. Reads show only whether each credential is
+            configured; replacement, rotation, and deletion never return it.
+          </p>
+          <div className="settings-fields">
+            {Object.entries(secrets).map(([secretId, state]) => (
+              <fieldset key={secretId}>
+                <legend>{SECRET_LABELS[secretId] ?? title(secretId)}</legend>
+                <p>
+                  {state.configured ? "Configured" : "Not configured"}
+                  {state.destination ? ` · ${state.destination}` : ""}
+                </p>
+                <Field label="Replacement value">
+                  {({ id }) => (
+                    <TextInput
+                      id={id}
+                      type="password"
+                      autoComplete="new-password"
+                      value={secretDrafts[secretId] ?? ""}
+                      onChange={(event) =>
+                        setSecretDrafts((drafts) => ({
+                          ...drafts,
+                          [secretId]: event.target.value,
+                        }))
+                      }
+                    />
+                  )}
+                </Field>
+                <div className="button-row">
+                  <Button
+                    loading={secretBusy === secretId}
+                    disabled={!secretDrafts[secretId]?.trim()}
+                    onClick={() => void changeSecret(secretId, "replace")}
+                  >
+                    Replace
+                  </Button>
+                  {ROTATABLE_SECRETS.has(secretId) ? (
+                    <Button
+                      variant="ghost"
+                      loading={secretBusy === secretId}
+                      onClick={() => void changeSecret(secretId, "rotate")}
+                    >
+                      Rotate
+                    </Button>
+                  ) : null}
+                  {state.configured ? (
+                    <Button
+                      variant="ghost"
+                      loading={secretBusy === secretId}
+                      onClick={() => void changeSecret(secretId, "delete")}
+                    >
+                      Delete
+                    </Button>
+                  ) : null}
+                </div>
+              </fieldset>
+            ))}
           </div>
         </Panel>
       </ResourceState>

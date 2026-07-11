@@ -143,7 +143,7 @@ export default function SetupPage() {
                 {resource.data.first_run ? "Continue arrival" : "Open Desk"}
               </Link>
               <Link className="btn btn--ghost" to="/profiles">
-                Runtime profiles
+                Runs on
               </Link>
             </div>
           </Panel>

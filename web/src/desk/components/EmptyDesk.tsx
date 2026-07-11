@@ -1,8 +1,19 @@
+import { useState } from "react";
+import { FirstWords } from "./FirstWords";
+
 // The guiding empty state (HS-73-02): a fresh desk answers "what is this"
 // in the world's own voice — the wordmark, the canonical short form (the
 // POSITIONING one-liner's tagline tier; the egress badge carries the trust
 // answer, so no privacy sentence here), and the next actions glowing.
-export function EmptyDesk() {
+export function EmptyDesk({ arrivalRequired = false }: { arrivalRequired?: boolean }) {
+  const [continued, setContinued] = useState(false);
+  if (arrivalRequired && !continued) {
+    return (
+      <div className="desk-empty is-first-value">
+        <FirstWords onDismiss={() => setContinued(true)} />
+      </div>
+    );
+  }
   return (
     <div className="desk-empty">
       <div className="desk-empty-mark" aria-hidden="true">
@@ -14,7 +25,7 @@ export function EmptyDesk() {
       </p>
       <p className="desk-empty-next">
         <a className="desk-chip" href="/dictation">
-          Set up dictation
+          Try dictation
         </a>
         <a className="desk-chip" href="/history">
           Record a meeting

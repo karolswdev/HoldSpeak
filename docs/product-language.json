@@ -1,0 +1,191 @@
+{
+  "registry_version": 1,
+  "product": "HoldSpeak",
+  "terms": {
+    "desk": {
+      "singular": "Desk",
+      "plural": "Desks",
+      "category": "place",
+      "meaning": "The primary world where work, capabilities, presence, attention, and results live."
+    },
+    "meeting": {
+      "singular": "Meeting",
+      "plural": "Meetings",
+      "category": "content",
+      "meaning": "A captured or imported conversation with stable identity."
+    },
+    "transcript": {
+      "singular": "Transcript",
+      "plural": "Transcripts",
+      "category": "meeting_projection",
+      "meaning": "Speaker and time material owned by a Meeting."
+    },
+    "action_item": {
+      "singular": "Action item",
+      "plural": "Action items",
+      "category": "meeting_projection",
+      "meaning": "Work a person should complete; never an external effect."
+    },
+    "result": {
+      "singular": "Result",
+      "plural": "Results",
+      "category": "content",
+      "meaning": "Transient output produced by a run before it is kept or discarded."
+    },
+    "artifact": {
+      "singular": "Artifact",
+      "plural": "Artifacts",
+      "category": "content",
+      "meaning": "A kept generated result with stable identity and lineage."
+    },
+    "note": {
+      "singular": "Note",
+      "plural": "Notes",
+      "category": "content",
+      "meaning": "Durable text authored by a person."
+    },
+    "zone": {
+      "singular": "Zone",
+      "plural": "Zones",
+      "category": "organization",
+      "meaning": "A findable Desk placement for items."
+    },
+    "knowledge": {
+      "singular": "Knowledge",
+      "plural": "Knowledge collections",
+      "category": "organization",
+      "meaning": "A named collection of material used to ground answers."
+    },
+    "project": {
+      "singular": "Project",
+      "plural": "Projects",
+      "category": "organization",
+      "meaning": "An ongoing endeavor or work scope, distinct from placement and grounding."
+    },
+    "persona": {
+      "singular": "Persona",
+      "plural": "Personas",
+      "category": "capability",
+      "meaning": "Saved reusable behavior made from instructions, tools, and knowledge."
+    },
+    "coder_session": {
+      "singular": "Coder session",
+      "plural": "Coder sessions",
+      "category": "presence",
+      "meaning": "A live Claude or Codex process, never a saved Persona."
+    },
+    "workflow": {
+      "singular": "Workflow",
+      "plural": "Workflows",
+      "category": "capability",
+      "meaning": "Saved reusable multi-step behavior."
+    },
+    "sequence": {
+      "singular": "Sequence",
+      "plural": "Sequences",
+      "category": "capability",
+      "meaning": "An advanced linear Workflow whose output flows through ordered steps."
+    },
+    "integration": {
+      "singular": "Integration",
+      "plural": "Integrations",
+      "category": "capability",
+      "meaning": "A named connection to a service or system."
+    },
+    "runs_on": {
+      "singular": "Runs on",
+      "plural": "Runs on",
+      "category": "placement",
+      "meaning": "The user-facing answer to where intelligence executes."
+    },
+    "proposed_action": {
+      "singular": "Proposed action",
+      "plural": "Proposed actions",
+      "category": "decision",
+      "meaning": "A request to produce a named effect on a named destination."
+    },
+    "review": {
+      "singular": "Review",
+      "plural": "Reviews",
+      "category": "decision",
+      "meaning": "A judgment about content that does not authorize an external effect."
+    },
+    "approval": {
+      "singular": "Approval",
+      "plural": "Approvals",
+      "category": "decision",
+      "meaning": "Authority for one exact effect, payload, and destination."
+    },
+    "grant": {
+      "singular": "Grant",
+      "plural": "Grants",
+      "category": "decision",
+      "meaning": "Bounded authority for repeated effects within an explicit scope."
+    },
+    "receipt": {
+      "singular": "Receipt",
+      "plural": "Receipts",
+      "category": "attention",
+      "meaning": "A durable account of what ran, where, why, and with what outcome."
+    }
+  },
+  "legacy_aliases": {
+    "agent": "persona",
+    "recipe": "persona",
+    "coder": "coder_session",
+    "directory": "zone",
+    "folder": "zone",
+    "kb": "knowledge",
+    "knowledge_base": "knowledge",
+    "chain": "sequence",
+    "connector": "integration",
+    "plugin": "integration",
+    "profile": "runs_on"
+  },
+  "lifecycle_axes": {
+    "readiness": ["unconfigured", "configured", "ready", "unavailable"],
+    "availability": ["offline", "connecting", "available", "degraded"],
+    "sync": ["local_only", "pending_sync", "synced", "sync_error"],
+    "work": ["queued", "running", "succeeded", "failed", "cancelled"],
+    "review": ["unreviewed", "accepted", "dismissed"],
+    "authority": ["not_requested", "proposed", "approved", "rejected", "expired", "revoked"],
+    "attention": ["unseen", "needs_attention", "acknowledged", "resolved"]
+  },
+  "destination_classes": [
+    "this_device",
+    "paired_device",
+    "private_endpoint",
+    "external_service"
+  ],
+  "decision_kinds": ["review", "approval", "grant"],
+  "control_modes": ["safe", "neutral", "yolo"],
+  "meeting_projections": ["summary", "action_items", "transcript", "topics"],
+  "guarded_terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+  "compatibility_exceptions": [
+    {
+      "path": "holdspeak/db/**",
+      "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+      "reason": "Persistence model and legacy wire names remain stable during the additive language migration."
+    },
+    {
+      "path": "holdspeak/web/routes/**",
+      "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+      "reason": "Public API compatibility and qualified architectural identifiers retain their existing wire names."
+    },
+    {
+      "path": "web/src/desk/api.ts",
+      "terms": ["Profile", "Agent"],
+      "reason": "The API adapter consumes legacy recipe/profile wires but emits canonical product labels."
+    },
+    {
+      "path": "apple/Sources/Contracts/**",
+      "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+      "reason": "Codable compatibility types preserve public wire identifiers."
+    },
+    {
+      "path": "apple/Sources/RuntimeCore/**",
+      "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+      "reason": "Qualified implementation types remain internal and are not product labels."
+    }
+  ]
+}

@@ -81,7 +81,9 @@ def _primary_action(
     return None
 
 
-def _trust_block(config: Any, *, web_bind: str = "127.0.0.1") -> dict[str, Any]:
+def _trust_block(
+    config: Any, *, web_bind: str = "127.0.0.1", database: Any = None
+) -> dict[str, Any]:
     """What can leave the machine right now, from config (display only)."""
     from .intel import intel_egress_posture
 
@@ -126,6 +128,10 @@ def _trust_block(config: Any, *, web_bind: str = "127.0.0.1") -> dict[str, Any]:
 
     # Static intent description reused from the doctor/web egress source of truth.
     _, egress_description = intel_egress_posture(meeting.intel_provider)
+    from .trust_destinations import destination_inventory
+
+    destinations = destination_inventory(config, database=database)
+    enabled_destinations = [row for row in destinations if row["enabled"]]
 
     return {
         "web_bind": web_bind,
@@ -136,6 +142,12 @@ def _trust_block(config: Any, *, web_bind: str = "127.0.0.1") -> dict[str, Any]:
         "configured_endpoints": endpoints,
         "actuators_enabled": bool(getattr(meeting, "allow_actuators", False)),
         "webhook_allowed_hosts": list(getattr(meeting, "webhook_allowed_hosts", []) or []),
+        "destinations": destinations,
+        "summary": (
+            f"{len(enabled_destinations)} external destination"
+            f"{'s' if len(enabled_destinations) != 1 else ''} enabled."
+            if enabled_destinations else "No external destination is enabled."
+        ),
     }
 
 
@@ -187,6 +199,11 @@ def build_setup_status(
     sections = [_section_from_check(c) for c in checks]
 
     first_run = True
+    onboarding: dict[str, Any] = {
+        "disposition": None,
+        "updated_at": None,
+        "latest_first_value": None,
+    }
     if database is not None and getattr(database, "milestones", None) is not None:
         from .db import FIRST_DICTATION_SUCCESS
 
@@ -195,6 +212,13 @@ def build_setup_status(
         except Exception as exc:  # pragma: no cover - never block a page load on the DB
             log.warning(f"setup_status: milestone read failed ({exc}); treating as first run")
             first_run = True
+        try:
+            disposition = database.onboarding.disposition()
+            if disposition:
+                onboarding.update(disposition)
+            onboarding["latest_first_value"] = database.onboarding.latest_attempt()
+        except Exception as exc:  # pragma: no cover - keep setup readable
+            log.warning(f"setup_status: onboarding read failed ({exc})")
 
     from . import __version__
 
@@ -204,9 +228,11 @@ def build_setup_status(
         "version": __version__,
         "overall": overall,
         "first_run": first_run,
+        "arrival_required": first_run and onboarding["disposition"] is None,
+        "onboarding": onboarding,
         "primary_action": _primary_action(sections, first_run=first_run, ready=ready),
         "sections": sections,
-        "trust": _trust_block(config),
+        "trust": _trust_block(config, database=database),
         "presence": _presence_block(
             env, config_enabled=bool(getattr(getattr(config, "presence", None), "enabled", False))
         ),

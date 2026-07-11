@@ -5,7 +5,7 @@
  * hand-arranged desk survives the React unification byte-for-byte. */
 import { create } from "zustand";
 import { apiRequest } from "../lib/api";
-import { EMPTY_ITEMS, loadAll, type Items, type Status } from "./api";
+import { EMPTY_ITEMS, loadAll, qualifiedRef, type Items, type Status } from "./api";
 import { buildLinearGraph } from "./graph";
 import { loadSetup, type SetupStatus } from "./setup";
 
@@ -91,9 +91,9 @@ interface DeskState {
   diveInto(zoneId: string): void;
   surface(): void;
   /** File a primitive into a directory (the real add-only PUT). */
-  fileIntoDir(pid: string, dirId: string): Promise<void>;
+  fileIntoDir(pid: string, dirId: string, kind?: string): Promise<void>;
   /** The toggle-off half (the legacy toggleFile parity). */
-  removeFromDir(pid: string, dirId: string): Promise<void>;
+  removeFromDir(pid: string, dirId: string, kind?: string): Promise<void>;
   /** Select a coder session as the dictation target (answerCoder parity). */
   answerCoder(agent: string, sessionId: string): Promise<boolean>;
   /** Speak straight into the waiting coder (HS-78-03): select the
@@ -114,6 +114,9 @@ interface DeskState {
     output: string;
     artifactId: string | null;
     warning: string | null;
+    invocationId: string | null;
+    resultRef: string | null;
+    state: string;
   }>;
   toggleSelected(id: string): void;
   setSelected(ids: string[]): void;
@@ -170,8 +173,8 @@ export const useDesk = create<DeskState>((set, get) => ({
   async createPrimitive(kind) {
     const posts: Record<string, [string, string, Record<string, unknown>]> = {
       note: ["/api/notes", "note", { title: "New note", body_markdown: "" }],
-      kb: ["/api/kbs", "kb", { name: "New KB" }],
-      recipe: ["/api/recipes", "recipe", { name: "New recipe", avatar: "🤖" }],
+      kb: ["/api/kbs", "kb", { name: "New Knowledge" }],
+      recipe: ["/api/recipes", "recipe", { name: "New Persona", avatar: "🤖" }],
       zone: ["/api/directories", "directory", { name: "New zone" }],
       // HSM-22-03 — a workflow is born with a real one-step linear graph in
       // the canonical wire shape (never an empty {} the run route must refuse).
@@ -318,10 +321,11 @@ export const useDesk = create<DeskState>((set, get) => ({
     set({ pulloutId: null, pulloutBackId: null });
   },
 
-  async fileIntoDir(pid, dirId) {
+  async fileIntoDir(pid, dirId, kind = "note") {
+    const ref = pid.includes(":") ? pid : qualifiedRef(kind, pid);
     try {
       await apiRequest(
-        `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(pid)}`,
+        `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(ref)}`,
         { method: "PUT" },
       );
     } catch {
@@ -332,10 +336,11 @@ export const useDesk = create<DeskState>((set, get) => ({
     await get().refresh();
   },
 
-  async removeFromDir(pid, dirId) {
+  async removeFromDir(pid, dirId, kind = "note") {
+    const ref = pid.includes(":") ? pid : qualifiedRef(kind, pid);
     try {
       await apiRequest(
-        `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(pid)}`,
+        `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(ref)}`,
         { method: "DELETE" },
       );
     } catch {
@@ -372,18 +377,33 @@ export const useDesk = create<DeskState>((set, get) => ({
       const data = await res.json().catch(() => ({}));
       const output = String(data.output || data.error || `HTTP ${res.status}`);
       const artifactId = res.ok ? String(data.artifact_id || "") || null : null;
-      // HSM-22-03 — the hub's honest refusal (a graph it ran as the prompt
-      // fallback) rides the response as `warning`; surface it, never drop it.
+      // Preserve warnings from older hubs; current hubs refuse unsupported graphs.
       const warning = data.warning ? String(data.warning) : null;
+      const invocationId = String(data.invocation_id || "") || null;
+      const resultRef = String(data.result_ref || data.invocation?.result_ref || "") || null;
+      const state = String(data.invocation?.state || (res.ok ? "succeeded" : "failed"));
       if (artifactId) {
         // The result is a REAL artifact now — it lands on the desk in
         // front of you, wearing the beat (the HS-73-06 grammar).
         await get().refresh();
+        const source = get().positions[id];
+        if (source) {
+          const positions = {
+            ...get().positions,
+            [artifactId]: {
+              x: Math.min(0.94, source.x + 0.08),
+              y: Math.min(0.94, source.y + 0.06),
+            },
+          };
+          set({ positions });
+          savePositions(positions);
+        }
         get().markNew(artifactId);
       }
-      return { ok: res.ok, output, artifactId, warning };
+      return { ok: res.ok, output, artifactId, warning, invocationId, resultRef, state };
     } catch (e) {
-      return { ok: false, output: String(e), artifactId: null, warning: null };
+      return { ok: false, output: String(e), artifactId: null, warning: null,
+        invocationId: null, resultRef: null, state: "failed" };
     }
   },
 

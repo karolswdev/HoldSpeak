@@ -263,6 +263,42 @@ class TranscribeLoopMixin:
                 max_end = max(max_end, system_chunks[-1].end_time)
             self._last_transcribe_time = max_end
 
+        # HS-92-04: transcript checkpoints are atomic SQLite transactions. Only
+        # after one lands do we release old audio, retaining the overlap guard.
+        if new_segments or mic_chunks or system_chunks or device_chunks:
+            try:
+                from ..db import get_database
+
+                if self._capture_journal is not None:
+                    self._capture_journal.checkpoint()
+                with self._lock:
+                    state = self._state
+                    if state is not None:
+                        state.capture_status = "recording"
+                        state.capture_failure = None
+                        state.capture_checkpoint_at = datetime.now()
+                        state.capture_checkpoint_seconds = max(
+                            state.capture_checkpoint_seconds,
+                            self._last_transcribe_time,
+                        )
+                        get_database().meetings.save_meeting(state)
+                recorder = self._recorder
+                if recorder is not None and self._last_transcribe_time > 0:
+                    recorder.trim_before(
+                        max(0.0, self._last_transcribe_time - self._overlap_tail_seconds)
+                    )
+            except Exception as exc:
+                with self._lock:
+                    if self._state is not None:
+                        self._state.capture_status = "recoverable"
+                        self._state.capture_failure = f"Checkpoint failed: {exc}"
+                self._emit_broadcast(
+                    "capture_recovery",
+                    {"status": "recoverable", "error": str(exc),
+                     "actions": ["retry", "discard"]},
+                )
+                log.error("Meeting checkpoint failed: %s", exc)
+
         # Trigger intel analysis periodically
         if new_segments:
             self._segments_since_intel += len(new_segments)

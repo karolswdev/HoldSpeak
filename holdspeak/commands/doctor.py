@@ -490,6 +490,26 @@ def _check_meeting_intel_egress(config: Config) -> DoctorCheck:
     )
 
 
+def _check_trust_destinations(config: Config) -> DoctorCheck:
+    """Render the canonical destination inventory used by both trust UIs."""
+    from ..trust_destinations import destination_inventory
+
+    enabled = [row for row in destination_inventory(config) if row["enabled"]]
+    if not enabled:
+        return DoctorCheck(
+            name="Trust destinations",
+            status="PASS",
+            detail="No external destination is enabled.",
+        )
+    names = ", ".join(str(row["name"]) for row in enabled)
+    return DoctorCheck(
+        name="Trust destinations",
+        status="WARN",
+        detail=f"Enabled external destinations: {names}.",
+        fix="Open Privacy & Trust to review boundaries, authority, and revoke actions.",
+    )
+
+
 def _check_web_auth(config: Config) -> DoctorCheck:
     """Report how the web runtime is bound and whether an auth token is set."""
     token_set = bool(getattr(config.meeting, "web_auth_token", "") or "")
@@ -1169,6 +1189,7 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_web_auth(config),
         _check_meeting_intel_runtime(config),
         _check_meeting_intel_egress(config),
+        _check_trust_destinations(config),
         _check_runtime_profiles(config),
         _check_mesh_edges(config),
         _check_meeting_intel_cloud_preflight(config, skip_network=skip_network),

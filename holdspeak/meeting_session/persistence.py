@@ -126,8 +126,14 @@ class PersistenceMixin:
 
         try:
             directory.mkdir(parents=True, exist_ok=True)
-            with open(filepath, "w") as f:
+            temp = filepath.with_suffix(filepath.suffix + ".tmp")
+            with open(temp, "w") as f:
                 json.dump(state.to_dict(), f, indent=2)
+                f.flush()
+                import os
+
+                os.fsync(f.fileno())
+            temp.replace(filepath)
             json_saved = True
             json_path = filepath
             log.info(f"Meeting saved to JSON: {filepath}")

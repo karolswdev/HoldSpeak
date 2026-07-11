@@ -28,6 +28,18 @@ def client(tmp_path, monkeypatch) -> TestClient:
     reset_database()
 
 
+def _assert_run_receipt(body: dict, definition_ref: str, input_text: str) -> None:
+    assert body["invocation_id"] == body["correlation_id"]
+    assert body["result_ref"] == f"artifact:{body['artifact_id']}"
+    invocation = body["invocation"]
+    assert invocation["id"] == body["invocation_id"]
+    assert invocation["definition_ref"] == definition_ref
+    assert invocation["input_snapshot"]["input"] == input_text
+    assert invocation["state"] == "succeeded"
+    assert len(invocation["attempts"]) == 1
+    assert invocation["attempts"][0]["state"] == "succeeded"
+
+
 # ── Notes ──────────────────────────────────────────────────────────────────
 def test_note_crud_flow(client: TestClient) -> None:
     # Empty.
@@ -110,13 +122,13 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
     # HS-74-01: the run persists as a run-born artifact; the id is minted.
     artifact_id = body.pop("artifact_id")
     assert artifact_id
-    assert body == {
-        "recipe_id": aid,
-        "output": "ANSWER",
-        "provider": "local",
-        "profile_id": None,
-        "sources": [{"source_type": "recipe", "source_ref": aid}],
-    }
+    body["artifact_id"] = artifact_id
+    _assert_run_receipt(body, f"persona:{aid}", "hello")
+    assert body["recipe_id"] == aid and body["output"] == "ANSWER"
+    assert body["provider"] == "local" and body["profile_id"] is None
+    assert [row["source_type"] for row in body["sources"]] == [
+        "recipe", "invocation", "attempt"
+    ]
     # The persona's system prompt + rendered template reached the engine.
     assert captured["system_prompt"] == "SYS"
     assert captured["user_prompt"] == "Q: hello"
@@ -140,7 +152,7 @@ def test_run_agent_includes_input_source(client: TestClient, monkeypatch) -> Non
     resp = client.post(
         f"/api/recipes/{aid}/run", json={"input": "x", "source_ref": "meeting_7"}
     )
-    assert resp.json()["sources"] == [
+    assert resp.json()["sources"][:2] == [
         {"source_type": "recipe", "source_ref": aid},
         {"source_type": "input", "source_ref": "meeting_7"},
     ]
@@ -161,7 +173,9 @@ def test_run_response_source_type_vocab_is_pinned() -> None:
     )
 
     # The full canonical set the hub run endpoints emit.
-    assert CANONICAL_SOURCE_TYPES == {"recipe", "input", "chain", "workflow"}
+    assert CANONICAL_SOURCE_TYPES == {
+        "recipe", "input", "chain", "workflow", "invocation", "attempt"
+    }
 
     # Canonical values pass through unchanged.
     for value in CANONICAL_SOURCE_TYPES:
@@ -199,7 +213,7 @@ def test_run_agent_input_source_accepts_ipad_card_alias(
         f"/api/recipes/{aid}/run",
         json={"input": "x", "source_ref": "meeting_7", "source_type": "card"},
     )
-    assert resp.json()["sources"] == [
+    assert resp.json()["sources"][:2] == [
         {"source_type": "recipe", "source_ref": aid},
         {"source_type": "input", "source_ref": "meeting_7"},
     ]
@@ -272,7 +286,9 @@ def test_chain_crud_flow(client: TestClient) -> None:
     cid = chain["id"]
     assert chain["name"] == "Triage"
     assert chain["steps"] == ["agent_a", "agent_b"]
-    assert set(chain) == {"id", "name", "steps", "created_at", "last_modified", "deleted"}
+    assert set(chain) == {"id", "name", "steps", "created_at", "last_modified", "deleted", "capability"}
+    assert chain["capability"]["kind"] == "sequence"
+    assert chain["capability"]["readiness"]["state"] == "unavailable"
 
     assert len(client.get("/api/chains").json()["chains"]) == 1
     assert client.get(f"/api/chains/{cid}").json()["chain"]["steps"] == ["agent_a", "agent_b"]
@@ -332,29 +348,33 @@ def test_run_chain_threads_steps(client: TestClient, monkeypatch) -> None:
     # Top-level provider = the last step's provider (kills the "provider unknown" badge).
     assert body["provider"] == "local"
     # Provenance: the chain plus each step's agent.
-    assert body["sources"] == [
+    assert body["sources"][:3] == [
         {"source_type": "chain", "source_ref": cid},
         {"source_type": "recipe", "source_ref": a1},
         {"source_type": "recipe", "source_ref": a2},
     ]
+    _assert_run_receipt(body, f"sequence:{cid}", "hello")
 
 
 def test_run_chain_unknown_chain_is_404(client: TestClient) -> None:
     assert client.post("/api/chains/nope/run", json={"input": "x"}).status_code == 404
 
 
-def test_run_chain_missing_agent_is_404(client: TestClient) -> None:
+def test_run_chain_missing_persona_is_unavailable(client: TestClient) -> None:
     cid = client.post(
         "/api/chains", json={"name": "C", "steps": ["ghost_agent"]}
     ).json()["chain"]["id"]
     resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
-    assert resp.status_code == 404
+    assert resp.status_code == 409
     assert "ghost_agent" in resp.json()["error"]
+    assert resp.json()["invocation"]["state"] == "unavailable"
 
 
-def test_run_chain_empty_steps_is_400(client: TestClient) -> None:
+def test_run_chain_empty_steps_is_unavailable(client: TestClient) -> None:
     cid = client.post("/api/chains", json={"name": "Empty", "steps": []}).json()["chain"]["id"]
-    assert client.post(f"/api/chains/{cid}/run", json={"input": "x"}).status_code == 400
+    resp = client.post(f"/api/chains/{cid}/run", json={"input": "x"})
+    assert resp.status_code == 409
+    assert resp.json()["invocation"]["input_snapshot"]["input"] == "x"
 
 
 def test_run_chain_engine_error_is_502(client: TestClient, monkeypatch) -> None:
@@ -391,7 +411,8 @@ def test_workflow_crud_flow(client: TestClient) -> None:
     assert wf["name"] == "Daily"
     assert wf["prompt"] == "summarize"
     assert wf["graph_json"] == {"nodes": [1]}
-    assert set(wf) == {"id", "name", "prompt", "graph_json", "created_at", "last_modified", "deleted"}
+    assert set(wf) == {"id", "name", "prompt", "graph_json", "created_at", "last_modified", "deleted", "capability"}
+    assert wf["capability"]["readiness"]["state"] == "unavailable"
 
     assert len(client.get("/api/workflows").json()["workflows"]) == 1
     assert client.get(f"/api/workflows/{wid}").json()["workflow"]["prompt"] == "summarize"
@@ -440,12 +461,13 @@ def test_run_workflow_prompt(client: TestClient, monkeypatch) -> None:
     body = resp.json()
     # HS-74-01: the run persists as a run-born artifact; the id is minted.
     assert body.pop("artifact_id")
-    assert body == {
-        "workflow_id": wid,
-        "output": "WF-OUT",
-        "provider": "local",
-        "sources": [{"source_type": "workflow", "source_ref": wid}],
-    }
+    body["artifact_id"] = body["result_ref"].split(":", 1)[1]
+    _assert_run_receipt(body, f"workflow:{wid}", "the thing")
+    assert body["workflow_id"] == wid and body["output"] == "WF-OUT"
+    assert body["provider"] == "local"
+    assert [row["source_type"] for row in body["sources"]] == [
+        "workflow", "invocation", "attempt"
+    ]
     # Workflow runs with an empty system prompt + the rendered prompt.
     assert fake.captured == {"system_prompt": "", "user_prompt": "Do: the thing"}
 
@@ -529,13 +551,15 @@ def test_run_workflow_linear_graph_runs_in_order(client: TestClient, monkeypatch
     assert [s["kind"] for s in body["steps"]] == ["summarize", "rewrite"]
     assert body["output"] == "out2"
     assert body["provider"] == "local"
-    assert body["sources"] == [{"source_type": "workflow", "source_ref": wid}]
+    assert [row["source_type"] for row in body["sources"]] == [
+        "workflow", "invocation", "attempt"
+    ]
+    _assert_run_receipt(body, f"workflow:{wid}", "the meeting")
     assert "warning" not in body
 
 
-def test_run_workflow_branching_graph_falls_back_with_warning(client: TestClient, monkeypatch) -> None:
-    # A branching graph + a prompt: we refuse the graph (no guessed order) and run the
-    # prompt, with an honest warning naming why.
+def test_run_workflow_branching_graph_is_refused_before_run(client: TestClient, monkeypatch) -> None:
+    # A branching graph + prompt remains a graph. The hub never silently lowers it.
     wid = client.post(
         "/api/workflows",
         json={"name": "G", "prompt": "fallback: {input}", "graph_json": _branching_graph()},
@@ -543,22 +567,21 @@ def test_run_workflow_branching_graph_falls_back_with_warning(client: TestClient
     fake = _stub_intel(monkeypatch)
 
     resp = client.post(f"/api/workflows/{wid}/run", json={"input": "x"})
-    assert resp.status_code == 200
+    assert resp.status_code == 409
     body = resp.json()
-    assert body["output"] == "WF-OUT"
-    assert "control-flow" in body["warning"] and "prompt fallback" in body["warning"]
-    # It ran the PROMPT, not any graph node.
-    assert fake.captured["user_prompt"] == "fallback: x"
-    assert "steps" not in body
+    assert "control-flow" in body["error"]
+    assert "not lowered to a prompt" in body["error"]
+    assert fake.captured == {}
+    assert body["invocation"]["state"] == "unavailable"
+    assert body["invocation"]["input_snapshot"]["input"] == "x"
 
 
-def test_run_workflow_branching_graph_no_prompt_no_input_is_400(client: TestClient, monkeypatch) -> None:
-    # A branching graph, no prompt, no input: nothing safe to run -> 400 (never a guess).
+def test_run_workflow_branching_graph_no_prompt_is_unavailable(client: TestClient, monkeypatch) -> None:
     wid = client.post(
         "/api/workflows", json={"name": "G", "graph_json": _branching_graph()}
     ).json()["workflow"]["id"]
     _stub_intel(monkeypatch)
-    assert client.post(f"/api/workflows/{wid}/run", json={}).status_code == 400
+    assert client.post(f"/api/workflows/{wid}/run", json={}).status_code == 409
 
 
 def test_run_workflow_web_authored_graph_runs(client: TestClient, monkeypatch) -> None:
@@ -669,24 +692,24 @@ def test_directory_membership_file_and_unfile(client: TestClient) -> None:
     did = client.post("/api/directories", json={"name": "Bag"}).json()["directory"]["id"]
 
     # File a primitive.
-    filed = client.put(f"/api/directories/{did}/members/note_42")
+    filed = client.put(f"/api/directories/{did}/members/note%3Anote_42")
     assert filed.status_code == 200
-    assert filed.json()["membership"]["primitive_id"] == "note_42"
+    assert filed.json()["membership"]["primitive_id"] == "note:note_42"
     assert filed.json()["membership"]["directory_id"] == did
 
     # Membership is readable both via the directory GET and the members list.
     members = client.get(f"/api/directories/{did}/members").json()["members"]
-    assert [m["primitive_id"] for m in members] == ["note_42"]
-    assert client.get(f"/api/directories/{did}").json()["members"][0]["primitive_id"] == "note_42"
+    assert [m["primitive_id"] for m in members] == ["note:note_42"]
+    assert client.get(f"/api/directories/{did}").json()["members"][0]["primitive_id"] == "note:note_42"
 
     # Filing into an unknown directory 404s.
-    assert client.put("/api/directories/nope/members/x").status_code == 404
+    assert client.put("/api/directories/nope/members/note%3Ax").status_code == 404
 
     # Unfile (tombstone) -> gone from the list.
-    assert client.delete(f"/api/directories/{did}/members/note_42").json() == {"success": True}
+    assert client.delete(f"/api/directories/{did}/members/note%3Anote_42").json() == {"success": True}
     assert client.get(f"/api/directories/{did}/members").json()["members"] == []
     # Unfiling again (already gone) 404s.
-    assert client.delete(f"/api/directories/{did}/members/note_42").status_code == 404
+    assert client.delete(f"/api/directories/{did}/members/note%3Anote_42").status_code == 404
 
 
 def test_directory_member_listing_404_for_unknown_directory(client: TestClient) -> None:
@@ -701,22 +724,22 @@ def test_directory_reads_include_member_ids(client: TestClient) -> None:
     assert client.get(f"/api/directories/{did}").json()["member_ids"] == []
 
     # File two primitives.
-    client.put(f"/api/directories/{did}/members/note_1")
-    client.put(f"/api/directories/{did}/members/agent_2")
+    client.put(f"/api/directories/{did}/members/note%3Anote_1")
+    client.put(f"/api/directories/{did}/members/persona%3Aagent_2")
 
     # The list item now carries the filed ids.
     item = client.get("/api/directories").json()["directories"][0]
-    assert sorted(item["member_ids"]) == ["agent_2", "note_1"]
+    assert sorted(item["member_ids"]) == ["note:note_1", "persona:agent_2"]
 
     # The detail response carries member_ids AND keeps the full members bucket.
     detail = client.get(f"/api/directories/{did}").json()
-    assert sorted(detail["member_ids"]) == ["agent_2", "note_1"]
-    assert sorted(m["primitive_id"] for m in detail["members"]) == ["agent_2", "note_1"]
+    assert sorted(detail["member_ids"]) == ["note:note_1", "persona:agent_2"]
+    assert sorted(m["primitive_id"] for m in detail["members"]) == ["note:note_1", "persona:agent_2"]
 
     # Unfiling drops the id from member_ids (tombstone excluded).
-    client.delete(f"/api/directories/{did}/members/note_1")
-    assert client.get(f"/api/directories/{did}").json()["member_ids"] == ["agent_2"]
-    assert client.get("/api/directories").json()["directories"][0]["member_ids"] == ["agent_2"]
+    client.delete(f"/api/directories/{did}/members/note%3Anote_1")
+    assert client.get(f"/api/directories/{did}").json()["member_ids"] == ["persona:agent_2"]
+    assert client.get("/api/directories").json()["directories"][0]["member_ids"] == ["persona:agent_2"]
 
 
 def test_profile_crud_roundtrip(client: TestClient) -> None:

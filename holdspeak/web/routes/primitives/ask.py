@@ -16,12 +16,18 @@ from __future__ import annotations
 
 import asyncio
 from typing import Any, Optional
-from urllib.parse import urlparse
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....grounding import (
+    GROUNDING_EXPANDS as _GROUNDING_EXPANDS,
+    GROUNDING_MAX_REFS as _GROUNDING_MAX_REFS,
+    hydrate_grounding_blocks as _hydrate_grounding,
+    meeting_digest as _meeting_digest,
+)
+from ....intel.providers import endpoint_egress
 from ...context import WebContext
 from ...runtime_support import error_500
 from ._shared import _json_body, _new_id, _run_frame
@@ -39,14 +45,6 @@ _MATERIAL_CAP = 6000
 # The hydration itself lives in `holdspeak.grounding` (HS-87-04, shared with
 # steer); these names re-export it so this route (and recipes.py, which
 # imports from here) stay byte-identical.
-from ....grounding import (  # noqa: E402
-    GROUNDING_EXPANDS as _GROUNDING_EXPANDS,
-    GROUNDING_MAX_REFS as _GROUNDING_MAX_REFS,
-    GROUNDING_TRANSCRIPT_CAP as _GROUNDING_TRANSCRIPT_CAP,
-    hydrate_grounding_blocks as _hydrate_grounding,
-    meeting_digest as _meeting_digest,
-)
-
 _ASK_SYSTEM_PROMPT = (
     "You are the desk's AI core. Follow the instruction using the material "
     "provided. Be concrete and brief."
@@ -55,9 +53,6 @@ _ASK_SYSTEM_PROMPT = (
 
 # HS-84-04: the host/badge derivation lives with the resolver now; the alias
 # keeps this module's import surface (recipes.py) stable.
-from ....intel.providers import endpoint_egress, endpoint_host as _host_of
-
-
 def _run_egress(ctx: Any, prof: Any, intel: Any) -> tuple[dict[str, Any], str]:
     """The run's HONEST egress badge + model (the 16-09 grammar), ONE derivation.
 
@@ -212,6 +207,36 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to list models")
 
+    @router.post("/api/grounding/resolve")
+    async def api_resolve_grounding(request: Request) -> Any:
+        """Price the exact content the shared resolver would send."""
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        refs = body.get("refs") if isinstance(body.get("refs"), list) else []
+        refs = [str(ref).strip() for ref in refs if str(ref).strip()]
+        if len(refs) > _GROUNDING_MAX_REFS:
+            return JSONResponse({"error": f"grounding is capped at {_GROUNDING_MAX_REFS} refs"}, status_code=400)
+        try:
+            from ....db import get_database
+            blocks, _, titles, unknown = _hydrate_grounding(
+                get_database(), [], [], "summary", qualified_refs=refs
+            )
+            if unknown:
+                return JSONResponse(
+                    {"error": "grounding ids not on this hub", "unknown_ids": unknown},
+                    status_code=400,
+                )
+            return JSONResponse({
+                "refs": refs,
+                "titles": titles,
+                "chars": sum(len(block) for block in blocks),
+                "blocks": [{"ref": ref, "title": title, "chars": len(block)}
+                           for ref, title, block in zip(refs, titles, blocks)],
+            })
+        except Exception as exc:
+            return error_500(exc, log, "Failed to resolve grounding")
+
     @router.post("/api/ask")
     async def api_ask(request: Request) -> Any:
         """Run an instruction over lasso'd context. Persists nothing."""
@@ -245,9 +270,11 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                     )
                 raw_m = grounding.get("meeting_ids")
                 raw_a = grounding.get("artifact_ids")
+                raw_q = grounding.get("refs")
                 raw_r = grounding.get("rails")
                 meeting_ids = [str(x).strip() for x in raw_m if str(x).strip()] if isinstance(raw_m, list) else []
                 artifact_ids = [str(x).strip() for x in raw_a if str(x).strip()] if isinstance(raw_a, list) else []
+                qualified_refs = [str(x).strip() for x in raw_q if str(x).strip()] if isinstance(raw_q, list) else []
                 rails_refs = [x for x in raw_r if isinstance(x, dict)] if isinstance(raw_r, list) else []
                 expand = str(grounding.get("expand") or "summary").strip() or "summary"
                 if expand not in _GROUNDING_EXPANDS:
@@ -255,13 +282,13 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                         {"error": f"expand {expand!r} is not one of {list(_GROUNDING_EXPANDS)}"},
                         status_code=400,
                     )
-                if len(meeting_ids) + len(artifact_ids) + len(rails_refs) > _GROUNDING_MAX_REFS:
+                if len(meeting_ids) + len(artifact_ids) + len(qualified_refs) + len(rails_refs) > _GROUNDING_MAX_REFS:
                     return JSONResponse(
                         {"error": f"grounding is capped at {_GROUNDING_MAX_REFS} refs"},
                         status_code=400,
                     )
                 blocks, g_ids, g_titles, unknown = _hydrate_grounding(
-                    db, meeting_ids, artifact_ids, expand
+                    db, meeting_ids, artifact_ids, expand, qualified_refs=qualified_refs
                 )
                 # HS-88-01: rails objects (phase/story/evidence/roadmap) ground
                 # through the SAME block type, CLI-mediated per repo — a receipt,
@@ -291,6 +318,8 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                     "expand": expand,
                     "titles": g_titles,
                 }
+                if qualified_refs:
+                    grounding_echo["refs"] = qualified_refs
                 if rails_refs:
                     grounding_echo["rails"] = rails_refs
 
@@ -418,6 +447,48 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
         ]
         try:
             from ....db import get_database
+            from ....db.relationships import qualified_ref
+
+            db = get_database()
+            aliases = {"kb": "knowledge", "directory": "zone", "recipe": "persona", "chain": "sequence"}
+            exact_refs: list[str] = []
+            for entry in context:
+                if not isinstance(entry, dict):
+                    continue
+                candidate = str(entry.get("ref") or "").strip()
+                if not candidate and entry.get("kind") and entry.get("id"):
+                    kind = aliases.get(str(entry["kind"]), str(entry["kind"]))
+                    candidate = f"{kind}:{entry['id']}"
+                if candidate:
+                    try:
+                        exact_refs.append(qualified_ref(candidate))
+                    except ValueError as exc:
+                        return JSONResponse({"error": str(exc)}, status_code=400)
+            grounding = body.get("grounding") if isinstance(body.get("grounding"), dict) else {}
+            for candidate in grounding.get("refs") or []:
+                try:
+                    exact_refs.append(qualified_ref(candidate))
+                except ValueError as exc:
+                    return JSONResponse({"error": str(exc)}, status_code=400)
+            exact_refs = list(dict.fromkeys(exact_refs))
+            if exact_refs:
+                _, stale = _hydrate_grounding(
+                    db, [], [], "summary", qualified_refs=exact_refs
+                )[-2:]
+                if stale:
+                    return JSONResponse(
+                        {"error": "grounding changed or was deleted before Keep", "unknown_ids": stale},
+                        status_code=409,
+                    )
+
+            axes: dict[str, Any] = {}
+            for ref in exact_refs:
+                placement = db.directory_memberships.get(ref)
+                axes[ref] = {
+                    "zone_id": placement.directory_id if placement else None,
+                    "knowledge_ids": [r.knowledge_id for r in db.knowledge_memberships.list_for_resource(ref)],
+                    "project_ids": [r.project_id for r in db.project_relationships.list_for_resource(ref)],
+                }
 
             prov = _ask_provenance(
                 lens=lens, prompt=prompt,
@@ -426,11 +497,18 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
             # The canonical sources rows (iPad `provenanceSources`): every card
             # the ask read, plus its own via row.
             sources = [
-                {"source_type": "card", "source_ref": t} for t in (context_titles or [prov["source_card_title"]])
-            ] + [{"source_type": "ask", "source_ref": lens}]
+                {"source_type": ref.split(":", 1)[0], "source_ref": ref}
+                for ref in exact_refs
+            ]
+            if not sources:
+                sources = [
+                    {"source_type": "card", "source_ref": title}
+                    for title in (context_titles or [prov["source_card_title"]])
+                ]
+            sources += [{"source_type": "ask", "source_ref": lens}]
 
             artifact_id = _new_id("artifact")
-            get_database().plugins.record_artifact(
+            db.plugins.record_artifact(
                 artifact_id=artifact_id,
                 meeting_id="",
                 artifact_type="plugin_output",
@@ -440,6 +518,8 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
                     "lens": lens,
                     "source": prov["source_card_title"],
                     "provenance": prov,
+                    "qualified_refs": exact_refs,
+                    "relationship_snapshot": axes,
                 },
                 confidence=1.0,
                 status="draft",

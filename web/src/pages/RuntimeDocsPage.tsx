@@ -13,7 +13,10 @@ export default function RuntimeDocsPage() {
         API keys are environment variables on the hub. They never belong in a
         browser field or profile response.
       </InlineMessage>
-      <Panel title="Choose a runtime" eyebrow="One profile, explicit reach">
+      <Panel
+        title="Choose a runtime"
+        eyebrow="One Runs on destination, explicit reach"
+      >
         <Disclosure title="Basic voice typing" open>
           <p>
             Install HoldSpeak and a Whisper backend. Leave the dictation LLM

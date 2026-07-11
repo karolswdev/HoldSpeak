@@ -1,27 +1,27 @@
 id: a-sync-cross-device
 execution_target: web_react
-title: A meeting captured in one React Desk appears in another — byte-faithful across the wire
+title: An offline native Meeting comes home to Web exactly once — byte-faithful across the wire
 features:
   - sync.content.cross_device
   - sync.integrity.roundtrip
 manual_setup:
-  - Open the React Desk in desktop browsers on two machines, both authenticated to the same hub with host + port + token.
-  - Have the meeting-import / capture flow ready in the origin browser so a fresh meeting can be produced and pushed.
+  - Pair the canonical flagship Swift app with an authenticated Web hub, then put the device offline.
+  - Have the native Meeting recorder ready so the origin Meeting is created without hub access.
   - For the roundtrip leg, be able to create at least one of each of the 10 primitive kinds (note, KB, directory/zone, recipe, chain, workflow, profile, meeting, plus the remaining two the contract wire carries) on the origin so the whole wire is exercised, not just meetings.
 recipes: []
 form_factors: [desktop]
 steps:
-  - do: (Staging beat) Confirm both desktop React Desks are authenticated to the same hub — each browser's connect/doctor view names the hub host+port, with no meeting yet present in the second browser.
-    expect: Both React Desks report the same hub, and the second browser's history is empty of the meeting about to be captured — so its later appearance is provably a sync, not a pre-seed.
+  - do: (Staging beat) Confirm the Swift app names the paired hub, take it offline, and confirm Web History has no Meeting with the title you are about to record.
+    expect: The native device is offline but capture-ready, and Web has no pre-seeded copy — later appearance is provably sync.
     where: /history
-  - do: In the origin browser, capture or import a meeting, then refresh or pull in the second desktop browser.
-    expect: The meeting captured in browser one appears in browser two, read back through the second React Desk's own history — same title, same transcript content. Cross-machine continuity is real, not a screenshot.
+  - do: Capture and stop the Meeting in the native app while offline, reconnect, trigger Desk sync twice, then open it from Web Desk and History.
+    expect: Exactly one Meeting appears with the native title, timed/speaker-labelled transcript, native provenance, partial/intelligence state, artifacts and aftercare; the second sync creates no duplicate.
     where: /history
   - do: (Roundtrip integrity) In the origin React Desk, create one of each of the 10 primitive kinds, push, pull in the second browser, and open each primitive to compare its fields against the origin.
     expect: All 10 primitive kinds round-trip byte-faithfully — the values typed in browser one arrive intact in browser two (a note's body, a KB's name, a zone's members, a recipe's system prompt), with last-writer-wins on conflict and no silent field loss. Judge structurally — every kind present and its load-bearing fields equal.
     where: /history
     form_factors: [desktop]
-  - do: (Honest-failure close) Edit the SAME primitive in both desktop React Desks while briefly offline, then let both sync.
-    expect: The conflict resolves honestly — last-writer-wins keeps one version and the other is preserved as keep-both, never silently dropped. No primitive vanishes and no half-merged corruption appears; the loser is recoverable, not gone.
+  - do: (Honest-failure close) Edit the SAME Meeting title/content on native and Web at an equal staged clock while offline, then let both sync and inspect the conflict endpoint/diagnostic.
+    expect: The conflict resolves by last-writer-wins with deterministic local precedence at equal time, and the losing value appears as one recoverable conflict record; the UI does not claim keep-both because no second Meeting object was created.
     where: /history
     form_factors: [desktop]

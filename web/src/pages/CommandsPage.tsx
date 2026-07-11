@@ -208,7 +208,7 @@ export default function CommandsPage() {
                 />
               )}
             </Field>
-            <Field label="Action">
+            <Field label="Command behavior">
               {({ id }) => (
                 <Select
                   id={id}

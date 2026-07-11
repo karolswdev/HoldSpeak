@@ -20,6 +20,7 @@ from __future__ import annotations
 import hmac
 import ipaddress
 import secrets
+import base64
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -28,6 +29,8 @@ if TYPE_CHECKING:
 
 # Hostnames (not IPs) that mean "this machine only".
 _LOOPBACK_HOSTNAMES = {"localhost", ""}
+_WEBSOCKET_AUTH_PREFIX = "holdspeak.auth.v1."
+WEBSOCKET_PROTOCOL = "holdspeak.v1"
 
 
 def generate_web_token() -> str:
@@ -117,4 +120,38 @@ def extract_request_token(
                 return candidate
     if query_token and query_token.strip():
         return query_token.strip()
+    return None
+
+
+def websocket_auth_protocol(token: str) -> str:
+    """Encode a bearer token as a WebSocket subprotocol offer.
+
+    Browsers cannot add an Authorization header to a WebSocket handshake.
+    Subprotocols are sent in a header rather than the URL, keeping credentials
+    out of request targets, browser history, and ordinary access logs.
+    """
+
+    clean = str(token or "").strip()
+    if not clean:
+        raise ValueError("websocket auth token is required")
+    encoded = base64.urlsafe_b64encode(clean.encode("utf-8")).decode("ascii").rstrip("=")
+    return f"{_WEBSOCKET_AUTH_PREFIX}{encoded}"
+
+
+def extract_websocket_token(protocol_header: Optional[str]) -> Optional[str]:
+    """Extract the credential from ``Sec-WebSocket-Protocol`` offers."""
+
+    for offered in str(protocol_header or "").split(","):
+        protocol = offered.strip()
+        if protocol.startswith(_WEBSOCKET_AUTH_PREFIX):
+            candidate = protocol[len(_WEBSOCKET_AUTH_PREFIX) :].strip()
+            if not candidate:
+                return None
+            try:
+                padding = "=" * (-len(candidate) % 4)
+                return base64.b64decode(
+                    candidate + padding, altchars=b"-_", validate=True
+                ).decode("utf-8")
+            except (ValueError, UnicodeDecodeError):
+                return None
     return None

@@ -21,6 +21,7 @@ from .actuators import ActuatorRepository
 from .corrections import DictationCorrectionRepository
 from .journal import DictationJournalRepository
 from .milestones import MilestoneRepository
+from .onboarding import OnboardingRepository
 from .cadence import CadenceRepository
 from .primitives import (
     RecipeRepository,
@@ -33,6 +34,8 @@ from .primitives import (
     ProfileRepository,
     WorkflowRepository,
 )
+from .relationships import KnowledgeMembershipRepository, ProjectRelationshipRepository
+from .invocations import CapabilityInvocationRepository
 
 log = get_logger("db")
 
@@ -41,7 +44,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 12  # v12: steering_audit (HS-87-03); v11: profiles.node for the meshNode kind (HS-85-02); v10: mesh_relay_jobs + mesh_workers (HS-85-01) — both bumped WITH their DDL (the v9 lesson)
+SCHEMA_VERSION = 17  # v17: durable capability invocation/attempt envelopes (HS-92-06)
 
 
 class SchemaVersionError(RuntimeError):
@@ -168,6 +171,12 @@ CREATE TABLE IF NOT EXISTS meetings (
     mic_label TEXT NOT NULL DEFAULT 'Me',
     remote_label TEXT NOT NULL DEFAULT 'Remote',
     web_url TEXT,
+    capture_status TEXT NOT NULL DEFAULT 'finalized',
+    capture_failure TEXT,
+    capture_checkpoint_at TEXT,
+    capture_checkpoint_seconds REAL NOT NULL DEFAULT 0,
+    provenance TEXT NOT NULL DEFAULT 'desktop',
+    sync_modified_at TEXT NOT NULL DEFAULT (datetime('now')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -178,6 +187,21 @@ CREATE TABLE IF NOT EXISTS meeting_tags (
     tag TEXT NOT NULL,
     PRIMARY KEY (meeting_id, tag)
 );
+
+-- Equal-timestamp divergent Meeting edits are never silently discarded. The
+-- deterministic LWW winner remains canonical while the losing value stays
+-- recoverable here until an owner resolves it (HS-92-04).
+CREATE TABLE IF NOT EXISTS meeting_sync_conflicts (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    local_json TEXT NOT NULL,
+    incoming_json TEXT NOT NULL,
+    winner TEXT NOT NULL DEFAULT 'local',
+    detected_at TEXT NOT NULL DEFAULT (datetime('now')),
+    resolved_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_meeting_sync_conflicts_open
+ON meeting_sync_conflicts(meeting_id, resolved_at, detected_at DESC);
 
 -- Transcript segments
 CREATE TABLE IF NOT EXISTS segments (
@@ -441,6 +465,12 @@ CREATE TABLE IF NOT EXISTS actuator_proposals (
     reversible INTEGER NOT NULL DEFAULT 0,
     required_capabilities_json TEXT NOT NULL DEFAULT '[]',
     decided_by TEXT,
+    approved_payload_hash TEXT,
+    approved_destination TEXT,
+    approved_preview_hash TEXT,
+    preview_renderer_version TEXT,
+    effect_class TEXT,
+    policy_version TEXT,
     result_json TEXT,
     error TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -689,6 +719,29 @@ CREATE TABLE IF NOT EXISTS milestones (
     achieved_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Phase 92 (HS-92-03): disposition is independent of first success, so
+-- Continue later never creates a redirect loop. First-value receipts contain
+-- mechanics only; there is deliberately no phrase/content column.
+CREATE TABLE IF NOT EXISTS onboarding_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    disposition TEXT NOT NULL CHECK (disposition IN ('completed', 'dismissed', 'needs_help')),
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS first_value_attempts (
+    id TEXT PRIMARY KEY,
+    started_at TEXT NOT NULL,
+    succeeded_at TEXT,
+    steps INTEGER NOT NULL DEFAULT 0,
+    decisions INTEGER NOT NULL DEFAULT 0,
+    destination TEXT NOT NULL CHECK (destination IN ('this_machine', 'paired_desktop')),
+    failure_category TEXT,
+    finished_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_first_value_attempts_started
+ON first_value_attempts(started_at DESC);
+
 -- Phase 45 (HS-45-01): the dictation journal. A durable, local-only, private
 -- record of each dictation/dry-run pipeline run — what was said, how it routed,
 -- what got typed, and per-stage latency — so the daily-driver dictation loop
@@ -790,6 +843,46 @@ CREATE TABLE IF NOT EXISTS workflows (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
+-- Phase 92 (HS-92-06): one durable envelope for every Persona, Sequence, and
+-- Workflow run. This augments; it does not replace optimized domain job tables.
+CREATE TABLE IF NOT EXISTS capability_invocations (
+    id TEXT PRIMARY KEY,
+    correlation_id TEXT NOT NULL UNIQUE,
+    definition_ref TEXT NOT NULL,
+    initiator TEXT NOT NULL DEFAULT 'owner',
+    grounding_refs_json TEXT NOT NULL DEFAULT '[]',
+    requested_placement TEXT NOT NULL DEFAULT 'this_machine',
+    input_snapshot_json TEXT NOT NULL DEFAULT '{}',
+    state TEXT NOT NULL DEFAULT 'running'
+        CHECK (state IN ('running','succeeded','failed','cancelled','unavailable','empty')),
+    result_ref TEXT,
+    error TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    completed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_capability_invocations_definition
+ON capability_invocations(definition_ref, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_capability_invocations_state
+ON capability_invocations(state, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS capability_attempts (
+    id TEXT PRIMARY KEY,
+    invocation_id TEXT NOT NULL REFERENCES capability_invocations(id) ON DELETE CASCADE,
+    attempt_index INTEGER NOT NULL,
+    destination TEXT NOT NULL,
+    provider TEXT,
+    state TEXT NOT NULL DEFAULT 'running'
+        CHECK (state IN ('running','succeeded','failed','cancelled','empty')),
+    error TEXT,
+    result_ref TEXT,
+    started_at TEXT NOT NULL,
+    completed_at TEXT,
+    UNIQUE(invocation_id, attempt_index)
+);
+CREATE INDEX IF NOT EXISTS idx_capability_attempts_invocation
+ON capability_attempts(invocation_id, attempt_index);
+
 -- Runtime profile (capability/synced, Phase 24): a named "where intelligence runs"
 -- target. SHAPE ONLY — the API key NEVER lives here and never syncs; the hub joins
 -- its own secret at request time (mirrors the connector credential rule).
@@ -879,6 +972,28 @@ CREATE TABLE IF NOT EXISTS directory_memberships (
     deleted INTEGER NOT NULL DEFAULT 0
 );
 
+-- Independent, qualified relationship axes (HS-92-05). These do not mutate
+-- one another: a resource has one Zone and any number of Knowledge/Projects.
+CREATE TABLE IF NOT EXISTS knowledge_memberships (
+    knowledge_id TEXT NOT NULL REFERENCES kbs(id) ON DELETE CASCADE,
+    resource_ref TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (knowledge_id, resource_ref)
+);
+CREATE TABLE IF NOT EXISTS project_resources (
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    resource_ref TEXT NOT NULL,
+    relationship TEXT NOT NULL DEFAULT 'member',
+    source TEXT NOT NULL DEFAULT 'manual',
+    confidence REAL NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+    deleted INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (project_id, resource_ref)
+);
+
 CREATE INDEX IF NOT EXISTS idx_notes_modified ON notes(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_kbs_modified ON kbs(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_recipes_modified ON recipes(last_modified DESC);
@@ -886,6 +1001,10 @@ CREATE INDEX IF NOT EXISTS idx_chains_modified ON chains(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_workflows_modified ON workflows(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_directories_modified ON directories(last_modified DESC);
 CREATE INDEX IF NOT EXISTS idx_directory_memberships_dir ON directory_memberships(directory_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_memberships_resource ON knowledge_memberships(resource_ref, deleted);
+CREATE INDEX IF NOT EXISTS idx_knowledge_memberships_modified ON knowledge_memberships(last_modified);
+CREATE INDEX IF NOT EXISTS idx_project_resources_resource ON project_resources(resource_ref, deleted);
+CREATE INDEX IF NOT EXISTS idx_project_resources_modified ON project_resources(last_modified);
 
 -- ── Cadence Engine (CAD-1-01) ──────────────────────────────────────────────
 -- Open Loops are source-PROJECTED entities: the collector idempotently upserts
@@ -1003,6 +1122,7 @@ class Database:
         self.dictation_corrections = DictationCorrectionRepository(self._connection, self)
         self.dictation_journal = DictationJournalRepository(self._connection, self)
         self.milestones = MilestoneRepository(self._connection, self)
+        self.onboarding = OnboardingRepository(self._connection, self)
         self.cadence = CadenceRepository(self._connection, self)  # CAD-1-01
         # Primitive Framework: the desk's synced first-class primitives.
         self.notes = NoteRepository(self._connection, self)
@@ -1013,6 +1133,9 @@ class Database:
         self.workflows = WorkflowRepository(self._connection, self)
         self.directories = DirectoryRepository(self._connection, self)
         self.directory_memberships = DirectoryMembershipRepository(self._connection, self)
+        self.knowledge_memberships = KnowledgeMembershipRepository(self._connection, self)
+        self.project_relationships = ProjectRelationshipRepository(self._connection, self)
+        self.capability_invocations = CapabilityInvocationRepository(self._connection, self)
         self.model_manifests = ModelManifestRepository(self._connection, self)
         self.mesh_relay = MeshRelayRepository(self._connection, self)
         self.steering = SteeringAuditRepository(self._connection, self)
@@ -1206,6 +1329,52 @@ class Database:
                 """
             )
             conn.execute("PRAGMA foreign_keys = ON")
+        # v13 (Phase 92, HS-92-02): approval is bound to the complete material
+        # effect. Additive nullable columns keep legacy rows readable; an
+        # already-approved legacy row is deliberately non-executable until it
+        # is re-approved and receives a complete binding.
+        proposal_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(actuator_proposals)").fetchall()
+        }
+        approval_binding_columns = {
+            "approved_payload_hash": "TEXT",
+            "approved_destination": "TEXT",
+            "approved_preview_hash": "TEXT",
+            "preview_renderer_version": "TEXT",
+            "effect_class": "TEXT",
+            "policy_version": "TEXT",
+        }
+        for column, sql_type in approval_binding_columns.items():
+            if column not in proposal_cols:
+                conn.execute(
+                    f"ALTER TABLE actuator_proposals ADD COLUMN {column} {sql_type}"
+                )
+        # v15 (Phase 92, HS-92-04): a Meeting exists before the recorder accepts
+        # audio and carries honest checkpoint/recovery state through interruption.
+        # Legacy rows are completed desktop meetings, hence the non-lossy defaults.
+        meeting_cols = {
+            row[1] for row in conn.execute("PRAGMA table_info(meetings)").fetchall()
+        }
+        capture_columns = {
+            "capture_status": "TEXT NOT NULL DEFAULT 'finalized'",
+            "capture_failure": "TEXT",
+            "capture_checkpoint_at": "TEXT",
+            "capture_checkpoint_seconds": "REAL NOT NULL DEFAULT 0",
+            "provenance": "TEXT NOT NULL DEFAULT 'desktop'",
+            "sync_modified_at": "TEXT",
+        }
+        for column, sql_type in capture_columns.items():
+            if column not in meeting_cols:
+                conn.execute(f"ALTER TABLE meetings ADD COLUMN {column} {sql_type}")
+        # v16: preserve every existing Meeting↔Project relationship in the
+        # generic qualified edge store used by both Desks and grounding.
+        conn.execute(
+            """INSERT OR IGNORE INTO project_resources
+               (project_id,resource_ref,relationship,source,confidence,
+                created_at,last_modified,deleted)
+               SELECT project_id,'meeting:' || meeting_id,'member',source,confidence,
+                      detected_at,detected_at,0 FROM meeting_projects"""
+        )
         # v6 (Phase 74, HS-74-01): artifacts become owner-typed the same way
         # proposals did in v5 — a run's output persists as an artifact with no
         # meeting anchor (origin='run', NULL meeting_id; lineage is the anchor).

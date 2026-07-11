@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { websocketUrl } from "../lib/auth";
+import { websocketProtocols, websocketUrl } from "../lib/auth";
 
 export type RuntimeFrame<T = unknown> = { type: string; data: T };
 export type RuntimeState =
@@ -48,7 +48,7 @@ export function RuntimeBusProvider({ children }: { children: ReactNode }) {
     const connect = () => {
       if (disposed) return;
       setState(attempt ? "reconnecting" : "connecting");
-      socket = new WebSocket(websocketUrl());
+      socket = new WebSocket(websocketUrl(), websocketProtocols());
       socket.addEventListener("open", () => {
         attempt = 0;
         setState("connected");

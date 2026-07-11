@@ -23,7 +23,9 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/action-items/{item_id}/edit",
@@ -47,7 +49,9 @@
         "GET"
       ],
       "module": "web.routes.activity.enrichment",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/activity/briefing",
@@ -56,7 +60,8 @@
       ],
       "module": "web.routes.activity.enrichment",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -65,7 +70,9 @@
         "POST"
       ],
       "module": "web.routes.activity.ledger",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/activity/domains/{domain}",
@@ -397,7 +404,9 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/all-action-items/{item_id}/edit",
@@ -452,7 +461,9 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/brief",
@@ -460,7 +471,9 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/closeout",
@@ -468,7 +481,9 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/closeout/apply",
@@ -592,7 +607,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.chains",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/chains/{chain_id}",
@@ -600,7 +617,9 @@
         "GET"
       ],
       "module": "web.routes.primitives.chains",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/chains/{chain_id}",
@@ -608,7 +627,9 @@
         "PUT"
       ],
       "module": "web.routes.primitives.chains",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/chains/{chain_id}/run",
@@ -627,7 +648,9 @@
         "POST"
       ],
       "module": "web.routes.system.coders",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/coders/dismiss",
@@ -636,7 +659,8 @@
       ],
       "module": "web.routes.system.coders",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -668,7 +692,8 @@
       ],
       "module": "web.routes.system.coders",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -744,7 +769,8 @@
       ],
       "module": "web.routes.system.coders",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -960,12 +986,24 @@
       ]
     },
     {
+      "path": "/api/desk/relationships/{resource_ref:path}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/devices/audio",
       "methods": [
         "WS"
       ],
       "module": "device_audio_ws",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/devices/health",
@@ -983,7 +1021,9 @@
         "GET"
       ],
       "module": "web.routes.dictation.agent",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/dictation/agent-context/clear",
@@ -1018,7 +1058,8 @@
       ],
       "module": "web.routes.dictation.blocks",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1403,7 +1444,7 @@
       "consumers": []
     },
     {
-      "path": "/api/directories/{directory_id}/members/{primitive_id}",
+      "path": "/api/directories/{directory_id}/members/{primitive_id:path}",
       "methods": [
         "DELETE"
       ],
@@ -1413,11 +1454,21 @@
       ]
     },
     {
-      "path": "/api/directories/{directory_id}/members/{primitive_id}",
+      "path": "/api/directories/{directory_id}/members/{primitive_id:path}",
       "methods": [
         "PUT"
       ],
       "module": "web.routes.primitives.directories",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/grounding/resolve",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.primitives.ask",
       "consumers": [
         "web"
       ]
@@ -1438,7 +1489,9 @@
         "POST"
       ],
       "module": "web.routes.meetings.intel",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/intel/retry/{meeting_id}",
@@ -1454,7 +1507,9 @@
         "GET"
       ],
       "module": "web.routes.meetings.intel",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/intents/control",
@@ -1472,7 +1527,9 @@
         "PUT"
       ],
       "module": "web.routes.dictation.intents",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/intents/preview",
@@ -1495,6 +1552,24 @@
       ]
     },
     {
+      "path": "/api/invocations",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.invocations",
+      "consumers": []
+    },
+    {
+      "path": "/api/invocations/{invocation_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.invocations",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/kbs",
       "methods": [
         "GET"
@@ -1543,6 +1618,30 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/kbs/{kb_id}/members",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.kbs",
+      "consumers": []
+    },
+    {
+      "path": "/api/kbs/{kb_id}/members/{resource_ref:path}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.primitives.kbs",
+      "consumers": []
+    },
+    {
+      "path": "/api/kbs/{kb_id}/members/{resource_ref:path}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.primitives.kbs",
+      "consumers": []
     },
     {
       "path": "/api/meeting",
@@ -1663,6 +1762,16 @@
       ]
     },
     {
+      "path": "/api/meetings/{meeting_id}/capture/recover",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}/export",
       "methods": [
         "GET"
@@ -1739,13 +1848,22 @@
       ]
     },
     {
+      "path": "/api/meetings/{meeting_id}/sync-conflicts",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": []
+    },
+    {
       "path": "/api/mesh/inbox",
       "methods": [
         "GET"
       ],
       "module": "web.routes.mesh",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1755,7 +1873,8 @@
       ],
       "module": "web.routes.mesh",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -2069,7 +2188,9 @@
         "DELETE"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}",
@@ -2077,7 +2198,9 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}",
@@ -2085,7 +2208,9 @@
         "PATCH"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/action-items",
@@ -2131,6 +2256,30 @@
       "path": "/api/projects/{project_id}/meetings/{meeting_id}",
       "methods": [
         "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/resources",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/resources/{resource_ref:path}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.projects",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/resources/{resource_ref:path}",
+      "methods": [
+        "PUT"
       ],
       "module": "web.routes.projects",
       "consumers": []
@@ -2258,9 +2407,69 @@
       ]
     },
     {
+      "path": "/api/settings/secrets/{secret_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.system.settings_secrets",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/secrets/{secret_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.system.settings_secrets",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/secrets/{secret_id}/rotate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.settings_secrets",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/setup/discover-models",
       "methods": [
         "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/setup/first-value/start",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/setup/first-value/{attempt_id}/finish",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/setup/onboarding",
+      "methods": [
+        "PUT"
       ],
       "module": "web.routes.setup",
       "consumers": [
@@ -2314,7 +2523,9 @@
         "GET"
       ],
       "module": "web.routes.meetings.speakers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/speakers/{speaker_id}",
@@ -2322,7 +2533,9 @@
         "PATCH"
       ],
       "module": "web.routes.meetings.speakers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/state",
@@ -2360,7 +2573,8 @@
       ],
       "module": "web.routes.sync",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -2609,6 +2823,7 @@
       ],
       "module": "web.routes.system.ws",
       "consumers": [
+        "ios",
         "web"
       ]
     }

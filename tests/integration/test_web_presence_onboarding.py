@@ -33,7 +33,9 @@ def test_setup_page_has_presence_onboarding() -> None:
 
 
 def test_presence_tier_and_install_rules() -> None:
-    src = (_REPO / "web" / "src" / "pages" / "WelcomePage.tsx").read_text()
-    assert "Desktop Presence" in src
-    assert "Config-backed and reversible" in src
-    assert 'json: { presence: { enabled } }' in src
+    # HS-92-03 removed the six-step Welcome wizard. Presence remains a
+    # reversible, config-backed option in the canonical Settings surface.
+    src = (_REPO / "web" / "src" / "pages" / "SettingsPage.tsx").read_text()
+    assert '"presence"' in src
+    assert "<Switch" in src
+    assert '"/api/settings"' in src

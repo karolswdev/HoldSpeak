@@ -41,6 +41,17 @@ export interface LoadResult {
   error: string;
 }
 
+/** Canonical identity shared with the hub and native Desk. */
+export function qualifiedRef(kind: string, id: string): string {
+  const canonical: Record<string, string> = {
+    kb: "knowledge",
+    directory: "zone",
+    recipe: "persona",
+    chain: "sequence",
+  };
+  return `${canonical[kind] || kind}:${id}`;
+}
+
 export const EMPTY_ITEMS: Items = {
   meeting: [],
   artifact: [],
@@ -85,6 +96,7 @@ export const fromWireRecipe = (a: any): DeskItem => ({
   tools: a.tools || [],
   kbId: a.kb_id || null,
   profileId: a.profile_id || "",
+  capability: a.capability || null,
 });
 
 export const fromWireKb = (k: any): DeskItem => ({
@@ -109,6 +121,7 @@ export const fromWireChain = (c: any): DeskItem => ({
   id: c.id,
   name: c.name,
   steps: c.steps || [],
+  capability: c.capability || null,
 });
 
 export const fromWireWorkflow = (w: any): DeskItem => {
@@ -122,6 +135,7 @@ export const fromWireWorkflow = (w: any): DeskItem => {
     prompt: w.prompt || "",
     hasGraph: Boolean(hasGraph),
     graphJson: graph,
+    capability: w.capability || null,
   };
 };
 
@@ -226,13 +240,13 @@ export async function loadAll(): Promise<LoadResult> {
           .map(fromWireRecipe);
         status.recipe = "live";
       })
-      .catch((e) => fail("recipe", "Recipes", e)),
+      .catch((e) => fail("recipe", "Personas", e)),
     fetchJson("/api/kbs")
       .then((d) => {
         items.kb = (d.kbs || []).filter((k: any) => !k.deleted).map(fromWireKb);
         status.kb = "live";
       })
-      .catch((e) => fail("kb", "KBs", e)),
+      .catch((e) => fail("kb", "Knowledge", e)),
     fetchJson("/api/directories")
       .then((d) => {
         const raw = d.directories || liveValues(d);
@@ -241,7 +255,7 @@ export async function loadAll(): Promise<LoadResult> {
           .map(fromWireDirectory);
         status.directory = "live";
       })
-      .catch((e) => fail("directory", "Directories", e)),
+      .catch((e) => fail("directory", "Zones", e)),
     fetchJson("/api/chains")
       .then((d) => {
         items.chain = (d.chains || [])
@@ -249,7 +263,7 @@ export async function loadAll(): Promise<LoadResult> {
           .map(fromWireChain);
         status.chain = "live";
       })
-      .catch((e) => fail("chain", "Chains", e)),
+      .catch((e) => fail("chain", "Sequences", e)),
     fetchJson("/api/workflows")
       .then((d) => {
         items.workflow = (d.workflows || [])

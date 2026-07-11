@@ -3,6 +3,7 @@
  * `objGlow`, so the island lays the same desk out the same way. */
 import { oh } from "./hash";
 import type { DeskItem, Items, Kind } from "./api";
+import { qualifiedRef } from "./api";
 import type { UnitPos } from "./store";
 
 export interface WorldObject {
@@ -50,7 +51,7 @@ export function worldObjects(
   if (divedZone) {
     const dir = (items.directory || []).find((d) => d.id === divedZone);
     const members = new Set(((dir as any)?.memberIds as string[]) || []);
-    return out.filter((o) => members.has(o.id));
+    return out.filter((o) => members.has(o.id) || members.has(qualifiedRef(o.kind, o.id)));
   }
   // The iPad grammar (owner feedback, 2026-07-02): a filed object lives on
   // its shelf, not on the open desk — the root stage shows only unfiled
@@ -60,7 +61,9 @@ export function worldObjects(
   for (const d of items.directory || []) {
     for (const mid of ((d as any).memberIds as string[]) || []) filed.add(mid);
   }
-  return out.filter((o) => o.kind === "coder" || !filed.has(o.id));
+  return out.filter(
+    (o) => o.kind === "coder" || (!filed.has(o.id) && !filed.has(qualifiedRef(o.kind, o.id))),
+  );
 }
 
 export interface WorldZone {
@@ -77,7 +80,7 @@ export function worldZones(
   if (divedZone) return [];
   return (items.directory || []).map((d) => ({
     id: String(d.id),
-    title: String(d.title || d.name || "Directory"),
+    title: String(d.title || d.name || "Zone"),
     count: (((d as any).memberIds as string[]) || []).length,
     ref: d,
   }));

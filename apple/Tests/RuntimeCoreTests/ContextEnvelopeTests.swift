@@ -60,16 +60,27 @@ final class ContextEnvelopeTests: XCTestCase {
         let sel = GroundingSelection(meetings: [
             .init(id: "m1", title: "Kickoff", includeTranscript: true, artifactIds: ["a1", "a2"]),
             .init(id: "m2", title: "Retro", artifactIds: ["a3"]),
+        ], resources: [
+            .init(ref: "note:n1", kind: "Note", title: "Scratch"),
+            .init(ref: "project:p1", kind: "Project", title: "Launch"),
         ])
         XCTAssertEqual(sel.hubMeetingIds, ["m1", "m2"])
         XCTAssertEqual(sel.hubArtifactIds, ["a1", "a2", "a3"])
         XCTAssertEqual(sel.hubExpand, "full")   // any transcript toggle upgrades the expand
-        XCTAssertEqual(sel.summaryLabel, "2 meetings · 3 artifacts")
+        XCTAssertEqual(sel.hubRefs, ["note:n1", "project:p1"])
+        XCTAssertEqual(sel.summaryLabel, "2 meetings · 3 artifacts · 2 objects")
 
         let digestOnly = GroundingSelection(meetings: [.init(id: "m1", title: "Kickoff")])
         XCTAssertEqual(digestOnly.hubExpand, "summary")
         XCTAssertEqual(digestOnly.summaryLabel, "1 meeting")
         XCTAssertTrue(GroundingSelection().isEmpty)
+    }
+
+    func testLegacySelectionWithoutResourcesStillDecodes() throws {
+        let legacy = Data(#"{"meetings":[]}"#.utf8)
+        let decoded = try JSONDecoder().decode(GroundingSelection.self, from: legacy)
+        XCTAssertEqual(decoded.resources, [])
+        XCTAssertTrue(decoded.isEmpty)
     }
 
     func testEmptySelectionEstimatesZero() {

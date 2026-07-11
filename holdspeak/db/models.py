@@ -19,6 +19,12 @@ VALID_ACTIVITY_MEETING_CANDIDATE_STATUSES = frozenset(
 VALID_ACTUATOR_PROPOSAL_STATUSES = frozenset(
     {"proposed", "approved", "executed", "rejected", "failed"}
 )
+VALID_CAPABILITY_INVOCATION_STATES = frozenset(
+    {"running", "succeeded", "failed", "cancelled", "unavailable", "empty"}
+)
+VALID_CAPABILITY_ATTEMPT_STATES = frozenset(
+    {"running", "succeeded", "failed", "cancelled", "empty"}
+)
 
 
 @dataclass
@@ -34,6 +40,10 @@ class MeetingSummary:
     tags: list[str]
     intel_status: str = "disabled"
     intel_status_detail: Optional[str] = None
+    capture_status: str = "finalized"
+    capture_failure: Optional[str] = None
+    capture_checkpoint_seconds: float = 0.0
+    provenance: str = "desktop"
 
 
 @dataclass
@@ -376,6 +386,12 @@ class ActuatorProposalRecord:
     reversible: bool
     required_capabilities: list[str]
     decided_by: Optional[str]
+    approved_payload_hash: Optional[str]
+    approved_destination: Optional[str]
+    approved_preview_hash: Optional[str]
+    preview_renderer_version: Optional[str]
+    effect_class: Optional[str]
+    policy_version: Optional[str]
     result: Optional[dict[str, Any]]
     error: Optional[str]
     created_at: str
@@ -718,6 +734,74 @@ class WorkflowRecord:
             "created_at": self.created_at,
             "last_modified": self.last_modified,
             "deleted": self.deleted,
+        }
+
+
+@dataclass
+class CapabilityAttemptRecord:
+    """One execution attempt inside a durable capability invocation."""
+
+    id: str
+    invocation_id: str
+    attempt_index: int
+    destination: str
+    provider: Optional[str]
+    state: str
+    error: Optional[str]
+    result_ref: Optional[str]
+    started_at: str
+    completed_at: Optional[str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "invocation_id": self.invocation_id,
+            "attempt_index": self.attempt_index,
+            "destination": self.destination,
+            "provider": self.provider,
+            "state": self.state,
+            "error": self.error,
+            "result_ref": self.result_ref,
+            "started_at": self.started_at,
+            "completed_at": self.completed_at,
+        }
+
+
+@dataclass
+class CapabilityInvocationRecord:
+    """The additive run envelope shared by Persona, Sequence, and Workflow."""
+
+    id: str
+    correlation_id: str
+    definition_ref: str
+    initiator: str
+    grounding_refs: list[str]
+    requested_placement: str
+    input_snapshot: dict[str, Any]
+    state: str
+    result_ref: Optional[str]
+    error: Optional[str]
+    created_at: str
+    updated_at: str
+    completed_at: Optional[str]
+    attempts: list[CapabilityAttemptRecord] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "correlation_id": self.correlation_id,
+            "definition_ref": self.definition_ref,
+            "initiator": self.initiator,
+            "grounding_refs": list(self.grounding_refs),
+            "requested_placement": self.requested_placement,
+            "input_snapshot": dict(self.input_snapshot),
+            "state": self.state,
+            "result_ref": self.result_ref,
+            "error": self.error,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "completed_at": self.completed_at,
+            "attempts": [attempt.to_dict() for attempt in self.attempts],
         }
 
 

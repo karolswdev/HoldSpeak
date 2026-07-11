@@ -37,7 +37,7 @@ def _new_id(prefix: str) -> str:
 # synonym and fold it to the canonical "input" via `canonical_source_type` so
 # lineage from either surface lands on one stored vocabulary; nothing is rejected.
 CANONICAL_SOURCE_TYPES: frozenset[str] = frozenset(
-    {"recipe", "input", "chain", "workflow"}
+    {"recipe", "input", "chain", "workflow", "invocation", "attempt"}
 )
 
 # iPad / authoring-port synonyms → the canonical hub value (additive, tolerant).
@@ -56,6 +56,108 @@ def canonical_source_type(raw: Any) -> str:
     """
     val = str(raw or "").strip().lower()
     return _SOURCE_TYPE_ALIASES.get(val, val)
+
+
+def capability_descriptor(
+    *,
+    kind: str,
+    name: str,
+    readiness: str = "ready",
+    detail: str = "",
+    supported_placements: Optional[list[str]] = None,
+    effect_classes: Optional[list[str]] = None,
+    action_label: str = "",
+    support: str = "supported",
+) -> dict[str, Any]:
+    """The shared, user-facing capability negotiation shape."""
+    return {
+        "kind": kind,
+        "input_schema": {
+            "type": "object",
+            "required": ["input"],
+            "properties": {"input": {"type": "string", "help": "Material to work on."}},
+        },
+        "input_help": "Choose or enter the material this capability should work on.",
+        "supported_placements": supported_placements or ["this_machine"],
+        "effect_classes": effect_classes or ["creates_artifact"],
+        "readiness": {"state": readiness, "detail": detail},
+        "action_label": action_label or f"Run {name}",
+        "support": support,
+    }
+
+
+class RunLifecycle:
+    """Small route adapter around the durable invocation/attempt repository."""
+
+    def __init__(self, db: Any, invocation_id: str, definition_ref: str) -> None:
+        self.db = db
+        self.invocation_id = invocation_id
+        self.definition_ref = definition_ref
+        self.attempt_id: Optional[str] = None
+
+    @classmethod
+    def begin(
+        cls,
+        db: Any,
+        *,
+        definition_ref: str,
+        body: dict[str, Any],
+        default_placement: str = "this_machine",
+    ) -> "RunLifecycle":
+        invocation_id = _new_id("invocation")
+        refs = [str(ref) for ref in body.get("grounding_refs", []) if str(ref).strip()] \
+            if isinstance(body.get("grounding_refs"), list) else []
+        source_ref = str(body.get("source_ref") or "").strip()
+        if source_ref:
+            refs.append(source_ref)
+        snapshot: dict[str, Any] = {"input": str(body.get("input") or "")}
+        if isinstance(body.get("variables"), dict):
+            snapshot["variables"] = dict(body["variables"])
+        db.capability_invocations.begin(
+            invocation_id=invocation_id,
+            definition_ref=definition_ref,
+            initiator=str(body.get("initiator") or "owner"),
+            grounding_refs=list(dict.fromkeys(refs)),
+            requested_placement=str(body.get("requested_placement") or default_placement),
+            input_snapshot=snapshot,
+        )
+        return cls(db, invocation_id, definition_ref)
+
+    def start_attempt(self, *, destination: str, provider: Optional[str] = None) -> str:
+        self.attempt_id = _new_id("attempt")
+        self.db.capability_invocations.start_attempt(
+            invocation_id=self.invocation_id,
+            attempt_id=self.attempt_id,
+            destination=destination,
+            provider=provider,
+        )
+        return self.attempt_id
+
+    def fail(self, error: str, *, state: str = "failed", provider: Optional[str] = None) -> dict[str, Any]:
+        if self.attempt_id:
+            self.db.capability_invocations.finish_attempt(
+                self.attempt_id, state="failed" if state != "empty" else "empty",
+                provider=provider, error=error,
+            )
+        return self.db.capability_invocations.finish(
+            self.invocation_id, state=state, error=error,
+        ).to_dict()
+
+    def succeed(self, artifact_id: str, *, provider: Optional[str] = None) -> dict[str, Any]:
+        result_ref = f"artifact:{artifact_id}"
+        if self.attempt_id:
+            self.db.capability_invocations.finish_attempt(
+                self.attempt_id, state="succeeded", provider=provider, result_ref=result_ref,
+            )
+        return self.db.capability_invocations.finish(
+            self.invocation_id, state="succeeded", result_ref=result_ref,
+        ).to_dict()
+
+    def lineage(self) -> list[dict[str, str]]:
+        rows = [{"source_type": "invocation", "source_ref": self.invocation_id}]
+        if self.attempt_id:
+            rows.append({"source_type": "attempt", "source_ref": self.attempt_id})
+        return rows
 
 
 async def _json_body(request: Request) -> Optional[dict[str, Any]]:
@@ -157,5 +259,4 @@ def _persist_run_artifact(
     except Exception as exc:
         log.error(f"Failed to persist run artifact: {exc}")
         return None
-
 

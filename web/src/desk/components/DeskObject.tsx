@@ -84,7 +84,7 @@ export function DeskObject({
           const over = useDesk.getState().hoverZoneId;
           setHoverZone(null);
           if (over) {
-            void fileIntoDir(o.id, over);
+            void fileIntoDir(o.id, over, o.kind);
           } else {
             persistPositions();
           }

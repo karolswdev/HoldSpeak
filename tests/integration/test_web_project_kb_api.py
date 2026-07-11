@@ -610,8 +610,8 @@ def test_dictation_page_includes_project_kb_section() -> None:
     assert '<div id="root"></div>' in response.text
     js = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
     assert "Project grounding" in js
-    assert "Knowledge base" in js and "Project instructions" in js
-    assert "Agent hooks" in js
+    assert 'title="Knowledge"' in js and "Project instructions" in js
+    assert "Automation hooks" in js
     assert "/api/dictation/project-kb" in js
     assert "/api/dictation/project-hs" in js
     assert "/api/dictation/agent-hooks" in js

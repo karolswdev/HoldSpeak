@@ -139,6 +139,12 @@ SQLCipher) becomes warranted and should be its own story.
 
 ## 4. Egress points: everywhere data can leave the machine
 
+The machine-readable source for destination names, boundaries, data classes,
+authority, background ability, and revoke actions is
+[`trust-destinations.json`](trust-destinations.json). Setup, doctor, Web, and
+Swift render that registry with current enabled state; this narrative table
+adds implementation detail but is not a second product inventory.
+
 | Egress | Trigger | What leaves | Gate |
 |---|---|---|---|
 | **Cloud meeting intel** (`intel/providers.py` → OpenAI-compatible client) | `intel_provider` = `cloud`, or `auto` falling back | Transcript text (no audio, no embeddings, no activity) | Explicit provider choice. `provider="local"` (default) **never** egresses, locked by `tests/unit/test_intel_egress_invariant.py`; surfaced by `doctor` + `intel_egress` in the runtime status. |

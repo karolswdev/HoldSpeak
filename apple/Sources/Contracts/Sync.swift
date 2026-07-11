@@ -21,6 +21,9 @@ public enum SyncKind: String, Codable, Sendable, CaseIterable {
     case kb
     case directory      // the iPad "zone": identity + nesting (geometry/paint stays local)
     case membership = "directory_membership"   // a primitive's home-directory edge; wire kind matches the hub
+    case knowledgeMembership = "knowledge_membership"
+    case projectRelationship = "project_relationship"
+    case project
     // capability
     case recipe
     case chain
@@ -80,6 +83,9 @@ public struct ChangeSet: Codable, Equatable, Sendable {
     public var kbs: [Synced<KB>]
     public var directories: [Synced<Directory>]   // the iPad zone's identity + nesting
     public var directoryMemberships: [Synced<Membership>]  // primitive → home-directory edges
+    public var knowledgeMemberships: [Synced<KnowledgeMembership>]
+    public var projectRelationships: [Synced<ProjectRelationship>]
+    public var projects: [Synced<Project>]
     public var recipes: [Synced<Recipe>]
     public var chains: [Synced<Chain>]
     public var workflows: [Synced<WorkflowDefinition>]
@@ -89,6 +95,9 @@ public struct ChangeSet: Codable, Equatable, Sendable {
     public init(meetings: [Synced<Meeting>] = [], artifacts: [Synced<Artifact>] = [],
                 notes: [Synced<Note>] = [], kbs: [Synced<KB>] = [],
                 directories: [Synced<Directory>] = [], directoryMemberships: [Synced<Membership>] = [],
+                knowledgeMemberships: [Synced<KnowledgeMembership>] = [],
+                projectRelationships: [Synced<ProjectRelationship>] = [],
+                projects: [Synced<Project>] = [],
                 recipes: [Synced<Recipe>] = [], chains: [Synced<Chain>] = [],
                 workflows: [Synced<WorkflowDefinition>] = [], profiles: [Synced<RuntimeProfile>] = [],
                 models: [Synced<ModelManifest>] = []) {
@@ -98,6 +107,9 @@ public struct ChangeSet: Codable, Equatable, Sendable {
         self.kbs = kbs
         self.directories = directories
         self.directoryMemberships = directoryMemberships
+        self.knowledgeMemberships = knowledgeMemberships
+        self.projectRelationships = projectRelationships
+        self.projects = projects
         self.recipes = recipes
         self.chains = chains
         self.workflows = workflows
@@ -119,7 +131,7 @@ public struct ChangeSet: Codable, Equatable, Sendable {
     //   (`undecodedRecords`), never allowed to fail the set.
     // (Encoding stays synthesized: all keys out; the counter is not a CodingKey.)
     private enum CodingKeys: String, CodingKey {
-        case meetings, artifacts, notes, kbs, directories, directoryMemberships, recipes, chains, workflows, profiles, models
+        case meetings, artifacts, notes, kbs, directories, directoryMemberships, knowledgeMemberships, projectRelationships, projects, recipes, chains, workflows, profiles, models
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -147,6 +159,9 @@ public struct ChangeSet: Codable, Equatable, Sendable {
         kbs = lossy(KB.self, .kbs)
         directories = lossy(Directory.self, .directories)
         directoryMemberships = lossy(Membership.self, .directoryMemberships)
+        knowledgeMemberships = lossy(KnowledgeMembership.self, .knowledgeMemberships)
+        projectRelationships = lossy(ProjectRelationship.self, .projectRelationships)
+        projects = lossy(Project.self, .projects)
         recipes = lossy(Recipe.self, .recipes)
         chains = lossy(Chain.self, .chains)
         workflows = lossy(WorkflowDefinition.self, .workflows)
@@ -158,12 +173,16 @@ public struct ChangeSet: Codable, Equatable, Sendable {
     public var isEmpty: Bool {
         meetings.isEmpty && artifacts.isEmpty && notes.isEmpty && kbs.isEmpty
             && directories.isEmpty && directoryMemberships.isEmpty
+            && knowledgeMemberships.isEmpty && projectRelationships.isEmpty
+            && projects.isEmpty
             && recipes.isEmpty && chains.isEmpty && workflows.isEmpty && profiles.isEmpty
             && models.isEmpty
     }
     public var count: Int {
         meetings.count + artifacts.count + notes.count + kbs.count
             + directories.count + directoryMemberships.count
+            + knowledgeMemberships.count + projectRelationships.count
+            + projects.count
             + recipes.count + chains.count + workflows.count + profiles.count + models.count
     }
 }

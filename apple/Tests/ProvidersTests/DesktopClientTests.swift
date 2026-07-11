@@ -276,7 +276,7 @@ final class DesktopClientTests: XCTestCase {
             Data(#"{"output":"crew says hi","steps":["Scout: hi"]}"#.utf8))]
         let result = try await client().runChain(id: "c1", input: "go")
         XCTAssertEqual(result.output, "crew says hi")
-        XCTAssertEqual(result.steps, ["Scout: hi"])
+        XCTAssertEqual(result.steps, [.string("Scout: hi")])
         XCTAssertNil(result.artifactId)
     }
 }

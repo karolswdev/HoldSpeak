@@ -5,6 +5,34 @@ import Foundation
 // shared decoder (`.convertFromSnakeCase`); every field is optional (robust-decode
 // posture — the route carries more than the chip reads, and the payload evolves).
 
+/// One row from the hub's canonical destination/operation trust registry.
+public struct TrustDestination: Codable, Equatable, Sendable {
+    public var id: String?
+    public var name: String?
+    public var operation: String?
+    public var enabled: Bool?
+    public var destination: String?
+    public var boundary: String?
+    public var dataClass: String?
+    public var authorityBasis: String?
+    public var backgroundAbility: String?
+    public var revokeAction: String?
+    public var lastReceipt: String?
+
+    public init(id: String? = nil, name: String? = nil, operation: String? = nil,
+                enabled: Bool? = nil,
+                destination: String? = nil, boundary: String? = nil,
+                dataClass: String? = nil, authorityBasis: String? = nil,
+                backgroundAbility: String? = nil, revokeAction: String? = nil,
+                lastReceipt: String? = nil) {
+        self.id = id; self.name = name; self.operation = operation; self.enabled = enabled
+        self.destination = destination; self.boundary = boundary
+        self.dataClass = dataClass; self.authorityBasis = authorityBasis
+        self.backgroundAbility = backgroundAbility; self.revokeAction = revokeAction
+        self.lastReceipt = lastReceipt
+    }
+}
+
 /// The `trust` block: what can leave the machine right now, from config (display only).
 public struct SetupTrust: Codable, Equatable, Sendable {
     /// The web bind address ("127.0.0.1" loopback, or an off-loopback bind).
@@ -15,13 +43,18 @@ public struct SetupTrust: Codable, Equatable, Sendable {
     public var transcriptEgress: String?
     /// Whether actuators (external writes, still per-action approved) are enabled.
     public var actuatorsEnabled: Bool?
+    public var destinations: [TrustDestination]?
+    public var summary: String?
 
     public init(webBind: String? = nil, authTokenSet: Bool? = nil,
-                transcriptEgress: String? = nil, actuatorsEnabled: Bool? = nil) {
+                transcriptEgress: String? = nil, actuatorsEnabled: Bool? = nil,
+                destinations: [TrustDestination]? = nil, summary: String? = nil) {
         self.webBind = webBind
         self.authTokenSet = authTokenSet
         self.transcriptEgress = transcriptEgress
         self.actuatorsEnabled = actuatorsEnabled
+        self.destinations = destinations
+        self.summary = summary
     }
 }
 

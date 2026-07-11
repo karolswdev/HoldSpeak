@@ -36,7 +36,37 @@ enum PrimitiveKind: String {
         case .coder:                        return DioPal.cobalt
         }
     }
-    var badge: String { rawValue.uppercased() }
+    /// Native summary/actions/transcript/topics cards are Meeting projections,
+    /// not peer resources that Web or sync must invent.
+    var meetingProjection: String? {
+        switch self {
+        case .summary: return "summary"
+        case .actions: return "action_items"
+        case .transcript: return "transcript"
+        case .topics: return "topics"
+        default: return nil
+        }
+    }
+    var productTerm: CanonicalProductTerm? {
+        switch self {
+        case .meeting, .summary, .actions, .transcript, .topics: return .meeting
+        case .note: return .note
+        case .artifact: return .artifact
+        case .kb: return .knowledge
+        case .workflow: return .workflow
+        case .connector: return .integration
+        case .recipe: return .persona
+        case .chain: return .sequence
+        case .coder: return .coderSession
+        case .model: return .runsOn
+        case .game: return nil
+        }
+    }
+    var badge: String {
+        if let projection = meetingProjection { return projection.replacingOccurrences(of: "_", with: " ").uppercased() }
+        if let productTerm { return ProductLanguage.label(productTerm).uppercased() }
+        return rawValue.uppercased()
+    }
     var base: CGFloat {                       // canvas sprite size
         switch self { case .model: return 162; case .kb: return 120; case .note: return 106; case .recipe: return 104; case .chain: return 110; case .game: return 122; case .coder: return 118; default: return 130 }
     }
@@ -288,7 +318,7 @@ struct ConnectorPrimitive: DeskPrimitive {
         return paired ? "set up on your desktop" : "pair your desktop"
     }
     var sections: [PrimitiveSection] {
-        [.init(label: "CONNECTOR", tint: tint, body: .text(configured
+        [.init(label: "INTEGRATION", tint: tint, body: .text(configured
             ? "Sends to \(name) via your desktop (\(detail))."
             : (paired ? "Set \(name) up on your desktop, then send from here."
                       : "Pair your desktop to send to \(name).")))]
@@ -317,11 +347,18 @@ struct WorkflowPrimitive: DeskPrimitive {
     var color: Color { DioPal.violet }
     var base: CGFloat { 118 }
     var title: String { rec.name }
-    var subtitle: String { "a saved Ask · drop to run" }
+    var subtitle: String { rec.contract.graphJson == nil ? "a saved Ask · drop to run" : "a Workflow graph · support checked before Run" }
     var preview: String? { "drop to run" }
     var sections: [PrimitiveSection] {
-        [.init(label: "WORKFLOW", tint: DioPal.violet, body: .text("A saved Ask.")),
-         .init(label: "PROMPT", tint: DioPal.muted, body: .text(rec.prompt))]
+        var rows = [PrimitiveSection(
+            label: "WORKFLOW", tint: DioPal.violet,
+            body: .text(rec.contract.graphJson == nil ? "A saved Ask." : "A Workbench graph. Unsupported hosts refuse it without lowering."))]
+        if !rec.prompt.isEmpty { rows.append(.init(label: "PROMPT", tint: DioPal.muted, body: .text(rec.prompt))) }
+        rows.append(.init(label: "CAPABILITY", tint: DioPal.violet, body: .chips([
+            "Run \(rec.name)", "Input · Desk object", "Runs on · selected target",
+            "Effect · creates Artifact", rec.contract.graphJson == nil ? "Ready · prompt Workflow" : "Readiness · checked by host",
+        ])))
+        return rows
     }
     var accepts: [PrimitiveKind] { [.meeting, .summary, .actions, .topics, .artifact] }
 }

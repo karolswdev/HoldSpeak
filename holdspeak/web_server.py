@@ -79,8 +79,8 @@ class WebSocketManager:
         self._clients: set[Any] = set()
         self._lock = asyncio.Lock()
 
-    async def connect(self, websocket: Any) -> None:
-        await websocket.accept()
+    async def connect(self, websocket: Any, *, subprotocol: Optional[str] = None) -> None:
+        await websocket.accept(subprotocol=subprotocol)
         async with self._lock:
             self._clients.add(websocket)
 
@@ -568,6 +568,8 @@ class MeetingWebServer:
             # HSM-15-10: a server bound off-loopback requires the auth token; the
             # mesh identify endpoint surfaces that to an unpaired companion.
             mesh_requires_token=not web_auth.is_loopback_host(self.host),
+            web_host=self.host,
+            web_auth_token=self.auth_token,
         )
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_cadence_router(web_ctx))

@@ -415,9 +415,10 @@ class WebRuntime(
             unmet = sum(
                 1 for s in setup.get("sections", []) if s.get("status") in ("fail", "warn")
             )
-            if setup.get("first_run"):
-                # HS-43-06: a brand-new user gets the guided wizard.
-                print(f"  → Welcome! Get set up in a minute: open {url}/welcome")
+            if setup.get("arrival_required"):
+                # HS-92-03: first value starts on the Desk; /welcome remains a
+                # compatibility route to the same atom, never a wizard loop.
+                print(f"  → Welcome! Say your first words on the Desk: open {url}/")
             elif setup.get("overall") == "blocked":
                 suffix = f" — {unmet} thing{'' if unmet == 1 else 's'} need{'s' if unmet == 1 else ''} attention" if unmet else ""
                 print(f"  → Setup needs attention: open {url}/setup{suffix}")

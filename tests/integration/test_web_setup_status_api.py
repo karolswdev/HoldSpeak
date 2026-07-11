@@ -58,6 +58,11 @@ def test_setup_status_shape_ready(isolated_config, db_singleton, monkeypatch) ->
     # ready + first-run → the next step is the first-dictation test itself.
     assert body["primary_action"]["id"] == "first_dictation"
     assert {"web_bind", "auth_token_set", "transcript_egress"} <= set(body["trust"])
+    assert body["trust"]["destinations"]
+    assert {
+        "operation", "enabled", "destination", "boundary", "data_class", "authority_basis",
+        "background_ability", "revoke_action", "last_receipt",
+    } <= set(body["trust"]["destinations"][0])
     assert {"enabled", "available", "tier"} <= set(body["presence"])
     assert isinstance(body["sections"], list) and body["sections"]
 

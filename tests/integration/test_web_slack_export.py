@@ -361,22 +361,22 @@ def test_the_wire_events_ride_for_qlippy(
 
 
 @pytest.mark.integration
-def test_slack_url_round_trips_through_settings(client, settings_path):
+def test_slack_url_uses_write_only_settings_boundary(client, settings_path):
     res = client.put(
-        "/api/settings",
-        json={"meeting": {"slack_webhook_url": URL}},
+        "/api/settings/secrets/slack_webhook_url",
+        json={"value": URL},
     )
     assert res.status_code == 200, res.text
-    stored = client.get("/api/settings").json()["meeting"]["slack_webhook_url"]
-    assert stored == URL
+    settings = client.get("/api/settings").json()
+    assert "slack_webhook_url" not in settings["meeting"]
+    assert settings["_secrets"]["slack_webhook_url"] == {
+        "configured": True, "destination": "hooks.slack.com",
+    }
     # Clearing it turns the feature back off.
-    assert (
-        client.put(
-            "/api/settings", json={"meeting": {"slack_webhook_url": ""}}
-        ).status_code
-        == 200
-    )
-    assert client.get("/api/settings").json()["meeting"]["slack_webhook_url"] == ""
+    assert client.delete("/api/settings/secrets/slack_webhook_url").status_code == 200
+    assert client.get("/api/settings").json()["_secrets"]["slack_webhook_url"] == {
+        "configured": False,
+    }
 
 
 @pytest.mark.integration
@@ -390,7 +390,11 @@ def test_slack_url_round_trips_through_settings(client, settings_path):
     ],
 )
 def test_malformed_slack_url_refused_and_changes_nothing(client, settings_path, bad):
-    res = client.put("/api/settings", json={"meeting": {"slack_webhook_url": bad}})
+    res = client.put(
+        "/api/settings/secrets/slack_webhook_url", json={"value": bad}
+    )
     assert res.status_code == 400
-    assert "slack_webhook_url" in res.json()["error"]
-    assert client.get("/api/settings").json()["meeting"]["slack_webhook_url"] == ""
+    assert "webhook" in res.json()["error"].lower()
+    assert client.get("/api/settings").json()["_secrets"]["slack_webhook_url"] == {
+        "configured": False,
+    }

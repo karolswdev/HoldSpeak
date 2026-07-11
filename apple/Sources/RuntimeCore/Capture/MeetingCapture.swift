@@ -36,9 +36,13 @@ public final class MeetingCapture: @unchecked Sendable {
 
     private let lock = NSLock()
     private var chunks: [AudioChunk] = []
+    // Absolute frame represented by chunks[0]. Once transcript audio is
+    // committed, the corresponding PCM is dropped so memory stays flat.
+    private var bufferBaseFrames: Int = 0
     private var _state: CaptureState = .idle
     private var startedAt: Date?
     private var meetingID: String?
+    private var audioJournal: MeetingAudioJournal?
     private var lastGoodSegments: [Segment] = []   // last non-empty active-window tail (blank-pass fallback)
     private var _level: Float = 0                   // HSM-14 — smoothed mic amplitude for the live VU
     private var _capturedFrames: Int = 0            // diagnostic: total audio frames the callback delivered
@@ -97,6 +101,10 @@ public final class MeetingCapture: @unchecked Sendable {
     /// loudest raw RMS seen this run. `capturedFrames == 0` ⇒ no audio is reaching us at all.
     public var capturedFrames: Int { locked { _capturedFrames } }
     public var peakLevel: Float { locked { _peakLevel } }
+    /// Test/diagnostic proof that capture memory is the active tail, not the take.
+    public var bufferedFrames: Int {
+        locked { chunks.reduce(0) { $0 + $1.frameCount } }
+    }
     private func updateLevel(_ chunk: AudioChunk) {
         guard !chunk.samples.isEmpty else { return }
         var sum: Float = 0
@@ -114,10 +122,26 @@ public final class MeetingCapture: @unchecked Sendable {
 
     /// Begin a recording. Audio accumulates on-device; the live transcript starts empty.
     public func start() {
-        locked { chunks.removeAll(); lastGoodSegments = []; committedSegments = []; committedFrames = 0; _level = 0; _capturedFrames = 0; _peakLevel = 0; startedAt = now(); meetingID = makeID(); _state = .recording(liveTranscript: "") }
+        let started = now()
+        let id = makeID()
+        locked { chunks.removeAll(); bufferBaseFrames = 0; lastGoodSegments = []; committedSegments = []; committedFrames = 0; _level = 0; _capturedFrames = 0; _peakLevel = 0; startedAt = started; meetingID = id; _state = .recording(liveTranscript: "") }
+        // HS-92-04: the identity and provenance become durable before capture
+        // starts accepting callbacks. A storage failure leaves the microphone
+        // unopened and gives the UI a retryable, non-ghost Meeting failure.
+        let provisional = Self.provisionalMeeting(id: id, started: started, segments: [], detail: "Recording started on device")
+        do { try store.save(provisional) }
+        catch { setState(.failed("could not create Meeting: \(error)")); return }
+        guard let journal = MeetingAudioJournal(meetingID: id, sampleRate: sampleRate) else {
+            let failed = Self.provisionalMeeting(id: id, started: started, segments: [], detail: "Audio journal unavailable · Retry or Discard")
+            try? store.save(failed)
+            setState(.failed("audio journal unavailable; Meeting retained for Retry or Discard"))
+            return
+        }
+        locked { audioJournal = journal }
         do {
             try capture.start { [weak self] chunk in
                 guard let self else { return }
+                self.locked { self.audioJournal }?.append(chunk.samples)
                 self.locked { self.chunks.append(chunk) }
                 self.updateLevel(chunk)
             }
@@ -133,14 +157,20 @@ public final class MeetingCapture: @unchecked Sendable {
     /// transcript only grows. The window's settled front is committed once it passes
     /// `commitThresholdSeconds`, so the per-tick cost stays constant on a long meeting.
     public func tick() async {
-        guard case .recording = state else { return }
-        let (captured, fromFrame) = locked { (chunks, committedFrames) }
+        switch state {
+        case .recording, .recoverable: break
+        default: return
+        }
+        let (captured, fromFrame) = locked { (chunks, max(0, committedFrames - bufferBaseFrames)) }
         guard !captured.isEmpty else { return }
         let window = Self.windowChunks(captured, fromFrame: fromFrame)
         guard !window.chunks.isEmpty else { return }
         let windowSegs = (try? await makeTranscriber(window.chunks).transcribe()) ?? []
         locked {
-            guard case .recording = _state else { return }
+            switch _state {
+            case .recording, .recoverable: break
+            default: return
+            }
             var tail: [Segment]
             if windowSegs.isEmpty {
                 tail = lastGoodSegments                       // blank window → hold the last good tail, never commit
@@ -153,8 +183,15 @@ public final class MeetingCapture: @unchecked Sendable {
                     if commitCount > 0 {
                         let base = Double(committedFrames) / Double(sampleRate)
                         committedSegments.append(contentsOf: windowSegs[..<commitCount].map { Self.shifted($0, by: base) })
-                        committedFrames += Int((windowSegs[commitCount - 1].endTime * Double(sampleRate)).rounded())
-                        tail = Array(windowSegs[commitCount...])
+                        let advanced = Int((windowSegs[commitCount - 1].endTime * Double(sampleRate)).rounded())
+                        committedFrames += advanced
+                        tail = Array(windowSegs[commitCount...]).map {
+                            Self.shifted($0, by: -Double(advanced) / Double(sampleRate))
+                        }
+                        // The prefix is now durable transcript truth; keep only
+                        // its overlap/tail audio instead of the whole take.
+                        chunks = Self.droppingFrames(chunks, count: advanced)
+                        bufferBaseFrames = committedFrames
                     }
                 }
                 lastGoodSegments = tail
@@ -163,18 +200,52 @@ public final class MeetingCapture: @unchecked Sendable {
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             _state = .recording(liveTranscript: text)
         }
+
+        // Checkpoint the same Meeting id after each successful live pass. The
+        // SQLite adapter writes this atomically; interruption loses at most one
+        // bounded active window and relaunch lists the provisional Meeting.
+        let checkpoint = locked { () -> Meeting? in
+            guard let id = meetingID, let started = startedAt else { return nil }
+            let tail = lastGoodSegments.map {
+                Self.shifted($0, by: Double(committedFrames) / Double(sampleRate))
+            }
+            return Self.provisionalMeeting(
+                id: id, started: started, segments: committedSegments + tail,
+                detail: "Recording on device · checkpointed"
+            )
+        }
+        if var checkpoint {
+            let journal = locked { audioJournal }
+            journal?.checkpoint()
+            if let error = journal?.lastError {
+                checkpoint.captureStatus = "recoverable"
+                checkpoint.captureFailure = "Audio checkpoint failed: \(error)"
+                checkpoint.intelStatus = IntelStatus(
+                    state: "partial",
+                    detail: "Meeting saved through the last durable audio checkpoint · Retry or Discard"
+                )
+                try? store.save(checkpoint)
+                setState(.recoverable(checkpoint, checkpoint.captureFailure ?? error))
+            } else {
+                do { try store.save(checkpoint) }
+                catch { setState(.recoverable(checkpoint, "checkpoint failed: \(error)")) }
+            }
+        }
     }
 
     /// Stop capture, transcribe the full take, persist the meeting, and return it. Lands
     /// in `.saved` (or `.failed`). The persisted meeting reopens intact via `load`.
     @discardableResult
     public func stop() async -> Meeting? {
-        guard case .recording = state else { return nil }
+        switch state {
+        case .recording, .recoverable: break
+        default: return nil
+        }
         do { try capture.stop() }
         catch { setState(.failed(String(describing: error))); return nil }
 
-        let (captured, prefix, fromFrame, lastGood) =
-            locked { (chunks, committedSegments, committedFrames, lastGoodSegments) }
+        let (captured, prefix, fromFrame, absoluteBaseFrame, lastGood) =
+            locked { (chunks, committedSegments, max(0, committedFrames - bufferBaseFrames), committedFrames, lastGoodSegments) }
         let started = locked { startedAt } ?? now()
         let id = locked { meetingID } ?? makeID()
         let ended = now()
@@ -193,7 +264,7 @@ public final class MeetingCapture: @unchecked Sendable {
         } else {
             let window = Self.windowChunks(captured, fromFrame: fromFrame)
             let tailSegs = (try? await makeTranscriber(window.chunks).transcribe()) ?? []
-            let base = Double(fromFrame) / Double(sampleRate)
+            let base = Double(absoluteBaseFrame) / Double(sampleRate)
             let raw = tailSegs.isEmpty ? lastGood : tailSegs
             segments = prefix + raw.map { Self.shifted($0, by: base) }
         }
@@ -201,26 +272,41 @@ public final class MeetingCapture: @unchecked Sendable {
         // HSM-14-17 — on-device speaker diarization (opt-in). With the diarizer injected, label the
         // final segments by who spoke each, over the full captured take's PCM16. Off the main thread
         // (model inference); when no diarizer is injected this whole block is skipped (byte-identical).
+        // Only the bounded active tail remains resident; the full take lives in
+        // the append-only journal. Long-take diarization is explicitly deferred
+        // rather than pretending the active tail represents the whole Meeting.
         let pcm = captured.flatMap { $0.samples }
         var labelled = segments
-        if let diarize, !segments.isEmpty {
+        if let diarize, prefix.isEmpty, !segments.isEmpty {
             let sr = sampleRate
             labelled = await Task.detached(priority: .userInitiated) {
                 diarize(segments, pcm, sr)
             }.value
         }
 
-        let meeting = Meeting(
+        var meeting = Meeting(
             id: id, startedAt: started, endedAt: ended,
             duration: ended.timeIntervalSince(started),
             title: nil, segments: labelled,
-            intelStatus: IntelStatus(state: "none"),
-            micLabel: "On-device", remoteLabel: "")
+            intelStatus: IntelStatus(
+                state: prefix.isEmpty ? "none" : "queued",
+                detail: prefix.isEmpty ? nil : "Full-take diarization can be retried from durable audio"
+            ),
+            micLabel: "On-device", remoteLabel: "",
+            captureStatus: "finalized", captureCheckpointAt: ended,
+            captureCheckpointSeconds: ended.timeIntervalSince(started),
+            provenance: "native")
 
         // Persist the full captured take as a replayable WAV keyed by the meeting id, so the detail
         // view can play back any one segment to judge its speaker label. Best-effort: a write failure
         // here must never break stop/persist, so this is fire-and-forget with no error propagation.
-        MeetingAudioStore(sampleRate: sampleRate).save(pcm, for: id)
+        let journal = locked { audioJournal }
+        if journal?.finalize() == nil {
+            meeting.intelStatus = IntelStatus(
+                state: "partial",
+                detail: "Meeting saved; audio finalization failed. Retry from the durable capture journal."
+            )
+        }
 
         do {
             try store.save(meeting)
@@ -237,6 +323,46 @@ public final class MeetingCapture: @unchecked Sendable {
 
     /// Reopen a recording by id (the persistence round-trip the list relies on).
     public func reopen(id: String) -> Meeting? { try? store.load(id: id) }
+
+    @discardableResult
+    public func recover(id: String) throws -> Meeting? {
+        guard var meeting = try store.load(id: id) else { return nil }
+        guard meeting.captureStatus != "finalized" else { return meeting }
+        let recoveredAt = meeting.captureCheckpointAt ?? now()
+        meeting.endedAt = recoveredAt
+        meeting.duration = max(0, recoveredAt.timeIntervalSince(meeting.startedAt))
+        meeting.captureStatus = "recovered"
+        meeting.captureFailure = nil
+        meeting.intelStatus = IntelStatus(
+            state: "partial",
+            detail: "Meeting saved through its last durable checkpoint · Retry remaining intelligence or Skip"
+        )
+        _ = MeetingAudioJournal.recover(meetingID: id)
+        try store.save(meeting)
+        return meeting
+    }
+
+    public func discard(id: String) throws {
+        try store.delete(id: id, at: now())
+        MeetingAudioJournal.discard(meetingID: id)
+    }
+
+    /// Apply the Desk's reconciled Meeting set back to the capture-owned store.
+    /// The list and detail views therefore reopen the exact records pulled from
+    /// the hub; tombstones remain tombstones instead of resurrecting on refresh.
+    public func applySyncedMeetings(_ meetings: [Meeting],
+                                    modified: [String: Date],
+                                    tombstones: [String: Date]) throws {
+        let incoming = Set(meetings.map(\.id))
+        for current in try store.list() where !incoming.contains(current.id) {
+            if let deletedAt = tombstones["meeting:\(current.id)"] {
+                try store.delete(id: current.id, at: deletedAt)
+            }
+        }
+        for meeting in meetings {
+            try store.save(meeting, modifiedAt: modified[meeting.id] ?? meeting.endedAt ?? meeting.startedAt)
+        }
+    }
 
     // MARK: - internals
 
@@ -272,6 +398,33 @@ public final class MeetingCapture: @unchecked Sendable {
                 startTime: s.startTime + base, endTime: s.endTime + base,
                 isBookmarked: s.isBookmarked, deviceId: s.deviceId)
     }
+
+    static func droppingFrames(_ all: [AudioChunk], count: Int) -> [AudioChunk] {
+        guard count > 0 else { return all }
+        var remaining = count
+        var out: [AudioChunk] = []
+        for chunk in all {
+            if remaining >= chunk.frameCount { remaining -= chunk.frameCount; continue }
+            if remaining > 0 {
+                out.append(AudioChunk(samples: Array(chunk.samples[remaining...]), sequence: chunk.sequence))
+                remaining = 0
+            } else { out.append(chunk) }
+        }
+        return out
+    }
+
+    private static func provisionalMeeting(id: String, started: Date,
+                                           segments: [Segment], detail: String) -> Meeting {
+        Meeting(id: id, startedAt: started, endedAt: nil, duration: nil,
+                title: nil, segments: segments,
+                intelStatus: IntelStatus(state: "recording", detail: detail),
+                micLabel: "On-device", remoteLabel: "",
+                captureStatus: detail.contains("unavailable") ? "capture_failed" : "recording",
+                captureFailure: detail.contains("unavailable") ? detail : nil,
+                captureCheckpointAt: Date(),
+                captureCheckpointSeconds: segments.last?.endTime ?? 0,
+                provenance: "native")
+    }
 }
 
 /// Where the capture loop reads + writes recordings. Narrower than `IStorage` (no
@@ -279,8 +432,15 @@ public final class MeetingCapture: @unchecked Sendable {
 /// `SQLiteStorage` to it.
 public protocol MeetingStore: Sendable {
     func save(_ meeting: Meeting) throws
+    func save(_ meeting: Meeting, modifiedAt: Date) throws
+    func delete(id: String, at: Date) throws
     func list() throws -> [Meeting]
     func load(id: String) throws -> Meeting?
+}
+
+public extension MeetingStore {
+    func save(_ meeting: Meeting, modifiedAt: Date) throws { try save(meeting) }
+    func delete(id: String, at: Date) throws { }
 }
 
 /// The capture screen's state — drives Record/Stop and the live transcript view.
@@ -288,5 +448,8 @@ public enum CaptureState: Sendable, Equatable {
     case idle
     case recording(liveTranscript: String)
     case saved(Meeting)
+    /// Audio is still held and Stop remains available, but the latest durable
+    /// checkpoint failed. UI offers Retry/Discard without claiming completion.
+    case recoverable(Meeting, String)
     case failed(String)
 }

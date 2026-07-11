@@ -39,13 +39,14 @@ def test_setup_route_serves_the_setup_page() -> None:
         assert "npm run build" in resp.text
 
 
-def test_dashboard_has_the_first_run_guard() -> None:
+def test_dashboard_owns_first_value_without_redirecting() -> None:
     resp = _client().get("/")
     assert resp.status_code == 200
     desk = (_REPO / "web" / "src" / "desk" / "DeskApp.tsx").read_text()
-    assert "setup?.first_run" in desk
-    assert 'navigate("/welcome"' in desk
-    assert 'navigate("/setup"' in desk
+    assert "setup?.arrival_required" in desk
+    assert "arrivalRequired" in desk
+    assert 'navigate("/welcome"' not in desk
+    assert 'navigate("/setup"' not in desk
 
 
 # ── the CLI launch nudge (WebRuntime._print_setup_nudge) ──────────────
@@ -63,13 +64,13 @@ def _nudge_output(monkeypatch, status: dict) -> str:
     return buf.getvalue()
 
 
-def test_cli_nudge_points_first_run_user_at_the_wizard(monkeypatch) -> None:
-    # HS-43-06: a first-run user is pointed at the /welcome wizard.
+def test_cli_nudge_points_first_run_user_at_the_desk(monkeypatch) -> None:
     out = _nudge_output(
         monkeypatch,
-        {"first_run": True, "overall": "needs_attention", "primary_action": None, "sections": []},
+        {"first_run": True, "arrival_required": True, "overall": "needs_attention", "primary_action": None, "sections": []},
     )
-    assert "/welcome" in out
+    assert "open http://127.0.0.1:9999/" in out
+    assert "/welcome" not in out
     assert "Welcome" in out
 
 

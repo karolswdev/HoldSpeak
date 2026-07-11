@@ -74,6 +74,10 @@ final class SQLiteMeetingStore: MeetingStore, @unchecked Sendable {
         storage = try SQLiteStorage(path: docs.appendingPathComponent("meetings.sqlite").path)
     }
     func save(_ meeting: Meeting) throws { try storage.saveMeeting(meeting) }
+    func save(_ meeting: Meeting, modifiedAt: Date) throws {
+        try storage.saveMeeting(meeting, modifiedAt: modifiedAt)
+    }
+    func delete(id: String, at: Date) throws { try storage.deleteMeeting(id: id, at: at) }
     func load(id: String) throws -> Meeting? { try storage.loadMeeting(id: id) }
     func list() throws -> [Meeting] {
         try storage.allMeetings().sorted { $0.modifiedAt > $1.modifiedAt }.map(\.meeting)

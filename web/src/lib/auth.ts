@@ -45,7 +45,17 @@ export function authenticatedHeaders(initial?: HeadersInit): Headers {
 export function websocketUrl(path = "/ws"): string {
   const url = new URL(path, window.location.href);
   url.protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const token = authToken();
-  if (token) url.searchParams.set("token", token);
   return url.toString();
+}
+
+/** Browser WebSockets cannot set Authorization headers. Offer the credential
+ * as a subprotocol header so it never enters the URL, history, or access logs. */
+export function websocketProtocols(): string[] {
+  const token = authToken();
+  if (!token) return ["holdspeak.v1"];
+  const bytes = new TextEncoder().encode(token);
+  let binary = "";
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  const encoded = window.btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+  return ["holdspeak.v1", `holdspeak.auth.v1.${encoded}`];
 }

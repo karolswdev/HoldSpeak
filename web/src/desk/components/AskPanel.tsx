@@ -30,6 +30,8 @@ import {
 import { GroundingSection } from "./GroundingSection";
 import { RailsPicker } from "./RailsPicker";
 import { MicButton } from "./MicButton";
+import { apiRequest } from "../../lib/api";
+import { qualifiedRef } from "../api";
 
 export function AskPanel() {
   const items = useDesk((s) => s.items);
@@ -50,12 +52,24 @@ export function AskPanel() {
   const [grounding, setGrounding] =
     useState<GroundingSelection>(emptyGrounding());
   const [rails, setRails] = useState<RailsPick[]>([]);
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const ref = useRef<HTMLDivElement | null>(null);
 
   const context = useMemo(
     () => askContexts(items, selectedIds),
     [items, selectedIds],
   );
+  useEffect(() => {
+    apiRequest("/api/projects").then((response) => response.json())
+      .then((body) => setProjects((body.projects || []).filter((project: any) => !project.is_archived)))
+      .catch(() => setProjects([]));
+  }, []);
+  const groundableResources = useMemo(() => [
+    ...(items.note || []).map((item) => ({ ref: qualifiedRef("note", item.id), kind: "Note", id: item.id, title: String(item.title || item.id) })),
+    ...(items.kb || []).map((item) => ({ ref: qualifiedRef("kb", item.id), kind: "Knowledge", id: item.id, title: String(item.name || item.id) })),
+    ...(items.directory || []).map((item) => ({ ref: qualifiedRef("directory", item.id), kind: "Zone", id: item.id, title: String(item.name || item.id) })),
+    ...projects.map((project) => ({ ref: `project:${project.id}`, kind: "Project", id: project.id, title: project.name || project.id })),
+  ], [items, projects]);
   // The context is pinned at print time so keep records what was actually read
   // even if the selection changes underneath. Grounding rows join it at print
   // time (the receipts rule): the kept ask names what grounded the answer.
@@ -110,7 +124,7 @@ export function AskPanel() {
       ...context,
       ...groundingReceiptRows(grounding)
         .filter((g) => !context.some((c) => c.id === g.id))
-        .map((g) => ({ id: g.id, kind: "grounding", title: g.title })),
+        .map((g) => ({ id: g.id, kind: g.kind, ref: g.ref, title: g.title })),
     ];
     const r = await runAsk({
       prompt: prompt.trim(),
@@ -274,6 +288,7 @@ export function AskPanel() {
                 title: String(m.title || "Untitled meeting"),
                 startedAt: (m as any).startedAt,
               }))}
+              resources={groundableResources}
               selection={grounding}
               onChange={setGrounding}
               limitTokens={limitTokens}

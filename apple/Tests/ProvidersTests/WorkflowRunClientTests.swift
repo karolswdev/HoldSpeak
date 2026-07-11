@@ -65,7 +65,25 @@ final class WorkflowRunClientTests: XCTestCase {
          "failure_policy": "skip", "runs_on": "onDevice", "status": "ok"}
       ],
       "sources": [{"source_type": "workflow", "source_ref": "wf-1"}],
-      "artifact_id": "art_123"
+      "artifact_id": "art_123",
+      "result_ref": "artifact:art_123",
+      "invocation_id": "invocation_1",
+      "correlation_id": "invocation_1",
+      "invocation": {
+        "id": "invocation_1", "correlation_id": "invocation_1",
+        "definition_ref": "workflow:wf-1", "initiator": "owner",
+        "grounding_refs": ["note:n1"], "requested_placement": "this_machine",
+        "input_snapshot": {"input": "the meeting"}, "state": "succeeded",
+        "result_ref": "artifact:art_123", "error": null,
+        "created_at": "2026-07-11T12:00:00Z", "updated_at": "2026-07-11T12:00:01Z",
+        "completed_at": "2026-07-11T12:00:01Z",
+        "attempts": [{
+          "id": "attempt_1", "invocation_id": "invocation_1", "attempt_index": 1,
+          "destination": "this_machine", "provider": "local", "state": "succeeded",
+          "error": null, "result_ref": "artifact:art_123",
+          "started_at": "2026-07-11T12:00:00Z", "completed_at": "2026-07-11T12:00:01Z"
+        }]
+      }
     }
     """#
 
@@ -80,6 +98,10 @@ final class WorkflowRunClientTests: XCTestCase {
         XCTAssertEqual(result.output, "risk: the demo")
         XCTAssertEqual(result.provider, "local")
         XCTAssertEqual(result.artifactId, "art_123")
+        XCTAssertEqual(result.resultRef, "artifact:art_123")
+        XCTAssertEqual(result.invocationId, "invocation_1")
+        XCTAssertEqual(result.invocation?.definitionRef, "workflow:wf-1")
+        XCTAssertEqual(result.invocation?.attempts.first?.destination, "this_machine")
         XCTAssertNil(result.warning)
         XCTAssertEqual(result.steps?.count, 2)
         XCTAssertEqual(result.steps?[0].nodeId, "n1")
@@ -88,8 +110,8 @@ final class WorkflowRunClientTests: XCTestCase {
         XCTAssertEqual(result.steps?[1].runsOn, "onDevice")
     }
 
-    func testWarningRefusalDecodes() async throws {
-        // A refused graph: prompt fallback ran, no steps, the honest warning rides.
+    func testLegacyWarningStillDecodes() async throws {
+        // Backward compatibility with a pre-HS-92-06 hub that lowered graphs.
         let body = #"{"workflow_id": "wf-1", "output": "OUT", "provider": "local", "warning": "control-flow nodes present; prompt fallback ran", "artifact_id": "art_9"}"#
         StubProtocol.routes = ["/api/workflows/wf-1/run": (200, Data(body.utf8))]
         let result = try await client().runWorkflow(id: "wf-1", input: "x")

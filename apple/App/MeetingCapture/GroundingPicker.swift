@@ -21,6 +21,7 @@ private func haptic(_ s: HapticStub) {}
 struct GroundingPicker: View {
     let meetings: [Meeting]                        // newest first (the stage sorts)
     let artifactsFor: (Meeting) -> [OutputRecord]  // the meeting's drawer (bound artifacts)
+    let resources: [GroundingSelection.Resource]
     let contextLimit: Int                          // the run target's usable window
     let tokensFor: (GroundingSelection) -> Int     // the stage's envelope estimator
     @Binding var selection: GroundingSelection
@@ -51,7 +52,7 @@ struct GroundingPicker: View {
                 .font(.system(size: 20, weight: .bold)).foregroundStyle(DioPal.cobalt)
             VStack(alignment: .leading, spacing: 1) {
                 Text("Ground this ask").font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.text)
-                Text(selection.isEmpty ? "Pick the meetings this question is about" : selection.summaryLabel)
+                Text(selection.isEmpty ? "Pick Meetings, Notes, Knowledge, Zones, or Projects" : selection.summaryLabel)
                     .font(.system(size: 11, weight: .semibold, design: .rounded)).foregroundStyle(DioPal.muted)
             }
             Spacer(minLength: 0)
@@ -79,10 +80,56 @@ struct GroundingPicker: View {
                     }.frame(maxWidth: .infinity).padding(.top, 40)
                 }
                 ForEach(meetings, id: \.id) { m in meetingRow(m) }
+                if !resources.isEmpty {
+                    Text("DESK OBJECTS AND COLLECTIONS")
+                        .font(.system(size: 9.5, weight: .black, design: .rounded))
+                        .tracking(1.3).foregroundStyle(DioPal.muted)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 8)
+                    ForEach(resources, id: \.ref) { resource in resourceRow(resource) }
+                }
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
         .frame(maxHeight: .infinity)
+    }
+
+    private func resourceRow(_ resource: GroundingSelection.Resource) -> some View {
+        let picked = selection.resources.contains(where: { $0.ref == resource.ref })
+        return Button {
+            haptic(.light)
+            withAnimation {
+                if let index = selection.resources.firstIndex(where: { $0.ref == resource.ref }) {
+                    selection.resources.remove(at: index)
+                } else { selection.resources.append(resource) }
+            }
+        } label: {
+            HStack(spacing: 11) {
+                Image(systemName: picked ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(picked ? DioPal.cobalt : DioPal.muted.opacity(0.55))
+                Image(systemName: resourceIcon(resource.kind))
+                    .frame(width: 28).foregroundStyle(DioPal.violet)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(resource.title).font(.system(size: 13.5, weight: .heavy, design: .rounded))
+                        .foregroundStyle(DioPal.text).lineLimit(1)
+                    Text(resource.kind).font(.system(size: 10.5, weight: .semibold, design: .rounded))
+                        .foregroundStyle(DioPal.muted)
+                }
+                Spacer(minLength: 0)
+            }.padding(.horizontal, 12).padding(.vertical, 10)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(picked ? "Remove" : "Ground on") \(resource.kind) \(resource.title)")
+        .background(RoundedRectangle(cornerRadius: 15, style: .continuous)
+            .fill(picked ? DioPal.cobalt.opacity(0.09) : Color.white.opacity(0.035))
+            .overlay(RoundedRectangle(cornerRadius: 15).strokeBorder(
+                picked ? DioPal.cobalt.opacity(0.4) : Color.white.opacity(0.07))))
+    }
+
+    private func resourceIcon(_ kind: String) -> String {
+        switch kind { case "Note": return "note.text"; case "Knowledge": return "diamond.fill"
+        case "Zone": return "square.stack.3d.up"; case "Project": return "folder.fill"
+        default: return "doc.text" }
     }
 
     private func meetingRow(_ m: Meeting) -> some View {

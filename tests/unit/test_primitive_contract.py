@@ -55,6 +55,9 @@ KIND_BUCKETS = {
     "workflow": "workflows",
     "directory": "directories",
     "directory_membership": "directory_memberships",
+    "knowledge_membership": "knowledge_memberships",
+    "project_relationship": "project_relationships",
+    "project": "projects",
     "profile": "profiles",
     "model": "models",
 }
@@ -108,6 +111,9 @@ def pull_body(tmp_path, monkeypatch):
     db.workflows.upsert(workflow_id="w1", name="W", prompt="p")
     db.directories.upsert(directory_id="Atlas/Q3", name="Q3", parent_id="Atlas")
     db.directory_memberships.upsert(primitive_id="n1", directory_id="Atlas/Q3")
+    db.knowledge_memberships.upsert(knowledge_id="kb1", resource_ref="note:n1")
+    db.projects.create_project(project_id="p-work", name="Work")
+    db.project_relationships.upsert(project_id="p-work", resource_ref="note:n1")
     db.profiles.upsert(profile_id="p1", name="lan", kind="openAICompatible",
                        base_url="http://example.test/v1", model="m")
     db.model_manifests.upsert(manifest_id="iPad:q.gguf", node="iPad", name="q",
@@ -200,7 +206,7 @@ class TestWebShapesCannotInventFields:
         "Note": "note",
         "Directory": "directory",
         "KB": "kb",
-        "Agent": "recipe",
+        "Persona": "recipe",
         "Chain": "chain",
         "Workflow": "workflow",
     }

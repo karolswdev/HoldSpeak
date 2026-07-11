@@ -93,7 +93,7 @@ struct DeskHome: View {
             }
             .background(Sig.bg.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
-            .alert(newIsKB ? "New Knowledge Base" : "New Directory", isPresented: $showNewFolder) {
+            .alert(newIsKB ? "New Knowledge" : "New Zone", isPresented: $showNewFolder) {
                 TextField("Name", text: $newFolderName)
                 Button("Create") {
                     let n = newFolderName.trimmingCharacters(in: .whitespaces)
@@ -103,7 +103,7 @@ struct DeskHome: View {
                 }
                 Button("Cancel", role: .cancel) { newFolderName = "" }
             } message: { Text(newIsKB ? "A knowledge base classifies what you file into it; open it to spill its contents."
-                                       : "Group meetings into a directory you organize yourself.") }
+                                       : "Place meetings in a Zone you organize yourself.") }
         }
         .tint(Sig.accent)
         .onAppear { model.refresh() }
@@ -556,7 +556,7 @@ struct DeskSidebar: View {
                             .padding(.trailing, 6)
                     }.padding(.top, 14)
                     if userFolders.isEmpty {
-                        Text("Lasso cards on the desk, then\nFile them into a directory.")
+                        Text("Lasso cards on the Desk, then\nmove them into a Zone.")
                             .font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint).padding(.leading, 9).padding(.top, 2)
                     } else {
                         ForEach(userFolders, id: \.self) { userRow($0) }
@@ -621,14 +621,14 @@ struct DeskSelectionBar: View {
             Button(action: onBundle) { plain("Bundle", "circle.grid.3x3.fill") }.buttonStyle(PressableCard())
             Menu {
                 if !knowledgeBases.isEmpty {
-                    Section("Knowledge bases") { ForEach(knowledgeBases, id: \.self) { k in Button { onFile(k) } label: { Label(k, systemImage: "sparkles") } } }
+                    Section("Knowledge") { ForEach(knowledgeBases, id: \.self) { k in Button { onFile(k) } label: { Label(k, systemImage: "sparkles") } } }
                 }
                 if !directories.isEmpty {
-                    Section("Directories") { ForEach(directories, id: \.self) { f in Button { onFile(f) } label: { Label(f, systemImage: "folder") } } }
+                    Section("Zones") { ForEach(directories, id: \.self) { f in Button { onFile(f) } label: { Label(f, systemImage: "folder") } } }
                 }
                 Divider()
-                Button { onNewKB() } label: { Label("New Knowledge Base…", systemImage: "sparkles") }
-                Button { onNewFolder() } label: { Label("New Directory…", systemImage: "folder.badge.plus") }
+                Button { onNewKB() } label: { Label("New Knowledge…", systemImage: "sparkles") }
+                Button { onNewFolder() } label: { Label("New Zone…", systemImage: "folder.badge.plus") }
             } label: { filled("File to", "tray.and.arrow.down.fill") }
             Button(action: onClear) {
                 Image(systemName: "xmark").font(.system(size: 12, weight: .black)).foregroundStyle(Sig.muted)

@@ -12,10 +12,10 @@ before any outbound call:
   1. **status** — refuses anything that isn't `approved` (no execution).
   2. **policy gate** — the master `allow_actuators` switch must be on, and (if a
      per-project allow-list is supplied) the actuator id must be on it.
-  3. **payload parity** — the side effect is built from the proposal's stored
-     `payload` (the source of truth). When the approval layer passes the hash it
-     approved, a mismatch aborts to `failed` with **no** outbound call (TOCTOU
-     guard).
+  3. **authority parity** — payload, normalized destination, material preview,
+     renderer version, effect class, and policy version must all equal the
+     durable binding captured at approval time. Any mismatch aborts to `failed`
+     with **no** outbound call.
   4. **egress** — routes through the injected `connector` (HS-37-05 supplies one
      backed by the Phase-25-gated connector runtime; this module is
      connector-agnostic and never opens a socket itself).
@@ -29,10 +29,9 @@ the approval and retry); parity and connector failures transition the proposal t
 """
 from __future__ import annotations
 
-import hashlib
-import json
 from typing import Any, Callable, Iterable, Optional
 
+from ..actuator_authority import AuthorityBinding, authority_binding, payload_hash
 from ..logging_config import get_logger
 from .actuators import ActuatorProposal
 
@@ -50,12 +49,6 @@ class ActuatorExecutionError(RuntimeError):
 
 class ActuatorPolicyError(PermissionError):
     """Execution is refused by the governance gate (no state change)."""
-
-
-def payload_hash(payload: Optional[dict[str, Any]]) -> str:
-    """Stable hash of a proposal payload — the parity identity."""
-    canonical = json.dumps(payload or {}, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
 class ActuatorExecutor:
@@ -89,7 +82,7 @@ class ActuatorExecutor:
         )
         self._actor = str(actor).strip() or "executor"
 
-    def execute(self, proposal_id: str, *, approved_payload_hash: Optional[str] = None) -> Any:
+    def execute(self, proposal_id: str) -> Any:
         """Execute an approved proposal; returns the updated proposal record.
 
         Raises `KeyError` (unknown), `ActuatorExecutionError` (not approved), or
@@ -116,27 +109,46 @@ class ActuatorExecutor:
                 f"actuator '{proposal.plugin_id}' is not on the project allow-list"
             )
 
-        # 3. payload parity (TOCTOU) — what executes must equal what was approved.
-        current_hash = payload_hash(proposal.payload)
-        if approved_payload_hash is not None and approved_payload_hash != current_hash:
+        # 3. Mandatory material-authority parity (TOCTOU). The caller cannot
+        # supply or bypass authority: approval persistence is the source of
+        # truth, and every field is recomputed from the row immediately before
+        # egress using the current renderer/policy versions.
+        current_binding = authority_binding(
+            target=proposal.target,
+            action=proposal.action,
+            preview=proposal.preview,
+            payload=proposal.payload,
+        )
+        approved_binding = AuthorityBinding(
+            payload_hash=proposal.approved_payload_hash or "",
+            normalized_destination=proposal.approved_destination or "",
+            preview_hash=proposal.approved_preview_hash or "",
+            preview_renderer_version=proposal.preview_renderer_version or "",
+            effect_class=proposal.effect_class or "",
+            policy_version=proposal.policy_version or "",
+        )
+        mismatches = [
+            name
+            for name in AuthorityBinding.__dataclass_fields__
+            if getattr(approved_binding, name) != getattr(current_binding, name)
+        ]
+        if mismatches:
             log.warning(
-                "actuator payload parity mismatch for %s (approved %s != current %s)",
+                "actuator authority mismatch for %s (%s)",
                 proposal_id,
-                approved_payload_hash[:12],
-                current_hash[:12],
+                ", ".join(mismatches),
             )
             updated = self._db.actuators.transition_proposal(
                 proposal_id,
                 to_status="failed",
                 actor=self._actor,
-                detail=(
-                    f"payload parity mismatch (approved {approved_payload_hash[:12]} "
-                    f"!= current {current_hash[:12]})"
-                ),
-                error="payload parity check failed — execution aborted, no side effect performed",
+                detail=f"authority mismatch: {', '.join(mismatches)}",
+                error="approval authority check failed — execution aborted, no side effect performed",
             )
             self._notify_result(updated)
             return updated
+
+        current_hash = current_binding.payload_hash
 
         # 4. egress via the injected connector (never a socket from here). The
         #    side effect is built from the stored payload, not any caller input.

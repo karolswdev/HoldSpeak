@@ -633,4 +633,8 @@ def test_ipad_synced_graph_workflow_runs_on_the_hub(env, monkeypatch) -> None:
 
     # The run persisted as a run-born artifact with the workflow as its lineage.
     assert body["artifact_id"]
-    assert body["sources"] == [{"source_type": "workflow", "source_ref": "wf-golden"}]
+    assert [row["source_type"] for row in body["sources"]] == [
+        "workflow", "invocation", "attempt"
+    ]
+    assert body["invocation"]["definition_ref"] == "workflow:wf-golden"
+    assert body["invocation"]["result_ref"] == f"artifact:{body['artifact_id']}"

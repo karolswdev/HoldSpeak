@@ -11,6 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
 
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
@@ -56,6 +57,50 @@ def test_nonloopback_runtime_requires_token():
     # Static assets stay open (no secrets; needed to render a token prompt).
     # A missing asset is 404, never 401 — proving the gate let it through.
     assert client.get("/_built/does-not-exist.js").status_code != 401
+
+
+def test_general_websocket_matches_the_off_loopback_http_policy():
+    cb = _callbacks()
+
+    loopback = MeetingWebServer(
+        WebRuntimeCallbacks(**cb), host="127.0.0.1", auth_token=""
+    )
+    with TestClient(loopback.app).websocket_connect(
+        "/ws", subprotocols=["holdspeak.v1"]
+    ) as socket:
+        assert socket.accepted_subprotocol == "holdspeak.v1"
+        assert socket.receive_json()["type"] == "duration"
+        socket.send_text("ping")
+        assert socket.receive_text() == "pong"
+
+    remote = MeetingWebServer(
+        WebRuntimeCallbacks(**cb), host="0.0.0.0", auth_token="s3cret"
+    )
+    client = TestClient(remote.app)
+    for protocols in (
+        ["holdspeak.v1"],
+        ["holdspeak.v1", "holdspeak.auth.wrong"],
+    ):
+        with pytest.raises(WebSocketDisconnect):
+            with client.websocket_connect("/ws", subprotocols=protocols):
+                pass
+
+    from holdspeak.web_auth import websocket_auth_protocol
+
+    with client.websocket_connect(
+        "/ws", subprotocols=["holdspeak.v1", websocket_auth_protocol("s3cret")]
+    ) as socket:
+        assert socket.accepted_subprotocol == "holdspeak.v1"
+        assert socket.receive_json()["type"] == "duration"
+        socket.send_text("ping")
+        assert socket.receive_text() == "pong"
+
+    with client.websocket_connect(
+        "/ws",
+        subprotocols=["holdspeak.v1"],
+        headers={"Authorization": "Bearer s3cret"},
+    ) as socket:
+        assert socket.accepted_subprotocol == "holdspeak.v1"
 
 
 def test_nonloopback_bind_without_token_is_refused():

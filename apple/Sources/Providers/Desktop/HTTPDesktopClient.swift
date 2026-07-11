@@ -98,6 +98,23 @@ public struct HTTPDesktopClient: IDesktopClient {
         "local + LAN → \(config.baseURL.host ?? config.baseURL.absoluteString)"
     }
 
+    /// Authenticated general-runtime WebSocket request for native consumers.
+    /// The bearer stays in the HTTP header; it is never placed in the URL.
+    public func runtimeWebSocketRequest() -> URLRequest {
+        var components = URLComponents(
+            url: config.baseURL.appendingPathComponent("ws"),
+            resolvingAgainstBaseURL: false
+        )
+        components?.scheme = config.baseURL.scheme == "https" ? "wss" : "ws"
+        var request = URLRequest(url: components?.url ?? config.baseURL)
+        request.timeoutInterval = config.timeout
+        request.setValue("holdspeak.v1", forHTTPHeaderField: "Sec-WebSocket-Protocol")
+        if let token = config.token, !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        return request
+    }
+
     /// `GET /health` to confirm reachability, then `GET /api/runtime/status` to read
     /// runtime readiness. Any network failure maps to `.offline` — fail soft.
     public func handshake() async -> DesktopConnection {

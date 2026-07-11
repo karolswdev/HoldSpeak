@@ -4,8 +4,7 @@ Bodies moved verbatim from routes/primitives.py (HS-79-03, the Phase-63 discipli
 """
 from __future__ import annotations
 
-import uuid
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -13,9 +12,9 @@ from fastapi.responses import JSONResponse
 from ....logging_config import get_logger
 from ...context import WebContext
 from ...runtime_support import error_500
+from ._shared import _json_body, _new_id
 
 log = get_logger("web.routes.primitives")
-from ._shared import _json_body, _new_id
 
 
 def build_directories_router(ctx: WebContext) -> APIRouter:
@@ -121,7 +120,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to list directory members")
 
-    @router.put("/api/directories/{directory_id}/members/{primitive_id}")
+    @router.put("/api/directories/{directory_id}/members/{primitive_id:path}")
     async def api_file_member(directory_id: str, primitive_id: str) -> Any:
         """File a primitive into a directory (idempotent; a re-file moves it).
 
@@ -130,11 +129,12 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         """
         try:
             from ....db import get_database
+            from ....db.relationships import qualified_ref
             db = get_database()
             if db.directories.get(directory_id) is None:
                 return JSONResponse({"error": f"Unknown directory: {directory_id}"}, status_code=404)
             membership = db.directory_memberships.upsert(
-                primitive_id=primitive_id,
+                primitive_id=qualified_ref(primitive_id),
                 directory_id=directory_id,
             )
             return JSONResponse({"membership": membership.to_dict()})
@@ -143,7 +143,7 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to file directory member")
 
-    @router.delete("/api/directories/{directory_id}/members/{primitive_id}")
+    @router.delete("/api/directories/{directory_id}/members/{primitive_id:path}")
     async def api_unfile_member(directory_id: str, primitive_id: str) -> Any:
         """Unfile a primitive from a directory (tombstone).
 
@@ -151,14 +151,16 @@ def build_directories_router(ctx: WebContext) -> APIRouter:
         """
         try:
             from ....db import get_database
+            from ....db.relationships import qualified_ref
             db = get_database()
-            existing = db.directory_memberships.get(primitive_id)
+            ref = qualified_ref(primitive_id)
+            existing = db.directory_memberships.get(ref)
             if existing is None or existing.directory_id != directory_id:
                 return JSONResponse(
                     {"error": f"{primitive_id} is not filed in {directory_id}"},
                     status_code=404,
                 )
-            db.directory_memberships.delete(primitive_id)
+            db.directory_memberships.delete(ref)
             return JSONResponse({"success": True})
         except Exception as exc:
             return error_500(exc, log, "Failed to unfile directory member")

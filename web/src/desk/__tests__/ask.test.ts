@@ -27,8 +27,8 @@ afterEach(() => vi.unstubAllGlobals());
 describe("ask contexts", () => {
   it("resolves selected ids to id+kind+title, dropping unknowns", () => {
     expect(askContexts(items, ["n1", "m1", "ghost"])).toEqual([
-      { id: "n1", kind: "note", title: "Mesh sync owner" },
-      { id: "m1", kind: "meeting", title: "Q3 kickoff" },
+      { id: "n1", kind: "note", ref: "note:n1", title: "Mesh sync owner" },
+      { id: "m1", kind: "meeting", ref: "meeting:m1", title: "Q3 kickoff" },
     ]);
   });
 });
@@ -72,8 +72,8 @@ describe("the run/keep wire", () => {
       prompt: "Go",
       lens: "Distill",
       context: [
-        { id: "m1", kind: "meeting", title: "Q3 kickoff" },
-        { id: "n1", kind: "note", title: "Mesh sync owner" },
+        { id: "m1", kind: "meeting", ref: "meeting:m1", title: "Q3 kickoff" },
+        { id: "n1", kind: "note", ref: "note:n1", title: "Mesh sync owner" },
       ],
       profile_id: "p1",
     });
@@ -110,7 +110,7 @@ describe("the run/keep wire", () => {
       lens: "Distill",
       prompt: "Go",
       output: "PRINTED",
-      context: [{ id: "m1", title: "Q3 kickoff" }],
+      context: [{ id: "m1", kind: "meeting", ref: "meeting:m1", title: "Q3 kickoff" }],
     });
     expect(id).toBe("artifact_x");
   });

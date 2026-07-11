@@ -83,6 +83,33 @@ final class DeskRecordsTests: XCTestCase {
         XCTAssertEqual(back.lineageLine, "from 3 items · via Distill")
     }
 
+    func testKeptResultCarriesExactRefsAndRelationshipSnapshot() throws {
+        var rec = OutputRecord(
+            id: "o10", title: "Distill", body: "result", source: "2 items",
+            lens: "Distill", path: "", provenance: RunProvenance(
+                sourceCardId: "", sourceCardTitle: "2 items", viaId: "",
+                viaName: "Distill", viaKind: "ask"
+            )
+        )
+        rec.setRelationshipLineage(
+            qualifiedRefs: ["note:n1", "project:p1"],
+            snapshot: [
+                "note:n1": .init(zoneId: "focus", knowledgeIds: ["k1"], projectIds: ["p1"]),
+                "project:p1": .init(),
+            ]
+        )
+        let back = try roundTrip(rec, "relationship lineage")
+        guard case let .object(root) = back.contract.structuredJson,
+              case let .array(refs)? = root["qualified_refs"],
+              case let .object(axes)? = root["relationship_snapshot"],
+              case let .object(note)? = axes["note:n1"] else {
+            return XCTFail("qualified relationship lineage missing")
+        }
+        XCTAssertEqual(refs, [.string("note:n1"), .string("project:p1")])
+        XCTAssertEqual(note["zone_id"], .string("focus"))
+        XCTAssertEqual(back.contract.sources.map(\.sourceRef), ["note:n1", "project:p1", "Distill"])
+    }
+
     func testRecipeProvenanceKeepsLegacyWireShape() throws {
         // A recipe run (no Ask fields) must keep the EXACT legacy structured shape —
         // no context_ids/context_titles/prompt keys ride the wire (golden-pin safety).

@@ -444,14 +444,14 @@ struct QueueHUD: View {
         if store.working > 0 { parts.append("\(store.working) working") }
         if store.queued > 0 { parts.append("\(store.queued) queued") }
         if !store.meshJobs.isEmpty { parts.append("\(store.meshJobs.count) on \(store.meshPeerName)") }
-        if parts.isEmpty && store.jobs.isEmpty && !store.waitingAgents.isEmpty { return "Agent desk" }
+        if parts.isEmpty && store.jobs.isEmpty && !store.waitingAgents.isEmpty { return "Coder sessions" }
         if parts.isEmpty { parts.append(store.meshProposals.isEmpty ? "idle" : "needs you") }
         return parts.joined(separator: " · ")
     }
     private var agentSummary: String {
         let n = store.waitingAgents.count
-        if n == 1, let one = store.waitingAgents.first { return "1 agent waiting · \(one.repo)" }
-        return "\(n) agents waiting"
+        if n == 1, let one = store.waitingAgents.first { return "1 coder session waiting · \(one.repo)" }
+        return "\(n) coder sessions waiting"
     }
 }
 
@@ -681,4 +681,3 @@ private struct PresenceNudgeCard: View {
         .frame(maxWidth: 460)
     }
 }
-

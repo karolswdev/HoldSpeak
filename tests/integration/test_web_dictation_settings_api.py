@@ -202,7 +202,9 @@ class TestSettingsPutPersistsDictation:
         )
 
         assert response.status_code == 200, response.text
-        assert response.json()["settings"]["device"]["psk"] == "dogfood-psk"
+        body = response.json()["settings"]
+        assert "psk" not in body["device"]
+        assert body["_secrets"]["device_psk"] == {"configured": True}
         persisted = Config.load(path=settings_path)
         assert persisted.device.psk == "dogfood-psk"
 
@@ -434,7 +436,7 @@ def test_dictation_page_includes_runtime_section() -> None:
     assert '<div id="root"></div>' in response.text
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
     assert '["runtime", "Runtime"]' in source
-    assert "Dictation runtime" in source and "Runtime profile" in source
+    assert "Dictation runtime" in source and 'label="Runs on"' in source
 
 
 def test_dictation_page_includes_copilot_depth_controls() -> None:
@@ -553,36 +555,44 @@ class TestSettingsCompanionConnectors:
     def test_put_round_trips_companion_webhook_and_github(
         self, test_client: TestClient, settings_path: Path
     ) -> None:
-        payload = {
-            "meeting": {
-                "companion_webhook_url": "https://hooks.example.com/abc",
-                "companion_github_repo": "karolswdev/HoldSpeak",
-            }
-        }
-        response = test_client.put("/api/settings", json=payload)
+        secret = test_client.put(
+            "/api/settings/secrets/companion_webhook_url",
+            json={"value": "https://hooks.example.com/abc"},
+        )
+        assert secret.status_code == 200, secret.text
+        response = test_client.put(
+            "/api/settings",
+            json={"meeting": {"companion_github_repo": "karolswdev/HoldSpeak"}},
+        )
         assert response.status_code == 200, response.text
         out = response.json()["settings"]["meeting"]
-        assert out["companion_webhook_url"] == "https://hooks.example.com/abc"
+        assert "companion_webhook_url" not in out
         assert out["companion_github_repo"] == "karolswdev/HoldSpeak"
+        assert response.json()["settings"]["_secrets"]["companion_webhook_url"] == {
+            "configured": True,
+            "destination": "hooks.example.com",
+        }
 
         persisted = Config.load(path=settings_path)
         assert persisted.meeting.companion_webhook_url == "https://hooks.example.com/abc"
         assert persisted.meeting.companion_github_repo == "karolswdev/HoldSpeak"
 
-        # And the GET read path surfaces them.
-        got = test_client.get("/api/settings").json()["meeting"]
-        assert got["companion_webhook_url"] == "https://hooks.example.com/abc"
+        # The GET path surfaces only state + destination, never the credential URL.
+        got_body = test_client.get("/api/settings").json()
+        got = got_body["meeting"]
+        assert "companion_webhook_url" not in got
         assert got["companion_github_repo"] == "karolswdev/HoldSpeak"
+        assert got_body["_secrets"]["companion_webhook_url"]["destination"] == "hooks.example.com"
 
     def test_put_rejects_non_https_companion_webhook(
         self, test_client: TestClient, settings_path: Path
     ) -> None:
         response = test_client.put(
-            "/api/settings",
-            json={"meeting": {"companion_webhook_url": "http://hooks.example.com/x"}},
+            "/api/settings/secrets/companion_webhook_url",
+            json={"value": "http://hooks.example.com/x"},
         )
         assert response.status_code == 400
-        assert "companion_webhook_url" in response.json()["error"]
+        assert "https" in response.json()["error"]
 
     def test_put_rejects_malformed_companion_github_repo(
         self, test_client: TestClient, settings_path: Path
@@ -597,13 +607,13 @@ class TestSettingsCompanionConnectors:
     def test_put_omitting_connectors_preserves_them(
         self, test_client: TestClient, settings_path: Path
     ) -> None:
-        seed = {
-            "meeting": {
-                "companion_webhook_url": "https://hooks.example.com/keep",
-                "companion_github_repo": "owner/repo",
-            }
-        }
-        assert test_client.put("/api/settings", json=seed).status_code == 200
+        assert test_client.put(
+            "/api/settings/secrets/companion_webhook_url",
+            json={"value": "https://hooks.example.com/keep"},
+        ).status_code == 200
+        assert test_client.put(
+            "/api/settings", json={"meeting": {"companion_github_repo": "owner/repo"}}
+        ).status_code == 200
         assert test_client.put("/api/settings", json={"ui": {"theme": "light"}}).status_code == 200
         persisted = Config.load(settings_path)
         assert persisted.meeting.companion_webhook_url == "https://hooks.example.com/keep"

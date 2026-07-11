@@ -103,7 +103,7 @@ struct AgentDeskView: View {
                 .padding(.horizontal, 10).padding(.vertical, 5)
                 .background((waitingCount > 0 ? Sig.warn : Sig.ok).opacity(0.12), in: Capsule())
                 .overlay(Capsule().strokeBorder((waitingCount > 0 ? Sig.warn : Sig.ok).opacity(0.25), lineWidth: 1))
-                Text("Agent Desk").font(.system(size: 38, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Coder sessions").font(.system(size: 38, weight: .heavy)).foregroundStyle(Sig.text)
                     .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
             }
             Spacer()
@@ -129,8 +129,8 @@ struct AgentDeskView: View {
                 Image(systemName: "cpu").font(.system(size: 32, weight: .semibold)).foregroundStyle(Sig.accent)
             }
             VStack(spacing: 6) {
-                Text("No agents linked").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
-                Text("Run a coding agent on your desktop")
+                Text("No coder sessions linked").font(.system(size: 18, weight: .heavy)).foregroundStyle(Sig.text)
+                Text("Start a coder session on your desktop")
                     .font(.system(size: 13, weight: .medium)).foregroundStyle(Sig.faint)
                     .multilineTextAlignment(.center)
             }
@@ -289,10 +289,16 @@ private struct AgentDeskCard: View {
 @MainActor final class DictatePeerStore: ObservableObject {
     static let shared = DictatePeerStore()
 
-    // UserDefaults-backed so pairing survives launches; @Published so the home tile + sheet react.
+    // Peer identity stays in defaults; the bearer token is device-only Keychain.
+    // @Published keeps the home tile + pairing sheet reactive.
     @Published var host: String { didSet { defaults.set(host, forKey: "hs.peer.host") } }
     @Published var portText: String { didSet { defaults.set(portText, forKey: "hs.peer.port") } }
-    @Published var token: String { didSet { defaults.set(token, forKey: "hs.peer.token") } }
+    @Published var token: String {
+        didSet {
+            PeerTokenStore.set(token)
+            defaults.removeObject(forKey: PeerTokenStore.legacyDefaultsKey)
+        }
+    }
     @Published var name: String { didSet { defaults.set(name, forKey: "hs.peer.name") } }
     private let defaults = UserDefaults.standard
 
@@ -300,7 +306,7 @@ private struct AgentDeskCard: View {
         let env = ProcessInfo.processInfo.environment
         host = defaults.string(forKey: "hs.peer.host") ?? ""
         portText = defaults.string(forKey: "hs.peer.port") ?? "8000"
-        token = defaults.string(forKey: "hs.peer.token") ?? ""
+        token = PeerTokenStore.migrateFromDefaults(defaults) ?? ""
         name = defaults.string(forKey: "hs.peer.name") ?? ""
         if host.isEmpty, let h = env["HS_DESKTOP_HOST"], !h.isEmpty { host = h }
         if let p = env["HS_DESKTOP_PORT"], !p.isEmpty { portText = p }
@@ -358,6 +364,12 @@ private struct AgentDeskCard: View {
 @MainActor final class DictateModel: ObservableObject {
     /// Reachability of the paired Mac — a first-class state, not an error wall.
     enum Reach: Equatable { case unknown, reachable, asleep, unpaired }
+    /// Bounded recovery categories shared with the first-value journey. The
+    /// phrase itself remains only in `recoveryText`, never in telemetry.
+    enum Failure: Equatable {
+        case permissionDenied, missingModel, rejectedToken, deliveryConflict
+        case unreachableDesktop, noSpeech
+    }
     /// One delivered line in the read-back: the words + whether the desktop confirmed delivery.
     struct Line: Identifiable, Equatable { let id = UUID(); let text: String; var delivered: Bool }
 
@@ -369,6 +381,8 @@ private struct AgentDeskCard: View {
     @Published var lines: [Line] = []        // the finalized read-back (newest last)
     @Published var reach: Reach = .unknown
     @Published var lastDelivered = false     // the quiet confirmation tick
+    @Published var failure: Failure?
+    @Published var recoveryText = ""         // editable; survives every failed send
     // HSM-18-01 — the dictation-pipeline contract, surfaced:
     @Published var readiness: DictationReadiness?   // the hub's own verdict for the strip
     @Published var pending: DictationDryRun?        // the armed receipt awaiting Send
@@ -429,10 +443,12 @@ private struct AgentDeskCard: View {
     /// Push-to-talk down / hands-free arm: open the mic and start sampling the level.
     func startListening() async {
         guard !listening else { return }
-        guard await CaptureModel.requestMic() else { reach = .asleep; return }
+        guard await CaptureModel.requestMic() else { failure = .permissionDenied; return }
         sink.reset(); meter.reset(); partial = ""
-        do { try capture.start { [sink, meter] chunk in sink.add(chunk); meter.ingest(chunk) }; listening = true }
-        catch { listening = false; return }
+        do {
+            try capture.start { [sink, meter] chunk in sink.add(chunk); meter.ingest(chunk) }
+            listening = true; failure = nil
+        } catch { listening = false; failure = .permissionDenied; return }
         // Poll the live mic amplitude (20 Hz) so the waveform reacts the instant sound arrives.
         levelTicker = Task { [weak self] in
             while !Task.isCancelled, self?.listening == true {
@@ -454,8 +470,9 @@ private struct AgentDeskCard: View {
         do {
             let segs = try await WhisperKitTranscriber(chunks: sink.drain(), model: "base").transcribe()
             said = segs.map(\.text).joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-        } catch { return }
-        guard !said.isEmpty else { return }
+        } catch { failure = .missingModel; return }
+        guard !said.isEmpty else { failure = .noSpeech; return }
+        recoveryText = said
         // HSM-18-01 — preview mode arms a receipt instead of typing: the dry-run shows
         // exactly what would land BEFORE a keystroke leaves the iPad.
         if previewMode { await preview(said) } else { await deliver(said) }
@@ -466,7 +483,9 @@ private struct AgentDeskCard: View {
     /// words are never lost, and that lane already renders failure honestly (an
     /// un-ticked line + Reach.asleep).
     func preview(_ text: String) async {
-        guard let client = peers.client() else { reach = .asleep; return }
+        guard let client = peers.client() else {
+            recoveryText = text; failure = .unreachableDesktop; reach = .asleep; return
+        }
         previewing = true; defer { previewing = false }
         do {
             let receipt = try await client.dictationDryRun(utterance: text)
@@ -496,18 +515,37 @@ private struct AgentDeskCard: View {
         var line = Line(text: text, delivered: false)
         lines.append(line)
         if lines.count > 6 { lines.removeFirst(lines.count - 6) }
-        guard let client = peers.client() else { reach = .asleep; return }
+        recoveryText = text
+        guard let client = peers.client() else {
+            failure = .unreachableDesktop; reach = .asleep; return
+        }
         do {
             let result = try await client.sendRemoteDictation(text: text, target: .focused, raw: raw)
             line.delivered = result.delivered
             if let i = lines.firstIndex(where: { $0.id == line.id }) { lines[i].delivered = result.delivered }
             lastDelivered = result.delivered
             reach = .reachable
+            if result.delivered { recoveryText = ""; failure = nil }
+            else { failure = .deliveryConflict }
             // The hub consumed the one-shot pin with this dictation (HSM-18-05).
             groundedNudge = nil
+        } catch HTTPDesktopClient.DesktopClientError.http(let status)
+                    where status == 401 || status == 403 {
+            failure = .rejectedToken
+        } catch HTTPDesktopClient.DesktopClientError.http(let status) where status == 409 {
+            failure = .deliveryConflict
         } catch {
-            reach = .asleep
+            failure = .unreachableDesktop; reach = .asleep
         }
+    }
+
+    /// A retry is a fresh, explicit owner action using the edited draft. Each
+    /// invocation calls the remote contract once; no local Meeting is created.
+    func retryRecovery() async {
+        let text = recoveryText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        failure = nil
+        await deliver(text)
     }
 
     #if targetEnvironment(simulator)
@@ -602,6 +640,7 @@ struct DictateView: View {
                 waveformHero
                 talkControls
                 if let receipt = model.pending { receiptCard(receipt) }
+                recoveryCard
                 readBack
             }
             .padding(22).frame(maxWidth: 760).frame(maxWidth: .infinity)
@@ -622,6 +661,7 @@ struct DictateView: View {
                     reachChip
                     readinessStrip
                     nudgeCards
+                    recoveryCard
                     readBack
                 }
                 .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 180)
@@ -796,6 +836,60 @@ struct DictateView: View {
         .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
             .strokeBorder(filled ? Color.white.opacity(0.2) : color.opacity(0.28), lineWidth: 1))
         .opacity(appeared ? 1 : 0)
+    }
+
+    /// Failures never eat the words: the exact local draft remains editable,
+    /// copyable, and retryable while Setup stays one tap away.
+    @ViewBuilder private var recoveryCard: some View {
+        if let failure = model.failure {
+            VStack(alignment: .leading, spacing: 11) {
+                HStack(spacing: 7) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                    Text(recoveryTitle(failure)).font(.system(size: 13, weight: .heavy))
+                    Spacer(minLength: 0)
+                }
+                .foregroundStyle(Sig.warn)
+                TextEditor(text: $model.recoveryText)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(Sig.text)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 86)
+                    .padding(10)
+                    .background(Sig.s2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(Sig.line, lineWidth: 1))
+                HStack(spacing: 9) {
+                    Button("Retry") { tactile(.medium); Task { await model.retryRecovery() } }
+                        .disabled(model.recoveryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button("Copy") {
+                        #if canImport(UIKit)
+                        UIPasteboard.general.string = model.recoveryText
+                        #endif
+                        tactile(.light)
+                    }
+                    .disabled(model.recoveryText.isEmpty)
+                    Button("Setup") { tactile(.light); pairing = true }
+                    Spacer(minLength: 0)
+                }
+                .buttonStyle(.bordered)
+                .tint(Sig.accent)
+            }
+            .padding(14)
+            .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Sig.warn.opacity(0.35), lineWidth: 1))
+        }
+    }
+
+    private func recoveryTitle(_ failure: DictateModel.Failure) -> String {
+        switch failure {
+        case .permissionDenied: return "Microphone access is off · your draft stays here"
+        case .missingModel: return "On-device transcription is not ready · your draft stays here"
+        case .rejectedToken: return "The desktop rejected this connection · edit or open Setup"
+        case .deliveryConflict: return "Delivery conflicted · edit and retry"
+        case .unreachableDesktop: return "Desktop unreachable · edit and retry"
+        case .noSpeech: return "No words detected · type here or hold to try again"
+        }
     }
 
     /// HSM-18-01 — the hub's own dictation-pipeline verdict as chips. No snapshot = no strip.

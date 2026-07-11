@@ -16,11 +16,23 @@ from ...context import WebContext
 from ...runtime_support import error_500
 
 log = get_logger("web.routes.primitives")
-from ._shared import _json_body, _new_id, _persist_run_artifact, _render_user_prompt, _run_frame, canonical_source_type
+from ._shared import (
+    RunLifecycle, _json_body, _new_id, _persist_run_artifact, _render_user_prompt,
+    _run_frame, canonical_source_type, capability_descriptor,
+)
 
 
 def build_recipes_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
+
+    def _payload(recipe: Any) -> dict[str, Any]:
+        row = recipe.to_dict()
+        row["capability"] = capability_descriptor(
+            kind="persona", name=recipe.name or recipe.id,
+            supported_placements=[f"profile:{recipe.profile_id}"] if recipe.profile_id else ["this_machine"],
+            action_label=f"Ask {recipe.name or 'Persona'}",
+        )
+        return row
 
     def _recipe_fields(body: dict[str, Any], existing=None) -> dict[str, Any]:
         def pick(key: str, default: Any) -> Any:
@@ -43,7 +55,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         try:
             from ....db import get_database
             recipes = get_database().recipes.list()
-            return JSONResponse({"recipes": [r.to_dict() for r in recipes]})
+            return JSONResponse({"recipes": [_payload(r) for r in recipes]})
         except Exception as exc:
             return error_500(exc, log, "Failed to list recipes")
 
@@ -60,7 +72,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 recipe_id=str(body.get("id") or _new_id("recipe")),
                 **_recipe_fields(body),
             )
-            return JSONResponse({"recipe": recipe.to_dict()}, status_code=201)
+            return JSONResponse({"recipe": _payload(recipe)}, status_code=201)
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
         except Exception as exc:
@@ -73,7 +85,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             recipe = get_database().recipes.get(recipe_id)
             if recipe is None:
                 return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
-            return JSONResponse({"recipe": recipe.to_dict()})
+            return JSONResponse({"recipe": _payload(recipe)})
         except Exception as exc:
             return error_500(exc, log, "Failed to get recipe")
 
@@ -89,7 +101,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             if existing is None:
                 return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
             recipe = db.recipes.upsert(recipe_id=recipe_id, **_recipe_fields(body, existing))
-            return JSONResponse({"recipe": recipe.to_dict()})
+            return JSONResponse({"recipe": _payload(recipe)})
         except Exception as exc:
             return error_500(exc, log, "Failed to update recipe")
 
@@ -115,18 +127,29 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         output.
         """
         body = await _json_body(request) or {}
+        lifecycle: Optional[RunLifecycle] = None
         try:
             from ....db import get_database
-            recipe = get_database().recipes.get(recipe_id)
+            db = get_database()
+            recipe = db.recipes.get(recipe_id)
             if recipe is None:
                 return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
+
+            lifecycle = RunLifecycle.begin(
+                db, definition_ref=f"persona:{recipe_id}", body=body,
+                default_placement=f"profile:{recipe.profile_id}" if recipe.profile_id else "this_machine",
+            )
 
             user_input = str(body.get("input") or "")
             variables = body.get("variables") if isinstance(body.get("variables"), dict) else {}
             user_prompt = _render_user_prompt(recipe.user_template, variables or {}, user_input)
             if not user_prompt.strip():
+                invocation = lifecycle.fail(
+                    "nothing to run: provide `input` or a Persona input template", state="empty"
+                )
                 return JSONResponse(
-                    {"error": "nothing to run: provide `input` or a recipe user_template"},
+                    {"error": "nothing to run: provide `input` or a Persona input template",
+                     "invocation": invocation, "invocation_id": lifecycle.invocation_id},
                     status_code=400,
                 )
 
@@ -154,6 +177,10 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                     intel = build_configured_meeting_intel()
             else:
                 intel = build_configured_meeting_intel()
+            lifecycle.start_attempt(
+                destination=f"profile:{ran_profile_id}" if ran_profile_id else "this_machine",
+                provider=getattr(intel, "active_provider", None),
+            )
             _run_frame(ctx, "running", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
             try:
                 # off the event loop: a mesh run WAITS on the relay queue, and
@@ -168,9 +195,19 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             except MeetingIntelError as exc:
                 _run_frame(ctx, "error", kind="recipe", ref=recipe_id,
                            name=recipe.name or recipe_id, error=str(exc))
+                invocation = lifecycle.fail(str(exc), provider=getattr(intel, "active_provider", None))
                 return JSONResponse(
-                    {"error": str(exc), "recipe_id": recipe_id}, status_code=502
+                    {"error": str(exc), "recipe_id": recipe_id,
+                     "invocation": invocation, "invocation_id": lifecycle.invocation_id}, status_code=502
                 )
+            if not str(output or "").strip():
+                error = "Persona returned no output; your input is retained for Retry."
+                _run_frame(ctx, "error", kind="recipe", ref=recipe_id,
+                           name=recipe.name or recipe_id, error=error)
+                invocation = lifecycle.fail(error, state="empty", provider=getattr(intel, "active_provider", None))
+                return JSONResponse({"error": error, "recipe_id": recipe_id,
+                                     "invocation": invocation,
+                                     "invocation_id": lifecycle.invocation_id}, status_code=502)
             _run_frame(ctx, "ready", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
 
             # Provenance: what produced this output, so a surface that keeps the
@@ -188,11 +225,18 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                     canonical_source_type(provided_type) if provided_type else "input"
                 )
                 sources.append({"source_type": input_type, "source_ref": provided_ref})
+            sources.extend(lifecycle.lineage())
 
             artifact_id = _persist_run_artifact(
                 kind="recipe", name=recipe.name or recipe_id,
                 user_input=user_input, output=output, sources=sources,
             )
+            if not artifact_id:
+                invocation = lifecycle.fail("The result could not be kept as an Artifact.")
+                return JSONResponse({"error": invocation["error"], "recipe_id": recipe_id,
+                                     "invocation": invocation,
+                                     "invocation_id": lifecycle.invocation_id}, status_code=500)
+            invocation = lifecycle.succeed(artifact_id, provider=getattr(intel, "active_provider", None))
             return JSONResponse({
                 "recipe_id": recipe_id,
                 "output": output,
@@ -200,8 +244,17 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                 "profile_id": ran_profile_id,
                 "sources": sources,
                 "artifact_id": artifact_id,
+                "result_ref": f"artifact:{artifact_id}",
+                "invocation_id": lifecycle.invocation_id,
+                "correlation_id": lifecycle.invocation_id,
+                "invocation": invocation,
             })
         except Exception as exc:
+            if lifecycle is not None:
+                try:
+                    lifecycle.fail(str(exc))
+                except Exception:
+                    pass
             return error_500(exc, log, "Failed to run recipe")
 
     def _kb_block(db: Any, kb_id: str) -> str:

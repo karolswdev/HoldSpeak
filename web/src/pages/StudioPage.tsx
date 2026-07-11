@@ -7,11 +7,15 @@ const TOOLS = [
     "Workbench",
     "Wire primitives into a runnable workflow on a node canvas.",
   ],
-  ["/", "Desk", "Author meetings, notes, agents and more in a spatial world."],
+  [
+    "/",
+    "Desk",
+    "Author meetings, notes, Personas and more in a spatial world.",
+  ],
   [
     "/companion",
-    "Agent Desk",
-    "See your recipes and the coding agents waiting on you.",
+    "Personas and coders",
+    "See your Personas and the coder sessions waiting on you.",
   ],
   [
     "/cadence",
@@ -21,7 +25,7 @@ const TOOLS = [
   ["/commands", "Commands", "Map a spoken keyword to an explicit action."],
   [
     "/profiles",
-    "Profiles",
+    "Runs on",
     "Name model and runtime destinations without exposing keys.",
   ],
   [

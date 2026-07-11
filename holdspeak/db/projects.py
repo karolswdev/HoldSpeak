@@ -204,6 +204,21 @@ class ProjectRepository(BaseRepository):
                     now_iso,
                 ),
             )
+            conn.execute(
+                """INSERT INTO project_resources
+                   (project_id,resource_ref,relationship,source,confidence,
+                    created_at,last_modified,deleted)
+                   VALUES (?,?,'member',?,?,?,?,0)
+                   ON CONFLICT(project_id,resource_ref) DO UPDATE SET
+                     source=excluded.source,
+                     confidence=MAX(project_resources.confidence,excluded.confidence),
+                     last_modified=excluded.last_modified,deleted=0""",
+                (
+                    str(project_id).strip(), f"meeting:{str(meeting_id).strip()}",
+                    str(source).strip().lower() or "auto",
+                    max(0.0, min(1.0, float(confidence))), now_iso, now_iso,
+                ),
+            )
 
     def disassociate_meeting_project(self, *, meeting_id: str, project_id: str) -> None:
         """Remove a meeting-project association."""
@@ -211,6 +226,12 @@ class ProjectRepository(BaseRepository):
             conn.execute(
                 "DELETE FROM meeting_projects WHERE meeting_id = ? AND project_id = ?",
                 (str(meeting_id).strip(), str(project_id).strip()),
+            )
+            conn.execute(
+                "UPDATE project_resources SET deleted=1,last_modified=? "
+                "WHERE project_id=? AND resource_ref=?",
+                (datetime.now().isoformat(), str(project_id).strip(),
+                 f"meeting:{str(meeting_id).strip()}"),
             )
 
     def get_meeting_projects(self, meeting_id: str) -> list[dict[str, Any]]:

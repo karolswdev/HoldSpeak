@@ -5,6 +5,10 @@
 
 export interface SetupStatus {
   first_run?: boolean;
+  arrival_required?: boolean;
+  onboarding?: {
+    disposition?: "completed" | "dismissed" | "needs_help" | null;
+  };
   overall?: string;
   trust?: {
     web_bind?: string;

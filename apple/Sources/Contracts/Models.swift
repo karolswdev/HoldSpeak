@@ -117,6 +117,13 @@ public struct Meeting: Codable, Equatable, Sendable {
     public var remoteLabel: String
     public var webUrl: String?
     public var devices: [JSONValue]
+    // HS-92-04 — optional for backward wire compatibility; present on new
+    // captures so provenance and incomplete/recoverable truth survive sync.
+    public var captureStatus: String?
+    public var captureFailure: String?
+    public var captureCheckpointAt: Date?
+    public var captureCheckpointSeconds: Double?
+    public var provenance: String?
     // mir_profile is NOT a desktop Meeting field; HSM-7-03 adds it as a contract
     // addition (Phase 7). Reserved here, absent on the wire today.
     public var mirProfile: MIRProfile?
@@ -129,12 +136,18 @@ public struct Meeting: Codable, Equatable, Sendable {
                 segments: [Segment] = [], bookmarks: [Bookmark] = [], intel: IntelSnapshot? = nil,
                 intelStatus: IntelStatus = IntelStatus(state: "none"), micLabel: String = "",
                 remoteLabel: String = "", webUrl: String? = nil, devices: [JSONValue] = [],
-                mirProfile: MIRProfile? = nil) {
+                mirProfile: MIRProfile? = nil, captureStatus: String? = nil,
+                captureFailure: String? = nil, captureCheckpointAt: Date? = nil,
+                captureCheckpointSeconds: Double? = nil, provenance: String? = nil) {
         self.id = id; self.startedAt = startedAt; self.endedAt = endedAt; self.duration = duration
         self.formattedDuration = formattedDuration; self.title = title; self.tags = tags
         self.segments = segments; self.bookmarks = bookmarks; self.intel = intel
         self.intelStatus = intelStatus; self.micLabel = micLabel; self.remoteLabel = remoteLabel
         self.webUrl = webUrl; self.devices = devices; self.mirProfile = mirProfile
+        self.captureStatus = captureStatus; self.captureFailure = captureFailure
+        self.captureCheckpointAt = captureCheckpointAt
+        self.captureCheckpointSeconds = captureCheckpointSeconds
+        self.provenance = provenance
     }
 }
 

@@ -77,6 +77,15 @@ public struct RunProvenance: Codable, Equatable, Sendable {
     }
 }
 
+public struct RelationshipAxisSnapshot: Codable, Equatable, Sendable {
+    public var zoneId: String?
+    public var knowledgeIds: [String]
+    public var projectIds: [String]
+    public init(zoneId: String? = nil, knowledgeIds: [String] = [], projectIds: [String] = []) {
+        self.zoneId = zoneId; self.knowledgeIds = knowledgeIds; self.projectIds = projectIds
+    }
+}
+
 // MARK: - NoteRecord — a first-class jotting (embeds `Note`)
 
 public struct NoteRecord: Codable, Identifiable, Equatable, Sendable {
@@ -284,6 +293,35 @@ public struct OutputRecord: Codable, Identifiable, Equatable, Sendable {
         if case let .object(existing) = contract.structuredJson { o = existing }
         o[key] = value
         contract.structuredJson = .object(o)
+    }
+
+    /// Freeze the exact identities and independent axes the kept Result read.
+    public mutating func setRelationshipLineage(
+        qualifiedRefs: [String], snapshot: [String: RelationshipAxisSnapshot]
+    ) {
+        setStructured("qualified_refs", .array(qualifiedRefs.map { .string($0) }))
+        let axes = snapshot.mapValues { row in
+            var value: [String: JSONValue] = [
+                "knowledge_ids": .array(row.knowledgeIds.map { .string($0) }),
+                "project_ids": .array(row.projectIds.map { .string($0) }),
+            ]
+            value["zone_id"] = row.zoneId.map(JSONValue.string) ?? .null
+            return JSONValue.object(value)
+        }
+        setStructured("relationship_snapshot", .object(axes))
+        contract.sources = qualifiedRefs.map { ref in
+            ArtifactSource(sourceType: String(ref.split(separator: ":", maxSplits: 1).first ?? "object"),
+                           sourceRef: ref)
+        } + contract.sources.filter { ["ask", "recipe", "chain"].contains($0.sourceType) }
+    }
+
+    /// Attach the hub's durable run receipt without changing the visible result.
+    public mutating func setInvocationReceipt(_ invocationId: String, resultRef: String?) {
+        setStructured("invocation_id", .string(invocationId))
+        if let resultRef, !resultRef.isEmpty { setStructured("result_ref", .string(resultRef)) }
+        if !contract.sources.contains(where: { $0.sourceType == "invocation" && $0.sourceRef == invocationId }) {
+            contract.sources.append(ArtifactSource(sourceType: "invocation", sourceRef: invocationId))
+        }
     }
 
     public init(contract a: Artifact, path: String = "") {

@@ -33,12 +33,21 @@ export interface GroundingMeeting {
 
 export interface GroundingSelection {
   meetings: GroundingMeeting[];
+  resources?: GroundingResource[];
 }
 
-export const emptyGrounding = (): GroundingSelection => ({ meetings: [] });
+export interface GroundingResource {
+  ref: string;
+  kind: string;
+  id: string;
+  title: string;
+  chars: number;
+}
+
+export const emptyGrounding = (): GroundingSelection => ({ meetings: [], resources: [] });
 
 export const groundingIsEmpty = (s: GroundingSelection): boolean =>
-  s.meetings.length === 0;
+  s.meetings.length === 0 && (s.resources || []).length === 0;
 
 /** The wire half: refs only. Null when nothing is selected. */
 export function hubGrounding(
@@ -46,6 +55,7 @@ export function hubGrounding(
 ): {
   meeting_ids: string[];
   artifact_ids: string[];
+  refs?: string[];
   expand: "summary" | "full";
 } | null {
   if (groundingIsEmpty(s)) return null;
@@ -54,6 +64,9 @@ export function hubGrounding(
     artifact_ids: s.meetings.flatMap((m) =>
       m.artifacts.filter((a) => a.on).map((a) => a.id),
     ),
+    ...((s.resources || []).length
+      ? { refs: (s.resources || []).map((resource) => resource.ref) }
+      : {}),
     expand: s.meetings.some((m) => m.includeTranscript) ? "full" : "summary",
   };
 }
@@ -95,6 +108,7 @@ export function buildGrounding(
 ): {
   meeting_ids: string[];
   artifact_ids: string[];
+  refs?: string[];
   expand: "summary" | "full";
   rails?: Array<{ repo: string; project: string; kind: string; id: string }>;
 } | null {
@@ -146,6 +160,8 @@ export function groundingTokens(s: GroundingSelection): number {
     for (const a of m.artifacts)
       if (a.on) chars += a.chars + a.title.length + 24;
   }
+  for (const resource of s.resources || [])
+    chars += resource.chars + resource.title.length + 24;
   return tokens(chars);
 }
 
@@ -159,21 +175,46 @@ export function groundingLabel(s: GroundingSelection): string {
   );
   const parts = [`${m} meeting${m === 1 ? "" : "s"}`];
   if (a > 0) parts.push(`${a} artifact${a === 1 ? "" : "s"}`);
+  const r = (s.resources || []).length;
+  if (r > 0) parts.push(`${r} object${r === 1 ? "" : "s"}`);
   return parts.join(" · ");
 }
 
 /** The provenance rows a grounded keep carries (receipts by name). */
 export function groundingReceiptRows(
   s: GroundingSelection,
-): Array<{ id: string; title: string }> {
-  const rows: Array<{ id: string; title: string }> = s.meetings.map((m) => ({
+): Array<{ id: string; kind: string; ref: string; title: string }> {
+  const rows: Array<{ id: string; kind: string; ref: string; title: string }> = s.meetings.map((m) => ({
     id: m.id,
+    kind: "meeting",
+    ref: `meeting:${m.id}`,
     title: m.title,
   }));
   for (const m of s.meetings)
     for (const a of m.artifacts)
-      if (a.on) rows.push({ id: a.id, title: a.title });
+      if (a.on) rows.push({ id: a.id, kind: "artifact", ref: `artifact:${a.id}`, title: a.title });
+  rows.push(...(s.resources || []).map((resource) => ({
+    id: resource.id, kind: resource.kind, ref: resource.ref, title: resource.title,
+  })));
   return rows;
+}
+
+/** Resolve and price exactly what the hub would ground; stale refs refuse. */
+export async function fetchGroundingResource(
+  ref: string, kind: string, id: string, title: string,
+): Promise<GroundingResource | null> {
+  try {
+    const response = await apiRequest("/api/grounding/resolve", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ refs: [ref] }),
+    });
+    if (!response.ok) return null;
+    const body = await response.json();
+    return { ref, kind, id, title: body.titles?.[0] || title, chars: Number(body.chars || 0) };
+  } catch {
+    return null;
+  }
 }
 
 /** Pick a meeting: fetch its REAL expansion (segments, intel, bound artifacts)

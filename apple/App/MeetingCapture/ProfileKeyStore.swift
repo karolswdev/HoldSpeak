@@ -54,3 +54,74 @@ enum ProfileKeyStore {
 
     static func has(_ profileId: String) -> Bool { get(profileId) != nil }
 }
+
+// HS-92-02 — the paired hub's bearer credential has the same device-only
+// custody rule as profile keys, but a distinct service/account so profile-key
+// behavior and lifecycle remain completely independent.
+enum PeerTokenStore {
+    private static let service = "dev.holdspeak.peer.web-auth-token"
+    private static let account = "paired-hub"
+    static let legacyDefaultsKey = "hs.peer.token"
+
+    /// Store (or replace) the paired hub token. Empty means revoke locally.
+    static func set(_ token: String) {
+        let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { delete(); return }
+        #if canImport(Security)
+        let base: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                                   kSecAttrService as String: service,
+                                   kSecAttrAccount as String: account]
+        SecItemDelete(base as CFDictionary)
+        var add = base
+        add[kSecValueData as String] = Data(trimmed.utf8)
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        SecItemAdd(add as CFDictionary, nil)
+        #endif
+    }
+
+    static func get() -> String? {
+        #if canImport(Security)
+        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                                    kSecAttrService as String: service,
+                                    kSecAttrAccount as String: account,
+                                    kSecReturnData as String: true,
+                                    kSecMatchLimit as String: kSecMatchLimitOne]
+        var out: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &out) == errSecSuccess,
+              let data = out as? Data,
+              let value = String(data: data, encoding: .utf8),
+              !value.isEmpty else { return nil }
+        return value
+        #else
+        return nil
+        #endif
+    }
+
+    static func delete() {
+        #if canImport(Security)
+        SecItemDelete([kSecClass as String: kSecClassGenericPassword,
+                       kSecAttrService as String: service,
+                       kSecAttrAccount as String: account] as CFDictionary)
+        #endif
+    }
+
+    /// One-way migration from the historical UserDefaults value. Plaintext is
+    /// removed only after Keychain confirms the value, so an OS write failure
+    /// cannot silently destroy the pairing credential.
+    static func migrateFromDefaults(_ defaults: UserDefaults = .standard) -> String? {
+        if let secured = get() {
+            defaults.removeObject(forKey: legacyDefaultsKey)
+            return secured
+        }
+        let legacy = (defaults.string(forKey: legacyDefaultsKey) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !legacy.isEmpty else {
+            defaults.removeObject(forKey: legacyDefaultsKey)
+            return nil
+        }
+        set(legacy)
+        guard get() == legacy else { return legacy }
+        defaults.removeObject(forKey: legacyDefaultsKey)
+        return legacy
+    }
+}

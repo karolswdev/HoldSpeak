@@ -9,17 +9,18 @@ default suite makes no real outbound call).
 
 from __future__ import annotations
 
+import sqlite3
 from datetime import datetime
 
 import pytest
 
 from holdspeak.db import Database
 from holdspeak.meeting_session import MeetingState
+from holdspeak.actuator_authority import authority_binding
 from holdspeak.plugins.actuator_executor import (
     ActuatorExecutionError,
     ActuatorExecutor,
     ActuatorPolicyError,
-    payload_hash,
 )
 
 
@@ -152,34 +153,76 @@ def test_allow_list_permits_listed_actuator(tmp_path) -> None:
     assert len(connector.calls) == 1
 
 
-# ──────────────────────────── Payload parity ──────────────────────────
+# ─────────────────────────── Authority parity ─────────────────────────
 
 
-def test_parity_mismatch_aborts_to_failed_no_call(tmp_path) -> None:
+@pytest.mark.parametrize(
+    ("column", "value"),
+    [
+        ("payload_json", '{"repo":"other/repo","title":"Follow up"}'),
+        ("target", "slack"),
+        ("action", "delete_issue"),
+        ("preview", "Delete the issue"),
+        ("approved_payload_hash", "deadbeef" * 8),
+        ("approved_destination", "github:sha256:changed"),
+        ("approved_preview_hash", "deadbeef" * 8),
+        ("preview_renderer_version", "actuator-preview/v0"),
+        ("effect_class", "github/delete_issue"),
+        ("policy_version", "actuator-policy/v0"),
+    ],
+)
+def test_any_authority_change_aborts_to_failed_no_call(tmp_path, column, value) -> None:
     db = _db(tmp_path)
     proposal = _approved(db)
+    with sqlite3.connect(db.db_path) as conn:
+        conn.execute(
+            f"UPDATE actuator_proposals SET {column} = ? WHERE id = ?",
+            (value, proposal.id),
+        )
     connector = _SpyConnector()
     executor = ActuatorExecutor(db, connector=connector, allow_actuators=True)
 
-    result = executor.execute(proposal.id, approved_payload_hash="deadbeef" * 8)
+    result = executor.execute(proposal.id)
 
     assert result.status == "failed"
-    assert "parity" in (result.error or "").lower()
-    assert connector.calls == []  # no outbound call on a parity mismatch
+    assert "authority" in (result.error or "").lower()
+    assert connector.calls == []
     audit = db.actuators.list_audit(proposal.id)
     assert audit[-1].to_status == "failed"
 
 
-def test_parity_match_executes(tmp_path) -> None:
+def test_approval_records_complete_authority_binding(tmp_path) -> None:
     db = _db(tmp_path)
     proposal = _approved(db)
-    connector = _SpyConnector()
-    executor = ActuatorExecutor(db, connector=connector, allow_actuators=True)
+    expected = authority_binding(
+        target=proposal.target,
+        action=proposal.action,
+        preview=proposal.preview,
+        payload=proposal.payload,
+    )
+    assert proposal.approved_payload_hash == expected.payload_hash
+    assert proposal.approved_destination == expected.normalized_destination
+    assert proposal.approved_preview_hash == expected.preview_hash
+    assert proposal.preview_renderer_version == expected.preview_renderer_version
+    assert proposal.effect_class == expected.effect_class
+    assert proposal.policy_version == expected.policy_version
+    assert "authority bound" in (db.actuators.list_audit(proposal.id)[-1].detail or "")
 
-    good_hash = payload_hash(proposal.payload)
-    result = executor.execute(proposal.id, approved_payload_hash=good_hash)
-    assert result.status == "executed"
-    assert len(connector.calls) == 1
+
+def test_missing_legacy_binding_fails_closed(tmp_path) -> None:
+    db = _db(tmp_path)
+    proposal = _approved(db)
+    with sqlite3.connect(db.db_path) as conn:
+        conn.execute(
+            "UPDATE actuator_proposals SET approved_payload_hash = NULL WHERE id = ?",
+            (proposal.id,),
+        )
+    connector = _SpyConnector()
+    result = ActuatorExecutor(
+        db, connector=connector, allow_actuators=True
+    ).execute(proposal.id)
+    assert result.status == "failed"
+    assert connector.calls == []
 
 
 # ──────────────────────────── Connector failure ───────────────────────

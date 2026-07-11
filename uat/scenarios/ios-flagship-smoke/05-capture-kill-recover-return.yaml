@@ -1,0 +1,25 @@
+id: ios-flagship-capture-kill-recover-return
+execution_target: ios_flagship_swift
+title: An interrupted native Meeting survives, recovers, and comes home once
+features:
+  - mobile.capture.meeting_record
+  - sync.content.cross_device
+manual_setup:
+  - Use the exact flagship build on a physical iPad or iPhone, paired to an authenticated Web hub.
+  - Have a real microphone, enough free storage for a 60-minute treatment, and permission to force-kill the app.
+recipes: []
+form_factors: [ipad, iphone]
+steps:
+  - do: Start a uniquely titled native Meeting while offline, speak continuously, and at 5, 30, and 60 minutes record the app's resident-memory reading without pressing Stop.
+    expect: The Meeting identity exists from Record, transcript keeps advancing, and resident memory settles around a bounded live-window band instead of growing with elapsed audio.
+  - do: Force-kill the app during speech, relaunch it, and open the recent Meeting list.
+    expect: Exactly one interrupted Meeting remains, labelled RECOVER OR DISCARD; it never reads Ready or complete, and VoiceOver exposes both recovery actions without requiring a swipe.
+  - do: Choose Recover saved work and inspect the Meeting.
+    expect: The same Meeting id opens with transcript/audio through the last bounded checkpoint, labels itself SAVED PARTIAL, names remaining intelligence as Retry or Skip, and does not invent the killed tail.
+  - do: Reconnect, sync twice, then open the Meeting from Web Desk and History.
+    expect: One Web Meeting appears—not two—with the native provenance, title, timed/speaker transcript, saved-partial state, retained artifacts/aftercare, and a second sync is idempotent.
+  - do: Repeat a short capture with storage made unwritable, then restore storage; separately interrupt the audio route and lock/suspend the app.
+    expect: Each failure retains one visible Meeting with Recover/Retry/Discard and a named cause; no capture silently disappears, duplicates, or backfills progress to 100 percent.
+  - do: Make equal-clock divergent title edits on native and Web while disconnected, reconnect, and inspect the Web conflict diagnostic.
+    expect: The deterministic winner stays on the one canonical Meeting and exactly one losing value is recoverable in the conflict record; no UI claims a keep-both Meeting was created.
+teardown: []

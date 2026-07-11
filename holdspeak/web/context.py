@@ -101,3 +101,9 @@ class WebContext:
     # freshly-discovered companion knows whether pairing needs a token. A bool,
     # not a callable — the server fixes it once at bind time.
     mesh_requires_token: bool = False
+
+    # HS-92-02: the general runtime WebSocket follows the same bind policy as
+    # HTTP. These values are fixed by MeetingWebServer and checked before the
+    # socket is accepted or added to the broadcast manager.
+    web_host: str = "127.0.0.1"
+    web_auth_token: str = ""
