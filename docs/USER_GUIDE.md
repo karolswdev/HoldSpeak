@@ -331,7 +331,8 @@ Start small. A useful first version is:
 When dictating into Codex or Claude, rewrite rough speech into a concise engineering request. Preserve explicit filenames, commands, and test names.
 
 # .hs/context.md
-This is a Python application with a local FastAPI web UI and an Astro frontend.
+This is a Python application with a local FastAPI web UI and one typed
+Vite/React frontend.
 
 # .hs/workflows.md
 Run focused tests with `.venv/bin/python -m pytest <path>`.
@@ -685,6 +686,6 @@ Common issues:
 - [README](../README.md): install, platform notes, configuration reference.
 - [Getting Started](GETTING_STARTED.md): first-run setup and basic voice typing.
 - [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): dictation pipeline, project context, target override, OpenAI-compatible endpoints, and agent hooks.
-- [Dictation runtime setup](../web/src/pages/docs/dictation-runtime.astro): source for the web runtime setup page.
+- [Dictation runtime setup](../web/src/pages/RuntimeDocsPage.tsx): source for the local Web runtime setup page.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and troubleshooting.
 - [Firefox Extension Guide](FIREFOX_EXTENSION_GUIDE.md): local companion extension install.

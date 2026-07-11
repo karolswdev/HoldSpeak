@@ -7,16 +7,29 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { useDesk } from "../store";
 import {
-  clearThread, isModelChat, keepReply, loadChatGrounding, loadThread,
-  modelChatName, runChatTurn, runModelChatTurn, saveChatGrounding, saveThread,
+  clearThread,
+  isModelChat,
+  keepReply,
+  loadChatGrounding,
+  loadThread,
+  modelChatName,
+  runChatTurn,
+  runModelChatTurn,
+  saveChatGrounding,
+  saveThread,
   type ChatTurn,
 } from "../chat";
 import { keepAsk } from "../ask";
-import { groundingIsEmpty, groundingTokens, type GroundingSelection } from "../grounding";
+import {
+  groundingIsEmpty,
+  groundingTokens,
+  type GroundingSelection,
+} from "../grounding";
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
 
-const turnId = () => `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+const turnId = () =>
+  `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 
 export function PersonaChat(props: { personaId: string }) {
   const { personaId } = props;
@@ -29,13 +42,21 @@ export function PersonaChat(props: { personaId: string }) {
   const persona = useMemo(() => {
     if (isModelChat(personaId)) {
       const name = modelChatName(personaId);
-      return { id: personaId, name, avatar: "🖥️", role: "hub model", profileId: "" } as any;
+      return {
+        id: personaId,
+        name,
+        avatar: "🖥️",
+        role: "hub model",
+        profileId: "",
+      } as any;
     }
     return (items.recipe || []).find((a: any) => a.id === personaId) as any;
   }, [items, personaId]);
 
   const [turns, setTurns] = useState<ChatTurn[]>(() => loadThread(personaId));
-  const [grounding, setGrounding] = useState<GroundingSelection>(() => loadChatGrounding(personaId));
+  const [grounding, setGrounding] = useState<GroundingSelection>(() =>
+    loadChatGrounding(personaId),
+  );
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
@@ -86,7 +107,13 @@ export function PersonaChat(props: { personaId: string }) {
       ? await runModelChatTurn(modelChatName(personaId), q, history, grounding)
       : await runChatTurn(personaId, q, history, grounding);
     const reply: ChatTurn = r.ok
-      ? { id: turnId(), role: "agent", text: r.output, egress: r.egress, model: r.model }
+      ? {
+          id: turnId(),
+          role: "agent",
+          text: r.output,
+          egress: r.egress,
+          model: r.model,
+        }
       : { id: turnId(), role: "agent", text: r.output, error: true };
     const done = [...withMine, reply];
     setThinking(false);
@@ -97,9 +124,15 @@ export function PersonaChat(props: { personaId: string }) {
   const harvest = async (t: ChatTurn) => {
     if (savedId) return;
     setSavedId(t.id);
-    const question = [...turns].reverse().find((x) => x.role === "you")?.text || "";
+    const question =
+      [...turns].reverse().find((x) => x.role === "you")?.text || "";
     const artifactId = isModelChat(personaId)
-      ? await keepAsk({ lens: modelChatName(personaId), prompt: question, output: t.text, context: [] })
+      ? await keepAsk({
+          lens: modelChatName(personaId),
+          prompt: question,
+          output: t.text,
+          context: [],
+        })
       : await keepReply(personaId, question, t.text);
     if (artifactId) {
       await refresh();
@@ -118,10 +151,19 @@ export function PersonaChat(props: { personaId: string }) {
   const badge = (t: ChatTurn) =>
     t.egress
       ? t.egress.scope === "local"
-        ? { scope: "local", text: t.model ? `⌂ ${t.model}` : "⌂ On this machine" }
+        ? {
+            scope: "local",
+            text: t.model ? `⌂ ${t.model}` : "⌂ On this machine",
+          }
         : t.egress.scope === "mesh"
-          ? { scope: "mesh", text: `⇄ ${["mesh", t.egress.host, t.model].filter(Boolean).join(" · ")}` }
-          : { scope: "cloud", text: `☁ ${[t.model, t.egress.host].filter(Boolean).join(" · ")}` }
+          ? {
+              scope: "mesh",
+              text: `⇄ ${["mesh", t.egress.host, t.model].filter(Boolean).join(" · ")}`,
+            }
+          : {
+              scope: "cloud",
+              text: `☁ ${[t.model, t.egress.host].filter(Boolean).join(" · ")}`,
+            }
       : null;
 
   return (
@@ -133,46 +175,82 @@ export function PersonaChat(props: { personaId: string }) {
       onPointerDown={(e) => e.stopPropagation()}
     >
       <header className="desk-pullout-head">
-        <span className="desk-chat-avatar" aria-hidden="true">{String(persona.avatar || "🤖")}</span>
+        <span className="desk-chat-avatar" aria-hidden="true">
+          {String(persona.avatar || "🤖")}
+        </span>
         <span className="desk-pullout-title">
           {String(persona.name || personaId)}
-          {persona.role ? <span className="desk-chat-role"> · {String(persona.role)}</span> : null}
+          {persona.role ? (
+            <span className="desk-chat-role"> · {String(persona.role)}</span>
+          ) : null}
         </span>
         {turns.length > 0 && (
-          <button type="button" className="desk-chip quiet" onClick={clear} disabled={thinking}>
+          <button
+            type="button"
+            className="desk-chip quiet"
+            onClick={clear}
+            disabled={thinking}
+          >
             Clear
           </button>
         )}
-        <button type="button" className="desk-pullout-close" onClick={closeChat} aria-label="Close" disabled={thinking}>
+        <button
+          type="button"
+          className="desk-pullout-close"
+          onClick={closeChat}
+          aria-label="Close"
+          disabled={thinking}
+        >
           ✕
         </button>
       </header>
 
       <div className="desk-pullout-body desk-chat-scroll">
         {turns.length === 0 && !thinking && (
-          <p className="desk-chat-empty">Say hi to {String(persona.name || "your persona")}</p>
+          <p className="desk-chat-empty">
+            Say hi to {String(persona.name || "your persona")}
+          </p>
         )}
         {turns.map((t) => (
-          <div key={t.id} className={"desk-chat-turn is-" + t.role + (t.error ? " is-error" : "")}>
+          <div
+            key={t.id}
+            className={
+              "desk-chat-turn is-" + t.role + (t.error ? " is-error" : "")
+            }
+          >
             <div className="desk-chat-bubble">{t.text}</div>
             {t.role === "agent" && !t.error && (
               <div className="desk-chat-meta">
-                {badge(t) && <span className={`egress-badge is-${badge(t)!.scope}`}>{badge(t)!.text}</span>}
-                <button type="button" className="desk-chip quiet" onClick={() => void harvest(t)}>
+                {badge(t) && (
+                  <span className={`egress-badge is-${badge(t)!.scope}`}>
+                    {badge(t)!.text}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="desk-chip quiet"
+                  onClick={() => void harvest(t)}
+                >
                   {savedId === t.id ? "Saved" : "Save to desk"}
                 </button>
               </div>
             )}
           </div>
         ))}
-        {thinking && <div className="desk-chat-turn is-agent"><div className="desk-chat-bubble desk-chat-thinking">· · ·</div></div>}
+        {thinking && (
+          <div className="desk-chat-turn is-agent">
+            <div className="desk-chat-bubble desk-chat-thinking">· · ·</div>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
       <footer className="desk-chat-foot">
         <GroundingSection
           meetings={(items.meeting || []).map((m: any) => ({
-            id: m.id, title: String(m.title || "Untitled meeting"), startedAt: m.startedAt,
+            id: m.id,
+            title: String(m.title || "Untitled meeting"),
+            startedAt: m.startedAt,
           }))}
           selection={grounding}
           onChange={setAndSaveGrounding}
@@ -193,14 +271,20 @@ export function PersonaChat(props: { personaId: string }) {
             type="button"
             className="desk-chip"
             disabled={!input.trim() || thinking || overBudget}
-            title={overBudget ? "Grounding is past the window — pick less" : undefined}
+            title={
+              overBudget
+                ? "Grounding is past the window — pick less"
+                : undefined
+            }
             onClick={() => void send()}
           >
             {thinking ? "…" : "Send"}
           </button>
         </div>
         {!groundingIsEmpty(grounding) && overBudget && (
-          <p className="desk-run-warning">⚠ Grounding is past the window — pick less</p>
+          <p className="desk-run-warning">
+            ⚠ Grounding is past the window — pick less
+          </p>
         )}
       </footer>
     </motion.div>

@@ -133,51 +133,19 @@ def test_delete_without_repo_404s(test_client: TestClient, settings_path: Path) 
 # ── page content ─────────────────────────────────────────────────────────
 
 def test_dictation_page_includes_journal_tab(test_client: TestClient) -> None:
-    body = test_client.get("/dictation").text
-    assert 'data-section="journal"' in body
-    assert 'id="view-journal"' in body
-    assert 'id="journal-list"' in body
-    assert 'id="journal-search"' in body
-    assert 'id="journal-filter-source"' in body
-    assert 'id="journal-btn-clear"' in body
-    # the local-only trust statement is first-class on the surface
-    assert 'id="journal-trust"' in body
-    assert "only on this machine" in body
+    assert '<div id="root"></div>' in test_client.get("/dictation").text
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    assert '["journal", "Journal"]' in source
+    assert "/api/dictation/journal" in source
+    assert "Search journal" in source and "Clear journal" in source
 
 
 def test_dictation_journal_premium_and_a11y_markers(test_client: TestClient) -> None:
-    """The Journal carries the Phase-44 bar + a11y (markup present in the HTML;
-    JS-rendered cards / linked-stylesheet classes are exercised live)."""
-    body = test_client.get("/dictation").text
-    # reduced-motion guard is in the inlined critical CSS
-    assert "prefers-reduced-motion" in body
-    # the trust note + its glyph + the search/filter controls are static markup
-    assert 'class="journal-trust"' in body
-    assert 'id="journal-filter-corrected"' in body
-    assert "journal-trust-glyph" in body
-    # warm empty-state copy + the said→typed framing live in the JS bundle
-    built = (
-        Path(__file__).resolve().parents[2]
-        / "holdspeak" / "static" / "_built" / "dictation" / "index.html"
-    )
-    if built.exists():
-        css = list(built.parent.parent.glob("_astro/dictation*.css"))
-        joined = "\n".join(p.read_text() for p in css)
-        assert "lat-strip" in joined  # the per-utterance latency strip
-        assert "journal-card" in joined
-        # REGRESSION GUARD: the journal/moment/replay DOM is injected by
-        # dictation-app.js at runtime, so its CSS MUST be global. Astro scopes
-        # `.journal-card { }` to `.journal-card[data-astro-cid-…]`, which never
-        # matches runtime-injected elements — that left the whole surface
-        # rendering naked. Keep these rules in a `<style is:global>` block.
-        assert ".journal-card{" in joined.replace(" ", ""), (
-            "journal styles must be global (is:global) — scoped CSS does not "
-            "apply to the JS-injected journal cards"
-        )
-        assert "journal-card[data-astro-cid" not in joined, (
-            "journal-card is scoped — it will NOT style the runtime-injected "
-            "cards. Move these rules into <style is:global>."
-        )
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    css = (Path(__file__).resolve().parents[2] / "web/src/styles/react-app.css").read_text()
+    assert "ConfirmAction" in source and "ResourceState" in source
+    assert "prefers-reduced-motion" in css
+    assert ".innerHTML" not in source
 
 
 # ── F-07: the journal follows journal_enabled, not the pipeline gate ─

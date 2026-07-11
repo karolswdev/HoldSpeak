@@ -24,7 +24,7 @@ def _client() -> TestClient:
 
 
 def _built() -> bool:
-    return (pages._HOLDSPEAK_DIR / "static" / "_built" / "settings" / "index.html").exists()
+    return (pages._HOLDSPEAK_DIR / "static" / "_built" / "index.html").exists()
 
 
 def test_shell_carries_the_trust_chip_and_panel() -> None:
@@ -32,26 +32,20 @@ def test_shell_carries_the_trust_chip_and_panel() -> None:
     assert resp.status_code == 200
     if not _built():
         return  # the Unit Tests CI job runs without the bundle
-    html = resp.text
-    # The ambient chip (opens the panel) + the panel dialog + its honest default.
-    assert "data-trust-open" in html
-    assert 'id="trust-panel"' in html
-    assert "Local only" in html  # the server-rendered honest default
-    assert "data-trust-rows" in html
+    assert '<div id="root"></div>' in resp.text
+    source = (_REPO / "web/src/components/AppShell.tsx").read_text()
+    assert "Privacy & Trust" in source and "trustOpen" in source
+    assert "Current scope" in source and "Review privacy settings" in source
 
 
 def test_trust_view_module_maps_postures() -> None:
-    """Guard the source-of-truth posture rules in trust-view.js (the JS the
-    shell imports). A Node harness asserts the live mappings; here we lock the
-    rule strings so a regression in the mapping is visible in review."""
-    src = (_REPO / "web" / "src" / "scripts" / "trust-view.js").read_text()
+    """The shell reads trust posture from the hub and maps the egress scope."""
+    src = (_REPO / "web/src/components/AppShell.tsx").read_text()
     for marker in (
-        "Needs attention",        # off-loopback + no auth
-        "Writes need approval",   # actuators enabled
-        "Configured endpoint",    # transcript egress != none
-        "Local only",             # default
-        "actuators_enabled",
-        "transcript_egress",
-        "auth_token_set",
+        "/api/setup/status",
+        'mode === "cloud"',
+        'mode === "local+cloud"',
+        '"local"',
+        "egress?.target",
     ):
-        assert marker in src, f"missing trust-view rule: {marker}"
+        assert marker in src

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import datetime
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, AsyncMock
 
@@ -281,18 +282,8 @@ class TestDashboardEndpoint:
         assert "HoldSpeak" in response.text or "holdspeak" in response.text.lower()
 
     def _bundled_runtime_js(self, test_client) -> str:
-        """HS-10-06: the runtime page bundles its JS into a hashed
-        Astro chunk under /_built/_astro/. This helper fetches that
-        chunk so tests can assert against the actual runtime code
-        regardless of the hash."""
-        import re
-
-        html = test_client.get("/live").text
-        match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', html)
-        if not match:
-            return ""
-        js = test_client.get(match.group(1)).text
-        return js
+        del test_client
+        return (Path(__file__).resolve().parents[2] / "web/src/pages/LivePage.tsx").read_text()
 
     def test_dashboard_references_runtime_control_endpoints(self, test_client):
         """Dashboard JS should still call the runtime-level meeting
@@ -301,50 +292,35 @@ class TestDashboardEndpoint:
         scripts/dashboard-app.js?raw)."""
         response = test_client.get("/live")
         assert response.status_code == 200
-        html = response.text
-        # UI labels visible in the rendered page.
-        assert "Intent routing" in html
-        assert "Preview route" in html
-        assert "Deferred plugin jobs" in html
-        # API endpoints live in the bundled runtime JS.
         js = self._bundled_runtime_js(test_client)
-        assert js, "expected bundled /_built/_astro/*.js to be referenced from /live"
+        assert "Intent routing" in js and "Preview route" in js and "Deferred plugin jobs" in js
         assert "/api/runtime/status" in js
         assert "/api/meeting/start" in js
         assert "/api/meeting/stop" in js
         assert "/api/intents/control" in js
         assert "/api/intents/profile" in js
-        assert "/api/intents/override" in js
         assert "/api/intents/preview" in js
-        assert "/api/plugin-jobs" in js
         assert "/api/plugin-jobs/summary" in js
         assert "/api/plugin-jobs/process" in js
 
     def test_dashboard_includes_device_health_surface(self, test_client):
         """HS-17-03: dashboard exposes the attached-device health panel.
 
-        Alpine fills values in the browser, so this checks both the
-        server-rendered shell and bundled runtime helpers that drive
+        React fills values in the browser, so this checks both the
+        server-rendered shell and typed route source that drive
         battery/RSSI visibility and stale-state rendering.
         """
         response = test_client.get("/live")
         assert response.status_code == 200
-        html = response.text
-        assert "Devices" in html
-        assert "deviceBatteryLabel(device)" in html
-        assert "deviceRssiLabel(device)" in html
-        assert "deviceHealthStale(device)" in html
-
         js = self._bundled_runtime_js(test_client)
-        assert js, "expected bundled /_built/_astro/*.js to be referenced from /live"
-        assert "devices: []" in js
-        assert "upsertDevice" in js
-        assert "hasDeviceHealth" in js
+        assert "Devices" in js
+        assert "/api/devices/health" in js
+        assert "battery_pct" in js and "rssi_dbm" in js and "stale" in js
 
     def test_dashboard_includes_egress_posture_badge(self, test_client):
         """HS-25-08 / HS-69-01: dashboard shows the meeting-intel egress posture badge.
 
-        The badge is driven by `intel_egress` from /api/runtime/status; Alpine
+        The badge is driven by `intel_egress` from /api/runtime/status; React
         fills it in the browser, so we check the server-rendered shell + the
         bundled helper that produces the glanceable label. HS-69-01 made the
         badge a canonical STRUCTURED chip (`egress-badge` / `egressBadgeText()`),
@@ -352,19 +328,9 @@ class TestDashboardEndpoint:
         """
         response = test_client.get("/live")
         assert response.status_code == 200
-        html = response.text
-        assert "Privacy" in html
-        assert "egress-badge" in html
-        assert "egressBadgeText()" in html
-
         js = self._bundled_runtime_js(test_client)
-        assert js, "expected bundled /_built/_astro/*.js to be referenced from /live"
-        assert "intelEgress" in js
-        assert "egressLabel" in js
-        assert "deviceBatteryLabel" in js
-        assert "deviceRssiLabel" in js
-        assert "deviceHealthStale" in js
-        assert "device_health" in js
+        assert "intel_egress" in js
+        assert "Hub-reported" in js
 
     def test_dashboard_includes_idle_mode_guidance_markers(self, test_client):
         """The rebuilt runtime renders copy that distinguishes idle vs.
@@ -373,18 +339,17 @@ class TestDashboardEndpoint:
         present so users understand why controls are disabled."""
         response = test_client.get("/live")
         assert response.status_code == 200
-        html = response.text
-        assert "Press start, then hold to talk" in html
-        assert "Read-only while idle" in html
-        assert "Start a meeting to begin recording" in html
+        source = self._bundled_runtime_js(test_client)
+        assert "Ready when you are" in source
+        assert "Start a meeting to begin" in source
+        assert "Tests routing without changing the live meeting" in source
 
     def test_dashboard_bootstrap_prefers_runtime_status_payload(self, test_client):
         """The runtime-status payload is still preferred at bootstrap.
         The factory function lives in the bundled chunk (HS-10-06)."""
         js = self._bundled_runtime_js(test_client)
-        assert js, "expected bundled /_built/_astro/*.js to be referenced from /live"
-        assert "fetchRuntimeStatus" in js
-        assert "fetchInitialState" in js
+        assert 'useResource<JsonRecord>("/api/runtime/status"' in js
+        assert 'useResource<JsonRecord>("/api/state"' in js
 
 
 @pytest.mark.integration
@@ -1839,47 +1804,13 @@ class TestHistoryUiSmoke:
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
-        html = response.text
-        # HS-42-02: Settings moved out of History into the global /settings route.
-        for label in ("Meetings", "Action items", "Speakers", "Intel queue"):
-            assert label in html
-        assert "setTab('settings')" not in html  # the History settings tab is gone
-        assert "Deferred plugin jobs" in html
-        # UI strings + Alpine bindings still rendered server-side.
-        for ui_string in (
-            "Mark needs review",
-            "Open work",
-            "Local Markdown",
-            "Local JSON",
-            "source_timestamp",  # Alpine x-show / x-text bindings reference this.
-            "selectedMeetingArtifacts",  # x-show binding on the artifacts panel.
-            "setActionReviewState",  # @click binding on Accept/Mark needs review.
-            "downloadSelectedMeetingExport",  # @click binding on export buttons.
-            "mermaid-artifact",  # HS-16-04: diagram-artifact render container.
-            "renderMermaid",  # HS-16-04: x-init hook on the diagram container.
-        ):
-            assert ui_string in html
-
-        # JS handler identifiers + endpoint strings in the bundled chunk.
-        match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', html)
-        assert match, "expected history JS chunk reference"
-        js = test_client.get(match.group(1)).text
-        for marker in (
-            "openSpeaker",
-            "processIntelJobs",
-            "retryIntelJob",
-            "loadPluginJobs",
-            "retryPluginJob",
-            "cancelPluginJob",
-            "actionReviewFilter",
-            "renderMermaid",  # HS-16-04: diagram render method in the bundle.
-        ):
-            assert marker in js, f"missing JS marker: {marker}"
+        assert '<div id="root"></div>' in response.text
+        js = (Path(__file__).resolve().parents[2] / "web/src/pages/HistoryPage.tsx").read_text()
+        for marker in ("meetings", "actions", "speakers", "projects", "queues", "MeetingDetail", "ImportDialog"):
+            assert marker in js
         for endpoint in (
-            "/api/settings",
             "/api/speakers",
             "/api/intel/jobs",
-            "/api/intel/summary",
             "/api/plugin-jobs",
             "/api/all-action-items",
         ):
@@ -1887,19 +1818,14 @@ class TestHistoryUiSmoke:
         assert "/api/meetings/" in js
         assert "/artifacts" in js
         assert "/export?format=" in js
-        assert "No pending action items need review." in js
+        assert "No aftercare yet" in js
 
     def test_settings_route_serves_the_global_settings_page(self, test_client):
-        # HS-42-02: /settings is now its own shell-level page (not the history
-        # shell). It carries the settings Alpine factory; since HS-84-03 the
-        # cloud endpoint is a picked RuntimeProfile, not a typed base URL.
         response = test_client.get("/settings")
         assert response.status_code == 200
-        assert "settingsApp" in response.text
-        assert "intel_profile_id" in response.text
-        assert "Manage profiles" in response.text
-        assert "OpenAI-compatible base URL" not in response.text
-        assert "HoldSpeak History" not in response.text
+        assert '<div id="root"></div>' in response.text
+        source = (Path(__file__).resolve().parents[2] / "web/src/pages/SettingsPage.tsx").read_text()
+        assert "Hub configuration" in source and '"/api/settings"' in source
 
 
 @pytest.mark.integration
@@ -1907,7 +1833,7 @@ class TestCompanionUiSmoke:
     """Smoke checks for the /companion surface.
 
     Since HS-69-12, /companion is the **Agent Desk** — a live desk of the real
-    agents + the companion link (Alpine `companionDesk()` over /api/agents +
+    agents + the companion link (React over /api/agents +
     /api/coders/status), not the old static docs portal. This smoke check
     asserts the desk's stable structure + the preserved connection/credential
     facts in the "How it connects" footer.
@@ -1918,24 +1844,10 @@ class TestCompanionUiSmoke:
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
 
-        html = response.text
-        # The Agent Desk hero + its zones.
-        for marker in (
-            "Companion",
-            "The Agent Desk",
-            "Needs you",
-            "Recipes",
-            "companionDesk()",
-        ):
-            assert marker in html, f"missing Agent Desk marker: {marker}"
-
-        # The pairing + credential facts survive, folded into "How it connects".
-        for marker in (
-            "How it connects",
-            "never autonomous",
-            "credential",
-        ):
-            assert marker in html, f"missing companion connection fact: {marker}"
+        assert '<div id="root"></div>' in response.text
+        source = (Path(__file__).resolve().parents[2] / "web/src/pages/CompanionPage.tsx").read_text()
+        for marker in ("The Agent Desk", "Needs you", "Recipes", "How it connects", "no autonomous send"):
+            assert marker in source
 
 
 @pytest.mark.integration
@@ -1946,22 +1858,17 @@ class TestCadenceUiSmoke:
         response = test_client.get("/cadence")
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
-        html = response.text
-        for marker in ("Cadence", "Open loops", "off by default"):
-            assert marker in html, f"missing cadence page marker: {marker}"
+        assert '<div id="root"></div>' in response.text
+        source = (Path(__file__).resolve().parents[2] / "web/src/pages/CadencePage.tsx").read_text()
+        for marker in ("Cadence", "Open loops", "Run now"):
+            assert marker in source
 
     def test_cadence_page_js_calls_the_api(self, test_client):
-        import re
-
-        html = test_client.get("/cadence").text
-        chunks = re.findall(r'src="(/_built/_astro/[^"]+\.js)"', html)
-        assert chunks, "expected a bundled JS chunk reference on /cadence"
-        js = "".join(test_client.get(src).text for src in set(chunks))
-        # The bundler splits `${API}/status` into the base + the suffix, so assert the
-        # base path and each action segment (not the concatenated whole).
+        js = (Path(__file__).resolve().parents[2] / "web/src/pages/CadencePage.tsx").read_text()
         assert "/api/cadence" in js, "cadence page JS missing the API base path"
-        for segment in ("/status", "/loops", "/run-now", "/snooze"):
+        for segment in ("/status", "/loops", "/run-now"):
             assert segment in js, f"cadence page JS missing API segment: {segment}"
+        assert 'act(id, "snooze")' in js
 
 
 @pytest.mark.integration

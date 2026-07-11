@@ -1,5 +1,6 @@
 id: desk-seeded-reads-back
-title: The primitive-rich desk reads back on all three surfaces
+execution_target: web_react
+title: The primitive-rich React Desk reads back on desktop
 # The staging-verify beat for the whole pack: every seeded primitive type is
 # present and openable before any human judgement. Cites the front-door /
 # knowledge-base / zone keys the beats actually exercise — NOT Ask-AI (no beat
@@ -11,10 +12,7 @@ features:
   - desk.diorama.front_door
 recipes:
   - desk-primitives
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the iPhone form factor is unknown for the desk front door in the directory (desk.diorama.front_door ph=?); confirm at the sitting"}
+form_factors: [desktop]
 steps:
   - do: Open the desk. Count the objects that arrived.
     expect: The three seeded notes are present as objects — "BLUEBIRD streaming rewrite", "Pylon incident runbook", and "Questline save-format note".
@@ -25,6 +23,5 @@ steps:
   - do: Find the "Ledgerline" zone and open it.
     expect: The zone is present and contains exactly the two filed notes (BLUEBIRD and Pylon); the Questline note is NOT inside it.
     where: /
-    surfaces:
-      iphone: {n/a: "zone dive on iPhone is unconfirmed in the record"}
+    form_factors: [desktop]
 teardown: []

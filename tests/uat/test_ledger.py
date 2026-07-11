@@ -10,6 +10,7 @@ from uat.conductor.contract.ledger import (
     Feature,
     FeatureLedger,
 )
+from uat.conductor.contract.targets import ExecutionSlot
 
 
 def test_shipped_ledger_loads_and_validates():
@@ -62,6 +63,22 @@ def test_coverage_pct():
     r = CoverageResult(covered=1, total=4, uncovered=["x"])
     assert r.pct == 25.0
     assert CoverageResult(0, 0, []).pct == 0.0
+
+
+def test_native_coverage_requires_explicit_target_inventory():
+    feature = Feature(
+        "native-only",
+        surfaces={"web": "no", "ipad": "yes", "iphone": "yes"},
+        targets={"ios_flagship_swift": {"ipad"}},
+    )
+    ledger = FeatureLedger([feature], {})
+
+    flagship_ipad = ExecutionSlot("ios_flagship_swift", "ipad")
+    companion_ipad = ExecutionSlot("ios_companion_swift", "ipad")
+    assert feature.applicability_on_slot(flagship_ipad) == "yes"
+    assert feature.applicability_on_slot(companion_ipad) == "unknown"
+    assert ledger.coverage_slot({"native-only"}, flagship_ipad).covered == 1
+    assert ledger.coverage_slot({"native-only"}, companion_ipad).total == 0
 
 
 def test_validate_catches_bad_surface_and_dupes():

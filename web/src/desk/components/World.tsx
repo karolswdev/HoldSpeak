@@ -5,7 +5,12 @@
 import { useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
-  allObjects, objGlow, objUnit, worldObjects, worldRows, worldZones,
+  allObjects,
+  objGlow,
+  objUnit,
+  worldObjects,
+  worldRows,
+  worldZones,
 } from "../world";
 import { DeskObject } from "./DeskObject";
 import { InlineEditor } from "./InlineEditor";
@@ -13,12 +18,19 @@ import { Pullout } from "./Pullout";
 import { AskBar, AskPanel } from "./AskPanel";
 import { MicButton } from "./MicButton";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteUrl, variantIndex } from "../../scripts/desk/sprites.js";
+import { spriteUrl, variantIndex } from "../sprites";
 import { resolveRef } from "../lineage";
 
 // Per-zone stable tints (variantIndex over the id keeps a zone's color
 // forever — the same stable-hash family the sprite picker uses).
-const ZONE_TINTS = ["#E0A458", "#56C7F5", "#34D399", "#A78BFA", "#FF9E64", "#FBBF24"];
+const ZONE_TINTS = [
+  "#E0A458",
+  "#56C7F5",
+  "#34D399",
+  "#A78BFA",
+  "#FF9E64",
+  "#FBBF24",
+];
 
 export function World() {
   const items = useDesk((s) => s.items);
@@ -38,7 +50,12 @@ export function World() {
   // The lasso (HSM-16-09's gesture on pointer metal): press the empty desk,
   // drag a rope, release — everything inside is the ask's context. A bare
   // background click (no rope) clears the selection.
-  const [lasso, setLasso] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const [lasso, setLasso] = useState<{
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+  } | null>(null);
   const lassoRef = useRef<typeof lasso>(null);
   const worldRef = useRef<HTMLDivElement | null>(null);
 
@@ -71,15 +88,17 @@ export function World() {
       return;
     }
     const roped: string[] = [];
-    worldRef.current?.querySelectorAll<HTMLElement>(".desk-obj").forEach((el) => {
-      const r = el.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      if (cx >= left && cx <= right && cy >= top && cy <= bottom) {
-        const id = el.dataset.objId;
-        if (id) roped.push(id);
-      }
-    });
+    worldRef.current
+      ?.querySelectorAll<HTMLElement>(".desk-obj")
+      .forEach((el) => {
+        const r = el.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        if (cx >= left && cx <= right && cy >= top && cy <= bottom) {
+          const id = el.dataset.objId;
+          if (id) roped.push(id);
+        }
+      });
     if (roped.length) setSelected(roped);
   };
 
@@ -95,7 +114,11 @@ export function World() {
       onPointerCancel={onLassoUp}
     >
       {divedZone && (
-        <button type="button" className="desk-chip desk-surface" onClick={surface}>
+        <button
+          type="button"
+          className="desk-chip desk-surface"
+          onClick={surface}
+        >
           ← All
         </button>
       )}
@@ -103,12 +126,18 @@ export function World() {
         const cols = Math.max(1, Math.min(4, zones.length));
         const wPct = Math.min(30, 84 / cols);
         return (
-          <ZoneTray key={z.id} z={z} style={{
-            left: `${((((i % cols) + 0.5) / cols) * 100).toFixed(2)}%`,
-            top: "12%",
-            width: `${wPct}%`,
-            "--zk": objGlow("directory"),
-          } as React.CSSProperties} />
+          <ZoneTray
+            key={z.id}
+            z={z}
+            style={
+              {
+                left: `${((((i % cols) + 0.5) / cols) * 100).toFixed(2)}%`,
+                top: "12%",
+                width: `${wPct}%`,
+                "--zk": objGlow("directory"),
+              } as React.CSSProperties
+            }
+          />
         );
       })}
       {objects.map((o, i) => (
@@ -126,8 +155,12 @@ export function World() {
         <div
           className="desk-lasso"
           style={{
-            left: Math.min(lasso.x0, lasso.x1) - (worldRef.current?.getBoundingClientRect().left || 0),
-            top: Math.min(lasso.y0, lasso.y1) - (worldRef.current?.getBoundingClientRect().top || 0),
+            left:
+              Math.min(lasso.x0, lasso.x1) -
+              (worldRef.current?.getBoundingClientRect().left || 0),
+            top:
+              Math.min(lasso.y0, lasso.y1) -
+              (worldRef.current?.getBoundingClientRect().top || 0),
             width: Math.abs(lasso.x1 - lasso.x0),
             height: Math.abs(lasso.y1 - lasso.y0),
           }}
@@ -139,10 +172,15 @@ export function World() {
   );
 }
 
-
 /** A landmark zone tray (HS-73-05): stable tint, member mini-sprites,
  * drop affordance, dive on click, rename-in-place, an empty hint. */
-function ZoneTray({ z, style }: { z: ReturnType<typeof worldZones>[number]; style: React.CSSProperties }) {
+function ZoneTray({
+  z,
+  style,
+}: {
+  z: ReturnType<typeof worldZones>[number];
+  style: React.CSSProperties;
+}) {
   const items = useDesk((s) => s.items);
   const hoverZoneId = useDesk((s) => s.hoverZoneId);
   const renamingZoneId = useDesk((s) => s.renamingZoneId);
@@ -172,17 +210,27 @@ function ZoneTray({ z, style }: { z: ReturnType<typeof worldZones>[number]; styl
       }}
     >
       {renaming || focusRename ? (
-        <span className="desk-zone-rename-row" onClick={(e) => e.stopPropagation()}>
+        <span
+          className="desk-zone-rename-row"
+          onClick={(e) => e.stopPropagation()}
+        >
           <input
             className="desk-zone-rename"
             value={focusRename && !renaming ? z.title : name}
             autoFocus
-            onFocus={() => { setName(z.title); setRenaming(true); }}
+            onFocus={() => {
+              setName(z.title);
+              setRenaming(true);
+            }}
             onChange={(e) => setName(e.target.value)}
             onBlur={commit}
             onKeyDown={(e) => {
               if (e.key === "Enter") commit();
-              if (e.key === "Escape") { setName(z.title); setRenaming(false); setRenamingZone(null); }
+              if (e.key === "Escape") {
+                setName(z.title);
+                setRenaming(false);
+                setRenamingZone(null);
+              }
             }}
           />
           <MicButton onText={(t) => setName(t)} />
@@ -190,7 +238,11 @@ function ZoneTray({ z, style }: { z: ReturnType<typeof worldZones>[number]; styl
       ) : (
         <span
           className="desk-zone-title"
-          onClick={(e) => { e.stopPropagation(); setName(z.title); setRenaming(true); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setName(z.title);
+            setRenaming(true);
+          }}
         >
           {z.title}
         </span>
@@ -198,10 +250,20 @@ function ZoneTray({ z, style }: { z: ReturnType<typeof worldZones>[number]; styl
       {thumbs.length > 0 ? (
         <span className="desk-zone-thumbs">
           {thumbs.map((t) => (
-            <img key={t.id} src={spriteUrl(t.kind, t.id)} alt="" width={22} height={22} />
+            <img
+              key={t.id}
+              src={spriteUrl(t.kind, t.id)}
+              alt=""
+              width={22}
+              height={22}
+            />
           ))}
-          {memberIds.length > 4 && <span className="desk-zone-more">+{memberIds.length - 4}</span>}
-          <span className="desk-zone-count">{memberIds.length === 1 ? "1 item" : `${memberIds.length} items`}</span>
+          {memberIds.length > 4 && (
+            <span className="desk-zone-more">+{memberIds.length - 4}</span>
+          )}
+          <span className="desk-zone-count">
+            {memberIds.length === 1 ? "1 item" : `${memberIds.length} items`}
+          </span>
         </span>
       ) : (
         <span className="desk-zone-count">drop things here</span>

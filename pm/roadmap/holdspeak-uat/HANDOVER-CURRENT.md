@@ -5,6 +5,14 @@
 > the full protocol are built and merged, the conductor is **hosted right now**,
 > the owner is **mid-sitting**, and the first findings are surfacing.
 
+> **Protocol-v2 update:** the mid-sitting statements below preserve the
+> 2026-07-09 historical record. That sitting used the superseded
+> web/iPad/iPhone surface model and must not be resumed or promoted as native
+> acceptance evidence. Current execution uses `web_react`,
+> `ios_flagship_swift`, `ios_companion_swift`, and `ios_classic_swift` with
+> explicit compatible form factors. React Desk and Swift Desk are separate
+> campaign legs; viewport evidence never fills a Swift slot.
+
 ## 1. What this is / where
 
 The **holdspeak-uat** rig lives under `uat/`. Start it:
@@ -75,20 +83,30 @@ product only as a subprocess (`holdspeak web`) and over HTTP. Enforced by
 3. **Three-surface gap: the product doesn't travel to devices.** A sitting boots
    the product loopback-only (`SittingManager.create` → `create_run(lan=False)`),
    so devices reach the guided *site* (:8799) but not the Web Desk (:8788).
-   Default the sitting's run to LAN-bound so the product travels too. → harness fix.
+   Default the sitting's run to LAN-bound so the product travels too. → historical
+   harness finding. Protocol v2 additionally showed that reachability alone is
+   insufficient: native evidence now requires the exact Swift target/form
+   factor and a matching pairing-verified device attestation.
 
 ## 5. What's NEXT (queued)
 
 - **Finish the sitting + triage.** The owner walks packs; then open the debrief
   together, set dispositions per `uat/TRIAGE.md`, and paste `fix`es into
   `pm/roadmap/holdspeak/BACKLOG.md` (harness proposes the block, human commits).
-- **Phase 3 — The Harness Engine** ([`phase-3-the-harness-engine/`](./phase-3-the-harness-engine/),
-  5 stories, scaffolded): mesh dispatch (⇄ badge arc), cloud-egress + per-card
-  probe, trust-gate attacks (off-loopback 401, no-telemetry, crafted-schema),
-  pipeline-on dictation (spoken-symbol + preview byte-lock), device pre-flight.
-  Building these flips ~26 `manual_setup` scenarios to auto-staged.
-- **The three harness findings above** (staging feedback, device-LAN default) are
-  quick wins to fold in.
+- **Phase 4 — The Owner Functional Pass**
+  ([`phase-4-the-owner-functional-pass/`](./phase-4-the-owner-functional-pass/))
+  is active. The guided site leads with seven ordered campaigns spanning 90
+  functional scenarios / 327 target-qualified observations. Campaign 1 is
+  `web_react:desktop`; Campaign 5 independently exercises flagship Swift Desk
+  and native workflows on physical iPad/iPhone. Campaigns 1–5 are the core pass;
+  campaign 6 is connected integrations; campaign 7 is conditional on exact
+  companion/classic builds. Use `uat/FUNCTIONAL-PASS.md` as the execution canon.
+- **Phase 3 paused at 2/5.** Mesh dispatch and cloud-egress shipped. The owner
+  explicitly declined the next drift/schema/network-hardening story; do not
+  resume HSU-3-03 without a fresh owner decision.
+- **Never revive “three surfaces, one script.”** Parity joins independently
+  executed target-specific legs. Responsive React and physical-device browser
+  evidence do not substitute for Swift.
 
 ## 6. Gotchas
 

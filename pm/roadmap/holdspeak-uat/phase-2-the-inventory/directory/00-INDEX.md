@@ -1,5 +1,10 @@
 # The Inventory Directory — what to look at, what to expand
 
+> **Historical inventory axis:** The web/iPad/iPhone columns below describe what
+> the phase record claimed, not executable implementation identity. Protocol v2
+> maps each claim to `web_react` or an exact Swift root plus form factor before
+> UAT can award evidence. Compact width is never native proof by itself.
+
 **Derived 2026-07-08** by an 8-agent parallel sweep (Opus 4.8) of the whole
 phase record — HoldSpeak desktop phases 0–90, HoldSpeak Mobile 1–27, and the
 public docs corpus read as promises. **255 capabilities** enumerated. This is

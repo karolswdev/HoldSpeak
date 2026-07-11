@@ -1,4 +1,5 @@
 id: desk-transcribe-everywhere
+execution_target: web_react
 title: Hold-to-talk voice on every desk input — hand-staged, real mic
 # The one-mic-call-site promise: every desk input carries hold-to-talk. No
 # recipe can induce a live mic capture, so the capture beats are hand-staged
@@ -9,12 +10,9 @@ features:
 recipes:
   - seeded-desk
 manual_setup:
-  - Grant the browser (or the iPad app) microphone permission for this run's origin.
+  - Grant the desktop browser microphone permission for this run's origin.
   - Have a working input microphone and a quiet spot to speak a short phrase.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "hold-to-talk at iPhone compact width is unverified in the directory record (desk.web.transcribe_everywhere iphone=unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Open the seeded desk and pick any input that takes text (a

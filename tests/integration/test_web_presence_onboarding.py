@@ -33,12 +33,7 @@ def test_setup_page_has_presence_onboarding() -> None:
 
 
 def test_presence_tier_and_install_rules() -> None:
-    """The platform→tier + install-command rules live in setup-app.js."""
-    src = (_REPO / "web" / "src" / "scripts" / "setup-app.js").read_text()
-    # macOS HUD vs Wayland tray+notification.
-    assert "menu-bar glyph" in src
-    assert "tray glyph + an in-place notification" in src
-    # Enable + the optional extra + the Linux typelibs.
-    assert "HOLDSPEAK_DESKTOP_PRESENCE=1 holdspeak" in src
-    assert "uv pip install -e '.[presence]'" in src
-    assert "gir1.2-notify-0.7" in src
+    src = (_REPO / "web" / "src" / "pages" / "WelcomePage.tsx").read_text()
+    assert "Desktop Presence" in src
+    assert "Config-backed and reversible" in src
+    assert 'json: { presence: { enabled } }' in src

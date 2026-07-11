@@ -1,0 +1,23 @@
+id: ios-flagship-deskos-seeded-primitives-sync-read
+execution_target: ios_flagship_swift
+title: The flagship DioStage syncs and opens seeded native Desk primitives
+features:
+  - desk.front-door.spatial-objects
+  - desk.knowledge_bases
+  - sync.contracts.parity_spine
+recipes:
+  - desk-primitives
+manual_setup:
+  - Pair the production flagship build to this isolated UAT run and complete its native pull/sync before judging the Desk.
+  - Keep the conductor's seeded object list visible only as a reference; every verdict must come from the installed Swift app.
+form_factors: [ipad, iphone]
+steps:
+  - do: Open the production flagship's native Desk and count the synced note objects.
+    expect: The native DioStage/lane shows the three seeded notes — "BLUEBIRD streaming rewrite", "Pylon incident runbook", and "Questline save-format note" — proving this build read the isolated run's data.
+  - do: Open each seeded note from the native Desk and compare its load-bearing title/body fields with the seed.
+    expect: Each note opens in the Swift in-world editor and its content is intact; no object is a noninteractive placeholder and no field is silently lost.
+  - do: Find and open "Project KB" and "Incident runbooks" in the native Desk.
+    expect: Both knowledge bases are distinct, openable native primitives with their seeded names/content; the app has not collapsed them into notes or browser links.
+  - do: Find the "Ledgerline" zone and inspect its membership.
+    expect: Ledgerline exists in the Swift Desk and contains BLUEBIRD and Pylon while Questline remains at the desk root, matching the seeded membership rather than merely listing every object.
+teardown: []

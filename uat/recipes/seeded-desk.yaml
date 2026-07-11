@@ -9,6 +9,7 @@ seeds:
   - dogfood-desk
 probe:
   - notes_min_count: 3
+  - egress_scope_is: local
   - note_exists: uat-seed-note-decisions
   - note_exists: uat-seed-note-glossary
   - kb_exists: uat-seed-kb-project

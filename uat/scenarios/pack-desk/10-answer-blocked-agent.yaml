@@ -1,18 +1,16 @@
 id: desk-answer-blocked-agent
-title: Answer a blocked agent — typed, or AI-drafted (control vs treatment)
+execution_target: web_react
+title: Answer a blocked agent — typed baseline and the claimed grounded draft
 # The blocked coder from scenario 09, now answered two ways. The AI-draft path
 # is an LLM feature, so it gets the mandatory control-vs-treatment pair: OFF
 # (no model / no dropped context) cannot name the repo token; ON (grounded on
-# the seeded desk, run on .43) drafts an answer that names it. Requires .43.
+# the seeded desk, run on .43) should draft an answer that names it. If the Desk
+# exposes no draft affordance/drop target, that is a direct acceptance failure.
 features:
   - desk.coders.answer-grounded-or-ai-drafted
 recipes:
-  - seeded-desk-43
-  - agent-pane-awaiting-input
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the answer-the-coder paths at iPhone compact width are unverified in the directory record (desk.coders.answer-grounded-or-ai-drafted iphone=unknown)"}
+  - agent-pane-awaiting-input-43
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. A coder pane is awaiting input and the seeded desk (dogfood
@@ -32,21 +30,14 @@ steps:
       needs no model.
     where: /
   - do: >
-      CONTROL. Ask AI to draft an answer with grounding OFF — no desk pile, no
-      dropped record fed to the model. Judge this beat alone.
+      Look for the claimed AI-draft affordance on the coder answer composer. Drop
+      the BLUEBIRD note (or select it through an explicit grounding picker) and
+      request a grounded draft on .43.
     expect: >
-      The draft is generic — it cannot name BLUEBIRD (the ledgerline streaming
-      rewrite) or the pylon incident, because nothing from the desk was fed to it.
-      A vague or "I don't have that context" draft is the point here.
+      The affordance exists and the AI-drafted answer names BLUEBIRD as the
+      ledgerline streaming/reconciliation rewrite. Nothing is injected until you
+      approve. If no draft affordance or Desk-object grounding target exists,
+      record a fail rather than imagining the control/treatment path.
     where: /
-  - do: >
-      TREATMENT. Drop the BLUEBIRD note (or lasso the Ledgerline pile) onto the
-      coder's answer composer, grounding ON, and AI-draft the answer against that
-      context on .43. Judge this beat alone.
-    expect: >
-      The AI-drafted answer names BLUEBIRD as the ledgerline streaming/reconciliation
-      rewrite (or cites the dropped record's substance) — judged structurally on
-      whether the decision/owner/risk is right, not literal wording. This is the
-      token the control could not know. Nothing is injected until you approve.
-    where: /
+    verifies: [desk.coders.answer-grounded-or-ai-drafted]
 teardown: []

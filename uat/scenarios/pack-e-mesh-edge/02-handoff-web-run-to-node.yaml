@@ -1,4 +1,5 @@
 id: e-handoff-web-run-to-node
+execution_target: web_react
 title: The handoff arc — a run moves onto the mesh worker and returns badged
 features:
   - mesh.handoff.web_run_to_node
@@ -6,10 +7,7 @@ features:
   - models.profiles.runs-on-per-agent
 recipes:
   - mesh-run-on-worker
-surfaces:
-  web: yes
-  ipad: {n/a: "mesh.handoff.web_run_to_node is ipad:unknown as a FROM-surface — the inventory row confirms only web enqueues via mesh_relay_jobs; the iPad-origin relay path is not confirmed shipped"}
-  iphone: {n/a: "mesh.handoff.web_run_to_node is iphone:unknown as a FROM-surface in the inventory row"}
+form_factors: [desktop]
 steps:
   - do: Confirm the world before the run (the staging beat) — the profiles view shows the "uat-worker" node live and the "uat-worker-run" meshNode profile ready to dispatch to.
     expect: The node reads live and a profile of the meshNode kind named at it is present; the run has somewhere real to go.

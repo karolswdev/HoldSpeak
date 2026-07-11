@@ -1,0 +1,40 @@
+title: Two exact pending proposals for the Qlippy queue
+description: >
+  Create two deterministic accepted meeting actions and queue one unexecuted
+  proposal from each while the Desk is subscribed. This gives Qlippy a genuine
+  first card plus a +1 queue, without external egress or manual proposal setup.
+deck: golden-local
+requires: []
+includes: [seeded-desk]
+actions:
+  - sync_meeting:
+      id: uat-qlippy-one
+      title: Qlippy decision one (UAT seed)
+      action_id: uat-qlippy-action-one
+      task: Approve the first deterministic Qlippy action
+      owner: Karol
+      review_state: accepted
+  - propose_github_card:
+      meeting_id: uat-qlippy-one
+      action_item_id: uat-qlippy-action-one
+      repo: acme/holdspeak-qlippy-one
+  - sync_meeting:
+      id: uat-qlippy-two
+      title: Qlippy decision two (UAT seed)
+      action_id: uat-qlippy-action-two
+      task: Review the second deterministic Qlippy action
+      owner: Karol
+      review_state: accepted
+  - propose_github_card:
+      meeting_id: uat-qlippy-two
+      action_item_id: uat-qlippy-action-two
+      repo: acme/holdspeak-qlippy-two
+probe:
+  - proposal_egress_names_target:
+      meeting_id: uat-qlippy-one
+      target: github
+      destination: acme/holdspeak-qlippy-one
+  - proposal_egress_names_target:
+      meeting_id: uat-qlippy-two
+      target: github
+      destination: acme/holdspeak-qlippy-two

@@ -116,30 +116,15 @@ def test_dictation_page_route_serves_html() -> None:
     response = client.get("/dictation")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
-    body = response.text
-    # HS-10-09: page now sits inside AppLayout. The legacy "Dictation
-    # Blocks" topbar copy is gone; the title is on the AppLayout
-    # heading + the Block editor h2. API endpoint + handler strings
-    # now live in the bundled JS chunk referenced from the HTML.
-    assert "HoldSpeak Dictation" in body
-    assert "Block editor" in body
-    assert "Starter templates" in body
-    assert "project-root-recent" in body
-
-    import re
-
-    match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', body)
-    assert match, "expected dictation JS chunk reference"
-    js = client.get(match.group(1)).text
+    assert '<div id="root"></div>' in response.text
+    js = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
     for endpoint in (
         "/api/dictation/blocks",
-        "/api/dictation/block-templates",
-        "/api/dictation/project-context",
+        "/api/dictation/readiness",
+        "/api/dictation/project-kb",
     ):
-        assert endpoint in js, f"missing API endpoint in bundle: {endpoint}"
-    assert "Create + dry-run" in js
-    assert "loadDetectedProjectContext" in js
-    assert "Using cwd:" in js
+        assert endpoint in js
+    assert "New block" in js and "Project grounding" in js
 
 
 @pytest.fixture

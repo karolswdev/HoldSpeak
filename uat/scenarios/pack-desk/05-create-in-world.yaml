@@ -1,14 +1,12 @@
 id: desk-create-in-world
+execution_target: web_react
 title: Create objects in the world without leaving the desk
 features:
   - desk.web.create_in_world
   - desk.recipes.in_world_authoring
 recipes:
   - desk-primitives
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "in-world create on iPhone is unconfirmed in the record (desk.web.create_in_world ph=?)"}
+form_factors: [desktop]
 steps:
   - do: On the desk, create a new note in place (no modal takeover — the note comes into being on the desk).
     expect: A new note object appears on the desk in world; the create happened on the desk surface, not behind a separate full-screen form.
@@ -19,6 +17,5 @@ steps:
   - do: Edit the recipe's system prompt and save.
     expect: The edit persists — reopening the recipe shows the new prompt, and no duplicate recipe was created.
     where: /
-    surfaces:
-      ipad: yes
+    form_factors: [desktop]
 teardown: []

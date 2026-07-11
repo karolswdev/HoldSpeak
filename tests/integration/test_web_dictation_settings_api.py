@@ -431,12 +431,10 @@ def test_dictation_page_includes_runtime_section() -> None:
     client = TestClient(server.app)
     response = client.get("/dictation")
     assert response.status_code == 200
-    body = response.text
-    assert 'data-section="runtime"' in body
-    # HS-10-09: heading switched to sentence case in the rebuild.
-    assert "Dictation runtime" in body
-    assert "cold-start cap" in body
-    assert "Target profile override" in body
+    assert '<div id="root"></div>' in response.text
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    assert '["runtime", "Runtime"]' in source
+    assert "Dictation runtime" in source and "Runtime profile" in source
 
 
 def test_dictation_page_includes_copilot_depth_controls() -> None:
@@ -449,16 +447,12 @@ def test_dictation_page_includes_copilot_depth_controls() -> None:
         )
     )
     client = TestClient(server.app)
-    body = client.get("/dictation").text
-    assert "Copilot depth" in body
-    # A control id for each of the four knobs (rewrite_passes is the segmented
-    # control's hidden value input).
-    assert 'id="rt-rewrite-passes"' in body
-    assert 'id="rt-corrections-enabled"' in body
-    assert 'id="rt-target-detect-llm-enabled"' in body
-    assert 'id="rt-target-detect-llm-below"' in body
-    # The "test this config in the dry-run" affordance.
-    assert 'id="rt-btn-test"' in body
+    assert '<div id="root"></div>' in client.get("/dictation").text
+    settings = (Path(__file__).resolve().parents[2] / "web/src/pages/SettingsPage.tsx").read_text()
+    # The recursive typed settings editor exposes every safe knob returned by
+    # the hub, including new depth knobs, without a duplicate hardcoded form.
+    assert "SettingsFields" in settings and "typeof item" in settings
+    assert "dictation" in settings
 
 
 class TestVoiceMacrosSettingsApi:

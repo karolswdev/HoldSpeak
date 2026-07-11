@@ -1,4 +1,5 @@
 id: desk-profiles-editor
+execution_target: web_react
 title: The runtime profiles editor — pick-not-type, and the key never rides back
 # The /profiles editor. A seeded desk gives the editor a live surface; the
 # profile-key-never-syncs recipe stages a profile carrying a bogus secret so the
@@ -9,10 +10,7 @@ features:
 recipes:
   - seeded-desk
   - profile-key-never-syncs
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the profiles editor at iPhone compact width is unverified in the directory record (runtime.web.profiles_editor iphone=unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Open the profiles editor at /profiles. A seeded desk and a

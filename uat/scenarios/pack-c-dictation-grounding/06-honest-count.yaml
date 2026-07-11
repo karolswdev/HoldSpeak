@@ -1,15 +1,12 @@
 id: c-honest-count
+execution_target: web_react
 title: The learning digest reports a real N — honest at zero
 features:
   - dictation.learning-digest.honest-count
   - dictation.learning.digest
 recipes:
   - seeded-desk-43
-  - learned-correction-taught
-surfaces:
-  web: yes
-  ipad: yes   # directory: dictation.learning-digest.honest-count ipad=yes (iPad reads the learning digest with real learned-from-N reach; ios consumes /api/dictation/learning-digest)
-  iphone: {n/a: "directory row: dictation.learning-digest.honest-count iphone=unknown — digest on iPhone form factor unverified in the record"}
+form_factors: [desktop]
 steps:
   # Staging-verify beat + the zero case: the digest must be honest at N=0.
   - do: Open the learning digest on the seeded desk, which has taught zero corrections.

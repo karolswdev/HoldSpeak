@@ -8,9 +8,24 @@ scenarios); the **guided site** walks you through a pack beat by beat and lands
 every verdict in a run database; a sitting ends in a **debrief packet** you and
 an agent triage together into `pm/roadmap/holdspeak/BACKLOG.md`.
 
+The governing acceptance policy is [`CHARTER.md`](./CHARTER.md). For physical
+iPhone/iPad work, use the short [`DEVICE-RUNBOOK.md`](./DEVICE-RUNBOOK.md). The
+latest evidence-backed readiness audit is [`REVIEW-2026-07-09.md`](./REVIEW-2026-07-09.md).
+The owner-facing execution order, bootstrap rules, usability bar, and stop gates
+are in [`FUNCTIONAL-PASS.md`](./FUNCTIONAL-PASS.md).
+
+Protocol v2 records every verdict as `implementation target × form factor`.
+`cli_python:local_shell` identifies terminal protocols; `web_react` is the
+React product; `ios_flagship_swift`,
+`ios_companion_swift`, and `ios_classic_swift` are separate installed Swift
+roots. `desktop`, `ipad_browser`, `iphone_browser`, and `tablet_viewport` are
+web environments; native `ipad` and `iphone` are physical app form factors.
+Viewport resizing never proves native behavior. React Desk and Swift Desk are
+separate campaign legs, and parity is joined only after both legs were run.
+
 ---
 
-## The owner's wake-up runbook
+## The owner's functional runbook
 
 ```bash
 cd /Users/karol/dev/tools/HoldSpeak
@@ -20,22 +35,31 @@ uv run python -m uat.conductor           # opens the UAT site; note the URL it p
 
 Then, in the browser (it prints `http://localhost:8799`):
 
-1. Pick **Pack D — Honest Failure** first (needs no LAN). Watch the rig stage
-   the world (each recipe verified, or the failure with the product's own log
-   tail — never a spinner).
+1. Start **1 · React Web Desk foundation — desktop**. The seven numbered owner
+   campaigns are the execution protocol; ordinary packs remain below them as
+   reference/diagnostic material.
 2. Walk the beats: each says *do this*, *expect this*. Use **Open the product**
-   to jump to the right screen. Cast a **verdict per surface** (web now;
-   iPad/iPhone when you have a device in hand — see "Device sittings" below),
-   jot a note (type it or **speak it** — every note field has a 🎤 that rides
+   to jump to the right screen. Cast a verdict only for the displayed
+   **target/form-factor slot**. Campaign 1 is React desktop; Campaign 5 is the
+   independent flagship Swift Desk/native pass on physical devices. Then jot a
+   note (type it or **speak it** — every note field has a 🎤 that rides
    the run's own transcribe route, local Whisper, no egress), drop a screenshot.
-3. If `.43` is up, **Pack A — Meeting Aftercare** and **Pack C — Dictation
-   Grounding** put the intelligence through its paces too.
-4. Read the **debrief** at sitting end (score per surface, coverage %, every
-   non-pass finding with its log slice). Triage the findings with an agent per
+3. Finish and triage one campaign before starting the next. Campaign cards show
+   the time, preflight, and split between automatic, assisted, and hands-on
+   bootstrap. Campaigns 2–4 add `.43`, mic, audio, and tmux only where needed.
+   Campaign 5 is the physical flagship pass.
+4. Read the **debrief** at sitting end (score per execution slot, coverage %,
+   every non-pass finding with its log slice). Triage the findings with an agent per
    [`TRIAGE.md`](./TRIAGE.md); each `fix` becomes a BACKLOG row.
 
 If anything is broken or pending, it is named honestly under **Known state**
 below.
+
+The numbered pass currently contains 90 scenarios and 327 direct observations:
+54 are fully automatic, 27 are recipe-staged plus a real-world preflight, and 9
+begin at a genuinely hands-on boundary. Exact meeting/action/proposal fixtures
+remove model wording and manual setup from UI-mechanics tests; live inference
+stays in the scenarios that judge intelligence itself.
 
 ---
 
@@ -48,7 +72,8 @@ below.
 | `8765` | your real hub | **untouched** — a sitting runs beside your live desk |
 
 `UAT_HOST=0.0.0.0 uv run python -m uat.conductor` binds the site LAN-wide for a
-device sitting.
+device sitting. Also enable **Device sitting** on the pack picker; that LAN-binds
+the isolated product run and preserves its pairing token across deck changes.
 
 ## How a sitting flows
 
@@ -58,10 +83,14 @@ device sitting.
 2. For each scenario, the conductor **stages** its state recipes (deck + seeds +
    actions) and verifies each through the product's own routes.
 3. You walk the steps; every verdict writes to the run DB the moment cast, keyed
-   `(scenario, step, surface)`. A refresh or a crash **resumes** at the first
-   unanswered slot.
+   `(scenario, step, target, form factor)`. A refresh or a crash **resumes** at
+   the first unanswered slot.
 4. At the end the **debrief packet** (`uat/_runs/<run_id>/debrief/debrief.md` +
    `.json`) generates.
+
+Each sitting snapshots its normalized scenarios, ledger, recipe/deck asset
+hashes, and git commit into `protocol-snapshot.json`. Debrief coverage means
+**executed** coverage; authored pack coverage is reported separately.
 
 ## Where things land
 
@@ -83,16 +112,23 @@ device sitting.
 `.43` = the LAN llama.cpp at `http://192.168.1.43:8080`. Pack D needs none of it,
 so **the rig demos without the LAN**. Packs A and C need `.43` up.
 
-## Device sittings (iPad / iPhone)
+## Device sittings (Swift on iPad / iPhone)
 
-The site is fully usable from a device browser: `UAT_HOST=0.0.0.0`, then open
-the LAN URL the conductor prints on the device. The run is shared, so a verdict
-cast from the iPad shows up on the Mac's open view. The **product** under test is
-reachable from the device the way it pairs with the real hub — each run reports
-its pairing facts (LAN URL + its own per-run token). Some device-local states
-(a sideloaded GGUF, airplane mode, mic permission) cannot be induced from the
-LAN; those are hand-staged in the device pre-flight and the harness refuses the
-beat rather than faking it.
+The guided site is usable from a device browser: `UAT_HOST=0.0.0.0`, then open
+the LAN URL the conductor prints. That browser is the recorder, not automatically
+the product target. Open the separately installed Swift app for a native step
+and pair it to the isolated product URL/token.
+
+Before a native verdict, register the exact target/form-factor device session:
+device name, OS, bundle ID, build number, installation source, and explicit
+pairing verification. The harness locks the slot unless that attestation matches
+the scenario. It is a durable human attestation, not cryptographic device proof.
+A result cast in React Safari on the iPad is `web_react:ipad_browser`, never
+`ios_flagship_swift:ipad`.
+
+Some device-local states (a sideloaded GGUF, airplane mode, mic permission)
+cannot be induced from the LAN; those are hand-staged in the device pre-flight
+and the harness refuses the beat rather than faking it.
 
 ## Building the site
 
@@ -106,17 +142,20 @@ npm --prefix uat/web run build
 
 ## Known state (kept truthful)
 
-- **The web surface loop is complete and proven** end to end (conductor →
+- **The `web_react:desktop` loop is complete and proven** end to end (conductor →
   induction → contract → guided site → debrief), including live on `.43` for the
   meeting-intel and mesh recipes.
-- **Physical iPad/iPhone verdicts are the owner's.** The device legs are built
-  (LAN-reachable site, per-surface verdict slots, `n/a`-with-reason), but every
-  device-surface verdict starts unanswered — never faked. The live device
-  cross-view (a verdict cast from a real device, seen on the Mac) awaits the
-  owner's sitting.
+- **Physical Swift verdicts are the owner's.** Every native slot starts locked
+  and unanswered until a matching pairing-verified device attestation exists.
+  React browser and Swift app evidence remain distinct even on the same glass.
 - **The first live human sitting (HSU-1-06) is pending the owner.** The rig is
   built up to the sitting; the sitting itself cannot be delegated — that is the
   point of the project.
+- **Native targets are distinct.** `ios_flagship_swift`,
+  `ios_companion_swift`, and `ios_classic_swift` are separate execution
+  targets. The current inventory still
+  contains claims that must be reclassified after on-glass verification; see
+  `CHARTER.md` "Current release blockers."
 - **The Phase-2 formal device verification + joint ranking** are not done; the
   directory is a model's reading of the record, used here as scenario source.
 
@@ -125,7 +164,8 @@ npm --prefix uat/web run build
 - `uv run pytest -q tests/uat/` — the harness suite (the `.43`-gated tests
   self-skip without the LAN).
 - `npm --prefix uat/web test` — the site's store tests.
-- `uv run python scripts/uat_site_walk.py` — a Playwright drive of the real site.
+- `uv run python scripts/uat_site_walk.py` — a Playwright drive of the real site
+  (UI smoke only; it is not a human sitting or a device-parity proof).
 
 ## Drive it ad-hoc (no sitting)
 

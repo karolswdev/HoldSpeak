@@ -1,40 +1,36 @@
 id: f-aftercare-file-issue
+execution_target: ios_companion_swift
 title: File a meeting action as a GitHub issue — accepted-only, honest proposed pill
 # HSM-19-01: an accepted meeting action item can be filed as a GitHub issue with
 # an inline repo row and an honest "proposed" pill; File issue is unavailable on a
-# non-accepted action (the accept gate). meeting-just-ended-open-actions stages a
-# real meeting with ≥1 open action on .43. The GitHub connector needs a real
-# credential/pairing, so that half is hand-staged.
+# non-accepted action (the accept gate). functional-aftercare-review stages an
+# exact pending + accepted pair through public sync, with no LLM dependency. The
+# GitHub connector needs a real credential/pairing, so that half is hand-staged.
 features:
   - mobile.meeting.aftercare.file_issue
 recipes:
-  - meeting-just-ended-open-actions
+  - functional-aftercare-review
 manual_setup:
   - Have the GitHub connector configured/paired for the run (a repo the issue can be proposed against) — or be ready to read the honest "not paired" state per Phase 21-03 honesty.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "directory row mobile.meeting.aftercare.file_issue iphone=unknown — meeting screens at compact width are covered generally by Phase 20 but this action is not separately called out; a phone-column gap"}
+form_factors: [ipad]
 steps:
   - do: >
-      Staging-verify. Open the just-ended meeting and confirm it has at least one
-      OPEN action item.
+      Staging-verify. Open "Owner functional review (UAT seed)" and confirm it
+      has the exact pending and accepted action pair.
     expect: >
-      The meeting shows ≥1 open action item in its aftercare view — a real intel
-      output, not an empty list.
-    where: /
+      The meeting shows "Confirm the pending-action consent gate" as pending and
+      "File the accepted owner verification action" as accepted. Both are owned
+      by Karol and neither depends on model wording.
   - do: >
       Negative gate. On a NON-accepted (still open / proposed) action, look for the
       File issue affordance.
     expect: >
       File issue is unavailable on a non-accepted action — you cannot file an
       action you have not accepted. The accept gate is enforced, not decorative.
-    where: /
   - do: Accept one action item, then tap File issue on it.
     expect: >
       After accepting, File issue is available; tapping it shows an inline repo row
       and an honest "proposed" pill — it proposes the issue rather than silently
       creating it. If the connector is not paired, the state reads honestly (not
       paired) instead of pretending to file.
-    where: /
 teardown: []

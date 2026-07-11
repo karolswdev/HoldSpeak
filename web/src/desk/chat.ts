@@ -6,7 +6,12 @@
  *
  * Threads are DEVICE-LOCAL (`localStorage`) — the exact posture of the iPad's
  * AppStorage threads. Recipes sync; threads do not (the Phase-17 contract). */
-import { groundingIsEmpty, hubGrounding, type GroundingSelection } from "./grounding";
+import {
+  groundingIsEmpty,
+  hubGrounding,
+  type GroundingSelection,
+} from "./grounding";
+import { apiRequest } from "../lib/api";
 
 export interface ChatTurn {
   id: string;
@@ -14,14 +19,14 @@ export interface ChatTurn {
   text: string;
   error?: boolean;
   /** The turn's HONEST egress — the hub's answer, never inferred. */
-  egress?: { scope: "local" | "cloud"; host?: string } | null;
+  egress?: { scope: "local" | "mesh" | "cloud"; host?: string } | null;
   model?: string;
 }
 
 const THREADS_KEY = "hs.desk.chats";
 const GROUNDING_KEY = "hs.desk.chatgrounding";
 
-const readMap = <T,>(key: string): Record<string, T> => {
+const readMap = <T>(key: string): Record<string, T> => {
   try {
     return JSON.parse(localStorage.getItem(key) || "{}") || {};
   } catch {
@@ -58,7 +63,10 @@ export function loadChatGrounding(personaId: string): GroundingSelection {
   return g && Array.isArray(g.meetings) ? g : { meetings: [] };
 }
 
-export function saveChatGrounding(personaId: string, sel: GroundingSelection): void {
+export function saveChatGrounding(
+  personaId: string,
+  sel: GroundingSelection,
+): void {
   const map = readMap<GroundingSelection>(GROUNDING_KEY);
   if (groundingIsEmpty(sel)) delete map[personaId];
   else map[personaId] = sel;
@@ -68,7 +76,7 @@ export function saveChatGrounding(personaId: string, sel: GroundingSelection): v
 export interface ChatTurnResult {
   ok: boolean;
   output: string;
-  egress: { scope: "local" | "cloud"; host?: string } | null;
+  egress: { scope: "local" | "mesh" | "cloud"; host?: string } | null;
   model: string;
 }
 
@@ -80,21 +88,35 @@ export async function runChatTurn(
   history: ChatTurn[],
   grounding: GroundingSelection,
 ): Promise<ChatTurnResult> {
-  const fail = (output: string): ChatTurnResult => ({ ok: false, output, egress: null, model: "" });
+  const fail = (output: string): ChatTurnResult => ({
+    ok: false,
+    output,
+    egress: null,
+    model: "",
+  });
   try {
-    const res = await fetch(`/api/recipes/${encodeURIComponent(recipeId)}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        question,
-        history: history.slice(-12).map((t) => ({ role: t.role, text: t.text })),
-        ...(hubGrounding(grounding) ? { grounding: hubGrounding(grounding) } : {}),
-      }),
-    });
+    const res = await apiRequest(
+      `/api/recipes/${encodeURIComponent(recipeId)}/chat`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question,
+          history: history
+            .slice(-12)
+            .map((t) => ({ role: t.role, text: t.text })),
+          ...(hubGrounding(grounding)
+            ? { grounding: hubGrounding(grounding) }
+            : {}),
+        }),
+      },
+    );
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const unknown = Array.isArray(data.unknown_ids) && data.unknown_ids.length
-        ? ` (${data.unknown_ids.join(", ")})` : "";
+      const unknown =
+        Array.isArray(data.unknown_ids) && data.unknown_ids.length
+          ? ` (${data.unknown_ids.join(", ")})`
+          : "";
       return fail(String(data.error || `HTTP ${res.status}`) + unknown);
     }
     return {
@@ -116,18 +138,26 @@ export async function runChatTurn(
 
 export const MODEL_CHAT_PREFIX = "modelchat:hub:";
 export const modelChatId = (model: string): string => MODEL_CHAT_PREFIX + model;
-export const isModelChat = (personaId: string): boolean => personaId.startsWith(MODEL_CHAT_PREFIX);
-export const modelChatName = (personaId: string): string => personaId.slice(MODEL_CHAT_PREFIX.length);
+export const isModelChat = (personaId: string): boolean =>
+  personaId.startsWith(MODEL_CHAT_PREFIX);
+export const modelChatName = (personaId: string): string =>
+  personaId.slice(MODEL_CHAT_PREFIX.length);
 
 /** The packed turn: the running conversation + the question — the iPad's
  * block grammar, minus role/context (a model persona has none). */
-export function packModelTurn(name: string, question: string, history: ChatTurn[]): string {
+export function packModelTurn(
+  name: string,
+  question: string,
+  history: ChatTurn[],
+): string {
   const blocks: string[] = [];
   const window = history.slice(-12);
   if (window.length) {
     blocks.push(
       "[CONVERSATION SO FAR]\n" +
-        window.map((t) => (t.role === "you" ? "User: " : `${name}: `) + t.text).join("\n"),
+        window
+          .map((t) => (t.role === "you" ? "User: " : `${name}: `) + t.text)
+          .join("\n"),
     );
   }
   blocks.push("[USER]\n" + question.slice(0, 6000));
@@ -152,13 +182,20 @@ export async function runModelChatTurn(
 }
 
 /** Harvest one reply onto the desk — the hub mints the run-born artifact. */
-export async function keepReply(recipeId: string, question: string, output: string): Promise<string | null> {
+export async function keepReply(
+  recipeId: string,
+  question: string,
+  output: string,
+): Promise<string | null> {
   try {
-    const res = await fetch(`/api/recipes/${encodeURIComponent(recipeId)}/keep`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question, output }),
-    });
+    const res = await apiRequest(
+      `/api/recipes/${encodeURIComponent(recipeId)}/keep`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, output }),
+      },
+    );
     if (!res.ok) return null;
     const data = await res.json().catch(() => ({}));
     return data.artifact_id ? String(data.artifact_id) : null;

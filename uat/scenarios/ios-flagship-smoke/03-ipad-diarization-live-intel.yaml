@@ -1,0 +1,22 @@
+id: ios-flagship-ipad-diarization-live-intel
+title: iPad live capture — two speakers and live intelligence, treatment vs quiet control
+execution_target: ios_flagship_swift
+features:
+  - mobile.capture.on_device_diarization
+  - mobile.capture.realtime_mir
+recipes:
+  - seeded-desk-43
+manual_setup:
+  - Use a physical iPad with Microphone permission and two people reading alternating labelled lines.
+  - Record the active inference mode, endpoint/model name, audio route, and whether an on-device model is installed.
+form_factors: [ipad]
+steps:
+  - do: CONTROL. Record 20 seconds of neutral single-speaker housekeeping with no decision, owner, risk, or question.
+    expect: The transcript advances, but live intelligence stays quiet instead of padding the session with invented moments.
+  - do: TREATMENT. Have two people alternate the scripted decision, owner, deadline, and risk, then inspect speaker labels and ASK LIVE markers.
+    expect: Speaker turns are distinguishable and the live intelligence surfaces the real decision/owner/risk structurally; it does not attribute the control's silence as an action item.
+    verifies:
+      - mobile.capture.on_device_diarization
+      - mobile.capture.realtime_mir
+  - do: Kill or disconnect the configured intelligence endpoint while capture remains open, then speak one more labelled line.
+    expect: Capture and the raw transcript continue; intelligence changes to a named unavailable/degraded state quickly, with no fabricated marker and no frozen recorder.

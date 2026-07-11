@@ -1,4 +1,5 @@
 id: e-node-serves-and-reads-live
+execution_target: web_react
 title: A machine becomes a mesh edge, and the desk reads it live
 features:
   - mesh.serve_node
@@ -6,19 +7,14 @@ features:
   - mesh.profile_node
 recipes:
   - mesh-node-alive
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "mesh.serve_node and the liveness sidecar are iphone:unknown in the inventory row — the Apple worker was an HSM follow-up, not confirmed shipped"}
+form_factors: [desktop]
 steps:
   - do: Open the profiles view. Confirm the staged mesh worker (the recipe's staging beat).
     expect: A profile named "uat-worker" of the meshNode kind is present; the profiles liveness sidecar reads it live — the hub has seen it poll the relay recently.
     where: /
-    surfaces:
-      iphone: {n/a: "profiles liveness sidecar on iphone is unverified in the record"}
+    form_factors: [desktop]
   - do: Read the same node's liveness from a second place on the desk (the models rows / rail edge indicator).
     expect: The node's live state agrees with the profiles view — models rows show it available and the rail does not dim it as a dead edge. Liveness reads the same on every surface that renders it.
     where: /
-    surfaces:
-      iphone: {n/a: "the models/rail liveness render on iphone is unverified in the record"}
+    form_factors: [desktop]
 teardown: []

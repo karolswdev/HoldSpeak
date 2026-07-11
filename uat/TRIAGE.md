@@ -7,15 +7,18 @@ it happens the same way every sitting and its output lands somewhere durable.
 
 ## The four steps
 
-1. **The human finishes the sitting.** Every applicable (step, surface) has a
+1. **The human finishes the sitting.** Every applicable
+   `(step, implementation target, form factor)` slot has a
    verdict. The site's sitting-end screen generates the debrief packet
    (`uat/_runs/<run_id>/debrief/debrief.md` + `debrief.json`).
 
 2. **The agent reads `debrief.json` + the log slices** and annotates each
    finding with a first-pass hypothesis. The log slice is the head start: a
-   `fail` arrives with the server's own words around that moment. Cross-surface
-   splits (passed on web, failed on iPhone) are read as parity breaks, not two
-   separate findings.
+   `fail` arrives with the server's own words around that moment. Cross-slot
+   splits are compared only across qualified execution slots. For example,
+   `web_react:desktop` pass versus `ios_flagship_swift:ipad` fail is a parity
+   break only when both target-specific legs were independently executed; it is
+   not evidence that a resized React browser exercised Swift.
 
 3. **Owner + agent walk the findings together** and set a disposition on each,
    from this vocabulary:
@@ -40,12 +43,21 @@ it happens the same way every sitting and its output lands somewhere durable.
 
 ## What is a finding
 
-Every `fail` and `partial` verdict becomes a finding with a stable id
-(`UAT-<run>-<n>`). A `skip` is a deliberate non-answer, listed in the debrief
-but not filed for triage. A `pass` is collapsed into the totals. An `n/a`
-surface never produces a verdict, so it never produces a finding — but a pack
-whose iPhone column is all `n/a` is a **partial sitting**, and the debrief's
-per-surface coverage says so plainly.
+Every `fail`, `partial`, and explicit `observe` verdict becomes a finding with a
+stable id derived from `(run, scenario, step)`. Multiple form-factor outcomes
+within one target are one finding wearing every applicable slot outcome. A
+cross-target comparison links the separately executed React and Swift findings;
+it must not collapse their target provenance. A `skip` is a deliberate
+non-answer, listed in the debrief but not filed for triage. A `pass` is collapsed
+into the totals. A missing target/form-factor leg produces no acceptance credit.
+Quarantined or legacy-unqualified evidence cannot close a finding or a parity
+gate.
+
+When triaging native evidence, verify that the finding names its attached device
+session: exact Swift target, native form factor, device/OS, bundle/build,
+installation source, and pairing verification. The current attestation is a
+durable human assertion, not cryptographic device identity; preserve that
+limitation in release-facing dispositions.
 
 ## Keeping a sitting that mattered
 

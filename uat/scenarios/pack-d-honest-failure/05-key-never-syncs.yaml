@@ -1,4 +1,5 @@
 id: d-loopback-gate-attacked
+execution_target: web_react
 title: The loopback door, attacked — off-loopback binds refuse without a token
 features:
   - trust.binding.loopback-token-gate
@@ -10,10 +11,7 @@ recipes:
 # the gate reject anything. This rewrites it as a staged do-then-attack: the
 # tester actually mounts the off-loopback request and reads the refusal. The
 # behaviour mirrors the product's own web_auth unit test.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the raw HTTP bind/auth attack is exercised against the web runtime process; iphone has no direct off-loopback bind surface (trust.binding.loopback-token-gate iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: Read the privacy chip on a fresh desk (the staging beat — confirm the door starts on loopback).
     expect: The chip states local by default, what leaves and when, and that the key never syncs — plainly, no marketing paragraph; and the run is answering on loopback right now.

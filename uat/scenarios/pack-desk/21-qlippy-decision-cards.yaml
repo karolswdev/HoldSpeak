@@ -1,36 +1,36 @@
 id: desk-qlippy-decision-cards
+execution_target: web_react
 title: Qlippy sliding cards interrupt only for a real moment
-# Qlippy's opt-in decision cards. A real meeting-just-ended world (with open
-# actions, run through intel on .43) is a genuine "moment that needs you" — the
-# card surfaces it. Whether the card is a faithful decision surface is an LLM
-# question (its content comes from the meeting's real actions), so the moment's
-# content is judged against the meeting the control could not know. Honest close:
+# Qlippy's opt-in decision cards. The initial exact meeting world contains no
+# proposals. After the quiet control, the conductor queues two real proposals
+# through public aftercare routes while the Desk is subscribed. Honest close:
 # the card's Approve sends the byte-identical decision request the dashboard does.
 features:
   - qlippy.decision_cards
 recipes:
-  - meeting-just-ended-open-actions
-surfaces:
-  web: yes
-  ipad: {n/a: "Qlippy decision cards are a web/desktop-presence surface; the iPad card surface is unverified in the directory record (qlippy.decision_cards ipad=unknown)"}
-  iphone: {n/a: "Qlippy decision cards are a web/desktop-presence surface; the iPhone card surface is unverified in the directory record (qlippy.decision_cards iphone=unknown)"}
+  - functional-aftercare-review
+manual_setup:
+  - Enable both Desktop Presence and Qlippy/mascot in this isolated run's settings.
+  - Open the Desk so Qlippy is subscribed before confirming the quiet control; do not create a proposal by hand.
+form_factors: [desktop]
 steps:
   - do: >
-      Staging-verify. A meeting just ended on .43 with at least one open action.
-      With Qlippy presence ON, wait for a decision card to slide in for that
-      moment.
+      CONTROL. With Qlippy subscribed but no proposal created yet, wait through
+      the ordinary idle interval.
     expect: >
-      A Qlippy card slides in tied to the just-ended meeting's open action — it
-      interrupts for a real moment, not a synthetic ping. The card names the
-      action's substance (drawn from the real meeting), which a card with no
-      meeting could not.
+      Qlippy stays docked and quiet; it does not invent a decision card merely
+      because the staged meeting has actions.
     where: /
+    after:
+      - apply_recipe: functional-qlippy-queue
   - do: >
-      With more than one pending moment, confirm the card queue behaves — the +N
-      hint counts the others, and hovering pauses the auto-slide.
+      TREATMENT. The conductor has now queued two exact proposal events. Confirm
+      the first card names its real action, the +N hint counts the other, and
+      hovering pauses the auto-slide.
     expect: >
-      The FIFO card shows a +N hint for additional pending moments and pauses on
-      hover — you are not rushed past a decision.
+      A real proposal card slides in for the deterministic Qlippy action, the
+      FIFO shows +1 for the second proposal, and hovering pauses the card — no
+      synthetic or pre-page-load ping.
     where: /
   - do: >
       Honest close. Approve the action from the Qlippy card, then confirm the
@@ -40,4 +40,5 @@ steps:
       dashboard sends — the same action is approved whether you act from the card
       or the dashboard; the two paths do not diverge.
     where: /
+    verifies: [qlippy.decision_cards]
 teardown: []

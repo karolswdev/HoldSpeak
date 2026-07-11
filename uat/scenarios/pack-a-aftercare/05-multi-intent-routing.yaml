@@ -1,4 +1,5 @@
 id: a-multi-intent-routing
+execution_target: web_react
 title: Multi-intent routing on a mixed-topic meeting (control vs treatment)
 features:
   - meetings.intel.multi_intent_routing
@@ -7,10 +8,7 @@ features:
 recipes:
   - pack-a-mixed-topic-meeting
   - meeting-just-ended-open-actions
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "iPhone meeting-artifact rendering is unverified in the inventory (multi_intent_routing iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: (Staging beat) Confirm the mixed-topic questline meeting imported and its intel ran live on .43.
     expect: The questline product-sync meeting is present with intel complete (not stuck importing) and at least one open action visible.

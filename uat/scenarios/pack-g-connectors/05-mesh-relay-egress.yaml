@@ -1,19 +1,12 @@
 id: g-mesh-relay-egress
+execution_target: web_react
 title: The mesh relay carries only prompt and result — no keys transit, and it fails by name
 features:
   - trust.egress.mesh-relay
 recipes:
   - mesh-node-alive
   - mesh-node-just-died
-# trust.egress.mesh-relay is web:yes, ipad:yes AND iphone:yes in the directory
-# (MODELS.md: on iPhone and iPad the same consent is one switch, "Serve my models
-# to the mesh"; HSM-25 the phone is a live edge). So all three surfaces are
-# authored — no n/a. The relay routing UI is the same across them; a sitting on
-# an iPhone confirms the one-switch consent + the liveness readout.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: yes
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Open the profiles / mesh view and confirm the "uat-worker"

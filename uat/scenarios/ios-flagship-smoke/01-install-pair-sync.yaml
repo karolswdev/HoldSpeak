@@ -1,0 +1,21 @@
+id: ios-flagship-install-pair-sync
+title: Cold-launch the installed flagship, pair this run, and read seeded state
+execution_target: ios_flagship_swift
+features:
+  - agents.companion.pair_desktop
+  - sync.contracts.parity_spine
+recipes:
+  - seeded-desk
+manual_setup:
+  - Record the device model, iOS version, orientation, installed bundle/build number, and TestFlight vs local install in the first verdict note.
+  - Grant Local Network permission; leave the app cold before beginning.
+form_factors: [ipad, iphone]
+steps:
+  - do: Cold-launch the installed flagship and identify the build and initial root without using an environment-only classic/demo switch.
+    expect: The production root renders without a crash or blank screen, and the recorded build is the build actually under acceptance test.
+  - do: In the native connect card, enter this sitting's LAN host, port, and per-run token, then run its connection test.
+    expect: The test names this isolated run as reachable and authenticated; it does not silently connect to the owner's live hub on port 8765.
+    verifies: [agents.companion.pair_desktop]
+  - do: Complete the initial sync and find the seeded BLUEBIRD/Questline material from this run.
+    expect: A deterministic seeded object is readable in the native client, proving the device paired and synced to this run rather than merely reaching /health.
+    verifies: [sync.contracts.parity_spine]

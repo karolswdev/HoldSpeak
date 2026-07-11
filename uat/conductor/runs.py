@@ -214,7 +214,14 @@ class RunManager:
         # LAN run gets its own token written into the overlay before boot.
         overlay = dict(overlay)
         if lan:
-            token = overlay.get("meeting", {}).get("web_auth_token") or secrets.token_urlsafe(24)
+            # Keep one token for the whole sitting. Recipes restart the same run
+            # onto different decks; rotating here would silently unpair every
+            # iPhone/iPad halfway through a pack.
+            token = (
+                overlay.get("meeting", {}).get("web_auth_token")
+                or run.token
+                or secrets.token_urlsafe(24)
+            )
             meeting = dict(overlay.get("meeting") or {})
             meeting["web_auth_token"] = token
             overlay["meeting"] = meeting
@@ -450,17 +457,34 @@ class RunManager:
         return out
 
     def logs(self, run_id: str, n: int = 80) -> dict[str, str]:
+        from .product import _tail_file
+
         with self._lock:
             entry = self._runs.get(run_id)
             if entry is not None:
-                return entry[1].tail(n)
+                streams = entry[1].tail(n)
+                streams["application"] = _tail_file(
+                    paths.run_home(run_id)
+                    / ".local"
+                    / "share"
+                    / "holdspeak"
+                    / "holdspeak.log",
+                    n,
+                )
+                return streams
         # A torn-down run still has its logs on disk.
-        from .product import _tail_file
-
         logs_dir = paths.run_logs_dir(run_id)
         return {
             "stdout": _tail_file(logs_dir / "product.stdout.log", n),
             "stderr": _tail_file(logs_dir / "product.stderr.log", n),
+            "application": _tail_file(
+                paths.run_home(run_id)
+                / ".local"
+                / "share"
+                / "holdspeak"
+                / "holdspeak.log",
+                n,
+            ),
         }
 
 

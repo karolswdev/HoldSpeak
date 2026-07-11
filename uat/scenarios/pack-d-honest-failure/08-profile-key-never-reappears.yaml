@@ -1,19 +1,12 @@
 id: d-profile-key-never-reappears
+execution_target: web_react
 title: A key pushed into a profile never reappears on a read
 features:
   - trust.secrets.profile-key-never-syncs
 recipes:
   - seeded-desk
   - profile-key-never-syncs
-# The re-eval's finding #5 + task #19: trust.secrets.profile-key-never-syncs is
-# a MUST, all-three in the directory (web/ipad/iphone: yes), and was written in
-# the imagined voice. This stages the attack: supply a secret to an ingress,
-# then read every surface back and assert the key field is gone. Mirrors the
-# product's own key-never-syncs invariant.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: yes
+form_factors: [desktop]
 steps:
   - do: On the seeded desk, open the runtime profiles view and confirm a profile exists to attack (the staging beat).
     expect: At least one runtime profile is listed; the profiles surface is reachable and the desk is healthy.

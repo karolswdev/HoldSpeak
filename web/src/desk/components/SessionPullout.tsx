@@ -98,7 +98,12 @@ function ArmChip() {
 // The key palette (HS-90-02) — full key control on glass. Each button is
 // ONE real key through `/keys`, shown only in the armed window. `^C` is the
 // loud one (interrupt a runaway); the rest drive a TUI.
-const KEY_BUTTONS: Array<{ label: string; key: string; title: string; loud?: boolean }> = [
+const KEY_BUTTONS: Array<{
+  label: string;
+  key: string;
+  title: string;
+  loud?: boolean;
+}> = [
   { label: "^C", key: "C-c", title: "interrupt — Ctrl-C", loud: true },
   { label: "Esc", key: "Escape", title: "Escape" },
   { label: "Tab", key: "Tab", title: "Tab" },
@@ -123,7 +128,9 @@ function KeyPalette() {
             type="button"
             className={"desk-key" + (k.loud ? " is-interrupt" : "")}
             title={k.title}
-            onClick={() => void useSteering.getState().sendKeys([k.key], k.label)}
+            onClick={() =>
+              void useSteering.getState().sendKeys([k.key], k.label)
+            }
           >
             {k.label}
           </button>
@@ -150,7 +157,10 @@ function NodeChip() {
   }, []);
   if (nodes.length === 0) {
     return (
-      <span className="desk-chip quiet desk-node-chip" title="steering targets this Mac">
+      <span
+        className="desk-chip quiet desk-node-chip"
+        title="steering targets this Mac"
+      >
         ⧉ this Mac
       </span>
     );
@@ -226,10 +236,14 @@ export function PanePicker() {
             </button>
           </div>
           {factoryState === "failed" && (
-            <span className="desk-panepicker-empty desk-arm-refusal">✕ {factoryDetail}</span>
+            <span className="desk-panepicker-empty desk-arm-refusal">
+              ✕ {factoryDetail}
+            </span>
           )}
           <div className="desk-panepicker-divider" />
-          {panesState === "loading" && <span className="desk-panepicker-empty">…</span>}
+          {panesState === "loading" && (
+            <span className="desk-panepicker-empty">…</span>
+          )}
           {panesState === "error" && (
             <span className="desk-panepicker-empty">tmux unreachable</span>
           )}
@@ -240,7 +254,9 @@ export function PanePicker() {
             <button
               key={p.paneId}
               type="button"
-              className={"desk-panepicker-item" + (p.active ? " is-active" : "")}
+              className={
+                "desk-panepicker-item" + (p.active ? " is-active" : "")
+              }
               onClick={() => {
                 useSteering.setState({ attachedSession: p.session });
                 useSteering.getState().openSession(`pane:${p.paneId}`);
@@ -288,7 +304,9 @@ function FactoryControls() {
               className="desk-chip quiet"
               disabled={!newName.trim() || factoryState === "working"}
               onClick={async () => {
-                const ok = await useSteering.getState().renameOpen(newName.trim());
+                const ok = await useSteering
+                  .getState()
+                  .renameOpen(newName.trim());
                 if (ok) {
                   setRenaming(false);
                   setNewName("");
@@ -297,7 +315,11 @@ function FactoryControls() {
             >
               Rename
             </button>
-            <button type="button" className="desk-chip quiet" onClick={() => setRenaming(false)}>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              onClick={() => setRenaming(false)}
+            >
               ✕
             </button>
           </>
@@ -306,7 +328,11 @@ function FactoryControls() {
             type="button"
             className="desk-chip quiet"
             disabled={!attachedSession}
-            title={attachedSession ? `rename ${attachedSession}` : "no session to rename"}
+            title={
+              attachedSession
+                ? `rename ${attachedSession}`
+                : "no session to rename"
+            }
             onClick={() => setRenaming(true)}
           >
             Rename
@@ -321,7 +347,11 @@ function FactoryControls() {
             >
               ⌫ Kill session — sure?
             </button>
-            <button type="button" className="desk-chip quiet" onClick={() => setConfirmKill(false)}>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              onClick={() => setConfirmKill(false)}
+            >
               ✕
             </button>
           </>
@@ -349,7 +379,8 @@ function SteerComposer() {
   const meetings = useDesk((s) => s.items.meeting);
   const [text, setText] = useState("");
   const [submitOn, setSubmitOn] = useState(true);
-  const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding());
+  const [grounding, setGrounding] =
+    useState<GroundingSelection>(emptyGrounding());
   const [rails, setRails] = useState<RailsPick[]>([]);
 
   const send = async () => {
@@ -404,7 +435,11 @@ function SteerComposer() {
         onChange={setGrounding}
         limitTokens={STEER_LIMIT_TOKENS}
       />
-      <RailsPicker picks={rails} onChange={setRails} limitTokens={STEER_LIMIT_TOKENS} />
+      <RailsPicker
+        picks={rails}
+        onChange={setRails}
+        limitTokens={STEER_LIMIT_TOKENS}
+      />
       {(!groundingIsEmpty(grounding) || rails.length > 0) && (
         <span className="desk-steer-grounded">
           objects ride in with a provenance header, capped at 8 KB
@@ -459,7 +494,12 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
             onClick={() =>
               useMissionControl
                 .getState()
-                .proposeFlip(flipTarget.repo, flipTarget.project, flipTarget.story, "done")
+                .proposeFlip(
+                  flipTarget.repo,
+                  flipTarget.project,
+                  flipTarget.story,
+                  "done",
+                )
             }
           >
             Flip {flipTarget.story} →
@@ -478,7 +518,10 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
           </button>
         ) : (
           <>
-            <MicButton label="Pin to story" onText={(t) => setPinInput(t.trim())} />
+            <MicButton
+              label="Pin to story"
+              onText={(t) => setPinInput(t.trim())}
+            />
             <input
               className="desk-classify-input"
               value={pinInput}
@@ -520,7 +563,8 @@ export function SessionPullout() {
       if (e.key === "Escape") closeSession();
     };
     const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) closeSession();
+      if (ref.current && !ref.current.contains(e.target as Node))
+        closeSession();
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onDown);
@@ -557,8 +601,14 @@ export function SessionPullout() {
         <span className="desk-pullout-title">
           {session?.agent || openKey.split(":", 2)[0]} · {sessionId.slice(0, 8)}
         </span>
-        {session?.stale && <span className="desk-chip quiet is-stale">stale</span>}
-        {live && <span className="desk-session-live" title="watching">●</span>}
+        {session?.stale && (
+          <span className="desk-chip quiet is-stale">stale</span>
+        )}
+        {live && (
+          <span className="desk-session-live" title="watching">
+            ●
+          </span>
+        )}
         <NodeChip />
         <ArmChip />
         <button
@@ -573,7 +623,9 @@ export function SessionPullout() {
 
       <div className="desk-pullout-body">
         {session?.awaitingResponse && session.question ? (
-          <pre className="desk-pullout-md desk-session-question">{session.question}</pre>
+          <pre className="desk-pullout-md desk-session-question">
+            {session.question}
+          </pre>
         ) : null}
         {live ? (
           <pre ref={preRef} className="desk-session-pane">

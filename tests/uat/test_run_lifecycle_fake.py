@@ -74,6 +74,16 @@ def test_lan_run_gets_own_token_and_lan_pairing(manager):
     assert run.config["meeting"]["web_auth_token"] == run.token
 
 
+def test_lan_token_survives_deck_restart(manager):
+    run = manager.create_run(lan=True, deck="golden-local")
+    token = run.token
+    pairing = run.pairing_url
+    restarted = manager.restart(run.id, deck="bad-endpoint")
+    assert restarted.token == token
+    assert f"token={token}" in restarted.pairing_url
+    assert restarted.pairing_url.split("?", 1)[0] == pairing.split("?", 1)[0]
+
+
 def test_get_reflects_a_crashed_product_as_down(manager, fake_products):
     run = manager.create_run()
     prod = fake_products.instances[-1]

@@ -206,14 +206,9 @@ def test_executor_on_result_fires_on_executed_and_failed(db):
 
 def test_qlippy_events_mirror_the_dashboard_decision_exactly():
     repo = Path(__file__).resolve().parents[2]
-    events = (repo / "web" / "src" / "scripts" / "qlippy-events.js").read_text()
-    dashboard = (repo / "web" / "src" / "scripts" / "dashboard-app.js").read_text()
-    # The identical route + body the dashboard sends.
-    assert "/proposals/${data.id}/decision" in events
-    assert "JSON.stringify({ decision })" in events
-    assert "JSON.stringify({ decision })" in dashboard
-    # Sticky proposed cards; the egress badge naming the target (HS-62-01
-    # retired the privacy paragraphs); never the payload.
-    assert "sticky: true" in events
-    assert 'egress: { scope: "cloud", label: data.target' in events
-    assert "data.payload" not in events
+    events = (repo / "web/src/components/AmbientLayer.tsx").read_text()
+    history = (repo / "web/src/pages/HistoryPage.tsx").read_text()
+    assert "/proposals/${encodeURIComponent(String(card.id))}/decision" in events
+    assert "json: { decision }" in events
+    assert "json: { decision }" in history
+    assert "card.payload" not in events

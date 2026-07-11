@@ -2,16 +2,17 @@
  * positions keep the EXACT legacy localStorage contract —
  * `localStorage["hs.diorama.pos"]` holding a bare `{id: {x, y}}` map,
  * local-only, never synced (the Primitive Framework layout rule) — so a
- * hand-arranged desk survives the Alpine→React cutover byte-for-byte. */
+ * hand-arranged desk survives the React unification byte-for-byte. */
 import { create } from "zustand";
-import {
-  EMPTY_ITEMS, loadAll,
-  type Items, type Status,
-} from "./api";
+import { apiRequest } from "../lib/api";
+import { EMPTY_ITEMS, loadAll, type Items, type Status } from "./api";
 import { buildLinearGraph } from "./graph";
 import { loadSetup, type SetupStatus } from "./setup";
 
-export interface UnitPos { x: number; y: number }
+export interface UnitPos {
+  x: number;
+  y: number;
+}
 
 const POS_KEY = "hs.diorama.pos";
 
@@ -35,7 +36,11 @@ interface DeskState {
   items: Items;
   profiles: Array<Record<string, unknown>>;
   /** HS-83-03 — the hub's runnable models (the ask allow-list). */
-  models: Array<{ name: string; source: "hub" | "profile"; profile_id: string | null }>;
+  models: Array<{
+    name: string;
+    source: "hub" | "profile";
+    profile_id: string | null;
+  }>;
   status: Status;
   error: string;
   loading: boolean;
@@ -66,12 +71,18 @@ interface DeskState {
   refresh(): Promise<void>;
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
    * editor open. The object IS the editor — no modal, ever. */
-  createPrimitive(kind: "note" | "kb" | "recipe" | "zone" | "workflow"): Promise<void>;
+  createPrimitive(
+    kind: "note" | "kb" | "recipe" | "zone" | "workflow",
+  ): Promise<void>;
   markNew(id: string): void;
   openEditor(id: string): void;
   closeEditor(): void;
   /** Autosaving field update through the real PUT routes. */
-  updatePrimitive(kind: string, id: string, patch: Record<string, unknown>): Promise<void>;
+  updatePrimitive(
+    kind: string,
+    id: string,
+    patch: Record<string, unknown>,
+  ): Promise<void>;
   renameZone(id: string, name: string): Promise<void>;
   openPullout(id: string): void;
   closePullout(): void;
@@ -87,14 +98,23 @@ interface DeskState {
   answerCoder(agent: string, sessionId: string): Promise<boolean>;
   /** Speak straight into the waiting coder (HS-78-03): select the
    * session, then inject the transcript through the remote seam. */
-  speakToCoder(agent: string, sessionId: string, text: string): Promise<boolean>;
+  speakToCoder(
+    agent: string,
+    sessionId: string,
+    text: string,
+  ): Promise<boolean>;
   /** Run a capability through the real route; the persisted result
    * MATERIALIZES on the desk (HS-74-03: refresh + the NEW beat). */
   runCapability(
     kind: "recipe" | "chain" | "workflow",
     id: string,
     input: string,
-  ): Promise<{ ok: boolean; output: string; artifactId: string | null; warning: string | null }>;
+  ): Promise<{
+    ok: boolean;
+    output: string;
+    artifactId: string | null;
+    warning: string | null;
+  }>;
   toggleSelected(id: string): void;
   setSelected(ids: string[]): void;
   clearSelection(): void;
@@ -133,11 +153,18 @@ export const useDesk = create<DeskState>((set, get) => ({
 
   async refresh() {
     set({ loading: true, error: "" });
-    const [{ items, profiles, models, status, error }, setup] = await Promise.all([
-      loadAll(),
-      loadSetup(),
-    ]);
-    set({ items, profiles, models, status, error, setup, loading: false, updatedAt: Date.now() });
+    const [{ items, profiles, models, status, error }, setup] =
+      await Promise.all([loadAll(), loadSetup()]);
+    set({
+      items,
+      profiles,
+      models,
+      status,
+      error,
+      setup,
+      loading: false,
+      updatedAt: Date.now(),
+    });
   },
 
   async createPrimitive(kind) {
@@ -148,17 +175,21 @@ export const useDesk = create<DeskState>((set, get) => ({
       zone: ["/api/directories", "directory", { name: "New zone" }],
       // HSM-22-03 — a workflow is born with a real one-step linear graph in
       // the canonical wire shape (never an empty {} the run route must refuse).
-      workflow: ["/api/workflows", "workflow", {
-        name: "New workflow",
-        graph_json: buildLinearGraph(
-          crypto.randomUUID(), "New workflow", [{ kind: "summarize" }],
-        ) as unknown as Record<string, unknown>,
-      }],
+      workflow: [
+        "/api/workflows",
+        "workflow",
+        {
+          name: "New workflow",
+          graph_json: buildLinearGraph(crypto.randomUUID(), "New workflow", [
+            { kind: "summarize" },
+          ]) as unknown as Record<string, unknown>,
+        },
+      ],
     };
     const [url, wireKey, body] = posts[kind];
     let createdId: string | null = null;
     try {
-      const res = await fetch(url, {
+      const res = await apiRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -171,7 +202,10 @@ export const useDesk = create<DeskState>((set, get) => ({
     if (createdId && kind !== "zone") {
       // Spawn at stage center (the iPad grammar): the new object appears in
       // front of you and you drag it away.
-      const positions = { ...get().positions, [createdId]: { x: 0.5, y: 0.55 } };
+      const positions = {
+        ...get().positions,
+        [createdId]: { x: 0.5, y: 0.55 },
+      };
       set({ positions });
       savePositions(positions);
     }
@@ -211,11 +245,20 @@ export const useDesk = create<DeskState>((set, get) => ({
     if (!url) return;
     // Optimistic local merge so the world's labels track typing.
     const camel: Record<string, string> = {
-      title: "title", name: "name", body_markdown: "bodyMarkdown", tags: "tags",
-      role: "role", system_prompt: "systemPrompt", user_template: "userTemplate",
-      tools: "tools", kb_id: "kbId", profile_id: "profileId", avatar: "avatar",
+      title: "title",
+      name: "name",
+      body_markdown: "bodyMarkdown",
+      tags: "tags",
+      role: "role",
+      system_prompt: "systemPrompt",
+      user_template: "userTemplate",
+      tools: "tools",
+      kb_id: "kbId",
+      profile_id: "profileId",
+      avatar: "avatar",
     };
-    const itemsKind = kind === "directory" ? "directory" : (kind as keyof Items);
+    const itemsKind =
+      kind === "directory" ? "directory" : (kind as keyof Items);
     const items = get().items;
     if (items[itemsKind]) {
       set({
@@ -233,7 +276,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       });
     }
     try {
-      await fetch(url, {
+      await apiRequest(url, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patch),
@@ -250,7 +293,12 @@ export const useDesk = create<DeskState>((set, get) => ({
     set({ renamingZoneId: id });
   },
   diveInto(zoneId) {
-    set({ divedZone: zoneId, pulloutId: null, pulloutBackId: null, editingId: null });
+    set({
+      divedZone: zoneId,
+      pulloutId: null,
+      pulloutBackId: null,
+      editingId: null,
+    });
   },
   surface() {
     set({ divedZone: null });
@@ -272,7 +320,7 @@ export const useDesk = create<DeskState>((set, get) => ({
 
   async fileIntoDir(pid, dirId) {
     try {
-      await fetch(
+      await apiRequest(
         `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(pid)}`,
         { method: "PUT" },
       );
@@ -286,7 +334,7 @@ export const useDesk = create<DeskState>((set, get) => ({
 
   async removeFromDir(pid, dirId) {
     try {
-      await fetch(
+      await apiRequest(
         `/api/directories/${encodeURIComponent(dirId)}/members/${encodeURIComponent(pid)}`,
         { method: "DELETE" },
       );
@@ -298,7 +346,7 @@ export const useDesk = create<DeskState>((set, get) => ({
 
   async answerCoder(agent, sessionId) {
     try {
-      const res = await fetch("/api/coders/select", {
+      const res = await apiRequest("/api/coders/select", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ agent, session_id: sessionId }),
@@ -316,7 +364,7 @@ export const useDesk = create<DeskState>((set, get) => ({
       workflow: `/api/workflows/${encodeURIComponent(id)}/run`,
     };
     try {
-      const res = await fetch(routes[kind], {
+      const res = await apiRequest(routes[kind], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input }),
@@ -342,12 +390,12 @@ export const useDesk = create<DeskState>((set, get) => ({
   async speakToCoder(agent, sessionId, text) {
     if (!text.trim()) return false;
     try {
-      await fetch("/api/coders/select", {
+      await apiRequest("/api/coders/select", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ agent, session_id: sessionId }),
       });
-      const res = await fetch("/api/dictation/remote", {
+      const res = await apiRequest("/api/dictation/remote", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text, target_mode: "agent" }),
@@ -374,7 +422,11 @@ export const useDesk = create<DeskState>((set, get) => ({
 
   toggleSelected(id) {
     const cur = get().selectedIds;
-    set({ selectedIds: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] });
+    set({
+      selectedIds: cur.includes(id)
+        ? cur.filter((x) => x !== id)
+        : [...cur, id],
+    });
   },
   setSelected(ids) {
     set({ selectedIds: ids });
@@ -385,7 +437,12 @@ export const useDesk = create<DeskState>((set, get) => ({
   openAsk() {
     // The composer joins the desk (the 17-08 atelier posture): the pull-out
     // and editor settle; the selection stays visible behind the panel.
-    set({ askOpen: true, pulloutId: null, pulloutBackId: null, editingId: null });
+    set({
+      askOpen: true,
+      pulloutId: null,
+      pulloutBackId: null,
+      editingId: null,
+    });
   },
   closeAsk() {
     set({ askOpen: false });
@@ -393,7 +450,13 @@ export const useDesk = create<DeskState>((set, get) => ({
   openChat(personaId) {
     // The conversation joins the desk like the composer does (one docked
     // panel at a time; the world stays alive behind it).
-    set({ chatPersonaId: personaId, askOpen: false, pulloutId: null, pulloutBackId: null, editingId: null });
+    set({
+      chatPersonaId: personaId,
+      askOpen: false,
+      pulloutId: null,
+      pulloutBackId: null,
+      editingId: null,
+    });
   },
   closeChat() {
     set({ chatPersonaId: null });

@@ -121,45 +121,29 @@ def test_aftercare_flag_is_true_and_never_the_url(client, db, settings_path, see
 
 
 def test_history_buttons_are_gated_on_the_flag():
-    page = (_REPO / "web" / "src" / "pages" / "history.astro").read_text()
-    assert page.count("Send to Slack") >= 2  # the digest + the draft button
-    # Every Slack affordance hides behind the capability flag — unconfigured
-    # renders no Slack mention at all.
-    assert page.count('x-show="selectedMeetingAftercare?.slack_configured"') >= 2
-    assert "exportToSlack('digest')" in page
-    assert "exportToSlack('followup')" in page
-    # The follow-up note stays honest in both states — and short (HS-62-02:
-    # no reassurance tails).
-    assert "'Preview and copy only.'" in page
-    assert "Send to Slack creates a proposal; approve it below." in page
+    page = (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
+    assert "Send digest to Slack" in page and "Send follow-up to Slack" in page
+    assert "aftercare.slack_configured" in page
+    assert 'proposeSlack("digest")' in page and 'proposeSlack("followup")' in page
+    assert "Each creates an exact-message proposal" in page
 
 
 def test_proposal_guard_copy_tells_the_per_target_truth():
     # The guard copy tells the per-target truth, in one short line each
     # (HS-62-02 swept the "Nothing runs without your approval" preamble).
-    for page_name in ("history.astro", "live.astro"):
-        page = (_REPO / "web" / "src" / "pages" / page_name).read_text()
-        assert "Approving sends this message to Slack." in page, page_name
-        assert "Approving records the decision; execution is a separate step." in page, page_name
+    page = (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
+    assert "configured Slack host" in page
+    assert "Rendering one never sends it" in page
 
 
 def test_history_app_wires_the_export_route():
-    js = (_REPO / "web" / "src" / "scripts" / "history-app.js").read_text()
-    assert "async exportToSlack(what)" in js
+    js = (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
+    assert "proposeSlack" in js
     assert "/export/slack" in js
-    assert "Slack proposal created — approve it below." in js
-    # The decision flash tells the truth about the execute-on-approve leg.
-    assert "Approved — sent to Slack." in js
+    assert "setActive(\"proposals\")" in js
 
 
 def test_settings_field_ships_the_honest_copy():
-    page = (_REPO / "web" / "src" / "pages" / "settings.astro").read_text()
-    assert "Send to Slack webhook URL" in page
-    assert 'x-model="settings.meeting.slack_webhook_url"' in page
-    for truth in (
-        "Sends exactly what you preview",
-        "after you approve each send",
-        "only to this URL's host",
-        "Leave empty to turn the feature off",
-    ):
-        assert truth in page, truth
+    page = (_REPO / "web/src/pages/SettingsPage.tsx").read_text()
+    assert "SettingsFields" in page and "meeting" in page
+    assert 'apiFetch<{ settings?: JsonRecord }>' in page and '"/api/settings"' in page

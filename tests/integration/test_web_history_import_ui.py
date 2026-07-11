@@ -1,103 +1,32 @@
-"""HS-55-03 — the /history "Import a recording" affordance.
-
-Page-content locks for the import panel (the affordance, the drop target,
-the honest notes, the import lifecycle states, the failed-import remove
-path) and the behavior markers in the Alpine factory.
-"""
-from __future__ import annotations
-
+"""Phase-91 React import and facet locks."""
 from pathlib import Path
 
 _REPO = Path(__file__).resolve().parents[2]
 
 
 def _page() -> str:
-    return (_REPO / "web" / "src" / "pages" / "history.astro").read_text()
+    return (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
 
 
-def _app_js() -> str:
-    return (_REPO / "web" / "src" / "scripts" / "history-app.js").read_text()
-
-
-def test_history_has_the_import_affordance_and_panel() -> None:
+def test_history_has_audio_and_transcript_import() -> None:
     page = _page()
-    # The opener sits in the meetings toolbar (HS-57: transcripts too).
-    assert "import-open-btn" in page
     assert "Import a recording or transcript" in page
-    # The panel: drop target + browse, metadata fields, actions.
-    assert "import-panel" in page
-    assert "import-drop" in page
-    assert 'type="file"' in page
-    assert "onImportDrop" in page
-    assert 'x-model="importTitle"' in page
-    assert 'x-model="importSpeaker"' in page
-    assert 'x-model="importTags"' in page
-    assert "submitImport" in page
-
-
-def test_import_panel_states_the_honest_truths() -> None:
-    page = _page()
-    # ffmpeg for compressed formats; one speaker label for audio; the
-    # per-kind transcript truths (HS-57); source not retained; local-only.
+    for suffix in (".wav", ".mp3", ".m4a", ".flac", ".vtt", ".srt", ".txt"):
+        assert suffix in page
     assert "ffmpeg" in page
-    assert "one speaker label" in page
-    assert "Speaker names are read from the file" in page
-    assert "real for vtt / srt and approximate for plain" in page
-    assert "source file isn't kept" in page
+    assert '"/api/meetings/import"' in page
+    assert "started_at_ms" in page and "lastModified" in page
 
 
-def test_import_panel_accepts_the_transcript_trio() -> None:
+def test_history_has_composable_server_facets() -> None:
     page = _page()
-    accept = next(l for l in page.split("\n") if "import-file-input" in l)
-    for suffix in (".vtt", ".srt", ".txt"):
-        assert suffix in accept, f"accept list missing {suffix}"
-    # The audio accept list is untouched (the recording path stays).
-    for suffix in (".wav", ".mp3", ".m4a", ".flac"):
-        assert suffix in accept, f"accept list lost {suffix}"
-    assert "Drop an audio or transcript file" in page
+    for marker in ("date_from", "date_to", "speaker", "tag", "has_open_actions"):
+        assert marker in page
+    assert '"/api/meetings/facets"' in page
 
 
-def test_import_lifecycle_states_render_honestly() -> None:
+def test_failed_import_and_queue_states_stay_visible() -> None:
     page = _page()
-    js = _app_js()
-    # The pill styles for both import states (reduced-motion-safe pulse).
-    assert ".status-pill.importing" in page
-    assert ".status-pill.import_failed" in page
-    assert "prefers-reduced-motion" in page
-    # The labels.
-    assert '"Importing…"' in js
-    assert '"Import failed"' in js
-    # A failed import is removable (outside the card button — valid HTML).
-    assert "card-remove" in page
-    assert "removeMeeting" in js
-    assert "/api/meetings/${meetingId}" in js
-
-
-def test_history_has_the_facet_row() -> None:
-    """HS-55-04: the server-side filter row composes with search."""
-    page = _page()
-    js = _app_js()
-    assert "facet-row" in page
-    assert 'x-model="facetDateFrom"' in page
-    assert 'x-model="facetDateTo"' in page
-    assert 'x-model="facetSpeaker"' in page
-    assert 'x-model="facetTag"' in page
-    assert 'x-model="facetOpenActions"' in page
-    assert "clearFacets" in page
-    # The query builder drives every meetings fetch (facets + search compose;
-    # the quiet import poll keeps the active filters).
-    assert "meetingsQuery" in js
-    assert "has_open_actions" in js
-    assert '"/api/meetings/facets"' in js
-
-
-def test_import_behavior_markers() -> None:
-    js = _app_js()
-    # Multipart POST with the honest started_at_ms (File.lastModified).
-    assert '"/api/meetings/import"' in js
-    assert "started_at_ms" in js
-    assert "lastModified" in js
-    # Quiet polling only while an import is in flight.
-    assert "watchImports" in js
-    assert "refreshMeetingsQuiet" in js
-    assert 'intel_status === "importing"' in js
+    assert "import_failed" in page
+    for state in ("pending", "running", "failed", "complete"):
+        assert f'value="{state}"' in page

@@ -1,27 +1,25 @@
 id: a-import-to-artifacts
+execution_target: web_react
 title: Import to typed artifacts — endpoint-down control vs live-intel treatment
 features:
   - meetings.import.transcript
   - meetings.plugins.14-typed-artifacts
   - meetings.intel.cloud_endpoint
 recipes:
-  - pack-a-import-endpoint-dead
   - meeting-just-ended-open-actions
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "iPhone meeting-intel artifact rendering is unverified in the inventory (row iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: (Staging beat) Confirm the world — a meeting just ended with at least one open action, its intel run live on .43.
     expect: The imported pylon meeting is present in history with intel marked complete (not stuck importing), and at least one open action is visible.
     where: /history
+    after:
+      - apply_recipe: pack-a-import-endpoint-dead
   - do: (Control — intel endpoint dead) Boot the endpoint-dead world, import the same pylon transcript, and read the intel state on the meeting.
     expect: The transcript parsed and the meeting appears, but the intel state is an honest empty — no typed artifact cards were fabricated and the runtime status names the dead endpoint. No hallucinated incident timeline.
     where: /history
-    surfaces:
-      ipad: {n/a: "the endpoint-dead import edge is a web-desk/hub boot posture; the iPad reads synced results, it does not boot the runtime broken"}
+    form_factors: [desktop]
     after:
-      - apply_recipe: pack-a-import-endpoint-dead
+      - apply_recipe: meeting-just-ended-open-actions
   - do: (Treatment — intel live on .43) Return to the live meeting and read the pylon incident's artifact cards — look for a concrete typed artifact (an incident timeline), a confidence score on each card, and a transcript source that resolves.
     expect: Typed artifact cards render with substance the control could not produce — a concrete incident-timeline artifact for the pylon meeting, each card carrying a confidence score and a transcript-source reference that resolves to a real segment. Judge on the decision (a 14-day expiry-headroom alert), the owner (Priya/Wei/Jordan), and the risk surfaced — not on wording.
     where: /history

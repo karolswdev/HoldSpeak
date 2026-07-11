@@ -1,4 +1,5 @@
 id: desk-doctor-honest-close
+execution_target: web_react
 title: The honest-failure close — doctor names the dead endpoint
 # The pack's honest-failure beat. The world boots with a dead intel/runtime
 # endpoint; the desk itself must still read, and doctor must name what is broken
@@ -8,10 +9,7 @@ features:
   - desk.front-door.spatial-objects
 recipes:
   - intel-endpoint-dead
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the doctor readout surface on iPhone is unconfirmed in the record (desk.doctor.honest-readout ph=?)"}
+form_factors: [desktop]
 steps:
   - do: The endpoint is dead from boot. Open the desk anyway (staging-verify the product still runs).
     expect: The desk loads and its objects are reachable — a dead intel/runtime endpoint does not take the whole product down.
@@ -22,6 +20,5 @@ steps:
   - do: Trigger a model-backed action (ask on a pile, or a rewrite) against the dead endpoint.
     expect: It refuses fast (under five seconds), naming the unreachable endpoint, rather than hanging or spinning; you always get an honest failure, not a stall.
     where: /
-    surfaces:
-      ipad: yes
+    form_factors: [desktop]
 teardown: []

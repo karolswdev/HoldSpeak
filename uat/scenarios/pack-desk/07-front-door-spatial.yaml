@@ -1,25 +1,23 @@
 id: desk-front-door-spatial
+execution_target: web_react
 title: The desk is the front door — every object lives in one spatial world
 features:
   - desk.front-door.spatial-objects
   - desk.web.objects_float
-  - desk.sync.profile-shape-across-surfaces
+  - desk.web.free_placement
 recipes:
   - desk-primitives
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the spatial front door on iPhone is unconfirmed in the record (desk.front-door.spatial-objects ph=?)"}
+form_factors: [desktop]
 steps:
   - do: Open the app. Confirm the desk (not a list or a settings page) is the first thing you land on.
-    expect: The front door is the spatial desk; notes, KBs, the zone, the recipe, and the profile all appear as objects in one world.
+    expect: The front door is the spatial desk; notes, KBs, the zone, and the recipe appear as objects in one world rather than a settings/list page.
     where: /
-  - do: Confirm the seeded "Local profile" runtime profile is present and reads the same shape it was created with.
-    expect: The profile is present with its kind (onDevice) intact — the profile shape is consistent, per desk.sync.profile-shape-across-surfaces.
-    where: /
+    verifies:
+      - desk.front-door.spatial-objects
+      - desk.web.objects_float
   - do: Move an object to a new spot on the desk, then reload.
     expect: The object stays where you placed it after reload — free placement persists; the desk is not a reflowing list.
     where: /
-    surfaces:
-      ipad: yes
+    form_factors: [desktop]
+    verifies: [desk.web.free_placement]
 teardown: []

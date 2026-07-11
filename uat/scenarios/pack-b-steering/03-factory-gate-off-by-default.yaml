@@ -1,17 +1,12 @@
 id: b-factory-gate-off-by-default
+execution_target: web_react
 title: The session factory is gated off by default — nothing armed on a fresh desk
 features:
   - trust.steering.session-factory-gates
   - factory.spawn_rename
 recipes:
   - seeded-desk
-# The factory + its gate are web:yes + ipad:yes (DeskSteer spawn/rename/kill,
-# HSM P27 sim-proven; coder_factory.py on web). This beat reads the disarmed
-# resting state — no live session is required to confirm the gate is closed.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the factory UI at iPhone compact width is unverified in the directory record"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Open the seeded desk and confirm it booted with notes and

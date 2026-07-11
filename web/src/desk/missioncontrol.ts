@@ -11,8 +11,10 @@
  */
 
 import { create } from "zustand";
+import { apiFetch } from "../lib/api";
 
-export type McRepoStatus = "live" | "compatibility" | "unavailable" | "unreachable";
+export type McRepoStatus =
+  "live" | "compatibility" | "unavailable" | "unreachable";
 
 export interface McPhase {
   number: number;
@@ -132,9 +134,13 @@ export const ciLight = (rollup: any[]): CiLight => {
   for (const check of rollup) {
     const conclusion = String(check?.conclusion || "").toUpperCase();
     if (
-      ["FAILURE", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE"].includes(
-        conclusion,
-      )
+      [
+        "FAILURE",
+        "TIMED_OUT",
+        "CANCELLED",
+        "ACTION_REQUIRED",
+        "STARTUP_FAILURE",
+      ].includes(conclusion)
     )
       return "fail";
     if (!conclusion || conclusion === "PENDING") pending = true;
@@ -187,15 +193,18 @@ export function gateLightFor(
 export function isBeltFrame(frame: any): boolean {
   return Boolean(
     frame &&
-      frame.type === "intel_status" &&
-      frame.data &&
-      frame.data.scope === "belt",
+    frame.type === "intel_status" &&
+    frame.data &&
+    frame.data.scope === "belt",
   );
 }
 
 export const fromWireMcSession = (s: any): McSession => {
   const refs: McStoryRef[] = (s.stories || [])
-    .map((st: any) => ({ storyId: st.story_id || "", project: st.project || "" }))
+    .map((st: any) => ({
+      storyId: st.story_id || "",
+      project: st.project || "",
+    }))
     .filter((r: McStoryRef) => r.storyId);
   return {
     key: s.key || "",
@@ -240,7 +249,9 @@ export const fromWireMcEvents = (repoEntry: any): McEvent[] =>
     : [];
 
 /** Sessions keyed by the story they are on — the belt pins these. */
-export function sessionsByStory(sessions: McSession[]): Record<string, McSession[]> {
+export function sessionsByStory(
+  sessions: McSession[],
+): Record<string, McSession[]> {
   const map: Record<string, McSession[]> = {};
   for (const s of sessions) {
     if (s.correlation !== "on_story") continue;
@@ -267,10 +278,7 @@ export function formatEvent(e: McEvent): string {
 }
 
 async function fetchJson(url: string, opts?: RequestInit): Promise<any> {
-  const res = await fetch(url, opts);
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error || body.detail || `HTTP ${res.status}`);
-  return body;
+  return apiFetch<any>(url, opts);
 }
 
 export const POLL_MS = 15_000; // the design's cadence, single-flight
@@ -310,7 +318,12 @@ interface McState {
   evidenceDetail: string;
   toggle(): void;
   refresh(): Promise<void>;
-  proposeFlip(repo: string, project: string, story: string, status: string): Promise<void>;
+  proposeFlip(
+    repo: string,
+    project: string,
+    story: string,
+    status: string,
+  ): Promise<void>;
   decide(decision: "approved" | "rejected"): Promise<void>;
   dismissProposal(): void;
   openEvidence(repo: string, project: string, story: string): Promise<void>;
@@ -409,7 +422,10 @@ export const useMissionControl = create<McState>((set, get) => ({
         repos: mergeReceipts(
           state
             ? (state.repos || []).map(fromWireMcRepo)
-            : get().repos.map((r) => ({ ...r, status: "unreachable" as const })),
+            : get().repos.map((r) => ({
+                ...r,
+                status: "unreachable" as const,
+              })),
           receipts,
         ),
         sessions:

@@ -1,89 +1,59 @@
-"""HS-43-01: the first-run wizard route + shell."""
-from __future__ import annotations
-
+"""Phase-91 React arrival and runtime-discovery locks."""
 from pathlib import Path
 from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
 
-import holdspeak.web.routes.pages as pages
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 _REPO = Path(__file__).resolve().parents[2]
 
 
 def _client() -> TestClient:
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={}))
-    )
-    return TestClient(server.app)
+    return TestClient(MeetingWebServer(WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={}))).app)
 
 
-def test_welcome_route_serves_the_wizard() -> None:
-    resp = _client().get("/welcome")
-    assert resp.status_code == 200
-    if (pages._HOLDSPEAK_DIR / "static" / "_built" / "welcome" / "index.html").exists():
-        assert "welcomeApp" in resp.text
-    else:
-        assert "Welcome to HoldSpeak" in resp.text
+def _page() -> str:
+    return (_REPO / "web/src/pages/WelcomePage.tsx").read_text()
 
 
-def test_wizard_is_a_funnel_with_a11y_and_reduced_motion() -> None:
-    """The wizard source is a real step-funnel with the a11y bones in place."""
-    page = (_REPO / "web" / "src" / "pages" / "welcome.astro").read_text()
-    app = (_REPO / "web" / "src" / "scripts" / "welcome-app.js").read_text()
-    # one step at a time + Step N of M + Back/Skip (user freedom)
-    assert "Step ${i + 1} of ${steps.length}" in app or "Step ${i + 1} of" in page
-    assert "skip()" in page and "back()" in page
-    # focus moves to the step heading on transition (a11y)
-    assert "focusHeading" in app and "x-ref=\"heading_welcome\"" in page
-    # reduced-motion is respected
-    assert "prefers-reduced-motion" in page
-    assert "reduceMotion" in app
-    # the six steps exist
-    for sid in ("welcome", "permissions", "model", "dictation", "presence", "done"):
-        assert f'"{sid}"' in app
+def test_welcome_route_serves_the_one_react_shell() -> None:
+    response = _client().get("/welcome")
+    assert response.status_code == 200
+    assert '<div id="root"></div>' in response.text or "npm run build" in response.text
 
 
-def test_wizard_reads_os_dynamically_and_mentions_meetings() -> None:
-    """No hardcoded 'Mac'; HoldSpeak is also a meeting tool — say so."""
-    page = (_REPO / "web" / "src" / "pages" / "welcome.astro").read_text()
-    app = (_REPO / "web" / "src" / "scripts" / "welcome-app.js").read_text()
-    # OS is read dynamically from the status, never hardcoded.
-    assert "your Mac is ready" not in page
-    assert "osLabel" in app and "presence?.os" in app
-    assert 'x-text="osLabel"' in page
-    # meetings are part of the pitch (welcome value prop + a "Run a meeting" card).
-    assert "meeting" in page.lower()
-    assert "Run a meeting" in page
+def test_wizard_is_a_focus_safe_six_step_funnel() -> None:
+    page = _page()
+    for step in ("Welcome", "Permissions", "Model", "First dictation", "Presence", "Done"):
+        assert f'"{step}"' in page
+    assert "heading.current?.focus()" in page
+    assert "Step {step + 1} of {STEPS.length}" in page
+    assert "Back" in page and "Continue" in page
 
 
-def test_first_dictation_is_a_reward_moment() -> None:
-    """HS-43-03: a live mic ring + a real celebration, the actual hotkey, a11y."""
-    page = (_REPO / "web" / "src" / "pages" / "welcome.astro").read_text()
-    app = (_REPO / "web" / "src" / "scripts" / "welcome-app.js").read_text()
-    # live target + a celebration (check + transcript reveal) keyed off the WS.
-    assert "dict-target" in page and "dict-ring" in page
-    assert "dict-win" in page and "It worked." in page
-    assert 'x-show="dictation.transcript"' in page  # the transcript is revealed
-    # the real configured hotkey is shown (mapped), not a hardcoded key.
-    assert "hotkeyLabel" in app and "x-text=\"hotkeyLabel\"" in page
-    assert "loadHotkey" in app and "/api/settings" in app
-    # the celebration respects reduced-motion.
-    assert "prefers-reduced-motion" in page
-    # focus moves to the "It worked" heading on success (a11y).
-    assert "heading_dictation_win" in app and "heading_dictation_win" in page
-
-
-def test_model_step_is_a_real_picker() -> None:
-    """HS-43-02: selectable backend tiles that persist + a Test (no placeholder)."""
-    page = (_REPO / "web" / "src" / "pages" / "welcome.astro").read_text()
-    app = (_REPO / "web" / "src" / "scripts" / "welcome-app.js").read_text()
-    assert "stp-placeholder" not in page  # every step is real now
-    # a radiogroup of the four backends, selection persists via /api/settings.
-    assert 'role="radiogroup"' in page and 'role="radio"' in page
-    assert "selectModel" in app and "modelChoices" in app
+def test_model_step_discovers_saves_and_tests_real_runtimes() -> None:
+    page = _page()
     for backend in ("basic", "mlx", "llama_cpp", "openai_compatible"):
-        assert f'"{backend}"' in app
-    # a Test reuses the HS-42-06 endpoint.
-    assert "testModel" in app and "/api/setup/runtime-test" in app
+        assert f'"{backend}"' in page
+    for endpoint in ("/api/setup/runtime-options", "/api/setup/discover-models", "/api/profiles", "/api/settings", "/api/setup/runtime-test"):
+        assert endpoint in page
+    assert "requires_key" in page and "context_limit" in page
+
+
+def test_first_dictation_and_presence_use_live_hub_state() -> None:
+    page = _page()
+    assert "useRuntimeFrame" in page
+    assert "It worked" in page
+    assert "hotkey" in page
+    assert "Desktop Presence" in page and "setPresence" in page
+
+
+def test_runtime_discovery_routes_are_real() -> None:
+    client = _client()
+    options = client.get("/api/setup/runtime-options")
+    assert options.status_code == 200
+    assert {"mlx", "gguf", "context_presets", "platform"} <= set(options.json())
+    invalid = client.post("/api/setup/discover-models", json={"base_url": "not-a-server"})
+    assert invalid.status_code == 422
+    assert invalid.json()["models"] == []

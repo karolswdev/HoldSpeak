@@ -374,6 +374,147 @@ class RecipeEngine:
                 "egress": sidecar["egress"],
                 "claimed": claims_after > claims_before,
             }
+        if kind == "sync_meeting":
+            # Stage a deterministic meeting through the product's cross-device
+            # sync ingress. This is the public route a paired iPad uses, and it
+            # gives fully-local recipes a real meeting/action-item world without
+            # manufacturing product DB rows or requiring an LLM to word an
+            # action exactly. The fixed timestamp makes a repeated apply a
+            # last-write-wins no-op.
+            opts = arg if isinstance(arg, dict) else {"id": str(arg)}
+            meeting_id = str(opts.get("id", "uat-synced-meeting"))
+            action_id = str(opts.get("action_id", f"{meeting_id}-action"))
+            stamp = str(opts.get("timestamp", "2035-01-15T10:00:00Z"))
+            title = str(opts.get("title", "UAT synced meeting"))
+            task = str(opts.get("task", "Verify the staged acceptance world"))
+            owner = opts.get("owner", "UAT owner")
+            raw_action_items = opts.get("action_items")
+            if isinstance(raw_action_items, list) and raw_action_items:
+                action_items = []
+                for index, raw_item in enumerate(raw_action_items):
+                    item = raw_item if isinstance(raw_item, dict) else {}
+                    action_items.append(
+                        {
+                            "id": str(
+                                item.get("id") or f"{meeting_id}-action-{index + 1}"
+                            ),
+                            "task": str(item.get("task") or task),
+                            "owner": item.get("owner", owner),
+                            "due": item.get("due"),
+                            "status": str(item.get("status", "pending")),
+                            "review_state": str(
+                                item.get("review_state", "accepted")
+                            ),
+                            "source_timestamp": float(
+                                item.get("source_timestamp", 0.0)
+                            ),
+                            "created_at": stamp,
+                        }
+                    )
+            else:
+                action_items = [
+                    {
+                        "id": action_id,
+                        "task": task,
+                        "owner": owner,
+                        "due": None,
+                        "status": "pending",
+                        "review_state": str(
+                            opts.get("review_state", "accepted")
+                        ),
+                        "source_timestamp": 0.0,
+                        "created_at": stamp,
+                    }
+                ]
+            record = {
+                "meta": {
+                    "id": meeting_id,
+                    "kind": "meeting",
+                    "last_modified": stamp,
+                    "deleted": False,
+                },
+                "value": {
+                    "id": meeting_id,
+                    "started_at": stamp,
+                    "ended_at": stamp,
+                    "title": title,
+                    "tags": ["uat-seed", "sync-staged"],
+                    "segments": [
+                        {
+                            "text": task,
+                            "speaker": "UAT owner",
+                            "speaker_id": None,
+                            "start_time": 0.0,
+                            "end_time": 2.0,
+                            "is_bookmarked": False,
+                            "device_id": "uat-harness",
+                        }
+                    ],
+                    "bookmarks": [],
+                    "intel": {
+                        "timestamp": 2.0,
+                        "topics": ["UAT"],
+                        "action_items": action_items,
+                        "summary": str(
+                            opts.get(
+                                "summary",
+                                "A deterministic meeting staged through the sync API.",
+                            )
+                        ),
+                    },
+                    "intel_status": {
+                        "state": "complete",
+                        "detail": "UAT sync-staged fixture",
+                        "requested_at": stamp,
+                        "completed_at": stamp,
+                    },
+                    "mic_label": "Me",
+                    "remote_label": "Remote",
+                    "web_url": None,
+                },
+            }
+            resp = client.post_json("/api/sync/push", {"meetings": [record]})
+            data = resp.json() if resp.status_code == 200 else {}
+            return {
+                "action": "sync_meeting",
+                "meeting_id": meeting_id,
+                "action_id": action_items[0]["id"],
+                "action_ids": [item["id"] for item in action_items],
+                "status": resp.status_code,
+                "merged": (data.get("received") or {}).get("meetings"),
+                **(
+                    {"error": data.get("error") or resp.text[:200]}
+                    if resp.status_code != 200
+                    else {}
+                ),
+            }
+        if kind == "propose_github_card":
+            # Create, but deliberately do not approve, the aftercare proposal.
+            # The product's proposal read route is the probe seam; no connector
+            # executes and no network egress occurs during staging.
+            opts = arg if isinstance(arg, dict) else {}
+            meeting_id = str(opts.get("meeting_id", "uat-egress-meeting"))
+            action_id = str(opts.get("action_item_id", "uat-egress-action"))
+            repo = str(opts.get("repo", "acme/holdspeak-uat"))
+            resp = client.post_json(
+                f"/api/meetings/{meeting_id}/aftercare/file-issue",
+                {"action_item_id": action_id, "repo": repo},
+            )
+            data = resp.json() if resp.status_code == 200 else {}
+            proposal = data.get("proposal") or {}
+            return {
+                "action": "propose_github_card",
+                "meeting_id": meeting_id,
+                "proposal_id": proposal.get("id"),
+                "target": proposal.get("target"),
+                "proposal_status": proposal.get("status"),
+                "status": resp.status_code,
+                **(
+                    {"error": data.get("error") or resp.text[:200]}
+                    if resp.status_code != 200
+                    else {}
+                ),
+            }
         if kind == "teach_correction":
             # Record a dictation correction so the learned-from-N digest has a
             # KNOWN count to check honestly against.

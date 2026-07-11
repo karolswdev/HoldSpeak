@@ -1,0 +1,31 @@
+title: Exact meeting actions for functional aftercare review
+description: >
+  Push one deterministic meeting through the product's public sync ingress with
+  one pending and one accepted action. This is the fast, fully local world for
+  testing action review, proposal affordances, export, and native read-back when
+  model generation itself is not the claim.
+deck: golden-local
+requires: []
+actions:
+  - sync_meeting:
+      id: uat-functional-aftercare
+      title: Owner functional review (UAT seed)
+      timestamp: "2035-01-15T10:00:00Z"
+      task: Review the deterministic aftercare world
+      owner: Karol
+      summary: The owner reviews two known actions before any external action is proposed.
+      action_items:
+        - id: uat-functional-action-pending
+          task: Confirm the pending-action consent gate
+          owner: Karol
+          review_state: pending
+        - id: uat-functional-action-accepted
+          task: File the accepted owner verification action
+          owner: Karol
+          review_state: accepted
+probe:
+  - meeting_actions_are:
+      id: uat-functional-aftercare
+      actions:
+        - {id: uat-functional-action-pending, review_state: pending, task_contains: consent gate}
+        - {id: uat-functional-action-accepted, review_state: accepted, task_contains: owner verification}

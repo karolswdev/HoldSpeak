@@ -4,6 +4,7 @@
  * it. The hub assembles the material from the canonical store and answers
  * with the run's HONEST egress — the badge states where THIS run went. */
 import type { DeskItem, Items } from "./api";
+import { apiRequest } from "../lib/api";
 
 /** One lasso'd card, as the ask reads it. */
 export interface AskContext {
@@ -14,11 +15,30 @@ export interface AskContext {
 
 /** The prompt presets — the iPad's `RouteLenses.all`, verbatim. */
 export const ASK_LENSES: Array<{ name: string; instruction: string }> = [
-  { name: "Summarize", instruction: "Summarize the following in 3–4 tight sentences. Be concrete." },
-  { name: "Action items", instruction: "Extract the concrete action items as a short list, each as 'task — owner — due' when known." },
-  { name: "Risks", instruction: "List the top risks, blockers, and open questions implied by the following. Be specific and brief." },
-  { name: "Decisions", instruction: "List the decisions that were made in the following. One line each." },
-  { name: "Draft email", instruction: "Write a short, friendly follow-up email summarizing the following and its next steps." },
+  {
+    name: "Summarize",
+    instruction: "Summarize the following in 3–4 tight sentences. Be concrete.",
+  },
+  {
+    name: "Action items",
+    instruction:
+      "Extract the concrete action items as a short list, each as 'task — owner — due' when known.",
+  },
+  {
+    name: "Risks",
+    instruction:
+      "List the top risks, blockers, and open questions implied by the following. Be specific and brief.",
+  },
+  {
+    name: "Decisions",
+    instruction:
+      "List the decisions that were made in the following. One line each.",
+  },
+  {
+    name: "Draft email",
+    instruction:
+      "Write a short, friendly follow-up email summarizing the following and its next steps.",
+  },
 ];
 
 /** Resolve the selected ids to ask contexts (id + kind + live title). */
@@ -39,14 +59,15 @@ export function askContexts(items: Items, selectedIds: string[]): AskContext[] {
 /** The printed card's lineage line — the iPad grammar ("3 items → Distill"). */
 export function askLineageLine(context: AskContext[], lens: string): string {
   if (!context.length) return lens;
-  const src = context.length === 1 ? context[0].title : `${context.length} items`;
+  const src =
+    context.length === 1 ? context[0].title : `${context.length} items`;
   return `${src} → ${lens}`;
 }
 
 export interface AskRunResult {
   ok: boolean;
   output: string;
-  egress: { scope: "local" | "cloud"; host?: string } | null;
+  egress: { scope: "local" | "mesh" | "cloud"; host?: string } | null;
   model: string;
   profileId: string | null;
   /** The lineage the hub actually read — grounding rows folded in (HS-83-01). */
@@ -62,22 +83,36 @@ export async function runAsk(opts: {
   lens: string;
   context: AskContext[];
   profileId?: string;
-  grounding?: { meeting_ids: string[]; artifact_ids: string[]; expand: "summary" | "full" } | null;
+  grounding?: {
+    meeting_ids: string[];
+    artifact_ids: string[];
+    expand: "summary" | "full";
+  } | null;
   /** HS-83-03: pin one of the hub's runnable models (the /api/models set);
    * an unknown name refuses 400 naming the allowed set. */
   model?: string;
 }): Promise<AskRunResult> {
   const fail = (output: string): AskRunResult => ({
-    ok: false, output, egress: null, model: "", profileId: null, contextIds: [], contextTitles: [],
+    ok: false,
+    output,
+    egress: null,
+    model: "",
+    profileId: null,
+    contextIds: [],
+    contextTitles: [],
   });
   try {
-    const res = await fetch("/api/ask", {
+    const res = await apiRequest("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         prompt: opts.prompt,
         lens: opts.lens,
-        context: opts.context.map((c) => ({ id: c.id, kind: c.kind, title: c.title })),
+        context: opts.context.map((c) => ({
+          id: c.id,
+          kind: c.kind,
+          title: c.title,
+        })),
         ...(opts.profileId ? { profile_id: opts.profileId } : {}),
         ...(opts.grounding ? { grounding: opts.grounding } : {}),
         ...(opts.model ? { model: opts.model } : {}),
@@ -85,8 +120,10 @@ export async function runAsk(opts: {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const unknown = Array.isArray(data.unknown_ids) && data.unknown_ids.length
-        ? ` (${data.unknown_ids.join(", ")})` : "";
+      const unknown =
+        Array.isArray(data.unknown_ids) && data.unknown_ids.length
+          ? ` (${data.unknown_ids.join(", ")})`
+          : "";
       return fail(String(data.error || `HTTP ${res.status}`) + unknown);
     }
     return {
@@ -95,8 +132,12 @@ export async function runAsk(opts: {
       egress: data.egress && data.egress.scope ? data.egress : null,
       model: String(data.model || ""),
       profileId: data.profile_id ? String(data.profile_id) : null,
-      contextIds: Array.isArray(data.context_ids) ? data.context_ids.map(String) : [],
-      contextTitles: Array.isArray(data.context_titles) ? data.context_titles.map(String) : [],
+      contextIds: Array.isArray(data.context_ids)
+        ? data.context_ids.map(String)
+        : [],
+      contextTitles: Array.isArray(data.context_titles)
+        ? data.context_titles.map(String)
+        : [],
     };
   } catch (e) {
     return fail(String(e));
@@ -112,7 +153,7 @@ export async function keepAsk(opts: {
   context: AskContext[];
 }): Promise<string | null> {
   try {
-    const res = await fetch("/api/ask/keep", {
+    const res = await apiRequest("/api/ask/keep", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

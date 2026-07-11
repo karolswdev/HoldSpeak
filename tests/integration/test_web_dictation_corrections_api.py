@@ -191,12 +191,8 @@ def test_delete_without_repo_404s(test_client: TestClient, settings_path: Path) 
 
 
 def test_dictation_page_includes_memory_tab(test_client: TestClient) -> None:
-    """HS-40-04: the Memory tab + its curate/telemetry hosts are in the page."""
-    body = test_client.get("/dictation").text
-    assert 'data-section="memory"' in body
-    assert "What the copilot has learned" in body
-    assert 'id="mem-list"' in body          # the corrections list host
-    assert 'id="mem-add-form"' in body       # the add-correction form
-    assert 'id="mem-btn-clear"' in body      # forget-all
-    assert 'id="mem-corrections-enabled"' in body  # the in-context toggle
-    assert 'id="mem-depth"' in body          # the depth-telemetry host
+    assert '<div id="root"></div>' in test_client.get("/dictation").text
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    assert '["memory", "Memory"]' in source
+    assert "/api/dictation/corrections" in source
+    assert "/api/dictation/learning-digest" in source

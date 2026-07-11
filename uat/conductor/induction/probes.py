@@ -13,7 +13,7 @@ Assertion forms in YAML (single-key mappings, arg scalar or mapping):
       - kb_exists: uat-seed-kb-project
       - meeting_with_open_actions: {min_actions: 1, timeout: 180}
       - runtime_endpoint_unreachable: true
-      - setup_not_ready: true
+      - first_run_pending: true
       - mesh_node_seen: uat-worker
 """
 
@@ -213,6 +213,43 @@ class ProbeEvaluator:
             time.sleep(2.0)
         return (False, f"timed out after {timeout:.0f}s: {last}")
 
+    def _check_meeting_actions_are(self, arg):
+        """An exact sync-staged meeting exposes the named actions and states."""
+        opts = arg if isinstance(arg, dict) else {"id": str(arg)}
+        meeting_id = str(opts.get("id", ""))
+        expected = list(opts.get("actions") or [])
+        if not meeting_id or not expected:
+            return (False, "meeting_actions_are needs id + non-empty actions")
+        try:
+            meeting = self.client.get_json(f"/api/meetings/{meeting_id}")
+        except Exception as exc:
+            return (False, f"could not read meeting {meeting_id!r}: {exc}")
+        actual = {
+            str(item.get("id")): item
+            for item in ((meeting.get("intel") or {}).get("action_items") or [])
+        }
+        misses: list[str] = []
+        for wanted in expected:
+            action_id = str(wanted.get("id", ""))
+            item = actual.get(action_id)
+            if item is None:
+                misses.append(f"{action_id}:absent")
+                continue
+            wanted_review = wanted.get("review_state")
+            if wanted_review is not None and item.get("review_state") != wanted_review:
+                misses.append(
+                    f"{action_id}:review={item.get('review_state')!r} "
+                    f"(want {wanted_review!r})"
+                )
+            wanted_task = str(wanted.get("task_contains") or "")
+            if wanted_task and wanted_task not in str(item.get("task") or ""):
+                misses.append(f"{action_id}:task missing {wanted_task!r}")
+        return (
+            not misses,
+            f"meeting {meeting_id!r} actions={sorted(actual)}"
+            + (f"; misses={misses}" if misses else ""),
+        )
+
     # --- dictation learning + trust attacks ------------------------------
 
     def _check_learning_digest_min(self, arg):
@@ -253,15 +290,101 @@ class ProbeEvaluator:
             f"in {elapsed:.1f}s: {data.get('detail','')}",
         )
 
-    def _check_setup_not_ready(self, _arg):
+    def _check_first_run_pending(self, _arg):
         status = self.client.get_json("/api/setup/status")
+        pending = status.get("first_run") is True
         overall = str(status.get("overall", "")).lower()
-        ready = overall == "pass"
-        return (not ready, f"setup overall={overall!r} (first-run expects not-pass)")
+        return (
+            pending,
+            f"first_run={status.get('first_run')!r}; setup overall={overall!r} "
+            "(optional intelligence does not determine first-run state)",
+        )
 
     def _check_setup_reachable(self, _arg):
         resp = self.client.get("/api/setup/status")
         return (resp.status_code == 200, f"/api/setup/status HTTP {resp.status_code}")
+
+    # --- egress posture + proposal cards ---------------------------------
+
+    def _check_egress_scope_is(self, arg):
+        """Read the global chrome's structured egress source through setup.
+
+        The web UI's canonical ``egressBadge(setup)`` maps the returned trust
+        block to local/mixed/cloud. Mirror that small mapping here so a recipe
+        verifies the same product state the human sees, including the named
+        endpoint for a cloud transcript posture.
+        """
+        opts = arg if isinstance(arg, dict) else {"scope": str(arg)}
+        wanted = str(opts.get("scope", "local"))
+        wanted_target = str(opts.get("target", ""))
+        status = self.client.get_json("/api/setup/status")
+        trust = status.get("trust") or {}
+        bind = str(trust.get("web_bind") or "")
+        off_loopback = bind not in {"", "127.0.0.1", "localhost", "::1"}
+        if trust.get("actuators_enabled") or (
+            off_loopback and not trust.get("auth_token_set")
+        ):
+            actual = "mixed"
+        elif str(trust.get("transcript_egress") or "none") != "none":
+            actual = "cloud"
+        else:
+            actual = "local"
+        endpoints = [str(item) for item in (trust.get("configured_endpoints") or [])]
+        target_ok = not wanted_target or any(wanted_target in item for item in endpoints)
+        return (
+            actual == wanted and target_ok,
+            f"egress scope={actual!r}, endpoints={endpoints} "
+            f"(want {wanted!r}"
+            + (f" target containing {wanted_target!r}" if wanted_target else "")
+            + ")",
+        )
+
+    def _check_proposal_egress_names_target(self, arg):
+        """A pending card names its cloud connector and exact destination.
+
+        The product route returns the structured proposal rendered by the
+        per-card badge (``target=github`` -> ``☁ GitHub``) and its reviewable
+        payload. Requiring ``status=proposed`` plus no executed/result fields
+        proves staging did not itself egress.
+        """
+        opts = arg if isinstance(arg, dict) else {"meeting_id": str(arg)}
+        meeting_id = str(opts.get("meeting_id", "uat-egress-meeting"))
+        wanted_target = str(opts.get("target", "github")).lower()
+        wanted_destination = str(opts.get("destination", ""))
+        try:
+            rows = self.client.get_json(
+                f"/api/meetings/{meeting_id}/proposals"
+            ).get("proposals", [])
+        except Exception as exc:
+            return (False, f"could not read proposals for {meeting_id!r}: {exc}")
+        candidates = [
+            row
+            for row in rows
+            if str(row.get("target") or "").lower() == wanted_target
+        ]
+        if not candidates:
+            return (
+                False,
+                f"no {wanted_target!r} proposal for meeting {meeting_id!r} "
+                f"(targets={[row.get('target') for row in rows]})",
+            )
+        proposal = candidates[0]
+        payload = proposal.get("payload") or {}
+        destination = str(
+            payload.get("repo")
+            or payload.get("url")
+            or payload.get("channel")
+            or ""
+        )
+        pending = proposal.get("status") == "proposed"
+        untouched = not proposal.get("executed_at") and not proposal.get("result")
+        destination_ok = not wanted_destination or destination == wanted_destination
+        return (
+            pending and untouched and destination_ok,
+            f"proposal target={proposal.get('target')!r}, destination={destination!r}, "
+            f"status={proposal.get('status')!r}, executed_at={proposal.get('executed_at')!r} "
+            f"(want destination={wanted_destination!r})",
+        )
 
     # --- mesh -------------------------------------------------------------
 

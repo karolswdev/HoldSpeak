@@ -3,9 +3,19 @@
 // (test_web_routes_ask.py); this locks what the web SENDS and PRICES.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  buildGrounding, emptyGrounding, fetchGroundingMeeting, fetchRailsSizes,
-  groundingIsEmpty, groundingLabel, groundingReceiptRows, groundingTokens, hubGrounding,
-  railsRefs, railsTokens, type GroundingSelection, type RailsPick,
+  buildGrounding,
+  emptyGrounding,
+  fetchGroundingMeeting,
+  fetchRailsSizes,
+  groundingIsEmpty,
+  groundingLabel,
+  groundingReceiptRows,
+  groundingTokens,
+  hubGrounding,
+  railsRefs,
+  railsTokens,
+  type GroundingSelection,
+  type RailsPick,
 } from "../grounding";
 import { runAsk } from "../ask";
 
@@ -14,20 +24,30 @@ afterEach(() => vi.unstubAllGlobals());
 const sel = (over: Partial<GroundingSelection> = {}): GroundingSelection => ({
   meetings: [
     {
-      id: "m1", title: "Q3 kickoff", day: "2026-07-01",
-      hasIntel: true, includeIntel: true,
-      transcriptLines: 2, includeTranscript: false,
-      intelChars: 400, transcriptChars: 8_000,
+      id: "m1",
+      title: "Q3 kickoff",
+      day: "2026-07-01",
+      hasIntel: true,
+      includeIntel: true,
+      transcriptLines: 2,
+      includeTranscript: false,
+      intelChars: 400,
+      transcriptChars: 8_000,
       artifacts: [
         { id: "a1", title: "Decisions", chars: 200, on: true },
         { id: "a2", title: "Actions", chars: 300, on: false },
       ],
     },
     {
-      id: "m2", title: "Deep dive", day: "2026-07-02",
-      hasIntel: false, includeIntel: false,
-      transcriptLines: 40, includeTranscript: true,
-      intelChars: 0, transcriptChars: 20_000,
+      id: "m2",
+      title: "Deep dive",
+      day: "2026-07-02",
+      hasIntel: false,
+      includeIntel: false,
+      transcriptLines: 40,
+      includeTranscript: true,
+      intelChars: 0,
+      transcriptChars: 20_000,
       artifacts: [],
     },
   ],
@@ -87,16 +107,36 @@ describe("the fetcher (real lengths, iPad defaults)", () => {
   it("prices segments/intel/artifacts from the hub's answers; digest defaults on", async () => {
     vi.stubGlobal("fetch", (url: string) => {
       if (url === "/api/meetings/m9") {
-        return Promise.resolve(new Response(JSON.stringify({
-          title: "Envelope proof", started_at: "2026-07-06T21:31:41",
-          segments: [{ speaker: "Karol", text: "BLUE LANTERN is the codename." }],
-          intel: { summary: "The codename exists.", action_items: [{ task: "Ship it" }] },
-        })));
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              title: "Envelope proof",
+              started_at: "2026-07-06T21:31:41",
+              segments: [
+                { speaker: "Karol", text: "BLUE LANTERN is the codename." },
+              ],
+              intel: {
+                summary: "The codename exists.",
+                action_items: [{ task: "Ship it" }],
+              },
+            }),
+          ),
+        );
       }
       if (url === "/api/meetings/m9/artifacts") {
-        return Promise.resolve(new Response(JSON.stringify({
-          artifacts: [{ id: "a9", title: "Decisions", body_markdown: "- Ship the manifest." }],
-        })));
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              artifacts: [
+                {
+                  id: "a9",
+                  title: "Decisions",
+                  body_markdown: "- Ship the manifest.",
+                },
+              ],
+            }),
+          ),
+        );
       }
       return Promise.reject(new Error("unexpected " + url));
     });
@@ -104,12 +144,14 @@ describe("the fetcher (real lengths, iPad defaults)", () => {
     expect(m.title).toBe("Envelope proof");
     expect(m.day).toBe("2026-07-06");
     expect(m.hasIntel).toBe(true);
-    expect(m.includeIntel).toBe(true);          // the iPad default
-    expect(m.includeTranscript).toBe(false);    // transcript is opt-in
+    expect(m.includeIntel).toBe(true); // the iPad default
+    expect(m.includeTranscript).toBe(false); // transcript is opt-in
     expect(m.transcriptLines).toBe(1);
     expect(m.transcriptChars).toBeGreaterThan(30);
     expect(m.intelChars).toBeGreaterThan(20);
-    expect(m.artifacts).toEqual([{ id: "a9", title: "Decisions", chars: 20, on: false }]);
+    expect(m.artifacts).toEqual([
+      { id: "a9", title: "Decisions", chars: 20, on: false },
+    ]);
   });
 });
 
@@ -118,31 +160,60 @@ describe("runAsk carries the envelope", () => {
     let sent: any = null;
     vi.stubGlobal("fetch", (_url: string, init: any) => {
       sent = JSON.parse(init.body);
-      return Promise.resolve(new Response(JSON.stringify({
-        output: "BLUE LANTERN",
-        egress: { scope: "cloud", host: "192.168.1.43" },
-        model: "Qwen",
-        context_ids: ["m1"], context_titles: ["Q3 kickoff"],
-        grounding: { meeting_ids: ["m1"], artifact_ids: [], expand: "full", titles: ["Q3 kickoff"] },
-      })));
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            output: "BLUE LANTERN",
+            egress: { scope: "cloud", host: "192.168.1.43" },
+            model: "Qwen",
+            context_ids: ["m1"],
+            context_titles: ["Q3 kickoff"],
+            grounding: {
+              meeting_ids: ["m1"],
+              artifact_ids: [],
+              expand: "full",
+              titles: ["Q3 kickoff"],
+            },
+          }),
+        ),
+      );
     });
     const r = await runAsk({
-      prompt: "codename?", lens: "Ask", context: [],
+      prompt: "codename?",
+      lens: "Ask",
+      context: [],
       grounding: { meeting_ids: ["m1"], artifact_ids: [], expand: "full" },
     });
-    expect(sent.grounding).toEqual({ meeting_ids: ["m1"], artifact_ids: [], expand: "full" });
+    expect(sent.grounding).toEqual({
+      meeting_ids: ["m1"],
+      artifact_ids: [],
+      expand: "full",
+    });
     expect(r.ok).toBe(true);
     expect(r.contextIds).toEqual(["m1"]);
     expect(r.contextTitles).toEqual(["Q3 kickoff"]);
   });
   it("renders the hub's refusal verbatim, naming unknown ids", async () => {
-    vi.stubGlobal("fetch", () => Promise.resolve(new Response(
-      JSON.stringify({ error: "grounding ids not on this hub", unknown_ids: ["ghost"] }),
-      { status: 400 },
-    )));
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            error: "grounding ids not on this hub",
+            unknown_ids: ["ghost"],
+          }),
+          { status: 400 },
+        ),
+      ),
+    );
     const r = await runAsk({
-      prompt: "x", lens: "Ask", context: [],
-      grounding: { meeting_ids: ["ghost"], artifact_ids: [], expand: "summary" },
+      prompt: "x",
+      lens: "Ask",
+      context: [],
+      grounding: {
+        meeting_ids: ["ghost"],
+        artifact_ids: [],
+        expand: "summary",
+      },
     });
     expect(r.ok).toBe(false);
     expect(r.output).toBe("grounding ids not on this hub (ghost)");
@@ -153,8 +224,13 @@ describe("rails grounding (HS-88-02)", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   const pick = (over: Partial<RailsPick> = {}): RailsPick => ({
-    repo: "code", project: "holdspeak", kind: "story", id: "HS-88-02",
-    title: "HS-88-02 The picker", chars: 400, ...over,
+    repo: "code",
+    project: "holdspeak",
+    kind: "story",
+    id: "HS-88-02",
+    title: "HS-88-02 The picker",
+    chars: 400,
+    ...over,
   });
 
   it("railsRefs strips the view fields down to the wire ref", () => {
@@ -173,8 +249,12 @@ describe("rails grounding (HS-88-02)", () => {
     const sel = emptyGrounding();
     const wire = buildGrounding(sel, [pick()]);
     expect(wire).toEqual({
-      meeting_ids: [], artifact_ids: [], expand: "summary",
-      rails: [{ repo: "code", project: "holdspeak", kind: "story", id: "HS-88-02" }],
+      meeting_ids: [],
+      artifact_ids: [],
+      expand: "summary",
+      rails: [
+        { repo: "code", project: "holdspeak", kind: "story", id: "HS-88-02" },
+      ],
     });
   });
 
@@ -184,7 +264,10 @@ describe("rails grounding (HS-88-02)", () => {
   });
 
   it("the SAME rails picks build the SAME wire for ask and steer (parity)", () => {
-    const picks = [pick(), pick({ kind: "phase", id: "88", title: "Phase 88" })];
+    const picks = [
+      pick(),
+      pick({ kind: "phase", id: "88", title: "Phase 88" }),
+    ];
     const askWire = buildGrounding(emptyGrounding(), picks);
     const steerWire = buildGrounding(emptyGrounding(), picks);
     expect(askWire).toEqual(steerWire); // one hydration, both surfaces
@@ -194,7 +277,10 @@ describe("rails grounding (HS-88-02)", () => {
     vi.stubGlobal("fetch", () =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ sizes: [{ kind: "story", id: "HS-88-02", chars: 512 }] }),
+        json: () =>
+          Promise.resolve({
+            sizes: [{ kind: "story", id: "HS-88-02", chars: 512 }],
+          }),
       }),
     );
     const sizes = await fetchRailsSizes([
@@ -205,6 +291,10 @@ describe("rails grounding (HS-88-02)", () => {
 
   it("fetchRailsSizes is empty (not thrown) on a hub error", async () => {
     vi.stubGlobal("fetch", () => Promise.reject(new Error("down")));
-    expect(await fetchRailsSizes([{ repo: "x", project: "y", kind: "story", id: "z" }])).toEqual({});
+    expect(
+      await fetchRailsSizes([
+        { repo: "x", project: "y", kind: "story", id: "z" },
+      ]),
+    ).toEqual({});
   });
 });

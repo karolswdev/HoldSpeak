@@ -1,0 +1,19 @@
+title: Exact proposed card for functional proposal review
+description: >
+  Compose the deterministic aftercare meeting and turn its accepted action into
+  one real, unexecuted GitHub proposal through the public aftercare route. The
+  queue has a known card without requiring a model or asking the tester to
+  manufacture one by hand.
+deck: golden-local
+requires: []
+includes: [functional-aftercare-review]
+actions:
+  - propose_github_card:
+      meeting_id: uat-functional-aftercare
+      action_item_id: uat-functional-action-accepted
+      repo: acme/holdspeak-owner-uat
+probe:
+  - proposal_egress_names_target:
+      meeting_id: uat-functional-aftercare
+      target: github
+      destination: acme/holdspeak-owner-uat

@@ -1,4 +1,5 @@
 id: c-journal-review
+execution_target: web_react
 title: The dictation Journal — every said→typed pair, in a durable timeline
 features:
   - dictation.journal.review
@@ -11,10 +12,7 @@ manual_setup:
   - The pack-c-journal-ready recipe has staged the glossary note and Journal KB; confirm the desk is up.
   - Have a transcription model installed and a short spoken phrase ready that leans on the repo, e.g. "note the ledgerline rewrite is on track".
   - Dictate that phrase twice through the pipeline so at least two entries exist in the Journal before the walk.
-surfaces:
-  web: yes
-  ipad: {n/a: "directory row: dictation.journal.review ipad=unknown — LearningJournal.swift contract exists but the Journal UI on device is unconfirmed in the record; a genuine record gap, not a punt"}
-  iphone: {n/a: "directory row: dictation.journal.review iphone=unknown — no Journal-on-device claim in the record"}
+form_factors: [desktop]
 steps:
   # Staging-verify beat: the context world is live and the journal has entries.
   - do: Open the /dictation Journal tab and confirm the two hand-staged dictations are present, and the glossary note (uat-seed-note-journal-glossary) is on the desk.

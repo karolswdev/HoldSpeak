@@ -1,23 +1,15 @@
 id: g-github-issue-connector
+execution_target: web_react
 title: File a GitHub issue from an approved proposal (hand-staged connector)
 features:
   - actuators.connector.github_issue
   - trust.egress.desk-github-issue
 recipes:
   - pack-g-actuators-armed
-# No recipe can induce a real GitHub write — it needs an authenticated `gh`
-# against a repo you own. The pack-g-actuators-armed recipe stages the
-# proposal-ready desk with the gate open and github_issue allow-listed; the
-# credential/repo half is hand-staged. github_issue is a web-desk connector
-# (github_issue_actuator.py, host-injected opt-in); no device write-connector UI
-# is confirmed in the directory, so ipad/iphone are honest n/a here.
 manual_setup:
   - Have an authenticated `gh` on this machine (`gh auth status` is logged in) pointed at a throwaway repo you own — the GitHub connector files via the host's own `gh`, no token is stored or crosses the wire.
   - Note the owner/name of that throwaway repo; you will type it inline when proposing.
-surfaces:
-  web: yes
-  ipad: {n/a: "no device GitHub write-connector UI is confirmed in the directory (actuators.connector.github_issue ipad: unknown; no apple write-connector view)"}
-  iphone: {n/a: "no device GitHub write-connector UI is confirmed in the directory (actuators.connector.github_issue iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. On the actuator-armed desk, confirm the pylon meeting has an

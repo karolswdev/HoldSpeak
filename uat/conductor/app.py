@@ -62,14 +62,30 @@ class StageBody(BaseModel):
     scenario_id: str
 
 
+class ManualConfirmBody(BaseModel):
+    scenario_id: str
+
+
 class VerdictBody(BaseModel):
     scenario_id: str
     step_index: int
-    surface: str
+    slot_id: str
     verdict: str
     note: Optional[str] = None
     shot_path: Optional[str] = None
     started_at: Optional[str] = None
+    device_session_id: Optional[str] = None
+
+
+class DeviceSessionBody(BaseModel):
+    target: str
+    form_factor: str
+    device_name: str
+    os_version: str
+    bundle_id: str
+    build_number: str
+    install_source: Optional[str] = None
+    pairing_verified: bool = False
 
 
 class AfterBody(BaseModel):
@@ -83,7 +99,7 @@ class TriageBody(BaseModel):
 
 
 def create_app(manager: RunManager | None = None) -> FastAPI:
-    app = FastAPI(title="HoldSpeak UAT Conductor", version="0.1.0")
+    app = FastAPI(title="HoldSpeak UAT Conductor", version="0.2.0")
     app.state.manager = manager or RunManager(Database())
 
     def mgr() -> RunManager:
@@ -237,6 +253,12 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
     def _deck_names() -> set[str]:
         return set(mgr().decks.names())
 
+    def _recipe_decks() -> dict[str, str]:
+        return {
+            name: mgr().recipes.registry.load(name).deck
+            for name in mgr().recipes.registry.names()
+        }
+
     @app.get("/api/features")
     def features() -> Any:
         ledger = _ledger()
@@ -251,6 +273,9 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
                     "domain": f.domain,
                     "phases": f.phases,
                     "surfaces": f.surfaces,
+                    "targets": {
+                        target: sorted(forms) for target, forms in f.targets.items()
+                    },
                     "priority": f.priority,
                     "status": f.status,
                 }
@@ -260,6 +285,8 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
 
     @app.get("/api/packs")
     def packs() -> Any:
+        from .contract.targets import TARGETS
+
         ledger = _ledger()
         out = []
         for name in scen_mod.list_packs():
@@ -269,14 +296,58 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
                 out.append({"pack": name, "error": str(exc)})
                 continue
             cov = pack_coverage(scenarios, ledger)
+            metadata = scen_mod.pack_metadata(name)
+            bootstrap = {
+                "automatic": sum(
+                    bool(scenario.recipes) and not scenario.manual_setup
+                    for scenario in scenarios
+                ),
+                "assisted": sum(
+                    bool(scenario.recipes) and bool(scenario.manual_setup)
+                    for scenario in scenarios
+                ),
+                "manual": sum(
+                    not scenario.recipes and bool(scenario.manual_setup)
+                    for scenario in scenarios
+                ),
+            }
+            requires_intel = any(
+                mgr().recipes.registry.load(recipe).requires_intel
+                for scenario in scenarios
+                for recipe in scenario.recipes
+            )
             out.append(
                 {
                     "pack": name,
+                    **metadata,
                     "scenario_count": len(scenarios),
-                    "coverage": {"overall": cov["overall"], "web": cov["web"], "ipad": cov["ipad"], "iphone": cov["iphone"]},
+                    "requires_device": any(
+                        TARGETS.get(scenario.execution_target, {}).get("native")
+                        for scenario in scenarios
+                    ),
+                    "required_targets": sorted(
+                        {scenario.execution_target for scenario in scenarios}
+                    ),
+                    "quarantined": any(
+                        TARGETS.get(scenario.execution_target, {}).get("quarantined")
+                        for scenario in scenarios
+                    ),
+                    "requires_intel": requires_intel,
+                    "bootstrap": bootstrap,
+                    "coverage": {
+                        "overall": cov["overall"],
+                        "slots": cov["slots"],
+                    },
                     "expected_verdicts": cov["expected_verdicts"],
                 }
             )
+        out.sort(
+            key=lambda item: (
+                0 if item.get("is_campaign") else 1,
+                item.get("sequence") or 999,
+                item["pack"],
+            )
+        )
         return {"packs": out}
 
     @app.get("/api/packs/{pack}")
@@ -289,10 +360,15 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
         errors: list[str] = []
         for s in scenarios:
             errors += validate_scenario(
-                s, ledger_keys=ledger.keys(), recipe_names=_recipe_names(), deck_names=_deck_names()
+                s,
+                ledger_keys=ledger.keys(),
+                recipe_names=_recipe_names(),
+                deck_names=_deck_names(),
+                recipe_decks=_recipe_decks(),
             )
         return {
             "pack": pack,
+            **scen_mod.pack_metadata(pack),
             "scenarios": [s.to_dict() for s in scenarios],
             "coverage": pack_coverage(scenarios, ledger),
             "validation_errors": errors,
@@ -329,6 +405,13 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
         except SittingError as exc:
             raise HTTPException(status_code=404, detail=str(exc))
 
+    @app.post("/api/sittings/{sitting_id}/manual-confirm")
+    def confirm_manual_setup(sitting_id: str, body: ManualConfirmBody) -> Any:
+        try:
+            return sit().confirm_manual_setup(sitting_id, body.scenario_id)
+        except SittingError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
     @app.post("/api/sittings/{sitting_id}/verdicts")
     def cast_verdict(sitting_id: str, body: VerdictBody) -> Any:
         try:
@@ -336,11 +419,29 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
                 sitting_id,
                 scenario_id=body.scenario_id,
                 step_index=body.step_index,
-                surface=body.surface,
+                slot_id=body.slot_id,
                 verdict=body.verdict,
                 note=body.note,
                 shot_path=body.shot_path,
                 started_at=body.started_at,
+                device_session_id=body.device_session_id,
+            )
+        except SittingError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+    @app.post("/api/sittings/{sitting_id}/device-sessions")
+    def register_device_session(sitting_id: str, body: DeviceSessionBody) -> Any:
+        try:
+            return sit().register_device_session(
+                sitting_id,
+                execution_target=body.target,
+                form_factor=body.form_factor,
+                device_name=body.device_name,
+                os_version=body.os_version,
+                bundle_id=body.bundle_id,
+                build_number=body.build_number,
+                install_source=body.install_source,
+                pairing_verified=body.pairing_verified,
             )
         except SittingError as exc:
             raise HTTPException(status_code=400, detail=str(exc))
@@ -350,13 +451,13 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
         sitting_id: str,
         scenario_id: str = Form(...),
         step_index: int = Form(...),
-        surface: str = Form(...),
+        slot_id: str = Form(...),
         file: UploadFile = File(...),
     ) -> Any:
         suffix = Path(file.filename or "shot.png").suffix or ".png"
         data = file.file.read()
         try:
-            path = sit().save_shot(sitting_id, scenario_id, step_index, surface, data, suffix=suffix)
+            path = sit().save_shot(sitting_id, scenario_id, step_index, slot_id, data, suffix=suffix)
         except SittingError as exc:
             raise HTTPException(status_code=404, detail=str(exc))
         return {"shot_path": path}
@@ -385,13 +486,26 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
         try:
             return sit().finish(sitting_id)
         except SittingError as exc:
-            raise HTTPException(status_code=404, detail=str(exc))
+            raise HTTPException(status_code=400, detail=str(exc))
+
+    @app.post("/api/sittings/{sitting_id}/supersede", status_code=201)
+    def supersede_sitting(sitting_id: str) -> Any:
+        try:
+            return sit().supersede(sitting_id)
+        except SittingError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
 
     # --- debrief + triage (HSU-1-05) -------------------------------------
 
     @app.post("/api/sittings/{sitting_id}/debrief")
     def generate_debrief(sitting_id: str) -> Any:
         try:
+            sitting = sit().get(sitting_id)
+            if sitting["status"] != "done":
+                raise HTTPException(
+                    status_code=409,
+                    detail="an unfinished sitting has no acceptance debrief",
+                )
             return debrief().generate(sitting_id)
         except KeyError:
             raise HTTPException(status_code=404, detail=f"no such sitting: {sitting_id}")
@@ -399,6 +513,12 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
     @app.get("/api/sittings/{sitting_id}/debrief")
     def read_debrief(sitting_id: str) -> Any:
         try:
+            sitting = sit().get(sitting_id)
+            if sitting["status"] != "done":
+                raise HTTPException(
+                    status_code=409,
+                    detail="an unfinished sitting has no acceptance debrief",
+                )
             return debrief().read(sitting_id)
         except KeyError:
             raise HTTPException(status_code=404, detail=f"no such sitting: {sitting_id}")
@@ -408,6 +528,11 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
         valid = {"untriaged", "fix", "wont-fix", "by-design", "duplicate"}
         if body.triage_state not in valid:
             raise HTTPException(status_code=400, detail=f"triage_state must be one of {sorted(valid)}")
+        if body.triage_state != "untriaged" and not (body.disposition or "").strip():
+            raise HTTPException(
+                status_code=400,
+                detail="a disposition is required when triaging a finding",
+            )
         if not mgr().db.set_triage(finding_id, body.triage_state, body.disposition):
             raise HTTPException(status_code=404, detail=f"no such finding: {finding_id}")
         return mgr().db.get_finding(finding_id)

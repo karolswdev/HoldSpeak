@@ -14,7 +14,7 @@ generated_by: uat/tools/build_ledger.py (proposes; committed YAML is canon)
 source:
   inventory: pm/roadmap/holdspeak-uat/phase-2-the-inventory/directory/_raw-inventory-rows.json
   phase_index: pm/roadmap/holdspeak/README.md
-  phases_total: 88
+  phases_total: 92
 features:
 - key: activity.candidates.meeting
   title: Activity-derived meeting candidates
@@ -3825,3 +3825,27 @@ phase_map:
   - steering.ground
   - steering.peek
   - trust.steering.arming-grant
+  '88':
+  - mesh.handoff.node_events_to_hub
+  - rails.ground_run
+  - rails.observer_journal
+  - trust.egress.missioncontrol-receipts
+  '89':
+  - desk.coders.agents-on-the-desk
+  - steering.attach_any_pane
+  - steering.audit
+  - steering.cross_machine
+  - steering.keys
+  - trust.steering.arming-grant
+  - trust.steering.named-key-allowlist
+  - trust.steering.relay-node-owns-grant
+  '90':
+  - factory.kill
+  - factory.spawn_rename
+  - steering.attach_any_pane
+  - steering.cross_machine
+  - steering.keys
+  - trust.steering.relay-node-owns-grant
+  - trust.steering.session-factory-gates
+  '91':
+  - internal/no-uat-surface

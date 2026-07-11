@@ -1,4 +1,5 @@
 id: c-spoken-symbols
+execution_target: web_react
 title: Spoken symbols land once — the double-substitution trap
 features:
   - languages.spoken_symbol_dictionary
@@ -6,10 +7,7 @@ features:
   - mobile.dictation.symbols.dictionary
 recipes:
   - dict-symbols-43
-surfaces:
-  web: yes
-  ipad: yes      # directory: mobile.dictation.symbols.dictionary ipad=yes (HSM-18-04, Settings editor, user-wins test-proven)
-  iphone: yes    # directory: mobile.dictation.symbols.dictionary iphone=yes (SpokenSymbols is shared App-layer, reused meeting-side)
+form_factors: [desktop]
 steps:
   # Staging-verify beat: the symbol dictionary is actually loaded.
   - do: Confirm the spoken-symbol dictionary is present — the Spoken-symbol dictionary note (uat-seed-note-symbols) is on the desk with its at-sign / hash / percent / arrow / double-dash entries.

@@ -1,8 +1,13 @@
 # Phase 3 — The Harness Engine (unlock the live-agent + device tier)
 
-**Last updated:** 2026-07-09 (HSU-3-01 shipped — the mesh handoff arc is
-machine-staged-and-verified live on `.43`)
-**Status:** in-progress (1/5)
+**Last updated:** 2026-07-09 (paused after HSU-3-02; active work moved to the
+Phase-4 functional/usability pass and the owner explicitly declined HSU-3-03)
+**Status:** paused (2/5)
+
+> **Protocol-v2 notice:** References below to iPhone/iPad columns describe the
+> historical inventory. Executable evidence now names one implementation target
+> (`web_react` or an exact Swift root) and an explicit form factor. Native
+> verdicts require matching pairing-verified device attestation.
 
 ## Goal
 
@@ -45,9 +50,10 @@ machine-verifiable, and the iPhone/iPad columns get a real answer.
       (HSU-3-01 — `dispatch_run` verb + `run_returned_badged` /
       `run_claimed_by_worker` / `run_output_contains` probes + the
       `mesh-run-on-worker` recipe; green live on `.43`.)
-- [ ] A cloud-egress card is staged and its egress target read back through a
-      probe (or the badge-is-chrome-global mismatch is recorded honestly);
-      pack-d/07, pack-d/11, pack-a/04 unblocked.
+- [x] A cloud-egress card is staged and its egress target read back through a
+      probe; the product exposes both the global chrome posture and a genuine
+      per-card `☁ GitHub` badge with exact repo. Pack-d/07, pack-d/11, and
+      pack-a/04 are staged. (HSU-3-02 — 40 focused tests green.)
 - [ ] The trust gate is *attacked*, not imagined: off-loopback without a token
       is refused (401), an idle run emits no beacon, a crafted newer-schema DB
       is refused untouched — each a probe; pack-d/05, /09, /10 unblocked.
@@ -65,8 +71,8 @@ machine-verifiable, and the iPhone/iPad columns get a real answer.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HSU-3-01 | Mesh dispatch — the handoff arc | done | [story-01](./story-01-mesh-dispatch.md) | [evidence-story-01](./evidence-story-01.md) |
-| HSU-3-02 | Cloud-egress card + per-card probe | backlog | [story-02](./story-02-cloud-egress.md) | — |
-| HSU-3-03 | Trust gate attacks | backlog | [story-03](./story-03-trust-gate-attacks.md) | — |
+| HSU-3-02 | Cloud-egress card + per-card probe | done | [story-02](./story-02-cloud-egress.md) | [evidence-story-02](./evidence-story-02.md) |
+| HSU-3-03 | Trust gate attacks | blocked | [story-03](./story-03-trust-gate-attacks.md) | — |
 | HSU-3-04 | Pipeline-on dictation world | backlog | [story-04](./story-04-dictation-pipeline-on.md) | — |
 | HSU-3-05 | Device pre-flight block | backlog | [story-05](./story-05-device-preflight.md) | — |
 
@@ -91,7 +97,23 @@ model surfaced `PYLON-CANARY-7`, which only the grounded note carries). The
 `mesh-run-on-worker` recipe composes it over the live-worker stage and tears
 down clean; pack-e `02`/`03`/`06` now cite it with the treatment leg
 machine-verified. Proven live on `.43` (`test_mesh_dispatch.py`, self-skips
-without the LAN). Next: HSU-3-02 (cloud-egress card + per-card probe).
+without the LAN).
+
+HSU-3-02 shipped 2026-07-09: `egress-cloud-card` uses the product's sync ingress
+to stage a deterministic accepted action, then the real aftercare route to
+create an unapproved GitHub card. `egress_scope_is` reads the chrome's setup
+truth (`local` control → `api.openai.com` treatment), while
+`proposal_egress_names_target` reads the per-card `github` target, exact
+`acme/holdspeak-uat` repo, and empty execution/result through the meeting
+proposal API. The recipe is fully local and probe-first idempotent. Pack D `/07`
+and `/11`, plus Pack A `/04`, now use the staged treatment. Next: HSU-3-03
+(bounded trust-gate attacks).
+
+**Priority override, 2026-07-09:** this phase is paused. The owner explicitly
+declined HSU-3-03's drift/schema/network-hardening work and asked for an
+owner-executed functional protocol with strong per-test bootstrap. Active work
+moved to [Phase 4](../phase-4-the-owner-functional-pass/current-phase-status.md).
+Do not resume HSU-3-03 without a fresh owner decision.
 
 ## Active risks
 
@@ -108,10 +130,10 @@ without the LAN). Next: HSU-3-02 (cloud-egress card + per-card probe).
 |---|---|---|---|
 | 2026-07-09 | The harness drives the product's OWN routes for every new verb (steering via `/api/coders`, dispatch via `/api/ask`, egress via the proposal routes) — no new product code, no `holdspeak` import | The subprocess boundary is canon; a route rename breaking a verb is a real cross-surface break a failing harness test should catch | owner + agent |
 | 2026-07-09 | Remaining backlog is a phase, not a long tail of overnight commits | The owner's call — ground it in stories for a focused pass rather than drift | owner |
+| 2026-07-09 | Treat global cloud posture and per-card egress as separate structured truths; probe both | History does expose a real per-proposal badge and exact payload destination, resolving the inventory's mismatch question without inventing product behavior | implementation evidence |
 
 ## Decisions deferred
 
 | Decision | Trigger | Default |
 |---|---|---|
-| Whether per-card egress is asserted or the chrome-global badge mismatch is recorded | HSU-3-02 implementation | Probe the real read surface; if the product's badge is global, record the mismatch in the ledger, don't assert a per-card truth |
 | Whether device pre-flight schedules into a specific pack or stays a manual runbook | HSU-3-05 | Build the recipe + probe; wire into pack-b/pack-e where the record supports, leave the physical verdict owner-gated |

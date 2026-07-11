@@ -1,14 +1,12 @@
 id: desk-zones-file-and-dive
+execution_target: web_react
 title: Zones file objects and you can dive into them
 features:
   - desk.web.zones_file_dive
   - desk.diorama.lasso_bundle_file
 recipes:
   - desk-primitives
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "zone file-and-dive on iPhone is unverified in the record (desk.web.zones_file_dive ph=?)"}
+form_factors: [desktop]
 steps:
   - do: The Ledgerline zone is pre-filed. Confirm the desk shows it as a container, not a loose note.
     expect: The Ledgerline object reads as a zone with a member count, sitting apart from the loose Questline note.
@@ -19,6 +17,5 @@ steps:
   - do: Lasso the loose "Questline save-format note" and file it into the Ledgerline zone as a new bundle.
     expect: After filing, the Questline note is inside the zone and the zone's member count goes up by one; the note is no longer loose on the desk.
     where: /
-    surfaces:
-      ipad: yes
+    form_factors: [desktop]
 teardown: []

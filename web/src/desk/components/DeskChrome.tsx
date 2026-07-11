@@ -25,7 +25,11 @@ export function DeskChrome() {
   const anyLive = Object.values(status).some((v) => v === "live");
   const hubState = error ? "degraded" : anyLive ? "live" : "connecting";
   const hubTitle =
-    hubState === "live" ? "Hub connected" : hubState === "degraded" ? error : "Connecting";
+    hubState === "live"
+      ? "Hub connected"
+      : hubState === "degraded"
+        ? error
+        : "Connecting";
   const badge = egressBadge(setup);
 
   return (
@@ -40,11 +44,17 @@ export function DeskChrome() {
             onClick={() => setMenuOpen((v) => !v)}
             title="HoldSpeak"
           >
-            <span className="desk-mark-glyph" aria-hidden="true">◍</span>
+            <span className="desk-mark-glyph" aria-hidden="true">
+              ◍
+            </span>
             HoldSpeak
           </button>
           {menuOpen && (
-            <nav className="desk-menu" role="menu" onMouseLeave={() => setMenuOpen(false)}>
+            <nav
+              className="desk-menu"
+              role="menu"
+              onMouseLeave={() => setMenuOpen(false)}
+            >
               {ROOMS.map((r) => (
                 <a key={r.href} role="menuitem" href={r.href}>
                   {r.label}
@@ -53,26 +63,50 @@ export function DeskChrome() {
             </nav>
           )}
         </div>
-        <span className={`desk-hub-dot is-${hubState}`} title={hubTitle} aria-label={hubTitle} />
+        <span
+          className={`desk-hub-dot is-${hubState}`}
+          title={hubTitle}
+          aria-label={hubTitle}
+        />
         <span className={`egress-badge is-${badge.scope}`} title={badge.title}>
           {badge.text}
         </span>
       </div>
 
       <div className="desk-chrome desk-chrome-tr">
-        <button type="button" className="desk-chip" onClick={() => void createPrimitive("note")}>
+        <button
+          type="button"
+          className="desk-chip"
+          onClick={() => void createPrimitive("note")}
+        >
           + Note
         </button>
-        <button type="button" className="desk-chip" onClick={() => void createPrimitive("kb")}>
+        <button
+          type="button"
+          className="desk-chip"
+          onClick={() => void createPrimitive("kb")}
+        >
           + KB
         </button>
-        <button type="button" className="desk-chip" onClick={() => void createPrimitive("recipe")}>
+        <button
+          type="button"
+          className="desk-chip"
+          onClick={() => void createPrimitive("recipe")}
+        >
           + Recipe
         </button>
-        <button type="button" className="desk-chip" onClick={() => void createPrimitive("zone")}>
+        <button
+          type="button"
+          className="desk-chip"
+          onClick={() => void createPrimitive("zone")}
+        >
           + Zone
         </button>
-        <button type="button" className="desk-chip" onClick={() => void createPrimitive("workflow")}>
+        <button
+          type="button"
+          className="desk-chip"
+          onClick={() => void createPrimitive("workflow")}
+        >
           + Workflow
         </button>
         {Object.keys(positions).length > 0 && (

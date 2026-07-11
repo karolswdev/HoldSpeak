@@ -9,7 +9,10 @@ import type { WorldObject } from "../world";
 import type { UnitPos } from "../store";
 import { MicButton } from "./MicButton";
 import {
-  buildLinearGraph, parseLinearGraph, stepLabel, STEP_PALETTE,
+  buildLinearGraph,
+  parseLinearGraph,
+  stepLabel,
+  STEP_PALETTE,
   type LinearStep,
 } from "../graph";
 
@@ -59,7 +62,10 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
     setF((prev) => ({ ...prev, [key]: value }));
     save({
       [wire]: split
-        ? value.split(",").map((t) => t.trim()).filter(Boolean)
+        ? value
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
         : value,
     });
   };
@@ -72,11 +78,15 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
   );
   const commitGraph = (next: LinearStep[], name?: string) => {
     setSteps(next);
-    save({ graph_json: buildLinearGraph(o.id, name ?? (f.name || "Workflow"), next) });
+    save({
+      graph_json: buildLinearGraph(o.id, name ?? (f.name || "Workflow"), next),
+    });
   };
   const setStepParam = (i: number, patch: Partial<LinearStep>) => {
     if (!steps) return;
-    const next = steps.map((s, j) => (j === i ? ({ ...s, ...patch } as LinearStep) : s));
+    const next = steps.map((s, j) =>
+      j === i ? ({ ...s, ...patch } as LinearStep) : s,
+    );
     commitGraph(next);
   };
 
@@ -102,10 +112,20 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
     <>
       <div
         className="desk-vignette"
-        style={{ "--vx": `${u.x * 100}%`, "--vy": `${u.y * 100}%` } as React.CSSProperties}
+        style={
+          {
+            "--vx": `${u.x * 100}%`,
+            "--vy": `${u.y * 100}%`,
+          } as React.CSSProperties
+        }
         onPointerDown={closeEditor}
       />
-      <div ref={ref} className="desk-editor" style={style} onPointerDown={(e) => e.stopPropagation()}>
+      <div
+        ref={ref}
+        className="desk-editor"
+        style={style}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         {o.kind === "note" && (
           <>
             <input
@@ -141,8 +161,14 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               onChange={(e) => {
                 setF((prev) => ({ ...prev, name: e.target.value }));
                 if (steps) {
-                  save({ name: e.target.value,
-                         graph_json: buildLinearGraph(o.id, e.target.value || "Workflow", steps) });
+                  save({
+                    name: e.target.value,
+                    graph_json: buildLinearGraph(
+                      o.id,
+                      e.target.value || "Workflow",
+                      steps,
+                    ),
+                  });
                 } else {
                   save({ name: e.target.value });
                 }
@@ -157,21 +183,27 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
                       <input
                         value={s.tone}
                         placeholder="Tone"
-                        onChange={(e) => setStepParam(i, { tone: e.target.value })}
+                        onChange={(e) =>
+                          setStepParam(i, { tone: e.target.value })
+                        }
                       />
                     )}
                     {s.kind === "keepIf" && (
                       <input
                         value={s.keyword}
                         placeholder="Keyword"
-                        onChange={(e) => setStepParam(i, { keyword: e.target.value })}
+                        onChange={(e) =>
+                          setStepParam(i, { keyword: e.target.value })
+                        }
                       />
                     )}
                     {s.kind === "llm" && (
                       <input
                         value={s.prompt}
                         placeholder="Prompt ({input} substitutes)"
-                        onChange={(e) => setStepParam(i, { prompt: e.target.value })}
+                        onChange={(e) =>
+                          setStepParam(i, { prompt: e.target.value })
+                        }
                       />
                     )}
                     <button
@@ -191,7 +223,9 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
                       type="button"
                       className="desk-chip quiet"
                       aria-label="Remove step"
-                      onClick={() => commitGraph(steps.filter((_, j) => j !== i))}
+                      onClick={() =>
+                        commitGraph(steps.filter((_, j) => j !== i))
+                      }
                     >
                       ✕
                     </button>
@@ -240,7 +274,9 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               rows={4}
               value={f.systemPrompt}
               placeholder="System prompt"
-              onChange={(e) => set("systemPrompt", "system_prompt", e.target.value)}
+              onChange={(e) =>
+                set("systemPrompt", "system_prompt", e.target.value)
+              }
             />
             {more ? (
               <>
@@ -248,7 +284,9 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
                   rows={3}
                   value={f.userTemplate}
                   placeholder="User template"
-                  onChange={(e) => set("userTemplate", "user_template", e.target.value)}
+                  onChange={(e) =>
+                    set("userTemplate", "user_template", e.target.value)
+                  }
                 />
                 <input
                   value={f.tools}
@@ -268,7 +306,9 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
                 </select>
                 <select
                   value={f.profileId}
-                  onChange={(e) => set("profileId", "profile_id", e.target.value)}
+                  onChange={(e) =>
+                    set("profileId", "profile_id", e.target.value)
+                  }
                 >
                   <option value="">Hub default</option>
                   {profiles.map((p) => (
@@ -279,7 +319,11 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
                 </select>
               </>
             ) : (
-              <button type="button" className="desk-editor-more" onClick={() => setMore(true)}>
+              <button
+                type="button"
+                className="desk-editor-more"
+                onClick={() => setMore(true)}
+              >
                 More
               </button>
             )}
@@ -295,12 +339,20 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               } else if (o.kind === "kb") {
                 set("name", "name", (f.name ? f.name + " " : "") + t);
               } else {
-                set("systemPrompt", "system_prompt", (f.systemPrompt ? f.systemPrompt + " " : "") + t);
+                set(
+                  "systemPrompt",
+                  "system_prompt",
+                  (f.systemPrompt ? f.systemPrompt + " " : "") + t,
+                );
               }
             }}
           />
           <span className="desk-editor-spacer" />
-          <button type="button" className="desk-chip quiet" onClick={closeEditor}>
+          <button
+            type="button"
+            className="desk-chip quiet"
+            onClick={closeEditor}
+          >
             Done
           </button>
         </div>

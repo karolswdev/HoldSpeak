@@ -1,19 +1,12 @@
 id: g-governance-gate
+execution_target: web_react
 title: The actuator governance gate — off by default, and what opening it takes
 features:
   - actuators.governance.gate
   - actuators.proposal.approve_execute
 recipes:
   - meeting-just-ended-open-actions
-  - pack-g-actuators-armed
-# The proposal lifecycle and the gate live on the web desk (GET /proposals +
-# POST decision; MeetingConfig.allow_actuators). The iPad has the ProposalsClient
-# contract and reviews/approves, so its arming/approve leg is walked; execution +
-# audit stay hub-side. iPhone is genuinely unknown in the directory record.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the actuator proposal/approve surface on iPhone is unverified in the directory record (actuators.* rows iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify (control desk). On the default golden-43 desk
@@ -31,8 +24,9 @@ steps:
       "actuators disabled" message), and nothing is filed or posted. Approval
       alone does not open the gate; the master switch is off.
     where: /history
-    surfaces:
-      ipad: {n/a: "reading the ActuatorPolicyError refusal on execute is a hub-side proposal-decision route; the iPad reviews/approves but the execute+refusal readout is web-desk (actuators.governance.gate ipad: unknown)"}
+    form_factors: [desktop]
+    after:
+      - apply_recipe: pack-g-actuators-armed
   - do: >
       (Treatment — gate OPEN) Restage on the actuator-armed desk, then open the
       same open action, propose again, and approve.
@@ -43,8 +37,5 @@ steps:
       approval, opposite outcome. This is the honest close: consent + policy, both
       required.
     where: /history
-    after:
-      - apply_recipe: pack-g-actuators-armed
-    surfaces:
-      ipad: {n/a: "the execute-on-approve + audit readout is the hub-side proposal-decision route; the iPad's leg is propose/approve, execution/audit stays on the web desk (actuators.proposal.approve_execute ipad: unknown)"}
+    form_factors: [desktop]
 teardown: []

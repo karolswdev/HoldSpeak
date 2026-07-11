@@ -1,14 +1,12 @@
 id: c-grounded-rewrite
+execution_target: web_react
 title: A grounded rewrite — control (OFF) then treatment (ON)
 features:
   - dictation.pipeline.intent-routing
   - dictation.kb.project_facts
 recipes:
   - seeded-desk-43
-surfaces:
-  web: yes
-  ipad: yes   # directory: dictation.pipeline.intent-routing ipad=yes (iPad runs the full dictation pipeline: /api/dictation/remote + dry-run)
-  iphone: {n/a: "directory row: iphone unknown — pipeline path on iPhone form factor unverified in the record; tracked as a phone-column gap, not a genuine absence"}
+form_factors: [desktop]
 steps:
   # Staging-verify beat: confirm the seeded world is live before the human walk.
   - do: Confirm the seeded desk is up on .43 — the Project glossary note and Project KB are present, and the dictation runtime answers a health check.

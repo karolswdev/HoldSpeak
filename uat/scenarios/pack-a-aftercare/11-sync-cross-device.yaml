@@ -1,31 +1,27 @@
 id: a-sync-cross-device
-title: A meeting captured on one device appears on another — byte-faithful across the wire
+execution_target: web_react
+title: A meeting captured in one React Desk appears in another — byte-faithful across the wire
 features:
   - sync.content.cross_device
   - sync.integrity.roundtrip
 manual_setup:
-  - Bind the hub to the LAN and pair a second device (an iPad, or a second machine's web desk) with host + port + token, both reading the same hub as the canonical store.
-  - Have the meeting-import / capture flow ready on the origin device so a fresh meeting can be produced and pushed.
+  - Open the React Desk in desktop browsers on two machines, both authenticated to the same hub with host + port + token.
+  - Have the meeting-import / capture flow ready in the origin browser so a fresh meeting can be produced and pushed.
   - For the roundtrip leg, be able to create at least one of each of the 10 primitive kinds (note, KB, directory/zone, recipe, chain, workflow, profile, meeting, plus the remaining two the contract wire carries) on the origin so the whole wire is exercised, not just meetings.
 recipes: []
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "cross-device continuity on iPhone is unverified in the inventory (row iphone: unknown for sync.content.cross_device); the roundtrip leg below is authored for iPhone where the row is iphone: yes"}
+form_factors: [desktop]
 steps:
-  - do: (Staging beat) Confirm both devices are paired to the same hub — each device's connect/doctor view names the hub host+port and reads paired, with no meeting yet present on the second device.
-    expect: Both devices report paired to the same hub, and the second device's history is empty of the meeting about to be captured — so its later appearance is provably a sync, not a pre-seed.
+  - do: (Staging beat) Confirm both desktop React Desks are authenticated to the same hub — each browser's connect/doctor view names the hub host+port, with no meeting yet present in the second browser.
+    expect: Both React Desks report the same hub, and the second browser's history is empty of the meeting about to be captured — so its later appearance is provably a sync, not a pre-seed.
     where: /history
-  - do: On the origin device, capture or import a meeting, then pull on the second device.
-    expect: The meeting captured on device one appears on device two, read back through the second device's own history — same title, same transcript content. Cross-device continuity is real, not a screenshot.
+  - do: In the origin browser, capture or import a meeting, then refresh or pull in the second desktop browser.
+    expect: The meeting captured in browser one appears in browser two, read back through the second React Desk's own history — same title, same transcript content. Cross-machine continuity is real, not a screenshot.
     where: /history
-  - do: (Roundtrip integrity) On the origin, create one of each of the 10 primitive kinds, push, pull on the second device, and open each primitive to compare its fields against the origin.
-    expect: All 10 primitive kinds round-trip byte-faithfully — the values a human typed on device one arrive intact on device two (a note's body, a KB's name, a zone's members, a recipe's system prompt), with last-writer-wins on conflict and no silent field loss. Judge structurally — every kind present and its load-bearing fields equal.
+  - do: (Roundtrip integrity) In the origin React Desk, create one of each of the 10 primitive kinds, push, pull in the second browser, and open each primitive to compare its fields against the origin.
+    expect: All 10 primitive kinds round-trip byte-faithfully — the values typed in browser one arrive intact in browser two (a note's body, a KB's name, a zone's members, a recipe's system prompt), with last-writer-wins on conflict and no silent field loss. Judge structurally — every kind present and its load-bearing fields equal.
     where: /history
-    surfaces:
-      iphone: yes
-  - do: (Honest-failure close) Edit the SAME primitive on both devices while briefly offline, then let both sync.
+    form_factors: [desktop]
+  - do: (Honest-failure close) Edit the SAME primitive in both desktop React Desks while briefly offline, then let both sync.
     expect: The conflict resolves honestly — last-writer-wins keeps one version and the other is preserved as keep-both, never silently dropped. No primitive vanishes and no half-merged corruption appears; the loser is recoverable, not gone.
     where: /history
-    surfaces:
-      iphone: yes
+    form_factors: [desktop]

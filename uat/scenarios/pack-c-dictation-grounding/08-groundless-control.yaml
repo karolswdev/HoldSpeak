@@ -1,4 +1,6 @@
 id: c-groundless-control
+execution_target: web_react
+form_factors: [desktop]
 title: The groundless world proves the control leg is real
 features:
   - dictation.kb.project_facts

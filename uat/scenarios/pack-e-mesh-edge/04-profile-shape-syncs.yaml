@@ -1,24 +1,21 @@
 id: e-profile-shape-syncs
-title: The mesh profile shape syncs across surfaces (author here, read there)
+execution_target: web_react
+title: The mesh profile shape syncs across desktop React sessions
 features:
   - desk.sync.profile-shape-across-surfaces
   - mesh.profile_node
 recipes:
   - mesh-run-ready
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: yes
+form_factors: [desktop]
 steps:
   - do: Confirm the staged meshNode profile "uat-worker-run" exists on this surface (the staging beat).
     expect: A profile named "uat-worker-run" of the meshNode kind is present, pointed at the uat-worker edge.
     where: /
-  - do: Read the SAME named profile on a second surface (pull the synced shape — /api/sync/pull on device, the profiles view on web).
-    expect: The same named "uat-worker-run" profile shows the same shape (meshNode kind, same edge target) on the second surface. The shape syncs; the same named profile is available everywhere.
+  - do: Read the SAME named profile in a second desktop React Desk authenticated to this hub.
+    expect: The same named "uat-worker-run" profile shows the same shape (meshNode kind, same edge target) in the second browser. The profile shape syncs between the two React sessions.
     where: /
   - do: Inspect the synced profile's stored secrets on the second surface.
     expect: The profile shape synced but any API key field did NOT — the key stays in the surface's own Keychain and is absent from the synced shape. Shape syncs, secret does not.
     where: /
-    surfaces:
-      web: {n/a: "the Keychain-holds-the-key claim is a device-surface property; on web the key never leaves the hub, so there is no cross-surface key-sync to attack here"}
+    form_factors: [desktop]
 teardown: []

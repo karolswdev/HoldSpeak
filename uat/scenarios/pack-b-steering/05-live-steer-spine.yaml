@@ -1,4 +1,5 @@
 id: b-live-steer-spine
+execution_target: web_react
 title: The live steering spine — peek, the consent gate, arm, audit
 features:
   - steering.peek
@@ -7,10 +8,7 @@ features:
   - steering.audit
 recipes:
   - agent-pane-awaiting-input
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the terminal/steering surface has no compact iPhone form (directory: mobile.steering.* is iPad, not iPhone)"}
+form_factors: [desktop]
 steps:
   - do: Open the coder pull-out and peek at the pane that is awaiting input (the staging beat — a real tmux pane was spawned and it printed its prompt).
     expect: The peek shows the pane live with its prompt visible; watching is free — no grant was needed to read it.

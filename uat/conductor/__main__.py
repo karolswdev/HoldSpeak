@@ -13,6 +13,7 @@ import os
 import uvicorn
 
 from .app import create_app
+from .runs import _lan_ip
 
 DEFAULT_PORT = 8799
 DEFAULT_HOST = "127.0.0.1"
@@ -27,7 +28,11 @@ def main() -> None:
 
     app = create_app()
 
-    shown = "localhost" if host in ("127.0.0.1", "localhost") else host
+    shown = (
+        "localhost"
+        if host in ("127.0.0.1", "localhost")
+        else _lan_ip() if host == "0.0.0.0" else host
+    )
     print("=" * 60)
     print("  HoldSpeak UAT Conductor")
     print(f"  Site + API:  http://{shown}:{port}")

@@ -43,9 +43,6 @@ def test_presence_toggle_persists_via_settings(settings_path) -> None:
 
 def test_wizard_presence_step_has_a_real_toggle_not_an_env_var() -> None:
     repo = Path(__file__).resolve().parents[2]
-    page = (repo / "web" / "src" / "pages" / "welcome.astro").read_text()
-    app = (repo / "web" / "src" / "scripts" / "welcome-app.js").read_text()
-    assert 'role="switch"' in page and "togglePresence" in page
-    assert "No environment variable" in page
-    # the toggle persists via the config-backed settings PUT
-    assert 'presence: { enabled: next }' in app
+    page = (repo / "web" / "src" / "pages" / "WelcomePage.tsx").read_text()
+    assert "<Switch" in page and "setPresence" in page
+    assert 'json: { presence: { enabled } }' in page

@@ -1,92 +1,25 @@
-from __future__ import annotations
-
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_runtime_presence_card_is_accessible_and_reduced_motion_safe() -> None:
-    # HS-70-02: the runtime dashboard (and its presence card) moved to /live.
-    page_source = (ROOT / "web/src/pages/live.astro").read_text()
-
-    assert 'class="presence-card"' in page_source
-    assert 'role="status"' in page_source
-    assert 'aria-live="polite"' in page_source
-    assert "@media (prefers-reduced-motion: reduce)" in page_source
-    assert ".presence-ring.is-live { animation: none; }" in page_source
-
-
-def test_dashboard_handles_runtime_activity_messages() -> None:
-    script_source = (ROOT / "web/src/scripts/dashboard-app.js").read_text()
-
-    assert "applyActivity(activity)" in script_source
-    assert 'if (type === "runtime_activity")' in script_source
-    assert "if (data && typeof data === \"object\") this.applyActivity(data)" in script_source
-    assert "activityWindowLabel()" in script_source
+def test_presence_hud_is_accessible_and_uses_the_one_bus() -> None:
+    page = (ROOT / "web/src/pages/PresencePage.tsx").read_text()
+    bus = (ROOT / "web/src/runtime/RuntimeBus.tsx").read_text()
+    css = (ROOT / "web/src/styles/react-app.css").read_text()
+    assert 'role="status"' in page and 'aria-live="polite"' in page
+    assert 'useRuntimeFrame<Activity>("runtime_activity")' in page
+    assert "new WebSocket" not in page
+    assert "new WebSocket" in bus and "15_000" in bus and "reconnecting" in bus
+    assert "prefers-reduced-motion" in css
 
 
-# ── HS-41-03: the /presence HUD page ──────────────────────────────────
-
-
-def test_presence_hud_page_is_standalone_and_token_styled() -> None:
-    page_source = (ROOT / "web/src/pages/presence.astro").read_text()
-    # Standalone HUD: no AppLayout chrome, transparent body, the card.
-    assert "<AppLayout" not in page_source
-    assert "import AppLayout" not in page_source
-    assert "background: transparent" in page_source
-    assert 'id="presence-card"' in page_source
-    assert 'role="status"' in page_source
-    assert 'aria-live="polite"' in page_source
-    assert "@media (prefers-reduced-motion: reduce)" in page_source
-
-
-def test_presence_hud_driver_consumes_runtime_activity() -> None:
-    # Phase 72: the HUD rides the ONE runtime bus (runtime-bus.js owns the
-    # socket, the reconnects, and the /api/state seed) instead of a private
-    # websocket. Pin the subscription + seed, and that no private socket
-    # crept back in.
-    script_source = (ROOT / "web/src/scripts/presence-app.js").read_text()
-    assert 'subscribe("runtime_activity"' in script_source
-    assert "applyActivity(data)" in script_source
-    assert "seedState()" in script_source          # seeds via the bus
-    assert "runtime-bus" in script_source          # the one socket owner
-    assert "new WebSocket" not in script_source    # no private socket
-
-    bus_source = (ROOT / "web/src/scripts/runtime-bus.js").read_text()
-    assert "/ws" in bus_source                     # the live websocket
-    assert "scheduleReconnect" in bus_source       # auto-reconnect
-    assert "/api/state" in bus_source              # the seed
-
-
-def test_presence_route_serves_the_hud() -> None:
+def test_presence_route_serves_the_react_shell() -> None:
     from unittest.mock import MagicMock
-
     from fastapi.testclient import TestClient
-
-    import holdspeak.web.routes.pages as pages
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=MagicMock(),
-            on_stop=MagicMock(),
-            get_state=MagicMock(return_value={}),
-        )
-    )
-    client = TestClient(server.app)
-    resp = client.get("/presence")
-    assert resp.status_code == 200
-
-    # The route is build-agnostic: when the web bundle is built it serves the
-    # Signal presence card; when it isn't (e.g. the Unit Tests CI job, which runs
-    # against source without the gitignored `_built/` bundle) it returns a 200
-    # fallback that still identifies the presence HUD. Assert the right one for
-    # the current state so the test is green in both.
-    built = (
-        pages._HOLDSPEAK_DIR / "static" / "_built" / "presence" / "index.html"
-    ).exists()
-    if built:
-        assert 'id="presence-card"' in resp.text
-    else:
-        assert "HoldSpeak Presence" in resp.text
+    client = TestClient(MeetingWebServer(WebRuntimeCallbacks(on_bookmark=MagicMock(), on_stop=MagicMock(), get_state=MagicMock(return_value={}))).app)
+    response = client.get("/presence")
+    assert response.status_code == 200
+    assert '<div id="root"></div>' in response.text or "npm run build" in response.text

@@ -1,74 +1,61 @@
 # HoldSpeak Web
 
-Astro source for the HoldSpeak web frontend. Builds static HTML/CSS/JS
-into `../holdspeak/static/_built/`. The FastAPI runtime serves that
-directory under the `/_built` URL mount.
+One typed Vite/React 19 application for every HoldSpeak browser surface. It
+builds into `../holdspeak/static/_built/`; FastAPI serves the hashed assets at
+`/_built/` and returns the same `index.html` shell for every product URL.
 
-## Why this exists
+## Requirements and commands
 
-See `pm/roadmap/holdspeak/phase-10-web-design-system/` — phase 10 is
-rebuilding every web route on a real design system (tokens, components,
-identity) instead of the five hand-authored HTML files currently in
-`holdspeak/static/`.
-
-## Requirements
-
-- Node.js ≥ 20 (only at build time; the deployed runtime stays
-  Python/FastAPI).
-- npm (bundled with Node).
-
-## Commands
-
-From this directory (`web/`):
+Node.js 20 or newer is needed only to build and test. The shipped runtime stays
+Python/FastAPI.
 
 ```bash
-npm install           # one-time
-npm run dev           # local Astro dev server with hot reload
-npm run build         # produces ../holdspeak/static/_built/
-npm run preview       # serve the built output for inspection
-npm run shots         # build + screenshot every route → web/.shots/<timestamp>/
+npm install
+npm run dev                # Vite development server
+npm run typecheck          # strict TypeScript
+npm run test:web           # React/Vitest suite
+npm run guard:architecture # no framework or selector-bootstrap residue
+npm run build              # production output in holdspeak/static/_built/
+npm run check              # all of the above in phase-gate order
 ```
 
-### Screenshots (`npm run shots`)
+Vite's development server is useful for component work. End-to-end API and
+deep-link work should run against the FastAPI application after `npm run build`,
+because FastAPI owns authentication and the production `/api/*` and `/ws`
+contracts.
 
-`npm run shots` builds the site, serves it with `astro preview`, drives a
-headless browser (Puppeteer) over every route plus the Settings drawer and a
-mobile width, writes PNGs to a timestamped folder under `web/.shots/`, then
-shuts the server down — one command, no manual browser needed. Output is
-gitignored; open the printed folder to review. Add a route by editing the
-`ROUTES` table in `scripts/shoot.mjs`. The same harness runs on web-touching
-PRs (`.github/workflows/screenshots.yml`) and uploads the PNGs as an artifact.
+## Architecture
 
-After `npm run build`, the HoldSpeak runtime serves the built design-check
-page at:
+- `src/main.tsx` is the only browser entry.
+- `src/routes.tsx` is the canonical client route inventory. Heavy routes are
+  lazy-loaded.
+- `src/components/AppShell.tsx` owns navigation and ambient trust/connection
+  state. The Desk and Presence use deliberate immersive shell modes.
+- `src/components/signal/` owns accessible controls and interaction styling.
+- `src/lib/api.ts` is the only direct `fetch` call site. `src/lib/auth.ts`
+  captures a tokenized arrival for the tab, scrubs it from the URL, and attaches
+  it to same-hub API and WebSocket traffic.
+- `src/runtime/RuntimeBus.tsx` owns the single `/ws` lifecycle.
+- `src/pages/` contains route compositions; shared or complex behavior belongs
+  in typed feature modules and hooks.
+- `src/desk/` remains the Zustand-backed spatial Desk inside the same tree.
+- `styles/tokens.css` is the Signal source of truth. `styles/global.css` owns
+  reset/type/shared state, while `styles/react-app.css` and feature CSS own
+  composition. There is no CSS-in-JS design-system fork.
 
-```
-http://127.0.0.1:<runtime-port>/_built/design/check/
-```
+The machine-readable URL/verb/state inventory is
+[`docs/WEB_REACT_PARITY_LEDGER.json`](../docs/WEB_REACT_PARITY_LEDGER.json).
 
-## Output contract
+## Output and security contract
 
-- Output goes into `../holdspeak/static/_built/` only. The five legacy
-  HTML files at `../holdspeak/static/*.html` are off-limits to this
-  pipeline until each route's rebuild story (HS-10-06 through HS-10-09)
-  intentionally migrates it.
-- Asset URLs are prefixed with `/_built` (Astro `base`) so they resolve
-  through the FastAPI mount.
-- This pipeline must not introduce any new runtime Python dependency.
-  Node is build-time only.
-
-## Source layout
-
-```
-web/
-├── astro.config.mjs       # outDir = ../holdspeak/static/_built, base = /_built
-├── package.json
-├── src/
-│   ├── pages/             # one .astro per route (Astro file-based routing)
-│   │   └── design/check.astro    # HS-10-01 smoke page
-│   ├── components/        # populated by HS-10-03
-│   ├── layouts/           # populated by HS-10-04
-│   └── styles/
-│       └── global.css     # placeholder; real tokens land in HS-10-02
-└── README.md
-```
+- `vite.config.ts` must keep `base: "/_built/"` and build only into
+  `../holdspeak/static/_built/`.
+- Browser routes and API payloads remain stable; React Router does not redefine
+  backend contracts.
+- API keys never enter browser storage or response bodies. Runtime profiles
+  carry only shape and `requires_key`; the key remains an environment variable
+  on the hub.
+- `localStorage` is only for explicitly device-local preferences such as Desk
+  positions, Workbench layout, chat threads, and project-root history.
+- New browser network calls go through the typed API client. New live consumers
+  subscribe to `RuntimeBus`; they do not open another `/ws`.

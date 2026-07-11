@@ -1,0 +1,25 @@
+title: "3 · Meetings, intelligence, and aftercare"
+purpose: >
+  Walk transcript and audio import, live capture, typed intelligence, multi-intent
+  routing, the next-move digest, moment jumps, archive facets, and local export.
+  Deterministic transcript fixtures establish content; real model runs are kept
+  only where generated intelligence is the behavior under test.
+sequence: 3
+tier: core
+estimated_minutes: 90
+prerequisites:
+  - The .43 endpoint reachable for meeting-intelligence treatment beats.
+  - A local Whisper model and the committed Pylon audio fixture for audio import.
+  - Microphone plus system-audio routing for the live-capture scenario.
+exit_gate:
+  - A meeting can enter the system, become reviewable intelligence, and leave as useful follow-up without losing source provenance.
+  - Fabricated artifacts, stuck processing, missing owners, or an unusable review flow stops the campaign for triage.
+scenarios:
+  - pack-a-aftercare/a-import-to-artifacts
+  - pack-a-aftercare/a-recording-and-transcript-pipeline
+  - pack-a-aftercare/a-import-audio-recording
+  - pack-a-aftercare/a-capture-live-meeting
+  - pack-a-aftercare/a-digest-and-moment
+  - pack-a-aftercare/a-multi-intent-routing
+  - pack-a-aftercare/a-archive-facets
+  - pack-a-aftercare/a-followup-draft-export

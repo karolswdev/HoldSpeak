@@ -1,13 +1,11 @@
 id: c-moment-of-truth
+execution_target: web_react
 title: The moment of truth — 'Was that right?' → Fix it → Taught, inline
 features:
   - dictation.moment_of_truth.correct_inline
 recipes:
   - seeded-desk-43
-surfaces:
-  web: yes
-  ipad: {n/a: "directory row: dictation.moment_of_truth.correct_inline ipad=unknown — ArtifactCorrectionTests exist but the dictation moment-of-truth on device is unconfirmed in the record; a genuine record gap"}
-  iphone: {n/a: "directory row: dictation.moment_of_truth.correct_inline iphone=unknown — no on-device moment-of-truth claim in the record"}
+form_factors: [desktop]
 steps:
   # Staging-verify beat: start from a KNOWN-empty correction memory so the teach is attributable.
   - do: Open the dictation surface on the seeded .43 desk and read the correction memory count. The seeded world has taught nothing.

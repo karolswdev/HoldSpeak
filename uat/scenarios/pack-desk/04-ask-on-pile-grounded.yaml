@@ -1,4 +1,5 @@
 id: desk-ask-on-pile-grounded
+execution_target: web_react
 title: Ask AI on a lassoed pile — control (groundless) vs treatment (grounded)
 # The pack's control-vs-treatment spine. The ONLY scenario that invokes Ask AI,
 # so it is the ONLY one citing desk.ask-ai.grounded-on-pile (the smoke-01
@@ -11,10 +12,7 @@ features:
   - desk.diorama.lasso_bundle_file
 recipes:
   - desk-primitives-43
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "Ask-on-pile on iPhone is unconfirmed in the record (desk.ask-ai.grounded-on-pile ph=?)"}
+form_factors: [desktop]
 steps:
   - do: "CONTROL. With grounding OFF (no pile fed to the model), ask: “What is BLUEBIRD and who owns the backfill?” Judge this beat alone."
     expect: The control cannot answer — it says it does not have that context, or guesses generically, and does NOT correctly name BLUEBIRD as the ledgerline streaming rewrite or Priya as the owner. A no-answer here is the point; do not read the treatment yet.

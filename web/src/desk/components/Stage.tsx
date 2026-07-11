@@ -11,13 +11,16 @@ export function Stage() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     let w = 0;
     let h = 0;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const N = 18;
     const motes = Array.from({ length: N }, () => ({
-      x: Math.random(), y: Math.random(),
+      x: Math.random(),
+      y: Math.random(),
       r: 0.6 + Math.random() * 1.6,
       s: 0.006 + Math.random() * 0.014,
       a: 0.06 + Math.random() * 0.12,

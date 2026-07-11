@@ -1,16 +1,11 @@
 id: b-factory-kill
+execution_target: web_react
 title: Kill a session from the desk — the two-step confirm is the gate
 features:
   - factory.kill
 recipes:
   - agent-pane-armed
-# factory.kill is web:yes (two-step-confirm Kill in the armed session row) and
-# ipad:yes (DeskSteer kill, HSM P27 sim-proven). iPhone genuinely unknown in the
-# directory row. The armed pane gives a live session that CAN be killed.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the Kill control at iPhone compact width is unknown in the directory record (factory.kill row: iphone unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Open the coder pull-out and confirm the staged pane is live

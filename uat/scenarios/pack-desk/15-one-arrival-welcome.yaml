@@ -1,4 +1,5 @@
 id: desk-one-arrival-welcome
+execution_target: web_react
 title: One first-run arrival — /welcome, and only on a first run
 # The first-run guard, both ways. A no-model first run (caches unlinked) must
 # route to /welcome. The honest close: once past first run (a seeded/ready
@@ -8,26 +9,28 @@ features:
   - desk.web.one_arrival
 recipes:
   - first-run-no-model
-  - seeded-desk
-surfaces:
-  web: yes
-  ipad: {n/a: "the iPad has its own connect/first-run flow, not the web /welcome arrival (desk.web.one_arrival ipad=unknown in the directory record)"}
-  iphone: {n/a: "the iPhone has its own connect/first-run flow, not the web /welcome arrival (desk.web.one_arrival iphone=unknown in the directory record)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Boot a genuine first run (no model, caches unlinked) and
       open the app root.
     expect: >
       The first-run guard routes you to /welcome — the single first-run arrival —
-      and the setup readiness honestly reports "not ready yet", not a faked green.
+      not the returning-user /setup diagnostics. Basic voice typing remains an
+      honest working path even when optional LLM intelligence is not configured.
     where: /
   - do: >
-      Walk the /welcome arrival to its end (or confirm it lets you proceed once
-      set up).
+      Walk the /welcome arrival. At the intelligence step, select
+      OpenAI-compatible and inspect how its endpoint is chosen.
     expect: >
-      /welcome is a single guided arrival, not a wall — it hands you onward to the
-      desk when you finish, and reports its readiness honestly along the way.
+      The journey asks the endpoint for its real model list, offers common but
+      freely editable context sizes, and does not test a hidden localhost
+      default. Apple Silicon and GGUF choices discover local models and reveal
+      raw paths or install commands only as secondary detail. The journey remains
+      skippable and hands you onward to the desk when you finish.
     where: /welcome
+    after:
+      - apply_recipe: seeded-desk
   - do: >
       Honest close. Now open a seeded/ready desk (past first run) at the root
       route and confirm the guard does not force you back to /welcome.

@@ -1,4 +1,5 @@
 id: desk-coders-on-the-desk
+execution_target: web_react
 title: Live coding agents appear on the desk and demand you when blocked
 # Staging-verify beat opens (a real tmux coder pane spawned via the factory
 # route, printing a prompt and waiting). The coder must render as a desk object
@@ -9,10 +10,7 @@ features:
   - desk.coders.agents-on-the-desk
 recipes:
   - agent-pane-awaiting-input
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the coder-on-the-desk object at iPhone compact width is unverified in the directory record (desk.coders.agents-on-the-desk iphone=unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. A real coder pane was spawned and is waiting on a prompt.

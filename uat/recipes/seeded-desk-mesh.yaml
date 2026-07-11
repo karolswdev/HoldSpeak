@@ -1,0 +1,14 @@
+title: A primitive-rich desk plus a live mesh worker
+description: >
+  Composite world for native relay/workbench legs. Dogfood desk primitives and
+  the uat-worker are staged together on the mesh-enabled .43 deck, rather than
+  applying two recipes whose second deck silently invalidates the first.
+deck: mesh-node
+requires: [intel]
+includes:
+  - seeded-desk-43
+  - mesh-node-alive
+probe:
+  - note_exists: uat-seed-note-glossary
+  - kb_exists: uat-seed-kb-project
+  - mesh_node_live: {name: uat-worker, timeout: 40}

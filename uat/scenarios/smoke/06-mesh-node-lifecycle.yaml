@@ -1,4 +1,5 @@
 id: smoke-mesh-node-lifecycle
+execution_target: web_react
 title: A mesh node, alive then gone
 features:
   - mesh.serve_node
@@ -6,10 +7,7 @@ features:
   - mesh.profile_node
 recipes:
   - mesh-node-alive
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the mesh profile/liveness surface on iPhone is unverified in the record"}
+form_factors: [desktop]
 steps:
   - do: Open the profiles view and find the mesh worker.
     expect: The "uat-worker" node reads live — the hub has seen it poll recently.

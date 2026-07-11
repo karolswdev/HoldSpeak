@@ -112,29 +112,14 @@ def test_digest_reports_corrections_enabled_posture(persistent_db: Database, set
 # ── page content ──────────────────────────────────────────────────────────
 
 def test_dictation_page_includes_learning_digest(bare_client: TestClient) -> None:
-    body = bare_client.get("/dictation").text
-    assert 'id="learn-digest"' in body
-    assert 'id="learn-window-week"' in body
-    assert 'id="learn-window-all"' in body
-    assert "What HoldSpeak learned" in body
+    assert '<div id="root"></div>' in bare_client.get("/dictation").text
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    assert "Learning digest" in source
+    assert "/api/dictation/learning-digest" in source
 
 
 def test_learning_digest_styles_are_global(bare_client: TestClient) -> None:
-    """The digest DOM is JS-injected, so its CSS must be global (is:global),
-    never Astro-scoped — the runtime cards carry no data-astro-cid attr."""
-    built = (
-        Path(__file__).resolve().parents[2]
-        / "holdspeak" / "static" / "_built" / "dictation" / "index.html"
-    )
-    if not built.exists():
-        pytest.skip("web bundle not built")
-    css = list(built.parent.parent.glob("_astro/dictation*.css"))
-    joined = "\n".join(p.read_text() for p in css)
-    assert "learn-digest" in joined
-    assert ".learn-stat{" in joined.replace(" ", ""), (
-        "learning-digest styles must be global (is:global) — scoped CSS does not "
-        "apply to the JS-injected digest"
-    )
-    assert "learn-stat[data-astro-cid" not in joined, (
-        "learn-stat is scoped — move it into <style is:global>"
-    )
+    """The digest is React-owned and composes the shared status primitives."""
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    assert "Learning digest" in source and "StatusPill" in source
+    assert "dangerouslySetInnerHTML" not in source

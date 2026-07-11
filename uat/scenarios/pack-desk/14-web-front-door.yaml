@@ -1,4 +1,5 @@
 id: desk-web-front-door
+execution_target: web_react
 title: The Desk is the front door — a fresh arrival lands in the world
 # Two worlds, one door. A fresh desk proves the empty front door; the seeded
 # desk proves the door filled with objects. Route / IS the Desk (no separate
@@ -7,22 +8,20 @@ title: The Desk is the front door — a fresh arrival lands in the world
 features:
   - desk.web.front_door
 recipes:
-  - fresh-desk
   - seeded-desk
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the iPhone diorama front-door layout is not separately proven in the directory record (desk.web.front_door iphone=unknown)"}
+manual_setup:
+  - Navigate directly to /dictation and complete one successful dictation so this isolated run is genuinely past first-run; record a failure if the welcome loop prevents that transition.
+form_factors: [desktop]
 steps:
   - do: >
-      Staging-verify (empty world). Open the app at its root route with a fresh
-      desk. Where do you land?
+      Staging-verify. After completing the first-dictation precondition, open the
+      seeded app at its root route. Where do you land?
     expect: >
       You land directly on the Desk at / — it IS the front door. There is no
-      intermediate dashboard or menu page; an empty desk world renders, ready.
+      intermediate dashboard or recurring welcome gate; the seeded world renders.
     where: /
   - do: >
-      Now open the seeded desk (the primitive-rich world) at the same root route.
+      Read the seeded desk (the primitive-rich world) at the same root route.
     expect: >
       The same / route now shows the seeded objects living in the one spatial
       world — the door did not change, only its contents.

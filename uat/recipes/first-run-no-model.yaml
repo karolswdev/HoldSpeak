@@ -1,11 +1,11 @@
-title: First run, no model — the truth at N=0
+title: First run, no optional LLM — streamlined arrival at N=0
 description: >
-  Boot no-model with the model caches UNLINKED (a genuine first run), so the
-  setup readiness surface honestly reports "not ready yet" — the first-run
-  truth, never faked green.
+  Boot no-model with the model caches UNLINKED and no completed first-dictation
+  milestone. Basic voice typing may honestly be ready; first-run state is what
+  sends the user to the streamlined /welcome journey.
 deck: no-model
 requires: []
 boot:
   link_caches: false
 probe:
-  - setup_not_ready: true
+  - first_run_pending: true

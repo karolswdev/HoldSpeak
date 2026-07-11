@@ -1,0 +1,18 @@
+title: Cloud egress selected — named endpoint, execution still closed
+description: >
+  The explicit cloud-treatment posture for UAT. Meeting intelligence is aimed
+  at a real, named OpenAI-compatible endpoint, but no model call is made while
+  staging this deck. The actuator master switch stays closed, and the recipe
+  creates only an unapproved proposal, so applying this deck cannot egress.
+requires: []
+config:
+  config_version: 1
+  model:
+    name: base
+    warm_on_start: false
+  meeting:
+    intel_enabled: true
+    intel_provider: cloud
+    intel_cloud_base_url: https://api.openai.com/v1
+    intel_cloud_model: uat-never-invoked
+    allow_actuators: false

@@ -1,11 +1,8 @@
 """HS-48-03: the one-tap right/wrong correction ritual.
 
-The ritual is a single inline component (`correctionRitual` / `wireFixit`) reused
-by the dry-run result and every journal entry. "Right" is a calm client-only
-acknowledgement; "Wrong" opens the existing correct path pre-scoped (block /
-target in one tap) and reuses `POST /api/dictation/journal/{id}/correct` — no new
-write primitive. These assertions read the built bundle + CSS (the ritual DOM is
-JS-injected) and exercise the backend correct path the ritual posts to.
+The React ritual keeps "Right" client-only and lets "Wrong" disclose the
+existing teach path. These assertions pin the typed source contract and
+exercise the backend write it uses.
 """
 from __future__ import annotations
 
@@ -22,21 +19,11 @@ from holdspeak.config import Config
 from holdspeak.db import Database, reset_database
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-_BUILT = Path(__file__).resolve().parents[2] / "holdspeak" / "static" / "_built" / "_astro"
+_SOURCE = Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx"
 
 
 def _dictation_script() -> str:
-    files = list(_BUILT.glob("dictation.astro_astro_type_script*.js"))
-    if not files:
-        pytest.skip("web bundle not built")
-    return "\n".join(p.read_text() for p in files)
-
-
-def _dictation_css() -> str:
-    files = list(_BUILT.glob("dictation*.css"))
-    if not files:
-        pytest.skip("web bundle not built")
-    return "\n".join(p.read_text() for p in files)
+    return _SOURCE.read_text()
 
 
 @pytest.fixture
@@ -71,22 +58,15 @@ def _client(database: Database) -> TestClient:
 
 def test_ritual_component_is_shipped() -> None:
     js = _dictation_script()
-    assert "correctionRitual" in js
-    assert "wireFixit" in js
-    # right (no write) + wrong (opens the pre-scoped fix), and the scope picker.
-    for marker in ("data-fixit-yes", "data-fixit-no", 'data-fixit-scope="intent"', "data-fixit-kind-label"):
+    for marker in ("Right", "Wrong", "Correct this result", "Teach correction"):
         assert marker in js, marker
-    # it reuses the existing correct endpoint — no new write primitive.
-    assert "/correct" in js
-    assert "submitMomentFix" in js  # the existing seam, extended not duplicated
+    assert "/api/dictation/journal/" in js and "/correct" in js
 
 
-def test_ritual_is_wired_into_dry_run_and_journal() -> None:
+def test_ritual_is_wired_into_dry_run_result() -> None:
     js = _dictation_script()
-    # dry-run host wires the ritual it renders…
-    assert "wireFixit(host)" in js
-    # …and the journal list wires the ritual on each entry.
-    assert "wireFixit(list)" in js
+    assert 'setVerdict("right")' in js and 'setVerdict("wrong")' in js
+    assert "journal_id" in js
 
 
 def test_ritual_is_focus_safe() -> None:
@@ -94,19 +74,19 @@ def test_ritual_is_focus_safe() -> None:
     assert ".focus()" not in _dictation_script()
 
 
-def test_ritual_css_is_global() -> None:
-    css = _dictation_css()
-    assert ".fixit-scope{" in css.replace(" ", ""), (
-        "ritual styles must be global (is:global) — the ritual DOM is JS-injected"
-    )
-    assert "fixit-scope[data-astro-cid" not in css, "fixit-scope is scoped — move it into <style is:global>"
+def test_ritual_uses_shared_react_controls() -> None:
+    source = _dictation_script()
+    assert "<Button" in source and "<Disclosure" in source
+    assert "dangerouslySetInnerHTML" not in source
 
 
 def test_dry_run_moment_host_present(persistent_db: Database, settings_path: Path) -> None:
     Config().save(path=settings_path)
-    body = _client(persistent_db).get("/dictation").text
-    assert 'id="dry-moment"' in body
-    assert "autofocus" not in body.lower()
+    response = _client(persistent_db).get("/dictation")
+    assert '<div id="root"></div>' in response.text
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    assert "Pipeline result" in source and "/api/dictation/dry-run" in source
+    assert "autofocus" not in source.lower()
 
 
 # ── the path the ritual posts to still teaches (one decision, real write) ────

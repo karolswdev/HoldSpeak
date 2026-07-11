@@ -1,5 +1,9 @@
 # HSU-2-01 — The UAT charter
 
+> **Historical charter story:** The current charter is `uat/CHARTER.md` protocol
+> v2. Its target × form-factor model supersedes the three-surface parity frame
+> described in this planning story while preserving this file as decision history.
+
 - **Project:** holdspeak-uat
 - **Phase:** 2
 - **Status:** backlog

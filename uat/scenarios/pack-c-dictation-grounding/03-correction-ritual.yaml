@@ -1,14 +1,12 @@
 id: c-correction-ritual
+execution_target: web_react
 title: The correction ritual — before/after is the control, the count is pinned
 features:
   - dictation.correction.one-tap-teaches
   - dictation.correction.session_memory
 recipes:
   - seeded-desk-43
-surfaces:
-  web: yes
-  ipad: {n/a: "directory row: dictation.correction.session_memory ipad=unknown — LearningClient/contracts exist but the Memory UI + correction-tap authoring on device is unconfirmed. Genuine record gap, not a punt."}
-  iphone: {n/a: "directory row: dictation.correction.* iphone=unknown — no device claim in the record"}
+form_factors: [desktop]
 steps:
   # Staging-verify beat: start from a KNOWN correction count so N is checkable.
   - do: Open the correction memory on the seeded desk and read the starting count. The seeded world has taught zero corrections, so the memory is empty.

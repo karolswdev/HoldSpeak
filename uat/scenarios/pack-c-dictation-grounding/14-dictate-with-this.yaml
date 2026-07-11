@@ -1,4 +1,5 @@
 id: c-dictate-with-this
+execution_target: web_react
 title: "'Dictate with this' — a picked activity record grounds the next dictation"
 features:
   - activity.prebriefing.dictate_with_this
@@ -12,10 +13,7 @@ manual_setup:
   - The seeded-desk-43 recipe has staged the live .43 dictation runtime; confirm it reads reachable.
   - Populate the activity ledger with at least one record that carries a distinctive token the base model cannot know, e.g. visit a page or file referencing "PYLON-CANARY-7" so it appears as a recent-activity candidate.
   - Open the activity pre-briefing surface and confirm that record is offered as a nudge/candidate.
-surfaces:
-  web: yes
-  ipad: {n/a: "directory row: activity.prebriefing.dictate_with_this ipad=unknown — the one-shot 'Dictate with this' pin on device is unverified in the record"}
-  iphone: {n/a: "directory row: activity.prebriefing.dictate_with_this iphone=unknown — no on-device 'Dictate with this' claim in the record"}
+form_factors: [desktop]
 steps:
   # Staging-verify beat: the activity record is genuinely present and offered.
   - do: Open the activity pre-briefing surface and confirm the hand-staged record carrying PYLON-CANARY-7 is offered as a candidate, and the runtime reads reachable.

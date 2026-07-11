@@ -1,13 +1,11 @@
 id: d-dead-endpoint-doctor
+execution_target: web_react
 title: A dead intel endpoint, named honestly
 features:
   - desk.doctor.honest-readout
 recipes:
   - intel-endpoint-dead
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the doctor/setup readout on iPhone is unverified in the record"}
+form_factors: [desktop]
 steps:
   - do: Open the setup readiness screen (the staging beat — confirm the world is as described).
     expect: The runtime reads unreachable and the dead endpoint is named; the screen is honest, not a spinner or a false green.

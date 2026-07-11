@@ -1,0 +1,22 @@
+title: "7 · Secondary native shells (conditional)"
+purpose: >
+  Quarantine the companion-only and classic/demo-only surfaces so they can be
+  tested honestly when those exact builds are installed, without treating them
+  as proof of the flagship app.
+sequence: 7
+tier: conditional
+estimated_minutes: 70
+prerequisites:
+  - Install the separately built CompanionShell and classic/demo MeetingCapture roots.
+  - If those roots share a bundle identifier, test and record them one at a time; never let installing one silently replace the build named by an active verdict.
+  - Start a LAN Device sitting and record each bundle identifier/build before its first verdict.
+  - Skip this campaign when those builds are not intentionally in scope; it does not block the flagship pass.
+exit_gate:
+  - Every result is ios_companion_swift or ios_classic_swift; no result is credited to the flagship target.
+scenarios:
+  - pack-f-mobile/f-holdbar-teleprompter
+  - pack-f-mobile/f-macros-fire
+  - pack-f-mobile/f-prebriefing-nudge
+  - pack-f-mobile/f-aftercare-file-issue
+  - pack-f-mobile/f-proposals-review
+  - pack-f-mobile/f-workbench-graph-author

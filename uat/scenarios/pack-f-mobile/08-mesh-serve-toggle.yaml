@@ -1,4 +1,5 @@
 id: f-mesh-serve-toggle
+execution_target: ios_flagship_swift
 title: Flip one toggle to serve the mesh from the phone — default OFF, consent-gated
 # HSM-25-02: meshServeOn (default FALSE) makes the phone a live mesh edge that
 # serves inference to the desk; the Settings card subline shows serving state, and
@@ -13,10 +14,7 @@ recipes:
 manual_setup:
   - Use a device with the on-device engine (TestFlight build 2+) paired to the hub for the serving leg.
   - Have a hub reachable so the toggle is armable; separately be able to unpair / point at no hub for the disabled-toggle control.
-surfaces:
-  web: {n/a: "directory row mobile.mesh.serve.consent_toggle web=no — serving is a device-edge capability; the web/hub is the consumer/orchestrator, not a served edge"}
-  ipad: yes
-  iphone: yes
+form_factors: [ipad, iphone]
 steps:
   - do: >
       Staging-verify. Open Settings and confirm the serve toggle exists and reads
@@ -24,13 +22,11 @@ steps:
     expect: >
       The mesh serve toggle is present and default OFF — no node serves implicitly.
       The card subline reads not-serving.
-    where: /
   - do: >
       Control (default OFF / unarmable). With no hub paired, observe the toggle.
     expect: >
       The toggle is disabled when unarmable (e.g. no hub paired) — it cannot be
       turned on to serve into nothing, and nothing serves implicitly. Off means off.
-    where: /
   - do: >
       Treatment. Pair the hub, flip the serve toggle ON, and read the hub doctor /
       the card subline.
@@ -38,12 +34,10 @@ steps:
       The hub doctor reads the device as a live mesh edge and the card subline
       reads "serving as iPad · N runs" — the phone is now a served edge. The single
       consented toggle is what changed it; before the flip nothing served.
-    where: /
   - do: >
       Consent-off close. Flip the serve toggle back OFF (or leave the app / kill it).
     expect: >
       Serving stops — the hub no longer reads the device as live once the toggle is
       off (polling is liveness). Toggle-off, backgrounding, and app-death all stop
       serving; consent is revocable and honest.
-    where: /
 teardown: []

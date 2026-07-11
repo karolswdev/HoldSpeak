@@ -1,0 +1,35 @@
+title: "2 · Voice and dictation loop"
+purpose: >
+  Exercise the daily voice loop end to end: hold-to-talk, routing, preview,
+  correction and learning, language and symbols, wake word, activity context,
+  voice commands, browser inputs, first successful arrival, and presence HUD.
+sequence: 2
+tier: core
+estimated_minutes: 105
+prerequisites:
+  - A working microphone and browser microphone permission.
+  - A local Whisper model installed and a foreign app with an empty text field.
+  - The .43 OpenAI-compatible endpoint reachable for model-assisted treatment beats.
+  - A quiet room for wake-word checks.
+exit_gate:
+  - Spoken text can be previewed, committed, corrected, and found again without losing the user's intent.
+  - Repeated dictation, unwanted typing, unclear routing, or a broken correction loop stops the campaign for triage.
+scenarios:
+  - pack-c-dictation-grounding/c-hold-to-talk
+  - pack-desk/desk-web-front-door
+  - pack-c-dictation-grounding/c-grounded-rewrite
+  - pack-c-dictation-grounding/c-endpoint-dies-mid-pack
+  - pack-c-dictation-grounding/c-preview-before-type
+  - pack-c-dictation-grounding/c-correction-ritual
+  - pack-c-dictation-grounding/c-moment-of-truth
+  - pack-c-dictation-grounding/c-journal-review
+  - pack-c-dictation-grounding/c-honest-count
+  - pack-c-dictation-grounding/c-spoken-symbols
+  - pack-c-dictation-grounding/c-spoken-language
+  - pack-c-dictation-grounding/c-wake-word-arm
+  - pack-c-dictation-grounding/c-wake-preview
+  - pack-c-dictation-grounding/c-dictate-with-this
+  - pack-c-dictation-grounding/c-byo-backends
+  - pack-b-steering/b-fire-while-dictating
+  - pack-desk/desk-transcribe-everywhere
+  - pack-desk/desk-desktop-presence-hud

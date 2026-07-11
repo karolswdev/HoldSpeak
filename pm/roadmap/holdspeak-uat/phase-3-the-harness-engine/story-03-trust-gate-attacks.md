@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak-uat
 - **Phase:** 3
-- **Status:** backlog
+- **Status:** blocked
 - **Depends on:** none
 - **Owner:** unassigned
 
@@ -51,6 +51,12 @@ staged do-then-attack beat backed by a probe.
 - Manual/device: n/a.
 
 ## Notes / open questions
+
+- **Owner decision, 2026-07-09:** do not schedule or implement this story for
+  the early MVP. Database drift/schema attacks, idle network observation, and
+  token-gate hardening are explicitly below usability and functional progress.
+  It remains blocked as historical context and requires a fresh owner decision
+  before any work resumes.
 
 - Read `web_auth.py` (`nonloopback_bind_blocked`, `verify_web_token`) and the
   schema-policy / backup-restore seams (`release.schema.safe_upgrade`) — mirror

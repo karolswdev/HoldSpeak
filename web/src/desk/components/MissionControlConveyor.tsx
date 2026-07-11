@@ -33,12 +33,18 @@ interface PickTarget {
   story: string;
 }
 
-function SessionPin({ session, manual }: { session: McSession; manual?: boolean }) {
+function SessionPin({
+  session,
+  manual,
+}: {
+  session: McSession;
+  manual?: boolean;
+}) {
   const armedUntil = useSteering((s) => s.armedKeys[session.key]);
   const armed = Boolean(armedUntil && armedUntil > Date.now());
   return (
-    <span
-      role="button"
+    <button
+      type="button"
       className={
         "desk-mc-pin" +
         (session.awaitingResponse ? " awaiting" : "") +
@@ -61,7 +67,7 @@ function SessionPin({ session, manual }: { session: McSession; manual?: boolean 
     >
       {session.awaitingResponse ? "🙋" : "🤖"}
       {session.agent}
-    </span>
+    </button>
   );
 }
 
@@ -111,26 +117,37 @@ function PhaseBelt({
         {beltStories.map((s) => (
           <span
             key={s.storyId}
-            role="button"
             className={
               "desk-mc-story st-" +
               s.status.replace(/[^a-z-]/g, "") +
               (s.storyId === project.nextStoryId ? " next" : "") +
               (picked && picked.story === s.storyId ? " picked" : "")
             }
-            title={`${s.title} [${s.status}]` + (s.evidenceExists ? " ·evidence" : "")}
-            onClick={() =>
-              onPick(
-                picked && picked.story === s.storyId
-                  ? null
-                  : { repo: repoName, project: project.slug, story: s.storyId },
-              )
-            }
           >
-            {s.storyId}
+            <button
+              type="button"
+              className="desk-mc-story-pick"
+              title={
+                `${s.title} [${s.status}]` +
+                (s.evidenceExists ? " ·evidence" : "")
+              }
+              onClick={() =>
+                onPick(
+                  picked && picked.story === s.storyId
+                    ? null
+                    : {
+                        repo: repoName,
+                        project: project.slug,
+                        story: s.storyId,
+                      },
+                )
+              }
+            >
+              {s.storyId}
+            </button>
             {s.evidenceExists && (
-              <span
-                role="button"
+              <button
+                type="button"
                 className="desk-mc-evidence-open"
                 title="open the evidence in place"
                 onClick={(ev) => {
@@ -141,7 +158,7 @@ function PhaseBelt({
                 }}
               >
                 ✓
-              </span>
+              </button>
             )}
             {(pins[s.storyId] || []).map((sess) => (
               <SessionPin key={sess.key} session={sess} />
@@ -219,9 +236,7 @@ function RepoBlock({
     return (
       <div className="desk-mc-honest">
         <span className="desk-mc-slug">{repo.name}</span>
-        <span className={"desk-mc-state " + repo.status}>
-          ✕ {repo.status}
-        </span>
+        <span className={"desk-mc-state " + repo.status}>✕ {repo.status}</span>
         {repo.detail && <span className="desk-mc-detail">{repo.detail}</span>}
       </div>
     );
@@ -257,7 +272,9 @@ function EvidencePanel() {
     return (
       <div className="desk-mc-evidence">
         <span className="desk-mc-refusal">✕ {evidenceDetail}</span>
-        <button className="desk-mc-btn" onClick={closeEvidence}>close</button>
+        <button className="desk-mc-btn" onClick={closeEvidence}>
+          close
+        </button>
       </div>
     );
   }
@@ -266,7 +283,9 @@ function EvidencePanel() {
     <div className="desk-mc-evidence">
       <div className="desk-mc-evidence-head">
         <span className="desk-mc-evidence-path">{evidence.path}</span>
-        <button className="desk-mc-btn" onClick={closeEvidence}>close</button>
+        <button className="desk-mc-btn" onClick={closeEvidence}>
+          close
+        </button>
       </div>
       <pre className="desk-mc-evidence-body">{evidence.text}</pre>
     </div>
@@ -281,7 +300,9 @@ function ProposalCard() {
     return (
       <div className="desk-mc-proposal failed">
         <span className="desk-mc-refusal">✕ {proposalError}</span>
-        <button className="desk-mc-btn" onClick={dismissProposal}>dismiss</button>
+        <button className="desk-mc-btn" onClick={dismissProposal}>
+          dismiss
+        </button>
       </div>
     );
   }
@@ -290,7 +311,10 @@ function ProposalCard() {
     return (
       <div className="desk-mc-proposal">
         <span className="desk-mc-preview">{proposal.preview}</span>
-        <button className="desk-mc-btn approve" onClick={() => void decide("approved")}>
+        <button
+          className="desk-mc-btn approve"
+          onClick={() => void decide("approved")}
+        >
           Approve
         </button>
         <button className="desk-mc-btn" onClick={() => void decide("rejected")}>
@@ -305,7 +329,9 @@ function ProposalCard() {
         <span className="desk-mc-refusal">
           ✕ the rails refused: {proposal.error}
         </span>
-        <button className="desk-mc-btn" onClick={dismissProposal}>dismiss</button>
+        <button className="desk-mc-btn" onClick={dismissProposal}>
+          dismiss
+        </button>
       </div>
     );
   }
@@ -314,7 +340,9 @@ function ProposalCard() {
       <span className="desk-mc-executed">
         {proposal.status === "executed" ? "✓ executed" : proposal.status}
       </span>
-      <button className="desk-mc-btn" onClick={dismissProposal}>dismiss</button>
+      <button className="desk-mc-btn" onClick={dismissProposal}>
+        dismiss
+      </button>
     </div>
   );
 }
@@ -431,7 +459,9 @@ export function MissionControlConveyor() {
           {offBelt.map((s) => (
             <span key={s.key} className="desk-mc-offbelt" title={s.key}>
               <SessionPin session={s} />
-              <span className="desk-mc-bucket">{s.correlation.replace(/_/g, " ")}</span>
+              <span className="desk-mc-bucket">
+                {s.correlation.replace(/_/g, " ")}
+              </span>
             </span>
           ))}
         </div>

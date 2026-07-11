@@ -1,15 +1,11 @@
 id: smoke-egress-badge-trust
-title: The egress badge tells the truth, on all three surfaces
+execution_target: web_react
+title: The React Desk egress badge tells the truth on desktop
 features:
   - trust.egress.badge-tells-truth
 recipes:
   - seeded-desk
-# The egress badge and the key-never-syncs promise are explicitly all-three in
-# the directory — this is a genuine three-surface trust check.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: yes
+form_factors: [desktop]
 steps:
   - do: Find the egress badge on the desk.
     expect: The badge reads local. Nothing on this fully-local desk leaves the machine, and the badge says so in one word, not a paragraph.

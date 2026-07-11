@@ -1,0 +1,19 @@
+id: ios-flagship-record-save-reopen
+title: Record, save, cold-reopen — the universal flagship capture spine
+execution_target: ios_flagship_swift
+features:
+  - mobile.capture.meeting_record
+recipes:
+  - fresh-desk
+manual_setup:
+  - Grant Microphone permission and use the built-in microphone; record any Bluetooth route in the verdict note.
+  - Use a quiet 30-second script containing the canary phrase "violet lighthouse seven".
+form_factors: [ipad, iphone]
+steps:
+  - do: Start a new recording from the production root, speak the canary phrase, and let capture run for at least 30 seconds.
+    expect: Recording state is unmistakable, elapsed time advances, and a live transcript includes the substance of "violet lighthouse seven" without blocking the UI.
+  - do: Stop and save the meeting, then force-quit the app and cold-launch it again.
+    expect: The saved meeting reappears exactly once with a non-empty transcript; cold launch does not lose or duplicate the recording.
+    verifies: [mobile.capture.meeting_record]
+  - do: Turn off Wi-Fi and cellular after saving, then reopen the same meeting.
+    expect: The local recording and transcript remain readable offline; any unavailable remote intelligence is named honestly rather than shown as fabricated output.

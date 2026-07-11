@@ -1,0 +1,29 @@
+title: A cloud-egress proposal card, queued and unexecuted
+description: >
+  Select the named cloud posture, seed the ordinary local desk, push a
+  deterministic accepted meeting action through the product's sync ingress,
+  and turn it into a GitHub-issue proposal through the real aftercare route.
+  The probe reads the per-card target and exact repo back through the proposal
+  API and requires the card to remain proposed/unexecuted.
+deck: cloud-egress
+requires: []
+includes: [seeded-desk]
+actions:
+  - sync_meeting:
+      id: uat-egress-meeting
+      title: Cloud egress review (UAT seed)
+      action_id: uat-egress-action
+      task: File the UAT egress finding
+      owner: UAT owner
+      review_state: accepted
+  - propose_github_card:
+      meeting_id: uat-egress-meeting
+      action_item_id: uat-egress-action
+      repo: acme/holdspeak-uat
+probe:
+  - note_exists: uat-seed-note-decisions
+  - egress_scope_is: {scope: cloud, target: api.openai.com}
+  - proposal_egress_names_target:
+      meeting_id: uat-egress-meeting
+      target: github
+      destination: acme/holdspeak-uat

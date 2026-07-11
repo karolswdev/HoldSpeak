@@ -333,28 +333,11 @@ def test_dictation_page_includes_readiness_panel() -> None:
     response = client.get("/dictation")
 
     assert response.status_code == 200
-    body = response.text
-    # Markers staying in server-rendered markup.
-    assert 'data-section="readiness"' in body
-    # HS-10-09: heading now sentence-case.
-    assert "Dictation readiness" in body
-    assert "rt-guidance" in body
-
-    # Endpoint + handler strings + JS-rendered data attributes live
-    # in the bundled chunk after the rebuild.
-    import re
-
-    match = re.search(r'src="(/_built/_astro/[^"]+\.js)"', body)
-    assert match, "expected dictation JS chunk reference"
-    js = client.get(match.group(1)).text
+    assert '<div id="root"></div>' in response.text
+    js = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
     assert "/api/dictation/readiness" in js
-    assert "data-ready-template-id" in js
-    assert "data-ready-kb-starter" in js
-    assert "data-ready-runtime-action" in js
-    assert "renderRuntimeGuidance" in js
-    assert "data-copy-command" in js
-    assert "Claude/Codex hook context freshness" in js
-    assert "Copy all setup commands" in js
+    assert "Pipeline readiness" in js and "Resolved target" in js
+    assert "warnings" in js
 
 
 def test_dictation_runtime_docs_route_serves_setup_page() -> None:
@@ -370,13 +353,11 @@ def test_dictation_runtime_docs_route_serves_setup_page() -> None:
     response = client.get("/docs/dictation-runtime")
 
     assert response.status_code == 200
-    body = response.text
-    assert "Dictation Runtime Setup" in body
-    assert 'id="mlx"' in body
-    assert 'id="llama-cpp"' in body
-    assert "dictation-mlx" in body
-    assert "dictation-llama" in body
-    assert "Qwen3.5-4B-Instruct-Q4_K_M.gguf" in body
+    assert '<div id="root"></div>' in response.text
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/RuntimeDocsPage.tsx").read_text()
+    assert "Dictation runtime setup" in source
+    assert "dictation-mlx" in source and "dictation-llama" in source
+    assert "OpenAI-compatible endpoint" in source
 
 
 def test_readiness_includes_depth_telemetry_block(

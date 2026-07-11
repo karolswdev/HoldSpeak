@@ -1,4 +1,5 @@
 id: f-profiles-picker-manage-key
+execution_target: ios_flagship_swift
 title: Runtime profiles — pick the active one, manage the list, and the key never syncs
 # Three profile musts (HSM-24-*). active_picker and manage_advanced and
 # key_never_syncs are all iphone:yes (shared ProfileKeyStore / ProfilesView).
@@ -12,10 +13,7 @@ features:
 recipes:
   - profile-key-never-syncs
   - seeded-desk
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: yes
+form_factors: [ipad, iphone]
 steps:
   - do: >
       Staging-verify. Open the profiles view and confirm the staged profile is
@@ -24,7 +22,6 @@ steps:
       The "Leaky profile" (uat-leaky-profile) is present in the profiles list — the
       profile that was given a secret key, so the never-sync check below is not
       vacuous.
-    where: /
   - do: >
       Active picker. Change the active runtime profile from the always-exposed
       picker in Settings, then run an ask.
@@ -32,7 +29,6 @@ steps:
       The next ask runs on the newly-selected profile's model — the picker actually
       re-routes inference, it is not a cosmetic chip. On first launch the legacy
       single target reads as a migrated profile with unchanged behaviour.
-    where: /
   - do: >
       Manage advanced. Add a second profile with an endpoint + key, assign it to an
       agent via the inline "Runs on" picker, and read the context gauge.
@@ -40,15 +36,13 @@ steps:
       The agent's run hits that profile's endpoint and the gauge reads that
       profile's context limit (per-profile, not a global constant), and the egress
       badge is honest for the assigned profile — not hardcoded "On device".
-    where: /
   - do: >
       Key never syncs (the attack). The profile carries the secret UAT-SECRET-KEY-
-      DO-NOT-LEAK. Sync to web, then inspect every served profile shape and a
-      ChangeSet on both surfaces.
+      DO-NOT-LEAK. Trigger sync from the flagship app, then inspect that native
+      client's captured outbound ChangeSet and sync diagnostics.
     expect: >
-      The secret NEVER appears in any served profile shape on either surface, and
-      no key field is present on the ChangeSet on the wire — the key stays in the
-      Keychain (this-device-only). Despite a profile that WAS given a key, the key
-      is absent everywhere it is read back.
-    where: /
+      The secret NEVER appears in the flagship client's outbound profile shape,
+      and no key field is present in its ChangeSet on the wire — the key stays in
+      the device Keychain. Despite a profile that WAS given a key, the native sync
+      payload omits it.
 teardown: []

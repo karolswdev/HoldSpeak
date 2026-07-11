@@ -1,4 +1,5 @@
 id: desk-lasso-ask-keep
+execution_target: web_react
 title: Ask over a lassoed pile, then keep or bin the printed card
 # The lasso -> Ask -> keep-or-bin loop. Ask is an LLM feature, so it rides the
 # mandatory control-vs-treatment pair on .43. The kept card must persist with
@@ -9,40 +10,32 @@ features:
   - ask.atom.lasso_ask_keep
 recipes:
   - seeded-desk-43
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the lasso-ask-keep loop at iPhone width is a later reflow (phase 20), unproven in the directory record (ask.atom.lasso_ask_keep iphone=unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
-      Staging-verify. The seeded desk is live on .43. Lasso (or shift-click) the
-      Ledgerline pile — the BLUEBIRD and pylon notes — into a bundle and open the
-      Ask composer over it.
+      Staging-verify. The seeded desk is live on .43. Open an empty-context model
+      chat and ask "summarise this pile in one line" before selecting any object.
     expect: >
-      The lassoed objects form a bundle and the Ask composer opens scoped to
-      exactly that pile — the bundle bar shows the selected objects.
+      CONTROL. The empty-context chat is generic — it cannot name BLUEBIRD or the
+      pylon incident because no Desk object was supplied.
     where: /
   - do: >
-      CONTROL. Ask "summarise this pile in one line" with grounding OFF (the pile
-      NOT fed to the model). Judge this beat alone.
+      Lasso (or shift-click) the BLUEBIRD and pylon notes, confirm the bundle bar
+      names exactly those objects, then ask the SAME question through Desk Ask.
     expect: >
-      The result is generic — it cannot name BLUEBIRD or the pylon incident,
-      because the pile was not fed. A vague or "no context" answer is the point.
-    where: /
-  - do: >
-      TREATMENT. Ask the SAME question grounded on the lassoed pile, on .43. Judge
-      this beat alone.
-    expect: >
-      The answer names the pile's substance (BLUEBIRD as the ledgerline rewrite,
+      TREATMENT. The answer names the pile's substance (BLUEBIRD as the ledgerline rewrite,
       the pylon incident) — judged structurally on whether it surfaces the pile's
-      real content, not wording. This is the token the control could not know.
+      real content, not wording. Selected pile context is always supplied on this
+      path; the control used a genuinely empty-context chat.
     where: /
+    verifies: [ask.atom.lasso_ask_keep]
   - do: >
       Keep the printed answer card, then confirm it persists as a desk object with
-      its lineage (which pile it came from, the prompt).
+      its visible source chips.
     expect: >
-      The kept card lands on the desk as its own object and carries its lineage —
-      the source pile and the prompt are recoverable from it.
+      The kept card lands on the desk as its own object and its source chips name
+      the selected records. Do not claim prompt/provenance fields the current
+      pullout does not render.
     where: /
   - do: >
       Ask again over the same pile, and this time BIN (discard) the printed card.

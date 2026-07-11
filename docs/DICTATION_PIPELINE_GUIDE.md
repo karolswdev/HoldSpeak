@@ -275,8 +275,8 @@ When dictating into Codex or Claude, rewrite rough speech into a concise
 engineering request. Preserve explicit filenames, commands, and test names.
 
 # .hs/context.md
-This project is a local-first Python app with a FastAPI web runtime and Astro
-frontend.
+This project is a local-first Python app with a FastAPI web runtime and one
+typed Vite/React frontend.
 
 # .hs/workflows.md
 Run focused Python tests with `.venv/bin/pytest <path>`.

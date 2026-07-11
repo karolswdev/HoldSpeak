@@ -1,0 +1,15 @@
+title: A real coder pane plus a live mesh worker
+description: >
+  Composite device-steering world: one mesh-enabled run owns both the waiting,
+  unarmed tmux pane and the live uat-worker. A single authoritative deck keeps
+  both prerequisites true at the same time.
+deck: mesh-node
+requires: [intel]
+includes:
+  - agent-pane-awaiting-input
+  - mesh-node-alive
+probe:
+  - pane_listed: coder
+  - pane_shows: {name: coder, contains: AWAITING-MIGRATION-CONFIRM}
+  - keys_refused_unarmed: coder
+  - mesh_node_live: {name: uat-worker, timeout: 40}

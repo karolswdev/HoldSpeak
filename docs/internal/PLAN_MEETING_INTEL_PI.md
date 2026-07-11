@@ -202,13 +202,14 @@ WS   /ws                - Real-time updates
 
 ### Story 3.1: Dashboard HTML Shell
 **Points:** 2
-**Description:** Create single-file HTML dashboard with Tailwind + Alpine.js.
+**Description:** Build the dashboard as a lazy React route in the shared Vite
+application, using Signal controls and the shared runtime bus.
 
 **Acceptance Criteria:**
-- [ ] `holdspeak/static/dashboard.html` created
+- [ ] `web/src/pages/LivePage.tsx` owns the route
 - [ ] Dark mode, modern aesthetic
 - [ ] Responsive layout (works on mobile too)
-- [ ] No build step required (CDN imports)
+- [ ] Production output is emitted by the repository's Vite build
 
 **Layout:**
 ```
@@ -226,9 +227,9 @@ WS   /ws                - Real-time updates
 ```
 
 **Tasks:**
-- Create HTML structure
-- Add Tailwind CSS (CDN)
-- Add Alpine.js (CDN)
+- Create the React route structure
+- Reuse the Signal token and component layers
+- Subscribe through `RuntimeBusProvider`
 - Style dark mode theme
 - Make responsive
 

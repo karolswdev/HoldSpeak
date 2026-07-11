@@ -1,4 +1,5 @@
 id: d-wake-model-download-honesty
+execution_target: web_react
 title: Enabling wake-word downloads a model inbound — no audio ever leaves
 features:
   - trust.egress.wake-model-download
@@ -10,10 +11,7 @@ recipes:
 # directional-egress claim — the honest failure it guards against is a feature
 # that quietly starts streaming mic audio out. Staged on first-run-no-model so
 # the wake model is genuinely absent at the start.
-surfaces:
-  web: yes
-  ipad: {n/a: "wake-word model download + local mic loop is a desktop-runtime feature; the directory marks trust.egress.wake-model-download with no ipad surface"}
-  iphone: {n/a: "same — desktop wake-word runtime (trust.egress.wake-model-download iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: On a first run with no wake model present, confirm wake-word is off and its model is absent (the staging beat).
     expect: The setup surface honestly reports the wake-word model as not present; wake-word is off and nothing has been downloaded.

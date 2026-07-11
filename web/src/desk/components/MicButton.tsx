@@ -11,7 +11,7 @@ import {
   speakToFillSupported,
   startCapture,
   stopAndTranscribe,
-} from "../../scripts/speak-to-fill.js";
+} from "../../lib/speakToFill";
 
 export function MicButton({
   onText,
@@ -20,7 +20,9 @@ export function MicButton({
   onText: (text: string) => void;
   label?: string;
 }) {
-  const [state, setState] = useState<"idle" | "listening" | "busy" | "failed">("idle");
+  const [state, setState] = useState<"idle" | "listening" | "busy" | "failed">(
+    "idle",
+  );
   const holding = useRef(false);
 
   if (!speakToFillSupported()) return null;

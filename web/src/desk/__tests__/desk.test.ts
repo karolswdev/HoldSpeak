@@ -1,11 +1,15 @@
 // HS-73-01 — the island's unit rig: sprite-hash parity with the shared
 // picker (per-id stability is what keeps a desk wearing the same art across
-// the Alpine→React cutover) and the wire normalizers.
+// the React unification) and the wire normalizers.
 import { afterEach, describe, expect, it, vi } from "vitest";
-// @ts-ignore — shared ESM module (see ../sprites.d.ts)
-import { spriteName, stableHash, variantIndex } from "../../scripts/desk/sprites.js";
+import { spriteName, stableHash, variantIndex } from "../sprites";
 import {
-  fromWireDirectory, fromWireNote, fromWireRecipe, fromWireWorkflow, liveValues, loadAll,
+  fromWireDirectory,
+  fromWireNote,
+  fromWireRecipe,
+  fromWireWorkflow,
+  liveValues,
+  loadAll,
 } from "../api";
 import { lineage } from "../lineage";
 import { objUnit, worldObjects } from "../world";
@@ -21,7 +25,9 @@ describe("sprite hash parity", () => {
     expect(variantIndex("m0", 17)).toBeLessThan(17);
     // Distinct ids spread across the pool (the HS-71-02 acceptance).
     const picks = new Set(
-      ["a", "b", "c", "d", "e", "f", "g", "h"].map((id) => spriteName("meeting", id)),
+      ["a", "b", "c", "d", "e", "f", "g", "h"].map((id) =>
+        spriteName("meeting", id),
+      ),
     );
     expect(picks.size).toBeGreaterThanOrEqual(4);
   });
@@ -30,20 +36,44 @@ describe("sprite hash parity", () => {
 describe("wire normalizers", () => {
   it("note", () => {
     expect(
-      fromWireNote({ id: "n1", title: "T", body_markdown: "b", tags: ["x"], created_at: "c" }),
-    ).toMatchObject({ kind: "note", id: "n1", title: "T", bodyMarkdown: "b", tags: ["x"] });
+      fromWireNote({
+        id: "n1",
+        title: "T",
+        body_markdown: "b",
+        tags: ["x"],
+        created_at: "c",
+      }),
+    ).toMatchObject({
+      kind: "note",
+      id: "n1",
+      title: "T",
+      bodyMarkdown: "b",
+      tags: ["x"],
+    });
   });
   it("recipe defaults", () => {
     expect(fromWireRecipe({ id: "a1", name: "A" })).toMatchObject({
-      kind: "recipe", avatar: "🤖", tools: [], kbId: null, profileId: "",
+      kind: "recipe",
+      avatar: "🤖",
+      tools: [],
+      kbId: null,
+      profileId: "",
     });
   });
   it("directory members from either shape", () => {
-    expect(fromWireDirectory({ id: "d", name: "D", member_ids: ["x"] }).memberIds).toEqual(["x"]);
-    expect(fromWireDirectory({ id: "d", name: "D", members: { y: 1 } }).memberIds).toEqual(["y"]);
+    expect(
+      fromWireDirectory({ id: "d", name: "D", member_ids: ["x"] }).memberIds,
+    ).toEqual(["x"]);
+    expect(
+      fromWireDirectory({ id: "d", name: "D", members: { y: 1 } }).memberIds,
+    ).toEqual(["y"]);
   });
   it("workflow graph_json stays an object", () => {
-    const w = fromWireWorkflow({ id: "w", name: "W", graph_json: { nodes: [] } });
+    const w = fromWireWorkflow({
+      id: "w",
+      name: "W",
+      graph_json: { nodes: [] },
+    });
     expect(w.hasGraph).toBe(true);
     expect(typeof w.graphJson).toBe("object");
   });
@@ -66,21 +96,36 @@ describe("the recipe wire (the v8 rename, hub-faithful)", () => {
     // rail, the editor, or the world. The hub's key is `recipes`.
     vi.stubGlobal("fetch", (url: string) => {
       const body = String(url).startsWith("/api/recipes")
-        ? { recipes: [{ id: "r1", name: "Scout", avatar: "🦊" }, { id: "r2", name: "Gone", deleted: true }] }
+        ? {
+            recipes: [
+              { id: "r1", name: "Scout", avatar: "🦊" },
+              { id: "r2", name: "Gone", deleted: true },
+            ],
+          }
         : {};
       return Promise.resolve({ ok: true, json: () => Promise.resolve(body) });
     });
     const { items, status } = await loadAll();
     expect(items.recipe.map((r) => r.id)).toEqual(["r1"]);
-    expect(items.recipe[0]).toMatchObject({ kind: "recipe", name: "Scout", avatar: "🦊" });
+    expect(items.recipe[0]).toMatchObject({
+      kind: "recipe",
+      name: "Scout",
+      avatar: "🦊",
+    });
     expect(status.recipe).toBe("live");
   });
 });
 
 describe("lineage via detection", () => {
   const items = {
-    meeting: [], note: [], kb: [], artifact: [], chain: [], workflow: [],
-    directory: [], coder: [],
+    meeting: [],
+    note: [],
+    kb: [],
+    artifact: [],
+    chain: [],
+    workflow: [],
+    directory: [],
+    coder: [],
     recipe: [{ kind: "recipe", id: "r1", name: "Scout" }],
   } as unknown as Items;
 
@@ -93,7 +138,9 @@ describe("lineage via detection", () => {
     expect(l.from.map((f) => f.ref)).toEqual(["m1"]);
   });
   it("a pre-rename 'agent' row still reads as the via (older stored artifacts)", () => {
-    expect(lineage(items, [{ source_type: "agent", source_ref: "r1" }]).via?.ref).toBe("r1");
+    expect(
+      lineage(items, [{ source_type: "agent", source_ref: "r1" }]).via?.ref,
+    ).toBe("r1");
   });
   it("the Ask atom's via row (HSM-16-09 wire) reads as the via", () => {
     const l = lineage(items, [
@@ -102,7 +149,10 @@ describe("lineage via detection", () => {
       { source_type: "ask", source_ref: "Distill" },
     ]);
     expect(l.via?.label).toBe("Distill");
-    expect(l.from.map((f) => f.label)).toEqual(["Q3 kickoff", "Mesh sync owner"]);
+    expect(l.from.map((f) => f.label)).toEqual([
+      "Q3 kickoff",
+      "Mesh sync owner",
+    ]);
   });
 });
 
@@ -110,8 +160,14 @@ describe("world math", () => {
   const items: Items = {
     meeting: [{ kind: "meeting", id: "m1", title: "M" }],
     note: [{ kind: "note", id: "n1", title: "N" }],
-    kb: [], recipe: [], artifact: [], chain: [], workflow: [],
-    directory: [{ kind: "directory", id: "z", name: "Z", memberIds: ["m1"] } as any],
+    kb: [],
+    recipe: [],
+    artifact: [],
+    chain: [],
+    workflow: [],
+    directory: [
+      { kind: "directory", id: "z", name: "Z", memberIds: ["m1"] } as any,
+    ],
     coder: [],
   };
   it("flattens in the canonical order and filters on dive", () => {
@@ -122,14 +178,22 @@ describe("world math", () => {
     expect(worldObjects(items, "z").map((o) => o.id)).toEqual(["m1"]);
   });
   it("looseHome is deterministic and clamped", () => {
-    const o = { kind: "note" as const, id: "n1", title: "N", ref: items.note[0] };
+    const o = {
+      kind: "note" as const,
+      id: "n1",
+      title: "N",
+      ref: items.note[0],
+    };
     const a = objUnit(o, 0, 12, {});
     const b = objUnit(o, 0, 12, {});
     expect(a).toEqual(b);
     expect(a.x).toBeGreaterThanOrEqual(0.06);
     expect(a.x).toBeLessThanOrEqual(0.94);
     // A saved position wins.
-    expect(objUnit(o, 0, 12, { n1: { x: 0.5, y: 0.5 } })).toEqual({ x: 0.5, y: 0.5 });
+    expect(objUnit(o, 0, 12, { n1: { x: 0.5, y: 0.5 } })).toEqual({
+      x: 0.5,
+      y: 0.5,
+    });
   });
   it("the jitter hash is the legacy _oh", () => {
     expect(oh("n1")).toBeGreaterThanOrEqual(0);

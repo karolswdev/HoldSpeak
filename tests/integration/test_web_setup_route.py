@@ -32,21 +32,20 @@ def _built(*parts: str) -> bool:
 def test_setup_route_serves_the_setup_page() -> None:
     resp = _client().get("/setup")
     assert resp.status_code == 200
-    if _built("setup", "index.html"):
-        assert "setupApp" in resp.text  # the page's Alpine factory
+    if _built("index.html"):
+        assert '<div id="root"></div>' in resp.text
+        assert "/_built/assets/" in resp.text
     else:
-        assert "HoldSpeak Setup" in resp.text
+        assert "npm run build" in resp.text
 
 
 def test_dashboard_has_the_first_run_guard() -> None:
     resp = _client().get("/")
     assert resp.status_code == 200
-    if _built("index.html"):
-        # HS-43-06: the guard sends a first-run user to the /welcome wizard and a
-        # hard-blocked returning user to /setup.
-        assert "/api/setup/status" in resp.text
-        assert '"/welcome"' in resp.text
-        assert '"/setup"' in resp.text
+    desk = (_REPO / "web" / "src" / "desk" / "DeskApp.tsx").read_text()
+    assert "setup?.first_run" in desk
+    assert 'navigate("/welcome"' in desk
+    assert 'navigate("/setup"' in desk
 
 
 # ── the CLI launch nudge (WebRuntime._print_setup_nudge) ──────────────

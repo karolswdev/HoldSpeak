@@ -1,17 +1,11 @@
 id: g-named-key-allowlist
+execution_target: web_react
 title: Only allow-listed named keys reach tmux — an arbitrary string can never become a keystroke
 features:
   - trust.steering.named-key-allowlist
 recipes:
   - agent-pane-awaiting-input
-# trust.steering.named-key-allowlist is web:yes + ipad:yes (README iPad key
-# control; ios consumes /api/coders/{key}/keys + relay/{node}/keys). iPhone is
-# genuinely unknown in the record (key palette at compact width unverified), so it
-# is the honest n/a — not the ipad leg.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the key palette at iPhone compact width is unverified in the directory record (trust.steering.named-key-allowlist iphone: unknown)"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. A real coder pane ("coder") is live and awaiting input,

@@ -38,7 +38,7 @@ def test_the_orb_never_uses_the_browser_microphone() -> None:
     talk to this stuff"): MEETING RECORDING always runs on the hub — the
     orb must never reach for the browser mic. Speak-to-fill capture
     (Phase 78) is exactly what the browser mic is for, and its shared
-    helper lives outside the desk tree (web/src/scripts/speak-to-fill.js);
+    helper lives outside the desk tree (web/src/lib/speakToFill.ts);
     desk components may import it but never call getUserMedia directly."""
     for name, text in _tree(DESK).items():
         assert "getUserMedia" not in text, (
@@ -79,9 +79,8 @@ def test_positions_contract_stays_bare() -> None:
 
 
 def test_the_front_door_is_the_desk_with_the_guard() -> None:
-    index = (REPO / "web" / "src" / "pages" / "index.astro").read_text(
-        encoding="utf-8"
-    )
-    assert 'client:only="react"' in index
-    assert '/api/setup/status' in index, "the first-run guard left the front door"
-    assert "/welcome" in index and "/setup" in index
+    routes = (REPO / "web/src/routes.tsx").read_text(encoding="utf-8")
+    desk = (REPO / "web/src/desk/DeskApp.tsx").read_text(encoding="utf-8")
+    assert 'path: "/"' in routes and 'label: "Desk"' in routes
+    assert "setup?.first_run" in desk, "the first-run guard left the front door"
+    assert "/welcome" in desk and "/setup" in desk

@@ -7,7 +7,8 @@ import { useMemo, useState } from "react";
 import { useMissionControl } from "../missioncontrol";
 import { fetchRailsSizes, railsTokens, type RailsPick } from "../grounding";
 
-const fmt = (n: number): string => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+const fmt = (n: number): string =>
+  n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 
 interface RailsRow {
   repo: string;
@@ -26,17 +27,29 @@ function useRailsRows(): RailsRow[] {
     for (const repo of repos) {
       if (repo.status !== "live") continue;
       for (const p of repo.projects) {
-        rows.push({ repo: repo.name, project: p.slug, kind: "roadmap", id: p.slug, title: `${p.slug} — roadmap` });
+        rows.push({
+          repo: repo.name,
+          project: p.slug,
+          kind: "roadmap",
+          id: p.slug,
+          title: `${p.slug} — roadmap`,
+        });
         const cur = p.currentPhase;
         if (cur) {
           rows.push({
-            repo: repo.name, project: p.slug, kind: "phase",
-            id: String(cur.number), title: `Phase ${cur.number} — ${cur.title}`,
+            repo: repo.name,
+            project: p.slug,
+            kind: "phase",
+            id: String(cur.number),
+            title: `Phase ${cur.number} — ${cur.title}`,
           });
           for (const st of p.stories.filter((s) => s.phase === cur.number)) {
             rows.push({
-              repo: repo.name, project: p.slug, kind: "story",
-              id: st.storyId, title: `${st.storyId} ${st.title}`,
+              repo: repo.name,
+              project: p.slug,
+              kind: "story",
+              id: st.storyId,
+              title: `${st.storyId} ${st.title}`,
             });
           }
         }
@@ -46,7 +59,8 @@ function useRailsRows(): RailsRow[] {
   }, [repos]);
 }
 
-const key = (r: { kind: string; id: string; repo: string }) => `${r.repo}:${r.kind}:${r.id}`;
+const key = (r: { kind: string; id: string; repo: string }) =>
+  `${r.repo}:${r.kind}:${r.id}`;
 
 export function RailsPicker(props: {
   picks: RailsPick[];
@@ -69,7 +83,9 @@ export function RailsPicker(props: {
       return;
     }
     setLoading(key(r));
-    const sizes = await fetchRailsSizes([{ repo: r.repo, project: r.project, kind: r.kind, id: r.id }]);
+    const sizes = await fetchRailsSizes([
+      { repo: r.repo, project: r.project, kind: r.kind, id: r.id },
+    ]);
     setLoading(null);
     onChange([...picks, { ...r, chars: sizes[`${r.kind}:${r.id}`] || 0 }]);
   };
@@ -78,30 +94,60 @@ export function RailsPicker(props: {
 
   return (
     <div className={"desk-ground desk-rails" + (open ? " is-open" : "")}>
-      <button type="button" className="desk-ground-head" onClick={() => setOpen((v) => !v)}>
-        <span className={"desk-ground-glyph" + (picks.length ? " is-on" : "")} aria-hidden="true">▤</span>
+      <button
+        type="button"
+        className="desk-ground-head"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span
+          className={"desk-ground-glyph" + (picks.length ? " is-on" : "")}
+          aria-hidden="true"
+        >
+          ▤
+        </span>
         <span className="desk-ground-title">
-          {picks.length === 0 ? "Ground on the rails" : `Rails · ${picks.length}`}
+          {picks.length === 0
+            ? "Ground on the rails"
+            : `Rails · ${picks.length}`}
         </span>
         {picks.length > 0 && (
-          <span className={"desk-ground-tokens is-" + tone}>{fmt(used)} / {fmt(limitTokens)} tok</span>
+          <span className={"desk-ground-tokens is-" + tone}>
+            {fmt(used)} / {fmt(limitTokens)} tok
+          </span>
         )}
-        <span className="desk-ground-chev" aria-hidden="true">{open ? "▴" : "▾"}</span>
+        <span className="desk-ground-chev" aria-hidden="true">
+          {open ? "▴" : "▾"}
+        </span>
       </button>
 
       {open && (
         <div className="desk-ground-body">
-          {over && <p className="desk-run-warning">⚠ Past the window — pick fewer rail objects</p>}
+          {over && (
+            <p className="desk-run-warning">
+              ⚠ Past the window — pick fewer rail objects
+            </p>
+          )}
           <ul className="desk-ground-list">
             {rows.map((r) => {
               const sel = isPicked(r);
               return (
-                <li key={key(r)} className={"desk-ground-row" + (sel ? " is-picked" : "")}>
-                  <button type="button" className="desk-ground-pick" onClick={() => void toggle(r)}>
-                    <span className="desk-ground-check" aria-hidden="true">{sel ? "●" : "○"}</span>
+                <li
+                  key={key(r)}
+                  className={"desk-ground-row" + (sel ? " is-picked" : "")}
+                >
+                  <button
+                    type="button"
+                    className="desk-ground-pick"
+                    onClick={() => void toggle(r)}
+                  >
+                    <span className="desk-ground-check" aria-hidden="true">
+                      {sel ? "●" : "○"}
+                    </span>
                     <span className="desk-rails-kind">{r.kind}</span>
                     <span className="desk-ground-name">{r.title}</span>
-                    {loading === key(r) && <span className="desk-ground-loading">…</span>}
+                    {loading === key(r) && (
+                      <span className="desk-ground-loading">…</span>
+                    )}
                   </button>
                 </li>
               );

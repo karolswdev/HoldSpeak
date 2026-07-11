@@ -1,18 +1,12 @@
 id: b-ground-a-steer
+execution_target: web_react
 title: Ground a steer with a real desk object — and the empty control
 features:
   - steering.ground
   - agents.answer_coder.dropped_context
 recipes:
   - seeded-desk
-# steering.ground is web:yes (GroundingSection.tsx, compose_steer fences objects,
-# 8KB cap). The iPad leg is carried by agents.answer_coder.dropped_context, which
-# IS ipad:yes — the keystone drop gesture opens the composer with the dropped
-# primitive's routableText as cited grounding (HSM-17-04). iPhone genuinely unknown.
-surfaces:
-  web: yes
-  ipad: yes
-  iphone: {n/a: "the grounding picker at iPhone compact width is unverified in the directory record"}
+form_factors: [desktop]
 steps:
   - do: >
       Staging-verify. Open the seeded desk and confirm the "Project glossary" note
