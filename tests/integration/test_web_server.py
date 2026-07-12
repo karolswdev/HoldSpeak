@@ -340,7 +340,7 @@ class TestDashboardEndpoint:
         response = test_client.get("/live")
         assert response.status_code == 200
         source = self._bundled_runtime_js(test_client)
-        assert "Ready when you are" in source
+        assert "Ready to record" in source
         assert "Start a meeting to begin" in source
         assert "Tests routing without changing the live meeting" in source
 

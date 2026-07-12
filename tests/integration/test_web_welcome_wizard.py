@@ -34,21 +34,36 @@ def test_welcome_is_the_same_one_step_first_value_surface_as_the_desk() -> None:
 def test_basic_value_precedes_optional_runs_on_setup() -> None:
     first_words = (_REPO / "web/src/desk/components/FirstWords.tsx").read_text()
     assert "Dictate one sentence" in first_words
-    assert "decisions: 0" in first_words and "steps: 1" in first_words
-    assert "Add an intelligent rewrite · choose Runs on" in first_words
+    basic_value = first_words.index("Dictation is ready on this machine.")
+    optional_runs = first_words.index("Configure rewrite destination")
+    assert basic_value < optional_runs
     assert 'to="/profiles"' in first_words
 
 
 def test_first_dictation_retains_editable_text_and_all_recovery_doors() -> None:
     page = (_REPO / "web/src/desk/components/FirstWords.tsx").read_text()
+    recovery = (_REPO / "web/src/lib/dictationRecovery.ts").read_text()
+    tracker = (_REPO / "web/src/desk/firstValue.ts").read_text()
     for marker in (
-        "Hold to retry", "Copy", "Keep as Note", "Setup", "Continue later",
-        "permission_denied", "missing_model", "rejected_token",
-        "unreachable_hub", "delivery_conflict",
+        "Hold to retry",
+        "Copy",
+        "Keep as Note",
+        "Setup",
+        "Continue later",
     ):
         assert marker in page
+    assert "DICTATION_FAILURES" in page and "dictationFailure" in page
+    for failure in (
+        "permission_denied",
+        "missing_model",
+        "rejected_token",
+        "unreachable_hub",
+        "delivery_conflict",
+    ):
+        assert failure in recovery
     assert "<TextArea" in page and "onChange" in page
-    assert "/api/setup/first-value/start" in page
+    assert "FirstValueTracker" in page
+    assert "/api/setup/first-value/start" in tracker
     assert "/api/setup/onboarding" in page
 
 
