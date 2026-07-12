@@ -6,7 +6,7 @@ _REPO = Path(__file__).resolve().parents[2]
 
 def test_live_room_keeps_idle_and_active_primary_actions() -> None:
     page = (_REPO / "web/src/pages/LivePage.tsx").read_text()
-    assert "Ready when you are" in page
+    assert "Ready to record" in page
     assert "Start meeting" in page
     assert "Stop meeting" in page
     assert '"/api/meeting/start"' in page

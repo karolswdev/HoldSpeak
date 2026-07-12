@@ -18,5 +18,6 @@ def test_history_keeps_approval_and_export_governance() -> None:
     assert '"approved"' in page and '"rejected"' in page
     assert 'row.status !== "proposed"' in page
     assert "apiBlob" in page
-    assert "Rendering one never sends it" in page
+    assert "Each creates an exact-message proposed action" in page
+    assert "Approval sends" in page
     assert "ConfirmAction" in page

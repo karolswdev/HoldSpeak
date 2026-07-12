@@ -340,7 +340,7 @@ class TestDashboardEndpoint:
         response = test_client.get("/live")
         assert response.status_code == 200
         source = self._bundled_runtime_js(test_client)
-        assert "Ready when you are" in source
+        assert "Ready to record" in source
         assert "Start a meeting to begin" in source
         assert "Tests routing without changing the live meeting" in source
 
@@ -2292,6 +2292,10 @@ class TestIntelQueueApiEndpoints:
             def requeue_intel_job(self, meeting_id, *, reason=None):
                 _ = reason
                 return meeting_id == "m-001"
+
+            def request_intel_retry(self, meeting_id, *, reason=None):
+                _ = reason
+                return "queued" if meeting_id == "m-001" else "missing"
 
         import holdspeak.db as db_module
         monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())

@@ -22,6 +22,8 @@ RETRY_FAILURE_ALERT_PERCENT = 50.0
 RETRY_FAILURE_HYSTERESIS_MINUTES = 5.0
 RETRY_FAILURE_WEBHOOK_TIMEOUT_SECONDS = 5.0
 
+RESOLVED_PLUGIN_STATUSES = frozenset({"success", "proposed", "deduped", "skipped"})
+
 
 def build_runtime_queue_frame(db) -> dict:
     """The REAL queue truth for the web's Queue HUD (HS-77-02).
@@ -182,48 +184,65 @@ def process_next_intel_job(
         return True
 
     try:
-        kwargs = {
-            "provider": provider,
-            "cloud_model": cloud_model,
-            "cloud_api_key_env": cloud_api_key_env,
-            "cloud_base_url": cloud_base_url,
-            "cloud_reasoning_effort": cloud_reasoning_effort,
-            "cloud_store": cloud_store,
-        }
-        if model_path:
-            kwargs["model_path"] = model_path
-        intel = MeetingIntel(**kwargs)
-        transcript = "\n".join(str(segment) for segment in meeting.segments)
-        result = intel.analyze(transcript, stream=False)
-        if result.error:
-            _retry_or_fail_job(
-                db,
-                job,
-                f"Deferred intel failed: {result.error}",
-                max_attempts=retry_max_attempts,
-                base_delay_seconds=retry_base_seconds,
-                max_delay_seconds=retry_max_seconds,
-            )
-            return True
+        from .db.intel import ROUTED_INTEL_RETRY_REASON
 
-        meeting.intel = IntelSnapshot(
-            timestamp=meeting.duration,
-            topics=result.topics,
-            action_items=result.action_items,
-            summary=result.summary,
+        resume_routed = (
+            job.last_error == ROUTED_INTEL_RETRY_REASON and meeting.intel is not None
         )
-        meeting.intel_status = "ready"
-        meeting.intel_status_detail = "Deferred meeting intelligence processed successfully."
-        meeting.intel_completed_at = datetime.now()
+        if not resume_routed:
+            kwargs = {
+                "provider": provider,
+                "cloud_model": cloud_model,
+                "cloud_api_key_env": cloud_api_key_env,
+                "cloud_base_url": cloud_base_url,
+                "cloud_reasoning_effort": cloud_reasoning_effort,
+                "cloud_store": cloud_store,
+            }
+            if model_path:
+                kwargs["model_path"] = model_path
+            intel = MeetingIntel(**kwargs)
+            transcript = "\n".join(str(segment) for segment in meeting.segments)
+            result = intel.analyze(transcript, stream=False)
+            if result.error:
+                _retry_or_fail_job(
+                    db,
+                    job,
+                    f"Deferred intel failed: {result.error}",
+                    max_attempts=retry_max_attempts,
+                    base_delay_seconds=retry_base_seconds,
+                    max_delay_seconds=retry_max_seconds,
+                )
+                return True
+
+            meeting.intel = IntelSnapshot(
+                timestamp=meeting.duration,
+                topics=result.topics,
+                action_items=result.action_items,
+                summary=result.summary,
+            )
+        else:
+            log.info(
+                "Deferred intel resuming routed work for meeting %s",
+                job.meeting_id,
+            )
+        # Persist the completed base analysis before routed work starts, but do
+        # not advertise Ready while the remaining chain is still unresolved.
+        meeting.intel_status = "running"
+        meeting.intel_status_detail = (
+            "Meeting saved. Summary, topics, and action items saved. "
+            "Routed intelligence running."
+        )
+        meeting.intel_completed_at = None
         db.meetings.save_meeting(meeting)
         # HS-80-02 — the archive gets its artifacts: after a successful base
         # analyze, run the routed plugin chain over the saved transcript (the
-        # Phase-67 F-05 fix). Gated on the same knob that gates live routing;
-        # a chain failure never fails the job (base intel already landed) and
-        # the status detail stays honest either way.
+        # Phase-67 F-05 fix). Gated on the same knob that gates live routing.
+        # Any unresolved plugin keeps the base analysis/artifacts and leaves an
+        # owner-recoverable partial job; only the complete chain becomes Ready.
         from .config import Config
 
         meeting_cfg = Config.load().meeting
+        artifact_count = 0
         if bool(getattr(meeting_cfg, "intent_router_enabled", False)):
             try:
                 from .meeting_plugins import run_meeting_plugin_chain
@@ -231,21 +250,66 @@ def process_next_intel_job(
                 chain_summary = run_meeting_plugin_chain(
                     db, meeting, profile=getattr(meeting_cfg, "mir_profile", None)
                 )
-                meeting.intel_status_detail = (
-                    "Deferred meeting intelligence processed successfully; "
-                    f"{int(chain_summary.get('artifacts_saved') or 0)} artifact(s) "
-                    "from the routed plugin chain."
+                artifact_count = len(
+                    db.plugins.list_artifacts(job.meeting_id, limit=2000)
                 )
-                db.meetings.save_meeting(meeting)
+                plugin_statuses = dict(chain_summary.get("plugin_statuses") or {})
+                incomplete = sorted(
+                    (str(plugin_id), str(status))
+                    for plugin_id, status in plugin_statuses.items()
+                    if str(status).strip().lower() not in RESOLVED_PLUGIN_STATUSES
+                )
+                if incomplete:
+                    failed_work = ", ".join(
+                        f"{plugin_id} ({status})" for plugin_id, status in incomplete
+                    )
+                    detail = (
+                        "Meeting saved. Summary, topics, and action items retained; "
+                        f"{artifact_count} routed "
+                        f"{'artifact' if artifact_count == 1 else 'artifacts'} retained. "
+                        f"Remaining routed intelligence did not finish: {failed_work}."
+                    )
+                    db.intel.mark_intel_job_partial(job.meeting_id, detail)
+                    db.intel.record_intel_job_attempt(
+                        job.meeting_id,
+                        attempt=int(job.attempts),
+                        outcome="partial_failure",
+                        error=detail,
+                        retry_at=None,
+                    )
+                    log.warning(
+                        "Deferred routed intel remained partial for meeting %s: %s",
+                        job.meeting_id,
+                        failed_work,
+                    )
+                    return True
             except Exception as exc:
                 log.warning(
                     f"Deferred plugin chain failed for meeting {job.meeting_id}: {exc}"
                 )
-                meeting.intel_status_detail = (
-                    "Deferred meeting intelligence processed successfully; "
-                    f"the plugin chain did not complete ({exc})."
+                detail = (
+                    "Meeting saved. Summary, topics, and action items retained. "
+                    "Remaining routed intelligence did not finish: "
+                    f"{type(exc).__name__}: {exc}."
                 )
-                db.meetings.save_meeting(meeting)
+                db.intel.mark_intel_job_partial(job.meeting_id, detail)
+                db.intel.record_intel_job_attempt(
+                    job.meeting_id,
+                    attempt=int(job.attempts),
+                    outcome="partial_failure",
+                    error=detail,
+                    retry_at=None,
+                )
+                return True
+        meeting.intel_status = "ready"
+        meeting.intel_status_detail = (
+            f"Meeting intelligence ready. {artifact_count} routed "
+            f"{'artifact' if artifact_count == 1 else 'artifacts'} saved."
+            if bool(getattr(meeting_cfg, "intent_router_enabled", False))
+            else "Meeting intelligence ready."
+        )
+        meeting.intel_completed_at = datetime.now()
+        db.meetings.save_meeting(meeting)
         db.intel.record_intel_job_attempt(
             job.meeting_id,
             attempt=int(job.attempts),

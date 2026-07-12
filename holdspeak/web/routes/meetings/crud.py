@@ -167,6 +167,98 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             "conflicts": get_database().meetings.list_sync_conflicts(meeting_id)
         })
 
+    @router.post(
+        "/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve"
+    )
+    async def api_resolve_meeting_sync_conflict(
+        meeting_id: str,
+        conflict_id: str,
+        payload: dict[str, Any],
+    ) -> Any:
+        """Apply the owner's explicit choice between two Meeting versions."""
+        resolution = str(payload.get("resolution") or "").strip()
+        if resolution not in {"keep_current", "use_incoming"}:
+            return JSONResponse(
+                {"error": "resolution must be keep_current or use_incoming"},
+                status_code=400,
+            )
+
+        from ....db import get_database
+
+        db = get_database()
+        conflict = db.meetings.get_sync_conflict(meeting_id, conflict_id)
+        if conflict is None:
+            return JSONResponse({"error": "Meeting conflict not found"}, status_code=404)
+        if conflict.get("resolved_at") is not None:
+            return JSONResponse(
+                {"error": "Meeting conflict was already resolved; reload the Meeting."},
+                status_code=409,
+            )
+
+        incoming_state = None
+        incoming = conflict.get("incoming")
+        if resolution == "use_incoming" and not (
+            isinstance(incoming, dict) and bool(incoming.get("deleted"))
+        ):
+            if not isinstance(incoming, dict):
+                return JSONResponse(
+                    {"error": "Incoming Meeting version is unreadable; current work retained."},
+                    status_code=409,
+                )
+            try:
+                from ..sync import meeting_state_from_sync_value
+
+                incoming_state = meeting_state_from_sync_value(
+                    {**incoming, "id": meeting_id}
+                )
+            except (TypeError, ValueError) as exc:
+                return JSONResponse(
+                    {
+                        "error": (
+                            "Incoming Meeting version is unreadable; current work retained: "
+                            f"{exc}"
+                        )
+                    },
+                    status_code=409,
+                )
+
+        try:
+            outcome = db.meetings.resolve_sync_conflict(
+                meeting_id,
+                conflict_id,
+                resolution=resolution,
+                incoming_state=incoming_state,
+            )
+        except (TypeError, ValueError) as exc:
+            return JSONResponse(
+                {"error": f"Conflict was not changed; both versions remain: {exc}"},
+                status_code=409,
+            )
+        except Exception as exc:
+            log.error("Failed to resolve Meeting sync conflict: %s", exc)
+            return JSONResponse(
+                {"error": f"Conflict recovery failed; both versions remain: {exc}"},
+                status_code=500,
+            )
+
+        if outcome == "missing":
+            return JSONResponse({"error": "Meeting conflict not found"}, status_code=404)
+        if outcome == "already_resolved":
+            return JSONResponse(
+                {"error": "Meeting conflict was already resolved; reload the Meeting."},
+                status_code=409,
+            )
+
+        meeting = db.meetings.get_meeting(meeting_id)
+        return JSONResponse(
+            {
+                "resolution": resolution,
+                "deleted": outcome == "deleted",
+                "meeting": meeting.to_dict() if meeting is not None else None,
+                "remaining_conflicts": db.meetings.list_sync_conflicts(meeting_id),
+            }
+        )
+
     @router.get("/api/meetings/{meeting_id}/export")
     async def api_export_meeting(
         meeting_id: str,

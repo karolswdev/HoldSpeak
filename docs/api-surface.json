@@ -1946,6 +1946,36 @@
       "consumers": []
     },
     {
+      "path": "/api/meetings/{meeting_id}/intel-recovery",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.meetings.intel",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/intel-recovery/retry",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.intel",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/intel-recovery/skip",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.intel",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}/intent-timeline",
       "methods": [
         "GET"
@@ -1999,7 +2029,19 @@
         "GET"
       ],
       "module": "web.routes.meetings.crud",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.crud",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/mesh/inbox",

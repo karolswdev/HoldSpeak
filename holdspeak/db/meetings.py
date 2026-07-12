@@ -8,7 +8,7 @@ from __future__ import annotations
 import sqlite3
 import hashlib
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Optional, Any
 
 from ..logging_config import get_logger
@@ -103,17 +103,126 @@ class MeetingRepository(BaseRepository):
                    ORDER BY detected_at DESC""",
                 (meeting_id,),
             ).fetchall()
-        return [
-            {
-                "id": row["id"],
-                "meeting_id": row["meeting_id"],
-                "local": json.loads(row["local_json"]),
-                "incoming": json.loads(row["incoming_json"]),
-                "winner": row["winner"],
-                "detected_at": row["detected_at"],
-            }
-            for row in rows
-        ]
+        return [self._sync_conflict_value(row) for row in rows]
+
+    def get_sync_conflict(
+        self,
+        meeting_id: str,
+        conflict_id: str,
+    ) -> Optional[dict[str, Any]]:
+        """Read one conflict, including its resolution state."""
+        with self._connection() as conn:
+            row = conn.execute(
+                """SELECT * FROM meeting_sync_conflicts
+                   WHERE id = ? AND meeting_id = ?""",
+                (conflict_id, meeting_id),
+            ).fetchone()
+        return self._sync_conflict_value(row) if row is not None else None
+
+    def resolve_sync_conflict(
+        self,
+        meeting_id: str,
+        conflict_id: str,
+        *,
+        resolution: str,
+        incoming_state: Optional["MeetingState"] = None,
+    ) -> str:
+        """Resolve an open equal-clock conflict without a loss window.
+
+        ``keep_current`` records the owner's decision without changing the
+        canonical Meeting. ``use_incoming`` replaces that same Meeting identity
+        (or honors the incoming tombstone) and resolves the conflict in the same
+        SQLite transaction. The stored losing value remains untouched until this
+        method commits successfully.
+
+        Returns ``resolved``, ``deleted``, ``missing``, or ``already_resolved``.
+        """
+        if resolution not in {"keep_current", "use_incoming"}:
+            raise ValueError("resolution must be keep_current or use_incoming")
+
+        with self._connection() as conn:
+            row = conn.execute(
+                """SELECT * FROM meeting_sync_conflicts
+                   WHERE id = ? AND meeting_id = ?""",
+                (conflict_id, meeting_id),
+            ).fetchone()
+            if row is None:
+                return "missing"
+            if row["resolved_at"] is not None:
+                return "already_resolved"
+
+            clock_row = conn.execute(
+                "SELECT sync_modified_at FROM meetings WHERE id = ?",
+                (meeting_id,),
+            ).fetchone()
+            resolution_clock = datetime.now()
+            if clock_row is not None and clock_row["sync_modified_at"]:
+                contested_clock = datetime.fromisoformat(
+                    str(clock_row["sync_modified_at"]).replace("Z", "+00:00")
+                )
+                if contested_clock.tzinfo is not None:
+                    contested_clock = contested_clock.replace(tzinfo=None)
+                if resolution_clock <= contested_clock:
+                    resolution_clock = contested_clock + timedelta(microseconds=1)
+
+            if resolution == "use_incoming":
+                incoming = json.loads(row["incoming_json"])
+                if bool(incoming.get("deleted")):
+                    # The conflict row is removed by the Meeting FK cascade.
+                    conn.execute("DELETE FROM meetings WHERE id = ?", (meeting_id,))
+                    return "deleted"
+                if incoming_state is None or incoming_state.id != meeting_id:
+                    raise ValueError("incoming Meeting does not match the conflict")
+
+                # The route decoded the exact stored wire value. Verify that no
+                # caller substituted different authored content before applying
+                # it through the normal persistence path.
+                expected = dict(incoming)
+                actual = incoming_state.to_dict()
+                for payload in (expected, actual):
+                    payload.pop("deleted", None)
+                    payload.pop("duration", None)
+                    payload.pop("formatted_duration", None)
+                    payload.pop("sync_modified_at", None)
+                if actual != expected:
+                    raise ValueError("incoming Meeting does not match the conflict")
+
+                self._save_meeting(
+                    conn,
+                    incoming_state,
+                    sync_modified_at=resolution_clock,
+                )
+            else:
+                # The chosen local content needs a strictly newer clock too;
+                # otherwise the same equal-clock peer value can challenge the
+                # owner's decision again on the next sync pass.
+                conn.execute(
+                    """UPDATE meetings
+                       SET sync_modified_at = ?, updated_at = datetime('now')
+                       WHERE id = ?""",
+                    (resolution_clock.isoformat(), meeting_id),
+                )
+
+            winner = "incoming" if resolution == "use_incoming" else "local"
+            conn.execute(
+                """UPDATE meeting_sync_conflicts
+                   SET winner = ?, resolved_at = ?
+                   WHERE id = ? AND meeting_id = ? AND resolved_at IS NULL""",
+                (winner, datetime.now().isoformat(), conflict_id, meeting_id),
+            )
+        return "resolved"
+
+    @staticmethod
+    def _sync_conflict_value(row: sqlite3.Row) -> dict[str, Any]:
+        return {
+            "id": row["id"],
+            "meeting_id": row["meeting_id"],
+            "local": json.loads(row["local_json"]),
+            "incoming": json.loads(row["incoming_json"]),
+            "winner": row["winner"],
+            "detected_at": row["detected_at"],
+            "resolved_at": row["resolved_at"],
+        }
 
     def save_meeting(
         self,
@@ -124,74 +233,75 @@ class MeetingRepository(BaseRepository):
         """Save or update a meeting and all related data."""
 
         with self._connection() as conn:
-            # Upsert meeting
-            conn.execute("""
-                INSERT INTO meetings (id, started_at, ended_at, title,
-                    duration_seconds, intel_status, intel_status_detail,
-                    intel_requested_at, intel_completed_at, mic_label, remote_label, web_url,
-                    capture_status, capture_failure, capture_checkpoint_at,
-                    capture_checkpoint_seconds, provenance, sync_modified_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    ended_at = excluded.ended_at,
-                    title = excluded.title,
-                    duration_seconds = excluded.duration_seconds,
-                    intel_status = excluded.intel_status,
-                    intel_status_detail = excluded.intel_status_detail,
-                    intel_requested_at = excluded.intel_requested_at,
-                    intel_completed_at = excluded.intel_completed_at,
-                    mic_label = excluded.mic_label,
-                    remote_label = excluded.remote_label,
-                    web_url = excluded.web_url,
-                    capture_status = excluded.capture_status,
-                    capture_failure = excluded.capture_failure,
-                    capture_checkpoint_at = excluded.capture_checkpoint_at,
-                    capture_checkpoint_seconds = excluded.capture_checkpoint_seconds,
-                    provenance = excluded.provenance,
-                    sync_modified_at = excluded.sync_modified_at,
-                    updated_at = datetime('now')
-            """, (
-                state.id,
-                state.started_at.isoformat(),
-                state.ended_at.isoformat() if state.ended_at else None,
-                state.title,
-                state.duration if state.ended_at else None,
-                state.intel_status,
-                state.intel_status_detail,
-                state.intel_requested_at.isoformat() if state.intel_requested_at else None,
-                state.intel_completed_at.isoformat() if state.intel_completed_at else None,
-                state.mic_label,
-                state.remote_label,
-                state.web_url,
-                state.capture_status,
-                state.capture_failure,
-                state.capture_checkpoint_at.isoformat() if state.capture_checkpoint_at else None,
-                state.capture_checkpoint_seconds,
-                state.provenance,
-                (sync_modified_at or datetime.now()).isoformat(),
-            ))
-
-            # Save tags
-            conn.execute(
-                "DELETE FROM meeting_tags WHERE meeting_id = ?", (state.id,)
-            )
-            for tag in state.tags:
-                conn.execute(
-                    "INSERT INTO meeting_tags (meeting_id, tag) VALUES (?, ?)",
-                    (state.id, tag)
-                )
-
-            # Save segments
-            self._save_segments(conn, state.id, state.segments)
-
-            # Save bookmarks
-            self._save_bookmarks(conn, state.id, state.bookmarks)
-
-            # Save intel
-            if state.intel:
-                self._save_intel(conn, state.id, state.intel)
+            self._save_meeting(conn, state, sync_modified_at=sync_modified_at)
 
         log.info(f"Meeting {state.id} saved to database")
+
+    def _save_meeting(
+        self,
+        conn: sqlite3.Connection,
+        state: "MeetingState",
+        *,
+        sync_modified_at: Optional[datetime] = None,
+    ) -> None:
+        """Write a complete Meeting through an existing transaction."""
+        conn.execute("""
+            INSERT INTO meetings (id, started_at, ended_at, title,
+                duration_seconds, intel_status, intel_status_detail,
+                intel_requested_at, intel_completed_at, mic_label, remote_label, web_url,
+                capture_status, capture_failure, capture_checkpoint_at,
+                capture_checkpoint_seconds, provenance, sync_modified_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                ended_at = excluded.ended_at,
+                title = excluded.title,
+                duration_seconds = excluded.duration_seconds,
+                intel_status = excluded.intel_status,
+                intel_status_detail = excluded.intel_status_detail,
+                intel_requested_at = excluded.intel_requested_at,
+                intel_completed_at = excluded.intel_completed_at,
+                mic_label = excluded.mic_label,
+                remote_label = excluded.remote_label,
+                web_url = excluded.web_url,
+                capture_status = excluded.capture_status,
+                capture_failure = excluded.capture_failure,
+                capture_checkpoint_at = excluded.capture_checkpoint_at,
+                capture_checkpoint_seconds = excluded.capture_checkpoint_seconds,
+                provenance = excluded.provenance,
+                sync_modified_at = excluded.sync_modified_at,
+                updated_at = datetime('now')
+        """, (
+            state.id,
+            state.started_at.isoformat(),
+            state.ended_at.isoformat() if state.ended_at else None,
+            state.title,
+            state.duration if state.ended_at else None,
+            state.intel_status,
+            state.intel_status_detail,
+            state.intel_requested_at.isoformat() if state.intel_requested_at else None,
+            state.intel_completed_at.isoformat() if state.intel_completed_at else None,
+            state.mic_label,
+            state.remote_label,
+            state.web_url,
+            state.capture_status,
+            state.capture_failure,
+            state.capture_checkpoint_at.isoformat() if state.capture_checkpoint_at else None,
+            state.capture_checkpoint_seconds,
+            state.provenance,
+            (sync_modified_at or datetime.now()).isoformat(),
+        ))
+
+        conn.execute("DELETE FROM meeting_tags WHERE meeting_id = ?", (state.id,))
+        for tag in state.tags:
+            conn.execute(
+                "INSERT INTO meeting_tags (meeting_id, tag) VALUES (?, ?)",
+                (state.id, tag),
+            )
+
+        self._save_segments(conn, state.id, state.segments)
+        self._save_bookmarks(conn, state.id, state.bookmarks)
+        if state.intel:
+            self._save_intel(conn, state.id, state.intel)
 
     def _save_segments(
         self, conn: sqlite3.Connection, meeting_id: str,

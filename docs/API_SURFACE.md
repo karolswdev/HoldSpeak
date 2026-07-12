@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 306 (plus static mounts). iOS-consumed: 81. Web-consumed: 222.
+Routes: 310 (plus static mounts). iOS-consumed: 81. Web-consumed: 227.
 
 ## device_audio_ws
 
@@ -253,7 +253,8 @@ Routes: 306 (plus static mounts). iOS-consumed: 81. Web-consumed: 222.
 | GET | `/api/meetings/{meeting_id}` | ios, web |
 | POST | `/api/meetings/{meeting_id}/capture/recover` | web |
 | GET | `/api/meetings/{meeting_id}/export` | web |
-| GET | `/api/meetings/{meeting_id}/sync-conflicts` | server only |
+| GET | `/api/meetings/{meeting_id}/sync-conflicts` | web |
+| POST | `/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve` | web |
 
 ## web.routes.meetings.insights
 
@@ -271,6 +272,9 @@ Routes: 306 (plus static mounts). iOS-consumed: 81. Web-consumed: 222.
 | POST | `/api/intel/process` | web |
 | POST | `/api/intel/retry/{meeting_id}` | server only |
 | GET | `/api/intel/summary` | web |
+| GET | `/api/meetings/{meeting_id}/intel-recovery` | web |
+| POST | `/api/meetings/{meeting_id}/intel-recovery/retry` | web |
+| POST | `/api/meetings/{meeting_id}/intel-recovery/skip` | web |
 
 ## web.routes.meetings.live
 

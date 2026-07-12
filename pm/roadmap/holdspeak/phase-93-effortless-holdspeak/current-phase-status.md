@@ -1,16 +1,18 @@
 # Phase 93 — Effortless HoldSpeak
 
 **Status:** IN PROGRESS (0/9). HS-93-01 through HS-93-05 have automated
-implementation slices verified through Web/Hub/Swift lanes, API-backed
-production Web captures where recorded, and supplementary simulator evidence,
-but remain open for their owner and physical-device gates.
+implementation slices verified through Web/Hub/Swift lanes; HS-93-06 now has
+Web/Hub conflict and partial-intelligence recovery slices. API-backed production
+Web captures exist where recorded, with supplementary simulator evidence, but
+all six stories remain open for their remaining implementation, owner, and
+physical-device gates.
 Phase 91 remains the roadmap's current phase; Phase 92 substrate is not accepted
 as a simplified product.
 
-**Last updated:** 2026-07-11 (HS-93-05 event-derived first value, durable
-text/audio recovery, paired-delivery identity, bounded default lanes,
-API-backed production Web evidence, and cross-client verification captured;
-full fault/control-mode/owner/device gates remain open).
+**Last updated:** 2026-07-11 (HS-93-06 now adds truthful partial Meeting
+intelligence plus atomic Retry remaining/Skip remaining on History and the Desk;
+full long-capture, real-fault, offline-sync, owner, and physical-device gates
+remain open).
 
 ## Goal
 
@@ -123,7 +125,7 @@ prove the daily experience through sustained owner use on Web, iPhone, and iPad.
 | HS-93-03 | One professional product voice | in progress | [story-03](./story-03-one-product-vocabulary.md) | [progress record](./progress-story-03.md) |
 | HS-93-04 | Power lives on the Desk | in progress | [story-04](./story-04-power-appears-in-context.md) | [progress record](./progress-story-04.md) |
 | HS-93-05 | Your words never disappear | in progress | [story-05](./story-05-your-words-never-disappear.md) | [progress record](./progress-story-05.md) |
-| HS-93-06 | A meeting survives real life | backlog | [story-06](./story-06-a-meeting-survives-real-life.md) | — |
+| HS-93-06 | A meeting survives real life | in progress | [story-06](./story-06-a-meeting-survives-real-life.md) | [progress record](./progress-story-06.md) |
 | HS-93-07 | Secure, Normal, or YOLO | backlog | [story-07](./story-07-decisions-explain-themselves.md) | — |
 | HS-93-08 | The Desk works for every body | backlog | [story-08](./story-08-the-desk-works-for-every-body.md) | — |
 | HS-93-09 | The owner can live here | backlog | [story-09](./story-09-the-owner-can-live-here.md) | — |
@@ -174,6 +176,24 @@ factual timeout actions, event-derived counters, and one-effect reconnect with
 synthetic content. The story remains open for the complete real fault matrix,
 active-capture interruption, alternate actions, HS-93-07 control modes, owner
 observation, and physical Web/iPhone/iPad evidence.
+
+HS-93-06 now carries two owner-visible recovery slices. First, equal-clock
+Meeting divergence that was already retained by the hub now has an explicit
+decision path. History and the Meeting's Desk pull-out show both exact versions
+and require a Keep-current, Use-synced, or named destructive deletion choice.
+Incoming content replaces the same Meeting identity and resolves atomically;
+malformed or substituted content refuses with both versions retained.
+
+Second, deferred routed-intelligence failures no longer become Ready after base
+analysis succeeds. The Meeting stays `partial`; transcript, summary/topics/
+actions, and completed artifacts remain saved; aftercare-ready is withheld; and
+successful plugin keys are deduplicated when only unresolved keys retry. The
+shared History/Desk card names retained and remaining work and provides atomic
+`Retry remaining` and audited `Skip remaining` decisions while refusing to race
+a running worker. API-backed production captures prove partial, skipped, and
+requeued Web states with zero failed API responses. The story remains open for
+native parity, long-duration memory/checkpoint traces, the complete real fault
+matrix, airplane-mode exactly-once sync, and owner and physical-device evidence.
 
 Phase 91 remains the roadmap's current phase and its owner/Swift close gate is
 non-waivable. Phase 92 still has broad automated implementation but no accepted
@@ -232,6 +252,17 @@ use; no final summary exists.
   device-local editable text plus a stable delivery id, and a hub claim/Receipt
   before the desktop effect. An indeterminate effect remains pending and is
   never replayed automatically — HS-93-05 implementation contract.
+- 2026-07-11 — A Meeting sync conflict stays unresolved until the owner chooses
+  the current or incoming version at the Meeting subject. Applying incoming
+  content and resolving the retained conflict is one transaction; deletion is
+  named explicitly, and no keep-both claim exists without creating another
+  object — HS-93-06 conflict-recovery contract.
+- 2026-07-11 — Deferred Meeting intelligence becomes Ready only after every
+  routed plugin is resolved. Partial work retains the Meeting, transcript, base
+  analysis, artifacts, failed queue row, and exact remaining keys; Retry and
+  Skip are atomic Meeting-scoped decisions that cannot overwrite a running job,
+  and Skip never sets an intelligence completion timestamp — HS-93-06
+  partial-intelligence contract.
 - 2026-07-11 — Phase 91 remains current and the roadmap pointer does not move —
   Delivery Workbench live state.
 

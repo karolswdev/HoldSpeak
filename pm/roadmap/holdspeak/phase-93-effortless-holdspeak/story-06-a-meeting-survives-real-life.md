@@ -2,7 +2,9 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** backlog
+- **Status:** in progress — explicit Web/Hub conflict and partial-intelligence
+  recovery are verified; long-run, physical fault, offline-sync, owner, and
+  physical-device gates remain open
 - **Depends on:** HS-93-02, HS-93-03
 - **Unblocks:** HS-93-08, HS-93-09
 - **Owner:** unassigned
@@ -64,6 +66,43 @@ offline sync, and conflict recovery work on physical clients.
 
 Approximately flat memory requires a documented tolerance derived from observed
 steady-state behavior; do not invent a threshold before the first trace.
+
+## Implementation progress — 2026-07-11
+
+The first vertical slice closes the previously stored-but-unusable Meeting
+sync-conflict loop. Equal-clock divergence now remains unresolved until the
+owner explicitly chooses `Keep current Meeting` or `Use synced Meeting` from
+either History or the Meeting's Desk pull-out. Both versions show title,
+capture state, transcript count/latest text, tags, and provenance before the
+choice. An incoming tombstone is named as the destructive `Delete this Meeting
+from this device` action; there is no fictitious keep-both option.
+
+The hub applies an incoming version and marks the conflict resolved in one
+SQLite transaction, preserving the same Meeting identity. Either retained
+choice advances beyond the contested sync clock so the next pass converges on
+the owner's decision. A mismatched or unreadable incoming value refuses without
+changing either version. The API surface manifest and focused Python/React
+regression proof are captured in [progress-story-06.md](./progress-story-06.md).
+
+This does not satisfy the story's physical conflict walk or any long-capture,
+fault, offline-sync, or owner gate. No acceptance checkbox is changed.
+
+The second vertical slice removes a false-completion path from deferred Meeting
+intelligence. A routed plugin error, timeout, capability block, or unresolved
+queue state now leaves the Meeting `partial`, retains the saved transcript,
+base analysis, and successfully produced artifacts, keeps the failed job
+recoverable, and withholds both Ready and the aftercare-ready broadcast. Retry
+deduplicates successful plugin keys and executes only unresolved keys.
+
+One Meeting-scoped recovery contract names completed and remaining work in both
+History and the Desk pull-out. `Retry remaining` atomically refuses a running
+job and requeues the same Meeting identity with a fresh bounded attempt budget.
+`Skip remaining` refuses a running job, deletes only the remaining queue item,
+records an audited `skipped` outcome, advances the Meeting sync clock, and
+leaves `intel_completed_at` empty. Production-Web implementation captures prove
+the partial, skipped, and requeued states against an isolated real Hub/database.
+The failed-intelligence acceptance criterion remains unchecked until a real
+model fault is walked on production Web and physical clients with owner review.
 
 Bundling note: this initial Phase-93 scaffold is intentionally committed with
 the HS-93-01 through HS-93-05 in-progress implementation slices because the

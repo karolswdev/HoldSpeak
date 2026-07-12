@@ -15,6 +15,8 @@ import {
   Toolbar,
 } from "../components/signal/Signal";
 import { apiBlob, apiFetch, readableError, type JsonRecord } from "../lib/api";
+import { MeetingConflictRecovery } from "../meetings/MeetingConflictRecovery";
+import { MeetingIntelRecovery } from "../meetings/MeetingIntelRecovery";
 import {
   ConfirmAction,
   PageHero,
@@ -54,6 +56,12 @@ function displayState(value: unknown): string {
     recoverable: "Recovery available",
     recording: "Recording",
     finalized: "Saved",
+    error: "Intelligence failed",
+    partial: "Intelligence incomplete",
+    skipped: "Intelligence skipped",
+    queued: "Intelligence queued",
+    running: "Intelligence running",
+    ready: "Intelligence ready",
   };
   return (
     known[state] ||
@@ -305,6 +313,26 @@ function MeetingDetail({
             {`Meeting saved · ${String(detail.capture_status)}${detail.capture_failure ? ` · ${String(detail.capture_failure)}` : ""}. The transcript below is the last durable checkpoint, not false completion.`}
           </InlineMessage>
         ) : null}
+        <MeetingConflictRecovery
+          meetingId={id}
+          onResolved={(result) => {
+            onDeleted();
+            if (result.deleted) {
+              onClose();
+            } else if (result.meeting) {
+              setDetail(result.meeting);
+            }
+          }}
+        />
+        <MeetingIntelRecovery
+          meetingId={id}
+          onChanged={async () => {
+            setDetail(
+              await apiFetch(`/api/meetings/${encodeURIComponent(id)}`),
+            );
+            onDeleted();
+          }}
+        />
         {active === "transcript" ? (
           segments.length ? (
             <ol className="transcript-list">
@@ -797,14 +825,20 @@ export default function HistoryPage() {
                   <StatusPill
                     tone={
                       row.status === "failed" ||
-                      row.intel_status === "import_failed" ||
+                      ["error", "failed", "import_failed"].includes(
+                        String(row.intel_status ?? ""),
+                      ) ||
                       ["capture_failed", "recoverable", "recording"].includes(
                         String(row.capture_status ?? ""),
                       )
                         ? "error"
-                        : row.status === "complete"
-                          ? "success"
-                          : "neutral"
+                        : ["partial", "skipped", "queued"].includes(
+                              String(row.intel_status ?? ""),
+                            )
+                          ? "warning"
+                          : row.status === "complete"
+                            ? "success"
+                            : "neutral"
                     }
                   >
                     {displayState(
