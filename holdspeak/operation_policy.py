@@ -158,7 +158,10 @@ def operation_for_proposal(
 
 
 def grant_matches(
-    grant: Optional[Mapping[str, Any]], operation: OperationDescriptor
+    grant: Optional[Mapping[str, Any]],
+    operation: OperationDescriptor,
+    *,
+    mode: Optional[str] = None,
 ) -> bool:
     if not grant or str(grant.get("state") or "") != "active":
         return False
@@ -169,6 +172,9 @@ def grant_matches(
     if str(grant.get("effect_class") or "") != operation.effect_class:
         return False
     if str(grant.get("destination") or "") != operation.destination:
+        return False
+    grant_mode = str(grant.get("control_mode") or "").strip().lower()
+    if mode and grant_mode and grant_mode != normalize_control_mode(mode):
         return False
     allowed_data = {str(item) for item in grant.get("data_classes", [])}
     if not set(operation.data_classes).issubset(allowed_data):
@@ -238,29 +244,49 @@ def resolve_policy(
         )
 
     if operation.family == "coder_steering":
-        # YOLO steering is delivered in a later HS-93-07 slice. Until the
-        # registered-session execution path consumes posture authority itself,
-        # this known family remains eligible but explicitly grant-gated.
-        matched = grant_matches(grant, operation)
+        matched = selected != "yolo" and grant_matches(grant, operation, mode=selected)
+        posture_allowed = selected == "yolo" and operation.fixed_destination
+        refused = selected == "yolo" and not operation.fixed_destination
+        allowed = posture_allowed or matched
         return PolicyDecision(
             mode=selected,
             source=source,
             precedence=precedence,
-            outcome="allowed" if matched else "grant_required",
-            reason_code="steering_grant_active"
-            if matched
-            else "steering_grant_required",
+            outcome="allowed"
+            if allowed
+            else "refused"
+            if refused
+            else "grant_required",
+            reason_code=(
+                "registered_steering_posture_allowed"
+                if posture_allowed
+                else "steering_grant_active"
+                if matched
+                else "registered_steering_destination_required"
+                if refused
+                else "steering_grant_required"
+            ),
             consequence="execute_now",
-            authority_basis="scoped_grant" if matched else "none",
-            next_state="execute_now" if matched else "awaiting_grant",
-            eligible=True,
+            authority_basis=(
+                "control_posture"
+                if posture_allowed
+                else "scoped_grant"
+                if matched
+                else "none"
+            ),
+            next_state="execute_now"
+            if allowed
+            else "refused"
+            if refused
+            else "awaiting_grant",
+            eligible=not refused,
             requires_review=False,
             requires_authorization=False,
-            requires_grant=True,
+            requires_grant=selected != "yolo",
         )
 
     if operation.family == "external_write":
-        scoped = grant_matches(grant, operation)
+        scoped = grant_matches(grant, operation, mode=selected)
         posture_allowed = selected == "yolo" and operation.fixed_destination
         allowed = posture_allowed or scoped or explicit_authorization
         refused = selected == "yolo" and not operation.fixed_destination and not allowed

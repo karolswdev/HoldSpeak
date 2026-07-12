@@ -92,42 +92,47 @@ SQLCipher) becomes warranted and should be its own story.
    a live Coder session is a this-device consequential act (nothing leaves the
    machine), gated by a consent model rather than an egress row. Watching is
    free: the pull-out's peek is read-only, hash-gated, never a keystroke.
-   Steering requires an **arming grant**: issued per session by an explicit
-   Desk act, TTL'd by Control mode (5 min Secure, 15 min Normal, 60 min YOLO;
-   60 min hard cap), pinned to the pane's
-   unique tmux `%N` identity at grant time, and held **in memory only**, so a
-   hub restart disarms everything. Every keystroke re-verifies that the
-   registry's current pane still resolves to the pinned identity; a recycled
-   or retargeted pane refuses AND revokes the grant. Expiry is checked on
-   every read; disarm is one act. Enforcement lives in one hub-side
-   chokepoint, not in any UI. Steers within an armed window are auto-approved
-   by the grant and every delivery (and refusal) is audited.
+   Secure and Normal steering require an **arming grant**: issued per session
+   by an explicit Desk act, TTL'd by Control mode (5 min Secure, 15 min Normal;
+   60 min hard cap), pinned to the pane's unique tmux `%N` identity, and held
+   **in memory only**, so a hub restart disarms everything. YOLO does not ask
+   for that arm grant for text and allowed-key delivery to a registered session
+   or exact `pane:%N`. The pane id captured by peek rides the delivery request;
+   the chokepoint re-resolves the registry target immediately before every send
+   and refuses a missing, recycled, or retargeted pane. It sends only to the
+   verified canonical `%N`. Mode changes invalidate old grants. Enforcement
+   lives in one hub-side chokepoint, not in either client. Every delivery and
+   refusal is audited with its operation-policy snapshot and projects as a
+   source-linked Desk Receipt.
 
-   **Full manipulation** widens the reach without loosening the consent.
+   **Full manipulation** widens the reach without loosening the invariants.
    (a) *Any key*, not just text: control and named keys (`C-c`, `Escape`,
    arrows) go through a second chokepoint, `coder_steering.deliver_keys`, with
-   the same grant re-check and audit; a named key must be on an allow-list or it
-   is refused by name and never handed to `tmux`, so an arbitrary string can
-   never become a keystroke. (b) *Any pane*, not just registered sessions: a
+   the same authority and identity check plus audit; a named key must be on an
+   allow-list or it is refused by name and never handed to `tmux`, so an
+   arbitrary string can never become a keystroke. (b) *Any pane*, not just
+   registered sessions: a
    `pane:%N` key steers a raw tmux pane (one you started by hand), pinned and
-   re-verified exactly like a tracked session; watching any pane is free,
-   manipulating any pane is armed. (c) *Any configured machine*:
+   re-verified exactly like a tracked session; watching any pane is free, and
+   Secure/Normal manipulation is armed while eligible YOLO steering uses the
+   exact pane as posture authority. (c) *Any configured machine*:
    `coder_steering_relay` forwards a command to a node named in
    `HOLDSPEAK_STEER_NODES`, which executes it against its own tmux.
-   **The machine that types owns the grant and writes the audit**; the hub is a
-   relay, never the authority over another machine's terminal, and only the
-   command (text/keys) plus the node's own bearer token cross the wire. A node
-   that does not answer refuses by name (`node_offline`), never a hang. Both
-   chokepoints are pinned by a census test; there is no autonomous path, so a
-   person is behind every key.
+   **The machine that types resolves the policy or grant and writes the audit**;
+   the hub is a relay, never the authority over another machine's terminal, and
+   only the command (text/keys), expected pane identity, and the node's own
+   bearer token cross the wire. A node that does not answer refuses by name
+   (`node_offline`), never a hang. Both chokepoints are pinned by a census test;
+   YOLO still exposes only the registered text/allowed-key capability, not an
+   arbitrary remote executable operation.
 
    **The session factory** (`coder_factory.py`) adds the lifecycle on the same
    terms. `spawn` and `rename` take a session name, which is user input, so the
-   name is held to a strict allow-list (first character a letter or underscore,
+   name is held to a strict allow-list (first character alphanumeric or underscore,
    so it can never be read as a flag) and passed as its own argument, never a
    shell string; a bad name refuses by name before tmux runs. `kill` is the most
-   consequential act, so it is gated exactly like a steer: it requires the
-   grant, re-verifies the pinned pane, drops the grant afterward, and audits.
+   consequential act, so it retains a separate arm grant: it re-verifies the
+   pinned pane, drops the grant afterward, and audits.
    The destructive tmux verbs live in that one module, pinned by a census, and
    every lifecycle act is audited with a plain heading.
 6. **Rails as material** (`grounding_rails.py`, `rails_observer.py`):

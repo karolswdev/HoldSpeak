@@ -65,14 +65,29 @@ def test_dictation_matrix() -> None:
     )
 
 
-@pytest.mark.parametrize("mode", ["safe", "neutral", "yolo"])
-def test_steering_always_requires_an_exact_grant(mode: str) -> None:
+@pytest.mark.parametrize("mode", ["safe", "neutral"])
+def test_secure_and_normal_steering_require_an_exact_grant(mode: str) -> None:
     operation = _operation("coder_steering")
     assert resolve_policy(operation, mode=mode).outcome == "grant_required"
     assert (
         resolve_policy(operation, mode=mode, grant=_grant(operation)).outcome
         == "allowed"
     )
+
+
+def test_yolo_steering_uses_registered_pane_posture_authority() -> None:
+    registered = _operation("coder_steering", fixed_destination=True)
+    decision = resolve_policy(registered, mode="yolo")
+    assert decision.outcome == "allowed"
+    assert decision.reason_code == "registered_steering_posture_allowed"
+    assert decision.authority_basis == "control_posture"
+    assert decision.requires_grant is False
+
+    unregistered = resolve_policy(
+        _operation("coder_steering", fixed_destination=False), mode="yolo"
+    )
+    assert unregistered.outcome == "refused"
+    assert unregistered.reason_code == "registered_steering_destination_required"
 
 
 def test_external_write_matrix_and_explicit_authorization() -> None:
@@ -100,6 +115,14 @@ def test_grant_scope_mismatch_refuses() -> None:
         resolve_policy(operation, mode="neutral", grant=grant).outcome
         == "authorization_required"
     )
+
+
+def test_grant_from_a_different_control_mode_does_not_authorize() -> None:
+    operation = _operation("coder_steering", fixed_destination=True)
+    grant = _grant(operation)
+    grant["control_mode"] = "safe"
+    decision = resolve_policy(operation, mode="neutral", grant=grant)
+    assert decision.outcome == "grant_required"
 
 
 def test_sync_matrix_and_unsupported_fail_closed() -> None:

@@ -96,6 +96,11 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
                 if previous != requested
                 else 0
             )
+            from ... import coder_steering
+
+            revoked_coder_grants = (
+                coder_steering.clear_grants() if previous != requested else 0
+            )
             return JSONResponse(
                 {
                     "control_mode": requested,
@@ -105,6 +110,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
                     "applies_to": "future_operations_only",
                     "source": "config",
                     "revoked_grants": revoked,
+                    "revoked_coder_grants": revoked_coder_grants,
                 }
             )
         except Exception as exc:

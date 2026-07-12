@@ -16,8 +16,9 @@ def test_history_uses_bounded_archive_and_detail_sections() -> None:
 def test_history_keeps_approval_and_export_governance() -> None:
     page = (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
     assert '"approved"' in page and '"rejected"' in page
-    assert 'row.status !== "proposed"' in page
+    assert 'row.status === "proposed" && !refused' in page
+    assert 'policy.outcome === "refused"' in page
+    assert "row.policy_snapshot" in page and "row.operation" in page
     assert "apiBlob" in page
-    assert "Each creates an exact-message proposed action" in page
-    assert "Approval sends" in page
+    assert "commitment" in page and "authority_basis" in page
     assert "ConfirmAction" in page

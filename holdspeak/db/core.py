@@ -46,7 +46,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 21  # v21: content-free first-value events + idempotent paired delivery (HS-93-05)
+SCHEMA_VERSION = 22  # v22: steering operation/policy receipts (HS-93-07)
 
 
 class SchemaVersionError(RuntimeError):
@@ -1190,7 +1190,9 @@ CREATE TABLE IF NOT EXISTS steering_audit (
     grounding_json TEXT NOT NULL DEFAULT '[]',
     submit INTEGER NOT NULL DEFAULT 1,
     outcome TEXT NOT NULL,
-    detail TEXT
+    detail TEXT,
+    operation_json TEXT NOT NULL DEFAULT '{}',
+    policy_snapshot_json TEXT NOT NULL DEFAULT '{}'
 );
 CREATE INDEX IF NOT EXISTS idx_steering_audit_ts ON steering_audit(ts);
 CREATE INDEX IF NOT EXISTS idx_steering_audit_key ON steering_audit(session_key);
@@ -1553,6 +1555,23 @@ class Database:
                         WHEN status = 'failed' THEN 'failed'
                         ELSE 'not_started' END"""
             )
+        # v22 (HS-93-07): the existing steering audit is also the source of
+        # Coder Receipts. Preserve the exact operation and central policy
+        # decision used by each new attempt; old rows retain honest empty
+        # snapshots and continue projecting with their legacy grant basis.
+        steering_cols = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(steering_audit)").fetchall()
+        }
+        steering_receipt_columns = {
+            "operation_json": "TEXT NOT NULL DEFAULT '{}'",
+            "policy_snapshot_json": "TEXT NOT NULL DEFAULT '{}'",
+        }
+        for column, sql_type in steering_receipt_columns.items():
+            if steering_cols and column not in steering_cols:
+                conn.execute(
+                    f"ALTER TABLE steering_audit ADD COLUMN {column} {sql_type}"
+                )
         conn.execute(
             """
             INSERT OR IGNORE INTO activity_privacy_settings

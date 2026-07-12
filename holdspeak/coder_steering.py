@@ -24,7 +24,7 @@ import subprocess
 import threading
 import time
 from datetime import datetime
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Mapping, Optional
 
 Runner = Callable[..., "subprocess.CompletedProcess[str]"]
 Clock = Callable[[], float]
@@ -170,8 +170,9 @@ def awaiting_transitions(
 
 # --- The arming grant (HS-87-02): consent with a countdown ---------------
 #
-# Watching is free; ANY keystroke toward a pane requires an active
-# grant for that session. One file owns consent: the store is
+# Watching is free; Secure/Normal keystrokes require an active grant for that
+# session. YOLO consumes registered-pane posture authority later in the same
+# chokepoint. One file owns the bounded grant store: it is
 # in-memory and module-level — a hub restart disarms everything (fail
 # closed, a phase decision, not a gap). Expiry is a lazy sweep on
 # read; there is no background timer. The clock is monotonic so a
@@ -183,6 +184,7 @@ ARM_MIN_TTL_SECONDS = 10
 
 _GRANTS: dict[str, dict[str, Any]] = {}
 _GRANTS_LOCK = threading.Lock()
+_PANE_ID_RE = re.compile(r"^%[0-9]+$")
 
 
 def resolve_pane_identity(
@@ -340,20 +342,39 @@ def active_grants(*, clock: Clock = time.monotonic) -> dict[str, dict[str, Any]]
     now = clock()
     with _GRANTS_LOCK:
         return {
-            key: {
-                "pane_id": grant["pane_id"],
-                "expires_in_seconds": max(0, int(grant["expires_at"] - now)),
-                "issued_at": grant["issued_at"],
-                "actor": grant["actor"],
-                "operation_family": grant["operation_family"],
-                "effect_class": grant["effect_class"],
-                "destination": grant["destination"],
-                "data_classes": list(grant["data_classes"]),
-                "resource_scope": grant["resource_scope"],
-                "control_mode": grant["control_mode"],
-            }
+            key: _grant_view(grant, now=now)
             for key, grant in _GRANTS.items()
         }
+
+
+def _grant_view(grant: Mapping[str, Any], *, now: float) -> dict[str, Any]:
+    return {
+        "pane_id": grant["pane_id"],
+        "expires_in_seconds": max(0, int(grant["expires_at"] - now)),
+        "issued_at": grant["issued_at"],
+        "actor": grant["actor"],
+        "operation_family": grant["operation_family"],
+        "effect_class": grant["effect_class"],
+        "destination": grant["destination"],
+        "data_classes": list(grant["data_classes"]),
+        "resource_scope": grant["resource_scope"],
+        "control_mode": grant["control_mode"],
+    }
+
+
+def policy_grant(
+    key: str, *, clock: Clock = time.monotonic
+) -> Optional[dict[str, Any]]:
+    """Return the grant snapshot without consuming expiry.
+
+    The resolver needs the exact binding, but ``require_grant`` remains the
+    authoritative expiry/identity check so an expired delivery keeps its typed
+    ``expired`` refusal and revocation frame.
+    """
+    now = clock()
+    with _GRANTS_LOCK:
+        grant = _GRANTS.get(key)
+        return {**_grant_view(grant, now=now), "state": "active"} if grant else None
 
 
 def require_grant(
@@ -407,17 +428,101 @@ def require_grant(
     }
 
 
-def clear_grants() -> None:
-    """Test seam. A real restart clears the store by construction."""
+def require_posture_authority(
+    current_target: Optional[str],
+    expected_pane_id: Optional[str],
+    *,
+    runner: Optional[Runner] = None,
+) -> dict[str, Any]:
+    """Verify a registered YOLO target without manufacturing an arm grant.
+
+    The expected ``%N`` identity comes from the read-side session/pane snapshot
+    and rides the delivery request. The registry target is resolved again now;
+    the send may use only that freshly verified canonical id. A missing,
+    malformed, gone, or changed identity refuses before one keystroke.
+    """
+    expected = str(expected_pane_id or "").strip()
+    if not _PANE_ID_RE.fullmatch(expected):
+        return {
+            "status": "pane_identity_required",
+            "detail": "a registered pane identity is required — nothing was typed",
+        }
+    if not current_target:
+        return {
+            "status": "pane_gone",
+            "detail": "registry has no pane — nothing was typed",
+        }
+    identity = resolve_pane_identity(current_target, runner=runner)
+    if identity["status"] != "ok":
+        return identity
+    if identity["pane_id"] != expected:
+        return {
+            "status": "pane_mismatch",
+            "detail": (
+                f"pane {identity['pane_id']!r} is not the expected "
+                f"{expected!r} — nothing was typed"
+            ),
+        }
+    return {"status": "ok", "pane_id": expected}
+
+
+def _require_delivery_authority(
+    key: str,
+    current_target: Optional[str],
+    *,
+    expected_pane_id: Optional[str],
+    policy_snapshot: Optional[Mapping[str, Any]],
+    runner: Optional[Runner],
+    clock: Clock,
+) -> dict[str, Any]:
+    """Consume the central decision, then run the invariant check it names."""
+    policy = dict(policy_snapshot or {})
+    if not policy:
+        return require_grant(key, current_target, runner=runner, clock=clock)
+    if policy.get("outcome") != "allowed":
+        if policy.get("outcome") == "grant_required":
+            return {"status": "unarmed", "detail": "arm this exact pane to steer"}
+        reason = str(policy.get("reason_code") or "steering_policy_refused")
+        status = (
+            "pane_identity_required"
+            if reason == "registered_steering_destination_required"
+            else "policy_refused"
+        )
+        return {
+            "status": status,
+            "detail": (
+                "a current registered session and pane identity are required — "
+                "nothing was typed"
+                if status == "pane_identity_required"
+                else f"operation policy refused steering: {reason}"
+            ),
+        }
+    basis = str(policy.get("authority_basis") or "")
+    if basis == "control_posture":
+        return require_posture_authority(
+            current_target, expected_pane_id, runner=runner
+        )
+    if basis == "scoped_grant":
+        return require_grant(key, current_target, runner=runner, clock=clock)
+    return {
+        "status": "authority_unresolved",
+        "detail": "operation policy supplied no usable steering authority",
+    }
+
+
+def clear_grants() -> int:
+    """Clear the in-memory store and return how many grants were revoked."""
     with _GRANTS_LOCK:
+        count = len(_GRANTS)
         _GRANTS.clear()
+    return count
 
 
 # --- Deliver (HS-87-03): THE chokepoint ------------------------------------
 #
-# The only path by which steering text reaches a pane. require_grant
-# verifies the pinned identity against what the registry points at
-# NOW; the send itself targets the verified `%N` (not the target
+# The only path by which steering text reaches a pane. The central policy
+# selects an exact grant or registered-pane posture check; either re-verifies
+# what the registry points at NOW. The send targets the verified `%N` (not the target
 # string, so nothing can re-resolve between check and keystroke); the
 # send craft is `tmux_transport.send_text_to_pane` verbatim — literal
 # text, submit as its own raw `\r`. Every attempt lands one audit
@@ -430,6 +535,57 @@ def _default_audit(**kw: Any) -> int:
     return hsdb.get_database().steering.record(**kw)
 
 
+def _audit_delivery_result(
+    record: Callable[..., int],
+    result: dict[str, Any],
+    *,
+    key: str,
+    agent: str,
+    pane_id: Optional[str],
+    text: str,
+    grounding: list[Any],
+    submit: bool,
+    operation: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    operation_payload = dict(operation)
+    policy_payload = dict(policy)
+    try:
+        result["audit_id"] = record(
+            session_key=key,
+            agent=agent,
+            pane_id=pane_id,
+            text=text,
+            grounding=grounding,
+            submit=submit,
+            outcome=result["status"],
+            detail=result.get("detail"),
+            operation=operation_payload,
+            policy_snapshot=policy_payload,
+        )
+    except Exception:
+        result["audit_id"] = None
+    if operation_payload:
+        result["operation"] = operation_payload
+    if policy_payload:
+        result["policy"] = policy_payload
+    if result["audit_id"] is not None:
+        result["receipt"] = {
+            "id": f"steering:{result['audit_id']}",
+            "source_ref": f"coder_session:{key}",
+            "actual_destination": pane_id
+            or operation_payload.get("destination")
+            or "unresolved pane",
+            "authority_basis": policy_payload.get("authority_basis")
+            or "armed_pane_grant",
+            "control_mode": policy_payload.get("mode"),
+            "policy_version": policy_payload.get("policy_version"),
+            "effect_class": operation_payload.get("effect_class"),
+            "outcome": result["status"],
+        }
+    return result
+
+
 def deliver(
     key: str,
     text: str,
@@ -438,12 +594,15 @@ def deliver(
     agent: str = "",
     submit: bool = True,
     grounding_refs: Optional[list[Any]] = None,
+    expected_pane_id: Optional[str] = None,
+    operation: Optional[Mapping[str, Any]] = None,
+    policy_snapshot: Optional[Mapping[str, Any]] = None,
     runner: Optional[Runner] = None,
     clock: Clock = time.monotonic,
     transport: Optional[Callable[..., Any]] = None,
     audit: Optional[Callable[..., int]] = None,
 ) -> dict[str, Any]:
-    """Deliver one steer into an armed session's verified pane.
+    """Deliver one steer into a policy-authorized, verified pane.
 
     Statuses: ``delivered``, ``empty_text``, the `require_grant`
     refusals verbatim (``unarmed`` / ``expired`` / ``pane_mismatch`` /
@@ -453,26 +612,33 @@ def deliver(
     """
     record = audit or _default_audit
     refs = list(grounding_refs or [])
+    operation_payload = dict(operation or {})
+    policy_payload = dict(policy_snapshot or {})
 
     def _audited(result: dict[str, Any], *, pane_id: Optional[str]) -> dict[str, Any]:
-        try:
-            result["audit_id"] = record(
-                session_key=key,
-                agent=agent,
-                pane_id=pane_id,
-                text=text,
-                grounding=refs,
-                submit=submit,
-                outcome=result["status"],
-                detail=result.get("detail"),
-            )
-        except Exception:
-            result["audit_id"] = None
-        return result
+        return _audit_delivery_result(
+            record,
+            result,
+            key=key,
+            agent=agent,
+            pane_id=pane_id,
+            text=text,
+            grounding=refs,
+            submit=submit,
+            operation=operation_payload,
+            policy=policy_payload,
+        )
 
     if not str(text or "").strip():
         return _audited({"status": "empty_text"}, pane_id=None)
-    check = require_grant(key, current_target, runner=runner, clock=clock)
+    check = _require_delivery_authority(
+        key,
+        current_target,
+        expected_pane_id=expected_pane_id,
+        policy_snapshot=policy_snapshot,
+        runner=runner,
+        clock=clock,
+    )
     if check["status"] != "ok":
         return _audited(dict(check), pane_id=None)
     pane_id = check["pane_id"]
@@ -566,14 +732,16 @@ def deliver_keys(
     *,
     current_target: Optional[str],
     agent: str = "",
+    expected_pane_id: Optional[str] = None,
+    operation: Optional[Mapping[str, Any]] = None,
+    policy_snapshot: Optional[Mapping[str, Any]] = None,
     runner: Optional[Runner] = None,
     clock: Clock = time.monotonic,
     transport: Optional[Callable[..., Any]] = None,
     audit: Optional[Callable[..., int]] = None,
 ) -> dict[str, Any]:
-    """Deliver a key sequence into an armed session's verified pane — the
-    control chokepoint, the SAME grant → verify ``%N`` → send → audit shape
-    as :func:`deliver`, sending keys instead of text.
+    """Deliver keys through the same policy → verify ``%N`` → send → audit
+    chokepoint as :func:`deliver`.
 
     Statuses: ``delivered``, ``empty_keys``, ``unknown_key`` (with the
     offending key in ``detail``), the `require_grant` refusals verbatim, or
@@ -583,28 +751,35 @@ def deliver_keys(
     record = audit or _default_audit
     normalized, bad = normalize_keys(keys)
     head = render_keys(normalized)
+    operation_payload = dict(operation or {})
+    policy_payload = dict(policy_snapshot or {})
 
     def _audited(result: dict[str, Any], *, pane_id: Optional[str]) -> dict[str, Any]:
-        try:
-            result["audit_id"] = record(
-                session_key=key,
-                agent=agent,
-                pane_id=pane_id,
-                text=head or (f"<unknown_key: {bad}>" if bad else ""),
-                grounding=[],
-                submit=False,
-                outcome=result["status"],
-                detail=result.get("detail"),
-            )
-        except Exception:
-            result["audit_id"] = None
-        return result
+        return _audit_delivery_result(
+            record,
+            result,
+            key=key,
+            agent=agent,
+            pane_id=pane_id,
+            text=head or (f"<unknown_key: {bad}>" if bad else ""),
+            grounding=[],
+            submit=False,
+            operation=operation_payload,
+            policy=policy_payload,
+        )
 
     if bad is not None:
         return _audited({"status": "unknown_key", "detail": bad}, pane_id=None)
     if not normalized:
         return _audited({"status": "empty_keys"}, pane_id=None)
-    check = require_grant(key, current_target, runner=runner, clock=clock)
+    check = _require_delivery_authority(
+        key,
+        current_target,
+        expected_pane_id=expected_pane_id,
+        policy_snapshot=policy_snapshot,
+        runner=runner,
+        clock=clock,
+    )
     if check["status"] != "ok":
         return _audited(dict(check), pane_id=None)
     pane_id = check["pane_id"]
@@ -650,7 +825,9 @@ __all__ = [
     "normalize_keys",
     "render_keys",
     "peek_pane",
+    "policy_grant",
     "require_grant",
+    "require_posture_authority",
     "resolve_pane_identity",
     "resolve_pane_target",
     "strip_ansi",

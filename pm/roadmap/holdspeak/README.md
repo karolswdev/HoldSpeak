@@ -9,9 +9,10 @@
 pre-close implementation but no accepted owner/device outcome; Phase 93,
 Effortless HoldSpeak, IN PROGRESS with HS-93-01 through HS-93-07 carrying
 automated implementation evidence but not yet accepted. HS-93-07 now snapshots
-future-operation policy and lets YOLO execute fixed configured Integrations with
-the posture as authority, no HoldSpeak approval/grant prompt, invariant checks
-intact, and a source-linked Receipt; unknown or unregistered effects refuse.**
+future-operation policy and lets YOLO execute fixed configured Integrations and
+steer a registered, re-verified Coder pane with the posture as authority and no
+HoldSpeak approval/grant/arm prompt. Invariants remain intact, every attempt
+leaves a source-linked Receipt, and unknown or unresolved effects refuse.**
 The Web is
 one Vite/React 19 tree and Phase 92 added substantial language, trust,
 first-value, capture, relationship, capability, destination, authority, and

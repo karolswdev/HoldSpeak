@@ -2,19 +2,19 @@
 
 **Status:** IN PROGRESS (0/9). HS-93-01 through HS-93-05 have automated
 implementation slices verified through Web/Hub/Swift lanes; HS-93-06 now has
-Web/Hub conflict and partial-intelligence recovery slices; HS-93-07 now has a
-versioned configured-Integration control-posture slice. API-backed production
-Web captures exist where recorded, with supplementary simulator evidence, but
-all seven stories remain open for their remaining implementation, owner, and
-physical-device gates.
+Web/Hub conflict and partial-intelligence recovery slices; HS-93-07 now has
+versioned configured-Integration and registered Coder-steering
+control-posture slices. API-backed production Web captures exist where
+recorded, with supplementary simulator evidence, but all seven stories remain
+open for their remaining implementation, owner, and physical-device gates.
 Phase 91 remains the roadmap's current phase; Phase 92 substrate is not accepted
 as a simplified product.
 
-**Last updated:** 2026-07-11 (HS-93-07 is now in progress: policy v2 snapshots
-future-operation posture, configured Integrations execute without a HoldSpeak
-prompt in YOLO, unregistered/unknown effects refuse, and React/Swift render the
-same action and Receipt fields; broader family, owner, and device gates remain
-open).
+**Last updated:** 2026-07-11 (HS-93-07 now carries policy v2 through configured
+Integrations and registered Coder steering. YOLO steers an exact verified pane
+without a HoldSpeak arm prompt; Secure/Normal retain bounded grants; every
+attempt audits the immutable operation/policy and returns a source-linked
+Receipt. Broader family, owner, and device gates remain open).
 
 ## Goal
 
@@ -197,8 +197,8 @@ requeued Web states with zero failed API responses. The story remains open for
 native parity, long-duration memory/checkpoint traces, the complete real fault
 matrix, airplane-mode exactly-once sync, and owner and physical-device evidence.
 
-HS-93-07 now carries its first authority slice through the existing Integration
-lifecycle. Operation-policy v2 snapshots mode, source, reason, authority basis,
+HS-93-07 now carries two authority slices through the existing Integration and
+Coder lifecycles. Operation-policy v2 snapshots mode, source, reason, authority basis,
 destination, effect, eligibility, and next state when a proposal is created, so
 a later posture change cannot widen it. Secure and Normal retain exact
 per-action decisions or bounded scoped grants. YOLO uses the captured posture
@@ -207,12 +207,22 @@ existing parity-checked executor without a HoldSpeak approval/grant prompt, and
 returns the resulting Receipt to the source subject. An unregistered destination
 or unknown operation refuses without entering the Web/native approval queue.
 
-Web Settings, the Desk Integration inspector, Meeting History, Desk Receipts,
-and flagship Swift Settings/Queue/Receipt details consume the shared policy
-fields rather than a private client matrix. The story remains open for the full
-dictation/inference/Coder/Mission-Control/sync/cadence/destructive matrix,
-grant-use source Receipts, Qlippy treatment, production walks, owner prediction,
-and physical iPhone/iPad evidence.
+Coder text and allowed-key delivery now consumes the same resolver. Secure and
+Normal retain the exact, expiring pane grant; YOLO uses a registered session or
+exact raw pane as posture authority without a HoldSpeak arm prompt. The pane id
+captured by peek rides the request, the typing node re-resolves the target
+immediately before delivery, and missing or changed identity refuses before a
+keystroke. The key allow-list is unchanged. Every attempt stores the operation
+and policy snapshot in the existing audit and projects a source-linked Coder
+Receipt. The Desk keeps factory controls separate; their full policy
+classification remains open.
+
+Web Settings, the Desk Integration inspector, Meeting History, Coder pull-out,
+Desk Receipts, and flagship Swift Settings/Queue/Coder/Receipt details consume
+the shared policy fields rather than a private client matrix. The story remains
+open for the full dictation/inference/Coder-factory/Mission-Control/sync/cadence/
+destructive matrix, general grant-use source Receipts, Qlippy treatment,
+production walks, owner prediction, and physical iPhone/iPad evidence.
 
 Phase 91 remains the roadmap's current phase and its owner/Swift close gate is
 non-waivable. Phase 92 still has broad automated implementation but no accepted
@@ -282,6 +292,11 @@ use; no final summary exists.
   Skip are atomic Meeting-scoped decisions that cannot overwrite a running job,
   and Skip never sets an intelligence completion timestamp — HS-93-06
   partial-intelligence contract.
+- 2026-07-11 — Registered Coder text and allowed-key delivery consumes central
+  policy: Secure/Normal use a bounded exact-pane grant; YOLO uses posture with no
+  arm prompt; the typing node still re-resolves the read-side `%N`, preserves
+  the key allow-list, and records a source-linked Receipt for every attempt.
+  Factory rename/kill authority remains separate — HS-93-07 Coder contract.
 - 2026-07-11 — Phase 91 remains current and the roadmap pointer does not move —
   Delivery Workbench live state.
 

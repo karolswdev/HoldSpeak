@@ -1,8 +1,6 @@
 // The session pull-out (HS-87-01/02) — attach + arm, in the desk
-// grammar. Watching is free; steering is armed: the ARM chip is a
-// press-and-hold (the desk's consent gesture, the record-orb family),
-// armed becomes the countdown, one tap disarms. Enforcement lives
-// hub-side — this surface can only ask.
+// grammar. Watching is free. Secure/Normal use an exact pane grant; a Hub
+// policy decision can make a registered pane directly steerable in YOLO.
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { MicButton } from "./MicButton";
@@ -19,6 +17,7 @@ import {
 import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
+import { controlModeLabel } from "../../lib/productLanguage";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -34,17 +33,16 @@ const PANE_STATE_LABEL: Record<string, string> = {
   idle: "…",
 };
 
-const HOLD_TO_ARM_MS = 600;
-
 function ArmChip() {
   const armed = useSteering((s) => s.armed);
   const armedUntil = useSteering((s) => s.armedUntil);
   const armError = useSteering((s) => s.armError);
   const armCommitment = useSteering((s) => s.armCommitment);
   const stale = useSteering((s) => Boolean(s.session?.stale));
+  const postureAuthorized = useSteering((s) => s.postureAuthorized);
+  const policy = useSteering((s) => s.policy);
+  const paneId = useSteering((s) => s.paneId);
   const [remaining, setRemaining] = useState(0);
-  const [holding, setHolding] = useState(false);
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!armed || armedUntil === null) return;
@@ -54,13 +52,28 @@ function ArmChip() {
     return () => clearInterval(t);
   }, [armed, armedUntil]);
 
-  const cancelHold = () => {
-    setHolding(false);
-    if (holdTimer.current !== null) {
-      clearTimeout(holdTimer.current);
-      holdTimer.current = null;
-    }
-  };
+  if (postureAuthorized) {
+    return (
+      <span className="desk-arm-wrap">
+        <span
+          className="desk-chip desk-arm-chip is-armed"
+          title={`Registered ${paneId || "pane"}; steering runs directly and leaves a Receipt`}
+        >
+          {controlModeLabel(policy?.mode || "yolo")} · direct
+        </span>
+        {armed ? (
+          <button
+            type="button"
+            className="desk-chip quiet"
+            title="Disarm the separate session-control grant"
+            onClick={() => void useSteering.getState().disarm()}
+          >
+            Session controls {mmss(remaining)}
+          </button>
+        ) : null}
+      </span>
+    );
+  }
 
   if (armed) {
     return (
@@ -78,21 +91,13 @@ function ArmChip() {
     <span className="desk-arm-wrap">
       <button
         type="button"
-        className={"desk-chip desk-arm-chip" + (holding ? " is-holding" : "")}
+        className="desk-chip desk-arm-chip"
         title={
           stale
-            ? "stale — arming will refuse"
-            : `Hold to ${armCommitment.toLowerCase()}`
+            ? "Stale session; arming will refuse"
+            : armCommitment
         }
-        onPointerDown={() => {
-          setHolding(true);
-          holdTimer.current = setTimeout(() => {
-            cancelHold();
-            void useSteering.getState().arm();
-          }, HOLD_TO_ARM_MS);
-        }}
-        onPointerUp={cancelHold}
-        onPointerLeave={cancelHold}
+        onClick={() => void useSteering.getState().arm()}
       >
         {armCommitment}
       </button>
@@ -102,8 +107,8 @@ function ArmChip() {
 }
 
 // The key palette (HS-90-02) — full key control on glass. Each button is
-// ONE real key through `/keys`, shown only in the armed window. `^C` is the
-// loud one (interrupt a runaway); the rest drive a TUI.
+// ONE real key through `/keys`, shown under resolved grant/posture authority.
+// `^C` is the loud one (interrupt a runaway); the rest drive a TUI.
 const KEY_BUTTONS: Array<{
   label: string;
   key: string;
@@ -142,7 +147,9 @@ function KeyPalette() {
           </button>
         ))}
         {keyState === "sent" && (
-          <span className="desk-key-fate desk-steer-sent">✓ {lastKey}</span>
+          <span className="desk-key-fate desk-steer-sent">
+            ✓ {keyDetail || lastKey}
+          </span>
         )}
         {keyState === "refused" && (
           <span className="desk-key-fate desk-arm-refusal">✕ {keyDetail}</span>
@@ -153,7 +160,7 @@ function KeyPalette() {
 }
 
 // The node chip (HS-90-02) — which machine the steering targets. Tap to
-// cycle this Mac → each configured node; a node routes arm/steer/keys
+// cycle this Mac → each configured node; a node routes watch/authority/delivery
 // through the relay. Absent config reads the honest "this Mac".
 function NodeChip() {
   const nodes = useSteering((s) => s.nodes);
@@ -186,8 +193,8 @@ function NodeChip() {
 }
 
 /** The pane picker (HS-90-02) — attach to ANY tmux pane on the machine,
- * not only a tracked session. Watching is free; arm to steer. A launcher
- * mounted on the desk beside the session surface. */
+ * not only a tracked session. Watching is free; policy resolves steering
+ * authority. A launcher mounted on the desk beside the session surface. */
 export function PanePicker() {
   const panes = useSteering((s) => s.panes);
   const panesState = useSteering((s) => s.panesState);
@@ -283,8 +290,8 @@ export function PanePicker() {
 }
 
 // The factory controls (HS-90-03) — rename + kill the open session, on glass.
-// Rendered only while armed: kill is gated like a steer, and rename rides the
-// same deliberate window. Kill is a two-step confirm (it is irreversible).
+// Rendered only with the separate session-control grant: factory authority is
+// deliberately not inherited from direct YOLO steering. Kill is two-step.
 function FactoryControls() {
   const attachedSession = useSteering((s) => s.attachedSession);
   const factoryState = useSteering((s) => s.factoryState);
@@ -376,9 +383,7 @@ function FactoryControls() {
   );
 }
 
-/** The voice-first composer (HS-87-03) — spoken first, typed if you
- * like, Enter its own deliberate chip. Rendered only while armed: the
- * ARM chip in the header IS the unarmed affordance. */
+/** The voice-first composer (HS-87-03), available under resolved authority. */
 function SteerComposer() {
   const steerState = useSteering((s) => s.steerState);
   const steerDetail = useSteering((s) => s.steerDetail);
@@ -463,8 +468,27 @@ function SteerComposer() {
       {steerState === "refused" && (
         <span className="desk-arm-refusal">✕ {steerDetail}</span>
       )}
-      {steerState === "sent" && <span className="desk-steer-sent">✓ sent</span>}
+      {steerState === "sent" && (
+        <span className="desk-steer-sent">✓ {steerDetail || "sent"}</span>
+      )}
     </div>
+  );
+}
+
+function SteeringPolicySummary() {
+  const operation = useSteering((s) => s.operation);
+  const policy = useSteering((s) => s.policy);
+  if (!operation || !policy) return null;
+  const authority =
+    policy.authority_basis === "control_posture"
+      ? `${controlModeLabel(policy.mode || "yolo")} control posture`
+      : "armed pane grant";
+  return (
+    <p className="quiet desk-steering-policy">
+      Send text or allowed keys to pane {operation.destination || "unresolved"}
+      {" · "}
+      {authority} · Receipt after every attempt
+    </p>
   );
 }
 
@@ -569,6 +593,8 @@ export function SessionPullout() {
   const paneDetail = useSteering((s) => s.paneDetail);
   const paneLines = useSteering((s) => s.paneLines);
   const armed = useSteering((s) => s.armed);
+  const postureAuthorized = useSteering((s) => s.postureAuthorized);
+  const paneId = useSteering((s) => s.paneId);
   const { closeSession } = useSteering.getState();
   const ref = useRef<HTMLDivElement | null>(null);
   const preRef = useRef<HTMLPreElement | null>(null);
@@ -655,11 +681,22 @@ export function SessionPullout() {
         )}
       </div>
 
-      {armed && (
+      {(armed || postureAuthorized) && (
         <footer className="desk-pullout-foot">
+          <SteeringPolicySummary />
           <KeyPalette />
           <SteerComposer />
-          <FactoryControls />
+          {armed ? (
+            <FactoryControls />
+          ) : (
+            <button
+              type="button"
+              className="desk-chip quiet"
+              onClick={() => void useSteering.getState().arm()}
+            >
+              Arm pane {paneId || "unresolved"} for rename and kill
+            </button>
+          )}
         </footer>
       )}
       <footer className="desk-pullout-foot">

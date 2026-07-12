@@ -1,18 +1,18 @@
 """Cross-machine steering relay (HS-89-03) — the third limit falls.
 
 Phase 87 could only steer LOCAL tmux. This reaches another machine: the far
-node runs its OWN steering routes + tmux + consent spine; the hub RELAYS a
+node runs its OWN steering routes + tmux + authority spine; the hub RELAYS a
 peek/arm/steer/keys command to it over authenticated HTTP, and the node
-executes against its own local tmux.
+executes against its own local tmux and control posture.
 
-The security model is deliberate: **the machine that types owns the consent
-AND the audit.** The far node checks its own grant and writes its own audit
+The security model is deliberate: **the machine that types owns the authority
+AND the audit.** The far node checks its own policy/grant and writes its own audit
 row for the keystroke it delivers — the hub is a relay, not the authority
 over someone else's terminal. Honest liveness: a node that does not answer in
 time refuses BY NAME (`node_offline`), never a hang, never a fabricated
-success. Only the command (text / keys) + the pane key cross the wire; the
-node resolves its own panes, and no secret leaves the hub beyond the node's
-own bearer token.
+success. Only the command (text / keys), pane key, and expected pane identity
+cross the wire; the node resolves its own panes, and no secret leaves the hub
+beyond the node's own bearer token.
 """
 from __future__ import annotations
 

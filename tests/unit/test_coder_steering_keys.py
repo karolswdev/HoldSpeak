@@ -147,3 +147,25 @@ def test_recycled_pane_refuses_and_revokes_for_keys_too() -> None:
     assert result["status"] == "pane_mismatch"
     assert result.get("revoked") is True
     assert rec.sent == []  # nothing typed into the wrong pane
+
+
+def test_yolo_posture_keeps_the_key_allow_list_and_skips_the_grant() -> None:
+    rec = _Recorder()
+    policy = {"outcome": "allowed", "authority_basis": "control_posture"}
+    result = deliver_keys(
+        "claude:a", ["C-c"],
+        current_target="hs:0.0", expected_pane_id="%9",
+        policy_snapshot=policy, runner=_identity_runner("%9"),
+        transport=rec.transport, audit=rec.audit,
+    )
+    assert result["status"] == "delivered"
+    assert rec.sent == [{"pane": "%9", "keys": [("named", "C-c")]}]
+
+    refused = deliver_keys(
+        "claude:a", ["sudo reboot"],
+        current_target="hs:0.0", expected_pane_id="%9",
+        policy_snapshot=policy, runner=_identity_runner("%9"),
+        transport=rec.transport, audit=rec.audit,
+    )
+    assert refused["status"] == "unknown_key"
+    assert len(rec.sent) == 1

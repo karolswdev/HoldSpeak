@@ -1,6 +1,5 @@
 import SwiftUI
 import Foundation
-import Contracts
 
 // HSM-14-19 "The Desk" decomposition: the run-queue + presence transparency layer (HSM-14-15) — the
 // app-wide Job queue (RunQueueStore/QueueHUD, the Dynamic-Island-style pill -> ledger) and the

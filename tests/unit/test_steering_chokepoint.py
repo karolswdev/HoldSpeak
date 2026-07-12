@@ -83,21 +83,20 @@ def test_send_keys_to_pane_call_sites_are_pinned() -> None:
     )
 
 
-def test_the_chokepoint_itself_checks_the_grant_before_the_transport() -> None:
-    # Mechanical shape check: inside deliver(), require_grant appears
-    # before the send_text_to_pane import/call.
+def test_the_chokepoint_resolves_authority_before_the_transport() -> None:
+    # The central decision selects exact grant or registered-pane posture;
+    # either invariant check must happen before the text transport.
     body = (REPO / "holdspeak" / "coder_steering.py").read_text(encoding="utf-8")
     deliver_src = body.split("def deliver(", 1)[1]
-    assert deliver_src.index("require_grant") < deliver_src.index(
+    assert deliver_src.index("_require_delivery_authority") < deliver_src.index(
         "send_text_to_pane"
     )
 
 
-def test_the_key_chokepoint_checks_the_grant_before_the_transport() -> None:
-    # The same shape for deliver_keys: require_grant before send_keys_to_pane.
+def test_the_key_chokepoint_resolves_authority_before_the_transport() -> None:
     body = (REPO / "holdspeak" / "coder_steering.py").read_text(encoding="utf-8")
     deliver_src = body.split("def deliver_keys(", 1)[1]
-    assert deliver_src.index("require_grant") < deliver_src.index(
+    assert deliver_src.index("_require_delivery_authority") < deliver_src.index(
         "send_keys_to_pane"
     )
 

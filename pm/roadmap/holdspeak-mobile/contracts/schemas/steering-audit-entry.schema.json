@@ -5,7 +5,7 @@
   "description": "One remembered steer, delivered or refused. Source: GET /api/coders/steering/audit (holdspeak/db/steering.py, Phase 87). Privacy-respecting: the text's sha256 + first 120 chars, never the full steer.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "ts", "session_key", "agent", "text_sha256", "text_head", "grounding", "submit", "outcome"],
+  "required": ["id", "ts", "session_key", "agent", "text_sha256", "text_head", "grounding", "submit", "outcome", "operation", "policy_snapshot"],
   "properties": {
     "id": { "type": "integer" },
     "ts": { "type": "string", "format": "date-time" },
@@ -17,6 +17,8 @@
     "grounding": { "type": "array", "items": { "type": "string" }, "description": "the ref tokens that rode along" },
     "submit": { "type": "boolean" },
     "outcome": { "type": "string", "description": "the steer's status (delivered or a refusal reason)" },
-    "detail": { "type": ["string", "null"] }
+    "detail": { "type": ["string", "null"] },
+    "operation": { "$ref": "https://holdspeak.dev/contracts/v0/operation-policy.schema.json#/$defs/operation" },
+    "policy_snapshot": { "$ref": "https://holdspeak.dev/contracts/v0/operation-policy.schema.json#/$defs/policy" }
   }
 }

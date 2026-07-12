@@ -199,6 +199,53 @@ def test_peek_envelope_carries_the_grant_state(monkeypatch, client) -> None:
     after = client.get("/api/coders/claude:abc/peek").json()
     assert after["grant"]["armed"] is True
     assert after["grant"]["expires_in_seconds"] > 0
+    assert after["pane_id"] == "%3"
+    assert after["policy"]["authority_basis"] == "scoped_grant"
+
+
+def test_yolo_peek_exposes_direct_registered_pane_policy(monkeypatch, client) -> None:
+    monkeypatch.setattr(
+        Config, "load", classmethod(lambda cls: SimpleNamespace(control_mode="yolo"))
+    )
+    _register(monkeypatch, _session())
+    monkeypatch.setattr(
+        coder_steering,
+        "peek_pane",
+        lambda target, *, lines, last_hash: {
+            "status": "live",
+            "hash": "h",
+            "lines": [],
+        },
+    )
+    body = client.get("/api/coders/claude:abc/peek").json()
+    assert body["grant"]["armed"] is False
+    assert body["pane_id"] == "%3"
+    assert body["policy"]["outcome"] == "allowed"
+    assert body["policy"]["authority_basis"] == "control_posture"
+    assert body["commitment"]["destination"] == "pane %3"
+
+
+def test_peek_arm_commitment_names_the_canonical_pane_not_a_tmux_alias(
+    monkeypatch, client
+) -> None:
+    _register(
+        monkeypatch,
+        _session(
+            tmux_pane=None,
+            tmux_session="work",
+            tmux_window="2",
+            tmux_pane_index="1",
+        ),
+    )
+    _pin_identity(monkeypatch, "%8")
+    monkeypatch.setattr(
+        coder_steering,
+        "peek_pane",
+        lambda target, *, lines, last_hash: {"status": "live", "lines": []},
+    )
+    body = client.get("/api/coders/claude:abc/peek").json()
+    assert body["pane_id"] == "%8"
+    assert body["arm_commitment"] == "Arm pane %8 for 15 minutes"
 
 
 def test_grants_route_lists_live_grants(monkeypatch, client) -> None:

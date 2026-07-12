@@ -62,7 +62,11 @@ final class SteeringClientTests: XCTestCase {
         route("/api/coders/claude:s1/peek", 200, #"""
         {"key":"claude:s1","agent":"claude","stale":false,"awaiting_response":true,
          "question":"merge?","updated_at":"2026-07-08T10:00:00Z",
+         "pane_id":"%5",
+         "arm_commitment":"Arm pane %5 for 15 minutes",
          "grant":{"armed":true,"expires_in_seconds":840},
+         "operation":{"effect_class":"terminal/type_text_and_keys","destination":"%5"},
+         "policy":{"mode":"yolo","outcome":"allowed","reason_code":"registered_steering_posture_allowed","authority_basis":"control_posture","policy_version":"operation-policy/v2"},
          "peek":{"status":"live","hash":"abc","lines":["$ make","ok"]}}
         """#)
         let peek = try await client().coderPeek(key: "claude:s1")
@@ -70,6 +74,10 @@ final class SteeringClientTests: XCTestCase {
         XCTAssertEqual(peek.peek.lines?.count, 2)
         XCTAssertTrue(peek.grant.armed)
         XCTAssertEqual(peek.grant.expiresInSeconds, 840)
+        XCTAssertEqual(peek.paneId, "%5")
+        XCTAssertEqual(peek.armCommitment, "Arm pane %5 for 15 minutes")
+        XCTAssertTrue(peek.policy?.usesControlPosture == true)
+        XCTAssertEqual(peek.policy?.reasonCode, "registered_steering_posture_allowed")
     }
 
     func testArmReturnsTheGrant() async throws {
@@ -100,15 +108,21 @@ final class SteeringClientTests: XCTestCase {
 
     func testSteerDeliversAndCarriesGrounding() async throws {
         route("/api/coders/claude:s1/steer", 200,
-              #"{"status":"delivered","pane_id":"%5","submitted":false,"audit_id":7}"#)
+              #"{"status":"delivered","pane_id":"%5","submitted":false,"audit_id":7,"policy":{"mode":"yolo","outcome":"allowed","authority_basis":"control_posture"},"receipt":{"id":"steering:7","source_ref":"coder_session:claude:s1","actual_destination":"%5","authority_basis":"control_posture","control_mode":"yolo","policy_version":"operation-policy/v2","effect_class":"terminal/type_text_and_keys","outcome":"delivered"}}"#)
         let refs = [RailsGroundingRef(repo: "holdspeak", project: "holdspeak", kind: "story", id: "HS-88-05")]
-        let res = try await client().steerCoder(key: "claude:s1", text: "ship it", submit: false, grounding: refs)
+        let res = try await client().steerCoder(
+            key: "claude:s1", text: "ship it", submit: false,
+            expectedPaneId: "%5", grounding: refs
+        )
         XCTAssertTrue(res.isDelivered)
         XCTAssertEqual(res.paneId, "%5")
+        XCTAssertEqual(res.receipt?.id, "steering:7")
+        XCTAssertTrue(res.policy?.usesControlPosture == true)
         // The grounding rides the body as rails refs.
         let sent = String(decoding: StubProtocol.lastBody ?? Data(), as: UTF8.self)
         XCTAssertTrue(sent.contains("\"rails\""))
         XCTAssertTrue(sent.contains("HS-88-05"))
+        XCTAssertTrue(sent.contains("\"expected_pane_id\":\"%5\""))
     }
 
     func testSteerRefusalRevokesAndReoffersARM() async throws {
@@ -126,12 +140,15 @@ final class SteeringClientTests: XCTestCase {
         route("/api/coders/steering/audit", 200, #"""
         {"audit":[{"id":7,"ts":"2026-07-08T10:00:00Z","session_key":"claude:s1","agent":"claude",
          "pane_id":"%5","text_sha256":"abc","text_head":"ship it","grounding":["rails:story:HS-88-05"],
-         "submit":false,"outcome":"delivered","detail":null}]}
+         "submit":false,"outcome":"delivered","detail":null,
+         "operation":{"effect_class":"terminal/type_text_and_keys","destination":"%5"},
+         "policy_snapshot":{"mode":"yolo","authority_basis":"control_posture","policy_version":"operation-policy/v2"}}]}
         """#)
         let trail = try await client().steeringAudit(sessionKey: "claude:s1")
         XCTAssertEqual(trail.count, 1)
         XCTAssertEqual(trail[0].outcome, "delivered")
         XCTAssertEqual(trail[0].grounding, ["rails:story:HS-88-05"])
+        XCTAssertEqual(trail[0].policySnapshot?.authorityBasis, "control_posture")
     }
 
     // MARK: - Phase-89/90 parity (the iPad catches up)
@@ -139,12 +156,16 @@ final class SteeringClientTests: XCTestCase {
     func testKeysDeliverNamedAndLiteral() async throws {
         route("/api/coders/claude:s1/keys", 200,
               #"{"status":"delivered","pane_id":"%5","keys":"C-c"}"#)
-        let res = try await client().coderKeys(key: "claude:s1", keys: [.interrupt, .literal("/find"), .down])
+        let res = try await client().coderKeys(
+            key: "claude:s1", keys: [.interrupt, .literal("/find"), .down],
+            expectedPaneId: "%5"
+        )
         XCTAssertTrue(res.isDelivered)
         let sent = String(decoding: StubProtocol.lastBody ?? Data(), as: UTF8.self)
         XCTAssertTrue(sent.contains("\"C-c\""))       // a named key is a bare string
         XCTAssertTrue(sent.contains("\"literal\""))   // a literal run is an object
         XCTAssertTrue(sent.contains("/find"))
+        XCTAssertTrue(sent.contains("\"expected_pane_id\":\"%5\""))
     }
 
     func testKeysRefusalIsData() async throws {
@@ -158,11 +179,14 @@ final class SteeringClientTests: XCTestCase {
 
     func testKeysToANodeRouteThroughTheRelayWithKeyInBody() async throws {
         route("/api/coders/relay/beta/keys", 200, #"{"status":"delivered","node":"beta","pane_id":"%5"}"#)
-        let res = try await client().coderKeys(key: "pane:%5", keys: [.interrupt], node: "beta")
+        let res = try await client().coderKeys(
+            key: "pane:%5", keys: [.interrupt], expectedPaneId: "%5", node: "beta"
+        )
         XCTAssertTrue(res.isDelivered)
         let sent = String(decoding: StubProtocol.lastBody ?? Data(), as: UTF8.self)
         XCTAssertTrue(sent.contains("\"key\""))        // the key rides the BODY on the relay
         XCTAssertTrue(sent.contains("pane:%5"))
+        XCTAssertTrue(sent.contains("\"expected_pane_id\":\"%5\""))
     }
 
     func testSteerToANodeRoutesThroughTheRelay() async throws {

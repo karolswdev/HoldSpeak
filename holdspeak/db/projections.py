@@ -373,19 +373,42 @@ class ProjectionRepository(BaseRepository):
             outcome = str(row["outcome"])
             refused = outcome != "delivered"
             key = str(row["session_key"])
+            operation = self._json_loads_dict(row["operation_json"])
+            policy = self._json_loads_dict(row["policy_snapshot_json"])
+            mode = str(policy.get("mode") or "").strip() or None
+            mode_label = {
+                "safe": "Secure",
+                "neutral": "Normal",
+                "yolo": "YOLO",
+            }.get(mode or "", mode or "Control posture")
+            authority_basis = str(
+                policy.get("authority_basis") or "armed_pane_grant"
+            )
             result.append(DeskProjection(
                 id=f"steering:{row['id']}", projection_kind="attention" if refused else "receipt",
                 subject_ref=f"coder_session:{key}", subject_label=key,
                 title="Coder steer refused" if refused else "Coder steer delivered",
-                summary="The source audit retains the bounded text fingerprint and delivery detail.",
+                summary=(
+                    f"{mode_label} used the registered pane as posture authority. "
+                    "The bounded fingerprint and delivery detail remain in the source audit."
+                    if authority_basis == "control_posture"
+                    else "The source audit retains the bounded text fingerprint and delivery detail."
+                ),
                 reason_code=f"steering_{outcome}", decision_kind="execution",
                 attention_state="needs_attention" if refused else "resolved",
-                actual_destination=str(row["pane_id"] or "unresolved pane"),
-                authority_basis="armed_pane_grant", attempt=1, outcome=outcome,
+                actual_destination=str(
+                    row["pane_id"]
+                    or operation.get("destination")
+                    or "unresolved pane"
+                ),
+                authority_basis=authority_basis, attempt=1, outcome=outcome,
                 timestamp=str(row["ts"]), correlation_id=f"steering:{key}",
                 source_kind="steering_audit", source_id=str(row["id"]),
                 source_api=f"/api/coders/steering/audit?session_key={key}",
-                detail_url=f"/?open={key}", severity="error" if refused else "normal",
+                detail_url=f"/?open={key}", control_mode=mode,
+                policy_version=str(policy.get("policy_version") or "") or None,
+                effect_class=str(operation.get("effect_class") or "") or None,
+                severity="error" if refused else "normal", version=2,
             ))
         return result
 

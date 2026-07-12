@@ -501,9 +501,11 @@ def _run_control_mode_command(args) -> int:
         config.control_mode = control_mode_wire(args.mode)
         config.save()
         if previous != config.control_mode:
+            from . import coder_steering
             from .db import get_database
 
             get_database().actuators.revoke_active_grants(reason="control_mode_changed")
+            coder_steering.clear_grants()
     payload = {
         "control_mode": config.control_mode,
         "control_mode_label": control_mode_label(config.control_mode),

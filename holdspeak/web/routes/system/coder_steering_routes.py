@@ -1,11 +1,5 @@
-"""The steering surface (HS-87-01/02/03): attach, arm, steer, audit.
+"""Coder steering routes: watch, authorize, deliver, audit, and factory."""
 
-Carved from `coders.py` (the Phase-79 single-concern budget): the
-coder BOARD (who receives a spoken answer) stays there; STEERING
-(watch a pane, arm it, type into it under the consent spine) lives
-here. Shared with the board: `_coder_frame` and `_session_age_seconds`,
-imported from `coders.py` (one owner each, no duplication).
-"""
 from __future__ import annotations
 
 import asyncio
@@ -19,6 +13,14 @@ from ....logging_config import get_logger
 from ...context import WebContext
 from ...runtime_support import error_500
 from .coders import _coder_frame, _session_age_seconds
+from .coder_steering_support import (
+    active_policy_grant,
+    canonical_pane_id,
+    compose_from_body,
+    expected_pane_id,
+    steering_commitment,
+    steering_policy,
+)
 
 log = get_logger("web.routes.system.steering")
 
@@ -36,11 +38,9 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         when the key is malformed or the session is gone.
         """
         if key.startswith("pane:"):
-            pane_id = key[len("pane:"):].strip()
-            if not pane_id:
-                return JSONResponse(
-                    {"error": "key must be pane:%N"}, status_code=400
-                )
+            pane_id = canonical_pane_id(key[len("pane:") :])
+            if pane_id is None:
+                return JSONResponse({"error": "key must be pane:%N"}, status_code=400)
             # A synthetic session over the raw pane — `resolve_pane_target`
             # reads `tmux_pane`, so the whole spine (arm pins %N, steer/keys
             # re-verify it) works unchanged. Fresh `updated_at`: a raw pane
@@ -52,7 +52,9 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
                 session_id=pane_id,
                 awaiting_response=False,
                 question=None,
-                updated_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                updated_at=datetime.now(timezone.utc)
+                .isoformat()
+                .replace("+00:00", "Z"),
                 tmux_pane=pane_id,
                 last_assistant_text=None,
             )
@@ -65,11 +67,7 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
                 {"error": "key must be agent:session_id"}, status_code=400
             )
         session = next(
-            (
-                s
-                for s in list_agent_sessions(agent=agent)
-                if s.session_id == session_id
-            ),
+            (s for s in list_agent_sessions(agent=agent) if s.session_id == session_id),
             None,
         )
         if session is None:
@@ -118,7 +116,7 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
             return session
         stale, _age = _session_is_stale(session)
         _sweep_and_frame()
-        grant = coder_steering.active_grants().get(key)
+        grant = active_policy_grant(key)
         envelope: dict[str, Any] = {
             "key": key,
             "agent": session.agent,
@@ -133,21 +131,57 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         }
         target = coder_steering.resolve_pane_target(session)
         if target is None:
+            operation, policy = steering_policy(
+                key,
+                None,
+                operation_kind="type_text_and_keys",
+                data_classes=("typed_text", "key_events"),
+                registered=False,
+                grant=grant,
+            )
+            envelope.update(
+                operation=operation,
+                policy=policy,
+                commitment=steering_commitment(operation, policy),
+            )
             envelope["peek"] = {"status": "no_pane"}
             return JSONResponse(envelope)
+        pane_id = canonical_pane_id(target)
+        if pane_id is None:
+            identity = await asyncio.to_thread(
+                coder_steering.resolve_pane_identity, target
+            )
+            pane_id = (
+                canonical_pane_id(identity.get("pane_id"))
+                if identity.get("status") == "ok"
+                else None
+            )
+        operation, policy = steering_policy(
+            key,
+            pane_id,
+            operation_kind="type_text_and_keys",
+            data_classes=("typed_text", "key_events"),
+            registered=not stale,
+            grant=grant,
+        )
+        envelope.update(
+            pane_id=pane_id,
+            operation=operation,
+            policy=policy,
+            commitment=steering_commitment(operation, policy),
+        )
         from ....config import Config
         from ....operation_policy import steering_ttl_for_mode
+
         preset_ttl = steering_ttl_for_mode(Config.load().control_mode)
-        envelope["arm_commitment"] = f"Arm pane {target} for {preset_ttl // 60} minutes"
+        envelope["arm_commitment"] = f"Arm pane {pane_id or target} for {preset_ttl // 60} minutes"
         envelope["peek"] = await asyncio.to_thread(
             coder_steering.peek_pane, target, lines=lines, last_hash=last_hash
         )
         return JSONResponse(envelope)
 
     @router.post("/api/coders/{key}/arm")
-    async def api_coder_arm(
-        key: str, payload: Optional[dict[str, Any]] = None
-    ) -> Any:
+    async def api_coder_arm(key: str, payload: Optional[dict[str, Any]] = None) -> Any:
         """Arm a session for steering (HS-87-02) — the explicit desk act.
 
         Pins the pane's `%N` identity at grant time; refuses a stale
@@ -233,8 +267,8 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         """Every tmux pane on the machine (HS-89-02) — the discovery behind
         attach-to-any-pane. Read-only (no grant): the desk lists panes with
         their session/window/command/title so a human can watch any of them
-        free, then arm the one they mean by its `pane:%N` key. No tmux
-        server is an honest empty list."""
+        free, then resolve authority for its exact `pane:%N` key. No tmux server
+        is an honest empty list."""
         from .... import coder_steering
 
         try:
@@ -243,20 +277,20 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         except Exception as e:
             return error_500("steering panes", e, log)
 
-    # --- cross-machine steering (HS-89-03) ---------------------------------
-    #
-    # Relay a steering verb to a CONFIGURED node's own steering routes. The
-    # node executes against its OWN tmux and enforces its OWN consent + audit
-    # (the machine that types owns the record). A quiet node refuses by name
-    # (502 node_offline); the node's own typed refusal rides through as 409.
+    # A configured remote node owns its tmux authority and authoritative audit;
+    # this hub only relays its typed success/refusal (HS-89-03).
 
-    async def _relay(node: str, verb: str, key: str, *, method: str = "POST", body: Any = None):
+    async def _relay(
+        node: str, verb: str, key: str, *, method: str = "POST", body: Any = None
+    ):
         from .... import coder_steering_relay
 
         result = await asyncio.to_thread(
             coder_steering_relay.relay, node, verb, key, method=method, body=body
         )
-        return JSONResponse(result, status_code=coder_steering_relay.relay_http_code(result))
+        return JSONResponse(
+            result, status_code=coder_steering_relay.relay_http_code(result)
+        )
 
     @router.get("/api/coders/relay/{node}/peek")
     async def api_relay_peek(
@@ -275,7 +309,9 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         return await _relay(node, "arm", key, body=ttl)
 
     @router.post("/api/coders/relay/{node}/disarm")
-    async def api_relay_disarm(node: str, payload: Optional[dict[str, Any]] = None) -> Any:
+    async def api_relay_disarm(
+        node: str, payload: Optional[dict[str, Any]] = None
+    ) -> Any:
         body = payload if isinstance(payload, dict) else {}
         key = str(body.get("key", "")).strip()
         if not key:
@@ -283,7 +319,9 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         return await _relay(node, "disarm", key, body={})
 
     @router.post("/api/coders/relay/{node}/steer")
-    async def api_relay_steer(node: str, payload: Optional[dict[str, Any]] = None) -> Any:
+    async def api_relay_steer(
+        node: str, payload: Optional[dict[str, Any]] = None
+    ) -> Any:
         body = payload if isinstance(payload, dict) else {}
         key = str(body.get("key", "")).strip()
         if not key:
@@ -292,81 +330,15 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         return await _relay(node, "steer", key, body=forwarded)
 
     @router.post("/api/coders/relay/{node}/keys")
-    async def api_relay_keys(node: str, payload: Optional[dict[str, Any]] = None) -> Any:
+    async def api_relay_keys(
+        node: str, payload: Optional[dict[str, Any]] = None
+    ) -> Any:
         body = payload if isinstance(payload, dict) else {}
         key = str(body.get("key", "")).strip()
         if not key:
             return JSONResponse({"error": "key is required"}, status_code=400)
-        return await _relay(node, "keys", key, body={"keys": body.get("keys")})
-
-    def _compose_from_body(body: dict[str, Any]):
-        """Message + optional grounding → the composed steer (HS-87-04).
-
-        A JSONResponse on any refusal (bad text, bad grounding shape,
-        unknown refs, over-cap); otherwise the compose result dict from
-        `grounding.compose_steer`. Hydration is the SAME helper the ask
-        route uses — one grounding truth.
-        """
-        from ....db import get_database
-        from ....grounding import (
-            GROUNDING_EXPANDS,
-            GROUNDING_MAX_REFS,
-            compose_steer,
-            hydrate_refs,
-        )
-
-        text = body.get("text")
-        if not isinstance(text, str) or not text.strip():
-            return JSONResponse({"error": "text is required"}, status_code=400)
-        grounding = body.get("grounding")
-        if grounding is None:
-            return compose_steer(text, [])
-        if not isinstance(grounding, dict):
-            return JSONResponse(
-                {"error": "grounding must be an object"}, status_code=400
-            )
-        raw_m = grounding.get("meeting_ids")
-        raw_a = grounding.get("artifact_ids")
-        raw_r = grounding.get("rails")
-        meeting_ids = (
-            [str(x).strip() for x in raw_m if str(x).strip()]
-            if isinstance(raw_m, list)
-            else []
-        )
-        artifact_ids = (
-            [str(x).strip() for x in raw_a if str(x).strip()]
-            if isinstance(raw_a, list)
-            else []
-        )
-        rails_refs = [x for x in raw_r if isinstance(x, dict)] if isinstance(raw_r, list) else []
-        expand = str(grounding.get("expand") or "summary").strip() or "summary"
-        if expand not in GROUNDING_EXPANDS:
-            return JSONResponse(
-                {"error": f"expand {expand!r} is not one of {list(GROUNDING_EXPANDS)}"},
-                status_code=400,
-            )
-        if len(meeting_ids) + len(artifact_ids) + len(rails_refs) > GROUNDING_MAX_REFS:
-            return JSONResponse(
-                {"error": f"grounding is capped at {GROUNDING_MAX_REFS} refs"},
-                status_code=400,
-            )
-        blocks, unknown = hydrate_refs(
-            get_database(), meeting_ids, artifact_ids, expand
-        )
-        # HS-88-01: rails objects ground through the same block type,
-        # CLI-mediated per repo — a receipt, folded in after desk objects.
-        if rails_refs:
-            from ....grounding_rails import hydrate_rails_refs
-
-            r_blocks, r_unknown = hydrate_rails_refs(rails_refs)
-            blocks = list(blocks) + r_blocks
-            unknown = list(unknown) + r_unknown
-        if unknown:
-            return JSONResponse(
-                {"error": "grounding ids not on this hub", "unknown_ids": unknown},
-                status_code=400,
-            )
-        return compose_steer(text, blocks)
+        forwarded = {item: value for item, value in body.items() if item != "key"}
+        return await _relay(node, "keys", key, body=forwarded)
 
     @router.post("/api/coders/{key}/steer")
     async def api_coder_steer(
@@ -378,10 +350,9 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         hydrates them through the SAME helper the ask route uses, fences
         them with provenance headers, and caps the context — over-cap
         refuses at compose time (executed == previewed). `preview: true`
-        returns the exact composed text WITHOUT sending. An unarmed
-        steer is a typed 409 (the desk shows the ARM affordance); a
-        revoking refusal broadcasts its frame. Delivered or refused, the
-        attempt is audited.
+        returns the exact composed text WITHOUT sending. Secure/Normal consume
+        a bounded pane grant; eligible YOLO steering consumes the registered
+        pane posture. Delivered or refused, the attempt is audited.
         """
         from .... import coder_steering
 
@@ -392,7 +363,7 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         if isinstance(session, JSONResponse):
             return session
         body = payload if isinstance(payload, dict) else {}
-        composed = _compose_from_body(body)
+        composed = compose_from_body(body)
         if isinstance(composed, JSONResponse):
             return composed
         if composed["status"] == "over_cap":
@@ -408,6 +379,18 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
                 },
                 status_code=409,
             )
+        target = coder_steering.resolve_pane_target(session)
+        stale, _age = _session_is_stale(session)
+        grant = active_policy_grant(key)
+        pane_id = expected_pane_id(key, body, grant)
+        operation, policy = steering_policy(
+            key,
+            pane_id,
+            operation_kind="type_text",
+            data_classes=("typed_text",),
+            registered=not stale,
+            grant=grant,
+        )
         submit = bool(body.get("submit", True))
         if bool(body.get("preview")):
             # Executed == previewed: the SAME composed text the send uses.
@@ -418,9 +401,11 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
                     "context_bytes": composed["context_bytes"],
                     "cap_bytes": composed["cap_bytes"],
                     "refs": composed["refs"],
+                    "operation": operation,
+                    "policy": policy,
+                    "commitment": steering_commitment(operation, policy),
                 }
             )
-        target = coder_steering.resolve_pane_target(session)
         result = await asyncio.to_thread(
             coder_steering.deliver,
             key,
@@ -429,17 +414,18 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
             agent=session.agent,
             submit=submit,
             grounding_refs=composed["refs"],
+            expected_pane_id=pane_id,
+            operation=operation,
+            policy_snapshot=policy,
         )
-        if result.get("revoked"):
-            _coder_frame(ctx, key)  # the disarm is visible everywhere, now
+        if result.get("audit_id") is not None or result.get("revoked"):
+            _coder_frame(ctx, key)
         if result["status"] == "delivered":
             return JSONResponse(result)
         return JSONResponse(result, status_code=409)
 
     @router.post("/api/coders/{key}/keys")
-    async def api_coder_keys(
-        key: str, payload: Optional[dict[str, Any]] = None
-    ) -> Any:
+    async def api_coder_keys(key: str, payload: Optional[dict[str, Any]] = None) -> Any:
         """Send a KEY sequence through THE chokepoint (HS-89-01).
 
         Full key control: `C-c` to interrupt a runaway, arrows/`Escape`/
@@ -447,9 +433,9 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         `{"keys": [...]}` where each item is a named key (a string like
         `"C-c"`, or `{"key": "C-c"}`) or a literal run (`{"literal": "…"}`).
         Named keys are held to an allow-list — an unknown key is refused by
-        name (409 `unknown_key`), never sent. Unarmed is a typed 409 (the
-        desk shows ARM); a revoking refusal broadcasts its frame. Delivered
-        or refused, every key sequence is audited.
+        name (409 `unknown_key`), never sent. Missing authority is a typed 409;
+        a revoking refusal broadcasts its frame. Delivered or refused, every
+        key sequence is audited.
         """
         from .... import coder_steering
 
@@ -461,23 +447,34 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
             return session
         body = payload if isinstance(payload, dict) else {}
         target = coder_steering.resolve_pane_target(session)
+        stale, _age = _session_is_stale(session)
+        grant = active_policy_grant(key)
+        pane_id = expected_pane_id(key, body, grant)
+        operation, policy = steering_policy(
+            key,
+            pane_id,
+            operation_kind="send_keys",
+            data_classes=("key_events",),
+            registered=not stale,
+            grant=grant,
+        )
         result = await asyncio.to_thread(
             coder_steering.deliver_keys,
             key,
             body.get("keys"),
             current_target=target,
             agent=session.agent,
+            expected_pane_id=pane_id,
+            operation=operation,
+            policy_snapshot=policy,
         )
-        if result.get("revoked"):
-            _coder_frame(ctx, key)  # the disarm is visible everywhere, now
+        if result.get("audit_id") is not None or result.get("revoked"):
+            _coder_frame(ctx, key)
         if result["status"] == "delivered":
             return JSONResponse(result)
         return JSONResponse(result, status_code=409)
 
-    # --- the session factory (HS-90-01) ------------------------------------
-    #
-    # Lifecycle acts. spawn/rename are name-validated audited create/label
-    # acts; kill is gated exactly like a steer (armed + verified %N + audit).
+    # Session factory: audited create/label acts; kill remains grant-gated.
 
     @router.post("/api/coders/factory/spawn")
     async def api_factory_spawn(payload: Optional[dict[str, Any]] = None) -> Any:
@@ -530,7 +527,9 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
         )
         if result.get("revoked"):
             _coder_frame(ctx, key)
-        return JSONResponse(result, status_code=200 if result["status"] == "killed" else 409)
+        return JSONResponse(
+            result, status_code=200 if result["status"] == "killed" else 409
+        )
 
     @router.get("/api/coders/steering/audit")
     async def api_coder_steering_audit(

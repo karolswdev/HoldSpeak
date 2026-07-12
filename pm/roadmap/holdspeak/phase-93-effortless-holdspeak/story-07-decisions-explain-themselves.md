@@ -82,6 +82,13 @@ OS-owned permissions are not HoldSpeak approval prompts. New arbitrary
 destinations or capabilities remain ineligible until configured/registered;
 YOLO is frictionless authority, not ambient remote-code execution.
 
+The 2026-07-11 Coder slice applies that boundary to text and allowed keys:
+Secure/Normal retain exact-pane grants; YOLO uses a registered session or exact
+`pane:%N` without an arm prompt; the typing node re-resolves the read-side pane
+identity and records the operation-policy snapshot and source-linked Receipt.
+The Desk keeps rename/kill controls separate pending factory/destructive
+classification; this slice does not claim posture authority for them.
+
 Bundling note: this initial Phase-93 scaffold is intentionally committed with
 the HS-93-01 through HS-93-05 in-progress implementation slices because the
 owner directed that the complete shared working tree ship together. No story is

@@ -308,31 +308,37 @@ the answer goes. A failed delivery keeps the question on the desk.
 
 ### The steering chokepoint
 
-The web desk can also steer a live session directly: watch its pane, arm it,
-and type into it. Watching is free and read only, a hash gated peek that costs
-a poll only while a pull-out is open. Every keystroke, by contrast, passes one
-function, `coder_steering.deliver`, and there is no other path to the pane. That
-function checks the arming grant, re-resolves the session's current pane, and
-sends only to the exact pane identity that was pinned when the grant was issued,
-so nothing can be retargeted between the check and the keystroke. A recycled or
-expired grant refuses and revokes. The send itself reuses the same tmux
-transport the answer loop uses. Every delivery and every refusal writes a row to
-the steering audit, a hash and a heading of the text, never the whole steer. A
+The web desk can also steer a live session directly: watch its pane, resolve
+authority, and type into it. Watching is free and read only, a hash-gated peek
+that costs a poll only while a pull-out is open. Every text delivery, by
+contrast, passes one function, `coder_steering.deliver`, and there is no other
+path to the pane. The central operation policy selects the authority invariant:
+Secure and Normal consume an exact, bounded pane grant; YOLO accepts the
+registered pane as posture authority without manufacturing a grant. The pane
+identity captured by the read side rides the request, and the chokepoint
+re-resolves the session target immediately before delivery. It sends only to
+the verified canonical `%N`, so a missing, recycled, or retargeted pane refuses
+before a keystroke. An invalid grant also revokes. The send itself reuses the
+same tmux transport the answer loop uses. Every delivery and every refusal
+writes the operation and policy snapshot plus a bounded text fingerprint to the
+steering audit, never the whole steer, and projects a source-linked Receipt. A
 test greps the codebase to keep the transport's call sites pinned to that one
-chokepoint. Nothing here leaves the machine; the model is a consent boundary,
-not an egress, and lives in [SECURITY.md](SECURITY.md).
+chokepoint. The local path does not leave the machine; its authority model lives
+in [SECURITY.md](SECURITY.md).
 
 That chokepoint later grew from a reply channel into full manipulation without
 loosening. Real keys (`C-c`, `Escape`, arrows) pass a sibling function,
-`coder_steering.deliver_keys`, with the same grant check and audit and its own
-pinned census; a named key is allow-listed or refused by name, never handed to
-`tmux` raw. A `pane:%N` key steers any tmux pane on the machine, not only a
-tracked session, pinned and re-verified the same way. And `coder_steering_relay`
-reaches another machine: it forwards a command to a configured node whose own
-copy of this chokepoint executes it, so the machine that types owns the grant and
-the audit while the hub only relays and names where the key landed. Each addition
-is more reach over the exact same spine: watch free, manipulate armed, re-verify
-every key, refuse and revoke, audit everything.
+`coder_steering.deliver_keys`, with the same policy-selected identity check and
+audit and its own pinned census; a named key is allow-listed or refused by name,
+never handed to `tmux` raw. A `pane:%N` key steers any exact tmux pane on the
+machine, not only a tracked session, and is re-verified the same way. And
+`coder_steering_relay` reaches another machine: it forwards the command and
+expected identity to a configured node whose own copy of this chokepoint
+resolves policy and executes it. The machine that types owns the authority
+decision and audit while the hub only relays and names where the key landed.
+Each addition is more reach over the same spine: watch free, resolve a bounded
+grant or eligible posture, re-verify every target, preserve the key allow-list,
+and audit every attempt.
 
 The lifecycle joins it in `coder_factory.py`: `spawn` and `rename` are
 name-validated audited acts (the name is an allow-list, passed as its own

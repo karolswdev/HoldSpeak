@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 import holdspeak.config as config_module
 import holdspeak.db as hsdb
+from holdspeak import coder_steering
 from holdspeak.db import Database, reset_database
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_authority_router
@@ -14,12 +15,14 @@ from holdspeak.web.routes import build_authority_router
 @pytest.fixture
 def rig(tmp_path, monkeypatch):
     reset_database()
+    coder_steering.clear_grants()
     db = Database(tmp_path / "authority-routes.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
     monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
     app = FastAPI()
     app.include_router(build_authority_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)
+    coder_steering.clear_grants()
     reset_database()
 
 
@@ -35,9 +38,19 @@ def test_policy_and_control_mode_are_one_future_operation_contract(rig) -> None:
     assert policy.json()["precedence"][0] == "hard_invariants"
     assert "schema_safety" in policy.json()["hard_invariants"]
 
+    coder_steering.arm(
+        "claude:s1",
+        "%5",
+        runner=lambda argv, cwd=None: type(
+            "Result", (), {"returncode": 0, "stdout": "%5\n", "stderr": ""}
+        )(),
+    )
+
     changed = client.put("/api/authority/control-mode", json={"control_mode": "Secure"})
     assert changed.status_code == 200
     assert changed.json()["control_mode_label"] == "Secure"
+    assert changed.json()["revoked_coder_grants"] == 1
+    assert coder_steering.active_grants() == {}
     assert changed.json()["applies_to"] == "future_operations_only"
     assert client.get("/api/authority/policy").json()["control_mode"] == "safe"
     assert (

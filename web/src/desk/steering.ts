@@ -10,6 +10,23 @@
 import { create } from "zustand";
 import { apiRequest } from "../lib/api";
 
+export interface SteeringOperation {
+  effect_class?: string;
+  destination?: string;
+  consequence?: string;
+}
+
+export interface SteeringPolicy {
+  mode?: string;
+  source?: string;
+  policy_version?: string;
+  outcome?: string;
+  reason_code?: string;
+  authority_basis?: string;
+  next_state?: string;
+  requires_grant?: boolean;
+}
+
 export type PaneStatus =
   | "live"
   | "not_modified"
@@ -100,6 +117,11 @@ interface SteeringState {
   paneDetail: string;
   paneLines: string[];
   paneHash: string | null;
+  paneId: string | null;
+  operation: SteeringOperation | null;
+  policy: SteeringPolicy | null;
+  /** True only when the Hub's decision names posture authority. */
+  postureAuthorized: boolean;
   inflight: boolean;
   /** The OPEN session's grant (HS-87-02): armed + a client-side
    * countdown anchor (epoch ms), re-synced by every peek. */
@@ -135,8 +157,7 @@ interface SteeringState {
   keepAsNote(title?: string): Promise<boolean>;
   pinToStory(key: string, storyId: string): void;
   clearPin(key: string): void;
-  /** HS-90-02 — full key control on glass: send a real key sequence
-   * (`C-c`, arrows, `Escape`) through `/keys`, armed only. */
+  /** Full key control through the Hub's resolved grant/posture authority. */
   keyState: "idle" | "sending" | "sent" | "refused";
   keyDetail: string;
   lastKey: string;
@@ -200,6 +221,25 @@ function grantPatch(
   };
 }
 
+function policyPatch(body: any) {
+  const policy = (body?.policy || null) as SteeringPolicy | null;
+  return {
+    paneId: body?.pane_id || null,
+    operation: (body?.operation || null) as SteeringOperation | null,
+    policy,
+    postureAuthorized: Boolean(
+      policy?.outcome === "allowed" &&
+        policy?.authority_basis === "control_posture",
+    ),
+  };
+}
+
+function receiptDetail(body: any): string {
+  const receipt = body?.receipt;
+  if (!receipt?.id) return "sent";
+  return `Receipt ${receipt.id} · ${receipt.actual_destination || "pane"}`;
+}
+
 export const useSteering = create<SteeringState>((set, get) => ({
   openKey: null,
   session: null,
@@ -207,6 +247,10 @@ export const useSteering = create<SteeringState>((set, get) => ({
   paneDetail: "",
   paneLines: [],
   paneHash: null,
+  paneId: null,
+  operation: null,
+  policy: null,
+  postureAuthorized: false,
   inflight: false,
   armed: false,
   armedUntil: null,
@@ -237,6 +281,10 @@ export const useSteering = create<SteeringState>((set, get) => ({
       paneDetail: "",
       paneLines: [],
       paneHash: null,
+      paneId: null,
+      operation: null,
+      policy: null,
+      postureAuthorized: false,
       armed: false,
       armedUntil: null,
       armError: "",
@@ -261,6 +309,10 @@ export const useSteering = create<SteeringState>((set, get) => ({
       paneDetail: "",
       paneLines: [],
       paneHash: null,
+      paneId: null,
+      operation: null,
+      policy: null,
+      postureAuthorized: false,
       armed: false,
       armedUntil: null,
       armError: "",
@@ -325,17 +377,23 @@ export const useSteering = create<SteeringState>((set, get) => ({
     set({ steerState: "sending", steerDetail: "" });
     try {
       const { url, wrap } = verbEndpoint(get().targetNode, key, "steer");
+      const expected = get().paneId;
+      const request = grounding ? { text, submit, grounding } : { text, submit };
       const res = await apiRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
-          wrap(grounding ? { text, submit, grounding } : { text, submit }),
+          wrap(
+            expected
+              ? { ...request, expected_pane_id: expected }
+              : request,
+          ),
         ),
       });
       const body = await res.json().catch(() => ({}));
       if (get().openKey !== key) return false;
       if (res.ok && body.status === "delivered") {
-        set({ steerState: "sent", steerDetail: "" });
+        set({ steerState: "sent", steerDetail: receiptDetail(body) });
         return true;
       }
       // A refusal that revoked (expiry, recycled pane) re-offers ARM:
@@ -350,10 +408,18 @@ export const useSteering = create<SteeringState>((set, get) => ({
         "pane_mismatch",
         "pane_gone",
       ].includes(body.status);
+      const identityInvalid = [
+        "pane_identity_required",
+        "pane_mismatch",
+        "pane_gone",
+      ].includes(body.status);
       set({
         steerState: "refused",
         steerDetail: body.detail || refusal,
         ...(revoking ? grantPatch(key, { armed: false }, get().armedKeys) : {}),
+        ...(identityInvalid
+          ? { paneId: null, postureAuthorized: false }
+          : {}),
       });
       return false;
     } catch {
@@ -402,15 +468,22 @@ export const useSteering = create<SteeringState>((set, get) => ({
     set({ keyState: "sending", keyDetail: "", lastKey: label });
     try {
       const { url, wrap } = verbEndpoint(get().targetNode, key, "keys");
+      const expected = get().paneId;
       const res = await apiRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(wrap({ keys: seq })),
+        body: JSON.stringify(
+          wrap(
+            expected
+              ? { keys: seq, expected_pane_id: expected }
+              : { keys: seq },
+          ),
+        ),
       });
       const body = await res.json().catch(() => ({}));
       if (get().openKey !== key) return false;
       if (res.ok && body.status === "delivered") {
-        set({ keyState: "sent", keyDetail: "" });
+        set({ keyState: "sent", keyDetail: receiptDetail(body) });
         return true;
       }
       // A revoking refusal (recycled pane, expiry) drops the grant, exactly
@@ -421,10 +494,18 @@ export const useSteering = create<SteeringState>((set, get) => ({
         "pane_mismatch",
         "pane_gone",
       ].includes(body.status);
+      const identityInvalid = [
+        "pane_identity_required",
+        "pane_mismatch",
+        "pane_gone",
+      ].includes(body.status);
       set({
         keyState: "refused",
         keyDetail: body.detail || body.status || `HTTP ${res.status}`,
         ...(revoking ? grantPatch(key, { armed: false }, get().armedKeys) : {}),
+        ...(identityInvalid
+          ? { paneId: null, postureAuthorized: false }
+          : {}),
       });
       return false;
     } catch {
@@ -473,7 +554,16 @@ export const useSteering = create<SteeringState>((set, get) => ({
   },
 
   setTargetNode(node) {
-    set({ targetNode: node });
+    set({
+      targetNode: node,
+      paneHash: null,
+      paneId: null,
+      operation: null,
+      policy: null,
+      postureAuthorized: false,
+      armed: false,
+      armedUntil: null,
+    });
   },
 
   async spawnSession(name, command) {
@@ -608,8 +698,9 @@ export const useSteering = create<SteeringState>((set, get) => ({
       const peek = body.peek || {};
       const session = fromWireSteeringSession(body);
       const grant = grantPatch(key, body.grant, get().armedKeys);
+      const policy = policyPatch(body);
       if (peek.status === "not_modified") {
-        set({ session, paneStatus: "live", armCommitment: body.arm_commitment || "Arm this pane", ...grant }); // the view stays; the gate held
+        set({ session, paneStatus: "live", armCommitment: body.arm_commitment || "Arm this pane", ...grant, ...policy }); // the view stays; the gate held
         return;
       }
       if (peek.status === "live") {
@@ -621,6 +712,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
           paneDetail: "",
           armCommitment: body.arm_commitment || "Arm this pane",
           ...grant,
+          ...policy,
         });
         return;
       }
@@ -632,6 +724,7 @@ export const useSteering = create<SteeringState>((set, get) => ({
         paneHash: null,
         armCommitment: body.arm_commitment || "Arm this pane",
         ...grant,
+        ...policy,
       });
     } catch {
       if (get().openKey === key)

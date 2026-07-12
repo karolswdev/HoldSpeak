@@ -109,6 +109,34 @@ describe("the steering slice (attach)", () => {
     expect(st.paneDetail).toBe("can't find pane %3");
   });
 
+  it("consumes the Hub's YOLO pane policy without manufacturing a grant", async () => {
+    const hits: string[] = [];
+    stubPeek(hits, {
+      ...LIVE_BODY,
+      pane_id: "%5",
+      grant: { armed: false, expires_in_seconds: null },
+      operation: {
+        effect_class: "terminal/type_text_and_keys",
+        destination: "%5",
+      },
+      policy: {
+        mode: "yolo",
+        outcome: "allowed",
+        authority_basis: "control_posture",
+        reason_code: "registered_steering_posture_allowed",
+      },
+    });
+    useSteering.getState().openSession("claude:abc123");
+    await vi.advanceTimersByTimeAsync(0);
+    const st = useSteering.getState();
+    expect(st.armed).toBe(false);
+    expect(st.postureAuthorized).toBe(true);
+    expect(st.paneId).toBe("%5");
+    expect(st.policy?.reason_code).toBe(
+      "registered_steering_posture_allowed",
+    );
+  });
+
   it("a 404 is the registry speaking: unknown_session", async () => {
     const hits: string[] = [];
     stubPeek(hits, { status: "unknown_session", key: "claude:abc123" }, 404);
@@ -262,6 +290,93 @@ describe("the steer action (HS-87-03)", () => {
     expect(posts[0].url).toContain("/api/coders/claude%3Aabc123/steer");
     expect(posts[0].body).toEqual({ text: "do the thing", submit: false });
     expect(useSteering.getState().steerState).toBe("sent");
+  });
+
+  it("YOLO sends the peeked pane identity with no arm request and keeps the Receipt", async () => {
+    const posts: any[] = [];
+    vi.stubGlobal("fetch", (url: string, opts?: any) => {
+      posts.push({ url: String(url), body: JSON.parse(opts?.body || "{}") });
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            status: "delivered",
+            pane_id: "%5",
+            receipt: {
+              id: "steering:9",
+              actual_destination: "%5",
+            },
+          }),
+      });
+    });
+    useSteering.setState({
+      openKey: "claude:abc123",
+      paneId: "%5",
+      postureAuthorized: true,
+      armed: false,
+    });
+    expect(await useSteering.getState().steer("ship it", true)).toBe(true);
+    expect(posts).toHaveLength(1);
+    expect(posts[0].url).toContain("/steer");
+    expect(posts[0].body).toEqual({
+      text: "ship it",
+      submit: true,
+      expected_pane_id: "%5",
+    });
+    expect(useSteering.getState().steerDetail).toBe(
+      "Receipt steering:9 · %5",
+    );
+  });
+
+  it("a posture identity refusal disables steering until peek rebinds", async () => {
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve({
+        ok: false,
+        status: 409,
+        json: () =>
+          Promise.resolve({
+            status: "pane_mismatch",
+            detail: "pane changed — nothing was typed",
+          }),
+      }),
+    );
+    useSteering.setState({
+      openKey: "claude:abc123",
+      paneId: "%5",
+      postureAuthorized: true,
+      armed: false,
+    });
+    expect(await useSteering.getState().steer("wrong pane", true)).toBe(false);
+    expect(useSteering.getState().paneId).toBeNull();
+    expect(useSteering.getState().postureAuthorized).toBe(false);
+  });
+
+  it("YOLO key control sends the same expected pane identity", async () => {
+    let posted: any = null;
+    vi.stubGlobal("fetch", (_url: string, opts?: any) => {
+      posted = JSON.parse(opts?.body || "{}");
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            status: "delivered",
+            receipt: { id: "steering:10", actual_destination: "%5" },
+          }),
+      });
+    });
+    useSteering.setState({
+      openKey: "claude:abc123",
+      paneId: "%5",
+      postureAuthorized: true,
+      armed: false,
+    });
+    expect(await useSteering.getState().sendKeys(["C-c"], "^C")).toBe(true);
+    expect(posted).toEqual({ keys: ["C-c"], expected_pane_id: "%5" });
+    expect(useSteering.getState().keyDetail).toBe(
+      "Receipt steering:10 · %5",
+    );
   });
 
   it("a revoking refusal drops the armed flag — ARM re-offered, not a toast", async () => {

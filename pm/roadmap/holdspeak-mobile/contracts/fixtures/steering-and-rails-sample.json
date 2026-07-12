@@ -7,9 +7,65 @@
     "awaiting_response": true,
     "question": "Should we merge #305?",
     "updated_at": "2026-07-08T10:00:00Z",
+    "pane_id": "%5",
+    "arm_commitment": "Arm pane %5 for 60 minutes",
+    "operation": {
+      "operation_id": "coder:claude:9244985d-2dd6-4abf-a33c-7a099253c728:type_text_and_keys",
+      "family": "coder_steering",
+      "effect_class": "terminal/type_text_and_keys",
+      "actor": "owner",
+      "destination": "%5",
+      "data_classes": [
+        "typed_text",
+        "key_events"
+      ],
+      "project_scope": null,
+      "resource_scope": "claude:9244985d-2dd6-4abf-a33c-7a099253c728",
+      "fixed_destination": true,
+      "consequence": "execute_now",
+      "version": 2
+    },
+    "policy": {
+      "mode": "yolo",
+      "source": "config",
+      "precedence": [
+        "hard_invariants",
+        "revocation",
+        "scoped_grant",
+        "control_mode",
+        "feature_default"
+      ],
+      "outcome": "allowed",
+      "reason_code": "registered_steering_posture_allowed",
+      "consequence": "execute_now",
+      "authority_basis": "control_posture",
+      "next_state": "execute_now",
+      "eligible": true,
+      "requires_review": false,
+      "requires_authorization": false,
+      "requires_grant": false,
+      "hard_invariants": [
+        "authentication",
+        "secret_custody",
+        "destination_binding",
+        "payload_binding",
+        "pane_identity",
+        "audit_receipt",
+        "configuration_integrity",
+        "schema_safety"
+      ],
+      "policy_version": "operation-policy/v2"
+    },
+    "commitment": {
+      "effect": "Send text or allowed keys",
+      "destination": "pane %5",
+      "authority_basis": "control_posture",
+      "next_state": "execute_now",
+      "receipt": "A Receipt is recorded after every attempt."
+    },
     "grant": {
-      "armed": true,
-      "expires_in_seconds": 842
+      "armed": false,
+      "expires_in_seconds": null
     },
     "peek": {
       "status": "live",
@@ -27,6 +83,62 @@
     "awaiting_response": false,
     "question": null,
     "updated_at": "2026-07-08T10:00:00Z",
+    "pane_id": "%5",
+    "arm_commitment": "Arm pane %5 for 60 minutes",
+    "operation": {
+      "operation_id": "coder:claude:9244985d-2dd6-4abf-a33c-7a099253c728:type_text_and_keys",
+      "family": "coder_steering",
+      "effect_class": "terminal/type_text_and_keys",
+      "actor": "owner",
+      "destination": "%5",
+      "data_classes": [
+        "typed_text",
+        "key_events"
+      ],
+      "project_scope": null,
+      "resource_scope": "claude:9244985d-2dd6-4abf-a33c-7a099253c728",
+      "fixed_destination": true,
+      "consequence": "execute_now",
+      "version": 2
+    },
+    "policy": {
+      "mode": "yolo",
+      "source": "config",
+      "precedence": [
+        "hard_invariants",
+        "revocation",
+        "scoped_grant",
+        "control_mode",
+        "feature_default"
+      ],
+      "outcome": "allowed",
+      "reason_code": "registered_steering_posture_allowed",
+      "consequence": "execute_now",
+      "authority_basis": "control_posture",
+      "next_state": "execute_now",
+      "eligible": true,
+      "requires_review": false,
+      "requires_authorization": false,
+      "requires_grant": false,
+      "hard_invariants": [
+        "authentication",
+        "secret_custody",
+        "destination_binding",
+        "payload_binding",
+        "pane_identity",
+        "audit_receipt",
+        "configuration_integrity",
+        "schema_safety"
+      ],
+      "policy_version": "operation-policy/v2"
+    },
+    "commitment": {
+      "effect": "Send text or allowed keys",
+      "destination": "pane %5",
+      "authority_basis": "control_posture",
+      "next_state": "execute_now",
+      "receipt": "A Receipt is recorded after every attempt."
+    },
     "grant": {
       "armed": false,
       "expires_in_seconds": null
@@ -45,6 +157,7 @@
   "steer_request": {
     "text": "run the full suite and read the tail",
     "submit": false,
+    "expected_pane_id": "%5",
     "grounding": {
       "meeting_ids": [],
       "artifact_ids": [],
@@ -63,7 +176,63 @@
     "status": "delivered",
     "pane_id": "%5",
     "submitted": false,
-    "audit_id": 7
+    "audit_id": 7,
+    "operation": {
+      "operation_id": "coder:claude:9244985d-2dd6-4abf-a33c-7a099253c728:type_text",
+      "family": "coder_steering",
+      "effect_class": "terminal/type_text_and_keys",
+      "actor": "owner",
+      "destination": "%5",
+      "data_classes": [
+        "typed_text"
+      ],
+      "project_scope": null,
+      "resource_scope": "claude:9244985d-2dd6-4abf-a33c-7a099253c728",
+      "fixed_destination": true,
+      "consequence": "execute_now",
+      "version": 2
+    },
+    "policy": {
+      "mode": "yolo",
+      "source": "config",
+      "precedence": [
+        "hard_invariants",
+        "revocation",
+        "scoped_grant",
+        "control_mode",
+        "feature_default"
+      ],
+      "outcome": "allowed",
+      "reason_code": "registered_steering_posture_allowed",
+      "consequence": "execute_now",
+      "authority_basis": "control_posture",
+      "next_state": "execute_now",
+      "eligible": true,
+      "requires_review": false,
+      "requires_authorization": false,
+      "requires_grant": false,
+      "hard_invariants": [
+        "authentication",
+        "secret_custody",
+        "destination_binding",
+        "payload_binding",
+        "pane_identity",
+        "audit_receipt",
+        "configuration_integrity",
+        "schema_safety"
+      ],
+      "policy_version": "operation-policy/v2"
+    },
+    "receipt": {
+      "id": "steering:7",
+      "source_ref": "coder_session:claude:9244985d-2dd6-4abf-a33c-7a099253c728",
+      "actual_destination": "%5",
+      "authority_basis": "control_posture",
+      "control_mode": "yolo",
+      "policy_version": "operation-policy/v2",
+      "effect_class": "terminal/type_text_and_keys",
+      "outcome": "delivered"
+    }
   },
   "steer_result_refused": {
     "status": "pane_mismatch",
@@ -84,7 +253,53 @@
     ],
     "submit": false,
     "outcome": "delivered",
-    "detail": null
+    "detail": null,
+    "operation": {
+      "operation_id": "coder:claude:9244985d-2dd6-4abf-a33c-7a099253c728:type_text",
+      "family": "coder_steering",
+      "effect_class": "terminal/type_text_and_keys",
+      "actor": "owner",
+      "destination": "%5",
+      "data_classes": [
+        "typed_text"
+      ],
+      "project_scope": null,
+      "resource_scope": "claude:9244985d-2dd6-4abf-a33c-7a099253c728",
+      "fixed_destination": true,
+      "consequence": "execute_now",
+      "version": 2
+    },
+    "policy_snapshot": {
+      "mode": "yolo",
+      "source": "config",
+      "precedence": [
+        "hard_invariants",
+        "revocation",
+        "scoped_grant",
+        "control_mode",
+        "feature_default"
+      ],
+      "outcome": "allowed",
+      "reason_code": "registered_steering_posture_allowed",
+      "consequence": "execute_now",
+      "authority_basis": "control_posture",
+      "next_state": "execute_now",
+      "eligible": true,
+      "requires_review": false,
+      "requires_authorization": false,
+      "requires_grant": false,
+      "hard_invariants": [
+        "authentication",
+        "secret_custody",
+        "destination_binding",
+        "payload_binding",
+        "pane_identity",
+        "audit_receipt",
+        "configuration_integrity",
+        "schema_safety"
+      ],
+      "policy_version": "operation-policy/v2"
+    }
   },
   "rails_grounding_ref": {
     "repo": "holdspeak",

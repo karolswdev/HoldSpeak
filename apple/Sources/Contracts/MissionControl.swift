@@ -90,6 +90,46 @@ public struct BeltStory: Codable, Equatable, Sendable {
 
 // MARK: - Presence: steering (Phase 87)
 
+public struct CoderSteeringOperation: Codable, Equatable, Sendable {
+    public var effectClass: String?
+    public var destination: String?
+    public var consequence: String?
+}
+
+public struct CoderSteeringPolicy: Codable, Equatable, Sendable {
+    public var mode: String?
+    public var source: String?
+    public var policyVersion: String?
+    public var outcome: String?
+    public var reasonCode: String?
+    public var authorityBasis: String?
+    public var nextState: String?
+    public var requiresGrant: Bool?
+
+    public var usesControlPosture: Bool {
+        outcome == "allowed" && authorityBasis == "control_posture"
+    }
+}
+
+public struct CoderSteeringCommitment: Codable, Equatable, Sendable {
+    public var effect: String?
+    public var destination: String?
+    public var authorityBasis: String?
+    public var nextState: String?
+    public var receipt: String?
+}
+
+public struct CoderSteeringReceipt: Codable, Equatable, Sendable {
+    public var id: String
+    public var sourceRef: String?
+    public var actualDestination: String?
+    public var authorityBasis: String?
+    public var controlMode: String?
+    public var policyVersion: String?
+    public var effectClass: String?
+    public var outcome: String?
+}
+
 public struct CoderSessionPeek: Codable, Equatable, Sendable {
     public var key: String
     public var agent: String
@@ -97,6 +137,11 @@ public struct CoderSessionPeek: Codable, Equatable, Sendable {
     public var awaitingResponse: Bool
     public var question: String?
     public var updatedAt: String?
+    public var paneId: String?
+    public var operation: CoderSteeringOperation?
+    public var policy: CoderSteeringPolicy?
+    public var commitment: CoderSteeringCommitment?
+    public var armCommitment: String?
     public var grant: Grant
     public var peek: Peek
 
@@ -121,10 +166,16 @@ public struct CoderSessionPeek: Codable, Equatable, Sendable {
 
     public init(key: String, agent: String, stale: Bool, awaitingResponse: Bool,
                 question: String? = nil, updatedAt: String? = nil,
-                grant: Grant, peek: Peek) {
+                grant: Grant, peek: Peek, paneId: String? = nil,
+                operation: CoderSteeringOperation? = nil,
+                policy: CoderSteeringPolicy? = nil,
+                commitment: CoderSteeringCommitment? = nil,
+                armCommitment: String? = nil) {
         self.key = key; self.agent = agent; self.stale = stale
         self.awaitingResponse = awaitingResponse; self.question = question
         self.updatedAt = updatedAt; self.grant = grant; self.peek = peek
+        self.paneId = paneId; self.operation = operation; self.policy = policy
+        self.commitment = commitment; self.armCommitment = armCommitment
     }
 }
 
@@ -146,10 +197,17 @@ public struct SteerResult: Codable, Equatable, Sendable {
     public var auditId: Int?
     public var revoked: Bool?
     public var detail: String?
+    public var operation: CoderSteeringOperation?
+    public var policy: CoderSteeringPolicy?
+    public var receipt: CoderSteeringReceipt?
     public init(status: String, paneId: String? = nil, submitted: Bool? = nil,
-                auditId: Int? = nil, revoked: Bool? = nil, detail: String? = nil) {
+                auditId: Int? = nil, revoked: Bool? = nil, detail: String? = nil,
+                operation: CoderSteeringOperation? = nil,
+                policy: CoderSteeringPolicy? = nil,
+                receipt: CoderSteeringReceipt? = nil) {
         self.status = status; self.paneId = paneId; self.submitted = submitted
         self.auditId = auditId; self.revoked = revoked; self.detail = detail
+        self.operation = operation; self.policy = policy; self.receipt = receipt
     }
 
     /// The consent grammar the surface reads from the shape alone: a
@@ -170,14 +228,18 @@ public struct SteeringAuditEntry: Codable, Equatable, Sendable {
     public var submit: Bool
     public var outcome: String
     public var detail: String?
+    public var operation: CoderSteeringOperation?
+    public var policySnapshot: CoderSteeringPolicy?
     public init(id: Int, ts: String, sessionKey: String, agent: String,
                 paneId: String? = nil, textSha256: String, textHead: String,
                 grounding: [String] = [], submit: Bool, outcome: String,
-                detail: String? = nil) {
+                detail: String? = nil, operation: CoderSteeringOperation? = nil,
+                policySnapshot: CoderSteeringPolicy? = nil) {
         self.id = id; self.ts = ts; self.sessionKey = sessionKey; self.agent = agent
         self.paneId = paneId; self.textSha256 = textSha256; self.textHead = textHead
         self.grounding = grounding; self.submit = submit; self.outcome = outcome
-        self.detail = detail
+        self.detail = detail; self.operation = operation
+        self.policySnapshot = policySnapshot
     }
 }
 
