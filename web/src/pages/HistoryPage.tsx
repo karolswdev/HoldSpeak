@@ -16,6 +16,7 @@ import {
 } from "../components/signal/Signal";
 import { apiBlob, apiFetch, readableError, type JsonRecord } from "../lib/api";
 import { MeetingConflictRecovery } from "../meetings/MeetingConflictRecovery";
+import { MeetingIntelRecovery } from "../meetings/MeetingIntelRecovery";
 import {
   ConfirmAction,
   PageHero,
@@ -55,6 +56,12 @@ function displayState(value: unknown): string {
     recoverable: "Recovery available",
     recording: "Recording",
     finalized: "Saved",
+    error: "Intelligence failed",
+    partial: "Intelligence incomplete",
+    skipped: "Intelligence skipped",
+    queued: "Intelligence queued",
+    running: "Intelligence running",
+    ready: "Intelligence ready",
   };
   return (
     known[state] ||
@@ -315,6 +322,15 @@ function MeetingDetail({
             } else if (result.meeting) {
               setDetail(result.meeting);
             }
+          }}
+        />
+        <MeetingIntelRecovery
+          meetingId={id}
+          onChanged={async () => {
+            setDetail(
+              await apiFetch(`/api/meetings/${encodeURIComponent(id)}`),
+            );
+            onDeleted();
           }}
         />
         {active === "transcript" ? (
@@ -809,14 +825,20 @@ export default function HistoryPage() {
                   <StatusPill
                     tone={
                       row.status === "failed" ||
-                      row.intel_status === "import_failed" ||
+                      ["error", "failed", "import_failed"].includes(
+                        String(row.intel_status ?? ""),
+                      ) ||
                       ["capture_failed", "recoverable", "recording"].includes(
                         String(row.capture_status ?? ""),
                       )
                         ? "error"
-                        : row.status === "complete"
-                          ? "success"
-                          : "neutral"
+                        : ["partial", "skipped", "queued"].includes(
+                              String(row.intel_status ?? ""),
+                            )
+                          ? "warning"
+                          : row.status === "complete"
+                            ? "success"
+                            : "neutral"
                     }
                   >
                     {displayState(

@@ -9,8 +9,9 @@
 pre-close implementation but no accepted owner/device outcome; Phase 93,
 Effortless HoldSpeak, IN PROGRESS with HS-93-01 through HS-93-06 carrying
 automated implementation evidence but not yet accepted. HS-93-06 now exposes
-an explicit, atomic choice between retained Meeting sync-conflict versions on
-History and the Desk.** The Web is
+an explicit, atomic choice between retained Meeting sync-conflict versions and
+truthful partial-intelligence Retry/Skip on History and the Desk, without false
+Ready state.** The Web is
 one Vite/React 19 tree and Phase 92 added substantial language, trust,
 first-value, capture, relationship, capability, destination, authority, and
 Desk-memory substrate. The experience audit found that the product is not yet

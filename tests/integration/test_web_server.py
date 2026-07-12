@@ -2293,6 +2293,10 @@ class TestIntelQueueApiEndpoints:
                 _ = reason
                 return meeting_id == "m-001"
 
+            def request_intel_retry(self, meeting_id, *, reason=None):
+                _ = reason
+                return "queued" if meeting_id == "m-001" else "missing"
+
         import holdspeak.db as db_module
         monkeypatch.setattr(db_module, "get_database", lambda: FakeDb())
 

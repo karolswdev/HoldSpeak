@@ -19,6 +19,7 @@ import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
 import { workroomHref } from "../../workrooms/context";
 import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
+import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
 import {
   contextualCapabilityActions,
   contextualCoderSessions,
@@ -363,6 +364,16 @@ export function Pullout({ o }: { o: WorldObject }) {
                 } else if (result.meeting) {
                   setDetail(result.meeting as MeetingDetail);
                 }
+                await useDesk.getState().refresh();
+              }}
+            />
+            <MeetingIntelRecovery
+              meetingId={o.id}
+              onChanged={async () => {
+                const meeting = await apiRequest(
+                  `/api/meetings/${encodeURIComponent(o.id)}`,
+                );
+                setDetail(await meeting.json());
                 await useDesk.getState().refresh();
               }}
             />

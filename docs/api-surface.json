@@ -1946,6 +1946,36 @@
       "consumers": []
     },
     {
+      "path": "/api/meetings/{meeting_id}/intel-recovery",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.meetings.intel",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/intel-recovery/retry",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.intel",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/intel-recovery/skip",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.intel",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}/intent-timeline",
       "methods": [
         "GET"

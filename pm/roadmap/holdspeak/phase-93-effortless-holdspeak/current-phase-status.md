@@ -1,18 +1,18 @@
 # Phase 93 — Effortless HoldSpeak
 
 **Status:** IN PROGRESS (0/9). HS-93-01 through HS-93-05 have automated
-implementation slices verified through Web/Hub/Swift lanes; HS-93-06 has
-started with a Web/Hub conflict-recovery slice. API-backed production Web
-captures exist where recorded, with supplementary simulator evidence, but all
-six stories remain open for their remaining implementation, owner, and
+implementation slices verified through Web/Hub/Swift lanes; HS-93-06 now has
+Web/Hub conflict and partial-intelligence recovery slices. API-backed production
+Web captures exist where recorded, with supplementary simulator evidence, but
+all six stories remain open for their remaining implementation, owner, and
 physical-device gates.
 Phase 91 remains the roadmap's current phase; Phase 92 substrate is not accepted
 as a simplified product.
 
-**Last updated:** 2026-07-11 (HS-93-06 started with atomic owner-visible
-Meeting conflict recovery on History and the Desk; full long-capture, fault,
-partial-intelligence, offline-sync, owner, and physical-device gates remain
-open).
+**Last updated:** 2026-07-11 (HS-93-06 now adds truthful partial Meeting
+intelligence plus atomic Retry remaining/Skip remaining on History and the Desk;
+full long-capture, real-fault, offline-sync, owner, and physical-device gates
+remain open).
 
 ## Goal
 
@@ -177,16 +177,23 @@ synthetic content. The story remains open for the complete real fault matrix,
 active-capture interruption, alternate actions, HS-93-07 control modes, owner
 observation, and physical Web/iPhone/iPad evidence.
 
-HS-93-06 has started with the first owner-visible conflict-recovery slice.
-Equal-clock Meeting divergence was already retained by the hub but had no write
-path or client decision surface. History and the Meeting's Desk pull-out now
-show both exact versions and require an explicit Keep-current, Use-synced, or
-named destructive deletion choice. Incoming content replaces the same Meeting
-identity and resolves atomically; malformed or substituted content refuses with
-both versions retained. The story remains open for production captures, native
-parity, long-duration memory/checkpoint traces, the complete fault matrix,
-partial-intelligence Retry/Skip, airplane-mode exactly-once sync, and owner and
-physical-device evidence.
+HS-93-06 now carries two owner-visible recovery slices. First, equal-clock
+Meeting divergence that was already retained by the hub now has an explicit
+decision path. History and the Meeting's Desk pull-out show both exact versions
+and require a Keep-current, Use-synced, or named destructive deletion choice.
+Incoming content replaces the same Meeting identity and resolves atomically;
+malformed or substituted content refuses with both versions retained.
+
+Second, deferred routed-intelligence failures no longer become Ready after base
+analysis succeeds. The Meeting stays `partial`; transcript, summary/topics/
+actions, and completed artifacts remain saved; aftercare-ready is withheld; and
+successful plugin keys are deduplicated when only unresolved keys retry. The
+shared History/Desk card names retained and remaining work and provides atomic
+`Retry remaining` and audited `Skip remaining` decisions while refusing to race
+a running worker. API-backed production captures prove partial, skipped, and
+requeued Web states with zero failed API responses. The story remains open for
+native parity, long-duration memory/checkpoint traces, the complete real fault
+matrix, airplane-mode exactly-once sync, and owner and physical-device evidence.
 
 Phase 91 remains the roadmap's current phase and its owner/Swift close gate is
 non-waivable. Phase 92 still has broad automated implementation but no accepted
@@ -250,6 +257,12 @@ use; no final summary exists.
   content and resolving the retained conflict is one transaction; deletion is
   named explicitly, and no keep-both claim exists without creating another
   object — HS-93-06 conflict-recovery contract.
+- 2026-07-11 — Deferred Meeting intelligence becomes Ready only after every
+  routed plugin is resolved. Partial work retains the Meeting, transcript, base
+  analysis, artifacts, failed queue row, and exact remaining keys; Retry and
+  Skip are atomic Meeting-scoped decisions that cannot overwrite a running job,
+  and Skip never sets an intelligence completion timestamp — HS-93-06
+  partial-intelligence contract.
 - 2026-07-11 — Phase 91 remains current and the roadmap pointer does not move —
   Delivery Workbench live state.
 

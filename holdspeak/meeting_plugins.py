@@ -34,6 +34,13 @@ log = get_logger("meeting_plugins")
 #: The one full-transcript window this seam writes per meeting.
 FULL_WINDOW_SUFFIX = "full"
 
+# These outcomes have no remaining execution for the same transcript. Errors,
+# timeouts, capability blocks, and queued work remain eligible for an exact-key
+# retry; a disabled plugin's explicit ``skipped`` outcome is already resolved.
+COMPLETED_PLUGIN_STATUSES = frozenset(
+    {"success", "proposed", "deduped", "skipped"}
+)
+
 
 def _meeting_transcript(meeting: Any) -> str:
     lines: list[str] = []
@@ -172,12 +179,22 @@ def run_meeting_plugin_chain(
         )
         for plugin_id in plugin_chain
     }
-    existing_keys = {
+    existing_completed_keys = {
         str(run.idempotency_key)
         for run in db.plugins.list_plugin_runs(meeting_id, limit=5000)
-        if str(getattr(run, "window_id", "")) == window_id and run.idempotency_key
+        if (
+            str(getattr(run, "window_id", "")) == window_id
+            and run.idempotency_key
+            and str(getattr(run, "status", "")).strip().lower()
+            in COMPLETED_PLUGIN_STATUSES
+        )
     }
-    if plugin_chain and set(planned_keys.values()) <= existing_keys:
+    remaining_chain = [
+        plugin_id
+        for plugin_id in plugin_chain
+        if planned_keys[plugin_id] not in existing_completed_keys
+    ]
+    if plugin_chain and not remaining_chain:
         artifacts_existing = db.plugins.list_artifacts(meeting_id)
         summary = {
             "meeting_id": meeting_id,
@@ -206,7 +223,7 @@ def run_meeting_plugin_chain(
         "threshold": route_payload.get("threshold"),
     }
     results = host.execute_chain(
-        list(route_payload.get("plugin_chain") or []),
+        remaining_chain,
         context=context,
         meeting_id=meeting_id,
         window_id=window_id,
@@ -254,7 +271,12 @@ def run_meeting_plugin_chain(
         "active_intents": list(route_payload.get("active_intents") or []),
         "plugin_chain": list(route_payload.get("plugin_chain") or []),
         "plugin_statuses": {
-            str(r.plugin_id): str(r.status) for r in results
+            **{
+                plugin_id: "deduped"
+                for plugin_id in plugin_chain
+                if planned_keys[plugin_id] in existing_completed_keys
+            },
+            **{str(r.plugin_id): str(r.status) for r in results},
         },
         "artifacts_saved": len(artifacts),
     }

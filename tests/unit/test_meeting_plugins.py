@@ -16,6 +16,7 @@ import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
 from holdspeak.meeting_plugins import run_meeting_plugin_chain
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
+from holdspeak.plugins.host import PluginRunResult, build_idempotency_key
 
 
 ARCH_TRANSCRIPT = [
@@ -113,6 +114,70 @@ def test_rerun_is_idempotent_not_duplicating(env) -> None:
     )
 
 
+def test_rerun_executes_only_unresolved_plugin_keys(env) -> None:
+    """Retry remaining preserves successful runs and retries the failed key."""
+    db, _ = env
+    meeting = _saved_meeting(db, meeting_id="m81-partial")
+
+    class _Host:
+        def __init__(self, *, fail_first: bool):
+            self.fail_first = fail_first
+            self.calls = []
+
+        def execute_chain(
+            self,
+            plugin_chain,
+            *,
+            context,
+            meeting_id,
+            window_id,
+            transcript_hash,
+            defer_heavy,
+        ):
+            _ = context, defer_heavy
+            self.calls.append(list(plugin_chain))
+            return [
+                PluginRunResult(
+                    plugin_id=plugin_id,
+                    plugin_version="test",
+                    status=(
+                        "error"
+                        if self.fail_first and index == 0
+                        else "success"
+                    ),
+                    idempotency_key=build_idempotency_key(
+                        meeting_id=meeting_id,
+                        window_id=window_id,
+                        plugin_id=plugin_id,
+                        transcript_hash=transcript_hash,
+                    ),
+                    duration_ms=1.0,
+                    output={} if not (self.fail_first and index == 0) else None,
+                    error="timeout" if self.fail_first and index == 0 else None,
+                )
+                for index, plugin_id in enumerate(plugin_chain)
+            ]
+
+    first_host = _Host(fail_first=True)
+    first = run_meeting_plugin_chain(
+        db, meeting, profile="architect", host=first_host
+    )
+    failed_plugin = first_host.calls[0][0]
+    assert first["plugin_statuses"][failed_plugin] == "error"
+
+    retry_host = _Host(fail_first=False)
+    retried = run_meeting_plugin_chain(
+        db, meeting, profile="architect", host=retry_host
+    )
+
+    assert retry_host.calls == [[failed_plugin]]
+    assert retried["plugin_statuses"][failed_plugin] == "success"
+    assert all(
+        status in {"success", "deduped"}
+        for status in retried["plugin_statuses"].values()
+    )
+
+
 def test_override_intents_force_the_route(env) -> None:
     db, _ = env
     meeting = _saved_meeting(db, meeting_id="m82", tags=())
@@ -161,6 +226,7 @@ def test_deferred_intel_runs_the_chain_when_router_enabled(env, monkeypatch, tmp
     monkeypatch.setattr(
         "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
     )
+    monkeypatch.setattr("holdspeak.intel.resolve_llm_capability", lambda cfg: True)
 
     from holdspeak.intel_queue import process_next_intel_job
 
@@ -168,8 +234,101 @@ def test_deferred_intel_runs_the_chain_when_router_enabled(env, monkeypatch, tmp
 
     refreshed = db.meetings.get_meeting("m84")
     assert refreshed.intel_status == "ready"
-    assert "artifact(s) from the routed plugin chain" in (refreshed.intel_status_detail or "")
+    assert "Meeting intelligence ready" in (refreshed.intel_status_detail or "")
     assert db.plugins.list_artifacts("m84"), "the import path must produce artifacts now"
+
+
+def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
+    env, monkeypatch
+) -> None:
+    """A routed failure stays partial and recoverable instead of becoming Ready."""
+    db, _ = env
+    meeting = _saved_meeting(db, meeting_id="m84-partial")
+    db.intel.enqueue_intel_job(
+        meeting.id,
+        transcript_hash=meeting.transcript_hash(),
+        reason="test partial routing",
+    )
+
+    class _Cfg:
+        class meeting:  # noqa: N801 - config shape
+            intent_router_enabled = True
+            mir_profile = "architect"
+
+    class _Analyze:
+        error = None
+        topics = ["write path"]
+        action_items = []
+        summary = "Base analysis retained."
+
+    monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls: _Cfg))
+    monkeypatch.setattr(
+        "holdspeak.intel.engine.MeetingIntel.analyze",
+        lambda self, transcript, stream=False: _Analyze(),
+    )
+    monkeypatch.setattr(
+        "holdspeak.intel_queue.get_intel_runtime_status",
+        lambda *a, **k: (True, "ready"),
+    )
+    monkeypatch.setattr(
+        "holdspeak.meeting_plugins.run_meeting_plugin_chain",
+        lambda *a, **k: {
+            "plugin_statuses": {
+                "requirements_extractor": "success",
+                "risk_heatmap": "timeout",
+            },
+            "artifacts_saved": 1,
+        },
+    )
+
+    from holdspeak.intel_queue import process_next_intel_job
+
+    ready = []
+    assert process_next_intel_job(db, on_meeting_ready=ready.append) is True
+
+    retained = db.meetings.get_meeting(meeting.id)
+    assert retained is not None
+    assert retained.intel is not None
+    assert retained.intel.summary == "Base analysis retained."
+    assert retained.intel_status == "partial"
+    assert retained.intel_completed_at is None
+    assert "risk_heatmap (timeout)" in (retained.intel_status_detail or "")
+    job = db.intel.get_intel_job(meeting.id)
+    assert job is not None
+    assert job.status == "failed"
+    assert db.intel.list_intel_job_attempts(meeting.id)[0].outcome == "partial_failure"
+    assert ready == []
+
+    assert db.intel.request_intel_retry(meeting.id) == "queued"
+
+    def fail_if_base_analysis_repeats(*_args, **_kwargs):
+        raise AssertionError(
+            "Retry remaining must not rerun completed base analysis"
+        )
+
+    monkeypatch.setattr(
+        "holdspeak.intel.engine.MeetingIntel.analyze",
+        fail_if_base_analysis_repeats,
+    )
+    monkeypatch.setattr(
+        "holdspeak.meeting_plugins.run_meeting_plugin_chain",
+        lambda *a, **k: {
+            "plugin_statuses": {
+                "requirements_extractor": "deduped",
+                "risk_heatmap": "success",
+            },
+            "artifacts_saved": 1,
+        },
+    )
+
+    assert process_next_intel_job(db, on_meeting_ready=ready.append) is True
+    completed = db.meetings.get_meeting(meeting.id)
+    assert completed is not None
+    assert completed.intel_status == "ready"
+    assert completed.intel is not None
+    assert completed.intel.summary == "Base analysis retained."
+    assert db.intel.get_intel_job(meeting.id) is None
+    assert ready == [meeting.id]
 
 
 def test_deferred_intel_skips_the_chain_when_router_disabled(env, monkeypatch) -> None:

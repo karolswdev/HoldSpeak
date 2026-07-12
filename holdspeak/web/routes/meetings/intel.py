@@ -8,12 +8,135 @@ from typing import Any, Optional
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
+from ....db.intel import MANUAL_INTEL_RETRY_REASON, ROUTED_INTEL_RETRY_REASON
 from ....logging_config import get_logger
 from ....web_requests import _IntelProcessRequest
 from ...runtime_support import error_500
 from ...context import WebContext
 
 log = get_logger("web.routes.meetings")
+
+
+def _intel_recovery_payload(db: Any, meeting_id: str) -> Optional[dict[str, Any]]:
+    """Project persisted Meeting/intel work into one truthful recovery contract."""
+    meeting = db.meetings.get_meeting(meeting_id)
+    if meeting is None:
+        return None
+
+    job = db.intel.get_intel_job(meeting_id)
+    artifacts = db.plugins.list_artifacts(meeting_id, limit=2000)
+    meeting_state = str(meeting.intel_status or "disabled").strip().lower()
+    job_state = str(job.status).strip().lower() if job is not None else None
+    effective_state = (
+        meeting_state
+        if meeting_state in {"partial", "skipped"}
+        else job_state or meeting_state
+    )
+    visible = bool(job) or meeting_state in {
+        "queued",
+        "running",
+        "error",
+        "failed",
+        "partial",
+        "skipped",
+    }
+
+    if effective_state == "running":
+        headline = "Meeting saved · intelligence running"
+    elif effective_state == "queued":
+        headline = "Meeting saved · intelligence queued"
+    elif meeting_state == "skipped":
+        headline = "Meeting saved · intelligence skipped"
+    else:
+        headline = "Meeting saved · intelligence incomplete"
+
+    segment_count = len(meeting.segments)
+    completed: list[dict[str, str]] = [
+        {"label": "Meeting", "detail": "Saved"},
+        {
+            "label": "Transcript",
+            "detail": (
+                f"{segment_count} saved "
+                f"{'segment' if segment_count == 1 else 'segments'}"
+            ),
+        },
+    ]
+    if meeting.intel is not None:
+        completed.append(
+            {
+                "label": "Meeting analysis",
+                "detail": "Summary, topics, and action items saved",
+            }
+        )
+    if artifacts:
+        completed.append(
+            {
+                "label": "Artifacts",
+                "detail": (
+                    f"{len(artifacts)} saved "
+                    f"{'artifact' if len(artifacts) == 1 else 'artifacts'}"
+                ),
+            }
+        )
+
+    if meeting.intel is not None and meeting_state in {"partial", "skipped"}:
+        remaining_label = "Routed meeting intelligence"
+    elif meeting.intel is not None:
+        remaining_label = "Remaining meeting intelligence"
+    else:
+        remaining_label = "Summary, topics, action items, and routed artifacts"
+    status_detail = (
+        (job.last_error if job is not None else None)
+        or meeting.intel_status_detail
+        or "Meeting intelligence did not finish."
+    )
+    running = effective_state == "running"
+    ready = meeting_state == "ready" and job is None
+    retry_already_requested = effective_state == "queued" and status_detail in {
+        MANUAL_INTEL_RETRY_REASON,
+        ROUTED_INTEL_RETRY_REASON,
+    }
+    return {
+        "meeting_id": meeting_id,
+        "visible": visible,
+        "state": effective_state,
+        "headline": headline,
+        "completed": completed,
+        "remaining": {
+            "label": remaining_label,
+            "detail": str(status_detail),
+        },
+        "job": (
+            {
+                "status": job.status,
+                "attempts": job.attempts,
+                "requested_at": job.requested_at.isoformat(),
+                "updated_at": job.updated_at.isoformat(),
+            }
+            if job is not None
+            else None
+        ),
+        "actions": {
+            "retry": visible
+            and not running
+            and not ready
+            and not retry_already_requested,
+            "skip": visible
+            and not running
+            and not ready
+            and meeting_state != "skipped",
+        },
+    }
+
+
+def _broadcast_runtime_queue(ctx: WebContext, db: Any) -> None:
+    """Publish queue truth after an owner recovery decision."""
+    try:
+        from ....intel_queue import build_runtime_queue_frame
+
+        ctx.broadcast("runtime_queue", build_runtime_queue_frame(db))
+    except Exception as exc:
+        log.debug(f"runtime_queue frame dropped: {exc}")
 
 
 def build_intel_router(ctx: WebContext) -> APIRouter:
@@ -190,12 +313,118 @@ def build_intel_router(ctx: WebContext) -> APIRouter:
             from ....db import get_database
 
             db = get_database()
-            ok = db.intel.requeue_intel_job(meeting_id, reason="Manual retry requested from web UI.")
-            if not ok:
-                return JSONResponse({"success": False, "error": "Meeting not found or transcript is empty"}, status_code=404)
+            outcome = db.intel.request_intel_retry(
+                meeting_id,
+                reason=MANUAL_INTEL_RETRY_REASON,
+            )
+            if outcome == "missing":
+                return JSONResponse(
+                    {"success": False, "error": "Meeting not found"},
+                    status_code=404,
+                )
+            if outcome == "empty":
+                return JSONResponse(
+                    {"success": False, "error": "Meeting transcript is empty"},
+                    status_code=409,
+                )
+            if outcome == "running":
+                return JSONResponse(
+                    {
+                        "success": False,
+                        "error": "Meeting intelligence is already running",
+                    },
+                    status_code=409,
+                )
+            if outcome == "ready":
+                return JSONResponse(
+                    {
+                        "success": False,
+                        "error": "Meeting intelligence is already ready",
+                    },
+                    status_code=409,
+                )
+            _broadcast_runtime_queue(ctx, db)
             return JSONResponse({"success": True})
         except Exception as e:
             log.error(f"Failed to retry intel job: {e}")
             return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+    @router.get("/api/meetings/{meeting_id}/intel-recovery")
+    async def api_get_meeting_intel_recovery(meeting_id: str) -> Any:
+        """Name retained and remaining Meeting intelligence work."""
+        try:
+            from ....db import get_database
+
+            recovery = _intel_recovery_payload(get_database(), meeting_id)
+            if recovery is None:
+                return JSONResponse({"error": "Meeting not found"}, status_code=404)
+            return JSONResponse(recovery)
+        except Exception as e:
+            return error_500(e, log, "Failed to load Meeting intelligence recovery")
+
+    @router.post("/api/meetings/{meeting_id}/intel-recovery/retry")
+    async def api_retry_meeting_intel_recovery(meeting_id: str) -> Any:
+        """Retry only the Meeting intelligence that remains incomplete."""
+        try:
+            from ....db import get_database
+
+            db = get_database()
+            outcome = db.intel.request_intel_retry(
+                meeting_id,
+                reason=MANUAL_INTEL_RETRY_REASON,
+            )
+            errors = {
+                "missing": (404, "Meeting not found"),
+                "empty": (409, "Meeting transcript is empty; no intelligence can run"),
+                "running": (409, "Meeting intelligence is already running"),
+                "ready": (409, "Meeting intelligence is already ready"),
+            }
+            if outcome in errors:
+                status_code, error = errors[outcome]
+                return JSONResponse(
+                    {"success": False, "error": error},
+                    status_code=status_code,
+                )
+            _broadcast_runtime_queue(ctx, db)
+            return JSONResponse(
+                {
+                    "success": True,
+                    "recovery": _intel_recovery_payload(db, meeting_id),
+                }
+            )
+        except Exception as e:
+            return error_500(e, log, "Failed to retry Meeting intelligence")
+
+    @router.post("/api/meetings/{meeting_id}/intel-recovery/skip")
+    async def api_skip_meeting_intel_recovery(meeting_id: str) -> Any:
+        """Keep completed Meeting work and skip non-running remainder."""
+        try:
+            from ....db import get_database
+
+            db = get_database()
+            outcome = db.intel.skip_remaining_intel(meeting_id)
+            errors = {
+                "missing": (404, "Meeting not found"),
+                "running": (
+                    409,
+                    "Meeting intelligence is running; wait for it to finish before skipping",
+                ),
+                "ready": (409, "Meeting intelligence is already ready"),
+            }
+            if outcome in errors:
+                status_code, error = errors[outcome]
+                return JSONResponse(
+                    {"success": False, "error": error},
+                    status_code=status_code,
+                )
+            _broadcast_runtime_queue(ctx, db)
+            return JSONResponse(
+                {
+                    "success": True,
+                    "recovery": _intel_recovery_payload(db, meeting_id),
+                }
+            )
+        except Exception as e:
+            return error_500(e, log, "Failed to skip Meeting intelligence")
 
     return router

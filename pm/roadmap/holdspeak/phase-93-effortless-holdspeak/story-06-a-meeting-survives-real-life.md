@@ -2,9 +2,9 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** in progress — explicit Web/Hub conflict recovery is verified;
-  long-run, fault, partial-intelligence, offline-sync, owner, and physical-device
-  gates remain open
+- **Status:** in progress — explicit Web/Hub conflict and partial-intelligence
+  recovery are verified; long-run, physical fault, offline-sync, owner, and
+  physical-device gates remain open
 - **Depends on:** HS-93-02, HS-93-03
 - **Unblocks:** HS-93-08, HS-93-09
 - **Owner:** unassigned
@@ -85,8 +85,24 @@ changing either version. The API surface manifest and focused Python/React
 regression proof are captured in [progress-story-06.md](./progress-story-06.md).
 
 This does not satisfy the story's physical conflict walk or any long-capture,
-fault, partial-intelligence, offline-sync, or owner gate. No acceptance checkbox
-is changed.
+fault, offline-sync, or owner gate. No acceptance checkbox is changed.
+
+The second vertical slice removes a false-completion path from deferred Meeting
+intelligence. A routed plugin error, timeout, capability block, or unresolved
+queue state now leaves the Meeting `partial`, retains the saved transcript,
+base analysis, and successfully produced artifacts, keeps the failed job
+recoverable, and withholds both Ready and the aftercare-ready broadcast. Retry
+deduplicates successful plugin keys and executes only unresolved keys.
+
+One Meeting-scoped recovery contract names completed and remaining work in both
+History and the Desk pull-out. `Retry remaining` atomically refuses a running
+job and requeues the same Meeting identity with a fresh bounded attempt budget.
+`Skip remaining` refuses a running job, deletes only the remaining queue item,
+records an audited `skipped` outcome, advances the Meeting sync clock, and
+leaves `intel_completed_at` empty. Production-Web implementation captures prove
+the partial, skipped, and requeued states against an isolated real Hub/database.
+The failed-intelligence acceptance criterion remains unchecked until a real
+model fault is walked on production Web and physical clients with owner review.
 
 Bundling note: this initial Phase-93 scaffold is intentionally committed with
 the HS-93-01 through HS-93-05 in-progress implementation slices because the

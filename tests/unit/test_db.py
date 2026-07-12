@@ -1141,6 +1141,7 @@ class TestDeferredIntelQueue:
         assert updated is not None
         assert updated.intel_status == "error"
         assert updated.intel_status_detail == "Deferred intel failed"
+        assert updated.intel_completed_at is None
 
     def test_list_intel_jobs_includes_meeting_context(self, db, sample_meeting):
         """Queued jobs should include meeting metadata for CLI display."""
@@ -1269,6 +1270,114 @@ class TestDeferredIntelQueue:
         assert attempts[0].outcome == "terminal_failure"
         assert attempts[1].attempt == 1
         assert attempts[1].retry_at is not None
+
+    def test_skip_remaining_intel_retains_completed_meeting_work(
+        self, db, sample_meeting
+    ):
+        """Skip is an audited partial outcome, never false completion."""
+        sample_meeting.intel = IntelSnapshot(
+            timestamp=sample_meeting.duration,
+            topics=["Delivery"],
+            action_items=[],
+            summary="Delivery plan retained.",
+        )
+        db.meetings.save_meeting(sample_meeting)
+        db.plugins.record_artifact(
+            artifact_id="retained-artifact",
+            meeting_id=sample_meeting.id,
+            artifact_type="decision",
+            title="Retained decision",
+            body_markdown="Keep the saved decision.",
+            structured_json={},
+            confidence=0.9,
+            status="draft",
+            plugin_id="decision_extractor",
+            plugin_version="1.0.0",
+            sources=[],
+        )
+        db.intel.enqueue_intel_job(
+            sample_meeting.id,
+            transcript_hash=sample_meeting.transcript_hash(),
+        )
+        assert db.intel.claim_next_intel_job() is not None
+        db.intel.mark_intel_job_partial(
+            sample_meeting.id, "Routed intelligence timed out."
+        )
+        before = db.meetings.get_meeting(sample_meeting.id)
+        assert before is not None
+
+        assert db.intel.skip_remaining_intel(sample_meeting.id) == "skipped"
+
+        retained = db.meetings.get_meeting(sample_meeting.id)
+        assert retained is not None
+        assert retained.intel_status == "skipped"
+        assert retained.intel_completed_at is None
+        assert retained.sync_modified_at > before.sync_modified_at
+        assert [segment.text for segment in retained.segments] == [
+            segment.text for segment in sample_meeting.segments
+        ]
+        assert retained.intel is not None
+        assert retained.intel.summary == "Delivery plan retained."
+        assert [artifact.id for artifact in db.plugins.list_artifacts(sample_meeting.id)] == [
+            "retained-artifact"
+        ]
+        assert db.intel.get_intel_job(sample_meeting.id) is None
+        attempts = db.intel.list_intel_job_attempts(sample_meeting.id)
+        assert attempts[0].outcome == "skipped"
+        assert "Remaining intelligence skipped" in (retained.intel_status_detail or "")
+        assert db.intel.skip_remaining_intel(sample_meeting.id) == "skipped"
+        assert len(db.intel.list_intel_job_attempts(sample_meeting.id)) == len(attempts)
+
+        from holdspeak.db.intel import MANUAL_INTEL_RETRY_REASON
+
+        assert db.intel.request_intel_retry(sample_meeting.id) == "queued"
+        queued = db.intel.get_intel_job(sample_meeting.id)
+        assert queued is not None
+        assert queued.last_error == MANUAL_INTEL_RETRY_REASON
+        claimed = db.intel.claim_next_intel_job()
+        assert claimed is not None
+        assert claimed.last_error == MANUAL_INTEL_RETRY_REASON
+
+    def test_running_intel_refuses_retry_and_skip(self, db, sample_meeting):
+        """Owner actions cannot overwrite an in-flight worker claim."""
+        db.meetings.save_meeting(sample_meeting)
+        db.intel.enqueue_intel_job(
+            sample_meeting.id,
+            transcript_hash=sample_meeting.transcript_hash(),
+        )
+        assert db.intel.claim_next_intel_job() is not None
+
+        assert db.intel.request_intel_retry(sample_meeting.id) == "running"
+        assert db.intel.skip_remaining_intel(sample_meeting.id) == "running"
+        job = db.intel.get_intel_job(sample_meeting.id)
+        assert job is not None
+        assert job.status == "running"
+        assert db.meetings.get_meeting(sample_meeting.id).intel_status == "running"
+
+    def test_manual_retry_requeues_same_meeting_and_resets_attempt_budget(
+        self, db, sample_meeting
+    ):
+        """Retry remaining starts a fresh bounded attempt set in place."""
+        db.meetings.save_meeting(sample_meeting)
+        db.intel.enqueue_intel_job(
+            sample_meeting.id,
+            transcript_hash=sample_meeting.transcript_hash(),
+        )
+        assert db.intel.claim_next_intel_job() is not None
+        db.intel.fail_intel_job(sample_meeting.id, "Model unavailable.")
+
+        assert db.intel.request_intel_retry(sample_meeting.id) == "queued"
+
+        job = db.intel.get_intel_job(sample_meeting.id)
+        assert job is not None
+        assert job.meeting_id == sample_meeting.id
+        assert job.status == "queued"
+        assert job.attempts == 0
+        assert job.transcript_hash == sample_meeting.transcript_hash()
+        meeting = db.meetings.get_meeting(sample_meeting.id)
+        assert meeting is not None
+        assert meeting.intel_status == "queued"
+        assert meeting.intel_completed_at is None
 
 
 class TestMirPersistence:
