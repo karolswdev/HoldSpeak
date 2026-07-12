@@ -119,7 +119,7 @@ target.build_configurations.each do |config|
   s['PRODUCT_BUNDLE_IDENTIFIER'] = BUNDLE_ID
   s['PRODUCT_NAME'] = 'HoldSpeakMobile'
   s['MARKETING_VERSION'] = '0.1.0'
-  s['CURRENT_PROJECT_VERSION'] = '10'  # TestFlight build number — bump per upload (b10 = the terminal surface: attach/arm/keys/steer/spawn/kill on glass)
+  s['CURRENT_PROJECT_VERSION'] = '11'  # TestFlight build number — Phase 92 convergence + Phase 93 effortless slices through HS-93-07
   s['GENERATE_INFOPLIST_FILE'] = 'NO'
   s['INFOPLIST_FILE'] = info_plist
   s['TARGETED_DEVICE_FAMILY'] = '1,2'
