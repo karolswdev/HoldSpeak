@@ -32,19 +32,30 @@ The resolver always applies the same precedence:
 4. Control mode;
 5. the feature default.
 
-Unsupported operation families keep their current behavior. They never inherit
-a permissive YOLO default.
+Unsupported operation families refuse. They never inherit a permissive YOLO
+default.
 
 | Family | Secure | Normal | YOLO |
 |---|---|---|---|
 | Dictation commit | Preview before typing | Follow the configured preview setting | Commit directly |
-| Coder steering | Exact pane grant, up to 5 min | Exact pane grant, up to 15 min | Exact pane grant, up to 60 min |
-| Slack/webhook/GitHub write | Per-action authorization | Per-action authorization | Per-action authorization or an exact fixed-destination grant |
+| Coder steering | Exact pane grant, up to 5 min | Exact pane grant, up to 15 min | Direct text/allowed-key delivery to the registered pane; no arm prompt |
+| Slack/webhook/GitHub write | Per-action authorization or exact short grant | Per-action authorization or exact short grant | Direct execution for a configured fixed destination; no HoldSpeak approval prompt |
 | Cadence | Explicit `run-now`; no background loop | Configured cadence may run | Configured cadence may run |
 
 Changing modes affects operations created afterward. Changing a configured
 Slack, webhook, or GitHub destination revokes reusable grants bound to the old
-configuration.
+configuration. Changing modes revokes active reusable grants and in-memory
+Coder pane grants; a Coder attempt resolved afterward uses the new posture.
+
+Coder steering never treats a session name as sufficient destination identity.
+The read-side pane snapshot supplies the expected tmux `%N`; every delivery
+re-resolves the current registry target and sends only to that canonical pane.
+A missing, gone, or changed pane refuses before a keystroke. Secure and Normal
+use the existing bounded in-memory grant. YOLO uses the central posture decision
+for a registered session or exact `pane:%N`, while the key allow-list, payload,
+pane identity, audit, and source-linked Receipt remain mandatory. Destructive
+session factory operations retain their separate grant/confirmation path until
+that operation family receives its own policy treatment.
 
 ## Grants
 

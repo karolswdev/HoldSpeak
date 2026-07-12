@@ -162,6 +162,65 @@ def test_grounding_refs_ride_the_audit_row() -> None:
     assert rec.rows[0]["grounding"] == ["meeting:m1", "artifact:a2"]
 
 
+def test_yolo_posture_delivers_without_a_grant_to_the_expected_pane() -> None:
+    rec = _Recorder()
+    operation = {
+        "family": "coder_steering",
+        "effect_class": "terminal/type_text_and_keys",
+        "destination": "%9",
+    }
+    policy = {
+        "mode": "yolo",
+        "outcome": "allowed",
+        "authority_basis": "control_posture",
+        "reason_code": "registered_steering_posture_allowed",
+        "policy_version": "operation-policy/v2",
+    }
+    result = deliver(
+        "claude:a",
+        "ship it",
+        current_target="hs:0.0",
+        expected_pane_id="%9",
+        operation=operation,
+        policy_snapshot=policy,
+        runner=_identity_runner("%9"),
+        transport=rec.transport,
+        audit=rec.audit,
+    )
+    assert result["status"] == "delivered"
+    assert rec.sent == [{"pane": "%9", "text": "ship it", "submit": True}]
+    assert result["receipt"]["authority_basis"] == "control_posture"
+    assert rec.rows[0]["operation"] == operation
+    assert rec.rows[0]["policy_snapshot"] == policy
+
+
+def test_yolo_posture_refuses_a_changed_or_missing_expected_pane() -> None:
+    rec = _Recorder()
+    policy = {"outcome": "allowed", "authority_basis": "control_posture"}
+    changed = deliver(
+        "claude:a",
+        "old target",
+        current_target="hs:0.0",
+        expected_pane_id="%9",
+        policy_snapshot=policy,
+        runner=_identity_runner("%13"),
+        transport=rec.transport,
+        audit=rec.audit,
+    )
+    assert changed["status"] == "pane_mismatch"
+    missing = deliver(
+        "claude:a",
+        "no target",
+        current_target="hs:0.0",
+        policy_snapshot=policy,
+        runner=_identity_runner("%9"),
+        transport=rec.transport,
+        audit=rec.audit,
+    )
+    assert missing["status"] == "pane_identity_required"
+    assert rec.sent == []
+
+
 def test_a_broken_audit_sink_never_blocks_the_refusal() -> None:
     def exploding_audit(**kw):
         raise RuntimeError("db is gone")

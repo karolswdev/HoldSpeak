@@ -25,6 +25,9 @@ public struct DeskProjectionDTO: Codable, Equatable, Sendable, Identifiable {
     public var sourceId: String
     public var sourceApi: String
     public var detailUrl: String
+    public var controlMode: String?
+    public var policyVersion: String?
+    public var effectClass: String?
     public var severity: String
     public var dismissed: Bool
 }

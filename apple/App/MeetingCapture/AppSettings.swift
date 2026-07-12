@@ -60,7 +60,7 @@ struct SettingsView: View {
                     if !cfg.isLocal { endpointCard }
                     egressRow
                     meshServeCard
-                    label("CONTROL MODE")
+                    label("CONTROL POSTURE")
                     controlModeCard
                     label("TRANSCRIPTION")
                     whisperCard
@@ -195,21 +195,21 @@ struct SettingsView: View {
                 .foregroundStyle(Sig.faint)
             if !controlModeState.isEmpty && controlModeState != "saving" {
                 Text(controlModeState).font(.system(size: 11, weight: .heavy, design: .rounded))
-                    .foregroundStyle(controlModeState == "Control mode updated" ? Sig.ok : Sig.warn)
+                    .foregroundStyle(controlModeState == "Control posture updated for future operations" ? Sig.ok : Sig.warn)
             }
         }
         .padding(16).signalCard(radius: 20)
     }
 
     private func loadControlMode() {
-        guard let client = peer.client() else { controlModeState = "Pair a desktop to change Control mode."; return }
+        guard let client = peer.client() else { controlModeState = "Pair a desktop to change Control posture."; return }
         Task {
             do {
                 let policy = try await client.authorityPolicy()
                 controlMode = policy.controlMode
                 controlModeState = ""
             } catch {
-                controlModeState = "Control mode unavailable on the paired desktop. Check the connection and retry."
+                controlModeState = "Control posture is unavailable on the paired desktop. Check the connection and retry."
             }
         }
     }
@@ -221,9 +221,9 @@ struct SettingsView: View {
             do {
                 let policy = try await client.setControlMode(mode)
                 controlMode = policy.controlMode
-                controlModeState = "Control mode updated"
+                controlModeState = "Control posture updated for future operations"
             } catch {
-                controlModeState = "Control mode was not changed. Check the paired desktop and retry."
+                controlModeState = "Control posture was not changed. Check the paired desktop and retry."
             }
         }
     }

@@ -6466,6 +6466,11 @@ struct DioStage: View {
         steerSheet?.question = peek.awaitingResponse ? peek.question : nil
         steerSheet?.armed = peek.grant.armed
         steerSheet?.remaining = peek.grant.expiresInSeconds ?? 0
+        steerSheet?.paneId = peek.paneId
+        steerSheet?.operation = peek.operation
+        steerSheet?.policy = peek.policy
+        steerSheet?.commitment = peek.commitment
+        steerSheet?.armCommitment = peek.armCommitment ?? "Arm this pane"
     }
 
     private func steerArm() {
@@ -6492,10 +6497,18 @@ struct DioStage: View {
         guard let client = desktopClient, let ss = steerSheet else { return }
         let node = ss.node.isEmpty ? nil : ss.node
         Task { @MainActor in
-            if let r = try? await client.coderKeys(key: ss.paneKey, keys: [key], node: node) {
-                steerSheet?.fate = r.isDelivered ? label : (r.detail ?? r.status)
+            if let r = try? await client.coderKeys(
+                key: ss.paneKey, keys: [key],
+                expectedPaneId: ss.paneId, node: node
+            ) {
+                steerSheet?.fate = r.isDelivered
+                    ? (r.receipt.map { "Receipt \($0.id)" } ?? label)
+                    : (r.detail ?? r.status)
                 steerSheet?.fateOK = r.isDelivered
                 if r.didRevoke { steerSheet?.armed = false }
+                if ["pane_identity_required", "pane_mismatch", "pane_gone"].contains(r.status) {
+                    steerSheet?.paneId = nil; steerSheet?.policy = nil
+                }
             }
         }
     }
@@ -6505,10 +6518,18 @@ struct DioStage: View {
         guard let client = desktopClient, let ss = steerSheet else { return }
         let node = ss.node.isEmpty ? nil : ss.node
         Task { @MainActor in
-            if let r = try? await client.steerCoder(key: ss.paneKey, text: text, submit: submit, node: node) {
-                steerSheet?.fate = r.isDelivered ? "steered" : (r.detail ?? r.status)
+            if let r = try? await client.steerCoder(
+                key: ss.paneKey, text: text, submit: submit,
+                expectedPaneId: ss.paneId, node: node
+            ) {
+                steerSheet?.fate = r.isDelivered
+                    ? (r.receipt.map { "Receipt \($0.id)" } ?? "steered")
+                    : (r.detail ?? r.status)
                 steerSheet?.fateOK = r.isDelivered
                 if r.didRevoke { steerSheet?.armed = false }
+                if ["pane_identity_required", "pane_mismatch", "pane_gone"].contains(r.status) {
+                    steerSheet?.paneId = nil; steerSheet?.policy = nil
+                }
             }
         }
     }
@@ -6545,6 +6566,9 @@ struct DioStage: View {
         let options = [""] + ss.nodes
         let idx = options.firstIndex(of: ss.node) ?? 0
         ss.node = options[(idx + 1) % options.count]
+        ss.paneId = nil; ss.operation = nil; ss.policy = nil
+        ss.commitment = nil; ss.armCommitment = "Arm this pane"
+        ss.armed = false; ss.remaining = 0
         steerSheet = ss
     }
 

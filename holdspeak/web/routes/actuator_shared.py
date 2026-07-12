@@ -88,8 +88,56 @@ def actuator_result_event(proposal: Any) -> dict[str, Any]:
         "action": getattr(proposal, "action", ""),
         "preview": getattr(proposal, "preview", ""),
         "reversible": bool(getattr(proposal, "reversible", False)),
+        "policy": getattr(proposal, "policy_snapshot", {}),
         "error": getattr(proposal, "error", None),
     }
+
+
+def apply_control_posture(
+    ctx: WebContext,
+    db: Any,
+    proposal: Any,
+    *,
+    executors: dict[str, Any],
+) -> Any:
+    """Execute a proposal whose immutable creation snapshot authorizes it.
+
+    This is the zero-prompt YOLO seam. It never re-resolves against the current
+    configuration: changing posture affects future proposals only. Only a
+    fixed, registered destination with a concrete executor can cross the seam;
+    payload/destination/preview parity is still rechecked by ActuatorExecutor
+    immediately before the effect.
+    """
+
+    if proposal.status != "proposed":
+        return proposal
+    policy = dict(getattr(proposal, "policy_snapshot", {}) or {})
+    if not (
+        policy.get("outcome") == "allowed"
+        and policy.get("authority_basis") == "control_posture"
+    ):
+        return proposal
+
+    from ...operation_policy import operation_for_proposal
+
+    operation = operation_for_proposal(proposal)
+    execute = executors.get(proposal.target)
+    if not operation.fixed_destination or execute is None:
+        return proposal
+
+    updated = db.actuators.transition_proposal(
+        proposal.id,
+        to_status="approved",
+        actor=f"control-posture:{policy.get('mode') or 'unknown'}",
+        detail="configured operation authorized by captured control posture",
+        policy_snapshot=policy,
+    )
+    return execute(
+        ctx,
+        db,
+        updated,
+        actor=f"control-posture:{policy.get('mode') or 'unknown'}",
+    )
 
 
 def decide_proposal(
@@ -129,20 +177,30 @@ def decide_proposal(
     try:
         policy_snapshot = None
         if clean == "approved":
-            from ...config import Config
             from ...operation_policy import operation_for_proposal, resolve_policy
 
             operation = operation_for_proposal(existing, actor=actor)
             grant_record = db.actuators.get_grant(grant_id) if grant_id else None
             grant = grant_record.to_dict() if grant_record else None
+            captured = dict(getattr(existing, "policy_snapshot", {}) or {})
+            if captured.get("outcome") == "refused":
+                raise ValueError(
+                    "captured operation policy refuses this unregistered effect"
+                )
             policy_decision = resolve_policy(
-                operation, mode=Config.load().control_mode, source="config", grant=grant,
-                explicit_authorization=True,
+                operation,
+                mode=str(captured.get("mode") or "neutral"),
+                source=str(captured.get("source") or "config"),
+                grant=grant,
+                explicit_authorization=not bool(grant_id),
             )
-            if grant_id and policy_decision.reason_code != "fixed_destination_grant_active":
+            if grant_id and policy_decision.authority_basis != "scoped_grant":
                 raise ValueError("scoped grant is not active for this exact operation and mode")
+            if policy_decision.outcome != "allowed":
+                raise ValueError(
+                    "captured operation policy does not authorize this effect"
+                )
             policy_snapshot = policy_decision.to_dict()
-            policy_snapshot["authorization_basis"] = "scoped_grant" if grant_id else "per_action_decision"
         updated = db.actuators.transition_proposal(
             proposal_id, to_status=clean, actor=actor,
             policy_snapshot=policy_snapshot, grant_id=grant_id,

@@ -1,12 +1,10 @@
 import SwiftUI
 
 // HSM-27-02 — the terminal surface on the diorama. The iPad's counterpart to
-// the web desk's SessionPullout: attach to a pane (peek, read-only), arm it
-// (hold-to-arm → countdown), and manipulate it — a KEY PALETTE (^C, arrows,
-// Escape), the voice-first composer, and the factory (spawn in the picker;
-// rename + a confirm-gated kill in the armed surface). The whole thing drives
-// through HSM-27-01's client; the consent spine holds on glass — watch free,
-// manipulate armed, the countdown visible, kill confirmed.
+// the web desk's SessionPullout: attach to a pane (peek, read-only), then
+// consume the Hub's policy decision. Secure/Normal use an exact pane grant;
+// YOLO can steer a registered pane directly while identity, allowed keys,
+// audit, and Receipts remain mandatory.
 //
 // This view is presentational: DioStage owns the async client calls + the
 // peek poll and passes the state in, so the surface stays testable and the
@@ -45,6 +43,14 @@ struct SteerSheetState: Equatable {
     var panes: [PaneInfo]          // the machine's pane list (the picker)
     var fate: String               // the last act's fate, in place ("" = none)
     var fateOK: Bool
+    var paneId: String? = nil
+    var operation: CoderSteeringOperation? = nil
+    var policy: CoderSteeringPolicy? = nil
+    var commitment: CoderSteeringCommitment? = nil
+    var armCommitment: String = "Arm this pane"
+
+    var postureAuthorized: Bool { policy?.usesControlPosture == true }
+    var canSteer: Bool { armed || postureAuthorized }
 }
 
 struct DioSteerSheet: View {
@@ -67,7 +73,6 @@ struct DioSteerSheet: View {
     @State private var spawnName: String = ""
     @State private var showPanes: Bool = false
     @State private var confirmKill: Bool = false
-    @State private var holdProgress: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -77,7 +82,7 @@ struct DioSteerSheet: View {
                 Divider().overlay(.white.opacity(0.08))
                 if showPanes { paneStrip }
                 paneView
-                if state.armed { armedFoot }
+                if state.canSteer { armedFoot }
             }
             .frame(width: maxW, height: maxH)
             .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.ultraThinMaterial)
@@ -119,7 +124,23 @@ struct DioSteerSheet: View {
 
     private var armChip: some View {
         Group {
-            if state.armed {
+            if state.postureAuthorized {
+                HStack(spacing: 6) {
+                    Text("\(ProductLanguage.controlModeLabel(state.policy?.mode ?? "yolo")) · direct")
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .foregroundStyle(DioPal.accent)
+                        .padding(.horizontal, 10).frame(height: 30)
+                        .background(Capsule().fill(DioPal.accent.opacity(0.14))
+                            .overlay(Capsule().strokeBorder(DioPal.accent.opacity(0.5), lineWidth: 1)))
+                    if state.armed {
+                        Button(action: onDisarm) {
+                            Text("Controls \(mmss(state.remaining))")
+                                .font(.system(size: 10, weight: .black, design: .monospaced))
+                                .foregroundStyle(DioPal.muted)
+                        }.buttonStyle(.plain)
+                    }
+                }
+            } else if state.armed {
                 Button(action: onDisarm) {
                     Text("⏻ \(mmss(state.remaining))")
                         .font(.system(size: 12, weight: .black, design: .monospaced)).foregroundStyle(DioPal.accent)
@@ -127,19 +148,13 @@ struct DioSteerSheet: View {
                         .background(Capsule().fill(DioPal.accent.opacity(0.14)).overlay(Capsule().strokeBorder(DioPal.accent.opacity(0.5), lineWidth: 1)))
                 }.buttonStyle(.plain)
             } else {
-                Text("ARM")
-                    .font(.system(size: 12, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.text)
-                    .padding(.horizontal, 13).frame(height: 30)
-                    .background(Capsule().fill(.white.opacity(0.08))
-                        .overlay(GeometryReader { g in Capsule().fill(DioPal.accent.opacity(0.3)).frame(width: g.size.width * holdProgress) })
-                        .clipShape(Capsule())
-                        .overlay(Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 1)))
-                    .gesture(
-                        LongPressGesture(minimumDuration: 0.6)
-                            .onChanged { _ in withAnimation(.linear(duration: 0.6)) { holdProgress = 1 } }
-                            .onEnded { _ in holdProgress = 0; onArm() }
-                    )
-                    .onTapGesture { withAnimation { holdProgress = 0 } }
+                Button(action: onArm) {
+                    Text(state.armCommitment)
+                        .font(.system(size: 12, weight: .black, design: .rounded)).tracking(1).foregroundStyle(DioPal.text)
+                        .padding(.horizontal, 13).frame(height: 30)
+                        .background(Capsule().fill(.white.opacity(0.08))
+                            .overlay(Capsule().strokeBorder(.white.opacity(0.18), lineWidth: 1)))
+                }.buttonStyle(.plain)
             }
         }
     }
@@ -195,10 +210,16 @@ struct DioSteerSheet: View {
         }
     }
 
-    // MARK: the armed foot — key palette, composer, factory
+    // MARK: the authorized foot — key palette, composer, factory
 
     private var armedFoot: some View {
         VStack(spacing: 9) {
+            if let operation = state.operation, let policy = state.policy {
+                Text("Send text or allowed keys to pane \(operation.destination ?? "unresolved") · \(policy.authorityBasis == "control_posture" ? ProductLanguage.controlModeLabel(policy.mode ?? "yolo") + " control posture" : "armed pane grant") · Receipt after every attempt")
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .foregroundStyle(DioPal.muted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
             // KEY PALETTE
             HStack(spacing: 6) {
                 Text("KEYS").font(.system(size: 9, weight: .black, design: .monospaced)).tracking(1).foregroundStyle(DioPal.muted)
@@ -235,7 +256,13 @@ struct DioSteerSheet: View {
             // SESSION — kill (rename lives here on the couch build)
             HStack(spacing: 8) {
                 Text("SESSION").font(.system(size: 9, weight: .black, design: .monospaced)).tracking(1).foregroundStyle(DioPal.muted)
-                if confirmKill {
+                if !state.armed {
+                    Button(action: onArm) {
+                        Text("Arm pane for rename and kill")
+                            .font(.system(size: 11, weight: .heavy, design: .rounded))
+                            .foregroundStyle(DioPal.muted)
+                    }.buttonStyle(.plain)
+                } else if confirmKill {
                     Button(action: onKill) {
                         Text("⌫ Kill — sure?").font(.system(size: 12, weight: .heavy, design: .rounded)).foregroundStyle(.white)
                             .padding(.horizontal, 11).frame(height: 30).background(Capsule().fill(INTERRUPT))

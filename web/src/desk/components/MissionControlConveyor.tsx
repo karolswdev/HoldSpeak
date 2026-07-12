@@ -405,7 +405,10 @@ export function MissionControlConveyor() {
     const onFrame = (e: Event) => {
       const frame = (e as CustomEvent).detail;
       if (isBeltFrame(frame)) void refresh();
-      if (isCoderFrame(frame)) tick();
+      if (isCoderFrame(frame)) {
+        tick();
+        void useProjections.getState().refresh(true);
+      }
     };
     document.addEventListener("hs-broadcast", onFrame);
     return () => {

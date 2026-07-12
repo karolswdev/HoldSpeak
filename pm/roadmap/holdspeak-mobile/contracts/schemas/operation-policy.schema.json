@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/operation-policy.schema.json",
+  "title": "OperationPolicy",
+  "description": "The Hub-owned operation descriptor and resolved policy decision consumed by Web and Swift clients.",
+  "$defs": {
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "operation_id": { "type": "string" },
+        "family": { "type": "string" },
+        "effect_class": { "type": "string" },
+        "actor": { "type": "string" },
+        "destination": { "type": "string" },
+        "data_classes": { "type": "array", "items": { "type": "string" } },
+        "project_scope": { "type": ["string", "null"] },
+        "resource_scope": { "type": ["string", "null"] },
+        "fixed_destination": { "type": "boolean" },
+        "consequence": { "type": "string" },
+        "version": { "type": "integer" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["safe", "neutral", "yolo"] },
+        "source": { "type": "string" },
+        "precedence": { "type": "array", "items": { "type": "string" } },
+        "outcome": { "type": "string" },
+        "reason_code": { "type": "string" },
+        "consequence": { "type": "string" },
+        "authority_basis": { "type": "string" },
+        "next_state": { "type": "string" },
+        "eligible": { "type": "boolean" },
+        "requires_review": { "type": "boolean" },
+        "requires_authorization": { "type": "boolean" },
+        "requires_grant": { "type": "boolean" },
+        "hard_invariants": { "type": "array", "items": { "type": "string" } },
+        "policy_version": { "type": "string" }
+      }
+    }
+  }
+}

@@ -7,11 +7,13 @@
 **Last updated:** 2026-07-11 — **Phase 91, One React Surface, IN PROGRESS
 (9/10); Phase 92, The Coalescence, PLANNED with all ten stories carrying
 pre-close implementation but no accepted owner/device outcome; Phase 93,
-Effortless HoldSpeak, IN PROGRESS with HS-93-01 through HS-93-06 carrying
-automated implementation evidence but not yet accepted. HS-93-06 now exposes
-an explicit, atomic choice between retained Meeting sync-conflict versions and
-truthful partial-intelligence Retry/Skip on History and the Desk, without false
-Ready state.** The Web is
+Effortless HoldSpeak, IN PROGRESS with HS-93-01 through HS-93-07 carrying
+automated implementation evidence but not yet accepted. HS-93-07 now snapshots
+future-operation policy and lets YOLO execute fixed configured Integrations and
+steer a registered, re-verified Coder pane with the posture as authority and no
+HoldSpeak approval/grant/arm prompt. Invariants remain intact, every attempt
+leaves a source-linked Receipt, and unknown or unresolved effects refuse.**
+The Web is
 one Vite/React 19 tree and Phase 92 added substantial language, trust,
 first-value, capture, relationship, capability, destination, authority, and
 Desk-memory substrate. The experience audit found that the product is not yet

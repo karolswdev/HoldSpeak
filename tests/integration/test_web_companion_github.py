@@ -25,11 +25,11 @@ from fastapi.testclient import TestClient
 
 pytestmark = [pytest.mark.requires_meeting]
 
-import holdspeak.config as config_module
-import holdspeak.web.routes.actuator_shared as actuator_shared
-from holdspeak.config import Config
-from holdspeak.db import Database, get_database, reset_database
-from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+import holdspeak.config as config_module  # noqa: E402
+import holdspeak.web.routes.actuator_shared as actuator_shared  # noqa: E402
+from holdspeak.config import Config  # noqa: E402
+from holdspeak.db import get_database, reset_database  # noqa: E402
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks  # noqa: E402
 
 REPO = "acme/app"
 ISSUE_URL = "https://github.com/acme/app/issues/42"
@@ -73,6 +73,12 @@ def settings_path(tmp_path, monkeypatch):
 def _configure(settings_path, repo=REPO):
     config = Config.load()
     config.meeting.companion_github_repo = repo
+    config.save(path=settings_path)
+
+
+def _set_control_mode(settings_path, mode):
+    config = Config.load()
+    config.control_mode = mode
     config.save(path=settings_path)
 
 
@@ -175,6 +181,41 @@ def test_approval_files_the_issue_and_returns_the_url(client, db, settings_path,
     argv = gh.calls[0]
     assert argv[:3] == ["gh", "issue", "create"]
     assert REPO in argv and "Wire onboarding" in argv and "the body" in argv
+
+
+@pytest.mark.integration
+def test_yolo_files_to_the_registered_repo_without_a_decision(
+    client, db, settings_path, gh
+):
+    _configure(settings_path)
+    _set_control_mode(settings_path, "yolo")
+    proposal = client.post(
+        PROPOSE,
+        json={"text": "the body", "title": "Wire onboarding"},
+    ).json()["proposal"]
+    assert proposal["status"] == "executed"
+    assert proposal["policy_snapshot"]["authority_basis"] == "control_posture"
+    assert len(gh.calls) == 1
+
+
+@pytest.mark.integration
+def test_yolo_refuses_an_unregistered_repo_without_filing_or_prompting(
+    client, db, settings_path, gh
+):
+    _configure(settings_path, repo="host/default")
+    _set_control_mode(settings_path, "yolo")
+    proposal = client.post(
+        PROPOSE,
+        json={"text": "the body", "title": "Ship", "repo": "other/repo"},
+    ).json()["proposal"]
+    assert proposal["status"] == "proposed"
+    assert proposal["policy_snapshot"]["outcome"] == "refused"
+    assert proposal["policy_snapshot"]["reason_code"] == "registered_destination_required"
+    assert gh.calls == []
+    assert client.get("/api/mesh/inbox").json()["counts"]["pending_approvals"] == 0
+    decision = _decide(client, proposal["id"], "approved")
+    assert decision.status_code == 400
+    assert "refuses" in decision.json()["error"]
 
 
 @pytest.mark.integration

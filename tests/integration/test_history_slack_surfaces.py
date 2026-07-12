@@ -1,11 +1,11 @@
-"""HS-61-02 — the Send-to-Slack surfaces: gating, wiring, honest copy.
+"""Send-to-Slack surfaces: capability gating, policy, and wiring.
 
 The conditions under test: the aftercare response carries the capability
 flag (a bool, never the URL); the history page's buttons are gated on that
 flag, so an unconfigured install renders no Slack affordance at all; the
-buttons wire to the export route through `proposeSlack`; the settings field
-ships with the honest copy (what is sent, only after approval, only to this
-URL's host, stored locally).
+buttons wire to the export route through `proposeSlack`; and the result uses
+the central operation-policy snapshot rather than assuming every posture asks
+for approval.
 """
 from __future__ import annotations
 
@@ -127,17 +127,20 @@ def test_history_buttons_are_gated_on_the_flag():
     assert "Send digest to Slack" in page and "Send follow-up to Slack" in page
     assert "aftercare.slack_configured" in page
     assert 'proposeSlack("digest")' in page and 'proposeSlack("followup")' in page
-    assert "Each creates an exact-message proposed action" in page
-    assert "configured Slack destination" in page
+    assert 'apiFetch<JsonRecord>("/api/authority/policy")' in page
+    assert "controlModeDescription" in page
 
 
-def test_proposal_guard_copy_tells_the_per_target_truth():
-    # The guard copy tells the per-target truth, in one short line each
-    # (HS-62-02 swept the "Nothing runs without your approval" preamble).
+def test_proposal_rows_render_the_central_policy_and_refusal_truth():
     page = " ".join(
         (_REPO / "web/src/pages/HistoryPage.tsx").read_text().split()
     )
-    assert "Approval sends it to the configured Slack destination" in page
+    assert "row.policy_snapshot" in page and "row.operation" in page
+    assert 'policy.outcome === "refused"' in page
+    assert 'row.status === "proposed" && !refused' in page
+    assert "operation.effect_class" in page
+    assert "operation.destination" in page
+    assert "policy.authority_basis" in page
     assert "Proposed external actions appear here before execution" in page
 
 

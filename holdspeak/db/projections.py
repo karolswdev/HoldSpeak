@@ -33,6 +33,9 @@ class DeskProjection:
     source_id: str
     source_api: str
     detail_url: str
+    control_mode: Optional[str] = None
+    policy_version: Optional[str] = None
+    effect_class: Optional[str] = None
     severity: str = "normal"
     dismissed: bool = False
     version: int = 1
@@ -212,7 +215,10 @@ class ProjectionRepository(BaseRepository):
                 subject_label = target.title()
             policy = self._json_loads_dict(row["policy_snapshot_json"])
             operation = self._json_loads_dict(row["operation_json"])
-            needs = status in {"proposed", "approved", "failed"}
+            policy_refused = (
+                status == "proposed" and policy.get("outcome") == "refused"
+            )
+            needs = status in {"proposed", "approved", "failed"} and not policy_refused
             action_names = {
                 "slack": ("send to Slack", "Slack send"),
                 "webhook": ("post to Custom webhook", "Custom webhook post"),
@@ -226,21 +232,51 @@ class ProjectionRepository(BaseRepository):
                 "failed": f"{noun} failed",
                 "rejected": f"{noun} rejected",
             }
+            if policy_refused:
+                titles["proposed"] = f"{noun} refused"
+            mode = str(policy.get("mode") or "").strip() or None
+            mode_label = {
+                "safe": "Secure",
+                "neutral": "Normal",
+                "yolo": "YOLO",
+            }.get(mode or "", mode or "Control posture")
+            summary = (
+                f"{mode_label} refused this unregistered destination. "
+                "Configure the destination before trying again."
+                if policy_refused
+                else (
+                    f"{mode_label} authorized this configured effect. "
+                    "The exact effect and source remain on this Receipt."
+                    if policy.get("authority_basis") == "control_posture"
+                    else (
+                        "The exact proposed effect and source remain on this Receipt."
+                        if source_ref
+                        else "The exact proposed effect remains in its source record."
+                    )
+                )
+            )
             result.append(DeskProjection(
                 id=f"actuator:{row['id']}:{status}",
                 projection_kind="attention" if needs else "receipt",
                 subject_ref=subject_ref, subject_label=subject_label,
                 title=titles.get(status, f"{target.title()} action: {status}"),
-                summary=(
-                    "The exact proposed effect and source remain on this Receipt."
-                    if source_ref
-                    else "The exact proposed effect remains in its source record."
-                ),
-                reason_code=f"effect_{status}", decision_kind="authorization",
+                summary=summary,
+                reason_code=str(
+                    policy.get("reason_code") or f"effect_{status}"
+                ), decision_kind="authorization",
                 attention_state="needs_attention" if needs else "resolved",
                 actual_destination=str(row["approved_destination"] or operation.get("destination") or target),
-                authority_basis=str(policy.get("authorization_basis") or "per_action_required"),
-                attempt=None, outcome=str(row["execution_state"] or status),
+                authority_basis=str(
+                    policy.get("authority_basis")
+                    or policy.get("authorization_basis")
+                    or "per_action_required"
+                ),
+                attempt=None,
+                outcome=(
+                    "refused"
+                    if policy_refused
+                    else str(row["execution_state"] or status)
+                ),
                 timestamp=str(row["updated_at"]), correlation_id=f"actuator:{row['id']}",
                 source_kind="actuator_proposal", source_id=str(row["id"]),
                 source_api=(
@@ -253,7 +289,11 @@ class ProjectionRepository(BaseRepository):
                     if meeting_id
                     else f"/?open={source_ref}" if source_ref else "/"
                 ),
-                severity="error" if status == "failed" else "normal",
+                control_mode=mode,
+                policy_version=str(policy.get("policy_version") or "") or None,
+                effect_class=str(operation.get("effect_class") or "") or None,
+                severity="error" if status == "failed" or policy_refused else "normal",
+                version=2,
             ))
         return result
 
@@ -333,19 +373,42 @@ class ProjectionRepository(BaseRepository):
             outcome = str(row["outcome"])
             refused = outcome != "delivered"
             key = str(row["session_key"])
+            operation = self._json_loads_dict(row["operation_json"])
+            policy = self._json_loads_dict(row["policy_snapshot_json"])
+            mode = str(policy.get("mode") or "").strip() or None
+            mode_label = {
+                "safe": "Secure",
+                "neutral": "Normal",
+                "yolo": "YOLO",
+            }.get(mode or "", mode or "Control posture")
+            authority_basis = str(
+                policy.get("authority_basis") or "armed_pane_grant"
+            )
             result.append(DeskProjection(
                 id=f"steering:{row['id']}", projection_kind="attention" if refused else "receipt",
                 subject_ref=f"coder_session:{key}", subject_label=key,
                 title="Coder steer refused" if refused else "Coder steer delivered",
-                summary="The source audit retains the bounded text fingerprint and delivery detail.",
+                summary=(
+                    f"{mode_label} used the registered pane as posture authority. "
+                    "The bounded fingerprint and delivery detail remain in the source audit."
+                    if authority_basis == "control_posture"
+                    else "The source audit retains the bounded text fingerprint and delivery detail."
+                ),
                 reason_code=f"steering_{outcome}", decision_kind="execution",
                 attention_state="needs_attention" if refused else "resolved",
-                actual_destination=str(row["pane_id"] or "unresolved pane"),
-                authority_basis="armed_pane_grant", attempt=1, outcome=outcome,
+                actual_destination=str(
+                    row["pane_id"]
+                    or operation.get("destination")
+                    or "unresolved pane"
+                ),
+                authority_basis=authority_basis, attempt=1, outcome=outcome,
                 timestamp=str(row["ts"]), correlation_id=f"steering:{key}",
                 source_kind="steering_audit", source_id=str(row["id"]),
                 source_api=f"/api/coders/steering/audit?session_key={key}",
-                detail_url=f"/?open={key}", severity="error" if refused else "normal",
+                detail_url=f"/?open={key}", control_mode=mode,
+                policy_version=str(policy.get("policy_version") or "") or None,
+                effect_class=str(operation.get("effect_class") or "") or None,
+                severity="error" if refused else "normal", version=2,
             ))
         return result
 

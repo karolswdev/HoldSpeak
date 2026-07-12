@@ -38,15 +38,39 @@ public struct MeshInboxProposal: Codable, Equatable, Sendable, Identifiable {
     public var status: String?
     public var createdAt: String?   // ISO string — the timestamps rule (never Date)
     public var commitment: MeshProposalCommitment?
+    public var operation: MeshProposalOperation?
+    public var policySnapshot: MeshProposalPolicy?
 
     public init(id: String, origin: String? = nil, meetingId: String? = nil,
                 target: String? = nil, action: String? = nil, preview: String? = nil,
                 status: String? = nil, createdAt: String? = nil,
-                commitment: MeshProposalCommitment? = nil) {
+                commitment: MeshProposalCommitment? = nil,
+                operation: MeshProposalOperation? = nil,
+                policySnapshot: MeshProposalPolicy? = nil) {
         self.id = id; self.origin = origin; self.meetingId = meetingId
         self.target = target; self.action = action; self.preview = preview
         self.status = status; self.createdAt = createdAt; self.commitment = commitment
+        self.operation = operation; self.policySnapshot = policySnapshot
     }
+
+}
+
+public struct MeshProposalOperation: Codable, Equatable, Sendable {
+    public var effectClass: String?
+    public var destination: String?
+    public var consequence: String?
+
+}
+
+public struct MeshProposalPolicy: Codable, Equatable, Sendable {
+    public var mode: String?
+    public var source: String?
+    public var policyVersion: String?
+    public var outcome: String?
+    public var reasonCode: String?
+    public var authorityBasis: String?
+    public var nextState: String?
+
 }
 
 public struct MeshProposalCommitment: Codable, Equatable, Sendable {

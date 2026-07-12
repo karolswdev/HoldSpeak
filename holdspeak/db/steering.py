@@ -42,6 +42,8 @@ class SteeringAuditEntry:
     submit: bool
     outcome: str
     detail: Optional[str]
+    operation: dict[str, Any]
+    policy_snapshot: dict[str, Any]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -56,6 +58,8 @@ class SteeringAuditEntry:
             "submit": self.submit,
             "outcome": self.outcome,
             "detail": self.detail,
+            "operation": dict(self.operation),
+            "policy_snapshot": dict(self.policy_snapshot),
         }
 
 
@@ -71,6 +75,8 @@ class SteeringAuditRepository(BaseRepository):
         submit: bool = True,
         outcome: str,
         detail: Optional[str] = None,
+        operation: Optional[dict[str, Any]] = None,
+        policy_snapshot: Optional[dict[str, Any]] = None,
     ) -> int:
         """One audit row per steer attempt; returns the row id."""
         digest = hashlib.sha256(str(text).encode("utf-8", "replace")).hexdigest()
@@ -80,8 +86,9 @@ class SteeringAuditRepository(BaseRepository):
                 """
                 INSERT INTO steering_audit
                     (session_key, agent, pane_id, text_sha256, text_head,
-                     grounding_json, submit, outcome, detail)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     grounding_json, submit, outcome, detail, operation_json,
+                     policy_snapshot_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     session_key,
@@ -93,6 +100,8 @@ class SteeringAuditRepository(BaseRepository):
                     1 if submit else 0,
                     outcome,
                     detail,
+                    self._json_dumps(dict(operation or {}), fallback="{}"),
+                    self._json_dumps(dict(policy_snapshot or {}), fallback="{}"),
                 ),
             )
             return int(cursor.lastrowid or 0)
@@ -104,7 +113,8 @@ class SteeringAuditRepository(BaseRepository):
         limit = max(1, min(int(limit), 500))
         query = (
             "SELECT id, ts, session_key, agent, pane_id, text_sha256, "
-            "text_head, grounding_json, submit, outcome, detail "
+            "text_head, grounding_json, submit, outcome, detail, "
+            "operation_json, policy_snapshot_json "
             "FROM steering_audit "
         )
         params: tuple[Any, ...] = ()
@@ -128,6 +138,8 @@ class SteeringAuditRepository(BaseRepository):
                 submit=bool(row[8]),
                 outcome=str(row[9]),
                 detail=row[10],
+                operation=self._json_loads_dict(row[11]),
+                policy_snapshot=self._json_loads_dict(row[12]),
             )
             for row in rows
         ]

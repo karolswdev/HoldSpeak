@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://holdspeak.dev/contracts/v0/coder-session-peek.schema.json",
   "title": "CoderSessionPeek",
-  "description": "The read-only window into a live agent session's tmux pane. Source: GET /api/coders/{key}/peek (holdspeak/web/routes/system/coder_steering_routes.py, Phase 87). Presence class: read, never synced. Watching is free; the grant sub-object reports arming state without issuing one.",
+  "description": "The read-only window into a live Coder pane plus the Hub-owned policy decision for its next text/allowed-key delivery.",
   "type": "object",
   "additionalProperties": false,
   "required": ["key", "agent", "stale", "awaiting_response", "updated_at", "grant", "peek"],
@@ -13,6 +13,22 @@
     "awaiting_response": { "type": "boolean" },
     "question": { "type": ["string", "null"] },
     "updated_at": { "type": "string", "description": "the registry record's last-updated instant" },
+    "pane_id": { "type": ["string", "null"], "description": "canonical tmux identity captured for the next request" },
+    "arm_commitment": { "type": "string" },
+    "operation": { "$ref": "https://holdspeak.dev/contracts/v0/operation-policy.schema.json#/$defs/operation" },
+    "policy": { "$ref": "https://holdspeak.dev/contracts/v0/operation-policy.schema.json#/$defs/policy" },
+    "commitment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect", "destination", "authority_basis", "next_state", "receipt"],
+      "properties": {
+        "effect": { "type": "string" },
+        "destination": { "type": "string" },
+        "authority_basis": { "type": "string" },
+        "next_state": { "type": "string" },
+        "receipt": { "type": "string" }
+      }
+    },
     "grant": {
       "type": "object",
       "additionalProperties": false,

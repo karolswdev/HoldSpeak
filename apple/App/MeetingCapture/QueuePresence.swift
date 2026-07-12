@@ -366,6 +366,16 @@ struct QueueHUD: View {
                 LabeledContent("Decision", value: projection.decisionKind)
                 LabeledContent("Destination", value: projection.actualDestination ?? "Not reached")
                 LabeledContent("Authority", value: projection.authorityBasis ?? "Not required")
+                if let mode = projection.controlMode {
+                    LabeledContent(
+                        "Control posture",
+                        value: ProductLanguage.controlModeLabel(mode)
+                            + (projection.policyVersion.map { " · \($0)" } ?? "")
+                    )
+                }
+                if let effect = projection.effectClass {
+                    LabeledContent("Effect", value: effect)
+                }
                 LabeledContent("Attempt", value: projection.attempt.map(String.init) ?? "—")
                 LabeledContent("Outcome", value: projection.outcome)
                 LabeledContent("Source", value: "\(projection.sourceKind) · \(projection.sourceId)")
@@ -483,6 +493,16 @@ struct QueueHUD: View {
                     Text("·").foregroundStyle(Sig.faint)
                     Text(proposal.target ?? "").font(.system(size: 11, weight: .semibold))
                 }.foregroundStyle(Sig.faint).lineLimit(1)
+                if let mode = proposal.policySnapshot?.mode {
+                    Text(
+                        "\(ProductLanguage.controlModeLabel(mode)) · "
+                        + "\(proposal.policySnapshot?.authorityBasis ?? "authority pending") · "
+                        + "\(proposal.operation?.destination ?? proposal.target ?? "destination unavailable")"
+                    )
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundStyle(Sig.faint)
+                    .lineLimit(1)
+                }
             }
             Spacer(minLength: 4)
             Button {

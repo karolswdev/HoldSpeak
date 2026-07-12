@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient
 import holdspeak.agent_context as agent_context
 import holdspeak.tmux_transport as tmux_transport
 from holdspeak import coder_steering
+from holdspeak.config import Config
 from holdspeak.db import core as dbcore
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes.system.coder_steering_routes import (
@@ -52,6 +53,10 @@ def env(tmp_path, monkeypatch):
     coder_steering.clear_grants()
     dbcore.reset_database()
     db = dbcore.Database(tmp_path / "holdspeak.db")
+    monkeypatch.setattr(
+        Config, "load",
+        classmethod(lambda cls: SimpleNamespace(control_mode="neutral")),
+    )
     monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
     frames: list = []
     app = FastAPI()
@@ -127,6 +132,67 @@ def test_armed_steer_delivers_exactly_as_composed(env) -> None:
     assert trail[0].pane_id == "%3"
 
 
+def test_yolo_steers_registered_pane_without_an_arm_and_returns_receipt(env) -> None:
+    env.monkeypatch.setattr(
+        Config, "load", classmethod(lambda cls: SimpleNamespace(control_mode="yolo"))
+    )
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    res = env.client.post(
+        "/api/coders/claude:abc/steer",
+        json={"text": "ship it", "expected_pane_id": "%3"},
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["status"] == "delivered"
+    assert body["policy"]["authority_basis"] == "control_posture"
+    assert body["policy"]["reason_code"] == "registered_steering_posture_allowed"
+    assert body["receipt"] == {
+        "id": f"steering:{body['audit_id']}",
+        "source_ref": "coder_session:claude:abc",
+        "actual_destination": "%3",
+        "authority_basis": "control_posture",
+        "control_mode": "yolo",
+        "policy_version": "operation-policy/v2",
+        "effect_class": "terminal/type_text_and_keys",
+        "outcome": "delivered",
+    }
+    assert coder_steering.active_grants() == {}
+    trail = env.db.steering.list()
+    assert trail[0].policy_snapshot["mode"] == "yolo"
+    assert trail[0].operation["destination"] == "%3"
+    projection = next(
+        row for row in env.db.projections.list(limit=20)["projections"]
+        if row["source_kind"] == "steering_audit"
+    )
+    assert projection["subject_ref"] == "coder_session:claude:abc"
+    assert projection["authority_basis"] == "control_posture"
+    assert projection["control_mode"] == "yolo"
+    assert projection["policy_version"] == "operation-policy/v2"
+
+
+def test_yolo_refuses_missing_or_changed_pane_identity_before_typing(env) -> None:
+    env.monkeypatch.setattr(
+        Config, "load", classmethod(lambda cls: SimpleNamespace(control_mode="yolo"))
+    )
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    missing = env.client.post(
+        "/api/coders/claude:abc/steer", json={"text": "no snapshot"}
+    )
+    assert missing.status_code == 409
+    assert missing.json()["status"] == "pane_identity_required"
+    _pin_identity(env.monkeypatch, "%99")
+    changed = env.client.post(
+        "/api/coders/claude:abc/steer",
+        json={"text": "old pane", "expected_pane_id": "%3"},
+    )
+    assert changed.status_code == 409
+    assert changed.json()["status"] == "pane_mismatch"
+    assert changed.json().get("revoked") is not True
+    assert env.sent == []
+
+
 def test_no_submit_steer_leaves_enter_unpressed(env) -> None:
     _register(env.monkeypatch, _session())
     _pin_identity(env.monkeypatch)
@@ -153,6 +219,23 @@ def test_recycled_pane_steer_refuses_disarms_and_frames(env) -> None:
     assert len(env.frames) == 1  # the disarm is visible everywhere
     trail = env.db.steering.list()
     assert trail[0].outcome == "pane_mismatch"
+
+
+def test_expired_grant_keeps_its_typed_refusal_and_receipt(env) -> None:
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    env.client.post("/api/coders/claude:abc/arm", json={})
+    with coder_steering._GRANTS_LOCK:
+        coder_steering._GRANTS["claude:abc"]["expires_at"] = 0.0
+    env.frames.clear()
+    res = env.client.post(
+        "/api/coders/claude:abc/steer", json={"text": "too late"}
+    )
+    assert res.status_code == 409
+    assert res.json()["status"] == "expired"
+    assert res.json()["receipt"]["outcome"] == "expired"
+    assert coder_steering.active_grants() == {}
+    assert len(env.frames) == 1
 
 
 def test_empty_text_is_a_400(env) -> None:
@@ -411,6 +494,23 @@ def test_armed_keys_interrupt_reaches_the_verified_pane(env) -> None:
     assert trail[0].outcome == "delivered" and trail[0].text_head == "C-c"
 
 
+def test_yolo_keys_reach_the_expected_registered_pane_without_an_arm(env) -> None:
+    env.monkeypatch.setattr(
+        Config, "load", classmethod(lambda cls: SimpleNamespace(control_mode="yolo"))
+    )
+    _register(env.monkeypatch, _session())
+    _pin_identity(env.monkeypatch, "%3")
+    keyed = _capture_keys(env)
+    res = env.client.post(
+        "/api/coders/claude:abc/keys",
+        json={"keys": ["C-c"], "expected_pane_id": "%3"},
+    )
+    assert res.status_code == 200
+    assert res.json()["policy"]["authority_basis"] == "control_posture"
+    assert keyed == [{"pane": "%3", "keys": [("named", "C-c")]}]
+    assert coder_steering.active_grants() == {}
+
+
 def test_unknown_key_is_refused_by_name_and_types_nothing(env) -> None:
     _register(env.monkeypatch, _session())
     _pin_identity(env.monkeypatch, "%3")
@@ -482,9 +582,24 @@ def test_arm_and_key_control_any_pane_under_a_grant(env) -> None:
     assert trail[0].session_key == "pane:%7" and trail[0].text_head == "C-c"
 
 
+def test_yolo_controls_an_exact_raw_pane_without_an_arm(env) -> None:
+    env.monkeypatch.setattr(
+        Config, "load", classmethod(lambda cls: SimpleNamespace(control_mode="yolo"))
+    )
+    _pin_identity(env.monkeypatch, "%7")
+    keyed = _capture_keys(env)
+    res = env.client.post("/api/coders/pane:%7/keys", json={"keys": ["C-c"]})
+    assert res.status_code == 200
+    assert res.json()["pane_id"] == "%7"
+    assert res.json()["policy"]["authority_basis"] == "control_posture"
+    assert keyed == [{"pane": "%7", "keys": [("named", "C-c")]}]
+
+
 def test_a_bad_pane_key_is_a_400(env) -> None:
-    res = env.client.post("/api/coders/pane:/arm", json={})
-    assert res.status_code == 400
+    for key in ("pane:", "pane:7", "pane:work", "pane:%7:0"):
+        res = env.client.post(f"/api/coders/{key}/arm", json={})
+        assert res.status_code == 400
+        assert res.json()["error"] == "key must be pane:%N"
 
 
 def test_registry_path_still_works_unchanged(env) -> None:
@@ -516,11 +631,15 @@ def _capture_relay(env):
 
 def test_relay_keys_forwards_node_key_and_sequence(env) -> None:
     calls = _capture_relay(env)
-    res = env.client.post("/api/coders/relay/beta/keys", json={"key": "pane:%5", "keys": ["C-c"]})
+    res = env.client.post(
+        "/api/coders/relay/beta/keys",
+        json={"key": "pane:%5", "keys": ["C-c"], "expected_pane_id": "%5"},
+    )
     assert res.status_code == 200
     assert res.json()["node"] == "beta"
     assert calls == [{"node": "beta", "verb": "keys", "key": "pane:%5",
-                      "method": "POST", "body": {"keys": ["C-c"]}}]
+                      "method": "POST", "body": {
+                          "keys": ["C-c"], "expected_pane_id": "%5"}}]
 
 
 def test_relay_steer_drops_key_from_the_forwarded_body(env) -> None:

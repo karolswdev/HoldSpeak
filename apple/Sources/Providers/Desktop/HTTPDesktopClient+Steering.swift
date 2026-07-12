@@ -5,8 +5,9 @@ import FoundationNetworking
 import Contracts
 
 // HSM-26-03 — the consent spine on the wire (Phase 87). The iPad attaches to a
-// live session (peek, read-only), arms it (a grant that pins the pane's %N and
-// counts down), and steers it (voice-first, audited). The refusals are
+// live session (peek, read-only), consumes the Hub's policy decision, and
+// steers it (voice-first, audited). Secure/Normal may arm a bounded grant;
+// YOLO binds the expected registered pane id without an arm prompt. Refusals are
 // first-class DATA, not errors: an unarmed or recycled-pane steer comes back as
 // a typed SteerResult (a 409 body), so the surface re-offers ARM from the shape
 // alone — never a thrown toast. Own request helpers (the +Ask precedent).
@@ -147,10 +148,14 @@ extension HTTPDesktopClient {
     /// revoking refusal (recycled pane / expiry) sets `revoked` so the surface
     /// re-offers ARM.
     public func steerCoder(key: String, text: String, submit: Bool = true,
+                           expectedPaneId: String? = nil,
                            grounding: [RailsGroundingRef]? = nil, node: String? = nil) async throws -> SteerResult {
         let (path, keyInBody) = steerVerb(node: node, key: key, verb: "steer")
         var body: [String: Any] = ["text": text, "submit": submit]
         if keyInBody { body["key"] = key }
+        if let expectedPaneId, !expectedPaneId.isEmpty {
+            body["expected_pane_id"] = expectedPaneId
+        }
         if let g = grounding, !g.isEmpty {
             body["grounding"] = ["rails": g.map { ["repo": $0.repo, "project": $0.project, "kind": $0.kind, "id": $0.id] }]
         }
@@ -180,10 +185,15 @@ extension HTTPDesktopClient {
     /// keys (`.interrupt`, arrows, `.escape`) through the chokepoint. 200 →
     /// delivered; 409 → a typed refusal (a revoking one re-offers ARM). A
     /// `node` routes through the relay (HS-89-03).
-    public func coderKeys(key: String, keys: [SteerKey], node: String? = nil) async throws -> SteerResult {
+    public func coderKeys(key: String, keys: [SteerKey],
+                          expectedPaneId: String? = nil,
+                          node: String? = nil) async throws -> SteerResult {
         let (path, keyInBody) = steerVerb(node: node, key: key, verb: "keys")
         var body: [String: Any] = ["keys": keys.map { $0.wire }]
         if keyInBody { body["key"] = key }
+        if let expectedPaneId, !expectedPaneId.isEmpty {
+            body["expected_pane_id"] = expectedPaneId
+        }
         let data = try await sendSteerAllowing409(makeSteerRequest(path: path, method: "POST", jsonBody: body))
         guard let res = try? HoldSpeakContracts.decoder().decode(SteerResult.self, from: data) else {
             throw DesktopClientError.malformed

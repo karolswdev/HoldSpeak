@@ -2,12 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://holdspeak.dev/contracts/v0/steer-result.schema.json",
   "title": "SteerResult",
-  "description": "The outcome of a steer through the one chokepoint. Source: POST /api/coders/{key}/steer result (holdspeak/coder_steering.py deliver, Phase 87). Delivered carries the verified pane_id + audit_id; every other status is a typed refusal (unarmed/expired/pane_mismatch/pane_gone/transport_error/grounding_over_cap), and a revoking refusal disarms.",
+  "description": "The outcome of a text/key delivery through the one policy and identity chokepoint. Delivered carries the verified pane, audit, policy, and Receipt; refusals remain typed data.",
   "type": "object",
   "additionalProperties": false,
   "required": ["status"],
   "properties": {
-    "status": { "enum": ["delivered", "unarmed", "expired", "pane_mismatch", "pane_gone", "tmux_absent", "error", "transport_error", "empty_text", "grounding_over_cap", "preview"] },
+    "status": { "enum": ["delivered", "unarmed", "expired", "pane_identity_required", "pane_mismatch", "pane_gone", "tmux_absent", "error", "transport_error", "authority_unresolved", "policy_refused", "empty_text", "empty_keys", "unknown_key", "grounding_over_cap", "preview"] },
     "pane_id": { "type": "string" },
     "submitted": { "type": "boolean" },
     "audit_id": { "type": ["integer", "null"] },
@@ -15,6 +15,24 @@
     "detail": { "type": "string" },
     "text": { "type": "string", "description": "present only on preview: the exact composed text" },
     "context_bytes": { "type": "integer" },
-    "cap_bytes": { "type": "integer" }
+    "cap_bytes": { "type": "integer" },
+    "keys": { "type": "string" },
+    "operation": { "$ref": "https://holdspeak.dev/contracts/v0/operation-policy.schema.json#/$defs/operation" },
+    "policy": { "$ref": "https://holdspeak.dev/contracts/v0/operation-policy.schema.json#/$defs/policy" },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source_ref", "actual_destination", "authority_basis", "outcome"],
+      "properties": {
+        "id": { "type": "string" },
+        "source_ref": { "type": "string" },
+        "actual_destination": { "type": "string" },
+        "authority_basis": { "type": "string" },
+        "control_mode": { "type": ["string", "null"] },
+        "policy_version": { "type": ["string", "null"] },
+        "effect_class": { "type": ["string", "null"] },
+        "outcome": { "type": "string" }
+      }
+    }
   }
 }

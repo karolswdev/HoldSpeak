@@ -808,7 +808,9 @@ table steering_audit: CREATE TABLE steering_audit (
     grounding_json TEXT NOT NULL DEFAULT '[]',
     submit INTEGER NOT NULL DEFAULT 1,
     outcome TEXT NOT NULL,
-    detail TEXT
+    detail TEXT,
+    operation_json TEXT NOT NULL DEFAULT '{}',
+    policy_snapshot_json TEXT NOT NULL DEFAULT '{}'
 )
 table topics: CREATE TABLE topics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

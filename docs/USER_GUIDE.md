@@ -511,26 +511,30 @@ action on the desk, and the repository's own commit gate keeps the final say.
 
 ## Steer A Session From The Desk
 
-Watching is free; steering is armed; every steer is audited. Nothing here
-leaves your machine.
+Watching is free; every steer resolves authority and is audited. Local steering
+does not leave your machine.
 
 Click any session pin on the belt, or the "Watch live" chip in a coder card,
 and the session pull-out opens with a live view of that Coder session's terminal pane.
 The view is read only: it updates on its own, marks itself stale when the
 session has gone quiet, and never sends a keystroke.
 
-To reply, you arm the session first. Press and hold the ARM chip. The chip
-becomes a countdown; the grant lasts fifteen minutes, and one tap disarms it.
-Arming pins the exact terminal pane at that moment, and every keystroke
-re-checks that the pane you armed is still the pane in front of you. If the
-session's pane was replaced, the steer refuses and the grant is dropped, so a
-reply meant for one session can never land in another. A restart of the hub
-disarms everything.
+The pull-out names the exact pane and the Control posture used for steering. In
+Secure, click **Arm pane** for a five-minute exact-pane grant. In Normal, the
+same deliberate action grants fifteen minutes. The chip becomes a countdown;
+one click disarms it. In YOLO, an eligible registered session reads **YOLO ·
+direct** and needs no HoldSpeak arm prompt for text or allowed keys. It does not
+gain arbitrary terminal authority: the pane identity captured by the live view
+rides every delivery, and the hub re-checks that identity immediately before a
+keystroke. A missing or replaced pane refuses, so a reply meant for one session
+cannot land in another. Changing posture or restarting the hub clears existing
+pane grants.
 
-Once armed, the composer appears. Speak your reply by holding the mic, or type
-it. The paper-plane toggle chooses whether a return is pressed after the text
-lands, so a multi-part steer can stay in the Coder session's input box. Send, and the
-reply lands in the pane exactly as you composed it.
+Once the exact grant or YOLO posture is ready, the composer appears. Speak your
+reply by holding the mic, or type it. The paper-plane toggle chooses whether a
+return is pressed after the text lands, so a multi-part steer can stay in the
+Coder session's input box. Send, and the reply lands in the pane exactly as you
+composed it.
 
 You can carry desk objects into a steer. Open the grounding picker in the
 composer, choose a meeting or an artifact, and its content rides in ahead of
@@ -546,48 +550,53 @@ correlated story's status through the same proposal the belt uses, the commit
 gate keeping the final say.
 
 Every reply and every refusal is written to the steering audit: who, when, which
-session, which pane, and a hash of the text. Read it back with
-`GET /api/coders/steering/audit`.
+session and pane, the exact operation-policy snapshot, and a bounded text
+fingerprint. The result also appears as a Receipt on the Coder session. Read the
+source audit with `GET /api/coders/steering/audit`.
 
 ### Take Over A Session: Any Key, Any Pane, Any Machine
 
-Steering is not only typing text. Under the same arming grant you can send real
-keys: interrupt a runaway with `C-c`, dismiss a prompt with `Escape`, or drive a
-menu with the arrows and `Enter`. Keys go through the same one path and the same
-audit as a text reply, so the trail reads like what you did: `C-c`,
+Steering is not only typing text. Under the same resolved authority you can send
+real keys: interrupt a runaway with `C-c`, dismiss a prompt with `Escape`, or
+drive a menu with the arrows and `Enter`. Keys go through the same one path and
+the same audit as a text reply, so the trail reads like what you did: `C-c`,
 `Down Down Enter`. A key that is not a real terminal key is refused by name and
 never sent (`POST /api/coders/{key}/keys`).
 
 The session does not have to be one HoldSpeak already knows. Every tmux pane on
 the machine is listed at `GET /api/coders/steering/panes`, including a shell you
-opened by hand. Watch any of them free; to steer one, arm it by its pane id
-(`pane:%N`). Arming pins that exact pane the same way, so a pane you attach to by
-hand is as safe to steer as a tracked session.
+opened by hand. Watch any of them free. Secure and Normal ask you to arm its
+exact pane id (`pane:%N`); YOLO can use that exact selection directly. Either
+path re-verifies the canonical pane before delivery, so a pane you attach to by
+hand has the same identity protection as a tracked session.
 
 And the machine does not have to be this one. With a node configured
 (`HOLDSPEAK_STEER_NODES`), the desk relays a watch, an arm, a steer, or a key
 sequence to that node, which runs it against its own terminal. The machine that
-types owns the consent and keeps the audit: the far node checks its own grant
-and records its own keystroke, and the relay only names where it landed. A node
-that does not answer refuses by name, at once, rather than leaving you waiting.
+types owns the authority decision and audit: the far node resolves its own
+Control posture or grant, re-checks the expected pane, and records the attempt.
+The relay only carries the command and expected identity. A node that does not
+answer refuses by name, at once, rather than leaving you waiting.
 
-The rule never changes as the reach grows: watching is free, manipulating is
-armed, the pane is re-checked before every key, a recycled pane refuses and drops
-the grant, and every key is audited. There is no autonomous mode; a person is
-behind each keystroke or nothing is sent.
+The rule never changes as the reach grows: watching is free; Secure and Normal
+use a bounded exact-pane grant; eligible YOLO steering uses the registered pane
+and posture without another prompt; the pane is re-checked before every key; a
+recycled pane refuses; and every attempt leaves a Receipt. YOLO removes the
+HoldSpeak prompt, not the destination, identity, payload, or key checks.
 
 You do all of this from the desk, not a terminal. Open the Panes list at the
 bottom of the desk to see every tmux pane on the machine, and attach to any one.
-Once you arm it, a row of keys appears next to the composer: one tap sends `^C` to
-stop a runaway, or the arrows and `Enter` to drive a menu. A chip in the header
-shows which machine you are steering, this Mac or a paired node.
+When authority is ready, a row of keys appears next to the composer: one tap
+sends `^C` to stop a runaway, or the arrows and `Enter` to drive a menu. A chip
+in the header shows which machine you are steering, this Mac or a paired node.
 
 The desk can also make and end sessions. The Panes list has a field to spawn a
 new session by name (the name is checked, so it can never carry a stray command).
-An armed session shows a Rename control and a Kill control; Kill asks you to
-confirm, because ending a session cannot be undone, and it goes through the same
-armed check as a keystroke. Spawn, steer, rename, and kill each leave their own
-line in the audit.
+The Desk keeps Rename and Kill in a separate session-control window even when
+YOLO can steer directly. Kill requires that arm and asks you to confirm, because
+ending a session cannot be undone; Rename retains its strict name/argument
+validation while its full policy classification remains open. Spawn, steer,
+rename, and kill each leave their own line in the audit.
 
 ## Ground A Run On The Rails
 

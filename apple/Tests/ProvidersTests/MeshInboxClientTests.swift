@@ -72,6 +72,15 @@ final class MeshInboxClientTests: XCTestCase {
         {"id": "prop-d", "origin": "desk", "meeting_id": null,
          "target": "slack", "action": "send_message",
          "preview": "Digest → #eng-updates", "status": "proposed",
+         "operation": {"effect_class": "slack/post_message",
+                       "destination": "slack:sha256:fixed",
+                       "consequence": "execute_now"},
+         "policy_snapshot": {"mode": "neutral", "source": "config",
+                             "policy_version": "operation-policy/v2",
+                             "outcome": "authorization_required",
+                             "reason_code": "per_action_authorization_required",
+                             "authority_basis": "per_action_required",
+                             "next_state": "awaiting_authorization"},
          "created_at": "2026-07-05T10:01:00"}
       ],
       "counts": {"queued": 2, "running": 0, "failed": 1, "pending_approvals": 2}
@@ -95,6 +104,11 @@ final class MeshInboxClientTests: XCTestCase {
         XCTAssertNil(desk?.meetingId)
         XCTAssertEqual(desk?.target, "slack")
         XCTAssertEqual(desk?.preview, "Digest → #eng-updates")
+        XCTAssertEqual(desk?.operation?.effectClass, "slack/post_message")
+        XCTAssertEqual(desk?.operation?.destination, "slack:sha256:fixed")
+        XCTAssertEqual(desk?.policySnapshot?.mode, "neutral")
+        XCTAssertEqual(desk?.policySnapshot?.policyVersion, "operation-policy/v2")
+        XCTAssertEqual(desk?.policySnapshot?.nextState, "awaiting_authorization")
 
         XCTAssertEqual(inbox.counts?.pendingApprovals, 2)
         XCTAssertEqual(inbox.counts?.failed, 1)

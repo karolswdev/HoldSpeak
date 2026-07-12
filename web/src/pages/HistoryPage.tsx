@@ -15,6 +15,10 @@ import {
   Toolbar,
 } from "../components/signal/Signal";
 import { apiBlob, apiFetch, readableError, type JsonRecord } from "../lib/api";
+import {
+  controlModeDescription,
+  controlModeLabel,
+} from "../lib/productLanguage";
 import { MeetingConflictRecovery } from "../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../meetings/MeetingIntelRecovery";
 import {
@@ -199,6 +203,7 @@ function MeetingDetail({
   const [aftercare, setAftercare] = useState<JsonRecord>({});
   const [timeline, setTimeline] = useState<JsonRecord>({});
   const [proposals, setProposals] = useState<JsonRecord>({});
+  const [authority, setAuthority] = useState<JsonRecord>({});
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -224,6 +229,9 @@ function MeetingDetail({
       apiFetch<JsonRecord>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
         .then(setProposals)
         .catch(() => setProposals({})),
+      apiFetch<JsonRecord>("/api/authority/policy")
+        .then(setAuthority)
+        .catch(() => setAuthority({})),
     ]).catch((reason) => setError(readableError(reason)));
   }, [id, meeting]);
   const decide = async (
@@ -416,8 +424,13 @@ function MeetingDetail({
                   Send follow-up to Slack
                 </Button>
                 <small>
-                  Each creates an exact-message proposed action. Approval sends
-                  it to the configured Slack destination.
+                  {controlModeLabel(
+                    String(authority.control_mode ?? "neutral"),
+                  )}
+                  :{" "}
+                  {controlModeDescription(
+                    String(authority.control_mode ?? "neutral"),
+                  )}
                 </small>
               </div>
             ) : null}
@@ -431,42 +444,68 @@ function MeetingDetail({
         {active === "proposals" ? (
           proposalRows.length ? (
             <ul className="data-list">
-              {proposalRows.map((row, index) => (
-                <li className="data-row" key={rowId(row, index)}>
-                  <div>
-                    <strong>
-                      {String(row.title ?? row.kind ?? "Proposed action")}
-                    </strong>
-                    <small>
-                      {String(row.preview ?? row.body ?? row.status ?? "")}
-                    </small>
-                  </div>
-                  <div className="button-row">
-                    <Button
-                      dense
-                      loading={busy}
-                      disabled={row.status !== "proposed"}
-                      onClick={() => void decide(row, "approved")}
-                    >
-                      {String(
-                        (row.commitment as JsonRecord | undefined)?.approve ??
-                          `Approve for ${String(row.target ?? "executor")}`,
-                      )}
-                    </Button>
-                    <Button
-                      dense
-                      variant="ghost"
-                      disabled={row.status !== "proposed"}
-                      onClick={() => void decide(row, "rejected")}
-                    >
-                      {String(
-                        (row.commitment as JsonRecord | undefined)?.reject ??
-                          "Reject proposed action",
-                      )}
-                    </Button>
-                  </div>
-                </li>
-              ))}
+              {proposalRows.map((row, index) => {
+                const policy = (row.policy_snapshot ?? {}) as JsonRecord;
+                const operation = (row.operation ?? {}) as JsonRecord;
+                const refused = policy.outcome === "refused";
+                return (
+                  <li className="data-row" key={rowId(row, index)}>
+                    <div>
+                      <strong>
+                        {refused
+                          ? "Operation refused"
+                          : String(row.title ?? row.kind ?? "Proposed action")}
+                      </strong>
+                      <small>
+                        {String(row.preview ?? row.body ?? row.status ?? "")}
+                      </small>
+                      <small>
+                        {controlModeLabel(String(policy.mode ?? "neutral"))} ·{" "}
+                        {String(
+                          operation.effect_class ?? row.action ?? "effect",
+                        )}{" "}
+                        ·{" "}
+                        {String(
+                          operation.destination ?? row.target ?? "destination",
+                        )}{" "}
+                        ·{" "}
+                        {String(
+                          policy.authority_basis ?? "per_action_required",
+                        )}
+                      </small>
+                    </div>
+                    {row.status === "proposed" && !refused ? (
+                      <div className="button-row">
+                        <Button
+                          dense
+                          loading={busy}
+                          onClick={() => void decide(row, "approved")}
+                        >
+                          {String(
+                            (row.commitment as JsonRecord | undefined)
+                              ?.approve ??
+                              `Approve for ${String(row.target ?? "executor")}`,
+                          )}
+                        </Button>
+                        <Button
+                          dense
+                          variant="ghost"
+                          onClick={() => void decide(row, "rejected")}
+                        >
+                          {String(
+                            (row.commitment as JsonRecord | undefined)
+                              ?.reject ?? "Reject proposed action",
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <StatusPill tone={refused ? "error" : "neutral"}>
+                        {refused ? "Refused" : String(row.status)}
+                      </StatusPill>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <EmptyState title="No proposals">

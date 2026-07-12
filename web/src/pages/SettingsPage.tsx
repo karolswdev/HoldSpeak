@@ -350,8 +350,9 @@ export default function SettingsPage() {
         json: { control_mode: controlMode },
       });
       authority.setData({ ...authority.data, ...result });
+      const revoked = Number(result.revoked_grants ?? 0);
       setMessage({
-        text: `Control mode is now ${controlModeLabel(controlMode)}. Existing operations and grants did not change.`,
+        text: `Control posture is now ${controlModeLabel(controlMode)} for future operations. Existing proposals keep their captured posture.${revoked ? ` ${revoked} active ${revoked === 1 ? "grant was" : "grants were"} revoked.` : ""}`,
       });
     } catch (error) {
       setMessage({ error: true, text: readableError(error) });
@@ -381,13 +382,15 @@ export default function SettingsPage() {
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <Panel title="Control mode" eyebrow="Future operations">
+        <Panel title="Control posture" eyebrow="Future operations">
           <Field
             label="Preset"
             description={`${CONTROL_MODES.map(
               (mode) =>
                 `${controlModeLabel(mode)}: ${controlModeDescription(mode)}`,
-            ).join(" ")} Authentication, secret custody, destination and payload binding, pane identity, receipts, configuration, and schema checks never change.`}
+            ).join(
+              " ",
+            )} Authentication, secret custody, destination and payload binding, pane identity, receipts, configuration, and schema checks never change.`}
           >
             {({ id, describedBy }) => (
               <Select
@@ -406,7 +409,9 @@ export default function SettingsPage() {
             )}
           </Field>
           <p>
-            Source: {String(authority.data.source ?? "config")} · precedence:{" "}
+            Source: {String(authority.data.source ?? "config")} ·{" "}
+            {String(authority.data.policy_version ?? "operation policy")} ·
+            precedence:{" "}
             {Array.isArray(authority.data.precedence)
               ? authority.data.precedence.join(" → ")
               : "hard invariants → grants → mode → feature default"}

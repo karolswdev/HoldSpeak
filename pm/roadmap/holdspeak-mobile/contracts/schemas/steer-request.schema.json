@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://holdspeak.dev/contracts/v0/steer-request.schema.json",
   "title": "SteerRequest",
-  "description": "A steer toward an armed session. Source: POST /api/coders/{key}/steer body (holdspeak/web/routes/system/coder_steering_routes.py, Phase 87/88). Carries the composed text, the submit flag, and optional grounding (desk objects + rails refs).",
+  "description": "A steer toward a policy-authorized session. It carries the text, submit flag, expected pane identity, and optional grounding.",
   "type": "object",
   "additionalProperties": false,
   "required": ["text"],
@@ -10,6 +10,7 @@
     "text": { "type": "string", "minLength": 1 },
     "submit": { "type": "boolean", "description": "press Enter after the text; default true" },
     "preview": { "type": "boolean", "description": "return the composed text without sending (executed == previewed)" },
+    "expected_pane_id": { "type": "string", "pattern": "^%[0-9]+$", "description": "the pane identity captured by peek; mandatory for grantless registered-session delivery" },
     "grounding": { "$ref": "https://holdspeak.dev/contracts/v0/steer-grounding.schema.json" }
   }
 }

@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 
 from ..actuator_authority import authority_binding
-from ..operation_policy import describe_operation, normalize_control_mode
+from ..operation_policy import describe_operation, normalize_control_mode, resolve_policy
 from ..logging_config import get_logger
 from .base import BaseRepository
 from .models import (
@@ -62,6 +62,9 @@ class ActuatorRepository(BaseRepository):
         reversible: bool = False,
         required_capabilities: Optional[list[str]] = None,
         origin: str = "meeting",
+        control_mode: str = "neutral",
+        policy_source: str = "config",
+        fixed_destination: Optional[bool] = None,
     ) -> ActuatorProposalRecord:
         """Persist a `proposed` proposal (idempotent on `idempotency_key`).
 
@@ -104,6 +107,11 @@ class ActuatorRepository(BaseRepository):
             [str(c).strip().lower() for c in (required_capabilities or []) if str(c).strip()],
             fallback="[]",
         )
+        destination_is_fixed = (
+            bool(fixed_destination)
+            if fixed_destination is not None
+            else clean_target.lower() in {"slack", "webhook", "github"}
+        )
         operation = describe_operation(
             operation_id=f"actuator:{proposal_id}",
             family="external_write",
@@ -116,13 +124,19 @@ class ActuatorRepository(BaseRepository):
             data_classes=("proposed_content", "connector_metadata"),
             project_scope=str((payload or {}).get("project") or (payload or {}).get("repo") or "") or None,
             resource_scope=clean_meeting_id or str(window_id).strip() or None,
-            fixed_destination=clean_target.lower() in {"slack", "webhook", "github"},
+            fixed_destination=destination_is_fixed,
             consequence=(
                 "execute_now" if clean_target.lower() in {"slack", "webhook", "github"}
                 else "queue_executor"
             ),
         )
         operation_json = self._json_dumps(operation.to_dict(), fallback="{}")
+        policy = resolve_policy(
+            operation,
+            mode=control_mode,
+            source=str(policy_source or "config"),
+        )
+        policy_snapshot_json = self._json_dumps(policy.to_dict(), fallback="{}")
 
         with self._connection() as conn:
             cursor = conn.execute(
@@ -135,7 +149,7 @@ class ActuatorRepository(BaseRepository):
                     operation_json, policy_snapshot_json, created_at, updated_at
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, 'proposed', 'unreviewed', 'proposed',
-                        'not_started', ?, ?, ?, ?, ?, ?, ?, '{}', ?, ?)
+                        'not_started', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(idempotency_key) DO NOTHING
                 """,
                 (
@@ -153,6 +167,7 @@ class ActuatorRepository(BaseRepository):
                     int(bool(reversible)),
                     caps_json,
                     operation_json,
+                    policy_snapshot_json,
                     now,
                     now,
                 ),
@@ -166,7 +181,15 @@ class ActuatorRepository(BaseRepository):
                     )
                     VALUES (?, 'system', NULL, 'proposed', ?, ?)
                     """,
-                    (proposal_id, "proposal recorded", now),
+                    (
+                        proposal_id,
+                        (
+                            "proposal recorded; "
+                            f"policy={policy.policy_version} mode={policy.mode} "
+                            f"outcome={policy.outcome}"
+                        ),
+                        now,
+                    ),
                 )
             row = conn.execute(
                 "SELECT * FROM actuator_proposals WHERE idempotency_key = ?",
