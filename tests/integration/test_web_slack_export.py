@@ -27,14 +27,17 @@ from fastapi.testclient import TestClient
 
 pytestmark = [pytest.mark.requires_meeting]
 
-import holdspeak.config as config_module
-import holdspeak.plugins.builtin.webhook_post_actuator as webhook_module
-from holdspeak.config import Config
-from holdspeak.db import Database, get_database, reset_database
-from holdspeak.meeting_session import IntelSnapshot, MeetingState
-from holdspeak.plugins.actuator_executor import ActuatorExecutionError, ActuatorExecutor
-from holdspeak.slack_export import build_slack_connector
-from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+import holdspeak.config as config_module  # noqa: E402
+import holdspeak.plugins.builtin.webhook_post_actuator as webhook_module  # noqa: E402
+from holdspeak.config import Config  # noqa: E402
+from holdspeak.db import Database, get_database, reset_database  # noqa: E402
+from holdspeak.meeting_session import IntelSnapshot, MeetingState  # noqa: E402
+from holdspeak.plugins.actuator_executor import (  # noqa: E402
+    ActuatorExecutionError,
+    ActuatorExecutor,
+)
+from holdspeak.slack_export import build_slack_connector  # noqa: E402
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks  # noqa: E402
 
 URL = "https://hooks.slack.com/services/T0/B0/secret-credential"
 
@@ -64,6 +67,12 @@ def settings_path(tmp_path, monkeypatch):
 def _configure_slack(settings_path, url=URL):
     config = Config.load()
     config.meeting.slack_webhook_url = url
+    config.save(path=settings_path)
+
+
+def _set_control_mode(settings_path, mode):
+    config = Config.load()
+    config.control_mode = mode
     config.save(path=settings_path)
 
 
@@ -273,6 +282,22 @@ def test_approval_posts_the_preview_byte_equal(
     # The audit trail is the full lifecycle.
     audit = db.actuators.list_audit(proposal["id"])
     assert [a.to_status for a in audit] == ["proposed", "approved", "executed"]
+
+
+@pytest.mark.integration
+def test_yolo_sends_configured_meeting_export_without_a_decision(
+    client, db, settings_path, seeded, posts, broadcasts
+):
+    _configure_slack(settings_path)
+    _set_control_mode(settings_path, "yolo")
+    proposal = client.post(
+        "/api/meetings/m1/export/slack", json={"what": "digest"}
+    ).json()["proposal"]
+    assert proposal["status"] == "executed"
+    assert proposal["policy_snapshot"]["authority_basis"] == "control_posture"
+    assert proposal["policy_snapshot"]["mode"] == "yolo"
+    assert len(posts) == 1
+    assert posts[0][1] == {"text": proposal["preview"]}
 
 
 @pytest.mark.integration

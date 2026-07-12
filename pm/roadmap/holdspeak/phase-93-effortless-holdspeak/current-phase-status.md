@@ -2,17 +2,19 @@
 
 **Status:** IN PROGRESS (0/9). HS-93-01 through HS-93-05 have automated
 implementation slices verified through Web/Hub/Swift lanes; HS-93-06 now has
-Web/Hub conflict and partial-intelligence recovery slices. API-backed production
+Web/Hub conflict and partial-intelligence recovery slices; HS-93-07 now has a
+versioned configured-Integration control-posture slice. API-backed production
 Web captures exist where recorded, with supplementary simulator evidence, but
-all six stories remain open for their remaining implementation, owner, and
+all seven stories remain open for their remaining implementation, owner, and
 physical-device gates.
 Phase 91 remains the roadmap's current phase; Phase 92 substrate is not accepted
 as a simplified product.
 
-**Last updated:** 2026-07-11 (HS-93-06 now adds truthful partial Meeting
-intelligence plus atomic Retry remaining/Skip remaining on History and the Desk;
-full long-capture, real-fault, offline-sync, owner, and physical-device gates
-remain open).
+**Last updated:** 2026-07-11 (HS-93-07 is now in progress: policy v2 snapshots
+future-operation posture, configured Integrations execute without a HoldSpeak
+prompt in YOLO, unregistered/unknown effects refuse, and React/Swift render the
+same action and Receipt fields; broader family, owner, and device gates remain
+open).
 
 ## Goal
 
@@ -126,7 +128,7 @@ prove the daily experience through sustained owner use on Web, iPhone, and iPad.
 | HS-93-04 | Power lives on the Desk | in progress | [story-04](./story-04-power-appears-in-context.md) | [progress record](./progress-story-04.md) |
 | HS-93-05 | Your words never disappear | in progress | [story-05](./story-05-your-words-never-disappear.md) | [progress record](./progress-story-05.md) |
 | HS-93-06 | A meeting survives real life | in progress | [story-06](./story-06-a-meeting-survives-real-life.md) | [progress record](./progress-story-06.md) |
-| HS-93-07 | Secure, Normal, or YOLO | backlog | [story-07](./story-07-decisions-explain-themselves.md) | — |
+| HS-93-07 | Secure, Normal, or YOLO | in progress | [story-07](./story-07-decisions-explain-themselves.md) | [progress record](./progress-story-07.md) |
 | HS-93-08 | The Desk works for every body | backlog | [story-08](./story-08-the-desk-works-for-every-body.md) | — |
 | HS-93-09 | The owner can live here | backlog | [story-09](./story-09-the-owner-can-live-here.md) | — |
 
@@ -194,6 +196,23 @@ a running worker. API-backed production captures prove partial, skipped, and
 requeued Web states with zero failed API responses. The story remains open for
 native parity, long-duration memory/checkpoint traces, the complete real fault
 matrix, airplane-mode exactly-once sync, and owner and physical-device evidence.
+
+HS-93-07 now carries its first authority slice through the existing Integration
+lifecycle. Operation-policy v2 snapshots mode, source, reason, authority basis,
+destination, effect, eligibility, and next state when a proposal is created, so
+a later posture change cannot widen it. Secure and Normal retain exact
+per-action decisions or bounded scoped grants. YOLO uses the captured posture
+itself for a fixed configured Slack, Webhook, or GitHub destination, runs the
+existing parity-checked executor without a HoldSpeak approval/grant prompt, and
+returns the resulting Receipt to the source subject. An unregistered destination
+or unknown operation refuses without entering the Web/native approval queue.
+
+Web Settings, the Desk Integration inspector, Meeting History, Desk Receipts,
+and flagship Swift Settings/Queue/Receipt details consume the shared policy
+fields rather than a private client matrix. The story remains open for the full
+dictation/inference/Coder/Mission-Control/sync/cadence/destructive matrix,
+grant-use source Receipts, Qlippy treatment, production walks, owner prediction,
+and physical iPhone/iPad evidence.
 
 Phase 91 remains the roadmap's current phase and its owner/Swift close gate is
 non-waivable. Phase 92 still has broad automated implementation but no accepted

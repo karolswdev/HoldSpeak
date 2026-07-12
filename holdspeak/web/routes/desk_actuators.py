@@ -29,6 +29,7 @@ from ...web_requests import _CompanionSlackRequest, _ProposalDecisionRequest
 from ..context import WebContext
 from ..runtime_support import error_500
 from .actuator_shared import (
+    apply_control_posture,
     decide_proposal,
     execute_github_proposal,
     execute_slack_proposal,
@@ -117,7 +118,8 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
         text = str(payload.text or "").strip()
         if not text:
             return JSONResponse({"success": False, "error": "text is required"}, status_code=400)
-        if not Config.load().meeting.slack_webhook_url:
+        config = Config.load()
+        if not config.meeting.slack_webhook_url:
             return JSONResponse(
                 {"success": False, "error": "Slack is not configured on the host (set the webhook URL in Settings first)"},
                 status_code=400,
@@ -147,6 +149,8 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
                 payload={"body": {"text": body}, **source_payload},
                 reversible=False,
                 required_capabilities=["actuator"],
+                control_mode=config.control_mode,
+                fixed_destination=True,
             )
             ctx.broadcast(
                 "actuator_proposed",
@@ -160,6 +164,12 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
                     "preview": proposal.preview,
                     "reversible": bool(proposal.reversible),
                 },
+            )
+            proposal = apply_control_posture(
+                ctx,
+                db,
+                proposal,
+                executors={"slack": execute_slack_proposal},
             )
             return JSONResponse({"success": True, "proposal": proposal_to_dict(proposal)})
         except ValueError as e:
@@ -210,7 +220,8 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
         text = str(payload.text or "").strip()
         if not text:
             return JSONResponse({"success": False, "error": "text is required"}, status_code=400)
-        if not Config.load().meeting.companion_webhook_url:
+        config = Config.load()
+        if not config.meeting.companion_webhook_url:
             return JSONResponse(
                 {"success": False, "error": "Webhook is not configured on the host (set companion_webhook_url first)"},
                 status_code=400,
@@ -234,12 +245,19 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
                 target="webhook", action="post_message", preview=body,
                 payload={"body": {"text": body}, **source_payload},
                 reversible=False, required_capabilities=["actuator"],
+                control_mode=config.control_mode, fixed_destination=True,
             )
             ctx.broadcast("actuator_proposed", {
                 "id": proposal.id, "meeting_id": proposal.meeting_id, "plugin_id": proposal.plugin_id,
                 "status": proposal.status, "target": proposal.target, "action": proposal.action,
                 "preview": proposal.preview, "reversible": bool(proposal.reversible),
             })
+            proposal = apply_control_posture(
+                ctx,
+                db,
+                proposal,
+                executors={"webhook": execute_webhook_proposal},
+            )
             return JSONResponse({"success": True, "proposal": proposal_to_dict(proposal)})
         except ValueError as e:
             return JSONResponse({"success": False, "error": str(e)}, status_code=400)
@@ -281,7 +299,9 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
         text = str(payload.text or "").strip()
         if not text:
             return JSONResponse({"success": False, "error": "text is required"}, status_code=400)
-        repo = str(payload.repo or "").strip() or str(Config.load().meeting.companion_github_repo or "").strip()
+        config = Config.load()
+        configured_repo = str(config.meeting.companion_github_repo or "").strip()
+        repo = str(payload.repo or "").strip() or configured_repo
         if not repo:
             return JSONResponse(
                 {"success": False, "error": "No GitHub repo (set companion_github_repo on the host, or pass repo)"},
@@ -312,12 +332,20 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
                 target="github", action="create_issue", preview=preview,
                 payload={"repo": repo, "title": title, "body": text, **source_payload}, reversible=False,
                 required_capabilities=["actuator"],
+                control_mode=config.control_mode,
+                fixed_destination=bool(configured_repo and repo == configured_repo),
             )
             ctx.broadcast("actuator_proposed", {
                 "id": proposal.id, "meeting_id": proposal.meeting_id, "plugin_id": proposal.plugin_id,
                 "status": proposal.status, "target": proposal.target, "action": proposal.action,
                 "preview": proposal.preview, "reversible": bool(proposal.reversible),
             })
+            proposal = apply_control_posture(
+                ctx,
+                db,
+                proposal,
+                executors={"github": execute_github_proposal},
+            )
             return JSONResponse({"success": True, "proposal": proposal_to_dict(proposal)})
         except ValueError as e:
             return JSONResponse({"success": False, "error": str(e)}, status_code=400)

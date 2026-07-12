@@ -70,6 +70,12 @@ def _configure_slack(settings_path, url=URL):
     config.save(path=settings_path)
 
 
+def _set_control_mode(settings_path, mode):
+    config = Config.load()
+    config.control_mode = mode
+    config.save(path=settings_path)
+
+
 class _BroadcastSpy:
     def __init__(self):
         self.events: list[tuple[str, dict]] = []
@@ -278,6 +284,106 @@ def test_approval_posts_the_preview_byte_equal(client, db, settings_path, posts,
 
     audit = db.actuators.list_audit(proposal["id"])
     assert [a.to_status for a in audit] == ["proposed", "approved", "executed"]
+
+
+@pytest.mark.integration
+def test_yolo_executes_configured_slack_without_a_prompt_and_returns_receipt(
+    client, db, settings_path, posts, broadcasts
+):
+    _configure_slack(settings_path)
+    _set_control_mode(settings_path, "yolo")
+    db.notes.upsert(
+        note_id="n-yolo",
+        title="Release checklist",
+        body_markdown="release is ready",
+    )
+
+    response = client.post(
+        PROPOSE,
+        json={
+            "text": "release is ready",
+            "title": "Release checklist",
+            "source_ref": "note:n-yolo",
+        },
+    )
+    assert response.status_code == 200, response.text
+    proposal = response.json()["proposal"]
+    assert proposal["status"] == "executed"
+    policy = proposal["policy_snapshot"]
+    assert {
+        key: policy[key]
+        for key in (
+            "mode",
+            "policy_version",
+            "outcome",
+            "reason_code",
+            "authority_basis",
+            "next_state",
+            "eligible",
+            "requires_authorization",
+            "requires_grant",
+        )
+    } == {
+        "mode": "yolo",
+        "policy_version": "operation-policy/v2",
+        "outcome": "allowed",
+        "reason_code": "configured_destination_posture_allowed",
+        "authority_basis": "control_posture",
+        "next_state": "execute_now",
+        "eligible": True,
+        "requires_authorization": False,
+        "requires_grant": False,
+    }
+    assert len(posts) == 1
+    assert posts[0][1] == {"text": proposal["preview"]}
+    assert client.get("/api/mesh/inbox").json()["counts"]["pending_approvals"] == 0
+
+    receipt = db.projections.list(subject_ref="note:n-yolo")["projections"][0]
+    assert receipt["projection_kind"] == "receipt"
+    assert receipt["authority_basis"] == "control_posture"
+    assert receipt["control_mode"] == "yolo"
+    assert receipt["policy_version"] == "operation-policy/v2"
+    assert receipt["effect_class"] == "slack/post_message"
+    audit = db.actuators.list_audit(proposal["id"])
+    assert [row.to_status for row in audit] == ["proposed", "approved", "executed"]
+    assert audit[1].actor == "control-posture:yolo"
+
+    repeated = client.post(
+        PROPOSE,
+        json={
+            "text": "release is ready",
+            "title": "Release checklist",
+            "source_ref": "note:n-yolo",
+        },
+    ).json()["proposal"]
+    assert repeated["id"] == proposal["id"]
+    assert repeated["status"] == "executed"
+    assert len(posts) == 1
+
+
+@pytest.mark.integration
+def test_posture_change_never_widens_an_existing_proposal(
+    client, db, settings_path, posts, broadcasts
+):
+    _configure_slack(settings_path)
+    proposal = client.post(PROPOSE, json={"text": "captured normal"}).json()[
+        "proposal"
+    ]
+    assert proposal["policy_snapshot"]["mode"] == "neutral"
+    _set_control_mode(settings_path, "yolo")
+
+    repeated = client.post(PROPOSE, json={"text": "captured normal"}).json()[
+        "proposal"
+    ]
+    assert repeated["id"] == proposal["id"]
+    assert repeated["status"] == "proposed"
+    assert repeated["policy_snapshot"]["mode"] == "neutral"
+    assert posts == []
+
+    final = _decide(client, proposal["id"], "approved").json()["proposal"]
+    assert final["status"] == "executed"
+    assert final["policy_snapshot"]["mode"] == "neutral"
+    assert final["policy_snapshot"]["authority_basis"] == "per_action_decision"
 
 
 @pytest.mark.integration

@@ -55,7 +55,9 @@ final class ProjectionClientTests: XCTestCase {
           "authority_basis":"explicit_capture","attempt":null,"outcome":"recoverable",
           "timestamp":"2026-07-11T01:00:00Z","correlation_id":"meeting:m1",
           "source_kind":"meeting","source_id":"m1","source_api":"/api/meetings/m1",
-          "detail_url":"/history?meeting=m1","severity":"error","dismissed":false}],
+          "detail_url":"/history?meeting=m1","control_mode":"yolo",
+          "policy_version":"operation-policy/v2","effect_class":"slack/post_message",
+          "severity":"error","dismissed":false}],
          "counts":{"needs_attention":1,"receipts":0},
          "subject_counts":{"meeting:m1":{"needs_attention":1,"receipts":0}},
          "page":{"offset":0,"limit":50,"total":1,"has_more":false}}
@@ -64,6 +66,9 @@ final class ProjectionClientTests: XCTestCase {
         XCTAssertEqual(result.projections.first?.subjectRef, "meeting:m1")
         XCTAssertEqual(result.projections.first?.actualDestination, "this_machine")
         XCTAssertEqual(result.projections.first?.attentionState, "needs_attention")
+        XCTAssertEqual(result.projections.first?.controlMode, "yolo")
+        XCTAssertEqual(result.projections.first?.policyVersion, "operation-policy/v2")
+        XCTAssertEqual(result.projections.first?.effectClass, "slack/post_message")
         XCTAssertEqual(result.page.total, 1)
         XCTAssertEqual(StubProtocol.lastRequest?.value(forHTTPHeaderField: "Authorization"), "Bearer tok")
     }

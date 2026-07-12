@@ -168,9 +168,11 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
 
         Closing the loop reuses the existing propose -> approve -> execute flow:
         this records a `proposed` proposal only. Nothing leaves the machine here —
-        execution still requires a separate human approval (the decision endpoint)
-        plus `allow_actuators` + the per-project allow-list + a host-injected
-        connector. No new write primitive; idempotent per (meeting, action item).
+        Secure and Normal still require a bounded authority decision, while YOLO
+        refuses this ad-hoc destination because it is not host-configured. The
+        executor also requires `allow_actuators`, the per-project allow-list, and
+        a host-injected connector. No new write primitive; idempotent per
+        (meeting, action item).
         """
         repo = str(payload.repo or "").strip()
         if not repo:
@@ -179,6 +181,7 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
                 status_code=400,
             )
         try:
+            from ....config import Config
             from ....db import get_database
             from ....plugins.builtin.github_issue_actuator import (
                 GithubIssueActuator,
@@ -226,6 +229,8 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
                 payload=spec["payload"],
                 reversible=spec["reversible"],
                 required_capabilities=spec["required_capabilities"],
+                control_mode=Config.load().control_mode,
+                fixed_destination=False,
             )
             # HS-56-03: the live in-meeting path already broadcasts proposals;
             # the aftercare path now does too, with the identical wire-safe
@@ -283,7 +288,8 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
                 },
                 status_code=400,
             )
-        if not Config.load().meeting.slack_webhook_url:
+        config = Config.load()
+        if not config.meeting.slack_webhook_url:
             return JSONResponse(
                 {
                     "success": False,
@@ -325,6 +331,8 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
                 payload={"body": {"text": text}},
                 reversible=False,  # a posted message cannot be unsent
                 required_capabilities=["actuator"],
+                control_mode=config.control_mode,
+                fixed_destination=True,
             )
             # The same wire-safe shape every proposal broadcast uses (the
             # human preview only — never the machine payload).
@@ -343,6 +351,12 @@ def build_aftercare_router(ctx: WebContext) -> APIRouter:
                     if hasattr(proposal.created_at, "isoformat")
                     else proposal.created_at,
                 },
+            )
+            proposal = actuator_shared.apply_control_posture(
+                ctx,
+                db,
+                proposal,
+                executors={"slack": actuator_shared.execute_slack_proposal},
             )
             return JSONResponse(
                 {"success": True, "proposal": _proposal_to_dict(proposal)}

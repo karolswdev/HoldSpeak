@@ -7,15 +7,16 @@ import Contracts
 /// The desktop's one authority preset. It affects future operations only.
 public struct AuthorityPolicy: Codable, Equatable, Sendable {
     public var controlMode: String
+    public var controlModeLabel: String?
+    public var controlModeDescription: String?
+    public var policyVersion: String?
     public var source: String?
+    public var appliesTo: String?
     public var precedence: [String]?
     public var hardInvariants: [String]?
+    public var supportedFamilies: [String]?
+    public var unsupportedFamilyBehavior: String?
 
-    enum CodingKeys: String, CodingKey {
-        case controlMode = "control_mode"
-        case source, precedence
-        case hardInvariants = "hard_invariants"
-    }
 }
 
 extension HTTPDesktopClient {

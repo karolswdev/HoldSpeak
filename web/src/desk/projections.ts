@@ -22,6 +22,9 @@ export interface DeskProjection {
   source_id: string;
   source_api: string;
   detail_url: string;
+  control_mode?: string | null;
+  policy_version?: string | null;
+  effect_class?: string | null;
   severity: "normal" | "warning" | "error";
   dismissed: boolean;
 }
@@ -49,7 +52,10 @@ interface ProjectionState extends ProjectionEnvelope {
   refresh(reset?: boolean): Promise<void>;
   refreshAmbient(): Promise<void>;
   loadMore(): Promise<void>;
-  present(id: string, action: "acknowledge" | "dismiss" | "restore"): Promise<void>;
+  present(
+    id: string,
+    action: "acknowledge" | "dismiss" | "restore",
+  ): Promise<void>;
 }
 
 const EMPTY_PAGE = { offset: 0, limit: 50, total: 0, has_more: false };
@@ -92,7 +98,9 @@ export const useProjections = create<ProjectionState>((set, get) => ({
         `/api/desk/projections?${params.toString()}`,
       );
       set({
-        projections: reset ? body.projections : [...get().projections, ...body.projections],
+        projections: reset
+          ? body.projections
+          : [...get().projections, ...body.projections],
         counts: body.counts,
         subject_counts: body.subject_counts,
         page: body.page,
@@ -114,15 +122,20 @@ export const useProjections = create<ProjectionState>((set, get) => ({
   },
   async loadMore() {
     if (!get().page.has_more || get().loading) return;
-    set({ page: { ...get().page, offset: get().page.offset + get().page.limit } });
+    set({
+      page: { ...get().page, offset: get().page.offset + get().page.limit },
+    });
     await get().refresh(false);
   },
   async present(id, action) {
     try {
-      await apiFetch(`/api/desk/projections/${encodeURIComponent(id)}/presentation`, {
-        method: "PUT",
-        json: { action },
-      });
+      await apiFetch(
+        `/api/desk/projections/${encodeURIComponent(id)}/presentation`,
+        {
+          method: "PUT",
+          json: { action },
+        },
+      );
       set({ selectedId: action === "dismiss" ? null : get().selectedId });
       await Promise.all([get().refresh(true), get().refreshAmbient()]);
     } catch (error) {

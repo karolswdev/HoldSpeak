@@ -79,9 +79,14 @@ def test_external_write_matrix_and_explicit_authorization() -> None:
     operation = _operation("external_write")
     assert resolve_policy(operation, mode="safe").outcome == "authorization_required"
     assert resolve_policy(operation, mode="neutral").outcome == "authorization_required"
-    assert resolve_policy(operation, mode="yolo").outcome == "grant_required"
-    reusable = resolve_policy(operation, mode="yolo", grant=_grant(operation))
-    assert reusable.reason_code == "fixed_destination_grant_active"
+    automatic = resolve_policy(operation, mode="yolo")
+    assert automatic.outcome == "allowed"
+    assert automatic.reason_code == "configured_destination_posture_allowed"
+    assert automatic.authority_basis == "control_posture"
+    assert automatic.next_state == "execute_now"
+    reusable = resolve_policy(operation, mode="neutral", grant=_grant(operation))
+    assert reusable.reason_code == "scoped_grant_active"
+    assert reusable.authority_basis == "scoped_grant"
     for mode in ("safe", "neutral", "yolo"):
         decision = resolve_policy(operation, mode=mode, explicit_authorization=True)
         assert decision.outcome == "allowed"
@@ -92,19 +97,30 @@ def test_grant_scope_mismatch_refuses() -> None:
     grant = _grant(operation)
     grant["project_scope"] = "acme/other"
     assert (
-        resolve_policy(operation, mode="yolo", grant=grant).outcome == "grant_required"
+        resolve_policy(operation, mode="neutral", grant=grant).outcome
+        == "authorization_required"
     )
 
 
-def test_sync_matrix_and_unsupported_fail_to_current_behavior() -> None:
+def test_sync_matrix_and_unsupported_fail_closed() -> None:
     sync = _operation("sync_cadence")
     assert resolve_policy(sync, mode="safe").outcome == "authorization_required"
     assert resolve_policy(sync, mode="neutral").outcome == "allowed"
     assert resolve_policy(sync, mode="yolo").outcome == "allowed"
     unknown = _operation("future_arbitrary_shell")
     decision = resolve_policy(unknown, mode="yolo")
-    assert decision.outcome == "current_behavior"
-    assert decision.reason_code == "unsupported_family_current_behavior"
+    assert decision.outcome == "refused"
+    assert decision.reason_code == "unsupported_operation_family"
+    assert decision.eligible is False
+
+
+def test_yolo_refuses_an_unregistered_external_destination() -> None:
+    operation = _operation("external_write", fixed_destination=False)
+    decision = resolve_policy(operation, mode="yolo")
+    assert decision.outcome == "refused"
+    assert decision.reason_code == "registered_destination_required"
+    assert decision.authority_basis == "none"
+    assert decision.next_state == "refused"
 
 
 def test_steering_ttl_presets_cap_future_arms() -> None:

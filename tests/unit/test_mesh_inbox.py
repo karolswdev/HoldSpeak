@@ -95,6 +95,10 @@ def test_inbox_aggregates_jobs_and_pending_proposals(env) -> None:
     assert desk_row["preview"] == "Digest → #eng-updates"
     assert desk_row["commitment"]["approve"] == "Approve and send to Slack"
     assert desk_row["authorization_state"] == "proposed"
+    assert desk_row["operation"]["effect_class"] == "slack/send_message"
+    assert desk_row["policy_snapshot"]["mode"] == "neutral"
+    assert desk_row["policy_snapshot"]["policy_version"] == "operation-policy/v2"
+    assert desk_row["policy_snapshot"]["next_state"] == "awaiting_authorization"
     for p in body["proposals"]:
         assert "payload" not in p
 

@@ -3,8 +3,9 @@
 This is the one place an actuator's external side effect actually happens — so
 it is where the phase invariant is enforced in code:
 
-    No external side effect occurs without an explicit, audited, per-action
-    human approval — and what executes is exactly what was previewed.
+    No external side effect occurs without explicit, audited authority — a
+    per-action decision, scoped grant, or captured control posture — and what
+    executes is exactly what was previewed.
 
 `ActuatorExecutor.execute(proposal_id)` acts on an **approved** proposal and,
 before any outbound call:
@@ -232,6 +233,7 @@ class ActuatorExecutor:
                     "action": getattr(proposal, "action", ""),
                     "preview": getattr(proposal, "preview", ""),
                     "reversible": bool(getattr(proposal, "reversible", False)),
+                    "policy": getattr(proposal, "policy_snapshot", {}),
                     "error": getattr(proposal, "error", None),
                 }
             )

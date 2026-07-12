@@ -183,7 +183,7 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
             )
         body = payload if isinstance(payload, dict) else {}
         from ....config import Config
-        from ....operation_policy import steering_ttl_for_mode
+        from ....operation_policy import POLICY_VERSION, steering_ttl_for_mode
 
         control_mode = Config.load().control_mode
         ttl = coder_steering.clamp_ttl(
@@ -196,7 +196,7 @@ def build_coder_steering_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(result, status_code=409)
         result["control_mode"] = control_mode
         result["commitment"] = f"Arm pane {result['pane_id']} for {ttl // 60} minutes"
-        result["policy_version"] = "operation-policy/v1"
+        result["policy_version"] = POLICY_VERSION
         _coder_frame(ctx, key)
         return JSONResponse(result)
 

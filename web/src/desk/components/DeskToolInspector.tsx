@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch, readableError } from "../../lib/api";
+import {
+  controlModeDescription,
+  controlModeLabel,
+} from "../../lib/productLanguage";
 import { workroomHref } from "../../workrooms/context";
 import { modelChatId } from "../chat";
 import { contextualIntegrationActions } from "../contextual";
@@ -17,9 +21,33 @@ interface Proposal {
   error?: string | null;
   result?: Record<string, unknown> | null;
   commitment?: { approve?: string; reject?: string };
+  operation?: {
+    effect_class?: string;
+    destination?: string;
+    consequence?: string;
+  };
+  policy_snapshot?: {
+    mode?: string;
+    source?: string;
+    policy_version?: string;
+    outcome?: string;
+    reason_code?: string;
+    authority_basis?: string;
+    next_state?: string;
+    eligible?: boolean;
+  };
   payload?: {
     _source?: { ref?: string; label?: string };
   };
+}
+
+interface AuthorityPolicy {
+  control_mode?: string;
+  control_mode_label?: string;
+  control_mode_description?: string;
+  policy_version?: string;
+  source?: string;
+  applies_to?: string;
 }
 
 const INTEGRATION_TARGET: Record<string, "slack" | "webhook" | "github"> = {
@@ -57,6 +85,7 @@ export function DeskToolInspector() {
   >([]);
   const [loadingProject, setLoadingProject] = useState(false);
   const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [authority, setAuthority] = useState<AuthorityPolicy | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -108,8 +137,16 @@ export function DeskToolInspector() {
 
   useEffect(() => {
     setProposal(null);
+    setAuthority(null);
     setError("");
   }, [inspector?.kind, inspector?.id]);
+
+  useEffect(() => {
+    if (!integration) return;
+    void apiFetch<AuthorityPolicy>("/api/authority/policy")
+      .then(setAuthority)
+      .catch((reason) => setError(readableError(reason)));
+  }, [integration?.id]);
 
   useEffect(() => {
     if (!project) {
@@ -154,6 +191,15 @@ export function DeskToolInspector() {
         },
       );
       setProposal(response.proposal);
+      if (
+        response.proposal.status !== "proposed" ||
+        response.proposal.policy_snapshot?.outcome === "refused"
+      ) {
+        await Promise.all([
+          useProjections.getState().refresh(true),
+          useProjections.getState().refreshAmbient(),
+        ]);
+      }
     } catch (reason) {
       setError(readableError(reason));
     } finally {
@@ -314,7 +360,23 @@ export function DeskToolInspector() {
             <Fact label="Destination" value={integration.destination} />
             <Fact label="Boundary" value={integration.boundary} />
             <Fact label="Data" value={integration.data_class} />
-            <Fact label="Authority" value={integration.authority_basis} />
+            <Fact
+              label="Control posture"
+              value={
+                authority?.control_mode_label ||
+                (authority?.control_mode
+                  ? controlModeLabel(authority.control_mode)
+                  : undefined)
+              }
+            />
+            <Fact
+              label="Authority"
+              value={
+                authority?.control_mode
+                  ? controlModeDescription(authority.control_mode)
+                  : integration.authority_basis
+              }
+            />
             <Fact label="Background" value={integration.background_ability} />
           </dl>
           {integrationAction ? (
@@ -344,9 +406,39 @@ export function DeskToolInspector() {
           )}
           {proposal ? (
             <section className="desk-integration-proposal" aria-live="polite">
-              <h3>Proposed action</h3>
+              <h3>
+                {proposal.policy_snapshot?.outcome === "refused"
+                  ? "Operation refused"
+                  : proposal.status === "proposed"
+                    ? "Proposed action"
+                    : "Operation Receipt"}
+              </h3>
               <p>{proposal.preview}</p>
-              {proposal.status === "proposed" ? (
+              <dl className="desk-tool-facts">
+                <Fact label="Effect" value={proposal.operation?.effect_class} />
+                <Fact
+                  label="Destination"
+                  value={proposal.operation?.destination}
+                />
+                <Fact
+                  label="Control posture"
+                  value={
+                    proposal.policy_snapshot?.mode
+                      ? controlModeLabel(proposal.policy_snapshot.mode)
+                      : undefined
+                  }
+                />
+                <Fact
+                  label="Authority basis"
+                  value={proposal.policy_snapshot?.authority_basis}
+                />
+                <Fact
+                  label="Next state"
+                  value={proposal.policy_snapshot?.next_state}
+                />
+              </dl>
+              {proposal.status === "proposed" &&
+              proposal.policy_snapshot?.outcome !== "refused" ? (
                 <div className="desk-tool-actions">
                   <button
                     type="button"
@@ -377,9 +469,15 @@ export function DeskToolInspector() {
                   Retry {proposal.commitment?.approve || integration.operation}
                 </button>
               ) : null}
-              {["executed", "rejected", "failed"].includes(proposal.status) ? (
+              {["executed", "rejected", "failed"].includes(proposal.status) ||
+              proposal.policy_snapshot?.outcome === "refused" ? (
                 <div className="desk-integration-receipt">
-                  <strong>Receipt · {proposal.status}</strong>
+                  <strong>
+                    Receipt ·{" "}
+                    {proposal.policy_snapshot?.outcome === "refused"
+                      ? "refused"
+                      : proposal.status}
+                  </strong>
                   <p>
                     Source retained ·{" "}
                     {boundSource?.label || "selected material"}

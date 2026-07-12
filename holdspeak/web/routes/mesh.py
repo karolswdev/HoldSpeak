@@ -99,6 +99,9 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
             proposals = []
             for p in db.actuators.list_pending_proposals(limit=50):
                 operation = operation_for_proposal(p)
+                policy = dict(getattr(p, "policy_snapshot", {}) or {})
+                if policy.get("outcome") == "refused":
+                    continue
                 proposals.append({
                     "id": p.id,
                     "origin": p.origin,
@@ -111,6 +114,7 @@ def build_mesh_router(ctx: WebContext) -> APIRouter:
                     "authorization_state": p.authorization_state,
                     "execution_state": p.execution_state,
                     "operation": operation.to_dict(),
+                    "policy_snapshot": policy,
                     "commitment": commitment_labels(operation),
                     "created_at": p.created_at,
                 })

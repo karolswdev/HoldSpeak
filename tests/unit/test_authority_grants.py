@@ -97,3 +97,41 @@ def test_proposal_axes_are_separate_and_queryable(tmp_path) -> None:
     running = db.actuators.mark_execution_state(approved.id, "running")
     assert running.status == "approved"
     assert running.execution_state == "running"
+
+
+def test_proposal_captures_policy_once_for_future_operations(tmp_path) -> None:
+    db = Database(tmp_path / "authority.db")
+    first = db.actuators.record_proposal(
+        meeting_id=None,
+        origin="desk",
+        window_id="desk:1",
+        plugin_id="slack_export",
+        plugin_version="1",
+        idempotency_key="captured-posture",
+        target="slack",
+        action="post_message",
+        preview="Send the digest",
+        payload={"body": {"text": "digest"}},
+        control_mode="yolo",
+        fixed_destination=True,
+    )
+    assert first.policy_snapshot["mode"] == "yolo"
+    assert first.policy_snapshot["policy_version"] == "operation-policy/v2"
+    assert first.policy_snapshot["authority_basis"] == "control_posture"
+
+    repeated = db.actuators.record_proposal(
+        meeting_id=None,
+        origin="desk",
+        window_id="desk:1",
+        plugin_id="slack_export",
+        plugin_version="1",
+        idempotency_key="captured-posture",
+        target="slack",
+        action="post_message",
+        preview="Send the digest",
+        payload={"body": {"text": "digest"}},
+        control_mode="safe",
+        fixed_destination=True,
+    )
+    assert repeated.id == first.id
+    assert repeated.policy_snapshot == first.policy_snapshot

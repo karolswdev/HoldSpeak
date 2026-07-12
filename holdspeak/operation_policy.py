@@ -12,8 +12,8 @@ from dataclasses import asdict, dataclass
 from typing import Any, Iterable, Mapping, Optional
 
 
-POLICY_CONTRACT_VERSION = 1
-POLICY_VERSION = "operation-policy/v1"
+POLICY_CONTRACT_VERSION = 2
+POLICY_VERSION = "operation-policy/v2"
 CONTROL_MODES = frozenset({"safe", "neutral", "yolo"})
 INITIAL_FAMILIES = frozenset(
     {"dictation_commit", "coder_steering", "external_write", "sync_cadence"}
@@ -66,6 +66,9 @@ class PolicyDecision:
     outcome: str
     reason_code: str
     consequence: str
+    authority_basis: str
+    next_state: str
+    eligible: bool
     requires_review: bool
     requires_authorization: bool
     requires_grant: bool
@@ -189,7 +192,7 @@ def resolve_policy(
     configured_preview: bool = False,
     explicit_authorization: bool = False,
 ) -> PolicyDecision:
-    """Resolve one future operation. Unsupported families keep current behavior."""
+    """Resolve one future operation; unknown families always fail closed."""
     selected = normalize_control_mode(mode)
     precedence = (
         "hard_invariants",
@@ -204,9 +207,12 @@ def resolve_policy(
             mode=selected,
             source=source,
             precedence=precedence,
-            outcome="current_behavior",
-            reason_code="unsupported_family_current_behavior",
+            outcome="refused",
+            reason_code="unsupported_operation_family",
             consequence=operation.consequence,
+            authority_basis="none",
+            next_state="refused",
+            eligible=False,
             requires_review=False,
             requires_authorization=False,
             requires_grant=False,
@@ -223,54 +229,88 @@ def resolve_policy(
             if review
             else "dictation_commit_allowed",
             consequence="content_only",
+            authority_basis="configured_preview" if review else "direct_gesture",
+            next_state="awaiting_review" if review else "execute_now",
+            eligible=True,
             requires_review=review,
             requires_authorization=False,
             requires_grant=False,
         )
 
     if operation.family == "coder_steering":
-        # Pane identity + an expiring grant remain invariant in every mode.
+        # YOLO steering is delivered in a later HS-93-07 slice. Until the
+        # registered-session execution path consumes posture authority itself,
+        # this known family remains eligible but explicitly grant-gated.
+        matched = grant_matches(grant, operation)
         return PolicyDecision(
             mode=selected,
             source=source,
             precedence=precedence,
-            outcome="allowed" if grant_matches(grant, operation) else "grant_required",
+            outcome="allowed" if matched else "grant_required",
             reason_code="steering_grant_active"
-            if grant_matches(grant, operation)
+            if matched
             else "steering_grant_required",
             consequence="execute_now",
+            authority_basis="scoped_grant" if matched else "none",
+            next_state="execute_now" if matched else "awaiting_grant",
+            eligible=True,
             requires_review=False,
             requires_authorization=False,
             requires_grant=True,
         )
 
     if operation.family == "external_write":
-        reusable = (
-            selected == "yolo"
-            and operation.fixed_destination
-            and grant_matches(grant, operation)
+        scoped = grant_matches(grant, operation)
+        posture_allowed = selected == "yolo" and operation.fixed_destination
+        allowed = posture_allowed or scoped or explicit_authorization
+        refused = selected == "yolo" and not operation.fixed_destination and not allowed
+        outcome = (
+            "allowed"
+            if allowed
+            else "refused"
+            if refused
+            else "authorization_required"
         )
-        allowed = reusable or explicit_authorization
+        authority_basis = (
+            "control_posture"
+            if posture_allowed
+            else "scoped_grant"
+            if scoped
+            else "per_action_decision"
+            if explicit_authorization
+            else "per_action_required"
+            if outcome == "authorization_required"
+            else "none"
+        )
         return PolicyDecision(
             mode=selected,
             source=source,
             precedence=precedence,
-            outcome="allowed"
-            if allowed
-            else ("grant_required" if selected == "yolo" else "authorization_required"),
+            outcome=outcome,
             reason_code=(
-                "fixed_destination_grant_active"
-                if reusable
+                "configured_destination_posture_allowed"
+                if posture_allowed
+                else "scoped_grant_active"
+                if scoped
                 else "per_action_authorization_accepted"
                 if explicit_authorization
-                else "fixed_destination_grant_required"
-                if selected == "yolo"
+                else "registered_destination_required"
+                if refused
                 else "per_action_authorization_required"
             ),
             consequence=operation.consequence,
-            requires_review=True,
-            requires_authorization=not allowed,
-            requires_grant=selected == "yolo" and not explicit_authorization,
+            authority_basis=authority_basis,
+            next_state=(
+                "execute_now"
+                if allowed
+                else "refused"
+                if refused
+                else "awaiting_authorization"
+            ),
+            eligible=not refused,
+            requires_review=not allowed and not refused,
+            requires_authorization=outcome == "authorization_required",
+            requires_grant=False,
         )
 
     # Sync preserves auth/schema/config invariants in all modes. Safe asks for a
@@ -285,6 +325,9 @@ def resolve_policy(
         if manual
         else "configured_sync_cadence_allowed",
         consequence="queue_executor",
+        authority_basis="per_action_required" if manual else "configured_cadence",
+        next_state="awaiting_authorization" if manual else "queue_executor",
+        eligible=True,
         requires_review=False,
         requires_authorization=manual,
         requires_grant=False,

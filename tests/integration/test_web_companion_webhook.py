@@ -24,11 +24,11 @@ from fastapi.testclient import TestClient
 
 pytestmark = [pytest.mark.requires_meeting]
 
-import holdspeak.config as config_module
-import holdspeak.plugins.builtin.webhook_post_actuator as webhook_module
-from holdspeak.config import Config
-from holdspeak.db import Database, get_database, reset_database
-from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+import holdspeak.config as config_module  # noqa: E402
+import holdspeak.plugins.builtin.webhook_post_actuator as webhook_module  # noqa: E402
+from holdspeak.config import Config  # noqa: E402
+from holdspeak.db import get_database, reset_database  # noqa: E402
+from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks  # noqa: E402
 
 URL = "https://hooks.example.com/services/secret-hook"
 PROPOSE = "/api/desk/actuators/webhook/propose"
@@ -59,6 +59,12 @@ def settings_path(tmp_path, monkeypatch):
 def _configure(settings_path, url=URL):
     config = Config.load()
     config.meeting.companion_webhook_url = url
+    config.save(path=settings_path)
+
+
+def _set_control_mode(settings_path, mode):
+    config = Config.load()
+    config.control_mode = mode
     config.save(path=settings_path)
 
 
@@ -143,6 +149,20 @@ def test_approval_posts_the_preview_byte_equal(client, db, settings_path, posts,
     url, body = posts[0]
     assert url == URL
     assert body == {"text": proposal["preview"]}
+
+
+@pytest.mark.integration
+def test_yolo_executes_the_configured_webhook_without_a_decision(
+    client, db, settings_path, posts, broadcasts
+):
+    _configure(settings_path)
+    _set_control_mode(settings_path, "yolo")
+    proposal = client.post(PROPOSE, json={"text": "the brief"}).json()["proposal"]
+    assert proposal["status"] == "executed"
+    assert proposal["policy_snapshot"]["authority_basis"] == "control_posture"
+    assert proposal["policy_snapshot"]["mode"] == "yolo"
+    assert len(posts) == 1
+    assert posts[0][1] == {"text": proposal["preview"]}
 
 
 @pytest.mark.integration

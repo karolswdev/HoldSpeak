@@ -29,6 +29,9 @@ def test_policy_and_control_mode_are_one_future_operation_contract(rig) -> None:
     assert policy.status_code == 200
     assert policy.json()["control_mode"] == "neutral"
     assert policy.json()["control_mode_label"] == "Normal"
+    assert policy.json()["policy_version"] == "operation-policy/v2"
+    assert policy.json()["unsupported_family_behavior"] == "refused"
+    assert policy.json()["applies_to"] == "future_operations_only"
     assert policy.json()["precedence"][0] == "hard_invariants"
     assert "schema_safety" in policy.json()["hard_invariants"]
 
@@ -59,9 +62,11 @@ def test_grants_issue_only_from_fixed_proposal_and_expose_use_receipts(rig) -> N
         preview="Create issue",
         payload={"repo": "acme/app", "title": "Follow up"},
     )
-    neutral = client.post("/api/authority/grants", json={"proposal_id": proposal.id})
-    assert neutral.status_code == 409
     client.put("/api/authority/control-mode", json={"control_mode": "yolo"})
+    yolo = client.post("/api/authority/grants", json={"proposal_id": proposal.id})
+    assert yolo.status_code == 409
+    assert "captured posture" in yolo.json()["error"]
+    client.put("/api/authority/control-mode", json={"control_mode": "Normal"})
     issued = client.post(
         "/api/authority/grants",
         json={

@@ -32,17 +32,22 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
         from ...operation_policy import (
             HARD_INVARIANTS,
             INITIAL_FAMILIES,
+            POLICY_CONTRACT_VERSION,
             POLICY_VERSION,
         )
-        from ...product_language import control_mode_label
+        from ...product_language import control_mode_label, PRODUCT_LANGUAGE
 
         mode = Config.load().control_mode
         return JSONResponse(
             {
-                "version": 1,
+                "version": POLICY_CONTRACT_VERSION,
                 "policy_version": POLICY_VERSION,
                 "control_mode": mode,
                 "control_mode_label": control_mode_label(mode),
+                "control_mode_description": (
+                    PRODUCT_LANGUAGE.control_mode_description(mode)
+                ),
+                "applies_to": "future_operations_only",
                 "source": "config",
                 "precedence": [
                     "hard_invariants",
@@ -53,7 +58,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
                 ],
                 "hard_invariants": list(HARD_INVARIANTS),
                 "supported_families": sorted(INITIAL_FAMILIES),
-                "unsupported_family_behavior": "current_behavior",
+                "unsupported_family_behavior": "refused",
             }
         )
 
@@ -193,10 +198,10 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
                     status_code=409,
                 )
             control_mode = Config.load().control_mode
-            if control_mode != "yolo":
+            if control_mode == "yolo":
                 return JSONResponse(
                     {
-                        "error": "Reusable external-write grants require YOLO. Approve this exact action instead."
+                        "error": "YOLO uses the captured posture for eligible configured operations. Use Secure or Normal to issue a bounded grant."
                     },
                     status_code=409,
                 )
