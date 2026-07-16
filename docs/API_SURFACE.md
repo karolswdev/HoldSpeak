@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 332 (plus static mounts). iOS-consumed: 88. Web-consumed: 234.
+Routes: 332 (plus static mounts). iOS-consumed: 88. Web-consumed: 241.
 
 ## device_audio_ws
 
@@ -155,17 +155,17 @@ Routes: 332 (plus static mounts). iOS-consumed: 88. Web-consumed: 234.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/delivery/evidence/{bundle_id}/{asset_id}` | server only |
-| GET | `/api/delivery/phases/{project}/{phase}/dossier` | server only |
+| GET | `/api/delivery/evidence/{bundle_id}/{asset_id}` | web |
+| GET | `/api/delivery/phases/{project}/{phase}/dossier` | web |
 | GET | `/api/delivery/stories/{project}/{story}/dossier` | ios |
 
 ## web.routes.delivery_factory
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/delivery/factory/discover` | server only |
-| POST | `/api/delivery/factory/launch` | server only |
-| GET | `/api/delivery/factory/profiles` | server only |
+| GET | `/api/delivery/factory/discover` | web |
+| POST | `/api/delivery/factory/launch` | web |
+| GET | `/api/delivery/factory/profiles` | web |
 
 ## web.routes.delivery_node
 
@@ -181,10 +181,10 @@ Routes: 332 (plus static mounts). iOS-consumed: 88. Web-consumed: 234.
 
 | Method | Path | Consumers |
 |---|---|---|
-| POST | `/api/delivery/terminal/commands` | server only |
+| POST | `/api/delivery/terminal/commands` | web |
 | GET | `/api/delivery/terminal/commands/{command_id}` | server only |
 | POST | `/api/delivery/terminal/node/results` | server only |
-| POST | `/api/delivery/terminal/subscriptions` | server only |
+| POST | `/api/delivery/terminal/subscriptions` | web |
 | POST | `/api/delivery/terminal/targets` | server only |
 
 ## web.routes.desk_actuators

@@ -1,0 +1,24 @@
+HS-94-10 campaign — 2026-07-16T09:26:50Z
+report: /Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-94-delivery-runtime/evidence/hs-94-10/campaign-report-20260716T092651Z.json
+
+north-star journeys:
+  observe: True
+  evidence: True
+  steer: True
+  launch: True
+fault matrix:
+  node_kill_reconcile: True
+  generation_mismatch: True
+  expired: True
+  out_of_order: True
+  source_failure_lkg: True
+  link_loss_cursor_resume: True
+poll economy: True (1 client == 3 dw calls, 10 clients == 3)
+posture invariance: True
+zero duplicate/wrong-target: True
+self attempt exactly-once: True
+census accounted: True (13/13 commands)
+census clean (no leaks): True (0 leaks)
+compat consumers:
+  /api/missioncontrol/: 11 consumer file(s) (7 authored, 4 generated build copies) still call /api/missioncontrol/ — keep the compat route until parity shows zero callers
+  /api/coders/: 36 consumer file(s) (14 authored, 22 generated build copies) still call /api/coders/ — keep the compat route until parity shows zero callers

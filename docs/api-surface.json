@@ -1021,7 +1021,9 @@
         "GET"
       ],
       "module": "web.routes.delivery_dossiers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/delivery/factory/discover",
@@ -1029,7 +1031,9 @@
         "GET"
       ],
       "module": "web.routes.delivery_factory",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/delivery/factory/launch",
@@ -1037,7 +1041,9 @@
         "POST"
       ],
       "module": "web.routes.delivery_factory",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/delivery/factory/profiles",
@@ -1045,7 +1051,9 @@
         "GET"
       ],
       "module": "web.routes.delivery_factory",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/delivery/node/commands",
@@ -1096,7 +1104,9 @@
         "GET"
       ],
       "module": "web.routes.delivery_dossiers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/delivery/snapshot",
@@ -1147,7 +1157,9 @@
         "POST"
       ],
       "module": "web.routes.delivery_terminal",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/delivery/terminal/commands/{command_id}",
@@ -1171,7 +1183,9 @@
         "POST"
       ],
       "module": "web.routes.delivery_terminal",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/delivery/terminal/targets",

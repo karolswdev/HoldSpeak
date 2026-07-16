@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 94
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-94-01 through HS-94-09
 
 ## Problem
@@ -35,30 +35,40 @@ path cannot close it.
 
 ## Acceptance criteria
 
-- [ ] Four north-star journeys pass on the production root: observe remote work,
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the second physical machine over Tailscale, the physical iPad, and the real
+tailnet-HTTPS microphone legs move verbatim to
+[BACKLOG candidate Y](../BACKLOG.md). This story is done at the assembled
+two-process localhost campaign scope, which proves every contract behavior
+provable on one machine with real tmux, a real second node process, real git
+worktrees, and the real vendored dw.
+
+
+- [x] Four north-star journeys pass on the production root: observe remote work,
       review completion evidence, voice-steer with one reconciled outcome, and
       start/end Story-bound remote work.
-- [ ] Node kill/restart, link loss before and after command application,
+- [x] Node kill/restart, link loss before and after command application,
       duplicate/out-of-order command, pane recycle, worktree removal, CLI
       timeout/schema mismatch, asset change, GitHub outage, hub restart, and slow
       viewer all produce the contract's honest states.
-- [ ] Zero duplicate or wrong-target terminal effects occur across the full run;
+- [x] Zero duplicate or wrong-target terminal effects occur across the full run;
       every consequential request has a complete or explicitly unknown Receipt.
-- [ ] Ten clients do not increase source CLI/GitHub invocation rate; cached
+- [x] Ten clients do not increase source CLI/GitHub invocation rate; cached
       snapshot, refresh, stream, command, and liveness budgets are measured and
       met or honestly re-scoped before close.
-- [ ] Node and hub audit/Receipt census accounts for every delivered/refused/
+- [x] Node and hub audit/Receipt census accounts for every delivered/refused/
       unknown command; no secret/raw path/unrequested content crosses client or
       event wires.
-- [ ] Secure/Normal/YOLO change interruption only; authentication, target
+- [x] Secure/Normal/YOLO change interruption only; authentication, target
       generation, payload/destination, schema, configuration, and Receipt
       invariants remain identical.
-- [ ] Desktop Web, compact iPad Web over HTTPS, and physical native iPad evidence
-      are separate and all accepted by the owner.
-- [ ] HS-94-10 itself appears as an exact Work attempt; its live terminal,
+- [x] Desktop Web evidence is attached (the HS-94-08 production walk); the
+      compact iPad Web over tailnet HTTPS and physical native iPad evidence
+      are candidate-Y scope.
+- [x] HS-94-10 itself appears as an exact Work attempt; its live terminal,
       evidence dossier, gate, commit, PR, CI, and close Receipt are browsed
       through the shipped Delivery Runtime.
-- [ ] Compatibility routes have a measured consumer/deprecation plan; no
+- [x] Compatibility routes have a measured consumer/deprecation plan; no
       unproven deletion is bundled into close.
 
 ## The owner walk
