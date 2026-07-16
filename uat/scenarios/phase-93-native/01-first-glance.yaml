@@ -1,0 +1,20 @@
+id: phase93-native-first-glance
+execution_target: ios_flagship_swift
+title: "Phase 93 · Native · First glance and moved-tool discovery on glass"
+features: [phase93.residue.first-glance]
+manual_setup:
+  - Install TestFlight build 12 or newer on the physical device; register the device attestation (device, OS, bundle, build, install source) before any verdict.
+recipes: []
+form_factors: [iphone, ipad]
+steps:
+  - do: Cold-launch the app, look for ten seconds without touching, then state what you can start from here.
+    expect: The stated understanding matches the three daily starts; nothing on the first screen needs vocabulary it did not supply.
+    verifies: [phase93.residue.first-glance]
+    measurements:
+      - {key: misread_starts, label: Starts whose purpose was misstated, unit: starts}
+  - do: Find the creation entry, the tool shelf, and Desk memory without documentation, on each device.
+    expect: Each is reached through visible affordances in at most three touches; no tool needs a guess.
+    verifies: [phase93.residue.first-glance]
+    measurements:
+      - {key: dead_ends, label: Wrong paths before finding a tool, unit: paths}
+teardown: []

@@ -1,0 +1,20 @@
+id: phase93-web-room-return
+execution_target: web_react
+title: "Phase 93 · Web · Every room returns to its Desk subject through cancel and failure"
+features: [phase93.residue.room-return]
+recipes: [seeded-desk]
+form_factors: [desktop]
+steps:
+  - do: Confirm the seeded Desk shows its objects, then enter Dictation, Meetings, and Workbench contextually from a Desk subject, complete or cancel each, and come back.
+    expect: Each room names the subject it was opened with; completing returns to that subject; cancel returns without losing the room's draft.
+    where: /
+    verifies: [phase93.residue.room-return]
+  - do: Paste a direct room link into a fresh tab (no Desk subject), work in it, and return.
+    expect: The room states its explicit Desk fallback rather than fabricating a subject; the return lands somewhere findable, not an orphaned screen.
+    verifies: [phase93.residue.room-return]
+  - do: Force a failure inside a room (kill the network mid-action or use an invalid input), then leave the room.
+    expect: The failure names what is retained and where; leaving does not discard the retained work; the Desk shows it afterward.
+    verifies: [phase93.residue.room-return]
+    measurements:
+      - {key: orphaned_journeys, label: Journeys that ended with no findable result, unit: journeys}
+teardown: []

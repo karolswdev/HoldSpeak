@@ -1,0 +1,20 @@
+id: phase94-second-node
+execution_target: web_react
+title: "Phase 94 · Web · A second physical machine serves delivery over Tailscale"
+features: [phase94.delivery.second-node]
+manual_setup:
+  - On a second physical machine over Tailscale, run `holdspeak node serve` against the hub with a node-scoped token and a real repository checkout.
+recipes: []
+form_factors: [desktop]
+steps:
+  - do: Watch the remote node connect, advertise capabilities, and expose its sources; then observe and steer a session running on it.
+    expect: The remote node's work behaves like the local one under real transport latency; target identity, receipts, and authority survive the network hop.
+    verifies: [phase94.delivery.second-node]
+    measurements:
+      - {key: steer_latency_ms, label: Observed steer round-trip, unit: ms}
+  - do: Cut the node's network for a minute, restore it, and check the event stream and liveness clock.
+    expect: The node goes stale then offline on the specified clock, resumes its cursor on reconnect, and no events are invented or doubled.
+    verifies: [phase94.delivery.second-node]
+    measurements:
+      - {key: duplicated_events, label: Events replayed as new after reconnect, unit: events}
+teardown: []

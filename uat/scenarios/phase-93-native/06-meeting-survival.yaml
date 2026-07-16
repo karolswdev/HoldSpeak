@@ -1,0 +1,24 @@
+id: phase93-native-meeting-survival
+execution_target: ios_flagship_swift
+title: "Phase 93 · Native · Long capture, faults, airplane-mode sync, and conflict decisions"
+features: [phase93.residue.meeting-survival]
+manual_setup:
+  - Reserve a 30-minute block for the sustained capture leg (the 60-minute trace may be a separate sitting); note device memory pressure if visible.
+  - Keep the paired hub reachable for the sync legs, then genuinely offline for the airplane leg.
+recipes: []
+form_factors: [iphone, ipad]
+steps:
+  - do: Record a real 5-minute meeting, then a sustained 30-minute one; watch for memory-pressure warnings and check the transcript afterward.
+    expect: Capture stays bounded and responsive; the transcript and base analysis land; any deferred intelligence leaves the Meeting honestly partial with Retry remaining.
+    verifies: [phase93.residue.meeting-survival]
+    measurements:
+      - {key: sustained_minutes, label: Longest completed capture, unit: minutes}
+  - do: Kill the app mid-capture and relaunch; separately, record a full meeting in airplane mode, then reconnect and sync.
+    expect: The killed capture recovers its checkpoint with an honest statement of loss; the airplane-mode meeting syncs exactly once with no duplicate on either side.
+    verifies: [phase93.residue.meeting-survival]
+    measurements:
+      - {key: duplicate_sync_effects, label: Sync effects applied more than once, unit: effects}
+  - do: Create a conflict (edit the same Meeting on the desktop while the device is offline, then reconnect) and decide it on the device.
+    expect: Both exact versions display at the Meeting subject; Keep current, Use synced, or a named deletion is required; the decision applies atomically.
+    verifies: [phase93.residue.meeting-survival]
+teardown: []

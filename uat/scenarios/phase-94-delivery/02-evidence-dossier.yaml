@@ -1,0 +1,18 @@
+id: phase94-evidence-dossier
+execution_target: web_react
+title: "Phase 94 · Web · A closed Story opens as an evidence dossier"
+features: [phase94.delivery.evidence-dossier]
+manual_setup:
+  - Use a delivery source with at least one closed story carrying real evidence assets (this repository's Phase 93/94 stories qualify).
+recipes: []
+form_factors: [desktop]
+steps:
+  - do: Open a completed Story's dossier and read its rendered Markdown, captured runs, and any PNG, JSON, or log assets; then open the Phase-level dossier.
+    expect: Evidence renders in place with commit, gate, and PR/CI receipts where present; membership comes from the rails, not guesses.
+    verifies: [phase94.delivery.evidence-dossier]
+  - do: Find an asset that is not locally present (a remote or offline node's bytes) and try to open it.
+    expect: The dossier lists it honestly as unavailable rather than erroring blindly or fabricating content.
+    verifies: [phase94.delivery.evidence-dossier]
+    measurements:
+      - {key: dishonest_assets, label: Assets shown as present that were not, unit: assets}
+teardown: []

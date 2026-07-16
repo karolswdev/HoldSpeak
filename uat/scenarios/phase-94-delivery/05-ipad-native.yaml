@@ -1,0 +1,19 @@
+id: phase94-ipad-native
+execution_target: ios_flagship_swift
+title: "Phase 94 · Native · iPad observe, evidence, voice-steer, and remote disarm"
+features: [phase94.delivery.native-parity]
+manual_setup:
+  - Install TestFlight build 12 or newer on the physical iPad and pair it with the hub that has a live delivery source and session.
+recipes: []
+form_factors: [ipad]
+steps:
+  - do: From the iPad, observe the delivery source, open a Story's evidence, and watch the live session.
+    expect: The native views consume the same contracts as the Web — same states, reason codes, and receipts; nothing is a Swift-only invention.
+    verifies: [phase94.delivery.native-parity]
+  - do: Voice-steer the session (hold to talk, review, send once), then disarm the remote target from the iPad.
+    expect: The steer lands exactly once on the exact pane with a Receipt; remote disarm takes effect on the owning node and further input refuses by name.
+    verifies: [phase94.delivery.native-parity]
+    measurements:
+      - {key: wrong_target_effects, label: Effects on a pane other than the target, unit: effects}
+      - {key: disarm_failures, label: Inputs accepted after remote disarm, unit: inputs}
+teardown: []

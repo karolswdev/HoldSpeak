@@ -1,0 +1,25 @@
+title: "12 · Phase 94 delivery runtime — the platform on real metal"
+purpose: >
+  Prove the Delivery Runtime beyond the two-process proofs: delivery work
+  observed and steered from the Desk, evidence dossiers, Story-bound agent
+  launch, a second physical machine over Tailscale, the physical iPad native
+  legs with remote disarm, and iPad Safari over tailnet HTTPS with a
+  secure-context microphone.
+sequence: 12
+tier: close
+estimated_minutes: 240
+prerequisites:
+  - Phase 94 closed at machine-verifiable scope on 2026-07-16; this campaign is its physical leg (second machine, iPad, tailnet HTTPS).
+  - A second physical machine on the tailnet running `holdspeak node serve` with a node-scoped token and a real repository checkout.
+  - Tailscale Serve HTTPS configured for the hub; TestFlight build 12 or newer on the physical iPad.
+  - Use scratch branches or worktrees for launched agent work so a real repository is never at risk.
+exit_gate:
+  - Zero duplicate or wrong-target effects across every steer, launch, and reconnect leg, with complete Receipts.
+  - The remote-disarm and stale/offline clocks behave as specified; the tailnet HTTPS microphone works in Safari's secure context.
+scenarios:
+  - phase-94-delivery/phase94-desk-observe
+  - phase-94-delivery/phase94-evidence-dossier
+  - phase-94-delivery/phase94-story-launch
+  - phase-94-delivery/phase94-second-node
+  - phase-94-delivery/phase94-ipad-native
+  - phase-94-delivery/phase94-tailnet-https

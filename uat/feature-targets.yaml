@@ -91,3 +91,21 @@ features:
     ios_flagship_swift: [ipad, iphone]
   sync.content.cross_device:
     ios_flagship_swift: [ipad, iphone]
+  phase93.residue.first-glance:
+    ios_flagship_swift: [ipad, iphone]
+  phase93.residue.room-return:
+    ios_flagship_swift: [ipad, iphone]
+  phase93.residue.copy-read:
+    ios_flagship_swift: [ipad, iphone]
+  phase93.residue.desk-power:
+    ios_flagship_swift: [ipad, iphone]
+  phase93.residue.mic-faults:
+    ios_flagship_swift: [ipad, iphone]
+  phase93.residue.meeting-survival:
+    ios_flagship_swift: [ipad, iphone]
+  phase93.residue.accessibility:
+    ios_flagship_swift: [ipad, iphone]
+  phase93.residue.dogfood:
+    ios_flagship_swift: [ipad, iphone]
+  phase94.delivery.native-parity:
+    ios_flagship_swift: [ipad]

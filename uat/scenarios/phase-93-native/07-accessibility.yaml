@@ -1,0 +1,23 @@
+id: phase93-native-accessibility
+execution_target: ios_flagship_swift
+title: "Phase 93 · Native · VoiceOver, Dynamic Type, Reduce Motion, and orientation"
+features: [phase93.residue.accessibility]
+manual_setup:
+  - Enable VoiceOver with screen curtain for the first step; know the triple-click accessibility shortcut to switch modes between steps.
+recipes: []
+form_factors: [iphone, ipad]
+steps:
+  - do: With screen curtain and VoiceOver only, complete one dictation and one meeting start-stop, and open one Desk object.
+    expect: Every primary action has a VoiceOver path; focus order is coherent; results are announced, not just drawn.
+    verifies: [phase93.residue.accessibility]
+    measurements:
+      - {key: gesture_only_actions, label: Primary actions with no VoiceOver equivalent, unit: actions}
+  - do: Set the largest accessibility text size and revisit the Desk, a Meeting, and Settings; then enable Reduce Motion and watch the Desk idle.
+    expect: Layouts remain operable without clipped controls; continuous decorative motion stops under Reduce Motion.
+    verifies: [phase93.residue.accessibility]
+    measurements:
+      - {key: clipped_controls, label: Controls clipped or unreachable at max text, unit: controls}
+  - do: Rotate through both orientations mid-dictation and mid-meeting on the iPad; lock and unlock mid-action.
+    expect: No capture, draft, or room context is lost to a rotation or lock.
+    verifies: [phase93.residue.accessibility]
+teardown: []

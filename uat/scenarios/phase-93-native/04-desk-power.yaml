@@ -1,0 +1,18 @@
+id: phase93-native-desk-power
+execution_target: ios_flagship_swift
+title: "Phase 93 · Native · Inspector, connector, Coder, Runs-on, and relaunch walks"
+features: [phase93.residue.desk-power]
+manual_setup:
+  - Pair with a hub that has at least one configured Integration, one Runs-on target, and one live or waiting Coder session.
+recipes: []
+form_factors: [iphone, ipad]
+steps:
+  - do: From the device Desk, find and open the Project inspector, a configured Integration, the Runs-on choice, and the waiting Coder.
+    expect: Each is reachable through Desk affordances without matching Web chrome; each names its state and authority honestly.
+    verifies: [phase93.residue.desk-power]
+    measurements:
+      - {key: undiscoverable, label: Capabilities not found without documentation, unit: capabilities}
+  - do: Complete one Integration proposal to its Receipt, then force one to fail; kill and relaunch the app between the two.
+    expect: The Receipt projects back to its source subject; the failure names what refused and why; relaunch loses neither.
+    verifies: [phase93.residue.desk-power]
+teardown: []
