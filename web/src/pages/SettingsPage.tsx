@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   Button,
+  Disclosure,
   Field,
   InlineMessage,
   Panel,
@@ -10,12 +11,13 @@ import {
   TextInput,
 } from "../components/signal/Signal";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
+import { CONTROL_MODES, controlModeLabel } from "../lib/productLanguage";
 import {
-  CONTROL_MODES,
-  controlModeDescription,
-  controlModeLabel,
-} from "../lib/productLanguage";
-import { PageHero, ResourceState, useResource } from "./pageSupport";
+  PageHero,
+  PostureNote,
+  ResourceState,
+  useResource,
+} from "./pageSupport";
 import { decodeWorkroomContext, workroomSubjectId } from "../workrooms/context";
 
 const SECTION_ORDER = [
@@ -352,7 +354,7 @@ export default function SettingsPage() {
       authority.setData({ ...authority.data, ...result });
       const revoked = Number(result.revoked_grants ?? 0);
       setMessage({
-        text: `Control posture is now ${controlModeLabel(controlMode)} for future operations. Existing proposals keep their captured posture.${revoked ? ` ${revoked} active ${revoked === 1 ? "grant was" : "grants were"} revoked.` : ""}`,
+        text: `Control posture is now ${controlModeLabel(controlMode)} for future operations.${revoked ? ` ${revoked} active ${revoked === 1 ? "grant was" : "grants were"} revoked.` : ""}`,
       });
     } catch (error) {
       setMessage({ error: true, text: readableError(error) });
@@ -385,12 +387,7 @@ export default function SettingsPage() {
         <Panel title="Control posture" eyebrow="Future operations">
           <Field
             label="Preset"
-            description={`${CONTROL_MODES.map(
-              (mode) =>
-                `${controlModeLabel(mode)}: ${controlModeDescription(mode)}`,
-            ).join(
-              " ",
-            )} Authentication, secret custody, destination and payload binding, pane identity, receipts, configuration, and schema checks never change.`}
+            description="Applies to future operations. Existing proposals keep their captured posture."
           >
             {({ id, describedBy }) => (
               <Select
@@ -409,13 +406,26 @@ export default function SettingsPage() {
             )}
           </Field>
           <p>
-            Source: {String(authority.data.source ?? "config")} ·{" "}
-            {String(authority.data.policy_version ?? "operation policy")} ·
-            precedence:{" "}
-            {Array.isArray(authority.data.precedence)
-              ? authority.data.precedence.join(" → ")
-              : "hard invariants → grants → mode → feature default"}
+            <PostureNote
+              mode={String(authority.data.control_mode ?? "neutral")}
+              describe
+            />
           </p>
+          <Disclosure title="Policy details">
+            <p>
+              Authentication, secret custody, destination and payload binding,
+              pane identity, receipts, configuration, and schema checks never
+              change.
+            </p>
+            <p>
+              Source: {String(authority.data.source ?? "config")} ·{" "}
+              {String(authority.data.policy_version ?? "operation policy")} ·
+              precedence:{" "}
+              {Array.isArray(authority.data.precedence)
+                ? authority.data.precedence.join(" → ")
+                : "hard invariants → grants → mode → feature default"}
+            </p>
+          </Disclosure>
         </Panel>
         <Panel title="Hub configuration" eyebrow="Signal editor">
           <Field

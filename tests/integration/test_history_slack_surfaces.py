@@ -128,7 +128,11 @@ def test_history_buttons_are_gated_on_the_flag():
     assert "aftercare.slack_configured" in page
     assert 'proposeSlack("digest")' in page and 'proposeSlack("followup")' in page
     assert 'apiFetch<JsonRecord>("/api/authority/policy")' in page
-    assert "controlModeDescription" in page
+    # The posture chrome is the shared PostureNote (label + description).
+    assert (
+        '<PostureNote mode={String(authority.control_mode ?? "neutral")} describe />'
+        in page
+    )
 
 
 def test_proposal_rows_render_the_central_policy_and_refusal_truth():

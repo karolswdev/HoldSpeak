@@ -5,7 +5,13 @@ import {
   useState,
 } from "react";
 import { Link } from "react-router-dom";
-import { Button, Field, Panel, TextArea } from "../components/signal/Signal";
+import {
+  Button,
+  Field,
+  InlineMessage,
+  Panel,
+  TextArea,
+} from "../components/signal/Signal";
 import { apiFetch, readableError } from "../lib/api";
 import {
   buildLinearGraph,
@@ -308,13 +314,11 @@ export default function WorkbenchPage() {
           : "Build a Workflow from typed steps."}
       </PageHero>
       {status && (
-        <p
-          className={
-            support === "unsupported_graph" ? "notice error" : "notice"
-          }
+        <InlineMessage
+          tone={support === "unsupported_graph" ? "error" : "info"}
         >
           {status}
-        </p>
+        </InlineMessage>
       )}
       <div
         className="workbench-canvas"
@@ -431,14 +435,14 @@ export default function WorkbenchPage() {
           </Button>
           {artifactId && (
             <Link
-              className="button secondary"
+              className="btn btn--secondary"
               to={`/?open=${encodeURIComponent(`artifact:${artifactId}`)}`}
             >
               Return to kept Artifact
             </Link>
           )}
         </div>
-        {runOutput && <pre>{runOutput}</pre>}
+        {runOutput && <pre className="code-block">{runOutput}</pre>}
       </Panel>
     </div>
   );

@@ -18,6 +18,7 @@ import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { controlModeLabel } from "../../lib/productLanguage";
+import { useDeskWindow } from "./DeskWindow";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -92,11 +93,7 @@ function ArmChip() {
       <button
         type="button"
         className="desk-chip desk-arm-chip"
-        title={
-          stale
-            ? "Stale session; arming will refuse"
-            : armCommitment
-        }
+        title={stale ? "Stale session; arming will refuse" : armCommitment}
         onClick={() => void useSteering.getState().arm()}
       >
         {armCommitment}
@@ -598,21 +595,18 @@ export function SessionPullout() {
   const { closeSession } = useSteering.getState();
   const ref = useRef<HTMLDivElement | null>(null);
   const preRef = useRef<HTMLPreElement | null>(null);
+  const win = useDeskWindow("session", { minW: 420, open: Boolean(openKey) });
 
   useEffect(() => {
     if (!openKey) return;
+    // A desk window closes deliberately (✕ or Escape) — never from a stray
+    // click elsewhere on the desk; a live peek must survive arranging.
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeSession();
     };
-    const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        closeSession();
-    };
     document.addEventListener("keydown", onKey);
-    document.addEventListener("pointerdown", onDown);
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.removeEventListener("pointerdown", onDown);
     };
   }, [openKey]);
 
@@ -629,14 +623,27 @@ export function SessionPullout() {
 
   return (
     <motion.div
-      ref={ref}
-      className="desk-pullout is-session"
+      ref={(el: HTMLDivElement | null) => {
+        ref.current = el;
+        win.setEl(el);
+      }}
+      className={
+        "desk-pullout is-session desk-window" +
+        (win.floating ? " is-floating" : "")
+      }
+      style={win.style}
       initial={{ x: 60, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onPointerDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => {
+        win.focus();
+        e.stopPropagation();
+      }}
     >
-      <header className="desk-pullout-head">
+      <header
+        className="desk-pullout-head desk-window-handle"
+        {...win.handleProps}
+      >
         <span className="desk-session-glyph">
           {session?.awaitingResponse ? "🙋" : "🤖"}
         </span>
@@ -702,6 +709,7 @@ export function SessionPullout() {
       <footer className="desk-pullout-foot">
         <ClassifySection sessionKey={openKey} />
       </footer>
+      {win.grip}
     </motion.div>
   );
 }

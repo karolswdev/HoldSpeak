@@ -71,10 +71,8 @@ export const CONTROL_MODE_LABELS = {
 
 export const CONTROL_MODE_DESCRIPTIONS = {
   safe: "Reviews consequential work before it runs.",
-  neutral:
-    "Runs routine configured work and asks at consequential boundaries.",
-  yolo:
-    "Runs eligible configured work without HoldSpeak approval prompts.",
+  neutral: "Runs routine configured work and asks at consequential boundaries.",
+  yolo: "Runs eligible configured work without HoldSpeak approval prompts.",
 } as const satisfies Record<ControlMode, string>;
 
 export const DESTINATION_CLASS_LABELS = {
@@ -155,6 +153,47 @@ export const MEETING_PROJECTIONS = [
   "topics",
 ] as const;
 
+/**
+ * Proposal wire vocabulary (HS-93): effect classes are `target/action`
+ * compounds, authority bases come from `operation_policy.resolve_policy`, and
+ * proposal statuses from `VALID_ACTUATOR_PROPOSAL_STATUSES`. Unknown values
+ * humanize rather than rendering raw snake_case.
+ */
+export const EFFECT_CLASS_LABELS: Record<string, string> = {
+  "slack/post_message": "Slack message",
+  "webhook/post_message": "Webhook message",
+  "github/create_issue": "GitHub issue",
+  "desktop/type_text": "Typed text",
+  "terminal/type_text_and_keys": "Terminal input",
+};
+
+export const AUTHORITY_BASIS_LABELS: Record<string, string> = {
+  none: "No authority",
+  per_action_required: "Per-action approval required",
+  per_action_decision: "Per-action approval",
+  scoped_grant: "Scoped grant",
+  control_posture: "Control posture",
+  configured_cadence: "Configured cadence",
+  configured_preview: "Configured preview",
+  direct_gesture: "Direct gesture",
+  explicit_run: "Explicit run",
+  explicit_dictation: "Explicit dictation",
+};
+
+export const PROPOSAL_STATUS_LABELS: Record<string, string> = {
+  proposed: "Needs approval",
+  approved: "Approved",
+  executed: "Executed",
+  rejected: "Rejected",
+  failed: "Failed",
+};
+
+const WIRE_NAME_OVERRIDES: Record<string, string> = {
+  github: "GitHub",
+  slack: "Slack",
+  webhook: "Webhook",
+};
+
 export function canonicalProductTerm(value: string): CanonicalProductTerm {
   const normalized = value.trim().toLowerCase().replace(/[ -]/g, "_");
   if (Object.prototype.hasOwnProperty.call(PRODUCT_TERMS, normalized)) {
@@ -198,6 +237,35 @@ export function destinationClassLabel(value: string): string {
   return DESTINATION_CLASS_LABELS[
     requireCanonicalValue(value, DESTINATION_CLASSES, "destination class")
   ];
+}
+
+export function humanizeWireValue(value: string): string {
+  const clean = value.trim();
+  const known = WIRE_NAME_OVERRIDES[clean.toLowerCase()];
+  if (known) return known;
+  const spaced = clean.replace(/[_/]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!spaced) return "";
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+export function effectClassLabel(value: string): string {
+  return (
+    EFFECT_CLASS_LABELS[value.trim().toLowerCase()] ?? humanizeWireValue(value)
+  );
+}
+
+export function authorityBasisLabel(value: string): string {
+  return (
+    AUTHORITY_BASIS_LABELS[value.trim().toLowerCase()] ??
+    humanizeWireValue(value)
+  );
+}
+
+export function proposalStatusLabel(value: string): string {
+  return (
+    PROPOSAL_STATUS_LABELS[value.trim().toLowerCase()] ??
+    humanizeWireValue(value)
+  );
 }
 
 export function lifecycleLabel<Axis extends keyof typeof LIFECYCLE_AXES>(

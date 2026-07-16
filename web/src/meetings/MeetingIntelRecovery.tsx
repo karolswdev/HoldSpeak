@@ -97,12 +97,12 @@ export function MeetingIntelRecovery({
     >
       {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
       {recovery?.visible ? (
-        <div className="meeting-intel-recovery-card">
+        <div className="recovery-card">
           <div>
             <h3>{recovery.headline}</h3>
             <p>Completed work remains available on this Meeting.</p>
           </div>
-          <dl className="meeting-intel-recovery-facts">
+          <dl className="signal-facts">
             {recovery.completed.map((fact) => (
               <div key={fact.label}>
                 <dt>{fact.label}</dt>
@@ -140,7 +140,9 @@ export function MeetingIntelRecovery({
               ) : null}
             </div>
           ) : recovery.state === "running" ? (
-            <p className="quiet">Wait for the running attempt to finish.</p>
+            <InlineMessage tone="info">
+              Wait for the running attempt to finish.
+            </InlineMessage>
           ) : null}
         </div>
       ) : null}

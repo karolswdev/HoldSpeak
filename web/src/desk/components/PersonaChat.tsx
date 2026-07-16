@@ -28,6 +28,7 @@ import {
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
 import { RunsOnPicker } from "./RunsOnPicker";
+import { useDeskWindow } from "./DeskWindow";
 import { useDurableDraft } from "../../lib/durableDraft";
 
 const turnId = () =>
@@ -55,6 +56,7 @@ export function PersonaChat(props: { personaId: string }) {
     }
     return (items.recipe || []).find((a: any) => a.id === personaId) as any;
   }, [items, personaId]);
+  const win = useDeskWindow("chat", { open: Boolean(persona) });
 
   const [turns, setTurns] = useState<ChatTurn[]>(() => loadThread(personaId));
   const [grounding, setGrounding] = useState<GroundingSelection>(() =>
@@ -183,13 +185,24 @@ export function PersonaChat(props: { personaId: string }) {
 
   return (
     <motion.div
-      className="desk-pullout desk-chat"
+      ref={(el: HTMLDivElement | null) => win.setEl(el)}
+      className={
+        "desk-pullout desk-chat desk-window" +
+        (win.floating ? " is-floating" : "")
+      }
+      style={win.style}
       initial={{ x: 60, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onPointerDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => {
+        win.focus();
+        e.stopPropagation();
+      }}
     >
-      <header className="desk-pullout-head">
+      <header
+        className="desk-pullout-head desk-window-handle"
+        {...win.handleProps}
+      >
         <span className="desk-chat-avatar" aria-hidden="true">
           {String(persona.avatar || "🤖")}
         </span>
@@ -326,6 +339,7 @@ export function PersonaChat(props: { personaId: string }) {
           </p>
         )}
       </footer>
+      {win.grip}
     </motion.div>
   );
 }

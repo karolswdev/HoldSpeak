@@ -13,6 +13,10 @@ import {
 } from "../components/signal/Signal";
 import { apiFetch, readableError } from "../lib/api";
 import {
+  destinationClassLabel,
+  type DestinationClass,
+} from "../lib/productLanguage";
+import {
   ConfirmAction,
   PageHero,
   ResourceState,
@@ -29,6 +33,23 @@ type Envelope = {
     { live?: boolean; last_seen_seconds?: number }
   >;
 };
+const PRIVATE_HOST = /^(localhost|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/;
+
+function profileDestinationClass(profile: Profile): DestinationClass {
+  const kind = String(profile.kind ?? "onDevice");
+  if (kind === "desktop" || kind === "meshNode") return "paired_device";
+  if (kind === "openAICompatible") {
+    let host = "";
+    try {
+      host = new URL(String(profile.base_url || "")).hostname;
+    } catch {
+      host = "";
+    }
+    return PRIVATE_HOST.test(host) ? "private_endpoint" : "external_service";
+  }
+  return "this_device";
+}
+
 const blank = (): Profile => ({
   name: "",
   kind: "openAICompatible",
@@ -152,16 +173,9 @@ export default function ProfilesPage() {
                           ? liveness?.live
                             ? "live"
                             : "offline"
-                          : kind === "openAICompatible"
-                            ? (() => {
-                                const host = (() => {
-                                  try { return new URL(String(profile.base_url || "")).hostname; }
-                                  catch { return ""; }
-                                })();
-                                return /^(localhost|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)
-                                  ? "private endpoint" : "external service";
-                              })()
-                            : kind === "desktop" ? "paired device" : "this device"}
+                          : destinationClassLabel(
+                              profileDestinationClass(profile),
+                            )}
                       </StatusPill>
                       <Button dense onClick={() => setEditing({ ...profile })}>
                         Edit

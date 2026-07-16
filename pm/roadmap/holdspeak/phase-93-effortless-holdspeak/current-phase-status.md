@@ -11,10 +11,15 @@ open for their remaining implementation, owner, and physical-device gates.
 Phase 91 remains the roadmap's current phase; Phase 92 substrate is not accepted
 as a simplified product.
 
-**Last updated:** 2026-07-15 (HS-93-07 closed by direct owner decision at the
-two delivered authority families; the descoped remainder moved verbatim to
-BACKLOG candidate X. Fresh full-suite Python, Web, and Swift verification lanes
-were captured at close in the story's progress record).
+**Last updated:** 2026-07-15 (the owner-directed UI consistency + UX
+streamlining remediation shipped: a 46-finding inventory across four review
+passes, the desk-window contract — floating panels drag, resize, persist,
+raise, and coexist instead of being glued to one corner — one panel chrome and
+z ladder, one Record verb, product labels over raw wire values on every
+surface, copy-contract cleanups, and flagship Swift parity. Details in
+ui-consistency-inventory.md and the HS-93-04 progress record. Earlier the same
+day: HS-93-07 closed by direct owner decision at the two delivered authority
+families; the descoped remainder moved verbatim to BACKLOG candidate X).
 
 ## Goal
 
@@ -228,6 +233,20 @@ matrix, general grant-use source Receipts, Qlippy/Mission Control/Cadence
 treatment, production walks, owner prediction, and physical iPhone/iPad
 evidence moved verbatim to BACKLOG candidate X; the phase exit criterion that
 depends on them still gates the phase close.
+
+On 2026-07-15 the owner reviewed the Phase 92/93 deliverables and found them
+inconsistent with the general UI layout and per-component rules, and not
+streamlined: floating desk areas were glued in place. Four independent review
+passes over every UI file the two phases touched produced
+[ui-consistency-inventory.md](./ui-consistency-inventory.md) — 46 findings,
+each citing the pre-92 convention it breaks — and the remediation shipped the
+same day under HS-93-04's progress record: the desk-window contract (drag,
+resize, persist, focus-to-front, coexistence, reachable grips, cascade), one
+panel chrome over a documented z ladder, the undefined-token rendering bug
+fixed, one Record verb, product labels over raw wire values, copy-contract
+cleanups on both clients, flagship Swift sheet/badge/copy parity, and a
+bounded-rails repair for the Swift suite. Production Playwright captures of
+the window contract live in `evidence/ui-remediation/`.
 
 Phase 91 remains the roadmap's current phase and its owner/Swift close gate is
 non-waivable. Phase 92 still has broad automated implementation but no accepted

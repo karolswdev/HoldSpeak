@@ -1,7 +1,8 @@
 // The pull-out (HS-73-04): tap an object and it opens HERE, on the stage —
 // the port of the iPad's DioPullout + the meeting drawer (PR #196). The
 // world stays alive behind it; "Open full" is the ONE navigation on the
-// desk; Escape / click-elsewhere closes.
+// desk; Escape or ✕ closes (it is a desk window — it survives clicks
+// elsewhere and can be moved, resized, and raised).
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
@@ -17,6 +18,7 @@ import { useSteering } from "../steering";
 import { objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
+import { useDeskWindow } from "./DeskWindow";
 import { workroomHref } from "../../workrooms/context";
 import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
@@ -74,6 +76,7 @@ export function Pullout({ o }: { o: WorldObject }) {
     openToolInspector,
   } = useDesk.getState();
   const ref = useRef<HTMLDivElement | null>(null);
+  const win = useDeskWindow("pullout");
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [artifacts, setArtifacts] = useState<any[]>([]);
   const [runBusy, setRunBusy] = useState(false);
@@ -120,18 +123,14 @@ export function Pullout({ o }: { o: WorldObject }) {
   } = useDurableDraft(`coder-reply:${coderSessionId}`);
 
   useEffect(() => {
+    // A desk window closes deliberately (✕ or Escape) — never from a stray
+    // click elsewhere on the desk; arranged windows coexist.
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closePullout();
     };
-    const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
-        closePullout();
-    };
     document.addEventListener("keydown", onKey);
-    document.addEventListener("pointerdown", onDown);
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.removeEventListener("pointerdown", onDown);
     };
   }, []);
 
@@ -286,15 +285,26 @@ export function Pullout({ o }: { o: WorldObject }) {
 
   return (
     <motion.div
-      ref={ref}
-      className="desk-pullout"
-      style={{ "--k": objGlow(o.kind) } as React.CSSProperties}
+      ref={(el: HTMLDivElement | null) => {
+        ref.current = el;
+        win.setEl(el);
+      }}
+      className={
+        "desk-pullout desk-window" + (win.floating ? " is-floating" : "")
+      }
+      style={{ "--k": objGlow(o.kind), ...win.style } as React.CSSProperties}
       initial={{ x: 60, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onPointerDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => {
+        win.focus();
+        e.stopPropagation();
+      }}
     >
-      <header className="desk-pullout-head">
+      <header
+        className="desk-pullout-head desk-window-handle"
+        {...win.handleProps}
+      >
         {backId && (
           <button
             type="button"
@@ -755,7 +765,6 @@ export function Pullout({ o }: { o: WorldObject }) {
             aria-label="Organization and context"
           >
             <h3>Where it belongs</h3>
-            <p className="quiet">{relationships.explanations?.zone}</p>
             <p>
               {relationships.zone
                 ? `Zone: ${relationships.zone.directory_id}`
@@ -763,7 +772,6 @@ export function Pullout({ o }: { o: WorldObject }) {
             </p>
 
             <h3>Knowledge</h3>
-            <p className="quiet">{relationships.explanations?.knowledge}</p>
             <div className="desk-pullout-lineage">
               {knowledgeChoices.map((knowledge) => {
                 const active = (relationships.knowledge || []).some(
@@ -790,7 +798,6 @@ export function Pullout({ o }: { o: WorldObject }) {
             </div>
 
             <h3>Projects</h3>
-            <p className="quiet">{relationships.explanations?.projects}</p>
             <div className="desk-pullout-lineage">
               {projectChoices.map((project) => {
                 const active = (relationships.projects || []).some(
@@ -902,6 +909,7 @@ export function Pullout({ o }: { o: WorldObject }) {
           </div>
         )}
       </footer>
+      {win.grip}
     </motion.div>
   );
 }

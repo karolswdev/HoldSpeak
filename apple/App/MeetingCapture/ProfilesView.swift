@@ -101,7 +101,7 @@ struct ProfileEditor: View {
             Sig.bg.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(existing == nil ? "New Runs on destination" : "Edit Runs on destination").font(.system(size: 26, weight: .heavy)).foregroundStyle(Sig.text)
+                    Text(existing == nil ? "New destination" : "Edit destination").font(.system(size: 26, weight: .heavy)).foregroundStyle(Sig.text)
                     field("NAME", text: $name, placeholder: "e.g. Claude, OpenRouter, Studio box")
                     Picker("", selection: $isLocal) { Text("This device").tag(true); Text("OpenAI-compatible").tag(false) }
                         .pickerStyle(.segmented)

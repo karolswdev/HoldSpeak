@@ -240,13 +240,20 @@ export function DeskToolShelf() {
           role="region"
           aria-label="Tools and Desk search"
         >
-          <header>
+          <header className="desk-panel-head">
             <div>
-              <h2 id="desk-tool-shelf-title">Tools and Desk search</h2>
+              <h2 className="desk-panel-title" id="desk-tool-shelf-title">
+                Tools and Desk search
+              </h2>
               <p>Open a tool or find an item without leaving the Desk.</p>
             </div>
-            <button type="button" onClick={close} aria-label="Close Tools">
-              ×
+            <button
+              type="button"
+              className="desk-pullout-close"
+              onClick={close}
+              aria-label="Close Tools"
+            >
+              ✕
             </button>
           </header>
           <label className="desk-tool-search">

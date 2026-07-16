@@ -60,24 +60,24 @@ struct RunsOnPicker: View {
                 }.disabled(!destination.readiness.available)
             }
             Section(peerName.isEmpty ? "Paired device" : "Paired device · \(peerName)") {
-                    if hubModels.isEmpty {
-                        // Paired but no manifest yet (no pull has landed): the honest row.
-                        Label(paired ? "Unavailable · no models synced yet" : "Unavailable · no paired device",
-                              systemImage: "desktopcomputer.trianglebadge.exclamationmark")
-                    } else {
-                        ForEach(hubModels, id: \.self) { name in
-                            Button {
-                                selectedId = cfg.desktopProfile(model: name).id
-                                tactile()
-                            } label: {
-                                Label(name, systemImage: selectedId == "desktop:\(name)" ? "checkmark" : "desktopcomputer")
-                            }
-                            .disabled(!paired)
+                if hubModels.isEmpty {
+                    // Paired but no manifest yet (no pull has landed): the honest row.
+                    Label(paired ? "Unavailable · no models synced yet" : "Unavailable · no paired device",
+                          systemImage: "desktopcomputer.trianglebadge.exclamationmark")
+                } else {
+                    ForEach(hubModels, id: \.self) { name in
+                        Button {
+                            selectedId = cfg.desktopProfile(model: name).id
+                            tactile()
+                        } label: {
+                            Label(name, systemImage: selectedId == "desktop:\(name)" ? "checkmark" : "desktopcomputer")
                         }
-                        if !paired {
-                            Label("Unavailable · no paired device", systemImage: "exclamationmark.triangle")
-                        }
+                        .disabled(!paired)
                     }
+                    if !paired {
+                        Label("Unavailable · no paired device", systemImage: "exclamationmark.triangle")
+                    }
+                }
             }
         } label: {
             HStack(spacing: 7) {
@@ -86,10 +86,10 @@ struct RunsOnPicker: View {
                     Text(label.uppercased()).font(.system(size: 8.5, weight: .black, design: .rounded)).tracking(0.8).foregroundStyle(Sig.faint)
                     Text(isDefault ? cfg.activeProfile.name : resolved.name)
                         .font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(Sig.text).lineLimit(1)
-                    Text("\(kindLabel(selectedTarget.kind)) · \(selectedTarget.boundary) · sends instruction + context")
-                        .font(.system(size: 8.5, weight: .semibold, design: .rounded))
+                    Text("\(kindLabel(selectedTarget.kind)) · \(selectedTarget.boundary)")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(selectedTarget.readiness.available ? Sig.faint : .orange)
-                        .lineLimit(1)
+                        .lineLimit(2)
                 }
                 Spacer(minLength: 4)
                 Image(systemName: "chevron.up.chevron.down").font(.system(size: 10, weight: .bold)).foregroundStyle(Sig.faint)

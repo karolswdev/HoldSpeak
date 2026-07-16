@@ -33,6 +33,7 @@ import { apiRequest } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
+import { useDeskWindow } from "./DeskWindow";
 
 export function AskPanel() {
   const items = useDesk((s) => s.items);
@@ -60,6 +61,7 @@ export function AskPanel() {
     [],
   );
   const ref = useRef<HTMLDivElement | null>(null);
+  const win = useDeskWindow("ask");
 
   const context = useMemo(
     () => askContexts(items, selectedIds),
@@ -214,14 +216,27 @@ export function AskPanel() {
 
   return (
     <motion.div
-      ref={ref}
-      className="desk-pullout desk-ask"
+      ref={(el: HTMLDivElement | null) => {
+        ref.current = el;
+        win.setEl(el);
+      }}
+      className={
+        "desk-pullout desk-ask desk-window" +
+        (win.floating ? " is-floating" : "")
+      }
+      style={win.style}
       initial={{ x: 60, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onPointerDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => {
+        win.focus();
+        e.stopPropagation();
+      }}
     >
-      <header className="desk-pullout-head">
+      <header
+        className="desk-pullout-head desk-window-handle"
+        {...win.handleProps}
+      >
         <span className="desk-ask-glyph" aria-hidden="true">
           ✦
         </span>
@@ -391,6 +406,7 @@ export function AskPanel() {
           </>
         )}
       </footer>
+      {win.grip}
     </motion.div>
   );
 }

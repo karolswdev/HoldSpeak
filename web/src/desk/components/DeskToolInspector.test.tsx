@@ -239,7 +239,10 @@ describe("HS-93-04 Desk tool inspector", () => {
       }),
     );
     expect(await screen.findByText("Receipt · executed")).toBeInTheDocument();
-    expect(screen.getByText("control_posture")).toBeInTheDocument();
+    // The wire's control_posture authority renders as its product label —
+    // present both as the fact label and as the authority value.
+    expect(screen.getAllByText("Control posture").length).toBeGreaterThan(1);
+    expect(screen.queryByText("control_posture")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Approve and send to Slack" }),
     ).not.toBeInTheDocument();

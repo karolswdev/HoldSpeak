@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch, readableError } from "../../lib/api";
 import {
+  authorityBasisLabel,
   controlModeDescription,
   controlModeLabel,
+  effectClassLabel,
+  humanizeWireValue,
 } from "../../lib/productLanguage";
 import { workroomHref } from "../../workrooms/context";
 import { modelChatId } from "../chat";
@@ -12,6 +15,7 @@ import { useProjections } from "../projections";
 import { useDesk } from "../store";
 import { allObjects } from "../world";
 import { qualifiedRef } from "../api";
+import { useDeskWindow } from "./DeskWindow";
 
 interface Proposal {
   id: string;
@@ -80,6 +84,7 @@ export function DeskToolInspector() {
   const models = useDesk((state) => state.models);
   const selectedIds = useDesk((state) => state.selectedIds);
   const { closeToolInspector, openPullout, openChat } = useDesk.getState();
+  const win = useDeskWindow("inspector", { open: Boolean(inspector) });
   const [projectResources, setProjectResources] = useState<
     Array<{ resource_ref: string; relationship: string }>
   >([]);
@@ -232,24 +237,35 @@ export function DeskToolInspector() {
     project?.name ?? integration?.name ?? target?.name ?? "Desk tool";
   return (
     <aside
-      className="desk-tool-inspector"
+      ref={(el) => win.setEl(el)}
+      className={
+        "desk-tool-inspector desk-window" + (win.floating ? " is-floating" : "")
+      }
+      style={win.style}
       role="region"
       aria-label={`${title} inspector`}
-      onPointerDown={(event) => event.stopPropagation()}
+      onPointerDown={(event) => {
+        win.focus();
+        event.stopPropagation();
+      }}
     >
-      <header>
+      <header
+        className="desk-panel-head desk-window-handle"
+        {...win.handleProps}
+      >
         <div>
-          <small>
-            {project ? "PROJECT" : integration ? "INTEGRATION" : "RUNS ON"}
+          <small className="desk-panel-eyebrow">
+            {project ? "Project" : integration ? "Integration" : "Runs on"}
           </small>
-          <h2>{title}</h2>
+          <h2 className="desk-panel-title">{title}</h2>
         </div>
         <button
           type="button"
+          className="desk-pullout-close"
           onClick={closeToolInspector}
           aria-label={`Close ${title} inspector`}
         >
-          ×
+          ✕
         </button>
       </header>
 
@@ -415,7 +431,14 @@ export function DeskToolInspector() {
               </h3>
               <p>{proposal.preview}</p>
               <dl className="desk-tool-facts">
-                <Fact label="Effect" value={proposal.operation?.effect_class} />
+                <Fact
+                  label="Effect"
+                  value={
+                    proposal.operation?.effect_class
+                      ? effectClassLabel(proposal.operation.effect_class)
+                      : undefined
+                  }
+                />
                 <Fact
                   label="Destination"
                   value={proposal.operation?.destination}
@@ -430,11 +453,21 @@ export function DeskToolInspector() {
                 />
                 <Fact
                   label="Authority basis"
-                  value={proposal.policy_snapshot?.authority_basis}
+                  value={
+                    proposal.policy_snapshot?.authority_basis
+                      ? authorityBasisLabel(
+                          proposal.policy_snapshot.authority_basis,
+                        )
+                      : undefined
+                  }
                 />
                 <Fact
                   label="Next state"
-                  value={proposal.policy_snapshot?.next_state}
+                  value={
+                    proposal.policy_snapshot?.next_state
+                      ? humanizeWireValue(proposal.policy_snapshot.next_state)
+                      : undefined
+                  }
                 />
               </dl>
               {proposal.status === "proposed" &&
@@ -513,6 +546,7 @@ export function DeskToolInspector() {
           {error} Selected material is retained; retry the action.
         </p>
       ) : null}
+      {win.grip}
     </aside>
   );
 }

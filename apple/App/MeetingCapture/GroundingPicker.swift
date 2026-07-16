@@ -158,6 +158,7 @@ struct GroundingPicker: View {
                 }
                 .padding(.horizontal, 12).padding(.vertical, 10)
             }.buttonStyle(.plain)
+            .accessibilityLabel("\(picked != nil ? "Remove" : "Ground on") Meeting \(displayTitle(m))")
             if isOpen {
                 expansionRows(m, picked: picked, artifacts: arts)
                     .padding(.leading, 43).padding(.trailing, 12).padding(.bottom, 11)
