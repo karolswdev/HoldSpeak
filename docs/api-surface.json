@@ -1024,6 +1024,30 @@
       "consumers": []
     },
     {
+      "path": "/api/delivery/factory/discover",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_factory",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/factory/launch",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_factory",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/factory/profiles",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_factory",
+      "consumers": []
+    },
+    {
       "path": "/api/delivery/node/commands",
       "methods": [
         "GET"

@@ -45,7 +45,9 @@ NODE_TARGET_ID = "node"  # the node-scoped pseudo-target (spawn/rename)
 
 STEERING_VERBS = frozenset({"terminal.text", "terminal.keys"})
 PANE_VERBS = frozenset({"terminal.text", "terminal.keys", "factory.kill"})
-NODE_SCOPED_VERBS = frozenset({"factory.spawn", "factory.rename"})
+NODE_SCOPED_VERBS = frozenset(
+    {"factory.spawn", "factory.rename", "worktree.create"}
+)
 KNOWN_OPERATIONS = frozenset(
     {
         ("coder_steering", "terminal.text"),
@@ -54,6 +56,9 @@ KNOWN_OPERATIONS = frozenset(
         ("coder_factory", "factory.spawn"),
         ("coder_factory", "factory.rename"),
         ("coder_factory", "factory.kill"),
+        # HS-94-07: launching into a NEW worktree is a distinct typed
+        # operation with its own receipt (executor: delivery.factory_launch).
+        ("delivery_factory", "worktree.create"),
     }
 )
 
@@ -108,7 +113,9 @@ _SNAPSHOT_BY_DECISION = {
         "reason_code": "steering_policy_refused",
     },
 }
-_SUCCEEDED = frozenset({"delivered", "disarmed", "spawned", "renamed", "killed"})
+_SUCCEEDED = frozenset(
+    {"delivered", "disarmed", "spawned", "renamed", "killed", "worktree_created"}
+)
 _FAILED = frozenset({"transport_error", "error"})
 
 
@@ -157,6 +164,10 @@ def payload_head(verb: str, payload: Mapping[str, Any]) -> str:
         head = f"rename {payload.get('target_session') or ''} -> {payload.get('new_name') or ''}"
     elif verb == "factory.kill":
         head = f"kill ({payload.get('scope') or 'pane'})"
+    elif verb == "worktree.create":
+        # Path-free by construction: the receipt head names the act,
+        # never the filesystem (§13).
+        head = f"worktree {payload.get('name') or ''} -b {payload.get('branch') or ''}"
     else:
         head = verb
     return head[:PAYLOAD_HEAD_CHARS]
@@ -607,6 +618,13 @@ class NodeCommandProcessor:
                 command=payload.get("command"),
                 **kwargs,
             )
+            basis = "authenticated_owner"
+        elif verb == "worktree.create":
+            # HS-94-07's additive hook: the git-worktree-create op has
+            # its own executor; refusal guards re-prove node-side.
+            from . import factory_launch
+
+            result = factory_launch.execute_worktree_create(payload, **kwargs)
             basis = "authenticated_owner"
         else:  # factory.rename
             result = coder_factory.rename(

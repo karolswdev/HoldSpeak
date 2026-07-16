@@ -520,6 +520,7 @@ class MeetingWebServer:
             build_delivery_dossiers_router,
             build_delivery_node_router,
             build_delivery_terminal_router,
+            build_delivery_factory_router,
             build_dictation_router,
             build_desk_actuators_router,
             build_meeting_import_router,
@@ -624,6 +625,14 @@ class MeetingWebServer:
                 service=_delivery_cmd,
                 targets=_delivery_targets,
                 link=_delivery_link,
+            )
+        )
+        # The factory shares the terminal command service and target
+        # registry so a launch issues its worktree.create/spawn envelopes
+        # and pins the spawned pane's immutable target on the same spine.
+        app.include_router(
+            build_delivery_factory_router(
+                web_ctx, commands=_delivery_cmd, targets=_delivery_targets
             )
         )
         app.include_router(build_dictation_router(web_ctx))
