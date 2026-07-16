@@ -144,3 +144,37 @@ destructive operations through policy v2. Spawn's optional command, rename, and
 kill have materially different consequences; each must state its exact effect
 and destination, preserve name/argument and pane-identity invariants, and avoid
 inheriting text-steering posture authority by accident.
+
+## Closure — 2026-07-15 (owner-rescoped)
+
+The owner directed that HS-93-07 close at the two delivered authority families
+so the phase can proceed to the cross-client UI consistency remediation. The
+acceptance section of the story file was rescoped accordingly; everything in
+"Acceptance still required" above moved verbatim to BACKLOG candidate X and is
+not claimed by this closure. The phase exit criterion "every control mode
+passes the invariant matrix" still gates the phase close.
+
+Fresh verification lanes were captured at close through
+`dw evidence capture` into [evidence-story-07](./evidence-story-07.md):
+
+- Canonical Python suite (`uv run pytest -q --ignore=tests/e2e/test_metal.py`):
+  3,798 passed, 42 skipped (documented opt-in e2e, missing local models, and
+  unreachable LAN endpoints), exit 0.
+- Full Web gate (`npm --prefix web run check`): architecture guard, typecheck,
+  vitest, and production build, exit 0.
+- Full flagship Swift package (`swift test --package-path apple`): exit 0
+  (output truncated by the capture byte cap; the exit code is
+  machine-recorded).
+
+One verification-rail repair ships with this close (phase scope:
+"verification-rail repairs required to make the product and UAT suites
+bounded, repeatable, and honest"). The Swift lane hung indefinitely twice:
+`MeetingCaptureTests.testReopenSurvivesAFreshViewModel` drives
+`MeetingCapture.stop()` → `MeetingAudioJournal.finalize()`, which deletes
+files under the user's real `~/Documents/meeting-audio/`; on a Mac with cloud-
+synced Documents the `unlink` blocks in the kernel on the file provider and
+the suite never finishes. `MeetingAudioStore` now exposes
+`baseDirectoryOverride`, and `MeetingCaptureTests`/`SlidingWindowTests` point
+it at a per-run temp directory, so the suite is bounded and never touches the
+operator's synced folders. Product behavior is unchanged (the override is nil
+outside tests).

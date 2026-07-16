@@ -526,3 +526,49 @@ what every synced primitive already assumes (the sync wire contract is
 untouched). The one live-verification requirement is a real JIRA
 instance (Cloud or DC) with an API token/PAT; unit and integration
 tests use a fake opener and need no network.
+
+---
+
+### X. Control-posture completion — the HS-93-07 remainder (full family matrix + grant surfaces + owner/device proof)
+
+Owner decision (2026-07-15): HS-93-07 closed at its two delivered
+authority families — configured Integration writes (Slack, Webhook,
+GitHub) and registered Coder text/allowed-key steering — so Phase 93
+could proceed to the cross-client UI consistency remediation. This
+entry preserves the descoped remainder verbatim; none of it is claimed
+by the closed story.
+
+What remains, all on the existing `operation-policy/v2` spine (no new
+resolver, registry, or receipt store):
+
+- **Family coverage.** Classify dictation delivery, inference (local,
+  paired, external), Coder factory operations (spawn's optional
+  command, rename, kill — each with its own consequence class),
+  Mission Control/workflow runs, sync, cadence/background work, and
+  destructive Desk mutations through policy v2, honoring the
+  `control-mode-contract.md` matrix. `current_behavior` stays
+  unacceptable for any consequential primary-journey operation; YOLO
+  gives zero HoldSpeak prompts for eligible configured/registered
+  operations in every one of these families and never auto-allows an
+  unknown one.
+- **Grant surfaces.** Secure/Normal bounded grant issue/use/revoke
+  presentation: actor, operation, destination, data/resource scope,
+  TTL/count, remaining uses, revoke; every use mints a source-linked
+  Receipt.
+- **Shared treatment.** Qlippy, Mission Control, and Cadence consume
+  the same commitment/reason result with no consequential fallback
+  `Approve`/`Apply`/`Run`; Qlippy supplies no banter or personality
+  prose around consequential decisions.
+- **Proof.** Owner control/treatment production walks with exact
+  prompt counts and prediction/Receipt-findability verdicts, plus
+  physical Web/iPhone/iPad evidence with build, device, destination,
+  and operation provenance.
+
+**Sequencing note:** the natural next slice was already named in the
+HS-93-07 progress record — classify Coder factory/destructive
+operations first, because spawn/rename/kill have materially different
+consequences and must not inherit text-steering posture authority by
+accident. HS-93-08/09 do not depend on this entry's completion, but
+the Phase-93 exit criterion "every control mode passes the invariant
+matrix" cannot be satisfied without it; the phase close must link
+back here honestly.

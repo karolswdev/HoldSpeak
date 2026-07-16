@@ -1,20 +1,20 @@
 # Phase 93 — Effortless HoldSpeak
 
-**Status:** IN PROGRESS (0/9). HS-93-01 through HS-93-05 have automated
-implementation slices verified through Web/Hub/Swift lanes; HS-93-06 now has
-Web/Hub conflict and partial-intelligence recovery slices; HS-93-07 now has
-versioned configured-Integration and registered Coder-steering
-control-posture slices. API-backed production Web captures exist where
-recorded, with supplementary simulator evidence, but all seven stories remain
+**Status:** IN PROGRESS (1/9). HS-93-07 is done at an owner-rescoped close:
+configured Integration writes and registered Coder text/allowed-key steering
+run on the shared operation-policy v2 spine with zero-prompt YOLO, immutable
+proposal snapshots, named refusals, and source-linked Receipts on both clients;
+the remaining family matrix, grant surfaces, Qlippy/Mission Control/Cadence
+treatment, and owner/device proof are preserved as BACKLOG candidate X.
+HS-93-01 through HS-93-06 keep their automated implementation slices and remain
 open for their remaining implementation, owner, and physical-device gates.
 Phase 91 remains the roadmap's current phase; Phase 92 substrate is not accepted
 as a simplified product.
 
-**Last updated:** 2026-07-11 (HS-93-07 now carries policy v2 through configured
-Integrations and registered Coder steering. YOLO steers an exact verified pane
-without a HoldSpeak arm prompt; Secure/Normal retain bounded grants; every
-attempt audits the immutable operation/policy and returns a source-linked
-Receipt. Broader family, owner, and device gates remain open).
+**Last updated:** 2026-07-15 (HS-93-07 closed by direct owner decision at the
+two delivered authority families; the descoped remainder moved verbatim to
+BACKLOG candidate X. Fresh full-suite Python, Web, and Swift verification lanes
+were captured at close in the story's progress record).
 
 ## Goal
 
@@ -128,7 +128,7 @@ prove the daily experience through sustained owner use on Web, iPhone, and iPad.
 | HS-93-04 | Power lives on the Desk | in progress | [story-04](./story-04-power-appears-in-context.md) | [progress record](./progress-story-04.md) |
 | HS-93-05 | Your words never disappear | in progress | [story-05](./story-05-your-words-never-disappear.md) | [progress record](./progress-story-05.md) |
 | HS-93-06 | A meeting survives real life | in progress | [story-06](./story-06-a-meeting-survives-real-life.md) | [progress record](./progress-story-06.md) |
-| HS-93-07 | Secure, Normal, or YOLO | in progress | [story-07](./story-07-decisions-explain-themselves.md) | [progress record](./progress-story-07.md) |
+| HS-93-07 | Secure, Normal, or YOLO | done | [story-07](./story-07-decisions-explain-themselves.md) | [evidence-story-07](./evidence-story-07.md) · [progress record](./progress-story-07.md) |
 | HS-93-08 | The Desk works for every body | backlog | [story-08](./story-08-the-desk-works-for-every-body.md) | — |
 | HS-93-09 | The owner can live here | backlog | [story-09](./story-09-the-owner-can-live-here.md) | — |
 
@@ -219,10 +219,15 @@ classification remains open.
 
 Web Settings, the Desk Integration inspector, Meeting History, Coder pull-out,
 Desk Receipts, and flagship Swift Settings/Queue/Coder/Receipt details consume
-the shared policy fields rather than a private client matrix. The story remains
-open for the full dictation/inference/Coder-factory/Mission-Control/sync/cadence/
-destructive matrix, general grant-use source Receipts, Qlippy treatment,
-production walks, owner prediction, and physical iPhone/iPad evidence.
+the shared policy fields rather than a private client matrix.
+
+On 2026-07-15 the owner closed HS-93-07 at that delivered scope so the phase
+could proceed to the cross-client UI consistency remediation. The full
+dictation/inference/Coder-factory/Mission-Control/sync/cadence/destructive
+matrix, general grant-use source Receipts, Qlippy/Mission Control/Cadence
+treatment, production walks, owner prediction, and physical iPhone/iPad
+evidence moved verbatim to BACKLOG candidate X; the phase exit criterion that
+depends on them still gates the phase close.
 
 Phase 91 remains the roadmap's current phase and its owner/Swift close gate is
 non-waivable. Phase 92 still has broad automated implementation but no accepted
@@ -299,6 +304,19 @@ use; no final summary exists.
   Factory rename/kill authority remains separate — HS-93-07 Coder contract.
 - 2026-07-11 — Phase 91 remains current and the roadmap pointer does not move —
   Delivery Workbench live state.
+- 2026-07-15 — HS-93-07 closes at the two delivered authority families
+  (configured Integration writes; registered Coder text/allowed-key steering);
+  the remaining operation-family matrix, grant surfaces, Qlippy/Mission
+  Control/Cadence treatment, and owner/device proof move to BACKLOG candidate X
+  — direct owner decision.
+- 2026-07-15 — Phases 92/93 introduced visible UI layout and component-rule
+  inconsistency across Web and iOS; a comprehensive inventory and remediation
+  pass is the phase's next work, under the existing UI stories — direct owner
+  direction.
+- 2026-07-15 — The remediation is also a UX-streamlining pass: floating desk
+  surfaces must not be glued in place — they participate in the Desk OS window
+  grammar (movable, resizable, position retained), and competing or modal-heavy
+  flows get streamlined — direct owner direction.
 
 ## Decisions deferred
 

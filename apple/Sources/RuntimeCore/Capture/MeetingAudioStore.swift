@@ -19,11 +19,18 @@ public struct MeetingAudioStore: Sendable {
         self.sampleRate = sampleRate
     }
 
+    /// Overrides the on-disk root. Tests point this at a temp directory so a
+    /// suite run never touches the user's real (possibly cloud-synced)
+    /// Documents folder — a blocked FileProvider unlink there hangs forever.
+    nonisolated(unsafe) public static var baseDirectoryOverride: URL?
+
     /// The directory holding per-meeting WAVs (created on demand). Documents so it survives relaunch.
     public static func directory() -> URL? {
-        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-        else { return nil }
-        let dir = docs.appendingPathComponent("meeting-audio", isDirectory: true)
+        let root =
+            baseDirectoryOverride
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        guard let root else { return nil }
+        let dir = root.appendingPathComponent("meeting-audio", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }

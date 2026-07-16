@@ -4,15 +4,19 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-11 — **Phase 91, One React Surface, IN PROGRESS
+**Last updated:** 2026-07-15 — **Phase 91, One React Surface, IN PROGRESS
 (9/10); Phase 92, The Coalescence, PLANNED with all ten stories carrying
 pre-close implementation but no accepted owner/device outcome; Phase 93,
-Effortless HoldSpeak, IN PROGRESS with HS-93-01 through HS-93-07 carrying
-automated implementation evidence but not yet accepted. HS-93-07 now snapshots
-future-operation policy and lets YOLO execute fixed configured Integrations and
-steer a registered, re-verified Coder pane with the posture as authority and no
-HoldSpeak approval/grant/arm prompt. Invariants remain intact, every attempt
-leaves a source-linked Receipt, and unknown or unresolved effects refuse.**
+Effortless HoldSpeak, IN PROGRESS (1/9). HS-93-07 (Secure, Normal, or YOLO)
+closed by direct owner decision at its two delivered authority families:
+policy v2 snapshots future-operation posture, YOLO executes fixed configured
+Integrations and steers a registered, re-verified Coder pane with the posture
+as authority and no HoldSpeak approval/grant/arm prompt, invariants remain
+intact, every attempt leaves a source-linked Receipt, and unknown or unresolved
+effects refuse. The descoped remainder (full family matrix, grant surfaces,
+Qlippy/Mission Control/Cadence treatment, owner/device proof) is BACKLOG
+candidate X. Next: the owner-directed Phase 92/93 UI consistency inventory and
+remediation across Web and iOS.**
 The Web is
 one Vite/React 19 tree and Phase 92 added substantial language, trust,
 first-value, capture, relationship, capability, destination, authority, and
