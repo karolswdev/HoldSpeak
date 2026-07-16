@@ -519,6 +519,7 @@ class MeetingWebServer:
             build_delivery_attempts_router,
             build_delivery_dossiers_router,
             build_delivery_node_router,
+            build_delivery_terminal_router,
             build_dictation_router,
             build_desk_actuators_router,
             build_meeting_import_router,
@@ -588,10 +589,42 @@ class MeetingWebServer:
         app.include_router(build_delivery_router(web_ctx))
         app.include_router(build_delivery_attempts_router(web_ctx))
         app.include_router(build_delivery_dossiers_router(web_ctx))
-        # The node link shares the hub's web token only to REFUSE it: a
-        # browser credential can never authenticate as a node.
+        # One shared NodeLinkState feeds both the node link and the terminal
+        # command claim leg: commands issued at the hub reach a remote node
+        # through the same authenticated long-poll. The terminal command
+        # service is the node router's command_source.
+        from .delivery.node_link import NodeLinkState, NodeTokenStore
+        from .delivery.commands import HubCommandService, NodeCommandProcessor
+        from .delivery.terminal import TerminalTargetRegistry
+        from .db import get_database as _get_delivery_db
+        from .db.delivery_receipts import NodeReceiptLedger
+
+        _delivery_link = NodeLinkState(
+            NodeTokenStore(None), web_token=self.auth_token
+        )
+        _delivery_targets = TerminalTargetRegistry()
+        _delivery_cmd = HubCommandService(
+            repo=_get_delivery_db().delivery_receipts,
+            processor=NodeCommandProcessor(
+                node_id="local",
+                targets=_delivery_targets,
+                ledger=NodeReceiptLedger(None),
+            ),
+            local_node_id="local",
+        )
+        _delivery_link.command_source = _delivery_cmd.claim_for_node
         app.include_router(
-            build_delivery_node_router(web_ctx, web_token=self.auth_token)
+            build_delivery_node_router(
+                web_ctx, link=_delivery_link, web_token=self.auth_token
+            )
+        )
+        app.include_router(
+            build_delivery_terminal_router(
+                web_ctx,
+                service=_delivery_cmd,
+                targets=_delivery_targets,
+                link=_delivery_link,
+            )
         )
         app.include_router(build_dictation_router(web_ctx))
         app.include_router(build_activity_router(web_ctx))

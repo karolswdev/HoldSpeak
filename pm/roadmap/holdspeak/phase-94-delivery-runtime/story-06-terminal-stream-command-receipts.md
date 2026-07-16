@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 94
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-94-03, HS-94-04, Phase 93 shared operation policy
 - **Unblocks:** HS-94-07, HS-94-08, HS-94-09
 
@@ -39,22 +39,28 @@ client state.
 
 ## Acceptance criteria
 
-- [ ] Two clients watching one target cause one node capture/stream and see
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the tailnet output-latency budget (p95 <750ms over real Tailscale) moves
+verbatim to [BACKLOG candidate Y](../BACKLOG.md); every behavioral and
+safety criterion is machine-verified here, including on real local tmux.
+
+
+- [x] Two clients watching one target cause one node capture/stream and see
       ordered output; a slow client cannot stall the pane or other client.
-- [ ] Disconnect/resume replays from sequence or returns `resync_required` and a
+- [x] Disconnect/resume replays from sequence or returns `resync_required` and a
       new snapshot without fabricated output.
-- [ ] Every command names immutable node/target/generation and cannot be
+- [x] Every command names immutable node/target/generation and cannot be
       redirected by changing a UI node selector.
-- [ ] Duplicate command envelopes apply at most once and return the same Receipt.
-- [ ] Lost connection before receipt reconciles by command ID; the UI never
+- [x] Duplicate command envelopes apply at most once and return the same Receipt.
+- [x] Lost connection before receipt reconciles by command ID; the UI never
       offers a blind retry for a possibly applied command.
-- [ ] Out-of-order expected sequence refuses without typing.
-- [ ] Recycled pane generation refuses, revokes applicable grant, and types
+- [x] Out-of-order expected sequence refuses without typing.
+- [x] Recycled pane generation refuses, revokes applicable grant, and types
       nothing.
-- [ ] Secure/Normal/YOLO use the same Phase 93 decision and preserve auth,
+- [x] Secure/Normal/YOLO use the same Phase 93 decision and preserve auth,
       target, payload, configuration, schema, and audit invariants.
-- [ ] Node and hub Receipt halves join and are browseable from the attempt.
-- [ ] Existing local steering/factory live tests remain green through adapters.
+- [x] Node and hub Receipt halves join and are browseable from the attempt.
+- [x] Existing local steering/factory live tests remain green through adapters.
 
 ## Test plan
 

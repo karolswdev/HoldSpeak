@@ -342,6 +342,7 @@ class NodeLinkState:
         stale_after_seconds: float = STALE_AFTER_SECONDS,
         offline_after_seconds: float = OFFLINE_AFTER_SECONDS,
         heartbeat_seconds: float = HEARTBEAT_SECONDS,
+        command_source: Optional[Callable[[str], list[dict[str, Any]]]] = None,
     ) -> None:
         self.token_store = token_store or NodeTokenStore()
         self._web_token = web_token
@@ -350,6 +351,11 @@ class NodeLinkState:
         self.stale_after = float(stale_after_seconds)
         self.offline_after = float(offline_after_seconds)
         self.heartbeat_seconds = float(heartbeat_seconds)
+        # HS-94-06: the command claim leg's supplier. The hub's command
+        # service hands envelopes/probes per node_id; absent, the claim
+        # stays the HS-94-03 empty envelope. Auth/capability gating is
+        # unchanged — the source is consulted only after the gate.
+        self.command_source = command_source
         self._nodes: dict[str, _LinkedNode] = {}
 
     # auth --------------------------------------------------------------
@@ -469,11 +475,14 @@ class NodeLinkState:
         enabled, compat = self._command_gate(node)
         if not enabled:
             raise NodeLinkError("commands_disabled", compat or "commands_disabled")
+        commands: list[dict[str, Any]] = []
+        if self.command_source is not None:
+            commands = list(self.command_source(node.node_id))
         return {
             "commands_schema": 1,
             "node_id": node.node_id,
             "cursor": node.last_seq,
-            "commands": [],
+            "commands": commands,
         }
 
     # liveness ------------------------------------------------------------

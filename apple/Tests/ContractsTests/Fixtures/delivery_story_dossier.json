@@ -1,0 +1,96 @@
+{
+  "dossier_schema": 1,
+  "bundle_id": "bundle-3c4d5e6f708192a3",
+  "bundle_changed": false,
+  "live_bundle_id": null,
+  "freshness": "live",
+  "detail": "",
+  "source_id": "src_1b2c3d4e5f607182",
+  "project": "holdspeak",
+  "story_id": "HS-94-05",
+  "phase": 94,
+  "status": "done",
+  "source_revision": {
+    "head_sha": "174aa374b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7",
+    "index_tree": "9a8b7c6d5e4f30211203f4e5d6c7b8a99a8b7c6d"
+  },
+  "summary": {
+    "passing_captures": 1,
+    "failing_captures": 1,
+    "assets": 2
+  },
+  "members": [
+    {
+      "asset_id": "a-1a2b3c4d5e6f7081",
+      "role": "story_markdown",
+      "label": "Story",
+      "media_type": "text/markdown",
+      "bytes": 3412,
+      "sha256": "sha256:aa11bb22cc33dd44ee55ff667788990011223344556677889900aabbccddeeff"
+    },
+    {
+      "asset_id": "a-2b3c4d5e6f708192",
+      "role": "evidence_markdown",
+      "label": "Evidence",
+      "media_type": "text/markdown",
+      "bytes": 8907,
+      "sha256": "sha256:bb22cc33dd44ee55ff667788990011223344556677889900aabbccddeeff0011"
+    },
+    {
+      "asset_id": "a-3c4d5e6f708192a3",
+      "role": "phase_status",
+      "label": "Phase status",
+      "media_type": "text/markdown",
+      "bytes": 2101,
+      "sha256": "sha256:cc33dd44ee55ff667788990011223344556677889900aabbccddeeff00112233"
+    },
+    {
+      "asset_id": "a-4d5e6f708192a3b4",
+      "role": "asset",
+      "label": "proof.png",
+      "media_type": "image/png",
+      "bytes": 48213,
+      "sha256": "sha256:dd44ee55ff667788990011223344556677889900aabbccddeeff001122334455"
+    },
+    {
+      "asset_id": "a-5e6f708192a3b4c5",
+      "role": "asset",
+      "label": "run.log",
+      "media_type": "text/plain",
+      "bytes": 15320,
+      "sha256": "sha256:ee55ff667788990011223344556677889900aabbccddeeff0011223344556677"
+    }
+  ],
+  "captured_runs": [
+    {
+      "timestamp": "2026-07-14T16:41:02Z",
+      "command": "uv run pytest -q tests/unit/test_delivery_dossiers.py",
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "timestamp": "2026-07-14T15:02:44Z",
+      "command": "uv run pytest -q tests/unit/test_delivery_dossiers.py",
+      "exit_code": 1,
+      "passed": false
+    }
+  ],
+  "trace": {
+    "story_asset_id": "a-1a2b3c4d5e6f7081",
+    "evidence_asset_id": "a-2b3c4d5e6f708192",
+    "phase_status_asset_id": "a-3c4d5e6f708192a3",
+    "final_summary_asset_id": null
+  },
+  "story": {
+    "asset_id": "a-1a2b3c4d5e6f7081",
+    "state": "ready",
+    "markdown": "# HS-94-05 — Evidence dossiers\n\n- **Status:** done\n\n## Problem\n\nEvidence lives on the rails; the desk needs it."
+  },
+  "evidence": [
+    {
+      "asset_id": "a-2b3c4d5e6f708192",
+      "state": "ready",
+      "markdown": "# Evidence — HS-94-05\n\n## Captured run 2026-07-14T16:41:02Z\n\n- Command: `uv run pytest -q tests/unit/test_delivery_dossiers.py`\n- Exit code: 0\n\n```text\n48 passed in 3.02s\n```"
+    }
+  ]
+}

@@ -990,6 +990,7 @@
       ],
       "module": "web.routes.delivery_attempts",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -1000,6 +1001,7 @@
       ],
       "module": "web.routes.delivery_attempts",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -1060,6 +1062,7 @@
       ],
       "module": "web.routes.delivery_node",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -1078,6 +1081,7 @@
       ],
       "module": "web.routes.delivery",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -1088,6 +1092,7 @@
       ],
       "module": "web.routes.delivery",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -1098,6 +1103,7 @@
       ],
       "module": "web.routes.delivery",
       "consumers": [
+        "ios",
         "web"
       ]
     },
@@ -1107,6 +1113,48 @@
         "GET"
       ],
       "module": "web.routes.delivery_dossiers",
+      "consumers": [
+        "ios"
+      ]
+    },
+    {
+      "path": "/api/delivery/terminal/commands",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/terminal/commands/{command_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/terminal/node/results",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/terminal/subscriptions",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/terminal/targets",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_terminal",
       "consumers": []
     },
     {

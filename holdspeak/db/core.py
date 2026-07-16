@@ -39,6 +39,7 @@ from .primitives import (
 from .relationships import KnowledgeMembershipRepository, ProjectRelationshipRepository
 from .invocations import CapabilityInvocationRepository
 from .delivery_attempts import WorkAttemptRepository
+from .delivery_receipts import DeliveryCommandReceiptRepository
 
 log = get_logger("db")
 
@@ -47,7 +48,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 23  # v23: durable Work attempts + transition events (HS-94-04)
+SCHEMA_VERSION = 24  # v24: hub half of command Receipts (HS-94-06)
 
 
 class SchemaVersionError(RuntimeError):
@@ -1246,6 +1247,35 @@ CREATE TABLE IF NOT EXISTS work_attempt_events (
 );
 CREATE INDEX IF NOT EXISTS idx_work_attempt_events_attempt
 ON work_attempt_events(attempt_id, id);
+
+-- Command receipts, hub half (HS-94-06, PLATFORM-CONTRACT §8): one row per
+-- dispatched command envelope. Privacy §8.1: the payload's sha256 + bounded
+-- head only — full steer text is never retained merely because it crossed
+-- the node link. receipt_json joins the node's stored receipt by command_id.
+CREATE TABLE IF NOT EXISTS delivery_command_receipts (
+    command_id TEXT PRIMARY KEY,
+    node_id TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    target_generation TEXT NOT NULL,
+    operation_family TEXT NOT NULL,
+    operation_verb TEXT NOT NULL,
+    payload_sha256 TEXT NOT NULL,
+    payload_head TEXT NOT NULL DEFAULT '',
+    expected_sequence INTEGER,
+    issued_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    dispatch_epoch TEXT,
+    hub_state TEXT NOT NULL DEFAULT 'sent'
+        CHECK (hub_state IN ('sent','claimed','unknown','complete',
+                             'not_executed','indeterminate_after_node_reset')),
+    receipt_id TEXT,
+    receipt_json TEXT NOT NULL DEFAULT '{}',
+    authority_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_delivery_command_receipts_node
+ON delivery_command_receipts(node_id, hub_state);
 """
 
 
@@ -1285,6 +1315,7 @@ class Database:
         self.steering = SteeringAuditRepository(self._connection, self)
         self.projections = ProjectionRepository(self._connection, self)
         self.work_attempts = WorkAttemptRepository(self._connection, self)  # HS-94-04
+        self.delivery_receipts = DeliveryCommandReceiptRepository(self._connection, self)  # HS-94-06
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

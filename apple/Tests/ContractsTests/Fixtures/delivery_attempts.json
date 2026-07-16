@@ -1,0 +1,86 @@
+{
+  "attempts_schema": 1,
+  "attempts": [
+    {
+      "attempt_id": "att_5f6e7d8c9b0a1122",
+      "story_ref": {
+        "source_id": "src_1b2c3d4e5f607182",
+        "project": "holdspeak",
+        "story_id": "HS-94-09"
+      },
+      "node_id": "node_9f8e7d6c5b4a3921",
+      "worktree_id": "wt_78695a4b3c2d1e0f",
+      "session_id": "claude:hs-94-09",
+      "target_id": "%12",
+      "association": {
+        "kind": "rider_claim",
+        "claimed_by": "rider:claude",
+        "claimed_at": "2026-07-15T08:02:11Z"
+      },
+      "exact": true,
+      "state": "working",
+      "started_at": "2026-07-15T08:02:11Z",
+      "updated_at": "2026-07-15T09:29:50Z",
+      "ended_at": null,
+      "history": [
+        {"from": null, "to": "starting", "reason": "created:rider_claim", "occurred_at": "2026-07-15T08:02:11Z"},
+        {"from": "starting", "to": "working", "reason": "rider_heartbeat", "occurred_at": "2026-07-15T08:02:16Z"},
+        {"from": "working", "to": "waiting", "reason": "rider_heartbeat", "occurred_at": "2026-07-15T08:40:03Z"},
+        {"from": "waiting", "to": "working", "reason": "rider_heartbeat", "occurred_at": "2026-07-15T08:41:19Z"}
+      ]
+    },
+    {
+      "attempt_id": "att_a1b2c3d4e5f60718",
+      "story_ref": {
+        "source_id": "src_1b2c3d4e5f607182",
+        "project": "holdspeak",
+        "story_id": "HS-94-02"
+      },
+      "node_id": null,
+      "worktree_id": "wt_0a1b2c3d4e5f6071",
+      "session_id": "claude:main",
+      "target_id": null,
+      "association": {
+        "kind": "heuristic",
+        "claimed_by": "dw-sessions",
+        "claimed_at": null
+      },
+      "exact": false,
+      "state": "idle",
+      "started_at": "2026-07-14T18:12:00Z",
+      "updated_at": "2026-07-15T06:00:41Z",
+      "ended_at": null,
+      "history": [
+        {"from": null, "to": "working", "reason": "created:heuristic", "occurred_at": "2026-07-14T18:12:00Z"},
+        {"from": "working", "to": "idle", "reason": "heuristic_refresh", "occurred_at": "2026-07-15T06:00:41Z"}
+      ]
+    },
+    {
+      "attempt_id": "att_deadbeef00112233",
+      "story_ref": {
+        "source_id": "src_1b2c3d4e5f607182",
+        "project": "holdspeak",
+        "story_id": "HS-94-01"
+      },
+      "node_id": "node_00aa11bb22cc33dd",
+      "worktree_id": "wt_0a1b2c3d4e5f6071",
+      "session_id": "claude:old",
+      "target_id": "%3",
+      "association": {
+        "kind": "manual",
+        "claimed_by": "desk-owner",
+        "claimed_at": "2026-07-13T10:00:00Z"
+      },
+      "exact": true,
+      "state": "abandoned",
+      "started_at": "2026-07-13T10:00:00Z",
+      "updated_at": "2026-07-14T10:00:05Z",
+      "ended_at": "2026-07-14T10:00:05Z",
+      "history": [
+        {"from": null, "to": "starting", "reason": "created:manual", "occurred_at": "2026-07-13T10:00:00Z"},
+        {"from": "starting", "to": "unknown", "reason": "node_offline", "occurred_at": "2026-07-13T22:15:30Z"},
+        {"from": "unknown", "to": "abandoned", "reason": "stale_timeout", "occurred_at": "2026-07-14T10:00:05Z"}
+      ]
+    }
+  ]
+}

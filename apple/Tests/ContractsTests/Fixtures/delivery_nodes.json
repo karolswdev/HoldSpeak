@@ -1,0 +1,44 @@
+{
+  "nodes_schema": 1,
+  "nodes": [
+    {
+      "name": "intel-43",
+      "node_id": "node_9f8e7d6c5b4a3921",
+      "kind": "node-link",
+      "status": "live",
+      "last_seen": "2026-07-15T09:29:57Z",
+      "instance_id": "0f1e2d3c4b5a69788796a5b4c3d2e1f0",
+      "capabilities": ["delivery.source", "coder.steering"],
+      "commands_enabled": true,
+      "compat": null,
+      "cursor": 42,
+      "clock_skew_seconds": -0.412
+    },
+    {
+      "name": "mini-stale",
+      "node_id": "node_00aa11bb22cc33dd",
+      "kind": "node-link",
+      "status": "stale",
+      "last_seen": "2026-07-15T09:29:40Z",
+      "instance_id": "ffeeddccbbaa99887766554433221100",
+      "capabilities": ["delivery.source"],
+      "commands_enabled": false,
+      "compat": "capability_missing",
+      "cursor": 7,
+      "clock_skew_seconds": null
+    },
+    {
+      "name": "beta",
+      "node_id": null,
+      "kind": "legacy-direct",
+      "status": "unknown",
+      "last_seen": "",
+      "instance_id": "",
+      "capabilities": ["coder.steering"],
+      "commands_enabled": true,
+      "compat": "legacy-direct",
+      "cursor": 0,
+      "clock_skew_seconds": null
+    }
+  ]
+}

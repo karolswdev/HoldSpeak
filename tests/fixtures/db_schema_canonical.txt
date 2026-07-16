@@ -53,6 +53,8 @@ ON capability_invocations(state, created_at DESC)
 index idx_chains_modified: CREATE INDEX idx_chains_modified ON chains(last_modified DESC)
 index idx_connector_runs_connector_started: CREATE INDEX idx_connector_runs_connector_started
 ON connector_runs(connector_id, started_at DESC)
+index idx_delivery_command_receipts_node: CREATE INDEX idx_delivery_command_receipts_node
+ON delivery_command_receipts(node_id, hub_state)
 index idx_desk_projection_state_attention: CREATE INDEX idx_desk_projection_state_attention
 ON desk_projection_state(attention_state, dismissed_at, updated_at DESC)
 index idx_dictation_corrections_recent: CREATE INDEX idx_dictation_corrections_recent
@@ -444,6 +446,28 @@ table connector_runs: CREATE TABLE connector_runs (
     annotation_count INTEGER NOT NULL DEFAULT 0,
     candidate_count INTEGER NOT NULL DEFAULT 0,
     command_count INTEGER NOT NULL DEFAULT 0
+)
+table delivery_command_receipts: CREATE TABLE delivery_command_receipts (
+    command_id TEXT PRIMARY KEY,
+    node_id TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    target_generation TEXT NOT NULL,
+    operation_family TEXT NOT NULL,
+    operation_verb TEXT NOT NULL,
+    payload_sha256 TEXT NOT NULL,
+    payload_head TEXT NOT NULL DEFAULT '',
+    expected_sequence INTEGER,
+    issued_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    dispatch_epoch TEXT,
+    hub_state TEXT NOT NULL DEFAULT 'sent'
+        CHECK (hub_state IN ('sent','claimed','unknown','complete',
+                             'not_executed','indeterminate_after_node_reset')),
+    receipt_id TEXT,
+    receipt_json TEXT NOT NULL DEFAULT '{}',
+    authority_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
 table desk_projection_state: CREATE TABLE desk_projection_state (
     projection_id TEXT PRIMARY KEY,

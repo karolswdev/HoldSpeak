@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 324 (plus static mounts). iOS-consumed: 81. Web-consumed: 234.
+Routes: 329 (plus static mounts). iOS-consumed: 88. Web-consumed: 234.
 
 ## device_audio_ws
 
@@ -140,16 +140,16 @@ Routes: 324 (plus static mounts). iOS-consumed: 81. Web-consumed: 234.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/delivery/events` | web |
-| GET | `/api/delivery/snapshot` | web |
-| GET | `/api/delivery/sources` | web |
-| POST | `/api/delivery/sources` | web |
+| GET | `/api/delivery/snapshot` | ios, web |
+| GET | `/api/delivery/sources` | ios, web |
+| POST | `/api/delivery/sources` | ios, web |
 
 ## web.routes.delivery_attempts
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/delivery/attempts` | web |
-| POST | `/api/delivery/attempts` | web |
+| GET | `/api/delivery/attempts` | ios, web |
+| POST | `/api/delivery/attempts` | ios, web |
 
 ## web.routes.delivery_dossiers
 
@@ -157,7 +157,7 @@ Routes: 324 (plus static mounts). iOS-consumed: 81. Web-consumed: 234.
 |---|---|---|
 | GET | `/api/delivery/evidence/{bundle_id}/{asset_id}` | server only |
 | GET | `/api/delivery/phases/{project}/{phase}/dossier` | server only |
-| GET | `/api/delivery/stories/{project}/{story}/dossier` | server only |
+| GET | `/api/delivery/stories/{project}/{story}/dossier` | ios |
 
 ## web.routes.delivery_node
 
@@ -167,7 +167,17 @@ Routes: 324 (plus static mounts). iOS-consumed: 81. Web-consumed: 234.
 | POST | `/api/delivery/node/disconnect` | server only |
 | POST | `/api/delivery/node/heartbeat` | server only |
 | POST | `/api/delivery/node/hello` | server only |
-| GET | `/api/delivery/nodes` | web |
+| GET | `/api/delivery/nodes` | ios, web |
+
+## web.routes.delivery_terminal
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/delivery/terminal/commands` | server only |
+| GET | `/api/delivery/terminal/commands/{command_id}` | server only |
+| POST | `/api/delivery/terminal/node/results` | server only |
+| POST | `/api/delivery/terminal/subscriptions` | server only |
+| POST | `/api/delivery/terminal/targets` | server only |
 
 ## web.routes.desk_actuators
 
