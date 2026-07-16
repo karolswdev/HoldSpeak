@@ -1,0 +1,23 @@
+id: phase93-web-desk-power
+execution_target: web_react
+title: "Phase 93 · Web · Power is discoverable on the Desk without chrome"
+features: [phase93.residue.desk-power]
+recipes: [seeded-desk]
+form_factors: [desktop]
+steps:
+  - do: Starting from the seeded Desk, time how long it takes to find each of — a Project, a configured Integration, a Runs-on target, a live process, and a Receipt — using only Desk affordances (Tools, search, selection, inspector).
+    expect: Every one is reachable without permanent top-level navigation; nothing requires the Studio to merely be found.
+    where: /
+    verifies: [phase93.residue.desk-power]
+    measurements:
+      - {key: discovery_seconds_total, label: Total discovery time across the five, unit: seconds}
+      - {key: undiscoverable, label: Capabilities not found without documentation, unit: capabilities}
+  - do: Count the controls visible on the initial Desk that you did not use for any of the above.
+    expect: The count is honest and small; no control exists whose purpose you cannot state.
+    verifies: [phase93.residue.desk-power]
+    measurements:
+      - {key: irrelevant_controls, label: Visible controls with no stated purpose, unit: controls}
+  - do: Open the desk windows you used, drag, resize, and reload the page.
+    expect: Windows move, resize, keep position across reload, and focus-to-front works — the desk-window contract, not glued panels.
+    verifies: [phase93.residue.desk-power]
+teardown: []

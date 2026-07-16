@@ -1,0 +1,21 @@
+id: phase93-native-room-return
+execution_target: ios_flagship_swift
+title: "Phase 93 · Native · Contextual entry and returns through cancel and failure"
+features: [phase93.residue.room-return]
+manual_setup:
+  - Pair the flagship app with a running hub; keep at least one Desk subject (a note or meeting) available to enter rooms from.
+recipes: []
+form_factors: [iphone, ipad]
+steps:
+  - do: Enter Dictation and the Meeting room contextually from a Desk subject, complete one and cancel the other, and return.
+    expect: Each room names its subject; complete returns to the subject; cancel retains the draft and returns without loss.
+    verifies: [phase93.residue.room-return]
+  - do: Force a failure inside a room (airplane mode mid-action), leave, and look for the retained work.
+    expect: The failure names what is retained and where; the Desk shows it after return; no journey ends orphaned.
+    verifies: [phase93.residue.room-return]
+    measurements:
+      - {key: orphaned_journeys, label: Journeys ending with no findable result, unit: journeys}
+  - do: Kill the app mid-room, relaunch, and look for the room's work.
+    expect: Relaunch lands somewhere honest; the room's retained draft or result is findable, and Studio does not read as a second home.
+    verifies: [phase93.residue.room-return]
+teardown: []

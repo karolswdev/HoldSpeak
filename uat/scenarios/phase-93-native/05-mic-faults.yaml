@@ -1,0 +1,23 @@
+id: phase93-native-mic-faults
+execution_target: ios_flagship_swift
+title: "Phase 93 · Native · Real-microphone fault matrix with capture interruption"
+features: [phase93.residue.mic-faults]
+manual_setup:
+  - Use the physical device microphone; record provenance per walk — device, OS, build, audio route (built-in, wired, Bluetooth), model, destination.
+  - Have a second phone ready to place a real incoming call.
+recipes: []
+form_factors: [iphone, ipad]
+steps:
+  - do: Dictate one clean utterance end to end on each device to confirm the happy path.
+    expect: Text lands once at the intended destination; paired delivery produces one Receipt.
+    verifies: [phase93.residue.mic-faults]
+  - do: Induce each fault during real dictation — deny then revoke mic permission, switch to Bluetooth mid-capture, take an incoming call mid-capture, enable airplane mode before delivery, and point at a dead model endpoint.
+    expect: Every fault retains audio or editable text, names itself factually, and offers only applicable recovery; delivery after recovery happens exactly once.
+    verifies: [phase93.residue.mic-faults]
+    measurements:
+      - {key: lost_captures, label: Captures lost across the fault matrix, unit: captures}
+      - {key: duplicate_deliveries, label: Paired deliveries that landed twice, unit: deliveries}
+  - do: Background the app mid-capture, lock the device, then return.
+    expect: The capture checkpoint survives; the app states what was kept; no silent empty result.
+    verifies: [phase93.residue.mic-faults]
+teardown: []

@@ -1,0 +1,21 @@
+id: phase93-web-ten-journeys
+execution_target: web_react
+title: "Phase 93 · Web · The ten-journey direct observation on production Web"
+features: [phase93.residue.dogfood]
+recipes: [seeded-desk]
+manual_setup:
+  - Run this as a real work session, not a demo — bring one genuine task per journey; record build and commit provenance.
+form_factors: [desktop]
+steps:
+  - do: Complete all ten primary journeys as real work — arrival, dictation, meeting, capability run, destination choice, pairing/sync, integration, decision authority, coder steering, and failure recovery — counting HoldSpeak approval prompts in your configured posture.
+    expect: No lost work, no false completion, no silent retargeting, and no unexplained external effect across the ten; in YOLO, zero HoldSpeak approval prompts for eligible configured actions.
+    where: /
+    verifies: [phase93.residue.dogfood]
+    measurements:
+      - {key: journeys_completed, label: Journeys completed without a blocking finding, unit: journeys}
+      - {key: approval_prompts_yolo, label: Approval prompts on eligible YOLO actions, unit: prompts}
+      - {key: blocking_findings, label: Findings that blocked a journey, unit: findings}
+  - do: At session end, try to reconstruct from the product alone what happened today — what ran, what landed where, what still needs you.
+    expect: Receipts, attention, and Desk state answer it without memory or external notes.
+    verifies: [phase93.residue.dogfood]
+teardown: []

@@ -1,0 +1,25 @@
+title: "10 · Phase 93 physical proof — production Web"
+purpose: >
+  Burn down the Phase 93 owner residue (BACKLOG candidate Y) on production
+  desktop Web: first-glance and discovery, room returns, the copy read-through,
+  Desk-power measures, the real-microphone fault matrix, meeting survival, and
+  the ten-journey direct observation. Every verdict here is the owner evidence
+  the machine-verified story closes explicitly parked.
+sequence: 10
+tier: close
+estimated_minutes: 180
+prerequisites:
+  - Phase 93 closed at machine-verifiable scope on 2026-07-16; this campaign is its owner leg, not a re-run of the bounded suites.
+  - Use the exact production build; record commit and build provenance in the sitting notes.
+  - A real desktop microphone, a reachable model endpoint you can also kill, and a second paired device for the conflict/sync legs.
+exit_gate:
+  - Every scenario has a verdict on web_react:desktop with its measurements recorded; no lost work, false completion, or silent retargeting anywhere.
+  - Non-pass findings are triaged per TRIAGE.md into BACKLOG rows before the native campaign starts.
+scenarios:
+  - phase-93-web/phase93-web-first-glance
+  - phase-93-web/phase93-web-room-return
+  - phase-93-web/phase93-web-copy-read
+  - phase-93-web/phase93-web-desk-power
+  - phase-93-web/phase93-web-mic-faults
+  - phase-93-web/phase93-web-meeting-survival
+  - phase-93-web/phase93-web-ten-journeys

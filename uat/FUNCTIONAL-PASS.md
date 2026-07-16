@@ -5,12 +5,17 @@ the product feels like and whether its user journeys work. Database drift,
 packet-capture/no-telemetry proof, crafted-schema attacks, and token-gate attack
 work are not part of this pass by owner decision.
 
-The guided site exposes nine ordered campaigns assembled from the canonical
+The guided site exposes twelve ordered campaigns assembled from the canonical
 scenario files. Campaigns 1–5 are the core owner pass. Campaign 6 is the
 user-visible connectivity/integration extension. Campaign 7 is conditional on
 having the two non-flagship native builds installed. Campaigns 8 and 9 are the
 Phase 92 convergence close: the same ten journeys on production Web and the
-physical flagship Swift root, with required raw measurements.
+physical flagship Swift root, with required raw measurements. Campaigns 10–12
+are the Phase 93/94 physical proof program (BACKLOG candidate Y): 10 covers the
+Phase 93 owner residue on production desktop Web, 11 the same residue on
+physical iPhone/iPad with the flagship app (TestFlight build 12+), and 12 the
+Phase 94 Delivery Runtime legs that need real metal — a second machine over
+Tailscale, the physical iPad, and tailnet HTTPS.
 
 This protocol uses implementation target × form factor. Campaign 1 is the
 `web_react:desktop` Desk leg. Campaign 5 contains the separately executed

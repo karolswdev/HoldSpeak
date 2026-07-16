@@ -2828,6 +2828,180 @@ features:
   - seeded-desk
   priority: must
   status: live
+- key: phase93.residue.accessibility
+  title: Physical VoiceOver screen-curtain, Dynamic Type, Reduce Motion, and orientation walks
+  domain: Phase 93 physical proof
+  phases:
+  - 93
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes: []
+  priority: must
+  status: live
+- key: phase93.residue.copy-read
+  title: Owner copy read-through of the ten primary journeys with zero misunderstood noun or commitment
+  domain: Phase 93 physical proof
+  phases:
+  - 93
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: phase93.residue.desk-power
+  title: Owner discovery-time and irrelevant-control measures for Desk-composed power
+  domain: Phase 93 physical proof
+  phases:
+  - 93
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: phase93.residue.dogfood
+  title: Sustained owner dogfood with full provenance and the ten-journey direct observation
+  domain: Phase 93 physical proof
+  phases:
+  - 93
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes: []
+  priority: must
+  status: live
+- key: phase93.residue.first-glance
+  title: Owner first-glance explanation and moved-tool discovery on the production build
+  domain: Phase 93 physical proof
+  phases:
+  - 93
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: phase93.residue.meeting-survival
+  title: Physical meeting duration, fault, airplane-mode exactly-once sync, and owner conflict decisions
+  domain: Phase 93 physical proof
+  phases:
+  - 93
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: phase93.residue.mic-faults
+  title: Real-microphone fault matrix with interruption during active capture and per-walk provenance
+  domain: Phase 93 physical proof
+  phases:
+  - 93
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - fresh-desk
+  priority: must
+  status: live
+- key: phase93.residue.room-return
+  title: Contextual entry and pasted direct links return to a Desk subject through cancel and failure
+  domain: Phase 93 physical proof
+  phases:
+  - 93
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'yes'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: phase94.delivery.desk-observe
+  title: Delivery projects, stories, sessions, and receipts observable from the Desk
+  domain: Phase 94 delivery runtime
+  phases:
+  - 94
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'no'
+  recipes: []
+  priority: must
+  status: live
+- key: phase94.delivery.evidence-dossier
+  title: A completed Story and Phase open as evidence dossiers with receipts and honest remote bytes
+  domain: Phase 94 delivery runtime
+  phases:
+  - 94
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'no'
+  recipes: []
+  priority: must
+  status: live
+- key: phase94.delivery.native-parity
+  title: iPad native observe, evidence, voice-steer, and remote-disarm legs with the same contracts
+  domain: Phase 94 delivery runtime
+  phases:
+  - 94
+  surfaces:
+    web: 'no'
+    ipad: 'yes'
+    iphone: 'no'
+  recipes: []
+  priority: must
+  status: live
+- key: phase94.delivery.second-node
+  title: A second physical machine over Tailscale exercises real transport, clock skew, and latency budgets
+  domain: Phase 94 delivery runtime
+  phases:
+  - 94
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes: []
+  priority: must
+  status: live
+- key: phase94.delivery.story-launch
+  title: Discover panes, choose a worktree, launch Story-bound agent work, steer and end it from the Desk
+  domain: Phase 94 delivery runtime
+  phases:
+  - 94
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'no'
+  recipes: []
+  priority: must
+  status: live
+- key: phase94.delivery.tailnet-https
+  title: iPad Safari over tailnet HTTPS completes the journeys with a secure-context microphone
+  domain: Phase 94 delivery runtime
+  phases:
+  - 94
+  surfaces:
+    web: 'yes'
+    ipad: 'yes'
+    iphone: 'no'
+  recipes: []
+  priority: must
+  status: live
 - key: plugins.authoring.write-your-own
   title: Write your own meeting plugin or connector against a documented contract
   domain: public-docs-claims
@@ -3992,4 +4166,11 @@ phase_map:
   - phase92.journey.next-day-memory
   - phase92.journey.pair-sync
   '93':
-  - internal/no-uat-surface
+  - phase93.residue.accessibility
+  - phase93.residue.copy-read
+  - phase93.residue.desk-power
+  - phase93.residue.dogfood
+  - phase93.residue.first-glance
+  - phase93.residue.meeting-survival
+  - phase93.residue.mic-faults
+  - phase93.residue.room-return

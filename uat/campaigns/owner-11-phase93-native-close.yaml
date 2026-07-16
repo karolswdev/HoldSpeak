@@ -1,0 +1,25 @@
+title: "11 · Phase 93 physical proof — flagship on glass"
+purpose: >
+  The same Phase 93 owner residue on physical iPhone and iPad with the flagship
+  Swift app: first glance, room returns, copy, Desk power, the microphone fault
+  matrix with real interruptions, sustained meeting capture with airplane-mode
+  exactly-once sync, and the full accessibility walks. Native verdicts stay
+  locked to pairing-verified device attestations.
+sequence: 11
+tier: close
+estimated_minutes: 300
+prerequisites:
+  - TestFlight build 12 or newer installed on both physical devices; register the device attestation (device, OS, bundle, build 12+, TestFlight) before any verdict.
+  - Start the conductor with UAT_HOST=0.0.0.0 and Device sitting enabled; pair the app to the isolated run.
+  - A second phone for real incoming calls, a Bluetooth audio route, and a 30-minute quiet block for the sustained capture.
+exit_gate:
+  - Every scenario has independent verdicts on ios_flagship_swift:iphone and :ipad with measurements and provenance recorded.
+  - VoiceOver screen-curtain, Dynamic Type, Reduce Motion, and orientation evidence is direct and unwaived.
+scenarios:
+  - phase-93-native/phase93-native-first-glance
+  - phase-93-native/phase93-native-room-return
+  - phase-93-native/phase93-native-copy-read
+  - phase-93-native/phase93-native-desk-power
+  - phase-93-native/phase93-native-mic-faults
+  - phase-93-native/phase93-native-meeting-survival
+  - phase-93-native/phase93-native-accessibility

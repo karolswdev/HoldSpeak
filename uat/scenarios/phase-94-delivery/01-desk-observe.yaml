@@ -1,0 +1,21 @@
+id: phase94-desk-observe
+execution_target: web_react
+title: "Phase 94 · Web · Delivery work is observable from the Desk"
+features: [phase94.delivery.desk-observe]
+manual_setup:
+  - Run the hub against this repository as a configured delivery source (the HoldSpeak clone with its Delivery Workbench rails); start the local node adapter if it is not embedded.
+recipes: []
+form_factors: [desktop]
+steps:
+  - do: From the Desk, find the delivery source, its current phase, its stories, and any live Coder session without using a URL.
+    expect: Project, Story, session, and Receipt views open through existing Desk affordances; no separate dashboard exists; raw filesystem paths never render.
+    verifies: [phase94.delivery.desk-observe]
+    measurements:
+      - {key: raw_paths_shown, label: Raw repository paths rendered, unit: paths}
+  - do: Check the read model's honesty — note the snapshot freshness, then stop the node or collector and watch the source's state.
+    expect: The source turns stale or offline on the specified clock with its last-known data marked as such; nothing invents absence or freshness.
+    verifies: [phase94.delivery.desk-observe]
+  - do: At a compact width, repeat the discovery.
+    expect: Past work and evidence remain reachable without the current-phase belt.
+    verifies: [phase94.delivery.desk-observe]
+teardown: []

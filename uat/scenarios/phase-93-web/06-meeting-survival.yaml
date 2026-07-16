@@ -1,0 +1,24 @@
+id: phase93-web-meeting-survival
+execution_target: web_react
+title: "Phase 93 · Web · A desktop meeting survives duration, faults, and conflicts"
+features: [phase93.residue.meeting-survival]
+recipes: [seeded-desk]
+manual_setup:
+  - Reserve one uninterrupted desktop block; have a process monitor open to read the runtime's RSS at capture start, five minutes, and thirty minutes.
+  - Prepare a second paired device (or the flagship app) for the conflict and exactly-once sync legs.
+form_factors: [desktop]
+steps:
+  - do: Record a real five-minute meeting with live audio, noting RSS at start and end, then let intelligence run.
+    expect: Memory stays bounded (no unbounded growth across the capture), the transcript lands, and a partial intelligence failure — if one occurs — retains the Meeting as partial with Retry remaining and Skip remaining offered.
+    verifies: [phase93.residue.meeting-survival]
+    measurements:
+      - {key: rss_growth_mb, label: RSS growth over the capture, unit: MB}
+  - do: Start another capture and kill the runtime process mid-recording, then relaunch and open the Meeting.
+    expect: The checkpointed audio and transcript-so-far are retained and named; recovery states what was kept and what was lost; no silent empty Meeting.
+    verifies: [phase93.residue.meeting-survival]
+  - do: Create a sync conflict — edit the same Meeting on the second device while offline, then reconnect — and decide it from the Meeting's Desk pull-out.
+    expect: Both exact versions display; Keep current, Use synced, or a named deletion is required; the applied choice resolves atomically and syncs exactly once.
+    verifies: [phase93.residue.meeting-survival]
+    measurements:
+      - {key: duplicate_sync_effects, label: Sync effects applied more than once, unit: effects}
+teardown: []

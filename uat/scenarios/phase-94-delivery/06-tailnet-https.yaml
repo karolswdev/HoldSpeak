@@ -1,0 +1,18 @@
+id: phase94-tailnet-https
+execution_target: web_react
+title: "Phase 94 · Web · iPad Safari over tailnet HTTPS with a secure-context microphone"
+features: [phase94.delivery.tailnet-https]
+manual_setup:
+  - Serve the hub over Tailscale Serve (HTTPS) and open it in iPad Safari on the tailnet; sign in with the HoldSpeak bearer flow.
+recipes: []
+form_factors: [ipad_browser]
+steps:
+  - do: Complete the observe and evidence journeys from iPad Safari over the tailnet HTTPS URL.
+    expect: The Web Desk works at tablet width over HTTPS; no mixed-content or insecure-context failures; authentication is the bearer flow, not an open port.
+    verifies: [phase94.delivery.tailnet-https]
+  - do: Use the microphone from the HTTPS page — dictate one steer or note.
+    expect: Safari grants the microphone in the secure context and the dictation lands with the same delivery guarantees as the desktop.
+    verifies: [phase94.delivery.tailnet-https]
+    measurements:
+      - {key: insecure_context_blocks, label: Features blocked by context or certificate, unit: features}
+teardown: []

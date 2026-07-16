@@ -1,0 +1,20 @@
+id: phase93-web-copy-read
+execution_target: web_react
+title: "Phase 93 · Web · The ten-journey copy read-through"
+features: [phase93.residue.copy-read]
+recipes: [seeded-desk]
+manual_setup:
+  - Keep a notepad; every label, state, destination, or commitment you had to reread or guess at is a finding.
+form_factors: [desktop]
+steps:
+  - do: Walk the ten primary journeys (arrival, dictation, meeting, capability run, destination choice, pairing/sync, integration, decision authority, coder steering, failure recovery) reading every noun, state, and button out loud.
+    expect: Zero misunderstood nouns, states, destinations, or commitments; Secure/Normal/YOLO, Persona, Coder session, and Runs on read as distinct things.
+    where: /
+    verifies: [phase93.residue.copy-read]
+    measurements:
+      - {key: misunderstood_terms, label: Terms requiring a guess or reread, unit: terms}
+      - {key: marketing_lines, label: Lines that sell instead of state, unit: lines}
+  - do: Trigger at least two forced failures (dead endpoint, refused action) and read the error copy.
+    expect: Each error states what failed, what is retained, where it lives, and the next action — no reassurance prose, no anthropomorphic filler.
+    verifies: [phase93.residue.copy-read]
+teardown: []

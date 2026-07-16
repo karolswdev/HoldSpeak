@@ -1,0 +1,22 @@
+id: phase94-story-launch
+execution_target: web_react
+title: "Phase 94 · Web · Launch, steer, and end Story-bound agent work from the Desk"
+features: [phase94.delivery.story-launch]
+manual_setup:
+  - Have a delivery source with an actionable story, a configured agent profile on the node, and tmux available; use a scratch branch or worktree so real work stays safe.
+recipes: []
+form_factors: [desktop]
+steps:
+  - do: From the Desk, discover the node's panes, create or choose a worktree, and launch configured agent work bound to a Story.
+    expect: The launch runs the atomic sequence (worktree, spawn, target, attempt, receipt); the Work attempt joins node, source, worktree, Story, session, and terminal exactly.
+    verifies: [phase94.delivery.story-launch]
+  - do: Watch the live terminal, deliver one steer through the typed command envelope, rename the session, then end it.
+    expect: Output streams or falls back to snapshots; the steer lands once on the exact pane with a source-linked Receipt; rename and kill honor the same authority gates.
+    verifies: [phase94.delivery.story-launch]
+    measurements:
+      - {key: wrong_target_effects, label: Effects on a pane other than the target, unit: effects}
+      - {key: duplicate_commands, label: Commands applied more than once, unit: commands}
+  - do: Break a launch mid-way (kill the spawn target before it starts) and recover from the Desk.
+    expect: The partial launch is named with what completed and what did not; recovery does not require arbitrary shell input.
+    verifies: [phase94.delivery.story-launch]
+teardown: []

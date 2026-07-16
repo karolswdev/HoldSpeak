@@ -1,0 +1,18 @@
+id: phase93-native-copy-read
+execution_target: ios_flagship_swift
+title: "Phase 93 · Native · Copy read-through of the primary journeys on glass"
+features: [phase93.residue.copy-read]
+manual_setup:
+  - Keep a notepad; every label, state, destination, or commitment you had to reread or guess at is a finding.
+recipes: []
+form_factors: [iphone, ipad]
+steps:
+  - do: Walk the primary journeys the flagship app owns (arrival, dictation, meeting capture, capability run, destination choice, pairing/sync, decision authority, coder steering, failure recovery) reading every noun, state, and button out loud.
+    expect: Zero misunderstood nouns, states, destinations, or commitments; Secure/Normal/YOLO and destination classes read identically to the Web.
+    verifies: [phase93.residue.copy-read]
+    measurements:
+      - {key: misunderstood_terms, label: Terms requiring a guess or reread, unit: terms}
+  - do: Force two failures (airplane mode, dead endpoint) and read the error copy on the device.
+    expect: Each error states failure, retained work, destination, and next action — no reassurance prose.
+    verifies: [phase93.residue.copy-read]
+teardown: []

@@ -1,0 +1,23 @@
+id: phase93-web-mic-faults
+execution_target: web_react
+title: "Phase 93 · Web · Real-microphone fault matrix on production Web"
+features: [phase93.residue.mic-faults]
+recipes: [fresh-desk]
+manual_setup:
+  - Use a real microphone on the production desktop browser; record provenance for every walk — device, build, browser, audio route, model, destination.
+form_factors: [desktop]
+steps:
+  - do: Dictate one clean utterance end to end to confirm the happy path before inducing faults.
+    expect: Text lands once in the intended target and a first-value event records without a model-placement decision.
+    where: /
+    verifies: [phase93.residue.mic-faults]
+  - do: Induce each fault in turn during a real dictation — revoke mic permission mid-session, unplug or switch the audio route during active capture, kill the network before delivery, and stop the model endpoint before transcription.
+    expect: Every fault retains the captured audio or editable text, names the fault factually, and offers only applicable recovery actions; nothing claims success falsely.
+    verifies: [phase93.residue.mic-faults]
+    measurements:
+      - {key: lost_captures, label: Captures lost across the fault matrix, unit: captures}
+      - {key: false_successes, label: Faults reported as success, unit: faults}
+  - do: Interrupt a dictation mid-capture by closing the tab, reopen the production URL, and look for the work.
+    expect: The checkpointed capture or draft is findable and editable after relaunch; delivery, when retried, happens exactly once.
+    verifies: [phase93.residue.mic-faults]
+teardown: []

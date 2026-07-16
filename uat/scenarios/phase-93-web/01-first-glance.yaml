@@ -1,0 +1,26 @@
+id: phase93-web-first-glance
+execution_target: web_react
+title: "Phase 93 · Web · First glance explains itself; moved tools are findable"
+features: [phase93.residue.first-glance]
+recipes: [fresh-desk]
+manual_setup:
+  - Use the exact production build (record commit and bundle hash) in a desktop browser at a normal window size.
+form_factors: [desktop]
+steps:
+  - do: Look at the fresh Desk for ten seconds without clicking, then say aloud what you can start from here and what each of the three starts will do.
+    expect: The stated understanding matches Dictate, Record, and Create; no start requires a vocabulary the screen did not supply.
+    where: /
+    verifies: [phase93.residue.first-glance]
+    measurements:
+      - {key: misread_starts, label: Starts whose purpose was misstated, unit: starts}
+  - do: Without documentation, find three tools that moved during the Phase 93 subtraction — the creation entry, the Tools shelf, and Desk memory — and open each.
+    expect: Each is reached through visible Desk affordances; no tool needs a URL, a guess, or more than three actions.
+    where: /
+    verifies: [phase93.residue.first-glance]
+    measurements:
+      - {key: discovery_seconds_worst, label: Slowest tool discovery, unit: seconds}
+      - {key: dead_ends, label: Wrong paths taken before finding a tool, unit: paths}
+  - do: Ask for something that does not exist — look for a "dashboard" or "control center" view.
+    expect: No such destination exists; the Desk itself remains the only home and nothing on screen promises one.
+    where: /
+teardown: []
