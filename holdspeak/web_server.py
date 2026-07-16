@@ -516,6 +516,9 @@ class MeetingWebServer:
             build_cadence_router,
             build_core_router,
             build_delivery_router,
+            build_delivery_attempts_router,
+            build_delivery_dossiers_router,
+            build_delivery_node_router,
             build_dictation_router,
             build_desk_actuators_router,
             build_meeting_import_router,
@@ -583,6 +586,13 @@ class MeetingWebServer:
         app.include_router(build_mesh_router(web_ctx))
         app.include_router(build_missioncontrol_router(web_ctx))
         app.include_router(build_delivery_router(web_ctx))
+        app.include_router(build_delivery_attempts_router(web_ctx))
+        app.include_router(build_delivery_dossiers_router(web_ctx))
+        # The node link shares the hub's web token only to REFUSE it: a
+        # browser credential can never authenticate as a node.
+        app.include_router(
+            build_delivery_node_router(web_ctx, web_token=self.auth_token)
+        )
         app.include_router(build_dictation_router(web_ctx))
         app.include_router(build_activity_router(web_ctx))
         app.include_router(build_pages_router(web_ctx))

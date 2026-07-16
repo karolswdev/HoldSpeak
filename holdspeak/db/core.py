@@ -38,6 +38,7 @@ from .primitives import (
 )
 from .relationships import KnowledgeMembershipRepository, ProjectRelationshipRepository
 from .invocations import CapabilityInvocationRepository
+from .delivery_attempts import WorkAttemptRepository
 
 log = get_logger("db")
 
@@ -46,7 +47,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 22  # v22: steering operation/policy receipts (HS-93-07)
+SCHEMA_VERSION = 23  # v23: durable Work attempts + transition events (HS-94-04)
 
 
 class SchemaVersionError(RuntimeError):
@@ -1196,6 +1197,55 @@ CREATE TABLE IF NOT EXISTS steering_audit (
 );
 CREATE INDEX IF NOT EXISTS idx_steering_audit_ts ON steering_audit(ts);
 CREATE INDEX IF NOT EXISTS idx_steering_audit_key ON steering_audit(session_key);
+
+-- Work attempts (HS-94-04, PLATFORM-CONTRACT §4.2): one bounded undertaking
+-- of one primary Story, bound to node/source/worktree/session/target with
+-- explicit association provenance. attempt_id is opaque and never reused.
+-- No filesystem path enters this table by construction.
+CREATE TABLE IF NOT EXISTS work_attempts (
+    attempt_id TEXT PRIMARY KEY,
+    source_id TEXT NOT NULL,
+    project TEXT NOT NULL,
+    story_id TEXT NOT NULL,
+    worktree_id TEXT NOT NULL,
+    node_id TEXT,                 -- NULL = the embedded local node
+    session_id TEXT,              -- NULL until an agent session binds
+    target_id TEXT,               -- opaque terminal handle, when known
+    association_kind TEXT NOT NULL
+        CHECK (association_kind IN ('launch','rider_claim','manual','contract','heuristic')),
+    claimed_by TEXT,
+    claimed_at TEXT,
+    exact INTEGER NOT NULL DEFAULT 0,
+    state TEXT NOT NULL DEFAULT 'starting'
+        CHECK (state IN ('starting','working','waiting','idle','ended','abandoned','unknown')),
+    started_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    ended_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_work_attempts_story
+ON work_attempts(source_id, project, story_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_work_attempts_session
+ON work_attempts(session_id, state);
+CREATE INDEX IF NOT EXISTS idx_work_attempts_worktree
+ON work_attempts(worktree_id, state);
+-- One session may pin at most ONE live attempt as exact; the repo-wide
+-- heuristic can list it on several cards only as non-exact rows.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_work_attempts_exact_session
+ON work_attempts(session_id)
+WHERE exact = 1 AND session_id IS NOT NULL AND state NOT IN ('ended','abandoned');
+
+-- Replayable attempt lifecycle: every applied transition, timestamped.
+-- History is preserved through worktree removal and hub restarts.
+CREATE TABLE IF NOT EXISTS work_attempt_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    attempt_id TEXT NOT NULL REFERENCES work_attempts(attempt_id) ON DELETE CASCADE,
+    from_state TEXT,
+    to_state TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    occurred_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_work_attempt_events_attempt
+ON work_attempt_events(attempt_id, id);
 """
 
 
@@ -1234,6 +1284,7 @@ class Database:
         self.mesh_relay = MeshRelayRepository(self._connection, self)
         self.steering = SteeringAuditRepository(self._connection, self)
         self.projections = ProjectionRepository(self._connection, self)
+        self.work_attempts = WorkAttemptRepository(self._connection, self)  # HS-94-04
 
     @contextmanager
     def _connection(self) -> Iterator[sqlite3.Connection]:

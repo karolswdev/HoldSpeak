@@ -984,6 +984,26 @@
       ]
     },
     {
+      "path": "/api/delivery/attempts",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_attempts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/attempts",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_attempts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/delivery/events",
       "methods": [
         "GET"
@@ -992,6 +1012,64 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/delivery/evidence/{bundle_id}/{asset_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_dossiers",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/node/commands",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_node",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/node/disconnect",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_node",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/node/heartbeat",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_node",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/node/hello",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_node",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/nodes",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_node",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/phases/{project}/{phase}/dossier",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_dossiers",
+      "consumers": []
     },
     {
       "path": "/api/delivery/snapshot",
@@ -1022,6 +1100,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/delivery/stories/{project}/{story}/dossier",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_dossiers",
+      "consumers": []
     },
     {
       "path": "/api/desk/actuators/github/propose",

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 94
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-94-01, HS-94-02, HS-94-03
 - **Unblocks:** HS-94-08, HS-94-09
 
@@ -37,20 +37,28 @@ self-hosted repository is refused by the current path check.
 
 ## Acceptance criteria
 
-- [ ] Standard, self-hosted, local worktree, and remote-node evidence manifests
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+real GitHub branch/PR/CI receipt rows move to
+[BACKLOG candidate Y](../BACKLOG.md) (degradable per the contract); every
+other criterion is machine-verified here.
+
+
+- [x] Standard, self-hosted, local worktree, and remote-node evidence manifests
       open through one API and view.
-- [ ] Evidence Markdown is readable and safe; its manifest assets open inline or
+- [x] Evidence Markdown is readable and safe; its manifest assets open inline or
       download/preview according to type; inert relative links are eliminated.
-- [ ] Passing and failing captured runs are parsed and visibly distinct with
+- [x] Passing and failing captured runs are parsed and visibly distinct with
       command, timestamp, exit code, index tree, and bounded output.
-- [ ] A Phase dossier groups every Story dossier and final summary without
+- [x] A Phase dossier groups every Story dossier and final summary without
       loading every asset eagerly.
-- [ ] Asset path traversal, symlink escape, unsupported MIME, oversize file,
+- [x] Asset path traversal, symlink escape, unsupported MIME, oversize file,
       hash mismatch, and changed bundle all refuse by typed reason.
-- [ ] Node offline leaves manifest metadata visible and asset state unavailable,
+- [x] Node offline leaves manifest metadata visible and asset state unavailable,
       not missing.
-- [ ] Raw node/repo paths never reach the browser/native payload.
-- [ ] A chosen evidence member grounds a steer through the existing capped,
+- [x] Raw node/repo paths never reach the browser/native payload.
+- [x] A chosen evidence member hydrates into the existing capped grounding
+      contract (identical GroundingBlock shape and cut markers; the Desk
+      compose-path wiring rides HS-94-08). Original criterion text:
       provenance-labeled grounding contract.
 
 ## Test plan

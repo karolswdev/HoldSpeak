@@ -376,6 +376,14 @@ Logs are written to: {LOG_FILE}
         help="Claim at most one job, run it, exit",
     )
 
+    # Delivery node link (HS-94-03): this machine becomes a delivery node.
+    node_parser = subparsers.add_parser(
+        "node",
+        help="Delivery-node commands (serve, token)",
+        add_help=False,
+    )
+    node_parser.add_argument("node_args", nargs=argparse.REMAINDER)
+
     subparsers.add_parser(
         "backup",
         help="Back up the HoldSpeak database to a timestamped file",
@@ -464,6 +472,13 @@ Logs are written to: {LOG_FILE}
             raise SystemExit(run_mesh_serve_command(args))
         print("usage: holdspeak mesh serve [--hub URL] [--node NAME] [--once]")
         raise SystemExit(2)
+
+    # Handle delivery-node subcommands (HS-94-03): the node module owns
+    # its own argument surface (also served by `python -m`).
+    if args.command == "node":
+        from .commands.node_serve import main as node_main
+
+        raise SystemExit(node_main(getattr(args, "node_args", [])))
 
     # Handle backup / restore subcommands (HS-50-03)
     if args.command == "backup":

@@ -13,7 +13,7 @@ from typing import Any, Iterator, Mapping, Optional
 import holdspeak.agent_context as _agent_context_pkg
 
 from ._common import _format_timestamp, _optional_str, _parse_timestamp
-from .hooks import detect_tmux_context
+from .hooks import detect_story_claim, detect_tmux_context
 from .hs_context import _normalize_project_root, detect_repo_root
 from .models import (
     AgentSession,
@@ -146,6 +146,7 @@ def ingest_agent_hook_event(
             Path(str(payload.get("transcript_path") or "")).expanduser(),
         )
     tmux_context = detect_tmux_context(payload, env=env)
+    detected_claim = detect_story_claim(payload, env=env)
 
     with _state_lock(state_file):
         state = _read_state(state_file)
@@ -218,12 +219,115 @@ def ingest_agent_hook_event(
             lifecycle=lifecycle,
             question=question,
         )
-        sessions[key] = session.to_dict()
+        record = session.to_dict()
+        # HS-94-04: additive rider-claim emission. When the hook's context
+        # carries an explicit Story identity (typed payload or the launcher's
+        # HOLDSPEAK_STORY_* env), the session record emits a durable claim the
+        # hub resolves into an exact Work attempt. The claim is sticky across
+        # heartbeats (like tmux context); claimed_at only moves when the
+        # claimed Story actually changes. Sessions remain node presence —
+        # attempts stay hub runtime records (the story's direction rule).
+        previous_claim = (
+            dict(previous["story_claim"])
+            if isinstance(previous.get("story_claim"), dict)
+            else None
+        )
+        story_claim = _merge_story_claim(
+            previous_claim, detected_claim, agent=normalized_agent, timestamp=timestamp
+        )
+        if story_claim:
+            record["story_claim"] = story_claim
+        sessions[key] = record
         state["version"] = STATE_VERSION
         _prune_sessions(state, max_sessions=MAX_SESSIONS)
         _write_state(state_file, state)
 
     return session
+
+
+def _merge_story_claim(
+    previous: Optional[dict[str, Any]],
+    detected: Mapping[str, Any],
+    *,
+    agent: str,
+    timestamp: str,
+) -> Optional[dict[str, Any]]:
+    """Sticky rider-claim merge (HS-94-04): a detected claim wins; an
+    unchanged Story keeps its original claimed_at; no detection carries
+    the previous claim forward untouched."""
+    project = str(detected.get("project") or "").strip() if detected else ""
+    story_id = str(detected.get("story_id") or "").strip() if detected else ""
+    if project and story_id:
+        claimed_at = timestamp
+        if (
+            previous
+            and str(previous.get("project") or "") == project
+            and str(previous.get("story_id") or "") == story_id
+            and previous.get("claimed_at")
+        ):
+            claimed_at = str(previous["claimed_at"])
+        return {
+            "project": project,
+            "story_id": story_id,
+            "claimed_by": f"rider:{agent}",
+            "claimed_at": claimed_at,
+        }
+    return previous
+
+
+def list_agent_story_claims(
+    *,
+    state_path: Path | None = None,
+    now: datetime | None = None,
+) -> list[dict[str, Any]]:
+    """Every session carrying an explicit rider Story claim (HS-94-04).
+
+    Read-only over the registry; each row pairs the claim with the
+    session's presence facts the hub needs to resolve an exact Work
+    attempt: the compound session key, repo root/cwd (server-side
+    resolution input, never wire data), the effective lifecycle, and
+    the tmux pane hint. Ordering is newest-updated first.
+    """
+    state = _read_state(state_path or _default_state_file())
+    raw_sessions = state.get("sessions")
+    if not isinstance(raw_sessions, dict):
+        return []
+    moment = now or datetime.now(timezone.utc)
+    rows: list[dict[str, Any]] = []
+    for raw in raw_sessions.values():
+        if not isinstance(raw, dict):
+            continue
+        claim = raw.get("story_claim")
+        if not isinstance(claim, dict):
+            continue
+        project = _optional_str(claim.get("project"))
+        story_id = _optional_str(claim.get("story_id"))
+        if not project or not story_id:
+            continue
+        session = AgentSession.from_mapping(raw)
+        if not session.agent or not session.session_id:
+            continue
+        rows.append(
+            {
+                "session_key": _session_key(session.agent, session.session_id),
+                "agent": session.agent,
+                "session_id": session.session_id,
+                "cwd": session.cwd,
+                "repo_root": session.repo_root,
+                "updated_at": session.updated_at,
+                "lifecycle": effective_state(session, now=moment),
+                "tmux_pane": session.tmux_pane,
+                "story_claim": {
+                    "project": project,
+                    "story_id": story_id,
+                    "claimed_by": _optional_str(claim.get("claimed_by"))
+                    or f"rider:{session.agent}",
+                    "claimed_at": _optional_str(claim.get("claimed_at")),
+                },
+            }
+        )
+    rows.sort(key=lambda item: str(item.get("updated_at") or ""), reverse=True)
+    return rows
 
 
 def get_recent_agent_session(

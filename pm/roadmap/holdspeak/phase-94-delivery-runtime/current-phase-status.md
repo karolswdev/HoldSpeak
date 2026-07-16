@@ -1,6 +1,6 @@
 # Phase 94 — The Delivery Runtime
 
-**Status:** IN PROGRESS (2/10). HS-94-02 is done: the delivery source registry, single-flight collector, and coherent delivery_schema:1 read model with poll economy and wire hygiene proven. HS-94-01 is done: the vendored dw implements the counterpart contract (capabilities, cursored events, evidence manifest/asset) and worktree/self-hosted truth, proven by 20 subprocess tests against real scratch repositories. Activated 2026-07-16 by the owner's standing
+**Status:** IN PROGRESS (5/10). HS-94-03/04/05 are done: the authenticated node link with a real two-process kill/resume proof, durable Work attempts whose correlation fixture closes the zero-exact baseline against the real dw, and manifest-bound evidence dossiers with the typed asset chokepoint. HS-94-02 is done: the delivery source registry, single-flight collector, and coherent delivery_schema:1 read model with poll economy and wire hygiene proven. HS-94-01 is done: the vendored dw implements the counterpart contract (capabilities, cursored events, evidence manifest/asset) and worktree/self-hosted truth, proven by 20 subprocess tests against real scratch repositories. Activated 2026-07-16 by the owner's standing
 close directive after Phase 93 closed all nine stories; the current roadmap
 pointer remains Phase 91.
 
@@ -128,9 +128,9 @@ invariants are in [PLATFORM-CONTRACT.md](./PLATFORM-CONTRACT.md).
 |---|---|---|---|---|
 | HS-94-01 | Counterpart contract and worktree truth | done | [story-01-counterpart-contract-worktree-truth](./story-01-counterpart-contract-worktree-truth.md) | [evidence-story-01](./evidence-story-01.md) · [progress record](./progress-story-01.md) |
 | HS-94-02 | Delivery Source registry and coherent read model | done | [story-02-source-registry-read-model](./story-02-source-registry-read-model.md) | [evidence-story-02](./evidence-story-02.md) · [progress record](./progress-story-02.md) |
-| HS-94-03 | Authenticated node link, capabilities, liveness, reconnect | backlog | [story-03-node-link-capabilities](./story-03-node-link-capabilities.md) | - |
-| HS-94-04 | Work attempts and exact Story/session/worktree correlation | backlog | [story-04-work-attempts-correlation](./story-04-work-attempts-correlation.md) | - |
-| HS-94-05 | Evidence dossiers and safe asset browsing | backlog | [story-05-evidence-dossiers](./story-05-evidence-dossiers.md) | - |
+| HS-94-03 | Authenticated node link, capabilities, liveness, reconnect | done | [story-03-node-link-capabilities](./story-03-node-link-capabilities.md) | [evidence-story-03](./evidence-story-03.md) · [progress record](./progress-story-03.md) |
+| HS-94-04 | Work attempts and exact Story/session/worktree correlation | done | [story-04-work-attempts-correlation](./story-04-work-attempts-correlation.md) | [evidence-story-04](./evidence-story-04.md) · [progress record](./progress-story-04.md) |
+| HS-94-05 | Evidence dossiers and safe asset browsing | done | [story-05-evidence-dossiers](./story-05-evidence-dossiers.md) | [evidence-story-05](./evidence-story-05.md) · [progress record](./progress-story-05.md) |
 | HS-94-06 | Terminal stream and idempotent command receipts | backlog | [story-06-terminal-stream-command-receipts](./story-06-terminal-stream-command-receipts.md) | - |
 | HS-94-07 | Remote factory and Story-bound agent launch | backlog | [story-07-remote-factory-agent-launch](./story-07-remote-factory-agent-launch.md) | - |
 | HS-94-08 | Delivery work inhabits the Web Desk | backlog | [story-08-web-desk-delivery-experience](./story-08-web-desk-delivery-experience.md) | - |

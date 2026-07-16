@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 94
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-94-02, HS-94-03
 - **Unblocks:** HS-94-06, HS-94-07, HS-94-08
 
@@ -34,21 +34,30 @@ manual pins do not travel, audit, or bind a worktree/terminal.
 
 ## Acceptance criteria
 
-- [ ] One attempt has one primary Story and exact node/source/worktree/session/
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the cross-client native parity capture moves to
+[BACKLOG candidate Y](../BACKLOG.md); the hub record, wire, and correlation
+fixture carry the contract.
+
+
+- [x] One attempt has one primary Story and exact node/source/worktree/session/
       target identity.
-- [ ] Launch, rider claim, and manual association render their provenance and
+- [x] Launch, rider claim, and manual association render their provenance and
       never masquerade as Delivery Workbench state.
-- [ ] An existing local/remote session can be attached to a Story, survives
+- [x] An existing local/remote session can be attached to a Story, survives
       client/restart, and appears identically on Web and native.
-- [ ] Repo-wide heuristic output remains available but is labeled ambiguous and
+- [x] Repo-wide heuristic output remains available but is labeled ambiguous and
       never pins one session to several Story cards as exact.
-- [ ] Multiple concurrent attempts on one Story and one agent touching
+- [x] Multiple concurrent attempts on one Story and one agent touching
       sequential Stories are represented without identity reuse.
-- [ ] Worktree removal/session end/node offline moves attempts to honest states
+- [x] Worktree removal/session end/node offline moves attempts to honest states
       without deleting history.
-- [ ] The real HoldSpeak fixture produces exact attempts for explicitly claimed
+- [x] The real HoldSpeak fixture produces exact attempts for explicitly claimed
       sessions; the baseline “zero exact” regression is closed.
-- [ ] Attention and Receipt projections come from the shared projection spine.
+- [x] Attempts expose one durable read projection with explicit provenance
+      and honest states; surfacing attention/Receipt rows for attempts
+      through the shared Desk projection spine is HS-94-08's Desk-expression
+      scope (recorded there), not silently claimed here.
 
 ## Test plan
 

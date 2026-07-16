@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 314 (plus static mounts). iOS-consumed: 81. Web-consumed: 231.
+Routes: 324 (plus static mounts). iOS-consumed: 81. Web-consumed: 234.
 
 ## device_audio_ws
 
@@ -143,6 +143,31 @@ Routes: 314 (plus static mounts). iOS-consumed: 81. Web-consumed: 231.
 | GET | `/api/delivery/snapshot` | web |
 | GET | `/api/delivery/sources` | web |
 | POST | `/api/delivery/sources` | web |
+
+## web.routes.delivery_attempts
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/delivery/attempts` | web |
+| POST | `/api/delivery/attempts` | web |
+
+## web.routes.delivery_dossiers
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/delivery/evidence/{bundle_id}/{asset_id}` | server only |
+| GET | `/api/delivery/phases/{project}/{phase}/dossier` | server only |
+| GET | `/api/delivery/stories/{project}/{story}/dossier` | server only |
+
+## web.routes.delivery_node
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/delivery/node/commands` | server only |
+| POST | `/api/delivery/node/disconnect` | server only |
+| POST | `/api/delivery/node/heartbeat` | server only |
+| POST | `/api/delivery/node/hello` | server only |
+| GET | `/api/delivery/nodes` | web |
 
 ## web.routes.desk_actuators
 
