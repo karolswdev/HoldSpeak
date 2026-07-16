@@ -11,15 +11,15 @@ open for their remaining implementation, owner, and physical-device gates.
 Phase 91 remains the roadmap's current phase; Phase 92 substrate is not accepted
 as a simplified product.
 
-**Last updated:** 2026-07-15 (the owner-directed UI consistency + UX
-streamlining remediation shipped: a 46-finding inventory across four review
-passes, the desk-window contract — floating panels drag, resize, persist,
-raise, and coexist instead of being glued to one corner — one panel chrome and
-z ladder, one Record verb, product labels over raw wire values on every
-surface, copy-contract cleanups, and flagship Swift parity. Details in
-ui-consistency-inventory.md and the HS-93-04 progress record. Earlier the same
-day: HS-93-07 closed by direct owner decision at the two delivered authority
-families; the descoped remainder moved verbatim to BACKLOG candidate X).
+**Last updated:** 2026-07-15 (round 2 of the UI remediation shipped after the
+owner's live desktop + iPhone spin found the merged desk still wrong: zones
+now drag, resize, and persist like objects; the chrome band no longer eats
+taps; defaults respect the chrome per breakpoint; paper sprites read as
+documents; the in-world editor is a phone bottom sheet; frosted panels no
+longer ghost. R2-01..R2-10 in ui-consistency-inventory.md, live-screenshot
+verified. Earlier the same day: the 46-finding round-1 remediation with the
+desk-window contract, and HS-93-07 closed by direct owner decision with its
+remainder preserved as BACKLOG candidate X).
 
 ## Goal
 
