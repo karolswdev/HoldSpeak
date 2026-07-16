@@ -984,6 +984,46 @@
       ]
     },
     {
+      "path": "/api/delivery/events",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/snapshot",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/sources",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/sources",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/desk/actuators/github/propose",
       "methods": [
         "POST"

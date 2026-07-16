@@ -15,6 +15,7 @@ from .authority import build_authority_router
 from .cadence import build_cadence_router
 from .desk_actuators import build_desk_actuators_router
 from .core import build_core_router
+from .delivery import build_delivery_router
 from .dictation import build_dictation_router
 from .meeting_import import build_meeting_import_router
 from .meetings import build_meetings_router
@@ -34,6 +35,7 @@ __all__ = [
     "build_cadence_router",
     "build_desk_actuators_router",
     "build_core_router",
+    "build_delivery_router",
     "build_dictation_router",
     "build_meeting_import_router",
     "build_meetings_router",

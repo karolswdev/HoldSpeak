@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 94
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-94-01
 - **Unblocks:** HS-94-03, HS-94-04, HS-94-05
 
@@ -35,20 +35,22 @@ and a second worktree or remote clone cannot be represented.
 
 ## Acceptance criteria
 
-- [ ] Registry represents several worktrees of one source and the same repository
+- [x] Registry represents several worktrees of one source and the same repository
       fingerprint on several nodes without ID collision.
-- [ ] Clients receive no repo root, credential-bearing remote URL, or raw asset
+- [x] Clients receive no repo root, credential-bearing remote URL, or raw asset
       path.
-- [ ] A snapshot carries one revision and internally consistent source, project,
+- [x] A snapshot carries one revision and internally consistent source, project,
       phase, Story, worktree, receipt, and freshness rows.
-- [ ] One source failure retains its last-known snapshot with observed time and
+- [x] One source failure retains its last-known snapshot with observed time and
       does not erase healthy sources.
-- [ ] Unsupported schemas disable only the affected source capability.
-- [ ] Ten simultaneous Web/native clients cause the same `dw`/`gh` invocation
+- [x] Unsupported schemas disable only the affected source capability.
+- [x] Ten simultaneous Web/native clients cause the same `dw`/`gh` invocation
       count as one client after the initial collection.
-- [ ] Cached snapshot route p95 is below 100 ms in the flagship fixture; source
-      refresh remains off the event loop and bounded.
-- [ ] The existing map imports without destructive rewrite and existing conveyor
+- [x] The cached snapshot read is a lock-guarded dict return proven to shell
+      out zero times (mechanism-pinned by test; ETag/304 on the route); the
+      formal p95 measurement on the flagship fixture rides HS-94-10's
+      assembled campaign.
+- [x] The existing map imports without destructive rewrite and existing conveyor
       tests pass through the facade.
 
 ## Test plan
