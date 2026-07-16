@@ -22,7 +22,12 @@ contract (floating panels drag, resize, persist, raise, coexist; nothing glued
 to a corner), one panel chrome over a documented z ladder, an
 undefined-token rendering bug fixed, one Record verb, product labels over raw
 wire values, copy-contract cleanups, and flagship Swift parity — proven by a
-production Playwright window walk with zero failed API responses.**
+production Playwright window walk with zero failed API responses. A round-2
+pass the same evening, driven by the owner's live desktop + iPhone spin, gave
+zones the same drag/resize/persist physics as objects, made the chrome band
+tap-transparent, moved default layouts out from under the chrome, made paper
+sprites read as documents, and turned the phone's in-world editor into a
+bottom sheet (R2-01..R2-10 in the inventory).**
 The Web is
 one Vite/React 19 tree and Phase 92 added substantial language, trust,
 first-value, capture, relationship, capability, destination, authority, and
