@@ -138,8 +138,17 @@ def capture_desktop(page: Page, url: str, output: Path) -> None:
     page.screenshot(path=str(output / "after-web-integration-receipt.png"))
 
     page.get_by_role("button", name="Return to Release checklist").click()
-    page.locator(".desk-pullout", has_text="Release checklist").wait_for()
-    page.locator(".desk-pullout-close").click()
+    pullout = page.locator(".desk-pullout", has_text="Release checklist")
+    pullout.wait_for()
+    # Desk windows coexist now (Phase 93 remediation): close THIS window's
+    # affordance, not whichever close button matches first.
+    pullout.locator(".desk-pullout-close").first.click()
+    # Windows coexist: the Slack inspector stays open by design; close it
+    # before reopening Tools so the shelf is unobstructed.
+    inspector_close = page.locator(".desk-tool-inspector .desk-pullout-close")
+    if inspector_close.count():
+        inspector_close.first.click()
+        page.locator(".desk-tool-inspector").wait_for(state="detached")
 
     open_tools(page)
     page.get_by_role("button", name=re.compile(r"^Project Orion")).click()

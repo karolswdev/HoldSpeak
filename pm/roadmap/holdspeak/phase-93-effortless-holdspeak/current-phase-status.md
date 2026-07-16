@@ -1,6 +1,6 @@
 # Phase 93 — Effortless HoldSpeak
 
-**Status:** IN PROGRESS (2/9). HS-93-01 is done at an owner-rescoped close
+**Status:** IN PROGRESS (3/9). HS-93-04 is done at an owner-rescoped close (context power composed through Desk affordances, source-bound Receipts, the desk-window grammar; owner measures parked in candidate Y). HS-93-01 is done at an owner-rescoped close
 (machine-verifiable scope; owner/device walks parked as BACKLOG candidate Y):
 the repaired bounded route preflight sweeps all 19 routes clean and a
 keyboard-only production walk proves Create/Tools/Desk-memory reachability,
@@ -11,8 +11,9 @@ run on the shared operation-policy v2 spine with zero-prompt YOLO, immutable
 proposal snapshots, named refusals, and source-linked Receipts on both clients;
 the remaining family matrix, grant surfaces, Qlippy/Mission Control/Cadence
 treatment, and owner/device proof are preserved as BACKLOG candidate X.
-HS-93-01 through HS-93-06 keep their automated implementation slices and remain
-open for their remaining implementation, owner, and physical-device gates.
+The remaining stories keep their automated implementation slices; their
+closes follow the same owner-rescoped pattern with every owner/physical gate
+preserved in BACKLOG candidate Y.
 Phase 91 remains the roadmap's current phase; Phase 92 substrate is not accepted
 as a simplified product.
 
@@ -135,7 +136,7 @@ prove the daily experience through sustained owner use on Web, iPhone, and iPad.
 | HS-93-01 | Three obvious starts | done | [story-01](./story-01-three-obvious-starts.md) | [evidence-story-01](./evidence-story-01.md) · [progress record](./progress-story-01.md) |
 | HS-93-02 | Every room is a Desk workspace | in progress | [story-02](./story-02-every-room-comes-home.md) | [progress record](./progress-story-02.md) |
 | HS-93-03 | One professional product voice | in progress | [story-03](./story-03-one-product-vocabulary.md) | [progress record](./progress-story-03.md) |
-| HS-93-04 | Power lives on the Desk | in progress | [story-04](./story-04-power-appears-in-context.md) | [progress record](./progress-story-04.md) |
+| HS-93-04 | Power lives on the Desk | done | [story-04](./story-04-power-appears-in-context.md) | [evidence-story-04](./evidence-story-04.md) · [progress record](./progress-story-04.md) |
 | HS-93-05 | Your words never disappear | in progress | [story-05](./story-05-your-words-never-disappear.md) | [progress record](./progress-story-05.md) |
 | HS-93-06 | A meeting survives real life | in progress | [story-06](./story-06-a-meeting-survives-real-life.md) | [progress record](./progress-story-06.md) |
 | HS-93-07 | Secure, Normal, or YOLO | done | [story-07](./story-07-decisions-explain-themselves.md) | [evidence-story-07](./evidence-story-07.md) · [progress record](./progress-story-07.md) |
