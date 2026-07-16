@@ -164,7 +164,8 @@ final class MeetingReviewState: ObservableObject {
                     if !chunk { try? storage?.saveArtifact(a); withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() } }
                     Self.glog("w\(wi) ok \(type.rawValue)")
                 } catch {
-                    lastError = "\(error)"; Self.glog("w\(wi) FAIL \(type.rawValue): \(error)")
+                    lastError = "\(error)"
+                    Self.glog("w\(wi) FAIL \(type.rawValue): \(error)")
                 }
             }
         }
@@ -220,7 +221,7 @@ final class MeetingReviewState: ObservableObject {
                 provider: provider, idGenerator: { artifact.id })   // replace in place
             try? storage?.saveArtifact(fixed)
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { load() }
-        } catch { note = "Couldn't apply the correction: \(error)" }
+        } catch { note = "Couldn't apply the correction (\(error)). The Artifact is unchanged. Retry the correction." }
     }
 
     var hasInkArtifacts: Bool { artifacts.contains { $0.pluginId == "holdspeak.mobile.ink" } }

@@ -140,6 +140,143 @@ def test_failed_delivery_identity_never_replays_implicitly(tmp_path):
     assert calls == 1
 
 
+def test_changed_target_mode_under_same_id_is_refused(tmp_path):
+    """HS-93-05: the payload binding covers the destination, not just the words.
+    The same id with the same text but a different target_mode is a different
+    request; it must 409 and never reach the hook a second time."""
+    from holdspeak.db import Database
+
+    database = Database(tmp_path / "delivery.db")
+    delivered: list = []
+    client = _client(
+        _ctx(
+            on_remote_dictation=lambda t, *, target="agent": delivered.append((t, target)),
+            dictation_deliveries=database.dictation_deliveries,
+        )
+    )
+    first = client.post(
+        "/api/dictation/remote",
+        json={"text": "same words", "target_mode": "agent", "delivery_id": "id-1"},
+    )
+    conflict = client.post(
+        "/api/dictation/remote",
+        json={"text": "same words", "target_mode": "focused", "delivery_id": "id-1"},
+    )
+
+    assert first.status_code == 200
+    assert conflict.status_code == 409
+    assert conflict.json()["failure_category"] == "delivery_conflict"
+    assert delivered == [("[corrected] same words", "agent")]
+
+
+def test_changed_raw_flag_under_same_id_is_refused(tmp_path):
+    """raw toggles whether the pipeline runs; the same id must not silently
+    switch between verbatim and processed delivery."""
+    from holdspeak.db import Database
+
+    database = Database(tmp_path / "delivery.db")
+    delivered: list[str] = []
+    client = _client(
+        _ctx(
+            on_remote_dictation=lambda t: delivered.append(t),
+            dictation_deliveries=database.dictation_deliveries,
+        )
+    )
+    assert client.post(
+        "/api/dictation/remote",
+        json={"text": "exact words", "raw": True, "delivery_id": "id-raw"},
+    ).status_code == 200
+
+    conflict = client.post(
+        "/api/dictation/remote",
+        json={"text": "exact words", "delivery_id": "id-raw"},
+    )
+
+    assert conflict.status_code == 409
+    assert conflict.json()["failure_category"] == "delivery_conflict"
+    assert delivered == ["exact words"]
+
+
+def test_terminal_failure_is_cached_and_an_explicit_new_id_may_retry(tmp_path, monkeypatch):
+    """A known pre-effect failure (the pipeline itself) becomes a terminal
+    failed Receipt: the same id replays the cached failure without re-running
+    anything, and an explicit retry under a NEW id runs the effect exactly once."""
+    from holdspeak.db import Database
+
+    database = Database(tmp_path / "delivery.db")
+    delivered: list[str] = []
+    pipeline_calls = 0
+
+    def exploding_pipeline(text, *a, **k):
+        nonlocal pipeline_calls
+        pipeline_calls += 1
+        if pipeline_calls == 1:
+            raise RuntimeError("rewrite backend unavailable")
+        return {"final_text": f"[corrected] {text}"}
+
+    monkeypatch.setattr(PIPELINE, exploding_pipeline)
+    client = _client(
+        _ctx(
+            on_remote_dictation=lambda t: delivered.append(t),
+            dictation_deliveries=database.dictation_deliveries,
+        )
+    )
+    payload = {"text": "keep these words", "delivery_id": "id-fail-1"}
+
+    first = client.post("/api/dictation/remote", json=payload)
+    replay = client.post("/api/dictation/remote", json=payload)
+    retry = client.post(
+        "/api/dictation/remote",
+        json={"text": "keep these words", "delivery_id": "id-fail-2"},
+    )
+
+    assert first.status_code == replay.status_code == 500
+    assert replay.json()["deduplicated"] is True
+    assert pipeline_calls == 2, "the cached failure must not re-run the pipeline"
+    assert retry.status_code == 200
+    assert retry.json()["deduplicated"] is False
+    assert delivered == ["[corrected] keep these words"]
+
+
+def test_pending_claim_refuses_a_changed_payload_too(tmp_path):
+    """An indeterminate delivery stays pending AND keeps its payload binding:
+    reusing the pending id for different words is a 409 conflict, not a
+    silent replacement of the uncertain effect."""
+    from holdspeak.db import Database
+
+    database = Database(tmp_path / "delivery.db")
+    calls = 0
+
+    def fail_once(_text: str) -> None:
+        nonlocal calls
+        calls += 1
+        raise RuntimeError("target stopped")
+
+    client = _client(
+        _ctx(
+            on_remote_dictation=fail_once,
+            dictation_deliveries=database.dictation_deliveries,
+        )
+    )
+    pending = client.post(
+        "/api/dictation/remote",
+        json={"text": "original words", "delivery_id": "id-pending"},
+    )
+    changed = client.post(
+        "/api/dictation/remote",
+        json={"text": "different words", "delivery_id": "id-pending"},
+    )
+    same = client.post(
+        "/api/dictation/remote",
+        json={"text": "original words", "delivery_id": "id-pending"},
+    )
+
+    assert pending.status_code == 425
+    assert changed.status_code == 409
+    assert same.status_code == 425, "indeterminate stays pending; never re-run"
+    assert calls == 1
+
+
 def test_without_delivery_hook_processes_only():
     r = _client(_ctx()).post("/api/dictation/remote", json={"text": "hello"})
     assert r.status_code == 200

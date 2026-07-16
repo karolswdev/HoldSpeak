@@ -4,7 +4,7 @@
 // desk; Escape or ✕ closes (it is a desk window — it survives clicks
 // elsewhere and can be moved, resized, and raised).
 import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { Link } from "react-router-dom";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
@@ -59,6 +59,7 @@ function intelligenceState(value: string): string {
 }
 
 export function Pullout({ o }: { o: WorldObject }) {
+  const reducedMotion = useReducedMotion();
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
   const inferenceTargets = useDesk((s) => s.inferenceTargets);
@@ -237,7 +238,7 @@ export function Pullout({ o }: { o: WorldObject }) {
   const capability = ir.capability || {};
   const readiness = capability.readiness || {
     state: "unavailable",
-    detail: "Capability contract unavailable.",
+    detail: "Capability contract unavailable. Nothing was run. Reload the Desk to retry.",
   };
   const capabilityCanRun =
     readiness.state === "ready" &&
@@ -293,7 +294,7 @@ export function Pullout({ o }: { o: WorldObject }) {
         "desk-pullout desk-window" + (win.floating ? " is-floating" : "")
       }
       style={{ "--k": objGlow(o.kind), ...win.style } as React.CSSProperties}
-      initial={{ x: 60, opacity: 0 }}
+      initial={reducedMotion ? false : { x: 60, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 30 }}
       onPointerDown={(e) => {

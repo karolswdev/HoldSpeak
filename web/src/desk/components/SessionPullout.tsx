@@ -2,7 +2,7 @@
 // grammar. Watching is free. Secure/Normal use an exact pane grant; a Hub
 // policy decision can make a registered pane directly steerable in YOLO.
 import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { MicButton } from "./MicButton";
 import { GroundingSection } from "./GroundingSection";
 import { RailsPicker } from "./RailsPicker";
@@ -584,6 +584,7 @@ function ClassifySection({ sessionKey }: { sessionKey: string }) {
 }
 
 export function SessionPullout() {
+  const reducedMotion = useReducedMotion();
   const openKey = useSteering((s) => s.openKey);
   const session = useSteering((s) => s.session);
   const paneStatus = useSteering((s) => s.paneStatus);
@@ -632,7 +633,7 @@ export function SessionPullout() {
         (win.floating ? " is-floating" : "")
       }
       style={win.style}
-      initial={{ x: 60, opacity: 0 }}
+      initial={reducedMotion ? false : { x: 60, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 30 }}
       onPointerDown={(e) => {

@@ -70,7 +70,7 @@ export const DESK_TOOLS = [
   },
 ] as const;
 
-const KIND_LABEL: Record<string, string> = {
+export const KIND_LABEL: Record<string, string> = {
   artifact: "Artifact",
   chain: "Workflow",
   coder: "Coder session",
@@ -219,6 +219,29 @@ export function DeskToolShelf() {
     setQuery("");
   };
 
+  // Keyboard-only navigation (HS-93-01): ArrowDown/ArrowUp move focus from
+  // the search field through every result (tool links and Desk-item
+  // buttons), the standard search-shelf pattern. Without this the shelf was
+  // Tab-only, which buried distant results behind many keystrokes.
+  const moveFocus = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const root = rootRef.current;
+    if (!root) return;
+    const focusables = Array.from(
+      root.querySelectorAll<HTMLElement>(
+        "input[type='search'], .desk-tool-list a, .desk-tool-list button",
+      ),
+    );
+    if (!focusables.length) return;
+    event.preventDefault();
+    const current = focusables.indexOf(document.activeElement as HTMLElement);
+    const next =
+      event.key === "ArrowDown"
+        ? Math.min(current + 1, focusables.length - 1)
+        : Math.max(current - 1, 0);
+    focusables[next]?.focus();
+  };
+
   return (
     <>
       <button
@@ -239,6 +262,7 @@ export function DeskToolShelf() {
           className="desk-tool-shelf"
           role="region"
           aria-label="Tools and Desk search"
+          onKeyDown={moveFocus}
         >
           <header className="desk-panel-head">
             <div>

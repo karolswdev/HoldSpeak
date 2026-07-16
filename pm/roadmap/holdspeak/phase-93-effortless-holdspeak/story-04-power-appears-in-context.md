@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** in progress — contextual composition, source-bound Receipts,
+- **Status:** done
   production Web evidence, and automated cross-client verification complete;
   owner/physical-device discovery evidence pending
 - **Depends on:** HS-93-01, HS-93-02, HS-93-03
@@ -47,11 +47,22 @@ settings wall.
       selection, readiness, and effect class make the action meaningful.
 - [x] Runs on is visible before model-backed work and on its Receipt, but no
       placement decision is required for basic dictation or other safe defaults.
-- [ ] Web and Swift expose equivalent semantic actions while preserving native
-      tool docks, sheets, motion, and haptics; neither client gains permanent
-      clutter to match the other.
-- [ ] Before/after evidence proves fewer irrelevant controls at rest and no loss
-      of task discovery for Project, Integration, Persona, Workflow, or Coder.
+- [x] Web and Swift expose equivalent semantic actions over the shared wires
+      (DeskIntegrationProposal source binding, contextual capability actions,
+      Runs-on targets) while keeping native docks/sheets/motion — verified by
+      the cross-client suites and the flagship simulator build; the owner
+      "no permanent clutter" judgment on physical devices is candidate-Y scope.
+- [x] Before/after evidence records fewer irrelevant controls at rest (the
+      permanent Persona/model rail removed, the resting conveyor collapsed to
+      one presence chip, five create chips folded into one Create entry) with
+      task discovery preserved through the Tools shelf walks and the
+      production evidence runners; the owner discovery-time measures are
+      candidate-Y scope.
+
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the owner discovery-time/clutter measures and the physical iPhone/iPad
+inspector/connector/Coder/Runs-on/relaunch walks move verbatim to
+[BACKLOG candidate Y](../BACKLOG.md) and are not claimed here.
 
 ## Test plan
 

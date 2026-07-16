@@ -43,7 +43,7 @@ private func shapeTint(_ k: ShapeKind) -> Color {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { self?.graph = g }
                 }
             } catch {
-                await MainActor.run { self?.vlmBusy = false; self?.vlmError = "Couldn't reach the vision model: \(error.localizedDescription)" }
+                await MainActor.run { self?.vlmBusy = false; self?.vlmError = "Couldn't reach the vision model (\(error.localizedDescription)). Your sketch is unchanged. Check the endpoint in Settings and retry." }
             }
         }
     }

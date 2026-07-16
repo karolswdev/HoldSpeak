@@ -34,7 +34,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         """
         if ctx.on_wake_type is None:
             return JSONResponse(
-                {"success": False, "error": "Wake typing is unavailable in this runtime."},
+                {"success": False, "error": "Wake typing is unavailable in this runtime. Nothing was typed. Start the desktop runtime and retry."},
                 status_code=503,
             )
         token = str((payload or {}).get("token", "")).strip()
@@ -63,7 +63,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         """
         if ctx.on_transcribe is None:
             return JSONResponse(
-                {"success": False, "error": "Transcription is unavailable in this runtime."},
+                {"success": False, "error": "Transcription is unavailable in this runtime. Your audio is kept in the browser for Retry. Start the desktop runtime."},
                 status_code=503,
             )
         raw = await request.body()
@@ -101,7 +101,8 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             log.error(f"speak-to-fill transcription failed: {exc}")
             return JSONResponse(
-                {"success": False, "error": "Transcription failed."}, status_code=502
+                {"success": False, "error": "Transcription failed. Your audio is kept in the browser for Retry."},
+                status_code=502,
             )
         return {"success": True, "text": text}
 
@@ -115,7 +116,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         """
         if ctx.on_preview_type is None:
             return JSONResponse(
-                {"success": False, "error": "Preview typing is unavailable in this runtime."},
+                {"success": False, "error": "Preview typing is unavailable in this runtime. Nothing was typed. Start the desktop runtime and retry."},
                 status_code=503,
             )
         token = str((payload or {}).get("token", "")).strip()
@@ -137,7 +138,7 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         """HS-75-01: burn a stored preview without typing."""
         if ctx.on_preview_discard is None:
             return JSONResponse(
-                {"success": False, "error": "Preview discard is unavailable in this runtime."},
+                {"success": False, "error": "Preview discard is unavailable in this runtime. The preview is unchanged. Start the desktop runtime and retry."},
                 status_code=503,
             )
         token = str((payload or {}).get("token", "")).strip()

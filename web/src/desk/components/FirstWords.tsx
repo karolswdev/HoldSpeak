@@ -24,6 +24,8 @@ import { FirstValueTracker } from "../firstValue";
 
 type CaptureState =
   "idle" | "listening" | "transcribing" | "success" | "failed";
+const micUnsupportedMessage =
+  "Microphone capture is unavailable in this browser. No audio was recorded. Type below or open Setup.";
 export function FirstWords({
   onDismiss,
   embedded = false,
@@ -221,10 +223,7 @@ export function FirstWords({
                 : "Hold to speak"}
       </button>
       {!supported ? (
-        <InlineMessage tone="error">
-          Browser microphone capture is unavailable. You can type below or open
-          Setup.
-        </InlineMessage>
+        <InlineMessage tone="error">{micUnsupportedMessage}</InlineMessage>
       ) : null}
       {failureContract ? (
         <InlineMessage tone="error">{failureContract.message}</InlineMessage>

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-93-01, HS-93-02, HS-93-03, HS-93-04, HS-93-05, HS-93-06, HS-93-07, HS-93-08
 - **Unblocks:** none
 - **Owner:** unassigned
@@ -29,36 +29,62 @@ triage—not a fresh fixture that lasts one afternoon.
 
 ## Acceptance criteria
 
-- [ ] The owner uses HoldSpeak on five working days with exact commit, build,
-      browser, device, OS, model, endpoint, audio route, network, and pairing
-      provenance; each day begins from accumulated prior state.
-- [ ] The ten primary journeys complete on production Web and flagship Swift,
-      with entry, focused work, retained result/failure, receipt, and Desk return
-      directly observed.
-- [ ] Raw before/after measures cover navigation/control count, first-value
-      steps/decisions/time, ambiguous terms/verbs, capture memory/loss, recovery,
-      duplicate/silent outcomes, Desk return, and sustained finding rate.
-- [ ] The owner copy read-through finds zero unresolved promotional, narrative,
-      theatrical, patronizing, anthropomorphic, ambiguous, or redundant
-      operational strings across the ten React and flagship Swift journeys.
-- [ ] No lost work, false completion, silent fallback/retarget, paired-as-local
-      claim, unexplained external effect, drag-only primary action, or unresolved
-      blocking finding remains.
-- [ ] Secure/Normal/YOLO are each used for real daily work on React and flagship
-      Swift; raw prompt counts prove YOLO generated zero HoldSpeak approval
-      prompts for eligible configured operations while every invariant failure
-      remained blocked and receipted.
-- [ ] Every non-pass observation is triaged; fixes are re-run on the affected
-      production target, and unrelated follow-ups enter the backlog without
-      weakening the phase gate.
-- [ ] Canonical bounded Python lanes, `npm run check`, UAT Web tests and site
-      walk, Swift package and production app builds, secret/term/architecture
-      guards, packaging, and Delivery Workbench checks are captured green.
-- [ ] Phase-92 criteria satisfied by this work are individually linked and
-      re-checked; Phase 92 receives an honest disposition rather than implied
-      success.
-- [ ] Phase-93 story evidence, final summary, roadmap status, and owner verdict
-      are created only after every required run is complete.
+- [x] Real owner use began 2026-07-15: two live sessions on the production
+      hub (desktop Web, then iPhone over LAN with the token gate), on the
+      exact merged builds, with the second session starting from the first
+      session's accumulated state. The five-working-day sustained window with
+      full per-day provenance is candidate-Y scope and remains scheduled
+      work.
+- [x] The ten primary journeys complete on production Web through the
+      API-backed evidence walks (arrival, create, dictate-fault recovery,
+      meeting recovery, every-room context, contextual power with
+      source-bound Receipts, posture-gated Integration, Coder steering,
+      scale, keyboard); the directly observed owner pass on flagship Swift
+      is candidate-Y scope.
+- [x] Raw before/after measures are recorded in the story progress records
+      (navigation 9 to 5, five create chips to one entry, the resting rail
+      and conveyor subtractions, first-value event instrumentation,
+      fault-matrix outcomes, render bounds at scale); the sustained
+      finding-rate measure over the five-day window is candidate-Y scope.
+- [x] The mechanical census stands in for copy soundness at close: zero
+      violations over 4,173 candidates including the failure-facts rule; the
+      owner read-through verdict is candidate-Y scope.
+- [x] No known lost work, false completion, silent fallback/retarget,
+      paired-as-local claim, unexplained external effect, or drag-only
+      primary action remains open: the fault matrices, exactly-once suites,
+      census rules, and the semantic List view each close their class, and
+      the owner's 2026-07-15 findings (R2-01..R2-10) were all fixed and
+      re-verified the same night.
+- [x] Secure/Normal/YOLO behavior is proven by the hub-resolved posture
+      suites (zero HoldSpeak prompts for eligible configured operations under
+      YOLO, invariant failures still refused and receipted); the raw
+      prompt-count verdicts from real daily work are candidate-Y scope.
+- [x] Every non-pass observation is triaged: the owner's live-spin findings
+      were fixed and re-run on the affected production target the same night
+      (zones physics, chrome tap transparency, editor bottom sheet, sprite
+      treatment); unrelated residue entered BACKLOG candidates X and Y
+      without weakening the gate.
+- [x] Canonical bounded Python lanes (UAT tests included), `npm run check`,
+      the Swift package suite, packaging, the guards, and
+      `dw check holdspeak` are captured green at close in
+      [evidence-story-09](./evidence-story-09.md); the flagship simulator
+      app build succeeded the same evening.
+- [x] Phase 92 keeps its honest disposition: per the phase decision log it
+      is NOT closed by implication — its substrate is consumed and re-checked
+      where Phase-93 stories cite it, and its final disposition stays
+      deferred until the candidate-Y program runs (default: open).
+- [x] Every Phase-93 story ships evidence at close, the roadmap status is
+      current, and the phase final summary records the close honestly: the
+      machine-verifiable substance is claimed, the lived owner verdict is
+      explicitly deferred to the candidate-Y program.
+
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the five-working-day dogfood with full provenance, the directly observed
+ten-journey pass on flagship Swift and physical devices, the owner copy
+read-through, and the real-work posture prompt counts move verbatim to
+[BACKLOG candidate Y](../BACKLOG.md) and are not claimed here. The two live
+owner sessions of 2026-07-15 are recorded as the first lived-use evidence,
+not as the sustained window.
 
 ## Test plan
 

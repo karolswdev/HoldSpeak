@@ -99,6 +99,12 @@ class MeetingCaptureJournal:
             self._write_manifest()
 
     def _checkpoint_locked(self) -> None:
+        # HS-93-06 fault plane: a deterministic disk-write failure at the
+        # checkpoint, taking exactly the real error path (self._error set,
+        # capture goes `recoverable`, no durable bytes are falsely claimed).
+        from .faults import trip as _fault_trip
+
+        _fault_trip("meeting.checkpoint_write", OSError)
         for source, handle in self._files.items():
             handle.flush()
             os.fsync(handle.fileno())

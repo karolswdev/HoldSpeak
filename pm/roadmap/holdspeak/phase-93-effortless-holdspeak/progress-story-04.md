@@ -225,3 +225,21 @@ Verification: full Web gate green (guard 115 sources, typecheck, 32 files /
 desk source-lock/copy/doc-drift guards `30 passed`, and before/after live
 captures on desktop (1440) and iPhone (393) viewports plus the seeded-rig
 create-Persona editor sheets.
+
+## Closure — 2026-07-16 (owner-rescoped)
+
+The standing owner close directive rescopes this story to its
+machine-verifiable scope; the owner discovery-time/clutter measures and the
+physical iPhone/iPad walks move verbatim to BACKLOG candidate Y.
+
+Closing evidence ([evidence-story-04](./evidence-story-04.md)): the complete
+context-power walk (selection tools, Integration inspector, propose → approve
+→ Receipt → source return, Project inspector, compact layout) and the
+desk-window walk both green with zero failed API responses. Two earlier
+captures the same night are recorded honestly: the evidence runner still
+assumed the pre-remediation destroy-on-open panel exclusivity; it now closes
+the coexisting inspector window explicitly, matching the shipped window
+grammar. Cross-client semantic-action parity rides the shared wires
+(DeskIntegrationProposal source binding, capability actions, Runs-on
+targets), verified by the Web and Swift suites and the flagship simulator
+build recorded earlier in this record.

@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useDesk } from "./store";
 import { Stage } from "./components/Stage";
 import { World } from "./components/World";
+import { DeskListView } from "./components/DeskListView";
 import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
 import { RecordOrb } from "./components/RecordOrb";
@@ -23,6 +24,7 @@ export default function DeskApp() {
   const updatedAt = useDesk((s) => s.updatedAt);
   const chatPersonaId = useDesk((s) => s.chatPersonaId);
   const setup = useDesk((s) => s.setup);
+  const viewMode = useDesk((s) => s.viewMode);
   const { refresh } = useDesk.getState();
 
   useEffect(() => {
@@ -42,6 +44,8 @@ export default function DeskApp() {
       <DeskChrome showDailyStarts={!empty} />
       {empty ? (
         <EmptyDesk arrivalRequired={setup?.arrival_required === true} />
+      ) : viewMode === "list" ? (
+        <DeskListView />
       ) : (
         <World />
       )}

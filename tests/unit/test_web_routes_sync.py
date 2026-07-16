@@ -165,6 +165,159 @@ def test_push_rejects_malformed_record(monkeypatch, tmp_path):
     assert not (tmp_path / "sync_inbox").exists()
 
 
+# ---------------------------------------------------------------------------
+# HS-93-06 — the exactly-once matrix on a REAL database: an identical replayed
+# envelope is idempotent, a changed payload at an equal clock is refused into a
+# retained conflict (never merged by guessing), and tombstones delete once and
+# replay harmlessly.
+# ---------------------------------------------------------------------------
+
+
+def _real_db(tmp_path, monkeypatch):
+    from holdspeak.db import Database
+
+    db = Database(tmp_path / "hs.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    return db
+
+
+def _meeting_value(mid: str) -> dict:
+    return {
+        "id": mid,
+        "title": "Native capture",
+        "tags": ["sync"],
+        "started_at": "2026-07-10T09:00:00Z",
+        "ended_at": "2026-07-10T09:30:00Z",
+        "segments": [
+            {"text": "the first durable words", "speaker": "Me",
+             "start_time": 1.0, "end_time": 4.0},
+        ],
+        "capture_status": "finalized",
+        "provenance": "native",
+    }
+
+
+def _push(client, record) -> dict:
+    resp = client.post(
+        "/api/sync/push", json={"meetings": [record], "artifacts": []}
+    )
+    assert resp.status_code == 200, resp.text
+    return resp.json()
+
+
+def _record(mid: str, lm: str, value=None, *, deleted: bool = False) -> dict:
+    return {
+        "meta": {"id": mid, "kind": "meeting", "last_modified": lm,
+                 "deleted": deleted},
+        "value": value,
+    }
+
+
+LM = "2026-07-10T09:30:00Z"
+LM_NEWER = "2026-07-10T09:31:00Z"
+LM_OLDER = "2026-07-10T09:29:00Z"
+
+
+def test_replayed_identical_envelope_is_exactly_once(monkeypatch, tmp_path):
+    db = _real_db(tmp_path, monkeypatch)
+    client = _client()
+
+    _push(client, _record("m-once", LM, _meeting_value("m-once")))
+    stored = db.meetings.get_meeting("m-once")
+    assert stored is not None
+
+    # Replay the exact wire shape the hub itself would emit for this meeting.
+    _push(client, _record("m-once", LM, stored.to_dict()))
+
+    assert [m.id for m in db.meetings.list_meetings()] == ["m-once"]
+    replayed = db.meetings.get_meeting("m-once")
+    assert replayed.title == "Native capture"
+    assert [s.text for s in replayed.segments] == ["the first durable words"]
+    assert db.meetings.list_sync_conflicts("m-once") == []
+
+
+def test_changed_payload_at_equal_clock_is_refused_into_one_conflict(
+    monkeypatch, tmp_path
+):
+    db = _real_db(tmp_path, monkeypatch)
+    client = _client()
+
+    _push(client, _record("m-clash", LM, _meeting_value("m-clash")))
+    divergent = db.meetings.get_meeting("m-clash").to_dict()
+    divergent["title"] = "Divergent native title"
+
+    _push(client, _record("m-clash", LM, divergent))
+    # Local remains authoritative; the losing value is retained exactly once.
+    assert db.meetings.get_meeting("m-clash").title == "Native capture"
+    conflicts = db.meetings.list_sync_conflicts("m-clash")
+    assert len(conflicts) == 1
+    assert conflicts[0]["incoming"]["title"] == "Divergent native title"
+
+    # Replaying the same divergent push does not stack a second conflict.
+    _push(client, _record("m-clash", LM, divergent))
+    assert len(db.meetings.list_sync_conflicts("m-clash")) == 1
+    assert [m.id for m in db.meetings.list_meetings()] == ["m-clash"]
+
+
+def test_stale_clock_push_is_skipped_without_conflict(monkeypatch, tmp_path):
+    db = _real_db(tmp_path, monkeypatch)
+    client = _client()
+
+    _push(client, _record("m-stale", LM, _meeting_value("m-stale")))
+    stale = db.meetings.get_meeting("m-stale").to_dict()
+    stale["title"] = "An older device speaks"
+
+    _push(client, _record("m-stale", LM_OLDER, stale))
+    assert db.meetings.get_meeting("m-stale").title == "Native capture"
+    assert db.meetings.list_sync_conflicts("m-stale") == []
+
+
+def test_newer_clock_updates_same_identity_without_duplicate(monkeypatch, tmp_path):
+    db = _real_db(tmp_path, monkeypatch)
+    client = _client()
+
+    _push(client, _record("m-lww", LM, _meeting_value("m-lww")))
+    newer = db.meetings.get_meeting("m-lww").to_dict()
+    newer["title"] = "Corrected after the meeting"
+
+    _push(client, _record("m-lww", LM_NEWER, newer))
+    assert [m.id for m in db.meetings.list_meetings()] == ["m-lww"]
+    assert db.meetings.get_meeting("m-lww").title == "Corrected after the meeting"
+    assert db.meetings.list_sync_conflicts("m-lww") == []
+
+
+def test_tombstone_deletes_once_and_replays_harmlessly(monkeypatch, tmp_path):
+    db = _real_db(tmp_path, monkeypatch)
+    client = _client()
+
+    _push(client, _record("m-tomb", LM, _meeting_value("m-tomb")))
+    assert db.meetings.get_meeting("m-tomb") is not None
+
+    _push(client, _record("m-tomb", LM_NEWER, deleted=True))
+    assert db.meetings.get_meeting("m-tomb") is None
+
+    # The replayed tombstone neither errors nor resurrects the meeting.
+    _push(client, _record("m-tomb", LM_NEWER, deleted=True))
+    assert db.meetings.get_meeting("m-tomb") is None
+    assert db.meetings.list_meetings() == []
+
+
+def test_tombstone_at_equal_clock_keeps_meeting_and_retains_conflict(
+    monkeypatch, tmp_path
+):
+    db = _real_db(tmp_path, monkeypatch)
+    client = _client()
+
+    _push(client, _record("m-tomb-eq", LM, _meeting_value("m-tomb-eq")))
+    _push(client, _record("m-tomb-eq", LM, deleted=True))
+
+    # An equal-clock delete is a conflict decision for the owner, not a merge.
+    assert db.meetings.get_meeting("m-tomb-eq") is not None
+    conflicts = db.meetings.list_sync_conflicts("m-tomb-eq")
+    assert len(conflicts) == 1
+    assert conflicts[0]["incoming"]["deleted"] is True
+
+
 def test_iso_emits_strict_wire_timestamps():
     """Every `_iso` shape lands as strict `Z` seconds — the iPad's `.iso8601`
     decoder rejects fractional seconds and timezone-less strings, and one bad

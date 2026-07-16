@@ -93,6 +93,35 @@ def test_preflight_covers_every_html_route() -> None:
     assert not stale, f"PAGE_ROUTES lists routes the app no longer serves: {sorted(stale)}"
 
 
+# Every wait below is bounded. The desk bundle keeps a WebSocket (with a
+# ping/reconnect loop) and pollers alive, so `networkidle` never fires on
+# those routes — the old sweep stalled to the driver timeout on every case
+# after the first. We wait for `load` with an explicit deadline instead,
+# then give the page a fixed settle window to surface async page errors.
+ROUTE_LOAD_TIMEOUT_MS = 15_000
+ROUTE_SETTLE_MS = 800
+SERVER_READY_TIMEOUT_S = 10.0
+
+
+def _wait_until_serving(url: str) -> None:
+    """Bounded readiness poll — fail loudly instead of sleeping blind."""
+    import urllib.request
+
+    deadline = time.monotonic() + SERVER_READY_TIMEOUT_S
+    last_error: Exception | None = None
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(f"{url}/", timeout=2.0):
+                return
+        except Exception as exc:  # noqa: BLE001 — retry until the deadline
+            last_error = exc
+            time.sleep(0.1)
+    pytest.fail(
+        f"web server at {url} did not answer within {SERVER_READY_TIMEOUT_S}s "
+        f"(last error: {last_error})"
+    )
+
+
 @pytest.mark.e2e
 def test_every_route_loads_without_page_errors() -> None:
     from playwright.sync_api import sync_playwright
@@ -108,7 +137,7 @@ def test_every_route_loads_without_page_errors() -> None:
         host="127.0.0.1",
     )
     url = server.start()
-    time.sleep(1.0)
+    _wait_until_serving(url)
 
     failures: dict[str, list[str]] = {}
     try:
@@ -120,10 +149,22 @@ def test_every_route_loads_without_page_errors() -> None:
             for path in PAGE_ROUTES:
                 errors: list[str] = []
                 page = browser.new_page()
+                page.set_default_timeout(ROUTE_LOAD_TIMEOUT_MS)
                 page.on("pageerror", lambda e, errors=errors: errors.append(str(e)))
-                page.goto(f"{url}{path}", wait_until="networkidle")
-                page.wait_for_timeout(800)
-                page.close()
+                try:
+                    page.goto(
+                        f"{url}{path}",
+                        wait_until="load",
+                        timeout=ROUTE_LOAD_TIMEOUT_MS,
+                    )
+                    page.wait_for_timeout(ROUTE_SETTLE_MS)
+                except Exception as exc:  # noqa: BLE001 — a stalled route is a failure, not a hang
+                    errors.append(
+                        f"route did not reach 'load' within "
+                        f"{ROUTE_LOAD_TIMEOUT_MS}ms: {exc}"
+                    )
+                finally:
+                    page.close()
                 if errors:
                     failures[path] = errors
             browser.close()

@@ -6,7 +6,7 @@
 // pre-run it names the picked profile's target; printed, it names where the
 // run actually went.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { useDesk } from "../store";
 import {
   ASK_LENSES,
@@ -36,6 +36,7 @@ import { RunsOnPicker } from "./RunsOnPicker";
 import { useDeskWindow } from "./DeskWindow";
 
 export function AskPanel() {
+  const reducedMotion = useReducedMotion();
   const items = useDesk((s) => s.items);
   const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const selectedIds = useDesk((s) => s.selectedIds);
@@ -225,7 +226,7 @@ export function AskPanel() {
         (win.floating ? " is-floating" : "")
       }
       style={win.style}
-      initial={{ x: 60, opacity: 0 }}
+      initial={reducedMotion ? false : { x: 60, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 30 }}
       onPointerDown={(e) => {

@@ -164,3 +164,25 @@ The next autonomous development slice should add deterministic capture/model
 fault hooks and the bounded long-run protocol needed for repeatable physical
 Web/iPhone/iPad execution. Simulator, deterministic seed, or synthetic evidence
 will not be used to close physical or real-fault acceptance.
+
+## Closure — 2026-07-16 (owner-rescoped)
+
+The standing owner close directive rescopes this story to its
+machine-verifiable scope; the physical-device duration, fault, and
+airplane-mode walks move verbatim to BACKLOG candidate Y.
+
+The closing slice delivered the explicitly requested rail: a deterministic
+fault plane (holdspeak/faults.py, HOLDSPEAK_FAULT env, off by default,
+census-locked to five declared injection sites) covering transcription
+failure, refused checkpoint writes, a SIGKILL between checkpoint and
+finalize, model unavailability at intelligence time, and per-plugin failure;
+a bounded long-run protocol (scripts/phase93_meeting_longrun.py) that drove
+the real server, device-audio WebSocket ingest, journal, and DB for 60
+samples with RSS slope 763 KiB/min under the 1,024 limit and recovery valid
+at every sample (trace in evidence/hs-93-06/longrun-trace-5min.json, with
+30/120-minute owner flags); a deterministic kill/recovery integration test
+proving single-identity recovery with the checkpointed prefix intact; and six
+new exactly-once sync tests (idempotent replay, one retained conflict at
+equal clock, tombstone semantics). The recovery evidence runner was also
+repaired for the HS-93-04 recovery-card rename and its captures refreshed.
+Captured runs: [evidence-story-06](./evidence-story-06.md).

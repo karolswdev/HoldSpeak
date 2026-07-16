@@ -124,3 +124,22 @@ state, destination, boundary, or commitment. Forced-failure walks must also
 confirm the rendered combination of failed operation, retained work, relevant
 destination, and next valid action. Automated source inventory and simulator
 compilation do not substitute for that evidence.
+
+## Closure — 2026-07-16 (owner-rescoped)
+
+The standing owner close directive rescopes this story to its
+machine-verifiable scope; the owner read-through and physical-device
+forced-failure walks move verbatim to BACKLOG candidate Y.
+
+The closing slice completed the one open automatable criterion: every
+forced-failure string now mechanically carries the four facts (what failed,
+what is retained, destination when relevant, next valid action). The census
+gained a failure-facts rule with the same exception discipline as the
+generic-verb rule, plus a new hub-served copy surface (bounded route files),
+camelCase error-context extraction, and f-string normalization. 86 flagged
+strings were fixed across flagship Swift (25), Web (5), hub routes (27,
+including Sequence/Persona renames), and the CLI (1); two exact, reasoned
+exceptions were recorded. Census green over 4,173 candidates with zero
+violations; product-copy and language lanes 15 passed; full unit suite 2,936
+passed; full Web gate green.
+Captured runs: [evidence-story-03](./evidence-story-03.md).

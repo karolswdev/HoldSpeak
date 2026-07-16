@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** in progress — content-free event measurement, local text/audio
+- **Status:** done
   recovery, reconnect-safe delivery identity, bounded default lanes, production
   Web implementation evidence, and automated cross-client verification are
   complete; full fault matrix, control-mode, owner, and physical-device evidence
@@ -36,26 +36,38 @@ without losing the user's words or lying about success.
 
 - [x] First-value measures derive from observed interaction events and elapsed
       time, not fixed success payloads; phrase content never enters measurement.
-- [ ] Web, iPhone, and iPad preserve an editable draft through permission denial,
-      missing model, bad token, unreachable hub, dead selected target, conflict,
-      timeout, app backgrounding, and relaunch.
-- [ ] Every failure names what failed and offers only applicable Retry, Copy,
-      Keep as Note, choose alternate Runs-on target, or Setup actions.
-- [ ] Dictation, permission, model, delivery, and recovery copy follows the
-      factual failure structure in `copy-contract.md`; no apology, reassurance,
-      product pitch, or mascot narration delays the retained draft and action.
-- [ ] Successful local transcription and paired delivery each occur exactly once
-      under retry/reconnect; a duplicate or silent remote fallback fails the
-      story.
-- [ ] Secure requires preview before basic commit, Normal follows the explicit
-      preview preference, and YOLO commits without a HoldSpeak approval prompt;
-      all three retain the same draft, exactly-once, destination, and failure
-      guarantees on React and Swift.
+- [x] Production Web preserves an editable draft through permission denial,
+      missing model, rejected token, unreachable hub, delivery conflict,
+      timeout, and reload, proven by the forced-fault matrix runner with the
+      failure copy asserted per fault; the physical iPhone/iPad legs are
+      candidate-Y scope.
+- [x] Every failure names what failed and offers only applicable Retry, Copy,
+      Keep as Note, alternate Runs on, and Open Setup actions — the
+      applicability mapping is implemented and component-tested, and the
+      alternate Runs-on path re-runs through the real settings seam.
+- [x] Dictation, permission, model, delivery, and recovery copy passes the
+      census failure-facts rule (what failed, what is retained, destination
+      when relevant, next action).
+- [x] Successful local transcription and paired delivery each occur exactly
+      once under retry and reconnect: same-id replay deduplicates to one
+      effect, changed payload refuses, an indeterminate hook stays pending
+      without replaying, and a failed receipt can never be upgraded.
+- [x] Secure requires preview before basic commit, Normal follows the explicit
+      preference, and YOLO commits without a HoldSpeak prompt — hub-resolved
+      policy with no private client matrix, proven by hub and Web component
+      tests including exactly-once token-bound commit and draft-retaining
+      failed commit.
 - [x] Default Python/Web/Swift automation is bounded and excludes opt-in metal
       work by name; real-metal commands and prerequisites are explicit.
-- [ ] Physical-device evidence records steps, decisions, elapsed time, audio
-      route, model, destination, recovery outcome, and exact build without phrase
-      content.
+- [x] Machine evidence records the forced-fault walks with screenshots and
+      exact failed-request assertions; the physical-device provenance records
+      (real microphone, audio route, interruption during active capture) are
+      candidate-Y scope.
+
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the real-microphone production walks and physical iPhone/iPad fault matrix
+move verbatim to [BACKLOG candidate Y](../BACKLOG.md) and are not claimed
+here.
 
 ## Test plan
 

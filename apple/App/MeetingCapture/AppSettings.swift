@@ -209,7 +209,7 @@ struct SettingsView: View {
                 controlMode = policy.controlMode
                 controlModeState = ""
             } catch {
-                controlModeState = "Control posture is unavailable on the paired desktop. Check the connection and retry."
+                controlModeState = "Control posture could not be read from the paired desktop. Your setting is unchanged. Check the connection and retry."
             }
         }
     }

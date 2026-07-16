@@ -155,7 +155,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"meeting": meeting.to_dict(), "recovered": True})
         except Exception as exc:
             return JSONResponse(
-                {"error": f"Recovery failed; original retained: {exc}"},
+                {"error": f"Recovery failed; the original Meeting is retained: {exc}. Retry recovery."},
                 status_code=500,
             )
 
@@ -231,13 +231,13 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             )
         except (TypeError, ValueError) as exc:
             return JSONResponse(
-                {"error": f"Conflict was not changed; both versions remain: {exc}"},
+                {"error": f"Conflict was not changed; both versions remain: {exc}. Choose a version and retry."},
                 status_code=409,
             )
         except Exception as exc:
             log.error("Failed to resolve Meeting sync conflict: %s", exc)
             return JSONResponse(
-                {"error": f"Conflict recovery failed; both versions remain: {exc}"},
+                {"error": f"Conflict recovery failed; both versions remain: {exc}. Retry the resolution."},
                 status_code=500,
             )
 

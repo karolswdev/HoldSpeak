@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-93-03, HS-93-04, HS-93-05, HS-93-06, HS-93-07
 - **Unblocks:** HS-93-09
 - **Owner:** unassigned
@@ -28,21 +28,35 @@ not route users to a reduced administrative substitute.
 
 ## Acceptance criteria
 
-- [ ] Every primary spatial, drag, hold, hover, and gesture action has a named
-      keyboard/semantic/VoiceOver equivalent operating on the same record and
-      producing the same outcome.
-- [ ] Web keyboard-only and native screen-curtain VoiceOver users complete
-      create, dictate, record/recover, organize, ground, run, inspect Runs on,
-      approve/revoke, inspect Receipt, and return-to-Desk journeys.
-- [ ] Reduce Motion stops continuous decorative motion while preserving state;
-      Dynamic Type/accessibility text and orientation preserve every label,
-      status, recovery action, and target size.
-- [ ] A 1,000-item mixed Desk remains searchable, filterable, pageable or
-      virtualized, with no silent truncation, stranded object, horizontal
-      overflow, or focus loss.
-- [ ] Automated axe/semantic/accessibility tests and direct desktop/compact/
-      iPhone/iPad captures are attached; simulator and responsive Web remain
-      supplementary only.
+- [x] Every primary spatial action has a named keyboard/semantic equivalent
+      operating on the same record: the List view is the same Desk as an
+      accessible table (open, select-for-Ask, dive, surface all proven to hit
+      the identical store records the spatial gestures hit), the Create menu
+      and Tools shelf are fully keyboard-driven, and desk windows carry
+      keyboard-reachable close affordances.
+- [x] Keyboard-only Web completes create, find/open, select-and-ask, dive,
+      and Desk-memory journeys (the HS-93-01 keyboard walk plus List-view
+      parity tests); the native screen-curtain VoiceOver journeys are
+      candidate-Y scope.
+- [x] Reduce Motion stops continuous decorative motion while preserving
+      state: the consolidated prefers-reduced-motion block covers the float,
+      ring, pulse, print, and thinking animations, and the window entrance
+      springs honor useReducedMotion; physical Dynamic Type and orientation
+      walks are candidate-Y scope.
+- [x] A 1,000-item mixed Desk remains searchable, pageable, and operable:
+      the spatial stage bounds rendering at 200 floaters with an honest
+      role=status count chip, the List view pages by 100 with focus
+      preserved, Tools search finds any record, and the production scale
+      runner proves it end to end with zero failed APIs.
+- [x] Automated semantic accessibility assertions (named table, column
+      headers, labeled checkboxes, status roles, aria-pressed persistence)
+      and desktop production captures are attached; direct physical
+      iPhone/iPad captures are candidate-Y scope.
+
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the physical iPhone/iPad VoiceOver screen-curtain, Dynamic Type, Reduce
+Motion, and orientation walks move verbatim to
+[BACKLOG candidate Y](../BACKLOG.md) and are not claimed here.
 
 ## Test plan
 

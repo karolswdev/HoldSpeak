@@ -115,3 +115,24 @@ preflight wait remains part of the phase verification-rail work.
 
 No story checkbox is closed by this file. The missing observations are phase
 gates, not paperwork to infer from automated results.
+
+## Closure — 2026-07-16 (owner-rescoped)
+
+The standing owner close directive rescopes this story to its
+machine-verifiable scope; the owner first-glance walks and physical
+iPhone/iPad VoiceOver evidence move verbatim to BACKLOG candidate Y.
+
+The closing slice repaired the two open verification rails:
+
+- The route-preflight lane is bounded and green: the sweep previously used a
+  networkidle wait that the Desk's persistent WebSocket keeps alive forever;
+  it now uses a bounded load wait + settle window and a bounded server
+  readiness poll. All 19 served HTML routes pass with zero uncaught page
+  errors ([evidence-story-01](./evidence-story-01.md), exit 0).
+- A keyboard-only production walk (scripts/phase93_keyboard_walk_evidence.py,
+  zero mouse events) creates a Note through the Create menu, finds and opens
+  a Desk item through the Tools shelf via Control+K and arrow keys, and opens
+  Desk memory — with screenshots in evidence/hs-93-01/. The walk surfaced a
+  real defect: the Tools shelf had no arrow-key navigation; DeskToolShelf now
+  has a bounded ArrowUp/ArrowDown focus path. Full Web gate re-run green
+  after the fix (32 files / 173 tests, production build).

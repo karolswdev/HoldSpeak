@@ -165,3 +165,24 @@ HS-93-05 remains open. Required evidence still includes:
 HS-93-02 is also still open at its owner/physical evidence gate. Synthetic
 typed text, simulator compilation, and source-level audio contracts do not
 substitute for any of these observations.
+
+## Closure — 2026-07-16 (owner-rescoped)
+
+The standing owner close directive rescopes this story to its
+machine-verifiable scope; the real-microphone production walks and physical
+iPhone/iPad matrix move verbatim to BACKLOG candidate Y.
+
+The closing slice ships the Web forced-fault matrix against the production
+bundle (permission denial via a real NotAllowedError, a real 503 from a hub
+with no transcriber, rejected token, unreachable hub, delivery conflict with
+a real re-run through the alternate Runs-on picker, plus the retained timeout
+and reload walks) with per-fault failure-copy and exact failed-request
+assertions and six screenshots in evidence/hs-93-05. The only-applicable
+action mapping (Retry, Copy, Keep as Note, alternate Runs on, Open Setup) is
+implemented and component-tested; the alternate Runs-on pick saves through
+the real settings seam and re-runs with the draft intact. The exactly-once
+matrix gained changed-mode/changed-flag refusals, cached terminal failures,
+and unupgradeable failed receipts. Posture behavior (Secure preview, Normal
+preference, YOLO promptless) is hub-resolved and proven by hub plus Web
+component tests, including the token-bound exactly-once commit.
+Captured runs: [evidence-story-05](./evidence-story-05.md).

@@ -21,7 +21,8 @@ export class ErrorBoundary extends Component<
       <div className="page-wrap">
         <Panel title="This surface needs a reset" eyebrow="Route error">
           <InlineMessage tone="error">
-            {this.state.error.message || "The route could not render."}
+            {this.state.error.message ||
+              "The route could not render. Saved work is unchanged. Reload HoldSpeak to retry."}
           </InlineMessage>
           <Button
             onClick={() => {

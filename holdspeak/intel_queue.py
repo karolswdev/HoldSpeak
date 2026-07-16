@@ -190,6 +190,12 @@ def process_next_intel_job(
             job.last_error == ROUTED_INTEL_RETRY_REASON and meeting.intel is not None
         )
         if not resume_routed:
+            # HS-93-06 fault plane: the model disappears at intelligence time.
+            # Raising here takes the real deferred-intel failure path — a
+            # bounded scheduled retry, never a false Ready.
+            from .faults import trip as _fault_trip
+
+            _fault_trip("intel.model_unavailable")
             kwargs = {
                 "provider": provider,
                 "cloud_model": cloud_model,

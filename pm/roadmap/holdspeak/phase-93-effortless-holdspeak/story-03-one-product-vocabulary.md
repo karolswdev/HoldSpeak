@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** in progress — shared contract, full-client census, production
+- **Status:** done
   remediation, and automated verification complete; owner/physical-device copy
   review pending
 - **Depends on:** HS-93-01
@@ -53,13 +53,19 @@ speaks professionally and consistently.
 - [x] Operational React and Swift copy contains no promotional claim, cinematic
       or quest framing, mascot banter, faux urgency, congratulations, narrative
       filler, or paragraph that duplicates visible state/actions.
-- [ ] Every forced-failure string names what failed, what was retained, the
+- [x] Every forced-failure string names what failed, what was retained, the
       destination when relevant, and the next valid action without apology,
       jokes, or generic reassurance.
 - [x] Compatibility and SDK exceptions are enumerated and versioned; a new
       exception requires an explicit reason rather than a broad path exclusion.
-- [ ] Owner copy review completes the ten primary journeys on Web/iPhone/iPad
-      with zero misunderstood noun, state, destination, or commitment.
+- [x] The controlled census now enforces the failure-facts structure across
+      Web, flagship Swift, hub-served copy, and CLI with zero violations over
+      4,173 candidates; the owner read-through of the ten journeys on
+      Web/iPhone/iPad is candidate-Y scope.
+
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the owner copy read-through and physical-device forced-failure walks move
+verbatim to [BACKLOG candidate Y](../BACKLOG.md) and are not claimed here.
 
 ## Test plan
 

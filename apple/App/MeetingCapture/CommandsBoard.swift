@@ -42,7 +42,7 @@ import SwiftUI
             enabled = s.enabled
             drafts = s.items.map { Draft(keyword: $0.keyword, kind: $0.action.kind, payload: $0.action.payload) }
             boardError = ""
-        } catch { boardError = "Couldn't reach \(macName)." }
+        } catch { boardError = "Couldn't reach \(macName). Saved commands are unchanged. Check pairing and retry." }
     }
 
     /// PUT only the macros slice; the hub validates every macro (a clean 400 shows
@@ -63,7 +63,7 @@ import SwiftUI
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
                 withAnimation { self?.savedTick = false }
             }
-        } catch { boardError = "Save failed — \(macName) rejected it or is unreachable." }
+        } catch { boardError = "Save failed. \(macName) rejected it or was unreachable. Your drafts are kept here. Retry save." }
     }
 
     func test(_ id: UUID) async {

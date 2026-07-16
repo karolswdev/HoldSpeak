@@ -212,6 +212,37 @@ def run_meeting_plugin_chain(
         )
         return summary
 
+    # HS-93-06 fault plane: fail exactly the plugin keys named via
+    # ``HOLDSPEAK_FAULT=intel.plugin:<id>``. Each faulted key persists the same
+    # `error` run record a real plugin failure persists (keyed by the planned
+    # idempotency key, so a later un-faulted retry executes exactly that key),
+    # and the rest of the chain proceeds untouched.
+    from .faults import FAULT_ENV, PLUGIN_FAULT_PREFIX, faulted_plugin_keys
+
+    injected_faults = sorted(faulted_plugin_keys().intersection(remaining_chain))
+    if injected_faults:
+        for plugin_id in injected_faults:
+            db.plugins.record_plugin_run(
+                meeting_id=meeting_id,
+                window_id=window_id,
+                plugin_id=plugin_id,
+                plugin_version="unknown",
+                status="error",
+                idempotency_key=planned_keys[plugin_id],
+                duration_ms=0.0,
+                output=None,
+                error=f"{FAULT_ENV}={PLUGIN_FAULT_PREFIX}{plugin_id} injected failure",
+                deduped=False,
+            )
+        log.warning(
+            "meeting_plugins: %s injected plugin fault(s) for %s",
+            meeting_id, ", ".join(injected_faults),
+        )
+        remaining_chain = [
+            plugin_id for plugin_id in remaining_chain
+            if plugin_id not in set(injected_faults)
+        ]
+
     if host is None:
         host = _build_host()
     context = {
@@ -276,6 +307,7 @@ def run_meeting_plugin_chain(
                 for plugin_id in plugin_chain
                 if planned_keys[plugin_id] in existing_completed_keys
             },
+            **{plugin_id: "error" for plugin_id in injected_faults},
             **{str(r.plugin_id): str(r.status) for r in results},
         },
         "artifacts_saved": len(artifacts),

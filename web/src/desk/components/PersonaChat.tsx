@@ -4,7 +4,7 @@
 // honest egress and can be harvested to the desk; the HSM-15-12 grounding
 // picker rides the composer, per conversation.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { useDesk } from "../store";
 import {
   clearThread,
@@ -35,6 +35,7 @@ const turnId = () =>
   `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 
 export function PersonaChat(props: { personaId: string }) {
+  const reducedMotion = useReducedMotion();
   const { personaId } = props;
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
@@ -191,7 +192,7 @@ export function PersonaChat(props: { personaId: string }) {
         (win.floating ? " is-floating" : "")
       }
       style={win.style}
-      initial={{ x: 60, opacity: 0 }}
+      initial={reducedMotion ? false : { x: 60, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 30 }}
       onPointerDown={(e) => {
