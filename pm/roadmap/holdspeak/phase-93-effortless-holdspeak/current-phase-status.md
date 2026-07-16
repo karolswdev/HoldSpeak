@@ -1,6 +1,11 @@
 # Phase 93 — Effortless HoldSpeak
 
-**Status:** IN PROGRESS (1/9). HS-93-07 is done at an owner-rescoped close:
+**Status:** IN PROGRESS (2/9). HS-93-01 is done at an owner-rescoped close
+(machine-verifiable scope; owner/device walks parked as BACKLOG candidate Y):
+the repaired bounded route preflight sweeps all 19 routes clean and a
+keyboard-only production walk proves Create/Tools/Desk-memory reachability,
+fixing a real missing arrow-key path in the Tools shelf. HS-93-07 is done at
+an owner-rescoped close:
 configured Integration writes and registered Coder text/allowed-key steering
 run on the shared operation-policy v2 spine with zero-prompt YOLO, immutable
 proposal snapshots, named refusals, and source-linked Receipts on both clients;
@@ -127,7 +132,7 @@ prove the daily experience through sustained owner use on Web, iPhone, and iPad.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-93-01 | Three obvious starts | in progress | [story-01](./story-01-three-obvious-starts.md) | [progress record](./progress-story-01.md) |
+| HS-93-01 | Three obvious starts | done | [story-01](./story-01-three-obvious-starts.md) | [evidence-story-01](./evidence-story-01.md) · [progress record](./progress-story-01.md) |
 | HS-93-02 | Every room is a Desk workspace | in progress | [story-02](./story-02-every-room-comes-home.md) | [progress record](./progress-story-02.md) |
 | HS-93-03 | One professional product voice | in progress | [story-03](./story-03-one-product-vocabulary.md) | [progress record](./progress-story-03.md) |
 | HS-93-04 | Power lives on the Desk | in progress | [story-04](./story-04-power-appears-in-context.md) | [progress record](./progress-story-04.md) |

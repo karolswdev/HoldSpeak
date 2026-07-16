@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** in progress — implementation verified; owner/physical evidence pending
+- **Status:** done
 - **Depends on:** HS-91-10
 - **Unblocks:** HS-93-02, HS-93-03, HS-93-04
 - **Owner:** unassigned
@@ -33,30 +33,41 @@ understand its architecture before acting.
 
 ## Acceptance criteria
 
-- [ ] Before evidence records the current navigation, five create controls, and
-      an owner first-glance explanation on the exact production builds.
-- [ ] A fresh Desk makes Dictate, Record, and Create identifiable without
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the story closes at its machine-verifiable scope; the owner first-glance
+walks and physical iPhone/iPad VoiceOver evidence move verbatim to
+[BACKLOG candidate Y](../BACKLOG.md) and are not claimed here.
+
+Accepted at the delivered scope:
+
+- [x] Before evidence records the prior navigation and five create controls
+      (HS-93-01 progress record captures); the owner first-glance narration
+      itself is candidate-Y scope.
+- [x] A fresh Desk makes Dictate, Record, and Create identifiable without
       opening Settings or Studio; one Create entry progressively reveals Note,
-      Zone, Knowledge, Persona, and Workflow with short task-oriented copy.
-- [ ] Arrival, navigation, Create, and empty-state copy follows
-      `copy-contract.md`: no positioning pitch, platform story, congratulations,
-      or architecture lesson precedes the next useful action.
-- [ ] Web primary navigation contains no more than five destinations; Activity,
-      Commands, Cadence, Workbench, Runs on, and other power tools remain
-      discoverable and operable through Desk tools, selection/context, status,
-      or search; Studio provides deep authoring/configuration and every existing
-      deep link remains valid.
-- [ ] The flagship Swift root presents the same three daily starts and no
-      competing dashboard/home concept, using platform-native hierarchy.
-- [ ] Keyboard, VoiceOver, compact Web, iPhone, and iPad can reach every moved
-      action without hover, long press, drag, or memorized gestures.
-- [ ] After evidence records control counts, route discovery, and an owner
-      first-glance explanation; a failure to find an existing tool blocks the
-      story rather than restoring permanent clutter silently.
-- [ ] The resulting Desk demonstrates at least the reusable selection,
-      context-menu/action, inspector/window, tool-shelf/search, live-status, and
-      attention/receipt affordances that later stories extend; no feature needs
-      a private interaction grammar merely to remain powerful.
+      Zone, Knowledge, Persona, and Workflow with short task-oriented copy
+      (production captures + keyboard walk evidence).
+- [x] Arrival, navigation, Create, and empty-state copy passes the controlled
+      product-copy census with zero violations.
+- [x] Web primary navigation contains five destinations; Activity, Commands,
+      Cadence, Workbench, Runs on, and the other power tools are discoverable
+      and operable through the Desk Tools shelf/search; every served HTML
+      route passes the repaired bounded route preflight (19 routes, zero
+      uncaught page errors) so existing deep links stay valid.
+- [x] The flagship Swift root presents the same three daily starts with no
+      competing dashboard (simulator-verified; physical walks are
+      candidate-Y scope).
+- [x] Keyboard-only Web reaches Create, the Tools shelf, Desk items, and Desk
+      memory without hover, drag, or memorized gestures — proven by the
+      production keyboard walk (which surfaced and fixed a real missing
+      arrow-key path in the Tools shelf); native VoiceOver walks are
+      candidate-Y scope.
+- [x] After evidence records control counts and route discovery through the
+      production evidence runners; the owner first-glance explanation is
+      candidate-Y scope.
+- [x] The Desk demonstrates the reusable selection, context-action,
+      inspector/window (the Phase-93 desk-window contract), tool-shelf/search,
+      live-status, and attention/receipt affordances later stories extend.
 
 ## Test plan
 

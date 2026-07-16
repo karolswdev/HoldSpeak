@@ -572,3 +572,64 @@ accident. HS-93-08/09 do not depend on this entry's completion, but
 the Phase-93 exit criterion "every control mode passes the invariant
 matrix" cannot be satisfied without it; the phase close must link
 back here honestly.
+
+---
+
+### Y. The physical proof program — owner + device evidence continued from Phases 93/94
+
+Owner decision (2026-07-16): Phases 93 and 94 close their stories at
+the delivered, machine-verifiable scope (implementation, bounded
+suites, API-backed production Web walks, simulator builds, two-process
+node proofs, real linked-worktree fixtures). Every criterion that
+requires the owner's body or physical hardware moves here verbatim so
+it is scheduled work, not a fiction. Nothing in this entry is claimed
+by any closed story.
+
+**Phase 93 residue (per story):**
+
+- HS-93-01: owner first-glance explanation + moved-tool discovery walk
+  on the exact production build; physical iPhone/iPad VoiceOver walks.
+- HS-93-02: physical iPhone/iPad contextual-entry + pasted-direct-link
+  walks (cancel and failure legs); owner confirmation that no journey
+  ends orphaned and Studio does not feel like a second home.
+- HS-93-03: owner copy read-through of the ten primary journeys on
+  Web + physical iPhone/iPad with zero misunderstood noun, state,
+  destination, or commitment; forced-failure walks observed.
+- HS-93-04: owner discovery-time and irrelevant-control measures on
+  the production Desk; physical-device inspector/connector/Coder/
+  Runs-on/relaunch walks.
+- HS-93-05: real-microphone fault matrix on production Web + physical
+  iPhone/iPad including interruption during active capture; per-walk
+  provenance records (device, build, audio route, model, destination).
+- HS-93-06: 5/30/60-minute native and 5/30/120-minute desktop
+  RSS/checkpoint traces on real hardware; disk-full/permission/route/
+  call/lock/kill/relaunch fault walks; airplane-mode capture with
+  exactly-once cross-device sync; owner conflict decisions on both
+  production entry points and both devices.
+- HS-93-07: already parked as candidate X (posture family matrix and
+  owner/device proof).
+- HS-93-08: physical iPhone/iPad VoiceOver screen-curtain, Dynamic
+  Type, Reduce Motion, and orientation walks (the Web keyboard-only
+  and scale legs are machine-verified in the story).
+- HS-93-09: the five-working-day owner dogfood with full provenance,
+  the ten-journey direct observation on production Web + flagship
+  Swift, posture prompt-count verdicts, and the owner copy verdict.
+  The two live owner sessions of 2026-07-15 (LAN iPhone + desktop,
+  findings R2-01..R2-10, fixes verified the same night) are recorded
+  in the story as the first real lived-use evidence; they do not
+  substitute for the sustained window.
+
+**Phase 94 residue:** the second physical machine over Tailscale
+(real transport, clock skew, tailnet latency budgets), the physical
+iPad native + iPad Safari tailnet-HTTPS legs (Tailscale Serve, secure-
+context microphone), real GitHub PR/CI receipts where the two-process
+walks used local substitutes, and the HS-94-10 owner walk on all three
+surfaces. The upstream reusable-processes Delivery Workbench repo
+adopting the counterpart contract (capabilities, cursored events,
+evidence manifest/asset) mirrors what this repo's vendored dw now
+implements.
+
+**Sequencing note:** one sitting on real hardware can burn down most
+of the Phase-93 list; the Phase-94 legs need the second machine and
+the iPad reserved. The UAT framework (holdspeak-uat) is the natural
+conductor for the owner sittings.
