@@ -190,7 +190,7 @@ struct SettingsView: View {
             Text(ProductLanguage.controlModeDescription(controlMode) ?? "Choose how future operations request authority.")
                 .font(.system(size: 11.5, weight: .semibold, design: .rounded))
                 .foregroundStyle(Sig.text)
-            Text("Future operations only · authentication, secrets, destination and payload binding, pane identity, receipts, configuration, and schema checks never change.")
+            Text("Applies to future operations only.")
                 .font(.system(size: 11.5, weight: .medium, design: .rounded))
                 .foregroundStyle(Sig.faint)
             if !controlModeState.isEmpty && controlModeState != "saving" {

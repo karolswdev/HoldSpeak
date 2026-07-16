@@ -160,7 +160,9 @@ function Qlippy() {
     if (enabled) void useProjections.getState().refreshAmbient();
   }, [enabled]);
   const projection = projections.find(
-    (row) => row.attention_state === "needs_attention" || row.attention_state === "unseen",
+    (row) =>
+      row.attention_state === "needs_attention" ||
+      row.attention_state === "unseen",
   );
   const card = cards[0];
   if (!enabled || (!projection && !card)) return null;
@@ -185,28 +187,38 @@ function Qlippy() {
       </div>
       <div>
         <span className="signal-eyebrow">
-          {projection ? `${projection.projection_kind} · ${projection.subject_label}` : card!.frameType.replace(/_/g, " ")}
+          {projection
+            ? `${projection.projection_kind} · ${projection.subject_label}`
+            : card!.frameType.replace(/_/g, " ")}
         </span>
         <strong>
-          {projection?.title ?? String(
-            card?.title ??
-              card?.label ??
-              (card?.frameType === "learning_event"
-                ? "HoldSpeak learned"
-                : "Something is ready"),
-          )}
+          {projection?.title ??
+            String(
+              card?.title ??
+                card?.label ??
+                (card?.frameType === "learning_event"
+                  ? "HoldSpeak learned"
+                  : "Something is ready"),
+            )}
         </strong>
         <p>
-          {projection?.summary ?? String(
-            card?.preview ??
-              card?.detail ??
-              card?.body ??
-              "Review this moment when you are ready.",
-          )}
+          {projection?.summary ??
+            String(
+              card?.preview ??
+                card?.detail ??
+                card?.body ??
+                "Review this moment when you are ready.",
+            )}
         </p>
         <div className="button-row">
           {projection ? (
-            <Button dense variant="primary" onClick={() => { window.location.href = projection.detail_url; }}>
+            <Button
+              dense
+              variant="primary"
+              onClick={() => {
+                window.location.href = projection.detail_url;
+              }}
+            >
               Review source
             </Button>
           ) : card!.frameType === "actuator_proposed" ? (
@@ -231,9 +243,13 @@ function Qlippy() {
           <Button
             dense
             variant="ghost"
-            onClick={() => projection
-              ? void useProjections.getState().present(projection.id, "dismiss")
-              : dismiss()}
+            onClick={() =>
+              projection
+                ? void useProjections
+                    .getState()
+                    .present(projection.id, "dismiss")
+                : dismiss()
+            }
           >
             Dismiss
           </Button>
@@ -274,9 +290,9 @@ function GenerationTheater() {
   return (
     <div className="ambient-theater" role="status">
       <span aria-hidden="true">✦</span>
-      <strong>{String(status?.label ?? "Making meeting intelligence")}</strong>
+      <strong>{String(status?.label ?? "Analyzing meeting")}</strong>
       <small>
-        {String(status?.detail ?? "The hub is working through the transcript.")}
+        {String(status?.detail ?? "Transcript analysis is running.")}
       </small>
     </div>
   );

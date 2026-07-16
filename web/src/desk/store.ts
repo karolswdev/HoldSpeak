@@ -40,6 +40,41 @@ function savePositions(positions: Record<string, UnitPos>) {
   }
 }
 
+/** A desk-window rect in viewport px (the panel counterpart of UnitPos).
+ * Panels the user has arranged persist under their own key, exactly like
+ * hand-arranged objects do; untouched panels keep their CSS default corner. */
+export interface PanelRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+const PANEL_KEY = "hs.desk.panels";
+
+function loadPanelRects(): Record<string, PanelRect> {
+  try {
+    return JSON.parse(localStorage.getItem(PANEL_KEY) || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+function savePanelRects(rects: Record<string, PanelRect>, keep: string[]) {
+  try {
+    const out: Record<string, PanelRect> = {};
+    for (const id of keep) if (rects[id]) out[id] = rects[id];
+    localStorage.setItem(PANEL_KEY, JSON.stringify(out));
+  } catch {
+    /* storage may be unavailable; arranging just won't persist */
+  }
+}
+
+const initialPanelRects = loadPanelRects();
+
+/** Meetings on the desk when a local recording started (NEW-beat diff). */
+let meetingsBeforeRecording = new Set<string>();
+
 interface DeskState {
   items: Items;
   profiles: Array<Record<string, unknown>>;
@@ -82,6 +117,17 @@ interface DeskState {
     kind: "project" | "integration" | "target";
     id: string;
   } | null;
+  /** One recording verb (UX remediation): the chrome Record chip and the
+   * orb drive the SAME hub recorder and mirror the same state. */
+  recording: "idle" | "recording" | "busy";
+  recordingExternal: boolean;
+  recordingStartedAt: number | null;
+  /** Desk-window geometry per panel id (moved/resized panels only). */
+  panelRects: Record<string, PanelRect>;
+  /** Panel ids whose rect the user arranged — the persisted subset. */
+  panelSaved: string[];
+  /** Window focus order; the last id renders in front. */
+  panelOrder: string[];
 
   refresh(): Promise<void>;
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
@@ -152,6 +198,18 @@ interface DeskState {
   clearPosition(id: string): void;
   tidyDesk(): void;
   setDragging(id: string | null): void;
+  /** Reduce a runtime_activity frame (or /api/state seed) into orb state. */
+  applyRecordingActivity(activity: unknown): void;
+  /** Start the hub recorder in place (never a browser mic). */
+  startRecording(): Promise<void>;
+  /** Stop the hub recorder; the finished meeting materializes NEW. */
+  stopRecording(): Promise<void>;
+  /** Move/resize a desk window; persist=true marks it user-arranged. */
+  setPanelRect(id: string, rect: PanelRect, persist?: boolean): void;
+  /** Forget a window's arranged rect (back to its CSS default corner). */
+  resetPanelRect(id: string): void;
+  /** Bring a desk window to the front of the focus order. */
+  focusPanel(id: string): void;
 }
 
 export const useDesk = create<DeskState>((set, get) => ({
@@ -165,6 +223,12 @@ export const useDesk = create<DeskState>((set, get) => ({
   loading: false,
   updatedAt: null,
   positions: loadPositions(),
+  recording: "idle",
+  recordingExternal: false,
+  recordingStartedAt: null,
+  panelRects: initialPanelRects,
+  panelSaved: Object.keys(initialPanelRects),
+  panelOrder: [],
   divedZone: null,
   draggingId: null,
   setup: null,
@@ -350,8 +414,8 @@ export const useDesk = create<DeskState>((set, get) => ({
       // go back to (an artifact row inside a meeting's drawer).
       pulloutBackId: current && current !== id ? current : null,
       editingId: null,
-      toolInspector: null,
     });
+    get().focusPanel("pullout");
   },
   closePullout() {
     set({ pulloutId: null, pulloutBackId: null });
@@ -515,43 +579,25 @@ export const useDesk = create<DeskState>((set, get) => ({
     set({ selectedIds: [], askOpen: false });
   },
   openAsk() {
-    // The composer joins the desk (the 17-08 atelier posture): the pull-out
-    // and editor settle; the selection stays visible behind the panel.
-    set({
-      askOpen: true,
-      pulloutId: null,
-      pulloutBackId: null,
-      editingId: null,
-      toolInspector: null,
-    });
+    // Desk windows coexist (focus, don't destroy): opening the composer
+    // settles the in-world editor but leaves sibling windows arranged as
+    // the user left them; the selection stays visible behind the panel.
+    set({ askOpen: true, editingId: null });
+    get().focusPanel("ask");
   },
   closeAsk() {
     set({ askOpen: false });
   },
   openChat(personaId) {
-    // The conversation joins the desk like the composer does (one docked
-    // panel at a time; the world stays alive behind it).
-    set({
-      chatPersonaId: personaId,
-      askOpen: false,
-      pulloutId: null,
-      pulloutBackId: null,
-      editingId: null,
-      toolInspector: null,
-    });
+    set({ chatPersonaId: personaId, editingId: null });
+    get().focusPanel("chat");
   },
   closeChat() {
     set({ chatPersonaId: null });
   },
   openToolInspector(kind, id) {
-    set({
-      toolInspector: { kind, id },
-      askOpen: false,
-      chatPersonaId: null,
-      pulloutId: null,
-      pulloutBackId: null,
-      editingId: null,
-    });
+    set({ toolInspector: { kind, id }, editingId: null });
+    get().focusPanel("inspector");
   },
   closeToolInspector() {
     set({ toolInspector: null });
@@ -573,5 +619,83 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
   setDragging(id) {
     set({ draggingId: id });
+  },
+  applyRecordingActivity(activity) {
+    if (!activity || typeof activity !== "object") return;
+    const s = String((activity as any).state || "").toLowerCase();
+    if (s === "meeting_live") {
+      const started = get().recording === "recording";
+      set({
+        recording: "recording",
+        // A start this desk initiated is not "live elsewhere": the local
+        // start stamps recordingStartedAt just before the frame lands.
+        recordingExternal: started
+          ? get().recordingExternal
+          : get().recordingStartedAt == null,
+        recordingStartedAt: get().recordingStartedAt ?? Date.now(),
+      });
+    } else if (s === "idle" || s === "complete") {
+      if (get().recording === "recording")
+        set({
+          recording: "idle",
+          recordingExternal: false,
+          recordingStartedAt: null,
+        });
+    }
+  },
+  async startRecording() {
+    if (get().recording !== "idle") return;
+    // The stamp lands before the POST so an early runtime frame still
+    // reads this start as local, not "live elsewhere".
+    set({ recording: "busy", recordingStartedAt: Date.now() });
+    meetingsBeforeRecording = new Set(
+      get().items.meeting.map((m: any) => String(m.id)),
+    );
+    try {
+      // /live's exact call — the hub's recorder, never a browser mic.
+      await apiRequest("/api/meeting/start", { method: "POST" });
+      set({ recording: "recording", recordingExternal: false });
+    } catch {
+      set({ recording: "idle", recordingStartedAt: null });
+    }
+  },
+  async stopRecording() {
+    if (get().recording !== "recording") return;
+    set({ recording: "busy" });
+    try {
+      await apiRequest("/api/meeting/stop", { method: "POST" });
+    } catch {
+      /* the state frame settles the orb either way */
+    }
+    set({
+      recording: "idle",
+      recordingExternal: false,
+      recordingStartedAt: null,
+    });
+    // The finished meeting materializes as an object in front of you.
+    await get().refresh();
+    const after = get().items.meeting.map((m: any) => String(m.id));
+    const fresh = after.find((id: string) => !meetingsBeforeRecording.has(id));
+    if (fresh) get().markNew(fresh);
+  },
+  setPanelRect(id, rect, persist = false) {
+    const panelRects = { ...get().panelRects, [id]: rect };
+    const panelSaved =
+      persist && !get().panelSaved.includes(id)
+        ? [...get().panelSaved, id]
+        : get().panelSaved;
+    set({ panelRects, panelSaved });
+    if (persist) savePanelRects(panelRects, panelSaved);
+  },
+  resetPanelRect(id) {
+    const { [id]: _dropped, ...rest } = get().panelRects;
+    const panelSaved = get().panelSaved.filter((x) => x !== id);
+    set({ panelRects: rest, panelSaved });
+    savePanelRects(rest, panelSaved);
+  },
+  focusPanel(id) {
+    const order = get().panelOrder.filter((x) => x !== id);
+    order.push(id);
+    set({ panelOrder: order });
   },
 }));

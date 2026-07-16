@@ -3,19 +3,31 @@ import { workroomHref } from "../workrooms/context";
 import { PageHero } from "./pageSupport";
 
 const TOOLS = [
-  ["/workbench", "Workflow editor", "Build or edit a Workflow."],
+  ["/workbench", "Workflow editor", "Build or edit a Workflow.", "configure"],
   [
     "/companion",
     "Personas and coders",
-    "Configure Personas and inspect Coder sessions.",
+    "Review Personas and waiting Coder sessions.",
+    "inspect",
   ],
-  ["/cadence", "Cadence", "Configure scheduled background work."],
-  ["/commands", "Commands", "Map spoken phrases to registered actions."],
-  ["/profiles", "Runs on", "Configure model and runtime destinations."],
+  ["/cadence", "Cadence", "Configure scheduled background work.", "configure"],
+  [
+    "/commands",
+    "Commands",
+    "Map spoken phrases to registered actions.",
+    "configure",
+  ],
+  [
+    "/profiles",
+    "Runs on",
+    "Configure model and runtime destinations.",
+    "configure",
+  ],
   [
     "/activity",
     "Activity",
     "Inspect work context, sources, rules, and records.",
+    "inspect",
   ],
 ] as const;
 export default function StudioPage() {
@@ -25,11 +37,11 @@ export default function StudioPage() {
         Build and configure reusable Desk tools.
       </PageHero>
       <div className="studio-grid">
-        {TOOLS.map(([href, name, what]) => (
+        {TOOLS.map(([href, name, what, mode]) => (
           <Link
             className="studio-card"
             to={workroomHref(href, {
-              action: `configure-${name
+              action: `${mode}-${name
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, "-")
                 .replace(/-$/g, "")}`,
@@ -39,7 +51,7 @@ export default function StudioPage() {
             <span aria-hidden="true">◇</span>
             <strong>{name}</strong>
             <p>{what}</p>
-            <b>Configure →</b>
+            <b>{mode === "inspect" ? "Open →" : "Configure →"}</b>
           </Link>
         ))}
       </div>

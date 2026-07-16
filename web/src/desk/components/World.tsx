@@ -79,10 +79,12 @@ export function World() {
     const right = Math.max(l.x0, l.x1);
     const top = Math.min(l.y0, l.y1);
     const bottom = Math.max(l.y0, l.y1);
-    const { setSelected, clearSelection } = useDesk.getState();
+    const { setSelected, clearSelection, askOpen } = useDesk.getState();
     if (right - left < 8 && bottom - top < 8) {
-      // A bare tap on the desk: the selection settles.
-      clearSelection();
+      // A bare tap on the desk: the selection settles — unless the Ask
+      // composer holds the rope; a stray background click must not wipe
+      // its context (close the panel to release the selection).
+      if (!askOpen) clearSelection();
       return;
     }
     const roped: string[] = [];

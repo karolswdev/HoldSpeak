@@ -1463,9 +1463,6 @@ struct DioRelationshipPanel: View {
             Text("WHERE IT BELONGS")
                 .font(.system(size: 10, weight: .black, design: .rounded))
                 .tracking(1.3).foregroundStyle(DioPal.muted)
-            Text("A Zone is where this object lives. Knowledge is reusable context. A Project is work it supports; neither moves it.")
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(DioPal.muted).fixedSize(horizontal: false, vertical: true)
             if !knowledge.isEmpty {
                 Text("KNOWLEDGE").font(.system(size: 9.5, weight: .black, design: .rounded))
                     .tracking(1.2).foregroundStyle(DioPal.violet)
@@ -1553,21 +1550,18 @@ struct DioProjectInspector: View {
         ZStack {
             Color.black.opacity(0.7).ignoresSafeArea().onTapGesture(perform: onClose)
             VStack(alignment: .leading, spacing: 13) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("PROJECT")
-                            .font(.system(size: 10, weight: .black, design: .rounded))
-                            .tracking(1.3).foregroundStyle(DioPal.cobalt)
+                HStack(spacing: 9) {
+                    Image(systemName: "folder.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 34, height: 34).background(Circle().fill(DioPal.cobalt))
+                    VStack(alignment: .leading, spacing: 1) {
                         Text(project.name)
-                            .font(.system(size: 20, weight: .heavy, design: .rounded))
+                            .font(.system(size: 16, weight: .heavy, design: .rounded))
                             .foregroundStyle(DioPal.text)
+                        Text("Project")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundStyle(DioPal.muted)
                     }
-                    Spacer(minLength: 8)
-                    Button(action: onClose) {
-                        Image(systemName: "xmark").frame(width: 36, height: 36)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Close \(project.name) Project")
+                    Spacer(minLength: 0)
                 }
                 if !project.description.isEmpty {
                     Text(project.description)
@@ -1598,19 +1592,24 @@ struct DioProjectInspector: View {
                 }
                 Button(action: onUseContext) {
                     Text("Use Project context")
-                        .font(.system(size: 13, weight: .heavy, design: .rounded))
-                        .frame(maxWidth: .infinity).frame(height: 42)
-                        .background(Capsule().fill(DioPal.cobalt.opacity(0.8)))
+                        .font(.system(size: 14.5, weight: .heavy, design: .rounded))
+                        .frame(maxWidth: .infinity).frame(height: 46)
+                        .background(Capsule().fill(LinearGradient(colors: [Color(hex: 0x7AA2F7), DioPal.cobalt], startPoint: .top, endPoint: .bottom)))
                         .foregroundStyle(.white)
                 }
                 .buttonStyle(.plain)
+                Button(action: onClose) {
+                    Text("Cancel").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.muted)
+                        .frame(maxWidth: .infinity).frame(height: 44).background(Capsule().fill(.white.opacity(0.06)))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Close \(project.name) Project")
             }
-            .padding(19).frame(maxWidth: 430)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(hex: 0x12101A))
-                    .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(.white.opacity(0.09)))
-            )
+            .padding(20).frame(maxWidth: 460)
+            .background(RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(LinearGradient(colors: [Color(hex: 0x171320), Color(hex: 0x0C0A12)], startPoint: .top, endPoint: .bottom))
+                .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(.white.opacity(0.08), lineWidth: 1))
+                .shadow(color: .black.opacity(0.6), radius: 30, y: 16))
             .padding(.horizontal, 18)
         }
     }
@@ -1839,7 +1838,7 @@ struct DioConstellationWeave: View {
                     .scaleEffect(active ? 1.0 + 0.03 : 1)
                 }
                 Spacer(minLength: 0)
-                HStack(spacing: 4) { Image(systemName: "lock.fill").font(.system(size: 8, weight: .bold)); Text("This device").font(.system(size: 9, weight: .heavy, design: .rounded)) }.foregroundStyle(DioPal.mint)
+                EgressBadge(scope: .local)
             }.frame(width: 300)
         }
         .padding(15)
@@ -2352,9 +2351,10 @@ struct DioLiveTranscriptModal: View {
                     }
                     .onAppear { withAnimation { proxy.scrollTo("tail", anchor: .bottom) } }
                 }
-                HStack(spacing: 6) {
-                    Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold)); Text("Still recording · This device").font(.system(size: 10.5, weight: .heavy, design: .rounded))
-                }.foregroundStyle(DioPal.mint).padding(.horizontal, 11).frame(height: 28).background(Capsule().fill(DioPal.mint.opacity(0.14))).padding(.bottom, 22)
+                HStack(spacing: 7) {
+                    Text("Still recording").font(.system(size: 10.5, weight: .heavy, design: .rounded)).foregroundStyle(DioPal.mint)
+                    EgressBadge(scope: .local)
+                }.padding(.bottom, 22)
             }
             .frame(maxWidth: .infinity).frame(height: geo.size.height * 0.62)
             .background(UnevenRoundedRectangle(topLeadingRadius: 30, topTrailingRadius: 30, style: .continuous)

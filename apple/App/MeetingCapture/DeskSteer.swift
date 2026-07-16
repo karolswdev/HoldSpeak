@@ -126,12 +126,7 @@ struct DioSteerSheet: View {
         Group {
             if state.postureAuthorized {
                 HStack(spacing: 6) {
-                    Text("\(ProductLanguage.controlModeLabel(state.policy?.mode ?? "yolo")) · direct")
-                        .font(.system(size: 11, weight: .black, design: .rounded))
-                        .foregroundStyle(DioPal.accent)
-                        .padding(.horizontal, 10).frame(height: 30)
-                        .background(Capsule().fill(DioPal.accent.opacity(0.14))
-                            .overlay(Capsule().strokeBorder(DioPal.accent.opacity(0.5), lineWidth: 1)))
+                    PostureBadge(mode: state.policy?.mode ?? "yolo")
                     if state.armed {
                         Button(action: onDisarm) {
                             Text("Controls \(mmss(state.remaining))")
@@ -215,10 +210,15 @@ struct DioSteerSheet: View {
     private var armedFoot: some View {
         VStack(spacing: 9) {
             if let operation = state.operation, let policy = state.policy {
-                Text("Send text or allowed keys to pane \(operation.destination ?? "unresolved") · \(policy.authorityBasis == "control_posture" ? ProductLanguage.controlModeLabel(policy.mode ?? "yolo") + " control posture" : "armed pane grant") · Receipt after every attempt")
-                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .foregroundStyle(DioPal.muted)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Pane \(operation.destination ?? "unresolved") · \(ProductLanguage.controlModeLabel(policy.mode ?? "yolo"))")
+                        .font(.system(size: 10.5, weight: .heavy, design: .rounded))
+                        .foregroundStyle(DioPal.text.opacity(0.85))
+                    Text("Authority: \(policy.authorityBasis == "control_posture" ? "Control posture" : "Armed pane grant") · Receipt: after every attempt")
+                        .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                        .foregroundStyle(DioPal.muted)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             // KEY PALETTE
             HStack(spacing: 6) {

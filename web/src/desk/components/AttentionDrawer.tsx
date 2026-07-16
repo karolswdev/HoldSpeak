@@ -1,6 +1,12 @@
 import { useEffect, useMemo } from "react";
-import { controlModeLabel } from "../../lib/productLanguage";
+import {
+  authorityBasisLabel,
+  controlModeLabel,
+  effectClassLabel,
+  humanizeWireValue,
+} from "../../lib/productLanguage";
 import { useProjections } from "../projections";
+import { useDeskWindow } from "./DeskWindow";
 
 function when(raw: string) {
   const date = new Date(raw);
@@ -9,6 +15,7 @@ function when(raw: string) {
 
 export function AttentionDrawer() {
   const store = useProjections();
+  const win = useDeskWindow("attention", { open: store.open });
   const selected = useMemo(
     () => store.projections.find((row) => row.id === store.selectedId) ?? null,
     [store.projections, store.selectedId],
@@ -41,21 +48,33 @@ export function AttentionDrawer() {
       {store.open ? (
         <aside
           id="desk-memory-drawer"
-          className="desk-attention-drawer"
+          ref={(el) => win.setEl(el)}
+          className={
+            "desk-attention-drawer desk-window" +
+            (win.floating ? " is-floating" : "")
+          }
+          style={win.style}
           role="region"
-          aria-label="Desk attention and receipts"
+          aria-label="Desk memory"
+          onPointerDown={() => win.focus()}
         >
-          <header>
+          <header
+            className="desk-panel-head desk-window-handle"
+            {...win.handleProps}
+          >
             <div>
-              <small>DESK ACTIVITY</small>
-              <h2>Attention and Receipts</h2>
+              <small className="desk-panel-eyebrow">
+                Attention and Receipts
+              </small>
+              <h2 className="desk-panel-title">Desk memory</h2>
             </div>
             <button
               type="button"
+              className="desk-pullout-close"
               onClick={() => store.setOpen(false)}
               aria-label="Close Desk memory"
             >
-              ×
+              ✕
             </button>
           </header>
           <div className="desk-attention-counts" aria-live="polite">
@@ -122,11 +141,11 @@ export function AttentionDrawer() {
               <dl>
                 <div>
                   <dt>Reason</dt>
-                  <dd>{selected.reason_code}</dd>
+                  <dd>{humanizeWireValue(String(selected.reason_code))}</dd>
                 </div>
                 <div>
                   <dt>Decision</dt>
-                  <dd>{selected.decision_kind}</dd>
+                  <dd>{humanizeWireValue(String(selected.decision_kind))}</dd>
                 </div>
                 <div>
                   <dt>Destination</dt>
@@ -134,7 +153,11 @@ export function AttentionDrawer() {
                 </div>
                 <div>
                   <dt>Authority</dt>
-                  <dd>{selected.authority_basis || "not required"}</dd>
+                  <dd>
+                    {selected.authority_basis
+                      ? authorityBasisLabel(selected.authority_basis)
+                      : "not required"}
+                  </dd>
                 </div>
                 {selected.control_mode ? (
                   <div>
@@ -150,7 +173,7 @@ export function AttentionDrawer() {
                 {selected.effect_class ? (
                   <div>
                     <dt>Effect</dt>
-                    <dd>{selected.effect_class}</dd>
+                    <dd>{effectClassLabel(selected.effect_class)}</dd>
                   </div>
                 ) : null}
                 <div>
@@ -230,6 +253,7 @@ export function AttentionDrawer() {
               ) : null}
             </>
           )}
+          {win.grip}
         </aside>
       ) : null}
     </>

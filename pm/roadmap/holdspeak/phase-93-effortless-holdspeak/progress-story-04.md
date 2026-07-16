@@ -129,3 +129,80 @@ Runs-on selection/Receipt, relaunch, and source-bound Receipt. Failure and
 unavailable-destination walks must confirm the source remains findable and retry
 does not duplicate the effect. Simulator compilation and scripted Web discovery
 do not substitute for those observations.
+
+## UI consistency + desk-window remediation slice — 2026-07-15
+
+Direct owner finding: the Phase 92/93 deliverables introduced visible
+inconsistency with the general UI layout and per-component rules, and the
+floating desk areas were glued in place — not movable, not resizable — which
+contradicts the Desk OS window grammar this phase promised. Four independent
+review passes produced [ui-consistency-inventory.md](./ui-consistency-inventory.md)
+(46 findings, each with the convention it breaks); this slice remediates them
+across Web and flagship Swift.
+
+What shipped:
+
+- **The desk-window contract.** `web/src/desk/components/DeskWindow.tsx` gives
+  every floating panel drag (by its head), a corner resize grip, focus-to-front
+  ordering, and a persisted per-panel rect (`hs.desk.panels`, beside the object
+  layout), reusing the exact `@use-gesture` + localStorage machinery desk
+  objects already trust. Adopters: object Pullout, Ask composer, Persona chat,
+  Session pullout, Tool inspector, Desk memory drawer. Windows coexist
+  (focus-not-destroy replaced the destroy-on-open exclusivity), a stray desk
+  click no longer wipes a roped Ask context or closes a live Session peek, a
+  window dragged toward an edge shrinks to keep its grip reachable, and two
+  default-corner windows cascade instead of stacking pixel-for-pixel.
+- **One panel chrome.** The undefined `--surface-0` token (four panels rendered
+  with no background fill — a real bug), divergent radii/offsets/blur/shadows,
+  unscoped `.desk-first-*` rules, the invented `--ink` token, hardcoded hex and
+  off-grid values, and per-panel close-button reinventions all converge on the
+  established pullout chrome, shared part classes, and a documented z ladder.
+- **One Record verb.** The chrome Record chip now drives the same hub recorder
+  as the orb and mirrors its state (Stop while recording) instead of navigating
+  off-desk to /live; recording state lives in the desk store.
+- **Pages and language.** Dead `.notice`/`button secondary` classes replaced
+  with real components; raw wire values (`control_posture`, `effect_class`,
+  proposal statuses) render product labels everywhere including the Desk
+  memory drawer and Tool inspector; one shared `PostureNote`; recovery-card CSS
+  deduplicated onto the canonical warning tint; Settings policy internals moved
+  behind a disclosure; copy-contract rewrites (no anthropomorphism, no
+  documentation prose in permanent chrome, on Web and in the relationship
+  pull-outs).
+- **Flagship Swift parity.** The Desk-memory detail sheet rebuilt from stock
+  `List`/`LabeledContent` to the Signal grammar; `DioProjectInspector` adopts
+  the sibling Dio sheet anatomy; recovery actions use the capsule grammar with
+  commitment verbs; hand-rolled egress badges replaced by `EgressBadge`; one
+  shared `PostureBadge` (Settings keeps its selector); relationship prose and
+  invariant enumerations removed from permanent chrome; the 8.5pt destination
+  line and fixed HUD height made Dynamic-Type-sane; naming drift fixed.
+
+Verification for this slice (fresh, on the final tree):
+
+| Lane | Result |
+|---|---|
+| Full Web gate (`npm --prefix web run check`) | architecture guard 115 sources; typecheck; 32 files / 173 tests; production build — all green |
+| Desk-window production walk (`scripts/phase93_desk_windows_evidence.py`) | coexist → drag+persist → resize → focus-raise → reload-restore → Desk memory window; zero failed API responses; captures in [evidence/ui-remediation](./evidence/ui-remediation/) |
+| Flagship simulator app build | generated project rebuilt from the remediated App sources; Debug iPhoneSimulator BUILD SUCCEEDED |
+| Canonical Python suite | captured at commit time; see "Captured runs" below |
+
+HS-93-04's owner and physical-device acceptance gates are unchanged by this
+slice and remain open.
+
+### Captured runs (2026-07-15, `dw evidence capture`, this slice's final tree)
+
+- `uv run pytest -q --ignore=tests/e2e/test_metal.py` — captured
+  2026-07-16T02:59:04Z, exit 0: `3798 passed, 42 skipped in 463.56s`.
+  Two prior captures the same evening are recorded honestly: the first
+  (02:41Z, exit 1) caught the stale `Button("Retry")` source lock in
+  `test_native_first_words_contract.py`, updated to the copy-contract
+  commitment verbs this slice ships; the second (02:50Z, exit 1) was
+  `test_device_recording_tick.py::test_sender_exception_does_not_kill_thread`,
+  a thread-timing test on a file this slice does not touch, which passes in
+  isolation and on the rerun.
+- `npm --prefix web run check` — captured 2026-07-16T03:06:53Z, exit 0:
+  architecture guard (115 sources), typecheck, `32 passed (32)` test files /
+  173 tests, production build.
+
+The raw captures were taken via the evidence tool and folded here because an
+`evidence-story-04.md` file is a done-claim in `dw check` and this story
+remains in progress.

@@ -20,6 +20,9 @@ describe("Phase 93 Desk arrival", () => {
       openPullout: vi.fn(),
       openToolInspector: vi.fn(),
       diveInto: vi.fn(),
+      recording: "idle",
+      startRecording: vi.fn().mockResolvedValue(undefined),
+      stopRecording: vi.fn().mockResolvedValue(undefined),
     });
   });
 
@@ -36,14 +39,14 @@ describe("Phase 93 Desk arrival", () => {
       screen.getByRole("link", { name: "Dictate" }).getAttribute("href")!,
       "https://holdspeak.test",
     );
-    const record = new URL(
-      screen.getByRole("link", { name: "Record" }).getAttribute("href")!,
-      "https://holdspeak.test",
-    );
     expect(dictate.pathname).toBe("/dictation");
     expect(decodeWorkroomContext(dictate.search)?.action).toBe("dictate");
-    expect(record.pathname).toBe("/live");
-    expect(decodeWorkroomContext(record.search)?.action).toBe("record-meeting");
+    // Record is one verb: the chip starts the hub recorder in place (the
+    // orb's exact behavior) instead of leaving the Desk for /live.
+    const record = screen.getByRole("button", { name: "Record" });
+    expect(record).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(record);
+    expect(useDesk.getState().startRecording).toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Create" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Create" }));

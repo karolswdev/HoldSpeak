@@ -238,8 +238,13 @@
 .desk-next .desk-chrome-tr {
   top: 14px;
   right: 18px;
-  /* Menus and the tool shelf must remain operable above the fixed delivery
-     belt, which is a later sibling in the same root stacking context. */
+  /* The desk z ladder (keep every fixed surface in its band):
+     0–26  world, objects, in-world editor
+     28–34 conveyor, rail, chrome-adjacent strips, ask bar
+     40    top chrome clusters and launchers
+     42–59 desk windows (base 42; focus raises via inline z from the store)
+     60–99 transient overlays: pane picker 60, menus/palette 82
+     no hand-tuned one-off values above this ladder. */
   z-index: 40;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -349,6 +354,15 @@
   background: var(--accent);
   box-shadow: 0 0 8px var(--accent-glow);
 }
+.desk-next .desk-start-action.is-recording {
+  border-color: color-mix(in srgb, var(--danger-signal) 60%, var(--border));
+  color: var(--text);
+}
+.desk-next .desk-start-action.is-recording .desk-start-record {
+  background: var(--danger-signal);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--danger-signal) 60%, transparent);
+  animation: desk-next-mic-pulse 1.6s ease-in-out infinite;
+}
 .desk-next .desk-create {
   position: relative;
 }
@@ -359,20 +373,20 @@
   z-index: 82;
   display: grid;
   width: min(300px, calc(100vw - 28px));
-  padding: 7px;
+  padding: var(--space-2);
   border: 1px solid var(--surface-3);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--surface-0) 96%, transparent);
-  box-shadow: 0 20px 60px rgb(0 0 0 / 52%);
-  backdrop-filter: blur(20px);
+  border-radius: var(--radius-lg);
+  background: rgba(13, 11, 18, 0.96);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(10px);
 }
 .desk-next .desk-create-menu button {
   display: grid;
   gap: 2px;
   min-height: 56px;
-  padding: 9px 11px;
+  padding: var(--space-2) var(--space-3);
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--text);
   text-align: left;
@@ -399,31 +413,26 @@
 .desk-next .desk-tools-launch kbd {
   padding: 2px 5px;
   border: 1px solid var(--surface-3);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
-  font: 600 10px var(--font-mono);
+  font: 600 var(--font-size-xs) var(--font-mono);
 }
 .desk-next .desk-tool-shelf {
   position: fixed;
-  top: 62px;
+  top: 64px;
   right: 18px;
-  z-index: 84;
+  z-index: 82;
   width: min(430px, calc(100vw - 36px));
   max-height: calc(100vh - 80px);
-  padding: 16px;
+  padding: var(--space-4);
   overflow: auto;
-  border: 1px solid var(--surface-3);
-  border-radius: 22px;
-  background: color-mix(in srgb, var(--surface-0) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: 18px;
+  background: rgba(13, 11, 18, 0.93);
   color: var(--text);
-  box-shadow: 0 24px 80px rgb(0 0 0 / 58%);
-  backdrop-filter: blur(24px);
-}
-.desk-next .desk-tool-shelf > header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
 }
 .desk-next .desk-tool-shelf h2,
 .desk-next .desk-tool-shelf h3,
@@ -444,15 +453,6 @@
   margin-top: 4px;
   color: var(--text-muted);
   font-size: var(--font-size-xs);
-}
-.desk-next .desk-tool-shelf header button {
-  min-width: 40px;
-  min-height: 40px;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font-size: 22px;
-  cursor: pointer;
 }
 .desk-next .desk-tool-search {
   display: block;
@@ -525,30 +525,17 @@
   top: 64px;
   right: 18px;
   bottom: 18px;
-  z-index: 83;
+  z-index: 42;
   width: min(430px, calc(100vw - 36px));
-  padding: 16px;
+  padding: var(--space-4);
   overflow: auto;
-  border: 1px solid var(--surface-3);
-  border-left: 3px solid var(--accent);
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--surface-0) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: 18px;
+  background: rgba(13, 11, 18, 0.93);
   color: var(--text);
-  box-shadow: 0 24px 80px rgb(0 0 0 / 58%);
-  backdrop-filter: blur(24px);
-}
-.desk-next .desk-tool-inspector > header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--surface-3);
-}
-.desk-next .desk-tool-inspector > header small {
-  color: var(--accent);
-  font: 700 10px var(--font-mono);
-  letter-spacing: 0.1em;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
 }
 .desk-next .desk-tool-inspector h2,
 .desk-next .desk-tool-inspector h3,
@@ -562,15 +549,6 @@
 .desk-next .desk-tool-inspector h3 {
   margin-bottom: 8px;
   font-size: var(--font-size-sm);
-}
-.desk-next .desk-tool-inspector > header button {
-  min-width: 40px;
-  min-height: 40px;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font-size: 22px;
-  cursor: pointer;
 }
 .desk-next .desk-tool-inspector > p,
 .desk-next .desk-tool-inspector > section,
@@ -647,10 +625,10 @@
 .desk-next .desk-integration-effect pre {
   max-height: 180px;
   margin: 0;
-  padding: 9px;
+  padding: var(--space-2);
   overflow: auto;
-  border-radius: 9px;
-  background: var(--surface-0);
+  border-radius: var(--radius-md);
+  background: var(--bg);
   color: var(--text-muted);
   font: var(--font-size-xs) var(--font-mono);
   white-space: pre-wrap;
@@ -714,7 +692,7 @@
   padding-top: 96px;
   overflow: auto;
 }
-.desk-first-words {
+.desk-next .desk-first-words {
   width: 100%;
   max-width: 620px;
   display: grid;
@@ -722,35 +700,35 @@
   text-align: left;
   padding: clamp(20px, 4vw, 36px);
   border: 1px solid var(--surface-3);
-  border-radius: 24px;
+  border-radius: 18px;
   background: color-mix(in srgb, var(--surface-1) 92%, transparent);
-  box-shadow: 0 24px 80px rgb(0 0 0 / 34%);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
 }
-.desk-first-words h1,
-.desk-first-words h2,
-.desk-first-words p {
+.desk-next .desk-first-words h1,
+.desk-next .desk-first-words h2,
+.desk-next .desk-first-words p {
   margin: 0;
 }
-.desk-first-talk {
+.desk-next .desk-first-talk {
   min-height: 58px;
   border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
   color: var(--text);
   font: inherit;
-  font-weight: 750;
+  font-weight: 700;
   cursor: pointer;
 }
-.desk-first-talk.is-listening {
+.desk-next .desk-first-talk.is-listening {
   background: var(--accent);
-  color: #130b08;
+  color: var(--text-on-accent);
   box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 45%, transparent);
 }
-.desk-first-talk:focus-visible {
+.desk-next .desk-first-talk:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
-.desk-first-success {
+.desk-next .desk-first-success {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -935,7 +913,7 @@
   top: 64px;
   right: 18px;
   bottom: 18px;
-  z-index: 28;
+  z-index: 42;
   width: min(400px, 88vw);
   display: flex;
   flex-direction: column;
@@ -969,6 +947,66 @@
   color: var(--text-muted);
   font-size: 15px;
   cursor: pointer;
+}
+
+/* ── The desk-window contract (Phase 93 UI remediation): any floating panel
+   can be moved by its head, resized by its grip, and raised by a click; a
+   user-arranged rect persists beside the object layout. ── */
+.desk-next .desk-window.is-floating {
+  right: auto;
+  bottom: auto;
+  max-height: none;
+}
+.desk-next .desk-window-handle {
+  cursor: grab;
+  user-select: none;
+}
+.desk-next .desk-window-handle:active {
+  cursor: grabbing;
+}
+.desk-next .desk-window-grip {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  touch-action: none;
+  opacity: 0.55;
+  background: linear-gradient(
+      135deg,
+      transparent 0 50%,
+      var(--text-faint) 50% 58%,
+      transparent 58% 72%,
+      var(--text-faint) 72% 80%,
+      transparent 80%
+    )
+    no-repeat;
+}
+.desk-next .desk-window-grip:hover {
+  opacity: 1;
+}
+
+/* Shared panel-head anatomy for non-pullout windows and the palette. */
+.desk-next .desk-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-3);
+}
+.desk-next .desk-panel-title {
+  margin: 0;
+  font: 700 var(--font-size-lg) var(--font-display);
+}
+.desk-next .desk-panel-eyebrow {
+  display: block;
+  color: var(--accent);
+  font: 700 10px var(--font-mono);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
 }
 .desk-next .desk-pullout-body {
   flex: 1;
@@ -1389,8 +1427,8 @@
 
 .desk-next .desk-mic-failure {
   max-width: 24rem;
-  color: #ffb5a7;
-  font-size: 11px;
+  color: color-mix(in srgb, var(--danger, #f87171) 65%, var(--text));
+  font-size: var(--font-size-xs);
   line-height: 1.35;
 }
 @keyframes desk-next-mic-pulse {
@@ -1433,11 +1471,11 @@
   width: min(100%, 28rem);
   min-height: 4.5rem;
   resize: vertical;
-  color: var(--ink, #f5f0e8);
-  background: rgb(10 12 18 / 72%);
-  border: 1px solid rgb(255 255 255 / 14%);
-  border-radius: 10px;
-  padding: 9px 10px;
+  color: var(--text);
+  background: rgba(8, 7, 12, 0.7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
   font: inherit;
 }
 .desk-next .desk-coder-context {
@@ -2609,7 +2647,7 @@
   position: fixed;
   right: 18px;
   bottom: 18px;
-  z-index: 75;
+  z-index: 40;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2619,7 +2657,7 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--surface-1) 94%, transparent);
   color: var(--text);
-  box-shadow: 0 12px 36px rgb(0 0 0 / 0.36);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.36);
   font: 700 12px var(--font-mono);
   backdrop-filter: blur(18px);
 }
@@ -2634,26 +2672,26 @@
 }
 .desk-next .desk-attention-drawer {
   position: fixed;
-  inset: 12px 12px 12px auto;
-  z-index: 90;
+  top: 64px;
+  right: 18px;
+  bottom: 18px;
+  z-index: 42;
   display: flex;
   width: min(460px, calc(100vw - 24px));
   max-width: 100%;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--surface-3);
-  border-radius: 24px;
-  background: color-mix(in srgb, var(--surface-0) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
+  border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: 18px;
+  background: rgba(13, 11, 18, 0.93);
   color: var(--text);
-  box-shadow: 0 24px 80px rgb(0 0 0 / 0.58);
-  backdrop-filter: blur(24px);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
 }
-.desk-next .desk-attention-drawer > header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px;
-  border-bottom: 1px solid var(--surface-3);
+.desk-next .desk-attention-drawer .desk-panel-head {
+  padding: 14px 18px 12px;
+  margin-bottom: 0;
 }
 .desk-next .desk-attention-drawer h2,
 .desk-next .desk-receipt-detail h3 {
@@ -2662,7 +2700,6 @@
 .desk-next .desk-attention-drawer small {
   color: var(--text-muted);
 }
-.desk-next .desk-attention-drawer > header button,
 .desk-next .desk-receipt-detail > button {
   min-width: 40px;
   min-height: 40px;
@@ -2820,7 +2857,7 @@
   min-width: 20px;
   height: 20px;
   place-items: center;
-  border: 2px solid var(--surface-0);
+  border: 2px solid var(--bg);
   border-radius: 999px;
   background: var(--danger-signal);
   color: white;

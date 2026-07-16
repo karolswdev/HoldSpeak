@@ -1009,22 +1009,37 @@ struct DictateView: View {
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(Sig.line, lineWidth: 1))
                 HStack(spacing: 9) {
-                    Button("Retry") { tactile(.medium); Task { await model.retryRecovery() } }
-                        .disabled(
-                            model.recoveryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                            && !model.hasRecoverableAudio)
-                    Button("Copy") {
+                    Button { tactile(.medium); Task { await model.retryRecovery() } } label: {
+                        Text("Retry transcription").font(.system(size: 12, weight: .heavy)).foregroundStyle(.black)
+                            .padding(.horizontal, 13).padding(.vertical, 8)
+                            .background(Sig.accentGradient, in: Capsule())
+                    }
+                    .buttonStyle(PressableCard())
+                    .disabled(
+                        model.recoveryText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        && !model.hasRecoverableAudio)
+                    Button {
                         #if canImport(UIKit)
                         UIPasteboard.general.string = model.recoveryText
                         #endif
                         tactile(.light)
+                    } label: {
+                        Text("Copy text").font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.text)
+                            .padding(.horizontal, 12).padding(.vertical, 8)
+                            .background(Sig.s2, in: Capsule())
+                            .overlay(Capsule().strokeBorder(Sig.line, lineWidth: 1))
                     }
+                    .buttonStyle(PressableCard())
                     .disabled(model.recoveryText.isEmpty)
-                    Button("Setup") { tactile(.light); pairing = true }
+                    Button { tactile(.light); pairing = true } label: {
+                        Text("Open setup").font(.system(size: 12, weight: .heavy)).foregroundStyle(Sig.text)
+                            .padding(.horizontal, 12).padding(.vertical, 8)
+                            .background(Sig.s2, in: Capsule())
+                            .overlay(Capsule().strokeBorder(Sig.line, lineWidth: 1))
+                    }
+                    .buttonStyle(PressableCard())
                     Spacer(minLength: 0)
                 }
-                .buttonStyle(.bordered)
-                .tint(Sig.accent)
             }
             .padding(14)
             .background(Sig.s1, in: RoundedRectangle(cornerRadius: 16, style: .continuous))

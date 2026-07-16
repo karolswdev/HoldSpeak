@@ -51,9 +51,11 @@ def test_native_failures_keep_an_editable_recovery_draft() -> None:
     source = DICTATE.read_text(encoding="utf-8")
     assert '@Published var recoveryText = ""' in source
     assert "TextEditor(text: $model.recoveryText)" in source
-    assert 'Button("Retry")' in source
-    assert 'Button("Copy")' in source
-    assert 'Button("Setup")' in source
+    # Commitment verbs per the Phase-93 copy contract (its recovery example
+    # is "[Retry transcription] [Keep recording] [Open setup]").
+    assert 'Text("Retry transcription")' in source
+    assert 'Text("Copy text")' in source
+    assert 'Text("Open setup")' in source
     assert "DictationRecoveryStore" in source
     assert "recoveryStore.load()" in source
     assert "clearRecovery()" in source

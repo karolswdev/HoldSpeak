@@ -15,6 +15,10 @@ import {
   Skeleton,
 } from "../components/signal/Signal";
 import {
+  controlModeDescription,
+  controlModeLabel,
+} from "../lib/productLanguage";
+import {
   decodeWorkroomContext,
   workroomActionLabel,
   workroomReturnHref,
@@ -52,9 +56,7 @@ export function WorkroomBar({
 }) {
   const subject =
     subjectLabel || (context ? subjectDescription(context) : null);
-  const returnsToSubject = Boolean(
-    context?.return_ref ?? context?.subject_ref,
-  );
+  const returnsToSubject = Boolean(context?.return_ref ?? context?.subject_ref);
   return (
     <nav className="workroom-bar" aria-label="Workroom context">
       <span className="signal-eyebrow">
@@ -96,6 +98,26 @@ export function PageHero({
       </header>
       <WorkroomBar context={context} subjectLabel={workroomSubject} />
     </>
+  );
+}
+
+/**
+ * The one chrome for a control posture: the canonical label, optionally
+ * followed by the canonical description. Renders inline so it can sit inside
+ * facts lines and supporting text alike.
+ */
+export function PostureNote({
+  mode,
+  describe = false,
+}: {
+  mode: string;
+  describe?: boolean;
+}) {
+  return (
+    <span className="posture-note">
+      <strong>{controlModeLabel(mode)}</strong>
+      {describe ? <> · {controlModeDescription(mode)}</> : null}
+    </span>
   );
 }
 

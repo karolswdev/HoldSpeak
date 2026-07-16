@@ -16,14 +16,17 @@ import {
 } from "../components/signal/Signal";
 import { apiBlob, apiFetch, readableError, type JsonRecord } from "../lib/api";
 import {
-  controlModeDescription,
-  controlModeLabel,
+  authorityBasisLabel,
+  effectClassLabel,
+  humanizeWireValue,
+  proposalStatusLabel,
 } from "../lib/productLanguage";
 import { MeetingConflictRecovery } from "../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../meetings/MeetingIntelRecovery";
 import {
   ConfirmAction,
   PageHero,
+  PostureNote,
   ResourceState,
   asRows,
   rowId,
@@ -318,7 +321,7 @@ function MeetingDetail({
         {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
         {detail?.capture_status && detail.capture_status !== "finalized" ? (
           <InlineMessage tone="warning">
-            {`Meeting saved · ${String(detail.capture_status)}${detail.capture_failure ? ` · ${String(detail.capture_failure)}` : ""}. The transcript below is the last durable checkpoint, not false completion.`}
+            {`Meeting saved · ${displayState(detail.capture_status)}${detail.capture_failure ? ` · ${String(detail.capture_failure)}` : ""}. The transcript below is the last durable checkpoint.`}
           </InlineMessage>
         ) : null}
         <MeetingConflictRecovery
@@ -424,13 +427,10 @@ function MeetingDetail({
                   Send follow-up to Slack
                 </Button>
                 <small>
-                  {controlModeLabel(
-                    String(authority.control_mode ?? "neutral"),
-                  )}
-                  :{" "}
-                  {controlModeDescription(
-                    String(authority.control_mode ?? "neutral"),
-                  )}
+                  <PostureNote
+                    mode={String(authority.control_mode ?? "neutral")}
+                    describe
+                  />
                 </small>
               </div>
             ) : null}
@@ -448,6 +448,19 @@ function MeetingDetail({
                 const policy = (row.policy_snapshot ?? {}) as JsonRecord;
                 const operation = (row.operation ?? {}) as JsonRecord;
                 const refused = policy.outcome === "refused";
+                const effect = String(
+                  operation.effect_class ?? row.action ?? "",
+                );
+                const destination = String(
+                  operation.destination ?? row.target ?? "",
+                );
+                const facts = [
+                  effect ? effectClassLabel(effect) : null,
+                  destination ? humanizeWireValue(destination) : null,
+                  authorityBasisLabel(
+                    String(policy.authority_basis ?? "per_action_required"),
+                  ),
+                ].filter((fact): fact is string => Boolean(fact));
                 return (
                   <li className="data-row" key={rowId(row, index)}>
                     <div>
@@ -460,18 +473,8 @@ function MeetingDetail({
                         {String(row.preview ?? row.body ?? row.status ?? "")}
                       </small>
                       <small>
-                        {controlModeLabel(String(policy.mode ?? "neutral"))} ·{" "}
-                        {String(
-                          operation.effect_class ?? row.action ?? "effect",
-                        )}{" "}
-                        ·{" "}
-                        {String(
-                          operation.destination ?? row.target ?? "destination",
-                        )}{" "}
-                        ·{" "}
-                        {String(
-                          policy.authority_basis ?? "per_action_required",
-                        )}
+                        <PostureNote mode={String(policy.mode ?? "neutral")} />
+                        {` · ${facts.join(" · ")}`}
                       </small>
                     </div>
                     {row.status === "proposed" && !refused ? (
@@ -500,7 +503,9 @@ function MeetingDetail({
                       </div>
                     ) : (
                       <StatusPill tone={refused ? "error" : "neutral"}>
-                        {refused ? "Refused" : String(row.status)}
+                        {refused
+                          ? "Refused"
+                          : proposalStatusLabel(String(row.status ?? ""))}
                       </StatusPill>
                     )}
                   </li>

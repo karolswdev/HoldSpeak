@@ -121,6 +121,33 @@ struct GlyphChip: View {
     }
 }
 
+/// The ONE Control-posture chip (mirrors EgressBadge's shape): capsule, glyph + the canonical
+/// mode label from ProductLanguage, tinted by mode. Raw wire values ("yolo") never reach the user.
+struct PostureBadge: View {
+    let mode: String
+    private var resolved: ControlMode? { try? ProductLanguage.controlMode(for: mode) }
+    private var tint: Color {
+        switch resolved {
+        case .safe: return Sig.ok
+        case .yolo: return Sig.warn
+        default: return Sig.local
+        }
+    }
+    private var glyph: String {
+        switch resolved {
+        case .safe: return "checkmark.shield.fill"
+        case .yolo: return "bolt.shield.fill"
+        default: return "shield.lefthalf.filled"
+        }
+    }
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: glyph).font(.system(size: 9, weight: .bold))
+            Text(ProductLanguage.controlModeLabel(mode)).font(.system(size: 10, weight: .heavy, design: .rounded))
+        }.foregroundStyle(tint).padding(.horizontal, 9).frame(height: 26).background(Capsule().fill(tint.opacity(0.14)))
+    }
+}
+
 /// Press feedback every tappable card shares: a subtle scale + dim on a spring (HIG scale-feedback).
 struct PressableCard: ButtonStyle {
     var scale: CGFloat = 0.975

@@ -47,7 +47,7 @@ function versionSummary(
   return (
     <article className="meeting-conflict-version">
       <h4>{label}</h4>
-      <dl>
+      <dl className="signal-facts">
         <div>
           <dt>Title</dt>
           <dd>{String(value.title || fallbackTitle)}</dd>
@@ -144,13 +144,12 @@ export function MeetingConflictRecovery({
       {conflicts.map((conflict) => {
         const incomingDeletes = Boolean(conflict.incoming.deleted);
         return (
-          <div className="meeting-conflict" key={conflict.id}>
+          <div className="recovery-card" key={conflict.id}>
             <div>
               <h3>Choose the Meeting version</h3>
               <p>
-                Two edits have the same sync time. HoldSpeak kept both and made
-                no silent choice. Select the version that should remain under
-                this Meeting identity.
+                Two synced edits share a timestamp. Both versions are retained.
+                Choose which version to keep for this Meeting.
               </p>
             </div>
             <div className="meeting-conflict-versions">

@@ -213,7 +213,7 @@ export function FirstWords({
         {state === "listening"
           ? "Listening… release when done"
           : state === "transcribing"
-            ? "Writing your words…"
+            ? "Transcribing…"
             : state === "failed" && failureContract?.retry
               ? "Hold to retry"
               : state === "failed"
@@ -244,7 +244,7 @@ export function FirstWords({
             void tracker.current?.event("draft_edited");
           }
         }}
-        placeholder="Your words will appear here—or type them now."
+        placeholder="Transcribed text appears here. You can also type."
       />
       {message ? <InlineMessage tone="info">{message}</InlineMessage> : null}
       <div className="button-row">

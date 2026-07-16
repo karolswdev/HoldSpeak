@@ -204,9 +204,12 @@ struct QueueHUD: View {
     @State private var selectedProjection: DeskProjectionDTO?
 
     var body: some View {
+        // The ledger cap is viewport-relative (this surface's real height, honest in
+        // iPad split-view), never a fixed point value.
+        GeometryReader { geo in
         VStack(spacing: 0) {
             if store.hasContent {
-                if store.expanded { panel } else { pill }
+                if store.expanded { panel(maxHeight: geo.size.height * 0.62) } else { pill }
             }
             Spacer(minLength: 0)
         }
@@ -220,6 +223,7 @@ struct QueueHUD: View {
         .onAppear { pulse = true }
         .sheet(item: $selectedProjection) { projection in
             NavigationStack { projectionDetail(projection) }.preferredColorScheme(.dark)
+        }
         }
     }
 
@@ -274,7 +278,7 @@ struct QueueHUD: View {
     }
 
     // Expanded: the full ledger of what the machine is doing right now.
-    private var panel: some View {
+    private func panel(maxHeight: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "square.stack.3d.up.fill").font(.system(size: 14, weight: .bold)).foregroundStyle(Sig.accent)
@@ -304,7 +308,7 @@ struct QueueHUD: View {
                 }
                 .padding(.horizontal, 12).padding(.bottom, 12)
             }
-            .frame(maxHeight: 520)
+            .frame(maxHeight: maxHeight)
 
             if store.meshUnreachable {
                 HStack(spacing: 7) {
@@ -355,48 +359,84 @@ struct QueueHUD: View {
         .accessibilityHint("Opens destination, authority, attempt, outcome, and source receipt details")
     }
 
+    // The projection detail, in the SAME Signal language as the HUD rows (never a stock
+    // grouped List inside the hand-drawn HUD): eyebrow labels, label/value rows, capsule acts.
     private func projectionDetail(_ projection: DeskProjectionDTO) -> some View {
-        List {
-            Section("\(projection.projectionKind == "receipt" ? "Receipt" : "Attention") · \(projection.subjectLabel)") {
-                Text(projection.title).font(.headline)
-                Text(projection.summary).foregroundStyle(.secondary)
-            }
-            Section("What happened") {
-                LabeledContent("Reason", value: projection.reasonCode)
-                LabeledContent("Decision", value: projection.decisionKind)
-                LabeledContent("Destination", value: projection.actualDestination ?? "Not reached")
-                LabeledContent("Authority", value: projection.authorityBasis ?? "Not required")
-                if let mode = projection.controlMode {
-                    LabeledContent(
-                        "Control posture",
-                        value: ProductLanguage.controlModeLabel(mode)
-                            + (projection.policyVersion.map { " · \($0)" } ?? "")
-                    )
-                }
-                if let effect = projection.effectClass {
-                    LabeledContent("Effect", value: effect)
-                }
-                LabeledContent("Attempt", value: projection.attempt.map(String.init) ?? "—")
-                LabeledContent("Outcome", value: projection.outcome)
-                LabeledContent("Source", value: "\(projection.sourceKind) · \(projection.sourceId)")
-            }
-            Section {
-                if projection.attentionState == "needs_attention" {
-                    Button("Acknowledge") {
-                        tactile(); selectedProjection = nil
-                        Task { await store.setProjectionPresentation(projection, action: "acknowledge") }
+        ZStack {
+            Sig.bgGradient.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    detailEyebrow("\(projection.projectionKind == "receipt" ? "Receipt" : "Attention") · \(projection.subjectLabel)")
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(projection.title).font(.system(size: 16, weight: .heavy)).foregroundStyle(Sig.text)
+                        Text(projection.summary).font(.system(size: 12.5, weight: .medium)).foregroundStyle(Sig.muted)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(13).background(Sig.s2, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+
+                    detailEyebrow("What happened")
+                    VStack(alignment: .leading, spacing: 8) {
+                        detailRow("Reason", projection.reasonCode)
+                        detailRow("Decision", (try? ProductLanguage.canonicalTerm(for: projection.decisionKind))
+                            .map { ProductLanguage.label($0) } ?? projection.decisionKind)
+                        detailRow("Destination", projection.actualDestination ?? "Not reached")
+                        detailRow("Authority", projection.authorityBasis ?? "Not required")
+                        if let mode = projection.controlMode {
+                            detailRow("Control posture", ProductLanguage.controlModeLabel(mode)
+                                + (projection.policyVersion.map { " · \($0)" } ?? ""))
+                        }
+                        if let effect = projection.effectClass {
+                            detailRow("Effect", effect)
+                        }
+                        detailRow("Attempt", projection.attempt.map(String.init) ?? "None")
+                        detailRow("Outcome", ProductLanguage.lifecycleLabel(axis: "work", value: projection.outcome) ?? projection.outcome)
+                        detailRow("Source", "\(projection.sourceKind) · \(projection.sourceId)")
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(13).background(Sig.s2, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Sig.topHairline, lineWidth: 1))
+
+                    if projection.attentionState == "needs_attention" {
+                        Button {
+                            tactile(); selectedProjection = nil
+                            Task { await store.setProjectionPresentation(projection, action: "acknowledge") }
+                        } label: {
+                            Text("Acknowledge").font(.system(size: 14, weight: .heavy)).foregroundStyle(.black)
+                                .frame(maxWidth: .infinity).frame(height: 46)
+                                .background(Sig.accentGradient, in: Capsule())
+                        }.buttonStyle(PressableCard())
+                    }
+                    Button {
+                        tactile(); selectedProjection = nil
+                        Task { await store.setProjectionPresentation(projection, action: "dismiss") }
+                    } label: {
+                        Text("Dismiss this card").font(.system(size: 14, weight: .heavy)).foregroundStyle(Sig.text)
+                            .frame(maxWidth: .infinity).frame(height: 46)
+                            .background(Sig.s2, in: Capsule())
+                            .overlay(Capsule().strokeBorder(Sig.topHairline, lineWidth: 1))
+                    }.buttonStyle(PressableCard())
+                    Text("Dismissal changes only this Desk projection. The source record and subject remain unchanged.")
+                        .font(.system(size: 11, weight: .medium)).foregroundStyle(Sig.faint)
                 }
-                Button("Dismiss this card") {
-                    tactile(); selectedProjection = nil
-                    Task { await store.setProjectionPresentation(projection, action: "dismiss") }
-                }
-            } footer: {
-                Text("Dismissal changes only this Desk projection. The source record and subject remain unchanged.")
+                .padding(16)
             }
         }
         .navigationTitle("Desk memory")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func detailEyebrow(_ s: String) -> some View {
+        Text(s.uppercased()).font(.system(size: 10, weight: .heavy)).tracking(1.2)
+            .foregroundStyle(Sig.faint).padding(.leading, 2)
+    }
+
+    private func detailRow(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(label).font(.system(size: 10, weight: .heavy)).foregroundStyle(Sig.faint)
+                .frame(width: 96, alignment: .leading)
+            Text(value).font(.system(size: 11.5, weight: .medium)).foregroundStyle(Sig.muted)
+        }
     }
 
     private func jobRow(_ job: QueuedJob) -> some View {
@@ -494,14 +534,16 @@ struct QueueHUD: View {
                     Text(proposal.target ?? "").font(.system(size: 11, weight: .semibold))
                 }.foregroundStyle(Sig.faint).lineLimit(1)
                 if let mode = proposal.policySnapshot?.mode {
-                    Text(
-                        "\(ProductLanguage.controlModeLabel(mode)) · "
-                        + "\(proposal.policySnapshot?.authorityBasis ?? "authority pending") · "
-                        + "\(proposal.operation?.destination ?? proposal.target ?? "destination unavailable")"
-                    )
-                    .font(.system(size: 10.5, weight: .semibold))
-                    .foregroundStyle(Sig.faint)
-                    .lineLimit(1)
+                    HStack(spacing: 6) {
+                        PostureBadge(mode: mode)
+                        Text(
+                            "\(proposal.policySnapshot?.authorityBasis ?? "authority pending") · "
+                            + "\(proposal.operation?.destination ?? proposal.target ?? "destination unavailable")"
+                        )
+                        .font(.system(size: 10.5, weight: .semibold))
+                        .foregroundStyle(Sig.faint)
+                        .lineLimit(1)
+                    }.padding(.top, 1)
                 }
             }
             Spacer(minLength: 4)
