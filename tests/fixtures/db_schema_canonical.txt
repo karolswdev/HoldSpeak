@@ -53,6 +53,8 @@ ON capability_invocations(state, created_at DESC)
 index idx_chains_modified: CREATE INDEX idx_chains_modified ON chains(last_modified DESC)
 index idx_connector_runs_connector_started: CREATE INDEX idx_connector_runs_connector_started
 ON connector_runs(connector_id, started_at DESC)
+index idx_delivery_command_receipts_node: CREATE INDEX idx_delivery_command_receipts_node
+ON delivery_command_receipts(node_id, hub_state)
 index idx_desk_projection_state_attention: CREATE INDEX idx_desk_projection_state_attention
 ON desk_projection_state(attention_state, dismissed_at, updated_at DESC)
 index idx_dictation_corrections_recent: CREATE INDEX idx_dictation_corrections_recent
@@ -102,6 +104,17 @@ index idx_speakers_name: CREATE INDEX idx_speakers_name ON speakers(name)
 index idx_steering_audit_key: CREATE INDEX idx_steering_audit_key ON steering_audit(session_key)
 index idx_steering_audit_ts: CREATE INDEX idx_steering_audit_ts ON steering_audit(ts)
 index idx_topics_meeting: CREATE INDEX idx_topics_meeting ON topics(meeting_id)
+index idx_work_attempt_events_attempt: CREATE INDEX idx_work_attempt_events_attempt
+ON work_attempt_events(attempt_id, id)
+index idx_work_attempts_exact_session: CREATE UNIQUE INDEX idx_work_attempts_exact_session
+ON work_attempts(session_id)
+WHERE exact = 1 AND session_id IS NOT NULL AND state NOT IN ('ended','abandoned')
+index idx_work_attempts_session: CREATE INDEX idx_work_attempts_session
+ON work_attempts(session_id, state)
+index idx_work_attempts_story: CREATE INDEX idx_work_attempts_story
+ON work_attempts(source_id, project, story_id, started_at DESC)
+index idx_work_attempts_worktree: CREATE INDEX idx_work_attempts_worktree
+ON work_attempts(worktree_id, state)
 index idx_workflows_modified: CREATE INDEX idx_workflows_modified ON workflows(last_modified DESC)
 table action_items: CREATE TABLE action_items (
     id TEXT PRIMARY KEY,
@@ -433,6 +446,28 @@ table connector_runs: CREATE TABLE connector_runs (
     annotation_count INTEGER NOT NULL DEFAULT 0,
     candidate_count INTEGER NOT NULL DEFAULT 0,
     command_count INTEGER NOT NULL DEFAULT 0
+)
+table delivery_command_receipts: CREATE TABLE delivery_command_receipts (
+    command_id TEXT PRIMARY KEY,
+    node_id TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    target_generation TEXT NOT NULL,
+    operation_family TEXT NOT NULL,
+    operation_verb TEXT NOT NULL,
+    payload_sha256 TEXT NOT NULL,
+    payload_head TEXT NOT NULL DEFAULT '',
+    expected_sequence INTEGER,
+    issued_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    dispatch_epoch TEXT,
+    hub_state TEXT NOT NULL DEFAULT 'sent'
+        CHECK (hub_state IN ('sent','claimed','unknown','complete',
+                             'not_executed','indeterminate_after_node_reset')),
+    receipt_id TEXT,
+    receipt_json TEXT NOT NULL DEFAULT '{}',
+    authority_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 )
 table desk_projection_state: CREATE TABLE desk_projection_state (
     projection_id TEXT PRIMARY KEY,
@@ -818,6 +853,34 @@ table topics: CREATE TABLE topics (
     topic TEXT NOT NULL,
     extracted_at REAL NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)
+table work_attempt_events: CREATE TABLE work_attempt_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    attempt_id TEXT NOT NULL REFERENCES work_attempts(attempt_id) ON DELETE CASCADE,
+    from_state TEXT,
+    to_state TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    occurred_at TEXT NOT NULL
+)
+table work_attempts: CREATE TABLE work_attempts (
+    attempt_id TEXT PRIMARY KEY,
+    source_id TEXT NOT NULL,
+    project TEXT NOT NULL,
+    story_id TEXT NOT NULL,
+    worktree_id TEXT NOT NULL,
+    node_id TEXT,                 -- NULL = the embedded local node
+    session_id TEXT,              -- NULL until an agent session binds
+    target_id TEXT,               -- opaque terminal handle, when known
+    association_kind TEXT NOT NULL
+        CHECK (association_kind IN ('launch','rider_claim','manual','contract','heuristic')),
+    claimed_by TEXT,
+    claimed_at TEXT,
+    exact INTEGER NOT NULL DEFAULT 0,
+    state TEXT NOT NULL DEFAULT 'starting'
+        CHECK (state IN ('starting','working','waiting','idle','ended','abandoned','unknown')),
+    started_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    ended_at TEXT
 )
 table workflows: CREATE TABLE workflows (
     id TEXT PRIMARY KEY,

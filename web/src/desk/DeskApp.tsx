@@ -14,6 +14,9 @@ import { RecordOrb } from "./components/RecordOrb";
 import { PersonaChat } from "./components/PersonaChat";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
 import { SessionPullout, PanePicker } from "./components/SessionPullout";
+import { DeliveryBoard } from "./components/DeliveryBoard";
+import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
+import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { useProjections } from "./projections";
@@ -53,6 +56,9 @@ export default function DeskApp() {
       {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
       <DeskToolInspector />
       <MissionControlConveyor />
+      <DeliveryBoard />
+      <DeliveryDossierWindow />
+      <DeliveryTerminalWindow />
       <PanePicker />
       <SessionPullout />
       <AttentionDrawer />

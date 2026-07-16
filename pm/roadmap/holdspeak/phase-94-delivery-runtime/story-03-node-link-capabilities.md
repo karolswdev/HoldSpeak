@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 94
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-94-02
 - **Unblocks:** HS-94-04, HS-94-05, HS-94-06
 
@@ -36,20 +36,27 @@ but no production worker sends it.
 
 ## Acceptance criteria
 
-- [ ] A node initiates the connection; it needs no inbound general Web server
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the second-physical-machine Tailscale leg (real transport latency, clock
+skew across real hardware) moves verbatim to
+[BACKLOG candidate Y](../BACKLOG.md); the two-process localhost proof and
+injected-clock suites carry the behavioral contract.
+
+
+- [x] A node initiates the connection; it needs no inbound general Web server
       reachable from the hub.
-- [ ] Browser, native, and node tokens are distinct; node token rotation and
+- [x] Browser, native, and node tokens are distinct; node token rotation and
       revoke take effect without repository edits.
-- [ ] Capability and required policy mismatch makes commands unavailable while
+- [x] Capability and required policy mismatch makes commands unavailable while
       compatible observation remains usable.
-- [ ] Heartbeat produces live → stale within 15 s → offline within 30 s; last
+- [x] Heartbeat produces live → stale within 15 s → offline within 30 s; last
       source/session truth stays visible with last-seen.
-- [ ] Kill/restart/reconnect resumes event/audit cursors without duplicates or
+- [x] Kill/restart/reconnect resumes event/audit cursors without duplicates or
       gaps; an unreplayable gap requests a source resync.
-- [ ] A remote linked worktree, rail change, and Coder waiting transition appear
+- [x] A remote linked worktree, rail change, and Coder waiting transition appear
       at the hub through the node link.
-- [ ] A remote event cannot smuggle body content outside the declared protocol.
-- [ ] Local and remote providers pass the same behavior contract suite.
+- [x] A remote event cannot smuggle body content outside the declared protocol.
+- [x] Local and remote providers pass the same behavior contract suite.
 
 ## Test plan
 

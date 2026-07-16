@@ -189,6 +189,30 @@ final class SteeringClientTests: XCTestCase {
         XCTAssertTrue(sent.contains("\"expected_pane_id\":\"%5\""))
     }
 
+    func testDisarmToANodeRoutesThroughTheRelayWithKeyInBody() async throws {
+        // Regression (HS-94-09 / the Phase-94 audit): disarm did NOT route to
+        // the session's node, so a remote-armed grant survived a native
+        // disarm. ONLY the relay route is stubbed here — hitting the local
+        // `/api/coders/{key}/disarm` path would fail the request outright, so
+        // a passing call proves the node-routed path was taken.
+        route("/api/coders/relay/beta/disarm", 200,
+              #"{"status":"disarmed","key":"pane:%5","was_armed":true,"node":"beta"}"#)
+        let res = try await client().disarmCoder(key: "pane:%5", node: "beta")
+        XCTAssertEqual(res.status, "disarmed")
+        XCTAssertTrue(res.wasArmed)                    // the FAR grant is gone
+        let sent = String(decoding: StubProtocol.lastBody ?? Data(), as: UTF8.self)
+        XCTAssertTrue(sent.contains("\"key\""))        // the key rides the BODY on the relay
+        XCTAssertTrue(sent.contains("pane:%5"))
+    }
+
+    func testDisarmWithoutANodeStaysOnTheLocalRoute() async throws {
+        route("/api/coders/pane:%5/disarm", 200,
+              #"{"status":"disarmed","key":"pane:%5","was_armed":false}"#)
+        let res = try await client().disarmCoder(key: "pane:%5")
+        XCTAssertEqual(res.status, "disarmed")
+        XCTAssertFalse(res.wasArmed)
+    }
+
     func testSteerToANodeRoutesThroughTheRelay() async throws {
         route("/api/coders/relay/beta/steer", 200, #"{"status":"delivered","node":"beta","pane_id":"%5"}"#)
         let res = try await client().steerCoder(key: "pane:%5", text: "hi", node: "beta")

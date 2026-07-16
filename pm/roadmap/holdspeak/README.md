@@ -4,7 +4,7 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-16 — **Phase 93 at 8/9 under the owner's standing
+**Last updated:** 2026-07-16 — **Phase 93 CLOSED (9/9) and Phase 94, The Delivery Runtime, CLOSED (10/10) the same day under the owner's standing
 close directive: HS-93-01 through HS-93-08 are done at their owner-rescoped
 machine-verifiable scopes (bounded route preflight, every-room walks, the
 failure-facts census over 4,173 candidates, contextual power, the Web

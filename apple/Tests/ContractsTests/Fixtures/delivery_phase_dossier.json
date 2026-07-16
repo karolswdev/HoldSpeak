@@ -1,0 +1,70 @@
+{
+  "phase_dossier_schema": 1,
+  "source_id": "src_1b2c3d4e5f607182",
+  "project": "holdspeak",
+  "phase": 94,
+  "title": "Delivery Runtime",
+  "status": "open",
+  "stories_done": 8,
+  "stories_total": 10,
+  "stories": [
+    {
+      "bundle_id": "bundle-3c4d5e6f708192a3",
+      "bundle_changed": false,
+      "live_bundle_id": null,
+      "freshness": "cached",
+      "detail": "",
+      "source_id": "src_1b2c3d4e5f607182",
+      "project": "holdspeak",
+      "story_id": "HS-94-05",
+      "phase": 94,
+      "status": "done",
+      "source_revision": {
+        "head_sha": "174aa374b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7",
+        "index_tree": "9a8b7c6d5e4f30211203f4e5d6c7b8a99a8b7c6d"
+      },
+      "summary": {"passing_captures": 1, "failing_captures": 0, "assets": 2},
+      "members": [
+        {
+          "asset_id": "a-6f708192a3b4c5d6",
+          "role": "final_summary",
+          "label": "Final summary",
+          "media_type": "text/markdown",
+          "bytes": 1204,
+          "sha256": "sha256:ff667788990011223344556677889900aabbccddeeff001122334455667788aa"
+        }
+      ],
+      "captured_runs": [
+        {
+          "timestamp": "2026-07-14T16:41:02Z",
+          "command": "uv run pytest -q tests/unit/test_delivery_dossiers.py",
+          "exit_code": 0,
+          "passed": true
+        }
+      ],
+      "trace": {
+        "story_asset_id": "a-1a2b3c4d5e6f7081",
+        "evidence_asset_id": "a-2b3c4d5e6f708192",
+        "phase_status_asset_id": "a-3c4d5e6f708192a3",
+        "final_summary_asset_id": "a-6f708192a3b4c5d6"
+      },
+      "title": "Evidence dossiers and safe assets",
+      "state": "ready"
+    },
+    {
+      "story_id": "HS-94-10",
+      "title": "Phase closeout",
+      "status": "backlog",
+      "state": "not_found"
+    }
+  ],
+  "final_summary": {
+    "asset_id": "a-6f708192a3b4c5d6",
+    "role": "final_summary",
+    "label": "Final summary",
+    "media_type": "text/markdown",
+    "bytes": 1204,
+    "sha256": "sha256:ff667788990011223344556677889900aabbccddeeff001122334455667788aa",
+    "bundle_id": "bundle-3c4d5e6f708192a3"
+  }
+}

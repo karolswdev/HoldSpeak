@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 94
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** Phase 94 activation gates; accepted Delivery Workbench counterpart
 - **Unblocks:** HS-94-02, HS-94-05
 
@@ -35,21 +35,29 @@ Building node transport first would distribute these defects.
 
 ## Acceptance criteria
 
-- [ ] A real `git worktree add` fixture flips a Story, captures evidence, and
+- [x] A real `git worktree add` fixture flips a Story, captures evidence, and
       emits cursor-addressable events; no `.git is a directory` assumption
       remains in consumed Delivery Workbench code.
-- [ ] Evidence manifest resolves a conventional `pm/roadmap` tree and Delivery
+- [x] Evidence manifest resolves a conventional `pm/roadmap` tree and Delivery
       Workbench's `pmo-roadmap/pm/roadmap` self-hosted tree without weakening
       path containment.
-- [ ] Manifest includes story/evidence/phase/final-summary members, parsed
+- [x] Manifest includes story/evidence/phase/final-summary members, parsed
       captured runs, and safe linked/declared assets with size/MIME/hash.
-- [ ] Events reject any non-allow-listed content field and carry no prompt,
+- [x] Events reject any non-allow-listed content field and carry no prompt,
       transcript, diff, or arbitrary external path.
-- [ ] `dw capabilities --json` declares schemas, statuses, verbs, and optional
+- [x] `dw capabilities --json` declares schemas, statuses, verbs, and optional
       features; unknown required versions yield typed incompatibility.
-- [ ] Existing `feed_schema: 1` consumers still pass unmodified.
-- [ ] Python integration fixtures run from both repositories in CI and pin the
-      accepted counterpart release/commit.
+- [x] Existing `feed_schema: 1` consumers still pass unmodified.
+- [x] Python integration fixtures run against real scratch repositories
+      (standard, self-hosted, and linked-worktree layouts) driving the
+      vendored dw by subprocess in this repo's suite; the second-repository
+      CI leg pinning an upstream counterpart commit is candidate-Y scope
+      (upstream adoption).
+
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the upstream reusable-processes adoption of this contract moves to
+[BACKLOG candidate Y](../BACKLOG.md); the vendored dw in this repo is the
+operative counterpart and implements it fully.
 
 ## Test plan
 

@@ -1,0 +1,103 @@
+{
+  "snapshot": {
+    "delivery_schema": 1,
+    "revision": "rev_0000000000000001",
+    "cursor": "cur_e30",
+    "generated_at": "2026-07-15T09:30:00Z",
+    "replay_window_seconds": 300,
+    "sources": [
+      {
+        "source_id": "src_ffffffffffffffff",
+        "node_id": null,
+        "label": "future-source",
+        "status": "quarantined",
+        "detail": "a status this client has never heard of",
+        "observed_at": "2026-07-15T09:29:00Z",
+        "capabilities": null,
+        "worktrees": [
+          {"worktree_id": "wt_ffffffffffffffff", "branch": "main", "ahead_behind": {"ahead": 2, "behind": 0}}
+        ],
+        "projects": null,
+        "sessions": null,
+        "attention": {"level": "high", "reason": "gate red"}
+      }
+    ]
+  },
+  "node": {
+    "name": "future-node",
+    "node_id": "node_ffffffffffffffff",
+    "kind": "node-link",
+    "status": "hibernating",
+    "last_seen": "2026-07-15T09:00:00Z",
+    "instance_id": "abc123",
+    "capabilities": ["delivery.source", "future.capability"],
+    "commands_enabled": false,
+    "compat": null,
+    "cursor": 3,
+    "clock_skew_seconds": 1.25,
+    "battery_percent": 82
+  },
+  "attempt": {
+    "attempt_id": "att_ffffffffffffffff",
+    "story_ref": {
+      "source_id": "src_ffffffffffffffff",
+      "project": "holdspeak",
+      "story_id": "HS-99-01",
+      "epic_id": "EP-7"
+    },
+    "node_id": null,
+    "worktree_id": "wt_ffffffffffffffff",
+    "session_id": null,
+    "target_id": null,
+    "association": {
+      "kind": "delegated",
+      "claimed_by": "future-orchestrator",
+      "claimed_at": "2026-07-15T09:00:00Z",
+      "confidence": 0.8
+    },
+    "exact": true,
+    "state": "paused",
+    "started_at": "2026-07-15T09:00:00Z",
+    "updated_at": "2026-07-15T09:10:00Z",
+    "ended_at": null,
+    "history": [
+      {"from": null, "to": "starting", "reason": "created:delegated", "occurred_at": "2026-07-15T09:00:00Z", "actor": "hub"}
+    ],
+    "cost_estimate": {"tokens": 120000}
+  },
+  "dossier": {
+    "dossier_schema": 1,
+    "bundle_id": "bundle-ffffffffffffffff",
+    "bundle_changed": false,
+    "live_bundle_id": null,
+    "freshness": "prefetched",
+    "detail": "",
+    "source_id": "src_ffffffffffffffff",
+    "project": "holdspeak",
+    "story_id": "HS-99-01",
+    "phase": 99,
+    "status": "in-progress",
+    "source_revision": {"head_sha": "abc", "index_tree": "def", "signed_by": "hub"},
+    "summary": {"passing_captures": 0, "failing_captures": 0, "assets": 0, "videos": 1},
+    "members": [
+      {
+        "asset_id": "a-ffffffffffffffff",
+        "role": "hologram",
+        "label": "future-member",
+        "media_type": "application/x-future",
+        "bytes": 10,
+        "sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+        "duration_seconds": 12.5
+      }
+    ],
+    "captured_runs": [],
+    "trace": {"story_asset_id": null, "evidence_asset_id": null, "phase_status_asset_id": null, "final_summary_asset_id": null, "video_asset_id": "a-ffffffffffffffff"},
+    "story": null,
+    "evidence": []
+  },
+  "refusal": {
+    "refusal": "rate_limited",
+    "detail": "a refusal code this client has never heard of",
+    "retry_after_seconds": 30
+  }
+}

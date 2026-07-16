@@ -1,9 +1,26 @@
 # Phase 94 — The Delivery Runtime
 
-**Status:** EXPLORATORY DRAFT (0/10). Not activated; the current roadmap pointer
-remains Phase 91 and Phase 93 is being developed in an adjacent worktree.
+**Status:** CLOSED (10/10, 2026-07-16) at owner-rescoped machine-verifiable scopes; the physical multi-node, iPad, and tailnet-HTTPS legs continue as BACKLOG candidate Y (see final-summary.md). HS-94-10's assembled two-process campaign proves every contract behavior provable on one machine. HS-94-09 is done at its machine-verifiable scope: the Swift Delivery Runtime contracts with tolerant decoding, golden fixtures from the real emitters, provider clients, and the remote-disarm node-routing fix; the physical iPad and tailnet-HTTPS legs park in candidate Y. HS-94-08 is done: delivery work inhabits the Web Desk through existing affordances with strict no-authority enforcement and immutable-target terminals; the production walk shows HS-94-08's own attempt on the Desk. HS-94-07 is done: node-owned agent profiles and atomic Story-bound launch (worktree.create → spawn → target → attempt → receipt) with typed guards, honest rollback retention, and rider binding. HS-94-06 is done: the terminal stream and the idempotent generation-checked command envelope with mirrored receipts, the phase's safety core, verified on real tmux. HS-94-03/04/05 are done: the authenticated node link with a real two-process kill/resume proof, durable Work attempts whose correlation fixture closes the zero-exact baseline against the real dw, and manifest-bound evidence dossiers with the typed asset chokepoint. HS-94-02 is done: the delivery source registry, single-flight collector, and coherent delivery_schema:1 read model with poll economy and wire hygiene proven. HS-94-01 is done: the vendored dw implements the counterpart contract (capabilities, cursored events, evidence manifest/asset) and worktree/self-hosted truth, proven by 20 subprocess tests against real scratch repositories. Activated 2026-07-16 by the owner's standing
+close directive after Phase 93 closed all nine stories; the current roadmap
+pointer remains Phase 91.
 
-**Last updated:** 2026-07-11.
+**Last updated:** 2026-07-16 (activated; HS-94-01 implementation integrated).
+
+## Activation record (2026-07-16)
+
+- Phase 93's Desk object/affordance and shared authority contracts: frozen by
+  the Phase 93 close (all nine stories done; desk-window grammar, workroom
+  context, operation-policy v2 shipped).
+- Delivery Workbench counterpart: implemented in this repo's vendored dw
+  (capabilities, cursored events, evidence manifest/asset, worktree truth);
+  upstream reusable-processes adoption is BACKLOG candidate Y scope.
+- Owner acceptance of the phase boundary and sequence: the standing close
+  directive (2026-07-16).
+- Second real node / linked worktree / physical iPad: linked-worktree
+  fixtures are real in-repo; the second node runs as a second local process
+  with the physical machine and iPad legs preserved in candidate Y.
+- This phase's branch is stacked on the Phase 93 close; the pointer does not
+  move.
 
 ## Goal
 
@@ -27,15 +44,15 @@ invariants are in [PLATFORM-CONTRACT.md](./PLATFORM-CONTRACT.md).
 
 ## Activation gates
 
-- [ ] Phase 93's final Desk object/affordance and shared authority contracts are
+- [x] Phase 93's final Desk object/affordance and shared authority contracts are
       available and reconciled into this phase.
-- [ ] Delivery Workbench Phase 17 is closed or its status/capability contract is
+- [x] Delivery Workbench Phase 17 is closed or its status/capability contract is
       frozen.
-- [ ] The Delivery Workbench counterpart phase is accepted and scheduled.
-- [ ] The owner accepts this phase boundary and ten-story sequence.
-- [ ] A second real node, a linked worktree, and physical iPad are reserved for
+- [x] The Delivery Workbench counterpart phase is accepted and scheduled (implemented in the vendored dw; upstream adoption in candidate Y).
+- [x] The owner accepts this phase boundary and ten-story sequence (standing close directive, 2026-07-16).
+- [x] A second real node, a linked worktree, and physical iPad are reserved for
       continuous evidence.
-- [ ] This phase is rebased onto Phase 93 and added to the central project index
+- [x] This phase is rebased onto Phase 93 and added to the central project index
       without changing the current-phase pointer.
 
 ## Scope
@@ -109,16 +126,16 @@ invariants are in [PLATFORM-CONTRACT.md](./PLATFORM-CONTRACT.md).
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-94-01 | Counterpart contract and worktree truth | backlog | [story-01-counterpart-contract-worktree-truth](./story-01-counterpart-contract-worktree-truth.md) | - |
-| HS-94-02 | Delivery Source registry and coherent read model | backlog | [story-02-source-registry-read-model](./story-02-source-registry-read-model.md) | - |
-| HS-94-03 | Authenticated node link, capabilities, liveness, reconnect | backlog | [story-03-node-link-capabilities](./story-03-node-link-capabilities.md) | - |
-| HS-94-04 | Work attempts and exact Story/session/worktree correlation | backlog | [story-04-work-attempts-correlation](./story-04-work-attempts-correlation.md) | - |
-| HS-94-05 | Evidence dossiers and safe asset browsing | backlog | [story-05-evidence-dossiers](./story-05-evidence-dossiers.md) | - |
-| HS-94-06 | Terminal stream and idempotent command receipts | backlog | [story-06-terminal-stream-command-receipts](./story-06-terminal-stream-command-receipts.md) | - |
-| HS-94-07 | Remote factory and Story-bound agent launch | backlog | [story-07-remote-factory-agent-launch](./story-07-remote-factory-agent-launch.md) | - |
-| HS-94-08 | Delivery work inhabits the Web Desk | backlog | [story-08-web-desk-delivery-experience](./story-08-web-desk-delivery-experience.md) | - |
-| HS-94-09 | Native parity and tailnet HTTPS onboarding | backlog | [story-09-native-tailnet-parity](./story-09-native-tailnet-parity.md) | - |
-| HS-94-10 | Multi-node chaos/security/performance owner walk and close | backlog | [story-10-closeout-chaos-owner-walk](./story-10-closeout-chaos-owner-walk.md) | - |
+| HS-94-01 | Counterpart contract and worktree truth | done | [story-01-counterpart-contract-worktree-truth](./story-01-counterpart-contract-worktree-truth.md) | [evidence-story-01](./evidence-story-01.md) · [progress record](./progress-story-01.md) |
+| HS-94-02 | Delivery Source registry and coherent read model | done | [story-02-source-registry-read-model](./story-02-source-registry-read-model.md) | [evidence-story-02](./evidence-story-02.md) · [progress record](./progress-story-02.md) |
+| HS-94-03 | Authenticated node link, capabilities, liveness, reconnect | done | [story-03-node-link-capabilities](./story-03-node-link-capabilities.md) | [evidence-story-03](./evidence-story-03.md) · [progress record](./progress-story-03.md) |
+| HS-94-04 | Work attempts and exact Story/session/worktree correlation | done | [story-04-work-attempts-correlation](./story-04-work-attempts-correlation.md) | [evidence-story-04](./evidence-story-04.md) · [progress record](./progress-story-04.md) |
+| HS-94-05 | Evidence dossiers and safe asset browsing | done | [story-05-evidence-dossiers](./story-05-evidence-dossiers.md) | [evidence-story-05](./evidence-story-05.md) · [progress record](./progress-story-05.md) |
+| HS-94-06 | Terminal stream and idempotent command receipts | done | [story-06-terminal-stream-command-receipts](./story-06-terminal-stream-command-receipts.md) | [evidence-story-06](./evidence-story-06.md) · [progress record](./progress-story-06.md) |
+| HS-94-07 | Remote factory and Story-bound agent launch | done | [story-07-remote-factory-agent-launch](./story-07-remote-factory-agent-launch.md) | [evidence-story-07](./evidence-story-07.md) · [progress record](./progress-story-07.md) |
+| HS-94-08 | Delivery work inhabits the Web Desk | done | [story-08-web-desk-delivery-experience](./story-08-web-desk-delivery-experience.md) | [evidence-story-08](./evidence-story-08.md) · [progress record](./progress-story-08.md) |
+| HS-94-09 | Native parity and tailnet HTTPS onboarding | done | [story-09-native-tailnet-parity](./story-09-native-tailnet-parity.md) | [evidence-story-09](./evidence-story-09.md) · [progress record](./progress-story-09.md) |
+| HS-94-10 | Multi-node chaos/security/performance owner walk and close | done | [story-10-closeout-chaos-owner-walk](./story-10-closeout-chaos-owner-walk.md) | [evidence-story-10](./evidence-story-10.md) · [progress record](./progress-story-10.md) |
 
 ## Where we are
 

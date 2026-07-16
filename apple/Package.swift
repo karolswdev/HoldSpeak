@@ -39,7 +39,10 @@ let package = Package(
                  dependencies: ["Providers", "Contracts", .product(name: "LLM", package: "LLM.swift")]),
         // Layer 4 — platform hosts (iPad/iPhone apps). The only UI layer.
         .target(name: "Hosts", dependencies: ["RuntimeCore", "Providers", "Contracts"]),
-        .testTarget(name: "ContractsTests", dependencies: ["Contracts"]),
+        // Golden wire fixtures are read in-place via #filePath (the
+        // PrimitiveContractFixtureTests precedent), not bundled resources.
+        .testTarget(name: "ContractsTests", dependencies: ["Contracts"],
+                    exclude: ["Fixtures"]),
         .testTarget(name: "RuntimeCoreTests", dependencies: ["RuntimeCore", "Providers", "Contracts"]),
         .testTarget(name: "ProvidersTests", dependencies: ["Providers", "Contracts"]),
         .testTarget(name: "InferenceLlamaTests",

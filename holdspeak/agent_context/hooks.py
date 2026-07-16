@@ -44,6 +44,77 @@ def detect_tmux_context(
     return context
 
 
+#: Environment variables a Story-scoped launcher can set so every hook
+#: event from that agent process carries an explicit Story claim
+#: (HS-94-04 rider claim). The combined form wins over the pair.
+STORY_CLAIM_ENV_REF = "HOLDSPEAK_STORY_REF"
+STORY_CLAIM_ENV_PROJECT = "HOLDSPEAK_STORY_PROJECT"
+STORY_CLAIM_ENV_STORY = "HOLDSPEAK_STORY_ID"
+
+_STORY_CLAIM_MAX_CHARS = 128
+
+
+def _claim_part(value: Any) -> str | None:
+    text = _optional_str(value)
+    if text is None or len(text) > _STORY_CLAIM_MAX_CHARS:
+        return None
+    return text
+
+
+def detect_story_claim(
+    payload: Mapping[str, Any] | None = None,
+    *,
+    env: Mapping[str, str] | None = None,
+) -> dict[str, str]:
+    """The Story identity a rider/hook process explicitly carries
+    (HS-94-04). Returns ``{"project", "story_id"}`` or ``{}``.
+
+    Sources, most explicit first:
+
+    1. ``payload["story_ref"]`` — a typed launch payload
+       (``{"project": ..., "story_id": ...}``);
+    2. ``payload["story_project"]`` + ``payload["story_id"]``;
+    3. env ``HOLDSPEAK_STORY_REF`` (``<project>/<story-id>`` or
+       ``<project>:<story-id>``) — what a Story-scoped launcher exports;
+    4. env ``HOLDSPEAK_STORY_PROJECT`` + ``HOLDSPEAK_STORY_ID``.
+
+    Both parts are treated as opaque labels (§3): bounded, stripped,
+    never parsed further. Anything incomplete detects as no claim —
+    a guessed half-identity is worse than none.
+    """
+    raw = dict(payload or {})
+    source_env = env if env is not None else os.environ
+
+    story_ref = raw.get("story_ref")
+    if isinstance(story_ref, Mapping):
+        project = _claim_part(story_ref.get("project"))
+        story_id = _claim_part(story_ref.get("story_id") or story_ref.get("story"))
+        if project and story_id:
+            return {"project": project, "story_id": story_id}
+
+    project = _claim_part(raw.get("story_project"))
+    story_id = _claim_part(raw.get("story_id"))
+    if project and story_id:
+        return {"project": project, "story_id": story_id}
+
+    combined = _claim_part(source_env.get(STORY_CLAIM_ENV_REF))
+    if combined:
+        for separator in ("/", ":"):
+            if separator in combined:
+                head, _, tail = combined.partition(separator)
+                project = _claim_part(head)
+                story_id = _claim_part(tail)
+                if project and story_id:
+                    return {"project": project, "story_id": story_id}
+                break
+
+    project = _claim_part(source_env.get(STORY_CLAIM_ENV_PROJECT))
+    story_id = _claim_part(source_env.get(STORY_CLAIM_ENV_STORY))
+    if project and story_id:
+        return {"project": project, "story_id": story_id}
+    return {}
+
+
 def claude_hook_template(*, capture_messages: bool = False) -> dict[str, Any]:
     command = _agent_hook_command("claude", capture_messages=capture_messages)
     return {

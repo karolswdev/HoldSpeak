@@ -226,8 +226,11 @@ def story_evidence_payload(
     """Evidence content for one story (HS-86-04) — the desk opens the
     filed object in place. The path comes from the repo's own CLI
     (`dw context`), never from re-parsing the roadmap; the read is
-    contained to `<repo>/pm/roadmap/**/*.md`. Display-only: state is
-    never derived from this document."""
+    contained to the repo's roadmap tree — `pm/roadmap/**/*.md` or
+    Delivery Workbench's self-hosted `pmo-roadmap/pm/roadmap/**/*.md`
+    (HS-94-01). Both containment roots are fixed relative to the
+    mapped repo, so no CLI document can widen them. Display-only:
+    state is never derived from this document."""
     repo_path = project_map["projects"].get(repo_name)
     if not repo_path:
         return {"status": "refused", "detail": f"repo {repo_name!r} is not in the project map"}
@@ -248,9 +251,13 @@ def story_evidence_payload(
         return {"status": "absent", "detail": f"no evidence path for {story_id}"}
     root = Path(repo_path).resolve()
     target = (root / rel).resolve()
-    roadmap_root = str((root / "pm" / "roadmap").resolve()) + os.sep
-    if target.suffix != ".md" or not str(target).startswith(roadmap_root):
-        return {"status": "refused", "detail": "evidence path escapes pm/roadmap or is not markdown"}
+    roadmap_roots = (
+        str((root / "pm" / "roadmap").resolve()) + os.sep,
+        str((root / "pmo-roadmap" / "pm" / "roadmap").resolve()) + os.sep,
+    )
+    contained = any(str(target).startswith(allowed) for allowed in roadmap_roots)
+    if target.suffix != ".md" or not contained:
+        return {"status": "refused", "detail": "evidence path escapes the roadmap tree or is not markdown"}
     if not target.is_file():
         return {"status": "absent", "detail": f"{rel} does not exist"}
     try:

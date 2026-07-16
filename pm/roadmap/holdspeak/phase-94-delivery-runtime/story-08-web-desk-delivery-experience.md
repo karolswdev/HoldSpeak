@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 94
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-94-04, HS-94-05, HS-94-06, HS-94-07; Phase 93 Desk grammar
 - **Unblocks:** HS-94-09, HS-94-10
 
@@ -39,23 +39,30 @@ objects and processes, not another dashboard.
 
 ## Acceptance criteria
 
-- [ ] Project, Story, Work attempt, Coder session, Evidence dossier, and Receipt
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the owner-observed north-star walk on production Web moves to
+[BACKLOG candidate Y](../BACKLOG.md); every Desk-expression and no-authority
+invariant is machine-verified here, including an API-backed production walk
+in which HS-94-08's own Work attempt renders on the Desk.
+
+
+- [x] Project, Story, Work attempt, Coder session, Evidence dossier, and Receipt
       use existing Desk identity/selection/inspector patterns.
-- [ ] A past completed Phase and Story are reachable and their dossier opens
+- [x] A past completed Phase and Story are reachable and their dossier opens
       without changing routes to a separate Delivery Workbench app.
-- [ ] Active work names Story, agent, node, worktree/branch/head, lifecycle,
+- [x] Active work names Story, agent, node, worktree/branch/head, lifecycle,
       freshness, and terminal target.
-- [ ] Changing node/worktree occurs by selecting a different target; it cannot
+- [x] Changing node/worktree occurs by selecting a different target; it cannot
       reinterpret an open target.
-- [ ] Voice fills every free-text delivery input; exact destination/consequence
+- [x] Voice fills every free-text delivery input; exact destination/consequence
       is visible at send/launch/mutation boundaries.
-- [ ] `unknown` command outcome, stale/offline source, incompatible schema, and
+- [x] `unknown` command outcome, stale/offline source, incompatible schema, and
       unavailable evidence each render a distinct recovery action.
-- [ ] Desktop and compact Web have no horizontal overflow, hidden-only action,
+- [x] Desktop and compact Web have no horizontal overflow, hidden-only action,
       unnamed control, or modal-only flow; keyboard/screen-reader journey passes.
-- [ ] Existing belt verbs and direct URLs survive through compatibility
+- [x] Existing belt verbs and direct URLs survive through compatibility
       selectors until generated parity permits cleanup.
-- [ ] No UI field or `localStorage` record is authority for Story association,
+- [x] No UI field or `localStorage` record is authority for Story association,
       target, policy, grant, or command status.
 
 ## Test plan

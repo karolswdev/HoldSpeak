@@ -134,9 +134,16 @@ extension HTTPDesktopClient {
         return res
     }
 
-    /// `POST /api/coders/{key}/disarm` — one tap, immediate, idempotent.
-    public func disarmCoder(key: String) async throws -> CoderDisarmResult {
-        let data = try await sendSteer(makeSteerRequest(path: "api/coders/\(encoded(key))/disarm", method: "POST", jsonBody: [:]))
+    /// `POST /api/coders/{key}/disarm` — one tap, immediate, idempotent. A
+    /// `node` routes through the relay (`POST /api/coders/relay/{node}/disarm`,
+    /// key in the BODY) exactly like the other verbs — the Phase-94 audit
+    /// found the local-only route left a remote-armed grant alive after a
+    /// native disarm; the disarm MUST land on the session's own node.
+    public func disarmCoder(key: String, node: String? = nil) async throws -> CoderDisarmResult {
+        let (path, keyInBody) = steerVerb(node: node, key: key, verb: "disarm")
+        var body: [String: Any] = [:]
+        if keyInBody { body["key"] = key }
+        let data = try await sendSteer(makeSteerRequest(path: path, method: "POST", jsonBody: body))
         guard let res = try? HoldSpeakContracts.decoder().decode(CoderDisarmResult.self, from: data) else {
             throw DesktopClientError.malformed
         }

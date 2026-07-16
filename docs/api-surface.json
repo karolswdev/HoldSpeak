@@ -984,6 +984,218 @@
       ]
     },
     {
+      "path": "/api/delivery/attempts",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_attempts",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/attempts",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_attempts",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/events",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/evidence/{bundle_id}/{asset_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_dossiers",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/factory/discover",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_factory",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/factory/launch",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_factory",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/factory/profiles",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_factory",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/node/commands",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_node",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/node/disconnect",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_node",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/node/heartbeat",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_node",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/node/hello",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_node",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/nodes",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_node",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/phases/{project}/{phase}/dossier",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_dossiers",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/snapshot",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/sources",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/sources",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery",
+      "consumers": [
+        "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/stories/{project}/{story}/dossier",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_dossiers",
+      "consumers": [
+        "ios"
+      ]
+    },
+    {
+      "path": "/api/delivery/terminal/commands",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/terminal/commands/{command_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/terminal/node/results",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": []
+    },
+    {
+      "path": "/api/delivery/terminal/subscriptions",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/terminal/targets",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_terminal",
+      "consumers": []
+    },
+    {
       "path": "/api/desk/actuators/github/propose",
       "methods": [
         "POST"

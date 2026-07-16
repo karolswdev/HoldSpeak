@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 94
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-94-04, HS-94-06
 - **Unblocks:** HS-94-08, HS-94-09
 
@@ -37,22 +37,30 @@ they intend to steer from the remote Desk.
 
 ## Acceptance criteria
 
-- [ ] The Desk lists remote panes/sessions with node, source/worktree, command
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the true cross-machine launch over a second physical node moves to
+[BACKLOG candidate Y](../BACKLOG.md); the launch atomicity, guards, rollback,
+and remote-verb behavior are machine-verified here with real git worktrees
+and a stubbed launcher exec (a real Claude/Codex binary is a candidate-Y
+rider, not a contract requirement).
+
+
+- [x] The Desk lists remote panes/sessions with node, source/worktree, command
       profile, and immutable target; no pre-known `pane:%N` is needed.
-- [ ] A person selects a Story and online capable node, chooses/creates an
+- [x] A person selects a Story and online capable node, chooses/creates an
       allowed worktree, previews exact launch facts, and launches Claude or
       Codex without supplying shell syntax.
-- [ ] Launch creates one Work attempt and one target; rider registration binds
+- [x] Launch creates one Work attempt and one target; rider registration binds
       the real session without duplication.
-- [ ] Process launched but rider absent is a retained partial state with terminal
+- [x] Process launched but rider absent is a retained partial state with terminal
       access and cleanup, not a fake success.
-- [ ] Rename/kill on a remote node target the discovered generation, are
+- [x] Rename/kill on a remote node target the discovered generation, are
       idempotent, and produce node+hub Receipts.
-- [ ] Name/branch/path/argv injection, source outside configured roots, duplicate
+- [x] Name/branch/path/argv injection, source outside configured roots, duplicate
       worktree, dirty-worktree policy, and node capability mismatch refuse before
       execution.
-- [ ] Node disconnect during launch/kill reconciles by command ID.
-- [ ] Local factory behavior and safety census remain intact.
+- [x] Node disconnect during launch/kill reconciles by command ID.
+- [x] Local factory behavior and safety census remain intact.
 
 ## Test plan
 
