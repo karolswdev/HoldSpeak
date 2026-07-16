@@ -86,7 +86,7 @@ final class SpeakModel: ObservableObject {
                 timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
                     Task { @MainActor in self?.seconds += 1 }
                 }
-            } catch { phase = .error("Couldn't start the mic: \(error)") }
+            } catch { phase = .error("Couldn't start the mic: \(error). Nothing was recorded. Check microphone access and retry.") }
         }
     }
 

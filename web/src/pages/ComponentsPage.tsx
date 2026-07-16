@@ -80,7 +80,7 @@ export default function ComponentsPage() {
               />
             )}
           </Field>
-          <Field label="Disabled field" description="Unavailable by policy.">
+          <Field label="Disabled field" description="Editing is restricted by policy.">
             {({ id, describedBy }) => (
               <TextInput
                 id={id}
@@ -132,7 +132,7 @@ export default function ComponentsPage() {
           Review this before continuing.
         </InlineMessage>
         <InlineMessage tone="error">
-          The request failed with a readable explanation.
+          Sync failed on the private endpoint. The draft is kept here. Retry sync.
         </InlineMessage>
       </Panel>
       <Panel title="Navigation and disclosure" eyebrow="Keyboard-first">

@@ -375,7 +375,7 @@ struct HFSearchSection: View {
 
             switch hf.state {
             case .empty:  Text("No GGUF repositories found.").font(.system(size: 12)).foregroundStyle(Sig.faint)
-            case .failed: Text("Search failed. Check your connection.").font(.system(size: 12)).foregroundStyle(Sig.warn)
+            case .failed: Text("Search on Hugging Face failed. Nothing was downloaded. Check your connection and retry.").font(.system(size: 12)).foregroundStyle(Sig.warn)
             default:
                 if !hf.repos.isEmpty && shownRepos.isEmpty {
                     Text("No \(size ?? "") models in these results.").font(.system(size: 12)).foregroundStyle(Sig.faint)
@@ -457,7 +457,7 @@ struct ModelReadmeView: View {
                     if loading {
                         HStack(spacing: 8) { ProgressView().tint(Sig.accent); Text("Loading the model card…").font(.system(size: 13)).foregroundStyle(Sig.muted) }
                     } else if failed {
-                        Text("Couldn't load this model's README.").font(.system(size: 13)).foregroundStyle(Sig.faint)
+                        Text("Couldn't load this model's README from Hugging Face. Nothing was downloaded. Check your connection and retry.").font(.system(size: 13)).foregroundStyle(Sig.faint)
                     } else if let md = markdown {
                         MarkdownText(raw: md)
                     }

@@ -291,12 +291,12 @@ final class CaptureModel: ObservableObject {
 
     func recover(_ meeting: Meeting) {
         do { _ = try mc?.recover(id: meeting.id); refresh() }
-        catch { self.error = "Recovery failed; the original is still retained: \(error)" }
+        catch { self.error = "Recovery failed; the original is still retained: \(error). Retry recovery." }
     }
 
     func discard(_ meeting: Meeting) {
         do { try mc?.discard(id: meeting.id); refresh() }
-        catch { self.error = "Discard failed; the Meeting was retained: \(error)" }
+        catch { self.error = "Discard failed; the Meeting was retained: \(error). Retry discard." }
     }
 
     func applySyncedMeetings(_ incoming: [Meeting], modified: [String: Date],
@@ -324,7 +324,7 @@ final class CaptureModel: ObservableObject {
 
     func startRecording() async {
         guard let mc else { return }
-        guard await Self.requestMic() else { error = "Microphone permission denied."; return }
+        guard await Self.requestMic() else { error = "Microphone permission denied. Nothing was recorded. Enable microphone access in Settings."; return }
         liveTranscript = ""; error = ""
         liveBubbles = []; pinned = []; partial = ""; bubbledCount = 0; lastFull = ""
         mc.start()
@@ -635,10 +635,10 @@ final class VoiceCaptureState: ObservableObject {
     private let sink = ChunkSink()
 
     func start() async {
-        guard await CaptureModel.requestMic() else { error = "Microphone permission denied."; return }
+        guard await CaptureModel.requestMic() else { error = "Microphone permission denied. Nothing was recorded. Enable microphone access in Settings."; return }
         error = ""; text = ""; sink.reset()
         do { try capture.start { [sink] chunk in sink.add(chunk) }; recording = true }
-        catch { self.error = "Couldn't start the mic: \(error)" }
+        catch { self.error = "Couldn't start the mic: \(error). Nothing was recorded. Check microphone access and retry." }
     }
 
     func stopAndTranscribe() async {
@@ -653,7 +653,7 @@ final class VoiceCaptureState: ObservableObject {
             // verbatim and never runs this. Built-ins + the user's persisted symbols, user-wins.
             if said.isEmpty { self.error = "Didn't catch that — try again, or type it." }
             else { text = SpokenSymbols.configured().process(said) }
-        } catch { self.error = "Couldn't transcribe: \(error)" }
+        } catch { self.error = "Couldn't transcribe: \(error). The field is unchanged. Retry dictation." }
     }
 }
 

@@ -166,7 +166,8 @@ def build_meeting_import_router(ctx) -> APIRouter:
         except Exception as exc:  # pragma: no cover — disk-level failure
             tmp_path.unlink(missing_ok=True)
             return JSONResponse(
-                {"error": f"Could not store the upload: {exc}"}, status_code=500
+                {"error": f"Could not store the upload on the hub: {exc}. No Meeting was created. Check disk space and retry the import."},
+                status_code=500,
             )
         if tmp_path.stat().st_size == 0:
             tmp_path.unlink(missing_ok=True)

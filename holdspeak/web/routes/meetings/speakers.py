@@ -99,13 +99,13 @@ def build_speakers_router(ctx: WebContext) -> APIRouter:
             if payload.name is not None:
                 name = payload.name.strip()
                 if not name:
-                    return JSONResponse({"success": False, "error": "Speaker name cannot be empty"}, status_code=400)
+                    return JSONResponse({"success": False, "error": "Speaker name cannot be empty. The saved name is unchanged. Enter a name and retry."}, status_code=400)
                 updated = db.meetings.update_speaker_name(speaker_id, name) or updated
 
             if payload.avatar is not None:
                 avatar = payload.avatar.strip()
                 if not avatar:
-                    return JSONResponse({"success": False, "error": "Speaker avatar cannot be empty"}, status_code=400)
+                    return JSONResponse({"success": False, "error": "Speaker avatar cannot be empty. The saved avatar is unchanged. Pick an avatar and retry."}, status_code=400)
                 updated = db.meetings.update_speaker_avatar(speaker_id, avatar) or updated
 
             if not updated:

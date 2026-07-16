@@ -92,6 +92,40 @@ function saveZoneWidths(widths: Record<string, number>) {
   }
 }
 
+/** HS-93-08 — the semantic list mode is the SAME Desk, keyboard-first.
+ * The choice persists (`hs.desk.view`) and mirrors into the URL as
+ * `?view=list` so a bookmarked or shared address opens the same expression. */
+export type DeskView = "spatial" | "list";
+
+const VIEW_KEY = "hs.desk.view";
+
+function loadViewMode(): DeskView {
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get("view");
+    if (fromUrl === "list") return "list";
+    if (fromUrl === "spatial") return "spatial";
+    return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "spatial";
+  } catch {
+    return "spatial";
+  }
+}
+
+function persistViewMode(mode: DeskView) {
+  try {
+    localStorage.setItem(VIEW_KEY, mode);
+  } catch {
+    /* storage may be unavailable; the choice just won't persist */
+  }
+  try {
+    const url = new URL(window.location.href);
+    if (mode === "list") url.searchParams.set("view", "list");
+    else url.searchParams.delete("view");
+    window.history.replaceState(null, "", url);
+  } catch {
+    /* environments without history keep the in-memory choice */
+  }
+}
+
 /** Meetings on the desk when a local recording started (NEW-beat diff). */
 let meetingsBeforeRecording = new Set<string>();
 
@@ -150,8 +184,12 @@ interface DeskState {
   panelSaved: string[];
   /** Window focus order; the last id renders in front. */
   panelOrder: string[];
+  /** HS-93-08 — which expression of the Desk renders (spatial or list). */
+  viewMode: DeskView;
 
   refresh(): Promise<void>;
+  /** Switch Desk expression; persists and mirrors `?view=list` in the URL. */
+  setViewMode(mode: DeskView): void;
   /** Create in-world (HS-73-03): instant POST, spawn at center, NEW beat,
    * editor open. The object IS the editor — no modal, ever. */
   createPrimitive(
@@ -267,6 +305,12 @@ export const useDesk = create<DeskState>((set, get) => ({
   askOpen: false,
   chatPersonaId: null,
   toolInspector: null,
+  viewMode: loadViewMode(),
+
+  setViewMode(mode) {
+    set({ viewMode: mode });
+    persistViewMode(mode);
+  },
 
   async refresh() {
     set({ loading: true, error: "" });

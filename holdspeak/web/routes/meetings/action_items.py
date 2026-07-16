@@ -105,7 +105,7 @@ def build_action_items_router(ctx: WebContext) -> APIRouter:
         task = str(payload.task or "").strip()
         if not task:
             return JSONResponse(
-                {"success": False, "error": "Action item task cannot be empty"},
+                {"success": False, "error": "Action item task cannot be empty. The saved task is unchanged. Enter a task and retry."},
                 status_code=400,
             )
 
@@ -296,7 +296,7 @@ def build_action_items_router(ctx: WebContext) -> APIRouter:
         task = str(payload.task or "").strip()
         if not task:
             return JSONResponse(
-                {"success": False, "error": "Action item task cannot be empty"},
+                {"success": False, "error": "Action item task cannot be empty. The saved task is unchanged. Enter a task and retry."},
                 status_code=400,
             )
 

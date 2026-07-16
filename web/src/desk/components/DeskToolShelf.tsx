@@ -70,7 +70,7 @@ export const DESK_TOOLS = [
   },
 ] as const;
 
-const KIND_LABEL: Record<string, string> = {
+export const KIND_LABEL: Record<string, string> = {
   artifact: "Artifact",
   chain: "Workflow",
   coder: "Coder session",

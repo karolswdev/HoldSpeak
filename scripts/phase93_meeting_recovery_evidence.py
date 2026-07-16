@@ -110,7 +110,9 @@ def seed(database: object) -> None:
 
 
 def assert_recovery(page: Page, headline: str) -> None:
-    card = page.locator(".meeting-intel-recovery-card")
+    # HS-93-04's UI-consistency remediation renamed the container: the shared
+    # surface is now `.meeting-intel-recovery` wrapping a `.recovery-card`.
+    card = page.locator(".meeting-intel-recovery")
     card.wait_for()
     card.get_by_role("heading", name=headline).wait_for()
     for expected in (

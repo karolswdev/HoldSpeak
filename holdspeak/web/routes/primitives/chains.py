@@ -57,7 +57,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "chain name is required"}, status_code=400)
+            return JSONResponse({"error": "Sequence name is required"}, status_code=400)
         try:
             from ....db import get_database
             db = get_database()
@@ -79,7 +79,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             chain = db.chains.get(chain_id)
             if chain is None:
-                return JSONResponse({"error": f"Unknown chain: {chain_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Sequence: {chain_id}"}, status_code=404)
             return JSONResponse({"chain": _payload(db, chain)})
         except Exception as exc:
             return error_500(exc, log, "Failed to get chain")
@@ -94,7 +94,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             existing = db.chains.get(chain_id)
             if existing is None:
-                return JSONResponse({"error": f"Unknown chain: {chain_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Sequence: {chain_id}"}, status_code=404)
             chain = db.chains.upsert(
                 chain_id=chain_id,
                 name=str(body["name"]) if "name" in body else existing.name,
@@ -110,7 +110,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             from ....db import get_database
             removed = get_database().chains.delete(chain_id)
             if not removed:
-                return JSONResponse({"error": f"Unknown chain: {chain_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Sequence: {chain_id}"}, status_code=404)
             return JSONResponse({"success": True})
         except Exception as exc:
             return error_500(exc, log, "Failed to delete chain")
@@ -134,7 +134,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             chain = db.chains.get(chain_id)
             if chain is None:
-                return JSONResponse({"error": f"Unknown chain: {chain_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Sequence: {chain_id}"}, status_code=404)
 
             lifecycle = RunLifecycle.begin(
                 db, definition_ref=f"sequence:{chain_id}", body=body,
@@ -155,7 +155,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             for recipe_id in steps:
                 agent = db.recipes.get(str(recipe_id))
                 if agent is None:
-                    error = f"Persona {recipe_id} is unavailable; repair this Sequence before running."
+                    error = f"Persona {recipe_id} is unavailable; the Sequence was not run. Repair the Sequence and run it again."
                     invocation = lifecycle.fail(error, state="unavailable")
                     return JSONResponse(
                         {"error": error, "invocation": invocation,

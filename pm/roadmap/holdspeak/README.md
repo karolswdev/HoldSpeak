@@ -4,7 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-15 — **Phase 91, One React Surface, IN PROGRESS
+**Last updated:** 2026-07-16 — **Phase 93 at 8/9 under the owner's standing
+close directive: HS-93-01 through HS-93-08 are done at their owner-rescoped
+machine-verifiable scopes (bounded route preflight, every-room walks, the
+failure-facts census over 4,173 candidates, contextual power, the Web
+dictation fault matrix with exactly-once delivery, the deterministic meeting
+fault plane + bounded long-run protocol, and the semantic List view with the
+1,000-item scale walk); every owner/physical-device criterion is preserved
+verbatim in BACKLOG candidates X and Y. Phase 91, One React Surface, IN PROGRESS
 (9/10); Phase 92, The Coalescence, PLANNED with all ten stories carrying
 pre-close implementation but no accepted owner/device outcome; Phase 93,
 Effortless HoldSpeak, IN PROGRESS (1/9). HS-93-07 (Secure, Normal, or YOLO)

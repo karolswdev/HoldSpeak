@@ -194,7 +194,7 @@ final class ShellModel: ObservableObject {
             } else {
                 dictatePreview = result
             }
-        } catch { dictatePreview = nil; dictateError = "Couldn't reach your desktop for a preview." }
+        } catch { dictatePreview = nil; dictateError = "Couldn't reach your desktop for a preview. Your text is kept here. Check pairing and retry." }
     }
 
     /// Commit the previewed text: free-type the rewritten result into the focused desktop app.
@@ -206,7 +206,7 @@ final class ShellModel: ObservableObject {
         do {
             _ = try await c.sendRemoteDictation(text: preview.finalText, target: .focused, raw: true)
             dictateSent = true; dictatePreview = nil; dictateText = ""
-        } catch { dictateError = "Send failed. Is a desktop app focused?" }
+        } catch { dictateError = "Send failed. Nothing was typed on the desktop. Focus a desktop app and retry." }
     }
 
     // MARK: Meeting import (HSM-19-03) — hand an on-device recording or transcript to the
@@ -300,15 +300,15 @@ final class ShellModel: ObservableObject {
             if result.success {
                 filedItemIds.insert(itemId); filingItemId = nil
             } else {
-                fileIssueError = result.error ?? "The desktop refused the filing."
+                fileIssueError = result.error ?? "The desktop refused the filing. No issue was created. Review the action item and retry."
             }
         } catch HTTPDesktopClient.DesktopClientError.http(let code) {
             // The hub 400s on a missing repo or an item that isn't accepted; the button is
             // gated to accepted items, so name the repo shape as the likely miss.
             fileIssueError = code == 400
-                ? "The desktop refused — repo must be owner/name and the item accepted."
-                : "The desktop refused (\(code))."
-        } catch { fileIssueError = "Couldn't reach your desktop." }
+                ? "The desktop refused the filing. No issue was created. Use an owner/name repo with an accepted item and retry."
+                : "The desktop refused the filing (\(code)). No issue was created. Retry from the action item."
+        } catch { fileIssueError = "Couldn't reach your desktop. No issue was created. Check pairing and retry." }
     }
 
     // MARK: Artifacts (HSM-19-04) — each meeting artifact wears its synthesis confidence.
@@ -344,11 +344,11 @@ final class ShellModel: ObservableObject {
                     proposals[i] = updated
                 }
             } else {
-                proposalsError = result.error ?? "The desktop refused the decision."
+                proposalsError = result.error ?? "The desktop refused the decision. The proposed action is unchanged. Review it and retry."
             }
         } catch HTTPDesktopClient.DesktopClientError.http(let code) {
-            proposalsError = "The desktop refused (\(code))."
-        } catch { proposalsError = "Couldn't reach your desktop." }
+            proposalsError = "The desktop refused the decision (\(code)). The proposed action is unchanged. Retry."
+        } catch { proposalsError = "Couldn't reach your desktop. The proposed action is unchanged. Check pairing and retry." }
     }
 }
 

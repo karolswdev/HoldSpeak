@@ -415,6 +415,11 @@
 .desk-next .desk-chip.quiet {
   color: var(--text-muted);
 }
+.desk-next .desk-chip[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: rgba(255, 107, 53, 0.14);
+  color: var(--text);
+}
 .desk-next .desk-start-actions {
   display: flex;
   align-items: center;
@@ -3067,5 +3072,132 @@
   .desk-next .desk-obj-glow,
   .desk-next .desk-session-live {
     animation: none !important;
+  }
+}
+
+/* ── HS-93-08: Reduce Motion completes — every continuous or decorative
+   animation stops; state (recording, awaiting, thinking, NEW) stays visible
+   through its static color/shadow. The hold-to-arm progress stays: it IS the
+   state of a user-initiated press, not decoration. ── */
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-obj.is-new .desk-obj-ring,
+  .desk-next .desk-obj.materialize,
+  .desk-next .desk-start-action.is-recording .desk-start-record,
+  .desk-next .desk-mc-pin.awaiting,
+  .desk-next .desk-chat-thinking,
+  .desk-next .desk-ask-routing,
+  .desk-next .desk-ask-card {
+    animation: none !important;
+  }
+}
+
+/* ── HS-93-08: the semantic list mode (the same Desk, keyboard-first) ── */
+.desk-next .desk-listmode {
+  position: relative;
+  min-height: calc(100vh - 40px);
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 76px 18px 120px;
+}
+.desk-next .desk-list-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.desk-next .desk-list-head h2 {
+  margin: 0;
+  font: 700 var(--font-size-lg) var(--font-display);
+}
+.desk-next .desk-list-status {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-list-status:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.desk-next .desk-list-zones ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.desk-next .desk-list-zones .desk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.desk-next .desk-list-zones .desk-chip small {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+}
+.desk-next .desk-list-scroll {
+  margin-top: var(--space-3);
+  overflow-x: auto;
+}
+.desk-next .desk-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-list-table th,
+.desk-next .desk-list-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: baseline;
+}
+.desk-next .desk-list-table thead th {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.desk-next .desk-list-table tbody th {
+  font-weight: 600;
+}
+.desk-next .desk-list-select input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+.desk-next .desk-list-open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.desk-next .desk-list-open:hover,
+.desk-next .desk-list-open:focus-visible {
+  color: var(--accent);
+  outline-offset: 3px;
+}
+.desk-next .desk-list-attention {
+  color: var(--accent);
+}
+.desk-next .desk-list-more {
+  margin-top: var(--space-3);
+}
+.desk-next .desk-scale-chip {
+  position: fixed;
+  bottom: 54px;
+  left: 18px;
+  z-index: 30;
+  color: var(--text-muted);
+  cursor: default;
+}
+@media (max-width: 720px) {
+  .desk-next .desk-scale-chip {
+    bottom: 100px;
+    max-width: calc(100vw - 36px);
   }
 }

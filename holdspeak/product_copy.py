@@ -52,6 +52,65 @@ _STATE_WORDS = re.compile(
     r"revoked|needs review|needs approval|needs attention)\b",
     re.IGNORECASE,
 )
+# HS-93-03 — forced-failure copy must carry the contract's four failure facts.
+# A failure statement asserts that an operation failed; short state chips and
+# recovery buttons are not statements and are checked by their own rules.
+_FAILURE_ASSERTION = re.compile(
+    r"\b(?:fail(?:s|ed|ure)?|unavailable|unreachable|refused|denied|"
+    r"could not|couldn['’]t|"
+    r"cannot\b(?!\s+be\s+(?:restored|undone|recovered))|"
+    r"can['’]t\b(?!\s+(?:undo|be\s+(?:restored|undone|recovered)))|"
+    r"not (?:saved|changed|sent|recorded|delivered)|timed out|malformed)\b",
+    re.IGNORECASE,
+)
+_RETAINED_FACT = re.compile(
+    r"\b(?:retained|saved|kept|keeps?|stays?|remains?|unchanged|preserved|"
+    r"recovered|not (?:changed|sent|typed|lost|deleted|created|written|run)|"
+    r"nothing (?:was |were )?(?:sent|typed|changed|created|deleted|"
+    r"downloaded|recorded|written|lost|run|imported)|"
+    r"no (?:audio|file|text|change|draft|work|data|message|meeting|issue)s? "
+    r"(?:was|were|is|are) "
+    r"(?:recorded|captured|sent|written|created|changed|lost|deleted|affected)|"
+    r"still (?:open|editable|here|available|retained|saved|recorded))\b",
+    re.IGNORECASE,
+)
+_NEXT_ACTION_FACT = re.compile(
+    r"\b(?:retry|try again|check|reconnect|re-?pair\b|review|choose|select|"
+    r"switch|start|record again|reimport|import again|edit|enter|type|reload|"
+    r"refresh|sign in|set ?up|grant|dismiss|search again|send again|run again|"
+    r"run it again|stop to retry|auto-?resumes?|resumes?|repair|enable|"
+    r"open (?:setup|settings|runtime|readiness)|allow|pick|name|shorten|wait)\b",
+    re.IGNORECASE,
+)
+_DESTINATION_RELEVANT = re.compile(
+    r"\b(?:send|sent|sending|deliver(?:y|ed|ing)?|sync(?:ed|ing)?|post(?:ed)?|"
+    r"publish(?:ed)?|reach(?:ed)?|unreachable|connect(?:ion|ed|ing)?|"
+    r"pair(?:ed|ing)?|upload(?:ed)?|download(?:ed)?|webhook|filed?|filing|"
+    r"typed?|typing)\b",
+    re.IGNORECASE,
+)
+_DESTINATION_FACT = re.compile(
+    r"\b(?:this (?:device|browser|mac)|paired (?:device|desktop)|"
+    r"private endpoint|external service|desktop|browser|slack|github|hub|"
+    r"node|peer|endpoint|server|device|hugging face|clipboard|homelab)\b"
+    r"|\{value\}?|\bvalue\}",
+    re.IGNORECASE,
+)
+_FAILURE_STOPWORDS = frozenset(
+    """
+    a an and are be been but by for from had has have here in is it its no not
+    nothing of on or something request operation error the that this to was
+    were will with your
+    """.split()
+)
+_SOURCE_COPY_SUFFIXES = (".tsx", ".ts", ".swift", ".py")
+_HUB_LOG_CALL = re.compile(
+    r"\blog(?:ger)?\.(?:debug|info|warning|error|exception|critical)\("
+)
+_ERROR_CONTEXT = re.compile(
+    r"(?:setError|setMessage|routeError|State\s*=|toast\(|"
+    r"[a-z](?:Error|Detail|Failure|Reason|Message)\s*[:=])"
+)
 _CODE_PREFIXES = (
     "const ",
     "let ",
@@ -135,6 +194,7 @@ def iter_surface_paths(
 def _normalize_literal(value: str) -> str:
     value = re.sub(r"\\\([^)]*\)", "{value}", value)
     value = re.sub(r"\$\{[^}]*\}", "{value}", value)
+    value = re.sub(r"\{[A-Za-z_][^{}]*\}", "{value}", value)
     value = value.replace(r'\"', '"').replace(r"\n", " ")
     value = re.sub(r"\s+", " ", value).strip()
     return value.strip("{} ")
@@ -190,6 +250,7 @@ def _candidate(
 def _extract_source(client: str, relative: str, source: str) -> Iterator[CopyCandidate]:
     in_fence = False
     in_block_comment = False
+    pending_error_context = 0
     for line_number, raw_line in enumerate(source.splitlines(), 1):
         stripped = raw_line.strip()
         if relative.endswith(".md") and stripped.startswith("```"):
@@ -204,6 +265,9 @@ def _extract_source(client: str, relative: str, source: str) -> Iterator[CopyCan
                 in_block_comment = False
             continue
         if stripped.startswith(("//", "<!--")):
+            continue
+        if client == "hub" and _HUB_LOG_CALL.search(stripped):
+            # Hub log lines are server diagnostics, not user-served copy.
             continue
 
         emitted: set[tuple[str, str]] = set()
@@ -242,9 +306,16 @@ def _extract_source(client: str, relative: str, source: str) -> Iterator[CopyCan
             yield from emit(match.group(1), "action" if "button" in raw_line.lower() else "label")
 
         swift_visible = bool(_SWIFT_VISIBLE.search(raw_line))
-        error_context = bool(
-            re.search(r"(?:setError|setMessage|routeError|State\s*=|toast\()", raw_line)
-        )
+        quoted = list(_QUOTED.finditer(raw_line))
+        error_context = bool(_ERROR_CONTEXT.search(raw_line))
+        # A ternary or wrapped assignment carries its error context onto the
+        # literal's continuation line (HS-93-03 failure-copy coverage).
+        if pending_error_context and quoted and stripped[:1] in "?:\"'`":
+            error_context = True
+        if error_context and not quoted:
+            pending_error_context = 2
+        else:
+            pending_error_context = max(0, pending_error_context - 1)
         ui_assignment = bool(
             re.search(
                 r"\b(?:title|label|subtitle|preview|message|detail|error|state)\b",
@@ -263,7 +334,7 @@ def _extract_source(client: str, relative: str, source: str) -> Iterator[CopyCan
                 if re.search(r"\b(?:Button|Label)\s*\(", raw_line)
                 else "label"
             )
-            for match in _QUOTED.finditer(raw_line):
+            for match in quoted:
                 yield from emit(match.group("text"), context)
 
         if relative.endswith(".tsx") and stripped and not any(emitted):
@@ -293,6 +364,39 @@ def _exception_matches(
     path = str(exception.get("path") or "")
     literals = tuple(str(value) for value in exception.get("literals") or ())
     return fnmatch.fnmatch(candidate.path, path) and candidate.text in literals
+
+
+def _is_failure_statement(candidate: CopyCandidate) -> bool:
+    """A rendered statement that an operation failed, not a chip or button."""
+
+    if not candidate.path.endswith(_SOURCE_COPY_SUFFIXES):
+        return False
+    if not _FAILURE_ASSERTION.search(candidate.text):
+        return False
+    words = re.findall(r"[A-Za-z0-9]+", candidate.text)
+    if len(words) >= 4:
+        return True
+    return len(words) == 3 and candidate.text.rstrip().endswith((".", "!", "?"))
+
+
+def _missing_failure_facts(text: str) -> list[str]:
+    """The contract's four failure facts a forced-failure string must carry."""
+
+    missing: list[str] = []
+    content = [
+        word
+        for word in re.findall(r"[A-Za-z]+", _FAILURE_ASSERTION.sub(" ", text))
+        if word.lower() not in _FAILURE_STOPWORDS
+    ]
+    if not content:
+        missing.append("failed_operation")
+    if not _RETAINED_FACT.search(text):
+        missing.append("retained_work")
+    if not _NEXT_ACTION_FACT.search(text):
+        missing.append("next_action")
+    if _DESTINATION_RELEVANT.search(text) and not _DESTINATION_FACT.search(text):
+        missing.append("destination_when_relevant")
+    return missing
 
 
 def violations(
@@ -333,6 +437,26 @@ def violations(
                     reason="Name the immediate consequence and destination.",
                 )
             )
+        if (
+            selected.failure_requirements
+            and not excepted
+            and _is_failure_statement(candidate)
+        ):
+            missing = _missing_failure_facts(candidate.text)
+            if missing:
+                result.add(
+                    CopyViolation(
+                        rule_id="failure-missing-facts",
+                        path=candidate.path,
+                        line=candidate.line,
+                        text=candidate.text,
+                        reason=(
+                            "Failure copy names what failed, retained work, "
+                            "the next valid action, and the destination when "
+                            "relevant (missing: " + ", ".join(missing) + ")."
+                        ),
+                    )
+                )
     return sorted(result)
 
 

@@ -27,7 +27,8 @@ export function DeskChrome({
   const setup = useDesk((s) => s.setup);
   const loading = useDesk((s) => s.loading);
   const positions = useDesk((s) => s.positions);
-  const { refresh, tidyDesk } = useDesk.getState();
+  const viewMode = useDesk((s) => s.viewMode);
+  const { refresh, tidyDesk, setViewMode } = useDesk.getState();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const anyLive = Object.values(status).some((v) => v === "live");
@@ -92,6 +93,17 @@ export function DeskChrome({
       <div className="desk-chrome desk-chrome-tr">
         {showDailyStarts ? <DeskStartActions compact /> : null}
         <DeskToolShelf />
+        <button
+          type="button"
+          className="desk-chip"
+          aria-pressed={viewMode === "list"}
+          onClick={() =>
+            setViewMode(viewMode === "list" ? "spatial" : "list")
+          }
+          title="Show the Desk as a keyboard-first list"
+        >
+          List
+        </button>
         {Object.keys(positions).length > 0 && (
           <button
             type="button"

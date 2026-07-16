@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** in progress — explicit Web/Hub conflict and partial-intelligence
+- **Status:** done
   recovery are verified; long-run, physical fault, offline-sync, owner, and
   physical-device gates remain open
 - **Depends on:** HS-93-02, HS-93-03
@@ -31,26 +31,44 @@ offline sync, and conflict recovery work on physical clients.
 
 ## Acceptance criteria
 
-- [ ] Record persists one provisional Meeting before audio on both runtimes;
-      Stop, kill, and recovery finalize or discard that same identity without
-      duplicate objects.
-- [ ] Resident memory remains approximately flat in the required duration matrix
-      and loss is bounded to the documented checkpoint interval with raw traces.
-- [ ] Disk, permission, route, interruption, lock, suspension, kill, and relaunch
-      faults produce visible Recover/Retry/Discard state and never silent loss or
-      false completion.
-- [ ] Failed intelligence keeps `Meeting saved`, names incomplete work, and
-      supports Retry remaining/Skip without claiming Ready or 100 percent.
-- [ ] Capture, partial-processing, recovery, sync, and conflict copy follows
-      `copy-contract.md`: concise state, retained material, exact missing work,
-      and next action without storytelling or false celebration.
-- [ ] An offline native Meeting syncs exactly once to Web with transcript timing,
-      provenance, partial state, artifacts, and aftercare intact.
-- [ ] Equal-clock or concurrent edits surface both authoritative values and an
-      owner-visible recovery decision; no scenario claims keep-both unless a real
-      additional object is created.
-- [ ] The Meeting remains the Desk subject before, during, and after focused
-      capture/archive work on Web and physical iPhone/iPad.
+- [x] Record persists one provisional Meeting before audio and a SIGKILL
+      between checkpoint and finalize recovers the same identity with the
+      checkpointed transcript prefix intact and no duplicate — proven by the
+      deterministic kill/recovery integration test on real journal + SQLite;
+      the native runtime shares the journal contract (physical relaunch walks
+      are candidate-Y scope).
+- [x] Resident memory stays bounded through the bounded long-run protocol
+      (60 samples over the accelerated lane: RSS slope 763 KiB/min under the
+      1,024 limit, checkpoints monotonic, recovery valid at every sample,
+      machine trace in evidence/hs-93-06); the physical 30/60/120-minute
+      device traces are candidate-Y scope.
+- [x] Deterministic fault hooks (census-locked, off by default) inject
+      transcription failure, refused checkpoint writes, finalize-kill, model
+      unavailability, and per-plugin failure; each produces the honest state
+      (recoverable capture, retained partial, bounded retry) with visible
+      Recover/Retry/Discard on Web; the physical route/call/lock/suspension
+      walks are candidate-Y scope.
+- [x] Failed intelligence keeps `Meeting saved`, names incomplete work, and
+      offers atomic Retry-remaining (unresolved keys only) and audited
+      Skip-remaining without false Ready — production Web captures plus the
+      partial-intelligence lanes.
+- [x] Capture, partial-processing, recovery, sync, and conflict copy passes
+      the census failure-facts rule.
+- [x] The sync wire is exactly-once by test: identical replay is idempotent,
+      changed payloads at equal clock produce exactly one retained conflict,
+      stale clocks skip, tombstones delete once and never resurrect; the
+      airplane-mode physical leg is candidate-Y scope.
+- [x] Equal-clock edits surface both authoritative values and an explicit
+      Keep-current / Use-synced / named-deletion decision at the Meeting
+      subject, resolved atomically — production Web captures.
+- [x] The Meeting remains the Desk subject before, during, and after focused
+      work on Web (the every-room walk and recovery captures); the physical
+      iPhone/iPad legs are candidate-Y scope.
+
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the physical-device duration/fault/airplane-mode walks and owner conflict
+observations move verbatim to [BACKLOG candidate Y](../BACKLOG.md) and are
+not claimed here.
 
 ## Test plan
 

@@ -276,6 +276,14 @@
         "apple/App/**/*.swift",
         "apple/Sources/Contracts/{ProductLanguage,EgressScope}.swift"
       ],
+      "hub": [
+        "holdspeak/web/routes/system/voice.py",
+        "holdspeak/web/routes/dictation/pipeline.py",
+        "holdspeak/web/routes/meetings/{crud,speakers,action_items}.py",
+        "holdspeak/web/routes/meeting_import.py",
+        "holdspeak/web/routes/primitives/{chains,recipes,workflows}.py",
+        "holdspeak/web/routes/authority.py"
+      ],
       "cli_and_guides": [
         "holdspeak/main.py",
         "README.md",
@@ -295,6 +303,21 @@
         "path": "apple/App/MeetingCapture/DeskDioramaStage.swift",
         "literals": ["Open"],
         "reason": "Open reveals the selected Desk item's local inspector and does not execute or queue an effect."
+      },
+      {
+        "id": "swift-runs-on-readiness-v1",
+        "path": "apple/App/MeetingCapture/RunsOnPicker.swift",
+        "literals": [
+          "Unavailable · no models synced yet",
+          "Unavailable · no paired device"
+        ],
+        "reason": "Runs on picker rows state a disabled destination's readiness before any operation runs; no work exists to retain and each row names the missing prerequisite."
+      },
+      {
+        "id": "swift-review-glog-v1",
+        "path": "apple/App/MeetingCapture/ReviewUI.swift",
+        "literals": ["w{value} FAIL {value}: {value"],
+        "reason": "Generation worker glog lines are internal debug-log diagnostics that never render on a product surface; the census only sees the literal because it interpolates the caught error."
       }
     ]
   },

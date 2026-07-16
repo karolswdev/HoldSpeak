@@ -64,7 +64,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "recipe name is required"}, status_code=400)
+            return JSONResponse({"error": "Persona name is required"}, status_code=400)
         try:
             from ....db import get_database
             recipe = get_database().recipes.upsert(
@@ -83,7 +83,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             from ....db import get_database
             recipe = get_database().recipes.get(recipe_id)
             if recipe is None:
-                return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
             return JSONResponse({"recipe": _payload(recipe)})
         except Exception as exc:
             return error_500(exc, log, "Failed to get recipe")
@@ -98,7 +98,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             existing = db.recipes.get(recipe_id)
             if existing is None:
-                return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
             recipe = db.recipes.upsert(recipe_id=recipe_id, **_recipe_fields(body, existing))
             return JSONResponse({"recipe": _payload(recipe)})
         except Exception as exc:
@@ -110,7 +110,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             from ....db import get_database
             removed = get_database().recipes.delete(recipe_id)
             if not removed:
-                return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
             return JSONResponse({"success": True})
         except Exception as exc:
             return error_500(exc, log, "Failed to delete recipe")
@@ -132,7 +132,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             recipe = db.recipes.get(recipe_id)
             if recipe is None:
-                return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
 
             lifecycle = RunLifecycle.begin(
                 db, definition_ref=f"persona:{recipe_id}", body=body,
@@ -319,7 +319,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             recipe = db.recipes.get(recipe_id)
             if recipe is None:
-                return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
             name = recipe.name or recipe_id
 
             blocks: list[str] = []
@@ -447,7 +447,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             from ....db import get_database
             recipe = get_database().recipes.get(recipe_id)
             if recipe is None:
-                return JSONResponse({"error": f"Unknown recipe: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
             artifact_id = _persist_run_artifact(
                 kind="recipe", name=recipe.name or recipe_id,
                 user_input=str(body.get("question") or ""),

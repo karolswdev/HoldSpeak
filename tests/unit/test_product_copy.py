@@ -21,7 +21,12 @@ REPO = Path(__file__).resolve().parents[2]
 def test_every_declared_primary_surface_expands_and_is_classified() -> None:
     paths = list(iter_surface_paths(REPO))
     assert paths
-    assert {client for client, _ in paths} == {"web", "swift", "cli_and_guides"}
+    assert {client for client, _ in paths} == {
+        "web",
+        "swift",
+        "hub",
+        "cli_and_guides",
+    }
     assert len(paths) == len(set(paths))
 
     candidates = inventory(REPO)
@@ -29,6 +34,7 @@ def test_every_declared_primary_surface_expands_and_is_classified() -> None:
     assert {candidate.client for candidate in candidates} == {
         "web",
         "swift",
+        "hub",
         "cli_and_guides",
     }
     assert {candidate.classification for candidate in candidates} <= COPY_CLASSIFICATIONS
@@ -76,6 +82,63 @@ def test_each_prohibited_product_copy_rule_is_exercised() -> None:
         assert {item.rule_id for item in violations([candidate])} == {
             "generic-consequential-verb"
         }
+
+
+def _failure_candidate(text: str, path: str = "web/src/example.tsx") -> CopyCandidate:
+    return CopyCandidate(
+        client="web",
+        path=path,
+        line=1,
+        text=text,
+        classification="error_recovery",
+        context="error_recovery",
+    )
+
+
+def test_failure_statements_must_carry_the_four_failure_facts() -> None:
+    incomplete = _failure_candidate("The transcription request failed.")
+    problems = violations([incomplete])
+    assert {item.rule_id for item in problems} == {"failure-missing-facts"}
+    reason = problems[0].reason
+    assert "retained_work" in reason
+    assert "next_action" in reason
+
+    unsent = _failure_candidate("Sync failed. Please try again soon.")
+    (problem,) = violations([unsent])
+    assert problem.rule_id == "failure-missing-facts"
+    assert "destination_when_relevant" in problem.reason
+    assert "retained_work" in problem.reason
+
+    complete = _failure_candidate(
+        "Transcription failed on this device. Your recording is saved. "
+        "Retry transcription."
+    )
+    assert not violations([complete])
+
+
+def test_failure_facts_skip_chips_buttons_and_documentation_prose() -> None:
+    chip = _failure_candidate("Sync failed")
+    button = _failure_candidate("Retry transcription")
+    docs = _failure_candidate(
+        "The request failed and nothing explains it here.",
+        path="docs/USER_GUIDE.md",
+    )
+    assert not violations([chip, button, docs])
+
+
+def test_failure_facts_exception_is_exact_and_bounded() -> None:
+    allowed = _failure_candidate(
+        "Unavailable · no paired device",
+        path="apple/App/MeetingCapture/RunsOnPicker.swift",
+    )
+    assert not violations([allowed])
+    elsewhere = _failure_candidate(
+        "Unavailable · no paired device",
+        path="apple/App/MeetingCapture/QueuePresence.swift",
+    )
+    assert {item.rule_id for item in violations([elsewhere])} == {
+        "failure-missing-facts"
+    }
 
 
 def test_generic_open_exception_is_exact_and_bounded() -> None:

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Button,
@@ -14,9 +14,12 @@ import {
   TextInput,
   Toolbar,
 } from "../components/signal/Signal";
+import { RunsOnPicker } from "../desk/components/RunsOnPicker";
+import type { InferenceTarget } from "../desk/api";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
 import {
   DICTATION_FAILURES,
+  applicableActions,
   dictationFailure,
   type DictationFailure,
 } from "../lib/dictationRecovery";
@@ -136,6 +139,8 @@ function DryRun() {
   const [correctionValue, setCorrectionValue] = useState("");
   const [taught, setTaught] = useState("");
   const [verdict, setVerdict] = useState<"" | "right" | "wrong">("");
+  const [targets, setTargets] = useState<InferenceTarget[]>([]);
+  const [targetId, setTargetId] = useState("this_machine");
   const run = async () => {
     setBusy(true);
     setError("");
@@ -160,6 +165,39 @@ function DryRun() {
       setError(DICTATION_FAILURES[category].message);
     } finally {
       setBusy(false);
+    }
+  };
+  const actions = failure
+    ? applicableActions(failure, { draftPresent: Boolean(utterance.trim()) })
+    : [];
+  useEffect(() => {
+    if (!actions.includes("alternate_runs_on") || targets.length) return;
+    let mounted = true;
+    void apiFetch<{ targets?: InferenceTarget[] }>("/api/inference-targets")
+      .then((result) => {
+        if (mounted && Array.isArray(result.targets))
+          setTargets(result.targets);
+      })
+      .catch(() => undefined);
+    return () => {
+      mounted = false;
+    };
+  }, [actions, targets.length]);
+  const runElsewhere = async (id: string) => {
+    setTargetId(id);
+    setRecoveryMessage("");
+    try {
+      await apiFetch("/api/settings", {
+        method: "PUT",
+        json: {
+          dictation: {
+            runtime: { profile_id: id === "this_machine" ? null : id },
+          },
+        },
+      });
+      await run();
+    } catch (reason) {
+      setRecoveryMessage(readableError(reason));
     }
   };
   const keepDraft = async () => {
@@ -247,7 +285,7 @@ function DryRun() {
           disabled={!utterance.trim()}
           onClick={run}
         >
-          {error ? "Retry dry test" : "Run dry test"}
+          {error && actions.includes("retry") ? "Retry dry test" : "Run dry test"}
         </Button>
         {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
         {utteranceRecovered && !error ? (
@@ -257,22 +295,33 @@ function DryRun() {
         ) : null}
         {error ? (
           <div className="button-row">
-            <Button
-              dense
-              disabled={!utterance.trim()}
-              onClick={() => void navigator.clipboard.writeText(utterance)}
-            >
-              Copy
-            </Button>
-            <Button dense disabled={!utterance.trim()} onClick={keepDraft}>
-              Keep as Note
-            </Button>
-            {failure && DICTATION_FAILURES[failure].setup ? (
+            {actions.includes("copy") ? (
+              <Button
+                dense
+                onClick={() => void navigator.clipboard.writeText(utterance)}
+              >
+                Copy
+              </Button>
+            ) : null}
+            {actions.includes("keep_as_note") ? (
+              <Button dense onClick={keepDraft}>
+                Keep as Note
+              </Button>
+            ) : null}
+            {actions.includes("setup") ? (
               <Link className="btn btn--secondary" to="/setup">
                 Setup
               </Link>
             ) : null}
           </div>
+        ) : null}
+        {error && actions.includes("alternate_runs_on") && targets.length ? (
+          <RunsOnPicker
+            targets={targets}
+            selectedId={targetId}
+            onChange={(id) => void runElsewhere(id)}
+            disabled={busy}
+          />
         ) : null}
         {recoveryMessage ? (
           <InlineMessage

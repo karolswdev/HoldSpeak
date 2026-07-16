@@ -713,7 +713,7 @@ def _export_transcript(results: list[tuple[str, str]], format: str) -> Optional[
             filepath.write_text("\n".join(lines))
         return str(filepath)
     except Exception as e:
-        log.error(f"Failed to export transcript: {e}")
+        log.error(f"Transcript export failed: {e}. No file was written. Check the export path and retry.")
         return None
 
 

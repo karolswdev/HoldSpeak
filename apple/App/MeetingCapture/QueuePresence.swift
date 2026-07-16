@@ -313,7 +313,7 @@ struct QueueHUD: View {
             if store.meshUnreachable {
                 HStack(spacing: 7) {
                     Image(systemName: "desktopcomputer.trianglebadge.exclamationmark").font(.system(size: 11, weight: .bold))
-                    Text("\(store.meshPeerName) unreachable · auto-resumes").font(.system(size: 11, weight: .medium))
+                    Text("\(store.meshPeerName) unreachable · jobs kept · auto-resumes").font(.system(size: 11, weight: .medium))
                 }
                 .foregroundStyle(Sig.warn).padding(.horizontal, 16).padding(.bottom, store.blocked > 0 ? 4 : 14)
             }
@@ -592,7 +592,7 @@ struct QueueHUD: View {
                     Text(store.meshPeerName).font(.system(size: 11, weight: .semibold))
                 }.foregroundStyle(Sig.faint).lineLimit(1)
                 if store.meshUnreachable {
-                    Text("peer unreachable · auto-resumes")
+                    Text("peer unreachable · jobs kept · auto-resumes")
                         .font(.system(size: 10.5, weight: .semibold)).foregroundStyle(status.color)
                         .lineLimit(1).padding(.top, 1)
                 }

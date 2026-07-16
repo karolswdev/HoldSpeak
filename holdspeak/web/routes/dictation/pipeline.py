@@ -423,7 +423,7 @@ def build_pipeline_router(
                     log.error(f"Remote dictation receipt persistence failed: {exc}")
                     return JSONResponse(
                         {
-                            "error": "Delivery outcome could not be recorded. The draft remains on the sending device.",
+                            "error": "Delivery outcome could not be recorded. The draft remains on the sending device. Send again to retry.",
                             "error_code": "delivery_pending",
                             "failure_category": "delivery_conflict",
                             "delivery_id": delivery_id,

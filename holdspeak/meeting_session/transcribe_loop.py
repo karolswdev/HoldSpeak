@@ -57,6 +57,18 @@ log = get_logger("meeting_session")
 
 
 class TranscribeLoopMixin:
+    def _transcribe_audio(self, audio: "np.ndarray") -> Optional[str]:
+        """The one transcription seam for every stream (mic/system/device).
+
+        HS-93-06: the ``meeting.transcribe`` fault point trips here, so a
+        deterministic mid-meeting transcription failure exercises exactly the
+        real error path (segment dropped, meeting alive, checkpoints running).
+        """
+        from ..faults import trip as _fault_trip
+
+        _fault_trip("meeting.transcribe")
+        return self.transcriber.transcribe(audio)
+
     def _transcribe_loop(self) -> None:
         """Background thread that transcribes audio periodically."""
         log.debug("Transcription loop started")
@@ -131,7 +143,7 @@ class TranscribeLoopMixin:
                 end_time = mic_chunks[-1].end_time
 
                 try:
-                    text = self.transcriber.transcribe(mic_audio)
+                    text = self._transcribe_audio(mic_audio)
                     if text and text.strip():
                         # Optionally diarize mic audio (for on-site meetings)
                         speaker_id: Optional[str] = None
@@ -173,7 +185,7 @@ class TranscribeLoopMixin:
                 end_time = system_chunks[-1].end_time
 
                 try:
-                    text = self.transcriber.transcribe(system_audio)
+                    text = self._transcribe_audio(system_audio)
                     if text and text.strip():
                         # Identify speaker via diarization
                         speaker_id: Optional[str] = None
@@ -226,7 +238,7 @@ class TranscribeLoopMixin:
             start_time = chunks[0].timestamp
             end_time = chunks[-1].end_time
             try:
-                text = self.transcriber.transcribe(audio)
+                text = self._transcribe_audio(audio)
             except Exception as e:
                 log.error(f"Device {device_id!r} transcription error: {e}")
                 continue

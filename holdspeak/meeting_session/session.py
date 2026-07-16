@@ -738,6 +738,14 @@ class MeetingSession(
             except Exception as e:
                 log.error(f"MIR routing finalization failed: {e}")
 
+        # HS-93-06 fault plane: die between the last durable checkpoint and the
+        # finalize transaction. Everything above already checkpointed; nothing
+        # below may be required for recovery — restart must resume this same
+        # Meeting identity from `capture_status="recording"` without a duplicate.
+        from ..faults import kill_process as _fault_kill
+
+        _fault_kill("meeting.finalize_kill")
+
         with self._lock:
             # Save speaker embeddings for cross-meeting recognition
             if self._diarizer is diarizer:

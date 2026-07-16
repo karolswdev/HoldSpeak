@@ -33,15 +33,23 @@ const ZONE_TINTS = [
   "#FBBF24",
 ];
 
+/** HS-93-08 — the spatial stage's honest render bound: a 1,000-item desk
+ * floats only the first MAX_FLOATERS objects (world order — meetings first)
+ * and says so in a visible chip; search and the list mode always reach
+ * everything (both read the store's items, never the rendered nodes). */
+export const MAX_FLOATERS = 200;
+
 export function World() {
   const items = useDesk((s) => s.items);
   const divedZone = useDesk((s) => s.divedZone);
   const positions = useDesk((s) => s.positions);
   const editingId = useDesk((s) => s.editingId);
-  const objects = worldObjects(items, divedZone);
+  const allWorld = worldObjects(items, divedZone);
+  const objects =
+    allWorld.length > MAX_FLOATERS ? allWorld.slice(0, MAX_FLOATERS) : allWorld;
+  const editingIdx = allWorld.findIndex((o) => o.id === editingId);
+  const editing = editingIdx >= 0 ? allWorld[editingIdx] : null;
   const zones = worldZones(items, divedZone);
-  const editingIdx = objects.findIndex((o) => o.id === editingId);
-  const editing = editingIdx >= 0 ? objects[editingIdx] : null;
   const pulloutId = useDesk((s) => s.pulloutId);
   const pullout = pulloutId ? objectByRef(items, pulloutId) : null;
   const askOpen = useDesk((s) => s.askOpen);
@@ -122,6 +130,12 @@ export function World() {
         >
           ← All
         </button>
+      )}
+      {allWorld.length > objects.length && (
+        <div className="desk-chip desk-scale-chip" role="status">
+          Showing {objects.length} of {allWorld.length}. Search or use List
+          view for everything.
+        </div>
       )}
       {zones.map((z, i) => {
         const compact =
