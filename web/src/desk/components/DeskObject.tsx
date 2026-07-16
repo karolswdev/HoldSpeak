@@ -127,6 +127,7 @@ export function DeskObject({
       tabIndex={0}
       aria-label={`${o.title}${projectionCounts?.needs_attention ? `, ${projectionCounts.needs_attention} need attention` : ""}`}
       data-obj-id={selectionRef}
+      data-kind={o.kind}
       className={
         "desk-obj" +
         (dragging ? " dragging" : "") +

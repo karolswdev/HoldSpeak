@@ -136,9 +136,19 @@ export function objUnit(
   const row = Math.floor(i / cols);
   const jx = (oh(o.id + "x") - 0.5) * (0.7 / cols);
   const jy = (oh(o.id + "y") - 0.5) * (0.6 / rows);
+  // Default homes stay clear of the chrome band: the top clusters occupy
+  // one row on wide screens and wrap much deeper on phones. A user drag
+  // may still park anything anywhere; only defaults respect the band.
+  const compact = typeof window !== "undefined" && window.innerWidth <= 720;
+  // Zones default one band above (0.20 compact / 0.13 wide, see World).
+  const yMin = compact ? 0.32 : 0.18;
+  const xMin = compact ? 0.14 : 0.07;
   return {
-    x: Math.min(0.94, Math.max(0.06, (col + 0.5) / cols + jx)),
-    y: Math.min(0.94, Math.max(0.06, (row + 0.5) / rows + jy)),
+    x: Math.min(1 - xMin, Math.max(xMin, (col + 0.5) / cols + jx)),
+    y: Math.min(
+      0.92,
+      Math.max(yMin, yMin + (1 - yMin - 0.08) * ((row + 0.5) / rows) + jy),
+    ),
   };
 }
 

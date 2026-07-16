@@ -3,6 +3,7 @@
 // the lasso surface (HSM-16-04): drag on the background to rope objects into
 // the Ask atom's context.
 import { useRef, useState } from "react";
+import { useDrag } from "@use-gesture/react";
 import { useDesk } from "../store";
 import {
   objectByRef,
@@ -123,8 +124,10 @@ export function World() {
         </button>
       )}
       {zones.map((z, i) => {
-        const cols = Math.max(1, Math.min(4, zones.length));
-        const wPct = Math.min(30, 84 / cols);
+        const compact =
+          typeof window !== "undefined" && window.innerWidth <= 720;
+        const cols = Math.max(1, Math.min(compact ? 2 : 4, zones.length));
+        const wPct = Math.min(compact ? 42 : 30, 84 / cols);
         return (
           <ZoneTray
             key={z.id}
@@ -132,7 +135,10 @@ export function World() {
             style={
               {
                 left: `${((((i % cols) + 0.5) / cols) * 100).toFixed(2)}%`,
-                top: "12%",
+                // Default homes clear the chrome band and sit one band
+                // above the object grid (objUnit yMin); a dragged zone
+                // keeps whatever home the owner gave it.
+                top: `${(compact ? 0.2 : 0.13) * 100 + Math.floor(i / cols) * 12}%`,
                 width: `${wPct}%`,
                 "--zk": objGlow("directory"),
               } as React.CSSProperties
@@ -173,7 +179,10 @@ export function World() {
 }
 
 /** A landmark zone tray (HS-73-05): stable tint, member mini-sprites,
- * drop affordance, dive on click, rename-in-place, an empty hint. */
+ * drop affordance, dive on click, rename-in-place, an empty hint. A zone is
+ * desk material like any object: drag it anywhere (the position persists
+ * beside the object layout, keyed `zone:<id>`), resize its width by the
+ * corner grip, tap to dive. */
 function ZoneTray({
   z,
   style,
@@ -181,13 +190,72 @@ function ZoneTray({
   z: ReturnType<typeof worldZones>[number];
   style: React.CSSProperties;
 }) {
+  const zoneKey = `zone:${z.id}`;
   const items = useDesk((s) => s.items);
   const hoverZoneId = useDesk((s) => s.hoverZoneId);
   const renamingZoneId = useDesk((s) => s.renamingZoneId);
+  const savedPos = useDesk((s) => s.positions[zoneKey]);
+  const savedWidth = useDesk((s) => s.zoneWidths[z.id]);
+  const dragging = useDesk((s) => s.draggingId === zoneKey);
   const { renameZone, diveInto, setRenamingZone } = useDesk.getState();
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(z.title);
   const focusRename = renamingZoneId === z.id;
+
+  const bind = useDrag(
+    ({ event, first, last, movement: [mx, my], memo }) => {
+      // The rename input and mic keep their own gestures.
+      if (first) {
+        const t = event?.target as HTMLElement | null;
+        if (t?.closest("input, button, [role='textbox']"))
+          return { skip: true };
+      }
+      if (memo?.skip) return memo;
+      const el = event?.target as HTMLElement | null;
+      const world = memo?.world ?? el?.closest(".desk-world");
+      if (!world) return memo;
+      const moved = memo?.moved || Math.abs(mx) + Math.abs(my) > 4;
+      const { setDragging, setPosition, persistPositions } = useDesk.getState();
+      if (first) setDragging(zoneKey);
+      if (moved && event && "clientX" in event) {
+        // A FRESH world rect each move (the HS-71-05 robustness rule).
+        const px = (event as PointerEvent).clientX;
+        const py = (event as PointerEvent).clientY;
+        const r = (world as HTMLElement).getBoundingClientRect();
+        setPosition(zoneKey, {
+          x: Math.min(0.96, Math.max(0.04, (px - r.left) / r.width)),
+          y: Math.min(0.94, Math.max(0.03, (py - r.top) / r.height)),
+        });
+      }
+      if (last) {
+        if (moved) {
+          persistPositions();
+          // Cleared next tick so the click reads the drag and does not dive.
+          setTimeout(() => setDragging(null), 0);
+        } else {
+          setDragging(null);
+        }
+      }
+      return { world, moved, skip: false };
+    },
+    { pointer: { buttons: 1 } },
+  );
+
+  const resizeBind = useDrag(
+    ({ event, movement: [mx], last, memo }) => {
+      event?.stopPropagation();
+      const base: number =
+        memo?.base ??
+        (event?.target as HTMLElement | null)?.closest<HTMLElement>(
+          ".desk-zone",
+        )?.offsetWidth ??
+        200;
+      const next = Math.min(560, Math.max(148, base + mx));
+      useDesk.getState().setZoneWidth(z.id, next, last);
+      return { base };
+    },
+    { pointer: { buttons: 1 } },
+  );
   const memberIds = ((z.ref as any).memberIds as string[]) || [];
   const thumbs = memberIds.slice(0, 4).map((mid) => {
     const r = resolveRef(items, mid);
@@ -200,15 +268,34 @@ function ZoneTray({
     if (clean && clean !== z.title) void renameZone(z.id, clean);
   };
   const tint = ZONE_TINTS[variantIndex(z.id, ZONE_TINTS.length)];
+  const placed: React.CSSProperties = savedPos
+    ? {
+        ...style,
+        left: `${(savedPos.x * 100).toFixed(2)}%`,
+        top: `${(savedPos.y * 100).toFixed(2)}%`,
+      }
+    : style;
+  if (savedWidth) {
+    placed.width = savedWidth;
+    placed.maxWidth = "none";
+  }
+
   return (
     <div
-      className={"desk-zone" + (hoverZoneId === z.id ? " drop-ready" : "")}
+      {...bind()}
+      className={
+        "desk-zone" +
+        (hoverZoneId === z.id ? " drop-ready" : "") +
+        (dragging ? " dragging" : "")
+      }
       data-zone-id={z.id}
       role="button"
       tabIndex={0}
       aria-label={`${z.title} zone, ${memberIds.length} ${memberIds.length === 1 ? "item" : "items"}`}
-      style={{ ...style, "--zk": tint } as React.CSSProperties}
+      style={{ ...placed, "--zk": tint } as React.CSSProperties}
       onClick={() => {
+        // A completed drag never dives (the HS-71-06 discrimination).
+        if (useDesk.getState().draggingId === zoneKey) return;
         if (!renaming && !focusRename) diveInto(z.id);
       }}
       onKeyDown={(event) => {
@@ -281,6 +368,12 @@ function ZoneTray({
       ) : (
         <span className="desk-zone-count">drop things here</span>
       )}
+      <span
+        className="desk-zone-grip"
+        {...resizeBind()}
+        aria-hidden="true"
+        onClick={(e) => e.stopPropagation()}
+      />
     </div>
   );
 }

@@ -206,3 +206,22 @@ slice and remain open.
 The raw captures were taken via the evidence tool and folded here because an
 `evidence-story-04.md` file is a done-claim in `dw check` and this story
 remains in progress.
+
+## Round 2 — the owner's spin (2026-07-15, same evening)
+
+The owner walked the merged desk on desktop and iPhone (LAN + token) and
+found it still not right: zones immovable, several surfaces visually broken.
+Ten findings (R2-01..R2-10 in the inventory) were reproduced with live
+screenshots against the running hub before fixing. The heart of it: zones had
+been treated as fixed furniture while objects and panels got physics — they
+now drag, resize, and persist exactly like objects; the chrome band no longer
+eats taps; default layouts respect the chrome on both breakpoints; paper
+sprites read as documents; the in-world editor is a bottom sheet on phones
+with a proper header; frosted panels no longer ghost; the egress badge
+truncates.
+
+Verification: full Web gate green (guard 115 sources, typecheck, 32 files /
+173 tests, production build), full Python unit suite `2911 passed in 96.28s`,
+desk source-lock/copy/doc-drift guards `30 passed`, and before/after live
+captures on desktop (1440) and iPhone (393) viewports plus the seeded-rig
+create-Persona editor sheets.
