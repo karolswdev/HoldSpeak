@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 93
-- **Status:** in progress
+- **Status:** done
 - **Depends on:** HS-93-02, HS-93-03, HS-93-04
 - **Unblocks:** HS-93-08, HS-93-09
 - **Owner:** unassigned
@@ -33,37 +33,56 @@ YOLO must become one complete AI-OS posture across React and Swift.
 
 ## Acceptance criteria
 
-- [ ] Every proposed external or destructive effect states what will happen,
-      the named destination, whether approval executes now or queues work, and
-      the current authority basis before the decision.
-- [ ] Secure, Normal, and YOLO show their practical effect on the Desk and at the
-      action point; changing posture affects future decisions only and never
-      silently widens the current proposal.
-- [ ] YOLO executes every eligible configured/registered primary-journey
-      operation with zero HoldSpeak approval, grant, or arm prompt; the posture
-      is the authority basis and the operation still produces a complete Receipt.
-- [ ] Secure uses previews and explicit authority at boundary-crossing,
-      destructive, or automated effects; Normal lets routine local/configured
-      work flow and asks only where consequence or authority materially changes.
-- [ ] Grants show actor, operation, destination, data/resource scope, TTL/count,
-      remaining uses, and revoke; every use creates a source-linked Receipt.
-- [ ] Payload, destination, identity, pane, configuration, expiry, count, and
-      revoke changes refuse before effect in every mode with the same invariant
-      matrix.
-- [ ] Missing OS permission, credential, pairing, destination, pane, or declared
-      capability refuses by name in all postures; an unknown operation is never
-      auto-allowed by YOLO.
-- [ ] Qlippy, Mission Control, History, Coder, Integration, Cadence, and native
-      Queue consume the same commitment/reason result; no fallback path renders a
-      bare consequential Approve/Apply/Run.
-- [ ] Authority, warning, refusal, grant, and Receipt copy follows
-      `copy-contract.md`; Qlippy supplies no banter, guilt, invented urgency, or
-      personality prose around consequential decisions.
-- [ ] Owner control/treatment walks correctly predict the result before acting
-      and find the outcome Receipt on the originating Desk subject.
-- [ ] React and flagship Swift consume the same versioned policy decision,
-      labels, source, reason codes, and receipt fields; client-specific posture
-      branches are mechanically forbidden.
+Rescoped 2026-07-15 by direct owner decision: the story closes at the two
+delivered authority families — configured Integration writes (Slack, Webhook,
+GitHub) and registered Coder text/allowed-key steering — plus their shared
+client expression. The remaining operation-family matrix, Qlippy/Mission
+Control/Cadence treatment, owner walks, and physical-device evidence move to
+[BACKLOG candidate X](../BACKLOG.md) and are not claimed here.
+
+Accepted at the delivered scope:
+
+- [x] Every proposed configured-Integration or registered-Coder effect states
+      what will happen, the named destination, whether approval executes now or
+      queues work, and the current authority basis before the decision
+      (operation-policy v2 snapshot, rendered at the Desk action point, History,
+      Coder pull-out, Web Settings, and Swift Queue/Receipt details).
+- [x] Secure, Normal, and YOLO show their practical effect at these action
+      points; changing posture affects future decisions only — an existing
+      proposal keeps its immutable policy snapshot and is never silently
+      widened, and a posture change revokes active grants.
+- [x] YOLO executes the eligible configured Slack/Webhook/GitHub destination and
+      the registered or exact-pane Coder text/allowed-key delivery with zero
+      HoldSpeak approval, grant, or arm prompt; the posture is the recorded
+      authority basis and every attempt produces a complete source-linked
+      Receipt.
+- [x] Secure retains exact per-action decisions and Normal allows a matching
+      bounded scoped grant for these families; grants are no longer a YOLO
+      prerequisite anywhere.
+- [x] Payload, destination, identity, pane, configuration, and grant-posture
+      changes refuse before effect in every mode: the executor re-verifies the
+      durable payload/destination/audit binding before egress, and the typing
+      node re-resolves the canonical `%N` immediately before a keystroke.
+- [x] An unregistered destination, unresolved pane, or unknown operation family
+      resolves to a named refusal in all postures and never enters the approval
+      queue; YOLO never auto-allows an unknown operation.
+- [x] React and flagship Swift decode the same versioned policy snapshot,
+      labels, source, reason codes, and Receipt fields for the delivered
+      families; neither client keeps a private posture matrix for them.
+- [x] Authority, refusal, and Receipt copy on the delivered surfaces passes the
+      controlled product-copy census with zero violations.
+
+Descoped to BACKLOG candidate X (owner decision 2026-07-15):
+
+- Central policy coverage for dictation delivery, inference, Coder
+  factory/destructive operations, Mission Control/workflows, sync, cadence, and
+  destructive Desk mutations, with zero-prompt YOLO for those families.
+- Bounded grant issue/use/revoke presentation (actor, scope, TTL/count,
+  remaining uses, revoke) with per-use source-linked Receipts.
+- Shared Qlippy, Mission Control, and Cadence commitment treatment with no
+  consequential fallback verb.
+- Owner control/treatment walks with prompt counts and prediction verdicts;
+  physical Web/iPhone/iPad evidence with exact provenance.
 
 ## Test plan
 
@@ -93,3 +112,9 @@ Bundling note: this initial Phase-93 scaffold is intentionally committed with
 the HS-93-01 through HS-93-05 in-progress implementation slices because the
 owner directed that the complete shared working tree ship together. No story is
 marked done; each closure gate remains independent.
+
+Closure note (2026-07-15): the owner directed that this story close at the two
+delivered authority slices so the phase can proceed to the cross-client UI
+consistency remediation. The rescope is recorded in the acceptance section
+above, in the phase status file's decision log, and as BACKLOG candidate X;
+nothing from the original scope is silently dropped.

@@ -11,6 +11,23 @@ import Contracts
 /// wrong word sequence. Tuned tiny (`sampleRate: 1` ⇒ 1 frame = 1 s) so commits fire cheaply.
 final class SlidingWindowTests: XCTestCase {
 
+    // Same rail rule as MeetingCaptureTests: stop() drives the audio journal,
+    // which must never touch the real Documents folder from a test run.
+    override func setUp() {
+        super.setUp()
+        MeetingAudioStore.baseDirectoryOverride = FileManager.default
+            .temporaryDirectory
+            .appendingPathComponent("hs-window-tests-\(UUID().uuidString)", isDirectory: true)
+    }
+
+    override func tearDown() {
+        if let root = MeetingAudioStore.baseDirectoryOverride {
+            try? FileManager.default.removeItem(at: root)
+        }
+        MeetingAudioStore.baseDirectoryOverride = nil
+        super.tearDown()
+    }
+
     /// Chunk N carries sample value N (one frame each). Lets the transcriber emit position-tied text.
     final class IndexedCapture: IAudioCapture, @unchecked Sendable {
         private var cb: (@Sendable (AudioChunk) -> Void)?

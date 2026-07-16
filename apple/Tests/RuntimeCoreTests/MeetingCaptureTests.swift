@@ -8,6 +8,24 @@ import Contracts
 /// transcript grows as audio accumulates, and a stopped meeting reopens intact.
 final class MeetingCaptureTests: XCTestCase {
 
+    // The audio journal must never touch the real Documents folder from a
+    // test run: a cloud-synced Documents can block unlink in the kernel and
+    // hang the whole suite. Every run gets its own temp root.
+    override func setUp() {
+        super.setUp()
+        MeetingAudioStore.baseDirectoryOverride = FileManager.default
+            .temporaryDirectory
+            .appendingPathComponent("hs-capture-tests-\(UUID().uuidString)", isDirectory: true)
+    }
+
+    override func tearDown() {
+        if let root = MeetingAudioStore.baseDirectoryOverride {
+            try? FileManager.default.removeItem(at: root)
+        }
+        MeetingAudioStore.baseDirectoryOverride = nil
+        super.tearDown()
+    }
+
     // Capture that emits chunks on demand, so a test can grow the buffer between ticks.
     final class PushCapture: IAudioCapture, @unchecked Sendable {
         private var onChunk: (@Sendable (AudioChunk) -> Void)?

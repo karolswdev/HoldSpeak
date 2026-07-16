@@ -470,3 +470,105 @@ cross-machine leg needs the rails repo's `dw` reachable on the far node
 new wire and should be scoped honestly (likely: the remote node's
 worker tails its own `dw events` and pushes envelopes, mirroring the
 coder-queue pull pattern).
+
+---
+
+### W. JIRA Desk Sync (pull reports as Desk primitives) — **PLAN FILED** ([`docs/internal/PLAN_PHASE_JIRA_DESK_SYNC.md`](../../../docs/internal/PLAN_PHASE_JIRA_DESK_SYNC.md))
+
+Owner direction (2026-07-11): a plugin that, after configuration (API
+token, JIRA base URL, etc.), uses the JIRA REST API to pull reports as
+Desk primitives — TODO / IN PROGRESS stories and items. The full RFC
+lives in the plan doc above; this entry is the backlog handoff.
+
+The gap is specific and half-built already. HoldSpeak ships a JIRA
+connector (`connector_packs/jira_cli.py` + `activity_jira.py`) but it
+is narrow on three axes: it runs `jira issue view KEY --plain` against
+tickets already referenced in local activity (no JQL reports); its
+output is `activity_annotations` (never reaches the Desk); and it is
+CLI-mediated with no credentials of its own. Nothing sinks external
+data into Desk primitives, and no connector speaks REST with its own
+credentials. JDS-01 fills both.
+
+One thesis, pull-only: a new `desk_sync` connector kind that, after the
+operator configures base URL + token (secret store, joined at request
+time), polls a named JQL report on a cadence and materializes the
+result as one Note per issue (stable id `jira:<slug>:<KEY>`, tagged by
+`statusCategory` lane) grouped into a KB per report. The Desk's existing
+diorama renders them as ordinary objects badged `cloud · <host>` with a
+"refreshed N min ago" line. Lanes key off `statusCategory.key`
+(`new`/`ind`/`done`), stable across every team's custom workflow; the
+granular `status.name` rides as a tag. A provenance sidecar
+(`primitive_sources`, mirroring `artifact_sources`) makes synced notes
+read-only until the operator detaches them, so a refresh never
+clobbers a hand edit (there is no hand edit to clobber until detach).
+
+The design reuses the most machinery and invents the least: the
+`connector_sdk` manifest + `Enrich`/`Preview`/`Clear` protocols, the
+`PermissionGate` (`network:outbound`, host-pinned against redirect
+SSRF), the existing `NoteRepository`/`KBRepository`, the `settings_secrets`
+secret-store rule, and the Desk's existing primitive renderers. No new
+primitive type, no new rendering surface. Write-back (transition an
+issue, comment) is deliberately deferred to a later `jira_issue_actuator`
+sibling of `github_issue_actuator` on the `gated_connector`+
+actuator spine — the pull MVP needs only the `PermissionGate`, never
+the propose-approve-execute gate.
+
+*Lands on:* `connector_sdk.py` (one new kind + capability +
+permission), `connector_packs/jira_desk_sync.py` (the pack),
+`db/primitive_sources.py` (the sidecar repo), `db/core.py` (additive
+schema migration), `settings_secrets.py` (two secrets),
+`web/routes/primitives/notes.py` (read-only 409 + detach),
+`commands/doctor.py` (the check).
+
+**Sequencing note:** independent of the current phase; can graduate
+whenever a slot opens. No dependency on the iPad/Apple surfaces beyond
+what every synced primitive already assumes (the sync wire contract is
+untouched). The one live-verification requirement is a real JIRA
+instance (Cloud or DC) with an API token/PAT; unit and integration
+tests use a fake opener and need no network.
+
+---
+
+### X. Control-posture completion — the HS-93-07 remainder (full family matrix + grant surfaces + owner/device proof)
+
+Owner decision (2026-07-15): HS-93-07 closed at its two delivered
+authority families — configured Integration writes (Slack, Webhook,
+GitHub) and registered Coder text/allowed-key steering — so Phase 93
+could proceed to the cross-client UI consistency remediation. This
+entry preserves the descoped remainder verbatim; none of it is claimed
+by the closed story.
+
+What remains, all on the existing `operation-policy/v2` spine (no new
+resolver, registry, or receipt store):
+
+- **Family coverage.** Classify dictation delivery, inference (local,
+  paired, external), Coder factory operations (spawn's optional
+  command, rename, kill — each with its own consequence class),
+  Mission Control/workflow runs, sync, cadence/background work, and
+  destructive Desk mutations through policy v2, honoring the
+  `control-mode-contract.md` matrix. `current_behavior` stays
+  unacceptable for any consequential primary-journey operation; YOLO
+  gives zero HoldSpeak prompts for eligible configured/registered
+  operations in every one of these families and never auto-allows an
+  unknown one.
+- **Grant surfaces.** Secure/Normal bounded grant issue/use/revoke
+  presentation: actor, operation, destination, data/resource scope,
+  TTL/count, remaining uses, revoke; every use mints a source-linked
+  Receipt.
+- **Shared treatment.** Qlippy, Mission Control, and Cadence consume
+  the same commitment/reason result with no consequential fallback
+  `Approve`/`Apply`/`Run`; Qlippy supplies no banter or personality
+  prose around consequential decisions.
+- **Proof.** Owner control/treatment production walks with exact
+  prompt counts and prediction/Receipt-findability verdicts, plus
+  physical Web/iPhone/iPad evidence with build, device, destination,
+  and operation provenance.
+
+**Sequencing note:** the natural next slice was already named in the
+HS-93-07 progress record — classify Coder factory/destructive
+operations first, because spawn/rename/kill have materially different
+consequences and must not inherit text-steering posture authority by
+accident. HS-93-08/09 do not depend on this entry's completion, but
+the Phase-93 exit criterion "every control mode passes the invariant
+matrix" cannot be satisfied without it; the phase close must link
+back here honestly.
