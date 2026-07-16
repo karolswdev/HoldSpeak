@@ -102,3 +102,21 @@ recoverable failure, and return. Those walks must also prove browser Back and
 native dismissal retain drafts and make results findable. Owner observation
 must confirm no journey ends on an orphaned administrative page and Studio does
 not feel like a second home.
+
+## Closure — 2026-07-16 (owner-rescoped)
+
+The standing owner close directive rescopes this story to its
+machine-verifiable scope; the physical-device walks and owner judgments move
+verbatim to BACKLOG candidate Y.
+
+The closing slice extended scripts/phase93_workroom_evidence.py to every
+named room against the production bundle with the zero-failed-API gate:
+contextual Dictation (subject named, return reopens the same pull-out),
+direct-URL Dictation (explicit Back to Desk, no fabricated subject), Meeting
+archive/detail via Review meeting, Workbench edit with the draft retained
+outside the URL across exit and re-entry, Runs-on editor cancel with nothing
+stranded, Integration setup on desktop and compact, and a refused Runs-on
+save that states its failure while the return still lands on the subject.
+Nine screenshots in evidence/hs-93-02/. No product gaps were found — every
+room already carried its contextual entry and working return.
+Captured run: [evidence-story-02](./evidence-story-02.md).

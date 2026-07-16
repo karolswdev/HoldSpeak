@@ -1,6 +1,6 @@
 # Phase 93 — Effortless HoldSpeak
 
-**Status:** IN PROGRESS (3/9). HS-93-04 is done at an owner-rescoped close (context power composed through Desk affordances, source-bound Receipts, the desk-window grammar; owner measures parked in candidate Y). HS-93-01 is done at an owner-rescoped close
+**Status:** IN PROGRESS (4/9). HS-93-02 is done at an owner-rescoped close (the every-room production walk covers contextual and direct entry, retained drafts, cancel/failure returns for all six named rooms with zero failed APIs; physical walks parked in candidate Y). HS-93-04 is done at an owner-rescoped close (context power composed through Desk affordances, source-bound Receipts, the desk-window grammar; owner measures parked in candidate Y). HS-93-01 is done at an owner-rescoped close
 (machine-verifiable scope; owner/device walks parked as BACKLOG candidate Y):
 the repaired bounded route preflight sweeps all 19 routes clean and a
 keyboard-only production walk proves Create/Tools/Desk-memory reachability,
@@ -134,7 +134,7 @@ prove the daily experience through sustained owner use on Web, iPhone, and iPad.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-93-01 | Three obvious starts | done | [story-01](./story-01-three-obvious-starts.md) | [evidence-story-01](./evidence-story-01.md) · [progress record](./progress-story-01.md) |
-| HS-93-02 | Every room is a Desk workspace | in progress | [story-02](./story-02-every-room-comes-home.md) | [progress record](./progress-story-02.md) |
+| HS-93-02 | Every room is a Desk workspace | done | [story-02](./story-02-every-room-comes-home.md) | [evidence-story-02](./evidence-story-02.md) · [progress record](./progress-story-02.md) |
 | HS-93-03 | One professional product voice | in progress | [story-03](./story-03-one-product-vocabulary.md) | [progress record](./progress-story-03.md) |
 | HS-93-04 | Power lives on the Desk | done | [story-04](./story-04-power-appears-in-context.md) | [evidence-story-04](./evidence-story-04.md) · [progress record](./progress-story-04.md) |
 | HS-93-05 | Your words never disappear | in progress | [story-05](./story-05-your-words-never-disappear.md) | [progress record](./progress-story-05.md) |
