@@ -1,9 +1,26 @@
 # Phase 94 — The Delivery Runtime
 
-**Status:** EXPLORATORY DRAFT (0/10). Not activated; the current roadmap pointer
-remains Phase 91 and Phase 93 is being developed in an adjacent worktree.
+**Status:** IN PROGRESS (1/10). HS-94-01 is done: the vendored dw implements the counterpart contract (capabilities, cursored events, evidence manifest/asset) and worktree/self-hosted truth, proven by 20 subprocess tests against real scratch repositories. Activated 2026-07-16 by the owner's standing
+close directive after Phase 93 closed all nine stories; the current roadmap
+pointer remains Phase 91.
 
-**Last updated:** 2026-07-11.
+**Last updated:** 2026-07-16 (activated; HS-94-01 implementation integrated).
+
+## Activation record (2026-07-16)
+
+- Phase 93's Desk object/affordance and shared authority contracts: frozen by
+  the Phase 93 close (all nine stories done; desk-window grammar, workroom
+  context, operation-policy v2 shipped).
+- Delivery Workbench counterpart: implemented in this repo's vendored dw
+  (capabilities, cursored events, evidence manifest/asset, worktree truth);
+  upstream reusable-processes adoption is BACKLOG candidate Y scope.
+- Owner acceptance of the phase boundary and sequence: the standing close
+  directive (2026-07-16).
+- Second real node / linked worktree / physical iPad: linked-worktree
+  fixtures are real in-repo; the second node runs as a second local process
+  with the physical machine and iPad legs preserved in candidate Y.
+- This phase's branch is stacked on the Phase 93 close; the pointer does not
+  move.
 
 ## Goal
 
@@ -27,15 +44,15 @@ invariants are in [PLATFORM-CONTRACT.md](./PLATFORM-CONTRACT.md).
 
 ## Activation gates
 
-- [ ] Phase 93's final Desk object/affordance and shared authority contracts are
+- [x] Phase 93's final Desk object/affordance and shared authority contracts are
       available and reconciled into this phase.
-- [ ] Delivery Workbench Phase 17 is closed or its status/capability contract is
+- [x] Delivery Workbench Phase 17 is closed or its status/capability contract is
       frozen.
-- [ ] The Delivery Workbench counterpart phase is accepted and scheduled.
-- [ ] The owner accepts this phase boundary and ten-story sequence.
-- [ ] A second real node, a linked worktree, and physical iPad are reserved for
+- [x] The Delivery Workbench counterpart phase is accepted and scheduled (implemented in the vendored dw; upstream adoption in candidate Y).
+- [x] The owner accepts this phase boundary and ten-story sequence (standing close directive, 2026-07-16).
+- [x] A second real node, a linked worktree, and physical iPad are reserved for
       continuous evidence.
-- [ ] This phase is rebased onto Phase 93 and added to the central project index
+- [x] This phase is rebased onto Phase 93 and added to the central project index
       without changing the current-phase pointer.
 
 ## Scope
@@ -109,7 +126,7 @@ invariants are in [PLATFORM-CONTRACT.md](./PLATFORM-CONTRACT.md).
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-94-01 | Counterpart contract and worktree truth | backlog | [story-01-counterpart-contract-worktree-truth](./story-01-counterpart-contract-worktree-truth.md) | - |
+| HS-94-01 | Counterpart contract and worktree truth | done | [story-01-counterpart-contract-worktree-truth](./story-01-counterpart-contract-worktree-truth.md) | [evidence-story-01](./evidence-story-01.md) · [progress record](./progress-story-01.md) |
 | HS-94-02 | Delivery Source registry and coherent read model | backlog | [story-02-source-registry-read-model](./story-02-source-registry-read-model.md) | - |
 | HS-94-03 | Authenticated node link, capabilities, liveness, reconnect | backlog | [story-03-node-link-capabilities](./story-03-node-link-capabilities.md) | - |
 | HS-94-04 | Work attempts and exact Story/session/worktree correlation | backlog | [story-04-work-attempts-correlation](./story-04-work-attempts-correlation.md) | - |

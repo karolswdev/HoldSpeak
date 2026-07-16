@@ -581,6 +581,48 @@ class TestEvidenceInPlace:
                 assert set(route.methods) == {"GET"}
 
 
+class TestEvidenceSelfHostedLayout:
+    """HS-94-01: Delivery Workbench's self-hosted `pmo-roadmap/pm/roadmap`
+    tree is a first-class containment root — resolved, not weakened:
+    traversal and out-of-tree reads still refuse."""
+
+    REL = "pmo-roadmap/pm/roadmap/demo/phase-1-a/evidence-story-01.md"
+
+    def _payload(self, tmp_path, evidence_rel, write=True):
+        from holdspeak.missioncontrol_bridge import story_evidence_payload
+
+        repo = tmp_path / "rails-repo"
+        (repo / ".githooks").mkdir(parents=True)
+        dw = repo / ".githooks" / "dw"
+        dw.write_text("#!/usr/bin/env python3\n")
+        dw.chmod(0o755)
+        if write:
+            target = repo / "pmo-roadmap" / "pm" / "roadmap" / "demo" / "phase-1-a"
+            target.mkdir(parents=True, exist_ok=True)
+            (target / "evidence-story-01.md").write_text(
+                "# Evidence\n\n- self-hosted proof\n"
+            )
+            (repo / "pmo-roadmap" / "secrets.md").write_text("SECRET\n")
+        project_map = {"projects": {"demo": str(repo)}, "default": str(repo)}
+        runner = _runner_for({"context": _context_doc(evidence_rel)})
+        return story_evidence_payload(project_map, "demo", "demo", "DM-1-01", runner)
+
+    def test_self_hosted_tree_is_contained_and_live(self, tmp_path):
+        body = self._payload(tmp_path, self.REL)
+        assert body["status"] == "live"
+        assert "self-hosted proof" in body["text"]
+
+    def test_traversal_out_of_the_self_hosted_tree_is_refused(self, tmp_path):
+        body = self._payload(
+            tmp_path, "pmo-roadmap/pm/roadmap/../../../secrets.md"
+        )
+        assert body["status"] == "refused"
+
+    def test_pmo_roadmap_outside_the_roadmap_tree_is_refused(self, tmp_path):
+        body = self._payload(tmp_path, "pmo-roadmap/secrets.md")
+        assert body["status"] == "refused"
+
+
 class TestRailsSize:
     """The grounding gauge's honest number (HS-88-02): sizes only, a
     receipt (the dw-named file), never the content."""

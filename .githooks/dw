@@ -318,6 +318,29 @@ def command_evidence_capture(args: argparse.Namespace) -> int:
     return exit_code
 
 
+def command_capabilities(args: argparse.Namespace) -> int:
+    from dw_pmo.capabilities import build_capabilities
+
+    payload = build_capabilities(args.root)
+    print(json.dumps(payload, indent=None if args.json else 2, sort_keys=True))
+    return 0
+
+
+def command_evidence_manifest(args: argparse.Namespace) -> int:
+    from dw_pmo.manifest import build_manifest
+
+    project = get_project(args.root, args.project)
+    payload = build_manifest(args.root, project, args.story)
+    print(json.dumps(payload, indent=None if args.json else 2, sort_keys=True))
+    return 0
+
+
+def command_evidence_asset(args: argparse.Namespace) -> int:
+    from dw_pmo.manifest import stream_asset
+
+    return stream_asset(args.root, args.bundle_or_story, args.asset)
+
+
 def command_contract_new(args: argparse.Namespace) -> int:
     story_ids = []
     for raw in args.story or []:
@@ -447,8 +470,19 @@ def command_state(args: argparse.Namespace) -> int:
 
 
 def command_events(args: argparse.Namespace) -> int:
-    from dw_pmo.events import read_events
+    from dw_pmo.events import read_events, read_events_after
 
+    if args.after is not None:
+        # Cursor-addressable read (HS-94-01): the versioned envelope,
+        # additive beside the legacy bare-array form below.
+        try:
+            cursor = int(args.after or 0)
+        except ValueError:
+            die(f"--after expects the numeric cursor a previous read returned, got {args.after!r}")
+        if cursor < 0:
+            die(f"--after expects a non-negative cursor, got {args.after!r}")
+        print(json.dumps(read_events_after(args.root, cursor), sort_keys=True))
+        return 0
     entries = read_events(args.root, tail=args.tail)
     if args.json:
         print(json.dumps(entries, sort_keys=True))
@@ -586,7 +620,18 @@ def build_parser() -> argparse.ArgumentParser:
     events = sub.add_parser("events", help="the rail event log (append-only; docs/mission-control.md §3)")
     events.add_argument("--tail", type=int, default=None, help="only the last N events")
     events.add_argument("--json", action="store_true", help="emit events as a JSON array")
+    events.add_argument(
+        "--after", default=None, metavar="<cursor>",
+        help="cursor-addressable read: only events after this cursor (0 = all), as the versioned events_schema envelope",
+    )
     events.set_defaults(func=command_events)
+
+    capabilities = sub.add_parser(
+        "capabilities",
+        help="declare the counterpart contract: schema versions, statuses, verbs (pure read)",
+    )
+    capabilities.add_argument("--json", action="store_true", help="compact JSON (default is indented JSON)")
+    capabilities.set_defaults(func=command_capabilities)
 
     sessions = sub.add_parser("sessions", help="correlate live agent sessions to stories (docs/mission-control.md §2)")
     sessions.add_argument("--json", action="store_true", help="emit the sessions_schema JSON document")
@@ -706,6 +751,21 @@ def build_parser() -> argparse.ArgumentParser:
     evidence_capture.add_argument("--max-output-bytes", type=int, default=20000)
     evidence_capture.add_argument("cmd", nargs="*", help="command to run (everything after `--`)")
     evidence_capture.set_defaults(func=command_evidence_capture)
+    evidence_manifest = evidence_sub.add_parser(
+        "manifest",
+        help="the story's evidence dossier: members with size/MIME/sha256, parsed captured runs (pure read)",
+    )
+    evidence_manifest.add_argument("project")
+    evidence_manifest.add_argument("story")
+    evidence_manifest.add_argument("--json", action="store_true", help="compact JSON (default is indented JSON)")
+    evidence_manifest.set_defaults(func=command_evidence_manifest)
+    evidence_asset = evidence_sub.add_parser(
+        "asset",
+        help="stream one manifest member to stdout by asset id or manifest path (the manifest is the sole path authority)",
+    )
+    evidence_asset.add_argument("bundle_or_story", help="bundle id or story selector")
+    evidence_asset.add_argument("asset", help="asset id or manifest-listed path")
+    evidence_asset.set_defaults(func=command_evidence_asset)
 
     story = sub.add_parser("story", help="story commands")
     story_sub = story.add_subparsers(dest="story_command", required=True)
