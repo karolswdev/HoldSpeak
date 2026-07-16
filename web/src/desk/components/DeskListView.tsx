@@ -14,6 +14,7 @@ import { KIND_LABEL } from "./DeskToolShelf";
 import { InlineEditor } from "./InlineEditor";
 import { Pullout } from "./Pullout";
 import { AskBar, AskPanel } from "./AskPanel";
+import { DeliveryListSection } from "./DeliveryListSection";
 
 /** Rows per page — a plain "show more" pagination, no virtualization dep. */
 export const LIST_PAGE = 100;
@@ -181,6 +182,7 @@ export function DeskListView() {
           </button>
         ) : null}
       </section>
+      <DeliveryListSection />
       {editing && (
         <InlineEditor key={editing.id} o={editing} u={{ x: 0.5, y: 0.4 }} />
       )}
