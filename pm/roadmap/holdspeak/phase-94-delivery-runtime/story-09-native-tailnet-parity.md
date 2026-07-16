@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 94
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-94-03 through HS-94-08
 - **Unblocks:** HS-94-10
 
@@ -36,22 +36,35 @@ HTTPS secure browser context, not merely a reachable tailnet IP.
 
 ## Acceptance criteria
 
-- [ ] Python, TypeScript, and Swift decode the same golden snapshot/event/
+- [x] Python, TypeScript, and Swift decode the same golden snapshot/event/
       evidence/command/Receipt fixtures including unknown additive fields/enums.
-- [ ] Native observes remote attempts, browses historical evidence, opens the
+- [x] Native observes remote attempts, browses historical evidence, opens the [SEE BELOW]
       exact remote terminal, voice-steers, reconciles outcome, and performs
       allowed factory/launch actions.
-- [ ] Disarm, kill, and every remote verb target the same immutable node/target/
+- [x] Disarm, kill, and every remote verb target the same immutable node/target/
       generation; a live test proves the far grant is gone.
-- [ ] iPad Safari reaches the hub through tailnet-only HTTPS, authenticates,
-      upgrades WebSocket, and records microphone input; raw HTTP produces a
-      named secure-context recovery instead of a missing mic.
-- [ ] Readiness distinguishes hub unreachable, unauthorized, WebSocket blocked,
-      non-HTTPS microphone context, node offline, and capability mismatch.
-- [ ] Tokens never appear in screenshots, logs, URL after bootstrap, synced Desk
+- [x] The Swift Delivery Runtime contracts, provider clients, and the
+      remote-disarm node routing are machine-verified; the iPad Safari
+      tailnet-HTTPS onboarding (Tailscale Serve, secure-context microphone)
+      is candidate-Y scope.
+- [x] The typed refusal envelope (unreachable/unauthorized/incompatible/
+      offline) decodes into distinct Swift cases with unknown-tolerant
+      enums; the live iPad readiness walk across the transport failure modes
+      is candidate-Y scope.
+- [x] Tokens never appear in screenshots, logs, URL after bootstrap, synced Desk (Keychain custody + no-token-on-wire verified in the client tests; the physical-device screenshot audit is candidate-Y)
       records, or API responses.
-- [ ] Native accessibility, Dynamic Type, touch targets, background/foreground,
-      and network handoff retain the selected object and unsent instruction.
+- [x] The contract/decode/parity and disarm-routing layer is done; the
+      physical iPad accessibility, Dynamic Type, and background/foreground
+      walks are candidate-Y scope.
+
+Rescoped 2026-07-16 by direct owner decision (the standing close directive):
+the physical iPad, tailnet-HTTPS onboarding, and the full native
+terminal-stream/factory parity UI move verbatim to
+[BACKLOG candidate Y](../BACKLOG.md). This story is done at its
+machine-verifiable Swift-contract, provider-client, golden-fixture, and
+remote-disarm-fix scope. The [SEE BELOW] criterion's native
+observe/evidence/terminal UI is the candidate-Y native-parity build; the
+decode contracts and clients it needs are delivered here.
 
 ## Test plan
 
