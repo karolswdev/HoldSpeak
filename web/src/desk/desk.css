@@ -147,6 +147,46 @@
 .desk-next .desk-obj:hover .desk-obj-sprite {
   filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.6)) brightness(1.08);
 }
+/* Notes: the paper sprite is a near-blank sheet, which reads as a missing
+   texture at 88px. Ruled lines, an ink margin, and a corner fold make it
+   read as a note without touching the sprite assets. */
+.desk-next .desk-obj[data-kind="note"] .desk-obj-sprite,
+.desk-next .desk-obj[data-kind="artifact"] .desk-obj-sprite {
+  width: 74px;
+  height: 74px;
+  margin: 7px;
+}
+.desk-next .desk-obj[data-kind="note"] .desk-obj-lift,
+.desk-next .desk-obj[data-kind="artifact"] .desk-obj-lift {
+  position: relative;
+}
+.desk-next .desk-obj[data-kind="note"] .desk-obj-lift::after,
+.desk-next .desk-obj[data-kind="artifact"] .desk-obj-lift::after {
+  content: "";
+  position: absolute;
+  inset: 16px 15px 15px 16px;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(
+        225deg,
+        rgba(0, 0, 0, 0.22) 0 9px,
+        rgba(255, 255, 255, 0.28) 9px 10px,
+        transparent 10px
+      )
+      no-repeat,
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 11px,
+      rgba(72, 62, 46, 0.28) 11px 12px
+    );
+  background-size:
+    100% 100%,
+    100% calc(100% - 14px);
+  background-position:
+    0 0,
+    0 12px;
+}
 .desk-next .desk-obj:hover .desk-obj-glow {
   opacity: 0.82;
 }
@@ -194,11 +234,48 @@
     0 12px 30px rgba(0, 0, 0, 0.42),
     inset 0 1px 0 color-mix(in srgb, var(--zk, #e0a458) 30%, transparent);
   color: var(--text);
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
   transition:
-    transform var(--duration-short) var(--ease-standard),
     box-shadow var(--duration-short) var(--ease-standard),
     border-color var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-zone.dragging {
+  cursor: grabbing;
+  z-index: 20;
+  transition: none;
+}
+.desk-next .desk-zone-grip {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 16px;
+  height: 16px;
+  cursor: ew-resize;
+  touch-action: none;
+  opacity: 0;
+  background: linear-gradient(
+      135deg,
+      transparent 0 50%,
+      color-mix(in srgb, var(--zk, #e0a458) 70%, var(--text-faint)) 50% 58%,
+      transparent 58% 72%,
+      color-mix(in srgb, var(--zk, #e0a458) 70%, var(--text-faint)) 72% 80%,
+      transparent 80%
+    )
+    no-repeat;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-zone:hover .desk-zone-grip,
+.desk-next .desk-zone.dragging .desk-zone-grip {
+  opacity: 0.9;
+}
+@media (pointer: coarse) {
+  .desk-next .desk-zone-grip {
+    opacity: 0.6;
+    width: 22px;
+    height: 22px;
+  }
 }
 .desk-next .desk-zone:hover {
   transform: translateX(-50%) translateY(-2px);
@@ -230,10 +307,22 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  /* The chrome band must never eat taps meant for the world beneath it:
+     only its actual controls are interactive, the flex box is not. */
+  pointer-events: none;
+}
+.desk-next .desk-chrome > * {
+  pointer-events: auto;
 }
 .desk-next .desk-chrome-tl {
   top: 14px;
   left: 18px;
+}
+.desk-next .desk-chrome .egress-badge {
+  max-width: min(340px, 34vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .desk-next .desk-chrome-tr {
   top: 14px;
@@ -429,7 +518,7 @@
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
   border-radius: 18px;
-  background: rgba(13, 11, 18, 0.93);
+  background: rgba(13, 11, 18, 0.985);
   color: var(--text);
   box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
@@ -532,7 +621,7 @@
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
   border-radius: 18px;
-  background: rgba(13, 11, 18, 0.93);
+  background: rgba(13, 11, 18, 0.985);
   color: var(--text);
   box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
@@ -870,6 +959,14 @@
   outline: none;
   border-color: var(--accent, #ff6b35);
 }
+.desk-next .desk-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
 .desk-next .desk-editor-more {
   align-self: flex-start;
   padding: 4px 10px;
@@ -920,7 +1017,7 @@
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--k, #ff6b35) 34%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--k, #ff6b35) 70%, transparent);
-  background: rgba(13, 11, 18, 0.93);
+  background: rgba(13, 11, 18, 0.985);
   box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
 }
@@ -1015,6 +1112,15 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+.desk-next .desk-pullout-body section,
+.desk-next .desk-relationship-axes {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle, var(--border));
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
 }
 .desk-next .desk-pullout-body h3 {
   margin: 0 0 6px;
@@ -2684,7 +2790,7 @@
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
   border-radius: 18px;
-  background: rgba(13, 11, 18, 0.93);
+  background: rgba(13, 11, 18, 0.985);
   color: var(--text);
   box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(10px);
@@ -2876,6 +2982,20 @@
   }
   .desk-next .desk-start-actions {
     width: 100%;
+    flex-wrap: wrap;
+  }
+  /* The in-world editor becomes a bottom sheet on phones: an editor
+     anchored beside an object near the screen edge is unreachable. */
+  .desk-next .desk-editor {
+    position: fixed;
+    top: auto !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: 84px;
+    width: auto;
+    max-height: 62vh;
+    overflow: auto;
+    z-index: 46;
   }
   .desk-next .desk-start-action,
   .desk-next .desk-create-button {
@@ -2925,6 +3045,15 @@
   .desk-next .desk-receipt-detail dl div {
     grid-template-columns: 1fr;
     gap: 3px;
+  }
+}
+@media (max-width: 720px) {
+  .desk-next .desk-obj-label {
+    max-width: 92px;
+    font-size: 11px;
+  }
+  .desk-next .desk-chrome .egress-badge {
+    max-width: 40vw;
   }
 }
 @media (max-width: 420px) {

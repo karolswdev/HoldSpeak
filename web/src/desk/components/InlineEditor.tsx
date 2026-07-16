@@ -126,6 +126,26 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
         style={style}
         onPointerDown={(e) => e.stopPropagation()}
       >
+        <header className="desk-editor-head">
+          <span className="desk-panel-eyebrow">
+            {(
+              {
+                note: "Note",
+                kb: "Knowledge",
+                recipe: "Persona",
+                workflow: "Workflow",
+              } as Record<string, string>
+            )[o.kind] || o.kind}
+          </span>
+          <button
+            type="button"
+            className="desk-pullout-close"
+            onClick={closeEditor}
+            aria-label="Close editor"
+          >
+            ✕
+          </button>
+        </header>
         {o.kind === "note" && (
           <>
             <input

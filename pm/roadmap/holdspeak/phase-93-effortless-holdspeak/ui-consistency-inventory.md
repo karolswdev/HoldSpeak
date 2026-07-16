@@ -164,6 +164,25 @@ AttentionDrawer; the hardcoded corner geometry leaves
 With per-panel rects the destroy-on-open exclusivity relaxes to
 focus-not-destroy.
 
+### Round 2 — owner spin findings (2026-07-15, live Web + iPhone)
+
+The owner took the merged desk for a spin (desktop + iPhone over LAN) and
+found it still bad. Every finding below was reproduced with live screenshots
+before fixing; all four Round-1 review passes had missed them.
+
+| ID | Sev | Where | Defect | Status |
+|---|---|---|---|---|
+| R2-01 | crit | `World.tsx` ZoneTray, `desk.css` `.desk-zone` | Zones were never given the object/window physics: pinned to a fixed top-row grid, not movable, not resizable, no persistence — now they drag like objects (tap dives, drag moves, position persists as `zone:<id>` beside the object layout) and resize by a width grip | fixed |
+| R2-02 | crit | `desk.css` `.desk-chrome` | The chrome clusters' empty flex boxes intercepted taps meant for the world beneath (on iPhone whole objects were unreachable); the band is now `pointer-events: none` with interactive children only | fixed |
+| R2-03 | high | `world.ts` objUnit, `World.tsx` zone slots | Default homes placed objects and zones under the chrome band (worse on phones where the chrome wraps two rows); defaults now respect a chrome-safe band per breakpoint, zones one band above the object grid | fixed |
+| R2-04 | high | `desk.css` sprites | Note/artifact paper sprites render as blank beige squares that read as missing textures; a ruled-lines + ink-margin + corner-fold treatment (CSS only, assets untouched) makes them read as documents, slightly downsized | fixed |
+| R2-05 | high | `InlineEditor.tsx`, `desk.css` | The in-world create/edit card anchors beside its object and runs off-screen on phones (Done unreachable); on compact it is now a fixed bottom sheet, and it gained a kind eyebrow + close header on all sizes | fixed |
+| R2-06 | med | `desk.css` window fills | Desk objects ghosted through the 0.93-alpha frosted panels as blurry blocks (read as broken rendering); fills raised to 0.985 | fixed |
+| R2-07 | med | `desk.css` chrome | The egress badge renders unbounded content (full endpoint URLs) and overflowed the viewport; now truncates with ellipsis | fixed |
+| R2-08 | low | `desk.css` compact | Edge objects' labels clipped at both screen edges on phones; compact grid insets widened and label width capped | fixed |
+| R2-09 | low | `desk.css` compact chrome | The start-action row could overflow the phone viewport (Create clipped); the cluster now wraps | fixed |
+| R2-10 | med | `Pullout.tsx` sections, `desk.css` | Pull-out body sections were floating bare text with no rhythm; sections are now quiet cards (border, radius, consistent gap) | fixed |
+
 ### Noted, not scheduled here
 
 - `AmbientLayer.tsx` 277–279 copy ("Making meeting intelligence", "The hub is

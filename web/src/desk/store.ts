@@ -72,6 +72,26 @@ function savePanelRects(rects: Record<string, PanelRect>, keep: string[]) {
 
 const initialPanelRects = loadPanelRects();
 
+/** Zone tray widths in px (`hs.desk.zonew`) — zones move via the shared
+ * positions map (keyed `zone:<id>`) and resize via this sibling map. */
+const ZONE_W_KEY = "hs.desk.zonew";
+
+function loadZoneWidths(): Record<string, number> {
+  try {
+    return JSON.parse(localStorage.getItem(ZONE_W_KEY) || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveZoneWidths(widths: Record<string, number>) {
+  try {
+    localStorage.setItem(ZONE_W_KEY, JSON.stringify(widths));
+  } catch {
+    /* storage may be unavailable; arranging just won't persist */
+  }
+}
+
 /** Meetings on the desk when a local recording started (NEW-beat diff). */
 let meetingsBeforeRecording = new Set<string>();
 
@@ -122,6 +142,8 @@ interface DeskState {
   recording: "idle" | "recording" | "busy";
   recordingExternal: boolean;
   recordingStartedAt: number | null;
+  /** Zone tray widths in px (resized zones only). */
+  zoneWidths: Record<string, number>;
   /** Desk-window geometry per panel id (moved/resized panels only). */
   panelRects: Record<string, PanelRect>;
   /** Panel ids whose rect the user arranged — the persisted subset. */
@@ -204,6 +226,8 @@ interface DeskState {
   startRecording(): Promise<void>;
   /** Stop the hub recorder; the finished meeting materializes NEW. */
   stopRecording(): Promise<void>;
+  /** Resize a zone tray; persist=true saves the width. */
+  setZoneWidth(id: string, width: number, persist?: boolean): void;
   /** Move/resize a desk window; persist=true marks it user-arranged. */
   setPanelRect(id: string, rect: PanelRect, persist?: boolean): void;
   /** Forget a window's arranged rect (back to its CSS default corner). */
@@ -223,6 +247,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   loading: false,
   updatedAt: null,
   positions: loadPositions(),
+  zoneWidths: loadZoneWidths(),
   recording: "idle",
   recordingExternal: false,
   recordingStartedAt: null,
@@ -677,6 +702,11 @@ export const useDesk = create<DeskState>((set, get) => ({
     const after = get().items.meeting.map((m: any) => String(m.id));
     const fresh = after.find((id: string) => !meetingsBeforeRecording.has(id));
     if (fresh) get().markNew(fresh);
+  },
+  setZoneWidth(id, width, persist = false) {
+    const zoneWidths = { ...get().zoneWidths, [id]: width };
+    set({ zoneWidths });
+    if (persist) saveZoneWidths(zoneWidths);
   },
   setPanelRect(id, rect, persist = false) {
     const panelRects = { ...get().panelRects, [id]: rect };
