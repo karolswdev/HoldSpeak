@@ -5,7 +5,11 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, IN
-PROGRESS (7/9)**. **HS-97-07, One shelf, quiet chrome, DONE**: the dock
+PROGRESS (8/9)**. **HS-97-08, The physics floors, written, DONE**: the
+DESIGN_SYSTEM chapter names every Phase 97 contract as an Article
+VIII.2 floor tied to its walk leg, the add-a-surface path teaches the
+placement engine and dock-launcher registration, and the architecture
+locks list carries the new grammar. Earlier: **HS-97-07, One shelf, quiet chrome, DONE**: the dock
 is the one centered shelf — launchers for Desk memory, Delivery, and
 Panes with the record orb seated at its center, the four floating
 pills deleted, the mono eyebrows off every title bar, and the stage

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 97
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-97-01, HS-97-02, HS-97-03, HS-97-04, HS-97-05, HS-97-06, HS-97-07
 - **Unblocks:** HS-97-09
 
@@ -31,11 +31,11 @@ look. Unwritten floors erode.
 
 ## Acceptance criteria
 
-- [ ] DESIGN_SYSTEM.md names every Phase 97 floor; the guard passes and
+- [x] DESIGN_SYSTEM.md names every Phase 97 floor; the guard passes and
       still fails on raw values.
-- [ ] web/README and the architecture doc carry the new locks; doc
+- [x] web/README and the architecture doc carry the new locks; doc
       guards green.
-- [ ] `npm run check` + the doc guard suite green.
+- [x] `npm run check` + the doc guard suite green.
 
 ## Test plan
 

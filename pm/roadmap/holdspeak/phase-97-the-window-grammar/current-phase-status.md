@@ -1,9 +1,9 @@
 # Phase 97 — The Window Grammar
 
-**Status:** IN PROGRESS (7/9, 2026-07-18) — from the owner's direct
+**Status:** IN PROGRESS (8/9, 2026-07-18) — from the owner's direct
 verdict on the Desk OS state.
 
-**Last updated:** 2026-07-18 (HS-97-07 done; one shelf, quiet chrome).
+**Last updated:** 2026-07-18 (HS-97-08 done; the floors are written).
 
 ## Why this phase exists
 
@@ -91,12 +91,23 @@ staged follow-ups (Native Surfaces; The Living World).
 | HS-97-05 | Hands on the frame | done | [story-05-hands-on-frame](./story-05-hands-on-frame.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-97-06 | The switcher | done | [story-06-switcher](./story-06-switcher.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-97-07 | One shelf, quiet chrome | done | [story-07-one-shelf](./story-07-one-shelf.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-97-08 | The physics floors, written | backlog | [story-08-docs](./story-08-docs.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-97-08 | The physics floors, written | done | [story-08-docs](./story-08-docs.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-97-09 | Closeout: the grammar walk | backlog | [story-09-closeout](./story-09-closeout.md) | [evidence-story-09](./evidence-story-09.md) |
 
 ## Where we are
 
-**HS-97-07 done (2026-07-18): one shelf, quiet chrome.** The dock is
+**HS-97-08 done (2026-07-18): the physics floors, written.**
+`docs/internal/DESIGN_SYSTEM.md` gains "The window physics floors
+(HS-97)" — every Phase 97 contract named in token vocabulary (land
+well, remember everything, depth is focus, motion tells the story,
+hands on the frame, switch visibly, one shelf), each tied to its walk
+leg. `web/README.md`'s add-a-surface path gains step 6 (windows are
+placed by the OS; shelf verbs register through `announceLauncher`;
+floating pills forbidden; the eyebrow demoted), and the frontend
+architecture doc's locks list carries the Phase 97 floors beside the
+Phase 96 gates (including the HS-97-01 unresolved-brace lock). Doc +
+design-system guards 40 passed; `npm run check` green (279 web
+tests). Earlier: **HS-97-07 done (2026-07-18): one shelf, quiet chrome.** The dock is
 the one shelf, centered on the bottom edge: launcher verbs for Desk
 memory, Delivery, and Panes (a launcher registry beside the window
 registry; badges ride the chips; an open surface's launcher folds into
