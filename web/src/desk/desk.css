@@ -3069,3 +3069,69 @@
   transform: translateX(-50%);
   padding-top: 10px;
 }
+
+/* ── HS-95-02: the OS window chrome — one head, one verb cluster, the
+   minimized tray, the maximized stage, the phone sheet. ── */
+.desk-next .desk-window-verbs {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 2px;
+  flex: none;
+}
+.desk-next .desk-window-verb {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.desk-next .desk-window-verb:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+.desk-next .desk-window-verb.desk-window-close:hover {
+  background: color-mix(in srgb, var(--accent, #ff6b35) 26%, transparent);
+}
+.desk-next .desk-window-shell.is-max {
+  position: fixed;
+  border-radius: 14px;
+}
+.desk-next .desk-min-tray {
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  /* Shell furniture rides ABOVE the window band (42+): a maximized
+     window must never bury the way back to a parked one. */
+  z-index: 80;
+  display: flex;
+  gap: 6px;
+}
+.desk-next .desk-min-chip {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .desk-next .desk-window-shell.is-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: auto;
+    max-height: 78vh;
+    border-radius: 18px 18px 0 0;
+    overflow: auto;
+  }
+  .desk-next .desk-min-tray {
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+}

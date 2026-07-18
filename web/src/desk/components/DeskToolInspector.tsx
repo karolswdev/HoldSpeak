@@ -15,7 +15,7 @@ import { useProjections } from "../projections";
 import { useDesk } from "../store";
 import { allObjects } from "../world";
 import { qualifiedRef } from "../api";
-import { useDeskWindow } from "./DeskWindow";
+import { DeskWindowFrame } from "./DeskWindow";
 
 interface Proposal {
   id: string;
@@ -84,7 +84,6 @@ export function DeskToolInspector() {
   const models = useDesk((state) => state.models);
   const selectedIds = useDesk((state) => state.selectedIds);
   const { closeToolInspector, openPullout, openChat } = useDesk.getState();
-  const win = useDeskWindow("inspector", { open: Boolean(inspector) });
   const [projectResources, setProjectResources] = useState<
     Array<{ resource_ref: string; relationship: string }>
   >([]);
@@ -236,38 +235,16 @@ export function DeskToolInspector() {
   const title =
     project?.name ?? integration?.name ?? target?.name ?? "Desk tool";
   return (
-    <aside
-      ref={(el) => win.setEl(el)}
-      className={
-        "desk-tool-inspector desk-window" + (win.floating ? " is-floating" : "")
-      }
-      style={win.style}
-      role="region"
-      aria-label={`${title} inspector`}
-      onPointerDown={(event) => {
-        win.focus();
-        event.stopPropagation();
-      }}
+    <DeskWindowFrame
+      id="inspector"
+      label={title}
+      className="desk-tool-inspector"
+      eyebrow={project ? "Project" : integration ? "Integration" : "Runs on"}
+      title={<h2 className="desk-panel-title">{title}</h2>}
+      entrance={false}
+      open={Boolean(inspector)}
+      onClose={closeToolInspector}
     >
-      <header
-        className="desk-panel-head desk-window-handle"
-        {...win.handleProps}
-      >
-        <div>
-          <small className="desk-panel-eyebrow">
-            {project ? "Project" : integration ? "Integration" : "Runs on"}
-          </small>
-          <h2 className="desk-panel-title">{title}</h2>
-        </div>
-        <button
-          type="button"
-          className="desk-pullout-close"
-          onClick={closeToolInspector}
-          aria-label={`Close ${title} inspector`}
-        >
-          ✕
-        </button>
-      </header>
 
       {project ? (
         <>
@@ -546,7 +523,6 @@ export function DeskToolInspector() {
           {error} Selected material is retained; retry the action.
         </p>
       ) : null}
-      {win.grip}
-    </aside>
+    </DeskWindowFrame>
   );
 }

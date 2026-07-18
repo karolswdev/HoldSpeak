@@ -28,7 +28,7 @@ describe("desk windows", () => {
 
     useDesk.getState().setPanelRect("ask", rect, true);
     expect(
-      JSON.parse(localStorage.getItem("hs.desk.panels") || "{}").ask,
+      JSON.parse(localStorage.getItem("hs.desk.panels") || "{}").rects?.ask,
     ).toEqual(rect);
   });
 
@@ -40,7 +40,7 @@ describe("desk windows", () => {
     useDesk.getState().resetPanelRect("ask");
     expect(useDesk.getState().panelRects.ask).toBeUndefined();
     expect(
-      JSON.parse(localStorage.getItem("hs.desk.panels") || "{}").ask,
+      JSON.parse(localStorage.getItem("hs.desk.panels") || "{}").rects?.ask,
     ).toBeUndefined();
     // The other panel's ephemeral rect is untouched.
     expect(useDesk.getState().panelRects.pullout).toBeDefined();

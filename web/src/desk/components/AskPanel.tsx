@@ -33,7 +33,7 @@ import { apiRequest } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
-import { useDeskWindow } from "./DeskWindow";
+import { DeskWindowFrame } from "./DeskWindow";
 
 export function AskPanel() {
   const reducedMotion = useReducedMotion();
@@ -61,8 +61,6 @@ export function AskPanel() {
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>(
     [],
   );
-  const ref = useRef<HTMLDivElement | null>(null);
-  const win = useDeskWindow("ask");
 
   const context = useMemo(
     () => askContexts(items, selectedIds),
@@ -216,37 +214,22 @@ export function AskPanel() {
     : null;
 
   return (
-    <motion.div
-      ref={(el: HTMLDivElement | null) => {
-        ref.current = el;
-        win.setEl(el);
-      }}
-      className={
-        "desk-pullout desk-ask desk-window" +
-        (win.floating ? " is-floating" : "")
-      }
-      style={win.style}
-      initial={reducedMotion ? false : { x: 60, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onPointerDown={(e) => {
-        win.focus();
-        e.stopPropagation();
-      }}
-    >
-      <header
-        className="desk-pullout-head desk-window-handle"
-        {...win.handleProps}
-      >
+    <DeskWindowFrame
+      id="ask"
+      label="Ask AI"
+      className="desk-pullout desk-ask"
+      icon={
         <span className="desk-ask-glyph" aria-hidden="true">
           ✦
         </span>
-        <span className="desk-pullout-title">
-          {phase === "printed"
-            ? askLineageLine(printedContext.current, lens)
-            : "Ask AI"}
-        </span>
-        {phase === "printed" && printedEgress ? (
+      }
+      title={
+        phase === "printed"
+          ? askLineageLine(printedContext.current, lens)
+          : "Ask AI"
+      }
+      actions={
+        phase === "printed" && printedEgress ? (
           <span className={`egress-badge is-${printedEgress.scope}`}>
             {printedEgress.text}
           </span>
@@ -254,18 +237,13 @@ export function AskPanel() {
           <span className={`egress-badge is-${composeEgress.scope}`}>
             {composeEgress.text}
           </span>
-        )}
-        {phase !== "routing" && (
-          <button
-            type="button"
-            className="desk-pullout-close"
-            onClick={bin}
-            aria-label="Close"
-          >
-            ✕
-          </button>
-        )}
-      </header>
+        )
+      }
+      open
+      onClose={() => {
+        if (phase !== "routing") bin();
+      }}
+    >
 
       <div className="desk-pullout-body">
         {phase !== "printed" && (
@@ -407,8 +385,7 @@ export function AskPanel() {
           </>
         )}
       </footer>
-      {win.grip}
-    </motion.div>
+    </DeskWindowFrame>
   );
 }
 

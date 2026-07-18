@@ -206,6 +206,101 @@ def storm(headed: bool = True) -> None:
         browser.close()
 
 
+
+def windows() -> None:
+    """HS-95-02 — the OS window lifecycle on the production bundle: open
+    three windows, drag one, minimize one (tray restores), maximize one,
+    reload and find the arrangement intact; the phone form is a sheet."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        # Window 1: Desk memory (attention drawer).
+        page.click(".desk-attention-launch")
+        page.wait_for_selector(".desk-attention-drawer", timeout=5000)
+        # Window 2: the Delivery board tab.
+        page.click(".desk-dlv-tab")
+        page.wait_for_selector(".desk-dlv-board", timeout=5000)
+        # Window 3: the pull-out, via a canvas tap on a real object.
+        target = page.evaluate("() => window.__hsWorldProbe()")[0]
+        page.mouse.click(target["x"], target["y"])
+        page.wait_for_selector(".desk-pullout", timeout=5000)
+        assert page.locator(".desk-window-shell").count() >= 3
+        # Drag the pull-out by its head to a deliberate spot.
+        head = page.locator(".desk-pullout.desk-window-shell").first.locator(
+            ".desk-window-handle"
+        )
+        hb = head.bounding_box()
+        page.mouse.move(hb["x"] + 40, hb["y"] + 10)
+        page.mouse.down()
+        page.mouse.move(300, 200, steps=8)
+        page.mouse.up()
+        page.wait_for_timeout(300)
+        # Minimize Desk memory → tray chip appears; window parks.
+        page.click('[aria-label="Minimize Desk memory"]')
+        page.wait_for_selector(".desk-min-chip", timeout=3000)
+        # Maximize the delivery board.
+        page.click('[aria-label="Maximize Delivery"]')
+        page.wait_for_timeout(200)
+        assert "is-max" in (
+            page.locator(".desk-dlv-board").get_attribute("class") or ""
+        )
+        rect_before = page.evaluate(
+            """() => {
+              const el = document.querySelector('.desk-pullout.desk-window-shell');
+              const r = el.getBoundingClientRect();
+              return {x: Math.round(r.x), y: Math.round(r.y)};
+            }"""
+        )
+        # In-session: the tray restores the parked window.
+        page.click(".desk-min-chip")
+        page.wait_for_selector(".desk-attention-drawer:visible", timeout=3000)
+        page.click('[aria-label="Minimize Desk memory"]')
+        page.wait_for_selector(".desk-min-chip", timeout=3000)
+        # Reload: rects and maximize persist; a reopening window always
+        # PRESENTS itself (minimize is session-scoped by design).
+        page.reload(wait_until="networkidle")
+        wait_world(page)
+        layout = page.evaluate(
+            "() => JSON.parse(localStorage.getItem('hs.desk.panels'))"
+        )
+        assert layout["max"] == ["delivery-board"], layout
+        assert "pullout" in layout["rects"], layout
+        page.click(".desk-attention-launch")
+        page.wait_for_selector(".desk-attention-drawer:visible", timeout=3000)
+        min_now = page.evaluate(
+            "() => JSON.parse(localStorage.getItem('hs.desk.panels')).min"
+        )
+        assert min_now == [], min_now
+        # The delivery board reopens maximized (persisted lifecycle).
+        page.click(".desk-dlv-tab")
+        page.wait_for_selector(".desk-dlv-board", timeout=5000)
+        assert "is-max" in (
+            page.locator(".desk-dlv-board").get_attribute("class") or ""
+        )
+        print(
+            f"windows walk 1440: 3 windows, drag to {rect_before}, tray "
+            f"parks+restores, rect+maximize survive reload, reopen presents"
+        )
+        page.close()
+        # The phone: a window presents as a bottom sheet.
+        page = browser.new_page(viewport={"width": 393, "height": 852})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        target = page.evaluate("() => window.__hsWorldProbe()")[0]
+        page.mouse.click(target["x"], target["y"])
+        page.wait_for_selector(".desk-pullout", timeout=5000)
+        cls = page.locator(".desk-pullout.desk-window-shell").first.get_attribute(
+            "class"
+        )
+        assert "is-sheet" in (cls or ""), cls
+        box = page.locator(".desk-pullout.desk-window-shell").first.bounding_box()
+        assert box["y"] + box["height"] >= 830, box
+        print("windows walk 393: sheet form ok")
+        browser.close()
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "shots"
     if mode == "shots":
@@ -215,5 +310,7 @@ if __name__ == "__main__":
         smoke()
     elif mode == "storm":
         storm()
+    elif mode == "windows":
+        windows()
     else:
         raise SystemExit(f"unknown mode {mode}")

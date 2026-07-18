@@ -1,8 +1,8 @@
 # Phase 95 — The Desk OS
 
-**Status:** IN PROGRESS (1/10; HS-95-01 done 2026-07-17).
+**Status:** IN PROGRESS (2/10; HS-95-02 done 2026-07-17).
 
-**Last updated:** 2026-07-17 (HS-95-01, the WebGL stage, done).
+**Last updated:** 2026-07-17 (HS-95-02, OS-grade windows, done).
 
 ## Why this phase exists
 
@@ -113,7 +113,7 @@ navigates away from the desk.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-95-01 | The WebGL stage | done | [story-01-the-webgl-stage](./story-01-the-webgl-stage.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-95-02 | OS-grade windows | backlog | [story-02-os-grade-windows](./story-02-os-grade-windows.md) | — |
+| HS-95-02 | OS-grade windows | done | [story-02-os-grade-windows](./story-02-os-grade-windows.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-95-03 | The shell: dock, switching, layouts | backlog | [story-03-the-shell](./story-03-the-shell.md) | — |
 | HS-95-04 | Embeddable page cores | backlog | [story-04-embeddable-page-cores](./story-04-embeddable-page-cores.md) | — |
 | HS-95-05 | Dictation through the desk | backlog | [story-05-dictation-through-the-desk](./story-05-dictation-through-the-desk.md) | — |
@@ -143,6 +143,20 @@ Deviation noted honestly: the room's base gradient + spotlight pulse stay
 CSS (compositor-only transform/opacity — zero per-frame paint); the motes
 moved into the GL scene; `Stage.tsx` retired.
 
-Next: HS-95-02 (the `<DeskWindow>` container + lifecycle) and HS-95-04
-(page cores) are the two open tracks; the Phase 93 physics contract
-remains the regression floor.
+**HS-95-02 done (2026-07-17): windows are OS citizens.** `DeskWindowFrame`
+is the ONE container (icon · eyebrow · title · actions · minimize/maximize/
+close over the Phase 93 physics; children as the content slot); all nine
+panels migrated with their private wiring deleted and the physics hook
+folded module-private. Lifecycle lives in the store (`panelMin`/`panelMax`,
+persisted in `hs.desk.panels` with a tolerant reader for the Phase 93 flat
+shape). Designed in-story and pinned by the walk: opening a window always
+PRESENTS it (minimize is session-scoped; rects + maximize persist), and
+the minimized tray is shell furniture riding above the window band — the
+walk caught a maximized window burying it. The phone form is a bottom
+sheet from the same component and state. Proof: web suite 244/244; the
+production windows walk at 1440 (three windows, drag, park/restore,
+reload persistence, reopen-maximized) and 393 (sheet); chrome screenshots
+in `assets/`.
+
+Next: HS-95-03 (dock/switching/layouts) and HS-95-04 (page cores); the
+Phase 93 physics contract remains the regression floor.

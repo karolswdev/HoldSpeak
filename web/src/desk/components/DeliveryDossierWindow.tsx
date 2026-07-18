@@ -10,7 +10,7 @@ import {
   useDeliveryDossier,
   type DossierRefusalCode,
 } from "../deliveryDossier";
-import { useDeskWindow } from "./DeskWindow";
+import { DeskWindowFrame } from "./DeskWindow";
 
 const REFUSAL_RECOVERY: Record<
   DossierRefusalCode,
@@ -48,9 +48,7 @@ export function DeliveryDossierWindow() {
   const loading = useDeliveryDossier((s) => s.loading);
   const refusal = useDeliveryDossier((s) => s.refusal);
   const { close } = useDeliveryDossier.getState();
-  const rootRef = useRef<HTMLDivElement | null>(null);
   const open = Boolean(dossier || loading || refusal);
-  const win = useDeskWindow("delivery-dossier", { minW: 420, open });
 
   useEffect(() => {
     if (!open) return;
@@ -73,41 +71,16 @@ export function DeliveryDossierWindow() {
           : "Evidence";
 
   return (
-    <motion.aside
-      ref={(el: HTMLDivElement | null) => {
-        rootRef.current = el;
-        win.setEl(el);
-      }}
-      className={
-        "desk-pullout desk-window desk-dlv-dossier" +
-        (win.floating ? " is-floating" : "")
-      }
-      style={win.style}
-      role="region"
-      aria-label={`Dossier ${title}`}
-      initial={reducedMotion ? false : { x: 40, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onPointerDown={(e) => {
-        win.focus();
-        e.stopPropagation();
-      }}
+    <DeskWindowFrame
+      id="delivery-dossier"
+      minW={420}
+      label={`Dossier ${title}`}
+      className="desk-pullout desk-dlv-dossier"
+      eyebrow="Evidence"
+      title={title}
+      open={open}
+      onClose={close}
     >
-      <header
-        className="desk-pullout-head desk-window-handle"
-        {...win.handleProps}
-      >
-        <small className="desk-panel-eyebrow">Evidence</small>
-        <span className="desk-pullout-title">{title}</span>
-        <button
-          type="button"
-          className="desk-pullout-close"
-          onClick={close}
-          aria-label="Close dossier"
-        >
-          ✕
-        </button>
-      </header>
 
       <div className="desk-pullout-body desk-dlv-dossier-body">
         {loading ? <p className="quiet">…</p> : null}
@@ -244,7 +217,6 @@ export function DeliveryDossierWindow() {
           </>
         ) : null}
       </div>
-      {win.grip}
-    </motion.aside>
+    </DeskWindowFrame>
   );
 }
