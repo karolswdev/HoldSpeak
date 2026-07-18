@@ -5,7 +5,7 @@ _REPO = Path(__file__).resolve().parents[2]
 
 
 def test_history_uses_bounded_archive_and_detail_sections() -> None:
-    page = (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
+    page = (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text()
     for tab in ("meetings", "actions", "speakers", "projects", "queues"):
         assert f'"{tab}"' in page
     for tab in ("transcript", "artifacts", "aftercare", "routing", "proposals"):
@@ -14,7 +14,7 @@ def test_history_uses_bounded_archive_and_detail_sections() -> None:
 
 
 def test_history_keeps_approval_and_export_governance() -> None:
-    page = (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
+    page = (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text()
     assert '"approved"' in page and '"rejected"' in page
     assert 'row.status === "proposed" && !refused' in page
     assert 'policy.outcome === "refused"' in page

@@ -5,12 +5,15 @@ _REPO = Path(__file__).resolve().parents[2]
 
 
 def _page() -> str:
-    return (_REPO / "web/src/pages/DictationPage.tsx").read_text()
+    return (_REPO / "web/src/pages/cores/DictationCore.tsx").read_text()
 
 
 def test_dictation_is_one_typed_section_graph() -> None:
     page = _page()
-    assert "Daily cockpit" in page and "Dictation" in page
+    # HS-95-05: the eyebrow rides the window chrome (the SURFACES table).
+    surfaces = (_REPO / "web/src/desk/components/SurfaceWindows.tsx").read_text()
+    assert '"Daily cockpit"' in surfaces
+    assert "Dictation" in page
     for section in ("ready", "dry", "blocks", "memory", "knowledge", "journal", "runtime", "hooks", "nudges"):
         assert f'["{section}"' in page
     assert "useMemo" in page and "<Tabs" in page

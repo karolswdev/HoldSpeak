@@ -283,7 +283,7 @@ class TestDashboardEndpoint:
 
     def _bundled_runtime_js(self, test_client) -> str:
         del test_client
-        return (Path(__file__).resolve().parents[2] / "web/src/pages/LivePage.tsx").read_text()
+        return (Path(__file__).resolve().parents[2] / "web/src/pages/cores/LiveCore.tsx").read_text()
 
     def test_dashboard_references_runtime_control_endpoints(self, test_client):
         """Dashboard JS should still call the runtime-level meeting
@@ -1805,7 +1805,7 @@ class TestHistoryUiSmoke:
         assert "text/html" in response.headers["content-type"]
 
         assert '<div id="root"></div>' in response.text
-        js = (Path(__file__).resolve().parents[2] / "web/src/pages/HistoryPage.tsx").read_text()
+        js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/HistoryCore.tsx").read_text()
         for marker in ("meetings", "actions", "speakers", "projects", "queues", "MeetingDetail", "ImportDialog"):
             assert marker in js
         for endpoint in (
@@ -1824,7 +1824,7 @@ class TestHistoryUiSmoke:
         response = test_client.get("/settings")
         assert response.status_code == 200
         assert '<div id="root"></div>' in response.text
-        source = (Path(__file__).resolve().parents[2] / "web/src/pages/SettingsPage.tsx").read_text()
+        source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx").read_text()
         assert "Hub configuration" in source and '"/api/settings"' in source
 
 
@@ -1845,8 +1845,8 @@ class TestCompanionUiSmoke:
         assert "text/html" in response.headers["content-type"]
 
         assert '<div id="root"></div>' in response.text
-        source = (Path(__file__).resolve().parents[2] / "web/src/pages/CompanionPage.tsx").read_text()
-        for marker in ("Personas and coder sessions", "Needs you", "Personas", "How it connects", "no autonomous send"):
+        source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CompanionCore.tsx").read_text()
+        for marker in ("openPersona", "Needs you", "Personas", "How it connects", "no autonomous send"):
             assert marker in source
 
 
@@ -1859,12 +1859,12 @@ class TestCadenceUiSmoke:
         assert response.status_code == 200
         assert "text/html" in response.headers["content-type"]
         assert '<div id="root"></div>' in response.text
-        source = (Path(__file__).resolve().parents[2] / "web/src/pages/CadencePage.tsx").read_text()
-        for marker in ("Cadence", "Open loops", "Run now"):
+        source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CadenceCore.tsx").read_text()
+        for marker in ("cadence", "snooze", "Run now"):
             assert marker in source
 
     def test_cadence_page_js_calls_the_api(self, test_client):
-        js = (Path(__file__).resolve().parents[2] / "web/src/pages/CadencePage.tsx").read_text()
+        js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CadenceCore.tsx").read_text()
         assert "/api/cadence" in js, "cadence page JS missing the API base path"
         for segment in ("/status", "/loops", "/run-now"):
             assert segment in js, f"cadence page JS missing API segment: {segment}"

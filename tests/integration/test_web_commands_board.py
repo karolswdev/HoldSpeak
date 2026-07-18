@@ -7,6 +7,8 @@ preview because it types into the focused app, with nothing to run here).
 from __future__ import annotations
 
 from pathlib import Path
+
+_REPO = Path(__file__).resolve().parents[2]
 from unittest.mock import MagicMock
 
 import pytest
@@ -37,8 +39,14 @@ def test_commands_route_serves_board(client: TestClient) -> None:
     res = client.get("/commands")
     assert res.status_code == 200
     assert '<div id="root"></div>' in res.text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/CommandsPage.tsx").read_text()
-    assert "Command board" in source and "Voice commands" in source
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CommandsCore.tsx").read_text()
+    assert "Command board" in source
+    # HS-95-04: the eyebrow rides the window chrome (the SURFACES table).
+    surfaces = (
+        Path(__file__).resolve().parents[2]
+        / "web/src/desk/components/SurfaceWindows.tsx"
+    ).read_text()
+    assert '"Voice commands"' in surfaces
     assert "/api/commands/test" in source and "/api/settings" in source
 
 

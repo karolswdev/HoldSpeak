@@ -33,14 +33,17 @@ def test_shell_carries_the_trust_chip_and_panel() -> None:
     if not _built():
         return  # the Unit Tests CI job runs without the bundle
     assert '<div id="root"></div>' in resp.text
-    source = (_REPO / "web/src/components/AppShell.tsx").read_text()
-    assert "Privacy & Trust" in source and "trustOpen" in source
+    # HS-95-10: the trust panel is a desk window opened by the egress badge.
+    source = (_REPO / "web/src/desk/components/TrustWindow.tsx").read_text()
+    assert "Privacy & Trust" in source and "useTrustWindow" in source
     assert "Current scope" in source and "Review privacy settings" in source
+    chrome = (_REPO / "web/src/desk/components/DeskChrome.tsx").read_text()
+    assert "useTrustWindow.getState().setOpen(true)" in chrome
 
 
 def test_trust_view_module_maps_postures() -> None:
     """The shell reads trust posture from the hub and maps the egress scope."""
-    src = (_REPO / "web/src/components/AppShell.tsx").read_text()
+    src = (_REPO / "web/src/desk/components/TrustWindow.tsx").read_text()
     for marker in (
         "/api/setup/status",
         'transcript_egress === "none"',

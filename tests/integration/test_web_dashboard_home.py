@@ -5,7 +5,7 @@ _REPO = Path(__file__).resolve().parents[2]
 
 
 def test_live_room_keeps_idle_and_active_primary_actions() -> None:
-    page = (_REPO / "web/src/pages/LivePage.tsx").read_text()
+    page = (_REPO / "web/src/pages/cores/LiveCore.tsx").read_text()
     assert "Ready to record" in page
     assert "Start meeting" in page
     assert "Stop meeting" in page
@@ -14,7 +14,7 @@ def test_live_room_keeps_idle_and_active_primary_actions() -> None:
 
 
 def test_live_room_keeps_transcript_bookmarks_metadata_and_intel() -> None:
-    page = (_REPO / "web/src/pages/LivePage.tsx").read_text()
+    page = (_REPO / "web/src/pages/cores/LiveCore.tsx").read_text()
     for marker in ("Transcript", "Bookmark", "Meeting details", "Intelligence"):
         assert marker in page
     assert "useRuntimeBus" in page

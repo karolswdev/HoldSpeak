@@ -3286,3 +3286,23 @@
 .desk-next .desk-chrome:has(.desk-menu) {
   z-index: 81;
 }
+
+/* HS-95-10: the egress badge is a button — the one tap into Privacy & Trust. */
+.desk-next .egress-badge-button {
+  cursor: pointer;
+  border: 0;
+  font: inherit;
+}
+.desk-next .desk-trust-window {
+  position: fixed;
+  top: 64px;
+  right: 18px;
+  width: min(460px, calc(100vw - 36px));
+  max-height: calc(100vh - 140px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: rgba(14, 12, 19, 0.96);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}

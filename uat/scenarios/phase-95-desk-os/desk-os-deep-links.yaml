@@ -1,0 +1,16 @@
+id: desk-os-deep-links
+execution_target: web_react
+title: Old addresses are deep links into the desk
+features:
+  - phase95.deskos.deep-links
+recipes:
+  - seeded-desk
+form_factors: [desktop]
+steps:
+  - do: Visit /dictation, /history, /settings, and /studio directly in the address bar.
+    expect: Each lands on the desk with the matching window already open; the address settles to /; no flat page ever appears.
+    where: /dictation
+  - do: Visit /workbench?workflow=<a real workflow id> (use one you created).
+    expect: The desk arrives with the Workbench window open on that workflow.
+    where: /workbench
+teardown: []

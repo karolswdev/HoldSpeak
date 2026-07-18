@@ -1,0 +1,17 @@
+id: desk-os-arrival-and-feel
+execution_target: web_react
+title: The desk arrives as an OS and feels native under the hand
+features:
+  - phase95.deskos.gl-world
+  - desk.front-door.spatial-objects
+recipes:
+  - seeded-desk
+form_factors: [desktop]
+steps:
+  - do: Open the desk. Drag one object around the stage quickly for several seconds, then a zone tray.
+    expect: Motion tracks the pointer with no visible stutter or lag; sprites stay crisp while moving; dropping parks the object where you left it and a reload keeps it there.
+    where: /
+  - do: Rope two objects with a background drag (the lasso), then tap empty desk.
+    expect: The rope draws live under the pointer; the roped objects wear their rings; a bare tap settles the selection.
+    where: /
+teardown: []

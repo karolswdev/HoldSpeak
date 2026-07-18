@@ -1,8 +1,12 @@
 # Phase 95 — The Desk OS
 
-**Status:** IN PROGRESS (9/10; HS-95-09 done 2026-07-18).
+**Status:** CLOSED (10/10, 2026-07-18 — scaffolded from the owner's live
+UAT verdict on 2026-07-17 and shipped in two days) at machine-verifiable
+scope under the owner's standing close directive; the live owner walk is
+preserved verbatim as UAT Campaign 13 and BACKLOG candidate Z. See
+[final-summary](./final-summary.md).
 
-**Last updated:** 2026-07-18 (HS-95-09, docs under the Constitution, done).
+**Last updated:** 2026-07-18 (HS-95-10 done; phase CLOSED 10/10).
 
 ## Why this phase exists
 
@@ -121,7 +125,7 @@ navigates away from the desk.
 | HS-95-07 | Configuration through the desk | done | [story-07-configuration-through-the-desk](./story-07-configuration-through-the-desk.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-95-08 | Studio, sessions, and the last exits | done | [story-08-studio-sessions-last-exits](./story-08-studio-sessions-last-exits.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-95-09 | Docs: the Desk OS is the documented product | done | [story-09-docs](./story-09-docs.md) | [evidence-story-09](./evidence-story-09.md) |
-| HS-95-10 | Closeout: performance proof, screenshot walk, owner walk | backlog | [story-10-closeout-owner-walk](./story-10-closeout-owner-walk.md) | — |
+| HS-95-10 | Closeout: performance proof, screenshot walk, owner walk | done | [story-10-closeout-owner-walk](./story-10-closeout-owner-walk.md) | [evidence-story-10](./evidence-story-10.md) |
 
 ## Where we are
 
@@ -266,5 +270,22 @@ run). Guards: doc drift 18/18, copy census, mermaid renders, and
 `npm run check` (architecture census + typecheck + suite + build) all
 green.
 
-Next: HS-95-10 — the closeout (performance proof, the production
-screenshot walk, the UAT campaign rider, and the live owner walk).
+**HS-95-10 done (2026-07-18): the phase closes the way it opened — at the
+desk.** The assembled storm (the meetings window open, the dock alive)
+holds the budget on real GPU: median 8.3ms, p95 10.1ms over 941 frames
+with ONE layout event; the assembled walk chains every story walk on the
+production bundle (smoke, windows, shell, cores, voice dictation,
+meetings, config, the fifteen-route demotion) and the final shots at 1440
+and 393 record zero failed API responses. The closeout caught real drift
+and fixed it: three stale walk beats still expecting the pre-demotion
+world, ~30 source-census tests reading the deleted pages (retargeted to
+cores/SURFACES), and one real regression — the flat shell's Privacy &
+Trust panel died with the header, so the desk's egress badge is now a
+button opening the TrustWindow (the Phase 42 boundary read-out, Article
+III intact). UAT Campaign 13 ("The Desk OS — the owner's verdict", seven
+scenarios) is authored, ledger-backed (phase95.deskos.* keys, ledger
+regenerated), harness-validated, and listed by the live conductor. Full
+python sweep green with the standing metal exclusion; web suite 256/256.
+The live owner walk is preserved verbatim as Campaign 13 + BACKLOG
+candidate Z per the standing close directive — that verdict cannot be
+delegated; it is the point of the phase.

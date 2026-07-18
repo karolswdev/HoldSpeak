@@ -37,7 +37,8 @@ def test_basic_value_precedes_optional_runs_on_setup() -> None:
     basic_value = first_words.index("Dictation is ready on this machine.")
     optional_runs = first_words.index("Configure rewrite destination")
     assert basic_value < optional_runs
-    assert 'to="/profiles"' in first_words
+    # HS-95-07: the Runs on affordance opens in-world through the shell.
+    assert 'openSurfaceOr("configure-runs-on", "/profiles")' in first_words
 
 
 def test_first_dictation_retains_editable_text_and_all_recovery_doors() -> None:

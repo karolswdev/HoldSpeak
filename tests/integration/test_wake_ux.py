@@ -106,7 +106,7 @@ def test_wake_preview_card_ships_with_the_safety_copy():
 
 
 def test_settings_section_states_the_honest_truths():
-    page = (_REPO / "web/src/pages/SettingsPage.tsx").read_text()
+    page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
     assert "SettingsFields" in page and "Wake Word" in page
     assert "typeof item === \"boolean\"" in page
     preview = (_REPO / "web/src/components/AmbientLayer.tsx").read_text()

@@ -4,7 +4,16 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **HS-95-09, Docs under the Constitution,
+**Last updated:** 2026-07-18 — **Phase 95, The Desk OS, CLOSED (10/10 in
+two days)** at machine-verifiable scope under the standing close directive:
+the WebGL stage at the frame budget (median 8.3ms assembled), one window
+chrome with dock/snap/MRU cycling, every surface in-world, fifteen routes
+demoted to desk deep links behind a mechanical no-exit lock, docs amended
+under the Constitution, the Privacy & Trust panel reborn as a desk window
+off the egress badge, and the assembled production walk green with zero
+failed API responses. The live owner verdict is staged as UAT Campaign 13
+("The Desk OS — the owner's verdict") and BACKLOG candidate Z. Earlier:
+**HS-95-09, Docs under the Constitution,
 DONE**: POSITIONING amended under Article I (services are system
 primitives; windows/objects/the dock are how they appear), the entry docs
 speak windows and deep links, ARCHITECTURE redrawn to the three-surface +

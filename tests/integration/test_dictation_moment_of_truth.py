@@ -209,7 +209,7 @@ def test_moment_affordance_present_and_focus_safe(persistent_db: Database) -> No
     client = _client(persistent_db)
     body = client.get("/dictation").text
     assert '<div id="root"></div>' in body
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "Correct this result" in source
     assert "Teach correction" in source
     assert "/api/dictation/corrections" in source

@@ -35,7 +35,7 @@ def test_setup_page_has_presence_onboarding() -> None:
 def test_presence_tier_and_install_rules() -> None:
     # HS-92-03 removed the six-step Welcome wizard. Presence remains a
     # reversible, config-backed option in the canonical Settings surface.
-    src = (_REPO / "web" / "src" / "pages" / "SettingsPage.tsx").read_text()
+    src = (_REPO / "web" / "src" / "pages" / "cores" / "SettingsCore.tsx").read_text()
     assert '"presence"' in src
     assert "<Switch" in src
     assert '"/api/settings"' in src

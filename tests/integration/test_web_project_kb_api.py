@@ -608,7 +608,7 @@ def test_dictation_page_includes_project_kb_section() -> None:
     response = client.get("/dictation")
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
-    js = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "Project grounding" in js
     assert 'title="Knowledge"' in js and "Project instructions" in js
     assert "Automation hooks" in js

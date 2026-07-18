@@ -2,8 +2,8 @@
   "gpu": "hardware",
   "frames": 962,
   "median_ms": 8.3,
-  "p95_ms": 9.9,
-  "max_ms": 10.3,
+  "p95_ms": 10.2,
+  "max_ms": 41.9,
   "layout_events": 1,
-  "paint_events": 2
+  "paint_events": 1197
 }

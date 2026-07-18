@@ -1,0 +1,17 @@
+id: desk-os-record-review
+execution_target: web_react
+title: Record and review a meeting without leaving the world
+features:
+  - phase95.deskos.surfaces-in-world
+  - desk.diorama.front_door
+recipes:
+  - seeded-desk
+form_factors: [desktop]
+steps:
+  - do: Press Record. Speak for a few seconds. Stop from INSIDE the live window.
+    expect: The live window opens with recording; stopping in the window settles the Record chip and the orb too (one recorder truth); "Meeting saved" appears with a way to the saved Meeting.
+    where: /
+  - do: Follow "Return to saved Meeting", then "Review meeting" from its pull-out.
+    expect: The pull-out opens on the desk; the Meetings window opens scoped to this meeting with its transcript inside.
+    where: /
+teardown: []

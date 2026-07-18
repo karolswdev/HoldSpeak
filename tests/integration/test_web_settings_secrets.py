@@ -143,7 +143,7 @@ def test_partial_update_preserves_every_unrelated_top_level_section(
 
 def test_web_settings_uses_only_dedicated_secret_operations() -> None:
     source = (
-        Path(__file__).resolve().parents[2] / "web/src/pages/SettingsPage.tsx"
+        Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx"
     ).read_text()
     assert "Write-only secrets" in source
     assert "/api/settings/secrets/${secretId}" in source

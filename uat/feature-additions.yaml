@@ -197,3 +197,35 @@ features:
     recipes: []
     priority: must
     status: live
+  - key: phase95.deskos.gl-world
+    title: The WebGL world stage renders and interacts at the 60fps budget
+    domain: Phase 95 the Desk OS
+    phases: [95]
+    surfaces: {web: 'yes', ipad: 'no', iphone: 'no'}
+    recipes: [seeded-desk]
+    priority: must
+    status: live
+  - key: phase95.deskos.windows-shell
+    title: One window chrome with lifecycle, the dock, MRU cycling, and snap tiles
+    domain: Phase 95 the Desk OS
+    phases: [95]
+    surfaces: {web: 'yes', ipad: 'no', iphone: 'no'}
+    recipes: [seeded-desk]
+    priority: must
+    status: live
+  - key: phase95.deskos.surfaces-in-world
+    title: Dictation, meetings, configuration, and studio open as desk windows
+    domain: Phase 95 the Desk OS
+    phases: [95]
+    surfaces: {web: 'yes', ipad: 'no', iphone: 'no'}
+    recipes: [seeded-desk]
+    priority: must
+    status: live
+  - key: phase95.deskos.deep-links
+    title: Legacy routes land on the desk with the right window at the right scope
+    domain: Phase 95 the Desk OS
+    phases: [95]
+    surfaces: {web: 'yes', ipad: 'no', iphone: 'no'}
+    recipes: [seeded-desk]
+    priority: must
+    status: live

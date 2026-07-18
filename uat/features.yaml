@@ -15,7 +15,7 @@ source:
   inventory: pm/roadmap/holdspeak-uat/phase-2-the-inventory/directory/_raw-inventory-rows.json
   additions: uat/feature-additions.yaml
   phase_index: pm/roadmap/holdspeak/README.md
-  phases_total: 94
+  phases_total: 96
 features:
 - key: activity.candidates.meeting
   title: Activity-derived meeting candidates
@@ -3002,6 +3002,58 @@ features:
   recipes: []
   priority: must
   status: live
+- key: phase95.deskos.deep-links
+  title: Legacy routes land on the desk with the right window at the right scope
+  domain: Phase 95 the Desk OS
+  phases:
+  - 95
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: phase95.deskos.gl-world
+  title: The WebGL world stage renders and interacts at the 60fps budget
+  domain: Phase 95 the Desk OS
+  phases:
+  - 95
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: phase95.deskos.surfaces-in-world
+  title: Dictation, meetings, configuration, and studio open as desk windows
+  domain: Phase 95 the Desk OS
+  phases:
+  - 95
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
+- key: phase95.deskos.windows-shell
+  title: One window chrome with lifecycle, the dock, MRU cycling, and snap tiles
+  domain: Phase 95 the Desk OS
+  phases:
+  - 95
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
 - key: plugins.authoring.write-your-own
   title: Write your own meeting plugin or connector against a documented contract
   domain: public-docs-claims
@@ -4174,3 +4226,15 @@ phase_map:
   - phase93.residue.meeting-survival
   - phase93.residue.mic-faults
   - phase93.residue.room-return
+  '94':
+  - phase94.delivery.desk-observe
+  - phase94.delivery.evidence-dossier
+  - phase94.delivery.native-parity
+  - phase94.delivery.second-node
+  - phase94.delivery.story-launch
+  - phase94.delivery.tailnet-https
+  '95':
+  - phase95.deskos.deep-links
+  - phase95.deskos.gl-world
+  - phase95.deskos.surfaces-in-world
+  - phase95.deskos.windows-shell

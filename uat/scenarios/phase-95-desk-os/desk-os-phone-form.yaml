@@ -1,0 +1,16 @@
+id: desk-os-phone-form
+execution_target: web_react
+title: The phone gets the same OS as sheets
+features:
+  - phase95.deskos.windows-shell
+recipes:
+  - seeded-desk
+form_factors: [iphone_browser]
+steps:
+  - do: Open the desk in a phone-sized viewport (or your phone's browser on the LAN). Tap an object.
+    expect: The world renders crisp; the pull-out presents as a bottom sheet with the same content and verbs.
+    where: /
+  - do: Open Dictation from the menu.
+    expect: The Dictation window presents as a bottom sheet; the mic works; closing returns the world.
+    where: /
+teardown: []

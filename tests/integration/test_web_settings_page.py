@@ -54,17 +54,19 @@ def test_no_interim_settings_drawer_in_live_source() -> None:
     )
 
 
-def test_topnav_gear_links_to_settings_route() -> None:
-    topnav = (_REPO / "web" / "src" / "components" / "AppShell.tsx").read_text()
-    assert '["/settings", "Settings"]' in topnav
-    assert "PRIMARY_NAV.map(([to, label])" in topnav
-    assert '<NavLink key={to} to={to}' in topnav
+def test_desk_menu_opens_settings_in_world() -> None:
+    """HS-95-08: the flat top-nav is gone; the desk menu dispatches the
+    Settings window and the deep link demotes to the same surface."""
+    chrome = (_REPO / "web" / "src" / "desk" / "components" / "DeskChrome.tsx").read_text()
+    assert '{ label: "Settings", action: "configure-settings" }' in chrome
+    routes = (_REPO / "web" / "src" / "routes.tsx").read_text()
+    assert '"configure-settings"' in routes
 
 
 def test_settings_is_sectioned_searchable_and_progressive() -> None:
     """The React editor stays sectioned and searchable while reflecting every
     safe field returned by the hub."""
-    page = (_REPO / "web" / "src" / "pages" / "SettingsPage.tsx").read_text()
+    page = (_REPO / "web" / "src" / "pages" / "cores" / "SettingsCore.tsx").read_text()
     assert "SECTION_ORDER" in page and "Find a setting" in page
     assert "SettingsFields" in page and "<Tabs" in page
     for section in ("ui", "hotkey", "model", "dictation", "presence", "meeting"):

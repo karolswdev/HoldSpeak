@@ -111,7 +111,7 @@ def smoke() -> None:
         browser.close()
 
 
-def storm(headed: bool = True) -> None:
+def storm(headed: bool = True) -> None:  # noqa: C901
     """The object-drag storm. Runs HEADED by default so WebGL is the real
     GPU (headless Chromium falls back to SwiftShader software GL, which
     measures a CPU rasterizer, not the product). Frame timing is sampled
@@ -127,6 +127,15 @@ def storm(headed: bool = True) -> None:
         wait_world(page)
         objs = page.evaluate("() => window.__hsWorldProbe()")
         assert objs, "no objects on the seeded desk"
+        if "--assembled" in sys.argv:
+            # The assembled worst case: the heaviest core (meeting memory)
+            # open as a window, the dock alive, while the world storms.
+            page.click(".desk-mark")
+            page.click("nav.desk-menu button:has-text(\'Meetings\')")
+            page.wait_for_selector(
+                "[aria-label=\'Meetings\'].desk-surface-window", timeout=8000
+            )
+            page.wait_for_timeout(1200)
         client = page.context.new_cdp_session(page)
         client.send(
             "Tracing.start",
@@ -373,12 +382,15 @@ def shell() -> None:
             "() => JSON.parse(localStorage.getItem('hs.desk.panels'))"
         )
         assert layout == {"rects": {}, "min": [], "max": []}, layout
-        # The chrome menu dispatches through the shell; unregistered
-        # surfaces fall back to the legacy route (retired in HS-95-08).
+        # The chrome menu dispatches through the shell: since HS-95-05 the
+        # Dictation surface is registered, so it opens IN PLACE.
         page.click(".desk-mark")
         page.click('nav.desk-menu button:has-text("Dictation")')
-        page.wait_for_url("**/dictation*", timeout=5000)
-        print("shell walk 1440: dock, snap, cycle, park/restore, close, reset, menu dispatch")
+        page.wait_for_selector(
+            "[aria-label='Dictation'].desk-surface-window", timeout=8000
+        )
+        assert page.url.rstrip("/") == BASE, page.url
+        print("shell walk 1440: dock, snap, cycle, park/restore, close, reset, menu dispatch in place")
         browser.close()
 
 
@@ -409,12 +421,16 @@ def cores() -> None:
         )
         assert page.locator(".desk-surface-window").count() == 2
         page.screenshot(path=str(OUT / "cores-1440.png"))
-        # The flat routes keep their chrome for deep links.
+        # Deep links land in-world (HS-95-08's demotion).
         page.goto(BASE + "/activity", wait_until="networkidle")
-        page.wait_for_selector(".page-hero:has-text(\'Activity\')", timeout=5000)
+        page.wait_for_selector(
+            "[aria-label=\'Activity\'].desk-surface-window", timeout=10000
+        )
         page.goto(BASE + "/commands", wait_until="networkidle")
-        page.wait_for_selector(".page-hero:has-text(\'Commands\')", timeout=5000)
-        print("cores walk: shelf opens both cores in-world (chrome-free); flat routes keep the hero")
+        page.wait_for_selector(
+            "[aria-label=\'Commands\'].desk-surface-window", timeout=10000
+        )
+        print("cores walk: shelf opens both cores in-world (chrome-free); deep links land in-world")
         browser.close()
 
 
@@ -478,10 +494,12 @@ def dictation() -> None:
         chip = page.locator(".desk-surface-window .desk-scope-chip").inner_text()
         assert page.url.rstrip("/") == BASE, page.url
         print(f"scoped in-world: {chip!r}")
-        # 4. The flat route still answers for deep links.
+        # 4. The deep link lands in-world (HS-95-08's demotion).
         page.goto(BASE + "/dictation", wait_until="networkidle")
-        page.wait_for_selector(".page-hero:has-text(\'Dictation\')", timeout=5000)
-        print("dictation walk: chip + pullout open in-world; voice lands; flat route lives")
+        page.wait_for_selector(
+            "[aria-label=\'Dictation\'].desk-surface-window", timeout=10000
+        )
+        print("dictation walk: chip + pullout open in-world; voice lands; deep link lands in-world")
         browser.close()
 
 
@@ -602,13 +620,17 @@ def meetings(intel: bool = False) -> None:
                 f"{payload['summary'][:80]!r}; 'Intelligence ready' shown in-world"
             )
         page.screenshot(path=str(OUT / ("meetings-intel-1440.png" if intel else "meetings-1440.png")))
-        # 5. Flat routes still answer for deep links.
+        # 5. Deep links land in-world (HS-95-08's demotion).
         page.goto(BASE + "/history", wait_until="networkidle")
-        page.wait_for_selector(".page-hero:has-text(\'Meetings\')", timeout=5000)
+        page.wait_for_selector(
+            "[aria-label=\'Meetings\'].desk-surface-window", timeout=10000
+        )
         page.goto(BASE + "/live", wait_until="networkidle")
-        page.wait_for_selector(".page-hero:has-text(\'Live meeting\')", timeout=5000)
+        page.wait_for_selector(
+            "[aria-label=\'Live meeting\'].desk-surface-window", timeout=10000
+        )
         print("meetings walk: record→live window in place, one recorder truth, "
-              "saved→pull-out, review scoped in-world, flat routes live")
+              "saved→pull-out, review scoped in-world, deep links land in-world")
         browser.close()
 
 
@@ -682,19 +704,19 @@ def config() -> None:
         )
         assert page.url.rstrip("/") == BASE, page.url
         page.screenshot(path=str(OUT / "config-1440.png"))
-        # 4. Flat routes still answer.
+        # 4. Deep links land in-world (HS-95-08's demotion).
         for path, marker in (
             ("/settings", "Settings"),
             ("/profiles", "Runs on"),
             ("/cadence", "Cadence"),
-            ("/setup", "Setup and readiness"),
+            ("/setup", "Setup"),
         ):
             page.goto(BASE + path, wait_until="networkidle")
             page.wait_for_selector(
-                f".page-hero:has-text(\'{marker}\')", timeout=5000
+                f"[aria-label=\'{marker}\'].desk-surface-window", timeout=10000
             )
         print("config walk: settings change round-trips + persists; runs-on/"
-              "cadence/integrations open in-world; flat routes live")
+              "cadence/integrations open in-world; deep links land in-world")
         browser.close()
 
 
@@ -773,6 +795,25 @@ def lastexits() -> None:
         browser.close()
 
 
+
+
+def closeout() -> None:
+    """HS-95-10 — the assembled walk: every per-story walk in sequence on
+    the production bundle (entry-point-driven, the way a user travels),
+    then the final screenshot pass at 1440 and 393 with the API-failure
+    listener armed."""
+    smoke()
+    windows()
+    shell()
+    cores()
+    dictation()
+    meetings()
+    config()
+    lastexits()
+    shots("closeout")
+    print("closeout walk: all eight walks green; final shots archived")
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "shots"
     if mode == "shots":
@@ -796,5 +837,7 @@ if __name__ == "__main__":
         config()
     elif mode == "lastexits":
         lastexits()
+    elif mode == "closeout":
+        closeout()
     else:
         raise SystemExit(f"unknown mode {mode}")

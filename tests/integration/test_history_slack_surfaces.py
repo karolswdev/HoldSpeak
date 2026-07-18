@@ -122,7 +122,7 @@ def test_aftercare_flag_is_true_and_never_the_url(client, db, settings_path, see
 
 def test_history_buttons_are_gated_on_the_flag():
     page = " ".join(
-        (_REPO / "web/src/pages/HistoryPage.tsx").read_text().split()
+        (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text().split()
     )
     assert "Send digest to Slack" in page and "Send follow-up to Slack" in page
     assert "aftercare.slack_configured" in page
@@ -137,7 +137,7 @@ def test_history_buttons_are_gated_on_the_flag():
 
 def test_proposal_rows_render_the_central_policy_and_refusal_truth():
     page = " ".join(
-        (_REPO / "web/src/pages/HistoryPage.tsx").read_text().split()
+        (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text().split()
     )
     assert "row.policy_snapshot" in page and "row.operation" in page
     assert 'policy.outcome === "refused"' in page
@@ -149,13 +149,13 @@ def test_proposal_rows_render_the_central_policy_and_refusal_truth():
 
 
 def test_history_app_wires_the_export_route():
-    js = (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
+    js = (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text()
     assert "proposeSlack" in js
     assert "/export/slack" in js
     assert "setActive(\"proposals\")" in js
 
 
 def test_settings_field_ships_the_honest_copy():
-    page = (_REPO / "web/src/pages/SettingsPage.tsx").read_text()
+    page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
     assert "SettingsFields" in page and "meeting" in page
     assert 'apiFetch<{ settings?: JsonRecord }>' in page and '"/api/settings"' in page
