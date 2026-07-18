@@ -1,8 +1,8 @@
 # Phase 96 — The Design System
 
-**Status:** IN PROGRESS (2/7; HS-96-02 done 2026-07-18).
+**Status:** IN PROGRESS (3/7; HS-96-03 done 2026-07-18).
 
-**Last updated:** 2026-07-18 (HS-96-02, the validator gate and the burn-down, done).
+**Last updated:** 2026-07-18 (HS-96-03, component state specs, done).
 
 ## Why this phase exists
 
@@ -75,7 +75,7 @@ recorded (Article X.3).
 |---|---|---|---|---|
 | HS-96-01 | The token architecture | done | [story-01-token-architecture](./story-01-token-architecture.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-96-02 | The validator gate and the burn-down | done | [story-02-validator-burndown](./story-02-validator-burndown.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-96-03 | Component state specs | backlog | [story-03-component-specs](./story-03-component-specs.md) | — |
+| HS-96-03 | Component state specs | done | [story-03-component-specs](./story-03-component-specs.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-96-04 | One material grammar | backlog | [story-04-material-grammar](./story-04-material-grammar.md) | — |
 | HS-96-05 | The accessibility pass | backlog | [story-05-accessibility](./story-05-accessibility.md) | — |
 | HS-96-06 | Docs and the mechanical lock | backlog | [story-06-docs-lock](./story-06-docs-lock.md) | — |
@@ -112,4 +112,18 @@ pool, and zone tints now come from the SAME source as the CSS — drift is
 structurally impossible. Build pixel-identical (shots in assets/);
 suite 256/256.
 
-Next: HS-96-03 writes the component state matrices and makes them true.
+**HS-96-03 done (2026-07-18): the state contract is written and true.**
+`docs/internal/DESIGN_SYSTEM.md` carries the architecture, the locks, and
+per-component state matrices (Button, chips, window verbs, dock, orb,
+window frame, inputs, Switch/Tabs/StatusPill/InlineMessage, and the GL
+world states) in token vocabulary only (a guard forbids raw values in the
+doc). The mechanical gaps closed: one pressed grammar (a 1px settle,
+compositor-only) across `.btn` and eleven chrome families, the orb
+pressing inward; focus-visible was already global (audited, adopted as
+the spec's grammar). `tests/unit/test_design_system_guard.py` locks the
+doc's coverage and the CSS grammars; the keyboard walk shows 14/14 tab
+stops wearing the accent ring (`assets/focus-ring-1440.png`). Suite
+256/256; token gates clean.
+
+Next: HS-96-04 folds the window materials onto one elevation/radius/
+motion grammar.

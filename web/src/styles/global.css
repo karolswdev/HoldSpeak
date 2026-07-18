@@ -184,6 +184,15 @@ body {
   color: var(--white);
 }
 
+:where(.btn):active:not(:disabled) {
+  /* HS-96-03: one pressed grammar — a 1px settle, compositor-only. */
+  transform: translateY(1px);
+}
+
+:where(.btn--primary, .btn.primary):active:not(:disabled) {
+  background: var(--accent-press);
+}
+
 :where(.btn):hover:not(:disabled) {
   border-color: var(--accent);
   background-color: var(--surface-3);

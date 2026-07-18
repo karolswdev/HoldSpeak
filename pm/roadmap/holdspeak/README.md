@@ -4,7 +4,12 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **HS-96-02, The validator gate and the
+**Last updated:** 2026-07-18 — **HS-96-03, Component state specs, DONE**:
+the state contract is written (docs/internal/DESIGN_SYSTEM.md, token
+vocabulary only, guard-locked) and made true — one pressed grammar across
+the Signal buttons and eleven chrome families, the global focus ring
+audited and adopted, 14/14 tab stops wearing the accent ring in the
+keyboard walk. Earlier: **HS-96-02, The validator gate and the
 burn-down, DONE**: the token gate runs in npm run check (shown firing on a
 planted raw value), 86 CSS literals became named tokens, a 70-entry
 reasoned allow-list covers the atmosphere art, and the generated TS mirror

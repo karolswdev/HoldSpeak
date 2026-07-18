@@ -3306,3 +3306,30 @@
   border: 1px solid var(--border);
   box-shadow: 0 24px 60px var(--shadow-ink-4);
 }
+
+
+/* ── HS-96-03: the component state contract (docs/internal/DESIGN_SYSTEM.md).
+   One pressed grammar for every chrome affordance — a 1px settle,
+   compositor-only; focus-visible rides the global accent outline. ── */
+.desk-next
+  :where(
+    .desk-chip,
+    .desk-window-verb,
+    .desk-dock-main,
+    .desk-dock-x,
+    .desk-dock-reset,
+    .desk-tool-link,
+    .desk-mark,
+    .desk-menu button,
+    .studio-card,
+    .desk-attention-launch,
+    .desk-create-button,
+    .egress-badge-button,
+    .btn-link
+  ):active {
+  transform: translateY(1px);
+}
+/* The orb presses inward instead of down (it is a circle, not a chip). */
+.desk-next .desk-orb:active:not(:disabled) .desk-orb-core {
+  transform: scale(0.92);
+}

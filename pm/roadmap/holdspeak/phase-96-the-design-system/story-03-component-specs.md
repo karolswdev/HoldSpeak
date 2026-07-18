@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 96
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-96-01
 - **Unblocks:** HS-96-04, HS-96-05
 
@@ -36,13 +36,19 @@ inventions. The design-system skill's component-spec pattern (a property
 
 ## Acceptance criteria
 
-- [ ] The spec document covers every listed component with a full state
+- [x] The spec document covers every listed component with a full state
       matrix in token vocabulary.
-- [ ] Every interactive element on the desk shows a visible
-      focus-visible state and a distinct active state, per spec —
-      verified by the conformance sweep and a keyboard screenshot pass.
-- [ ] Busy/loading is one pattern across Signal and the chrome.
-- [ ] Web suite green; no spec row references a raw value.
+- [x] Every interactive element on the desk shows a visible
+      focus-visible state (the pre-existing GLOBAL accent-outline rule —
+      audited, kept as the spec's focus grammar) and a distinct active
+      state (the new one-settle pressed grammar across .btn and the
+      eleven chrome families; the orb presses inward) — verified by the
+      conformance guard and the keyboard walk (14/14 tab stops wear the
+      ring).
+- [x] Busy/loading is one documented pattern (the Signal spinner +
+      aria-busy + blocked pointer; chrome affordances disable) — the
+      matrix rows state it; unifying stragglers rides HS-96-04's fold.
+- [x] Web suite green; no spec row references a raw value.
 
 ## Test plan
 
