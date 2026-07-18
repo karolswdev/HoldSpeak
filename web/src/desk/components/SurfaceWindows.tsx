@@ -41,6 +41,32 @@ const SURFACES: SurfaceRow[] = [
     ),
   },
   {
+    key: "review-meetings",
+    id: "surface-meetings",
+    title: "Meetings",
+    glyph: "▣",
+    eyebrow: "Meeting memory",
+    minW: 640,
+    Core: lazy(() =>
+      import("../../pages/cores/HistoryCore").then((m) => ({
+        default: m.HistoryCore,
+      })),
+    ),
+  },
+  {
+    key: "record-live",
+    id: "surface-live",
+    title: "Live meeting",
+    glyph: "●",
+    eyebrow: "Meeting room",
+    minW: 560,
+    Core: lazy(() =>
+      import("../../pages/cores/LiveCore").then((m) => ({
+        default: m.LiveCore,
+      })),
+    ),
+  },
+  {
     key: "inspect-activity",
     id: "surface-activity",
     title: "Activity",

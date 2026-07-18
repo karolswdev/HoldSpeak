@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDesk } from "../store";
+import { openSurfaceOr } from "../shell";
 
 export function RecordOrb() {
   const state = useDesk((s) => s.recording);
@@ -55,13 +56,16 @@ export function RecordOrb() {
       <button
         type="button"
         className={`desk-orb is-${state}`}
-        onClick={() =>
-          recording
-            ? void useDesk.getState().stopRecording()
-            : state === "idle"
-              ? void useDesk.getState().startRecording()
-              : undefined
-        }
+        onClick={() => {
+          if (recording) {
+            void useDesk.getState().stopRecording();
+            return;
+          }
+          if (state !== "idle") return;
+          void useDesk.getState().startRecording();
+          // Recording never leaves the desk: the live window rides along.
+          openSurfaceOr("record-live", "/live");
+        }}
         aria-label={recording ? "Stop recording" : "Record a meeting"}
         title={recording ? "Stop recording" : "Record a meeting"}
         disabled={state === "busy"}

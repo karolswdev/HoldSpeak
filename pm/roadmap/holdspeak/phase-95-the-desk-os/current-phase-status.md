@@ -1,8 +1,8 @@
 # Phase 95 — The Desk OS
 
-**Status:** IN PROGRESS (5/10; HS-95-05 done 2026-07-17).
+**Status:** IN PROGRESS (6/10; HS-95-06 done 2026-07-18).
 
-**Last updated:** 2026-07-17 (HS-95-05, dictation through the desk, done).
+**Last updated:** 2026-07-18 (HS-95-06, meetings through the desk, done).
 
 ## Why this phase exists
 
@@ -117,7 +117,7 @@ navigates away from the desk.
 | HS-95-03 | The shell: dock, switching, layouts | done | [story-03-the-shell](./story-03-the-shell.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-95-04 | Embeddable page cores | done | [story-04-embeddable-page-cores](./story-04-embeddable-page-cores.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-95-05 | Dictation through the desk | done | [story-05-dictation-through-the-desk](./story-05-dictation-through-the-desk.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-95-06 | Meetings and recording through the desk | backlog | [story-06-meetings-through-the-desk](./story-06-meetings-through-the-desk.md) | — |
+| HS-95-06 | Meetings and recording through the desk | done | [story-06-meetings-through-the-desk](./story-06-meetings-through-the-desk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-95-07 | Configuration through the desk | backlog | [story-07-configuration-through-the-desk](./story-07-configuration-through-the-desk.md) | — |
 | HS-95-08 | Studio, sessions, and the last exits | backlog | [story-08-studio-sessions-last-exits](./story-08-studio-sessions-last-exits.md) | — |
 | HS-95-09 | Docs: the Desk OS is the documented product | backlog | [story-09-docs](./story-09-docs.md) | — |
@@ -203,5 +203,23 @@ tracks stop; pinned by test). The app shell delegates navigate to
 imports. Suite 258/258; the dictation walk covers all beats plus the flat
 route for deep links.
 
-Next: HS-95-06 (meetings/live) and HS-95-07 (configuration) on the same
-pattern; the Phase 93 physics contract remains the regression floor.
+**HS-95-06 done (2026-07-18): meetings live in-world.** `LiveCore` and
+`HistoryCore` host the meeting room and the meeting memory as desk
+windows; Record (chip and orb) opens the live window with the recorder —
+the URL never leaves the desk; Stop inside the window settles every
+surface (one recorder truth); "Return to saved Meeting" opens the
+pull-out via the shell's `openPrimitive` (refresh-then-open, the arrival
+path's exact behavior); "Review meeting" hosts the memory core scoped to
+the meeting. The proof is PHYSICAL: the hub records the real microphone
+(Phase 73 lock — never the browser), so the walk speaks a generated
+meeting through the speakers; Whisper transcribed it, and the .43 model
+titled the meeting, wrote the summary, and the window wears "Intelligence
+ready" — live, twice (two staged runs). Named deferrals: the meeting
+detail keeps the flat page's Dialog grammar inside the window (Article
+VII drift for HS-95-09/10 to name), and the seeded-desk-43 deck's intel
+keys were shadowed by DB-backed settings on this staged run (the walk
+enabled intel through the product's own settings route; a UAT-rig
+observation worth a BACKLOG row at closeout).
+
+Next: HS-95-07 (configuration) then HS-95-08 (the last exits); the Phase
+93 physics contract remains the regression floor.

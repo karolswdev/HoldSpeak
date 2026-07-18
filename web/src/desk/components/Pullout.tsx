@@ -314,15 +314,15 @@ export function Pullout({ o }: { o: WorldObject }) {
           </span>
         )}
         {o.kind === "meeting" && (
-          <Link
+          <button
+            type="button"
             className="desk-chip quiet"
-            to={workroomHref("/history", {
-              action: "review-meeting",
-              subjectRef: resourceRef,
-            })}
+            onClick={() =>
+              openSurfaceOr("review-meetings", "/history", resourceRef)
+            }
           >
             Review meeting
-          </Link>
+          </button>
         )}
         {o.kind === "workflow" && (
           <Link
@@ -841,15 +841,13 @@ export function Pullout({ o }: { o: WorldObject }) {
           </button>
         )}
         {o.kind === "meeting" && (
-          <Link
+          <button
+            type="button"
             className="desk-chip quiet"
-            to={workroomHref("/live", {
-              action: "record-follow-up",
-              subjectRef: resourceRef,
-            })}
+            onClick={() => openSurfaceOr("record-live", "/live", resourceRef)}
           >
             Record follow-up
-          </Link>
+          </button>
         )}
         {EDITABLE.has(o.kind) && (
           <button

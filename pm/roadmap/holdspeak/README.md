@@ -4,7 +4,13 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-17 — **HS-95-05, Dictation through the desk,
+**Last updated:** 2026-07-18 — **HS-95-06, Meetings through the desk,
+DONE**: Record opens the live window in place, one recorder truth across
+chip/orb/window, and the meeting memory core hosts reviews scoped from the
+pull-out — proven physically: the walk spoke a generated meeting through
+the speakers, the hub's real mic + Whisper transcribed it, and the .43
+model titled and summarized it with "Intelligence ready" worn in-world.
+Earlier: **HS-95-05, Dictation through the desk,
 DONE**: the full dictation cockpit is a desk window; all four dictation
 exits open it in place (the URL never leaves the desk), "Dictate about
 this" scopes it with a product-label chip, and the proof is a real voice

@@ -47,3 +47,20 @@ export function openSurfaceOr(
   if (openSurface(key, scope)) return;
   shellNavigate?.(fallbackHref);
 }
+
+/** Open a desk primitive's pull-out. On the desk this opens in place; on
+ * a flat route it walks home first (`/?open=<ref>` is the arrival path). */
+export function openPrimitive(ref: string): void {
+  if (window.location.pathname === "/") {
+    // The arrival path's exact behavior: refresh first so a just-created
+    // primitive is in the items before the pull-out resolves it.
+    void import("./store").then((m) =>
+      m.useDesk
+        .getState()
+        .refresh()
+        .then(() => m.useDesk.getState().openPullout(ref)),
+    );
+    return;
+  }
+  shellNavigate?.(`/?open=${encodeURIComponent(ref)}`);
+}
