@@ -4,7 +4,13 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-17 — **Phase 95, The Desk OS, SCAFFOLDED** from the
+**Last updated:** 2026-07-17 — **HS-95-01, The WebGL stage, DONE**: the desk
+world renders on a pixi v8 GPU scene graph (one renderer — the DOM world is
+deleted), interactions ported at exact HS-71 semantics and proven by a
+Playwright smoke through the real canvas, and the production storm reads
+median 8.3ms / p95 9.9ms with 1 layout + 2 paint events across 8 seconds of
+continuous drags on the seeded desk. Earlier the same day: **Phase 95, The
+Desk OS, SCAFFOLDED** from the
 owner's first live UAT sitting (conductor Campaign 1 territory): the verdict
 was that the desk experience is clunky and fragmented — desk actions eject to
 sixteen flat routes under an alien shell, and the world renders DOM/CSS. The

@@ -5,8 +5,8 @@
 // minimal cluster (DeskChrome); a fresh desk shows the guiding empty state.
 import { useEffect } from "react";
 import { useDesk } from "./store";
-import { Stage } from "./components/Stage";
-import { World } from "./components/World";
+import { Atmosphere } from "./gl/Atmosphere";
+import { WorldStage } from "./gl/WorldStage";
 import { DeskListView } from "./components/DeskListView";
 import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
@@ -43,14 +43,14 @@ export default function DeskApp() {
 
   return (
     <div className="desk-next">
-      <Stage />
+      <Atmosphere />
       <DeskChrome showDailyStarts={!empty} />
       {empty ? (
         <EmptyDesk arrivalRequired={setup?.arrival_required === true} />
       ) : viewMode === "list" ? (
         <DeskListView />
       ) : (
-        <World />
+        <WorldStage />
       )}
       {!empty ? <RecordOrb /> : null}
       {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
