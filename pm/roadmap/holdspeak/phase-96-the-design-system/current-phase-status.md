@@ -1,8 +1,8 @@
 # Phase 96 — The Design System
 
-**Status:** IN PROGRESS (1/7; HS-96-01 done 2026-07-18).
+**Status:** IN PROGRESS (2/7; HS-96-02 done 2026-07-18).
 
-**Last updated:** 2026-07-18 (HS-96-01, the token architecture, done).
+**Last updated:** 2026-07-18 (HS-96-02, the validator gate and the burn-down, done).
 
 ## Why this phase exists
 
@@ -74,7 +74,7 @@ recorded (Article X.3).
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-96-01 | The token architecture | done | [story-01-token-architecture](./story-01-token-architecture.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-96-02 | The validator gate and the burn-down | backlog | [story-02-validator-burndown](./story-02-validator-burndown.md) | — |
+| HS-96-02 | The validator gate and the burn-down | done | [story-02-validator-burndown](./story-02-validator-burndown.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-96-03 | Component state specs | backlog | [story-03-component-specs](./story-03-component-specs.md) | — |
 | HS-96-04 | One material grammar | backlog | [story-04-material-grammar](./story-04-material-grammar.md) | — |
 | HS-96-05 | The accessibility pass | backlog | [story-05-accessibility](./story-05-accessibility.md) | — |
@@ -96,5 +96,20 @@ clearances, per-kind glows). Deterministic double-run, `npm run check`
 green end to end, and the production desk renders identically (shots in
 `assets/`).
 
-Next: HS-96-02 wires the validator and burns the desk.css literals down
-onto these tokens.
+**HS-96-02 done (2026-07-18): the gate is live and the debt is paid.**
+The adapted validator (`web/scripts/validate-tokens.cjs`: hex/rgb colors,
+z-index literals, ms durations in component CSS, with var() bodies
+masked) runs in `npm run check` beside the drift gate; the evidence shows
+it firing on a planted raw value and failing on stale allow-list entries.
+86 literals burned down: the recurring values became NAMED tokens
+(--desk-glass, --desk-window-fill, --shadow-ink-1..6, --wash-1/2,
+--accent-cool, --accent-glow-strong, and the z ladder including
+--desk-z-stage/-dock-under/-popover); the 70 that remain are allow-listed
+with reasons (DioPal atmosphere art, local stacking contexts, one-off
+shades for HS-96-04's fold). The TS mirror is generated
+(`src/lib/tokens.gen.ts`): DeskWindow physics, snap clearances, the glow
+pool, and zone tints now come from the SAME source as the CSS — drift is
+structurally impossible. Build pixel-identical (shots in assets/);
+suite 256/256.
+
+Next: HS-96-03 writes the component state matrices and makes them true.

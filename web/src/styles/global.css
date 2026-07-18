@@ -85,7 +85,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-3);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 52%),
+    linear-gradient(180deg, var(--wash-1), transparent 52%),
     var(--surface-1);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.045),
@@ -108,7 +108,7 @@ body {
 :where(.input, .select, .hs-control):hover:not(:disabled) {
   border-color: var(--border-strong);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 55%),
+    linear-gradient(180deg, var(--wash-2), transparent 55%),
     var(--surface-2);
 }
 
@@ -116,7 +116,7 @@ body {
   outline: none;
   border-color: var(--accent);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 var(--wash-2),
     0 0 0 3px var(--accent-tint),
     0 8px 24px rgba(0, 0, 0, 0.22);
 }
@@ -181,7 +181,7 @@ body {
 :where(.btn.danger, .btn--danger) {
   border-color: var(--danger-fill);
   background: var(--danger-fill);
-  color: #fff;
+  color: var(--white);
 }
 
 :where(.btn):hover:not(:disabled) {
@@ -221,7 +221,7 @@ body {
   padding-right: 2.65rem;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239BA2B0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 52%);
+    linear-gradient(180deg, var(--wash-1), transparent 52%);
   background-repeat: no-repeat, no-repeat;
   background-position:
     right 0.8rem center,
@@ -285,7 +285,7 @@ body {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent),
     var(--surface-1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 var(--surface-hover);
   cursor: pointer;
   transition:
     border-color var(--duration-short) var(--ease-standard),
@@ -416,16 +416,16 @@ pre {
   padding: 1px;
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.12) 0%,
-    rgba(255, 255, 255, 0.035) 100%
+    var(--border) 0%,
+    var(--wash-1) 100%
   );
   -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
+    linear-gradient(var(--black) 0 0) content-box,
+    linear-gradient(var(--black) 0 0);
   -webkit-mask-composite: xor;
   mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
+    linear-gradient(var(--black) 0 0) content-box,
+    linear-gradient(var(--black) 0 0);
   mask-composite: exclude;
   pointer-events: none;
 }
@@ -442,7 +442,7 @@ pre {
   height: var(--chip-size);
   border-radius: calc(var(--chip-size) * 0.28);
   background: var(--accent-gradient);
-  color: #fff;
+  color: var(--white);
   box-shadow: 0 4px 14px var(--accent-glow);
 }
 .glyph-chip svg {

@@ -4,7 +4,12 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **HS-96-01, The token architecture, DONE**:
+**Last updated:** 2026-07-18 — **HS-96-02, The validator gate and the
+burn-down, DONE**: the token gate runs in npm run check (shown firing on a
+planted raw value), 86 CSS literals became named tokens, a 70-entry
+reasoned allow-list covers the atmosphere art, and the generated TS mirror
+feeds the window physics and GL palettes from the same source as the CSS.
+Earlier: **HS-96-01, The token architecture, DONE**:
 `design-tokens.json` is the one source of truth (three layers per the
 vendored skill), the adapted generator emits `tokens.css` with a drift
 gate first in `npm run check`, all 117 pre-existing tokens preserved with

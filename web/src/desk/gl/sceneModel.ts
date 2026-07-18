@@ -22,21 +22,16 @@ import { resolveRef } from "../lineage";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl, variantIndex } from "../sprites";
 import type { WorldRect } from "./coords";
+import { ZONE_TINT_POOL } from "../../lib/tokens.gen";
 
 /** HS-93-08 — the spatial stage's honest render bound (moved here with the
  * renderer; the chip and List view still reach everything). */
 export const MAX_FLOATERS = 200;
 
 /** Per-zone stable tints — the same stable-hash family the sprite picker
- * uses, so a zone's color never changes (World.tsx values, verbatim). */
-export const ZONE_TINTS = [
-  "#E0A458",
-  "#56C7F5",
-  "#34D399",
-  "#A78BFA",
-  "#FF9E64",
-  "#FBBF24",
-];
+ * uses, so a zone's color never changes. One generated source with the
+ * CSS zone-tint tokens (HS-96-02). */
+export const ZONE_TINTS: readonly string[] = ZONE_TINT_POOL;
 
 export const OBJ_W = 128;
 export const LIFT = 96;

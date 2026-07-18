@@ -19,6 +19,7 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 const CONFIG = path.join(ROOT, "design-tokens.json");
 const OUTPUT = path.join(ROOT, "src", "styles", "tokens.css");
+const TS_OUTPUT = path.join(ROOT, "src", "lib", "tokens.gen.ts");
 
 function resolveReference(value, tokens) {
   if (typeof value !== "string" || !value.startsWith("{") || !value.endsWith("}")) {
@@ -133,23 +134,81 @@ function generate(tokens) {
   return out.join("\n");
 }
 
+function componentValue(tokens, name) {
+  const row = tokens.component.groups.find((entry) => entry.name === name);
+  if (!row) throw new Error(`missing component token ${name}`);
+  return resolveReference(row.value, tokens);
+}
+
+function px(value) {
+  return Number(String(value).replace(/px$/, ""));
+}
+
+function generateTs(tokens) {
+  const out = [];
+  out.push("// GENERATED FILE — do not edit (HS-96-02). Source of truth:");
+  out.push("// web/design-tokens.json → node scripts/generate-tokens.cjs.");
+  out.push("// The TS mirror of the Desk OS component tokens, so the window");
+  out.push("// physics and the GL world can never drift from the CSS ladder.");
+  out.push("");
+  out.push("export const DESK_Z = {");
+  out.push(`  canvas: ${componentValue(tokens, "--desk-z-canvas")},`);
+  out.push(`  worldOverlay: ${componentValue(tokens, "--desk-z-world-overlay")},`);
+  out.push(`  chrome: ${componentValue(tokens, "--desk-z-chrome")},`);
+  out.push(`  windowBase: ${componentValue(tokens, "--desk-z-window-base")},`);
+  out.push(`  dock: ${componentValue(tokens, "--desk-z-dock")},`);
+  out.push(`  transient: ${componentValue(tokens, "--desk-z-transient")},`);
+  out.push("} as const;");
+  out.push("");
+  out.push("export const DESK_WINDOW = {");
+  out.push(`  margin: ${px(componentValue(tokens, "--desk-window-margin"))},`);
+  out.push(`  grab: ${px(componentValue(tokens, "--desk-window-grab"))},`);
+  out.push(`  cascade: ${px(componentValue(tokens, "--desk-window-cascade"))},`);
+  out.push(`  snapTop: ${px(componentValue(tokens, "--desk-snap-top"))},`);
+  out.push(`  snapBottom: ${px(componentValue(tokens, "--desk-snap-bottom"))},`);
+  out.push("} as const;");
+  out.push("");
+  const glow = (kind) => componentValue(tokens, `--glow-${kind}`);
+  out.push("export const GLOW_POOL: Record<string, string> = {");
+  out.push(`  meeting: "${glow("meeting")}",`);
+  out.push(`  note: "${glow("note")}",`);
+  out.push(`  kb: "${glow("kb")}",`);
+  out.push(`  recipe: "${glow("recipe")}",`);
+  out.push(`  artifact: "${glow("artifact")}",`);
+  out.push(`  chain: "${glow("chain")}",`);
+  out.push(`  workflow: "${glow("meeting")}",`);
+  out.push(`  directory: "${glow("directory")}",`);
+  out.push(`  coder: "${glow("recipe")}",`);
+  out.push("};");
+  out.push("");
+  const tint = (n) => componentValue(tokens, `--zone-tint-${n}`);
+  out.push("export const ZONE_TINT_POOL = [");
+  for (let i = 1; i <= 6; i++) out.push(`  "${tint(i)}",`);
+  out.push("] as const;");
+  out.push("");
+  return out.join("\n");
+}
+
 function main() {
   const check = process.argv.includes("--check");
   const tokens = JSON.parse(fs.readFileSync(CONFIG, "utf-8"));
   const css = generate(tokens);
+  const ts = generateTs(tokens);
   if (check) {
     const current = fs.existsSync(OUTPUT) ? fs.readFileSync(OUTPUT, "utf-8") : "";
-    if (current !== css) {
+    const currentTs = fs.existsSync(TS_OUTPUT) ? fs.readFileSync(TS_OUTPUT, "utf-8") : "";
+    if (current !== css || currentTs !== ts) {
       console.error(
-        "tokens.css drifted from design-tokens.json — run: node scripts/generate-tokens.cjs",
+        "tokens drifted from design-tokens.json — run: node scripts/generate-tokens.cjs",
       );
       process.exit(1);
     }
-    console.log("tokens.css matches design-tokens.json");
+    console.log("tokens.css and tokens.gen.ts match design-tokens.json");
     return;
   }
   fs.writeFileSync(OUTPUT, css);
-  console.log(`wrote ${path.relative(ROOT, OUTPUT)} (${css.split("\n").length} lines)`);
+  fs.writeFileSync(TS_OUTPUT, ts);
+  console.log(`wrote ${path.relative(ROOT, OUTPUT)} and ${path.relative(ROOT, TS_OUTPUT)}`);
 }
 
 main();

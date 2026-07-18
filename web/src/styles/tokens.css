@@ -60,6 +60,16 @@
   --p-color-zonetint-4: #A78BFA;
   --p-color-zonetint-5: #FF9E64;
   --p-color-zonetint-6: #FBBF24;
+  --p-color-shadow-34: rgba(0, 0, 0, 0.34);
+  --p-color-shadow-42: rgba(0, 0, 0, 0.42);
+  --p-color-shadow-50: rgba(0, 0, 0, 0.5);
+  --p-color-shadow-55: rgba(0, 0, 0, 0.55);
+  --p-color-shadow-60: rgba(0, 0, 0, 0.6);
+  --p-color-shadow-70: rgba(0, 0, 0, 0.7);
+  --p-color-wash-035: rgba(255, 255, 255, 0.035);
+  --p-color-wash-05: rgba(255, 255, 255, 0.05);
+  --p-color-wash-08: rgba(255, 255, 255, 0.08);
+  --p-color-blue-450: #5b8def; /* the cool blue accent (delivery/panes surfaces) */
   --p-font-display: "Space Grotesk", "Inter", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   --p-font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -191,6 +201,18 @@
   --z-overlay: 100;
   --z-dialog: 200;
   --z-toast: 300;
+  --black: #000; /* absolute ink (shadow/scrim compositing) */
+  --white: #fff; /* absolute paper (rare highlight compositing) */
+  --accent-cool: #5b8def; /* the cool blue counterweight to the signal orange */
+  --accent-glow-strong: rgba(255, 107, 53, 0.5); /* the stronger accent glow (recording/attention) */
+  --shadow-ink-1: rgba(0, 0, 0, 0.34);
+  --shadow-ink-2: rgba(0, 0, 0, 0.42);
+  --shadow-ink-3: rgba(0, 0, 0, 0.5);
+  --shadow-ink-4: rgba(0, 0, 0, 0.55);
+  --shadow-ink-5: rgba(0, 0, 0, 0.6);
+  --shadow-ink-6: rgba(0, 0, 0, 0.7);
+  --wash-1: rgba(255, 255, 255, 0.035); /* faintest white wash (hairline fills) */
+  --wash-2: rgba(255, 255, 255, 0.05); /* hover-weight white wash */
 
   /* ============================================================
    * 3. COMPONENT TOKENS (the Desk OS chrome — HS-95 values)
@@ -220,6 +242,12 @@
   --zone-tint-4: #A78BFA;
   --zone-tint-5: #FF9E64;
   --zone-tint-6: #FBBF24;
+  --desk-z-stage: -1; /* the fixed atmosphere behind the document */
+  --desk-z-dock-under: 40; /* the dock on compact viewports — sheets own the phone's bottom */
+  --desk-z-popover: 82; /* popovers/toasts above even the transient band */
+  --desk-glass: rgba(8, 7, 12, 0.7); /* the frosted chrome-cluster glass */
+  --desk-window-fill: rgba(13, 11, 18, 0.985); /* the window body fill (R2-06: objects must not ghost through) */
+  --desk-panel-fill: rgba(14, 12, 20, 0.94); /* secondary panel fill */
 }
 
 @media (prefers-reduced-motion: reduce) {

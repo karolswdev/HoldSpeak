@@ -150,6 +150,45 @@
         "6": {
           "value": "#FBBF24"
         }
+      },
+      "shadow": {
+        "$doc": "black ink alphas for depth (dark theme's shadow ramp)",
+        "34": {
+          "value": "rgba(0, 0, 0, 0.34)"
+        },
+        "42": {
+          "value": "rgba(0, 0, 0, 0.42)"
+        },
+        "50": {
+          "value": "rgba(0, 0, 0, 0.5)"
+        },
+        "55": {
+          "value": "rgba(0, 0, 0, 0.55)"
+        },
+        "60": {
+          "value": "rgba(0, 0, 0, 0.6)"
+        },
+        "70": {
+          "value": "rgba(0, 0, 0, 0.7)"
+        }
+      },
+      "wash": {
+        "$doc": "white washes for hairlines and hover fills on dark",
+        "035": {
+          "value": "rgba(255, 255, 255, 0.035)"
+        },
+        "05": {
+          "value": "rgba(255, 255, 255, 0.05)"
+        },
+        "08": {
+          "value": "rgba(255, 255, 255, 0.08)"
+        }
+      },
+      "blue": {
+        "450": {
+          "value": "#5b8def",
+          "doc": "the cool blue accent (delivery/panes surfaces)"
+        }
       }
     },
     "font": {
@@ -634,6 +673,60 @@
       {
         "name": "--z-toast",
         "value": "300"
+      },
+      {
+        "name": "--black",
+        "value": "#000",
+        "doc": "absolute ink (shadow/scrim compositing)"
+      },
+      {
+        "name": "--white",
+        "value": "#fff",
+        "doc": "absolute paper (rare highlight compositing)"
+      },
+      {
+        "name": "--accent-cool",
+        "value": "{primitive.color.blue.450}",
+        "doc": "the cool blue counterweight to the signal orange"
+      },
+      {
+        "name": "--accent-glow-strong",
+        "value": "rgba(255, 107, 53, 0.5)",
+        "doc": "the stronger accent glow (recording/attention)"
+      },
+      {
+        "name": "--shadow-ink-1",
+        "value": "{primitive.color.shadow.34}"
+      },
+      {
+        "name": "--shadow-ink-2",
+        "value": "{primitive.color.shadow.42}"
+      },
+      {
+        "name": "--shadow-ink-3",
+        "value": "{primitive.color.shadow.50}"
+      },
+      {
+        "name": "--shadow-ink-4",
+        "value": "{primitive.color.shadow.55}"
+      },
+      {
+        "name": "--shadow-ink-5",
+        "value": "{primitive.color.shadow.60}"
+      },
+      {
+        "name": "--shadow-ink-6",
+        "value": "{primitive.color.shadow.70}"
+      },
+      {
+        "name": "--wash-1",
+        "value": "{primitive.color.wash.035}",
+        "doc": "faintest white wash (hairline fills)"
+      },
+      {
+        "name": "--wash-2",
+        "value": "{primitive.color.wash.05}",
+        "doc": "hover-weight white wash"
       }
     ]
   },
@@ -746,6 +839,36 @@
       {
         "name": "--zone-tint-6",
         "value": "{primitive.color.zonetint.6}"
+      },
+      {
+        "name": "--desk-z-stage",
+        "value": "-1",
+        "doc": "the fixed atmosphere behind the document"
+      },
+      {
+        "name": "--desk-z-dock-under",
+        "value": "40",
+        "doc": "the dock on compact viewports — sheets own the phone's bottom"
+      },
+      {
+        "name": "--desk-z-popover",
+        "value": "82",
+        "doc": "popovers/toasts above even the transient band"
+      },
+      {
+        "name": "--desk-glass",
+        "value": "rgba(8, 7, 12, 0.7)",
+        "doc": "the frosted chrome-cluster glass"
+      },
+      {
+        "name": "--desk-window-fill",
+        "value": "rgba(13, 11, 18, 0.985)",
+        "doc": "the window body fill (R2-06: objects must not ghost through)"
+      },
+      {
+        "name": "--desk-panel-fill",
+        "value": "rgba(14, 12, 20, 0.94)",
+        "doc": "secondary panel fill"
       }
     ]
   }

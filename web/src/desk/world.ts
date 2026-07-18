@@ -2,6 +2,7 @@
  * original desk's `worldObjects` / `worldZones` / `objUnit` (looseHome) /
  * `objGlow`, so the island lays the same desk out the same way. */
 import { oh } from "./hash";
+import { GLOW_POOL } from "../lib/tokens.gen";
 import type { DeskItem, Items, Kind } from "./api";
 import { qualifiedRef } from "./api";
 import type { UnitPos } from "./store";
@@ -101,21 +102,8 @@ export function worldZones(
 }
 
 export function objGlow(kind: string): string {
-  return (
-    (
-      {
-        meeting: "#56C7F5",
-        note: "#34D399",
-        kb: "#FBBF24",
-        recipe: "#FF6B35",
-        artifact: "#FF9E64",
-        chain: "#A78BFA",
-        workflow: "#56C7F5",
-        directory: "#E0A458",
-        coder: "#FF6B35",
-      } as Record<string, string>
-    )[kind] || "#FF6B35"
-  );
+  // One generated source with the CSS glow tokens (HS-96-02).
+  return GLOW_POOL[kind] || GLOW_POOL.recipe;
 }
 
 /** A saved drag position, else the density-aware `looseHome` grid. */

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 96
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-96-01
 - **Unblocks:** HS-96-04
 
@@ -37,13 +37,17 @@ down so the lock starts honest.
 
 ## Acceptance criteria
 
-- [ ] The validator runs in `npm run check` and CI; a planted raw hex in
+- [x] The validator runs in `npm run check` and CI; a planted raw hex in
       a component style fails it (shown in evidence, then removed).
-- [ ] `desk.css`/`react-app.css` pass the validator with an allow-list
-      small enough to read in one sitting, every entry reasoned.
-- [ ] The TS mirror constants come from the generated module; a
+- [x] `desk.css`/`react-app.css`/`global.css` pass the validator with a
+      70-entry allow-list, every entry carrying its reason (atmosphere
+      art, local stacking contexts, explicit zeros, and one-off shades
+      HS-96-04's material fold consolidates). 86 literals burned down to
+      tokens (colors, the z ladder, durations); the gate also fails on
+      STALE allow-list entries so the list can only shrink honestly.
+- [x] The TS mirror constants come from the generated module; a
       drift test locks CSS and TS to the same values.
-- [ ] The production build renders pixel-identically except for named
+- [x] The production build renders pixel-identically except for named
       normalizations; web suite and desk-lock guards pass.
 
 ## Test plan

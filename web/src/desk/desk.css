@@ -7,7 +7,7 @@
 .desk-next .desk-stage {
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: var(--desk-z-stage);
   pointer-events: none;
   overflow: hidden;
   background: linear-gradient(178deg, #0b0d12 0%, #16111f 52%, #090a0e 100%);
@@ -66,7 +66,7 @@
 }
 .desk-next .desk-chrome {
   position: fixed;
-  z-index: 30;
+  z-index: var(--desk-z-chrome);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -97,7 +97,7 @@
      42–59 desk windows (base 42; focus raises via inline z from the store)
      60–99 transient overlays: pane picker 60, menus/palette 82
      no hand-tuned one-off values above this ladder. */
-  z-index: 40;
+  z-index: var(--desk-z-dock-under);
   flex-wrap: wrap;
   justify-content: flex-end;
 }
@@ -131,8 +131,8 @@
   padding: 6px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: rgba(14, 12, 20, 0.94);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  background: var(--desk-panel-fill);
+  box-shadow: 0 18px 40px var(--shadow-ink-3);
 }
 .desk-next .desk-menu a {
   padding: 8px 12px;
@@ -142,7 +142,7 @@
   font-size: var(--font-size-sm);
 }
 .desk-next .desk-menu a:hover {
-  background: rgba(255, 107, 53, 0.12);
+  background: var(--accent-tint);
 }
 .desk-next .desk-hub-dot {
   width: 9px;
@@ -227,7 +227,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 82;
+  z-index: var(--desk-z-popover);
   display: grid;
   width: min(300px, calc(100vw - 28px));
   padding: var(--space-2);
@@ -278,7 +278,7 @@
   position: fixed;
   top: 64px;
   right: 18px;
-  z-index: 82;
+  z-index: var(--desk-z-popover);
   width: min(430px, calc(100vw - 36px));
   max-height: calc(100vh - 80px);
   padding: var(--space-4);
@@ -286,9 +286,9 @@
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
   border-radius: 18px;
-  background: rgba(13, 11, 18, 0.985);
+  background: var(--desk-window-fill);
   color: var(--text);
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 26px 70px var(--shadow-ink-5);
   backdrop-filter: blur(10px);
 }
 .desk-next .desk-tool-shelf h2,
@@ -386,16 +386,16 @@
   top: 64px;
   right: 18px;
   bottom: 18px;
-  z-index: 42;
+  z-index: var(--desk-z-window-base);
   width: min(430px, calc(100vw - 36px));
   padding: var(--space-4);
   overflow: auto;
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
   border-radius: 18px;
-  background: rgba(13, 11, 18, 0.985);
+  background: var(--desk-window-fill);
   color: var(--text);
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 26px 70px var(--shadow-ink-5);
   backdrop-filter: blur(10px);
 }
 .desk-next .desk-tool-inspector h2,
@@ -513,12 +513,12 @@
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 30;
+  z-index: var(--desk-z-chrome);
   font-size: var(--font-size-xs);
   color: var(--text-faint);
   letter-spacing: 0.04em;
   pointer-events: none;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 1px 3px var(--shadow-ink-6);
 }
 
 /* ── the guiding empty state (a world being empty, not a page of copy) ── */
@@ -563,7 +563,7 @@
   border: 1px solid var(--surface-3);
   border-radius: 18px;
   background: color-mix(in srgb, var(--surface-1) 92%, transparent);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+  box-shadow: 0 24px 80px var(--shadow-ink-1);
 }
 .desk-next .desk-first-words h1,
 .desk-next .desk-first-words h2,
@@ -630,9 +630,9 @@
   border-radius: 16px;
   border: 1px solid
     color-mix(in srgb, var(--accent, #ff6b35) 30%, var(--border));
-  background: rgba(14, 12, 20, 0.94);
+  background: var(--desk-panel-fill);
   box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.55),
+    0 24px 60px var(--shadow-ink-4),
     0 0 0 1px rgba(255, 107, 53, 0.08);
   backdrop-filter: blur(8px);
 }
@@ -643,7 +643,7 @@
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: rgba(8, 7, 12, 0.7);
+  background: var(--desk-glass);
   color: var(--text);
   font-size: var(--font-size-sm);
   font-family: inherit;
@@ -706,15 +706,15 @@
   top: 64px;
   right: 18px;
   bottom: 18px;
-  z-index: 42;
+  z-index: var(--desk-z-window-base);
   width: min(400px, 88vw);
   display: flex;
   flex-direction: column;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--k, #ff6b35) 34%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--k, #ff6b35) 70%, transparent);
-  background: rgba(13, 11, 18, 0.985);
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
+  background: var(--desk-window-fill);
+  box-shadow: 0 26px 70px var(--shadow-ink-5);
   backdrop-filter: blur(10px);
 }
 .desk-next .desk-pullout-head {
@@ -912,7 +912,7 @@
 .desk-next .runs-on-picker select {
   width: 100%;
   min-height: 38px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.055);
   color: inherit;
@@ -931,7 +931,7 @@
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: rgba(8, 7, 12, 0.7);
+  background: var(--desk-glass);
   color: var(--text);
   font-size: var(--font-size-sm);
 }
@@ -972,7 +972,7 @@
   position: fixed;
   top: 60px;
   left: 18px;
-  z-index: 30;
+  z-index: var(--desk-z-chrome);
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-world,
@@ -988,7 +988,7 @@
   bottom: 34px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 30;
+  z-index: var(--desk-z-chrome);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1005,7 +1005,7 @@
     rgba(120, 40, 20, 0.5) 70%
   );
   box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 10px 30px var(--shadow-ink-3),
     0 0 24px rgba(255, 107, 53, 0.35);
   cursor: pointer;
   display: grid;
@@ -1039,12 +1039,12 @@
   0%,
   100% {
     box-shadow:
-      0 10px 30px rgba(0, 0, 0, 0.5),
+      0 10px 30px var(--shadow-ink-3),
       0 0 22px rgba(255, 107, 53, 0.4);
   }
   50% {
     box-shadow:
-      0 10px 30px rgba(0, 0, 0, 0.5),
+      0 10px 30px var(--shadow-ink-3),
       0 0 42px rgba(255, 107, 53, 0.85);
   }
 }
@@ -1052,7 +1052,7 @@
   font-size: var(--font-size-xs);
   color: var(--text);
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 1px 3px var(--shadow-ink-6);
 }
 .desk-next .desk-orb-note {
   font-size: var(--font-size-xs);
@@ -1063,7 +1063,7 @@
   .desk-next .desk-orb.is-recording {
     animation: none;
     box-shadow:
-      0 10px 30px rgba(0, 0, 0, 0.5),
+      0 10px 30px var(--shadow-ink-3),
       0 0 0 3px rgba(255, 107, 53, 0.6);
   }
 }
@@ -1111,7 +1111,7 @@
 @keyframes desk-next-rail-work {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.5);
+    box-shadow: 0 0 0 0 var(--accent-glow-strong);
   }
   50% {
     box-shadow: 0 0 0 7px rgba(255, 107, 53, 0);
@@ -1124,13 +1124,13 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--shadow-ink-5);
 }
 .desk-next .desk-rail-egress.is-local {
   background: var(--success, #34d399);
 }
 .desk-next .desk-rail-egress.is-cloud {
-  background: #56c7f5;
+  background: var(--info);
 }
 .desk-next .desk-rail-ask {
   position: absolute;
@@ -1144,8 +1144,8 @@
   border-radius: 14px;
   border: 1px solid
     color-mix(in srgb, var(--accent, #ff6b35) 30%, var(--border));
-  background: rgba(14, 12, 20, 0.94);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  background: var(--desk-panel-fill);
+  box-shadow: 0 20px 50px var(--shadow-ink-4);
   backdrop-filter: blur(8px);
 }
 .desk-next .desk-rail-ask-row {
@@ -1157,7 +1157,7 @@
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: rgba(8, 7, 12, 0.7);
+  background: var(--desk-glass);
   color: var(--text);
   font-size: var(--font-size-sm);
 }
@@ -1168,7 +1168,7 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-rail-avatar.working {
     animation: none;
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.5);
+    box-shadow: 0 0 0 3px var(--accent-glow-strong);
   }
 }
 
@@ -1232,7 +1232,7 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-mic.is-listening {
     animation: none;
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.5);
+    box-shadow: 0 0 0 3px var(--accent-glow-strong);
   }
 }
 
@@ -1249,7 +1249,7 @@
   min-height: 4.5rem;
   resize: vertical;
   color: var(--text);
-  background: rgba(8, 7, 12, 0.7);
+  background: var(--desk-glass);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 8px 10px;
@@ -1317,7 +1317,7 @@
   left: var(--space-3);
   right: var(--space-3);
   bottom: var(--space-3);
-  z-index: 30;
+  z-index: var(--desk-z-chrome);
   padding: var(--space-2) var(--space-3);
   background: color-mix(in srgb, var(--surface-1) 88%, transparent);
   border: 1px solid var(--surface-3);
@@ -1331,7 +1331,7 @@
   position: fixed;
   left: 112px;
   bottom: var(--space-3);
-  z-index: 30;
+  z-index: var(--desk-z-chrome);
   padding: 2px 10px;
   background: color-mix(in srgb, var(--surface-1) 88%, transparent);
   border: 1px solid var(--surface-3);
@@ -1573,7 +1573,7 @@
 /* the lasso rope: drawn while roping context on the empty desk */
 .desk-next .desk-lasso {
   position: absolute;
-  z-index: 30;
+  z-index: var(--desk-z-chrome);
   border: 1.5px dashed var(--accent, #ff6b35);
   border-radius: 8px;
   background: color-mix(in srgb, var(--accent, #ff6b35) 10%, transparent);
@@ -1595,7 +1595,7 @@
   border: 1px solid
     color-mix(in srgb, var(--accent, #ff6b35) 35%, var(--border));
   background: rgba(14, 12, 20, 0.92);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 14px 40px var(--shadow-ink-3);
   backdrop-filter: blur(8px);
 }
 .desk-next .desk-askbar-count {
@@ -1633,7 +1633,7 @@
   padding: 10px 40px 10px 10px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: rgba(8, 7, 12, 0.7);
+  background: var(--desk-glass);
   color: var(--text);
   font-size: var(--font-size-sm);
   font-family: inherit;
@@ -1652,7 +1652,7 @@
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: rgba(8, 7, 12, 0.7);
+  background: var(--desk-glass);
   color: var(--text);
   font-size: var(--font-size-sm);
   font-family: inherit;
@@ -1728,7 +1728,7 @@
   border-bottom-right-radius: 5px;
 }
 .desk-next .desk-chat-turn.is-agent .desk-chat-bubble {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--wash-2);
   border-bottom-left-radius: 5px;
 }
 .desk-next .desk-chat-turn.is-error .desk-chat-bubble {
@@ -1760,7 +1760,7 @@
   padding: 9px 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: rgba(8, 7, 12, 0.7);
+  background: var(--desk-glass);
   color: var(--text);
   font-size: var(--font-size-sm);
   font-family: inherit;
@@ -1778,7 +1778,7 @@
   background: rgba(8, 7, 12, 0.55);
 }
 .desk-next .desk-ground.is-open {
-  border-color: color-mix(in srgb, #5b8def 45%, var(--border));
+  border-color: color-mix(in srgb, var(--accent-cool) 45%, var(--border));
 }
 .desk-next .desk-ground-head {
   display: flex;
@@ -1798,7 +1798,7 @@
   color: var(--text-muted);
 }
 .desk-next .desk-ground-glyph.is-on {
-  color: #5b8def;
+  color: var(--accent-cool);
 }
 .desk-next .desk-ground-head .desk-ground-title {
   flex: 1;
@@ -1830,7 +1830,7 @@
 .desk-next .desk-ground-gauge {
   height: 5px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border-subtle);
   overflow: hidden;
 }
 .desk-next .desk-ground-fill {
@@ -1866,8 +1866,8 @@
   background: rgba(255, 255, 255, 0.03);
 }
 .desk-next .desk-ground-row.is-picked {
-  border-color: color-mix(in srgb, #5b8def 55%, transparent);
-  background: color-mix(in srgb, #5b8def 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent-cool) 55%, transparent);
+  background: color-mix(in srgb, var(--accent-cool) 10%, transparent);
 }
 .desk-next .desk-ground-pick {
   display: flex;
@@ -1884,7 +1884,7 @@
   font-family: inherit;
 }
 .desk-next .desk-ground-check {
-  color: #5b8def;
+  color: var(--accent-cool);
   font-size: 12px;
 }
 .desk-next .desk-ground-name {
@@ -2365,7 +2365,7 @@
   background: color-mix(in srgb, var(--danger-signal) 12%, transparent);
 }
 .desk-next .desk-chip.desk-kill-confirm {
-  color: #fff;
+  color: var(--white);
   background: var(--danger-signal);
   border-color: var(--danger-signal);
   font-family: var(--font-mono);
@@ -2413,7 +2413,7 @@
   position: fixed;
   right: 18px;
   bottom: 18px;
-  z-index: 40;
+  z-index: var(--desk-z-dock-under);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2441,7 +2441,7 @@
   top: 64px;
   right: 18px;
   bottom: 18px;
-  z-index: 42;
+  z-index: var(--desk-z-window-base);
   display: flex;
   width: min(460px, calc(100vw - 24px));
   max-width: 100%;
@@ -2450,9 +2450,9 @@
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
   border-radius: 18px;
-  background: rgba(13, 11, 18, 0.985);
+  background: var(--desk-window-fill);
   color: var(--text);
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 26px 70px var(--shadow-ink-5);
   backdrop-filter: blur(10px);
 }
 .desk-next .desk-attention-drawer .desk-panel-head {
@@ -2824,7 +2824,7 @@
   position: fixed;
   bottom: 54px;
   left: 18px;
-  z-index: 30;
+  z-index: var(--desk-z-chrome);
   color: var(--text-muted);
   cursor: default;
 }
@@ -2852,7 +2852,7 @@
   width: min(560px, calc(100vw - 2 * var(--space-3)));
   max-height: 70vh;
   overflow: auto;
-  z-index: 42;
+  z-index: var(--desk-z-window-base);
   padding: var(--space-2) var(--space-3);
   background: color-mix(in srgb, var(--surface-1) 92%, transparent);
   border: 1px solid var(--surface-3);
@@ -3069,7 +3069,7 @@
 }
 .desk-next .desk-zone-rename-row.is-overlay {
   position: absolute;
-  z-index: 25;
+  z-index: var(--desk-z-world-overlay);
   transform: translateX(-50%);
   padding-top: 10px;
 }
@@ -3096,7 +3096,7 @@
   cursor: pointer;
 }
 .desk-next .desk-window-verb:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border-subtle);
   color: var(--text);
 }
 .desk-next .desk-window-verb.desk-window-close:hover {
@@ -3114,7 +3114,7 @@
      all sit at the bottom edge); the dock never covers a launcher. */
   left: 16px;
   bottom: 52px;
-  z-index: 80;
+  z-index: var(--desk-z-dock);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -3128,7 +3128,7 @@
   display: inline-flex;
   align-items: center;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--wash-2);
 }
 .desk-next .desk-dock-chip.is-front {
   background: color-mix(in srgb, var(--accent, #ff6b35) 22%, transparent);
@@ -3198,7 +3198,7 @@
     left: 8px;
     bottom: calc(8px + env(safe-area-inset-bottom, 0px));
     /* Sheets own the phone's bottom; the dock yields beneath them. */
-    z-index: 40;
+    z-index: var(--desk-z-dock-under);
   }
   .desk-next .desk-dock-main {
     max-width: 96px;
@@ -3222,7 +3222,7 @@
   border-radius: 16px;
   background: rgba(14, 12, 19, 0.96);
   border: 1px solid var(--border);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 24px 60px var(--shadow-ink-4);
 }
 .desk-next .desk-surface-window .desk-pullout-head {
   padding: 10px 12px;
@@ -3284,7 +3284,7 @@
    rides above the window band — a window's default home must never bury
    an open menu. The cluster returns to its band when the menu closes. */
 .desk-next .desk-chrome:has(.desk-menu) {
-  z-index: 81;
+  z-index: var(--desk-z-transient);
 }
 
 /* HS-95-10: the egress badge is a button — the one tap into Privacy & Trust. */
@@ -3304,5 +3304,5 @@
   border-radius: 16px;
   background: rgba(14, 12, 19, 0.96);
   border: 1px solid var(--border);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 24px 60px var(--shadow-ink-4);
 }

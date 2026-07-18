@@ -16,15 +16,18 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { useDesk, type PanelRect } from "../store";
+// The physics constants mirror the CSS component tokens — one generated
+// source (design-tokens.json), no drift possible (HS-96-02).
+import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
 
 /** Viewport margin windows are clamped inside. */
-const MARGIN = 10;
+const MARGIN = DESK_WINDOW.margin;
 /** Minimum visible head strip so a window can always be grabbed back. */
-const GRAB = 72;
+const GRAB = DESK_WINDOW.grab;
 /** The desk-window z band (see the ladder note in desk.css). */
-const Z_BASE = 42;
+const Z_BASE = DESK_Z.windowBase;
 /** Cascade step when several default-corner windows are open at once. */
-const CASCADE = 26;
+const CASCADE = DESK_WINDOW.cascade;
 
 /** Windows currently mounted at their CSS default corner (no rect yet). */
 const defaultCorner = new Set<string>();
@@ -40,8 +43,8 @@ export function snapForPointer(
 ): PanelRect | null {
   const EDGE = 26;
   const CORNER = 150;
-  const top = 54; // below the chrome band
-  const bottom = 52; // clear of the dock band
+  const top = DESK_WINDOW.snapTop; // below the chrome band
+  const bottom = DESK_WINDOW.snapBottom; // clear of the dock band
   const halfW = Math.floor((vw - MARGIN * 3) / 2);
   const halfH = Math.floor((vh - top - bottom - MARGIN) / 2);
   const left = px <= CORNER;
