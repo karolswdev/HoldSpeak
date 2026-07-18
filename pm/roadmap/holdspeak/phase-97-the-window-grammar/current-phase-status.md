@@ -1,10 +1,9 @@
 # Phase 97 — The Window Grammar
 
-**Status:** IN PROGRESS (6/9, 2026-07-18) — from the owner's direct
+**Status:** IN PROGRESS (7/9, 2026-07-18) — from the owner's direct
 verdict on the Desk OS state.
 
-**Last updated:** 2026-07-18 (HS-97-06 done; the switcher answers
-"where is everything").
+**Last updated:** 2026-07-18 (HS-97-07 done; one shelf, quiet chrome).
 
 ## Why this phase exists
 
@@ -91,12 +90,27 @@ staged follow-ups (Native Surfaces; The Living World).
 | HS-97-04 | Focus and depth | done | [story-04-focus-depth](./story-04-focus-depth.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-97-05 | Hands on the frame | done | [story-05-hands-on-frame](./story-05-hands-on-frame.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-97-06 | The switcher | done | [story-06-switcher](./story-06-switcher.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-97-07 | One shelf, quiet chrome | backlog | [story-07-one-shelf](./story-07-one-shelf.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-97-07 | One shelf, quiet chrome | done | [story-07-one-shelf](./story-07-one-shelf.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-97-08 | The physics floors, written | backlog | [story-08-docs](./story-08-docs.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-97-09 | Closeout: the grammar walk | backlog | [story-09-closeout](./story-09-closeout.md) | [evidence-story-09](./evidence-story-09.md) |
 
 ## Where we are
 
+**HS-97-07 done (2026-07-18): one shelf, quiet chrome.** The dock is
+the one shelf, centered on the bottom edge: launcher verbs for Desk
+memory, Delivery, and Panes (a launcher registry beside the window
+registry; badges ride the chips; an open surface's launcher folds into
+its window chip) with THE RECORD ORB seated at the dock's center — the
+four floating fragments (`.desk-attention-launch`, `.desk-dlv-tab`,
+`.desk-panepicker-launch`, `.desk-hint`) are deleted from DOM and CSS
+(walk-verified at zero; allow-list 68 → 67). The chrome quiets: no
+window head renders the mono eyebrow (prop kept for compatibility),
+and the stage prose ("Select an item for actions") is gone per Article
+VII.1. Existing walks retargeted to the dock launchers and re-proven
+(`windows` leg green). Proven by the `shelf` walk at 1440 and 393
+(`assets/shelf-idle-1440.png`, `assets/shelf-open-1440.png`,
+`assets/shelf-393.png` LOOKED AT — the bottom edge is finally one
+built thing); `npm run check` green (279 web tests). Earlier:
 **HS-97-06 done (2026-07-18): the switcher.** Exposé: the dock's ⊞
 verb or Ctrl+ArrowUp fans every open window into a non-overlapping
 pick grid (`exposeLayout`, pure + pinned; live shells scale into their

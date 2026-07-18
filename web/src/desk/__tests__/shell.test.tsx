@@ -44,12 +44,12 @@ function TwoWindows({ onCloseA = () => {} }) {
 describe("the dock", () => {
   it("shows a chip per open window and none when nothing is open", () => {
     const { unmount } = render(<TwoWindows />);
-    expect(screen.getByRole("toolbar", { name: "Open windows" })).toBeTruthy();
+    expect(screen.getByRole("toolbar", { name: "Dock" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Focus Alpha" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Focus Beta" })).toBeTruthy();
     unmount();
     render(<Dock />);
-    expect(screen.queryByRole("toolbar", { name: "Open windows" })).toBeNull();
+    expect(screen.queryByRole("toolbar", { name: "Dock" })).toBeNull();
   });
 
   it("tap focuses; a parked window's chip restores it", () => {
@@ -68,7 +68,7 @@ describe("the dock", () => {
     render(<TwoWindows onCloseA={onCloseA} />);
     // Two "Close Alpha" buttons exist (window verb + dock ✕); the dock's
     // lives inside the toolbar.
-    const dock = screen.getByRole("toolbar", { name: "Open windows" });
+    const dock = screen.getByRole("toolbar", { name: "Dock" });
     const x = Array.from(dock.querySelectorAll("button")).find(
       (b) => b.getAttribute("aria-label") === "Close Alpha",
     )!;

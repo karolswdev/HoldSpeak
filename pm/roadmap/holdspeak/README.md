@@ -5,7 +5,11 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, IN
-PROGRESS (6/9)**. **HS-97-06, The switcher, DONE**: exposé fans every
+PROGRESS (7/9)**. **HS-97-07, One shelf, quiet chrome, DONE**: the dock
+is the one centered shelf — launchers for Desk memory, Delivery, and
+Panes with the record orb seated at its center, the four floating
+pills deleted, the mono eyebrows off every title bar, and the stage
+prose gone — walk-proven at 1440 and 393. Earlier: **HS-97-06, The switcher, DONE**: exposé fans every
 open window into a pick grid (live shells scale in, minimized ones
 join as dimmed cards; click focuses, Escape cancels) and Ctrl+`
 cycling shows a transient strip naming every window with the landing

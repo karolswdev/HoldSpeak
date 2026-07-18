@@ -515,18 +515,6 @@
   white-space: nowrap;
   border: 0;
 }
-.desk-next .desk-hint {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: var(--desk-z-chrome);
-  font-size: var(--font-size-xs);
-  color: var(--text-faint);
-  letter-spacing: 0.04em;
-  pointer-events: none;
-  text-shadow: 0 1px 3px var(--shadow-ink-6);
-}
 
 /* ── the guiding empty state (a world being empty, not a page of copy) ── */
 .desk-next .desk-empty {
@@ -2380,25 +2368,20 @@
 
 /* ── HS-90-02: the pane picker (attach to any tmux pane) ── */
 .desk-next .desk-panepicker {
+  /* HS-97-07 — the launcher lives in the dock; this anchor holds only
+     the transient list, centered above the shelf. */
   position: fixed;
-  left: 16px;
-  bottom: 16px;
-  /* Shelf furniture: rides the dock band (HS-97-03; the ladder note). */
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 64px;
   z-index: var(--desk-z-dock);
 }
 @media (max-width: 720px) {
   /* The phone's bottom edge belongs to the sheet (same rule as the
-     dock): shelf pills never occlude a sheet's action row. */
+     dock): shelf furniture never occludes a sheet's action row. */
   .desk-next .desk-panepicker {
     z-index: var(--desk-z-dock-under);
   }
-}
-.desk-next .desk-panepicker-launch {
-  font-family: var(--font-mono);
-}
-.desk-next .desk-panepicker.is-open .desk-panepicker-launch {
-  border-color: var(--accent);
-  color: var(--accent);
 }
 .desk-next .desk-panepicker-list {
   position: absolute;
@@ -2542,34 +2525,8 @@
   border-style: dashed;
 }
 
-/* ── HS-92-09: attention stays on the Desk; receipts open as one drawer. ── */
-.desk-next .desk-attention-launch {
-  position: fixed;
-  right: 18px;
-  bottom: 18px;
-  z-index: var(--desk-z-dock-under);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid var(--surface-3);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-1) 94%, transparent);
-  color: var(--text);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.36);
-  font: 700 12px var(--font-mono);
-  backdrop-filter: blur(18px);
-}
-.desk-next .desk-attention-launch strong {
-  display: grid;
-  min-width: 22px;
-  height: 22px;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--danger-signal);
-  color: white;
-}
+/* ── HS-92-09: attention stays on the Desk; receipts open as one drawer
+   (HS-97-07: the launcher lives in the dock). ── */
 .desk-next .desk-attention-drawer {
   position: fixed;
   top: 64px;
@@ -2797,8 +2754,7 @@
     width: auto;
     border-radius: 18px;
   }
-  .desk-next .desk-tools-launch kbd,
-  .desk-next .desk-hint {
+  .desk-next .desk-tools-launch kbd {
     display: none;
   }
   .desk-next .desk-empty {
@@ -2970,15 +2926,6 @@
 }
 
 /* ── HS-94-08 Delivery on the Desk ─────────────────────────────── */
-.desk-next .desk-dlv-tab {
-  left: 220px;
-}
-@media (max-width: 720px) {
-  .desk-next .desk-dlv-tab {
-    left: 16px;
-    bottom: 96px;
-  }
-}
 .desk-next .desk-dlv-board {
   position: fixed;
   right: var(--space-3);
@@ -3277,10 +3224,11 @@
    maximized window must never bury the way back to a parked one. ── */
 .desk-next .desk-dock {
   position: fixed;
-  /* One band above the launcher strip (Panes 16 · belt 112 · Delivery 220
-     all sit at the bottom edge); the dock never covers a launcher. */
-  left: 16px;
-  bottom: 52px;
+  /* HS-97-07 — ONE shelf, centered: launchers · the record orb · open
+     windows · verbs. The floating pills are gone. */
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 10px;
   z-index: var(--desk-z-dock);
   display: flex;
   align-items: center;
@@ -3348,6 +3296,63 @@
 }
 .desk-next .desk-dock-reset:hover {
   color: var(--text);
+}
+
+/* HS-97-07 — launcher chips + the shelf's orb seat. */
+.desk-next .desk-dock-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.desk-next .desk-dock-launch:hover {
+  background: var(--accent-tint);
+  color: var(--text);
+}
+.desk-next .desk-dock-launch.is-run {
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--desk-window-keyline);
+}
+.desk-next .desk-dock-launch strong {
+  display: grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--danger-signal);
+  color: white;
+  font-size: var(--font-size-xs);
+}
+.desk-next .desk-dock-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+}
+.desk-next .desk-dock .desk-orb-wrap {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  z-index: auto;
+}
+.desk-next .desk-dock .desk-orb {
+  width: 40px;
+  height: 40px;
+}
+.desk-next .desk-dock .desk-orb-note,
+.desk-next .desk-dock .desk-orb-elapsed {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 @media (max-width: 720px) {
   .desk-next .desk-window-shell.is-sheet {
@@ -3497,7 +3502,7 @@
     .desk-mark,
     .desk-menu button,
     .studio-card,
-    .desk-attention-launch,
+    .desk-dock-launch,
     .desk-create-button,
     .egress-badge-button,
     .btn-link

@@ -218,11 +218,6 @@
     },
     {
       "file": "src/desk/desk.css",
-      "match": "rgba(0, 0, 0, 0.36)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) \u2014 consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
       "match": "z-index: 46",
       "reason": "local stacking inside one component's own context (not the OS ladder)"
     },

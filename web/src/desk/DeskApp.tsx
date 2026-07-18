@@ -55,7 +55,6 @@ export default function DeskApp() {
       ) : (
         <WorldStage />
       )}
-      {!empty ? <RecordOrb /> : null}
       {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
       <DeskToolInspector />
       <MissionControlConveyor />
@@ -67,7 +66,7 @@ export default function DeskApp() {
       <AttentionDrawer />
       <SurfaceWindows />
       <TrustWindow />
-      <Dock />
+      <Dock center={!empty ? <RecordOrb /> : null} />
       <SnapGhost />
       <Expose />
       <Switcher />

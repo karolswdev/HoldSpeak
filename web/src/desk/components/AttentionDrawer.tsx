@@ -6,7 +6,11 @@ import {
   humanizeWireValue,
 } from "../../lib/productLanguage";
 import { useProjections } from "../projections";
-import { DeskWindowFrame } from "./DeskWindow";
+import {
+  DeskWindowFrame,
+  announceLauncher,
+  retractLauncher,
+} from "./DeskWindow";
 
 function when(raw: string) {
   const date = new Date(raw);
@@ -29,21 +33,23 @@ export function AttentionDrawer() {
     return () => document.removeEventListener("keydown", onKey);
   }, [store.open]);
 
+  // HS-97-07 — one shelf: the floating pill is gone; the dock carries
+  // the launcher (and the needs-attention badge) instead.
+  useEffect(() => {
+    announceLauncher({
+      id: "attention",
+      label: "Desk memory",
+      glyph: "◎",
+      open: store.open,
+      badge: needs > 0 ? needs : undefined,
+      activate: () => store.setOpen(true),
+    });
+    return () => retractLauncher("attention");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store.open, needs]);
+
   return (
     <>
-      <button
-        type="button"
-        className="desk-attention-launch"
-        aria-controls="desk-memory-drawer"
-        aria-expanded={store.open}
-        onClick={() => store.setOpen(!store.open)}
-      >
-        <span aria-hidden="true">◎</span>
-        Desk memory
-        {needs > 0 ? (
-          <strong aria-label={`${needs} need attention`}>{needs}</strong>
-        ) : null}
-      </button>
       <DeskWindowFrame
         id="attention"
       glyph="◎"

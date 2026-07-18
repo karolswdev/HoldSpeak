@@ -683,6 +683,49 @@ export function Expose() {
   );
 }
 
+/** HS-97-07 — dock launchers: fixed shelf verbs (Desk memory, Delivery,
+ * Panes) announce themselves so ONE dock carries launch and running
+ * state; the floating pills are gone. */
+export interface DockLauncher {
+  id: string;
+  label: string;
+  glyph: string;
+  open: boolean;
+  badge?: number;
+  activate: () => void;
+}
+const LAUNCHER_SEAT: Record<string, number> = {
+  attention: 0,
+  "delivery-board": 1,
+  panes: 2,
+};
+const launcherRegistry = new Map<string, DockLauncher>();
+let launcherSnapshot: DockLauncher[] = [];
+const launcherListeners = new Set<() => void>();
+function publishLaunchers() {
+  launcherSnapshot = Array.from(launcherRegistry.values()).sort(
+    (a, b) => (LAUNCHER_SEAT[a.id] ?? 9) - (LAUNCHER_SEAT[b.id] ?? 9),
+  );
+  for (const l of launcherListeners) l();
+}
+export function announceLauncher(l: DockLauncher) {
+  launcherRegistry.set(l.id, l);
+  publishLaunchers();
+}
+export function retractLauncher(id: string) {
+  launcherRegistry.delete(id);
+  publishLaunchers();
+}
+function useLaunchers() {
+  return useSyncExternalStore(
+    (cb) => {
+      launcherListeners.add(cb);
+      return () => launcherListeners.delete(cb);
+    },
+    () => launcherSnapshot,
+  );
+}
+
 /** Open windows announce themselves (title/icon/close) so the dock can
  * name and drive them without a parallel registry. */
 const windowRegistry = new Map<
@@ -756,7 +799,8 @@ export interface DeskWindowFrameProps {
   glyph?: string;
   /** Content before the icon (e.g. a back chip). */
   leading?: ReactNode;
-  /** One-word kind eyebrow above/beside the title (optional). */
+  /** One-word kind eyebrow — DEMOTED from the head (HS-97-07, Article
+   * VII.1); accepted for compatibility, no longer rendered. */
   eyebrow?: string;
   /** Extra head content (badges, panel-specific verbs), left of the window verbs. */
   actions?: ReactNode;
@@ -786,7 +830,6 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     icon,
     glyph: glyphProp,
     leading,
-    eyebrow,
     actions,
     className,
     minW,
@@ -994,7 +1037,8 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       >
         {leading}
         {icon}
-        {eyebrow ? <span className="desk-panel-eyebrow">{eyebrow}</span> : null}
+        {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
+            title (Article VII.1); the prop survives for callers/AT. */}
         <span className="desk-pullout-title desk-window-title">{title}</span>
         {actions}
         <span className="desk-window-verbs">
@@ -1043,10 +1087,11 @@ function mruOrder(ids: string[], order: string[]): string[] {
  * restores a parked one), ✕ closes, ⟲ resets the layout. Ctrl+` cycles
  * focus in MRU order, restoring as it lands. Shell furniture: it rides
  * above the window band, and it is invisible while nothing is open. */
-export function Dock() {
+export function Dock({ center }: { center?: ReactNode } = {}) {
   const panelMin = useDesk((s) => s.panelMin);
   const panelOrder = useDesk((s) => s.panelOrder);
   const windows = useOpenWindows();
+  const launchers = useLaunchers();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1069,7 +1114,7 @@ export function Dock() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  if (windows.length === 0) return null;
+  if (!center && windows.length === 0 && launchers.length === 0) return null;
   // The front chip mirrors the shell's is-front rule: the last id in
   // the order that is open here and not minimized (HS-97-04).
   let front: string | undefined;
@@ -1080,8 +1125,29 @@ export function Dock() {
     front = oid;
     break;
   }
+  // A launcher whose surface is already a window folds into that chip;
+  // it only renders as a launcher while its surface is closed.
+  const shown = launchers.filter((l) => !windows.some((w) => w.id === l.id));
   return (
-    <div className="desk-dock" role="toolbar" aria-label="Open windows">
+    <div className="desk-dock" role="toolbar" aria-label="Dock">
+      {shown.map((l) => (
+        <button
+          key={l.id}
+          type="button"
+          className={"desk-dock-launch" + (l.open ? " is-run" : "")}
+          onClick={() => l.activate()}
+        >
+          <span aria-hidden="true">{l.glyph}</span>
+          <span className="desk-dock-label">{l.label}</span>
+          {l.badge ? (
+            <strong aria-label={`${l.badge} need attention`}>{l.badge}</strong>
+          ) : null}
+        </button>
+      ))}
+      {center}
+      {shown.length > 0 && windows.length > 0 ? (
+        <span className="desk-dock-sep" aria-hidden="true" />
+      ) : null}
       {windows.map((c) => {
         const minimized = panelMin.includes(c.id);
         return (
@@ -1121,24 +1187,28 @@ export function Dock() {
           </span>
         );
       })}
-      <button
-        type="button"
-        className="desk-dock-reset"
-        aria-label="Overview"
-        title="Overview"
-        onClick={() => toggleExpose(true)}
-      >
-        ⊞
-      </button>
-      <button
-        type="button"
-        className="desk-dock-reset"
-        aria-label="Reset layout"
-        title="Reset layout"
-        onClick={() => useDesk.getState().resetLayout()}
-      >
-        ⟲
-      </button>
+      {windows.length > 0 ? (
+        <>
+          <button
+            type="button"
+            className="desk-dock-reset"
+            aria-label="Overview"
+            title="Overview"
+            onClick={() => toggleExpose(true)}
+          >
+            ⊞
+          </button>
+          <button
+            type="button"
+            className="desk-dock-reset"
+            aria-label="Reset layout"
+            title="Reset layout"
+            onClick={() => useDesk.getState().resetLayout()}
+          >
+            ⟲
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 97
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-97-04
 - **Unblocks:** HS-97-08, HS-97-09
 
@@ -39,14 +39,14 @@ floor carries instructional prose ("Select an item for actions").
 
 ## Acceptance criteria
 
-- [ ] One dock at the bottom center carries Desk memory, Delivery, and
+- [x] One dock at the bottom center carries Desk memory, Delivery, and
       Panes as launchers plus a chip per open window; the floating
       pills are gone (grep + shot).
-- [ ] Launchers open their surface when closed and focus/restore when
+- [x] Launchers open their surface when closed and focus/restore when
       open, with a visible running mark.
-- [ ] No window head renders a mono eyebrow; the orb prose is gone
+- [x] No window head renders a mono eyebrow; the orb prose is gone
       (shots at 1440 and 393).
-- [ ] Web suite + guards + retargeted walks green.
+- [x] Web suite + guards + retargeted walks green.
 
 ## Test plan
 

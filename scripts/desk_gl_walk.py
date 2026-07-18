@@ -228,10 +228,10 @@ def windows() -> None:
         page.goto(BASE + "/", wait_until="networkidle")
         wait_world(page)
         # Window 1: Desk memory (attention drawer).
-        page.click(".desk-attention-launch")
+        page.click(".desk-dock-launch:has-text('Desk memory')")
         page.wait_for_selector(".desk-attention-drawer", timeout=5000)
         # Window 2: the Delivery board tab.
-        page.click(".desk-dlv-tab")
+        page.click(".desk-dock-launch:has-text('Delivery')")
         page.wait_for_selector(".desk-dlv-board", timeout=5000)
         # Window 3: the pull-out, via a canvas tap on a real object.
         target = page.evaluate("() => window.__hsWorldProbe()")[0]
@@ -281,14 +281,14 @@ def windows() -> None:
         assert "pullout" in layout["rects"], layout
         assert "min" not in layout, layout
         assert isinstance(layout.get("order"), list), layout
-        page.click(".desk-attention-launch")
+        page.click(".desk-dock-launch:has-text('Desk memory')")
         page.wait_for_selector(".desk-attention-drawer:visible", timeout=3000)
         min_now = page.evaluate(
             "() => JSON.parse(localStorage.getItem('hs.desk.panels')).min"
         )
         assert min_now is None, min_now
         # The delivery board reopens maximized (persisted lifecycle).
-        page.click(".desk-dlv-tab")
+        page.click(".desk-dock-launch:has-text('Delivery')")
         page.wait_for_selector(".desk-dlv-board", timeout=5000)
         assert "is-max" in (
             page.locator(".desk-dlv-board").get_attribute("class") or ""
@@ -328,7 +328,7 @@ def shell() -> None:
         page.goto(BASE + "/", wait_until="networkidle")
         wait_world(page)
         # Open two windows.
-        page.click(".desk-attention-launch")
+        page.click(".desk-dock-launch:has-text('Desk memory')")
         page.wait_for_selector(".desk-attention-drawer", timeout=5000)
         target = page.evaluate("() => window.__hsWorldProbe()")[0]
         page.mouse.click(target["x"], target["y"])
@@ -1184,6 +1184,67 @@ def switcher() -> None:
         browser.close()
 
 
+def shelf() -> None:
+    """HS-97-07 — one shelf, quiet chrome: the dock alone carries the
+    launchers (Desk memory, Delivery, Panes) with the record orb seated
+    at its center; the floating pills are gone from the DOM; no window
+    head wears a mono eyebrow; the stage prose is gone."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        # One dock, centered, carrying the launchers and the orb.
+        dock = page.locator(".desk-dock")
+        assert dock.count() == 1
+        db = dock.bounding_box()
+        mid = db["x"] + db["width"] / 2
+        assert abs(mid - 720) < 40, f"dock off-center: {mid}"
+        for label in ("Desk memory", "Delivery", "Panes"):
+            assert page.locator(
+                f".desk-dock-launch:has-text('{label}')"
+            ).count() == 1, f"launcher {label} missing"
+        assert page.locator(".desk-dock .desk-orb").count() == 1
+        # The pills are gone from the DOM.
+        for cls in (
+            ".desk-attention-launch",
+            ".desk-dlv-tab",
+            ".desk-panepicker-launch",
+            ".desk-hint",
+        ):
+            assert page.locator(cls).count() == 0, f"{cls} survived"
+        assert page.locator("text=Select an item for actions").count() == 0
+        page.screenshot(path=str(OUT / "shelf-idle-1440.png"))
+        # A launcher opens its surface; the launcher folds into the chip.
+        page.click(".desk-dock-launch:has-text('Desk memory')")
+        page.wait_for_selector(".desk-attention-drawer", timeout=5000)
+        page.wait_for_timeout(400)
+        assert page.locator(".desk-dock-launch:has-text('Desk memory')").count() == 0
+        assert page.locator(".desk-dock-chip:has-text('Desk memory')").count() == 1
+        # No eyebrow in any window head.
+        page.click(".desk-mark")
+        page.click("nav.desk-menu button:has-text('Settings')")
+        page.wait_for_selector(
+            "[aria-label='Settings'].desk-surface-window", timeout=10000
+        )
+        assert page.locator(".desk-window-shell .desk-panel-eyebrow").count() == 0
+        page.screenshot(path=str(OUT / "shelf-open-1440.png"))
+        print("shelf walk 1440: one centered dock (launchers + orb), pills "
+              "gone, launcher folds into chip, no eyebrows, no stage prose")
+        page.close()
+        page = browser.new_page(viewport={"width": 393, "height": 852})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1000)
+        assert page.locator(".desk-attention-launch").count() == 0
+        assert page.locator("text=Select an item for actions").count() == 0
+        page.screenshot(path=str(OUT / "shelf-393.png"))
+        print("shelf walk 393: quiet chrome holds on the phone")
+        browser.close()
+
+
 def closeout() -> None:
     """HS-95-10 — the assembled walk: every per-story walk in sequence on
     the production bundle (entry-point-driven, the way a user travels),
@@ -1212,7 +1273,7 @@ def focus() -> None:
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.goto(BASE + "/", wait_until="networkidle")
         wait_world(page)
-        page.click(".desk-attention-launch")
+        page.click(".desk-dock-launch:has-text('Desk memory')")
         page.wait_for_selector(".desk-attention-drawer", timeout=5000)
         seen = []
         for _ in range(14):
@@ -1327,6 +1388,8 @@ if __name__ == "__main__":
         frame()
     elif mode == "switcher":
         switcher()
+    elif mode == "shelf":
+        shelf()
     elif mode == "closeout":
         closeout()
     elif mode == "focus":
