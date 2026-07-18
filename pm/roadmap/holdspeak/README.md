@@ -4,7 +4,12 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **HS-96-03, Component state specs, DONE**:
+**Last updated:** 2026-07-18 — **HS-96-04, One material grammar, DONE**:
+one :where() rule carries the whole window family (fill/radius/elevation/
+glass as component tokens; the pull-out keeps only its per-kind tinted
+edge), named normalizations recorded, the allow-list shrank, and the
+assembled storm holds 8.3ms median with the glass family-wide. Earlier:
+**HS-96-03, Component state specs, DONE**:
 the state contract is written (docs/internal/DESIGN_SYSTEM.md, token
 vocabulary only, guard-locked) and made true — one pressed grammar across
 the Signal buttons and eleven chrome families, the global focus ring

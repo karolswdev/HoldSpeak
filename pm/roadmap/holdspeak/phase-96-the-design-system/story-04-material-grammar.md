@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 96
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-96-02, HS-96-03
 - **Unblocks:** HS-96-07
 
@@ -32,15 +32,15 @@ owner's bar is a desk that reads as ONE built thing.
 
 ## Acceptance criteria
 
-- [ ] One window material: pull-outs, surface windows, and the trust
+- [x] One window material: pull-outs, surface windows, and the trust
       window differ only by tokens a reader can point to, not by private
       recipes (grep-verifiable: no window-scoped background/shadow
       literals).
-- [ ] Radius/elevation/motion values on the desk come from the scales;
+- [x] Radius/elevation/motion values on the desk come from the scales;
       the validator allow-list did not grow.
-- [ ] The before/after review at both viewports is in the evidence with
+- [x] The before/after review at both viewports is in the evidence with
       the changes named; the frame-budget storm shows no regression.
-- [ ] Web suite + guards green.
+- [x] Web suite + guards green.
 
 ## Test plan
 

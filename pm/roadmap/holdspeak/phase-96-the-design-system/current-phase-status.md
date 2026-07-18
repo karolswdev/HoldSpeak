@@ -1,8 +1,8 @@
 # Phase 96 — The Design System
 
-**Status:** IN PROGRESS (3/7; HS-96-03 done 2026-07-18).
+**Status:** IN PROGRESS (4/7; HS-96-04 done 2026-07-18).
 
-**Last updated:** 2026-07-18 (HS-96-03, component state specs, done).
+**Last updated:** 2026-07-18 (HS-96-04, one material grammar, done).
 
 ## Why this phase exists
 
@@ -76,7 +76,7 @@ recorded (Article X.3).
 | HS-96-01 | The token architecture | done | [story-01-token-architecture](./story-01-token-architecture.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-96-02 | The validator gate and the burn-down | done | [story-02-validator-burndown](./story-02-validator-burndown.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-96-03 | Component state specs | done | [story-03-component-specs](./story-03-component-specs.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-96-04 | One material grammar | backlog | [story-04-material-grammar](./story-04-material-grammar.md) | — |
+| HS-96-04 | One material grammar | done | [story-04-material-grammar](./story-04-material-grammar.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-96-05 | The accessibility pass | backlog | [story-05-accessibility](./story-05-accessibility.md) | — |
 | HS-96-06 | Docs and the mechanical lock | backlog | [story-06-docs-lock](./story-06-docs-lock.md) | — |
 | HS-96-07 | Closeout: walks, storm, owner rider | backlog | [story-07-closeout](./story-07-closeout.md) | — |
@@ -125,5 +125,16 @@ doc's coverage and the CSS grammars; the keyboard walk shows 14/14 tab
 stops wearing the accent ring (`assets/focus-ring-1440.png`). Suite
 256/256; token gates clean.
 
-Next: HS-96-04 folds the window materials onto one elevation/radius/
-motion grammar.
+**HS-96-04 done (2026-07-18): one window material.** A single
+`:where(.desk-pullout, .desk-surface-window, .desk-trust-window)` rule
+carries the family (fill `--desk-window-fill`, radius
+`--desk-window-radius` 18, elevation `--desk-window-shadow`, the glass
+`--desk-window-blur`); the pull-out keeps only its per-kind tinted border
+as a spec'd override; the menu adopts the transient tokens; window body
+padding rides `--desk-window-pad-*`. Named normalizations: surface/trust
+fills 0.96 → the R2-06 0.985, radius 16 → 18, elevation unified, glass
+family-wide. The allow-list SHRANK (70 → 69). Storm with the glass on the
+assembled build: median 8.3ms, p95 9.8ms — no regression. Suite 256/256;
+`assets/material-1440.png` shows both families side by side.
+
+Next: HS-96-05, the accessibility pass with the recorded Radix decision.

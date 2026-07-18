@@ -869,6 +869,41 @@
         "name": "--desk-panel-fill",
         "value": "rgba(14, 12, 20, 0.94)",
         "doc": "secondary panel fill"
+      },
+      {
+        "name": "--desk-window-radius",
+        "value": "18px",
+        "doc": "the ONE window corner (the pull-out's value, adopted family-wide in HS-96-04)"
+      },
+      {
+        "name": "--desk-window-shadow",
+        "value": "0 26px 70px {primitive.color.shadow.60}",
+        "doc": "the ONE window elevation"
+      },
+      {
+        "name": "--desk-window-blur",
+        "value": "blur(10px)",
+        "doc": "the window glass"
+      },
+      {
+        "name": "--desk-transient-radius",
+        "value": "12px",
+        "doc": "menus/popovers corner"
+      },
+      {
+        "name": "--desk-transient-shadow",
+        "value": "0 18px 40px {primitive.color.shadow.50}",
+        "doc": "menus/popovers elevation"
+      },
+      {
+        "name": "--desk-window-pad-x",
+        "value": "14px",
+        "doc": "window body horizontal padding"
+      },
+      {
+        "name": "--desk-window-pad-y",
+        "value": "12px",
+        "doc": "window body vertical padding"
       }
     ]
   }
