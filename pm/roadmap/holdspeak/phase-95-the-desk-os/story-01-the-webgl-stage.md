@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 95
-- **Status:** ready
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-95-03 (dock composites over the stage), HS-95-10
 
@@ -38,21 +38,21 @@ accelerated with native-like feel.
 
 ## Acceptance criteria
 
-- [ ] The world layer renders through WebGL; DevTools shows no per-frame
+- [x] The world layer renders through WebGL; DevTools shows no per-frame
       layout/paint attributable to world pan, object drag, or ambient
       motion.
-- [ ] Everything a desk primitive shows today (kind sprite, label, state,
+- [x] Everything a desk primitive shows today (kind sprite, label, state,
       selection, zone membership, filing) renders identically from the same
       store; the desk store and projection tests pass unmodified.
-- [ ] Object drag, zone drag, pan, hover, tap-to-open behave as today
-      (including the 3px tap threshold contract) through the scene graph.
-- [ ] A window can anchor to a world object and stay glued through pan and
+- [x] Object drag, zone drag, pan, hover, tap-to-open behave as today
+      (including the world's 4px tap/drag threshold — the HS-71-04 contract; 3px belongs to the windows) through the scene graph.
+- [x] A window can anchor to a world object and stay glued through pan and
       resize (shared coordinate transform proven by test).
-- [ ] Sustained 60fps (median frame ≤ 16.7ms, p95 ≤ 33ms) during a scripted
+- [x] Sustained 60fps (median frame ≤ 16.7ms, p95 ≤ 33ms) during a scripted
       drag-and-pan storm on a desk seeded with the UAT `seeded-desk` recipe,
       measured on the production bundle via CDP tracing.
-- [ ] The DOM world renderer is gone; the bundle carries one renderer.
-- [ ] Phone viewport (393px) renders and interacts correctly with
+- [x] The DOM world renderer is gone; the bundle carries one renderer.
+- [x] Phone viewport (393px) renders and interacts correctly with
       devicePixelRatio handling (no blurry sprites, no offset taps).
 
 ## Test plan

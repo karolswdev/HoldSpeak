@@ -7,7 +7,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { EMPTY_ITEMS, type Items } from "../api";
 import { useDesk } from "../store";
 import { allObjects } from "../world";
-import { World, MAX_FLOATERS } from "../components/World";
+// The GL world (HS-95-01): jsdom has no WebGL, so the canvas stays blank in
+// tests, but the scene model and the accessibility layer (one button per
+// floated object) carry the same render-bound contract the DOM world had.
+import { WorldStage, MAX_FLOATERS } from "../gl/WorldStage";
 
 const thousand: Items = {
   ...EMPTY_ITEMS,
@@ -46,8 +49,10 @@ beforeEach(() => {
 
 describe("HS-93-08 spatial bound at 1,000 items", () => {
   it("caps floaters at MAX_FLOATERS and says so in a status chip", () => {
-    const { container } = render(<World />);
-    expect(container.querySelectorAll(".desk-obj")).toHaveLength(MAX_FLOATERS);
+    const { container } = render(<WorldStage />);
+    expect(container.querySelectorAll("[data-obj-id]")).toHaveLength(
+      MAX_FLOATERS,
+    );
     expect(screen.getByRole("status")).toHaveTextContent(
       `Showing ${MAX_FLOATERS} of 1001`,
     );
@@ -72,9 +77,9 @@ describe("HS-93-08 spatial bound at 1,000 items", () => {
         note: [{ kind: "note", id: "solo", title: "Solo" }],
       },
     });
-    const { container } = render(<World />);
+    const { container } = render(<WorldStage />);
     expect(container.querySelector(".desk-scale-chip")).toBeNull();
-    expect(container.querySelectorAll(".desk-obj")).toHaveLength(1);
+    expect(container.querySelectorAll("[data-obj-id]")).toHaveLength(1);
   });
 });
 

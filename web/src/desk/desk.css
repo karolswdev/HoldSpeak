@@ -47,12 +47,6 @@
     transform: translateY(-1.5%) scale(1.04);
   }
 }
-.desk-next .desk-stage-motes {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
 
 /* ── the world (HS-71-03/04 values) ── */
 .desk-next .desk-world {
@@ -60,237 +54,6 @@
   width: 100%;
   min-height: calc(200px + var(--rows, 3) * 150px);
   margin-top: var(--space-2);
-}
-.desk-next .desk-obj {
-  position: absolute;
-  transform: translate(-50%, -50%) scale(var(--oscale, 1));
-  width: 128px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-}
-.desk-next .desk-obj.dragging {
-  cursor: grabbing;
-  z-index: 20;
-}
-.desk-next .desk-obj.dragging .desk-obj-lift,
-.desk-next .desk-obj.dragging .desk-obj-shadow {
-  animation: none;
-}
-.desk-next .desk-obj-lift {
-  position: relative;
-  width: 96px;
-  height: 96px;
-  display: grid;
-  place-items: center;
-  animation: desk-next-bob 4.6s ease-in-out infinite;
-  animation-delay: var(--phase, 0s);
-  transform: rotate(var(--tilt, 0deg));
-}
-.desk-next .desk-obj-sprite {
-  position: relative;
-  z-index: 1;
-  width: 88px;
-  height: 88px;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 11px 15px rgba(0, 0, 0, 0.55));
-  transition: filter var(--duration-short) var(--ease-standard);
-}
-.desk-next .desk-obj-glow {
-  position: absolute;
-  inset: 6px;
-  z-index: 0;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 55%,
-    color-mix(in srgb, var(--k, #ff6b35) 55%, transparent),
-    transparent 68%
-  );
-  filter: blur(7px);
-  opacity: 0.5;
-  transition: opacity var(--duration-short) var(--ease-standard);
-}
-.desk-next .desk-obj-shadow {
-  position: absolute;
-  left: 50%;
-  top: 90px;
-  width: 70px;
-  height: 16px;
-  transform: translateX(-50%);
-  background: radial-gradient(
-    closest-side,
-    rgba(0, 0, 0, 0.62),
-    transparent 78%
-  );
-  filter: blur(2px);
-  animation: desk-next-obj-shadow 4.6s ease-in-out infinite;
-  animation-delay: var(--phase, 0s);
-}
-.desk-next .desk-obj-label {
-  max-width: 118px;
-  margin-top: 2px;
-  text-align: center;
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-  line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-}
-.desk-next .desk-obj:hover .desk-obj-sprite {
-  filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.6)) brightness(1.08);
-}
-/* Notes: the paper sprite is a near-blank sheet, which reads as a missing
-   texture at 88px. Ruled lines, an ink margin, and a corner fold make it
-   read as a note without touching the sprite assets. */
-.desk-next .desk-obj[data-kind="note"] .desk-obj-sprite,
-.desk-next .desk-obj[data-kind="artifact"] .desk-obj-sprite {
-  width: 74px;
-  height: 74px;
-  margin: 7px;
-}
-.desk-next .desk-obj[data-kind="note"] .desk-obj-lift,
-.desk-next .desk-obj[data-kind="artifact"] .desk-obj-lift {
-  position: relative;
-}
-.desk-next .desk-obj[data-kind="note"] .desk-obj-lift::after,
-.desk-next .desk-obj[data-kind="artifact"] .desk-obj-lift::after {
-  content: "";
-  position: absolute;
-  inset: 16px 15px 15px 16px;
-  z-index: 2;
-  pointer-events: none;
-  background:
-    linear-gradient(
-        225deg,
-        rgba(0, 0, 0, 0.22) 0 9px,
-        rgba(255, 255, 255, 0.28) 9px 10px,
-        transparent 10px
-      )
-      no-repeat,
-    repeating-linear-gradient(
-      180deg,
-      transparent 0 11px,
-      rgba(72, 62, 46, 0.28) 11px 12px
-    );
-  background-size:
-    100% 100%,
-    100% calc(100% - 14px);
-  background-position:
-    0 0,
-    0 12px;
-}
-.desk-next .desk-obj:hover .desk-obj-glow {
-  opacity: 0.82;
-}
-
-@keyframes desk-next-bob {
-  0%,
-  100% {
-    transform: rotate(var(--tilt, 0deg)) translateY(0);
-  }
-  50% {
-    transform: rotate(calc(var(--tilt, 0deg) * -1)) translateY(-9px);
-  }
-}
-@keyframes desk-next-obj-shadow {
-  0%,
-  100% {
-    transform: translateX(-50%) scaleX(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateX(-50%) scaleX(0.8);
-    opacity: 0.3;
-  }
-}
-
-/* ── the flat zone trays (parity level; HS-73-05 makes them landmarks) ── */
-.desk-next .desk-zone {
-  position: absolute;
-  transform: translateX(-50%);
-  z-index: 2;
-  min-width: 148px;
-  max-width: 260px;
-  padding: 13px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  border-radius: 16px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--zk, #e0a458) 15%, rgba(18, 14, 24, 0.55)),
-    rgba(10, 9, 14, 0.6)
-  );
-  border: 1px solid color-mix(in srgb, var(--zk, #e0a458) 34%, var(--border));
-  box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.42),
-    inset 0 1px 0 color-mix(in srgb, var(--zk, #e0a458) 30%, transparent);
-  color: var(--text);
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-  transition:
-    box-shadow var(--duration-short) var(--ease-standard),
-    border-color var(--duration-short) var(--ease-standard);
-}
-.desk-next .desk-zone.dragging {
-  cursor: grabbing;
-  z-index: 20;
-  transition: none;
-}
-.desk-next .desk-zone-grip {
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  width: 16px;
-  height: 16px;
-  cursor: ew-resize;
-  touch-action: none;
-  opacity: 0;
-  background: linear-gradient(
-      135deg,
-      transparent 0 50%,
-      color-mix(in srgb, var(--zk, #e0a458) 70%, var(--text-faint)) 50% 58%,
-      transparent 58% 72%,
-      color-mix(in srgb, var(--zk, #e0a458) 70%, var(--text-faint)) 72% 80%,
-      transparent 80%
-    )
-    no-repeat;
-  transition: opacity var(--duration-short) var(--ease-standard);
-}
-.desk-next .desk-zone:hover .desk-zone-grip,
-.desk-next .desk-zone.dragging .desk-zone-grip {
-  opacity: 0.9;
-}
-@media (pointer: coarse) {
-  .desk-next .desk-zone-grip {
-    opacity: 0.6;
-    width: 22px;
-    height: 22px;
-  }
-}
-.desk-next .desk-zone:hover {
-  transform: translateX(-50%) translateY(-2px);
-  border-color: color-mix(in srgb, var(--zk, #e0a458) 58%, var(--border));
-  box-shadow:
-    0 16px 38px rgba(0, 0, 0, 0.5),
-    0 0 0 2px color-mix(in srgb, var(--zk, #e0a458) 28%, transparent);
-}
-.desk-next .desk-zone-title {
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-}
-.desk-next .desk-zone-count {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
 }
 
 /* ── the arrival chrome (HS-73-02): floating clusters, no header stack ── */
@@ -836,82 +599,6 @@
     animation: none;
     opacity: 0.85;
   }
-  .desk-next .desk-obj-lift,
-  .desk-next .desk-obj-shadow {
-    animation: none;
-  }
-}
-
-/* ── HS-73-03: create in-world ── */
-
-/* the HS-71-06 create beat, verbatim */
-.desk-next .desk-obj-ring {
-  position: absolute;
-  inset: 2px;
-  z-index: 2;
-  border-radius: 50%;
-  border: 2px solid var(--accent, #ff6b35);
-  opacity: 0;
-  pointer-events: none;
-}
-.desk-next .desk-obj.is-new .desk-obj-ring {
-  animation: desk-next-new-ring 1.1s ease-out 3;
-}
-.desk-next .desk-obj.is-new .desk-obj-glow {
-  opacity: 0.95;
-  background: radial-gradient(
-    circle at 50% 55%,
-    color-mix(in srgb, var(--accent, #ff6b35) 72%, transparent),
-    transparent 68%
-  );
-}
-.desk-next .desk-obj-new {
-  position: absolute;
-  top: -4px;
-  right: -6px;
-  z-index: 3;
-  padding: 1px 6px;
-  border-radius: var(--radius-pill, 999px);
-  background: var(--accent, #ff6b35);
-  color: var(--text-on-accent, #06121f);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  box-shadow: 0 2px 8px var(--accent-glow, rgba(255, 107, 53, 0.5));
-}
-@keyframes desk-next-new-ring {
-  0% {
-    opacity: 0.85;
-    transform: scale(0.7);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.55);
-  }
-}
-
-/* materialize: the spawn-in entrance */
-.desk-next .desk-obj.materialize {
-  animation: desk-next-materialize 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
-}
-@keyframes desk-next-materialize {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.35);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(var(--oscale, 1));
-  }
-}
-
-/* the object settles while its editor is open */
-.desk-next .desk-obj.editing .desk-obj-lift,
-.desk-next .desk-obj.editing .desk-obj-shadow {
-  animation: none;
-}
-.desk-next .desk-obj.editing .desk-obj-glow {
-  opacity: 0.9;
 }
 
 /* the radial vignette: the world dims AROUND the object — never a scrim */
@@ -1256,31 +943,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-}
-
-/* ── HS-73-05: zones as landmarks ── */
-.desk-next .desk-zone-thumbs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.desk-next .desk-zone-thumbs img {
-  image-rendering: pixelated;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
-}
-.desk-next .desk-zone-more {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-}
-.desk-next .desk-zone-thumbs .desk-zone-count {
-  margin-left: auto;
-}
-.desk-next .desk-zone.drop-ready {
-  transform: translateX(-50%) translateY(-4px) scale(1.04);
-  border-color: color-mix(in srgb, var(--zk, #e0a458) 80%, var(--border));
-  box-shadow:
-    0 20px 44px rgba(0, 0, 0, 0.55),
-    0 0 0 3px color-mix(in srgb, var(--zk, #e0a458) 40%, transparent);
 }
 
 /* the dive camera: the world scales in as the zone's members take the stage */
@@ -1912,17 +1574,6 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--accent, #ff6b35) 10%, transparent);
   pointer-events: none;
-}
-
-/* a roped object wears a steady selection ring (the NEW ring, held) */
-.desk-next .desk-obj.selected .desk-obj-ring {
-  opacity: 0.9;
-  animation: none;
-  transform: scale(1.15);
-  border-style: dashed;
-}
-.desk-next .desk-obj.selected .desk-obj-glow {
-  opacity: 0.55;
 }
 
 /* the bundle bar: the roped count + the one action that gives it meaning */
@@ -2960,20 +2611,6 @@
   width: auto;
   margin: 0 18px 18px;
 }
-.desk-next .desk-obj-attention {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  display: grid;
-  min-width: 20px;
-  height: 20px;
-  place-items: center;
-  border: 2px solid var(--bg);
-  border-radius: 999px;
-  background: var(--danger-signal);
-  color: white;
-  font: 800 10px var(--font-mono);
-}
 @media (max-width: 720px) {
   .desk-next .desk-chrome-tl {
     top: 10px;
@@ -3053,10 +2690,6 @@
   }
 }
 @media (max-width: 720px) {
-  .desk-next .desk-obj-label {
-    max-width: 92px;
-    font-size: 11px;
-  }
   .desk-next .desk-chrome .egress-badge {
     max-width: 40vw;
   }
@@ -3068,8 +2701,6 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .desk-next .desk-obj-lift,
-  .desk-next .desk-obj-glow,
   .desk-next .desk-session-live {
     animation: none !important;
   }
@@ -3080,8 +2711,6 @@
    through its static color/shadow. The hold-to-arm progress stays: it IS the
    state of a user-initiated press, not decoration. ── */
 @media (prefers-reduced-motion: reduce) {
-  .desk-next .desk-obj.is-new .desk-obj-ring,
-  .desk-next .desk-obj.materialize,
   .desk-next .desk-start-action.is-recording .desk-start-record,
   .desk-next .desk-mc-pin.awaiting,
   .desk-next .desk-chat-thinking,
@@ -3411,4 +3040,32 @@
 .desk-next .desk-dlv-list h2 {
   font-size: 14px;
   margin-bottom: var(--space-1);
+}
+
+/* ── HS-95-01: the GL world (the z ladder's ground rule: the canvas is the
+   bottom of the desk — world pixels on the GPU; DOM overlays (rename row,
+   inline editor, lasso, chips) sit above it inside .desk-world; windows
+   (.desk-window, Z 42+) above those; the chrome band above windows). ── */
+.desk-next .desk-world-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  user-select: none;
+}
+.desk-next .desk-world-a11y {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.desk-next .desk-zone-rename-row.is-overlay {
+  position: absolute;
+  z-index: 25;
+  transform: translateX(-50%);
+  padding-top: 10px;
 }

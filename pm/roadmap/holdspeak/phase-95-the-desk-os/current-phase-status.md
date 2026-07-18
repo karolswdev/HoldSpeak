@@ -1,9 +1,8 @@
 # Phase 95 — The Desk OS
 
-**Status:** PLANNED (scaffolded 2026-07-17 from the owner's live UAT verdict;
-HS-95-01 ready).
+**Status:** IN PROGRESS (1/10; HS-95-01 done 2026-07-17).
 
-**Last updated:** 2026-07-17 (scaffolded).
+**Last updated:** 2026-07-17 (HS-95-01, the WebGL stage, done).
 
 ## Why this phase exists
 
@@ -113,7 +112,7 @@ navigates away from the desk.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-95-01 | The WebGL stage | ready | [story-01-the-webgl-stage](./story-01-the-webgl-stage.md) | — |
+| HS-95-01 | The WebGL stage | done | [story-01-the-webgl-stage](./story-01-the-webgl-stage.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-95-02 | OS-grade windows | backlog | [story-02-os-grade-windows](./story-02-os-grade-windows.md) | — |
 | HS-95-03 | The shell: dock, switching, layouts | backlog | [story-03-the-shell](./story-03-the-shell.md) | — |
 | HS-95-04 | Embeddable page cores | backlog | [story-04-embeddable-page-cores](./story-04-embeddable-page-cores.md) | — |
@@ -126,10 +125,24 @@ navigates away from the desk.
 
 ## Where we are
 
-Scaffolded from the owner's live 2026-07-17 UAT verdict and a same-day code
-survey. No implementation has started. HS-95-01 (the engine) and HS-95-04
-(the page-core mechanism) are independent tracks; HS-95-02/03 build the
-window shell; HS-95-05..08 re-home the surfaces and retire the escape
-hatches; HS-95-09/10 document and close. The desk-window physics contract
-from Phase 93 is the floor, not the ceiling: nothing in this phase may
-regress drag, resize, persist, raise, or coexist.
+**HS-95-01 done (2026-07-17): the world renders on the GPU.** One pixi v8
+canvas draws zones, objects, selection, drag, and the ambient motes from a
+pure scene model (`web/src/desk/gl/`); the store stays the only truth;
+`World.tsx`/`DeskObject.tsx`/`Stage.tsx` and ~9 KB of world CSS are deleted
+— one renderer. Interactions ported at HS-71 semantics (4px threshold,
+fresh-rect rule upgraded to a cached rect refreshed on resize/scroll,
+tap/drag discrimination, zone drop/dive/rename/resize, the lasso) and
+proven by a Playwright smoke through the real canvas (tap-open, 330px
+object drag, zone drag, lasso rope). The storm on the production bundle,
+real GPU, seeded desk: **median 8.3ms, p95 9.9ms, max 10.3ms over 962
+frames, with 1 Layout and 2 Paint events in 8 seconds of continuous
+object drags** — React re-renders are surgically absent from the drag path
+(fine-grained selectors). Before/after parity shots at 1440 and 393 in
+`assets/`. A visually-hidden a11y layer preserves the keyboard contract.
+Deviation noted honestly: the room's base gradient + spotlight pulse stay
+CSS (compositor-only transform/opacity — zero per-frame paint); the motes
+moved into the GL scene; `Stage.tsx` retired.
+
+Next: HS-95-02 (the `<DeskWindow>` container + lifecycle) and HS-95-04
+(page cores) are the two open tracks; the Phase 93 physics contract
+remains the regression floor.

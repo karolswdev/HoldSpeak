@@ -1,0 +1,219 @@
+"""HS-95-01 — the GL world's production walk.
+
+Drives the real product (a staged isolated run, default :8788) with
+Playwright: parity screenshots at 1440 and 393, an interaction smoke
+(tap-to-open through the canvas, drag an object, lasso), and the
+frame-timing storm measured through CDP tracing on the production bundle.
+
+Usage:
+  uv run python scripts/desk_gl_walk.py shots  --label after
+  uv run python scripts/desk_gl_walk.py storm
+"""
+
+from __future__ import annotations
+
+import json
+import statistics
+import sys
+import time
+from pathlib import Path
+
+from playwright.sync_api import sync_playwright
+
+BASE = "http://localhost:8788"
+OUT = Path("uat/_runs/hs-95-01-walk")
+
+
+def wait_world(page):
+    page.wait_for_selector(".desk-next", timeout=15000)
+    # The world canvas (GL) or the legacy world div (before shots).
+    page.wait_for_selector(".desk-world, .desk-listmode, .desk-empty",
+                           timeout=15000)
+    page.wait_for_timeout(1200)
+
+
+def shots(label: str) -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        for name, w, h in (("desktop-1440", 1440, 900), ("phone-393", 393, 852)):
+            page = browser.new_page(viewport={"width": w, "height": h},
+                                    device_scale_factor=2)
+            failures: list[str] = []
+            page.on(
+                "response",
+                lambda r: failures.append(f"{r.status} {r.url}")
+                if r.url.startswith(BASE) and r.status >= 400 else None,
+            )
+            page.goto(BASE + "/", wait_until="networkidle")
+            wait_world(page)
+            page.screenshot(path=str(OUT / f"{label}-{name}.png"))
+            print(f"shot {label}-{name}.png  api-failures={failures}")
+            page.close()
+        browser.close()
+
+
+def smoke() -> None:
+    """Interaction smoke through the canvas: tap opens a pull-out, a drag
+    moves an object and persists its park, a lasso ropes a selection."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        objs = page.evaluate("() => window.__hsWorldProbe()")
+        assert objs, "no objects on the seeded desk"
+        target = objs[0]
+        # 1. Tap-to-open THROUGH the canvas at the rendered position.
+        page.mouse.click(target["x"], target["y"])
+        page.wait_for_timeout(500)
+        assert page.locator(".desk-pullout").count() > 0, "tap did not open"
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
+        # 2. Drag: press on the object, move far, release on background.
+        page.mouse.move(target["x"], target["y"])
+        page.mouse.down()
+        for i in range(12):
+            page.mouse.move(target["x"] + 20 * i, target["y"] + 10 * i)
+        page.mouse.up()
+        page.wait_for_timeout(400)
+        moved = page.evaluate("() => window.__hsWorldProbe()")[0]
+        dx = abs(moved["x"] - target["x"]) + abs(moved["y"] - target["y"])
+        assert dx > 100, f"drag did not move the object (dx={dx})"
+        assert page.locator(".desk-pullout").count() == 0, "drag opened a pull-out"
+        # 3. Lasso on the background ropes the object.
+        page.mouse.move(moved["x"] - 160, moved["y"] - 160)
+        page.mouse.down()
+        page.mouse.move(moved["x"] + 160, moved["y"] + 160, steps=8)
+        page.mouse.up()
+        page.wait_for_timeout(400)
+        roped = page.locator(".desk-askbar").count()
+        # 4. Zone drag: grab a zone body (below its title row), park it.
+        zones = page.evaluate("() => window.__hsWorldZoneProbe()")
+        zdx = 0.0
+        if zones:
+            z = zones[0]
+            gx, gy = z["x"], z["y"] + z["height"] - 14
+            page.mouse.move(gx - z["width"] / 4, gy)
+            page.mouse.down()
+            page.mouse.move(gx - z["width"] / 4 + 180, gy + 140, steps=10)
+            page.mouse.up()
+            page.wait_for_timeout(400)
+            z2 = page.evaluate("() => window.__hsWorldZoneProbe()")[0]
+            zdx = abs(z2["x"] - z["x"]) + abs(z2["y"] - z["y"])
+            assert zdx > 80, f"zone drag did not move the tray (zdx={zdx})"
+        print(
+            f"smoke: tap-open ok, drag ok ({dx:.0f}px), lasso bar={roped}, "
+            f"zone drag {zdx:.0f}px"
+        )
+        browser.close()
+
+
+def storm(headed: bool = True) -> None:
+    """The object-drag storm. Runs HEADED by default so WebGL is the real
+    GPU (headless Chromium falls back to SwiftShader software GL, which
+    measures a CPU rasterizer, not the product). Frame timing is sampled
+    in-page from the rAF loop the renderer actually runs on; a CDP trace
+    rides along to count DOM Layout/Paint events during the storm."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=not headed)
+        page = browser.new_page(
+            viewport={"width": 1440, "height": 900}, device_scale_factor=2
+        )
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        objs = page.evaluate("() => window.__hsWorldProbe()")
+        assert objs, "no objects on the seeded desk"
+        client = page.context.new_cdp_session(page)
+        client.send(
+            "Tracing.start",
+            {
+                "categories": "devtools.timeline",
+                "transferMode": "ReturnAsStream",
+            },
+        )
+        page.evaluate(
+            """() => {
+              window.__frames = [];
+              window.__framesOn = true;
+              let last = performance.now();
+              const loop = (t) => {
+                window.__frames.push(t - last);
+                last = t;
+                if (window.__framesOn) requestAnimationFrame(loop);
+              };
+              requestAnimationFrame(loop);
+            }"""
+        )
+        # The storm: 8 seconds of continuous OBJECT drags criss-crossing
+        # the desk (the worst per-frame path: store writes + GL sync).
+        t0 = time.time()
+        i = 0
+        while time.time() - t0 < 8:
+            target = page.evaluate("() => window.__hsWorldProbe()")[
+                i % len(objs)
+            ]
+            page.mouse.move(target["x"], target["y"])
+            page.mouse.down()
+            for step in range(20):
+                page.mouse.move(
+                    200 + (step * 97 + i * 131) % 1040,
+                    160 + (step * 61 + i * 73) % 620,
+                )
+            page.mouse.up()
+            i += 1
+        samples = page.evaluate(
+            "() => { window.__framesOn = false; return window.__frames; }"
+        )
+        client.send("Tracing.end")
+        done: dict = {"flag": False}
+        client.on(
+            "Tracing.tracingComplete",
+            lambda params: done.update(flag=True, stream=params.get("stream")),
+        )
+        deadline = time.time() + 30
+        while not done["flag"] and time.time() < deadline:
+            page.wait_for_timeout(100)
+        layouts = paints = None
+        if done["flag"]:
+            buf = []
+            while True:
+                chunk = client.send("IO.read", {"handle": done["stream"]})
+                buf.append(chunk["data"])
+                if chunk.get("eof"):
+                    break
+            client.send("IO.close", {"handle": done["stream"]})
+            trace = json.loads("".join(buf))
+            events = trace["traceEvents"] if isinstance(trace, dict) else trace
+            layouts = sum(1 for e in events if e.get("name") == "Layout")
+            paints = sum(1 for e in events if e.get("name") == "Paint")
+        deltas = [d for d in samples if 0 < d < 250][5:]
+        report = {
+            "gpu": "hardware" if headed else "swiftshader",
+            "frames": len(deltas),
+            "median_ms": round(statistics.median(deltas), 2) if deltas else None,
+            "p95_ms": round(statistics.quantiles(deltas, n=20)[18], 2)
+            if len(deltas) >= 20
+            else None,
+            "max_ms": round(max(deltas), 2) if deltas else None,
+            "layout_events": layouts,
+            "paint_events": paints,
+        }
+        (OUT / "storm-report.json").write_text(json.dumps(report, indent=2))
+        print("storm:", json.dumps(report))
+        assert report["median_ms"] is not None
+        browser.close()
+
+
+if __name__ == "__main__":
+    mode = sys.argv[1] if len(sys.argv) > 1 else "shots"
+    if mode == "shots":
+        label = sys.argv[sys.argv.index("--label") + 1] if "--label" in sys.argv else "shot"
+        shots(label)
+    elif mode == "smoke":
+        smoke()
+    elif mode == "storm":
+        storm()
+    else:
+        raise SystemExit(f"unknown mode {mode}")
