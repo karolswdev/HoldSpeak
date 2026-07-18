@@ -4,7 +4,19 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-16 — **Phase 93 CLOSED (9/9) and Phase 94, The Delivery Runtime, CLOSED (10/10) the same day under the owner's standing
+**Last updated:** 2026-07-17 — **Phase 95, The Desk OS, SCAFFOLDED** from the
+owner's first live UAT sitting (conductor Campaign 1 territory): the verdict
+was that the desk experience is clunky and fragmented — desk actions eject to
+sixteen flat routes under an alien shell, and the world renders DOM/CSS. The
+phase carries the owner's charter (**features do not own surfaces; the OS owns
+surfaces and features plug into them**) across ten stories: the WebGL stage,
+OS-grade windows over the Phase 93 physics, the dock/shell, embeddable page
+cores, dictation/meetings/configuration/studio re-homed as desk windows, the
+escape hatches retired with flat routes demoted to deep links, docs, and a
+closeout gated on the frame budget, the production screenshot walk, and a live
+owner walk. See
+[phase-95-the-desk-os](./phase-95-the-desk-os/current-phase-status.md).
+Previously (2026-07-16): **Phase 93 CLOSED (9/9) and Phase 94, The Delivery Runtime, CLOSED (10/10) the same day under the owner's standing
 close directive: HS-93-01 through HS-93-08 are done at their owner-rescoped
 machine-verifiable scopes (bounded route preflight, every-room walks, the
 failure-facts census over 4,173 candidates, contextual power, the Web
@@ -190,7 +202,9 @@ canon, canon wins.
 | 90 | The Factory: spawn, rename, drive, and kill terminal sessions from glass on the one consent spine | done | [phase-90-the-factory](./phase-90-the-factory/) |
 | 91 | One React Surface: one Vite/React application carrying DeskOS craft across every Web route; owner/Swift parity close gate remains | in-progress | [phase-91-one-react-surface](./phase-91-one-react-surface/) |
 | 92 | Make HoldSpeak feel like one powerful, understandable product by converging Web and native journeys on the Desk's shared objects, destinations, attention, authority, and retained results without rewriting the underlying systems. | planning | [phase-92-the-coalescence](./phase-92-the-coalescence/) |
-| 93 | Effortless HoldSpeak: make the Desk a rich, learnable AI operating system through visible subtraction, coherent OS affordances, contextual power, real failure recovery, accessibility, and sustained owner use across Web and flagship Swift. | in-progress | [phase-93-effortless-holdspeak](./phase-93-effortless-holdspeak/) |
+| 93 | Effortless HoldSpeak: make the Desk a rich, learnable AI operating system through visible subtraction, coherent OS affordances, contextual power, real failure recovery, accessibility, and sustained owner use across Web and flagship Swift. | done | [phase-93-effortless-holdspeak](./phase-93-effortless-holdspeak/) |
+| 94 | The Delivery Runtime: Delivery Workbench projects, Story progress, remote/local Coder sessions, terminals, evidence, and receipts as one robust platform primitive across workstation, iPad, and tailnet Web | done | [phase-94-delivery-runtime](./phase-94-delivery-runtime/) |
+| 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | planning | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
