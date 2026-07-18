@@ -335,7 +335,26 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         .filter((w) => w.id !== id && !s.panelMin.includes(w.id))
         .map((w) => s.panelRects[w.id])
         .filter((r): r is PanelRect => Boolean(r));
-      s.setPanelRect(id, placeWindow(measure(), others, vw, vh, minW, minH));
+      const seed = measure();
+      // Lazy cores may still be a Suspense fallback at measure time; a
+      // window's geometry comes from its CSS constraint (max-height),
+      // never from the transient content height. The default seat is
+      // capped below the full band so title bars can stagger — a
+      // full-band window is a choice (resize/maximize), not a default
+      // (HS-97-09).
+      const el = elRef.current;
+      if (el) {
+        const mh = parseFloat(getComputedStyle(el).maxHeight);
+        const cap = Math.max(
+          minH,
+          Math.round(
+            ((vh - DESK_WINDOW.snapTop - DESK_WINDOW.snapBottom) * 78) / 100,
+          ),
+        );
+        if (Number.isFinite(mh) && mh > seed.h)
+          seed.h = Math.min(mh, cap);
+      }
+      s.setPanelRect(id, placeWindow(seed, others, vw, vh, minW, minH));
     }
     return () => {
       // An unarranged (never persisted) rect is ephemeral: forget it so
@@ -647,7 +666,9 @@ export function Expose() {
       <div className="desk-expose-scrim" aria-hidden="true" />
       <div
         className="desk-expose"
-        role="dialog"
+        // A region, not a dialog: the desk's no-modal law holds — no
+        // trap, Escape and the backdrop dismiss (Phase 73 lock).
+        role="group"
         aria-label="Window overview"
         onClick={(e) => {
           if (e.target === e.currentTarget) toggleExpose(false);

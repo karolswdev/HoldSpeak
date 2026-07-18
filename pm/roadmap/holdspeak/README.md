@@ -4,12 +4,25 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, IN
-PROGRESS (8/9)**. **HS-97-08, The physics floors, written, DONE**: the
-DESIGN_SYSTEM chapter names every Phase 97 contract as an Article
-VIII.2 floor tied to its walk leg, the add-a-surface path teaches the
-placement engine and dock-launcher registration, and the architecture
-locks list carries the new grammar. Earlier: **HS-97-07, One shelf, quiet chrome, DONE**: the dock
+**Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, CLOSED
+(9/9, scaffolded and shipped the same day)**: the Desk OS finally has
+an OS grammar, proven whole on the production bundle. The shadows are
+back under a mechanical generator lock; windows land whole and off
+each other's title bars; the arrangement (rects, stacking order,
+maximize) survives reload byte-identically; the front window alone
+wears depth and a keyline; close/minimize/restore move with intent;
+the snap ghost previews its tile, edges resize, double-click
+maximizes; exposé fans everything into a pick grid and Ctrl+` cycles
+visibly; and the dock is the one centered shelf with the record orb at
+its heart — floating pills deleted, eyebrows demoted, stage prose
+gone. Closeout: all eight Phase 95 legs + the six-leg grammar chain
+green with zero failed API responses, storm 8.3ms median assembled,
+279 web tests, full sweep green, the physics floors written into
+DESIGN_SYSTEM.md as Article VIII.2 contracts. The owner's live verdict
+rides Campaign 13. Follow-ups staged: Native Surfaces (core content
+re-craft), The Living World (grounding + object-to-window continuity),
+One Grammar on Glass (HSM/iPad parity). Earlier: **HS-97-08, The
+physics floors, written, DONE**. Earlier: **HS-97-07, One shelf, quiet chrome, DONE**: the dock
 is the one centered shelf — launchers for Desk memory, Delivery, and
 Panes with the record orb seated at its center, the four floating
 pills deleted, the mono eyebrows off every title bar, and the stage
@@ -360,7 +373,7 @@ canon, canon wins.
 | 94 | The Delivery Runtime: Delivery Workbench projects, Story progress, remote/local Coder sessions, terminals, evidence, and receipts as one robust platform primitive across workstation, iPad, and tailnet Web | done | [phase-94-delivery-runtime](./phase-94-delivery-runtime/) |
 | 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | done | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
 | 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
-| 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | in-progress | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
+| 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | done | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

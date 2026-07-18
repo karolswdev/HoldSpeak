@@ -1,9 +1,12 @@
 # Phase 97 — The Window Grammar
 
-**Status:** IN PROGRESS (8/9, 2026-07-18) — from the owner's direct
-verdict on the Desk OS state.
+**Status:** CLOSED (9/9, 2026-07-18 — scaffolded and shipped the same
+day) at machine-verifiable scope under the standing close directive;
+the owner's live verdict rides the next UAT sitting (Campaign 13's
+desk-os-design-polish scenario now shows this grammar). See
+[final-summary](./final-summary.md).
 
-**Last updated:** 2026-07-18 (HS-97-08 done; the floors are written).
+**Last updated:** 2026-07-18 (HS-97-09 done; phase CLOSED 9/9).
 
 ## Why this phase exists
 
@@ -92,10 +95,26 @@ staged follow-ups (Native Surfaces; The Living World).
 | HS-97-06 | The switcher | done | [story-06-switcher](./story-06-switcher.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-97-07 | One shelf, quiet chrome | done | [story-07-one-shelf](./story-07-one-shelf.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-97-08 | The physics floors, written | done | [story-08-docs](./story-08-docs.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-97-09 | Closeout: the grammar walk | backlog | [story-09-closeout](./story-09-closeout.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-97-09 | Closeout: the grammar walk | done | [story-09-closeout](./story-09-closeout.md) | [evidence-story-09](./evidence-story-09.md) |
 
 ## Where we are
 
+**HS-97-09 done (2026-07-18): the grammar walks — phase CLOSED 9/9.**
+The assembled walk chain is green on the production bundle: all eight
+Phase 95 legs (smoke, windows, shell, cores, dictation with a real
+voice path, meetings with one recorder truth, config round-trip, the
+fifteen-route demotion + a saved workflow) plus the six-leg grammar
+chain (placement, arrangement, depth, frame, switcher, shelf), with
+zero failed API responses and fresh 1440/393 shots LOOKED AT. Storm
+assembled: 8.3ms median, p95 10.2, 1 layout event. `npm run check`
+green (279 web tests); the full python sweep green (metal exclusion
+per standing rule). The closeout hardened three real defects the
+per-story walks missed: lazy windows froze at their Suspense-fallback
+height (the seat now comes from the CSS max-height constraint, capped
+at 78% of the band so default title bars stagger), the chrome raise
+rule covered only the room menu (the open tool shelf now lifts its
+cluster the same way), and the compact dock now spans the phone edge
+whole. Riders and follow-up phases in final-summary.md. Earlier:
 **HS-97-08 done (2026-07-18): the physics floors, written.**
 `docs/internal/DESIGN_SYSTEM.md` gains "The window physics floors
 (HS-97)" — every Phase 97 contract named in token vocabulary (land

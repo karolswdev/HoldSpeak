@@ -3368,7 +3368,11 @@
   }
   .desk-next .desk-dock {
     left: 8px;
+    right: 8px;
     bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    transform: none;
+    max-width: none;
+    overflow-x: auto;
     /* Sheets own the phone's bottom; the dock yields beneath them. */
     z-index: var(--desk-z-dock-under);
   }
@@ -3452,7 +3456,11 @@
 /* HS-95-09: a chrome cluster hosting an OPEN transient (the room menu)
    rides above the window band — a window's default home must never bury
    an open menu. The cluster returns to its band when the menu closes. */
-.desk-next .desk-chrome:has(.desk-menu) {
+.desk-next .desk-chrome:has(.desk-menu),
+.desk-next .desk-chrome:has(.desk-tool-shelf) {
+  /* An open transient (room menu, tool shelf) lifts its chrome cluster
+     above the window band — windows may genuinely sit under the
+     cluster since HS-97-02's honest placement. */
   z-index: var(--desk-z-transient);
 }
 

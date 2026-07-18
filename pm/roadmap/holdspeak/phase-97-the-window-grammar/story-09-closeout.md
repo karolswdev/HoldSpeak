@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 97
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-97-01, HS-97-02, HS-97-03, HS-97-04, HS-97-05, HS-97-06, HS-97-07, HS-97-08
 - **Unblocks:** —
 
@@ -33,11 +33,11 @@ looked at.
 
 ## Acceptance criteria
 
-- [ ] The grammar walk passes end to end on the production bundle with
+- [x] The grammar walk passes end to end on the production bundle with
       zero failed API responses.
-- [ ] The assembled Phase 95 walks still pass (the floor held).
-- [ ] Storm median within the Phase 95 envelope; shots archived.
-- [ ] Full sweep green; `npm run check` green; PR merged on green.
+- [x] The assembled Phase 95 walks still pass (the floor held).
+- [x] Storm median within the Phase 95 envelope; shots archived.
+- [x] Full sweep green; `npm run check` green; PR merged on green.
 
 ## Test plan
 
