@@ -1,8 +1,11 @@
 # The Desk
 
-The Desk is HoldSpeak's primary workspace. Launch `holdspeak` and open `/` to
-work with Meetings, Notes, Knowledge, Personas, Sequences, Workflows,
-Artifacts, and live Coder sessions. Zones provide placement for durable work.
+The Desk is HoldSpeak's operating surface. Launch `holdspeak` and open `/`
+to work with Meetings, Notes, Knowledge, Personas, Sequences, Workflows,
+Artifacts, and live Coder sessions. Zones provide placement for durable
+work. The world itself renders on a WebGL stage; every product surface
+(Dictation, Meetings, Settings, Workbench, and the rest) opens as a window
+on the Desk, so nothing you do here navigates away.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects floating on a warm dark stage; a Zone tray holding a filed Meeting; Coder session avatars on a right-edge rail; a record orb bottom-center; the compact HoldSpeak menu and an egress badge top-left; Create controls top-right." width="760">
@@ -30,13 +33,31 @@ glow and a NEW mark, then settles.
 
 Primary controls stay compact:
 
-- **Top left**: the HoldSpeak mark opens the menu to the rooms
-  (Dictation, Meetings, Studio, Settings); beside it, the hub dot (green
-  when connected) and the current data-boundary badge.
+- **Top left**: the HoldSpeak mark opens the menu; each room (Dictation,
+  Meetings, Studio, Settings) opens as a window in place. Beside it, the
+  hub dot (green when connected) and the current data-boundary badge.
 - **Top right**: **Dictate**, **Record**, and one **Create** menu for Note,
   Zone, Knowledge, Persona, and Workflow.
 - **Tool shelf**: advanced Desk tools and Runs on destinations.
 - **Right edge**: the Persona rail.
+
+## Windows, the dock, and tiles
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk-windows.png" alt="Two windows on the Desk: the Dictation cockpit and the Meetings memory, cascaded over floating meeting cassettes and workflow cartridges, with dock chips bottom left." width="760">
+</p>
+
+Every surface is a window with one chrome: drag it by its head, resize it
+by the corner grip, minimize it to the dock, maximize it to the full
+stage, or close it. Releasing a drag at a screen edge snaps a half or
+quarter tile. The dock (bottom left) lists every open window; a dimmed
+chip is parked and a tap brings it back; the ⟲ chip resets the layout.
+`Ctrl+\`` cycles windows in most-recently-used order. Your arrangement
+persists on this device. On phones a window presents as a bottom sheet.
+
+Old page addresses (`/dictation`, `/history`, `/settings`, ...) are deep
+links: each lands on the Desk with the matching window open, at the same
+scope the link named.
 
 ## Create, in place
 
@@ -66,7 +87,7 @@ A Zone is a findable placement for Desk items:
 ## Record from the orb
 
 Press the orb and the hub starts recording a meeting (the same recorder
-the `/live` dashboard drives; never the browser's microphone). While
+the Live meeting window drives; never the browser's microphone). While
 recording, the orb pulses with the elapsed time; a meeting started
 anywhere else shows here too, marked "live elsewhere", and the orb can
 only stop it. When the recording ends, the finished meeting lands on the

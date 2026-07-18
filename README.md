@@ -247,7 +247,8 @@ Record a meeting live, or bring one you already have: import a recording
 call.wav`, and it becomes a real meeting, run through the same intelligence.
 The transcript is scored for intent (architecture, delivery, product,
 incident, comms), a sequence of plugins runs, and each one calls your LLM to
-produce a typed artifact. The results render read-only at `/history`.
+produce a typed artifact. The results render read-only in the Meetings
+window on the Desk (deep link `/history`).
 HoldSpeak ships 14 built-in plugins, all real and backed by an LLM.
 
 Plugins can also propose actions. An actuator proposes an external side
@@ -352,7 +353,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 ## Configuration
 
 Config lives at `~/.config/holdspeak/config.json`, but you rarely edit it by hand.
-The Settings page in the web runtime exposes the hotkey, model, meeting intel,
+The Settings window on the Desk exposes the hotkey, model, meeting intel,
 dictation pipeline, and presence options. The full reference is in
 [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) and the guides above.
 

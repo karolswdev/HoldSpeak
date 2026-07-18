@@ -190,7 +190,7 @@ machine except via the connector CLIs above (entity IDs only).
   (`web_auth.ensure_web_token`); constant-time comparison; never logged.
 - **Slack webhook URL** (`meeting.slack_webhook_url`): stored in
   `config.json` because it *is* the feature's configuration, but treated as
-  a credential everywhere else: shown only on the Settings page, never on a
+  a credential everywhere else: shown only in the Settings window, never on a
   proposal record, a broadcast, or any other API response (the connector
   joins it to the POST in memory at execution time).
 - **Runs on destination keys**: a Runs on destination stores only its

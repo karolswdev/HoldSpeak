@@ -4,7 +4,12 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **HS-95-08, The last exits, DONE — the
+**Last updated:** 2026-07-18 — **HS-95-09, Docs under the Constitution,
+DONE**: POSITIONING amended under Article I (services are system
+primitives; windows/objects/the dock are how they appear), the entry docs
+speak windows and deep links, ARCHITECTURE redrawn to the three-surface +
+demotion world, fresh 1440/393 screenshots from the shipped build, all doc
+guards + npm run check green. Earlier: **HS-95-08, The last exits, DONE — the
 two-worlds architecture is dead**: fifteen flat routes demoted to desk deep
 links (walk-proven cold), Workbench/Studio/Companion/docs/components live as
 windows (Workbench maximized, saving a real workflow), the sessions surface

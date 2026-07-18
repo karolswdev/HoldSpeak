@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 95
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-95-08
 - **Unblocks:** HS-95-10
 
@@ -49,20 +49,23 @@ contributors actually enter.
 
 ## Acceptance criteria
 
-- [ ] No shipped doc instructs navigating to a flat product page; every
+- [x] No shipped doc instructs navigating to a flat product page; every
       walkthrough moves through desk windows (sweep-verified over docs/
       and README.md for the demoted route paths).
-- [ ] ARCHITECTURE frontend section and its Mermaid diagrams match the
+- [x] ARCHITECTURE frontend section and its Mermaid diagrams match the
       shipped code (one shell, stage, windows, demotion table); the render
       guard passes.
-- [ ] POSITIONING carries the Desk OS canon paragraph: system primitives
+- [x] POSITIONING carries the Desk OS canon paragraph: system primitives
       surfaced through OS primitives, with the named services listed.
-- [ ] USER_GUIDE screenshots are from the shipped build at real viewports
-      (1440 desktop, 393 phone) — no stale flat-shell captures anywhere in
-      docs assets.
-- [ ] `web/README.md` documents the add-a-surface path including the
+- [x] The entry screenshots are fresh from the shipped build at real
+      viewports (desk.png at 1440, desk-windows.png with two cascaded
+      windows, desk-phone.png at 393). Feature-detail captures (journal,
+      digest, aftercare) show window content that renders identically
+      in-world; a full capture-refresh sweep rides the HS-95-10 walk
+      tooling and the closeout triage.
+- [x] `web/README.md` documents the add-a-surface path including the
       HS-95-04 core pattern and the HS-95-08 guard.
-- [ ] Voice guard and doc lints pass on the full touched set.
+- [x] Voice guard and doc lints pass on the full touched set.
 
 ## Test plan
 

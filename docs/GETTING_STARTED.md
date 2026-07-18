@@ -92,23 +92,26 @@ as an artifact you can open, trace (`via` the agent that made it), and file.
 Every input takes speech: hold the mic, talk, release (the hub's own local
 Whisper transcribes; nothing leaves your machine's runtime). A fresh desk says what
 HoldSpeak is and offers your next action. If something later needs
-attention, **`/setup`** is the calm Setup and health surface, and the egress
+attention, the **Setup window** (deep link `/setup`) is the calm health
+surface, and the egress
 badge in the Desk's corner always shows what can leave your machine.
 
-The web surface is the Desk plus three rooms reached from its menu: the two
-modes (**Dictation**, **Meetings**) and **Studio** for the advanced tools.
-Everything else nests under one of those.
+The web surface IS the Desk: every mode opens as a window on it. The menu
+(top left) and the tool shelf open Dictation, Meetings, Studio, Settings,
+and the rest as floating windows you can drag, resize, snap to an edge,
+minimize to the dock, or maximize. Nothing navigates away from the Desk.
 
-Useful routes:
+Old route addresses still work as deep links; each lands on the Desk with
+the matching window open:
 
-| Route | Purpose |
+| Deep link | Opens the window |
 | --- | --- |
 | `/welcome` | The first-run wizard: the single arrival on a fresh install |
-| `/` | The Desk: your primitives as a spatial world (record, create, open, file, run) |
-| `/dictation` | Dictation mode: voice typing, the journal, learning, pre-briefing. An optional preview mode (Settings, Voice) shows each dictation on a card first: Type it commits, Discard drops it. |
-| `/history` | Meetings mode: capture or import, the archive, aftercare |
+| `/` | The Desk itself: your primitives as a spatial world (record, create, open, file, run) |
+| `/dictation` | Dictation: voice typing, the journal, learning, pre-briefing. An optional preview mode (Settings, Voice) shows each dictation on a card first: Type it commits, Discard drops it. |
+| `/history` | Meetings: capture or import, the archive, aftercare |
 | `/studio` | Studio: the advanced tier (Workbench, Cadence, Commands, and more) |
-| `/settings` | Global settings (sectioned and searchable; open from the ⚙) |
+| `/settings` | Settings (sectioned and searchable) |
 | `/setup` | Setup and health: readiness plus the single next step |
 
 ## 5. Try Basic Voice Typing
@@ -233,7 +236,7 @@ Once hold-to-talk feels natural, the rest is one setting away each:
 | Text does not appear | Synthetic typing blocked | Try clipboard/manual paste fallback |
 | Transcription is unavailable | Missing backend/model | Run `holdspeak doctor` |
 | Web UI does not open | Browser auto-open disabled or blocked | Visit the printed local URL manually |
-| Project is wrong | Started from another cwd | Set Project root in `/dictation` |
+| Project is wrong | Started from another cwd | Set Project root in the Dictation window |
 
 ## See also
 

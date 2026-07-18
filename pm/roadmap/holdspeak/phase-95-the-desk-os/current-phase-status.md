@@ -1,8 +1,8 @@
 # Phase 95 — The Desk OS
 
-**Status:** IN PROGRESS (8/10; HS-95-08 done 2026-07-18).
+**Status:** IN PROGRESS (9/10; HS-95-09 done 2026-07-18).
 
-**Last updated:** 2026-07-18 (HS-95-08, the last exits, done — the two-worlds architecture is dead).
+**Last updated:** 2026-07-18 (HS-95-09, docs under the Constitution, done).
 
 ## Why this phase exists
 
@@ -120,7 +120,7 @@ navigates away from the desk.
 | HS-95-06 | Meetings and recording through the desk | done | [story-06-meetings-through-the-desk](./story-06-meetings-through-the-desk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-95-07 | Configuration through the desk | done | [story-07-configuration-through-the-desk](./story-07-configuration-through-the-desk.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-95-08 | Studio, sessions, and the last exits | done | [story-08-studio-sessions-last-exits](./story-08-studio-sessions-last-exits.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-95-09 | Docs: the Desk OS is the documented product | backlog | [story-09-docs](./story-09-docs.md) | — |
+| HS-95-09 | Docs: the Desk OS is the documented product | done | [story-09-docs](./story-09-docs.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-95-10 | Closeout: performance proof, screenshot walk, owner walk | backlog | [story-10-closeout-owner-walk](./story-10-closeout-owner-walk.md) | — |
 
 ## Where we are
@@ -250,4 +250,21 @@ is the one immersive frame (header/PRIMARY_NAV/trust dialog deleted);
 the page wrappers, PageHero, and WorkroomBar are gone; the bundle carries
 only Welcome/Presence page chunks. Suite 256/256; guards green.
 
-Next: HS-95-09 (docs under the Constitution) then HS-95-10 (closeout).
+**HS-95-09 done (2026-07-18): the Desk OS is the documented product.**
+POSITIONING's Phase 70 four-destination IA is amended under Article I with
+the canon rule (services are system primitives; windows/objects/the dock
+are how they appear); GETTING_STARTED, USER_GUIDE, WEB_DESK, README, and
+SECURITY now speak windows and deep links, never pages; WEB_DESK gains the
+window-system section (drag/snap/dock/Ctrl+`/sheets) with a fresh
+two-window screenshot; ARCHITECTURE and the web-frontend decomposition doc
+are redrawn to the three-surface + demotion world with the mermaid render
+guard green; web/README's add-a-surface path covers the demotion row and
+the no-exit lock. Fresh entry screenshots at 1440/393 from the shipped
+build. A real fix rode along: an open chrome menu now rides above the
+window band (a window's default home buried it — caught by the screenshot
+run). Guards: doc drift 18/18, copy census, mermaid renders, and
+`npm run check` (architecture census + typecheck + suite + build) all
+green.
+
+Next: HS-95-10 — the closeout (performance proof, the production
+screenshot walk, the UAT campaign rider, and the live owner walk).

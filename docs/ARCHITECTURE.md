@@ -65,7 +65,7 @@ flowchart TB
 
   subgraph out["Outputs"]
     TY["Keyboard inject<br/>(typer.py)"]
-    DESK["The Desk, the web front door<br/>(web/src/desk/, React island at /)"]
+    DESK["The Desk, the operating surface<br/>(web/src/desk/: WebGL stage + windows,<br/>every product surface a window at /)"]
     UI["The rooms + presence<br/>(web/src/pages/, desktop_presence.py)"]
     BUS["Runtime bus, the one /ws per page<br/>(web/src/scripts/runtime-bus.js)"]
     CN["Gated connectors<br/>(plugins/gated_connector.py)"]
