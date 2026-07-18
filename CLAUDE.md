@@ -39,6 +39,9 @@ git config core.hooksPath .githooks
 These are the docs phases must be grounded in. If any phase document
 disagrees with one of these, canon wins:
 
+- `docs/internal/CONSTITUTION.md` — **the supreme canon**: the ratified
+  articles every phase, story, and design decision is measured against.
+  Where any doc below disagrees with it, the Constitution wins.
 - `README.md` — public install + usage surface.
 - `docs/internal/POSITIONING.md` — the positioning canon: the story, the
   pillars, the named competitive frame, canonical feature names, and the
