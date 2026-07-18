@@ -2,7 +2,7 @@
 // persistence slot (including the Phase 93 flat-shape tolerance), and the
 // minimized tray. jsdom hosts the DOM; physics gestures stay pinned by the
 // Playwright walk.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskWindowFrame, Dock } from "../components/DeskWindow";
 import { useDesk } from "../store";
@@ -122,6 +122,44 @@ describe("DeskWindowFrame (the one chrome)", () => {
     // (the Phase 73 mechanical lock forbids modal roles on the desk).
     expect(screen.getByRole("region", { name: "Test window" })).toBeTruthy();
     expect(screen.getByRole("region", { name: "Second" })).toBeTruthy();
+  });
+});
+
+describe("focus depth (HS-97-04)", () => {
+  it("exactly the front window wears is-front; raising moves it", () => {
+    render(
+      <>
+        <DeskWindowFrame id="fa" title="Alpha" open onClose={() => {}}>
+          <p>a</p>
+        </DeskWindowFrame>
+        <DeskWindowFrame id="fb" title="Beta" open onClose={() => {}}>
+          <p>b</p>
+        </DeskWindowFrame>
+      </>,
+    );
+    const alpha = screen.getByRole("region", { name: "Alpha" });
+    const beta = screen.getByRole("region", { name: "Beta" });
+    expect(beta.className).toContain("is-front");
+    expect(alpha.className).not.toContain("is-front");
+    fireEvent.pointerDown(alpha);
+    expect(alpha.className).toContain("is-front");
+    expect(beta.className).not.toContain("is-front");
+  });
+
+  it("a minimized front hands depth to the next window", () => {
+    render(
+      <>
+        <DeskWindowFrame id="fa" title="Alpha" open onClose={() => {}}>
+          <p>a</p>
+        </DeskWindowFrame>
+        <DeskWindowFrame id="fb" title="Beta" open onClose={() => {}}>
+          <p>b</p>
+        </DeskWindowFrame>
+      </>,
+    );
+    act(() => useDesk.getState().minimizePanel("fb"));
+    const alpha = screen.getByRole("region", { name: "Alpha" });
+    expect(alpha.className).toContain("is-front");
   });
 });
 

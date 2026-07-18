@@ -1,9 +1,10 @@
 # Phase 97 — The Window Grammar
 
-**Status:** IN PROGRESS (3/9, 2026-07-18) — from the owner's direct
+**Status:** IN PROGRESS (4/9, 2026-07-18) — from the owner's direct
 verdict on the Desk OS state.
 
-**Last updated:** 2026-07-18 (HS-97-03 done; the arrangement persists).
+**Last updated:** 2026-07-18 (HS-97-04 done; focus has depth, motion
+tells the story).
 
 ## Why this phase exists
 
@@ -87,7 +88,7 @@ staged follow-ups (Native Surfaces; The Living World).
 | HS-97-01 | The shadow returns | done | [story-01-shadow-returns](./story-01-shadow-returns.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-97-02 | A window lands well | done | [story-02-placement](./story-02-placement.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-97-03 | The arrangement is sacred | done | [story-03-arrangement-persists](./story-03-arrangement-persists.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-97-04 | Focus and depth | backlog | [story-04-focus-depth](./story-04-focus-depth.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-97-04 | Focus and depth | done | [story-04-focus-depth](./story-04-focus-depth.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-97-05 | Hands on the frame | backlog | [story-05-hands-on-frame](./story-05-hands-on-frame.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-97-06 | The switcher | backlog | [story-06-switcher](./story-06-switcher.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-97-07 | One shelf, quiet chrome | backlog | [story-07-one-shelf](./story-07-one-shelf.md) | [evidence-story-07](./evidence-story-07.md) |
@@ -96,7 +97,21 @@ staged follow-ups (Native Surfaces; The Living World).
 
 ## Where we are
 
-**HS-97-03 done (2026-07-18): the arrangement is sacred.** The stacking
+**HS-97-04 done (2026-07-18): focus and depth.** The front window — the
+last id in the stacking order that is open and not minimized — alone
+wears the full elevation plus a 1px accent keyline ring; rest windows
+quiet to `--desk-window-shadow-rest` (two new component tokens; one
+property, one ladder, no per-window recipes; the dock's front chip
+mirrors the same rule). Motion completes the story: close animates out
+(140ms scale/fade), minimize contracts into the window's own dock chip
+and restore returns from it (WAAPI, compositor-only transform/opacity,
+chip elements tracked by ref registry — the architecture guard forbids
+selector bootstraps), everything instant under reduced motion. Proven
+by the `depth` walk on the production bundle (front-only keyline,
+depth follows raise, minimize/restore fly, close leaves, reduced-motion
+instant; `assets/depth-three-1440.png` LOOKED AT) and the storm inside
+the envelope (median 8.3ms, p95 9.9ms, 1 layout event); `npm run
+check` green (273 web tests). Earlier: **HS-97-03 done (2026-07-18): the arrangement is sacred.** The stacking
 order persists: `hs.desk.panels` now carries `{rects, order, max}`
 (`focusPanel` writes through; a legacy `min` key is tolerated and
 dropped by the loader, pinned by test), windows rehydrate at their

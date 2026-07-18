@@ -342,6 +342,10 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   };
 }
 
+/** Dock chip elements by window id — the minimize/restore motion's
+ * target (HS-97-04). Populated by the Dock's ref callbacks. */
+const chipEls = new Map<string, HTMLElement>();
+
 /** Open windows announce themselves (title/icon/close) so the dock can
  * name and drive them without a parallel registry. */
 const windowRegistry = new Map<
@@ -459,6 +463,17 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   } = props;
   const minimized = useDesk((s) => s.panelMin.includes(id));
   const maximized = useDesk((s) => s.panelMax.includes(id));
+  // HS-97-04 — the front window is the last id in the stacking order
+  // that is open (announced) and not minimized; it alone wears depth.
+  const isFront = useDesk((s) => {
+    for (let i = s.panelOrder.length - 1; i >= 0; i--) {
+      const oid = s.panelOrder[i];
+      if (s.panelMin.includes(oid)) continue;
+      if (!windowRegistry.has(oid)) continue;
+      return oid === id;
+    }
+    return false;
+  });
   const compact = useCompactViewport();
   const reducedMotion = useReducedMotion();
   const win = useDeskWindow(id, { minW, minH, open: open && !minimized });
@@ -467,17 +482,85 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+
+  // HS-97-04 — motion tells the story: close animates out; minimize
+  // contracts toward the window's dock chip and restore returns from
+  // it. WAAPI (compositor-only transform/opacity), skipped under
+  // reduced motion or where unavailable (jsdom).
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const leavingRef = useRef(false);
+  const dockChip = () => chipEls.get(id) ?? null;
+  const flyToChip = (el: HTMLElement, chip: Element, reverse: boolean) => {
+    const c = chip.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const dx = c.x + c.width / 2 - (r.x + r.width / 2);
+    const dy = c.y + c.height / 2 - (r.y + r.height / 2);
+    const away = { transform: `translate(${dx}px, ${dy}px) scale(0.06)`, opacity: 0 };
+    const home = { transform: "translate(0, 0) scale(1)", opacity: 1 };
+    return el.animate(reverse ? [away, home] : [home, away], {
+      duration: 220,
+      easing: "cubic-bezier(.2, .8, .2, 1)",
+      fill: "forwards",
+    });
+  };
+  const requestClose = () => {
+    const el = shellRef.current;
+    if (leavingRef.current) return;
+    if (!el || typeof el.animate !== "function" || reducedMotion) {
+      closeRef.current();
+      return;
+    }
+    leavingRef.current = true;
+    const anim = el.animate(
+      [
+        { opacity: 1, transform: "scale(1)" },
+        { opacity: 0, transform: "scale(0.96)" },
+      ],
+      { duration: 140, easing: "ease-in", fill: "forwards" },
+    );
+    anim.onfinish = () => {
+      leavingRef.current = false;
+      closeRef.current();
+    };
+  };
+  const requestMinimize = () => {
+    const el = shellRef.current;
+    const chip = dockChip();
+    const done = () => useDesk.getState().minimizePanel(id);
+    if (!el || typeof el.animate !== "function" || reducedMotion || !chip) {
+      done();
+      return;
+    }
+    const anim = flyToChip(el, chip, false);
+    anim.onfinish = () => {
+      anim.cancel(); // release the forwards fill before display:none
+      done();
+    };
+  };
+  const prevMinRef = useRef(false);
+  useEffect(() => {
+    const was = prevMinRef.current;
+    prevMinRef.current = minimized;
+    if (!was || minimized) return;
+    // Restore: the window returns from its dock chip.
+    const el = shellRef.current;
+    const chip = dockChip();
+    if (el && typeof el.animate === "function" && !reducedMotion && chip)
+      flyToChip(el, chip, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minimized]);
+
   useEffect(() => {
     if (!open) return;
-    announceWindow(id, name, glyph, () => closeRef.current());
+    announceWindow(id, name, glyph, () => requestClose());
     return () => retractWindow(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, id, name, glyph]);
 
   // HS-96-05 — window focus management (the ui-styling a11y pattern,
   // WITHOUT a modal trap: windows coexest is the law). Opening moves
   // focus into the window; closing returns it to the opener; Escape
   // anywhere inside closes this window.
-  const shellRef = useRef<HTMLDivElement | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (!open) return;
@@ -536,7 +619,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       onKeyDown={(e) => {
         if (e.key === "Escape" && !e.defaultPrevented) {
           e.stopPropagation();
-          onClose();
+          requestClose();
         }
       }}
       className={
@@ -544,7 +627,8 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         "desk-window desk-window-shell" +
         (win.floating ? " is-floating" : "") +
         (compact ? " is-sheet" : "") +
-        (maxed ? " is-max" : "")
+        (maxed ? " is-max" : "") +
+        (isFront ? " is-front" : "")
       }
       style={style}
       initial={reducedMotion || !entrance ? false : { x: 60, opacity: 0 }}
@@ -571,7 +655,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             type="button"
             className="desk-window-verb"
             aria-label={`Minimize ${name}`}
-            onClick={() => useDesk.getState().minimizePanel(id)}
+            onClick={requestMinimize}
           >
             –
           </button>
@@ -589,7 +673,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             type="button"
             className="desk-window-verb desk-window-close"
             aria-label={`Close ${name}`}
-            onClick={onClose}
+            onClick={requestClose}
           >
             ✕
           </button>
@@ -636,7 +720,16 @@ export function Dock() {
   }, []);
 
   if (windows.length === 0) return null;
-  const front = panelOrder[panelOrder.length - 1];
+  // The front chip mirrors the shell's is-front rule: the last id in
+  // the order that is open here and not minimized (HS-97-04).
+  let front: string | undefined;
+  for (let i = panelOrder.length - 1; i >= 0; i--) {
+    const oid = panelOrder[i];
+    if (panelMin.includes(oid)) continue;
+    if (!windows.some((w) => w.id === oid)) continue;
+    front = oid;
+    break;
+  }
   return (
     <div className="desk-dock" role="toolbar" aria-label="Open windows">
       {windows.map((c) => {
@@ -653,6 +746,10 @@ export function Dock() {
             <button
               type="button"
               className="desk-dock-main"
+              ref={(el) => {
+                if (el) chipEls.set(c.id, el);
+                else chipEls.delete(c.id);
+              }}
               aria-label={minimized ? `Restore ${c.label}` : `Focus ${c.label}`}
               onClick={() => {
                 const s = useDesk.getState();

@@ -5,7 +5,11 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, IN
-PROGRESS (3/9)**. **HS-97-03, The arrangement is sacred, DONE**: the
+PROGRESS (4/9)**. **HS-97-04, Focus and depth, DONE**: the front window
+alone wears the full elevation and an accent keyline (rest windows
+quiet down, the dock chip mirrors the rule), close animates out,
+minimize contracts into its dock chip and restore returns from it —
+walk-proven with the storm at 8.3ms median. Earlier: **HS-97-03, The arrangement is sacred, DONE**: the
 stacking order persists beside rects and maximize (reload-proven
 byte-identical with the front window restored), minimize is honestly
 session-scoped, the room menu wears the transient material instead of

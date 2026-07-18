@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 97
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-97-01
 - **Unblocks:** HS-97-06, HS-97-09
 
@@ -34,13 +34,13 @@ unannounced. Depth and motion are how an OS says what just happened.
 
 ## Acceptance criteria
 
-- [ ] Front vs rest windows are visually distinct (focused elevation +
+- [x] Front vs rest windows are visually distinct (focused elevation +
       keyline vs quiet), driven by tokens; shots at 1440 show three
       stacked windows reading as separate planes.
-- [ ] Close animates out; minimize animates toward the dock chip and
+- [x] Close animates out; minimize animates toward the dock chip and
       restore back; reduced-motion renders all three instant.
-- [ ] Storm median within the Phase 95 envelope on the assembled build.
-- [ ] Web suite + guards green; no new validator allow-list entries.
+- [x] Storm median within the Phase 95 envelope on the assembled build.
+- [x] Web suite + guards green; no new validator allow-list entries.
 
 ## Test plan
 

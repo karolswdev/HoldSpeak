@@ -978,6 +978,81 @@ def arrangement() -> None:
         browser.close()
 
 
+def depth() -> None:
+    """HS-97-04 — focus and depth: the front window alone wears the full
+    elevation + keyline; raising moves the depth; close/minimize/restore
+    move with intent (and instantly under reduced motion)."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        for label in ("Settings", "Meetings", "Dictation"):
+            page.click(".desk-mark")
+            page.click(f"nav.desk-menu button:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{label}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(500)
+
+        def shadow(label: str) -> str:
+            return page.evaluate(
+                """(label) => getComputedStyle(document.querySelector(
+                     `[aria-label='${label}'].desk-window-shell`)).boxShadow""",
+                label,
+            )
+
+        front, rest = shadow("Dictation"), shadow("Settings")
+        assert "70px" in front and "0px 0px 0px 1px" in front, front
+        assert "34px" in rest and "70px" not in rest, rest
+        # Raising moves the depth.
+        page.click("[aria-label='Settings'].desk-window-shell .desk-window-title")
+        page.wait_for_timeout(300)
+        front2 = shadow("Settings")
+        assert "70px" in front2, front2
+        assert "70px" not in shadow("Dictation"), "depth did not move"
+        page.screenshot(path=str(OUT / "depth-three-1440.png"))
+        # Minimize flies to the chip; the window parks; restore returns.
+        page.click('[aria-label="Minimize Settings"]')
+        page.wait_for_selector(".desk-dock-chip.is-min", timeout=3000)
+        page.wait_for_timeout(400)
+        assert not page.locator(
+            "[aria-label='Settings'].desk-window-shell"
+        ).is_visible()
+        page.click('[aria-label="Restore Settings"]')
+        page.wait_for_timeout(500)
+        assert page.locator(
+            "[aria-label='Settings'].desk-window-shell"
+        ).is_visible()
+        # Close animates out and the window leaves.
+        page.click('[aria-label="Close Settings"]')
+        page.wait_for_timeout(600)
+        assert page.locator("[aria-label='Settings'].desk-window-shell").count() == 0
+        print("depth walk: keyline+elevation on the front only, depth follows "
+              "raise, minimize/restore fly, close leaves")
+        page.close()
+        # Reduced motion: everything lands instantly.
+        page = browser.new_page(
+            viewport={"width": 1440, "height": 900},
+            reduced_motion="reduce",
+        )
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(800)
+        page.click(".desk-mark")
+        page.click("nav.desk-menu button:has-text('Settings')")
+        page.wait_for_selector(
+            "[aria-label='Settings'].desk-surface-window", timeout=10000
+        )
+        page.click('[aria-label="Close Settings"]')
+        page.wait_for_timeout(200)
+        assert page.locator("[aria-label='Settings'].desk-window-shell").count() == 0
+        print("depth walk (reduced motion): close is instant")
+        browser.close()
+
+
 def closeout() -> None:
     """HS-95-10 — the assembled walk: every per-story walk in sequence on
     the production bundle (entry-point-driven, the way a user travels),
@@ -1115,6 +1190,8 @@ if __name__ == "__main__":
         placement()
     elif mode == "arrangement":
         arrangement()
+    elif mode == "depth":
+        depth()
     elif mode == "closeout":
         closeout()
     elif mode == "focus":

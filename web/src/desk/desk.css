@@ -753,6 +753,17 @@
   bottom: auto;
   max-height: none;
 }
+/* HS-97-04 — depth: the front window carries the full elevation and a
+   1px keyline ring; rest windows quiet down. One property, one ladder —
+   never per-window recipes. Sheets keep their own form. */
+.desk-next .desk-window-shell:not(.is-sheet) {
+  box-shadow: var(--desk-window-shadow-rest);
+}
+.desk-next .desk-window-shell.is-front:not(.is-sheet) {
+  box-shadow:
+    0 0 0 1px var(--desk-window-keyline),
+    var(--desk-window-shadow);
+}
 .desk-next .desk-window-handle {
   cursor: grab;
   user-select: none;
