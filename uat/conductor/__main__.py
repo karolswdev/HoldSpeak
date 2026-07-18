@@ -26,7 +26,7 @@ def main() -> None:
     except ValueError:
         port = DEFAULT_PORT
 
-    app = create_app()
+    app = create_app(default_lan=(host == "0.0.0.0"))
 
     shown = (
         "localhost"
@@ -40,6 +40,7 @@ def main() -> None:
     print(f"  Ports:       conductor {port} · product-under-test 8788+ · hub 8765 untouched")
     if host == "0.0.0.0":
         print("  LAN-bound: reachable from the iPad/iPhone browser on this network.")
+        print("  Product runs default to LAN-bound with a pairing token in this mode.")
     print("=" * 60)
 
     uvicorn.run(app, host=host, port=port, log_level="info")
