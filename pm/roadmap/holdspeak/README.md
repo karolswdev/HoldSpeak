@@ -4,7 +4,16 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 95, The Desk OS, CLOSED (10/10 in
+**Last updated:** 2026-07-18 — **Phase 96, The Design System, SCAFFOLDED**
+by owner directive ("use ui-styling and design-system as Phase 96"): seven
+stories applying the vendored skills to the Desk OS — a three-layer token
+architecture generated from one JSON source, the hardcoded-value validator
+as a mechanical lock with the desk.css burn-down, component state specs
+made true, one window material grammar, the accessibility pass with the
+recorded Radix decision, docs, and a closeout against the production
+bundle. See
+[phase-96-the-design-system](./phase-96-the-design-system/current-phase-status.md).
+Earlier the same day: **Phase 95, The Desk OS, CLOSED (10/10 in
 two days)** at machine-verifiable scope under the standing close directive:
 the WebGL stage at the frame budget (median 8.3ms assembled), one window
 chrome with dock/snap/MRU cycling, every surface in-world, fifteen routes
@@ -260,7 +269,8 @@ canon, canon wins.
 | 92 | Make HoldSpeak feel like one powerful, understandable product by converging Web and native journeys on the Desk's shared objects, destinations, attention, authority, and retained results without rewriting the underlying systems. | planning | [phase-92-the-coalescence](./phase-92-the-coalescence/) |
 | 93 | Effortless HoldSpeak: make the Desk a rich, learnable AI operating system through visible subtraction, coherent OS affordances, contextual power, real failure recovery, accessibility, and sustained owner use across Web and flagship Swift. | done | [phase-93-effortless-holdspeak](./phase-93-effortless-holdspeak/) |
 | 94 | The Delivery Runtime: Delivery Workbench projects, Story progress, remote/local Coder sessions, terminals, evidence, and receipts as one robust platform primitive across workstation, iPad, and tailnet Web | done | [phase-94-delivery-runtime](./phase-94-delivery-runtime/) |
-| 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | planning | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
+| 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | done | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
+| 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | planning | [phase-96-the-design-system](./phase-96-the-design-system/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
