@@ -612,6 +612,92 @@ def meetings(intel: bool = False) -> None:
         browser.close()
 
 
+
+
+def config() -> None:
+    """HS-95-07 — configuration lives in-world: the chrome menu opens
+    Settings as a window, a real setting change round-trips to the hub and
+    survives reload, the shelf opens Runs on / Cadence / Integrations
+    (scoped Settings), and the inspector's edit affordances never leave
+    the desk."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        # 1. Chrome menu → Settings, in-world.
+        page.click(".desk-mark")
+        page.click("nav.desk-menu button:has-text(\'Settings\')")
+        page.wait_for_selector(
+            "[aria-label=\'Settings\'].desk-surface-window", timeout=8000
+        )
+        assert page.url.rstrip("/") == BASE, page.url
+        win = page.locator("[aria-label=\'Settings\'].desk-surface-window")
+        # 2. A real change: flip presence enabled via the cockpit search.
+        before = page.evaluate(
+            """async () => {
+              const r = await fetch('/api/settings', {credentials:'include'});
+              return (await r.json()).presence?.enabled ?? null;
+            }"""
+        )
+        win.locator("input[type=search]").first.fill("presence")
+        page.wait_for_timeout(600)
+        toggle = win.locator("input[type=checkbox]").first
+        toggle.wait_for(state="attached", timeout=5000)
+        # The Signal switch hides its native input; drive it directly.
+        toggle.evaluate("el => el.click()")
+        win.locator("button:has-text(\'Save settings\')").first.click()
+        page.wait_for_timeout(1500)
+        after = page.evaluate(
+            """async () => {
+              const r = await fetch('/api/settings', {credentials:'include'});
+              return (await r.json()).presence?.enabled ?? null;
+            }"""
+        )
+        assert after != before, (before, after)
+        page.reload(wait_until="networkidle")
+        wait_world(page)
+        persisted = page.evaluate(
+            """async () => {
+              const r = await fetch('/api/settings', {credentials:'include'});
+              return (await r.json()).presence?.enabled ?? null;
+            }"""
+        )
+        assert persisted == after, (persisted, after)
+        # 3. The shelf: Runs on, Cadence, and scoped Integrations.
+        for label, aria in (
+            ("Runs on", "Runs on"),
+            ("Cadence", "Cadence"),
+        ):
+            page.click(".desk-tools-launch")
+            page.click(f".desk-tool-link:has-text(\'{label}\')")
+            page.wait_for_selector(
+                f"[aria-label=\'{aria}\'].desk-surface-window", timeout=8000
+            )
+        page.click(".desk-tools-launch")
+        page.click(".desk-tool-link:has-text(\'Integrations\')")
+        page.wait_for_selector(
+            "[aria-label=\'Settings\'].desk-surface-window .desk-scope-chip",
+            timeout=8000,
+        )
+        assert page.url.rstrip("/") == BASE, page.url
+        page.screenshot(path=str(OUT / "config-1440.png"))
+        # 4. Flat routes still answer.
+        for path, marker in (
+            ("/settings", "Settings"),
+            ("/profiles", "Runs on"),
+            ("/cadence", "Cadence"),
+            ("/setup", "Setup and readiness"),
+        ):
+            page.goto(BASE + path, wait_until="networkidle")
+            page.wait_for_selector(
+                f".page-hero:has-text(\'{marker}\')", timeout=5000
+            )
+        print("config walk: settings change round-trips + persists; runs-on/"
+              "cadence/integrations open in-world; flat routes live")
+        browser.close()
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "shots"
     if mode == "shots":
@@ -631,5 +717,7 @@ if __name__ == "__main__":
         dictation()
     elif mode == "meetings":
         meetings(intel="--intel" in sys.argv)
+    elif mode == "config":
+        config()
     else:
         raise SystemExit(f"unknown mode {mode}")

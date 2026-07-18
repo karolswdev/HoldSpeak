@@ -4,7 +4,11 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **HS-95-06, Meetings through the desk,
+**Last updated:** 2026-07-18 — **HS-95-07, Configuration through the
+desk, DONE**: Settings/Runs on/Cadence/Setup as desk windows, Integrations
+as a scoped Settings alias, the inspector edits in place, and a real
+settings change round-trips and survives reload — all in-world. Earlier:
+**HS-95-06, Meetings through the desk,
 DONE**: Record opens the live window in place, one recorder truth across
 chip/orb/window, and the meeting memory core hosts reviews scoped from the
 pull-out — proven physically: the walk spoke a generated meeting through

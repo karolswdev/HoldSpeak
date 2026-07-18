@@ -638,15 +638,15 @@ export function Pullout({ o }: { o: WorldObject }) {
                   ? ` · ${capability.effect_classes.join(" · ")}`
                   : ""}
               </p>
-              <Link
+              <button
+                type="button"
                 className="desk-chip quiet"
-                to={workroomHref("/profiles", {
-                  action: "configure-runs-on",
-                  subjectRef: resourceRef,
-                })}
+                onClick={() =>
+                  openSurfaceOr("configure-runs-on", "/profiles", resourceRef)
+                }
               >
                 Configure Runs on
-              </Link>
+              </button>
               {o.kind === "chain" && (
                 <p className="quiet">
                   Sequence is the linear compatibility form.

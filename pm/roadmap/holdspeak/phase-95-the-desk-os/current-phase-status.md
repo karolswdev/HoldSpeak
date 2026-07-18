@@ -1,8 +1,8 @@
 # Phase 95 — The Desk OS
 
-**Status:** IN PROGRESS (6/10; HS-95-06 done 2026-07-18).
+**Status:** IN PROGRESS (7/10; HS-95-07 done 2026-07-18).
 
-**Last updated:** 2026-07-18 (HS-95-06, meetings through the desk, done).
+**Last updated:** 2026-07-18 (HS-95-07, configuration through the desk, done).
 
 ## Why this phase exists
 
@@ -118,7 +118,7 @@ navigates away from the desk.
 | HS-95-04 | Embeddable page cores | done | [story-04-embeddable-page-cores](./story-04-embeddable-page-cores.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-95-05 | Dictation through the desk | done | [story-05-dictation-through-the-desk](./story-05-dictation-through-the-desk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-95-06 | Meetings and recording through the desk | done | [story-06-meetings-through-the-desk](./story-06-meetings-through-the-desk.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-95-07 | Configuration through the desk | backlog | [story-07-configuration-through-the-desk](./story-07-configuration-through-the-desk.md) | — |
+| HS-95-07 | Configuration through the desk | done | [story-07-configuration-through-the-desk](./story-07-configuration-through-the-desk.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-95-08 | Studio, sessions, and the last exits | backlog | [story-08-studio-sessions-last-exits](./story-08-studio-sessions-last-exits.md) | — |
 | HS-95-09 | Docs: the Desk OS is the documented product | backlog | [story-09-docs](./story-09-docs.md) | — |
 | HS-95-10 | Closeout: performance proof, screenshot walk, owner walk | backlog | [story-10-closeout-owner-walk](./story-10-closeout-owner-walk.md) | — |
@@ -221,5 +221,17 @@ keys were shadowed by DB-backed settings on this staged run (the walk
 enabled intel through the product's own settings route; a UAT-rig
 observation worth a BACKLOG row at closeout).
 
-Next: HS-95-07 (configuration) then HS-95-08 (the last exits); the Phase
-93 physics contract remains the regression floor.
+**HS-95-07 done (2026-07-18): configuration lives in-world.** Settings,
+Runs on, Cadence, and Setup are cores hosted as desk windows (Commands
+landed in 04); the shelf's Integrations entry is an alias opening the
+Settings window scoped to integrations (the scope chip); the inspector's
+edit affordances (Configure Runs on, Configure <integration>, the
+Pullout's capability row) open scoped windows in place — the inspector
+never navigates; FirstWords' Setup/Runs on go through the shell. Proven
+by the config walk: a real presence toggle round-trips through
+`/api/settings` and survives reload, Runs on/Cadence/Integrations open
+in-world (three windows cascaded in `assets/config-1440.png`), and the
+flat routes still answer. Suite 258/258.
+
+Next: HS-95-08 (studio, sessions, and the last exits — the no-exit
+guard); the Phase 93 physics contract remains the regression floor.

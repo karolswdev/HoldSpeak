@@ -67,6 +67,58 @@ const SURFACES: SurfaceRow[] = [
     ),
   },
   {
+    key: "configure-settings",
+    id: "surface-settings",
+    title: "Settings",
+    glyph: "⚙",
+    eyebrow: "Configuration",
+    minW: 560,
+    Core: lazy(() =>
+      import("../../pages/cores/SettingsCore").then((m) => ({
+        default: m.SettingsCore,
+      })),
+    ),
+  },
+  {
+    key: "configure-runs-on",
+    id: "surface-profiles",
+    title: "Runs on",
+    glyph: "⇄",
+    eyebrow: "Runtime",
+    minW: 520,
+    Core: lazy(() =>
+      import("../../pages/cores/ProfilesCore").then((m) => ({
+        default: m.ProfilesCore,
+      })),
+    ),
+  },
+  {
+    key: "configure-cadence",
+    id: "surface-cadence",
+    title: "Cadence",
+    glyph: "∿",
+    eyebrow: "Follow-through",
+    minW: 520,
+    Core: lazy(() =>
+      import("../../pages/cores/CadenceCore").then((m) => ({
+        default: m.CadenceCore,
+      })),
+    ),
+  },
+  {
+    key: "configure-setup",
+    id: "surface-setup",
+    title: "Setup",
+    glyph: "✓",
+    eyebrow: "Arrival",
+    minW: 520,
+    Core: lazy(() =>
+      import("../../pages/cores/SetupCore").then((m) => ({
+        default: m.SetupCore,
+      })),
+    ),
+  },
+  {
     key: "inspect-activity",
     id: "surface-activity",
     title: "Activity",
@@ -111,6 +163,17 @@ export const useSurfaceWindows = create<SurfaceState>((set, get) => ({
   },
 }));
 
+/** Alias keys open an existing window with a default scope (e.g. the
+ * shelf's Integrations entry is the Settings window scoped to
+ * integrations). */
+const SURFACE_ALIASES: Record<string, { target: string; scope?: string }> = {
+  "configure-integrations": {
+    target: "configure-settings",
+    scope: "integration:destinations",
+  },
+  "configure-integration": { target: "configure-settings" },
+};
+
 export function SurfaceWindows() {
   const open = useSurfaceWindows((s) => s.open);
   const items = useDesk((s) => s.items);
@@ -121,7 +184,17 @@ export function SurfaceWindows() {
         useSurfaceWindows.getState().openSurfaceWindow(row.key, scope),
       ),
     );
-    return () => offs.forEach((off) => off());
+    const aliasOffs = Object.entries(SURFACE_ALIASES).map(([key, alias]) =>
+      registerSurface(key, (scope) =>
+        useSurfaceWindows
+          .getState()
+          .openSurfaceWindow(alias.target, scope ?? alias.scope),
+      ),
+    );
+    return () => {
+      offs.forEach((off) => off());
+      aliasOffs.forEach((off) => off());
+    };
   }, []);
 
   return (

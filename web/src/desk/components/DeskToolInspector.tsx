@@ -332,14 +332,13 @@ export function DeskToolInspector() {
                 Chat with {target.model}
               </button>
             ) : null}
-            <Link
+            <button
+              type="button"
               className="desk-chip quiet"
-              to={workroomHref("/profiles", {
-                action: "configure-runs-on",
-              })}
+              onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}
             >
               Configure Runs on
-            </Link>
+            </button>
           </div>
         </>
       ) : null}
@@ -508,15 +507,19 @@ export function DeskToolInspector() {
               ) : null}
             </section>
           ) : null}
-          <Link
+          <button
+            type="button"
             className="desk-chip quiet"
-            to={workroomHref("/settings", {
-              action: "configure-integration",
-              subjectRef: `integration:${integration.id}`,
-            })}
+            onClick={() =>
+              openSurfaceOr(
+                "configure-integration",
+                "/settings",
+                `integration:${integration.id}`,
+              )
+            }
           >
             Configure {integration.name}
-          </Link>
+          </button>
         </>
       ) : null}
 
