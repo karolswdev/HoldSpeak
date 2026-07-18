@@ -1,9 +1,10 @@
 # Phase 97 — The Window Grammar
 
-**Status:** IN PROGRESS (5/9, 2026-07-18) — from the owner's direct
+**Status:** IN PROGRESS (6/9, 2026-07-18) — from the owner's direct
 verdict on the Desk OS state.
 
-**Last updated:** 2026-07-18 (HS-97-05 done; hands on the frame).
+**Last updated:** 2026-07-18 (HS-97-06 done; the switcher answers
+"where is everything").
 
 ## Why this phase exists
 
@@ -89,13 +90,28 @@ staged follow-ups (Native Surfaces; The Living World).
 | HS-97-03 | The arrangement is sacred | done | [story-03-arrangement-persists](./story-03-arrangement-persists.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-97-04 | Focus and depth | done | [story-04-focus-depth](./story-04-focus-depth.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-97-05 | Hands on the frame | done | [story-05-hands-on-frame](./story-05-hands-on-frame.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-97-06 | The switcher | backlog | [story-06-switcher](./story-06-switcher.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-97-06 | The switcher | done | [story-06-switcher](./story-06-switcher.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-97-07 | One shelf, quiet chrome | backlog | [story-07-one-shelf](./story-07-one-shelf.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-97-08 | The physics floors, written | backlog | [story-08-docs](./story-08-docs.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-97-09 | Closeout: the grammar walk | backlog | [story-09-closeout](./story-09-closeout.md) | [evidence-story-09](./evidence-story-09.md) |
 
 ## Where we are
 
+**HS-97-06 done (2026-07-18): the switcher.** Exposé: the dock's ⊞
+verb or Ctrl+ArrowUp fans every open window into a non-overlapping
+pick grid (`exposeLayout`, pure + pinned; live shells scale into their
+cells via compositor transforms, minimized windows join as dimmed
+cards), the world dims behind a scrim, click or Enter focuses (a
+minimized pick restores), Escape or a backdrop click cancels with the
+shells animating home; instant under reduced motion. Ctrl+` cycling is
+finally visible: a transient strip names every open window with the
+landing target highlighted, fading after settling. Proven by the
+`switcher` walk on the production bundle (exposé fans 3 with 1 dim,
+click focuses, Escape cancels, the strip names all and fades;
+`assets/switcher-expose-1440.png` + `assets/switcher-strip-1440.png`
+LOOKED AT — the strip even caught the Meetings window mid-restore
+flying from its chip) and the storm inside the envelope (8.3ms median,
+1 layout event); `npm run check` green (279 web tests). Earlier:
 **HS-97-05 done (2026-07-18): hands on the frame.** The snap ghost:
 while a head drag hovers a snap region, the landing tile renders live
 as a translucent accent preview (`SnapGhost`, module-level publisher,

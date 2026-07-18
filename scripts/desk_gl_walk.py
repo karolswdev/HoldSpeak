@@ -1124,6 +1124,66 @@ def frame() -> None:
         browser.close()
 
 
+def switcher() -> None:
+    """HS-97-06 — the switcher: exposé fans every open window (minimized
+    ones join as dimmed cards) into a pick grid — click focuses, Escape
+    cancels; Ctrl+` cycling shows the transient strip naming every open
+    window with the landing target highlighted, fading after settling."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        for label in ("Settings", "Meetings", "Dictation"):
+            page.click(".desk-mark")
+            page.click(f"nav.desk-menu button:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{label}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(400)
+        page.click('[aria-label="Minimize Meetings"]')
+        page.wait_for_selector(".desk-dock-chip.is-min", timeout=3000)
+        # 1. Exposé via the dock verb: three cells, the minimized one dim.
+        page.click('[aria-label="Overview"]')
+        page.wait_for_selector(".desk-expose", timeout=3000)
+        page.wait_for_timeout(400)
+        assert page.locator(".desk-expose-cell").count() == 3
+        assert page.locator(".desk-expose-cell.is-min").count() == 1
+        page.screenshot(path=str(OUT / "switcher-expose-1440.png"))
+        # 2. Click a cell → exposé closes, that window is front.
+        page.click(".desk-expose-cell[aria-label='Focus Settings']")
+        page.wait_for_timeout(500)
+        assert page.locator(".desk-expose").count() == 0
+        front = page.evaluate(
+            """() => {
+              const shells = [...document.querySelectorAll('.desk-window-shell')];
+              shells.sort((a,b)=> (+b.style.zIndex||0) - (+a.style.zIndex||0));
+              return shells[0]?.getAttribute('aria-label');
+            }"""
+        )
+        assert front == "Settings", front
+        # 3. Keyboard entry + Escape cancel.
+        page.keyboard.press("Control+ArrowUp")
+        page.wait_for_selector(".desk-expose", timeout=3000)
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(400)
+        assert page.locator(".desk-expose").count() == 0
+        # 4. Ctrl+` cycling wears the visible strip, target highlighted.
+        page.keyboard.press("Control+`")
+        page.wait_for_selector(".desk-switcher", timeout=2000)
+        chips = page.locator(".desk-switcher-chip").count()
+        assert chips == 3, chips
+        assert page.locator(".desk-switcher-chip.is-target").count() == 1
+        page.screenshot(path=str(OUT / "switcher-strip-1440.png"))
+        page.wait_for_timeout(1300)
+        assert page.locator(".desk-switcher").count() == 0, "strip did not fade"
+        print("switcher walk: expose fans 3 (1 dim), click focuses, Escape "
+              "cancels, the strip names all with the target and fades")
+        browser.close()
+
+
 def closeout() -> None:
     """HS-95-10 — the assembled walk: every per-story walk in sequence on
     the production bundle (entry-point-driven, the way a user travels),
@@ -1265,6 +1325,8 @@ if __name__ == "__main__":
         depth()
     elif mode == "frame":
         frame()
+    elif mode == "switcher":
+        switcher()
     elif mode == "closeout":
         closeout()
     elif mode == "focus":

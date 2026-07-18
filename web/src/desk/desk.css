@@ -814,6 +814,75 @@
   background: var(--accent-tint);
   pointer-events: none;
 }
+
+/* HS-97-06 — the exposé: the world dims below the window band while the
+   pick grid rides the transient band above it. */
+.desk-next .desk-expose-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-world-overlay);
+  background: var(--desk-glass);
+}
+.desk-next .desk-expose {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-transient);
+}
+.desk-next .desk-expose-cell {
+  position: absolute;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--desk-window-radius);
+  background: none;
+  cursor: pointer;
+}
+.desk-next .desk-expose-cell:hover,
+.desk-next .desk-expose-cell:focus-visible {
+  border-color: var(--desk-window-keyline);
+}
+.desk-next .desk-expose-cell.is-min {
+  background: var(--desk-panel-fill);
+  opacity: 0.78;
+}
+.desk-next .desk-expose-name {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--desk-glass);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+/* HS-97-06 — the visible MRU switcher strip. */
+.desk-next .desk-switcher {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--desk-transient-radius);
+  background: var(--desk-panel-fill);
+  box-shadow: var(--desk-transient-shadow);
+  z-index: var(--desk-z-transient);
+}
+.desk-next .desk-switcher-chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+.desk-next .desk-switcher-chip.is-target {
+  background: var(--accent-tint);
+  color: var(--text);
+}
 .desk-next .desk-window-grip {
   position: absolute;
   right: 4px;

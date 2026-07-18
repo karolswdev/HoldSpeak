@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 97
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-97-04
 - **Unblocks:** HS-97-09
 
@@ -32,13 +32,13 @@ visible switcher.
 
 ## Acceptance criteria
 
-- [ ] Exposé fans 3+ windows (including one minimized) into a
+- [x] Exposé fans 3+ windows (including one minimized) into a
       non-overlapping grid, click focuses, Escape cancels — walk-proven
       with an in-exposé screenshot.
-- [ ] Ctrl+` shows the switcher strip naming every open window with the
+- [x] Ctrl+` shows the switcher strip naming every open window with the
       target highlighted; it fades after settling.
-- [ ] Reduced-motion honored; axe stays clean.
-- [ ] Web suite + guards green; storm envelope holds.
+- [x] Reduced-motion honored; axe stays clean.
+- [x] Web suite + guards green; storm envelope holds.
 
 ## Test plan
 

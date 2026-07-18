@@ -5,7 +5,12 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, IN
-PROGRESS (5/9)**. **HS-97-05, Hands on the frame, DONE**: the snap
+PROGRESS (6/9)**. **HS-97-06, The switcher, DONE**: exposé fans every
+open window into a pick grid (live shells scale in, minimized ones
+join as dimmed cards; click focuses, Escape cancels) and Ctrl+`
+cycling shows a transient strip naming every window with the landing
+target highlighted — walk-proven, storm at 8.3ms median. Earlier:
+**HS-97-05, Hands on the frame, DONE**: the snap
 ghost previews the landing tile live mid-drag and the release lands
 exactly on it, windows resize from their left/right/bottom edges and
 the bottom-left corner, and double-click on the head toggles maximize

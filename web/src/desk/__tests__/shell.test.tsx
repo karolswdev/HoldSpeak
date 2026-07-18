@@ -7,6 +7,7 @@ import {
   DeskWindowFrame,
   Dock,
   clampIntoBand,
+  exposeLayout,
   placeWindow,
   resizeEdge,
   snapForPointer,
@@ -213,6 +214,37 @@ describe("resizeEdge (HS-97-05, edge resize math)", () => {
     expect(r.x).toBe(80);
     expect(r.w).toBe(420);
     expect(r.h).toBe(330);
+  });
+});
+
+describe("exposeLayout (HS-97-06, the pick grid)", () => {
+  it("four windows tile 2x2 inside the working band, no overlap", () => {
+    const cells = exposeLayout(4, 1440, 900);
+    expect(cells).toHaveLength(4);
+    for (const c of cells) {
+      expect(c.x).toBeGreaterThanOrEqual(10);
+      expect(c.x + c.w).toBeLessThanOrEqual(1430);
+      expect(c.y).toBeGreaterThanOrEqual(54);
+      expect(c.y + c.h).toBeLessThanOrEqual(900 - 52);
+    }
+    for (let i = 0; i < cells.length; i++)
+      for (let j = i + 1; j < cells.length; j++) {
+        const a = cells[i];
+        const b = cells[j];
+        const overlap =
+          a.x < b.x + b.w &&
+          a.x + a.w > b.x &&
+          a.y < b.y + b.h &&
+          a.y + a.h > b.y;
+        expect(overlap).toBe(false);
+      }
+  });
+
+  it("a last-row straggler centers", () => {
+    const cells = exposeLayout(3, 1440, 900);
+    const last = cells[2];
+    const mid = last.x + last.w / 2;
+    expect(Math.abs(mid - 720)).toBeLessThan(last.w);
   });
 });
 

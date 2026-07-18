@@ -215,6 +215,38 @@ export function SnapGhost() {
   );
 }
 
+/** HS-97-06 — the exposé grid: N non-overlapping cells inside the
+ * working band, last row centered. Pure, pinned by test. */
+export function exposeLayout(
+  count: number,
+  vw: number,
+  vh: number,
+): PanelRect[] {
+  const top = DESK_WINDOW.snapTop + 8;
+  const bottom = DESK_WINDOW.snapBottom + 8;
+  const GAP = 18;
+  const cols = Math.max(1, Math.ceil(Math.sqrt(count)));
+  const rows = Math.max(1, Math.ceil(count / cols));
+  const bandW = vw - MARGIN * 2;
+  const bandH = vh - top - bottom;
+  const w = Math.floor((bandW - GAP * (cols - 1)) / cols);
+  const h = Math.floor((bandH - GAP * (rows - 1)) / rows);
+  const cells: PanelRect[] = [];
+  for (let i = 0; i < count; i++) {
+    const r = Math.floor(i / cols);
+    const inRow = r === rows - 1 ? count - r * cols : cols;
+    const rowW = inRow * w + (inRow - 1) * GAP;
+    const x0 = MARGIN + Math.floor((bandW - rowW) / 2);
+    cells.push({
+      x: x0 + (i - r * cols) * (w + GAP),
+      y: top + r * (h + GAP),
+      w,
+      h,
+    });
+  }
+  return cells;
+}
+
 function clampRect(r: PanelRect, minW: number, minH: number): PanelRect {
   const vw = window.innerWidth || 1280;
   const vh = window.innerHeight || 800;
@@ -454,6 +486,202 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
 /** Dock chip elements by window id — the minimize/restore motion's
  * target (HS-97-04). Populated by the Dock's ref callbacks. */
 const chipEls = new Map<string, HTMLElement>();
+
+/** Window shell elements by id — the exposé's fan targets (HS-97-06). */
+const shellEls = new Map<string, HTMLElement>();
+
+/** HS-97-06 — exposé state (module-level so the dock verb and the
+ * keyboard share one truth). */
+let exposeActive = false;
+const exposeListeners = new Set<() => void>();
+export function toggleExpose(force?: boolean) {
+  const next = force ?? !exposeActive;
+  if (next === exposeActive) return;
+  exposeActive = next;
+  for (const l of exposeListeners) l();
+}
+
+/** HS-97-06 — the transient switcher strip's state. */
+let switcherState: {
+  items: { id: string; label: string; glyph: string }[];
+  target: string;
+} | null = null;
+let switcherTimer: ReturnType<typeof setTimeout> | undefined;
+const switcherListeners = new Set<() => void>();
+function flashSwitcher(target: string) {
+  switcherState = {
+    items: registrySnapshot.map((w) => ({
+      id: w.id,
+      label: w.label,
+      glyph: w.glyph,
+    })),
+    target,
+  };
+  for (const l of switcherListeners) l();
+  clearTimeout(switcherTimer);
+  switcherTimer = setTimeout(() => {
+    switcherState = null;
+    for (const l of switcherListeners) l();
+  }, 900);
+}
+
+/** The visible MRU switcher (HS-97-06): while Ctrl+` cycles, a strip
+ * names every open window with the landing target highlighted, fading
+ * once the cycle settles. */
+export function Switcher() {
+  const st = useSyncExternalStore(
+    (cb) => {
+      switcherListeners.add(cb);
+      return () => switcherListeners.delete(cb);
+    },
+    () => switcherState,
+  );
+  if (!st) return null;
+  return (
+    <div className="desk-switcher" role="status">
+      {st.items.map((w) => (
+        <span
+          key={w.id}
+          className={
+            "desk-switcher-chip" + (w.id === st.target ? " is-target" : "")
+          }
+        >
+          <span aria-hidden="true">{w.glyph}</span> {w.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** The exposé (HS-97-06): fans every open window into a pick grid —
+ * live shells scale into their cells (compositor transforms), minimized
+ * windows join as dimmed cards; click or Enter focuses, Escape cancels. */
+export function Expose() {
+  const active = useSyncExternalStore(
+    (cb) => {
+      exposeListeners.add(cb);
+      return () => exposeListeners.delete(cb);
+    },
+    () => exposeActive,
+  );
+  const windows = useOpenWindows();
+  const panelMin = useDesk((s) => s.panelMin);
+  const reducedMotion = useReducedMotion();
+  const firstBtnRef = useRef<HTMLButtonElement | null>(null);
+  const fannedRef = useRef<
+    { el: HTMLElement; anim: Animation }[]
+  >([]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "ArrowUp") {
+        e.preventDefault();
+        toggleExpose();
+      } else if (e.key === "Escape" && exposeActive) {
+        e.preventDefault();
+        toggleExpose(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const entries = windows.map((w) => ({
+    ...w,
+    minimized: panelMin.includes(w.id),
+  }));
+  const vw = typeof window === "undefined" ? 1280 : window.innerWidth || 1280;
+  const vh = typeof window === "undefined" ? 800 : window.innerHeight || 800;
+  const cells = exposeLayout(Math.max(entries.length, 1), vw, vh);
+
+  useEffect(() => {
+    if (!active) return;
+    const fanned: { el: HTMLElement; anim: Animation }[] = [];
+    entries.forEach((en, i) => {
+      if (en.minimized) return;
+      const el = shellEls.get(en.id);
+      if (!el || typeof el.animate !== "function") return;
+      const r = el.getBoundingClientRect();
+      if (!r.width) return;
+      const cell = cells[i];
+      const s = Math.min(cell.w / r.width, cell.h / r.height, 1);
+      const dx = cell.x + cell.w / 2 - (r.x + r.width / 2);
+      const dy = cell.y + cell.h / 2 - (r.y + r.height / 2);
+      const anim = el.animate(
+        [
+          { transform: "translate(0, 0) scale(1)" },
+          { transform: `translate(${dx}px, ${dy}px) scale(${s})` },
+        ],
+        {
+          duration: reducedMotion ? 0 : 220,
+          easing: "cubic-bezier(.2, .8, .2, 1)",
+          fill: "forwards",
+        },
+      );
+      fanned.push({ el, anim });
+    });
+    fannedRef.current = fanned;
+    firstBtnRef.current?.focus();
+    return () => {
+      for (const { el, anim } of fannedRef.current) {
+        try {
+          const current = getComputedStyle(el).transform;
+          anim.cancel();
+          if (!reducedMotion && current && current !== "none")
+            el.animate(
+              [{ transform: current }, { transform: "none" }],
+              { duration: 180, easing: "cubic-bezier(.2, .8, .2, 1)" },
+            );
+        } catch {
+          /* jsdom or torn-down element: nothing to unwind */
+        }
+      }
+      fannedRef.current = [];
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
+  if (!active || entries.length === 0) return null;
+  return (
+    <>
+      <div className="desk-expose-scrim" aria-hidden="true" />
+      <div
+        className="desk-expose"
+        role="dialog"
+        aria-label="Window overview"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) toggleExpose(false);
+        }}
+      >
+        {entries.map((en, i) => (
+          <button
+            key={en.id}
+            type="button"
+            ref={i === 0 ? firstBtnRef : undefined}
+            className={"desk-expose-cell" + (en.minimized ? " is-min" : "")}
+            style={{
+              top: cells[i].y,
+              left: cells[i].x,
+              width: cells[i].w,
+              height: cells[i].h,
+            }}
+            aria-label={`Focus ${en.label}`}
+            onClick={() => {
+              toggleExpose(false);
+              const s = useDesk.getState();
+              if (s.panelMin.includes(en.id)) s.restorePanel(en.id);
+              else s.focusPanel(en.id);
+            }}
+          >
+            <span className="desk-expose-name">
+              <span aria-hidden="true">{en.glyph}</span> {en.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
 
 /** Open windows announce themselves (title/icon/close) so the dock can
  * name and drive them without a parallel registry. */
@@ -723,6 +951,8 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       ref={(el: HTMLDivElement | null) => {
         win.setEl(el);
         shellRef.current = el;
+        if (el) shellEls.set(id, el);
+        else shellEls.delete(id);
       }}
       tabIndex={-1}
       onKeyDown={(e) => {
@@ -832,6 +1062,8 @@ export function Dock() {
       const s = useDesk.getState();
       if (s.panelMin.includes(next)) s.restorePanel(next);
       else s.focusPanel(next);
+      // The cycle is visible (HS-97-06): the strip names the landing.
+      flashSwitcher(next);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -889,6 +1121,15 @@ export function Dock() {
           </span>
         );
       })}
+      <button
+        type="button"
+        className="desk-dock-reset"
+        aria-label="Overview"
+        title="Overview"
+        onClick={() => toggleExpose(true)}
+      >
+        ⊞
+      </button>
       <button
         type="button"
         className="desk-dock-reset"
