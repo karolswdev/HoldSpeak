@@ -4,7 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **HS-95-07, Configuration through the
+**Last updated:** 2026-07-18 — **HS-95-08, The last exits, DONE — the
+two-worlds architecture is dead**: fifteen flat routes demoted to desk deep
+links (walk-proven cold), Workbench/Studio/Companion/docs/components live as
+windows (Workbench maximized, saving a real workflow), the sessions surface
+reconciled to one roster + one chat + one session window, the desk carries
+zero router links (mechanical no-exit lock, shown firing on a planted
+violation), and AppShell/PRIMARY_NAV/PageHero/WorkroomBar are deleted.
+Earlier: **HS-95-07, Configuration through the
 desk, DONE**: Settings/Runs on/Cadence/Setup as desk windows, Integrations
 as a scoped Settings alias, the inspector edits in place, and a real
 settings change round-trips and survives reload — all in-world. Earlier:

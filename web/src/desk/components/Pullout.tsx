@@ -5,7 +5,6 @@
 // elsewhere and can be moved, resized, and raised).
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Link } from "react-router-dom";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
 import { apiRequest } from "../../lib/api";
@@ -20,7 +19,6 @@ import { objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
 import { DeskWindowFrame } from "./DeskWindow";
-import { workroomHref } from "../../workrooms/context";
 import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
 import {
@@ -325,15 +323,15 @@ export function Pullout({ o }: { o: WorldObject }) {
           </button>
         )}
         {o.kind === "workflow" && (
-          <Link
+          <button
+            type="button"
             className="desk-chip quiet"
-            to={workroomHref("/workbench", {
-              action: "edit-workflow",
-              subjectRef: resourceRef,
-            })}
+            onClick={() =>
+              openSurfaceOr("build-workflow", "/workbench", resourceRef)
+            }
           >
             Edit Workflow
-          </Link>
+          </button>
         )}
         </>
       }
@@ -653,15 +651,15 @@ export function Pullout({ o }: { o: WorldObject }) {
                 </p>
               )}
               {o.kind === "workflow" && (
-                <Link
+                <button
+                  type="button"
                   className="desk-chip quiet"
-                  to={workroomHref("/workbench", {
-                    action: "edit-workflow",
-                    subjectRef: resourceRef,
-                  })}
+                  onClick={() =>
+                    openSurfaceOr("build-workflow", "/workbench", resourceRef)
+                  }
                 >
                   Edit this Workflow
-                </Link>
+                </button>
               )}
             </div>
             <div className="desk-pullout-run">

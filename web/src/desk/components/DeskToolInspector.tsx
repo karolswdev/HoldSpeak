@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { apiFetch, readableError } from "../../lib/api";
 import {
   authorityBasisLabel,
@@ -8,7 +7,6 @@ import {
   effectClassLabel,
   humanizeWireValue,
 } from "../../lib/productLanguage";
-import { workroomHref } from "../../workrooms/context";
 import { modelChatId } from "../chat";
 import { contextualIntegrationActions } from "../contextual";
 import { useProjections } from "../projections";

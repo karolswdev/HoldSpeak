@@ -9,7 +9,7 @@ import {
   StatusPill,
 } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
-import { PageHero, ResourceState, asRows, useResource } from "../pageSupport";
+import { ResourceState, asRows, useResource } from "../pageSupport";
 
 type SetupStatus = {
   overall?: string;

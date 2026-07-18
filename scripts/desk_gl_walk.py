@@ -698,6 +698,81 @@ def config() -> None:
         browser.close()
 
 
+
+
+def lastexits() -> None:
+    """HS-95-08 — the two-worlds architecture is dead: every demoted route
+    cold-lands on the desk with the right window open; Workbench opens
+    maximized from the shelf and saves a real workflow through the hub;
+    Studio and Companion are windows; the desk never navigates."""
+    ROUTES = [
+        ("/dictation", "Dictation"),
+        ("/live", "Live meeting"),
+        ("/history", "Meetings"),
+        ("/meetings", "Meetings"),
+        ("/settings", "Settings"),
+        ("/activity", "Activity"),
+        ("/commands", "Commands"),
+        ("/cadence", "Cadence"),
+        ("/studio", "Studio"),
+        ("/workbench", "Workbench"),
+        ("/profiles", "Runs on"),
+        ("/companion", "Personas and coders"),
+        ("/setup", "Setup"),
+        ("/docs/dictation-runtime", "Runtime guide"),
+        ("/design/components", "Components"),
+    ]
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        for path, title in ROUTES:
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.goto(BASE + path, wait_until="networkidle")
+            page.wait_for_selector(
+                f"[aria-label=\'{title}\'].desk-surface-window", timeout=15000
+            )
+            assert page.url.rstrip("/") == BASE, (path, page.url)
+            page.close()
+        print(f"demotion: all {len(ROUTES)} routes land on the desk with the right window")
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        # A REAL workflow: create the primitive on the desk, then edit it
+        # in the scoped, maximized Workbench window and save through the hub.
+        page.click(".desk-create-button")
+        page.click(".desk-create-menu button:has-text(\'Workflow\')")
+        page.wait_for_timeout(1500)
+        objs = page.evaluate("() => window.__hsWorldProbe()")
+        wf = next((o for o in objs if o["ref"].startswith("workflow:")), None)
+        assert wf, f"no workflow object appeared: {[o['ref'] for o in objs][:6]}"
+        page.keyboard.press("Escape")  # settle any inline editor
+        page.wait_for_timeout(400)
+        page.mouse.click(wf["x"], wf["y"])
+        page.wait_for_selector(".desk-pullout", timeout=8000)
+        page.click(".desk-pullout button:has-text(\'Edit Workflow\')")
+        wb = page.locator("[aria-label=\'Workbench\'].desk-surface-window")
+        wb.wait_for(timeout=8000)
+        assert "is-max" in (wb.get_attribute("class") or ""), "not maximized"
+        wb.locator(".desk-scope-chip").wait_for(timeout=8000)
+        run_label = "Save Workflow"
+        wb.locator("button:has-text(\'Save Workflow\')").first.click()
+        page.wait_for_timeout(2000)
+        assert "Saved to this Workflow." in wb.inner_text(), "save did not land"
+        page.screenshot(path=str(OUT / "workbench-max-1440.png"))
+        page.click('[aria-label="Close Workbench"]')
+        page.keyboard.press("Escape")  # settle the workflow pull-out too
+        page.wait_for_timeout(400)
+        # Companion: the reconciled roster window.
+        page.click(".desk-tools-launch")
+        page.click(".desk-tool-link:has-text(\'Personas\')")
+        page.wait_for_selector(
+            "[aria-label=\'Personas and coders\'].desk-surface-window",
+            timeout=8000,
+        )
+        page.screenshot(path=str(OUT / "companion-1440.png"))
+        print(f"workbench maximized + saved via {run_label!r}; companion window open")
+        browser.close()
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "shots"
     if mode == "shots":
@@ -719,5 +794,7 @@ if __name__ == "__main__":
         meetings(intel="--intel" in sys.argv)
     elif mode == "config":
         config()
+    elif mode == "lastexits":
+        lastexits()
     else:
         raise SystemExit(f"unknown mode {mode}")

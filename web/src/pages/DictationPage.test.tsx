@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import DictationPage from "./DictationPage";
+import { DictationCore } from "./cores/DictationCore";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -81,7 +81,7 @@ function mockRoutes(options: {
 async function openTryIt() {
   render(
     <MemoryRouter>
-      <DictationPage />
+      <DictationCore />
     </MemoryRouter>,
   );
   fireEvent.click(screen.getByRole("tab", { name: "Try it" }));

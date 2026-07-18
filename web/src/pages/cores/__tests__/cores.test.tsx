@@ -3,12 +3,10 @@
 // tests/unit/test_page_cores_guard.py pins host-agnosticism statically,
 // these pin it behaviorally.
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import { DeskWindowFrame } from "../../../desk/components/DeskWindow";
 import { useDesk } from "../../../desk/store";
-import ActivityPage from "../../ActivityPage";
-import CommandsPage from "../../CommandsPage";
+import { DEMOTED_ROUTES } from "../../../routes";
 import { ActivityCore } from "../ActivityCore";
 import { CommandsCore } from "../CommandsCore";
 
@@ -50,31 +48,30 @@ describe("cores render chrome-free inside a desk window", () => {
   });
 });
 
-describe("the flat wrappers keep the page chrome", () => {
-  it("ActivityPage: hero + wrap around the same core", () => {
-    const { container } = render(
-      <MemoryRouter>
-        <ActivityPage />
-      </MemoryRouter>,
-    );
-    expect(container.querySelector(".page-wrap")).toBeTruthy();
-    expect(container.querySelector(".page-hero")).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "Activity" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Activity intelligence")).toBeInTheDocument();
+describe("route demotion (HS-95-08): every former page is a deep link", () => {
+  const table = Object.fromEntries(DEMOTED_ROUTES.map((r) => [r.path, r]));
+
+  it("maps every former flat route to its desk surface", () => {
+    expect(table["/dictation"].surface).toBe("dictate");
+    expect(table["/live"].surface).toBe("record-live");
+    expect(table["/history"].surface).toBe("review-meetings");
+    expect(table["/meetings"].surface).toBe("review-meetings");
+    expect(table["/settings"].surface).toBe("configure-settings");
+    expect(table["/activity"].surface).toBe("inspect-activity");
+    expect(table["/commands"].surface).toBe("configure-commands");
+    expect(table["/cadence"].surface).toBe("configure-cadence");
+    expect(table["/studio"].surface).toBe("configure-tools");
+    expect(table["/workbench"].surface).toBe("build-workflow");
+    expect(table["/profiles"].surface).toBe("configure-runs-on");
+    expect(table["/companion"].surface).toBe("inspect-personas-and-coders");
+    expect(table["/setup"].surface).toBe("configure-setup");
+    expect(table["/docs/dictation-runtime"].surface).toBe("read-runtime-docs");
+    expect(table["/design/components"].surface).toBe("design-components");
   });
 
-  it("CommandsPage: hero + wrap around the same core", () => {
-    const { container } = render(
-      <MemoryRouter>
-        <CommandsPage />
-      </MemoryRouter>,
-    );
-    expect(container.querySelector(".page-wrap")).toBeTruthy();
-    expect(container.querySelector(".page-hero")).toBeTruthy();
-    expect(
-      screen.getByRole("heading", { name: "Commands" }),
-    ).toBeInTheDocument();
+  it("carries subject decoding where deep links need scope", () => {
+    expect(table["/history"].subjectKind).toBe("meeting");
+    expect(table["/workbench"].subjectKind).toBe("workflow");
+    expect(table["/settings"].subjectKind).toBe("integration");
   });
 });

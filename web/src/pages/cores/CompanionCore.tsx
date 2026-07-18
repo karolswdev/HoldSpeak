@@ -1,20 +1,23 @@
-import { Link } from "react-router-dom";
+// HS-95-08 — the Companion core: the ONE roster of Personas and waiting
+// Coder sessions; a persona opens the chat window, a session opens the
+// session window (the reconciled surfaces — no duplicate chat/list).
+import { openCoderSession, openPersona } from "../../desk/shell";
+import type { CoreProps } from "./ActivityCore";
 import {
   Disclosure,
   EmptyState,
   Panel,
   StatusPill,
-} from "../components/signal/Signal";
+} from "../../components/signal/Signal";
 import {
-  PageHero,
   ResourceState,
   asRows,
   rowId,
   useResource,
-} from "./pageSupport";
-import { type JsonRecord } from "../lib/api";
+} from "../pageSupport";
+import { type JsonRecord } from "../../lib/api";
 
-export default function CompanionPage() {
+export function CompanionCore({ hero }: CoreProps) {
   const recipes = useResource<JsonRecord>("/api/recipes", {});
   const coders = useResource<JsonRecord>("/api/coders/status", {});
   const recipeRows = asRows(recipes.data, ["recipes"]).filter(
@@ -31,10 +34,8 @@ export default function CompanionPage() {
     ),
   );
   return (
-    <div className="page-wrap">
-      <PageHero eyebrow="Companion" title="Personas and coder sessions">
-        Saved Personas and waiting Coder sessions on the shared Desk.
-      </PageHero>
+    <>
+      {hero ? hero(null) : null}
       {sessions.length ? (
         <Panel title="Needs you" eyebrow="Live coding sessions">
           <ul className="data-list">
@@ -42,7 +43,21 @@ export default function CompanionPage() {
               const session = (row.session as JsonRecord | undefined) ?? row;
               return (
                 <li className="data-row" key={rowId(session, index)}>
-                  <div>
+                  <button
+                    type="button"
+                    className="data-row-open"
+                    onClick={() =>
+                      openCoderSession(
+                        String(
+                          row.key ??
+                            session.key ??
+                            `${String(session.agent ?? "claude")}:${String(
+                              session.session_id ?? "",
+                            )}`,
+                        ),
+                      )
+                    }
+                  >
                     <strong>
                       {String(
                         session.project ??
@@ -58,7 +73,7 @@ export default function CompanionPage() {
                           "Awaiting your response",
                       )}
                     </small>
-                  </div>
+                  </button>
                   <StatusPill tone="warning">Awaiting response</StatusPill>
                 </li>
               );
@@ -75,16 +90,17 @@ export default function CompanionPage() {
         >
           <div className="studio-grid">
             {recipeRows.map((recipe, index) => (
-              <Link
+              <button
+                type="button"
                 className="studio-card"
-                to={`/?agent=${encodeURIComponent(String(recipe.id))}`}
+                onClick={() => openPersona(String(recipe.id))}
                 key={rowId(recipe, index)}
               >
                 <span aria-hidden="true">{String(recipe.avatar ?? "🤖")}</span>
                 <strong>{String(recipe.name ?? "Persona")}</strong>
                 <p>{String(recipe.role ?? "")}</p>
-                <b>Open on Desk →</b>
-              </Link>
+                <b>Open chat →</b>
+              </button>
             ))}
           </div>
         </ResourceState>
@@ -102,6 +118,6 @@ export default function CompanionPage() {
           <li>There is no hosted relay and no autonomous send.</li>
         </ol>
       </Disclosure>
-    </div>
+    </>
   );
 }

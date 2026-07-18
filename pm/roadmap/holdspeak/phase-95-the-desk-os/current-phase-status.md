@@ -1,8 +1,8 @@
 # Phase 95 — The Desk OS
 
-**Status:** IN PROGRESS (7/10; HS-95-07 done 2026-07-18).
+**Status:** IN PROGRESS (8/10; HS-95-08 done 2026-07-18).
 
-**Last updated:** 2026-07-18 (HS-95-07, configuration through the desk, done).
+**Last updated:** 2026-07-18 (HS-95-08, the last exits, done — the two-worlds architecture is dead).
 
 ## Why this phase exists
 
@@ -119,7 +119,7 @@ navigates away from the desk.
 | HS-95-05 | Dictation through the desk | done | [story-05-dictation-through-the-desk](./story-05-dictation-through-the-desk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-95-06 | Meetings and recording through the desk | done | [story-06-meetings-through-the-desk](./story-06-meetings-through-the-desk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-95-07 | Configuration through the desk | done | [story-07-configuration-through-the-desk](./story-07-configuration-through-the-desk.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-95-08 | Studio, sessions, and the last exits | backlog | [story-08-studio-sessions-last-exits](./story-08-studio-sessions-last-exits.md) | — |
+| HS-95-08 | Studio, sessions, and the last exits | done | [story-08-studio-sessions-last-exits](./story-08-studio-sessions-last-exits.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-95-09 | Docs: the Desk OS is the documented product | backlog | [story-09-docs](./story-09-docs.md) | — |
 | HS-95-10 | Closeout: performance proof, screenshot walk, owner walk | backlog | [story-10-closeout-owner-walk](./story-10-closeout-owner-walk.md) | — |
 
@@ -233,5 +233,21 @@ by the config walk: a real presence toggle round-trips through
 in-world (three windows cascaded in `assets/config-1440.png`), and the
 flat routes still answer. Suite 258/258.
 
-Next: HS-95-08 (studio, sessions, and the last exits — the no-exit
-guard); the Phase 93 physics contract remains the regression floor.
+**HS-95-08 done (2026-07-18): the two-worlds architecture is dead.**
+Workbench, Studio, Companion, the runtime guide, and the component gallery
+are cores hosted as desk windows (Workbench opens MAXIMIZED and saved a
+real desk-created workflow through the hub, scoped from its pull-out).
+The sessions surface reconciled: the Companion core is the one roster; a
+persona opens the one chat window, a session opens the one session window.
+The desk carries ZERO router imports/links (the chrome menu and tool shelf
+are pure dispatchers), locked by `tests/unit/test_desk_no_exit_guard.py` —
+the evidence shows the guard firing on a planted violation. All fifteen
+flat routes are DEMOTED: `routes.tsx` renders three surfaces (Desk,
+Welcome, Presence) and maps every legacy path to a deep link that queues
+its window open (`openSurfaceWhenReady`) and lands on the desk — the walk
+cold-hits all fifteen and each arrives with the right window. `AppShell`
+is the one immersive frame (header/PRIMARY_NAV/trust dialog deleted);
+the page wrappers, PageHero, and WorkroomBar are gone; the bundle carries
+only Welcome/Presence page chunks. Suite 256/256; guards green.
+
+Next: HS-95-09 (docs under the Constitution) then HS-95-10 (closeout).

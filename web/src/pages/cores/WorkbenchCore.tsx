@@ -1,24 +1,26 @@
+// HS-95-08 — the Workbench core: the typed-step workflow editor,
+// hosted anywhere (the desk maximizes it to the full stage).
+import { openPrimitive } from "../../desk/shell";
+import type { CoreProps } from "./ActivityCore";
 import {
   type PointerEvent as ReactPointerEvent,
   useEffect,
   useMemo,
   useState,
 } from "react";
-import { Link } from "react-router-dom";
 import {
   Button,
   Field,
   InlineMessage,
   Panel,
   TextArea,
-} from "../components/signal/Signal";
-import { apiFetch, readableError } from "../lib/api";
+} from "../../components/signal/Signal";
+import { apiFetch, readableError } from "../../lib/api";
 import {
   buildLinearGraph,
   parseLinearGraph,
   type LinearStep,
-} from "../desk/graph";
-import { PageHero } from "./pageSupport";
+} from "../../desk/graph";
 import {
   PRESETS,
   STEP_KINDS,
@@ -28,8 +30,7 @@ import {
   type Node,
   type StepKind,
   type Workflow,
-} from "../features/workbench/model";
-import { decodeWorkroomContext, workroomSubjectId } from "../workrooms/context";
+} from "../../features/workbench/model";
 
 type WorkbenchDraft = {
   workflow: Workflow;
@@ -108,11 +109,11 @@ function toLinear(workflow: Workflow): LinearStep[] {
   });
 }
 
-export default function WorkbenchPage() {
-  const workroom = decodeWorkroomContext(window.location.search);
+export function WorkbenchCore({ hero, scope }: CoreProps) {
   const requestedWorkflowId =
-    new URLSearchParams(window.location.search).get("workflow") ??
-    workroomSubjectId(workroom, "workflow");
+    scope && scope.startsWith("workflow:")
+      ? scope.slice("workflow:".length)
+      : null;
   const draftKey = `holdspeak.workroom.workbench.${requestedWorkflowId ?? "new"}`;
   const [initialDraft] = useState(() => readWorkbenchDraft(draftKey));
   const [workflow, setWorkflow] = useState<Workflow>(
@@ -287,13 +288,7 @@ export default function WorkbenchPage() {
     );
   };
 
-  return (
-    <div className="page-wrap workbench-page">
-      <PageHero
-        eyebrow="Build"
-        title="Workbench"
-        workroomSubject={linked ? workflow.name : undefined}
-        actions={
+  const verbs = (
           <div className="button-row">
             {!linked &&
               PRESETS.map((preset) => (
@@ -307,12 +302,15 @@ export default function WorkbenchPage() {
                 </Button>
               ))}
           </div>
-        }
-      >
-        {linked
-          ? `Editing ${workflow.name}. Changes stay in this browser until saved.`
-          : "Build a Workflow from typed steps."}
-      </PageHero>
+  );
+  return (
+    <>
+      {hero ? hero(verbs) : <div className="desk-core-verbs">{verbs}</div>}
+      {linked ? (
+        <p className="desk-scope-chip">
+          <span aria-hidden="true">⧉</span> Editing {workflow.name}
+        </p>
+      ) : null}
       {status && (
         <InlineMessage
           tone={support === "unsupported_graph" ? "error" : "info"}
@@ -434,16 +432,17 @@ export default function WorkbenchPage() {
             Run {workflow.name}
           </Button>
           {artifactId && (
-            <Link
+            <button
+              type="button"
               className="btn btn--secondary"
-              to={`/?open=${encodeURIComponent(`artifact:${artifactId}`)}`}
+              onClick={() => openPrimitive(`artifact:${artifactId}`)}
             >
               Return to kept Artifact
-            </Link>
+            </button>
           )}
         </div>
         {runOutput && <pre className="code-block">{runOutput}</pre>}
       </Panel>
-    </div>
+    </>
   );
 }

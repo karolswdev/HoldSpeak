@@ -23,6 +23,8 @@ interface SurfaceRow {
   glyph: string;
   eyebrow: string;
   minW?: number;
+  /** Open maximized (full stage) — the canvas-sized surfaces want it. */
+  maximized?: boolean;
   Core: LazyExoticComponent<ComponentType<CoreProps & { scope?: string }>>;
 }
 
@@ -119,6 +121,72 @@ const SURFACES: SurfaceRow[] = [
     ),
   },
   {
+    key: "build-workflow",
+    id: "surface-workbench",
+    title: "Workbench",
+    glyph: "⧉",
+    eyebrow: "Build",
+    minW: 720,
+    maximized: true,
+    Core: lazy(() =>
+      import("../../pages/cores/WorkbenchCore").then((m) => ({
+        default: m.WorkbenchCore,
+      })),
+    ),
+  },
+  {
+    key: "configure-tools",
+    id: "surface-studio",
+    title: "Studio",
+    glyph: "◇",
+    eyebrow: "Focused workspace",
+    minW: 520,
+    Core: lazy(() =>
+      import("../../pages/cores/StudioCore").then((m) => ({
+        default: m.StudioCore,
+      })),
+    ),
+  },
+  {
+    key: "inspect-personas-and-coders",
+    id: "surface-companion",
+    title: "Personas and coders",
+    glyph: "🤝",
+    eyebrow: "Companion",
+    minW: 560,
+    Core: lazy(() =>
+      import("../../pages/cores/CompanionCore").then((m) => ({
+        default: m.CompanionCore,
+      })),
+    ),
+  },
+  {
+    key: "read-runtime-docs",
+    id: "surface-runtime-docs",
+    title: "Runtime guide",
+    glyph: "📘",
+    eyebrow: "Setup guide",
+    minW: 560,
+    Core: lazy(() =>
+      import("../../pages/cores/RuntimeDocsCore").then((m) => ({
+        default: m.RuntimeDocsCore,
+      })),
+    ),
+  },
+  {
+    key: "design-components",
+    id: "surface-components",
+    title: "Components",
+    glyph: "▦",
+    eyebrow: "Signal React",
+    minW: 640,
+    Core: lazy(() =>
+      import("../../pages/cores/ComponentsCore").then((m) => ({
+        default: m.ComponentsCore,
+      })),
+    ),
+  },
+  {
     key: "inspect-activity",
     id: "surface-activity",
     title: "Activity",
@@ -180,9 +248,11 @@ export function SurfaceWindows() {
 
   useEffect(() => {
     const offs = SURFACES.map((row) =>
-      registerSurface(row.key, (scope) =>
-        useSurfaceWindows.getState().openSurfaceWindow(row.key, scope),
-      ),
+      registerSurface(row.key, (scope) => {
+        useSurfaceWindows.getState().openSurfaceWindow(row.key, scope);
+        if (row.maximized && !useDesk.getState().panelMax.includes(row.id))
+          useDesk.getState().toggleMaximizePanel(row.id);
+      }),
     );
     const aliasOffs = Object.entries(SURFACE_ALIASES).map(([key, alias]) =>
       registerSurface(key, (scope) =>

@@ -8,13 +8,28 @@
 export type SurfaceOpener = (scope?: string) => void;
 
 const surfaces = new Map<string, SurfaceOpener>();
+const pendingOpens: Array<{ key: string; scope?: string }> = [];
 
-/** Register a window opener for a surface key. Returns the unregister. */
+/** Register a window opener for a surface key. Returns the unregister.
+ * Registration flushes any queued deep-link opens for the key (a demoted
+ * route can ask before the desk has mounted its windows). */
 export function registerSurface(key: string, opener: SurfaceOpener) {
   surfaces.set(key, opener);
+  for (let i = pendingOpens.length - 1; i >= 0; i--) {
+    if (pendingOpens[i].key === key) {
+      const [queued] = pendingOpens.splice(i, 1);
+      opener(queued.scope);
+    }
+  }
   return () => {
     if (surfaces.get(key) === opener) surfaces.delete(key);
   };
+}
+
+/** Open now if registered, else queue until the surface registers (the
+ * demoted-route arrival path). */
+export function openSurfaceWhenReady(key: string, scope?: string): void {
+  if (!openSurface(key, scope)) pendingOpens.push({ key, scope });
 }
 
 /** Open a surface in-world. False = not yet registered (legacy fallback). */
@@ -63,4 +78,16 @@ export function openPrimitive(ref: string): void {
     return;
   }
   shellNavigate?.(`/?open=${encodeURIComponent(ref)}`);
+}
+
+/** Open a Persona's chat window (the one chat surface). */
+export function openPersona(personaId: string): void {
+  void import("./store").then((m) => m.useDesk.getState().openChat(personaId));
+}
+
+/** Open a Coder session's window (the one session surface). */
+export function openCoderSession(key: string): void {
+  void import("./steering").then((m) =>
+    m.useSteering.getState().openSession(key),
+  );
 }
