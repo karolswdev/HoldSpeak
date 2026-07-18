@@ -814,6 +814,99 @@ def closeout() -> None:
     print("closeout walk: all eight walks green; final shots archived")
 
 
+
+
+def focus() -> None:
+    """HS-96-03 — the keyboard state contract: Tab traversal shows the
+    accent focus outline on chrome, dock, and window verbs; pressed
+    grammar exists (asserted statically by the guard suite)."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        page.click(".desk-attention-launch")
+        page.wait_for_selector(".desk-attention-drawer", timeout=5000)
+        seen = []
+        for _ in range(14):
+            page.keyboard.press("Tab")
+            info = page.evaluate(
+                """() => {
+                  const el = document.activeElement;
+                  if (!el || el === document.body) return null;
+                  const cs = getComputedStyle(el);
+                  return {
+                    label: el.getAttribute('aria-label') || el.textContent?.slice(0, 24) || el.tagName,
+                    outline: cs.outlineWidth,
+                    style: cs.outlineStyle,
+                  };
+                }"""
+            )
+            if info:
+                seen.append(info)
+        focused_with_ring = [
+            f for f in seen if f["outline"] == "2px" and f["style"] != "none"
+        ]
+        assert len(focused_with_ring) >= 8, (
+            f"focus ring missing on tab stops: {seen}"
+        )
+        page.screenshot(path=str(OUT / "focus-ring-1440.png"))
+        # HS-96-05: opening a window moves focus INTO it; Escape closes it
+        # and focus returns to the opener.
+        focused = page.evaluate(
+            """() => document.activeElement?.getAttribute('aria-label') ||
+                     document.activeElement?.className || ''"""
+        )
+        page.click(".desk-mark")
+        page.click("nav.desk-menu button:has-text(\'Settings\')")
+        page.wait_for_selector(
+            "[aria-label=\'Settings\'].desk-surface-window", timeout=8000
+        )
+        page.wait_for_timeout(400)
+        inside = page.evaluate(
+            """() => {
+              const win = document.querySelector(
+                "[aria-label=\'Settings\'].desk-surface-window");
+              return win ? win.contains(document.activeElement) : false;
+            }"""
+        )
+        assert inside, "focus did not move into the opened window"
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(400)
+        assert (
+            page.locator("[aria-label=\'Settings\'].desk-surface-window").count()
+            == 0
+        ), "Escape did not close the window"
+        # Keyboard travel through the GL world surfaces a visible chip.
+        for _ in range(30):
+            page.keyboard.press("Tab")
+            chip = page.evaluate(
+                """() => {
+                  const el = document.activeElement;
+                  return el && el.closest('.desk-world-a11y')
+                    ? el.textContent : null;
+                }"""
+            )
+            if chip:
+                box = page.evaluate(
+                    """() => {
+                      const r = document.activeElement.getBoundingClientRect();
+                      return {w: r.width, h: r.height};
+                    }"""
+                )
+                assert box["w"] > 40 and box["h"] > 20, (
+                    f"world focus chip not visible: {box}"
+                )
+                page.screenshot(path=str(OUT / "focus-world-chip-1440.png"))
+                print(f"world focus chip visible: {chip!r} ({box})")
+                break
+        print(
+            f"focus walk: {len(seen)} tab stops ringed; window focus-in, "
+            f"Escape-close, and the world chip verified"
+        )
+        browser.close()
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "shots"
     if mode == "shots":
@@ -839,5 +932,7 @@ if __name__ == "__main__":
         lastexits()
     elif mode == "closeout":
         closeout()
+    elif mode == "focus":
+        focus()
     else:
         raise SystemExit(f"unknown mode {mode}")

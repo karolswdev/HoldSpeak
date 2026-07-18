@@ -16,15 +16,18 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { useDesk, type PanelRect } from "../store";
+// The physics constants mirror the CSS component tokens — one generated
+// source (design-tokens.json), no drift possible (HS-96-02).
+import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
 
 /** Viewport margin windows are clamped inside. */
-const MARGIN = 10;
+const MARGIN = DESK_WINDOW.margin;
 /** Minimum visible head strip so a window can always be grabbed back. */
-const GRAB = 72;
+const GRAB = DESK_WINDOW.grab;
 /** The desk-window z band (see the ladder note in desk.css). */
-const Z_BASE = 42;
+const Z_BASE = DESK_Z.windowBase;
 /** Cascade step when several default-corner windows are open at once. */
-const CASCADE = 26;
+const CASCADE = DESK_WINDOW.cascade;
 
 /** Windows currently mounted at their CSS default corner (no rect yet). */
 const defaultCorner = new Set<string>();
@@ -40,8 +43,8 @@ export function snapForPointer(
 ): PanelRect | null {
   const EDGE = 26;
   const CORNER = 150;
-  const top = 54; // below the chrome band
-  const bottom = 52; // clear of the dock band
+  const top = DESK_WINDOW.snapTop; // below the chrome band
+  const bottom = DESK_WINDOW.snapBottom; // clear of the dock band
   const halfW = Math.floor((vw - MARGIN * 3) / 2);
   const halfH = Math.floor((vh - top - bottom - MARGIN) / 2);
   const left = px <= CORNER;
@@ -374,6 +377,26 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     return () => retractWindow(id);
   }, [open, id, name, glyph]);
 
+  // HS-96-05 — window focus management (the ui-styling a11y pattern,
+  // WITHOUT a modal trap: windows coexest is the law). Opening moves
+  // focus into the window; closing returns it to the opener; Escape
+  // anywhere inside closes this window.
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    openerRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    shellRef.current?.focus({ preventScroll: true });
+    return () => {
+      const opener = openerRef.current;
+      if (opener && document.contains(opener))
+        opener.focus({ preventScroll: true });
+    };
+  }, [open, id]);
+
   // Opening always PRESENTS the window. A stale minimize (e.g. persisted
   // from a prior session whose feature-open state reset on reload) would
   // otherwise open the window invisibly parked — a stranded surface.
@@ -409,7 +432,17 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   return (
     <motion.div
-      ref={(el: HTMLDivElement | null) => win.setEl(el)}
+      ref={(el: HTMLDivElement | null) => {
+        win.setEl(el);
+        shellRef.current = el;
+      }}
+      tabIndex={-1}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && !e.defaultPrevented) {
+          e.stopPropagation();
+          onClose();
+        }
+      }}
       className={
         (className ? className + " " : "") +
         "desk-window desk-window-shell" +

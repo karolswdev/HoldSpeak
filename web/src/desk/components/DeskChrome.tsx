@@ -63,6 +63,38 @@ export function DeskChrome({
               className="desk-menu"
               role="menu"
               onMouseLeave={() => setMenuOpen(false)}
+              onKeyDown={(e) => {
+                // HS-96-05 — the Radix menu keyboard pattern, hand-rolled
+                // (the recorded decision: Signal stays; the patterns come).
+                const items = Array.from(
+                  e.currentTarget.querySelectorAll<HTMLElement>(
+                    "[role='menuitem']",
+                  ),
+                );
+                const at = items.indexOf(
+                  document.activeElement as HTMLElement,
+                );
+                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                  e.preventDefault();
+                  const step = e.key === "ArrowDown" ? 1 : -1;
+                  items[
+                    (at + step + items.length) % items.length
+                  ]?.focus();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  setMenuOpen(false);
+                  (
+                    e.currentTarget.closest(".desk-menu-wrap")
+                      ?.querySelector(".desk-mark") as HTMLElement | null
+                  )?.focus();
+                } else if (e.key === "Home") {
+                  e.preventDefault();
+                  items[0]?.focus();
+                } else if (e.key === "End") {
+                  e.preventDefault();
+                  items[items.length - 1]?.focus();
+                }
+              }}
             >
               {ROOMS.map((r) => (
                 <button

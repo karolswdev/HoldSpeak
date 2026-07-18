@@ -55,9 +55,16 @@ web/src/styles/                      tokens, reset and named compositions
 
 Mechanical locks: `tests/unit/test_desk_no_exit_guard.py` (the desk never
 navigates; three rendered routes; the flat shell stays dead),
-`tests/unit/test_page_cores_guard.py` (cores stay host-agnostic), and the
+`tests/unit/test_page_cores_guard.py` (cores stay host-agnostic), the
 Phase 73 desk locks (no modal roles on the desk, no browser mic in the
-desk tree, byte-stable position storage).
+desk tree, byte-stable position storage), and the Phase 96 design-system
+locks (`npm run tokens:check` + `tokens:gate` — generated tokens and no
+raw values in component CSS; `tests/unit/test_design_system_guard.py` —
+the state contract stays true). The design system itself is canon in
+`docs/internal/DESIGN_SYSTEM.md`: three-layer tokens from
+`web/design-tokens.json`, the generated TS mirror feeding window physics
+and GL palettes, the component state matrices, and the recorded Radix
+decision.
 
 Route-local state stays in the route. State shared across a feature can move to
 a feature hook/reducer. State shared across routes may use Zustand when it has a

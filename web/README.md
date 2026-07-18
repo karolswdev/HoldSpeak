@@ -87,3 +87,10 @@ surface:
 4. **Style seam**: window-hosted cores render inside
    `.desk-surface-body`; never reintroduce `.page-*` chrome classes in a
    core.
+5. **Styling rules** (`docs/internal/DESIGN_SYSTEM.md` is the canon):
+   component tokens only — `npm run tokens:gate` fails raw colors,
+   z-index, and ms literals in component CSS; new recurring values become
+   tokens in `design-tokens.json` (then `npm run tokens`), not allow-list
+   entries; the focus and pressed state grammars are inherited — never
+   hand-roll them; the window material is ONE `:where()` rule — no
+   per-window recipes.

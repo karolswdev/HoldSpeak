@@ -15,7 +15,7 @@ source:
   inventory: pm/roadmap/holdspeak-uat/phase-2-the-inventory/directory/_raw-inventory-rows.json
   additions: uat/feature-additions.yaml
   phase_index: pm/roadmap/holdspeak/README.md
-  phases_total: 96
+  phases_total: 97
 features:
 - key: activity.candidates.meeting
   title: Activity-derived meeting candidates
@@ -3054,6 +3054,19 @@ features:
   - seeded-desk
   priority: must
   status: live
+- key: phase96.design.system
+  title: One design system - tokens, state grammars, one material, keyboard truth
+  domain: Phase 96 the design system
+  phases:
+  - 96
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
 - key: plugins.authoring.write-your-own
   title: Write your own meeting plugin or connector against a documented contract
   domain: public-docs-claims
@@ -4238,3 +4251,5 @@ phase_map:
   - phase95.deskos.gl-world
   - phase95.deskos.surfaces-in-world
   - phase95.deskos.windows-shell
+  '96':
+  - phase96.design.system

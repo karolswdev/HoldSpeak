@@ -4,7 +4,53 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 95, The Desk OS, CLOSED (10/10 in
+**Last updated:** 2026-07-18 — **Phase 96, The Design System, CLOSED
+(7/7, scaffolded and shipped the same day by owner directive)**: one token
+source of truth generating the CSS and the TS mirror, the validator gate
+live in check and CI, the state contract written and true, one window
+material, the keyboard-true OS, docs wired, and the closeout green on the
+production bundle (storm 8.3ms median; sweep 4110/0). The owner's
+design-polish verdict rides Campaign 13. Earlier: **HS-96-06, Docs and
+the mechanical lock,
+DONE**: DESIGN_SYSTEM.md is wired into the contributor path (web/README's
+add-a-surface styling step, the architecture doc's locks list); all doc
+guards green. Earlier: **HS-96-05, The accessibility pass, DONE**:
+windows manage focus without traps (in on open, back on close, Escape
+closes), the menu speaks full keyboard, the GL world's focused object
+surfaces as a visible chip, axe gates ride the suite, and the Radix
+decision is recorded (patterns yes, primitives no). Earlier: **HS-96-04,
+One material grammar, DONE**:
+one :where() rule carries the whole window family (fill/radius/elevation/
+glass as component tokens; the pull-out keeps only its per-kind tinted
+edge), named normalizations recorded, the allow-list shrank, and the
+assembled storm holds 8.3ms median with the glass family-wide. Earlier:
+**HS-96-03, Component state specs, DONE**:
+the state contract is written (docs/internal/DESIGN_SYSTEM.md, token
+vocabulary only, guard-locked) and made true — one pressed grammar across
+the Signal buttons and eleven chrome families, the global focus ring
+audited and adopted, 14/14 tab stops wearing the accent ring in the
+keyboard walk. Earlier: **HS-96-02, The validator gate and the
+burn-down, DONE**: the token gate runs in npm run check (shown firing on a
+planted raw value), 86 CSS literals became named tokens, a 70-entry
+reasoned allow-list covers the atmosphere art, and the generated TS mirror
+feeds the window physics and GL palettes from the same source as the CSS.
+Earlier: **HS-96-01, The token architecture, DONE**:
+`design-tokens.json` is the one source of truth (three layers per the
+vendored skill), the adapted generator emits `tokens.css` with a drift
+gate first in `npm run check`, all 117 pre-existing tokens preserved with
+identical computed values (proven mechanically), and 61 new tokens codify
+the primitives and the Desk OS chrome (the z ladder, window physics
+constants, the glow pool, zone tints). Earlier: **Phase 96, The Design
+System, SCAFFOLDED**
+by owner directive ("use ui-styling and design-system as Phase 96"): seven
+stories applying the vendored skills to the Desk OS — a three-layer token
+architecture generated from one JSON source, the hardcoded-value validator
+as a mechanical lock with the desk.css burn-down, component state specs
+made true, one window material grammar, the accessibility pass with the
+recorded Radix decision, docs, and a closeout against the production
+bundle. See
+[phase-96-the-design-system](./phase-96-the-design-system/current-phase-status.md).
+Earlier the same day: **Phase 95, The Desk OS, CLOSED (10/10 in
 two days)** at machine-verifiable scope under the standing close directive:
 the WebGL stage at the frame budget (median 8.3ms assembled), one window
 chrome with dock/snap/MRU cycling, every surface in-world, fifteen routes
@@ -260,7 +306,8 @@ canon, canon wins.
 | 92 | Make HoldSpeak feel like one powerful, understandable product by converging Web and native journeys on the Desk's shared objects, destinations, attention, authority, and retained results without rewriting the underlying systems. | planning | [phase-92-the-coalescence](./phase-92-the-coalescence/) |
 | 93 | Effortless HoldSpeak: make the Desk a rich, learnable AI operating system through visible subtraction, coherent OS affordances, contextual power, real failure recovery, accessibility, and sustained owner use across Web and flagship Swift. | done | [phase-93-effortless-holdspeak](./phase-93-effortless-holdspeak/) |
 | 94 | The Delivery Runtime: Delivery Workbench projects, Story progress, remote/local Coder sessions, terminals, evidence, and receipts as one robust platform primitive across workstation, iPad, and tailnet Web | done | [phase-94-delivery-runtime](./phase-94-delivery-runtime/) |
-| 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | planning | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
+| 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | done | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
+| 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

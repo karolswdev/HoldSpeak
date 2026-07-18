@@ -1,0 +1,350 @@
+{
+  "$doc": "HS-96-02 — deliberate raw-value exceptions to the token gate. Each entry names its reason; the validator fails on anything not listed here and on stale entries. Shrinking this list is standing work (HS-96-04 folds the one-offs).",
+  "entries": [
+    {
+      "file": "src/desk/desk.css",
+      "match": "#0b0d12",
+      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "#16111f",
+      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "#090a0e",
+      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 122, 64, 0.22)",
+      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.06)",
+      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(140, 104, 255, 0.13)",
+      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(120, 60, 40, 0.14)",
+      "reason": "DioPal atmosphere art (HS-71) — the room's gradient/spotlight stops live here by design"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(12, 10, 18, 0.62)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(52, 211, 153, 0.6)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.1)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.14)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(13, 11, 18, 0.96)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(0, 0, 0, 0.52)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.45)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "z-index: 24",
+      "reason": "local stacking inside one component's own context (not the OS ladder)"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(5, 4, 9, 0.62)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "z-index: 26",
+      "reason": "local stacking inside one component's own context (not the OS ladder)"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.08)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(8, 7, 12, 0.8)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 255, 255, 0.03)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(8, 7, 12, 0.6)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(10, 9, 14, 0.5)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 255, 255, 0.055)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 122, 64, 0.5)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(120, 40, 20, 0.5)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.35)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.8)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.4)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.85)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.6)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "z-index: 29",
+      "reason": "local stacking inside one component's own context (not the OS ladder)"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(12, 10, 18, 0.72)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(12, 10, 18, 0.7)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(255, 107, 53, 0.55)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "z-index: 34",
+      "reason": "local stacking inside one component's own context (not the OS ladder)"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(14, 12, 20, 0.92)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "#ffb4a0",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(8, 7, 12, 0.55)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "#3ecf8e",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "#f5a623",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "#ff6b6b",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "z-index: 60",
+      "reason": "local stacking inside one component's own context (not the OS ladder)"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(0, 0, 0, 0.45)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(0, 0, 0, 0.36)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "z-index: 46",
+      "reason": "local stacking inside one component's own context (not the OS ladder)"
+    },
+    {
+      "file": "src/desk/desk.css",
+      "match": "rgba(12, 10, 17, 0.82)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/global.css",
+      "match": "rgba(255, 255, 255, 0.045)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/global.css",
+      "match": "rgba(0, 0, 0, 0.24)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/global.css",
+      "match": "rgba(0, 0, 0, 0.22)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/global.css",
+      "match": "0ms",
+      "reason": "an explicit zero — not a magic value"
+    },
+    {
+      "file": "src/styles/global.css",
+      "match": "40ms",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "z-index: 999",
+      "reason": "local stacking inside one component's own context (not the OS ladder)"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "z-index: 50",
+      "reason": "local stacking inside one component's own context (not the OS ladder)"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "rgba(14, 15, 19, 0.82)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "rgba(255, 255, 255, 0.025)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "rgba(0, 0, 0, 0.68)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "#090a0e",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "rgba(255, 107, 53, 0.13)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "rgba(21, 23, 29, 0.94)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "#0b0c10",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "rgba(255, 255, 255, 0.13)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "rgba(255, 255, 255, 0.06)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "z-index: 5",
+      "reason": "local stacking inside one component's own context (not the OS ladder)"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "rgba(21, 23, 29, 0.96)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "z-index: 78",
+      "reason": "local stacking inside one component's own context (not the OS ladder)"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "60ms",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "rgba(14, 15, 19, 0.98)",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    },
+    {
+      "file": "src/styles/react-app.css",
+      "match": "01ms",
+      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
+    }
+  ]
+}

@@ -13,7 +13,10 @@
     "typecheck": "tsc --noEmit",
     "test:web": "vitest run --maxWorkers=2",
     "guard:architecture": "node scripts/guard-architecture.mjs",
-    "check": "npm run guard:architecture && npm run typecheck && npm run test:web && npm run build"
+    "tokens": "node scripts/generate-tokens.cjs",
+    "tokens:check": "node scripts/generate-tokens.cjs --check",
+    "tokens:gate": "node scripts/validate-tokens.cjs",
+    "check": "npm run tokens:check && npm run tokens:gate && npm run guard:architecture && npm run typecheck && npm run test:web && npm run build"
   },
   "devDependencies": {
     "@fontsource/inter": "^5.2.8",

@@ -1,0 +1,910 @@
+{
+  "$description": "HS-96-01 — HoldSpeak's design-token source of truth. Three layers per the vendored design-system skill: primitive (raw values), semantic (purpose names — today's canonical Signal vocabulary, preserved verbatim), component (the Desk OS chrome). scripts/generate-tokens.cjs emits src/styles/tokens.css from this file; edit HERE, never the CSS.",
+  "primitive": {
+    "color": {
+      "ink": {
+        "0": {
+          "value": "#0e0f13",
+          "doc": "the near-black floor (Signal bg)"
+        },
+        "1": {
+          "value": "#15171d",
+          "doc": "surface step 1"
+        },
+        "2": {
+          "value": "#1c1f27",
+          "doc": "surface step 2"
+        },
+        "3": {
+          "value": "#242833",
+          "doc": "surface step 3"
+        },
+        "4": {
+          "value": "#191b23",
+          "doc": "gradient top of the bg wash"
+        }
+      },
+      "paper": {
+        "0": {
+          "value": "#f2f3f5",
+          "doc": "primary text (~17:1 AAA on ink.0)"
+        },
+        "1": {
+          "value": "#9ba2b0",
+          "doc": "muted text (~7.1:1 AAA)"
+        },
+        "2": {
+          "value": "#767e8d",
+          "doc": "faint text (~4.7:1 AA)"
+        }
+      },
+      "orange": {
+        "300": {
+          "value": "#ff9d5c",
+          "doc": "gradient amber head"
+        },
+        "400": {
+          "value": "#ff7d4d",
+          "doc": "accent hover"
+        },
+        "500": {
+          "value": "#ff6b35",
+          "doc": "THE signal orange (~6.8:1 on ink.0)"
+        },
+        "600": {
+          "value": "#ec5a28",
+          "doc": "accent pressed"
+        },
+        "700": {
+          "value": "#f24a2e",
+          "doc": "gradient ember tail"
+        }
+      },
+      "green": {
+        "400": {
+          "value": "#34d399",
+          "doc": "ok"
+        },
+        "500": {
+          "value": "#10b981",
+          "doc": "ok strong"
+        }
+      },
+      "amber": {
+        "400": {
+          "value": "#fbbf24",
+          "doc": "warn"
+        },
+        "500": {
+          "value": "#f59e0b",
+          "doc": "warn strong"
+        }
+      },
+      "red": {
+        "400": {
+          "value": "#f87171",
+          "doc": "danger"
+        },
+        "600": {
+          "value": "#dc2626",
+          "doc": "danger fill"
+        }
+      },
+      "cyan": {
+        "300": {
+          "value": "#56c7f5",
+          "doc": "info / local"
+        },
+        "400": {
+          "value": "#38bdf8",
+          "doc": "info strong"
+        }
+      },
+      "glowpool": {
+        "meeting": {
+          "value": "#56C7F5",
+          "doc": "desk glow: meetings (cassettes)"
+        },
+        "note": {
+          "value": "#34D399",
+          "doc": "desk glow: notes"
+        },
+        "kb": {
+          "value": "#FBBF24",
+          "doc": "desk glow: knowledge crystals"
+        },
+        "recipe": {
+          "value": "#FF6B35",
+          "doc": "desk glow: personas / coders"
+        },
+        "artifact": {
+          "value": "#FF9E64",
+          "doc": "desk glow: artifacts"
+        },
+        "chain": {
+          "value": "#A78BFA",
+          "doc": "desk glow: sequences / workflows"
+        },
+        "directory": {
+          "value": "#E0A458",
+          "doc": "desk glow: zones"
+        }
+      },
+      "zonetint": {
+        "1": {
+          "value": "#E0A458",
+          "doc": "zone tray tint pool (stable-hash pick)"
+        },
+        "2": {
+          "value": "#56C7F5"
+        },
+        "3": {
+          "value": "#34D399"
+        },
+        "4": {
+          "value": "#A78BFA"
+        },
+        "5": {
+          "value": "#FF9E64"
+        },
+        "6": {
+          "value": "#FBBF24"
+        }
+      },
+      "shadow": {
+        "$doc": "black ink alphas for depth (dark theme's shadow ramp)",
+        "34": {
+          "value": "rgba(0, 0, 0, 0.34)"
+        },
+        "42": {
+          "value": "rgba(0, 0, 0, 0.42)"
+        },
+        "50": {
+          "value": "rgba(0, 0, 0, 0.5)"
+        },
+        "55": {
+          "value": "rgba(0, 0, 0, 0.55)"
+        },
+        "60": {
+          "value": "rgba(0, 0, 0, 0.6)"
+        },
+        "70": {
+          "value": "rgba(0, 0, 0, 0.7)"
+        }
+      },
+      "wash": {
+        "$doc": "white washes for hairlines and hover fills on dark",
+        "035": {
+          "value": "rgba(255, 255, 255, 0.035)"
+        },
+        "05": {
+          "value": "rgba(255, 255, 255, 0.05)"
+        },
+        "08": {
+          "value": "rgba(255, 255, 255, 0.08)"
+        }
+      },
+      "blue": {
+        "450": {
+          "value": "#5b8def",
+          "doc": "the cool blue accent (delivery/panes surfaces)"
+        }
+      }
+    },
+    "font": {
+      "display": {
+        "value": "\"Space Grotesk\", \"Inter\", system-ui, -apple-system, BlinkMacSystemFont,\n    \"Segoe UI\", sans-serif"
+      },
+      "ui": {
+        "value": "\"Inter\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    sans-serif"
+      },
+      "mono": {
+        "value": "\"JetBrains Mono\", \"SFMono-Regular\", \"SF Mono\", Consolas, \"Liberation Mono\",\n    monospace"
+      }
+    }
+  },
+  "semantic": {
+    "$doc": "Today's canonical Signal names, values preserved verbatim from the hand-written tokens.css (HS-30-03 lineage). Consumers use THESE names.",
+    "groups": [
+      {
+        "name": "--bg",
+        "value": "{primitive.color.ink.0}"
+      },
+      {
+        "name": "--surface-1",
+        "value": "{primitive.color.ink.1}"
+      },
+      {
+        "name": "--surface-2",
+        "value": "{primitive.color.ink.2}"
+      },
+      {
+        "name": "--surface-3",
+        "value": "{primitive.color.ink.3}"
+      },
+      {
+        "name": "--surface-hover",
+        "value": "rgba(255, 255, 255, 0.04)"
+      },
+      {
+        "name": "--surface-active",
+        "value": "rgba(255, 255, 255, 0.07)"
+      },
+      {
+        "name": "--text",
+        "value": "{primitive.color.paper.0}"
+      },
+      {
+        "name": "--text-muted",
+        "value": "{primitive.color.paper.1}"
+      },
+      {
+        "name": "--text-faint",
+        "value": "{primitive.color.paper.2}"
+      },
+      {
+        "name": "--text-on-accent",
+        "value": "{primitive.color.ink.0}"
+      },
+      {
+        "name": "--accent",
+        "value": "{primitive.color.orange.500}"
+      },
+      {
+        "name": "--accent-hover",
+        "value": "{primitive.color.orange.400}"
+      },
+      {
+        "name": "--accent-press",
+        "value": "{primitive.color.orange.600}"
+      },
+      {
+        "name": "--accent-tint",
+        "value": "rgba(255, 107, 53, 0.12)"
+      },
+      {
+        "name": "--accent-glow",
+        "value": "rgba(255, 107, 53, 0.28)"
+      },
+      {
+        "name": "--accent-gradient",
+        "value": "linear-gradient( 135deg, #ff9d5c 0%, #ff6b35 50%, #f24a2e 100% )"
+      },
+      {
+        "name": "--bg-gradient",
+        "value": "linear-gradient( 180deg, #191b23 0%, #0e0f13 100% )"
+      },
+      {
+        "name": "--ok",
+        "value": "{primitive.color.green.400}"
+      },
+      {
+        "name": "--ok-strong",
+        "value": "{primitive.color.green.500}"
+      },
+      {
+        "name": "--ok-soft",
+        "value": "rgba(52, 211, 153, 0.12)"
+      },
+      {
+        "name": "--warn-signal",
+        "value": "{primitive.color.amber.400}"
+      },
+      {
+        "name": "--warn-strong",
+        "value": "{primitive.color.amber.500}"
+      },
+      {
+        "name": "--warn-soft",
+        "value": "rgba(251, 191, 36, 0.12)"
+      },
+      {
+        "name": "--danger-signal",
+        "value": "{primitive.color.red.400}"
+      },
+      {
+        "name": "--danger-fill",
+        "value": "{primitive.color.red.600}"
+      },
+      {
+        "name": "--danger-soft",
+        "value": "rgba(248, 113, 113, 0.12)"
+      },
+      {
+        "name": "--info",
+        "value": "{primitive.color.cyan.300}"
+      },
+      {
+        "name": "--info-strong",
+        "value": "{primitive.color.cyan.400}"
+      },
+      {
+        "name": "--info-soft",
+        "value": "rgba(86, 199, 245, 0.12)"
+      },
+      {
+        "name": "--border-subtle",
+        "value": "rgba(255, 255, 255, 0.08)"
+      },
+      {
+        "name": "--border",
+        "value": "rgba(255, 255, 255, 0.12)"
+      },
+      {
+        "name": "--border-strong",
+        "value": "rgba(255, 255, 255, 0.2)"
+      },
+      {
+        "name": "--font-display",
+        "value": "{primitive.font.display}"
+      },
+      {
+        "name": "--font-ui",
+        "value": "{primitive.font.ui}"
+      },
+      {
+        "name": "--font-mono",
+        "value": "{primitive.font.mono}"
+      },
+      {
+        "name": "--canvas",
+        "value": "var(--surface-1)"
+      },
+      {
+        "name": "--canvas-raised",
+        "value": "var(--surface-1)"
+      },
+      {
+        "name": "--canvas-elevated",
+        "value": "var(--surface-2)"
+      },
+      {
+        "name": "--canvas-overlay",
+        "value": "rgba(0, 0, 0, 0.62)"
+      },
+      {
+        "name": "--line",
+        "value": "var(--border)"
+      },
+      {
+        "name": "--line-strong",
+        "value": "var(--border-strong)"
+      },
+      {
+        "name": "--line-emphasis",
+        "value": "var(--accent)"
+      },
+      {
+        "name": "--accent-strong",
+        "value": "var(--accent-press)"
+      },
+      {
+        "name": "--accent-soft",
+        "value": "var(--accent-tint)"
+      },
+      {
+        "name": "--accent-on",
+        "value": "var(--text-on-accent)"
+      },
+      {
+        "name": "--warm",
+        "value": "var(--accent)"
+      },
+      {
+        "name": "--warm-strong",
+        "value": "var(--accent-press)"
+      },
+      {
+        "name": "--warm-soft",
+        "value": "var(--accent-tint)"
+      },
+      {
+        "name": "--success",
+        "value": "var(--ok)"
+      },
+      {
+        "name": "--success-strong",
+        "value": "var(--ok-strong)"
+      },
+      {
+        "name": "--success-soft",
+        "value": "var(--ok-soft)"
+      },
+      {
+        "name": "--warn",
+        "value": "var(--warn-signal)"
+      },
+      {
+        "name": "--danger",
+        "value": "var(--danger-signal)"
+      },
+      {
+        "name": "--danger-strong",
+        "value": "var(--danger-fill)"
+      },
+      {
+        "name": "--info-soft-legacy",
+        "value": "var(--info-soft)"
+      },
+      {
+        "name": "--disabled-bg",
+        "value": "var(--surface-1)"
+      },
+      {
+        "name": "--disabled-fg",
+        "value": "var(--text-faint)"
+      },
+      {
+        "name": "--disabled-border",
+        "value": "var(--border)"
+      },
+      {
+        "name": "--selected-bg",
+        "value": "var(--accent-tint)"
+      },
+      {
+        "name": "--selected-fg",
+        "value": "var(--text)"
+      },
+      {
+        "name": "--selected-soft",
+        "value": "var(--accent-tint)"
+      },
+      {
+        "name": "--field-bg",
+        "value": "var(--surface-2)"
+      },
+      {
+        "name": "--field-border",
+        "value": "var(--border)"
+      },
+      {
+        "name": "--field-focus-border",
+        "value": "var(--accent)"
+      },
+      {
+        "name": "--local",
+        "value": "var(--info)"
+      },
+      {
+        "name": "--local-soft",
+        "value": "var(--info-soft)"
+      },
+      {
+        "name": "--font-size-xs",
+        "value": "0.75rem"
+      },
+      {
+        "name": "--font-size-sm",
+        "value": "0.8125rem"
+      },
+      {
+        "name": "--font-size-md",
+        "value": "0.875rem"
+      },
+      {
+        "name": "--font-size-lg",
+        "value": "1.0625rem"
+      },
+      {
+        "name": "--font-size-xl",
+        "value": "1.375rem"
+      },
+      {
+        "name": "--font-size-2xl",
+        "value": "1.625rem"
+      },
+      {
+        "name": "--font-size-3xl",
+        "value": "2rem"
+      },
+      {
+        "name": "--line-height-tight",
+        "value": "1.2"
+      },
+      {
+        "name": "--line-height-normal",
+        "value": "1.5"
+      },
+      {
+        "name": "--line-height-relaxed",
+        "value": "1.6"
+      },
+      {
+        "name": "--letter-spacing-tight",
+        "value": "-0.01em"
+      },
+      {
+        "name": "--letter-spacing-loose",
+        "value": "0.02em"
+      },
+      {
+        "name": "--letter-spacing-eyebrow",
+        "value": "0.06em"
+      },
+      {
+        "name": "--space-1",
+        "value": "0.25rem"
+      },
+      {
+        "name": "--space-2",
+        "value": "0.5rem"
+      },
+      {
+        "name": "--space-3",
+        "value": "0.75rem"
+      },
+      {
+        "name": "--space-4",
+        "value": "1rem"
+      },
+      {
+        "name": "--space-5",
+        "value": "1.5rem"
+      },
+      {
+        "name": "--space-6",
+        "value": "2rem"
+      },
+      {
+        "name": "--space-7",
+        "value": "3rem"
+      },
+      {
+        "name": "--space-8",
+        "value": "4rem"
+      },
+      {
+        "name": "--radius-xs",
+        "value": "4px"
+      },
+      {
+        "name": "--radius-sm",
+        "value": "6px"
+      },
+      {
+        "name": "--radius-md",
+        "value": "10px"
+      },
+      {
+        "name": "--radius-lg",
+        "value": "14px"
+      },
+      {
+        "name": "--radius-pill",
+        "value": "999px"
+      },
+      {
+        "name": "--radius-1",
+        "value": "var(--radius-xs)"
+      },
+      {
+        "name": "--radius-2",
+        "value": "var(--radius-sm)"
+      },
+      {
+        "name": "--radius-3",
+        "value": "var(--radius-md)"
+      },
+      {
+        "name": "--radius-4",
+        "value": "var(--radius-lg)"
+      },
+      {
+        "name": "--radius-5",
+        "value": "18px"
+      },
+      {
+        "name": "--elev-0",
+        "value": "none"
+      },
+      {
+        "name": "--elev-1",
+        "value": "0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04)"
+      },
+      {
+        "name": "--elev-2",
+        "value": "0 8px 24px rgba(0, 0, 0, 0.5)"
+      },
+      {
+        "name": "--elev-3",
+        "value": "0 16px 48px rgba(0, 0, 0, 0.6)"
+      },
+      {
+        "name": "--elev-4",
+        "value": "0 24px 64px rgba(0, 0, 0, 0.7)"
+      },
+      {
+        "name": "--glow-accent",
+        "value": "0 0 0 1px rgba(255, 107, 53, 0.4), 0 4px 18px var(--accent-glow)"
+      },
+      {
+        "name": "--duration-short",
+        "value": "120ms"
+      },
+      {
+        "name": "--duration-medium",
+        "value": "200ms"
+      },
+      {
+        "name": "--duration-long",
+        "value": "320ms"
+      },
+      {
+        "name": "--ease-standard",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)"
+      },
+      {
+        "name": "--ease-emphasized",
+        "value": "cubic-bezier(0.2, 0, 0, 1)"
+      },
+      {
+        "name": "--ease-decelerate",
+        "value": "cubic-bezier(0, 0, 0, 1)"
+      },
+      {
+        "name": "--focus-ring",
+        "value": "0 0 0 2px var(--bg), 0 0 0 4px var(--accent)"
+      },
+      {
+        "name": "--focus-outline-width",
+        "value": "2px"
+      },
+      {
+        "name": "--focus-outline-offset",
+        "value": "2px"
+      },
+      {
+        "name": "--z-base",
+        "value": "0"
+      },
+      {
+        "name": "--z-sticky",
+        "value": "10"
+      },
+      {
+        "name": "--z-overlay",
+        "value": "100"
+      },
+      {
+        "name": "--z-dialog",
+        "value": "200"
+      },
+      {
+        "name": "--z-toast",
+        "value": "300"
+      },
+      {
+        "name": "--black",
+        "value": "#000",
+        "doc": "absolute ink (shadow/scrim compositing)"
+      },
+      {
+        "name": "--white",
+        "value": "#fff",
+        "doc": "absolute paper (rare highlight compositing)"
+      },
+      {
+        "name": "--accent-cool",
+        "value": "{primitive.color.blue.450}",
+        "doc": "the cool blue counterweight to the signal orange"
+      },
+      {
+        "name": "--accent-glow-strong",
+        "value": "rgba(255, 107, 53, 0.5)",
+        "doc": "the stronger accent glow (recording/attention)"
+      },
+      {
+        "name": "--shadow-ink-1",
+        "value": "{primitive.color.shadow.34}"
+      },
+      {
+        "name": "--shadow-ink-2",
+        "value": "{primitive.color.shadow.42}"
+      },
+      {
+        "name": "--shadow-ink-3",
+        "value": "{primitive.color.shadow.50}"
+      },
+      {
+        "name": "--shadow-ink-4",
+        "value": "{primitive.color.shadow.55}"
+      },
+      {
+        "name": "--shadow-ink-5",
+        "value": "{primitive.color.shadow.60}"
+      },
+      {
+        "name": "--shadow-ink-6",
+        "value": "{primitive.color.shadow.70}"
+      },
+      {
+        "name": "--wash-1",
+        "value": "{primitive.color.wash.035}",
+        "doc": "faintest white wash (hairline fills)"
+      },
+      {
+        "name": "--wash-2",
+        "value": "{primitive.color.wash.05}",
+        "doc": "hover-weight white wash"
+      }
+    ]
+  },
+  "component": {
+    "$doc": "The Desk OS chrome (HS-95 values, codified — never retuned here without a story). Consumed by desk.css and, via the generated TS module (HS-96-02), by DeskWindow.tsx / world.ts.",
+    "groups": [
+      {
+        "name": "--desk-z-canvas",
+        "value": "0",
+        "doc": "the GL world canvas — the floor of the desk"
+      },
+      {
+        "name": "--desk-z-world-overlay",
+        "value": "25",
+        "doc": "in-world DOM overlays (rename row, lasso)"
+      },
+      {
+        "name": "--desk-z-chrome",
+        "value": "30",
+        "doc": "the chrome band (menus/launchers) — UNDER windows by design"
+      },
+      {
+        "name": "--desk-z-window-base",
+        "value": "42",
+        "doc": "the window band floor; focus order stacks upward from here"
+      },
+      {
+        "name": "--desk-z-dock",
+        "value": "80",
+        "doc": "shell furniture above every window"
+      },
+      {
+        "name": "--desk-z-transient",
+        "value": "81",
+        "doc": "an OPEN chrome transient (the room menu) rides above windows"
+      },
+      {
+        "name": "--desk-window-margin",
+        "value": "10px",
+        "doc": "viewport clamp margin for window rects"
+      },
+      {
+        "name": "--desk-window-grab",
+        "value": "72px",
+        "doc": "minimum grabbable head strip (HS-93 contract)"
+      },
+      {
+        "name": "--desk-window-cascade",
+        "value": "26px",
+        "doc": "default-corner cascade step"
+      },
+      {
+        "name": "--desk-snap-top",
+        "value": "54px",
+        "doc": "snap tiles clear the chrome band"
+      },
+      {
+        "name": "--desk-snap-bottom",
+        "value": "52px",
+        "doc": "snap tiles clear the dock band"
+      },
+      {
+        "name": "--glow-meeting",
+        "value": "{primitive.color.glowpool.meeting}"
+      },
+      {
+        "name": "--glow-note",
+        "value": "{primitive.color.glowpool.note}"
+      },
+      {
+        "name": "--glow-kb",
+        "value": "{primitive.color.glowpool.kb}"
+      },
+      {
+        "name": "--glow-recipe",
+        "value": "{primitive.color.glowpool.recipe}"
+      },
+      {
+        "name": "--glow-artifact",
+        "value": "{primitive.color.glowpool.artifact}"
+      },
+      {
+        "name": "--glow-chain",
+        "value": "{primitive.color.glowpool.chain}"
+      },
+      {
+        "name": "--glow-directory",
+        "value": "{primitive.color.glowpool.directory}"
+      },
+      {
+        "name": "--zone-tint-1",
+        "value": "{primitive.color.zonetint.1}"
+      },
+      {
+        "name": "--zone-tint-2",
+        "value": "{primitive.color.zonetint.2}"
+      },
+      {
+        "name": "--zone-tint-3",
+        "value": "{primitive.color.zonetint.3}"
+      },
+      {
+        "name": "--zone-tint-4",
+        "value": "{primitive.color.zonetint.4}"
+      },
+      {
+        "name": "--zone-tint-5",
+        "value": "{primitive.color.zonetint.5}"
+      },
+      {
+        "name": "--zone-tint-6",
+        "value": "{primitive.color.zonetint.6}"
+      },
+      {
+        "name": "--desk-z-stage",
+        "value": "-1",
+        "doc": "the fixed atmosphere behind the document"
+      },
+      {
+        "name": "--desk-z-dock-under",
+        "value": "40",
+        "doc": "the dock on compact viewports — sheets own the phone's bottom"
+      },
+      {
+        "name": "--desk-z-popover",
+        "value": "82",
+        "doc": "popovers/toasts above even the transient band"
+      },
+      {
+        "name": "--desk-glass",
+        "value": "rgba(8, 7, 12, 0.7)",
+        "doc": "the frosted chrome-cluster glass"
+      },
+      {
+        "name": "--desk-window-fill",
+        "value": "rgba(13, 11, 18, 0.985)",
+        "doc": "the window body fill (R2-06: objects must not ghost through)"
+      },
+      {
+        "name": "--desk-panel-fill",
+        "value": "rgba(14, 12, 20, 0.94)",
+        "doc": "secondary panel fill"
+      },
+      {
+        "name": "--desk-window-radius",
+        "value": "18px",
+        "doc": "the ONE window corner (the pull-out's value, adopted family-wide in HS-96-04)"
+      },
+      {
+        "name": "--desk-window-shadow",
+        "value": "0 26px 70px {primitive.color.shadow.60}",
+        "doc": "the ONE window elevation"
+      },
+      {
+        "name": "--desk-window-blur",
+        "value": "blur(10px)",
+        "doc": "the window glass"
+      },
+      {
+        "name": "--desk-transient-radius",
+        "value": "12px",
+        "doc": "menus/popovers corner"
+      },
+      {
+        "name": "--desk-transient-shadow",
+        "value": "0 18px 40px {primitive.color.shadow.50}",
+        "doc": "menus/popovers elevation"
+      },
+      {
+        "name": "--desk-window-pad-x",
+        "value": "14px",
+        "doc": "window body horizontal padding"
+      },
+      {
+        "name": "--desk-window-pad-y",
+        "value": "12px",
+        "doc": "window body vertical padding"
+      }
+    ]
+  }
+}

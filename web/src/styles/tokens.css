@@ -1,30 +1,20 @@
 /*
- * HoldSpeak design tokens — "Signal" (HS-30-03).
+ * HoldSpeak design tokens — "Signal" (HS-30-03; three-layer since HS-96-01).
  *
- * Phase 30 retires the Amiga Workbench skin (Phase 12) for "Signal":
- * a bold, distinctive, DARK-ONLY identity. Near-black layered
- * surfaces, off-white text, one signature orange accent reserved for
- * the primary/live/focus moment, real depth + radius + motion, and a
- * technical-geometric type system (Space Grotesk / Inter / JetBrains
- * Mono).
+ * GENERATED FILE — do not edit. The source of truth is
+ * web/design-tokens.json; regenerate with:
  *
- * Source of truth: pm/roadmap/holdspeak/phase-30-ui-ux-overhaul/
- * evidence/design-language-signal.md (signed off 2026-06-01).
+ *   node scripts/generate-tokens.cjs
  *
- * Layering of this file:
- *   1. Signal canonical tokens — the names new/migrated CSS should use.
- *   2. Legacy semantic aliases (--canvas / --line / --text / --accent /
- *      status / --field / --selected / --radius-N / --elev-N ...) kept
- *      and REPOINTED at Signal so existing component CSS flips to dark
- *      without edits.
- *   3. Scale — type / spacing / radius / elevation / motion / focus.
+ * Layers (the vendored design-system skill's architecture):
+ *   1. PRIMITIVE  (--p-*)  raw values; never referenced by components.
+ *   2. SEMANTIC             the canonical Signal vocabulary components use
+ *                           (names and computed values preserved verbatim
+ *                           from the HS-30-03 hand-written file).
+ *   3. COMPONENT            the Desk OS chrome (HS-95 values, codified).
  *
- * The Workbench palette anchors are fully retired: zero legacy anchors
- * remain anywhere in web/src (completed HS-30-08). Every component and
- * page reads canonical Signal tokens or the semantic aliases.
- *
- * Light theme is deferred (dark-only this phase); tokens are authored
- * so a light variant is a later additive layer.
+ * Dark-only by design (design-language-signal.md, 2026-06-01); the
+ * semantic layer is where a future light theme would attach.
  */
 
 @import "open-props/style";
@@ -33,48 +23,81 @@
   color-scheme: dark;
 
   /* ============================================================
-   * 1. SIGNAL CANONICAL TOKENS
+   * 1. PRIMITIVE TOKENS (raw values — components never use these)
    * ============================================================ */
 
-  /* Surfaces — elevation by lightness, neutral near-black ramp. */
+  --p-color-ink-0: #0e0f13; /* the near-black floor (Signal bg) */
+  --p-color-ink-1: #15171d; /* surface step 1 */
+  --p-color-ink-2: #1c1f27; /* surface step 2 */
+  --p-color-ink-3: #242833; /* surface step 3 */
+  --p-color-ink-4: #191b23; /* gradient top of the bg wash */
+  --p-color-paper-0: #f2f3f5; /* primary text (~17:1 AAA on ink.0) */
+  --p-color-paper-1: #9ba2b0; /* muted text (~7.1:1 AAA) */
+  --p-color-paper-2: #767e8d; /* faint text (~4.7:1 AA) */
+  --p-color-orange-300: #ff9d5c; /* gradient amber head */
+  --p-color-orange-400: #ff7d4d; /* accent hover */
+  --p-color-orange-500: #ff6b35; /* THE signal orange (~6.8:1 on ink.0) */
+  --p-color-orange-600: #ec5a28; /* accent pressed */
+  --p-color-orange-700: #f24a2e; /* gradient ember tail */
+  --p-color-green-400: #34d399; /* ok */
+  --p-color-green-500: #10b981; /* ok strong */
+  --p-color-amber-400: #fbbf24; /* warn */
+  --p-color-amber-500: #f59e0b; /* warn strong */
+  --p-color-red-400: #f87171; /* danger */
+  --p-color-red-600: #dc2626; /* danger fill */
+  --p-color-cyan-300: #56c7f5; /* info / local */
+  --p-color-cyan-400: #38bdf8; /* info strong */
+  --p-color-glowpool-meeting: #56C7F5; /* desk glow: meetings (cassettes) */
+  --p-color-glowpool-note: #34D399; /* desk glow: notes */
+  --p-color-glowpool-kb: #FBBF24; /* desk glow: knowledge crystals */
+  --p-color-glowpool-recipe: #FF6B35; /* desk glow: personas / coders */
+  --p-color-glowpool-artifact: #FF9E64; /* desk glow: artifacts */
+  --p-color-glowpool-chain: #A78BFA; /* desk glow: sequences / workflows */
+  --p-color-glowpool-directory: #E0A458; /* desk glow: zones */
+  --p-color-zonetint-1: #E0A458; /* zone tray tint pool (stable-hash pick) */
+  --p-color-zonetint-2: #56C7F5;
+  --p-color-zonetint-3: #34D399;
+  --p-color-zonetint-4: #A78BFA;
+  --p-color-zonetint-5: #FF9E64;
+  --p-color-zonetint-6: #FBBF24;
+  --p-color-shadow-34: rgba(0, 0, 0, 0.34);
+  --p-color-shadow-42: rgba(0, 0, 0, 0.42);
+  --p-color-shadow-50: rgba(0, 0, 0, 0.5);
+  --p-color-shadow-55: rgba(0, 0, 0, 0.55);
+  --p-color-shadow-60: rgba(0, 0, 0, 0.6);
+  --p-color-shadow-70: rgba(0, 0, 0, 0.7);
+  --p-color-wash-035: rgba(255, 255, 255, 0.035);
+  --p-color-wash-05: rgba(255, 255, 255, 0.05);
+  --p-color-wash-08: rgba(255, 255, 255, 0.08);
+  --p-color-blue-450: #5b8def; /* the cool blue accent (delivery/panes surfaces) */
+  --p-font-display: "Space Grotesk", "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --p-font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --p-font-mono: "JetBrains Mono", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono",
+    monospace;
+
+  /* ============================================================
+   * 2. SEMANTIC TOKENS (the canonical Signal vocabulary)
+   * ============================================================ */
+
   --bg: #0e0f13;
   --surface-1: #15171d;
   --surface-2: #1c1f27;
   --surface-3: #242833;
   --surface-hover: rgba(255, 255, 255, 0.04);
   --surface-active: rgba(255, 255, 255, 0.07);
-
-  /* Text ramp (contrast vs --bg in design-language §10). */
-  --text: #f2f3f5; /* ~17:1  AAA */
-  --text-muted: #9ba2b0; /* ~7.1:1 AAA */
-  --text-faint: #767e8d; /* ~4.7:1 AA  */
-  --text-on-accent: #0e0f13; /* dark ink on the orange fill (~6.8:1) */
-
-  /* Accent — the signal. Reserved for primary / live / focus. */
-  --accent: #ff6b35; /* ~6.8:1 on --bg */
+  --text: #f2f3f5;
+  --text-muted: #9ba2b0;
+  --text-faint: #767e8d;
+  --text-on-accent: #0e0f13;
+  --accent: #ff6b35;
   --accent-hover: #ff7d4d;
   --accent-press: #ec5a28;
   --accent-tint: rgba(255, 107, 53, 0.12);
   --accent-glow: rgba(255, 107, 53, 0.28);
-
-  /* HS-69-03: gradient tokens ported from the iPad Signal `Sig` enum
-   * (apple/App/MeetingCaptureApp.swift:409-418). The two platforms share
-   * the flat palette byte-for-byte; these gradients carried the felt
-   * depth that the web had no token for. Additive only — nothing
-   * repointed. The status palette stays web-canonical (web-wins). */
-  --accent-gradient: linear-gradient(
-    135deg,
-    #ff9d5c 0%,
-    #ff6b35 50%,
-    #f24a2e 100%
-  ); /* amber → ember diagonal */
-  --bg-gradient: linear-gradient(
-    180deg,
-    #191b23 0%,
-    #0e0f13 100%
-  ); /* cinematic vertical wash */
-
-  /* Status — dark-tuned; always paired with an icon, never colour alone. */
+  --accent-gradient: linear-gradient( 135deg, #ff9d5c 0%, #ff6b35 50%, #f24a2e 100% );
+  --bg-gradient: linear-gradient( 180deg, #191b23 0%, #0e0f13 100% );
   --ok: #34d399;
   --ok-strong: #10b981;
   --ok-soft: rgba(52, 211, 153, 0.12);
@@ -87,112 +110,67 @@
   --info: #56c7f5;
   --info-strong: #38bdf8;
   --info-soft: rgba(86, 199, 245, 0.12);
-
-  /* Lines. */
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border: rgba(255, 255, 255, 0.12);
   --border-strong: rgba(255, 255, 255, 0.2);
-
-  /* Type faces. */
-  --font-display:
-    "Space Grotesk", "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+  --font-display: "Space Grotesk", "Inter", system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  --font-ui:
-    "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+  --font-ui: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  --font-mono:
-    "JetBrains Mono", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono",
+  --font-mono: "JetBrains Mono", "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono",
     monospace;
-
-  /* ============================================================
-   * 2. LEGACY SEMANTIC ALIASES → repointed to Signal
-   *    (existing component CSS keeps these names; they now read dark)
-   * ============================================================ */
-
-  /* Canvas + surfaces. */
   --canvas: var(--surface-1);
   --canvas-raised: var(--surface-1);
   --canvas-elevated: var(--surface-2);
   --canvas-overlay: rgba(0, 0, 0, 0.62);
-
-  /* Lines. */
   --line: var(--border);
   --line-strong: var(--border-strong);
   --line-emphasis: var(--accent);
-
-  /* Accent + warm secondary (both the orange family now). */
   --accent-strong: var(--accent-press);
   --accent-soft: var(--accent-tint);
   --accent-on: var(--text-on-accent);
   --warm: var(--accent);
   --warm-strong: var(--accent-press);
   --warm-soft: var(--accent-tint);
-
-  /* Status ramps (legacy names → Signal). */
   --success: var(--ok);
   --success-strong: var(--ok-strong);
   --success-soft: var(--ok-soft);
   --warn: var(--warn-signal);
-  /* --warn-strong / --warn-soft defined in §1 */
   --danger: var(--danger-signal);
   --danger-strong: var(--danger-fill);
-  /* --danger-soft defined in §1 */
   --info-soft-legacy: var(--info-soft);
-
-  /* Disabled grammar. */
   --disabled-bg: var(--surface-1);
   --disabled-fg: var(--text-faint);
   --disabled-border: var(--border);
-
-  /* Selected / focused — Signal uses an accent-tint fill + a non-colour cue. */
   --selected-bg: var(--accent-tint);
   --selected-fg: var(--text);
   --selected-soft: var(--accent-tint);
-
-  /* Fields. */
   --field-bg: var(--surface-2);
   --field-border: var(--border);
   --field-focus-border: var(--accent);
-
-  /* Local-only signal — info cyan reads as "neutral / stays here". */
   --local: var(--info);
   --local-soft: var(--info-soft);
-
-  /* The temporary Workbench compat shim (HS-30-03) is GONE: every
-   * component and page now reads canonical Signal tokens. */
-
-  /* ============================================================
-   * 3. SCALE — type, spacing, radius, elevation, motion
-   * ============================================================ */
-
-  /* Type scale (unchanged names; Inter/Space Grotesk-tuned). */
-  --font-size-xs: 0.75rem; /* 12 */
-  --font-size-sm: 0.8125rem; /* 13 */
-  --font-size-md: 0.875rem; /* 14 — Signal default body */
-  --font-size-lg: 1.0625rem; /* 17 */
-  --font-size-xl: 1.375rem; /* 22 */
-  --font-size-2xl: 1.625rem; /* 26 */
-  --font-size-3xl: 2rem; /* 32 */
-
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-md: 0.875rem;
+  --font-size-lg: 1.0625rem;
+  --font-size-xl: 1.375rem;
+  --font-size-2xl: 1.625rem;
+  --font-size-3xl: 2rem;
   --line-height-tight: 1.2;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.6;
-
   --letter-spacing-tight: -0.01em;
   --letter-spacing-loose: 0.02em;
   --letter-spacing-eyebrow: 0.06em;
-
-  /* Spacing scale (4 px base). */
-  --space-1: 0.25rem; /*  4 */
-  --space-2: 0.5rem; /*  8 */
-  --space-3: 0.75rem; /* 12 */
-  --space-4: 1rem; /* 16 */
-  --space-5: 1.5rem; /* 24 */
-  --space-6: 2rem; /* 32 */
-  --space-7: 3rem; /* 48 */
-  --space-8: 4rem; /* 64 */
-
-  /* Radius — real scale (Signal). Canonical + legacy names. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -203,36 +181,80 @@
   --radius-3: var(--radius-md);
   --radius-4: var(--radius-lg);
   --radius-5: 18px;
-
-  /* Elevation — real depth (dark: surface step + soft shadow + top hairline). */
   --elev-0: none;
-  --elev-1:
-    0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   --elev-2: 0 8px 24px rgba(0, 0, 0, 0.5);
   --elev-3: 0 16px 48px rgba(0, 0, 0, 0.6);
   --elev-4: 0 24px 64px rgba(0, 0, 0, 0.7);
-  --glow-accent:
-    0 0 0 1px rgba(255, 107, 53, 0.4), 0 4px 18px var(--accent-glow);
-
-  /* Motion — the "Signal" settle. */
+  --glow-accent: 0 0 0 1px rgba(255, 107, 53, 0.4), 0 4px 18px var(--accent-glow);
   --duration-short: 120ms;
   --duration-medium: 200ms;
   --duration-long: 320ms;
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --ease-decelerate: cubic-bezier(0, 0, 0, 1);
-
-  /* Focus ring — 2px gap then a 2px orange ring, visible on dark. */
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
   --focus-outline-width: 2px;
   --focus-outline-offset: 2px;
-
-  /* Z-index. */
   --z-base: 0;
   --z-sticky: 10;
   --z-overlay: 100;
   --z-dialog: 200;
   --z-toast: 300;
+  --black: #000; /* absolute ink (shadow/scrim compositing) */
+  --white: #fff; /* absolute paper (rare highlight compositing) */
+  --accent-cool: #5b8def; /* the cool blue counterweight to the signal orange */
+  --accent-glow-strong: rgba(255, 107, 53, 0.5); /* the stronger accent glow (recording/attention) */
+  --shadow-ink-1: rgba(0, 0, 0, 0.34);
+  --shadow-ink-2: rgba(0, 0, 0, 0.42);
+  --shadow-ink-3: rgba(0, 0, 0, 0.5);
+  --shadow-ink-4: rgba(0, 0, 0, 0.55);
+  --shadow-ink-5: rgba(0, 0, 0, 0.6);
+  --shadow-ink-6: rgba(0, 0, 0, 0.7);
+  --wash-1: rgba(255, 255, 255, 0.035); /* faintest white wash (hairline fills) */
+  --wash-2: rgba(255, 255, 255, 0.05); /* hover-weight white wash */
+
+  /* ============================================================
+   * 3. COMPONENT TOKENS (the Desk OS chrome — HS-95 values)
+   * ============================================================ */
+
+  --desk-z-canvas: 0; /* the GL world canvas — the floor of the desk */
+  --desk-z-world-overlay: 25; /* in-world DOM overlays (rename row, lasso) */
+  --desk-z-chrome: 30; /* the chrome band (menus/launchers) — UNDER windows by design */
+  --desk-z-window-base: 42; /* the window band floor; focus order stacks upward from here */
+  --desk-z-dock: 80; /* shell furniture above every window */
+  --desk-z-transient: 81; /* an OPEN chrome transient (the room menu) rides above windows */
+  --desk-window-margin: 10px; /* viewport clamp margin for window rects */
+  --desk-window-grab: 72px; /* minimum grabbable head strip (HS-93 contract) */
+  --desk-window-cascade: 26px; /* default-corner cascade step */
+  --desk-snap-top: 54px; /* snap tiles clear the chrome band */
+  --desk-snap-bottom: 52px; /* snap tiles clear the dock band */
+  --glow-meeting: #56C7F5;
+  --glow-note: #34D399;
+  --glow-kb: #FBBF24;
+  --glow-recipe: #FF6B35;
+  --glow-artifact: #FF9E64;
+  --glow-chain: #A78BFA;
+  --glow-directory: #E0A458;
+  --zone-tint-1: #E0A458;
+  --zone-tint-2: #56C7F5;
+  --zone-tint-3: #34D399;
+  --zone-tint-4: #A78BFA;
+  --zone-tint-5: #FF9E64;
+  --zone-tint-6: #FBBF24;
+  --desk-z-stage: -1; /* the fixed atmosphere behind the document */
+  --desk-z-dock-under: 40; /* the dock on compact viewports — sheets own the phone's bottom */
+  --desk-z-popover: 82; /* popovers/toasts above even the transient band */
+  --desk-glass: rgba(8, 7, 12, 0.7); /* the frosted chrome-cluster glass */
+  --desk-window-fill: rgba(13, 11, 18, 0.985); /* the window body fill (R2-06: objects must not ghost through) */
+  --desk-panel-fill: rgba(14, 12, 20, 0.94); /* secondary panel fill */
+  --desk-window-radius: 18px; /* the ONE window corner (the pull-out's value, adopted family-wide in HS-96-04) */
+  --desk-window-shadow: 0 26px 70px {primitive.color.shadow.60}; /* the ONE window elevation */
+  --desk-window-blur: blur(10px); /* the window glass */
+  --desk-transient-radius: 12px; /* menus/popovers corner */
+  --desk-transient-shadow: 0 18px 40px {primitive.color.shadow.50}; /* menus/popovers elevation */
+  --desk-window-pad-x: 14px; /* window body horizontal padding */
+  --desk-window-pad-y: 12px; /* window body vertical padding */
 }
 
 @media (prefers-reduced-motion: reduce) {
