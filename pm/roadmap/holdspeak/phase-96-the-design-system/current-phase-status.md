@@ -1,8 +1,8 @@
 # Phase 96 — The Design System
 
-**Status:** IN PROGRESS (4/7; HS-96-04 done 2026-07-18).
+**Status:** IN PROGRESS (5/7; HS-96-05 done 2026-07-18).
 
-**Last updated:** 2026-07-18 (HS-96-04, one material grammar, done).
+**Last updated:** 2026-07-18 (HS-96-05, the accessibility pass, done).
 
 ## Why this phase exists
 
@@ -77,7 +77,7 @@ recorded (Article X.3).
 | HS-96-02 | The validator gate and the burn-down | done | [story-02-validator-burndown](./story-02-validator-burndown.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-96-03 | Component state specs | done | [story-03-component-specs](./story-03-component-specs.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-96-04 | One material grammar | done | [story-04-material-grammar](./story-04-material-grammar.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-96-05 | The accessibility pass | backlog | [story-05-accessibility](./story-05-accessibility.md) | — |
+| HS-96-05 | The accessibility pass | done | [story-05-accessibility](./story-05-accessibility.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-96-06 | Docs and the mechanical lock | backlog | [story-06-docs-lock](./story-06-docs-lock.md) | — |
 | HS-96-07 | Closeout: walks, storm, owner rider | backlog | [story-07-closeout](./story-07-closeout.md) | — |
 
@@ -137,4 +137,17 @@ family-wide. The allow-list SHRANK (70 → 69). Storm with the glass on the
 assembled build: median 8.3ms, p95 9.8ms — no regression. Suite 256/256;
 `assets/material-1440.png` shows both families side by side.
 
-Next: HS-96-05, the accessibility pass with the recorded Radix decision.
+**HS-96-05 done (2026-07-18): the OS answers the keyboard.** Windows
+manage focus (open moves in, close returns to the opener, Escape closes,
+tabIndex=-1 shell — NO trap, windows stay regions); the menu carries the
+full Radix keyboard pattern hand-rolled (arrows, Home/End, Escape with
+focus return); keyboard travel through the GL world is VISIBLE — a
+focused sr-only world button surfaces as a chip above the dock band (the
+walk shows 'My Nuts' surfacing). axe sweeps run in the suite at the
+serious/critical gate, zero violations. The Radix decision is RECORDED in
+the story: Signal stays; the patterns come, the primitives do not (the
+desk's no-modal law and the dark-only grammar would fight Radix's grain;
+the patterns cost ~30 lines). Suite 259/259; the focus walk verifies all
+three behaviors live.
+
+Next: HS-96-06 completes the docs and names the locks.

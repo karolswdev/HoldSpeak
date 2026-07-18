@@ -4,7 +4,12 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **HS-96-04, One material grammar, DONE**:
+**Last updated:** 2026-07-18 — **HS-96-05, The accessibility pass, DONE**:
+windows manage focus without traps (in on open, back on close, Escape
+closes), the menu speaks full keyboard, the GL world's focused object
+surfaces as a visible chip, axe gates ride the suite, and the Radix
+decision is recorded (patterns yes, primitives no). Earlier: **HS-96-04,
+One material grammar, DONE**:
 one :where() rule carries the whole window family (fill/radius/elevation/
 glass as component tokens; the pull-out keeps only its per-kind tinted
 edge), named normalizations recorded, the allow-list shrank, and the

@@ -3063,6 +3063,39 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
+/* HS-96-05: keyboard travel through the GL world is VISIBLE — a focused
+   world button surfaces as a chip above the dock band. */
+.desk-next .desk-world-a11y:has(:focus-visible) {
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  position: fixed;
+  left: 50%;
+  bottom: calc(52px + var(--space-2));
+  transform: translateX(-50%);
+  z-index: var(--desk-z-dock);
+}
+.desk-next .desk-world-a11y button {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+}
+.desk-next .desk-world-a11y button:not(:focus-visible) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.desk-next .desk-world-a11y button:focus-visible {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--desk-glass);
+  border: 1px solid var(--border);
+}
 .desk-next .desk-zone-rename-row.is-overlay {
   position: absolute;
   z-index: var(--desk-z-world-overlay);

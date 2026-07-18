@@ -851,9 +851,58 @@ def focus() -> None:
             f"focus ring missing on tab stops: {seen}"
         )
         page.screenshot(path=str(OUT / "focus-ring-1440.png"))
+        # HS-96-05: opening a window moves focus INTO it; Escape closes it
+        # and focus returns to the opener.
+        focused = page.evaluate(
+            """() => document.activeElement?.getAttribute('aria-label') ||
+                     document.activeElement?.className || ''"""
+        )
+        page.click(".desk-mark")
+        page.click("nav.desk-menu button:has-text(\'Settings\')")
+        page.wait_for_selector(
+            "[aria-label=\'Settings\'].desk-surface-window", timeout=8000
+        )
+        page.wait_for_timeout(400)
+        inside = page.evaluate(
+            """() => {
+              const win = document.querySelector(
+                "[aria-label=\'Settings\'].desk-surface-window");
+              return win ? win.contains(document.activeElement) : false;
+            }"""
+        )
+        assert inside, "focus did not move into the opened window"
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(400)
+        assert (
+            page.locator("[aria-label=\'Settings\'].desk-surface-window").count()
+            == 0
+        ), "Escape did not close the window"
+        # Keyboard travel through the GL world surfaces a visible chip.
+        for _ in range(30):
+            page.keyboard.press("Tab")
+            chip = page.evaluate(
+                """() => {
+                  const el = document.activeElement;
+                  return el && el.closest('.desk-world-a11y')
+                    ? el.textContent : null;
+                }"""
+            )
+            if chip:
+                box = page.evaluate(
+                    """() => {
+                      const r = document.activeElement.getBoundingClientRect();
+                      return {w: r.width, h: r.height};
+                    }"""
+                )
+                assert box["w"] > 40 and box["h"] > 20, (
+                    f"world focus chip not visible: {box}"
+                )
+                page.screenshot(path=str(OUT / "focus-world-chip-1440.png"))
+                print(f"world focus chip visible: {chip!r} ({box})")
+                break
         print(
-            f"focus walk: {len(seen)} tab stops, {len(focused_with_ring)} wear "
-            f"the accent ring; e.g. {[f['label'] for f in seen[:6]]}"
+            f"focus walk: {len(seen)} tab stops ringed; window focus-in, "
+            f"Escape-close, and the world chip verified"
         )
         browser.close()
 

@@ -377,6 +377,26 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     return () => retractWindow(id);
   }, [open, id, name, glyph]);
 
+  // HS-96-05 — window focus management (the ui-styling a11y pattern,
+  // WITHOUT a modal trap: windows coexest is the law). Opening moves
+  // focus into the window; closing returns it to the opener; Escape
+  // anywhere inside closes this window.
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    openerRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    shellRef.current?.focus({ preventScroll: true });
+    return () => {
+      const opener = openerRef.current;
+      if (opener && document.contains(opener))
+        opener.focus({ preventScroll: true });
+    };
+  }, [open, id]);
+
   // Opening always PRESENTS the window. A stale minimize (e.g. persisted
   // from a prior session whose feature-open state reset on reload) would
   // otherwise open the window invisibly parked — a stranded surface.
@@ -412,7 +432,17 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   return (
     <motion.div
-      ref={(el: HTMLDivElement | null) => win.setEl(el)}
+      ref={(el: HTMLDivElement | null) => {
+        win.setEl(el);
+        shellRef.current = el;
+      }}
+      tabIndex={-1}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && !e.defaultPrevented) {
+          e.stopPropagation();
+          onClose();
+        }
+      }}
       className={
         (className ? className + " " : "") +
         "desk-window desk-window-shell" +
