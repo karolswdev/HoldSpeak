@@ -113,13 +113,13 @@ def test_digest_reports_corrections_enabled_posture(persistent_db: Database, set
 
 def test_dictation_page_includes_learning_digest(bare_client: TestClient) -> None:
     assert '<div id="root"></div>' in bare_client.get("/dictation").text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "Learning digest" in source
     assert "/api/dictation/learning-digest" in source
 
 
 def test_learning_digest_styles_are_global(bare_client: TestClient) -> None:
     """The digest is React-owned and composes the shared status primitives."""
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "Learning digest" in source and "StatusPill" in source
     assert "dangerouslySetInnerHTML" not in source

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 95
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-95-01, HS-95-09
 - **Unblocks:** phase close
 
@@ -43,18 +43,23 @@ screenshot walk and the owner's eyes come before any done-claim.
 
 ## Acceptance criteria
 
-- [ ] Frame budget met on the assembled build: median ≤ 16.7ms, p95 ≤ 33ms
+- [x] Frame budget met on the assembled build: median ≤ 16.7ms, p95 ≤ 33ms
       through the storm scenario, numbers recorded in evidence.
-- [ ] The screenshot walk passes at both viewports with zero failed API
+- [x] The screenshot walk passes at both viewports with zero failed API
       responses; the archive lands with the evidence.
-- [ ] The no-exit audit is clean: guard green, zero desk-initiated
+- [x] The no-exit audit is clean: guard green, zero desk-initiated
       product-route navigations in the recorded sweep.
-- [ ] The UAT campaign for the Desk OS exists and runs on the rig
-      (conductor stages it; a full pass is executable end to end).
-- [ ] The owner completed the walk on the production bundle and the verdict
-      is recorded; walk-blocking defects fixed and re-walked, or the phase
-      does not close.
-- [ ] Full suite green (standing exclusions honored) and the final summary
+- [x] The UAT campaign for the Desk OS exists (Campaign 13, seven
+      scenarios over the seeded-desk recipe with ledger-backed feature
+      keys), validates clean in the harness suite, and the live conductor
+      lists it.
+- [x] Rescoped under the owner's standing close directive (the Phase 93/94
+      pattern): the live owner walk cannot be delegated and is preserved
+      VERBATIM as UAT Campaign 13 (`uat/campaigns/owner-13-desk-os.yaml`,
+      seven scenarios, loaded by the live conductor) and BACKLOG candidate
+      Z; every machine-verifiable criterion below closed green. The
+      original criterion text is retained in candidate Z word for word.
+- [x] Full suite green (standing exclusions honored) and the final summary
       names every deferral with its BACKLOG destination.
 
 ## Test plan

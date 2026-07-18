@@ -334,7 +334,7 @@ def test_dictation_page_includes_readiness_panel() -> None:
 
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
-    js = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "/api/dictation/readiness" in js
     assert "Pipeline readiness" in js and "Runs on" in js
     assert "warnings" in js
@@ -354,8 +354,13 @@ def test_dictation_runtime_docs_route_serves_setup_page() -> None:
 
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/RuntimeDocsPage.tsx").read_text()
-    assert "Dictation runtime setup" in source
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/RuntimeDocsCore.tsx").read_text()
+    # HS-95-08: the title rides the window chrome (the SURFACES table).
+    surfaces = (
+        Path(__file__).resolve().parents[2]
+        / "web/src/desk/components/SurfaceWindows.tsx"
+    ).read_text()
+    assert '"Runtime guide"' in surfaces and '"Setup guide"' in surfaces
     assert "dictation-mlx" in source and "dictation-llama" in source
     assert "OpenAI-compatible endpoint" in source
 

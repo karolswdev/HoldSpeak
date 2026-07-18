@@ -72,7 +72,7 @@ def test_unknown_language_refused_actionably(client):
 def test_settings_page_language_list_matches_the_registry():
     """The React settings editor reflects the server-owned language field;
     validation stays in the one Python registry rather than duplicating it."""
-    page = (_REPO / "web/src/pages/SettingsPage.tsx").read_text()
+    page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
     assert "SettingsFields" in page and "model" in page
     assert "WHISPER_LANGUAGES" not in page
     assert len(WHISPER_LANGUAGES) > 90

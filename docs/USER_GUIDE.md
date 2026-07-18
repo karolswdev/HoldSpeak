@@ -24,7 +24,7 @@ Use these guides depending on what you are setting up:
 | Area | What it does | Where to use it |
 | --- | --- | --- |
 | Voice typing | Hold a hotkey, speak, release, insert text | Any text field, editor, terminal, browser |
-| Dictation pipeline | Routes and rewrites dictated text with local rules and optional LLM stages | `/dictation`, `holdspeak dictation ...` |
+| Dictation pipeline | Routes and rewrites dictated text with local rules and optional LLM stages | the Dictation window (`/dictation`), `holdspeak dictation ...` |
 | Project facts | Keeps a `kb:` map in `.holdspeak/project.yaml`; exact values stamped into dictation verbatim, no LLM | `/dictation` -> Project Facts |
 | Project context | Keeps repo-local `.hs/` files that guide intelligent rewrites (optional LLM stage) | `/dictation` -> Project Context |
 | Automation hooks | Lets Claude Code and Codex report current cwd/session state to HoldSpeak | `/dictation` -> Hooks |
@@ -377,7 +377,7 @@ holdspeak agent-hook templates --agent claude --capture-messages
 holdspeak agent-hook templates --agent codex --capture-messages
 ```
 
-Assistant-message capture is opt-in. When enabled, HoldSpeak stores at most 4 KB of the latest assistant message from a Stop hook, marks likely questions as `awaiting_response`, and clears that captured text on the next submitted user prompt. The `/dictation` page shows a banner when Claude or Codex appears to be waiting for your reply.
+Assistant-message capture is opt-in. When enabled, HoldSpeak stores at most 4 KB of the latest assistant message from a Stop hook, marks likely questions as `awaiting_response`, and clears that captured text on the next submitted user prompt. The Dictation window shows a banner when Claude or Codex appears to be waiting for your reply.
 
 Use **Clear** on the banner to remove the captured assistant text manually.
 
@@ -695,6 +695,6 @@ Common issues:
 - [README](../README.md): install, platform notes, configuration reference.
 - [Getting Started](GETTING_STARTED.md): first-run setup and basic voice typing.
 - [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): dictation pipeline, project context, output-target override, OpenAI-compatible endpoints, and automation hooks.
-- [Dictation runtime setup](../web/src/pages/RuntimeDocsPage.tsx): source for the local Web runtime setup page.
+- [Dictation runtime setup](../web/src/pages/cores/RuntimeDocsCore.tsx): source for the local Web runtime setup page.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and troubleshooting.
 - [Firefox Extension Guide](FIREFOX_EXTENSION_GUIDE.md): local companion extension install.

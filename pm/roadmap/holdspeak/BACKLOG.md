@@ -633,3 +633,22 @@ implements.
 of the Phase-93 list; the Phase-94 legs need the second machine and
 the iPad reserved. The UAT framework (holdspeak-uat) is the natural
 conductor for the owner sittings.
+
+### Z. The Desk OS owner leg — Phase 95's live verdict (continues Y's program)
+
+Phase 95 closed at machine-verifiable scope on 2026-07-18 under the
+standing close directive: the WebGL stage at the frame budget, one window
+chrome with dock/snap/cycling, every surface in-world, fifteen routes
+demoted, the no-exit lock, docs under the Constitution, and the assembled
+production walk — all green. What no machine can cast is the verdict the
+phase was born from: the owner at the desk, on the production build,
+judging whether it now FEELS like a native OS.
+
+The criterion, preserved verbatim from HS-95-10: *"The owner completed
+the walk on the production bundle and the verdict is recorded;
+walk-blocking defects fixed and re-walked, or the phase does not close"*
+— rescoped by the standing directive to this row plus **UAT Campaign 13**
+(`uat/campaigns/owner-13-desk-os.yaml`, seven scenarios, ~45 minutes,
+loaded by the conductor). Run the sitting, record the verdict verbatim,
+triage findings per TRIAGE.md. The Article VII Dialog-grammar drift in
+re-homed cores and Article IV mic coverage ride the same triage.

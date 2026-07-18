@@ -21,6 +21,7 @@ import { AttentionDrawer } from "./components/AttentionDrawer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock } from "./components/DeskWindow";
 import { SurfaceWindows } from "./components/SurfaceWindows";
+import { TrustWindow } from "./components/TrustWindow";
 import { useProjections } from "./projections";
 import "./desk.css";
 
@@ -65,6 +66,7 @@ export default function DeskApp() {
       <SessionPullout />
       <AttentionDrawer />
       <SurfaceWindows />
+      <TrustWindow />
       <Dock />
     </div>
   );

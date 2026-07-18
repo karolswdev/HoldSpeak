@@ -1,0 +1,20 @@
+id: desk-os-dictation-in-world
+execution_target: web_react
+title: Dictation happens through the desk, voice-first
+features:
+  - phase95.deskos.surfaces-in-world
+  - desk.front-door.spatial-objects
+recipes:
+  - seeded-desk
+form_factors: [desktop]
+steps:
+  - do: Press Dictate in the top-right cluster.
+    expect: The Dictation window opens on the desk (the address bar never leaves /); the full cockpit is inside (Readiness, Try it, Journal, Runtime tabs).
+    where: /
+  - do: In Try it, hold the mic beside the utterance box, speak a sentence, release.
+    expect: Your words land in the box from the hub's local Whisper; nothing left the machine (the egress badge is unchanged).
+    where: /
+  - do: Open any object's pull-out and choose "Dictate about this".
+    expect: The Dictation window opens scoped to that object - a chip names it with its product title, never a raw id.
+    where: /
+teardown: []

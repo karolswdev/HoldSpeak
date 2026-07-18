@@ -434,7 +434,7 @@ def test_dictation_page_includes_runtime_section() -> None:
     response = client.get("/dictation")
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert '["runtime", "Runtime"]' in source
     assert "Dictation runtime" in source and 'label="Runs on"' in source
 
@@ -450,7 +450,7 @@ def test_dictation_page_includes_copilot_depth_controls() -> None:
     )
     client = TestClient(server.app)
     assert '<div id="root"></div>' in client.get("/dictation").text
-    settings = (Path(__file__).resolve().parents[2] / "web/src/pages/SettingsPage.tsx").read_text()
+    settings = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx").read_text()
     # The recursive typed settings editor exposes every safe knob returned by
     # the hub, including new depth knobs, without a duplicate hardcoded form.
     assert "SettingsFields" in settings and "typeof item" in settings

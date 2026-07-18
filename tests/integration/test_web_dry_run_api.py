@@ -483,7 +483,7 @@ def test_dictation_page_includes_dry_run_section() -> None:
     response = client.get("/dictation")
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
-    js = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "/api/dictation/dry-run" in js
     assert "Run dry test" in js
     assert "projectRoot" in js and "Pipeline result" in js

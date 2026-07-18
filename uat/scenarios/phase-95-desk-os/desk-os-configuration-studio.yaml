@@ -1,0 +1,19 @@
+id: desk-os-configuration-studio
+execution_target: web_react
+title: Configuration and the studio edit in place
+features:
+  - phase95.deskos.surfaces-in-world
+recipes:
+  - seeded-desk
+form_factors: [desktop]
+steps:
+  - do: Open Settings from the menu, change one setting, save, reload.
+    expect: The Settings window opens in-world; the change round-trips and survives the reload.
+    where: /
+  - do: From the tool shelf open Runs on, then Integrations.
+    expect: Both open as windows; Integrations is the Settings window scoped with its chip; nothing navigated away.
+    where: /
+  - do: Create a Workflow from Create, then "Edit Workflow" from its pull-out. Save it.
+    expect: The Workbench opens MAXIMIZED and scoped to your workflow; Save confirms "Saved to this Workflow."
+    where: /
+teardown: []

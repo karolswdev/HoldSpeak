@@ -75,23 +75,35 @@ does not ship.
    *Proof points:* `holdspeak doctor`, the schema policy + backup/restore
    (`docs/RELEASING.md`), the honest-copy locks in the test suite.
 
-## The web surface (information architecture)
+## The web surface (the Desk OS)
 
-The web flagship expresses "one copilot, two modes" in its own shape (Phase
-70). A first-time user, and the owner, should be able to say what HoldSpeak is
-and what to do first within ten seconds of the screen. The surface is four
-primary destinations, not a flat list of pages:
+Amended under the Constitution, Article I (Phase 95; this supersedes the
+Phase 70 four-destination information architecture). The Desk is the one
+operating surface. A first-time user, and the owner, should be able to say
+what HoldSpeak is and what to do first within ten seconds of the screen.
 
-- **Home** answers "what is this" (the one-liner) and "what do I do now" (the
-  two modes as co-equal cards plus a single next action).
-- **Dictation** holds the whole voice-typing mode: voice typing, the dictation
-  journal, the learning digest and corrections, and activity pre-briefing.
-- **Meetings** holds the whole meeting mode: live capture, import, the archive
-  with facets, and aftercare.
-- **Studio** is a collapsed advanced tier for the power tools (Workbench, Desk,
-  Agent Desk, Cadence, Commands, Profiles). It sits below the two modes; it is
-  not a third pillar, and a first-run user is never dropped into it.
-- **Settings** is the one place for global configuration.
+The canon rule: **services are system primitives, and the OS's primitives
+are how they appear.** Dictation, meetings and their intelligence,
+configuration, the workbench, personas and coder sessions, and activity
+are services; desk objects, windows, and the dock are the surfaces they
+open through. A feature never owns a route or a screen of its own; the old
+route addresses survive only as deep links that land on the Desk with the
+matching window open. Any future surface that ships as a page instead of a
+window is a regression against this canon (the no-exit lock makes that
+mechanical).
+
+- **The Desk** answers "what is this" and "what do I do now": the two
+  modes as start verbs (Dictate, Record) plus Create, with your material
+  as objects in the world.
+- **Dictation** opens as a window holding the whole voice-typing mode:
+  voice typing, the journal, the learning digest and corrections, and
+  activity pre-briefing.
+- **Meetings** opens as a window holding the whole meeting mode: live
+  capture, import, the archive with facets, and aftercare.
+- **Studio** is the advanced tier's launcher window (Workbench, Cadence,
+  Commands, Runs on, Activity, Personas). It sits below the two modes and
+  a first-run user is never dropped into it.
+- **Settings** is the one configuration window.
 
 **The Desk** (`/desk`) is the spatial expression of the Primitive Framework: a
 warm 2.5D diorama where every primitive (meetings, notes, KBs, agents, and the

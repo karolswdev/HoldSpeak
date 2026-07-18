@@ -74,14 +74,16 @@ surface:
    (`tests/unit/test_page_cores_guard.py` enforces this mechanically).
    The core owns its verbs and hands them to the optional `hero` slot so
    each host chooses the chrome.
-2. **Keep the flat route** as a thin wrapper: `.page-wrap` + `PageHero`
-   (verbs into `hero`) around the core. Until HS-95-08 demotes routes,
-   this keeps deep links pixel-identical.
+2. **Demote the route** (HS-95-08): there are no flat wrappers anymore.
+   Add one `DEMOTED_ROUTES` row in `src/routes.tsx` mapping the legacy
+   path to the surface key (plus a `subjectKind` when deep links carry a
+   scope); the path then lands on the Desk with the window open.
 3. **Register the window**: add one row to `SURFACES` in
    `src/desk/components/SurfaceWindows.tsx` (shell key, window id, title,
-   glyph, lazy core). The chrome menu and the tool shelf dispatch through
-   `desk/shell.ts` — a registered key opens the window in-world; an
-   unregistered one falls back to the legacy route.
+   glyph, lazy core, `maximized` for canvas-sized surfaces). The chrome
+   menu and the tool shelf dispatch through `desk/shell.ts`; the no-exit
+   lock (`tests/unit/test_desk_no_exit_guard.py`) forbids desk navigation
+   outright.
 4. **Style seam**: window-hosted cores render inside
    `.desk-surface-body`; never reintroduce `.page-*` chrome classes in a
    core.

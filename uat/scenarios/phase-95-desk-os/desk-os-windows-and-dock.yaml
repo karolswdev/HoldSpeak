@@ -1,0 +1,19 @@
+id: desk-os-windows-and-dock
+execution_target: web_react
+title: Windows behave like an OS - one chrome, the dock, snap, cycling
+features:
+  - phase95.deskos.windows-shell
+recipes:
+  - seeded-desk
+form_factors: [desktop]
+steps:
+  - do: Open three windows from real entry points (tap an object, open Desk memory, open Settings from the menu). Drag one by its head, resize one by its grip.
+    expect: All three coexist under one chrome (minimize, maximize, close verbs on each head); drag and resize are immediate; the arrangement survives a reload.
+    where: /
+  - do: Minimize one window, then bring it back from the dock chip. Press Ctrl+backquote a few times.
+    expect: The parked chip dims in the dock and restores on tap; the key cycles focus through open windows in most-recently-used order.
+    where: /
+  - do: Drag a window and release it at the left screen edge, then at a corner.
+    expect: The edge snaps a half tile below the chrome and clear of the dock; the corner snaps a quarter tile; dragging away un-snaps.
+    where: /
+teardown: []

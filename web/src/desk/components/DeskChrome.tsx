@@ -3,6 +3,7 @@
 // and refresh. A fresh Desk renders the same starts centrally instead.
 import { useState } from "react";
 import { openSurface } from "../shell";
+import { useTrustWindow } from "./TrustWindow";
 import { useDesk } from "../store";
 import { egressBadge } from "../setup";
 import { DeskStartActions } from "./DeskStartActions";
@@ -86,9 +87,15 @@ export function DeskChrome({
           title={hubTitle}
           aria-label={hubTitle}
         />
-        <span className={`egress-badge is-${badge.scope}`} title={badge.title}>
+        <button
+          type="button"
+          className={`egress-badge is-${badge.scope} egress-badge-button`}
+          title={badge.title}
+          aria-label={`Privacy and trust: ${badge.text}`}
+          onClick={() => useTrustWindow.getState().setOpen(true)}
+        >
           {badge.text}
-        </span>
+        </button>
       </div>
 
       <div className="desk-chrome desk-chrome-tr">

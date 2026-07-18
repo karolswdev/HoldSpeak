@@ -19,7 +19,7 @@ from holdspeak.config import Config
 from holdspeak.db import Database, reset_database
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-_SOURCE = Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx"
+_SOURCE = Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx"
 
 
 def _dictation_script() -> str:
@@ -84,7 +84,7 @@ def test_dry_run_moment_host_present(persistent_db: Database, settings_path: Pat
     Config().save(path=settings_path)
     response = _client(persistent_db).get("/dictation")
     assert '<div id="root"></div>' in response.text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "Pipeline result" in source and "/api/dictation/dry-run" in source
     assert "autofocus" not in source.lower()
 

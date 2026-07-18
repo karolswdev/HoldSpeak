@@ -207,7 +207,7 @@ def test_executor_on_result_fires_on_executed_and_failed(db):
 def test_qlippy_events_mirror_the_dashboard_decision_exactly():
     repo = Path(__file__).resolve().parents[2]
     events = (repo / "web/src/components/AmbientLayer.tsx").read_text()
-    history = (repo / "web/src/pages/HistoryPage.tsx").read_text()
+    history = (repo / "web/src/pages/cores/HistoryCore.tsx").read_text()
     assert "/proposals/${encodeURIComponent(String(card.id))}/decision" in events
     assert "json: { decision }" in events
     assert "json: { decision }" in history

@@ -176,7 +176,7 @@ def test_journal_card_has_replay_action(persistent_db: Database) -> None:
     client = _client(persistent_db)
     body = client.get("/dictation").text
     assert '<div id="root"></div>' in body
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "/replay" in source and "replayResult" in source
     assert "Preview only" in source and "Copy result" in source
     assert "navigator.clipboard.writeText" in source

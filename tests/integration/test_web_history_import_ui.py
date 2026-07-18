@@ -5,7 +5,7 @@ _REPO = Path(__file__).resolve().parents[2]
 
 
 def _page() -> str:
-    return (_REPO / "web/src/pages/HistoryPage.tsx").read_text()
+    return (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text()
 
 
 def test_history_has_audio_and_transcript_import() -> None:

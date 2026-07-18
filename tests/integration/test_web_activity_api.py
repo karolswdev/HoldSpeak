@@ -46,7 +46,7 @@ def test_activity_page_serves_browser_surface(test_client: TestClient) -> None:
     response = test_client.get("/activity")
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
-    js = (Path(__file__).resolve().parents[2] / "web/src/pages/ActivityPage.tsx").read_text()
+    js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/ActivityCore.tsx").read_text()
     for marker in ("records", "rules", "candidates", "connectors"):
         assert f'"{marker}"' in js
     assert "/api/activity/status" in js

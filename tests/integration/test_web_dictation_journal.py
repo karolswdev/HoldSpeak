@@ -134,14 +134,14 @@ def test_delete_without_repo_404s(test_client: TestClient, settings_path: Path) 
 
 def test_dictation_page_includes_journal_tab(test_client: TestClient) -> None:
     assert '<div id="root"></div>' in test_client.get("/dictation").text
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert '["journal", "Journal"]' in source
     assert "/api/dictation/journal" in source
     assert "Search journal" in source and "Clear journal" in source
 
 
 def test_dictation_journal_premium_and_a11y_markers(test_client: TestClient) -> None:
-    source = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     css = (Path(__file__).resolve().parents[2] / "web/src/styles/react-app.css").read_text()
     assert "ConfirmAction" in source and "ResourceState" in source
     assert "prefers-reduced-motion" in css

@@ -377,7 +377,7 @@ def test_banned_name_guard_scans_web_src() -> None:
     views = _web_src_views()
     assert len(views) > 20
     names = {p.name for p in views}
-    assert {"App.tsx", "DictationPage.tsx", "WelcomePage.tsx"} <= names
+    assert {"App.tsx", "DictationCore.tsx", "WelcomePage.tsx"} <= names
 
 
 def test_voice_guard_patterns_catch_seeded_violations() -> None:

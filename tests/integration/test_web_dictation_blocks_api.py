@@ -117,7 +117,7 @@ def test_dictation_page_route_serves_html() -> None:
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert '<div id="root"></div>' in response.text
-    js = (Path(__file__).resolve().parents[2] / "web/src/pages/DictationPage.tsx").read_text()
+    js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     for endpoint in (
         "/api/dictation/blocks",
         "/api/dictation/readiness",

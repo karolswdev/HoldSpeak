@@ -82,7 +82,7 @@ def test_presence_config_dataclass_default():
 
 
 def test_settings_page_has_the_subordinate_sub_toggle():
-    page = (_REPO / "web/src/pages/SettingsPage.tsx").read_text()
+    page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
     assert "SettingsFields" in page and "presence" in page
     ambient = (_REPO / "web/src/components/AmbientLayer.tsx").read_text()
     assert "function Qlippy" in ambient

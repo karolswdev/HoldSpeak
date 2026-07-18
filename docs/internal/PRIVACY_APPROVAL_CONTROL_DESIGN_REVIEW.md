@@ -706,7 +706,7 @@ Legacy pages already contain different explanatory copy for targets that send on
 ### 12.4 React proposal contract (resolved during migration)
 
 **Resolved migration finding:** an intermediate version of
-[HistoryPage.tsx](../../web/src/pages/HistoryPage.tsx) had:
+[HistoryPage.tsx](../../web/src/pages/cores/HistoryCore.tsx) had:
 
 - enables controls only when `status === "pending"`, while backend actuator proposals use `proposed`; and
 - posts `approve`/`decline`, while the backend accepts `approved`/`rejected`.
@@ -1269,9 +1269,9 @@ These are intentional decisions, not implementation details:
 
 ### Current interfaces and executable contracts
 
-- [HistoryPage.tsx](../../web/src/pages/HistoryPage.tsx)
-- [SettingsPage.tsx](../../web/src/pages/SettingsPage.tsx)
-- [LivePage.tsx](../../web/src/pages/LivePage.tsx)
+- [HistoryPage.tsx](../../web/src/pages/cores/HistoryCore.tsx)
+- [SettingsPage.tsx](../../web/src/pages/cores/SettingsCore.tsx)
+- [LivePage.tsx](../../web/src/pages/cores/LiveCore.tsx)
 - [UAT scenarios](../../uat/scenarios)
 - [unit tests](../../tests/unit)
 - [integration tests](../../tests/integration)
