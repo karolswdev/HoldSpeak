@@ -11,6 +11,8 @@ import {
 } from "react";
 import { create } from "zustand";
 import { registerSurface } from "../shell";
+import { useDesk } from "../store";
+import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
 import type { CoreProps } from "../../pages/cores/ActivityCore";
 
@@ -25,6 +27,19 @@ interface SurfaceRow {
 }
 
 const SURFACES: SurfaceRow[] = [
+  {
+    key: "dictate",
+    id: "surface-dictation",
+    title: "Dictation",
+    glyph: "⌁",
+    eyebrow: "Daily cockpit",
+    minW: 560,
+    Core: lazy(() =>
+      import("../../pages/cores/DictationCore").then((m) => ({
+        default: m.DictationCore,
+      })),
+    ),
+  },
   {
     key: "inspect-activity",
     id: "surface-activity",
@@ -72,6 +87,7 @@ export const useSurfaceWindows = create<SurfaceState>((set, get) => ({
 
 export function SurfaceWindows() {
   const open = useSurfaceWindows((s) => s.open);
+  const items = useDesk((s) => s.items);
 
   useEffect(() => {
     const offs = SURFACES.map((row) =>
@@ -104,7 +120,14 @@ export function SurfaceWindows() {
           >
             <div className="desk-surface-body">
               <Suspense fallback={<p className="quiet">…</p>}>
-                <row.Core scope={open[row.key] ?? undefined} />
+                <row.Core
+                  scope={open[row.key] ?? undefined}
+                  scopeLabel={
+                    open[row.key]
+                      ? (objectByRef(items, open[row.key]!)?.title ?? undefined)
+                      : undefined
+                  }
+                />
               </Suspense>
             </div>
           </DeskWindowFrame>

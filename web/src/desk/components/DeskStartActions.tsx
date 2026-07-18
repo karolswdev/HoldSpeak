@@ -1,5 +1,4 @@
-import { Link } from "react-router-dom";
-import { workroomHref } from "../../workrooms/context";
+import { openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { DeskCreateMenu } from "./DeskCreateMenu";
 
@@ -14,12 +13,13 @@ export function DeskStartActions({ compact = false }: { compact?: boolean }) {
       role="group"
       aria-label="Daily starts"
     >
-      <Link
+      <button
+        type="button"
         className="desk-chip desk-start-action"
-        to={workroomHref("/dictation", { action: "dictate" })}
+        onClick={() => openSurfaceOr("dictate", "/dictation")}
       >
         <span aria-hidden="true">⌁</span> Dictate
-      </Link>
+      </button>
       <button
         type="button"
         className={

@@ -3,7 +3,6 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
-import { decodeWorkroomContext } from "../../workrooms/context";
 import { DeskToolShelf, DESK_TOOLS } from "./DeskToolShelf";
 import { EmptyDesk } from "./EmptyDesk";
 
@@ -35,12 +34,9 @@ describe("Phase 93 Desk arrival", () => {
 
     const starts = screen.getByRole("group", { name: "Daily starts" });
     expect(starts).toBeInTheDocument();
-    const dictate = new URL(
-      screen.getByRole("link", { name: "Dictate" }).getAttribute("href")!,
-      "https://holdspeak.test",
-    );
-    expect(dictate.pathname).toBe("/dictation");
-    expect(decodeWorkroomContext(dictate.search)?.action).toBe("dictate");
+    // HS-95-05: Dictate opens the in-world Dictation window through the
+    // shell dispatcher — it is a button, never a route exit.
+    expect(screen.getByRole("button", { name: "Dictate" })).toBeInTheDocument();
     // Record is one verb: the chip starts the hub recorder in place (the
     // orb's exact behavior) instead of leaving the Desk for /live.
     const record = screen.getByRole("button", { name: "Record" });

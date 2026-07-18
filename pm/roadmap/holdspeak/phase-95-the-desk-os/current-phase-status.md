@@ -1,8 +1,8 @@
 # Phase 95 — The Desk OS
 
-**Status:** IN PROGRESS (4/10; HS-95-04 done 2026-07-17).
+**Status:** IN PROGRESS (5/10; HS-95-05 done 2026-07-17).
 
-**Last updated:** 2026-07-17 (HS-95-04, embeddable page cores, done).
+**Last updated:** 2026-07-17 (HS-95-05, dictation through the desk, done).
 
 ## Why this phase exists
 
@@ -116,7 +116,7 @@ navigates away from the desk.
 | HS-95-02 | OS-grade windows | done | [story-02-os-grade-windows](./story-02-os-grade-windows.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-95-03 | The shell: dock, switching, layouts | done | [story-03-the-shell](./story-03-the-shell.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-95-04 | Embeddable page cores | done | [story-04-embeddable-page-cores](./story-04-embeddable-page-cores.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-95-05 | Dictation through the desk | backlog | [story-05-dictation-through-the-desk](./story-05-dictation-through-the-desk.md) | — |
+| HS-95-05 | Dictation through the desk | done | [story-05-dictation-through-the-desk](./story-05-dictation-through-the-desk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-95-06 | Meetings and recording through the desk | backlog | [story-06-meetings-through-the-desk](./story-06-meetings-through-the-desk.md) | — |
 | HS-95-07 | Configuration through the desk | backlog | [story-07-configuration-through-the-desk](./story-07-configuration-through-the-desk.md) | — |
 | HS-95-08 | Studio, sessions, and the last exits | backlog | [story-08-studio-sessions-last-exits](./story-08-studio-sessions-last-exits.md) | — |
@@ -186,5 +186,22 @@ Activity and Commands: cores guard + web suite 257/257 + the cores walk
 (both windows in-world chrome-free; flat routes keep the hero);
 `assets/cores-1440.png`; the authoring note lives in `web/README.md`.
 
-Next: HS-95-05/06/07 re-home dictation, meetings, and configuration on
-this pattern; the Phase 93 physics contract remains the regression floor.
+**HS-95-05 done (2026-07-17): dictation lives in-world.** The full daily
+cockpit (readiness, Try it, blocks, memory, knowledge, journal, runtime,
+hooks, nudges) is `DictationCore`, hosted in a desk window; every dictation
+exit (the Dictate start chip, the DeskChrome room, the Pullout's "Dictate
+about this", the inspector's project-context) opens it in place through
+the shell — the URL never leaves the desk. "Dictate about this" scopes
+the window with a product-label chip (hosts resolve titles; no raw refs).
+The Try-it utterance gained its standing-rule mic, and the proof is a REAL
+voice path: Chromium's fake mic device fed a `say`-generated wav through
+the window's speak-to-fill into the hub's real Whisper — "Hello world from
+the desk" landed in the box (`assets/dictation-voice-1440.png`). Mic
+authority is single-owner (a second capture takes over and the first's
+tracks stop; pinned by test). The app shell delegates navigate to
+`desk/shell.ts` so cores/chrome fall back to legacy routes without router
+imports. Suite 258/258; the dictation walk covers all beats plus the flat
+route for deep links.
+
+Next: HS-95-06 (meetings/live) and HS-95-07 (configuration) on the same
+pattern; the Phase 93 physics contract remains the regression floor.

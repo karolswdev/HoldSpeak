@@ -13,6 +13,7 @@ import { modelChatId } from "../chat";
 import { contextualIntegrationActions } from "../contextual";
 import { useProjections } from "../projections";
 import { useDesk } from "../store";
+import { openSurfaceOr } from "../shell";
 import { allObjects } from "../world";
 import { qualifiedRef } from "../api";
 import { DeskWindowFrame } from "./DeskWindow";
@@ -286,15 +287,15 @@ export function DeskToolInspector() {
               ))}
             </ul>
           </section>
-          <Link
+          <button
+            type="button"
             className="desk-chip"
-            to={workroomHref("/dictation", {
-              action: "use-project-context",
-              subjectRef: `project:${project.id}`,
-            })}
+            onClick={() =>
+              openSurfaceOr("dictate", "/dictation", `project:${project.id}`)
+            }
           >
             Open Project context
-          </Link>
+          </button>
         </>
       ) : null}
 

@@ -32,6 +32,10 @@ const TABS = ["records", "rules", "candidates", "connectors"].map((id) => ({
 export interface CoreProps {
   /** Optional chrome the host renders around the core's own verbs. */
   hero?: (actions: ReactNode) => ReactNode;
+  /** The subject this window is scoped to (a qualified ref). */
+  scope?: string;
+  /** The subject's product label (hosts resolve it; never a raw ref). */
+  scopeLabel?: string;
 }
 
 export function ActivityCore({ hero }: CoreProps) {

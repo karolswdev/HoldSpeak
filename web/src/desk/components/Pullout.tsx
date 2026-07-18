@@ -11,6 +11,7 @@ import { spriteUrl } from "../sprites";
 import { apiRequest } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { useDesk } from "../store";
+import { openSurfaceOr } from "../shell";
 import { parseLinearGraph, stepLabel } from "../graph";
 import { MicButton } from "./MicButton";
 import { lineage } from "../lineage";
@@ -829,15 +830,15 @@ export function Pullout({ o }: { o: WorldObject }) {
 
       <footer className="desk-pullout-foot">
         {FILABLE.has(o.kind) && (
-          <Link
+          <button
+            type="button"
             className="desk-chip quiet"
-            to={workroomHref("/dictation", {
-              action: "dictate-about-subject",
-              subjectRef: resourceRef,
-            })}
+            onClick={() =>
+              openSurfaceOr("dictate", "/dictation", resourceRef)
+            }
           >
             Dictate about this
-          </Link>
+          </button>
         )}
         {o.kind === "meeting" && (
           <Link

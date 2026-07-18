@@ -4,7 +4,12 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-17 — **HS-95-04, Embeddable page cores, DONE**:
+**Last updated:** 2026-07-17 — **HS-95-05, Dictation through the desk,
+DONE**: the full dictation cockpit is a desk window; all four dictation
+exits open it in place (the URL never leaves the desk), "Dictate about
+this" scopes it with a product-label chip, and the proof is a real voice
+path — a `say` wav through Chromium's fake mic into the hub's real Whisper
+landed in the window. Earlier: **HS-95-04, Embeddable page cores, DONE**:
 the host-agnostic core pattern (chrome-free, router-free, guard-enforced)
 proven on Activity and Commands — one implementation renders the flat route
 and a desk window (`SurfaceWindows` + the shell dispatcher); the authoring

@@ -120,7 +120,7 @@ describe("DictationPage Try it failure actions", () => {
     expect(
       screen.getByRole("button", { name: "Keep as Note" }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Setup" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Setup" })).toBeNull();
 
     const picker = await screen.findByRole("combobox", { name: "Runs on" });
     fireEvent.change(picker, { target: { value: "p1" } });
@@ -167,10 +167,8 @@ describe("DictationPage Try it failure actions", () => {
 
     await screen.findByText(/rejected the connection/);
     expect(editor).toHaveValue("A draft that must not disappear.");
-    expect(screen.getByRole("link", { name: "Setup" })).toHaveAttribute(
-      "href",
-      "/setup",
-    );
+    // HS-95-05: Setup opens through the shell dispatcher (button, not a route link).
+    expect(screen.getByRole("button", { name: "Setup" })).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Runs on" })).toBeNull();
     expect(
       screen.getByRole("button", { name: "Run dry test" }),

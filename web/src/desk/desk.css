@@ -3256,3 +3256,25 @@
   padding: 0;
   cursor: pointer;
 }
+
+/* HS-95-05: the window's subject scope — one quiet chip, product label. */
+.desk-next .desk-scope-chip {
+  align-self: flex-start;
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent, #ff6b35) 40%, var(--border));
+  background: color-mix(in srgb, var(--accent, #ff6b35) 12%, transparent);
+  font-size: var(--font-size-xs);
+  color: var(--text);
+}
+.desk-next .desk-mic-row,
+.page-wrap .desk-mic-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.desk-next .desk-mic-row > :first-child,
+.page-wrap .desk-mic-row > :first-child {
+  flex: 1;
+}
