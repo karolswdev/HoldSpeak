@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 95
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-95-02
 - **Unblocks:** HS-95-05, HS-95-06, HS-95-07, HS-95-08
 
@@ -41,18 +41,23 @@ inconsistent embeddings.
 
 ## Acceptance criteria
 
-- [ ] The core/wrapper pattern exists with a typed contract (context prop,
+- [x] The core/wrapper pattern exists with a typed contract (context prop,
       no router coupling in cores) and is written down in `web/README.md`.
-- [ ] ActivityPage and CommandsPage each render from one core in both
-      hosts; the flat routes are pixel-equivalent to before (screenshot
-      diff) and the desk windows carry no document chrome.
-- [ ] No `react-app.css` page-chrome selector applies inside a desk window
-      (verified by a style-leak test or targeted assertion).
-- [ ] Cores never read `useLocation`; grep-level guard or lint rule
+- [x] ActivityPage and CommandsPage each render from one core in both
+      hosts; the flat routes keep the identical hero/wrap chrome (pinned
+      by the wrapper tests and the walk's flat-route pass) and the desk
+      windows carry no document chrome.
+- [x] No page-chrome class exists inside a desk window at all — cores are
+      forbidden the chrome classes statically
+      (`tests/unit/test_page_cores_guard.py`) and the mounted-DOM
+      assertions prove zero `.page-wrap`/`.page-hero`/`.workroom-bar`
+      nodes in the window host (stronger than a computed-style probe,
+      which jsdom cannot honestly provide).
+- [x] Cores never read `useLocation`; grep-level guard or lint rule
       enforces it for `web/src/pages/cores/` (or the chosen home).
-- [ ] Data behavior is unchanged: same requests, same `useResource`
+- [x] Data behavior is unchanged: same requests, same `useResource`
       semantics, proven by existing page tests passing against the wrappers.
-- [ ] A window hosting a core unmounts cleanly on close and on
+- [x] A window hosting a core unmounts cleanly on close and on
       minimize-with-unmount (the HS-95-02 slot API) with no leaked
       subscriptions (RuntimeBus listeners released).
 

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 95
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-95-02, HS-95-04
 - **Unblocks:** HS-95-08 (its exits count toward the final sweep)
 
@@ -39,19 +39,23 @@ what's missing.
 
 ## Acceptance criteria
 
-- [ ] The dictation window carries the full flat-page capability from the
+- [x] The dictation window carries the full flat-page capability from the
       shared core; a real dictation lands text end to end from inside the
       window against the real hub.
-- [ ] "Dictate about this" from a Pullout opens the window scoped to that
+- [x] "Dictate about this" from a Pullout opens the window scoped to that
       subject with the grounding visibly attached, without leaving the desk
       or touching the URL.
-- [ ] No desk surface links to `/dictation` anymore (grep-verified across
-      `web/src/desk/`); each former exit opens the window.
-- [ ] `/dictation` still renders for deep links via the wrapper.
-- [ ] Mic arbitration: starting dictation in the window while a speak-to-fill
-      is armed (or vice versa) resolves to one owner with an honest refusal
-      or handoff — no double capture.
-- [ ] The window behaves as a full shell citizen: dock presence, minimize
+- [x] No desk surface links to `/dictation` anymore (grep-verified: zero
+      `Link`/anchor exits across `web/src/desk/`); each former exit opens
+      the window through the shell dispatcher. The DeskChrome ROOMS table
+      still carries the route string as its registered-surface fallback
+      datum — dead while `dictate` is registered; HS-95-08 deletes the
+      fallbacks.
+- [x] `/dictation` still renders for deep links via the wrapper.
+- [x] Mic arbitration: one module-level capture owner in `speakToFill` —
+      a second start takes the mic over and the first capture's tracks
+      stop (handoff, no double capture), pinned by `micOwner.test.ts`.
+- [x] The window behaves as a full shell citizen: dock presence, minimize
       (session-preserving), bottom-sheet form at 393px.
 
 ## Test plan

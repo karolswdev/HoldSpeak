@@ -59,3 +59,29 @@ The machine-readable URL/verb/state inventory is
   positions, Workbench layout, chat threads, and project-root history.
 - New browser network calls go through the typed API client. New live consumers
   subscribe to `RuntimeBus`; they do not open another `/ws`.
+
+## Adding a surface (the Desk OS pattern, HS-95-04)
+
+Features do not own surfaces; the OS owns surfaces and features plug into
+them (docs/internal/CONSTITUTION.md, Articles I–II). To add or re-home a
+surface:
+
+1. **Extract the core** into `src/pages/cores/<Name>Core.tsx`: everything
+   the flat page rendered below its hero, exported as
+   `function <Name>Core({ hero, scope }: CoreProps)`. Cores are
+   host-agnostic — no router hooks, no page chrome classes, no
+   `window.location`; scope arrives as a prop
+   (`tests/unit/test_page_cores_guard.py` enforces this mechanically).
+   The core owns its verbs and hands them to the optional `hero` slot so
+   each host chooses the chrome.
+2. **Keep the flat route** as a thin wrapper: `.page-wrap` + `PageHero`
+   (verbs into `hero`) around the core. Until HS-95-08 demotes routes,
+   this keeps deep links pixel-identical.
+3. **Register the window**: add one row to `SURFACES` in
+   `src/desk/components/SurfaceWindows.tsx` (shell key, window id, title,
+   glyph, lazy core). The chrome menu and the tool shelf dispatch through
+   `desk/shell.ts` — a registered key opens the window in-world; an
+   unregistered one falls back to the legacy route.
+4. **Style seam**: window-hosted cores render inside
+   `.desk-surface-body`; never reintroduce `.page-*` chrome classes in a
+   core.

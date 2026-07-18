@@ -380,6 +380,109 @@ def shell() -> None:
         browser.close()
 
 
+
+
+def cores() -> None:
+    """HS-95-04 — one core, two hosts, on the production bundle: the tool
+    shelf opens Activity and Commands as desk windows (no page chrome
+    inside), while the flat routes still render the hero for deep links."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        page.click(".desk-tools-launch")
+        page.click(".desk-tool-link:has-text(\'Activity\')")
+        page.wait_for_selector(".desk-surface-window", timeout=5000)
+        assert page.locator(".desk-surface-window .page-hero").count() == 0
+        assert page.locator(".desk-surface-window .page-wrap").count() == 0
+        page.wait_for_selector(
+            ".desk-surface-window:has-text(\'Activity intelligence\')",
+            timeout=5000,
+        )
+        page.click(".desk-tools-launch")
+        page.click(".desk-tool-link:has-text(\'Commands\')")
+        page.wait_for_selector(
+            ".desk-surface-window:has-text(\'Command board\')", timeout=5000
+        )
+        assert page.locator(".desk-surface-window").count() == 2
+        page.screenshot(path=str(OUT / "cores-1440.png"))
+        # The flat routes keep their chrome for deep links.
+        page.goto(BASE + "/activity", wait_until="networkidle")
+        page.wait_for_selector(".page-hero:has-text(\'Activity\')", timeout=5000)
+        page.goto(BASE + "/commands", wait_until="networkidle")
+        page.wait_for_selector(".page-hero:has-text(\'Commands\')", timeout=5000)
+        print("cores walk: shelf opens both cores in-world (chrome-free); flat routes keep the hero")
+        browser.close()
+
+
+
+
+def dictation() -> None:
+    """HS-95-05 — dictation lives in-world, proven end to end with a REAL
+    voice path: Chromium's fake mic device plays a `say`-generated wav
+    into the window's speak-to-fill mic; the hub's real Whisper
+    transcribes it into the utterance box. Also: every dictation exit
+    opens the window in place (URL never leaves the desk), and the
+    Pullout's "Dictate about this" scopes the window to its object."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            args=[
+                "--use-fake-ui-for-media-stream",
+                "--use-fake-device-for-media-stream",
+                "--use-file-for-fake-audio-capture=/tmp/hs_dictate.wav",
+            ]
+        )
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.context.grant_permissions(["microphone"])
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        # 1. The Dictate start chip opens the window IN PLACE.
+        page.click(".desk-start-action:has-text(\'Dictate\')")
+        page.wait_for_selector(".desk-surface-window", timeout=8000)
+        assert page.url.rstrip("/") == BASE, page.url
+        # 2. Speak into the utterance mic (hold-to-talk): the fake device
+        # loops the wav; hold long enough to cover the phrase.
+        page.click("text=Try it")
+        mic = page.locator(".desk-surface-window .desk-mic-row .desk-mic")
+        mic.wait_for(timeout=5000)
+        box = mic.bounding_box()
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        page.mouse.down()
+        page.wait_for_timeout(3500)
+        page.mouse.up()
+        deadline = time.time() + 30
+        text = ""
+        while time.time() < deadline:
+            text = page.locator(
+                ".desk-surface-window textarea"
+            ).first.input_value()
+            if text.strip():
+                break
+            page.wait_for_timeout(500)
+        assert "hello" in text.lower() or "world" in text.lower(), (
+            f"transcription did not land: {text!r}"
+        )
+        print(f"voice landed in-world: {text!r}")
+        page.screenshot(path=str(OUT / "dictation-voice-1440.png"))
+        # 3. Close, then the Pullout's "Dictate about this" scopes it.
+        page.click('[aria-label="Close Dictation"]')
+        target = page.evaluate("() => window.__hsWorldProbe()")[0]
+        page.mouse.click(target["x"], target["y"])
+        page.wait_for_selector(".desk-pullout", timeout=5000)
+        page.click(".desk-pullout button:has-text(\'Dictate about this\')")
+        page.wait_for_selector(".desk-surface-window .desk-scope-chip",
+                               timeout=8000)
+        chip = page.locator(".desk-surface-window .desk-scope-chip").inner_text()
+        assert page.url.rstrip("/") == BASE, page.url
+        print(f"scoped in-world: {chip!r}")
+        # 4. The flat route still answers for deep links.
+        page.goto(BASE + "/dictation", wait_until="networkidle")
+        page.wait_for_selector(".page-hero:has-text(\'Dictation\')", timeout=5000)
+        print("dictation walk: chip + pullout open in-world; voice lands; flat route lives")
+        browser.close()
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "shots"
     if mode == "shots":
@@ -393,5 +496,9 @@ if __name__ == "__main__":
         windows()
     elif mode == "shell":
         shell()
+    elif mode == "cores":
+        cores()
+    elif mode == "dictation":
+        dictation()
     else:
         raise SystemExit(f"unknown mode {mode}")

@@ -333,6 +333,7 @@
   list-style: none;
 }
 .desk-next .desk-tool-list a,
+.desk-next .desk-tool-list .desk-tool-link,
 .desk-next .desk-tool-list button {
   display: grid;
   width: 100%;
@@ -350,13 +351,16 @@
   cursor: pointer;
 }
 .desk-next .desk-tool-list a:hover,
+.desk-next .desk-tool-list .desk-tool-link:hover,
 .desk-next .desk-tool-list button:hover,
 .desk-next .desk-tool-list a:focus-visible,
+.desk-next .desk-tool-list .desk-tool-link:focus-visible,
 .desk-next .desk-tool-list button:focus-visible {
   background: var(--accent-tint);
   outline: 0;
 }
 .desk-next .desk-tool-list a > span:first-child,
+.desk-next .desk-tool-list .desk-tool-link > span:first-child,
 .desk-next .desk-tool-list button > span:first-child {
   color: var(--accent);
   font-size: 18px;
@@ -3199,4 +3203,78 @@
   .desk-next .desk-dock-main {
     max-width: 96px;
   }
+}
+
+/* ── HS-95-04: page cores hosted in desk windows ── */
+.desk-next .desk-surface-window {
+  /* The default home: the left flank, below the chrome band and clear of
+     the top-right clusters and the dock (chrome sits UNDER the window
+     band — z 30 vs 42+ — so a default must not cover the launchers).
+     Arranged rects override (the window contract). */
+  position: fixed;
+  top: 72px;
+  left: 24px;
+  width: min(640px, 46vw);
+  max-height: calc(100vh - 148px);
+  display: flex;
+  flex-direction: column;
+  min-width: 420px;
+  border-radius: 16px;
+  background: rgba(14, 12, 19, 0.96);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+.desk-next .desk-surface-window .desk-pullout-head {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desk-next .desk-surface-body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.desk-next .desk-core-verbs {
+  display: flex;
+  justify-content: flex-end;
+}
+/* The shelf's tool rows are buttons now (the dispatcher); keep the link look. */
+.desk-next .desk-tool-link {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* HS-95-05: the window's subject scope — one quiet chip, product label. */
+.desk-next .desk-scope-chip {
+  align-self: flex-start;
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent, #ff6b35) 40%, var(--border));
+  background: color-mix(in srgb, var(--accent, #ff6b35) 12%, transparent);
+  font-size: var(--font-size-xs);
+  color: var(--text);
+}
+.desk-next .desk-mic-row,
+.page-wrap .desk-mic-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.desk-next .desk-mic-row > :first-child,
+.page-wrap .desk-mic-row > :first-child {
+  flex: 1;
 }

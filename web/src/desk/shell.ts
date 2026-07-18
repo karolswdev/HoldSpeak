@@ -29,3 +29,21 @@ export function openSurface(key: string, scope?: string): boolean {
 export function __resetSurfaces(): void {
   surfaces.clear();
 }
+
+/** The router's navigate, delegated once by the app shell so cores and
+ * chrome can fall back to a legacy route without importing the router. */
+let shellNavigate: ((href: string) => void) | null = null;
+
+export function setShellNavigator(nav: (href: string) => void): void {
+  shellNavigate = nav;
+}
+
+/** Open a surface in-world, else navigate to its legacy route. */
+export function openSurfaceOr(
+  key: string,
+  fallbackHref: string,
+  scope?: string,
+): void {
+  if (openSurface(key, scope)) return;
+  shellNavigate?.(fallbackHref);
+}
