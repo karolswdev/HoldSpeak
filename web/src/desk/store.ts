@@ -52,42 +52,46 @@ export interface PanelRect {
 
 const PANEL_KEY = "hs.desk.panels";
 
-/** The persisted window layout (HS-95-02): arranged rects plus the
- * minimize/maximize lifecycle, one slot. The loader also accepts the
- * Phase 93 flat `{id: rect}` shape so an arranged desk survives the
- * upgrade. */
+/** The persisted window layout (HS-95-02; order since HS-97-03):
+ * arranged rects, the stacking order, and maximize. Minimize is
+ * session-scoped by design and is NOT persisted (a legacy `min` key is
+ * tolerated and dropped). The loader also accepts the Phase 93 flat
+ * `{id: rect}` shape so an arranged desk survives the upgrade. */
 interface PanelLayout {
   rects: Record<string, PanelRect>;
-  min: string[];
+  order: string[];
   max: string[];
 }
 
-function loadPanelLayout(): PanelLayout {
+export function loadPanelLayout(): PanelLayout {
   try {
     const raw = JSON.parse(localStorage.getItem(PANEL_KEY) || "{}") || {};
     if (raw && typeof raw === "object" && raw.rects) {
       return {
         rects: raw.rects || {},
-        min: Array.isArray(raw.min) ? raw.min : [],
+        order: Array.isArray(raw.order) ? raw.order : [],
         max: Array.isArray(raw.max) ? raw.max : [],
       };
     }
-    return { rects: raw, min: [], max: [] };
+    return { rects: raw, order: [], max: [] };
   } catch {
-    return { rects: {}, min: [], max: [] };
+    return { rects: {}, order: [], max: [] };
   }
 }
 
 function savePanelLayout(
   rects: Record<string, PanelRect>,
   keep: string[],
-  min: string[],
+  order: string[],
   max: string[],
 ) {
   try {
     const out: Record<string, PanelRect> = {};
     for (const id of keep) if (rects[id]) out[id] = rects[id];
-    localStorage.setItem(PANEL_KEY, JSON.stringify({ rects: out, min, max }));
+    localStorage.setItem(
+      PANEL_KEY,
+      JSON.stringify({ rects: out, order, max }),
+    );
   } catch {
     /* storage may be unavailable; arranging just won't persist */
   }
@@ -206,9 +210,10 @@ interface DeskState {
   panelRects: Record<string, PanelRect>;
   /** Panel ids whose rect the user arranged — the persisted subset. */
   panelSaved: string[];
-  /** Window focus order; the last id renders in front. */
+  /** Window focus order; the last id renders in front. Persisted
+   * (HS-97-03: the arrangement is sacred, stacking included). */
   panelOrder: string[];
-  /** Minimized windows (parked in the tray/dock), persisted. */
+  /** Minimized windows (parked in the tray/dock), session-scoped. */
   panelMin: string[];
   /** Maximized windows (full stage; the saved rect is kept), persisted. */
   panelMax: string[];
@@ -305,6 +310,11 @@ interface DeskState {
   resetPanelRect(id: string): void;
   /** Bring a desk window to the front of the focus order. */
   focusPanel(id: string): void;
+  /** Present a window on open: a window with a remembered place in the
+   * stacking order keeps it (reload-rehydrate); a new one goes on top. */
+  presentPanel(id: string): void;
+  /** A closed window leaves the stacking order (so reopening presents). */
+  retirePanel(id: string): void;
 }
 
 export const useDesk = create<DeskState>((set, get) => ({
@@ -324,8 +334,8 @@ export const useDesk = create<DeskState>((set, get) => ({
   recordingStartedAt: null,
   panelRects: initialPanelRects,
   panelSaved: Object.keys(initialPanelRects),
-  panelOrder: [],
-  panelMin: initialPanelLayout.min,
+  panelOrder: initialPanelLayout.order,
+  panelMin: [],
   panelMax: initialPanelLayout.max,
   divedZone: null,
   draggingId: null,
@@ -795,31 +805,41 @@ export const useDesk = create<DeskState>((set, get) => ({
         : get().panelSaved;
     set({ panelRects, panelSaved });
     if (persist)
-      savePanelLayout(panelRects, panelSaved, get().panelMin, get().panelMax);
+      savePanelLayout(panelRects, panelSaved, get().panelOrder, get().panelMax);
   },
   resetPanelRect(id) {
     const { [id]: _dropped, ...rest } = get().panelRects;
     const panelSaved = get().panelSaved.filter((x) => x !== id);
     set({ panelRects: rest, panelSaved });
-    savePanelLayout(rest, panelSaved, get().panelMin, get().panelMax);
+    savePanelLayout(rest, panelSaved, get().panelOrder, get().panelMax);
   },
   focusPanel(id) {
     const order = get().panelOrder.filter((x) => x !== id);
     order.push(id);
     set({ panelOrder: order });
+    savePanelLayout(get().panelRects, get().panelSaved, order, get().panelMax);
+  },
+  presentPanel(id) {
+    if (get().panelOrder.includes(id)) return;
+    get().focusPanel(id);
+  },
+  retirePanel(id) {
+    if (!get().panelOrder.includes(id)) return;
+    const order = get().panelOrder.filter((x) => x !== id);
+    set({ panelOrder: order });
+    savePanelLayout(get().panelRects, get().panelSaved, order, get().panelMax);
   },
   minimizePanel(id) {
     if (get().panelMin.includes(id)) return;
-    const panelMin = [...get().panelMin, id];
-    set({ panelMin });
-    savePanelLayout(get().panelRects, get().panelSaved, panelMin, get().panelMax);
+    // Session-scoped by design (HS-97-03): never persisted.
+    set({ panelMin: [...get().panelMin, id] });
   },
   restorePanel(id) {
     const panelMin = get().panelMin.filter((x) => x !== id);
     const order = get().panelOrder.filter((x) => x !== id);
     order.push(id);
     set({ panelMin, panelOrder: order });
-    savePanelLayout(get().panelRects, get().panelSaved, panelMin, get().panelMax);
+    savePanelLayout(get().panelRects, get().panelSaved, order, get().panelMax);
   },
   toggleMaximizePanel(id) {
     const has = get().panelMax.includes(id);
@@ -829,10 +849,16 @@ export const useDesk = create<DeskState>((set, get) => ({
     const order = get().panelOrder.filter((x) => x !== id);
     order.push(id);
     set({ panelMax, panelOrder: order });
-    savePanelLayout(get().panelRects, get().panelSaved, get().panelMin, panelMax);
+    savePanelLayout(get().panelRects, get().panelSaved, order, panelMax);
   },
   resetLayout() {
-    set({ panelRects: {}, panelSaved: [], panelMin: [], panelMax: [] });
+    set({
+      panelRects: {},
+      panelSaved: [],
+      panelOrder: [],
+      panelMin: [],
+      panelMax: [],
+    });
     savePanelLayout({}, [], [], []);
   },
 }));

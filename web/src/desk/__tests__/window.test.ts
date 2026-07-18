@@ -2,7 +2,7 @@
 // beside the object layout, focus raises without destroying siblings, and
 // the one Record verb reduces runtime frames in the store.
 import { beforeEach, describe, expect, it } from "vitest";
-import { useDesk } from "../store";
+import { loadPanelLayout, useDesk } from "../store";
 
 describe("desk windows", () => {
   beforeEach(() => {
@@ -51,6 +51,50 @@ describe("desk windows", () => {
     useDesk.getState().focusPanel("pullout");
     useDesk.getState().focusPanel("ask");
     expect(useDesk.getState().panelOrder).toEqual(["pullout", "ask"]);
+  });
+
+  it("the stacking order persists; minimize does not (HS-97-03)", () => {
+    useDesk.getState().focusPanel("ask");
+    useDesk.getState().focusPanel("pullout");
+    useDesk.getState().minimizePanel("ask");
+    const raw = JSON.parse(localStorage.getItem("hs.desk.panels") || "{}");
+    expect(raw.order).toEqual(["ask", "pullout"]);
+    expect(raw.min).toBeUndefined();
+    expect(useDesk.getState().panelMin).toEqual(["ask"]);
+  });
+
+  it("presentPanel keeps a remembered plane; a new window goes on top", () => {
+    useDesk.getState().focusPanel("ask");
+    useDesk.getState().focusPanel("pullout");
+    useDesk.getState().presentPanel("ask");
+    expect(useDesk.getState().panelOrder).toEqual(["ask", "pullout"]);
+    useDesk.getState().presentPanel("chat");
+    expect(useDesk.getState().panelOrder).toEqual(["ask", "pullout", "chat"]);
+  });
+
+  it("retirePanel drops a closed window so a reopen presents on top", () => {
+    useDesk.getState().focusPanel("ask");
+    useDesk.getState().focusPanel("pullout");
+    useDesk.getState().retirePanel("ask");
+    expect(useDesk.getState().panelOrder).toEqual(["pullout"]);
+    useDesk.getState().presentPanel("ask");
+    expect(useDesk.getState().panelOrder).toEqual(["pullout", "ask"]);
+  });
+
+  it("a legacy layout payload (with min) loads and is tolerated", () => {
+    localStorage.setItem(
+      "hs.desk.panels",
+      JSON.stringify({
+        rects: { ask: { x: 1, y: 2, w: 300, h: 200 } },
+        min: ["ask"],
+        max: ["pullout"],
+      }),
+    );
+    const loaded = loadPanelLayout();
+    expect(loaded.rects.ask).toBeDefined();
+    expect(loaded.order).toEqual([]);
+    expect(loaded.max).toEqual(["pullout"]);
+    expect("min" in loaded).toBe(false);
   });
 
   it("windows coexist: opening the composer keeps the pull-out open", () => {

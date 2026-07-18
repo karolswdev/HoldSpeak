@@ -215,7 +215,9 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   // sacred). Sheets (compact viewports) own their own form.
   useEffect(() => {
     if (!open) return;
-    useDesk.getState().focusPanel(id);
+    // Present, don't blindly raise: a window rehydrating on reload keeps
+    // its remembered plane in the stacking order (HS-97-03).
+    useDesk.getState().presentPanel(id);
     if (
       typeof window.matchMedia === "function" &&
       window.matchMedia("(max-width: 720px)").matches
@@ -243,10 +245,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     }
     return () => {
       // An unarranged (never persisted) rect is ephemeral: forget it so
-      // the panel is re-placed from its default home next time.
+      // the panel is re-placed from its default home next time. Closing
+      // also leaves the stacking order, so a reopen presents on top.
       const st = useDesk.getState();
       if (!st.panelSaved.includes(id) && st.panelRects[id])
         st.resetPanelRect(id);
+      st.retirePanel(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, open]);
@@ -489,10 +493,10 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     };
   }, [open, id]);
 
-  // Opening always PRESENTS the window. A stale minimize (e.g. persisted
-  // from a prior session whose feature-open state reset on reload) would
-  // otherwise open the window invisibly parked — a stranded surface.
-  // Minimize is session-scoped by design; rects and maximize persist.
+  // Opening always PRESENTS the window. A stale in-session minimize
+  // (window closed while parked, reopened later) would otherwise open it
+  // invisibly parked — a stranded surface. Minimize is session-scoped by
+  // design and never persisted (HS-97-03); rects/order/maximize persist.
   useEffect(() => {
     if (open && useDesk.getState().panelMin.includes(id))
       useDesk.getState().restorePanel(id);

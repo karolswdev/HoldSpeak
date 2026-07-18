@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 97
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-97-09
 
@@ -34,15 +34,15 @@ sheet's action row.
 
 ## Acceptance criteria
 
-- [ ] Arrange three windows, reload: rects, maximize, AND stacking
+- [x] Arrange three windows, reload: rects, maximize, AND stacking
       order survive byte-identically (walk-proven, localStorage shown).
-- [ ] `hs.desk.panels` no longer carries a live `min` key; legacy
+- [x] `hs.desk.panels` no longer carries a live `min` key; legacy
       payloads still load.
-- [ ] The room menu wears the transient material with visible hover and
+- [x] The room menu wears the transient material with visible hover and
       focus states (shot in evidence).
-- [ ] On 393x852 an open sheet's action row is fully tappable (shot +
+- [x] On 393x852 an open sheet's action row is fully tappable (shot +
       hit-test in the walk).
-- [ ] Web suite + guards green.
+- [x] Web suite + guards green.
 
 ## Test plan
 

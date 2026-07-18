@@ -126,14 +126,16 @@ describe("DeskWindowFrame (the one chrome)", () => {
 });
 
 describe("the lifecycle store + hs.desk.panels persistence", () => {
-  it("round-trips rects + min + max through one slot", () => {
+  it("round-trips rects + order + max through one slot; min stays out (HS-97-03)", () => {
     useDesk.getState().setPanelRect("a", { x: 10, y: 20, w: 400, h: 300 }, true);
     useDesk.getState().minimizePanel("a");
     useDesk.getState().toggleMaximizePanel("b");
     const raw = JSON.parse(localStorage.getItem("hs.desk.panels") || "{}");
     expect(raw.rects.a).toEqual({ x: 10, y: 20, w: 400, h: 300 });
-    expect(raw.min).toEqual(["a"]);
+    expect(raw.min).toBeUndefined();
+    expect(raw.order).toEqual(["b"]);
     expect(raw.max).toEqual(["b"]);
+    expect(useDesk.getState().panelMin).toEqual(["a"]);
   });
 
   it("restore and un-maximize persist their removals", () => {
@@ -142,7 +144,7 @@ describe("the lifecycle store + hs.desk.panels persistence", () => {
     useDesk.getState().toggleMaximizePanel("b");
     useDesk.getState().toggleMaximizePanel("b");
     const raw = JSON.parse(localStorage.getItem("hs.desk.panels") || "{}");
-    expect(raw.min).toEqual([]);
+    expect(raw.min).toBeUndefined();
     expect(raw.max).toEqual([]);
   });
 

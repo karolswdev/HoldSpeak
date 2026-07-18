@@ -134,14 +134,21 @@
   background: var(--desk-panel-fill);
   box-shadow: var(--desk-transient-shadow);
 }
-.desk-next .desk-menu a {
+.desk-next .desk-menu a,
+.desk-next .desk-menu button {
   padding: 8px 12px;
+  border: 0;
   border-radius: 8px;
+  background: none;
   color: var(--text);
   text-decoration: none;
+  text-align: left;
+  font: inherit;
   font-size: var(--font-size-sm);
+  cursor: pointer;
 }
-.desk-next .desk-menu a:hover {
+.desk-next .desk-menu a:hover,
+.desk-next .desk-menu button:hover {
   background: var(--accent-tint);
 }
 .desk-next .desk-hub-dot {
@@ -2253,7 +2260,15 @@
   position: fixed;
   left: 16px;
   bottom: 16px;
-  z-index: 60;
+  /* Shelf furniture: rides the dock band (HS-97-03; the ladder note). */
+  z-index: var(--desk-z-dock);
+}
+@media (max-width: 720px) {
+  /* The phone's bottom edge belongs to the sheet (same rule as the
+     dock): shelf pills never occlude a sheet's action row. */
+  .desk-next .desk-panepicker {
+    z-index: var(--desk-z-dock-under);
+  }
 }
 .desk-next .desk-panepicker-launch {
   font-family: var(--font-mono);

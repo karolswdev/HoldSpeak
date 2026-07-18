@@ -1,9 +1,9 @@
 # Phase 97 — The Window Grammar
 
-**Status:** IN PROGRESS (2/9, 2026-07-18) — from the owner's direct
+**Status:** IN PROGRESS (3/9, 2026-07-18) — from the owner's direct
 verdict on the Desk OS state.
 
-**Last updated:** 2026-07-18 (HS-97-02 done; windows land well).
+**Last updated:** 2026-07-18 (HS-97-03 done; the arrangement persists).
 
 ## Why this phase exists
 
@@ -86,7 +86,7 @@ staged follow-ups (Native Surfaces; The Living World).
 |---|---|---|---|---|
 | HS-97-01 | The shadow returns | done | [story-01-shadow-returns](./story-01-shadow-returns.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-97-02 | A window lands well | done | [story-02-placement](./story-02-placement.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-97-03 | The arrangement is sacred | backlog | [story-03-arrangement-persists](./story-03-arrangement-persists.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-97-03 | The arrangement is sacred | done | [story-03-arrangement-persists](./story-03-arrangement-persists.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-97-04 | Focus and depth | backlog | [story-04-focus-depth](./story-04-focus-depth.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-97-05 | Hands on the frame | backlog | [story-05-hands-on-frame](./story-05-hands-on-frame.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-97-06 | The switcher | backlog | [story-06-switcher](./story-06-switcher.md) | [evidence-story-06](./evidence-story-06.md) |
@@ -96,7 +96,22 @@ staged follow-ups (Native Surfaces; The Living World).
 
 ## Where we are
 
-**HS-97-02 done (2026-07-18): a window lands well.** The open-placement
+**HS-97-03 done (2026-07-18): the arrangement is sacred.** The stacking
+order persists: `hs.desk.panels` now carries `{rects, order, max}`
+(`focusPanel` writes through; a legacy `min` key is tolerated and
+dropped by the loader, pinned by test), windows rehydrate at their
+remembered plane (`presentPanel` keeps a known id's position, new
+windows go on top, `retirePanel` drops closed ones so a reopen
+presents). Minimize is honestly session-scoped — never written to
+storage. The room menu wears the transient material (dark panel,
+radius, shadow, left-aligned quiet rows — the unstyled gray defaults
+are gone), and the pane-picker pill rides the dock band's z tokens
+(under the sheet on the phone; the stale `z-index: 60` allow-list
+entry removed, 69 → 68). Proven by the new `arrangement` walk: the
+layout survives reload byte-identically with the front window
+restored, and on 393 every sheet action row button wins the hit-test
+(`assets/arrangement-menu-1440.png`, `assets/arrangement-phone-393.png`);
+`npm run check` green (271 web tests). Earlier: **HS-97-02 done (2026-07-18): a window lands well.** The open-placement
 engine (`placeWindow`, exported beside `snapForPointer` and pinned by
 seven unit tests) seats every window opening without a persisted rect:
 seeded at its CSS default home, moved off other windows' title bars by

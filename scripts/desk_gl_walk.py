@@ -269,8 +269,9 @@ def windows() -> None:
         page.wait_for_selector(".desk-attention-drawer:visible", timeout=3000)
         page.click('[aria-label="Minimize Desk memory"]')
         page.wait_for_selector(".desk-dock-chip.is-min", timeout=3000)
-        # Reload: rects and maximize persist; a reopening window always
-        # PRESENTS itself (minimize is session-scoped by design).
+        # Reload: rects, stacking order, and maximize persist; a reopening
+        # window always PRESENTS itself (minimize is session-scoped by
+        # design and, since HS-97-03, never persisted).
         page.reload(wait_until="networkidle")
         wait_world(page)
         layout = page.evaluate(
@@ -278,12 +279,14 @@ def windows() -> None:
         )
         assert layout["max"] == ["delivery-board"], layout
         assert "pullout" in layout["rects"], layout
+        assert "min" not in layout, layout
+        assert isinstance(layout.get("order"), list), layout
         page.click(".desk-attention-launch")
         page.wait_for_selector(".desk-attention-drawer:visible", timeout=3000)
         min_now = page.evaluate(
             "() => JSON.parse(localStorage.getItem('hs.desk.panels')).min"
         )
-        assert min_now == [], min_now
+        assert min_now is None, min_now
         # The delivery board reopens maximized (persisted lifecycle).
         page.click(".desk-dlv-tab")
         page.wait_for_selector(".desk-dlv-board", timeout=5000)
@@ -381,7 +384,7 @@ def shell() -> None:
         layout = page.evaluate(
             "() => JSON.parse(localStorage.getItem('hs.desk.panels'))"
         )
-        assert layout == {"rects": {}, "min": [], "max": []}, layout
+        assert layout == {"rects": {}, "order": [], "max": []}, layout
         # The chrome menu dispatches through the shell: since HS-95-05 the
         # Dictation surface is registered, so it opens IN PLACE.
         page.click(".desk-mark")
@@ -859,6 +862,122 @@ def placement() -> None:
         browser.close()
 
 
+def arrangement() -> None:
+    """HS-97-03 — the arrangement is sacred: rects, maximize, AND the
+    stacking order survive reload byte-identically; the room menu wears
+    the transient material; on the phone a sheet's action row is fully
+    tappable (no shelf pill occludes it)."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        for label in ("Settings", "Meetings", "Dictation"):
+            page.click(".desk-mark")
+            page.click(f"nav.desk-menu button:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{label}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(500)
+        # Raise Settings back to the front, drag it (persists its rect).
+        head = page.locator(
+            "[aria-label='Settings'].desk-surface-window .desk-window-handle"
+        )
+        hb = head.bounding_box()
+        page.mouse.move(hb["x"] + 60, hb["y"] + 10)
+        page.mouse.down()
+        page.mouse.move(hb["x"] + 220, hb["y"] + 160, steps=8)
+        page.mouse.up()
+        page.wait_for_timeout(400)
+        before = page.evaluate(
+            "() => localStorage.getItem('hs.desk.panels')"
+        )
+        assert '"order"' in before and '"min"' not in before, before
+        front_before = page.evaluate(
+            """() => {
+              const shells = [...document.querySelectorAll('.desk-window-shell')];
+              shells.sort((a,b)=> (+b.style.zIndex||0) - (+a.style.zIndex||0));
+              return shells[0]?.getAttribute('aria-label');
+            }"""
+        )
+        assert front_before == "Settings", front_before
+        page.reload(wait_until="networkidle")
+        wait_world(page)
+        after = page.evaluate("() => localStorage.getItem('hs.desk.panels')")
+        assert after == before, (before, after)
+        # Reopen all three: each keeps its remembered plane — the front
+        # window is the one that was in front before the reload.
+        for label in ("Settings", "Meetings", "Dictation"):
+            page.click(".desk-mark")
+            page.click(f"nav.desk-menu button:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{label}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(400)
+        front_after = page.evaluate(
+            """() => {
+              const shells = [...document.querySelectorAll('.desk-window-shell')];
+              shells.sort((a,b)=> (+b.style.zIndex||0) - (+a.style.zIndex||0));
+              return shells[0]?.getAttribute('aria-label');
+            }"""
+        )
+        assert front_after == "Settings", front_after
+        # The room menu wears the transient material (no default buttons).
+        page.click(".desk-mark")
+        page.wait_for_selector("nav.desk-menu", timeout=3000)
+        menu_bg = page.evaluate(
+            """() => {
+              const b = document.querySelector('nav.desk-menu button');
+              const cs = getComputedStyle(b);
+              return {bg: cs.backgroundColor, align: cs.textAlign,
+                      border: cs.borderStyle};
+            }"""
+        )
+        assert menu_bg["align"] == "left" and menu_bg["border"] == "none", menu_bg
+        page.screenshot(path=str(OUT / "arrangement-menu-1440.png"))
+        print(
+            f"arrangement walk 1440: order+rects+max survive reload "
+            f"byte-identically, front={front_after}, menu styled {menu_bg}"
+        )
+        page.close()
+        # The phone: a sheet's action row is fully tappable.
+        page = browser.new_page(viewport={"width": 393, "height": 852})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1000)
+        page.click(".desk-create-button")
+        page.click(".desk-create-menu button:has-text('Note')")
+        page.wait_for_timeout(1500)
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(500)
+        objs = page.evaluate("() => window.__hsWorldProbe()")
+        assert objs, "no object on the phone desk"
+        page.mouse.click(objs[0]["x"], objs[0]["y"])
+        page.wait_for_selector(".desk-pullout", timeout=8000)
+        page.wait_for_timeout(400)
+        hit = page.evaluate(
+            """() => {
+              const btns = [...document.querySelectorAll(
+                '.desk-pullout button')].filter(b => b.offsetParent);
+              const out = [];
+              for (const b of btns.slice(-3)) {
+                const r = b.getBoundingClientRect();
+                const el = document.elementFromPoint(
+                  r.x + r.width / 2, r.y + r.height / 2);
+                out.push({label: b.textContent.trim().slice(0, 24),
+                          hittable: b.contains(el) || el === b});
+              }
+              return out;
+            }"""
+        )
+        assert all(h["hittable"] for h in hit), hit
+        page.screenshot(path=str(OUT / "arrangement-phone-393.png"))
+        print(f"arrangement walk 393: sheet action row tappable {hit}")
+        browser.close()
+
+
 def closeout() -> None:
     """HS-95-10 — the assembled walk: every per-story walk in sequence on
     the production bundle (entry-point-driven, the way a user travels),
@@ -994,6 +1113,8 @@ if __name__ == "__main__":
         lastexits()
     elif mode == "placement":
         placement()
+    elif mode == "arrangement":
+        arrangement()
     elif mode == "closeout":
         closeout()
     elif mode == "focus":

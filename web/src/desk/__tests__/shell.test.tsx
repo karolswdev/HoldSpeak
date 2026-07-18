@@ -97,7 +97,7 @@ describe("the dock", () => {
     expect(s.panelMax).toEqual([]);
     expect(
       JSON.parse(localStorage.getItem("hs.desk.panels") || "{}"),
-    ).toEqual({ rects: {}, min: [], max: [] });
+    ).toEqual({ rects: {}, order: [], max: [] });
   });
 });
 
