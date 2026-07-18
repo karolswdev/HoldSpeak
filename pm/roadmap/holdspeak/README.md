@@ -5,7 +5,11 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, IN
-PROGRESS (4/9)**. **HS-97-04, Focus and depth, DONE**: the front window
+PROGRESS (5/9)**. **HS-97-05, Hands on the frame, DONE**: the snap
+ghost previews the landing tile live mid-drag and the release lands
+exactly on it, windows resize from their left/right/bottom edges and
+the bottom-left corner, and double-click on the head toggles maximize
+— walk-proven on the production bundle. Earlier: **HS-97-04, Focus and depth, DONE**: the front window
 alone wears the full elevation and an accent keyline (rest windows
 quiet down, the dock chip mirrors the rule), close animates out,
 minimize contracts into its dock chip and restore returns from it —

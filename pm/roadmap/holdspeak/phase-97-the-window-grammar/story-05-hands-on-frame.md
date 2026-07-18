@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 97
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-97-02
 - **Unblocks:** HS-97-09
 
@@ -32,13 +32,13 @@ ignores the double-click every OS answers with maximize.
 
 ## Acceptance criteria
 
-- [ ] Dragging a window into a snap region shows the ghost tile at the
+- [x] Dragging a window into a snap region shows the ghost tile at the
       landing rect; releasing lands exactly on it; leaving the region
       hides it (walk-proven with a mid-drag screenshot).
-- [ ] A window resizes from the left edge, right edge, bottom edge, and
+- [x] A window resizes from the left edge, right edge, bottom edge, and
       both bottom corners, respecting minima and clamps.
-- [ ] Double-click on the head maximizes; again restores.
-- [ ] Web suite + guards green.
+- [x] Double-click on the head maximizes; again restores.
+- [x] Web suite + guards green.
 
 ## Test plan
 

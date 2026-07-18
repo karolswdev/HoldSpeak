@@ -1,10 +1,9 @@
 # Phase 97 — The Window Grammar
 
-**Status:** IN PROGRESS (4/9, 2026-07-18) — from the owner's direct
+**Status:** IN PROGRESS (5/9, 2026-07-18) — from the owner's direct
 verdict on the Desk OS state.
 
-**Last updated:** 2026-07-18 (HS-97-04 done; focus has depth, motion
-tells the story).
+**Last updated:** 2026-07-18 (HS-97-05 done; hands on the frame).
 
 ## Why this phase exists
 
@@ -89,7 +88,7 @@ staged follow-ups (Native Surfaces; The Living World).
 | HS-97-02 | A window lands well | done | [story-02-placement](./story-02-placement.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-97-03 | The arrangement is sacred | done | [story-03-arrangement-persists](./story-03-arrangement-persists.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-97-04 | Focus and depth | done | [story-04-focus-depth](./story-04-focus-depth.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-97-05 | Hands on the frame | backlog | [story-05-hands-on-frame](./story-05-hands-on-frame.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-97-05 | Hands on the frame | done | [story-05-hands-on-frame](./story-05-hands-on-frame.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-97-06 | The switcher | backlog | [story-06-switcher](./story-06-switcher.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-97-07 | One shelf, quiet chrome | backlog | [story-07-one-shelf](./story-07-one-shelf.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-97-08 | The physics floors, written | backlog | [story-08-docs](./story-08-docs.md) | [evidence-story-08](./evidence-story-08.md) |
@@ -97,6 +96,18 @@ staged follow-ups (Native Surfaces; The Living World).
 
 ## Where we are
 
+**HS-97-05 done (2026-07-18): hands on the frame.** The snap ghost:
+while a head drag hovers a snap region, the landing tile renders live
+as a translucent accent preview (`SnapGhost`, module-level publisher,
+z transient) and the release lands exactly on it — the tiling feature
+is finally discoverable. The frame resizes from its left/right/bottom
+edges and the bottom-left corner (`resizeEdge`, pure and pinned by
+four unit tests; the left edge keeps the right edge fixed when the
+minimum bites), and double-click on the head toggles
+maximize/restore. Proven by the `frame` walk on the production bundle
+(ghost previews + lands exactly, three edge resizes, double-click
+both ways; `assets/frame-ghost-1440.png` LOOKED AT — the ghost is
+unmistakable); `npm run check` green (277 web tests). Earlier:
 **HS-97-04 done (2026-07-18): focus and depth.** The front window — the
 last id in the stacking order that is open and not minimized — alone
 wears the full elevation plus a 1px accent keyline ring; rest windows

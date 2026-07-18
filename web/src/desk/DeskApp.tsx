@@ -19,7 +19,7 @@ import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
-import { Dock } from "./components/DeskWindow";
+import { Dock, SnapGhost } from "./components/DeskWindow";
 import { SurfaceWindows } from "./components/SurfaceWindows";
 import { TrustWindow } from "./components/TrustWindow";
 import { useProjections } from "./projections";
@@ -68,6 +68,7 @@ export default function DeskApp() {
       <SurfaceWindows />
       <TrustWindow />
       <Dock />
+      <SnapGhost />
     </div>
   );
 }

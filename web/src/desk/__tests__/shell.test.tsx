@@ -8,6 +8,7 @@ import {
   Dock,
   clampIntoBand,
   placeWindow,
+  resizeEdge,
   snapForPointer,
 } from "../components/DeskWindow";
 import { openSurface, registerSurface, __resetSurfaces } from "../shell";
@@ -184,6 +185,34 @@ describe("placeWindow (HS-97-02, the open-placement engine)", () => {
     expect(r.x).toBe(24 + 26 * 8);
     expect(r.y).toBe(72 + 26 * 8);
     expect(r.y + r.h).toBeLessThanOrEqual(VH - BOTTOM);
+  });
+});
+
+describe("resizeEdge (HS-97-05, edge resize math)", () => {
+  const base = { x: 100, y: 100, w: 400, h: 300 };
+
+  it("right and bottom edges grow with the pointer", () => {
+    expect(resizeEdge("r", base, 50, 0, 320, 220).w).toBe(450);
+    expect(resizeEdge("b", base, 0, 40, 320, 220).h).toBe(340);
+  });
+
+  it("the left edge moves x and shrinks w together", () => {
+    const r = resizeEdge("l", base, 30, 0, 320, 220);
+    expect(r.x).toBe(130);
+    expect(r.w).toBe(370);
+  });
+
+  it("the left edge keeps the right edge fixed at the minimum", () => {
+    const r = resizeEdge("l", base, 200, 0, 320, 220);
+    expect(r.w).toBe(320);
+    expect(r.x).toBe(180);
+  });
+
+  it("the bottom-left corner drives both axes", () => {
+    const r = resizeEdge("bl", base, -20, 30, 320, 220);
+    expect(r.x).toBe(80);
+    expect(r.w).toBe(420);
+    expect(r.h).toBe(330);
   });
 });
 

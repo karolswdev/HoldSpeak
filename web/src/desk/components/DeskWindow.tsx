@@ -153,6 +153,68 @@ export function snapForPointer(
   return null;
 }
 
+/** HS-97-05 — edge resize math: which edges move with the pointer.
+ * Modes: "r" | "b" | "br" | "l" | "bl"; the left edge keeps the right
+ * edge fixed when the minimum bites. Pure, pinned by test. */
+export function resizeEdge(
+  mode: string,
+  base: PanelRect,
+  mx: number,
+  my: number,
+  minW: number,
+  minH: number,
+): PanelRect {
+  let { x, y, w, h } = base;
+  if (mode.includes("r")) w = base.w + mx;
+  if (mode.includes("l")) {
+    w = base.w - mx;
+    x = base.x + mx;
+    if (w < minW) {
+      x = base.x + base.w - minW;
+      w = minW;
+    }
+  }
+  if (mode.includes("b")) h = base.h + my;
+  return clampRect({ x, y, w, h }, minW, minH);
+}
+
+/** HS-97-05 — the snap ghost: while a head drag hovers a snap region,
+ * the landing tile renders as a translucent preview. Module-level
+ * publisher so the one ghost lives outside any window. */
+let ghostRect: PanelRect | null = null;
+const ghostListeners = new Set<() => void>();
+function publishGhost(r: PanelRect | null) {
+  const same =
+    (r === null && ghostRect === null) ||
+    (r !== null &&
+      ghostRect !== null &&
+      r.x === ghostRect.x &&
+      r.y === ghostRect.y &&
+      r.w === ghostRect.w &&
+      r.h === ghostRect.h);
+  if (same) return;
+  ghostRect = r;
+  for (const l of ghostListeners) l();
+}
+
+export function SnapGhost() {
+  const rect = useSyncExternalStore(
+    (cb) => {
+      ghostListeners.add(cb);
+      return () => ghostListeners.delete(cb);
+    },
+    () => ghostRect,
+  );
+  if (!rect) return null;
+  return (
+    <div
+      className="desk-snap-ghost"
+      style={{ top: rect.y, left: rect.x, width: rect.w, height: rect.h }}
+      aria-hidden="true"
+    />
+  );
+}
+
 function clampRect(r: PanelRect, minW: number, minH: number): PanelRect {
   const vw = window.innerWidth || 1280;
   const vh = window.innerHeight || 800;
@@ -266,11 +328,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       if (memo?.skip) return memo;
       const base: PanelRect = memo?.base ?? measure();
       if (Math.abs(mx) + Math.abs(my) > 3) {
-        // Releasing at a screen edge snaps to the half/quarter tile
+        // A snap region shows its landing tile as a live ghost while
+        // dragging (HS-97-05); releasing inside it lands exactly there
         // (HS-95-03); anywhere else parks the dragged rect as before.
         const ev = event as PointerEvent | undefined;
-        const snapped =
-          last && ev && typeof ev.clientX === "number"
+        const tile =
+          ev && typeof ev.clientX === "number"
             ? snapForPointer(
                 ev.clientX,
                 ev.clientY,
@@ -278,11 +341,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
                 window.innerHeight || 800,
               )
             : null;
+        publishGhost(last ? null : tile);
         useDesk
           .getState()
           .setPanelRect(
             id,
-            snapped ??
+            (last ? tile : null) ??
               clampRect(
                 { ...base, x: base.x + mx, y: base.y + my },
                 minW,
@@ -290,6 +354,8 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
               ),
             last,
           );
+      } else if (last) {
+        publishGhost(null);
       }
       return { base, skip: false };
     },
@@ -309,6 +375,48 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       return { base };
     },
     { pointer: { buttons: 1 } },
+  );
+
+  // HS-97-05 — the frame resizes from its edges, not one corner.
+  const edgeBind = useDrag(
+    ({ args, movement: [mx, my], last, memo }) => {
+      const mode = String(args?.[0] ?? "br");
+      const base: PanelRect = memo?.base ?? measure();
+      useDesk
+        .getState()
+        .setPanelRect(id, resizeEdge(mode, base, mx, my, minW, minH), last);
+      return { base };
+    },
+    { pointer: { buttons: 1 } },
+  );
+  const edgeStyle = { touchAction: "none" } as React.CSSProperties;
+  const edges = (
+    <>
+      <span
+        className="desk-window-edge desk-window-edge-l"
+        {...edgeBind("l")}
+        style={edgeStyle}
+        aria-hidden="true"
+      />
+      <span
+        className="desk-window-edge desk-window-edge-r"
+        {...edgeBind("r")}
+        style={edgeStyle}
+        aria-hidden="true"
+      />
+      <span
+        className="desk-window-edge desk-window-edge-b"
+        {...edgeBind("b")}
+        style={edgeStyle}
+        aria-hidden="true"
+      />
+      <span
+        className="desk-window-corner desk-window-corner-bl"
+        {...edgeBind("bl")}
+        style={edgeStyle}
+        aria-hidden="true"
+      />
+    </>
   );
 
   const style: React.CSSProperties = rect
@@ -339,6 +447,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     grip: (
       <span className="desk-window-grip" {...resizeBind()} aria-hidden="true" />
     ),
+    edges,
   };
 }
 
@@ -644,6 +753,14 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       <header
         className="desk-pullout-head desk-window-handle"
         {...(compact || maxed ? {} : win.handleProps)}
+        onDoubleClick={(e) => {
+          // HS-97-05 — double-click the head toggles maximize (buttons
+          // inside the head keep their own clicks).
+          if (compact) return;
+          const t = e.target as HTMLElement | null;
+          if (t?.closest("button, a, input, textarea, select")) return;
+          useDesk.getState().toggleMaximizePanel(id);
+        }}
       >
         {leading}
         {icon}
@@ -681,6 +798,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       </header>
       {children}
       {!maxed && !compact ? win.grip : null}
+      {!maxed && !compact ? win.edges : null}
     </motion.div>
   );
 }

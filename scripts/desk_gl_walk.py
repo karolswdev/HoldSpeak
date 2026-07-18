@@ -1053,6 +1053,77 @@ def depth() -> None:
         browser.close()
 
 
+def frame() -> None:
+    """HS-97-05 — hands on the frame: the snap ghost previews the landing
+    tile mid-drag and the release lands exactly on it; the window resizes
+    from its left/right/bottom edges and the bottom-left corner;
+    double-click on the head toggles maximize."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        page.click(".desk-mark")
+        page.click("nav.desk-menu button:has-text('Settings')")
+        sel = "[aria-label='Settings'].desk-window-shell"
+        page.wait_for_selector(sel, timeout=10000)
+        page.wait_for_timeout(500)
+        # 1. Ghost: drag the head into the left snap flank; the ghost
+        # appears at the landing tile; release lands exactly there.
+        hb = page.locator(f"{sel} .desk-window-handle").bounding_box()
+        page.mouse.move(hb["x"] + 80, hb["y"] + 10)
+        page.mouse.down()
+        page.mouse.move(6, 450, steps=10)
+        page.wait_for_timeout(200)
+        ghost = page.locator(".desk-snap-ghost")
+        assert ghost.count() == 1, "no ghost in the snap region"
+        gb = ghost.bounding_box()
+        page.screenshot(path=str(OUT / "frame-ghost-1440.png"))
+        page.mouse.up()
+        page.wait_for_timeout(300)
+        assert page.locator(".desk-snap-ghost").count() == 0, "ghost stayed"
+        wb = page.locator(sel).bounding_box()
+        assert abs(wb["x"] - gb["x"]) < 3 and abs(wb["width"] - gb["width"]) < 3, (gb, wb)
+        # 2. Edges: right edge widens; bottom edge lengthens; the
+        # bottom-left corner moves x and grows both.
+        b0 = page.locator(sel).bounding_box()
+        page.mouse.move(b0["x"] + b0["width"], b0["y"] + b0["height"] / 2)
+        page.mouse.down()
+        page.mouse.move(b0["x"] + b0["width"] - 120, b0["y"] + b0["height"] / 2, steps=6)
+        page.mouse.up()
+        page.wait_for_timeout(250)
+        b1 = page.locator(sel).bounding_box()
+        assert abs((b0["width"] - 120) - b1["width"]) < 6, (b0, b1)
+        page.mouse.move(b1["x"] + b1["width"] / 2, b1["y"] + b1["height"])
+        page.mouse.down()
+        page.mouse.move(b1["x"] + b1["width"] / 2, b1["y"] + b1["height"] - 90, steps=6)
+        page.mouse.up()
+        page.wait_for_timeout(250)
+        b2 = page.locator(sel).bounding_box()
+        assert abs((b1["height"] - 90) - b2["height"]) < 6, (b1, b2)
+        page.mouse.move(b2["x"], b2["y"] + b2["height"])
+        page.mouse.down()
+        page.mouse.move(b2["x"] - 80, b2["y"] + b2["height"] + 60, steps=6)
+        page.mouse.up()
+        page.wait_for_timeout(250)
+        b3 = page.locator(sel).bounding_box()
+        assert b3["width"] > b2["width"] + 40 and b3["x"] < b2["x"] - 40, (b2, b3)
+        # 3. Double-click the head maximizes; again restores.
+        hb = page.locator(f"{sel} .desk-window-handle").bounding_box()
+        page.mouse.dblclick(hb["x"] + 120, hb["y"] + 10)
+        page.wait_for_timeout(300)
+        assert "is-max" in (page.locator(sel).get_attribute("class") or "")
+        hb = page.locator(f"{sel} .desk-window-handle").bounding_box()
+        page.mouse.dblclick(hb["x"] + 120, hb["y"] + 10)
+        page.wait_for_timeout(300)
+        assert "is-max" not in (page.locator(sel).get_attribute("class") or "")
+        print("frame walk: ghost previews + lands exactly, right/bottom/"
+              "bottom-left edges resize, double-click maximizes and restores")
+        browser.close()
+
+
 def closeout() -> None:
     """HS-95-10 — the assembled walk: every per-story walk in sequence on
     the production bundle (entry-point-driven, the way a user travels),
@@ -1192,6 +1263,8 @@ if __name__ == "__main__":
         arrangement()
     elif mode == "depth":
         depth()
+    elif mode == "frame":
+        frame()
     elif mode == "closeout":
         closeout()
     elif mode == "focus":

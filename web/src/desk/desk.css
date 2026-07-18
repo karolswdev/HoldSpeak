@@ -771,6 +771,49 @@
 .desk-next .desk-window-handle:active {
   cursor: grabbing;
 }
+/* HS-97-05 — hands on the frame: edge handles and the snap ghost. */
+.desk-next .desk-window-edge {
+  position: absolute;
+}
+.desk-next .desk-window-edge-l {
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 6px;
+  cursor: ew-resize;
+}
+.desk-next .desk-window-edge-r {
+  top: 0;
+  bottom: 0;
+  right: -3px;
+  width: 6px;
+  cursor: ew-resize;
+}
+.desk-next .desk-window-edge-b {
+  right: 14px;
+  bottom: -3px;
+  left: 14px;
+  height: 6px;
+  cursor: ns-resize;
+}
+.desk-next .desk-window-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+}
+.desk-next .desk-window-corner-bl {
+  bottom: -3px;
+  left: -3px;
+  cursor: nesw-resize;
+}
+.desk-next .desk-snap-ghost {
+  position: fixed;
+  z-index: var(--desk-z-transient);
+  border: 1px solid var(--desk-window-keyline);
+  border-radius: var(--desk-window-radius);
+  background: var(--accent-tint);
+  pointer-events: none;
+}
 .desk-next .desk-window-grip {
   position: absolute;
   right: 4px;
