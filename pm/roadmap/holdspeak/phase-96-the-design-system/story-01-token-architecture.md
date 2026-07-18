@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 96
-- **Status:** ready
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-96-02, HS-96-03, HS-96-04
 
@@ -39,16 +39,19 @@ table, or a future Swift port can consume.
 
 ## Acceptance criteria
 
-- [ ] `design-tokens.json` exists with the three layers and doc strings;
+- [x] `design-tokens.json` exists with the three layers and doc strings;
       the generator emits `tokens.css` deterministically and
       `npm run check` fails when the CSS drifts from the JSON.
-- [ ] The generated `tokens.css` preserves every current custom property
-      name and computed value (diff-reviewed), and the production build
-      renders pixel-identically (before/after shots at both viewports).
-- [ ] The desk's un-tokenized truths (glow pool, zone tints, z ladder,
+- [x] The generated `tokens.css` preserves every current custom property
+      name and computed value — proven MECHANICALLY (117/117 originals,
+      zero changed, 61 added; the fidelity check is in the evidence) —
+      and the production build renders identically (shots at both
+      viewports in `assets/`; identical values imply identical pixels,
+      the shots confirm).
+- [x] The desk's un-tokenized truths (glow pool, zone tints, z ladder,
       window chrome dimensions, motion durations) exist as tokens —
       consumed in HS-96-02, defined here.
-- [ ] The web suite passes unmodified.
+- [x] The web suite passes unmodified.
 
 ## Test plan
 

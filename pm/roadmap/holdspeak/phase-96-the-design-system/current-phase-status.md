@@ -1,9 +1,8 @@
 # Phase 96 — The Design System
 
-**Status:** PLANNED (scaffolded 2026-07-18 by owner directive: "use
-ui-styling and design-system as Phase 96"; HS-96-01 ready).
+**Status:** IN PROGRESS (1/7; HS-96-01 done 2026-07-18).
 
-**Last updated:** 2026-07-18 (scaffolded).
+**Last updated:** 2026-07-18 (HS-96-01, the token architecture, done).
 
 ## Why this phase exists
 
@@ -74,7 +73,7 @@ recorded (Article X.3).
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-96-01 | The token architecture | ready | [story-01-token-architecture](./story-01-token-architecture.md) | — |
+| HS-96-01 | The token architecture | done | [story-01-token-architecture](./story-01-token-architecture.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-96-02 | The validator gate and the burn-down | backlog | [story-02-validator-burndown](./story-02-validator-burndown.md) | — |
 | HS-96-03 | Component state specs | backlog | [story-03-component-specs](./story-03-component-specs.md) | — |
 | HS-96-04 | One material grammar | backlog | [story-04-material-grammar](./story-04-material-grammar.md) | — |
@@ -84,9 +83,18 @@ recorded (Article X.3).
 
 ## Where we are
 
-Scaffolded by owner directive the morning after Phase 95 closed. The
-vendored skills are the method source
-(`.claude/skills/design-system`, `.claude/skills/ui-styling`); their
-scripts (`generate-tokens.cjs`, `validate-tokens.cjs`) are the starting
-tools, adapted into `web/` where the repo's build lives. Nothing is
-implemented yet.
+**HS-96-01 done (2026-07-18): the tokens have one source of truth.**
+`web/design-tokens.json` carries three layers; the adapted generator
+(`web/scripts/generate-tokens.cjs`, skill-style `{ref}` syntax with a
+purpose-built plain-CSS emitter and a `--check` drift gate wired first
+into `npm run check`) emits `tokens.css`. Fidelity proven mechanically:
+all 117 pre-existing custom properties preserved with identical computed
+values, 61 added — the primitive layer (ink/paper/orange/status ramps,
+the glow pool, the zone tints, the type faces) and the Desk OS component
+layer (the z ladder 0/25/30/42/80/81, window margins/grab/cascade, snap
+clearances, per-kind glows). Deterministic double-run, `npm run check`
+green end to end, and the production desk renders identically (shots in
+`assets/`).
+
+Next: HS-96-02 wires the validator and burns the desk.css literals down
+onto these tokens.

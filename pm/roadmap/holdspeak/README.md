@@ -4,7 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 96, The Design System, SCAFFOLDED**
+**Last updated:** 2026-07-18 — **HS-96-01, The token architecture, DONE**:
+`design-tokens.json` is the one source of truth (three layers per the
+vendored skill), the adapted generator emits `tokens.css` with a drift
+gate first in `npm run check`, all 117 pre-existing tokens preserved with
+identical computed values (proven mechanically), and 61 new tokens codify
+the primitives and the Desk OS chrome (the z ladder, window physics
+constants, the glow pool, zone tints). Earlier: **Phase 96, The Design
+System, SCAFFOLDED**
 by owner directive ("use ui-styling and design-system as Phase 96"): seven
 stories applying the vendored skills to the Desk OS — a three-layer token
 architecture generated from one JSON source, the hardcoded-value validator
