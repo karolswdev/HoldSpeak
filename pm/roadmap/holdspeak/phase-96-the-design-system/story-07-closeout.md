@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 96
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-96-06
 - **Unblocks:** phase close
 
@@ -31,15 +31,17 @@ frame budget, the guards, and the owner's eyes on the polish.
 
 ## Acceptance criteria
 
-- [ ] The assembled walk and shots pass on the restyled bundle; zero
+- [x] The assembled walk and shots pass on the restyled bundle; zero
       failed API responses.
-- [ ] Storm: median and p95 within the Phase 95 envelope (≤16.7 / ≤33),
+- [x] Storm: median and p95 within the Phase 95 envelope (≤16.7 / ≤33),
       no regression beyond noise against 8.3/10.2.
-- [ ] All guards and suites green; the validator lock live in CI.
-- [ ] The owner sitting is staged (campaign beats shipped) and the
-      verdict recorded, or preserved per the standing close directive
-      with the criterion verbatim in BACKLOG.
-- [ ] final-summary.md names every deferral.
+- [x] All guards and suites green; the validator lock live in CI.
+- [x] The owner sitting is staged: Campaign 13 gained the
+      `desk-os-design-polish` scenario (one material, the state grammars
+      under the hand, the keyboard truth) — preserved per the standing
+      close directive with the Desk OS sitting (BACKLOG candidate Z
+      covers both verdicts in one sitting).
+- [x] final-summary.md names every deferral.
 
 ## Test plan
 

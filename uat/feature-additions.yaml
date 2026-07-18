@@ -229,3 +229,11 @@ features:
     recipes: [seeded-desk]
     priority: must
     status: live
+  - key: phase96.design.system
+    title: One design system - tokens, state grammars, one material, keyboard truth
+    domain: Phase 96 the design system
+    phases: [96]
+    surfaces: {web: 'yes', ipad: 'no', iphone: 'no'}
+    recipes: [seeded-desk]
+    priority: must
+    status: live

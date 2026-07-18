@@ -1,0 +1,19 @@
+id: desk-os-design-polish
+execution_target: web_react
+title: The desk reads as one built thing and answers the keyboard
+features:
+  - phase96.design.system
+recipes:
+  - seeded-desk
+form_factors: [desktop]
+steps:
+  - do: Open a pull-out, a Settings window, and the trust window (tap the egress badge). Look at their corners, fills, and shadows side by side.
+    expect: One material - same glass, same corner radius, same depth; only the pull-out wears its object-tinted edge. Nothing reads as a different app.
+    where: /
+  - do: Put the pointer through the chrome - hover and press chips, window verbs, dock chips, a primary button.
+    expect: Every affordance answers the hand the same way - a hover wash, a 1px press settle (the orb presses inward); nothing is inert.
+    where: /
+  - do: Put the mouse away. Tab through the desk; open a window with Enter; press Escape.
+    expect: The orange focus ring is visible on every stop; focus moves INTO an opened window and returns when Escape closes it; tabbing the world surfaces each object as a readable chip above the dock.
+    where: /
+teardown: []

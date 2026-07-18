@@ -1,8 +1,11 @@
 # Phase 96 — The Design System
 
-**Status:** IN PROGRESS (6/7; HS-96-06 done 2026-07-18).
+**Status:** CLOSED (7/7, 2026-07-18 — scaffolded and shipped the same
+day by owner directive) at machine-verifiable scope under the standing
+close directive; the owner's design-polish verdict rides UAT Campaign 13
+with the Desk OS sitting. See [final-summary](./final-summary.md).
 
-**Last updated:** 2026-07-18 (HS-96-06, docs and the mechanical lock, done).
+**Last updated:** 2026-07-18 (HS-96-07 done; phase CLOSED 7/7).
 
 ## Why this phase exists
 
@@ -79,7 +82,7 @@ recorded (Article X.3).
 | HS-96-04 | One material grammar | done | [story-04-material-grammar](./story-04-material-grammar.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-96-05 | The accessibility pass | done | [story-05-accessibility](./story-05-accessibility.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-96-06 | Docs and the mechanical lock | done | [story-06-docs-lock](./story-06-docs-lock.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-96-07 | Closeout: walks, storm, owner rider | backlog | [story-07-closeout](./story-07-closeout.md) | — |
+| HS-96-07 | Closeout: walks, storm, owner rider | done | [story-07-closeout](./story-07-closeout.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
@@ -157,4 +160,13 @@ styling rules and the gate) and from the frontend architecture doc's
 locks list (now including the Phase 96 token gates and the state-contract
 guard). Doc guards 22/22; `npm run check` green end to end.
 
-Next: HS-96-07 closes the phase against the production bundle.
+**HS-96-07 done (2026-07-18): closed against the production bundle.**
+The assembled eight-walk chain green on the restyled bundle with zero
+failed API responses; the storm within the Phase 95 envelope (median
+8.3ms, p95 10.0ms, one layout event); every guard green (no-exit, cores,
+desk locks, design-system, doc drift, UAT packs); `npm run check` end to
+end; the full python sweep 4110 passed / 0 failed. Campaign 13 carries
+the `desk-os-design-polish` scenario so one sitting casts both verdicts.
+final-summary.md names the deferrals (the sitting itself, the keyboard
+zone-rename path, the 69 shrinking allow-list entries, busy-state
+stragglers) and hands the token JSON to the Swift belt.

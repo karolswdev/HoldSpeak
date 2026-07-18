@@ -4,7 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **HS-96-06, Docs and the mechanical lock,
+**Last updated:** 2026-07-18 — **Phase 96, The Design System, CLOSED
+(7/7, scaffolded and shipped the same day by owner directive)**: one token
+source of truth generating the CSS and the TS mirror, the validator gate
+live in check and CI, the state contract written and true, one window
+material, the keyboard-true OS, docs wired, and the closeout green on the
+production bundle (storm 8.3ms median; sweep 4110/0). The owner's
+design-polish verdict rides Campaign 13. Earlier: **HS-96-06, Docs and
+the mechanical lock,
 DONE**: DESIGN_SYSTEM.md is wired into the contributor path (web/README's
 add-a-surface styling step, the architecture doc's locks list); all doc
 guards green. Earlier: **HS-96-05, The accessibility pass, DONE**:
@@ -300,7 +307,7 @@ canon, canon wins.
 | 93 | Effortless HoldSpeak: make the Desk a rich, learnable AI operating system through visible subtraction, coherent OS affordances, contextual power, real failure recovery, accessibility, and sustained owner use across Web and flagship Swift. | done | [phase-93-effortless-holdspeak](./phase-93-effortless-holdspeak/) |
 | 94 | The Delivery Runtime: Delivery Workbench projects, Story progress, remote/local Coder sessions, terminals, evidence, and receipts as one robust platform primitive across workstation, iPad, and tailnet Web | done | [phase-94-delivery-runtime](./phase-94-delivery-runtime/) |
 | 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | done | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
-| 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | planning | [phase-96-the-design-system](./phase-96-the-design-system/) |
+| 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

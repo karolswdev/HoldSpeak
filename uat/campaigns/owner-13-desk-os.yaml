@@ -8,7 +8,7 @@ purpose: >
   whether it now FEELS like a native OS desk.
 sequence: 13
 tier: close
-estimated_minutes: 45
+estimated_minutes: 55
 prerequisites:
   - Phase 95 stories 1-9 merged; use the exact production build (record the commit in the sitting notes).
   - A real desktop microphone for the dictation and recording beats.
@@ -23,3 +23,4 @@ scenarios:
   - phase-95-desk-os/desk-os-configuration-studio
   - phase-95-desk-os/desk-os-deep-links
   - phase-95-desk-os/desk-os-phone-form
+  - phase-95-desk-os/desk-os-design-polish
