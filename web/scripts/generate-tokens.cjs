@@ -21,25 +21,50 @@ const CONFIG = path.join(ROOT, "design-tokens.json");
 const OUTPUT = path.join(ROOT, "src", "styles", "tokens.css");
 const TS_OUTPUT = path.join(ROOT, "src", "lib", "tokens.gen.ts");
 
-function resolveReference(value, tokens) {
-  if (typeof value !== "string" || !value.startsWith("{") || !value.endsWith("}")) {
-    return value;
-  }
-  const segments = value.slice(1, -1).split(".");
+function lookupReference(ref, tokens) {
+  const segments = ref.split(".");
   let node = tokens;
   for (const key of segments) {
     node = node?.[key];
     if (node === undefined) {
-      throw new Error(`unresolved token reference: ${value}`);
+      throw new Error(`unresolved token reference: {${ref}}`);
     }
   }
   if (typeof node === "object" && node !== null && "value" in node) {
     return node.value;
   }
   if (typeof node !== "string") {
-    throw new Error(`reference does not resolve to a value: ${value}`);
+    throw new Error(`reference does not resolve to a value: {${ref}}`);
   }
   return node;
+}
+
+// HS-97-01: a {ref} resolves anywhere inside a composite value (e.g.
+// "0 26px 70px {primitive.color.shadow.60}"), not only when the value is
+// nothing but the reference — that gap shipped invalid box-shadow CSS.
+// Resolution iterates so a reference may itself resolve to a reference.
+function resolveReference(value, tokens) {
+  if (typeof value !== "string") return value;
+  let out = value;
+  for (let depth = 0; depth < 8 && out.includes("{"); depth++) {
+    out = out.replace(/\{([^{}]+)\}/g, (_, ref) => lookupReference(ref, tokens));
+  }
+  return out;
+}
+
+// HS-97-01: the mechanical lock for the whole class — no custom-property
+// declaration may carry an unresolved brace into the emitted CSS.
+function assertNoUnresolvedCss(css) {
+  const offenders = [];
+  for (const line of css.split("\n")) {
+    const m = line.match(/^\s*--[\w-]+:\s*(.+);/);
+    if (m && /[{}]/.test(m[1])) offenders.push(line.trim());
+  }
+  if (offenders.length) {
+    throw new Error(
+      `unresolved reference in emitted CSS:\n  ${offenders.join("\n  ")}`,
+    );
+  }
 }
 
 function emitPrimitives(tokens) {
@@ -193,6 +218,7 @@ function main() {
   const check = process.argv.includes("--check");
   const tokens = JSON.parse(fs.readFileSync(CONFIG, "utf-8"));
   const css = generate(tokens);
+  assertNoUnresolvedCss(css);
   const ts = generateTs(tokens);
   if (check) {
     const current = fs.existsSync(OUTPUT) ? fs.readFileSync(OUTPUT, "utf-8") : "";

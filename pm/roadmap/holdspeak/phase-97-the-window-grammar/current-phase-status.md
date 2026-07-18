@@ -1,9 +1,9 @@
 # Phase 97 — The Window Grammar
 
-**Status:** SCAFFOLDED (0/9, 2026-07-18) — from the owner's direct
+**Status:** IN PROGRESS (1/9, 2026-07-18) — from the owner's direct
 verdict on the Desk OS state.
 
-**Last updated:** 2026-07-18 (phase scaffolded; stories 01–09 ready).
+**Last updated:** 2026-07-18 (HS-97-01 done; the shadows are back).
 
 ## Why this phase exists
 
@@ -84,7 +84,7 @@ staged follow-ups (Native Surfaces; The Living World).
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-97-01 | The shadow returns | backlog | [story-01-shadow-returns](./story-01-shadow-returns.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-97-01 | The shadow returns | done | [story-01-shadow-returns](./story-01-shadow-returns.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-97-02 | A window lands well | backlog | [story-02-placement](./story-02-placement.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-97-03 | The arrangement is sacred | backlog | [story-03-arrangement-persists](./story-03-arrangement-persists.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-97-04 | Focus and depth | backlog | [story-04-focus-depth](./story-04-focus-depth.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -96,7 +96,20 @@ staged follow-ups (Native Surfaces; The Living World).
 
 ## Where we are
 
-**Phase 97 SCAFFOLDED (2026-07-18)** from the owner's Desk OS verdict
+**HS-97-01 done (2026-07-18): the shadow returns.** `resolveReference`
+now substitutes a `{ref}` anywhere inside a composite value (iterating
+so a reference may resolve to a reference, still failing loudly on an
+unknown path), and a new mechanical lock refuses any emitted
+custom-property declaration carrying a brace — the whole
+unresolved-reference class, not just the two known casualties. The
+healed diff is exactly two lines: `--desk-window-shadow` and
+`--desk-transient-shadow` now compute to valid shadows (the browser
+reports `rgba(0, 0, 0, 0.6) 0px 26px 70px 0px` on a live window). The
+gate is shown firing on a planted composite violation and passing
+clean; `npm run check` is green end to end (259 web tests); the
+before/after pair at 1440 (`assets/before-two-windows-1440.png` vs
+`assets/after-two-windows-1440.png`) shows stacked windows separating
+into planes again. Earlier: **Phase 97 SCAFFOLDED (2026-07-18)** from the owner's Desk OS verdict
 and the same-day screenshot + code audit. Nine stories: the shadow
 generator fix under a mechanical gate, the placement engine, completed
 persistence, focus depth and window motion, richer frame physics

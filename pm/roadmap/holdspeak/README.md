@@ -4,8 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 97, The Window Grammar,
-SCAFFOLDED (0/9)** from the owner's direct verdict on the Desk OS state
+**Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, IN
+PROGRESS (1/9)**. **HS-97-01, The shadow returns, DONE**: the token
+generator resolves references embedded in composite values, a new
+mechanical lock refuses unresolved braces in emitted CSS (shown firing
+on a plant), and `--desk-window-shadow`/`--desk-transient-shadow` are
+valid again — every desk window casts real elevation, proven by a live
+computed-style read and a before/after pair at 1440. Earlier the same
+day the phase was **SCAFFOLDED (0/9)** from the owner's direct verdict on the Desk OS state
 (windows without cohesion, no operating-system feeling) and the same-day
 screenshot + code audit against the UAT rig that confirmed it
 mechanically: every window renders shadowless (a token-generator

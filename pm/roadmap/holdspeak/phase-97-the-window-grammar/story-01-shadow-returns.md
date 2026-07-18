@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 97
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-97-04, HS-97-09
 
@@ -37,14 +37,14 @@ mechanical lock.
 
 ## Acceptance criteria
 
-- [ ] `tokens.css` contains zero `{` characters in emitted values;
+- [x] `tokens.css` contains zero `{` characters in emitted values;
       `--desk-window-shadow` and `--desk-transient-shadow` compute to
       valid `box-shadow` values in the browser.
-- [ ] The gate fails on a planted composite unresolved reference
+- [x] The gate fails on a planted composite unresolved reference
       (shown firing in the evidence) and passes clean.
-- [ ] Before/after shots show windows casting real shadows on the
+- [x] Before/after shots show windows casting real shadows on the
       production bundle.
-- [ ] `npm run check` green; web suite green.
+- [x] `npm run check` green; web suite green.
 
 ## Test plan
 
