@@ -99,7 +99,7 @@ class TriageBody(BaseModel):
     disposition: Optional[str] = None
 
 
-def create_app(manager: RunManager | None = None) -> FastAPI:
+def create_app(manager: RunManager | None = None, *, default_lan: bool = False) -> FastAPI:
     app = FastAPI(title="HoldSpeak UAT Conductor", version="0.2.0")
     app.state.manager = manager or RunManager(Database())
 
@@ -135,8 +135,11 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
 
     @app.post("/api/runs", status_code=201)
     def create_run(body: CreateRunBody) -> Any:
+        # A LAN-bound conductor exists to serve device sittings; a localhost
+        # product run there is unreachable from the device, so LAN wins even
+        # when the client sends lan=false.
         run = mgr().create_run(
-            config=body.config, deck=body.deck, lan=body.lan, port=body.port
+            config=body.config, deck=body.deck, lan=body.lan or default_lan, port=body.port
         )
         return run.to_public()
 
@@ -387,7 +390,7 @@ def create_app(manager: RunManager | None = None) -> FastAPI:
         from .contract.scenarios import ScenarioError
 
         try:
-            return sit().create(body.pack, deck_override=body.deck, lan=body.lan)
+            return sit().create(body.pack, deck_override=body.deck, lan=body.lan or default_lan)
         except ScenarioError as exc:
             raise HTTPException(status_code=404, detail=str(exc))
         except SittingError as exc:

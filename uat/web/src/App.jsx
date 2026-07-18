@@ -50,7 +50,11 @@ function RequiredTargets({ targets }) {
 
 function Home() {
   const { packs, sittings, start, open, busy } = useStore();
-  const [deviceMode, setDeviceMode] = useState(false);
+  // Opened via a LAN address = someone is walking this from a device, so
+  // device sitting defaults on; localhost keeps the desktop-only default.
+  const [deviceMode, setDeviceMode] = useState(
+    !["localhost", "127.0.0.1"].includes(window.location.hostname),
+  );
   const campaigns = packs.filter((pack) => pack.is_campaign);
   const referencePacks = packs.filter((pack) => !pack.is_campaign);
 

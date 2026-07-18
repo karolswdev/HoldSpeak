@@ -53,18 +53,23 @@ def _new_run_id() -> str:
 
 
 def _find_free_port(preferred: int) -> int:
-    """First free TCP port at or above ``preferred`` (so a second run coexists)."""
+    """First free TCP port at or above ``preferred`` (so a second run coexists).
+
+    Probes the wildcard address WITHOUT SO_REUSEADDR: a loopback-only probe
+    with SO_REUSEADDR reports a port as free while a LAN-bound (0.0.0.0)
+    product still holds it, which stacked several runs onto one port and let
+    a stale run answer another run's pairing URL.
+    """
     for port in range(preferred, preferred + 50):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
-                s.bind(("127.0.0.1", port))
+                s.bind(("", port))
                 return port
             except OSError:
                 continue
     # Fall back to an ephemeral port the OS hands us.
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
+        s.bind(("", 0))
         return s.getsockname()[1]
 
 
