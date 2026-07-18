@@ -111,10 +111,8 @@ describe("FirstWords", () => {
     ).toBeDisabled();
     expect(screen.getByRole("button", { name: "Copy" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Keep as Note" })).toBeDisabled();
-    expect(screen.getByRole("link", { name: "Setup" })).toHaveAttribute(
-      "href",
-      "/setup",
-    );
+    // HS-95-07: Setup opens in-world through the shell dispatcher.
+    expect(screen.getByRole("button", { name: "Setup" })).toBeInTheDocument();
   });
 
   it("transcribes one capture exactly once when release is repeated", async () => {

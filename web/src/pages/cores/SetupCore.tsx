@@ -1,13 +1,15 @@
+// HS-95-07 — the Setup core: readiness truth, hosted anywhere.
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { openSurfaceOr } from "../../desk/shell";
+import type { CoreProps } from "./ActivityCore";
 import {
   Button,
   InlineMessage,
   Panel,
   StatusPill,
-} from "../components/signal/Signal";
-import { apiFetch, readableError } from "../lib/api";
-import { PageHero, ResourceState, asRows, useResource } from "./pageSupport";
+} from "../../components/signal/Signal";
+import { apiFetch, readableError } from "../../lib/api";
+import { ResourceState, asRows, useResource } from "../pageSupport";
 
 type SetupStatus = {
   overall?: string;
@@ -17,7 +19,7 @@ type SetupStatus = {
   presence?: Record<string, unknown>;
 };
 
-export default function SetupPage() {
+export function SetupCore({ hero }: CoreProps) {
   const resource = useResource<SetupStatus>("/api/setup/status", {});
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
@@ -45,10 +47,8 @@ export default function SetupPage() {
   };
 
   return (
-    <div className="page-wrap">
-      <PageHero eyebrow="Arrival" title="Setup and readiness">
-        See exactly what is ready, what is optional, and what needs attention.
-      </PageHero>
+    <>
+      {hero ? hero(null) : null}
       <ResourceState
         loading={resource.loading}
         error={resource.error}
@@ -136,19 +136,29 @@ export default function SetupPage() {
                 : "Your first dictation is complete. The Desk is ready."}
             </p>
             <div className="button-row">
-              <Link
+              <button
+                type="button"
                 className="btn btn--primary"
-                to={resource.data.first_run ? "/welcome" : "/"}
+                onClick={() =>
+                  openSurfaceOr(
+                    resource.data.first_run ? "arrival" : "return-to-desk",
+                    resource.data.first_run ? "/welcome" : "/",
+                  )
+                }
               >
                 {resource.data.first_run ? "Continue arrival" : "Open Desk"}
-              </Link>
-              <Link className="btn btn--ghost" to="/profiles">
+              </button>
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}
+              >
                 Runs on
-              </Link>
+              </button>
             </div>
           </Panel>
         </div>
       </ResourceState>
-    </div>
+    </>
   );
 }

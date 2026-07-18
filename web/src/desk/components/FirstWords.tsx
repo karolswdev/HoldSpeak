@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   Button,
   InlineMessage,
   TextArea,
 } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
+import { openSurfaceOr } from "../shell";
 import {
   DICTATION_FAILURES,
   dictationFailure,
@@ -267,21 +267,28 @@ export function FirstWords({
           Keep as Note
         </Button>
         {!failureContract || failureContract.setup ? (
-          <Link
+          <button
+            type="button"
             className="btn btn--secondary"
-            to="/setup"
-            onClick={() => void tracker.current?.event("setup_selected")}
+            onClick={() => {
+              void tracker.current?.event("setup_selected");
+              openSurfaceOr("configure-setup", "/setup");
+            }}
           >
             Setup
-          </Link>
+          </button>
         ) : null}
       </div>
       {state === "success" ? (
         <div className="desk-first-success">
           <strong>Dictation is ready on this machine.</strong>
-          <Link className="btn btn--ghost" to="/profiles">
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}
+          >
             Configure rewrite destination
-          </Link>
+          </button>
         </div>
       ) : null}
       <div className="button-row">

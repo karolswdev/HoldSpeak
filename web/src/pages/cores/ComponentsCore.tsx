@@ -1,3 +1,5 @@
+// HS-95-08 — the Signal component grammar gallery, hosted anywhere.
+import type { CoreProps } from "./ActivityCore";
 import { useState } from "react";
 import {
   Button,
@@ -16,19 +18,15 @@ import {
   TextArea,
   TextInput,
   Toolbar,
-} from "../components/signal/Signal";
-import { PageHero } from "./pageSupport";
+} from "../../components/signal/Signal";
 
-export default function ComponentsPage() {
+export function ComponentsCore({ hero }: CoreProps) {
   const [tab, setTab] = useState("one");
   const [dialog, setDialog] = useState(false);
   const [checked, setChecked] = useState(true);
   return (
-    <div className="page-wrap components-page">
-      <PageHero eyebrow="Signal React" title="Component grammar">
-        One review surface for semantics, focus, motion, density, validation,
-        and every interaction state.
-      </PageHero>
+    <>
+      {hero ? hero(null) : null}
       <Panel title="Buttons" eyebrow="44 px primary · 36 px dense">
         <div className="gallery-row">
           <Button variant="primary">Primary</Button>
@@ -181,6 +179,6 @@ export default function ComponentsPage() {
           Close dialog
         </Button>
       </Dialog>
-    </div>
+    </>
   );
 }

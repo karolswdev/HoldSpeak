@@ -1,5 +1,8 @@
+// HS-95-06 — the live meeting's core: record, watch the transcript
+// arrive, keep the result — hosted anywhere (see ActivityCore's rules).
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { openPrimitive } from "../../desk/shell";
+import type { CoreProps } from "./ActivityCore";
 import {
   Button,
   Dialog,
@@ -11,20 +14,19 @@ import {
   StatusPill,
   TextArea,
   TextInput,
-} from "../components/signal/Signal";
-import { apiFetch, readableError, type JsonRecord } from "../lib/api";
-import { useRuntimeBus } from "../runtime/RuntimeBus";
+} from "../../components/signal/Signal";
+import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
+import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import {
-  PageHero,
   ResourceState,
   asRows,
   rowId,
   useResource,
-} from "./pageSupport";
+} from "../pageSupport";
 
 type Segment = Record<string, unknown>;
 
-export default function LivePage() {
+export function LiveCore({ hero }: CoreProps) {
   const initial = useResource<JsonRecord>("/api/state", {});
   const runtimeStatus = useResource<JsonRecord>("/api/runtime/status", {});
   const intentControl = useResource<JsonRecord>("/api/intents/control", {});
@@ -169,34 +171,40 @@ export default function LivePage() {
     [segments],
   );
 
+  const verbs = (
+    <Button
+      variant={active ? "danger" : "primary"}
+      loading={busy}
+      onClick={() =>
+        void action(active ? "/api/meeting/stop" : "/api/meeting/start")
+      }
+    >
+      {active ? "Stop meeting" : "Start meeting"}
+    </Button>
+  );
   return (
-    <div className="page-wrap">
-      <PageHero
-        eyebrow="Meeting room"
-        title={String(state.title ?? "Ready to record")}
-        actions={
-          <Button
-            variant={active ? "danger" : "primary"}
-            loading={busy}
-            onClick={() =>
-              void action(active ? "/api/meeting/stop" : "/api/meeting/start")
-            }
-          >
-            {active ? "Stop meeting" : "Start meeting"}
-          </Button>
-        }
-      >
-        Record a meeting, review its transcript, and keep the result.
-      </PageHero>
+    <>
+      {hero ? (
+        hero(verbs)
+      ) : (
+        <div className="desk-core-verbs desk-live-verbs">
+          <strong className="desk-live-title">
+            {String(state.title ?? "Ready to record")}
+          </strong>
+          {verbs}
+        </div>
+      )}
       {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
       {retainedMeetingId ? (
         <InlineMessage tone="success">
           Meeting saved.{" "}
-          <Link
-            to={`/?open=${encodeURIComponent(`meeting:${retainedMeetingId}`)}`}
+          <button
+            type="button"
+            className="btn-link"
+            onClick={() => openPrimitive(`meeting:${retainedMeetingId}`)}
           >
             Return to saved Meeting
-          </Link>
+          </button>
         </InlineMessage>
       ) : null}
       <div className="metric-grid">
@@ -447,6 +455,6 @@ export default function LivePage() {
           </Button>
         </div>
       </Dialog>
-    </div>
+    </>
   );
 }

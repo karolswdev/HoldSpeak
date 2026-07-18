@@ -5,7 +5,6 @@
 // elsewhere and can be moved, resized, and raised).
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Link } from "react-router-dom";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
 import { apiRequest } from "../../lib/api";
@@ -20,7 +19,6 @@ import { objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
 import { DeskWindowFrame } from "./DeskWindow";
-import { workroomHref } from "../../workrooms/context";
 import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
 import {
@@ -314,26 +312,26 @@ export function Pullout({ o }: { o: WorldObject }) {
           </span>
         )}
         {o.kind === "meeting" && (
-          <Link
+          <button
+            type="button"
             className="desk-chip quiet"
-            to={workroomHref("/history", {
-              action: "review-meeting",
-              subjectRef: resourceRef,
-            })}
+            onClick={() =>
+              openSurfaceOr("review-meetings", "/history", resourceRef)
+            }
           >
             Review meeting
-          </Link>
+          </button>
         )}
         {o.kind === "workflow" && (
-          <Link
+          <button
+            type="button"
             className="desk-chip quiet"
-            to={workroomHref("/workbench", {
-              action: "edit-workflow",
-              subjectRef: resourceRef,
-            })}
+            onClick={() =>
+              openSurfaceOr("build-workflow", "/workbench", resourceRef)
+            }
           >
             Edit Workflow
-          </Link>
+          </button>
         )}
         </>
       }
@@ -638,30 +636,30 @@ export function Pullout({ o }: { o: WorldObject }) {
                   ? ` · ${capability.effect_classes.join(" · ")}`
                   : ""}
               </p>
-              <Link
+              <button
+                type="button"
                 className="desk-chip quiet"
-                to={workroomHref("/profiles", {
-                  action: "configure-runs-on",
-                  subjectRef: resourceRef,
-                })}
+                onClick={() =>
+                  openSurfaceOr("configure-runs-on", "/profiles", resourceRef)
+                }
               >
                 Configure Runs on
-              </Link>
+              </button>
               {o.kind === "chain" && (
                 <p className="quiet">
                   Sequence is the linear compatibility form.
                 </p>
               )}
               {o.kind === "workflow" && (
-                <Link
+                <button
+                  type="button"
                   className="desk-chip quiet"
-                  to={workroomHref("/workbench", {
-                    action: "edit-workflow",
-                    subjectRef: resourceRef,
-                  })}
+                  onClick={() =>
+                    openSurfaceOr("build-workflow", "/workbench", resourceRef)
+                  }
                 >
                   Edit this Workflow
-                </Link>
+                </button>
               )}
             </div>
             <div className="desk-pullout-run">
@@ -841,15 +839,13 @@ export function Pullout({ o }: { o: WorldObject }) {
           </button>
         )}
         {o.kind === "meeting" && (
-          <Link
+          <button
+            type="button"
             className="desk-chip quiet"
-            to={workroomHref("/live", {
-              action: "record-follow-up",
-              subjectRef: resourceRef,
-            })}
+            onClick={() => openSurfaceOr("record-live", "/live", resourceRef)}
           >
             Record follow-up
-          </Link>
+          </button>
         )}
         {EDITABLE.has(o.kind) && (
           <button

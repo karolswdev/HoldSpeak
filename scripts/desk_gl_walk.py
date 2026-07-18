@@ -20,7 +20,9 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-BASE = "http://localhost:8788"
+import os
+
+BASE = os.environ.get("HS_WALK_BASE", "http://localhost:8788")
 OUT = Path("uat/_runs/hs-95-01-walk")
 
 
@@ -483,6 +485,294 @@ def dictation() -> None:
         browser.close()
 
 
+
+
+def meetings(intel: bool = False) -> None:
+    """HS-95-06 — meetings live in-world. Record opens the live window in
+    place; the fake mic feeds real speech; Stop inside the window settles
+    the desk's Record verb (one recorder truth); the saved meeting opens
+    as a pull-out; Review meeting hosts the meeting memory core scoped to
+    it. With --intel (a .43-backed run), the walk waits for real
+    intelligence to reach ready and shows it inside the review window."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            args=[
+                "--use-fake-ui-for-media-stream",
+                "--use-fake-device-for-media-stream",
+                "--use-file-for-fake-audio-capture=/tmp/hs_dictate.wav",
+            ]
+        )
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.context.grant_permissions(["microphone"])
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        # 1. Record: the chip starts the hub recorder AND opens the live
+        # window — the URL never leaves the desk.
+        page.click(".desk-start-action:has-text(\'Record\')")
+        page.wait_for_selector(".desk-surface-window", timeout=8000)
+        assert page.url.rstrip("/") == BASE, page.url
+        page.wait_for_selector(
+            ".desk-start-action:has-text(\'Stop\')", timeout=8000
+        )
+        if intel:
+            # The hub records the REAL microphone (Phase 73: the orb drives
+            # the hub's recorder, never the browser mic) — so the meeting is
+            # spoken OUT LOUD through the speakers for the mic to hear.
+            import subprocess
+            prev = subprocess.run(
+                ["osascript", "-e", "output volume of (get volume settings)"],
+                capture_output=True, text=True,
+            ).stdout.strip()
+            subprocess.run(["osascript", "-e", "set volume output volume 45"])
+            try:
+                page.wait_for_timeout(3000)  # the hub recorder settles
+                subprocess.run(["afplay", "/tmp/hs_meeting.wav"], timeout=40)
+                subprocess.run(["afplay", "/tmp/hs_meeting.wav"], timeout=40)
+            finally:
+                if prev.isdigit():
+                    subprocess.run(
+                        ["osascript", "-e", f"set volume output volume {prev}"]
+                    )
+            page.wait_for_timeout(1500)
+        else:
+            page.wait_for_timeout(6000)  # let the room breathe briefly
+        # 2. Stop INSIDE the window: every surface settles.
+        page.click(".desk-surface-window button:has-text(\'Stop meeting\')")
+        page.wait_for_selector(
+            ".desk-start-action:has-text(\'Record\')", timeout=20000
+        )
+        # 3. The saved meeting: "Return to saved Meeting" opens the pull-out.
+        page.wait_for_selector(
+            ".desk-surface-window :text(\'Meeting saved\')", timeout=20000
+        )
+        page.click(
+            ".desk-surface-window button:has-text(\'Return to saved Meeting\')"
+        )
+        page.wait_for_selector(".desk-pullout", timeout=8000)
+        assert page.url.rstrip("/") == BASE, page.url
+        # 4. Review meeting: the memory core scoped to this meeting.
+        page.click(".desk-pullout button:has-text(\'Review meeting\')")
+        page.wait_for_selector(
+            "[aria-label=\'Meetings\'].desk-surface-window", timeout=8000
+        )
+        review = page.locator("[aria-label=\'Meetings\'].desk-surface-window")
+        # The scoped detail: a transcript list or its honest empty state.
+        review.locator(
+            ".transcript-list, .signal-empty"
+        ).first.wait_for(state="visible", timeout=20000)
+        if intel:
+            # Real intelligence, real model: poll the product's own routes
+            # until the meeting's intel reaches ready, then SEE it in-world.
+            meeting_id = page.evaluate(
+                """async () => {
+                  const r = await fetch('/api/meetings', {credentials:'include'});
+                  const d = await r.json();
+                  const ms = d.meetings || d;
+                  return ms[0]?.id || null;
+                }"""
+            )
+            assert meeting_id, "no meeting on the archive"
+            deadline = time.time() + 300
+            payload = {}
+            while time.time() < deadline:
+                payload = page.evaluate(
+                    """async (id) => {
+                      const r = await fetch(`/api/meetings/${id}`,
+                                            {credentials:'include'});
+                      const m = await r.json();
+                      return {
+                        state: m.intel_status?.state || m.intel_status || "",
+                        title: m.title || "",
+                        summary: m.intel?.summary || "",
+                      };
+                    }""",
+                    meeting_id,
+                )
+                if payload.get("state") == "ready" and payload.get("summary"):
+                    break
+                page.wait_for_timeout(5000)
+            assert payload.get("state") == "ready", payload
+            assert payload.get("summary"), payload
+            # The archive row wears the honest status inside the window.
+            page.wait_for_timeout(1200)
+            body = review.inner_text()
+            assert "Intelligence ready" in body, "window does not wear the status"
+            print(
+                f"intel leg: .43 titled it {payload['title']!r}; summary "
+                f"{payload['summary'][:80]!r}; 'Intelligence ready' shown in-world"
+            )
+        page.screenshot(path=str(OUT / ("meetings-intel-1440.png" if intel else "meetings-1440.png")))
+        # 5. Flat routes still answer for deep links.
+        page.goto(BASE + "/history", wait_until="networkidle")
+        page.wait_for_selector(".page-hero:has-text(\'Meetings\')", timeout=5000)
+        page.goto(BASE + "/live", wait_until="networkidle")
+        page.wait_for_selector(".page-hero:has-text(\'Live meeting\')", timeout=5000)
+        print("meetings walk: record→live window in place, one recorder truth, "
+              "saved→pull-out, review scoped in-world, flat routes live")
+        browser.close()
+
+
+
+
+def config() -> None:
+    """HS-95-07 — configuration lives in-world: the chrome menu opens
+    Settings as a window, a real setting change round-trips to the hub and
+    survives reload, the shelf opens Runs on / Cadence / Integrations
+    (scoped Settings), and the inspector's edit affordances never leave
+    the desk."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        # 1. Chrome menu → Settings, in-world.
+        page.click(".desk-mark")
+        page.click("nav.desk-menu button:has-text(\'Settings\')")
+        page.wait_for_selector(
+            "[aria-label=\'Settings\'].desk-surface-window", timeout=8000
+        )
+        assert page.url.rstrip("/") == BASE, page.url
+        win = page.locator("[aria-label=\'Settings\'].desk-surface-window")
+        # 2. A real change: flip presence enabled via the cockpit search.
+        before = page.evaluate(
+            """async () => {
+              const r = await fetch('/api/settings', {credentials:'include'});
+              return (await r.json()).presence?.enabled ?? null;
+            }"""
+        )
+        win.locator("input[type=search]").first.fill("presence")
+        page.wait_for_timeout(600)
+        toggle = win.locator("input[type=checkbox]").first
+        toggle.wait_for(state="attached", timeout=5000)
+        # The Signal switch hides its native input; drive it directly.
+        toggle.evaluate("el => el.click()")
+        win.locator("button:has-text(\'Save settings\')").first.click()
+        page.wait_for_timeout(1500)
+        after = page.evaluate(
+            """async () => {
+              const r = await fetch('/api/settings', {credentials:'include'});
+              return (await r.json()).presence?.enabled ?? null;
+            }"""
+        )
+        assert after != before, (before, after)
+        page.reload(wait_until="networkidle")
+        wait_world(page)
+        persisted = page.evaluate(
+            """async () => {
+              const r = await fetch('/api/settings', {credentials:'include'});
+              return (await r.json()).presence?.enabled ?? null;
+            }"""
+        )
+        assert persisted == after, (persisted, after)
+        # 3. The shelf: Runs on, Cadence, and scoped Integrations.
+        for label, aria in (
+            ("Runs on", "Runs on"),
+            ("Cadence", "Cadence"),
+        ):
+            page.click(".desk-tools-launch")
+            page.click(f".desk-tool-link:has-text(\'{label}\')")
+            page.wait_for_selector(
+                f"[aria-label=\'{aria}\'].desk-surface-window", timeout=8000
+            )
+        page.click(".desk-tools-launch")
+        page.click(".desk-tool-link:has-text(\'Integrations\')")
+        page.wait_for_selector(
+            "[aria-label=\'Settings\'].desk-surface-window .desk-scope-chip",
+            timeout=8000,
+        )
+        assert page.url.rstrip("/") == BASE, page.url
+        page.screenshot(path=str(OUT / "config-1440.png"))
+        # 4. Flat routes still answer.
+        for path, marker in (
+            ("/settings", "Settings"),
+            ("/profiles", "Runs on"),
+            ("/cadence", "Cadence"),
+            ("/setup", "Setup and readiness"),
+        ):
+            page.goto(BASE + path, wait_until="networkidle")
+            page.wait_for_selector(
+                f".page-hero:has-text(\'{marker}\')", timeout=5000
+            )
+        print("config walk: settings change round-trips + persists; runs-on/"
+              "cadence/integrations open in-world; flat routes live")
+        browser.close()
+
+
+
+
+def lastexits() -> None:
+    """HS-95-08 — the two-worlds architecture is dead: every demoted route
+    cold-lands on the desk with the right window open; Workbench opens
+    maximized from the shelf and saves a real workflow through the hub;
+    Studio and Companion are windows; the desk never navigates."""
+    ROUTES = [
+        ("/dictation", "Dictation"),
+        ("/live", "Live meeting"),
+        ("/history", "Meetings"),
+        ("/meetings", "Meetings"),
+        ("/settings", "Settings"),
+        ("/activity", "Activity"),
+        ("/commands", "Commands"),
+        ("/cadence", "Cadence"),
+        ("/studio", "Studio"),
+        ("/workbench", "Workbench"),
+        ("/profiles", "Runs on"),
+        ("/companion", "Personas and coders"),
+        ("/setup", "Setup"),
+        ("/docs/dictation-runtime", "Runtime guide"),
+        ("/design/components", "Components"),
+    ]
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        for path, title in ROUTES:
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.goto(BASE + path, wait_until="networkidle")
+            page.wait_for_selector(
+                f"[aria-label=\'{title}\'].desk-surface-window", timeout=15000
+            )
+            assert page.url.rstrip("/") == BASE, (path, page.url)
+            page.close()
+        print(f"demotion: all {len(ROUTES)} routes land on the desk with the right window")
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        # A REAL workflow: create the primitive on the desk, then edit it
+        # in the scoped, maximized Workbench window and save through the hub.
+        page.click(".desk-create-button")
+        page.click(".desk-create-menu button:has-text(\'Workflow\')")
+        page.wait_for_timeout(1500)
+        objs = page.evaluate("() => window.__hsWorldProbe()")
+        wf = next((o for o in objs if o["ref"].startswith("workflow:")), None)
+        assert wf, f"no workflow object appeared: {[o['ref'] for o in objs][:6]}"
+        page.keyboard.press("Escape")  # settle any inline editor
+        page.wait_for_timeout(400)
+        page.mouse.click(wf["x"], wf["y"])
+        page.wait_for_selector(".desk-pullout", timeout=8000)
+        page.click(".desk-pullout button:has-text(\'Edit Workflow\')")
+        wb = page.locator("[aria-label=\'Workbench\'].desk-surface-window")
+        wb.wait_for(timeout=8000)
+        assert "is-max" in (wb.get_attribute("class") or ""), "not maximized"
+        wb.locator(".desk-scope-chip").wait_for(timeout=8000)
+        run_label = "Save Workflow"
+        wb.locator("button:has-text(\'Save Workflow\')").first.click()
+        page.wait_for_timeout(2000)
+        assert "Saved to this Workflow." in wb.inner_text(), "save did not land"
+        page.screenshot(path=str(OUT / "workbench-max-1440.png"))
+        page.click('[aria-label="Close Workbench"]')
+        page.keyboard.press("Escape")  # settle the workflow pull-out too
+        page.wait_for_timeout(400)
+        # Companion: the reconciled roster window.
+        page.click(".desk-tools-launch")
+        page.click(".desk-tool-link:has-text(\'Personas\')")
+        page.wait_for_selector(
+            "[aria-label=\'Personas and coders\'].desk-surface-window",
+            timeout=8000,
+        )
+        page.screenshot(path=str(OUT / "companion-1440.png"))
+        print(f"workbench maximized + saved via {run_label!r}; companion window open")
+        browser.close()
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "shots"
     if mode == "shots":
@@ -500,5 +790,11 @@ if __name__ == "__main__":
         cores()
     elif mode == "dictation":
         dictation()
+    elif mode == "meetings":
+        meetings(intel="--intel" in sys.argv)
+    elif mode == "config":
+        config()
+    elif mode == "lastexits":
+        lastexits()
     else:
         raise SystemExit(f"unknown mode {mode}")

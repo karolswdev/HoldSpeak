@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 95
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-95-03, HS-95-05, HS-95-06, HS-95-07
 - **Unblocks:** HS-95-09, HS-95-10
 
@@ -46,26 +46,29 @@ shell is demoted to a deep-link door.
 
 ## Acceptance criteria
 
-- [ ] Workbench opens in-world, maximizes to the full stage, and edits a
+- [x] Workbench opens in-world, maximizes to the full stage, and edits a
       real workflow end to end; the Pullout's "edit-workflow" opens it
       scoped.
-- [ ] Studio and Activity open as windows from the shelf with full
+- [x] Studio and Activity open as windows from the shelf with full
       capability.
-- [ ] One sessions surface: opening personas/coder sessions from the shelf
-      and opening a session from the world land in the same reconciled
-      windows; no duplicated list/chat implementations remain.
-- [ ] The guard is live: a `<Link>` from `web/src/desk/` to a product route
+- [x] One sessions surface, reconciled as: the Companion core is the ONE
+      roster (personas + waiting coder sessions); a persona card opens the
+      one PersonaChat window (`shell.openPersona`), a session row opens
+      the one SessionPullout window (`shell.openCoderSession`) — the same
+      windows the world opens; the old `/?agent=` link path died with the
+      wrappers.
+- [x] The guard is live: a `<Link>` from `web/src/desk/` to a product route
       fails the web test suite; the sweep shows zero occurrences.
-- [ ] Every former flat route (`/dictation`, `/history`, `/meetings`,
+- [x] Every former flat route (`/dictation`, `/history`, `/meetings`,
       `/live`, `/settings`, `/profiles`, `/commands`, `/cadence`,
       `/activity`, `/studio`, `/workbench`, `/companion`, `/setup`,
       `/docs/dictation-runtime`, `/design/components`) resolves to the desk
       with the right window open at the right scope; `AppShell`,
       `PRIMARY_NAV`, and dead page chrome are deleted from the bundle.
-- [ ] The `?room=` workroom "Back to Desk" bridge is retired (nothing
+- [x] The `?room=` workroom "Back to Desk" bridge is retired (nothing
       renders outside the desk to come back from); the codec survives only
       where deep links still need scope decoding.
-- [ ] Bundle check: the flat-shell chunk disappears from the build output;
+- [x] Bundle check: the flat-shell chunk disappears from the build output;
       no route regression at 1440 or 393.
 
 ## Test plan

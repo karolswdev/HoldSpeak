@@ -1,5 +1,8 @@
+// HS-95-06 — the meeting memory core: archive, facets, import, detail,
+// intelligence, aftercare — hosted anywhere (see ActivityCore's rules).
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { openSurfaceOr } from "../../desk/shell";
+import type { CoreProps } from "./ActivityCore";
 import {
   Button,
   Dialog,
@@ -13,30 +16,24 @@ import {
   Tabs,
   TextInput,
   Toolbar,
-} from "../components/signal/Signal";
-import { apiBlob, apiFetch, readableError, type JsonRecord } from "../lib/api";
+} from "../../components/signal/Signal";
+import { apiBlob, apiFetch, readableError, type JsonRecord } from "../../lib/api";
 import {
   authorityBasisLabel,
   effectClassLabel,
   humanizeWireValue,
   proposalStatusLabel,
-} from "../lib/productLanguage";
-import { MeetingConflictRecovery } from "../meetings/MeetingConflictRecovery";
-import { MeetingIntelRecovery } from "../meetings/MeetingIntelRecovery";
+} from "../../lib/productLanguage";
+import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
+import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
 import {
   ConfirmAction,
-  PageHero,
   PostureNote,
   ResourceState,
   asRows,
   rowId,
   useResource,
-} from "./pageSupport";
-import {
-  decodeWorkroomContext,
-  workroomHref,
-  workroomSubjectId,
-} from "../workrooms/context";
+} from "../pageSupport";
 
 const ARCHIVE_TABS = [
   "meetings",
@@ -546,11 +543,11 @@ function MeetingDetail({
   );
 }
 
-export default function HistoryPage() {
-  const workroom = decodeWorkroomContext(window.location.search);
+export function HistoryCore({ hero, scope }: CoreProps) {
+  // Scope arrives as a prop (a qualified ref, e.g. "meeting:<id>") — the
+  // flat wrapper decodes the URL; the desk passes it straight.
   const requestedMeetingId =
-    workroomSubjectId(workroom, "meeting") ??
-    new URLSearchParams(window.location.search).get("meeting");
+    scope && scope.startsWith("meeting:") ? scope.slice("meeting:".length) : null;
   const [active, setActive] = useState("meetings");
   const [query, setQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -661,38 +658,23 @@ export default function HistoryPage() {
     (requestedMeetingId && String(selected?.id ?? "") === requestedMeetingId
       ? selected
       : null);
-  return (
-    <div className="page-wrap">
-      <PageHero
-        eyebrow="Meeting memory"
-        title="Meetings"
-        workroomSubject={
-          orientedMeeting
-            ? String(orientedMeeting.title ?? "Meeting")
-            : undefined
-        }
-        actions={
-          <div className="button-row">
-            <Button variant="primary" onClick={() => setImportOpen(true)}>
-              Import
-            </Button>
-            <Link
-              className="btn btn--secondary"
-              to={workroomHref("/live", {
-                action: workroom?.subject_ref
-                  ? "record-follow-up"
-                  : "record-meeting",
-                subjectRef: workroom?.subject_ref,
-                returnRef: workroom?.return_ref,
-              })}
-            >
-              Record meeting
-            </Link>
-          </div>
-        }
+  const verbs = (
+    <div className="button-row">
+      <Button variant="primary" onClick={() => setImportOpen(true)}>
+        Import
+      </Button>
+      <button
+        type="button"
+        className="btn btn--secondary"
+        onClick={() => openSurfaceOr("record-live", "/live", scope)}
       >
-        Review meetings, import recordings, and export retained work.
-      </PageHero>
+        Record meeting
+      </button>
+    </div>
+  );
+  return (
+    <>
+      {hero ? hero(verbs) : <div className="desk-core-verbs">{verbs}</div>}
       {requestedMeetingError ? (
         <InlineMessage tone="error">
           {requestedMeetingError}{" "}
@@ -946,6 +928,6 @@ export default function HistoryPage() {
         onClose={() => setSelected(null)}
         onDeleted={() => void meetings.reload()}
       />
-    </div>
+    </>
   );
 }

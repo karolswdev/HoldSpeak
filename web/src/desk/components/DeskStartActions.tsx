@@ -28,11 +28,15 @@ export function DeskStartActions({ compact = false }: { compact?: boolean }) {
         }
         disabled={recording === "busy"}
         aria-pressed={recording === "recording"}
-        onClick={() =>
-          recording === "recording"
-            ? void useDesk.getState().stopRecording()
-            : void useDesk.getState().startRecording()
-        }
+        onClick={() => {
+          if (recording === "recording") {
+            void useDesk.getState().stopRecording();
+            return;
+          }
+          void useDesk.getState().startRecording();
+          // Recording never leaves the desk: the live window opens with it.
+          openSurfaceOr("record-live", "/live");
+        }}
       >
         <span className="desk-start-record" aria-hidden="true" />{" "}
         {recording === "recording" ? "Stop" : "Record"}

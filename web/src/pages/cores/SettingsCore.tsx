@@ -1,4 +1,6 @@
+// HS-95-07 — the Settings core: the whole cockpit, hosted anywhere.
 import { useMemo, useState } from "react";
+import type { CoreProps } from "./ActivityCore";
 import {
   Button,
   Disclosure,
@@ -9,16 +11,14 @@ import {
   Switch,
   Tabs,
   TextInput,
-} from "../components/signal/Signal";
-import { apiFetch, readableError, type JsonRecord } from "../lib/api";
-import { CONTROL_MODES, controlModeLabel } from "../lib/productLanguage";
+} from "../../components/signal/Signal";
+import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
+import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
 import {
-  PageHero,
   PostureNote,
   ResourceState,
   useResource,
-} from "./pageSupport";
-import { decodeWorkroomContext, workroomSubjectId } from "../workrooms/context";
+} from "../pageSupport";
 
 const SECTION_ORDER = [
   "ui",
@@ -236,9 +236,11 @@ function SettingsFields({
   );
 }
 
-export default function SettingsPage() {
-  const workroom = decodeWorkroomContext(window.location.search);
-  const integrationSubject = workroomSubjectId(workroom, "integration");
+export function SettingsCore({ hero, scope }: CoreProps) {
+  const integrationSubject =
+    scope && scope.startsWith("integration:")
+      ? scope.slice("integration:".length)
+      : null;
   const resource = useResource<JsonRecord>("/api/settings", {});
   const authority = useResource<JsonRecord>("/api/authority/policy", {});
   const [active, setActive] = useState("");
@@ -363,22 +365,19 @@ export default function SettingsPage() {
     }
   };
 
+  const verbs = (
+    <Button variant="primary" loading={saving} onClick={save}>
+      Save settings
+    </Button>
+  );
   return (
-    <div className="page-wrap">
-      <PageHero
-        eyebrow="Configuration"
-        title="Settings"
-        workroomSubject={
-          integrationSubject ? "Integration destinations" : undefined
-        }
-        actions={
-          <Button variant="primary" loading={saving} onClick={save}>
-            Save settings
-          </Button>
-        }
-      >
-        Find and update settings by task.
-      </PageHero>
+    <>
+      {hero ? hero(verbs) : <div className="desk-core-verbs">{verbs}</div>}
+      {integrationSubject ? (
+        <p className="desk-scope-chip">
+          <span aria-hidden="true">⇄</span> Integration destinations
+        </p>
+      ) : null}
       <ResourceState
         loading={resource.loading}
         error={resource.error}
@@ -553,6 +552,6 @@ export default function SettingsPage() {
           </div>
         </Panel>
       </ResourceState>
-    </div>
+    </>
   );
 }

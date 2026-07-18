@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { openSurface } from "../shell";
-import { workroomHref } from "../../workrooms/context";
 import { qualifiedRef } from "../api";
 import { modelChatId } from "../chat";
 import {
@@ -83,7 +81,6 @@ export const KIND_LABEL: Record<string, string> = {
 };
 
 export function DeskToolShelf() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLElement | null>(null);
@@ -373,16 +370,9 @@ export function DeskToolShelf() {
                     className="desk-tool-link"
                     onClick={() => {
                       close();
-                      // The shell mechanism (HS-95-03/04): the shelf is a
-                      // dispatcher; only surfaces not yet re-homed fall
-                      // back to their legacy route (HS-95-08 retires it).
-                      if (!openSurface(tool.action, tool.subjectRef))
-                        navigate(
-                          workroomHref(tool.href, {
-                            action: tool.action,
-                            subjectRef: tool.subjectRef,
-                          }),
-                        );
+                      // The shelf is a pure dispatcher (HS-95-08): every
+                      // tool is a desk surface; nothing navigates.
+                      openSurface(tool.action, tool.subjectRef);
                     }}
                   >
                     <span aria-hidden="true">{tool.glyph}</span>

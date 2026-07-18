@@ -1,4 +1,6 @@
+// HS-95-07 — the Runs-on core: runtime destinations, hosted anywhere.
 import { useState } from "react";
+import type { CoreProps } from "./ActivityCore";
 import {
   Button,
   Checkbox,
@@ -10,20 +12,19 @@ import {
   Select,
   StatusPill,
   TextInput,
-} from "../components/signal/Signal";
-import { apiFetch, readableError } from "../lib/api";
+} from "../../components/signal/Signal";
+import { apiFetch, readableError } from "../../lib/api";
 import {
   destinationClassLabel,
   type DestinationClass,
-} from "../lib/productLanguage";
+} from "../../lib/productLanguage";
 import {
   ConfirmAction,
-  PageHero,
   ResourceState,
   asRows,
   rowId,
   useResource,
-} from "./pageSupport";
+} from "../pageSupport";
 
 type Profile = Record<string, unknown>;
 type Envelope = {
@@ -61,7 +62,7 @@ const blank = (): Profile => ({
   requires_key: true,
 });
 
-export default function ProfilesPage() {
+export function ProfilesCore({ hero }: CoreProps) {
   const resource = useResource<Envelope>("/api/profiles", {});
   const [editing, setEditing] = useState<Profile | null>(null);
   const [deleting, setDeleting] = useState<Profile | null>(null);
@@ -111,20 +112,14 @@ export default function ProfilesPage() {
     }
   };
 
-  return (
-    <div className="page-wrap">
-      <PageHero
-        eyebrow="Runtime"
-        title="Runs on"
-        actions={
+  const verbs = (
           <Button variant="primary" onClick={() => setEditing(blank())}>
             New destination
           </Button>
-        }
-      >
-        Name where intelligence runs. Credentials remain on the hub and never
-        enter this editor.
-      </PageHero>
+  );
+  return (
+    <>
+      {hero ? hero(verbs) : <div className="desk-core-verbs">{verbs}</div>}
       <ResourceState
         loading={resource.loading}
         error={resource.error}
@@ -320,6 +315,6 @@ export default function ProfilesPage() {
         onConfirm={remove}
         onClose={() => setDeleting(null)}
       />
-    </div>
+    </>
   );
 }

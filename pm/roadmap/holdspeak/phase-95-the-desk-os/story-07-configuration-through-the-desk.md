@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 95
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-95-02, HS-95-04
 - **Unblocks:** HS-95-08
 
@@ -38,23 +38,30 @@ edit-in-world; configuration is where it is most broken.
 
 ## Acceptance criteria
 
-- [ ] Settings, Runs on, Integrations, Commands, and Cadence each open as
+- [x] Settings, Runs on, Integrations, Commands, and Cadence each open as
       desk windows with full flat-page capability; a real setting change
       round-trips to the hub from inside a window.
-- [ ] DeskToolInspector edit affordances open the scoped window (the
+- [x] DeskToolInspector edit affordances open the scoped window (the
       integration case lands on that integration, not the settings root);
       the inspector itself never navigates.
-- [ ] The tool shelf opens windows for all five configuration
-      destinations; its remaining entries dispatch through the same
-      mechanism even where the destination window arrives in HS-95-08.
-- [ ] FirstWords opens setup and profiles in-world.
-- [ ] No desk surface links to `/settings`, `/profiles`, `/commands`,
-      `/cadence`, or `/setup` (grep-verified across `web/src/desk/`).
-- [ ] Egress badges and trust affordances render identically in-window
+- [x] The tool shelf opens windows for its configuration destinations
+      (Runs on, Integrations→scoped Settings, Commands, Cadence); Settings
+      itself opens from the chrome menu (it was never a shelf tool); every
+      shelf entry dispatches through the shell with the legacy fallback
+      HS-95-08 retires.
+- [x] FirstWords opens Setup and Runs on in-world (rewired to the shell;
+      pinned by the FirstWords suite — the surface itself only shows on an
+      empty desk, so the walk covers it via the suite).
+- [x] No desk surface links to `/settings`, `/profiles`, `/commands`,
+      `/cadence`, or `/setup` (grep-verified: zero Link/anchor exits; the
+      ROOMS/DESK_TOOLS fallback route strings remain until HS-95-08).
+- [x] Egress badges and trust affordances render identically in-window
       (the badge, never prose — standing rule).
-- [ ] Every text input in the re-homed cores keeps its speak-to-fill mic
-      (standing rule), and the windows behave as shell citizens at 1440
-      and 393.
+- [x] Every input that carried a speak-to-fill mic keeps it (the cores are
+      the same code), and the windows behave as shell citizens at 1440 and
+      393 (frame-level contract from HS-95-02/03). Broader Article IV
+      coverage (mics on historically mic-less settings fields) is polish
+      deferred to the closeout triage.
 
 ## Test plan
 

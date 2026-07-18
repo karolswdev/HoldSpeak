@@ -1,14 +1,12 @@
-import { Link } from "react-router-dom";
-import { Disclosure, InlineMessage, Panel } from "../components/signal/Signal";
-import { PageHero } from "./pageSupport";
+// HS-95-08 — the runtime setup guide, hosted anywhere.
+import { openSurfaceOr } from "../../desk/shell";
+import type { CoreProps } from "./ActivityCore";
+import { Disclosure, InlineMessage, Panel } from "../../components/signal/Signal";
 
-export default function RuntimeDocsPage() {
+export function RuntimeDocsCore({ hero }: CoreProps) {
   return (
-    <article className="page-wrap docs-page">
-      <PageHero eyebrow="Setup guide" title="Dictation runtime setup">
-        Basic voice typing works without an LLM. Rewrites and routing require a
-        configured Runs on destination.
-      </PageHero>
+    <>
+      {hero ? hero(null) : null}
       <InlineMessage tone="info">
         API keys are environment variables on the hub. They never belong in a
         browser field or profile response.
@@ -54,15 +52,31 @@ export default function RuntimeDocsPage() {
       <Panel title="Verify" eyebrow="Readiness">
         <ol>
           <li>
-            Open <Link to="/setup">Setup</Link> and run the runtime test.
+            Open{" "}
+            <button
+              type="button"
+              className="btn-link"
+              onClick={() => openSurfaceOr("configure-setup", "/setup")}
+            >
+              Setup
+            </button>{" "}
+            and run the runtime test.
           </li>
           <li>
-            Open <Link to="/dictation">Dictation</Link> and check Readiness.
+            Open{" "}
+            <button
+              type="button"
+              className="btn-link"
+              onClick={() => openSurfaceOr("dictate", "/dictation")}
+            >
+              Dictation
+            </button>{" "}
+            and check Readiness.
           </li>
           <li>Use Try it to run one no-type dry test.</li>
           <li>Only then enable rewrite stages for daily dictation.</li>
         </ol>
       </Panel>
-    </article>
+    </>
   );
 }

@@ -23,6 +23,8 @@ interface SurfaceRow {
   glyph: string;
   eyebrow: string;
   minW?: number;
+  /** Open maximized (full stage) — the canvas-sized surfaces want it. */
+  maximized?: boolean;
   Core: LazyExoticComponent<ComponentType<CoreProps & { scope?: string }>>;
 }
 
@@ -37,6 +39,150 @@ const SURFACES: SurfaceRow[] = [
     Core: lazy(() =>
       import("../../pages/cores/DictationCore").then((m) => ({
         default: m.DictationCore,
+      })),
+    ),
+  },
+  {
+    key: "review-meetings",
+    id: "surface-meetings",
+    title: "Meetings",
+    glyph: "▣",
+    eyebrow: "Meeting memory",
+    minW: 640,
+    Core: lazy(() =>
+      import("../../pages/cores/HistoryCore").then((m) => ({
+        default: m.HistoryCore,
+      })),
+    ),
+  },
+  {
+    key: "record-live",
+    id: "surface-live",
+    title: "Live meeting",
+    glyph: "●",
+    eyebrow: "Meeting room",
+    minW: 560,
+    Core: lazy(() =>
+      import("../../pages/cores/LiveCore").then((m) => ({
+        default: m.LiveCore,
+      })),
+    ),
+  },
+  {
+    key: "configure-settings",
+    id: "surface-settings",
+    title: "Settings",
+    glyph: "⚙",
+    eyebrow: "Configuration",
+    minW: 560,
+    Core: lazy(() =>
+      import("../../pages/cores/SettingsCore").then((m) => ({
+        default: m.SettingsCore,
+      })),
+    ),
+  },
+  {
+    key: "configure-runs-on",
+    id: "surface-profiles",
+    title: "Runs on",
+    glyph: "⇄",
+    eyebrow: "Runtime",
+    minW: 520,
+    Core: lazy(() =>
+      import("../../pages/cores/ProfilesCore").then((m) => ({
+        default: m.ProfilesCore,
+      })),
+    ),
+  },
+  {
+    key: "configure-cadence",
+    id: "surface-cadence",
+    title: "Cadence",
+    glyph: "∿",
+    eyebrow: "Follow-through",
+    minW: 520,
+    Core: lazy(() =>
+      import("../../pages/cores/CadenceCore").then((m) => ({
+        default: m.CadenceCore,
+      })),
+    ),
+  },
+  {
+    key: "configure-setup",
+    id: "surface-setup",
+    title: "Setup",
+    glyph: "✓",
+    eyebrow: "Arrival",
+    minW: 520,
+    Core: lazy(() =>
+      import("../../pages/cores/SetupCore").then((m) => ({
+        default: m.SetupCore,
+      })),
+    ),
+  },
+  {
+    key: "build-workflow",
+    id: "surface-workbench",
+    title: "Workbench",
+    glyph: "⧉",
+    eyebrow: "Build",
+    minW: 720,
+    maximized: true,
+    Core: lazy(() =>
+      import("../../pages/cores/WorkbenchCore").then((m) => ({
+        default: m.WorkbenchCore,
+      })),
+    ),
+  },
+  {
+    key: "configure-tools",
+    id: "surface-studio",
+    title: "Studio",
+    glyph: "◇",
+    eyebrow: "Focused workspace",
+    minW: 520,
+    Core: lazy(() =>
+      import("../../pages/cores/StudioCore").then((m) => ({
+        default: m.StudioCore,
+      })),
+    ),
+  },
+  {
+    key: "inspect-personas-and-coders",
+    id: "surface-companion",
+    title: "Personas and coders",
+    glyph: "🤝",
+    eyebrow: "Companion",
+    minW: 560,
+    Core: lazy(() =>
+      import("../../pages/cores/CompanionCore").then((m) => ({
+        default: m.CompanionCore,
+      })),
+    ),
+  },
+  {
+    key: "read-runtime-docs",
+    id: "surface-runtime-docs",
+    title: "Runtime guide",
+    glyph: "📘",
+    eyebrow: "Setup guide",
+    minW: 560,
+    Core: lazy(() =>
+      import("../../pages/cores/RuntimeDocsCore").then((m) => ({
+        default: m.RuntimeDocsCore,
+      })),
+    ),
+  },
+  {
+    key: "design-components",
+    id: "surface-components",
+    title: "Components",
+    glyph: "▦",
+    eyebrow: "Signal React",
+    minW: 640,
+    Core: lazy(() =>
+      import("../../pages/cores/ComponentsCore").then((m) => ({
+        default: m.ComponentsCore,
       })),
     ),
   },
@@ -85,17 +231,40 @@ export const useSurfaceWindows = create<SurfaceState>((set, get) => ({
   },
 }));
 
+/** Alias keys open an existing window with a default scope (e.g. the
+ * shelf's Integrations entry is the Settings window scoped to
+ * integrations). */
+const SURFACE_ALIASES: Record<string, { target: string; scope?: string }> = {
+  "configure-integrations": {
+    target: "configure-settings",
+    scope: "integration:destinations",
+  },
+  "configure-integration": { target: "configure-settings" },
+};
+
 export function SurfaceWindows() {
   const open = useSurfaceWindows((s) => s.open);
   const items = useDesk((s) => s.items);
 
   useEffect(() => {
     const offs = SURFACES.map((row) =>
-      registerSurface(row.key, (scope) =>
-        useSurfaceWindows.getState().openSurfaceWindow(row.key, scope),
+      registerSurface(row.key, (scope) => {
+        useSurfaceWindows.getState().openSurfaceWindow(row.key, scope);
+        if (row.maximized && !useDesk.getState().panelMax.includes(row.id))
+          useDesk.getState().toggleMaximizePanel(row.id);
+      }),
+    );
+    const aliasOffs = Object.entries(SURFACE_ALIASES).map(([key, alias]) =>
+      registerSurface(key, (scope) =>
+        useSurfaceWindows
+          .getState()
+          .openSurfaceWindow(alias.target, scope ?? alias.scope),
       ),
     );
-    return () => offs.forEach((off) => off());
+    return () => {
+      offs.forEach((off) => off());
+      aliasOffs.forEach((off) => off());
+    };
   }, []);
 
   return (

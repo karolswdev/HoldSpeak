@@ -1,4 +1,6 @@
+// HS-95-07 — the Cadence core: loops and history, hosted anywhere.
 import { useState } from "react";
+import type { CoreProps } from "./ActivityCore";
 import {
   Button,
   EmptyState,
@@ -6,18 +8,17 @@ import {
   Panel,
   StatusPill,
   TextArea,
-} from "../components/signal/Signal";
-import { apiFetch, readableError, type JsonRecord } from "../lib/api";
+} from "../../components/signal/Signal";
+import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
 import {
   ConfirmAction,
-  PageHero,
   ResourceState,
   asRows,
   rowId,
   useResource,
-} from "./pageSupport";
+} from "../pageSupport";
 
-export default function CadencePage() {
+export function CadenceCore({ hero }: CoreProps) {
   const status = useResource<JsonRecord>("/api/cadence/status", {});
   const loopsResource = useResource<JsonRecord>("/api/cadence/loops", {});
   const history = useResource<JsonRecord>("/api/cadence/history?limit=20", {});
@@ -62,19 +63,14 @@ export default function CadencePage() {
       setBusy(false);
     }
   };
-  return (
-    <div className="page-wrap">
-      <PageHero
-        eyebrow="Follow-through"
-        title="Cadence"
-        actions={
+  const verbs = (
           <Button variant="primary" loading={busy} onClick={run}>
             Run now
           </Button>
-        }
-      >
-        Open loops become prepared next moves; nothing is sent until you choose.
-      </PageHero>
+  );
+  return (
+    <>
+      {hero ? hero(verbs) : <div className="desk-core-verbs">{verbs}</div>}
       {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
       <div className="page-grid">
         <Panel
@@ -196,6 +192,6 @@ export default function CadencePage() {
         onConfirm={() => confirm && void act(confirm.id, confirm.action)}
         onClose={() => setConfirm(null)}
       />
-    </div>
+    </>
   );
 }

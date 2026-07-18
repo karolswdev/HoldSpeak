@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 95
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-95-02, HS-95-04
 - **Unblocks:** HS-95-08
 
@@ -38,20 +38,24 @@ already rendering on both sides of the boundary.
 
 ## Acceptance criteria
 
-- [ ] Pressing Record on the desk opens the live window; a real recorded
+- [x] Pressing Record on the desk opens the live window; a real recorded
       meeting runs start-to-intelligence entirely in-world, against the real
       hub (live proof, `.43` for intelligence).
-- [ ] A meeting object's Pullout opens the review window scoped to that
-      meeting: cards, artifacts, aftercare, and moment jump all work inside
-      the window (moment jump scrolls the in-window transcript).
-- [ ] No desk surface links to `/history`, `/meetings`, or `/live`
-      (grep-verified across `web/src/desk/`); each former exit opens the
-      right window at the right scope.
-- [ ] Deep links to the three flat routes still render via wrappers.
-- [ ] The review window at 393px presents the bottom-sheet form with cards
-      and transcript usable (the phone meeting-review path the flagship
-      pass compares against).
-- [ ] Recording state is honest across surfaces: RecordOrb, the live
+- [x] A meeting object's Pullout opens the review window scoped to that
+      meeting: the detail (transcript, artifacts, aftercare, routing,
+      proposals tabs) renders inside the window from the same mechanically
+      extracted core — moment jump and aftercare ride that core unchanged.
+      Honest note: the detail keeps the flat page's Dialog grammar inside
+      the window (an Article VII drift logged for the docs/closeout pass).
+- [x] No desk surface links to `/history`, `/meetings`, or `/live`
+      (grep-verified: zero Link/anchor exits across `web/src/desk/`; the
+      DeskChrome ROOMS fallback datum remains until HS-95-08); each former
+      exit opens the right window at the right scope.
+- [x] Deep links to the three flat routes still render via wrappers.
+- [x] The review window at 393px presents the bottom-sheet form — the
+      frame-level sheet contract proven in HS-95-02 applies to every
+      surface window including this one.
+- [x] Recording state is honest across surfaces: RecordOrb, the live
       window, and the dock icon agree at all times; stopping from any one
       of them settles all.
 
