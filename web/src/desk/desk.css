@@ -3102,22 +3102,81 @@
   position: fixed;
   border-radius: 14px;
 }
-.desk-next .desk-min-tray {
+/* ── HS-95-03: the dock — shell furniture above the window band (42+): a
+   maximized window must never bury the way back to a parked one. ── */
+.desk-next .desk-dock {
   position: fixed;
-  left: 50%;
-  bottom: 10px;
-  transform: translateX(-50%);
-  /* Shell furniture rides ABOVE the window band (42+): a maximized
-     window must never bury the way back to a parked one. */
+  /* One band above the launcher strip (Panes 16 · belt 112 · Delivery 220
+     all sit at the bottom edge); the dock never covers a launcher. */
+  left: 16px;
+  bottom: 52px;
   z-index: 80;
   display: flex;
+  align-items: center;
   gap: 6px;
+  padding: 4px 6px;
+  border-radius: 14px;
+  background: rgba(12, 10, 17, 0.82);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
 }
-.desk-next .desk-min-chip {
-  max-width: 180px;
+.desk-next .desk-dock-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.desk-next .desk-dock-chip.is-front {
+  background: color-mix(in srgb, var(--accent, #ff6b35) 22%, transparent);
+}
+.desk-next .desk-dock-chip.is-min {
+  opacity: 0.55;
+}
+.desk-next .desk-dock-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 168px;
+  padding: 5px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+.desk-next .desk-dock-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.desk-next .desk-dock-x {
+  width: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: width var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-dock-chip:hover .desk-dock-x,
+.desk-next .desk-dock-x:focus-visible {
+  width: 20px;
+}
+.desk-next .desk-dock-x:hover {
+  color: var(--text);
+}
+.desk-next .desk-dock-reset {
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 13px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+.desk-next .desk-dock-reset:hover {
+  color: var(--text);
 }
 @media (max-width: 720px) {
   .desk-next .desk-window-shell.is-sheet {
@@ -3131,7 +3190,13 @@
     border-radius: 18px 18px 0 0;
     overflow: auto;
   }
-  .desk-next .desk-min-tray {
-    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  .desk-next .desk-dock {
+    left: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    /* Sheets own the phone's bottom; the dock yields beneath them. */
+    z-index: 40;
+  }
+  .desk-next .desk-dock-main {
+    max-width: 96px;
   }
 }

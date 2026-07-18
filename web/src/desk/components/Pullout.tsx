@@ -285,6 +285,7 @@ export function Pullout({ o }: { o: WorldObject }) {
   return (
     <DeskWindowFrame
       id="pullout"
+      glyph="▤"
       label={o.title}
       className="desk-pullout"
       rootStyle={{ "--k": objGlow(o.kind) } as React.CSSProperties}

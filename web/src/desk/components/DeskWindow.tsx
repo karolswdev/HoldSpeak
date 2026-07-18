@@ -29,6 +29,44 @@ const CASCADE = 26;
 /** Windows currently mounted at their CSS default corner (no rect yet). */
 const defaultCorner = new Set<string>();
 
+/** HS-95-03 — edge snap: releasing a window drag at a screen edge tiles
+ * it. Corners take quarters, the left/right flanks take halves; anywhere
+ * else returns null (a free park). Pure, pinned by test. */
+export function snapForPointer(
+  px: number,
+  py: number,
+  vw: number,
+  vh: number,
+): PanelRect | null {
+  const EDGE = 26;
+  const CORNER = 150;
+  const top = 54; // below the chrome band
+  const bottom = 52; // clear of the dock band
+  const halfW = Math.floor((vw - MARGIN * 3) / 2);
+  const halfH = Math.floor((vh - top - bottom - MARGIN) / 2);
+  const left = px <= CORNER;
+  const right = px >= vw - CORNER;
+  const high = py <= CORNER + top;
+  const low = py >= vh - CORNER;
+  if (left && high) return { x: MARGIN, y: top, w: halfW, h: halfH };
+  if (right && high)
+    return { x: vw - MARGIN - halfW, y: top, w: halfW, h: halfH };
+  if (left && low)
+    return { x: MARGIN, y: top + halfH + MARGIN, w: halfW, h: halfH };
+  if (right && low)
+    return {
+      x: vw - MARGIN - halfW,
+      y: top + halfH + MARGIN,
+      w: halfW,
+      h: halfH,
+    };
+  if (px <= EDGE)
+    return { x: MARGIN, y: top, w: halfW, h: vh - top - bottom };
+  if (px >= vw - EDGE)
+    return { x: vw - MARGIN - halfW, y: top, w: halfW, h: vh - top - bottom };
+  return null;
+}
+
 function clampRect(r: PanelRect, minW: number, minH: number): PanelRect {
   const vw = window.innerWidth || 1280;
   const vh = window.innerHeight || 800;
@@ -129,11 +167,28 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       if (memo?.skip) return memo;
       const base: PanelRect = memo?.base ?? measure();
       if (Math.abs(mx) + Math.abs(my) > 3) {
+        // Releasing at a screen edge snaps to the half/quarter tile
+        // (HS-95-03); anywhere else parks the dragged rect as before.
+        const ev = event as PointerEvent | undefined;
+        const snapped =
+          last && ev && typeof ev.clientX === "number"
+            ? snapForPointer(
+                ev.clientX,
+                ev.clientY,
+                window.innerWidth || 1280,
+                window.innerHeight || 800,
+              )
+            : null;
         useDesk
           .getState()
           .setPanelRect(
             id,
-            clampRect({ ...base, x: base.x + mx, y: base.y + my }, minW, minH),
+            snapped ??
+              clampRect(
+                { ...base, x: base.x + mx, y: base.y + my },
+                minW,
+                minH,
+              ),
             last,
           );
       }
@@ -188,14 +243,27 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   };
 }
 
-/** Open windows announce themselves (title/icon) so the minimized tray —
- * and HS-95-03's dock — can name them without a parallel registry. */
-const windowRegistry = new Map<string, { label: string; glyph: string }>();
+/** Open windows announce themselves (title/icon/close) so the dock can
+ * name and drive them without a parallel registry. */
+const windowRegistry = new Map<
+  string,
+  { label: string; glyph: string; close: () => void }
+>();
 const registryListeners = new Set<() => void>();
-let registrySnapshot: { id: string; label: string; glyph: string }[] = [];
+let registrySnapshot: {
+  id: string;
+  label: string;
+  glyph: string;
+  close: () => void;
+}[] = [];
 
-function announceWindow(id: string, label: string, glyph: string) {
-  windowRegistry.set(id, { label, glyph });
+function announceWindow(
+  id: string,
+  label: string,
+  glyph: string,
+  close: () => void,
+) {
+  windowRegistry.set(id, { label, glyph, close });
   publishRegistry();
 }
 
@@ -244,6 +312,8 @@ export interface DeskWindowFrameProps {
   label?: string;
   /** A small leading glyph/avatar node (the window's face). */
   icon?: ReactNode;
+  /** One-character dock face when `icon` is a node (default ▢). */
+  glyph?: string;
   /** Content before the icon (e.g. a back chip). */
   leading?: ReactNode;
   /** One-word kind eyebrow above/beside the title (optional). */
@@ -274,6 +344,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     title,
     label,
     icon,
+    glyph: glyphProp,
     leading,
     eyebrow,
     actions,
@@ -292,12 +363,14 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const compact = useCompactViewport();
   const reducedMotion = useReducedMotion();
   const win = useDeskWindow(id, { minW, minH, open: open && !minimized });
-  const glyph = typeof icon === "string" ? icon : "▢";
+  const glyph = glyphProp ?? (typeof icon === "string" ? icon : "▢");
   const name = label ?? (typeof title === "string" ? title : id);
 
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
     if (!open) return;
-    announceWindow(id, name, glyph);
+    announceWindow(id, name, glyph, () => closeRef.current());
     return () => retractWindow(id);
   }, [open, id, name, glyph]);
 
@@ -352,8 +425,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         win.focus();
         e.stopPropagation();
       }}
-      role="dialog"
-      aria-modal={false}
+      role="region"
       aria-label={name}
     >
       <header
@@ -400,25 +472,88 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   );
 }
 
-/** The parked-windows tray: every minimized window as a restorable chip.
- * HS-95-03's dock absorbs this; until then nothing minimized is stranded. */
-export function MinimizedTray() {
+/** MRU order over the currently-open windows (front last, like the z
+ * band). Windows never focused yet sort first. */
+function mruOrder(ids: string[], order: string[]): string[] {
+  return [...ids].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+}
+
+/** The dock (HS-95-03): every open window as a chip — tap focuses (or
+ * restores a parked one), ✕ closes, ⟲ resets the layout. Ctrl+` cycles
+ * focus in MRU order, restoring as it lands. Shell furniture: it rides
+ * above the window band, and it is invisible while nothing is open. */
+export function Dock() {
   const panelMin = useDesk((s) => s.panelMin);
+  const panelOrder = useDesk((s) => s.panelOrder);
   const windows = useOpenWindows();
-  const chips = windows.filter((w) => panelMin.includes(w.id));
-  if (chips.length === 0) return null;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "`" || !e.ctrlKey) return;
+      const ids = mruOrder(
+        registrySnapshot.map((w) => w.id),
+        useDesk.getState().panelOrder,
+      );
+      if (ids.length < 1) return;
+      e.preventDefault();
+      // The front window is last; cycling brings the least-recent forward.
+      const next = ids[0];
+      const s = useDesk.getState();
+      if (s.panelMin.includes(next)) s.restorePanel(next);
+      else s.focusPanel(next);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  if (windows.length === 0) return null;
+  const front = panelOrder[panelOrder.length - 1];
   return (
-    <div className="desk-min-tray" role="toolbar" aria-label="Minimized windows">
-      {chips.map((c) => (
-        <button
-          key={c.id}
-          type="button"
-          className="desk-chip desk-min-chip"
-          onClick={() => useDesk.getState().restorePanel(c.id)}
-        >
-          <span aria-hidden="true">{c.glyph}</span> {c.label}
-        </button>
-      ))}
+    <div className="desk-dock" role="toolbar" aria-label="Open windows">
+      {windows.map((c) => {
+        const minimized = panelMin.includes(c.id);
+        return (
+          <span
+            key={c.id}
+            className={
+              "desk-dock-chip" +
+              (minimized ? " is-min" : "") +
+              (c.id === front && !minimized ? " is-front" : "")
+            }
+          >
+            <button
+              type="button"
+              className="desk-dock-main"
+              aria-label={minimized ? `Restore ${c.label}` : `Focus ${c.label}`}
+              onClick={() => {
+                const s = useDesk.getState();
+                if (minimized) s.restorePanel(c.id);
+                else s.focusPanel(c.id);
+              }}
+            >
+              <span aria-hidden="true">{c.glyph}</span>
+              <span className="desk-dock-label">{c.label}</span>
+            </button>
+            <button
+              type="button"
+              className="desk-dock-x"
+              aria-label={`Close ${c.label}`}
+              onClick={c.close}
+            >
+              ✕
+            </button>
+          </span>
+        );
+      })}
+      <button
+        type="button"
+        className="desk-dock-reset"
+        aria-label="Reset layout"
+        title="Reset layout"
+        onClick={() => useDesk.getState().resetLayout()}
+      >
+        ⟲
+      </button>
     </div>
   );
 }

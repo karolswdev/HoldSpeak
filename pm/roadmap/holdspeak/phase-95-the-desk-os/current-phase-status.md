@@ -1,8 +1,8 @@
 # Phase 95 — The Desk OS
 
-**Status:** IN PROGRESS (2/10; HS-95-02 done 2026-07-17).
+**Status:** IN PROGRESS (3/10; HS-95-03 done 2026-07-17).
 
-**Last updated:** 2026-07-17 (HS-95-02, OS-grade windows, done).
+**Last updated:** 2026-07-17 (HS-95-03, the shell, done).
 
 ## Why this phase exists
 
@@ -114,7 +114,7 @@ navigates away from the desk.
 |---|---|---|---|---|
 | HS-95-01 | The WebGL stage | done | [story-01-the-webgl-stage](./story-01-the-webgl-stage.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-95-02 | OS-grade windows | done | [story-02-os-grade-windows](./story-02-os-grade-windows.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-95-03 | The shell: dock, switching, layouts | backlog | [story-03-the-shell](./story-03-the-shell.md) | — |
+| HS-95-03 | The shell: dock, switching, layouts | done | [story-03-the-shell](./story-03-the-shell.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-95-04 | Embeddable page cores | backlog | [story-04-embeddable-page-cores](./story-04-embeddable-page-cores.md) | — |
 | HS-95-05 | Dictation through the desk | backlog | [story-05-dictation-through-the-desk](./story-05-dictation-through-the-desk.md) | — |
 | HS-95-06 | Meetings and recording through the desk | backlog | [story-06-meetings-through-the-desk](./story-06-meetings-through-the-desk.md) | — |
@@ -158,5 +158,19 @@ production windows walk at 1440 (three windows, drag, park/restore,
 reload persistence, reopen-maximized) and 393 (sheet); chrome screenshots
 in `assets/`.
 
-Next: HS-95-03 (dock/switching/layouts) and HS-95-04 (page cores); the
-Phase 93 physics contract remains the regression floor.
+**HS-95-03 done (2026-07-17): the desk has a shell.** The dock (one band
+above the launcher strip) shows every open window as a chip — tap focuses,
+a parked chip restores, hover reveals ✕, ⟲ resets the layout; Ctrl+`
+cycles focus in MRU order restoring as it lands; releasing a window drag
+at a screen edge snaps half/quarter tiles that clear the chrome band and
+the dock; the DeskChrome menu now dispatches through the shell's surface
+registry (`desk/shell.ts`) with the legacy route as the not-yet-registered
+fallback HS-95-05..08 retire. Windows are `role="region"` — the Phase 73
+mechanical locks (no modal roles on the desk, no global selector state)
+caught the initial `role="dialog"` chrome in CI and the guards now pass.
+Proof: guards + web suite 253/253; the windows and shell production walks
+(dock, snap, cycle, park/restore, dock-close, reset, menu dispatch);
+`assets/shell-1440.png`.
+
+Next: HS-95-04 (page cores) unblocks the re-homing stories; the Phase 93
+physics contract remains the regression floor.

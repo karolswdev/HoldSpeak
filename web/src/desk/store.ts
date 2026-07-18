@@ -299,6 +299,8 @@ interface DeskState {
   minimizePanel(id: string): void;
   restorePanel(id: string): void;
   toggleMaximizePanel(id: string): void;
+  /** Forget every arranged rect and lifecycle mark (the reset verb). */
+  resetLayout(): void;
   /** Forget a window's arranged rect (back to its CSS default corner). */
   resetPanelRect(id: string): void;
   /** Bring a desk window to the front of the focus order. */
@@ -828,5 +830,9 @@ export const useDesk = create<DeskState>((set, get) => ({
     order.push(id);
     set({ panelMax, panelOrder: order });
     savePanelLayout(get().panelRects, get().panelSaved, get().panelMin, panelMax);
+  },
+  resetLayout() {
+    set({ panelRects: {}, panelSaved: [], panelMin: [], panelMax: [] });
+    savePanelLayout({}, [], [], []);
   },
 }));

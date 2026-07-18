@@ -623,6 +623,7 @@ export function SessionPullout() {
   return (
     <DeskWindowFrame
       id="session"
+      glyph="▮"
       minW={420}
       label={`${session?.agent || openKey.split(":", 2)[0]} · ${sessionId.slice(0, 8)}`}
       className="desk-pullout is-session"

@@ -216,6 +216,7 @@ export function AskPanel() {
   return (
     <DeskWindowFrame
       id="ask"
+      glyph="✦"
       label="Ask AI"
       className="desk-pullout desk-ask"
       icon={

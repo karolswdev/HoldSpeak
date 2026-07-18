@@ -237,6 +237,7 @@ export function DeskToolInspector() {
   return (
     <DeskWindowFrame
       id="inspector"
+      glyph="🔍"
       label={title}
       className="desk-tool-inspector"
       eyebrow={project ? "Project" : integration ? "Integration" : "Runs on"}

@@ -4,7 +4,12 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-17 — **HS-95-02, OS-grade windows, DONE**: one
+**Last updated:** 2026-07-17 — **HS-95-03, The shell, DONE**: the dock
+(chips for every open window: focus/restore/close/reset), Ctrl+` MRU window
+cycling, drag-to-edge half/quarter snap tiles, and the DeskChrome menu
+dispatching through the shell's surface registry instead of navigating;
+windows are regions (the Phase 73 no-modal locks hold). Earlier:
+**HS-95-02, OS-grade windows, DONE**: one
 `DeskWindowFrame` container (one chrome, minimize/maximize/close, store-backed
 lifecycle persisted beside the rects, phone bottom-sheet form) hosts all nine
 desk panels — their hand-wiring is deleted and the physics hook is

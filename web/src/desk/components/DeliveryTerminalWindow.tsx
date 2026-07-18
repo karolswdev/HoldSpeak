@@ -173,6 +173,7 @@ export function DeliveryTerminalWindow() {
   return (
     <DeskWindowFrame
       id="delivery-terminal"
+      glyph="▮"
       minW={460}
       label={`Terminal ${target.label}`}
       className="desk-pullout is-session desk-dlv-terminal"

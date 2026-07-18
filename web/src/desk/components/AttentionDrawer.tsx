@@ -46,6 +46,7 @@ export function AttentionDrawer() {
       </button>
       <DeskWindowFrame
         id="attention"
+      glyph="◎"
         label="Desk memory"
         className="desk-attention-drawer"
         eyebrow="Attention and Receipts"

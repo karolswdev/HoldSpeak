@@ -4,7 +4,7 @@
 // Playwright walk.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DeskWindowFrame, MinimizedTray } from "../components/DeskWindow";
+import { DeskWindowFrame, Dock } from "../components/DeskWindow";
 import { useDesk } from "../store";
 
 beforeEach(() => {
@@ -36,7 +36,7 @@ describe("DeskWindowFrame (the one chrome)", () => {
   it("hosts arbitrary children under one head with the three verbs", () => {
     render(<Host />);
     expect(screen.getByText("window content")).toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Test window" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Test window" })).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Minimize Test window" }),
     ).toBeTruthy();
@@ -55,11 +55,11 @@ describe("DeskWindowFrame (the one chrome)", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("minimize parks the window (mounted but hidden) and the tray restores it", () => {
-    render(
+  it("minimize parks the window (mounted but hidden) and the dock restores it", () => {
+    const { container } = render(
       <>
         <Host />
-        <MinimizedTray />
+        <Dock />
       </>,
     );
     fireEvent.click(
@@ -67,17 +67,17 @@ describe("DeskWindowFrame (the one chrome)", () => {
     );
     expect(useDesk.getState().panelMin).toEqual(["t1"]);
     // display:none removes it from the a11y tree; the mount itself parks.
-    const dialog = document.querySelector(
-      '[aria-label="Test window"][role="dialog"]',
+    const shell = container.querySelector(
+      '[aria-label="Test window"][role="region"]',
     ) as HTMLElement;
-    expect(dialog).toBeTruthy();
-    expect(dialog.style.display).toBe("none");
+    expect(shell).toBeTruthy();
+    expect(shell.style.display).toBe("none");
     expect(screen.getByText("window content")).toBeInTheDocument();
-    // The tray names it and restores it.
-    const chip = screen.getByRole("button", { name: /Test window/ });
+    // The dock names it and restores it.
+    const chip = screen.getByRole("button", { name: "Restore Test window" });
     fireEvent.click(chip);
     expect(useDesk.getState().panelMin).toEqual([]);
-    expect(dialog.style.display).not.toBe("none");
+    expect(shell.style.display).not.toBe("none");
   });
 
   it("unmountOnMinimize opts heavy content out of a parked mount", () => {
@@ -102,14 +102,14 @@ describe("DeskWindowFrame (the one chrome)", () => {
       screen.getByRole("button", { name: "Maximize Test window" }),
     );
     expect(useDesk.getState().panelMax).toEqual(["t1"]);
-    const dialog = screen.getByRole("dialog", { name: "Test window" });
-    expect(dialog.className).toContain("is-max");
+    const shell = screen.getByRole("region", { name: "Test window" });
+    expect(shell.className).toContain("is-max");
     fireEvent.click(screen.getByRole("button", { name: "Restore Test window" }));
     expect(useDesk.getState().panelMax).toEqual([]);
-    expect(dialog.className).not.toContain("is-max");
+    expect(shell.className).not.toContain("is-max");
   });
 
-  it("windows coexist and never trap focus (no aria-modal)", () => {
+  it("windows coexist as regions and never trap focus (no modal roles)", () => {
     render(
       <>
         <Host />
@@ -118,10 +118,10 @@ describe("DeskWindowFrame (the one chrome)", () => {
         </DeskWindowFrame>
       </>,
     );
-    const dialogs = screen.getAllByRole("dialog");
-    expect(dialogs).toHaveLength(2);
-    for (const d of dialogs)
-      expect(d.getAttribute("aria-modal")).toBe("false");
+    // Both windows live side by side; neither claims a takeover role
+    // (the Phase 73 mechanical lock forbids modal roles on the desk).
+    expect(screen.getByRole("region", { name: "Test window" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Second" })).toBeTruthy();
   });
 });
 

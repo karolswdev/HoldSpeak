@@ -73,6 +73,7 @@ export function DeliveryDossierWindow() {
   return (
     <DeskWindowFrame
       id="delivery-dossier"
+      glyph="▧"
       minW={420}
       label={`Dossier ${title}`}
       className="desk-pullout desk-dlv-dossier"

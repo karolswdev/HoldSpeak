@@ -2,8 +2,9 @@
 // cluster exposes the three daily starts, one searchable tool shelf, layout,
 // and refresh. A fresh Desk renders the same starts centrally instead.
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { workroomHref } from "../../workrooms/context";
+import { openSurface } from "../shell";
 import { useDesk } from "../store";
 import { egressBadge } from "../setup";
 import { DeskStartActions } from "./DeskStartActions";
@@ -30,6 +31,7 @@ export function DeskChrome({
   const viewMode = useDesk((s) => s.viewMode);
   const { refresh, tidyDesk, setViewMode } = useDesk.getState();
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const anyLive = Object.values(status).some((v) => v === "live");
   const hubState = error ? "degraded" : anyLive ? "live" : "connecting";
@@ -64,19 +66,29 @@ export function DeskChrome({
               role="menu"
               onMouseLeave={() => setMenuOpen(false)}
             >
-              {ROOMS.map((r) => (
-                <Link
-                  key={r.href}
-                  role="menuitem"
-                  to={
-                    r.href === "/"
-                      ? "/"
-                      : workroomHref(r.href, { action: r.action })
-                  }
-                >
-                  {r.label}
-                </Link>
-              ))}
+              {ROOMS.map((r) =>
+                r.href === "/" ? (
+                  <Link key={r.href} role="menuitem" to="/">
+                    {r.label}
+                  </Link>
+                ) : (
+                  <button
+                    key={r.href}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      // The shell mechanism (HS-95-03): open the surface
+                      // in-world; the route is only the not-yet-landed
+                      // fallback (HS-95-05..08 retire it).
+                      if (!openSurface(r.action))
+                        navigate(workroomHref(r.href, { action: r.action }));
+                    }}
+                  >
+                    {r.label}
+                  </button>
+                ),
+              )}
             </nav>
           )}
         </div>

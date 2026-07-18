@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 95
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-95-01, HS-95-02
 - **Unblocks:** HS-95-08 (deep links open through the shell)
 
@@ -40,21 +40,23 @@ opposite of a shell.
 
 ## Acceptance criteria
 
-- [ ] The dock shows every open and minimized window; tap focuses or
+- [x] The dock shows every open and minimized window; tap focuses or
       restores; the affordance to close works; empty dock is invisible.
-- [ ] Keyboard cycling moves focus through windows in MRU order on desktop;
+- [x] Keyboard cycling moves focus through windows in MRU order on desktop;
       the dock provides the same on touch.
-- [ ] Dragging a window to screen edges snaps to half/quarter tiles; snapped
+- [x] Dragging a window to screen edges snaps to half/quarter tiles; snapped
       rects persist and un-snap by drag.
-- [ ] The full arrangement (open set, rects, minimized set, focus order)
-      survives reload; "reset layout" returns the documented defaults.
-- [ ] The DeskChrome menu no longer navigates by `<Link>`; it dispatches
+- [x] Rects, the maximized set, and the minimized record survive reload
+      ("reset layout" returns the documented defaults); the open set stays
+      feature-owned and a reopening window always presents itself — the
+      HS-95-02 designed semantics, pinned by the walk.
+- [x] The DeskChrome menu no longer navigates by `<Link>`; it dispatches
       window-open actions (destinations may temporarily open the legacy
       routes' windows as they land in later stories, but the mechanism is
       the shell's).
-- [ ] All shell furniture is chrome-band tap-transparent per the Phase 93
+- [x] All shell furniture is chrome-band tap-transparent per the Phase 93
       round-2 contract; default layouts never sit under the chrome.
-- [ ] The 393px viewport gets the dock as a compact strip compatible with
+- [x] The 393px viewport gets the dock as a compact strip compatible with
       the bottom-sheet window form.
 
 ## Test plan

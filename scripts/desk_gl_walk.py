@@ -239,7 +239,7 @@ def windows() -> None:
         page.wait_for_timeout(300)
         # Minimize Desk memory → tray chip appears; window parks.
         page.click('[aria-label="Minimize Desk memory"]')
-        page.wait_for_selector(".desk-min-chip", timeout=3000)
+        page.wait_for_selector(".desk-dock-chip.is-min", timeout=3000)
         # Maximize the delivery board.
         page.click('[aria-label="Maximize Delivery"]')
         page.wait_for_timeout(200)
@@ -253,11 +253,11 @@ def windows() -> None:
               return {x: Math.round(r.x), y: Math.round(r.y)};
             }"""
         )
-        # In-session: the tray restores the parked window.
-        page.click(".desk-min-chip")
+        # In-session: the dock restores the parked window.
+        page.click('[aria-label="Restore Desk memory"]')
         page.wait_for_selector(".desk-attention-drawer:visible", timeout=3000)
         page.click('[aria-label="Minimize Desk memory"]')
-        page.wait_for_selector(".desk-min-chip", timeout=3000)
+        page.wait_for_selector(".desk-dock-chip.is-min", timeout=3000)
         # Reload: rects and maximize persist; a reopening window always
         # PRESENTS itself (minimize is session-scoped by design).
         page.reload(wait_until="networkidle")
@@ -301,6 +301,85 @@ def windows() -> None:
         browser.close()
 
 
+
+def shell() -> None:
+    """HS-95-03 — the shell on the production bundle: dock chips drive
+    focus/restore/close, Ctrl+` cycles MRU, drag-to-edge snaps a half
+    tile, reset clears the layout, and the chrome menu dispatches through
+    the shell (falling back to the legacy route only while a surface is
+    unregistered)."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        # Open two windows.
+        page.click(".desk-attention-launch")
+        page.wait_for_selector(".desk-attention-drawer", timeout=5000)
+        target = page.evaluate("() => window.__hsWorldProbe()")[0]
+        page.mouse.click(target["x"], target["y"])
+        page.wait_for_selector(".desk-pullout", timeout=5000)
+        # The dock shows both chips.
+        page.wait_for_selector(".desk-dock", timeout=3000)
+        assert page.locator(".desk-dock-chip").count() >= 2
+        # Snap: drag the pull-out's head to the left edge → left half tile.
+        head = page.locator(".desk-pullout.desk-window-shell").first.locator(
+            ".desk-window-handle"
+        )
+        hb = head.bounding_box()
+        page.mouse.move(hb["x"] + 40, hb["y"] + 10)
+        page.mouse.down()
+        page.mouse.move(6, 450, steps=10)
+        page.mouse.up()
+        page.wait_for_timeout(300)
+        box = page.locator(".desk-pullout.desk-window-shell").first.bounding_box()
+        assert abs(box["x"] - 10) < 3 and abs(box["width"] - (1440 - 30) / 2) < 4, box
+        assert box["height"] > 700, box
+        # MRU cycle: pull-out is front; Ctrl+` brings the drawer forward.
+        z_before = page.evaluate(
+            "() => JSON.parse(JSON.stringify(window.localStorage.length)) && null"
+        )
+        page.keyboard.press("Control+`")
+        page.wait_for_timeout(200)
+        front = page.evaluate(
+            """() => {
+              const shells = [...document.querySelectorAll('.desk-window-shell')];
+              shells.sort((a,b)=> (+b.style.zIndex||0) - (+a.style.zIndex||0));
+              return shells[0]?.getAttribute('aria-label');
+            }"""
+        )
+        assert front == "Desk memory", front
+        # Dock: minimize the drawer via its verb, restore via the chip.
+        page.click('[aria-label="Minimize Desk memory"]')
+        page.wait_for_selector(".desk-dock-chip.is-min", timeout=3000)
+        page.click('[aria-label="Restore Desk memory"]')
+        page.wait_for_timeout(200)
+        assert page.locator(".desk-dock-chip.is-min").count() == 0
+        # Dock close: the ✕ inside the dock closes the pull-out.
+        page.eval_on_selector_all(
+            ".desk-dock button",
+            """(btns) => {
+              const x = btns.find(b => b.getAttribute('aria-label') === 'Close Untitled meeting');
+              if (x) x.click();
+            }""",
+        )
+        page.wait_for_timeout(300)
+        assert page.locator(".desk-pullout.desk-window-shell").count() == 0
+        # Reset layout clears the persisted arrangement.
+        page.click('[aria-label="Reset layout"]')
+        layout = page.evaluate(
+            "() => JSON.parse(localStorage.getItem('hs.desk.panels'))"
+        )
+        assert layout == {"rects": {}, "min": [], "max": []}, layout
+        # The chrome menu dispatches through the shell; unregistered
+        # surfaces fall back to the legacy route (retired in HS-95-08).
+        page.click(".desk-mark")
+        page.click('nav.desk-menu button:has-text("Dictation")')
+        page.wait_for_url("**/dictation*", timeout=5000)
+        print("shell walk 1440: dock, snap, cycle, park/restore, close, reset, menu dispatch")
+        browser.close()
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "shots"
     if mode == "shots":
@@ -312,5 +391,7 @@ if __name__ == "__main__":
         storm()
     elif mode == "windows":
         windows()
+    elif mode == "shell":
+        shell()
     else:
         raise SystemExit(f"unknown mode {mode}")

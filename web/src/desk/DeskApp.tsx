@@ -19,7 +19,7 @@ import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
-import { MinimizedTray } from "./components/DeskWindow";
+import { Dock } from "./components/DeskWindow";
 import { useProjections } from "./projections";
 import "./desk.css";
 
@@ -63,7 +63,7 @@ export default function DeskApp() {
       <PanePicker />
       <SessionPullout />
       <AttentionDrawer />
-      <MinimizedTray />
+      <Dock />
     </div>
   );
 }

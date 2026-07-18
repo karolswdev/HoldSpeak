@@ -186,6 +186,7 @@ export function PersonaChat(props: { personaId: string }) {
   return (
     <DeskWindowFrame
       id="chat"
+      glyph="💬"
       label={String(persona.name || personaId)}
       className="desk-pullout desk-chat"
       icon={

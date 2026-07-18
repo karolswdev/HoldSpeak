@@ -262,6 +262,7 @@ export function DeliveryBoard() {
   return (
     <DeskWindowFrame
       id="delivery-board"
+      glyph="▦"
       minW={460}
       label="Delivery"
       className="desk-dlv-board"
