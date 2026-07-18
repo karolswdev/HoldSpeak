@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 96
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-96-04, HS-96-05
 - **Unblocks:** HS-96-07
 
@@ -29,10 +29,10 @@ where contributors will look.
 
 ## Acceptance criteria
 
-- [ ] The design-system chapter exists and covers tokens, scales, specs,
+- [x] The design-system chapter exists and covers tokens, scales, specs,
       locks, and decisions; every value referenced is a token name.
-- [ ] web/README and ARCHITECTURE point into it; doc guards pass.
-- [ ] A contributor path test: the docs' add-a-surface styling steps
+- [x] web/README and ARCHITECTURE point into it; doc guards pass.
+- [x] A contributor path test: the docs' add-a-surface styling steps
       name the validator and the spec doc (sweep-verified strings).
 
 ## Test plan

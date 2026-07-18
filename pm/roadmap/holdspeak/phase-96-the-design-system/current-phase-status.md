@@ -1,8 +1,8 @@
 # Phase 96 — The Design System
 
-**Status:** IN PROGRESS (5/7; HS-96-05 done 2026-07-18).
+**Status:** IN PROGRESS (6/7; HS-96-06 done 2026-07-18).
 
-**Last updated:** 2026-07-18 (HS-96-05, the accessibility pass, done).
+**Last updated:** 2026-07-18 (HS-96-06, docs and the mechanical lock, done).
 
 ## Why this phase exists
 
@@ -78,7 +78,7 @@ recorded (Article X.3).
 | HS-96-03 | Component state specs | done | [story-03-component-specs](./story-03-component-specs.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-96-04 | One material grammar | done | [story-04-material-grammar](./story-04-material-grammar.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-96-05 | The accessibility pass | done | [story-05-accessibility](./story-05-accessibility.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-96-06 | Docs and the mechanical lock | backlog | [story-06-docs-lock](./story-06-docs-lock.md) | — |
+| HS-96-06 | Docs and the mechanical lock | done | [story-06-docs-lock](./story-06-docs-lock.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-96-07 | Closeout: walks, storm, owner rider | backlog | [story-07-closeout](./story-07-closeout.md) | — |
 
 ## Where we are
@@ -150,4 +150,11 @@ desk's no-modal law and the dark-only grammar would fight Radix's grain;
 the patterns cost ~30 lines). Suite 259/259; the focus walk verifies all
 three behaviors live.
 
-Next: HS-96-06 completes the docs and names the locks.
+**HS-96-06 done (2026-07-18): the system is documented where builders
+look.** `docs/internal/DESIGN_SYSTEM.md` (authored across 03-05) is
+referenced from web/README's add-a-surface path (a fifth step names the
+styling rules and the gate) and from the frontend architecture doc's
+locks list (now including the Phase 96 token gates and the state-contract
+guard). Doc guards 22/22; `npm run check` green end to end.
+
+Next: HS-96-07 closes the phase against the production bundle.

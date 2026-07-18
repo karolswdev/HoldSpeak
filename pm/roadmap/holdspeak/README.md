@@ -4,7 +4,10 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **HS-96-05, The accessibility pass, DONE**:
+**Last updated:** 2026-07-18 — **HS-96-06, Docs and the mechanical lock,
+DONE**: DESIGN_SYSTEM.md is wired into the contributor path (web/README's
+add-a-surface styling step, the architecture doc's locks list); all doc
+guards green. Earlier: **HS-96-05, The accessibility pass, DONE**:
 windows manage focus without traps (in on open, back on close, Escape
 closes), the menu speaks full keyboard, the GL world's focused object
 surfaces as a visible chip, axe gates ride the suite, and the Radix
