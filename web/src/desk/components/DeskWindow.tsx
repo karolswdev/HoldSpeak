@@ -29,8 +29,91 @@ const Z_BASE = DESK_Z.windowBase;
 /** Cascade step when several default-corner windows are open at once. */
 const CASCADE = DESK_WINDOW.cascade;
 
-/** Windows currently mounted at their CSS default corner (no rect yet). */
-const defaultCorner = new Set<string>();
+/** The window head strip considered for title-bar occlusion (px). */
+const HEAD = 44;
+
+/** HS-97-02 — the open-placement engine. A window opening without a
+ * persisted rect lands FULLY inside the working band (below the chrome,
+ * clear of the dock), seeded at its CSS default home but moved off other
+ * windows' title bars by a min-overlap scan (head occlusion dominates,
+ * then overlap area, then distance from home). Pure, pinned by test. */
+export function placeWindow(
+  seed: PanelRect,
+  existing: PanelRect[],
+  vw: number,
+  vh: number,
+  minW = 320,
+  minH = 220,
+): PanelRect {
+  const top = DESK_WINDOW.snapTop;
+  const bottom = DESK_WINDOW.snapBottom;
+  const w = Math.max(minW, Math.min(seed.w, vw - MARGIN * 2));
+  const h = Math.max(minH, Math.min(seed.h, Math.max(minH, vh - top - bottom)));
+  const maxX = Math.max(MARGIN, vw - MARGIN - w);
+  const maxY = Math.max(top, vh - bottom - h);
+  const sx = Math.min(Math.max(seed.x, MARGIN), maxX);
+  const sy = Math.min(Math.max(seed.y, top), maxY);
+  const overlap = (
+    ax: number,
+    ay: number,
+    aw: number,
+    ah: number,
+    b: PanelRect,
+    bh: number,
+  ) => {
+    const ox = Math.max(0, Math.min(ax + aw, b.x + b.w) - Math.max(ax, b.x));
+    const oy = Math.max(0, Math.min(ay + ah, b.y + bh) - Math.max(ay, b.y));
+    return ox * oy;
+  };
+  const score = (x: number, y: number) => {
+    let heads = 0;
+    let area = 0;
+    for (const r of existing) {
+      area += overlap(x, y, w, h, r, r.h);
+      if (overlap(x, y, w, HEAD, r, HEAD) > 0) heads++;
+    }
+    return heads * 1e9 + area * 10 + Math.hypot(x - sx, y - sy);
+  };
+  let best = { x: sx, y: sy, s: score(sx, sy) };
+  const STEP = 32;
+  for (let y = top; y <= maxY; y += STEP) {
+    for (let x = MARGIN; x <= maxX; x += STEP) {
+      const s = score(x, y);
+      if (s < best.s - 0.5) best = { x, y, s };
+    }
+  }
+  if (best.s >= 1e9) {
+    // Saturated: every position occludes a title bar somewhere. The
+    // cascade survives exactly here — step down-right off the home seat.
+    const step = CASCADE * Math.min(existing.length, 8);
+    return {
+      x: Math.min(Math.max(sx + step, MARGIN), maxX),
+      y: Math.min(Math.max(sy + step, top), maxY),
+      w,
+      h,
+    };
+  }
+  return { x: best.x, y: best.y, w, h };
+}
+
+/** HS-97-02 — clamp-on-open: a persisted rect (possibly from a larger
+ * viewport) lands whole inside the working band; the arrangement is
+ * otherwise untouched. */
+export function clampIntoBand(
+  r: PanelRect,
+  vw: number,
+  vh: number,
+  minW = 320,
+  minH = 220,
+): PanelRect {
+  const top = DESK_WINDOW.snapTop;
+  const bottom = DESK_WINDOW.snapBottom;
+  const w = Math.max(minW, Math.min(r.w, vw - MARGIN * 2));
+  const h = Math.max(minH, Math.min(r.h, Math.max(minH, vh - top - bottom)));
+  const x = Math.min(Math.max(r.x, MARGIN), Math.max(MARGIN, vw - MARGIN - w));
+  const y = Math.min(Math.max(r.y, top), Math.max(top, vh - bottom - h));
+  return { x, y, w, h };
+}
 
 /** HS-95-03 — edge snap: releasing a window drag at a screen edge tiles
  * it. Corners take quarters, the left/right flanks take halves; anywhere
@@ -125,36 +208,45 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     return { x: r.left - tx, y: r.top - ty, w: r.width, h: r.height };
   };
 
-  // Cascade: a second window opening onto the same default corner steps
-  // down-left so windows never pile up pixel-for-pixel (UX-01/02).
+  // HS-97-02 — a window lands well. Opening places the window through
+  // the engine (seeded at its CSS default home, moved off other title
+  // bars, always whole inside the working band); a persisted rect is
+  // clamped into the band and otherwise untouched (the arrangement is
+  // sacred). Sheets (compact viewports) own their own form.
   useEffect(() => {
     if (!open) return;
     useDesk.getState().focusPanel(id);
-    if (useDesk.getState().panelRects[id]) return;
-    const behind = defaultCorner.size;
-    defaultCorner.add(id);
-    if (behind > 0) {
-      const base = measure();
-      useDesk.getState().setPanelRect(
-        id,
-        clampRect(
-          {
-            ...base,
-            x: base.x - CASCADE * behind,
-            y: base.y + CASCADE * behind,
-            h: Math.max(minH, base.h - CASCADE * behind * 2),
-          },
-          minW,
-          minH,
-        ),
-      );
+    if (
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 720px)").matches
+    )
+      return;
+    const s = useDesk.getState();
+    const vw = window.innerWidth || 1280;
+    const vh = window.innerHeight || 800;
+    const cur = s.panelRects[id];
+    if (cur) {
+      const kept = clampIntoBand(cur, vw, vh, minW, minH);
+      if (
+        kept.x !== cur.x ||
+        kept.y !== cur.y ||
+        kept.w !== cur.w ||
+        kept.h !== cur.h
+      )
+        s.setPanelRect(id, kept, s.panelSaved.includes(id));
+    } else {
+      const others = registrySnapshot
+        .filter((w) => w.id !== id && !s.panelMin.includes(w.id))
+        .map((w) => s.panelRects[w.id])
+        .filter((r): r is PanelRect => Boolean(r));
+      s.setPanelRect(id, placeWindow(measure(), others, vw, vh, minW, minH));
     }
     return () => {
-      defaultCorner.delete(id);
-      // An unarranged (never persisted) rect is ephemeral: forget it so the
-      // panel comes back at its default corner next time.
-      const s = useDesk.getState();
-      if (!s.panelSaved.includes(id) && s.panelRects[id]) s.resetPanelRect(id);
+      // An unarranged (never persisted) rect is ephemeral: forget it so
+      // the panel is re-placed from its default home next time.
+      const st = useDesk.getState();
+      if (!st.panelSaved.includes(id) && st.panelRects[id])
+        st.resetPanelRect(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, open]);

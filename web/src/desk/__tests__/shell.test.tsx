@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DeskWindowFrame,
   Dock,
+  clampIntoBand,
+  placeWindow,
   snapForPointer,
 } from "../components/DeskWindow";
 import { openSurface, registerSurface, __resetSurfaces } from "../shell";
@@ -123,6 +125,77 @@ describe("snapForPointer (edge tiling)", () => {
 
   it("the open middle is a free park (no snap)", () => {
     expect(snapForPointer(VW / 2, VH / 2, VW, VH)).toBeNull();
+  });
+});
+
+describe("placeWindow (HS-97-02, the open-placement engine)", () => {
+  const VW = 1440;
+  const VH = 900;
+  const TOP = 54;
+  const BOTTOM = 52;
+
+  const headsClash = (
+    a: { x: number; y: number; w: number },
+    b: { x: number; y: number; w: number },
+  ) =>
+    a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + 44 && a.y + 44 > b.y;
+
+  it("a free stage keeps the seed", () => {
+    const r = placeWindow({ x: 24, y: 72, w: 640, h: 480 }, [], VW, VH);
+    expect(r).toEqual({ x: 24, y: 72, w: 640, h: 480 });
+  });
+
+  it("a second window at the same home moves off the first title bar", () => {
+    const first = { x: 24, y: 72, w: 640, h: 480 };
+    const r = placeWindow({ ...first }, [first], VW, VH);
+    expect(headsClash(r, first)).toBe(false);
+    expect(r.x).toBeGreaterThanOrEqual(10);
+    expect(r.x + r.w).toBeLessThanOrEqual(VW - 10);
+    expect(r.y).toBeGreaterThanOrEqual(TOP);
+    expect(r.y + r.h).toBeLessThanOrEqual(VH - BOTTOM);
+  });
+
+  it("an off-viewport seed lands whole inside the working band", () => {
+    const r = placeWindow({ x: -200, y: 1000, w: 640, h: 480 }, [], VW, VH);
+    expect(r.x).toBeGreaterThanOrEqual(10);
+    expect(r.y + r.h).toBeLessThanOrEqual(VH - BOTTOM);
+    expect(r.w).toBe(640);
+  });
+
+  it("an oversize window shrinks to the band", () => {
+    const r = placeWindow({ x: 24, y: 72, w: 640, h: 2000 }, [], VW, VH);
+    expect(r.h).toBe(VH - TOP - BOTTOM);
+    expect(r.y).toBe(TOP);
+  });
+
+  it("a window may shade another's body but never its title bar", () => {
+    const wall = { x: 10, y: TOP, w: VW - 20, h: VH - TOP - BOTTOM };
+    const r = placeWindow({ x: 24, y: 72, w: 640, h: 480 }, [wall], VW, VH);
+    expect(headsClash(r, wall)).toBe(false);
+    expect(r.y).toBeGreaterThanOrEqual(TOP + 44);
+  });
+
+  it("a saturated stage cascades off the home seat, still in band", () => {
+    // Title bars tile the whole working band: every candidate collides.
+    const rows: { x: number; y: number; w: number; h: number }[] = [];
+    for (let y = TOP; y <= VH - BOTTOM; y += 32)
+      rows.push({ x: 10, y, w: VW - 20, h: 44 });
+    const r = placeWindow({ x: 24, y: 72, w: 640, h: 480 }, rows, VW, VH);
+    expect(r.x).toBe(24 + 26 * 8);
+    expect(r.y).toBe(72 + 26 * 8);
+    expect(r.y + r.h).toBeLessThanOrEqual(VH - BOTTOM);
+  });
+});
+
+describe("clampIntoBand (HS-97-02, clamp-on-open)", () => {
+  it("a rect persisted on a larger viewport lands whole", () => {
+    const r = clampIntoBand({ x: 1300, y: 800, w: 640, h: 480 }, 1440, 900);
+    expect(r).toEqual({ x: 790, y: 368, w: 640, h: 480 });
+  });
+
+  it("an in-band rect is untouched", () => {
+    const r = clampIntoBand({ x: 100, y: 100, w: 400, h: 300 }, 1440, 900);
+    expect(r).toEqual({ x: 100, y: 100, w: 400, h: 300 });
   });
 });
 

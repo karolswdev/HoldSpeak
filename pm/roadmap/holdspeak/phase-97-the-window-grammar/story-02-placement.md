@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 97
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-97-09
 
@@ -37,14 +37,14 @@ appears somewhere sensible, whole, and visible.
 
 ## Acceptance criteria
 
-- [ ] Opening 1..5 windows in sequence on a 1440x900 stage lands every
+- [x] Opening 1..5 windows in sequence on a 1440x900 stage lands every
       one fully on-viewport with no title-bar overlap until the stage
       saturates — proven by a live Playwright leg with screenshots.
-- [ ] A persisted rect from a larger viewport is clamped whole into the
+- [x] A persisted rect from a larger viewport is clamped whole into the
       current one on open.
-- [ ] The engine is pinned by unit tests; the walk leg passes on the
+- [x] The engine is pinned by unit tests; the walk leg passes on the
       production bundle.
-- [ ] Web suite + guards green.
+- [x] Web suite + guards green.
 
 ## Test plan
 

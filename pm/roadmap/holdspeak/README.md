@@ -5,7 +5,12 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, IN
-PROGRESS (1/9)**. **HS-97-01, The shadow returns, DONE**: the token
+PROGRESS (2/9)**. **HS-97-02, A window lands well, DONE**: the
+open-placement engine seats every new window whole inside the working
+band, off other title bars (head occlusion dominates a min-overlap
+scan), with persisted rects clamped on open and the cascade demoted to
+a true-saturation fallback — walk-proven with five surfaces landing
+unclipped on the production bundle. Earlier: **HS-97-01, The shadow returns, DONE**: the token
 generator resolves references embedded in composite values, a new
 mechanical lock refuses unresolved braces in emitted CSS (shown firing
 on a plant), and `--desk-window-shadow`/`--desk-transient-shadow` are

@@ -797,6 +797,68 @@ def lastexits() -> None:
 
 
 
+def placement() -> None:
+    """HS-97-02 — a window lands well: opening five surfaces in sequence
+    lands every one fully inside the working band (below the chrome band,
+    clear of the dock) with no two title bars overlapping, on the
+    production bundle."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        opened = []
+
+        def assert_layout(when: str) -> None:
+            info = page.evaluate(
+                """() => {
+                  const shells = [...document.querySelectorAll('.desk-window-shell')];
+                  return shells.map(el => {
+                    const r = el.getBoundingClientRect();
+                    return {label: el.getAttribute('aria-label'),
+                            x: r.x, y: r.y, w: r.width, h: r.height};
+                  });
+                }"""
+            )
+            vw, vh = 1440, 900
+            for r in info:
+                assert r["x"] >= 0 and r["y"] >= 44, (when, r)
+                assert r["x"] + r["w"] <= vw + 1, (when, r)
+                assert r["y"] + r["h"] <= vh - 40, (when, r)
+            for i, a in enumerate(info):
+                for b in info[i + 1 :]:
+                    heads_clash = (
+                        a["x"] < b["x"] + b["w"]
+                        and a["x"] + a["w"] > b["x"]
+                        and a["y"] < b["y"] + 44
+                        and a["y"] + 44 > b["y"]
+                    )
+                    assert not heads_clash, (when, a, b)
+            opened.append(len(info))
+
+        for label in ("Settings", "Meetings", "Dictation"):
+            page.click(".desk-mark")
+            page.click(f"nav.desk-menu button:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{label}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(600)
+            assert_layout(f"after {label}")
+        for label, aria in (("Activity", "Activity"), ("Commands", "Commands")):
+            page.click(".desk-tools-launch")
+            page.click(f".desk-tool-link:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{aria}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(600)
+            assert_layout(f"after {label}")
+        page.screenshot(path=str(OUT / "placement-five-1440.png"))
+        print(f"placement walk: {opened[-1]} windows, every land whole, no title-bar overlap")
+        browser.close()
+
+
 def closeout() -> None:
     """HS-95-10 — the assembled walk: every per-story walk in sequence on
     the production bundle (entry-point-driven, the way a user travels),
@@ -930,6 +992,8 @@ if __name__ == "__main__":
         config()
     elif mode == "lastexits":
         lastexits()
+    elif mode == "placement":
+        placement()
     elif mode == "closeout":
         closeout()
     elif mode == "focus":

@@ -1,9 +1,9 @@
 # Phase 97 — The Window Grammar
 
-**Status:** IN PROGRESS (1/9, 2026-07-18) — from the owner's direct
+**Status:** IN PROGRESS (2/9, 2026-07-18) — from the owner's direct
 verdict on the Desk OS state.
 
-**Last updated:** 2026-07-18 (HS-97-01 done; the shadows are back).
+**Last updated:** 2026-07-18 (HS-97-02 done; windows land well).
 
 ## Why this phase exists
 
@@ -85,7 +85,7 @@ staged follow-ups (Native Surfaces; The Living World).
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-97-01 | The shadow returns | done | [story-01-shadow-returns](./story-01-shadow-returns.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-97-02 | A window lands well | backlog | [story-02-placement](./story-02-placement.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-97-02 | A window lands well | done | [story-02-placement](./story-02-placement.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-97-03 | The arrangement is sacred | backlog | [story-03-arrangement-persists](./story-03-arrangement-persists.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-97-04 | Focus and depth | backlog | [story-04-focus-depth](./story-04-focus-depth.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-97-05 | Hands on the frame | backlog | [story-05-hands-on-frame](./story-05-hands-on-frame.md) | [evidence-story-05](./evidence-story-05.md) |
@@ -96,7 +96,20 @@ staged follow-ups (Native Surfaces; The Living World).
 
 ## Where we are
 
-**HS-97-01 done (2026-07-18): the shadow returns.** `resolveReference`
+**HS-97-02 done (2026-07-18): a window lands well.** The open-placement
+engine (`placeWindow`, exported beside `snapForPointer` and pinned by
+seven unit tests) seats every window opening without a persisted rect:
+seeded at its CSS default home, moved off other windows' title bars by
+a min-overlap scan (head occlusion dominates, then overlap area, then
+distance from home), always whole inside the working band below the
+chrome and clear of the dock. A persisted rect is clamped into the band
+on open (`clampIntoBand`) and otherwise untouched — the arrangement is
+sacred. The cascade survives only at true saturation (title bars tiling
+the whole band). The old pile-up path and its off-viewport spawns are
+gone. Proven by the new `placement` walk on the production bundle: five
+surfaces open in sequence, every window lands whole, no two title bars
+overlap (`assets/placement-five-1440.png`); `npm run check` green (267
+web tests). Earlier: **HS-97-01 done (2026-07-18): the shadow returns.** `resolveReference`
 now substitutes a `{ref}` anywhere inside a composite value (iterating
 so a reference may resolve to a reference, still failing loudly on an
 unknown path), and a new mechanical lock refuses any emitted
