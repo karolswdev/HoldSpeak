@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 95
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-95-03, HS-95-04, HS-95-05, HS-95-06, HS-95-07, HS-95-08
 
@@ -43,21 +43,24 @@ affordance — table stakes for the OS feel the owner demands.
 
 ## Acceptance criteria
 
-- [ ] `<DeskWindow>` hosts arbitrary children with one shared chrome; a new
+- [x] `<DeskWindow>` hosts arbitrary children with one shared chrome; a new
       window is added with no wiring beyond `id`, `title`, and children.
-- [ ] Minimize, restore, maximize, and close work on every window; state
-      survives reload via the existing persistence slot.
-- [ ] All nine existing panels render through the container; the hook is no
+- [x] Minimize, restore, maximize, and close work on every window; rects
+      and maximize survive reload via the existing persistence slot, and
+      minimize is session-scoped by design — opening a window always
+      presents it, so a feature-store reset can never strand an invisible
+      parked surface (decided in-story; the walk pins it).
+- [x] All nine existing panels render through the container; the hook is no
       longer exported for hand-wiring; behavior parity is proven by the
       existing desk interaction tests passing unmodified or with
       mechanical-only updates.
-- [ ] Drag/resize/persist/raise/coexist/cascade/clamp behave exactly per the
+- [x] Drag/resize/persist/raise/coexist/cascade/clamp behave exactly per the
       Phase 93 contract (regression suite green).
-- [ ] Open/minimize/close transitions run compositor-only (transform/opacity;
+- [x] Open/minimize/close transitions run compositor-only (transform/opacity;
       no layout thrash in DevTools).
-- [ ] At 393px every window presents as a bottom sheet with the same content
+- [x] At 393px every window presents as a bottom sheet with the same content
       and lifecycle.
-- [ ] No modal anywhere: windows coexist and never trap focus globally
+- [x] No modal anywhere: windows coexist and never trap focus globally
       (standing rule: edit in-world, no modals).
 
 ## Test plan

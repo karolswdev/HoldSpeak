@@ -6,7 +6,7 @@ import {
   humanizeWireValue,
 } from "../../lib/productLanguage";
 import { useProjections } from "../projections";
-import { useDeskWindow } from "./DeskWindow";
+import { DeskWindowFrame } from "./DeskWindow";
 
 function when(raw: string) {
   const date = new Date(raw);
@@ -15,7 +15,6 @@ function when(raw: string) {
 
 export function AttentionDrawer() {
   const store = useProjections();
-  const win = useDeskWindow("attention", { open: store.open });
   const selected = useMemo(
     () => store.projections.find((row) => row.id === store.selectedId) ?? null,
     [store.projections, store.selectedId],
@@ -45,38 +44,17 @@ export function AttentionDrawer() {
           <strong aria-label={`${needs} need attention`}>{needs}</strong>
         ) : null}
       </button>
-      {store.open ? (
-        <aside
-          id="desk-memory-drawer"
-          ref={(el) => win.setEl(el)}
-          className={
-            "desk-attention-drawer desk-window" +
-            (win.floating ? " is-floating" : "")
-          }
-          style={win.style}
-          role="region"
-          aria-label="Desk memory"
-          onPointerDown={() => win.focus()}
-        >
-          <header
-            className="desk-panel-head desk-window-handle"
-            {...win.handleProps}
-          >
-            <div>
-              <small className="desk-panel-eyebrow">
-                Attention and Receipts
-              </small>
-              <h2 className="desk-panel-title">Desk memory</h2>
-            </div>
-            <button
-              type="button"
-              className="desk-pullout-close"
-              onClick={() => store.setOpen(false)}
-              aria-label="Close Desk memory"
-            >
-              ✕
-            </button>
-          </header>
+      <DeskWindowFrame
+        id="attention"
+      glyph="◎"
+        label="Desk memory"
+        className="desk-attention-drawer"
+        eyebrow="Attention and Receipts"
+        title={<h2 className="desk-panel-title">Desk memory</h2>}
+        entrance={false}
+        open={store.open}
+        onClose={() => store.setOpen(false)}
+      >
           <div className="desk-attention-counts" aria-live="polite">
             <span>
               <b>{needs}</b> need attention
@@ -253,9 +231,7 @@ export function AttentionDrawer() {
               ) : null}
             </>
           )}
-          {win.grip}
-        </aside>
-      ) : null}
+      </DeskWindowFrame>
     </>
   );
 }

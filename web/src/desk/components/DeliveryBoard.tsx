@@ -22,7 +22,7 @@ import {
 } from "../deliveryFactory";
 import { useDeliveryDossier } from "../deliveryDossier";
 import { useDeliveryTerminal } from "../deliveryTerminal";
-import { useDeskWindow } from "./DeskWindow";
+import { DeskWindowFrame } from "./DeskWindow";
 
 const STATE_LABEL: Record<string, string> = {
   starting: "starting",
@@ -221,7 +221,6 @@ export function DeliveryBoard() {
   const updatedAt = useDelivery((s) => s.updatedAt);
   const [open, setOpen] = useState(false);
   const targets = useDeliveryFactory((s) => s.targets);
-  const win = useDeskWindow("delivery-board", { minW: 460, open });
 
   useEffect(() => {
     const tick = () => {
@@ -261,19 +260,15 @@ export function DeliveryBoard() {
   }
 
   return (
-    <div
-      ref={(el) => win.setEl(el)}
-      className={"desk-dlv-board desk-window" + (win.floating ? " is-floating" : "")}
-      style={win.style}
-      role="region"
-      aria-label="Delivery board"
-      onPointerDown={(e) => {
-        win.focus();
-        e.stopPropagation();
-      }}
-    >
-      <div className="desk-mc-head desk-window-handle" {...win.handleProps}>
-        <span className="desk-mc-title">▤ Delivery</span>
+    <DeskWindowFrame
+      id="delivery-board"
+      glyph="▦"
+      minW={460}
+      label="Delivery"
+      className="desk-dlv-board"
+      title={<span className="desk-mc-title">▤ Delivery</span>}
+      entrance={false}
+      actions={
         <button
           type="button"
           className="desk-mc-btn"
@@ -282,14 +277,10 @@ export function DeliveryBoard() {
         >
           ↻
         </button>
-        <button
-          className="desk-mc-close"
-          onClick={() => setOpen(false)}
-          title="collapse"
-        >
-          ▾
-        </button>
-      </div>
+      }
+      open={open}
+      onClose={() => setOpen(false)}
+    >
 
       {updatedAt === null ? <p className="quiet">…</p> : null}
 
@@ -395,6 +386,6 @@ export function DeliveryBoard() {
       ) : null}
 
       <LaunchComposer sources={sources} />
-    </div>
+    </DeskWindowFrame>
   );
 }

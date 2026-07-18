@@ -18,7 +18,7 @@ import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { controlModeLabel } from "../../lib/productLanguage";
-import { useDeskWindow } from "./DeskWindow";
+import { DeskWindowFrame } from "./DeskWindow";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -594,9 +594,7 @@ export function SessionPullout() {
   const postureAuthorized = useSteering((s) => s.postureAuthorized);
   const paneId = useSteering((s) => s.paneId);
   const { closeSession } = useSteering.getState();
-  const ref = useRef<HTMLDivElement | null>(null);
   const preRef = useRef<HTMLPreElement | null>(null);
-  const win = useDeskWindow("session", { minW: 420, open: Boolean(openKey) });
 
   useEffect(() => {
     if (!openKey) return;
@@ -623,53 +621,39 @@ export function SessionPullout() {
   const live = paneStatus === "live";
 
   return (
-    <motion.div
-      ref={(el: HTMLDivElement | null) => {
-        ref.current = el;
-        win.setEl(el);
-      }}
-      className={
-        "desk-pullout is-session desk-window" +
-        (win.floating ? " is-floating" : "")
-      }
-      style={win.style}
-      initial={reducedMotion ? false : { x: 60, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onPointerDown={(e) => {
-        win.focus();
-        e.stopPropagation();
-      }}
-    >
-      <header
-        className="desk-pullout-head desk-window-handle"
-        {...win.handleProps}
-      >
+    <DeskWindowFrame
+      id="session"
+      glyph="▮"
+      minW={420}
+      label={`${session?.agent || openKey.split(":", 2)[0]} · ${sessionId.slice(0, 8)}`}
+      className="desk-pullout is-session"
+      icon={
         <span className="desk-session-glyph">
           {session?.awaitingResponse ? "🙋" : "🤖"}
         </span>
-        <span className="desk-pullout-title">
+      }
+      title={
+        <>
           {session?.agent || openKey.split(":", 2)[0]} · {sessionId.slice(0, 8)}
-        </span>
-        {session?.stale && (
-          <span className="desk-chip quiet is-stale">stale</span>
-        )}
-        {live && (
-          <span className="desk-session-live" title="watching">
-            ●
-          </span>
-        )}
-        <NodeChip />
-        <ArmChip />
-        <button
-          type="button"
-          className="desk-pullout-close"
-          onClick={closeSession}
-          aria-label="Close"
-        >
-          ✕
-        </button>
-      </header>
+        </>
+      }
+      actions={
+        <>
+          {session?.stale && (
+            <span className="desk-chip quiet is-stale">stale</span>
+          )}
+          {live && (
+            <span className="desk-session-live" title="watching">
+              ●
+            </span>
+          )}
+          <NodeChip />
+          <ArmChip />
+        </>
+      }
+      open={Boolean(openKey)}
+      onClose={closeSession}
+    >
 
       <div className="desk-pullout-body">
         {session?.awaitingResponse && session.question ? (
@@ -710,7 +694,6 @@ export function SessionPullout() {
       <footer className="desk-pullout-foot">
         <ClassifySection sessionKey={openKey} />
       </footer>
-      {win.grip}
-    </motion.div>
+    </DeskWindowFrame>
   );
 }

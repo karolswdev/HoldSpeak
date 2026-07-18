@@ -4,7 +4,17 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-17 — **HS-95-01, The WebGL stage, DONE**: the desk
+**Last updated:** 2026-07-17 — **HS-95-03, The shell, DONE**: the dock
+(chips for every open window: focus/restore/close/reset), Ctrl+` MRU window
+cycling, drag-to-edge half/quarter snap tiles, and the DeskChrome menu
+dispatching through the shell's surface registry instead of navigating;
+windows are regions (the Phase 73 no-modal locks hold). Earlier:
+**HS-95-02, OS-grade windows, DONE**: one
+`DeskWindowFrame` container (one chrome, minimize/maximize/close, store-backed
+lifecycle persisted beside the rects, phone bottom-sheet form) hosts all nine
+desk panels — their hand-wiring is deleted and the physics hook is
+module-private; proven by the production windows walk at 1440/393 and 244/244
+web tests. Earlier: **HS-95-01, The WebGL stage, DONE**: the desk
 world renders on a pixi v8 GPU scene graph (one renderer — the DOM world is
 deleted), interactions ported at exact HS-71 semantics and proven by a
 Playwright smoke through the real canvas, and the production storm reads

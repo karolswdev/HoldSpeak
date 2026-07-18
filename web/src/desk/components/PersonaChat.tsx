@@ -28,7 +28,7 @@ import {
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
 import { RunsOnPicker } from "./RunsOnPicker";
-import { useDeskWindow } from "./DeskWindow";
+import { DeskWindowFrame } from "./DeskWindow";
 import { useDurableDraft } from "../../lib/durableDraft";
 
 const turnId = () =>
@@ -57,7 +57,6 @@ export function PersonaChat(props: { personaId: string }) {
     }
     return (items.recipe || []).find((a: any) => a.id === personaId) as any;
   }, [items, personaId]);
-  const win = useDeskWindow("chat", { open: Boolean(persona) });
 
   const [turns, setTurns] = useState<ChatTurn[]>(() => loadThread(personaId));
   const [grounding, setGrounding] = useState<GroundingSelection>(() =>
@@ -185,35 +184,26 @@ export function PersonaChat(props: { personaId: string }) {
       : null;
 
   return (
-    <motion.div
-      ref={(el: HTMLDivElement | null) => win.setEl(el)}
-      className={
-        "desk-pullout desk-chat desk-window" +
-        (win.floating ? " is-floating" : "")
-      }
-      style={win.style}
-      initial={reducedMotion ? false : { x: 60, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onPointerDown={(e) => {
-        win.focus();
-        e.stopPropagation();
-      }}
-    >
-      <header
-        className="desk-pullout-head desk-window-handle"
-        {...win.handleProps}
-      >
+    <DeskWindowFrame
+      id="chat"
+      glyph="💬"
+      label={String(persona.name || personaId)}
+      className="desk-pullout desk-chat"
+      icon={
         <span className="desk-chat-avatar" aria-hidden="true">
           {String(persona.avatar || "🤖")}
         </span>
-        <span className="desk-pullout-title">
+      }
+      title={
+        <>
           {String(persona.name || personaId)}
           {persona.role ? (
             <span className="desk-chat-role"> · {String(persona.role)}</span>
           ) : null}
-        </span>
-        {turns.length > 0 && (
+        </>
+      }
+      actions={
+        turns.length > 0 ? (
           <button
             type="button"
             className="desk-chip quiet"
@@ -222,17 +212,13 @@ export function PersonaChat(props: { personaId: string }) {
           >
             Clear
           </button>
-        )}
-        <button
-          type="button"
-          className="desk-pullout-close"
-          onClick={closeChat}
-          aria-label="Close"
-          disabled={thinking}
-        >
-          ✕
-        </button>
-      </header>
+        ) : null
+      }
+      open={Boolean(persona)}
+      onClose={() => {
+        if (!thinking) closeChat();
+      }}
+    >
 
       <div className="desk-pullout-body desk-chat-scroll">
         {turns.length === 0 && !thinking && (
@@ -340,7 +326,6 @@ export function PersonaChat(props: { personaId: string }) {
           </p>
         )}
       </footer>
-      {win.grip}
-    </motion.div>
+    </DeskWindowFrame>
   );
 }

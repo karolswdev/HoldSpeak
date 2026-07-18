@@ -18,7 +18,7 @@ import { useSteering } from "../steering";
 import { objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
-import { useDeskWindow } from "./DeskWindow";
+import { DeskWindowFrame } from "./DeskWindow";
 import { workroomHref } from "../../workrooms/context";
 import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
@@ -76,8 +76,6 @@ export function Pullout({ o }: { o: WorldObject }) {
     openChat,
     openToolInspector,
   } = useDesk.getState();
-  const ref = useRef<HTMLDivElement | null>(null);
-  const win = useDeskWindow("pullout");
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [artifacts, setArtifacts] = useState<any[]>([]);
   const [runBusy, setRunBusy] = useState(false);
@@ -285,39 +283,31 @@ export function Pullout({ o }: { o: WorldObject }) {
   );
 
   return (
-    <motion.div
-      ref={(el: HTMLDivElement | null) => {
-        ref.current = el;
-        win.setEl(el);
-      }}
-      className={
-        "desk-pullout desk-window" + (win.floating ? " is-floating" : "")
-      }
-      style={{ "--k": objGlow(o.kind), ...win.style } as React.CSSProperties}
-      initial={reducedMotion ? false : { x: 60, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onPointerDown={(e) => {
-        win.focus();
-        e.stopPropagation();
-      }}
-    >
-      <header
-        className="desk-pullout-head desk-window-handle"
-        {...win.handleProps}
-      >
-        {backId && (
+    <DeskWindowFrame
+      id="pullout"
+      glyph="▤"
+      label={o.title}
+      className="desk-pullout"
+      rootStyle={{ "--k": objGlow(o.kind) } as React.CSSProperties}
+      icon={<img src={spriteUrl(o.kind, o.id)} alt="" width={30} height={30} />}
+      title={o.title}
+      open
+      onClose={closePullout}
+      leading={
+        backId ? (
           <button
             type="button"
             className="desk-chip quiet"
             onClick={() => openPullout(backId)}
+            aria-label="Back"
           >
             ←
           </button>
-        )}
-        <img src={spriteUrl(o.kind, o.id)} alt="" width={30} height={30} />
-        <span className="desk-pullout-title">{o.title}</span>
-        {egress && (
+        ) : null
+      }
+      actions={
+        <>
+          {egress && (
           <span className={`egress-badge is-${egress.scope}`}>
             {egress.text}
           </span>
@@ -344,16 +334,9 @@ export function Pullout({ o }: { o: WorldObject }) {
             Edit Workflow
           </Link>
         )}
-        <button
-          type="button"
-          className="desk-pullout-close"
-          onClick={closePullout}
-          aria-label="Close"
-        >
-          ✕
-        </button>
-      </header>
-
+        </>
+      }
+    >
       <div className="desk-pullout-body">
         {o.kind === "meeting" && (
           <>
@@ -910,7 +893,6 @@ export function Pullout({ o }: { o: WorldObject }) {
           </div>
         )}
       </footer>
-      {win.grip}
-    </motion.div>
+    </DeskWindowFrame>
   );
 }

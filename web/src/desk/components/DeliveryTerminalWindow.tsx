@@ -14,7 +14,7 @@ import {
   useDeliveryTerminal,
   type TerminalStatus,
 } from "../deliveryTerminal";
-import { useDeskWindow } from "./DeskWindow";
+import { DeskWindowFrame } from "./DeskWindow";
 
 const ABSENCE_LABEL: Record<string, string> = {
   stream_unavailable: "stream unavailable",
@@ -143,11 +143,6 @@ export function DeliveryTerminalWindow() {
   const lines = useDeliveryTerminal((s) => s.lines);
   const { close } = useDeliveryTerminal.getState();
   const preRef = useRef<HTMLPreElement | null>(null);
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  const win = useDeskWindow("delivery-terminal", {
-    minW: 460,
-    open: Boolean(target),
-  });
 
   useEffect(() => {
     if (!target) return;
@@ -176,49 +171,29 @@ export function DeliveryTerminalWindow() {
   ).includes(status);
 
   return (
-    <motion.div
-      ref={(el: HTMLDivElement | null) => {
-        rootRef.current = el;
-        win.setEl(el);
-      }}
-      className={
-        "desk-pullout is-session desk-window desk-dlv-terminal" +
-        (win.floating ? " is-floating" : "")
-      }
-      style={win.style}
-      role="region"
-      aria-label={`Terminal ${target.label}`}
-      initial={reducedMotion ? false : { x: 60, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 320, damping: 30 }}
-      onPointerDown={(e) => {
-        win.focus();
-        e.stopPropagation();
-      }}
-    >
-      <header
-        className="desk-pullout-head desk-window-handle"
-        {...win.handleProps}
-      >
-        <span className="desk-session-glyph">▮</span>
-        <span className="desk-pullout-title">{target.label}</span>
-        <span className="desk-chip quiet desk-dlv-node" title="Node">
-          ⧉ {target.nodeId}
-        </span>
-        {live && (
-          <span className="desk-session-live" title="watching">
-            ●
+    <DeskWindowFrame
+      id="delivery-terminal"
+      glyph="▮"
+      minW={460}
+      label={`Terminal ${target.label}`}
+      className="desk-pullout is-session desk-dlv-terminal"
+      icon={<span className="desk-session-glyph">▮</span>}
+      title={target.label}
+      actions={
+        <>
+          <span className="desk-chip quiet desk-dlv-node" title="Node">
+            ⧉ {target.nodeId}
           </span>
-        )}
-        <button
-          type="button"
-          className="desk-pullout-close"
-          onClick={close}
-          aria-label="Close"
-        >
-          ✕
-        </button>
-      </header>
+          {live && (
+            <span className="desk-session-live" title="watching">
+              ●
+            </span>
+          )}
+        </>
+      }
+      open={Boolean(target)}
+      onClose={close}
+    >
 
       <div className="desk-pullout-body">
         <p className="quiet desk-dlv-target-line">
@@ -244,7 +219,6 @@ export function DeliveryTerminalWindow() {
           <SteerComposer />
         </footer>
       ) : null}
-      {win.grip}
-    </motion.div>
+    </DeskWindowFrame>
   );
 }
