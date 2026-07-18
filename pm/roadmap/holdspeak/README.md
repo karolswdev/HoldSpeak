@@ -4,7 +4,22 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 96, The Design System, CLOSED
+**Last updated:** 2026-07-18 — **Phase 97, The Window Grammar,
+SCAFFOLDED (0/9)** from the owner's direct verdict on the Desk OS state
+(windows without cohesion, no operating-system feeling) and the same-day
+screenshot + code audit against the UAT rig that confirmed it
+mechanically: every window renders shadowless (a token-generator
+reference bug the drift gate cannot see), windows spawn stacked and
+sometimes off-viewport, the stacking order forgets on reload, focus is
+invisible, close/minimize have no motion, the shelf is four fragments,
+and the title bars carry a second vocabulary. Nine stories make the
+window grammar an OS grammar — the shadow heal under a mechanical gate,
+an open-placement engine, completed persistence, focus depth and window
+motion, richer frame physics, the exposé and switcher, one dock with a
+quiet chrome, the physics floors written, and a closeout that walks the
+whole grammar on the production bundle. See
+[phase-97-the-window-grammar](./phase-97-the-window-grammar/current-phase-status.md).
+Earlier the same day: **Phase 96, The Design System, CLOSED
 (7/7, scaffolded and shipped the same day by owner directive)**: one token
 source of truth generating the CSS and the TS mirror, the validator gate
 live in check and CI, the state contract written and true, one window
@@ -308,6 +323,7 @@ canon, canon wins.
 | 94 | The Delivery Runtime: Delivery Workbench projects, Story progress, remote/local Coder sessions, terminals, evidence, and receipts as one robust platform primitive across workstation, iPad, and tailnet Web | done | [phase-94-delivery-runtime](./phase-94-delivery-runtime/) |
 | 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | done | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
 | 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
+| 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | in-progress | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
