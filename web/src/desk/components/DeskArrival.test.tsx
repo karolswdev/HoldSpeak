@@ -70,13 +70,13 @@ describe("Phase 93 Desk arrival", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Tools/ }));
 
+    // HS-95-04: the shelf is a dispatcher now — every advanced tool is a
+    // button that opens its surface in-world (or falls back to the legacy
+    // route until its story lands). Every tool remains reachable.
     for (const tool of DESK_TOOLS) {
-      const href = screen
-        .getByRole("link", { name: new RegExp(tool.label) })
-        .getAttribute("href")!;
-      const url = new URL(href, "https://holdspeak.test");
-      expect(url.pathname).toBe(tool.href);
-      expect(decodeWorkroomContext(url.search)?.action).toBe(tool.action);
+      expect(
+        screen.getByRole("button", { name: new RegExp(tool.label) }),
+      ).toBeTruthy();
     }
   });
 

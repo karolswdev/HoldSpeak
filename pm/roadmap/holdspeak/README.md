@@ -4,7 +4,11 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-17 — **HS-95-03, The shell, DONE**: the dock
+**Last updated:** 2026-07-17 — **HS-95-04, Embeddable page cores, DONE**:
+the host-agnostic core pattern (chrome-free, router-free, guard-enforced)
+proven on Activity and Commands — one implementation renders the flat route
+and a desk window (`SurfaceWindows` + the shell dispatcher); the authoring
+note is in web/README.md. Earlier: **HS-95-03, The shell, DONE**: the dock
 (chips for every open window: focus/restore/close/reset), Ctrl+` MRU window
 cycling, drag-to-edge half/quarter snap tiles, and the DeskChrome menu
 dispatching through the shell's surface registry instead of navigating;

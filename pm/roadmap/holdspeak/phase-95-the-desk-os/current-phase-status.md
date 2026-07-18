@@ -1,8 +1,8 @@
 # Phase 95 — The Desk OS
 
-**Status:** IN PROGRESS (3/10; HS-95-03 done 2026-07-17).
+**Status:** IN PROGRESS (4/10; HS-95-04 done 2026-07-17).
 
-**Last updated:** 2026-07-17 (HS-95-03, the shell, done).
+**Last updated:** 2026-07-17 (HS-95-04, embeddable page cores, done).
 
 ## Why this phase exists
 
@@ -115,7 +115,7 @@ navigates away from the desk.
 | HS-95-01 | The WebGL stage | done | [story-01-the-webgl-stage](./story-01-the-webgl-stage.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-95-02 | OS-grade windows | done | [story-02-os-grade-windows](./story-02-os-grade-windows.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-95-03 | The shell: dock, switching, layouts | done | [story-03-the-shell](./story-03-the-shell.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-95-04 | Embeddable page cores | backlog | [story-04-embeddable-page-cores](./story-04-embeddable-page-cores.md) | — |
+| HS-95-04 | Embeddable page cores | done | [story-04-embeddable-page-cores](./story-04-embeddable-page-cores.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-95-05 | Dictation through the desk | backlog | [story-05-dictation-through-the-desk](./story-05-dictation-through-the-desk.md) | — |
 | HS-95-06 | Meetings and recording through the desk | backlog | [story-06-meetings-through-the-desk](./story-06-meetings-through-the-desk.md) | — |
 | HS-95-07 | Configuration through the desk | backlog | [story-07-configuration-through-the-desk](./story-07-configuration-through-the-desk.md) | — |
@@ -172,5 +172,19 @@ Proof: guards + web suite 253/253; the windows and shell production walks
 (dock, snap, cycle, park/restore, dock-close, reset, menu dispatch);
 `assets/shell-1440.png`.
 
-Next: HS-95-04 (page cores) unblocks the re-homing stories; the Phase 93
-physics contract remains the regression floor.
+**HS-95-04 done (2026-07-17): one core, two hosts.** The pattern:
+`pages/cores/<Name>Core.tsx` is host-agnostic (no router hooks, no page
+chrome, scope by prop — `tests/unit/test_page_cores_guard.py` enforces it
+mechanically), owns its verbs, and hands them to a `hero` render-slot so
+each host picks the chrome. Flat routes are thin wrappers; the desk hosts
+cores through `SurfaceWindows` (one table row per surface: shell key,
+window id, lazy core) with a left-flank default home that respects the
+z ladder (chrome sits UNDER the window band). The tool shelf's mechanism
+converted to the shell dispatcher (registered surfaces open in-world;
+unregistered fall back to the legacy route until HS-95-08). Proven on
+Activity and Commands: cores guard + web suite 257/257 + the cores walk
+(both windows in-world chrome-free; flat routes keep the hero);
+`assets/cores-1440.png`; the authoring note lives in `web/README.md`.
+
+Next: HS-95-05/06/07 re-home dictation, meetings, and configuration on
+this pattern; the Phase 93 physics contract remains the regression floor.

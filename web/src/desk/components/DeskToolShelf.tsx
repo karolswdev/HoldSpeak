@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { openSurface } from "../shell";
 import { workroomHref } from "../../workrooms/context";
 import { qualifiedRef } from "../api";
 import { modelChatId } from "../chat";
@@ -82,6 +83,7 @@ export const KIND_LABEL: Record<string, string> = {
 };
 
 export function DeskToolShelf() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLElement | null>(null);
@@ -366,19 +368,29 @@ export function DeskToolShelf() {
             <ul className="desk-tool-list">
               {matchingTools.map((tool) => (
                 <li key={tool.href}>
-                  <Link
-                    to={workroomHref(tool.href, {
-                      action: tool.action,
-                      subjectRef: tool.subjectRef,
-                    })}
-                    onClick={close}
+                  <button
+                    type="button"
+                    className="desk-tool-link"
+                    onClick={() => {
+                      close();
+                      // The shell mechanism (HS-95-03/04): the shelf is a
+                      // dispatcher; only surfaces not yet re-homed fall
+                      // back to their legacy route (HS-95-08 retires it).
+                      if (!openSurface(tool.action, tool.subjectRef))
+                        navigate(
+                          workroomHref(tool.href, {
+                            action: tool.action,
+                            subjectRef: tool.subjectRef,
+                          }),
+                        );
+                    }}
                   >
                     <span aria-hidden="true">{tool.glyph}</span>
                     <span>
                       <strong>{tool.label}</strong>
                       <small>{tool.description}</small>
                     </span>
-                  </Link>
+                  </button>
                 </li>
               ))}
             </ul>

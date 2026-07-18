@@ -380,6 +380,42 @@ def shell() -> None:
         browser.close()
 
 
+
+
+def cores() -> None:
+    """HS-95-04 — one core, two hosts, on the production bundle: the tool
+    shelf opens Activity and Commands as desk windows (no page chrome
+    inside), while the flat routes still render the hero for deep links."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        wait_world(page)
+        page.click(".desk-tools-launch")
+        page.click(".desk-tool-link:has-text(\'Activity\')")
+        page.wait_for_selector(".desk-surface-window", timeout=5000)
+        assert page.locator(".desk-surface-window .page-hero").count() == 0
+        assert page.locator(".desk-surface-window .page-wrap").count() == 0
+        page.wait_for_selector(
+            ".desk-surface-window:has-text(\'Activity intelligence\')",
+            timeout=5000,
+        )
+        page.click(".desk-tools-launch")
+        page.click(".desk-tool-link:has-text(\'Commands\')")
+        page.wait_for_selector(
+            ".desk-surface-window:has-text(\'Command board\')", timeout=5000
+        )
+        assert page.locator(".desk-surface-window").count() == 2
+        page.screenshot(path=str(OUT / "cores-1440.png"))
+        # The flat routes keep their chrome for deep links.
+        page.goto(BASE + "/activity", wait_until="networkidle")
+        page.wait_for_selector(".page-hero:has-text(\'Activity\')", timeout=5000)
+        page.goto(BASE + "/commands", wait_until="networkidle")
+        page.wait_for_selector(".page-hero:has-text(\'Commands\')", timeout=5000)
+        print("cores walk: shelf opens both cores in-world (chrome-free); flat routes keep the hero")
+        browser.close()
+
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "shots"
     if mode == "shots":
@@ -393,5 +429,7 @@ if __name__ == "__main__":
         windows()
     elif mode == "shell":
         shell()
+    elif mode == "cores":
+        cores()
     else:
         raise SystemExit(f"unknown mode {mode}")

@@ -20,6 +20,7 @@ import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock } from "./components/DeskWindow";
+import { SurfaceWindows } from "./components/SurfaceWindows";
 import { useProjections } from "./projections";
 import "./desk.css";
 
@@ -63,6 +64,7 @@ export default function DeskApp() {
       <PanePicker />
       <SessionPullout />
       <AttentionDrawer />
+      <SurfaceWindows />
       <Dock />
     </div>
   );
