@@ -521,7 +521,7 @@ def speakflow() -> None:
         page.context.grant_permissions(["microphone"])
         page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
-        page.click(".desk-start-action:has-text('Dictate')")
+        page.click(".desk-dock-app[aria-label='Speak']")
         clicks += 1
         page.wait_for_selector(".desk-surface-window", timeout=8000)
         # The window opens ON the job: hero mic present, no tab wall.
@@ -582,7 +582,7 @@ def dictation() -> None:
         page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         # 1. The Dictate start chip opens the window IN PLACE.
-        page.click(".desk-start-action:has-text(\'Dictate\')")
+        page.click(".desk-dock-app[aria-label='Speak']")
         page.wait_for_selector(".desk-surface-window", timeout=8000)
         assert page.url.rstrip("/") == BASE, page.url
         # 2. Speak into the hero mic (HS-100-07: the loop IS the front
@@ -698,11 +698,11 @@ def meetings(intel: bool = False) -> None:
         wait_world(page)
         # 1. Record: the chip starts the hub recorder AND opens the live
         # window — the URL never leaves the desk.
-        page.click(".desk-start-action:has-text(\'Record\')")
+        page.click(".desk-orb")
         page.wait_for_selector(".desk-surface-window", timeout=8000)
         assert page.url.rstrip("/") == BASE, page.url
         page.wait_for_selector(
-            ".desk-start-action:has-text(\'Stop\')", timeout=8000
+            ".desk-orb[aria-label=\'Stop recording\']", timeout=8000
         )
         if intel:
             # The hub records the REAL microphone (Phase 73: the orb drives
@@ -729,7 +729,7 @@ def meetings(intel: bool = False) -> None:
         # 2. Stop INSIDE the window: every surface settles.
         page.click(".desk-surface-window button:has-text(\'Stop meeting\')")
         page.wait_for_selector(
-            ".desk-start-action:has-text(\'Record\')", timeout=20000
+            ".desk-orb[aria-label=\'Record a meeting\']", timeout=20000
         )
         # 3. The saved meeting: "Return to saved Meeting" opens the pull-out.
         page.wait_for_selector(
@@ -1478,17 +1478,22 @@ def chrome() -> None:
         assert head_token and head_token in ("", head_token), head_token
         hb = head.bounding_box()
         assert 38 <= hb["height"] <= 42, hb
+        # Materials spike (owner-approved): the window verbs are traffic
+        # LIGHTS — small round discs, colored on the front window.
         close = page.locator(f"{sel} [aria-label='Close Settings']")
         cb = close.bounding_box()
         assert abs(cb["width"] - cb["height"]) < 1.5, cb
-        assert abs(cb["height"] - hb["height"]) < 1.5, (cb, hb)
-        close.hover()
-        page.wait_for_timeout(250)
-        hover_bg = close.evaluate("el => getComputedStyle(el).backgroundColor")
-        assert hover_bg not in ("rgba(0, 0, 0, 0)", "transparent"), hover_bg
+        assert 10 <= cb["height"] <= 16, ("light disc size", cb)
+        radius_pct = close.evaluate(
+            "el => getComputedStyle(el).borderRadius")
+        assert radius_pct in ("50%",) or radius_pct.endswith("px"), radius_pct
+        light_bg = close.evaluate("el => getComputedStyle(el).backgroundColor")
+        assert light_bg not in ("rgba(0, 0, 0, 0)", "transparent"), light_bg
         page.screenshot(path=str(OUT / "chrome-bar-1440.png"))
         # 2. The head menu.
-        head.click(button="right")
+        # The head's center carries the wing segments now (HS-100-07);
+        # the menu opens from non-button head area — the title.
+        page.locator(f"{sel} .desk-window-title").click(button="right")
         page.wait_for_selector(".desk-head-menu[role='menu']", timeout=3000)
         page.keyboard.press("Escape")
         page.wait_for_timeout(200)
@@ -1513,7 +1518,8 @@ def chrome() -> None:
         # 6. The dock underline: the front chip's ::after wears width.
         chip_after = page.evaluate(
             """() => {
-              const c = document.querySelector('.desk-dock-chip.is-front');
+              const c = document.querySelector(
+                '.desk-dock-app.is-run, .desk-dock-chip.is-front');
               if (!c) return null;
               const cs = getComputedStyle(c, '::after');
               return { h: cs.height, w: cs.width };
@@ -1524,17 +1530,49 @@ def chrome() -> None:
         # 7. The 393 sheet keeps the bar.
         phone = browser.new_context(
             viewport={"width": 393, "height": 852}).new_page()
-        phone.goto(BASE + "/settings", wait_until="networkidle")
+        phone.goto(arrive_url("/settings"), wait_until="networkidle")
         phone.wait_for_selector(sel, timeout=15000)
         phone.wait_for_timeout(600)
         phb = phone.locator(f"{sel} header.desk-pullout-head").bounding_box()
         assert 38 <= phb["height"] <= 42, phb
         phone.screenshot(path=str(OUT / "chrome-393.png"))
-        print("chrome walk: the bar (two-tone, square verbs, red close), "
-              "head menu, skinned selects, drawn scrollbar (headed), square "
-              "maximize corners, dock underline — all present; shots at "
-              "1440 and 393")
+    # HS-100-11 — one launcher: the search palette reaches every
+    # application and tool.
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(arrive_url(), wait_until="networkidle")
+        wait_world(page)
+        assert page.locator(".desk-start-actions").count() == 0, (
+            "daily starts left the system bar (arrival + dock own them)"
+        )
+        for app in ("Speak", "Meetings", "Agents", "Settings"):
+            assert page.locator(
+                f".desk-dock-app[aria-label='{app}']"
+            ).count() == 1, f"dock must carry {app}"
+        for label in (
+            "Speak", "Meetings", "Settings", "Workflow editor",
+            "Agents and coder sessions", "Runs on", "Integrations",
+            "Commands", "Cadence", "Activity",
+        ):
+            trigger = page.locator("button:has-text('Search ⌘K')").first
+            if trigger.count() == 0:
+                trigger = page.locator("button:has-text('Search')").first
+            trigger.click()
+            page.fill("#desk-tool-shelf input[type=search]", label)
+            page.wait_for_timeout(250)
+            assert page.locator(
+                f".desk-tool-link:has-text('{label}')"
+            ).count() >= 1, f"search must reach {label}"
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(200)
+        print("one-launcher: dock carries the four apps; search reaches "
+              "every app and tool; the bar is system truth")
         browser.close()
+    print("chrome walk: the bar (two-tone, square verbs, red close), "
+          "head menu, skinned selects, drawn scrollbar (headed), square "
+          "maximize corners, dock underline — all present; shots at "
+          "1440 and 393")
 
 
 def switcher() -> None:

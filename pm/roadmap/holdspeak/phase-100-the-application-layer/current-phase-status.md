@@ -1,6 +1,6 @@
 # Phase 100 — The Application Layer
 
-**Status:** IN PROGRESS (10/13, 2026-07-19) — building on the approved thesis by the owner's direct
+**Status:** IN PROGRESS (11/13, 2026-07-19) — building on the approved thesis by the owner's direct
 directive, verbatim in spirit: *"a phase that will cause a deep, deep,
 deep grounding in the philosophy, seams, use cases — to then form an
 opinion on the entire UI/UX with regards to its applicability to the
@@ -8,7 +8,7 @@ Desk OS — and then finally deliver something beautiful, not mangled,
 easy to use: a proper application layer on our Desk OS to drive the
 value of HoldSpeak."*
 
-**Last updated:** 2026-07-19 (HS-100-10 done: Studio dead, guide absorbed, arrival quiet, ONE vocabulary canon end-to-end, POSITIONING amended).
+**Last updated:** 2026-07-19 (HS-100-11 done: one launcher — the dock carries the four applications, the bar is system truth, the shelf is ⌘K search).
 
 ## Why this phase exists — the honest post-mortem
 
@@ -87,7 +87,7 @@ and the opinion exist and the owner has gated them.
 | HS-100-08 | B4: Meetings | done | [story-08-meetings](./story-08-meetings.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-100-09 | B5: Agents | done | [story-09-agents](./story-09-agents.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-100-10 | B6: Settings and the arrival | done | [story-10-settings-arrival](./story-10-settings-arrival.md) | [evidence-story-10](./evidence-story-10.md) |
-| HS-100-11 | B7: one launcher | backlog | [story-11-one-launcher](./story-11-one-launcher.md) | — |
+| HS-100-11 | B7: one launcher | done | [story-11-one-launcher](./story-11-one-launcher.md) | [evidence-story-11](./evidence-story-11.md) |
 | HS-100-12 | B8: geometry walk + assembled chain | backlog | [story-12-geometry-walk](./story-12-geometry-walk.md) | — |
 | HS-100-13 | Closeout (the owner's sitting) | backlog | [story-13-closeout](./story-13-closeout.md) | — |
 
@@ -99,6 +99,6 @@ step forward. Keep being better and better." Zero revision rounds;
 the thesis stands as presented. B1–B8 are authored as HS-100-05..12
 (one story, one guard, one commit each); the closeout is HS-100-13
 and still closes only on the owner's live sitting over the BUILT
-layer. B1 shipped: the vocabulary guard is live with seven allowlisted offender files to burn down, and the model-missing refusal names its fix instead of leaking a path. B2 shipped: a mic without capture is visible, disabled, and says why — proven live on the plain-HTTP LAN origin. B3 shipped: Speak opens on the job — hero mic, verdict pair, correction in place; Journal/Blocks as head wings, six config sections behind one gear, and the flow budget pinned live at 4 interactions in one window. B4 shipped: Meetings opens on outcomes — needs-you leads with the approve verbs in place, the transcript folds to a receipt, the list is a rail, plumbing is behind the door; meetingflow pinned at 3 interactions. B5 shipped: Agents opens on who needs you — blocked sessions lead with a primary Answer verb into the audited steering seam; Delivery and Chat are wings; the persona vocabulary left the glass and the allowlist shrank to two files. B6 shipped: Studio is dead and its address demoted; Settings gained the Guide wing; the arrival is two starts and one trust line; the pre-Constitution product-language registry was amended to the Agent canon (the split-brain's engine), the docs and backend copy swept, and the vocabulary allowlist locked EMPTY; POSITIONING now says the Desk IS the front door. Next: HS-100-11 — one launcher. (Earlier today:
+layer. B1 shipped: the vocabulary guard is live with seven allowlisted offender files to burn down, and the model-missing refusal names its fix instead of leaking a path. B2 shipped: a mic without capture is visible, disabled, and says why — proven live on the plain-HTTP LAN origin. B3 shipped: Speak opens on the job — hero mic, verdict pair, correction in place; Journal/Blocks as head wings, six config sections behind one gear, and the flow budget pinned live at 4 interactions in one window. B4 shipped: Meetings opens on outcomes — needs-you leads with the approve verbs in place, the transcript folds to a receipt, the list is a rail, plumbing is behind the door; meetingflow pinned at 3 interactions. B5 shipped: Agents opens on who needs you — blocked sessions lead with a primary Answer verb into the audited steering seam; Delivery and Chat are wings; the persona vocabulary left the glass and the allowlist shrank to two files. B6 shipped: Studio is dead and its address demoted; Settings gained the Guide wing; the arrival is two starts and one trust line; the pre-Constitution product-language registry was amended to the Agent canon (the split-brain's engine), the docs and backend copy swept, and the vocabulary allowlist locked EMPTY; POSITIONING now says the Desk IS the front door. B7 shipped: the dock carries the four applications with running marks and folds their windows into chips; the system bar slimmed to menu, trust, the attention bell, ⌘K search, and the clock; the shelf became the search palette reaching every app, tool, and drawer. Next: HS-100-12 — the geometry walk and the assembled chain. (Earlier today:
 01 GROUNDING.md · 02 UIUX_JUDGMENT.md + traces · 03 the thesis +
 ten mockups.)

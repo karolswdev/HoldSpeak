@@ -5,7 +5,10 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
-PROGRESS (10/13)**. **HS-100-10, B6 Settings + arrival, DONE** (Studio
+PROGRESS (11/13)**. **HS-100-11, B7 one launcher, DONE** (the dock
+carries the four applications; the bar is system truth with the
+attention bell and ⌘K; the shelf is the search palette). Earlier,
+**HS-100-10, B6 Settings + arrival, DONE** (Studio
 dead; Guide wing; two-start arrival; ONE vocabulary canon — the
 product-language registry amended to Agent, allowlist locked empty;
 POSITIONING amended to the Desk-first front door). Earlier,

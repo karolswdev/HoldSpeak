@@ -9,8 +9,34 @@ import {
 } from "../contextual";
 import { useDesk } from "../store";
 import { allObjects } from "../world";
+import { useLaunchers } from "./DeskWindow";
 
 export const DESK_TOOLS = [
+  // HS-100-11 — the search palette reaches the four applications too.
+  {
+    href: "/dictation",
+    label: "Speak",
+    description: "Voice typing: speak, see it land, teach it.",
+    glyph: "⌁",
+    action: "dictate",
+    subjectRef: undefined,
+  },
+  {
+    href: "/history",
+    label: "Meetings",
+    description: "Outcomes, recordings, and the typed record.",
+    glyph: "▣",
+    action: "review-meetings",
+    subjectRef: undefined,
+  },
+  {
+    href: "/settings",
+    label: "Settings",
+    description: "Every boundary, stated once.",
+    glyph: "⚙",
+    action: "configure-settings",
+    subjectRef: undefined,
+  },
   {
     href: "/workbench",
     label: "Workflow editor",
@@ -134,6 +160,12 @@ export function DeskToolShelf() {
   }, [open]);
 
   const normalized = query.trim().toLocaleLowerCase();
+  const launchers = useLaunchers();
+  const matchingDrawers = launchers.filter(
+    (l) =>
+      l.id !== "attention" &&
+      l.label.toLowerCase().includes(query.trim().toLowerCase()),
+  );
   const matchingTools = DESK_TOOLS.filter((tool) =>
     `${tool.label} ${tool.description}`
       .toLocaleLowerCase()
@@ -252,7 +284,7 @@ export function DeskToolShelf() {
         aria-keyshortcuts="Control+K Meta+K"
         onClick={() => setOpen((value) => !value)}
       >
-        Tools <kbd>⌘K</kbd>
+        <span aria-hidden="true">⌕</span> Search <kbd>⌘K</kbd>
       </button>
       {open ? (
         <aside
@@ -268,7 +300,7 @@ export function DeskToolShelf() {
               <h2 className="desk-panel-title" id="desk-tool-shelf-title">
                 Tools and Desk search
               </h2>
-              <p>Open a tool or find an item without leaving the Desk.</p>
+
             </div>
             <button
               type="button"
@@ -358,6 +390,33 @@ export function DeskToolShelf() {
                   No ready tool accepts this selection.
                 </p>
               )}
+            </section>
+          ) : null}
+          {matchingDrawers.length ? (
+            <section aria-labelledby="desk-drawers-heading">
+              <h3 id="desk-drawers-heading">Drawers</h3>
+              <ul className="desk-tool-list">
+                {matchingDrawers.map((l) => (
+                  <li key={l.id}>
+                    <button
+                      type="button"
+                      className="desk-tool-link"
+                      onClick={() => {
+                        close();
+                        l.activate();
+                      }}
+                    >
+                      <span className="desk-tool-glyph" aria-hidden="true">
+                        {l.glyph}
+                      </span>
+                      <span>
+                        <strong>{l.label}</strong>
+                        {l.badge ? ` · ${l.badge} waiting` : ""}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </section>
           ) : null}
           <section aria-labelledby="desk-tools-heading">

@@ -42,14 +42,21 @@ function TwoWindows({ onCloseA = () => {} }) {
 }
 
 describe("the dock", () => {
-  it("shows a chip per open window and none when nothing is open", () => {
+  it("shows a chip per open window; the four applications ride always", () => {
     const { unmount } = render(<TwoWindows />);
     expect(screen.getByRole("toolbar", { name: "Dock" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Focus Alpha" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Focus Beta" })).toBeTruthy();
     unmount();
+    // HS-100-11 — the dock IS the launcher: with nothing open it still
+    // carries the four applications (no window chips, no running marks).
     render(<Dock />);
-    expect(screen.queryByRole("toolbar", { name: "Dock" })).toBeNull();
+    expect(screen.getByRole("toolbar", { name: "Dock" })).toBeTruthy();
+    for (const app of ["Speak", "Meetings", "Agents", "Settings"]) {
+      expect(screen.getByRole("button", { name: app })).toBeTruthy();
+    }
+    expect(screen.queryByRole("button", { name: /Focus / })).toBeNull();
+    expect(document.querySelector(".desk-dock-app.is-run")).toBeNull();
   });
 
   it("tap focuses; a parked window's chip restores it", () => {

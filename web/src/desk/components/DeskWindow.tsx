@@ -739,7 +739,7 @@ export function retractLauncher(id: string) {
   launcherRegistry.delete(id);
   publishLaunchers();
 }
-function useLaunchers() {
+export function useLaunchers() {
   return useSyncExternalStore(
     (cb) => {
       launcherListeners.add(cb);
@@ -1223,6 +1223,17 @@ function mruOrder(ids: string[], order: string[]): string[] {
  * restores a parked one), ✕ closes, ⟲ resets the layout. Ctrl+` cycles
  * focus in MRU order, restoring as it lands. Shell furniture: it rides
  * above the window band, and it is invisible while nothing is open. */
+/** HS-100-11 — the dock IS the launcher: the four applications ride it
+ * always (running mark when their window is open); drawers and tools
+ * moved to the menu-bar bell and the search shelf. */
+const DOCK_APPS = [
+  { key: "dictate", id: "surface-dictation", label: "Speak", glyph: "⌁", fallback: "/dictation" },
+  { key: "review-meetings", id: "surface-meetings", label: "Meetings", glyph: "▣", fallback: "/history" },
+  { key: "inspect-personas-and-coders", id: "surface-companion", label: "Agents", glyph: "◉", fallback: "/companion" },
+  { key: "configure-settings", id: "surface-settings", label: "Settings", glyph: "⚙", fallback: "/settings" },
+] as const;
+const DOCK_APP_IDS = new Set<string>(DOCK_APPS.map((a) => a.id));
+
 export function Dock({ center }: { center?: ReactNode } = {}) {
   const panelMin = useDesk((s) => s.panelMin);
   const panelOrder = useDesk((s) => s.panelOrder);
@@ -1265,7 +1276,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  if (!center && windows.length === 0 && launchers.length === 0) return null;
+  void launchers; // consumed by the bell + search shelf (HS-100-11)
   // The front chip mirrors the shell's is-front rule: the last id in
   // the order that is open here and not minimized (HS-97-04).
   let front: string | undefined;
@@ -1311,25 +1322,51 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           el.style.transform = "";
       }}
     >
-      {shown.map((l) => (
-        <button
-          key={l.id}
-          type="button"
-          className={"desk-dock-launch" + (l.open ? " is-run" : "")}
-          onClick={() => l.activate()}
-        >
-          <span aria-hidden="true">{l.glyph}</span>
-          <span className="desk-dock-label">{l.label}</span>
-          {l.badge ? (
-            <strong aria-label={`${l.badge} need attention`}>{l.badge}</strong>
-          ) : null}
-        </button>
-      ))}
+      {DOCK_APPS.map((a) => {
+        const win = windows.find((w) => w.id === a.id);
+        const minimized = win ? panelMin.includes(a.id) : false;
+        return (
+          <button
+            key={a.id}
+            type="button"
+            className={
+              "desk-dock-launch desk-dock-app" +
+              (win ? " is-run" : "") +
+              (win && a.id === front && !minimized ? " is-front" : "")
+            }
+            aria-label={a.label}
+            onClick={() => {
+              const s = useDesk.getState();
+              if (win && minimized) s.restorePanel(a.id);
+              else if (win) s.focusPanel(a.id);
+              else
+                void import("../shell").then((m) =>
+                  m.openSurfaceOr(a.key, a.fallback),
+                );
+            }}
+            onContextMenu={(e) => {
+              if (!win) return;
+              e.preventDefault();
+              setChipMenu({
+                id: a.id,
+                label: a.label,
+                x: e.clientX,
+                y: e.clientY,
+                minimized,
+                close: win.close,
+              });
+            }}
+          >
+            <span aria-hidden="true">{a.glyph}</span>
+            <span className="desk-dock-label">{a.label}</span>
+          </button>
+        );
+      })}
       {center}
-      {shown.length > 0 && windows.length > 0 ? (
+      {windows.some((w) => !DOCK_APP_IDS.has(w.id)) ? (
         <span className="desk-dock-sep" aria-hidden="true" />
       ) : null}
-      {windows.map((c) => {
+      {windows.filter((w) => !DOCK_APP_IDS.has(w.id)).map((c) => {
         const minimized = panelMin.includes(c.id);
         return (
           <span

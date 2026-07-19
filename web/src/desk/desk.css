@@ -4182,3 +4182,35 @@
 .desk-next .desk-empty-trust.is-cloud .desk-empty-trust-dot {
   background: var(--warning, var(--accent));
 }
+
+/* HS-100-11 — the system bar's attention bell (the dock carries the
+   applications; the approve-queue badge lives here). */
+.desk-next .desk-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+.desk-next .desk-bell:hover {
+  color: var(--text);
+  background: var(--desk-window-head-fill);
+}
+.desk-next .desk-bell strong {
+  font-size: var(--font-size-xs);
+  background: var(--accent);
+  color: var(--text-inverse, #fff);
+  border-radius: 8px;
+  padding: 0 5px;
+  line-height: 1.4;
+}
+.desk-next .desk-dock-app.is-front {
+  color: var(--text);
+}
