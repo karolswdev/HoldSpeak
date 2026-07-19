@@ -22,6 +22,7 @@ import {
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
 import { deSnake, humanTime, presentValue } from "../../desk/surface/format";
+import { spriteUrl } from "../../desk/sprites";
 
 export function CadenceCore({ hero }: CoreProps) {
   const status = useResource<JsonRecord>("/api/cadence/status", {});
@@ -96,7 +97,7 @@ export function CadenceCore({ hero }: CoreProps) {
               error={loopsResource.error}
               empty={!loops.length}
               emptyLabel="No open loops"
-              emptyGlyph="◎"
+              emptyImage={spriteUrl("note", "cadence-empty")}
               onRetry={() => void loopsResource.reload()}
             >
               <SurfaceRows>
@@ -180,7 +181,7 @@ export function CadenceCore({ hero }: CoreProps) {
               error={history.error}
               empty={!nudges.length}
               emptyLabel="No nudges yet"
-              emptyGlyph="◷"
+              emptyImage={spriteUrl("note", "cadence-nudges")}
               onRetry={() => void history.reload()}
             >
               <SurfaceRows>

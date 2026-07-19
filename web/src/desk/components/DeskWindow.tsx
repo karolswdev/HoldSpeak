@@ -847,16 +847,16 @@ export interface DeskWindowFrameProps {
  * surfaces). */
 /** HS-99-02 — the window verb glyphs: crisp inline SVG strokes that
  * inherit currentColor (text glyphs read as characters, not chrome). */
-function VerbGlyph({
-  kind,
-}: {
-  kind: "minimize" | "maximize" | "restore" | "close";
-}) {
+function VerbGlyph({ kind }: { kind: string }) {
   const paths: Record<string, string> = {
     minimize: "M3 7h8",
     maximize: "M3.5 3.5h7v7h-7Z",
     restore: "M3 5.2h5.8V11H3Z M5.2 5.2V3H11v5.8H8.8",
     close: "M3.5 3.5l7 7M10.5 3.5l-7 7",
+    "light-close": "M3.6 3.6l6.8 6.8M10.4 3.6l-6.8 6.8",
+    "light-min": "M3 7h8",
+    "light-max": "M7 3v8M3 7h8",
+    "light-restore": "M4 7h6M7 4l-3 3 3 3M7 4l3 3-3 3",
   };
   return (
     <svg
@@ -1117,40 +1117,46 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           setHeadMenu({ x: e.clientX, y: e.clientY });
         }}
       >
+        {/* Materials spike — traffic lights on the LEFT (the strongest
+            native cue there is): red close, yellow minimize, green
+            maximize; grey when the window is not front; glyphs reveal
+            on cluster hover. */}
+        <span className="desk-traffic">
+          <button
+            type="button"
+            className="desk-light desk-light-close"
+            aria-label={`Close ${name}`}
+            onClick={requestClose}
+          >
+            <VerbGlyph kind="light-close" />
+          </button>
+          <button
+            type="button"
+            className="desk-light desk-light-min"
+            aria-label={`Minimize ${name}`}
+            onClick={requestMinimize}
+          >
+            <VerbGlyph kind="light-min" />
+          </button>
+          {!compact ? (
+            <button
+              type="button"
+              className="desk-light desk-light-max"
+              aria-label={maximized ? `Restore ${name}` : `Maximize ${name}`}
+              onClick={() => useDesk.getState().toggleMaximizePanel(id)}
+            >
+              <VerbGlyph kind={maximized ? "light-restore" : "light-max"} />
+            </button>
+          ) : (
+            <span aria-hidden="true" />
+          )}
+        </span>
         {leading}
         {icon}
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}
         <span className="desk-pullout-title desk-window-title">{title}</span>
         {actions}
-        <span className="desk-window-verbs">
-          <button
-            type="button"
-            className="desk-window-verb"
-            aria-label={`Minimize ${name}`}
-            onClick={requestMinimize}
-          >
-            <VerbGlyph kind="minimize" />
-          </button>
-          {!compact && (
-            <button
-              type="button"
-              className="desk-window-verb"
-              aria-label={maximized ? `Restore ${name}` : `Maximize ${name}`}
-              onClick={() => useDesk.getState().toggleMaximizePanel(id)}
-            >
-              <VerbGlyph kind={maximized ? "restore" : "maximize"} />
-            </button>
-          )}
-          <button
-            type="button"
-            className="desk-window-verb desk-window-close"
-            aria-label={`Close ${name}`}
-            onClick={requestClose}
-          >
-            <VerbGlyph kind="close" />
-          </button>
-        </span>
       </header>
       {headMenu ? (
         <DeskMenuList
@@ -1268,7 +1274,37 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // it only renders as a launcher while its surface is closed.
   const shown = launchers.filter((l) => !windows.some((w) => w.id === l.id));
   return (
-    <div className="desk-dock" role="toolbar" aria-label="Dock">
+    <div
+      className="desk-dock"
+      role="toolbar"
+      aria-label="Dock"
+      onMouseMove={(e) => {
+        // Materials round 2 — magnification: a distance falloff swells
+        // chips near the pointer (macos-web curve, simplified; the CSS
+        // transition supplies the spring feel). Skipped under reduced
+        // motion.
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+          return;
+        const buttons = e.currentTarget.querySelectorAll<HTMLElement>(
+          ".desk-dock-main, .desk-dock-launch, .desk-dock-reset",
+        );
+        for (const el of buttons) {
+          const r = el.getBoundingClientRect();
+          const d = Math.abs(e.clientX - (r.x + r.width / 2));
+          const t = Math.max(0, 1 - d / 170);
+          const curve = t * t;
+          el.style.transform = curve > 0.01
+            ? `translateY(${(-5 * curve).toFixed(1)}px) scale(${(1 + 0.18 * curve).toFixed(3)})`
+            : "";
+        }
+      }}
+      onMouseLeave={(e) => {
+        for (const el of e.currentTarget.querySelectorAll<HTMLElement>(
+          ".desk-dock-main, .desk-dock-launch, .desk-dock-reset",
+        ))
+          el.style.transform = "";
+      }}
+    >
       {shown.map((l) => (
         <button
           key={l.id}

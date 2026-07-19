@@ -162,7 +162,14 @@
 .desk-next .desk-menu-list button:hover,
 .desk-next .desk-menu-list a:focus-visible,
 .desk-next .desk-menu-list button:focus-visible {
-  background: var(--wash-2);
+  /* Materials spike — the native menu selection bar: accent fill,
+     contrast ink (macOS behavior). */
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+.desk-next .desk-menu-list button:hover svg,
+.desk-next .desk-menu-list button:focus-visible svg {
+  color: var(--text-on-accent);
 }
 .desk-next .desk-menu-list svg {
   width: 12px;
@@ -743,10 +750,66 @@
   gap: 10px;
   height: 40px;
   flex: none;
-  padding: 0 0 0 12px;
+  padding: 0 12px;
   background: var(--desk-window-head-fill);
+  /* Materials round 2 — the UNIFIED header: the verb bar below shares
+     this tint and carries the hairline; head + verbs read as one
+     toolbar band (the mac unified-toolbar look). */
   border-radius: calc(var(--desk-window-radius) - 1px)
     calc(var(--desk-window-radius) - 1px) 0 0;
+}
+/* Materials spike — traffic lights (macos-web values): 12.8px discs
+   with darker rings; grey on an unfocused window; glyphs reveal and
+   the cluster swells on hover. */
+.desk-next .desk-traffic {
+  display: grid;
+  grid-template-columns: repeat(3, 12.8px);
+  gap: 8px;
+  align-items: center;
+  flex: none;
+}
+.desk-next .desk-light {
+  width: 12.8px;
+  height: 12.8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  background: var(--light-color, var(--light-idle));
+  box-shadow: 0 0 0 0.5px var(--light-ring, var(--shade-1));
+  transition: transform var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-light svg {
+  width: 8px;
+  height: 8px;
+  opacity: 0;
+  color: var(--shade-2);
+  transition: opacity var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-traffic:hover .desk-light,
+.desk-next .desk-traffic:focus-within .desk-light {
+  transform: scale(1.18);
+}
+.desk-next .desk-traffic:hover .desk-light svg,
+.desk-next .desk-traffic:focus-within .desk-light svg {
+  opacity: 1;
+}
+.desk-next .is-front .desk-light-close {
+  --light-color: var(--light-close);
+  --light-ring: var(--light-close-ring);
+}
+.desk-next .is-front .desk-light-min {
+  --light-color: var(--light-min);
+  --light-ring: var(--light-min-ring);
+}
+.desk-next .is-front .desk-light-max {
+  --light-color: var(--light-max);
+  --light-ring: var(--light-max-ring);
+}
+.desk-next .desk-window-title {
+  text-align: center;
 }
 .desk-next .desk-pullout-head img {
   image-rendering: pixelated;
@@ -778,12 +841,10 @@
    1px keyline ring; rest windows quiet down. One property, one ladder —
    never per-window recipes. Sheets keep their own form. */
 .desk-next .desk-window-shell:not(.is-sheet) {
-  box-shadow: var(--desk-window-shadow-rest);
+  box-shadow: var(--desk-glass-edge), var(--desk-window-shadow-rest);
 }
 .desk-next .desk-window-shell.is-front:not(.is-sheet) {
-  box-shadow:
-    0 0 0 1px var(--desk-window-keyline),
-    var(--desk-window-shadow);
+  box-shadow: var(--desk-glass-edge), var(--desk-window-shadow);
 }
 .desk-next .desk-window-handle {
   cursor: grab;
@@ -3349,6 +3410,15 @@
   display: inline-block;
   transition: transform var(--duration-short) var(--ease-quart);
 }
+/* Materials round 2 — dock magnification: chips and launchers swell
+   under the pointer with a distance falloff (JS drives --dock-mag
+   transforms; this transition makes it springy). */
+.desk-next .desk-dock-main,
+.desk-next .desk-dock-launch,
+.desk-next .desk-dock-reset {
+  transform-origin: bottom center;
+  transition: transform var(--duration-short) var(--ease-quart);
+}
 .desk-next .desk-dock-chip:hover .desk-dock-main > span[aria-hidden="true"],
 .desk-next .desk-dock-launch:hover > span[aria-hidden="true"] {
   transform: scale(1.18);
@@ -3625,8 +3695,10 @@
   :where(.desk-pullout, .desk-surface-window, .desk-trust-window) {
   border-radius: var(--desk-window-radius);
   background: var(--desk-window-fill);
-  border: 1px solid var(--border);
-  box-shadow: var(--desk-window-shadow);
+  border: 0;
+  /* Materials spike — the frosted-glass rim (inner dark + outer light
+     hairline) rides UNDER the elevation in the same shadow stack. */
+  box-shadow: var(--desk-glass-edge), var(--desk-window-shadow);
   backdrop-filter: var(--desk-window-blur);
 }
 
@@ -3654,4 +3726,12 @@
 /* The orb presses inward instead of down (it is a circle, not a chip). */
 .desk-next .desk-orb:active:not(:disabled) .desk-orb-core {
   transform: scale(0.92);
+}
+
+/* Materials spike — a WINDOW is not a form control: the shell never
+   wears the focus ring (front state is carried by the lifted shadow
+   and the colored traffic lights; interior elements keep the global
+   ring). */
+.desk-next .desk-window-shell:focus-visible {
+  outline: none;
 }

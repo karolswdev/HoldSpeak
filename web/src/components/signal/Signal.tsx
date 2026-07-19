@@ -162,7 +162,7 @@ export function Tabs({
   onChange,
   label,
 }: {
-  tabs: Array<{ id: string; label: string; disabled?: boolean }>;
+  tabs: Array<{ id: string; label: ReactNode; disabled?: boolean }>;
   active: string;
   onChange(id: string): void;
   label: string;

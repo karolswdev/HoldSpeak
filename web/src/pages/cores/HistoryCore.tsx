@@ -42,6 +42,7 @@ import {
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
 import { humanTime, presentValue } from "../../desk/surface/format";
+import { spriteUrl } from "../../desk/sprites";
 
 const ARCHIVE_TABS = [
   "meetings",
@@ -820,7 +821,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         error={source.error}
         empty={!rows.length}
         emptyLabel="Nothing here yet"
-        emptyGlyph="◫"
+        emptyImage={spriteUrl("meeting", "archive-empty")}
         onRetry={() => void source.reload()}
       >
         <SurfaceRows>

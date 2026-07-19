@@ -497,3 +497,151 @@
   border-radius: var(--radius-md);
   padding: 10px;
 }
+
+/* ── HS-100 spike: grouped inset settings (the OS idiom) ──
+   Rows live inside a rounded group on the rail tone, text left and a
+   COMPACT control right — never a full-width form stack. */
+.surface-group-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.surface-group-label {
+  margin: 0;
+  padding: 0 4px;
+  font-size: var(--desk-surface-label-size);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.surface-group {
+  background: var(--desk-window-rail);
+  border: 1px solid var(--wash-1);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.surface-setting-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 8px 12px;
+}
+.surface-setting-row + .surface-setting-row {
+  border-top: 1px solid var(--wash-1);
+}
+.surface-setting-row:hover {
+  background: var(--wash-1);
+}
+.surface-setting-icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--desk-window-well);
+  color: var(--text-muted);
+}
+.surface-setting-icon svg {
+  width: 15px;
+  height: 15px;
+}
+.surface-setting-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.surface-setting-text strong {
+  font-weight: 500;
+  font-size: var(--desk-surface-body-size);
+}
+.surface-setting-text small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.surface-setting-control {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 46%;
+}
+.surface-setting-control :where(.hs-control, .input, .select, select, input) {
+  width: auto;
+  min-width: 90px;
+  max-width: 240px;
+  min-height: 32px;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  font-size: var(--desk-surface-detail-size);
+  text-align: right;
+}
+.surface-setting-control select {
+  text-align: left;
+}
+.surface-setting-row.is-wide {
+  flex-wrap: wrap;
+}
+.surface-setting-row.is-wide .surface-setting-text {
+  flex: 1 1 100%;
+}
+.surface-setting-row.is-wide .surface-setting-control {
+  flex: 1 1 100%;
+  max-width: none;
+  justify-content: stretch;
+}
+.surface-setting-row.is-wide .surface-setting-control :where(.hs-control, textarea, input) {
+  width: 100%;
+  max-width: none;
+  text-align: left;
+}
+.surface-toggle {
+  gap: 0;
+}
+.surface-symbol-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.surface-search {
+  max-width: 320px;
+}
+.surface-setting-control .surface-actions :where(.hs-control, input) {
+  min-width: 140px;
+}
+
+/* Materials round 2 — the panel title: interiors get a real heading. */
+.surface-panel-title {
+  margin: 2px 0 4px;
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+/* Materials round 2 — the world lives in the windows: pixel sprites
+   carry the empty states. */
+.surface-state-sprite {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  opacity: 0.9;
+}
+
+/* The rail tabs carry icons now. */
+.surface-railed > .signal-tabs button svg,
+.signal-tabs button svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+.signal-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}

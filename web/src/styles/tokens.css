@@ -246,13 +246,13 @@
   --desk-z-dock-under: 40; /* the dock on compact viewports — sheets own the phone's bottom */
   --desk-z-popover: 82; /* popovers/toasts above even the transient band */
   --desk-glass: rgba(8, 7, 12, 0.7); /* the frosted chrome-cluster glass */
-  --desk-window-fill: rgba(13, 11, 18, 0.985); /* the window body fill (R2-06: objects must not ghost through) */
+  --desk-window-fill: rgba(21, 17, 29, 0.58); /* the window material TINT — real vibrancy over the world (materials spike; was 0.985 paint) */
   --desk-panel-fill: rgba(14, 12, 20, 0.94); /* secondary panel fill */
   --desk-window-radius: 18px; /* the ONE window corner (the pull-out's value, adopted family-wide in HS-96-04) */
-  --desk-window-shadow: 0 26px 70px rgba(0, 0, 0, 0.6); /* the ONE window elevation (the FRONT window wears it) */
-  --desk-window-shadow-rest: 0 14px 34px rgba(0, 0, 0, 0.42); /* rest windows quiet down (HS-97-04 focus depth) */
+  --desk-window-shadow: 0 8px 10px rgba(0, 0, 0, 0.28), 0 68px 80px rgba(0, 0, 0, 0.56); /* FRONT window: contact + ambient two-layer (macos-web recipe) */
+  --desk-window-shadow-rest: 0 8px 10px rgba(0, 0, 0, 0.14), 0 34px 60px rgba(0, 0, 0, 0.28); /* rest windows: the same two-layer at half strength */
   --desk-window-keyline: color-mix(in srgb, var(--accent) 38%, var(--border)); /* the front window's 1px keyline ring (HS-97-04) */
-  --desk-window-blur: blur(10px); /* the window glass */
+  --desk-window-blur: blur(26px) saturate(160%); /* the window glass — heavy blur + saturation so the world glows through */
   --desk-transient-radius: 12px; /* menus/popovers corner */
   --desk-transient-shadow: 0 18px 40px rgba(0, 0, 0, 0.5); /* menus/popovers elevation */
   --desk-window-pad-x: 14px; /* window body horizontal padding */
@@ -264,15 +264,28 @@
   --desk-surface-label-size: 0.6875rem; /* HS-98: quiet section label size (11px) */
   --desk-surface-body-size: 0.8125rem; /* HS-98: surface body copy size (13px; matches --font-size-sm) */
   --desk-surface-detail-size: 0.75rem; /* HS-98: surface row detail size (12px; matches --font-size-xs) */
-  --desk-window-head-fill: rgba(26, 23, 34, 0.99); /* HS-99: the title-bar tone — one step ABOVE the window body; separation by tone, never a border (PROZILLAOS_STUDY.md) */
-  --desk-window-rail: rgba(18, 16, 24, 0.92); /* HS-99: rails/toolbars — between head and body on the tonal ladder */
-  --desk-window-well: rgba(8, 7, 12, 0.72); /* HS-99: the well tone — inputs and controls sit one step BELOW the body */
+  --desk-window-head-fill: rgba(255, 255, 255, 0.035); /* the title bar wash on the material (seamless vibrancy, hairline below) */
+  --desk-window-rail: rgba(255, 255, 255, 0.05); /* rails/groups: a translucent white tile on the material */
+  --desk-window-well: rgba(0, 0, 0, 0.28); /* wells/inputs: a translucent dark inset on the material */
   --desk-scrollbar-thumb: rgba(255, 255, 255, 0.14); /* HS-99: the pill scrollbar thumb, everywhere */
   --desk-scrollbar-thumb-hover: rgba(255, 255, 255, 0.26); /* HS-99: the thumb under the pointer */
   --desk-control-h: 36px; /* HS-99: control height on the well tone (selects, dense inputs) */
   --ease-quart: cubic-bezier(0.76, 0, 0.24, 1); /* HS-99: the default chrome easing (in-out-quart) */
   --ease-expo: cubic-bezier(0.87, 0, 0.13, 1); /* HS-99: the emphatic easing for large moves */
   --ease-back: cubic-bezier(0.68, -0.4, 0.32, 1.4); /* HS-99: the playful overshoot (small elements only) */
+  --desk-glass-edge: inset 0 0 0 0.9px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.14); /* the frosted-glass rim: inner dark hairline + outer light hairline (every floating surface wears it) */
+  --light-close: #ff5f56; /* traffic light: close */
+  --light-close-ring: #e0443e; /* traffic light: close ring */
+  --light-min: #ffbd2e; /* traffic light: minimize */
+  --light-min-ring: #dea123; /* traffic light: minimize ring */
+  --light-max: #27c93f; /* traffic light: maximize */
+  --light-max-ring: #1aab29; /* traffic light: maximize ring */
+  --light-idle: rgba(255, 255, 255, 0.22); /* traffic lights on an unfocused window */
+  --shade-1: rgba(0, 0, 0, 0.3); /* the inner dark hairline / shade wash (glass-edge family) */
+  --shade-2: rgba(0, 0, 0, 0.62); /* strong dark ink on light elements (traffic-light glyphs) */
+  --gleam-1: rgba(255, 255, 255, 0.07); /* inner top highlight on fabricated control faces */
+  --gleam-2: rgba(255, 255, 255, 0.09); /* hover lift on fabricated secondary faces */
+  --gleam-3: rgba(255, 255, 255, 0.22); /* inner top highlight on the primary (accent) face */
 }
 
 @media (prefers-reduced-motion: reduce) {
