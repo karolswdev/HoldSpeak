@@ -10,6 +10,11 @@ import { apiFetch } from "../../lib/api";
 import { StatusPill } from "../../components/signal/Signal";
 import { DeskWindowFrame } from "./DeskWindow";
 import { openSurfaceOr } from "../shell";
+import {
+  SurfaceGroup,
+  SurfaceSection,
+  SurfaceSettingRow,
+} from "../surface/Surface";
 
 type TrustDestination = {
   id: string;
@@ -70,70 +75,64 @@ export function TrustWindow() {
       className="desk-trust-window"
     >
       <div className="desk-surface-body">
-        <p>
+        <p className="surface-lede">
           {trust?.summary ??
             "Current data boundaries and enabled destinations."}
         </p>
         {enabledDestinations.length > 0 ? (
-          <p role="alert">
+          <p role="alert" className="surface-lede">
             External destinations are enabled. Review each authority boundary
             and revoke action below.
           </p>
         ) : null}
-        <dl className="signal-facts">
-          <div>
-            <dt>Current scope</dt>
-            <dd>{egress}</dd>
-          </div>
-          <div>
-            <dt>Enabled destinations</dt>
-            <dd>{enabledDestinations.length}</dd>
-          </div>
-        </dl>
-        <div className="trust-destinations">
-          {(trust?.destinations ?? []).map((destination) => (
-            <article key={destination.id} className="signal-card">
-              <h3>{destination.name}</h3>
+        <SurfaceGroup>
+          <SurfaceSettingRow
+            label="Current scope"
+            control={<span className="surface-setting-value">{egress}</span>}
+          />
+          <SurfaceSettingRow
+            label="Enabled destinations"
+            control={
+              <span className="surface-setting-value">
+                {enabledDestinations.length}
+              </span>
+            }
+          />
+        </SurfaceGroup>
+        {(trust?.destinations ?? []).map((destination) => (
+          <SurfaceSection
+            key={destination.id}
+            label={destination.name}
+            actions={
               <StatusPill tone={destination.enabled ? "warning" : "success"}>
                 {destination.enabled ? "Enabled" : "Off"}
               </StatusPill>
-              <dl className="signal-facts">
-                <div>
-                  <dt>Destination</dt>
-                  <dd>{destination.destination}</dd>
-                </div>
-                <div>
-                  <dt>Operation</dt>
-                  <dd>{destination.operation}</dd>
-                </div>
-                <div>
-                  <dt>Boundary</dt>
-                  <dd>{destination.boundary}</dd>
-                </div>
-                <div>
-                  <dt>Data</dt>
-                  <dd>{destination.data_class}</dd>
-                </div>
-                <div>
-                  <dt>Authority</dt>
-                  <dd>{destination.authority_basis}</dd>
-                </div>
-                <div>
-                  <dt>Background</dt>
-                  <dd>{destination.background_ability}</dd>
-                </div>
-                <div>
-                  <dt>Revoke</dt>
-                  <dd>{destination.revoke_action}</dd>
-                </div>
-                <div>
-                  <dt>Last receipt</dt>
-                  <dd>{destination.last_receipt ?? "None recorded"}</dd>
-                </div>
-              </dl>
-            </article>
-          ))}
-        </div>
+            }
+          >
+            <SurfaceGroup>
+              {(
+                [
+                  ["Destination", destination.destination],
+                  ["Operation", destination.operation],
+                  ["Boundary", destination.boundary],
+                  ["Data", destination.data_class],
+                  ["Authority", destination.authority_basis],
+                  ["Background", destination.background_ability],
+                  ["Revoke", destination.revoke_action],
+                  ["Last receipt", destination.last_receipt ?? "None recorded"],
+                ] as const
+              ).map(([label, value]) => (
+                <SurfaceSettingRow
+                  key={label}
+                  label={label}
+                  control={
+                    <span className="surface-setting-value">{value}</span>
+                  }
+                />
+              ))}
+            </SurfaceGroup>
+          </SurfaceSection>
+        ))}
         <p>
           <button
             type="button"

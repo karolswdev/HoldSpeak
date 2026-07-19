@@ -645,3 +645,19 @@
   align-items: center;
   gap: 7px;
 }
+
+/* A row's read-only value: right-aligned, wraps, never edge-slammed. */
+.surface-setting-value {
+  display: block;
+  max-width: 100%;
+  text-align: right;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.surface-lede {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-body-size);
+}
