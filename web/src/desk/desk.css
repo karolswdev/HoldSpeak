@@ -3735,3 +3735,68 @@
 .desk-next .desk-window-shell:focus-visible {
   outline: none;
 }
+
+
+/* ── Materials round 3: the MENU BAR. The floating pill clusters were
+   a website header; an OS has a thin frosted strip — app + menus on
+   the left, status and the clock on the right. Inner classes keep
+   their names (walk + raise-rule canon); the bar flattens them. ── */
+.desk-next .desk-menubar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 30px;
+  z-index: var(--desk-z-dock-under);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px 0 12px;
+  background: var(--desk-glass);
+  border-bottom: 0.9px solid var(--shade-1);
+}
+.desk-next .desk-menubar::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 30px;
+  backdrop-filter: var(--desk-window-blur);
+  z-index: var(--desk-z-stage);
+}
+.desk-next .desk-menubar .desk-chrome {
+  position: static;
+  pointer-events: auto;
+  gap: 2px;
+  z-index: auto;
+}
+/* Every control in the bar is a flat menu item, not a pill. */
+.desk-next .desk-menubar button,
+.desk-next .desk-menubar .desk-chip {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 5px;
+  min-height: 22px;
+  padding: 2px 9px;
+  font-size: var(--font-size-sm);
+  color: var(--text);
+}
+.desk-next .desk-menubar button:hover,
+.desk-next .desk-menubar button:focus-visible {
+  background: var(--wash-2);
+}
+.desk-next .desk-menubar .desk-mark {
+  font-weight: 700;
+}
+.desk-next .desk-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 8px;
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.desk-next .desk-clock strong {
+  font-weight: 600;
+}
