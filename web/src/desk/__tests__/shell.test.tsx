@@ -56,7 +56,11 @@ describe("the dock", () => {
       expect(screen.getByRole("button", { name: app })).toBeTruthy();
     }
     expect(screen.queryByRole("button", { name: /Focus / })).toBeNull();
-    expect(document.querySelector(".desk-dock-app.is-run")).toBeNull();
+    for (const app of ["Speak", "Meetings", "Agents", "Settings"]) {
+      expect(
+        screen.getByRole("button", { name: app }).className,
+      ).not.toContain("is-run");
+    }
   });
 
   it("tap focuses; a parked window's chip restores it", () => {

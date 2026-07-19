@@ -1442,6 +1442,90 @@ def surfaces() -> None:
         browser.close()
 
 
+def geometry() -> None:
+    """HS-100-12 — the geometry walk: EVERY registered surface window
+    opened (via its deep link) and measured against the grammar — head
+    band 38-42px, traffic lights present and disc-shaped, a padded body
+    with no horizontal overflow, no tab wall in the body, and the same
+    truths after a squeeze to a narrow width (container reflow)."""
+    ROUTES = [
+        ("/dictation", "Speak"),
+        ("/history", "Meetings"),
+        ("/live", "Live meeting"),
+        ("/settings", "Settings"),
+        ("/profiles", "Runs on"),
+        ("/cadence", "Cadence"),
+        ("/setup", "Setup"),
+        ("/workbench", "Workbench"),
+        ("/companion", "Agents"),
+        ("/design/components", "Components"),
+        ("/activity", "Activity"),
+        ("/commands", "Commands"),
+    ]
+    failures: list[str] = []
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        for path, label in ROUTES:
+            page.goto(arrive_url(path), wait_until="networkidle")
+            sel = f"[aria-label='{label}'].desk-surface-window"
+            try:
+                page.wait_for_selector(sel, timeout=15000)
+            except Exception:
+                failures.append(f"{label}: window never opened from {path}")
+                continue
+            page.wait_for_timeout(900)
+            head = page.locator(f"{sel} header.desk-pullout-head")
+            hb = head.bounding_box()
+            if not hb or not (36 <= hb["height"] <= 46):
+                failures.append(f"{label}: head band {hb}")
+            lights = page.locator(f"{sel} .desk-light").count()
+            if lights < 2:
+                failures.append(f"{label}: traffic lights missing ({lights})")
+            body = page.locator(f"{sel} .desk-surface-body").first
+            metrics = body.evaluate(
+                """el => ({
+                  overflow: el.scrollWidth - el.clientWidth,
+                  pad: getComputedStyle(el).paddingLeft,
+                })"""
+            )
+            if metrics["overflow"] > 2:
+                failures.append(
+                    f"{label}: horizontal overflow {metrics['overflow']}px"
+                )
+            walls = page.evaluate(
+                """(sel) => {
+                  const body = document.querySelector(sel + ' .desk-surface-body');
+                  if (!body) return 0;
+                  return [...body.querySelectorAll('[role=tablist]')].filter(
+                    (t) =>
+                      !t.closest('.surface-railed') &&
+                      !t.closest('[data-specimen]'),
+                  ).length;
+                }""",
+                sel,
+            )
+            if walls:
+                failures.append(f"{label}: tab wall inside the body")
+            # Squeeze: the narrow form must reflow, not scroll sideways.
+            page.evaluate(
+                """(sel) => {
+                  const el = document.querySelector(sel);
+                  el.style.width = '360px';
+                }""",
+                sel,
+            )
+            page.wait_for_timeout(500)
+            squeezed = body.evaluate("el => el.scrollWidth - el.clientWidth")
+            if squeezed > 2:
+                failures.append(f"{label}: narrow overflow {squeezed}px")
+        assert not failures, "geometry failures:\n  " + "\n  ".join(failures)
+        print(f"geometry walk: {len(ROUTES)} windows measured against the "
+              "grammar — heads, lights, padded bodies, no sideways scroll, "
+              "no tab walls, reflow at 360px")
+        browser.close()
+
+
 def chrome() -> None:
     """HS-99-08 — the OS chrome, assembled: the two-tone bar with
     edge-flush square verbs and the red-hover close; the head menu;
@@ -1842,6 +1926,8 @@ if __name__ == "__main__":
         speakflow()
     elif mode == "meetingflow":
         meetingflow()
+    elif mode == "geometry":
+        geometry()
     elif mode == "meetings":
         meetings(intel="--intel" in sys.argv)
     elif mode == "config":

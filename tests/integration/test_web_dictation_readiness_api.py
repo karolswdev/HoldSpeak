@@ -360,7 +360,9 @@ def test_dictation_runtime_docs_route_serves_setup_page() -> None:
         Path(__file__).resolve().parents[2]
         / "web/src/desk/components/SurfaceWindows.tsx"
     ).read_text()
-    assert '"Runtime guide"' in surfaces and '"Setup guide"' in surfaces
+    # HS-100-10: the guide is Settings' Guide wing; the old surface key
+    # rides an alias so deep links land.
+    assert '"read-runtime-docs": { target: "configure-settings"' in surfaces
     assert "dictation-mlx" in source and "dictation-llama" in source
     assert "OpenAI-compatible endpoint" in source
 

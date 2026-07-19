@@ -4,8 +4,12 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
-PROGRESS (11/13)**. **HS-100-11, B7 one launcher, DONE** (the dock
+**Last updated:** 2026-07-19 — **Phase 100, The Application Layer, **BUILD
+COMPLETE AT MACHINE SCOPE (12/13)** — B1–B8 all shipped; the geometry
+walk polices every window and the assembled chain is green (21 walk
+legs, headed storm, full pytest sweep, 296 vitest, empty vocabulary
+allowlist); the closeout (HS-100-13) awaits the owner's sitting over
+the built layer. Earlier, **HS-100-11, B7 one launcher, DONE** (the dock
 carries the four applications; the bar is system truth with the
 attention bell and ⌘K; the shelf is the search palette). Earlier,
 **HS-100-10, B6 Settings + arrival, DONE** (Studio
