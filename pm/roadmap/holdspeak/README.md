@@ -5,7 +5,14 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, IN
-PROGRESS (2/9)**. **HS-98-02, Dictation, native, DONE**: the
+PROGRESS (3/9)**. **HS-98-03, Meetings, native, DONE**: the meeting
+detail left its modal for the split's second pane beside the archive
+(wide: two panes; narrow: detail replaces archive), import became an
+in-surface section, the archive is honest press-target rows with
+humanized times and state pills, filters fold into a quiet
+Disclosure, delete is an inline two-step — proven by the `meetings`
+walk leg (a real meeting recorded and reviewed scoped in-world) and
+1440/393 shots looked at. Earlier: **HS-98-02, Dictation, native, DONE**: the
 flagship's nine tabs re-composed from the surface kit (columns,
 honest rows, inline two-step confirms replacing every modal in the
 core, the raw trace behind a Disclosure), wire calls unchanged —

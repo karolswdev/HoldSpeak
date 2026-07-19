@@ -1,13 +1,13 @@
 # Phase 98 — Native Surfaces
 
-**Status:** IN PROGRESS (2/9, 2026-07-18) from the owner's standing
+**Status:** IN PROGRESS (3/9, 2026-07-18) from the owner's standing
 verdict ("none of the Desk OS feels like an OS — windows feel like
 glued-in HTML panes, zero consistent look and feel") and the 2026-07-18
 remediation audit. Phase 97 shipped the window grammar (placement,
 depth, motion, one shelf); this phase re-crafts what lives INSIDE the
 windows.
 
-**Last updated:** 2026-07-18 (HS-98-02 done: Dictation native, voice
+**Last updated:** 2026-07-18 (HS-98-03 done: Meetings native — the detail left its modal for the split; voice
 walk green, two sheet/strip defects fixed).
 
 ## Why this phase exists
@@ -96,7 +96,7 @@ viewports, screenshots looked at.
 |---|---|---|---|---|
 | HS-98-01 | The surface idiom | done | [story-01-surface-idiom](./story-01-surface-idiom.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-98-02 | Dictation, native | done | [story-02-dictation-native](./story-02-dictation-native.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-98-03 | Meetings, native | backlog | [story-03-meetings-native](./story-03-meetings-native.md) | — |
+| HS-98-03 | Meetings, native | done | [story-03-meetings-native](./story-03-meetings-native.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-98-04 | The live pair | backlog | [story-04-live-pair](./story-04-live-pair.md) | — |
 | HS-98-05 | The config pair | backlog | [story-05-config-pair](./story-05-config-pair.md) | — |
 | HS-98-06 | The builder set | backlog | [story-06-builder-set](./story-06-builder-set.md) | — |
@@ -106,6 +106,18 @@ viewports, screenshots looked at.
 
 ## Where we are
 
+**HS-98-03 done (2026-07-18): Meetings is native.** The 933-line
+memory core re-composed: the meeting detail LEFT ITS MODAL and lives
+as the split's second pane beside the archive (two panes in a wide
+window, detail-replaces-archive in a narrow one), import left its
+modal for an in-surface section, the archive is honest rows (press
+target + accent-tinted selection + humanized times + state pills),
+filters fold into a quiet Disclosure, and delete is an inline
+two-step. Proven by the `meetings` walk leg on the production bundle
+(a real meeting recorded, reviewed scoped in-world) and 1440/393
+shots looked at — which drove two more quietings (Disclosures and the
+transcript list on the material). `npm run check` green (289). Next:
+HS-98-04 — the live pair. Earlier:
 **HS-98-02 done (2026-07-18): Dictation is native.** The flagship's
 nine tabs re-composed from the kit (columns, honest rows, inline
 two-step confirms replacing every modal in this core, the raw trace

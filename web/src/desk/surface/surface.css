@@ -331,6 +331,51 @@
   margin: 0;
 }
 
+/* The transcript inside a surface: dense rows, quiet times. (The class
+   name is walk canon — the meetings leg waits on .transcript-list.) */
+.desk-surface-body .transcript-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-gap);
+  font-size: var(--desk-surface-body-size);
+}
+.desk-surface-body .transcript-list li {
+  display: flex;
+  gap: 10px;
+  padding: 4px var(--desk-surface-row-pad-x);
+  border-radius: var(--radius-sm);
+}
+.desk-surface-body .transcript-list li:hover {
+  background: var(--wash-1);
+}
+.desk-surface-body .transcript-list time {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+}
+.desk-surface-body .transcript-list p {
+  margin: 0;
+  min-width: 0;
+}
+
+/* Rule 1 — inside a window a disclosure is a quiet row, not a card. */
+.desk-surface-body .signal-disclosure {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+.desk-surface-body .signal-disclosure > summary,
+.desk-surface-body .signal-disclosure > .signal-disclosure-summary {
+  font-size: var(--desk-surface-body-size);
+}
+.desk-surface-body .signal-disclosure:hover {
+  background: var(--wash-1);
+}
+
 /* Rule 1 — inside a window the tab strip sits on the material: no
    boxed card, a hairline underline, a visible thin scrollbar when the
    window is narrower than the strip. */

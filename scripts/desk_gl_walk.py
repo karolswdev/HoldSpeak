@@ -638,7 +638,7 @@ def meetings(intel: bool = False) -> None:
         review = page.locator("[aria-label=\'Meetings\'].desk-surface-window")
         # The scoped detail: a transcript list or its honest empty state.
         review.locator(
-            ".transcript-list, .signal-empty"
+            ".transcript-list, .signal-empty, .surface-state"
         ).first.wait_for(state="visible", timeout=20000)
         if intel:
             # Real intelligence, real model: poll the product's own routes
