@@ -2,7 +2,7 @@
 // persistence slot (including the Phase 93 flat-shape tolerance), and the
 // minimized tray. jsdom hosts the DOM; physics gestures stay pinned by the
 // Playwright walk.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskWindowFrame, Dock } from "../components/DeskWindow";
 import { useDesk } from "../store";
@@ -125,15 +125,55 @@ describe("DeskWindowFrame (the one chrome)", () => {
   });
 });
 
+describe("focus depth (HS-97-04)", () => {
+  it("exactly the front window wears is-front; raising moves it", () => {
+    render(
+      <>
+        <DeskWindowFrame id="fa" title="Alpha" open onClose={() => {}}>
+          <p>a</p>
+        </DeskWindowFrame>
+        <DeskWindowFrame id="fb" title="Beta" open onClose={() => {}}>
+          <p>b</p>
+        </DeskWindowFrame>
+      </>,
+    );
+    const alpha = screen.getByRole("region", { name: "Alpha" });
+    const beta = screen.getByRole("region", { name: "Beta" });
+    expect(beta.className).toContain("is-front");
+    expect(alpha.className).not.toContain("is-front");
+    fireEvent.pointerDown(alpha);
+    expect(alpha.className).toContain("is-front");
+    expect(beta.className).not.toContain("is-front");
+  });
+
+  it("a minimized front hands depth to the next window", () => {
+    render(
+      <>
+        <DeskWindowFrame id="fa" title="Alpha" open onClose={() => {}}>
+          <p>a</p>
+        </DeskWindowFrame>
+        <DeskWindowFrame id="fb" title="Beta" open onClose={() => {}}>
+          <p>b</p>
+        </DeskWindowFrame>
+      </>,
+    );
+    act(() => useDesk.getState().minimizePanel("fb"));
+    const alpha = screen.getByRole("region", { name: "Alpha" });
+    expect(alpha.className).toContain("is-front");
+  });
+});
+
 describe("the lifecycle store + hs.desk.panels persistence", () => {
-  it("round-trips rects + min + max through one slot", () => {
+  it("round-trips rects + order + max through one slot; min stays out (HS-97-03)", () => {
     useDesk.getState().setPanelRect("a", { x: 10, y: 20, w: 400, h: 300 }, true);
     useDesk.getState().minimizePanel("a");
     useDesk.getState().toggleMaximizePanel("b");
     const raw = JSON.parse(localStorage.getItem("hs.desk.panels") || "{}");
     expect(raw.rects.a).toEqual({ x: 10, y: 20, w: 400, h: 300 });
-    expect(raw.min).toEqual(["a"]);
+    expect(raw.min).toBeUndefined();
+    expect(raw.order).toEqual(["b"]);
     expect(raw.max).toEqual(["b"]);
+    expect(useDesk.getState().panelMin).toEqual(["a"]);
   });
 
   it("restore and un-maximize persist their removals", () => {
@@ -142,7 +182,7 @@ describe("the lifecycle store + hs.desk.panels persistence", () => {
     useDesk.getState().toggleMaximizePanel("b");
     useDesk.getState().toggleMaximizePanel("b");
     const raw = JSON.parse(localStorage.getItem("hs.desk.panels") || "{}");
-    expect(raw.min).toEqual([]);
+    expect(raw.min).toBeUndefined();
     expect(raw.max).toEqual([]);
   });
 

@@ -34,6 +34,47 @@ def wait_world(page):
     page.wait_for_timeout(1200)
 
 
+def free_object(page, prefix: str | None = None):
+    """The first world object with a tappable point that actually hits
+    the canvas (windows and the dock are honest geometry since HS-97):
+    the tap must reach the world, not furniture above it. Tries the
+    object center and a slightly higher point (an object parked half
+    under the dock still shows its top). Returns {x, y, ref} or None."""
+    return page.evaluate(
+        """(prefix) => {
+          const objs = window.__hsWorldProbe();
+          const pool = prefix
+            ? objs.filter(o => o.ref.startsWith(prefix))
+            : objs;
+          for (const o of pool) {
+            for (const dy of [0, -28, -48]) {
+              const el = document.elementFromPoint(o.x, o.y + dy);
+              // The canvas is the world; the vignette is atmosphere the
+              // world's own tap handling still owns. Anything else
+              // (windows, the dock) is furniture covering the object.
+              if (
+                el &&
+                (el.classList.contains('desk-world-canvas') ||
+                  el.classList.contains('desk-vignette'))
+              )
+                return { x: o.x, y: o.y + dy, ref: o.ref };
+            }
+          }
+          return null;
+        }""",
+        prefix,
+    )
+
+
+def open_shelf(page):
+    """Open the tool shelf if it is not already open (the launch chip
+    TOGGLES; a leg must never close the shelf it means to use)."""
+    if page.locator(".desk-tool-shelf").count() == 0:
+        page.click(".desk-tools-launch")
+    page.wait_for_selector(".desk-tool-shelf", timeout=3000)
+    page.wait_for_timeout(150)
+
+
 def shots(label: str) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
@@ -227,16 +268,19 @@ def windows() -> None:
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.goto(BASE + "/", wait_until="networkidle")
         wait_world(page)
-        # Window 1: Desk memory (attention drawer).
-        page.click(".desk-attention-launch")
-        page.wait_for_selector(".desk-attention-drawer", timeout=5000)
-        # Window 2: the Delivery board tab.
-        page.click(".desk-dlv-tab")
-        page.wait_for_selector(".desk-dlv-board", timeout=5000)
-        # Window 3: the pull-out, via a canvas tap on a real object.
-        target = page.evaluate("() => window.__hsWorldProbe()")[0]
+        # Window 1: the pull-out, via a canvas tap on a real object
+        # (first, while nothing can cover it — windows are honest
+        # geometry since HS-97-02).
+        target = free_object(page)
+        assert target, "no tappable object on the desk"
         page.mouse.click(target["x"], target["y"])
         page.wait_for_selector(".desk-pullout", timeout=5000)
+        # Window 2: Desk memory (attention drawer).
+        page.click(".desk-dock-launch:has-text('Desk memory')")
+        page.wait_for_selector(".desk-attention-drawer", timeout=5000)
+        # Window 3: the Delivery board.
+        page.click(".desk-dock-launch:has-text('Delivery')")
+        page.wait_for_selector(".desk-dlv-board", timeout=5000)
         assert page.locator(".desk-window-shell").count() >= 3
         # Drag the pull-out by its head to a deliberate spot.
         head = page.locator(".desk-pullout.desk-window-shell").first.locator(
@@ -248,10 +292,16 @@ def windows() -> None:
         page.mouse.move(300, 200, steps=8)
         page.mouse.up()
         page.wait_for_timeout(300)
-        # Minimize Desk memory → tray chip appears; window parks.
+        # Minimize Desk memory → tray chip appears; window parks. Raise
+        # it first (windows genuinely overlap since HS-97-02's honest
+        # geometry; the front window owns its verbs).
+        page.click('[aria-label="Focus Desk memory"]')
+        page.wait_for_timeout(250)
         page.click('[aria-label="Minimize Desk memory"]')
         page.wait_for_selector(".desk-dock-chip.is-min", timeout=3000)
-        # Maximize the delivery board.
+        # Maximize the delivery board (raise it first — same law).
+        page.click('[aria-label="Focus Delivery"]')
+        page.wait_for_timeout(250)
         page.click('[aria-label="Maximize Delivery"]')
         page.wait_for_timeout(200)
         assert "is-max" in (
@@ -269,8 +319,9 @@ def windows() -> None:
         page.wait_for_selector(".desk-attention-drawer:visible", timeout=3000)
         page.click('[aria-label="Minimize Desk memory"]')
         page.wait_for_selector(".desk-dock-chip.is-min", timeout=3000)
-        # Reload: rects and maximize persist; a reopening window always
-        # PRESENTS itself (minimize is session-scoped by design).
+        # Reload: rects, stacking order, and maximize persist; a reopening
+        # window always PRESENTS itself (minimize is session-scoped by
+        # design and, since HS-97-03, never persisted).
         page.reload(wait_until="networkidle")
         wait_world(page)
         layout = page.evaluate(
@@ -278,14 +329,16 @@ def windows() -> None:
         )
         assert layout["max"] == ["delivery-board"], layout
         assert "pullout" in layout["rects"], layout
-        page.click(".desk-attention-launch")
+        assert "min" not in layout, layout
+        assert isinstance(layout.get("order"), list), layout
+        page.click(".desk-dock-launch:has-text('Desk memory')")
         page.wait_for_selector(".desk-attention-drawer:visible", timeout=3000)
         min_now = page.evaluate(
             "() => JSON.parse(localStorage.getItem('hs.desk.panels')).min"
         )
-        assert min_now == [], min_now
+        assert min_now is None, min_now
         # The delivery board reopens maximized (persisted lifecycle).
-        page.click(".desk-dlv-tab")
+        page.click(".desk-dock-launch:has-text('Delivery')")
         page.wait_for_selector(".desk-dlv-board", timeout=5000)
         assert "is-max" in (
             page.locator(".desk-dlv-board").get_attribute("class") or ""
@@ -299,7 +352,8 @@ def windows() -> None:
         page = browser.new_page(viewport={"width": 393, "height": 852})
         page.goto(BASE + "/", wait_until="networkidle")
         wait_world(page)
-        target = page.evaluate("() => window.__hsWorldProbe()")[0]
+        target = free_object(page)
+        assert target, "no tappable object on the desk"
         page.mouse.click(target["x"], target["y"])
         page.wait_for_selector(".desk-pullout", timeout=5000)
         cls = page.locator(".desk-pullout.desk-window-shell").first.get_attribute(
@@ -325,9 +379,10 @@ def shell() -> None:
         page.goto(BASE + "/", wait_until="networkidle")
         wait_world(page)
         # Open two windows.
-        page.click(".desk-attention-launch")
+        page.click(".desk-dock-launch:has-text('Desk memory')")
         page.wait_for_selector(".desk-attention-drawer", timeout=5000)
-        target = page.evaluate("() => window.__hsWorldProbe()")[0]
+        target = free_object(page)
+        assert target, "no tappable object on the desk"
         page.mouse.click(target["x"], target["y"])
         page.wait_for_selector(".desk-pullout", timeout=5000)
         # The dock shows both chips.
@@ -366,22 +421,28 @@ def shell() -> None:
         page.click('[aria-label="Restore Desk memory"]')
         page.wait_for_timeout(200)
         assert page.locator(".desk-dock-chip.is-min").count() == 0
-        # Dock close: the ✕ inside the dock closes the pull-out.
+        # Dock close: the ✕ inside the dock closes the pull-out (the
+        # object's own title names the chip; the close animates out).
+        pullout_name = page.locator(
+            ".desk-pullout.desk-window-shell"
+        ).first.get_attribute("aria-label")
         page.eval_on_selector_all(
             ".desk-dock button",
-            """(btns) => {
-              const x = btns.find(b => b.getAttribute('aria-label') === 'Close Untitled meeting');
+            """(btns, name) => {
+              const x = btns.find(
+                b => b.getAttribute('aria-label') === `Close ${name}`);
               if (x) x.click();
             }""",
+            arg=pullout_name,
         )
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(700)
         assert page.locator(".desk-pullout.desk-window-shell").count() == 0
         # Reset layout clears the persisted arrangement.
         page.click('[aria-label="Reset layout"]')
         layout = page.evaluate(
             "() => JSON.parse(localStorage.getItem('hs.desk.panels'))"
         )
-        assert layout == {"rects": {}, "min": [], "max": []}, layout
+        assert layout == {"rects": {}, "order": [], "max": []}, layout
         # The chrome menu dispatches through the shell: since HS-95-05 the
         # Dictation surface is registered, so it opens IN PLACE.
         page.click(".desk-mark")
@@ -405,7 +466,7 @@ def cores() -> None:
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.goto(BASE + "/", wait_until="networkidle")
         wait_world(page)
-        page.click(".desk-tools-launch")
+        open_shelf(page)
         page.click(".desk-tool-link:has-text(\'Activity\')")
         page.wait_for_selector(".desk-surface-window", timeout=5000)
         assert page.locator(".desk-surface-window .page-hero").count() == 0
@@ -414,7 +475,7 @@ def cores() -> None:
             ".desk-surface-window:has-text(\'Activity intelligence\')",
             timeout=5000,
         )
-        page.click(".desk-tools-launch")
+        open_shelf(page)
         page.click(".desk-tool-link:has-text(\'Commands\')")
         page.wait_for_selector(
             ".desk-surface-window:has-text(\'Command board\')", timeout=5000
@@ -485,7 +546,8 @@ def dictation() -> None:
         page.screenshot(path=str(OUT / "dictation-voice-1440.png"))
         # 3. Close, then the Pullout's "Dictate about this" scopes it.
         page.click('[aria-label="Close Dictation"]')
-        target = page.evaluate("() => window.__hsWorldProbe()")[0]
+        target = free_object(page)
+        assert target, "no tappable object on the desk"
         page.mouse.click(target["x"], target["y"])
         page.wait_for_selector(".desk-pullout", timeout=5000)
         page.click(".desk-pullout button:has-text(\'Dictate about this\')")
@@ -691,12 +753,12 @@ def config() -> None:
             ("Runs on", "Runs on"),
             ("Cadence", "Cadence"),
         ):
-            page.click(".desk-tools-launch")
+            open_shelf(page)
             page.click(f".desk-tool-link:has-text(\'{label}\')")
             page.wait_for_selector(
                 f"[aria-label=\'{aria}\'].desk-surface-window", timeout=8000
             )
-        page.click(".desk-tools-launch")
+        open_shelf(page)
         page.click(".desk-tool-link:has-text(\'Integrations\')")
         page.wait_for_selector(
             "[aria-label=\'Settings\'].desk-surface-window .desk-scope-chip",
@@ -763,11 +825,34 @@ def lastexits() -> None:
         page.click(".desk-create-button")
         page.click(".desk-create-menu button:has-text(\'Workflow\')")
         page.wait_for_timeout(1500)
-        objs = page.evaluate("() => window.__hsWorldProbe()")
-        wf = next((o for o in objs if o["ref"].startswith("workflow:")), None)
-        assert wf, f"no workflow object appeared: {[o['ref'] for o in objs][:6]}"
-        page.keyboard.press("Escape")  # settle any inline editor
-        page.wait_for_timeout(400)
+        # Settle the in-world editor + its vignette (they may arrive
+        # late) before probing for a tappable object.
+        for _ in range(8):
+            if (
+                page.locator(".desk-editor").count() == 0
+                and page.locator(".desk-vignette").count() == 0
+            ):
+                break
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(400)
+        wf = free_object(page, "workflow:")
+        if not wf:
+            dump = page.evaluate(
+                """() => ({
+                  shells: [...document.querySelectorAll('.desk-window-shell')]
+                    .map(s => s.getAttribute('aria-label')),
+                  wfs: window.__hsWorldProbe()
+                    .filter(o => o.ref.startsWith('workflow:'))
+                    .map(o => {
+                      const el = document.elementFromPoint(o.x, o.y);
+                      return {ref: o.ref.slice(0, 28), x: Math.round(o.x),
+                              y: Math.round(o.y),
+                              hit: el ? String(el.className).slice(0, 44) : null};
+                    }),
+                })"""
+            )
+            page.screenshot(path=str(OUT / "lastexits-debug.png"))
+            raise AssertionError(f"no tappable workflow object: {dump}")
         page.mouse.click(wf["x"], wf["y"])
         page.wait_for_selector(".desk-pullout", timeout=8000)
         page.click(".desk-pullout button:has-text(\'Edit Workflow\')")
@@ -784,7 +869,7 @@ def lastexits() -> None:
         page.keyboard.press("Escape")  # settle the workflow pull-out too
         page.wait_for_timeout(400)
         # Companion: the reconciled roster window.
-        page.click(".desk-tools-launch")
+        open_shelf(page)
         page.click(".desk-tool-link:has-text(\'Personas\')")
         page.wait_for_selector(
             "[aria-label=\'Personas and coders\'].desk-surface-window",
@@ -797,11 +882,470 @@ def lastexits() -> None:
 
 
 
+def placement() -> None:
+    """HS-97-02 — a window lands well: opening five surfaces in sequence
+    lands every one fully inside the working band (below the chrome band,
+    clear of the dock) with no two title bars overlapping, on the
+    production bundle."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        opened = []
+
+        def assert_layout(when: str) -> None:
+            info = page.evaluate(
+                """() => {
+                  const shells = [...document.querySelectorAll('.desk-window-shell')];
+                  return shells.map(el => {
+                    const r = el.getBoundingClientRect();
+                    return {label: el.getAttribute('aria-label'),
+                            x: r.x, y: r.y, w: r.width, h: r.height};
+                  });
+                }"""
+            )
+            vw, vh = 1440, 900
+            for r in info:
+                assert r["x"] >= 0 and r["y"] >= 44, (when, r)
+                assert r["x"] + r["w"] <= vw + 1, (when, r)
+                assert r["y"] + r["h"] <= vh - 40, (when, r)
+            for i, a in enumerate(info):
+                for b in info[i + 1 :]:
+                    heads_clash = (
+                        a["x"] < b["x"] + b["w"]
+                        and a["x"] + a["w"] > b["x"]
+                        and a["y"] < b["y"] + 44
+                        and a["y"] + 44 > b["y"]
+                    )
+                    assert not heads_clash, (when, a, b)
+            opened.append(len(info))
+
+        for label in ("Settings", "Meetings", "Dictation"):
+            page.click(".desk-mark")
+            page.click(f"nav.desk-menu button:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{label}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(600)
+            assert_layout(f"after {label}")
+        for label, aria in (("Activity", "Activity"), ("Commands", "Commands")):
+            open_shelf(page)
+            page.click(f".desk-tool-link:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{aria}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(600)
+            assert_layout(f"after {label}")
+        page.screenshot(path=str(OUT / "placement-five-1440.png"))
+        print(f"placement walk: {opened[-1]} windows, every land whole, no title-bar overlap")
+        browser.close()
+
+
+def arrangement() -> None:
+    """HS-97-03 — the arrangement is sacred: rects, maximize, AND the
+    stacking order survive reload byte-identically; the room menu wears
+    the transient material; on the phone a sheet's action row is fully
+    tappable (no shelf pill occludes it)."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        for label in ("Settings", "Meetings", "Dictation"):
+            page.click(".desk-mark")
+            page.click(f"nav.desk-menu button:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{label}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(500)
+        # Raise Settings back to the front, drag it (persists its rect).
+        head = page.locator(
+            "[aria-label='Settings'].desk-surface-window .desk-window-handle"
+        )
+        hb = head.bounding_box()
+        page.mouse.move(hb["x"] + 60, hb["y"] + 10)
+        page.mouse.down()
+        page.mouse.move(hb["x"] + 220, hb["y"] + 160, steps=8)
+        page.mouse.up()
+        page.wait_for_timeout(400)
+        before = page.evaluate(
+            "() => localStorage.getItem('hs.desk.panels')"
+        )
+        assert '"order"' in before and '"min"' not in before, before
+        front_before = page.evaluate(
+            """() => {
+              const shells = [...document.querySelectorAll('.desk-window-shell')];
+              shells.sort((a,b)=> (+b.style.zIndex||0) - (+a.style.zIndex||0));
+              return shells[0]?.getAttribute('aria-label');
+            }"""
+        )
+        assert front_before == "Settings", front_before
+        page.reload(wait_until="networkidle")
+        wait_world(page)
+        after = page.evaluate("() => localStorage.getItem('hs.desk.panels')")
+        assert after == before, (before, after)
+        # Reopen all three: each keeps its remembered plane — the front
+        # window is the one that was in front before the reload.
+        for label in ("Settings", "Meetings", "Dictation"):
+            page.click(".desk-mark")
+            page.click(f"nav.desk-menu button:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{label}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(400)
+        front_after = page.evaluate(
+            """() => {
+              const shells = [...document.querySelectorAll('.desk-window-shell')];
+              shells.sort((a,b)=> (+b.style.zIndex||0) - (+a.style.zIndex||0));
+              return shells[0]?.getAttribute('aria-label');
+            }"""
+        )
+        assert front_after == "Settings", front_after
+        # The room menu wears the transient material (no default buttons).
+        page.click(".desk-mark")
+        page.wait_for_selector("nav.desk-menu", timeout=3000)
+        menu_bg = page.evaluate(
+            """() => {
+              const b = document.querySelector('nav.desk-menu button');
+              const cs = getComputedStyle(b);
+              return {bg: cs.backgroundColor, align: cs.textAlign,
+                      border: cs.borderStyle};
+            }"""
+        )
+        assert menu_bg["align"] == "left" and menu_bg["border"] == "none", menu_bg
+        page.screenshot(path=str(OUT / "arrangement-menu-1440.png"))
+        print(
+            f"arrangement walk 1440: order+rects+max survive reload "
+            f"byte-identically, front={front_after}, menu styled {menu_bg}"
+        )
+        page.close()
+        # The phone: a sheet's action row is fully tappable.
+        page = browser.new_page(viewport={"width": 393, "height": 852})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1000)
+        page.click(".desk-create-button")
+        page.click(".desk-create-menu button:has-text('Note')")
+        page.wait_for_timeout(1500)
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(500)
+        objs = page.evaluate("() => window.__hsWorldProbe()")
+        assert objs, "no object on the phone desk"
+        page.mouse.click(objs[0]["x"], objs[0]["y"])
+        page.wait_for_selector(".desk-pullout", timeout=8000)
+        page.wait_for_timeout(400)
+        hit = page.evaluate(
+            """() => {
+              const btns = [...document.querySelectorAll(
+                '.desk-pullout button')].filter(b => b.offsetParent);
+              const out = [];
+              for (const b of btns.slice(-3)) {
+                const r = b.getBoundingClientRect();
+                const el = document.elementFromPoint(
+                  r.x + r.width / 2, r.y + r.height / 2);
+                out.push({label: b.textContent.trim().slice(0, 24),
+                          hittable: b.contains(el) || el === b});
+              }
+              return out;
+            }"""
+        )
+        assert all(h["hittable"] for h in hit), hit
+        page.screenshot(path=str(OUT / "arrangement-phone-393.png"))
+        print(f"arrangement walk 393: sheet action row tappable {hit}")
+        browser.close()
+
+
+def depth() -> None:
+    """HS-97-04 — focus and depth: the front window alone wears the full
+    elevation + keyline; raising moves the depth; close/minimize/restore
+    move with intent (and instantly under reduced motion)."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        for label in ("Settings", "Meetings", "Dictation"):
+            page.click(".desk-mark")
+            page.click(f"nav.desk-menu button:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{label}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(500)
+
+        def shadow(label: str) -> str:
+            return page.evaluate(
+                """(label) => getComputedStyle(document.querySelector(
+                     `[aria-label='${label}'].desk-window-shell`)).boxShadow""",
+                label,
+            )
+
+        front, rest = shadow("Dictation"), shadow("Settings")
+        assert "70px" in front and "0px 0px 0px 1px" in front, front
+        assert "34px" in rest and "70px" not in rest, rest
+        # Raising moves the depth.
+        page.click("[aria-label='Settings'].desk-window-shell .desk-window-title")
+        page.wait_for_timeout(300)
+        front2 = shadow("Settings")
+        assert "70px" in front2, front2
+        assert "70px" not in shadow("Dictation"), "depth did not move"
+        page.screenshot(path=str(OUT / "depth-three-1440.png"))
+        # Minimize flies to the chip; the window parks; restore returns.
+        page.click('[aria-label="Minimize Settings"]')
+        page.wait_for_selector(".desk-dock-chip.is-min", timeout=3000)
+        page.wait_for_timeout(400)
+        assert not page.locator(
+            "[aria-label='Settings'].desk-window-shell"
+        ).is_visible()
+        page.click('[aria-label="Restore Settings"]')
+        page.wait_for_timeout(500)
+        assert page.locator(
+            "[aria-label='Settings'].desk-window-shell"
+        ).is_visible()
+        # Close animates out and the window leaves.
+        page.click('[aria-label="Close Settings"]')
+        page.wait_for_timeout(600)
+        assert page.locator("[aria-label='Settings'].desk-window-shell").count() == 0
+        print("depth walk: keyline+elevation on the front only, depth follows "
+              "raise, minimize/restore fly, close leaves")
+        page.close()
+        # Reduced motion: everything lands instantly.
+        page = browser.new_page(
+            viewport={"width": 1440, "height": 900},
+            reduced_motion="reduce",
+        )
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(800)
+        page.click(".desk-mark")
+        page.click("nav.desk-menu button:has-text('Settings')")
+        page.wait_for_selector(
+            "[aria-label='Settings'].desk-surface-window", timeout=10000
+        )
+        page.click('[aria-label="Close Settings"]')
+        page.wait_for_timeout(200)
+        assert page.locator("[aria-label='Settings'].desk-window-shell").count() == 0
+        print("depth walk (reduced motion): close is instant")
+        browser.close()
+
+
+def frame() -> None:
+    """HS-97-05 — hands on the frame: the snap ghost previews the landing
+    tile mid-drag and the release lands exactly on it; the window resizes
+    from its left/right/bottom edges and the bottom-left corner;
+    double-click on the head toggles maximize."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        page.click(".desk-mark")
+        page.click("nav.desk-menu button:has-text('Settings')")
+        sel = "[aria-label='Settings'].desk-window-shell"
+        page.wait_for_selector(sel, timeout=10000)
+        page.wait_for_timeout(500)
+        # 1. Ghost: drag the head into the left snap flank; the ghost
+        # appears at the landing tile; release lands exactly there.
+        hb = page.locator(f"{sel} .desk-window-handle").bounding_box()
+        page.mouse.move(hb["x"] + 80, hb["y"] + 10)
+        page.mouse.down()
+        page.mouse.move(6, 450, steps=10)
+        page.wait_for_timeout(200)
+        ghost = page.locator(".desk-snap-ghost")
+        assert ghost.count() == 1, "no ghost in the snap region"
+        gb = ghost.bounding_box()
+        page.screenshot(path=str(OUT / "frame-ghost-1440.png"))
+        page.mouse.up()
+        page.wait_for_timeout(300)
+        assert page.locator(".desk-snap-ghost").count() == 0, "ghost stayed"
+        wb = page.locator(sel).bounding_box()
+        assert abs(wb["x"] - gb["x"]) < 3 and abs(wb["width"] - gb["width"]) < 3, (gb, wb)
+        # 2. Edges: right edge widens; bottom edge lengthens; the
+        # bottom-left corner moves x and grows both.
+        b0 = page.locator(sel).bounding_box()
+        page.mouse.move(b0["x"] + b0["width"], b0["y"] + b0["height"] / 2)
+        page.mouse.down()
+        page.mouse.move(b0["x"] + b0["width"] - 120, b0["y"] + b0["height"] / 2, steps=6)
+        page.mouse.up()
+        page.wait_for_timeout(250)
+        b1 = page.locator(sel).bounding_box()
+        assert abs((b0["width"] - 120) - b1["width"]) < 6, (b0, b1)
+        page.mouse.move(b1["x"] + b1["width"] / 2, b1["y"] + b1["height"])
+        page.mouse.down()
+        page.mouse.move(b1["x"] + b1["width"] / 2, b1["y"] + b1["height"] - 90, steps=6)
+        page.mouse.up()
+        page.wait_for_timeout(250)
+        b2 = page.locator(sel).bounding_box()
+        assert abs((b1["height"] - 90) - b2["height"]) < 6, (b1, b2)
+        page.mouse.move(b2["x"], b2["y"] + b2["height"])
+        page.mouse.down()
+        page.mouse.move(b2["x"] - 80, b2["y"] + b2["height"] + 60, steps=6)
+        page.mouse.up()
+        page.wait_for_timeout(250)
+        b3 = page.locator(sel).bounding_box()
+        assert b3["width"] > b2["width"] + 40 and b3["x"] < b2["x"] - 40, (b2, b3)
+        # 3. Double-click the head maximizes; again restores.
+        hb = page.locator(f"{sel} .desk-window-handle").bounding_box()
+        page.mouse.dblclick(hb["x"] + 120, hb["y"] + 10)
+        page.wait_for_timeout(300)
+        assert "is-max" in (page.locator(sel).get_attribute("class") or "")
+        hb = page.locator(f"{sel} .desk-window-handle").bounding_box()
+        page.mouse.dblclick(hb["x"] + 120, hb["y"] + 10)
+        page.wait_for_timeout(300)
+        assert "is-max" not in (page.locator(sel).get_attribute("class") or "")
+        print("frame walk: ghost previews + lands exactly, right/bottom/"
+              "bottom-left edges resize, double-click maximizes and restores")
+        browser.close()
+
+
+def switcher() -> None:
+    """HS-97-06 — the switcher: exposé fans every open window (minimized
+    ones join as dimmed cards) into a pick grid — click focuses, Escape
+    cancels; Ctrl+` cycling shows the transient strip naming every open
+    window with the landing target highlighted, fading after settling."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        for label in ("Settings", "Meetings", "Dictation"):
+            page.click(".desk-mark")
+            page.click(f"nav.desk-menu button:has-text('{label}')")
+            page.wait_for_selector(
+                f"[aria-label='{label}'].desk-surface-window", timeout=10000
+            )
+            page.wait_for_timeout(400)
+        page.click('[aria-label="Minimize Meetings"]')
+        page.wait_for_selector(".desk-dock-chip.is-min", timeout=3000)
+        # 1. Exposé via the dock verb: three cells, the minimized one dim.
+        page.click('[aria-label="Overview"]')
+        page.wait_for_selector(".desk-expose", timeout=3000)
+        page.wait_for_timeout(400)
+        assert page.locator(".desk-expose-cell").count() == 3
+        assert page.locator(".desk-expose-cell.is-min").count() == 1
+        page.screenshot(path=str(OUT / "switcher-expose-1440.png"))
+        # 2. Click a cell → exposé closes, that window is front.
+        page.click(".desk-expose-cell[aria-label='Focus Settings']")
+        page.wait_for_timeout(500)
+        assert page.locator(".desk-expose").count() == 0
+        front = page.evaluate(
+            """() => {
+              const shells = [...document.querySelectorAll('.desk-window-shell')];
+              shells.sort((a,b)=> (+b.style.zIndex||0) - (+a.style.zIndex||0));
+              return shells[0]?.getAttribute('aria-label');
+            }"""
+        )
+        assert front == "Settings", front
+        # 3. Keyboard entry + Escape cancel.
+        page.keyboard.press("Control+ArrowUp")
+        page.wait_for_selector(".desk-expose", timeout=3000)
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(400)
+        assert page.locator(".desk-expose").count() == 0
+        # 4. Ctrl+` cycling wears the visible strip, target highlighted.
+        page.keyboard.press("Control+`")
+        page.wait_for_selector(".desk-switcher", timeout=2000)
+        chips = page.locator(".desk-switcher-chip").count()
+        assert chips == 3, chips
+        assert page.locator(".desk-switcher-chip.is-target").count() == 1
+        page.screenshot(path=str(OUT / "switcher-strip-1440.png"))
+        page.wait_for_timeout(1300)
+        assert page.locator(".desk-switcher").count() == 0, "strip did not fade"
+        print("switcher walk: expose fans 3 (1 dim), click focuses, Escape "
+              "cancels, the strip names all with the target and fades")
+        browser.close()
+
+
+def shelf() -> None:
+    """HS-97-07 — one shelf, quiet chrome: the dock alone carries the
+    launchers (Desk memory, Delivery, Panes) with the record orb seated
+    at its center; the floating pills are gone from the DOM; no window
+    head wears a mono eyebrow; the stage prose is gone."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1200)
+        # One dock, centered, carrying the launchers and the orb.
+        dock = page.locator(".desk-dock")
+        assert dock.count() == 1
+        db = dock.bounding_box()
+        mid = db["x"] + db["width"] / 2
+        assert abs(mid - 720) < 40, f"dock off-center: {mid}"
+        for label in ("Desk memory", "Delivery", "Panes"):
+            assert page.locator(
+                f".desk-dock-launch:has-text('{label}')"
+            ).count() == 1, f"launcher {label} missing"
+        assert page.locator(".desk-dock .desk-orb").count() == 1
+        # The pills are gone from the DOM.
+        for cls in (
+            ".desk-attention-launch",
+            ".desk-dlv-tab",
+            ".desk-panepicker-launch",
+            ".desk-hint",
+        ):
+            assert page.locator(cls).count() == 0, f"{cls} survived"
+        assert page.locator("text=Select an item for actions").count() == 0
+        page.screenshot(path=str(OUT / "shelf-idle-1440.png"))
+        # A launcher opens its surface; the launcher folds into the chip.
+        page.click(".desk-dock-launch:has-text('Desk memory')")
+        page.wait_for_selector(".desk-attention-drawer", timeout=5000)
+        page.wait_for_timeout(400)
+        assert page.locator(".desk-dock-launch:has-text('Desk memory')").count() == 0
+        assert page.locator(".desk-dock-chip:has-text('Desk memory')").count() == 1
+        # No eyebrow in any window head.
+        page.click(".desk-mark")
+        page.click("nav.desk-menu button:has-text('Settings')")
+        page.wait_for_selector(
+            "[aria-label='Settings'].desk-surface-window", timeout=10000
+        )
+        assert page.locator(".desk-window-shell .desk-panel-eyebrow").count() == 0
+        page.screenshot(path=str(OUT / "shelf-open-1440.png"))
+        print("shelf walk 1440: one centered dock (launchers + orb), pills "
+              "gone, launcher folds into chip, no eyebrows, no stage prose")
+        page.close()
+        page = browser.new_page(viewport={"width": 393, "height": 852})
+        page.goto(BASE + "/", wait_until="networkidle")
+        page.wait_for_selector(".desk-next", timeout=15000)
+        page.wait_for_timeout(1000)
+        assert page.locator(".desk-attention-launch").count() == 0
+        assert page.locator("text=Select an item for actions").count() == 0
+        page.screenshot(path=str(OUT / "shelf-393.png"))
+        print("shelf walk 393: quiet chrome holds on the phone")
+        browser.close()
+
+
+def grammar() -> None:
+    """HS-97-09 — the window grammar, walked whole: placement, the
+    persisted arrangement, focus depth + motion, the frame's hands,
+    the switcher, and the one shelf — in sequence on the production
+    bundle."""
+    placement()
+    arrangement()
+    depth()
+    frame()
+    switcher()
+    shelf()
+    print("grammar walk: all six grammar legs green")
+
+
 def closeout() -> None:
     """HS-95-10 — the assembled walk: every per-story walk in sequence on
     the production bundle (entry-point-driven, the way a user travels),
-    then the final screenshot pass at 1440 and 393 with the API-failure
-    listener armed."""
+    then the grammar chain (HS-97-09), then the final screenshot pass at
+    1440 and 393 with the API-failure listener armed."""
     smoke()
     windows()
     shell()
@@ -810,8 +1354,9 @@ def closeout() -> None:
     meetings()
     config()
     lastexits()
+    grammar()
     shots("closeout")
-    print("closeout walk: all eight walks green; final shots archived")
+    print("closeout walk: all walks green; final shots archived")
 
 
 
@@ -825,7 +1370,7 @@ def focus() -> None:
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.goto(BASE + "/", wait_until="networkidle")
         wait_world(page)
-        page.click(".desk-attention-launch")
+        page.click(".desk-dock-launch:has-text('Desk memory')")
         page.wait_for_selector(".desk-attention-drawer", timeout=5000)
         seen = []
         for _ in range(14):
@@ -930,6 +1475,20 @@ if __name__ == "__main__":
         config()
     elif mode == "lastexits":
         lastexits()
+    elif mode == "placement":
+        placement()
+    elif mode == "arrangement":
+        arrangement()
+    elif mode == "depth":
+        depth()
+    elif mode == "frame":
+        frame()
+    elif mode == "switcher":
+        switcher()
+    elif mode == "shelf":
+        shelf()
+    elif mode == "grammar":
+        grammar()
     elif mode == "closeout":
         closeout()
     elif mode == "focus":

@@ -35,7 +35,7 @@ PRESSED_FAMILIES = (
     ".desk-tool-link",
     ".desk-mark",
     ".studio-card",
-    ".desk-attention-launch",
+    ".desk-dock-launch",
     ".desk-create-button",
     ".egress-badge-button",
 )

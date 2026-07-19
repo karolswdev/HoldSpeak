@@ -249,10 +249,12 @@
   --desk-window-fill: rgba(13, 11, 18, 0.985); /* the window body fill (R2-06: objects must not ghost through) */
   --desk-panel-fill: rgba(14, 12, 20, 0.94); /* secondary panel fill */
   --desk-window-radius: 18px; /* the ONE window corner (the pull-out's value, adopted family-wide in HS-96-04) */
-  --desk-window-shadow: 0 26px 70px {primitive.color.shadow.60}; /* the ONE window elevation */
+  --desk-window-shadow: 0 26px 70px rgba(0, 0, 0, 0.6); /* the ONE window elevation (the FRONT window wears it) */
+  --desk-window-shadow-rest: 0 14px 34px rgba(0, 0, 0, 0.42); /* rest windows quiet down (HS-97-04 focus depth) */
+  --desk-window-keyline: color-mix(in srgb, var(--accent) 38%, var(--border)); /* the front window's 1px keyline ring (HS-97-04) */
   --desk-window-blur: blur(10px); /* the window glass */
   --desk-transient-radius: 12px; /* menus/popovers corner */
-  --desk-transient-shadow: 0 18px 40px {primitive.color.shadow.50}; /* menus/popovers elevation */
+  --desk-transient-shadow: 0 18px 40px rgba(0, 0, 0, 0.5); /* menus/popovers elevation */
   --desk-window-pad-x: 14px; /* window body horizontal padding */
   --desk-window-pad-y: 12px; /* window body vertical padding */
 }

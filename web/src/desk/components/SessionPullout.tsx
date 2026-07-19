@@ -18,7 +18,11 @@ import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { controlModeLabel } from "../../lib/productLanguage";
-import { DeskWindowFrame } from "./DeskWindow";
+import {
+  DeskWindowFrame,
+  announceLauncher,
+  retractLauncher,
+} from "./DeskWindow";
 
 // The steer's context budget mirrors the hub's 8 KB cap (≈2000 tokens
 // at 4 chars/token); the gauge refuses past it before any send.
@@ -199,11 +203,6 @@ export function PanePicker() {
   const factoryDetail = useSteering((s) => s.factoryDetail);
   const [open, setOpen] = useState(false);
   const [spawnName, setSpawnName] = useState("");
-  const toggle = () => {
-    const next = !open;
-    setOpen(next);
-    if (next) void useSteering.getState().listPanes();
-  };
   const doSpawn = async () => {
     const name = spawnName.trim();
     if (!name) return;
@@ -213,16 +212,26 @@ export function PanePicker() {
       setOpen(false); // the new session's pull-out is now open
     }
   };
+  // HS-97-07 — one shelf: the floating pill is gone; the dock carries
+  // the Panes launcher (toggle: the list is a transient, not a window).
+  useEffect(() => {
+    announceLauncher({
+      id: "panes",
+      label: "Panes",
+      glyph: "⧉",
+      open,
+      activate: () => {
+        const next = !open;
+        setOpen(next);
+        if (next) void useSteering.getState().listPanes();
+      },
+    });
+    return () => retractLauncher("panes");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   return (
     <div className={"desk-panepicker" + (open ? " is-open" : "")}>
-      <button
-        type="button"
-        className="desk-chip desk-panepicker-launch"
-        onClick={toggle}
-        title="attach to any tmux pane"
-      >
-        ⧉ Panes
-      </button>
       {open && (
         <div className="desk-panepicker-list">
           {/* HS-90-03: spawn a new session from the desk */}

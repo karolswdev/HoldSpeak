@@ -94,3 +94,10 @@ surface:
    entries; the focus and pressed state grammars are inherited — never
    hand-roll them; the window material is ONE `:where()` rule — no
    per-window recipes.
+6. **Window grammar** (HS-97; the physics floors chapter in
+   `DESIGN_SYSTEM.md` is the contract): windows are placed by the OS —
+   never hand-position a surface window; its CSS default is only the
+   placement seed. A fixed shelf verb registers through
+   `announceLauncher` in `src/desk/components/DeskWindow.tsx` (the dock
+   is the one shelf; floating pills are forbidden). The eyebrow prop is
+   demoted — window identity is icon + title.

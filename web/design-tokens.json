@@ -878,7 +878,17 @@
       {
         "name": "--desk-window-shadow",
         "value": "0 26px 70px {primitive.color.shadow.60}",
-        "doc": "the ONE window elevation"
+        "doc": "the ONE window elevation (the FRONT window wears it)"
+      },
+      {
+        "name": "--desk-window-shadow-rest",
+        "value": "0 14px 34px {primitive.color.shadow.42}",
+        "doc": "rest windows quiet down (HS-97-04 focus depth)"
+      },
+      {
+        "name": "--desk-window-keyline",
+        "value": "color-mix(in srgb, var(--accent) 38%, var(--border))",
+        "doc": "the front window's 1px keyline ring (HS-97-04)"
       },
       {
         "name": "--desk-window-blur",

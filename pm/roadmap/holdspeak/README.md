@@ -4,7 +4,72 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 96, The Design System, CLOSED
+**Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, CLOSED
+(9/9, scaffolded and shipped the same day)**: the Desk OS finally has
+an OS grammar, proven whole on the production bundle. The shadows are
+back under a mechanical generator lock; windows land whole and off
+each other's title bars; the arrangement (rects, stacking order,
+maximize) survives reload byte-identically; the front window alone
+wears depth and a keyline; close/minimize/restore move with intent;
+the snap ghost previews its tile, edges resize, double-click
+maximizes; exposé fans everything into a pick grid and Ctrl+` cycles
+visibly; and the dock is the one centered shelf with the record orb at
+its heart — floating pills deleted, eyebrows demoted, stage prose
+gone. Closeout: all eight Phase 95 legs + the six-leg grammar chain
+green with zero failed API responses, storm 8.3ms median assembled,
+279 web tests, full sweep green, the physics floors written into
+DESIGN_SYSTEM.md as Article VIII.2 contracts. The owner's live verdict
+rides Campaign 13. Follow-ups staged: Native Surfaces (core content
+re-craft), The Living World (grounding + object-to-window continuity),
+One Grammar on Glass (HSM/iPad parity). Earlier: **HS-97-08, The
+physics floors, written, DONE**. Earlier: **HS-97-07, One shelf, quiet chrome, DONE**: the dock
+is the one centered shelf — launchers for Desk memory, Delivery, and
+Panes with the record orb seated at its center, the four floating
+pills deleted, the mono eyebrows off every title bar, and the stage
+prose gone — walk-proven at 1440 and 393. Earlier: **HS-97-06, The switcher, DONE**: exposé fans every
+open window into a pick grid (live shells scale in, minimized ones
+join as dimmed cards; click focuses, Escape cancels) and Ctrl+`
+cycling shows a transient strip naming every window with the landing
+target highlighted — walk-proven, storm at 8.3ms median. Earlier:
+**HS-97-05, Hands on the frame, DONE**: the snap
+ghost previews the landing tile live mid-drag and the release lands
+exactly on it, windows resize from their left/right/bottom edges and
+the bottom-left corner, and double-click on the head toggles maximize
+— walk-proven on the production bundle. Earlier: **HS-97-04, Focus and depth, DONE**: the front window
+alone wears the full elevation and an accent keyline (rest windows
+quiet down, the dock chip mirrors the rule), close animates out,
+minimize contracts into its dock chip and restore returns from it —
+walk-proven with the storm at 8.3ms median. Earlier: **HS-97-03, The arrangement is sacred, DONE**: the
+stacking order persists beside rects and maximize (reload-proven
+byte-identical with the front window restored), minimize is honestly
+session-scoped, the room menu wears the transient material instead of
+unstyled defaults, and shelf pills ride the dock band's z tokens so
+the phone sheet's action row is fully tappable. Earlier: **HS-97-02, A window lands well, DONE**: the
+open-placement engine seats every new window whole inside the working
+band, off other title bars (head occlusion dominates a min-overlap
+scan), with persisted rects clamped on open and the cascade demoted to
+a true-saturation fallback — walk-proven with five surfaces landing
+unclipped on the production bundle. Earlier: **HS-97-01, The shadow returns, DONE**: the token
+generator resolves references embedded in composite values, a new
+mechanical lock refuses unresolved braces in emitted CSS (shown firing
+on a plant), and `--desk-window-shadow`/`--desk-transient-shadow` are
+valid again — every desk window casts real elevation, proven by a live
+computed-style read and a before/after pair at 1440. Earlier the same
+day the phase was **SCAFFOLDED (0/9)** from the owner's direct verdict on the Desk OS state
+(windows without cohesion, no operating-system feeling) and the same-day
+screenshot + code audit against the UAT rig that confirmed it
+mechanically: every window renders shadowless (a token-generator
+reference bug the drift gate cannot see), windows spawn stacked and
+sometimes off-viewport, the stacking order forgets on reload, focus is
+invisible, close/minimize have no motion, the shelf is four fragments,
+and the title bars carry a second vocabulary. Nine stories make the
+window grammar an OS grammar — the shadow heal under a mechanical gate,
+an open-placement engine, completed persistence, focus depth and window
+motion, richer frame physics, the exposé and switcher, one dock with a
+quiet chrome, the physics floors written, and a closeout that walks the
+whole grammar on the production bundle. See
+[phase-97-the-window-grammar](./phase-97-the-window-grammar/current-phase-status.md).
+Earlier the same day: **Phase 96, The Design System, CLOSED
 (7/7, scaffolded and shipped the same day by owner directive)**: one token
 source of truth generating the CSS and the TS mirror, the validator gate
 live in check and CI, the state contract written and true, one window
@@ -308,6 +373,7 @@ canon, canon wins.
 | 94 | The Delivery Runtime: Delivery Workbench projects, Story progress, remote/local Coder sessions, terminals, evidence, and receipts as one robust platform primitive across workstation, iPad, and tailnet Web | done | [phase-94-delivery-runtime](./phase-94-delivery-runtime/) |
 | 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | done | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
 | 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
+| 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | done | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

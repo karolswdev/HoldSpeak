@@ -144,6 +144,48 @@ Values are token names; "—" inherits the default row.
 | dragging | z 20 within the layer; motion paused |
 | drop-ready (zone) | lift −4px, scale 1.04, emphasized panel |
 
+## The window physics floors (HS-97)
+
+Article VIII.2: physics are contracts — once shipped, a floor no change
+may regress. The Phase 97 grammar, all proven by the `desk_gl_walk.py`
+legs (`placement`, `arrangement`, `depth`, `frame`, `switcher`,
+`shelf`) on the production bundle:
+
+- **Land well.** A window opening without a persisted rect is seated by
+  `placeWindow` (exported beside `snapForPointer`): seeded at its CSS
+  default home, moved off other windows' title bars (head occlusion
+  dominates a min-overlap scan, then overlap area, then distance from
+  home), always whole inside the working band between
+  `--desk-snap-top` and `--desk-snap-bottom`. A persisted rect is
+  clamped into the band on open (`clampIntoBand`) and otherwise
+  untouched. The cascade survives only at true saturation.
+- **Remember everything.** `hs.desk.panels` persists `{rects, order,
+  max}`; windows rehydrate at their remembered plane (`presentPanel`);
+  a closed window leaves the order (`retirePanel`) so a reopen
+  presents. Minimize is session-scoped by design and never persisted.
+- **Depth is focus.** Exactly one front window (the last open,
+  non-minimized id in the order) wears `--desk-window-shadow` plus a
+  1px `--desk-window-keyline` ring; the rest wear
+  `--desk-window-shadow-rest`. The dock's front chip mirrors the rule.
+- **Motion tells the story.** Open springs in; close scales/fades out;
+  minimize contracts into the window's own dock chip and restore
+  returns from it (WAAPI, compositor-only transform/opacity). All of
+  it instant under reduced motion.
+- **Hands on the frame.** The head drags; a snap region shows its
+  landing tile live (`SnapGhost`) and the release lands exactly on it;
+  the frame resizes from its left/right/bottom edges and both bottom
+  corners (`resizeEdge`); double-click on the head toggles maximize.
+- **Switch visibly.** Exposé (the dock's ⊞ verb, Ctrl+ArrowUp) fans
+  every open window into a non-overlapping pick grid (`exposeLayout`);
+  minimized windows join as dimmed cards; Escape cancels. Ctrl+`
+  cycles MRU with a transient strip naming every open window and the
+  landing target.
+- **One shelf.** The dock, centered on the bottom edge, is the only
+  shelf: launcher verbs (registered through `announceLauncher`), the
+  record orb at its center, a chip per open window, the overview and
+  reset verbs. No floating pills. Window identity in the head is icon
+  plus title — the eyebrow is demoted (Article VII.1).
+
 ## Adding a surface (styling rules)
 
 See `web/README.md` for the full add-a-surface path. Styling rules:

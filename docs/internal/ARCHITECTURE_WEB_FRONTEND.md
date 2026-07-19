@@ -57,10 +57,14 @@ Mechanical locks: `tests/unit/test_desk_no_exit_guard.py` (the desk never
 navigates; three rendered routes; the flat shell stays dead),
 `tests/unit/test_page_cores_guard.py` (cores stay host-agnostic), the
 Phase 73 desk locks (no modal roles on the desk, no browser mic in the
-desk tree, byte-stable position storage), and the Phase 96 design-system
+desk tree, byte-stable position storage), the Phase 96 design-system
 locks (`npm run tokens:check` + `tokens:gate` — generated tokens and no
-raw values in component CSS; `tests/unit/test_design_system_guard.py` —
-the state contract stays true). The design system itself is canon in
+raw values in component CSS, with the HS-97-01 unresolved-brace lock in
+the generator itself; `tests/unit/test_design_system_guard.py` — the
+state contract stays true), and the Phase 97 window-grammar floors
+(placement, order persistence, focus depth, motion, ghost/edge physics,
+exposé/switcher, one dock — the physics floors chapter in
+DESIGN_SYSTEM.md, walk-proven by the `desk_gl_walk.py` grammar legs). The design system itself is canon in
 `docs/internal/DESIGN_SYSTEM.md`: three-layer tokens from
 `web/design-tokens.json`, the generated TS mirror feeding window physics
 and GL palettes, the component state matrices, and the recorded Radix

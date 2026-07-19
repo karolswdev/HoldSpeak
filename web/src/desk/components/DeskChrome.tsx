@@ -166,9 +166,6 @@ export function DeskChrome({
           ↻
         </button>
       </div>
-      {showDailyStarts ? (
-        <div className="desk-hint">Select an item for actions</div>
-      ) : null}
     </>
   );
 }

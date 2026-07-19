@@ -6,6 +6,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DeskWindowFrame,
   Dock,
+  clampIntoBand,
+  exposeLayout,
+  placeWindow,
+  resizeEdge,
   snapForPointer,
 } from "../components/DeskWindow";
 import { openSurface, registerSurface, __resetSurfaces } from "../shell";
@@ -40,12 +44,12 @@ function TwoWindows({ onCloseA = () => {} }) {
 describe("the dock", () => {
   it("shows a chip per open window and none when nothing is open", () => {
     const { unmount } = render(<TwoWindows />);
-    expect(screen.getByRole("toolbar", { name: "Open windows" })).toBeTruthy();
+    expect(screen.getByRole("toolbar", { name: "Dock" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Focus Alpha" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Focus Beta" })).toBeTruthy();
     unmount();
     render(<Dock />);
-    expect(screen.queryByRole("toolbar", { name: "Open windows" })).toBeNull();
+    expect(screen.queryByRole("toolbar", { name: "Dock" })).toBeNull();
   });
 
   it("tap focuses; a parked window's chip restores it", () => {
@@ -64,7 +68,7 @@ describe("the dock", () => {
     render(<TwoWindows onCloseA={onCloseA} />);
     // Two "Close Alpha" buttons exist (window verb + dock ✕); the dock's
     // lives inside the toolbar.
-    const dock = screen.getByRole("toolbar", { name: "Open windows" });
+    const dock = screen.getByRole("toolbar", { name: "Dock" });
     const x = Array.from(dock.querySelectorAll("button")).find(
       (b) => b.getAttribute("aria-label") === "Close Alpha",
     )!;
@@ -95,7 +99,7 @@ describe("the dock", () => {
     expect(s.panelMax).toEqual([]);
     expect(
       JSON.parse(localStorage.getItem("hs.desk.panels") || "{}"),
-    ).toEqual({ rects: {}, min: [], max: [] });
+    ).toEqual({ rects: {}, order: [], max: [] });
   });
 });
 
@@ -123,6 +127,136 @@ describe("snapForPointer (edge tiling)", () => {
 
   it("the open middle is a free park (no snap)", () => {
     expect(snapForPointer(VW / 2, VH / 2, VW, VH)).toBeNull();
+  });
+});
+
+describe("placeWindow (HS-97-02, the open-placement engine)", () => {
+  const VW = 1440;
+  const VH = 900;
+  const TOP = 54;
+  const BOTTOM = 52;
+
+  const headsClash = (
+    a: { x: number; y: number; w: number },
+    b: { x: number; y: number; w: number },
+  ) =>
+    a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + 44 && a.y + 44 > b.y;
+
+  it("a free stage keeps the seed", () => {
+    const r = placeWindow({ x: 24, y: 72, w: 640, h: 480 }, [], VW, VH);
+    expect(r).toEqual({ x: 24, y: 72, w: 640, h: 480 });
+  });
+
+  it("a second window at the same home moves off the first title bar", () => {
+    const first = { x: 24, y: 72, w: 640, h: 480 };
+    const r = placeWindow({ ...first }, [first], VW, VH);
+    expect(headsClash(r, first)).toBe(false);
+    expect(r.x).toBeGreaterThanOrEqual(10);
+    expect(r.x + r.w).toBeLessThanOrEqual(VW - 10);
+    expect(r.y).toBeGreaterThanOrEqual(TOP);
+    expect(r.y + r.h).toBeLessThanOrEqual(VH - BOTTOM);
+  });
+
+  it("an off-viewport seed lands whole inside the working band", () => {
+    const r = placeWindow({ x: -200, y: 1000, w: 640, h: 480 }, [], VW, VH);
+    expect(r.x).toBeGreaterThanOrEqual(10);
+    expect(r.y + r.h).toBeLessThanOrEqual(VH - BOTTOM);
+    expect(r.w).toBe(640);
+  });
+
+  it("an oversize window shrinks to the band", () => {
+    const r = placeWindow({ x: 24, y: 72, w: 640, h: 2000 }, [], VW, VH);
+    expect(r.h).toBe(VH - TOP - BOTTOM);
+    expect(r.y).toBe(TOP);
+  });
+
+  it("a window may shade another's body but never its title bar", () => {
+    const wall = { x: 10, y: TOP, w: VW - 20, h: VH - TOP - BOTTOM };
+    const r = placeWindow({ x: 24, y: 72, w: 640, h: 480 }, [wall], VW, VH);
+    expect(headsClash(r, wall)).toBe(false);
+    expect(r.y).toBeGreaterThanOrEqual(TOP + 44);
+  });
+
+  it("a saturated stage cascades off the home seat, still in band", () => {
+    // Title bars tile the whole working band: every candidate collides.
+    const rows: { x: number; y: number; w: number; h: number }[] = [];
+    for (let y = TOP; y <= VH - BOTTOM; y += 32)
+      rows.push({ x: 10, y, w: VW - 20, h: 44 });
+    const r = placeWindow({ x: 24, y: 72, w: 640, h: 480 }, rows, VW, VH);
+    expect(r.x).toBe(24 + 26 * 8);
+    expect(r.y).toBe(72 + 26 * 8);
+    expect(r.y + r.h).toBeLessThanOrEqual(VH - BOTTOM);
+  });
+});
+
+describe("resizeEdge (HS-97-05, edge resize math)", () => {
+  const base = { x: 100, y: 100, w: 400, h: 300 };
+
+  it("right and bottom edges grow with the pointer", () => {
+    expect(resizeEdge("r", base, 50, 0, 320, 220).w).toBe(450);
+    expect(resizeEdge("b", base, 0, 40, 320, 220).h).toBe(340);
+  });
+
+  it("the left edge moves x and shrinks w together", () => {
+    const r = resizeEdge("l", base, 30, 0, 320, 220);
+    expect(r.x).toBe(130);
+    expect(r.w).toBe(370);
+  });
+
+  it("the left edge keeps the right edge fixed at the minimum", () => {
+    const r = resizeEdge("l", base, 200, 0, 320, 220);
+    expect(r.w).toBe(320);
+    expect(r.x).toBe(180);
+  });
+
+  it("the bottom-left corner drives both axes", () => {
+    const r = resizeEdge("bl", base, -20, 30, 320, 220);
+    expect(r.x).toBe(80);
+    expect(r.w).toBe(420);
+    expect(r.h).toBe(330);
+  });
+});
+
+describe("exposeLayout (HS-97-06, the pick grid)", () => {
+  it("four windows tile 2x2 inside the working band, no overlap", () => {
+    const cells = exposeLayout(4, 1440, 900);
+    expect(cells).toHaveLength(4);
+    for (const c of cells) {
+      expect(c.x).toBeGreaterThanOrEqual(10);
+      expect(c.x + c.w).toBeLessThanOrEqual(1430);
+      expect(c.y).toBeGreaterThanOrEqual(54);
+      expect(c.y + c.h).toBeLessThanOrEqual(900 - 52);
+    }
+    for (let i = 0; i < cells.length; i++)
+      for (let j = i + 1; j < cells.length; j++) {
+        const a = cells[i];
+        const b = cells[j];
+        const overlap =
+          a.x < b.x + b.w &&
+          a.x + a.w > b.x &&
+          a.y < b.y + b.h &&
+          a.y + a.h > b.y;
+        expect(overlap).toBe(false);
+      }
+  });
+
+  it("a last-row straggler centers", () => {
+    const cells = exposeLayout(3, 1440, 900);
+    const last = cells[2];
+    const mid = last.x + last.w / 2;
+    expect(Math.abs(mid - 720)).toBeLessThan(last.w);
+  });
+});
+
+describe("clampIntoBand (HS-97-02, clamp-on-open)", () => {
+  it("a rect persisted on a larger viewport lands whole", () => {
+    const r = clampIntoBand({ x: 1300, y: 800, w: 640, h: 480 }, 1440, 900);
+    expect(r).toEqual({ x: 790, y: 368, w: 640, h: 480 });
+  });
+
+  it("an in-band rect is untouched", () => {
+    const r = clampIntoBand({ x: 100, y: 100, w: 400, h: 300 }, 1440, 900);
+    expect(r).toEqual({ x: 100, y: 100, w: 400, h: 300 });
   });
 });
 

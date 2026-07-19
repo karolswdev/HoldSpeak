@@ -22,7 +22,11 @@ import {
 } from "../deliveryFactory";
 import { useDeliveryDossier } from "../deliveryDossier";
 import { useDeliveryTerminal } from "../deliveryTerminal";
-import { DeskWindowFrame } from "./DeskWindow";
+import {
+  DeskWindowFrame,
+  announceLauncher,
+  retractLauncher,
+} from "./DeskWindow";
 
 const STATE_LABEL: Record<string, string> = {
   starting: "starting",
@@ -246,18 +250,23 @@ export function DeliveryBoard() {
   const looseTargets = targets.filter((t) => !boundTargetIds.has(t.targetId));
   const active = activeAttempts(attempts);
 
-  if (!open) {
-    const awaiting = attempts.filter((a) => a.state === "waiting").length;
-    return (
-      <button
-        className="desk-mc-tab desk-dlv-tab"
-        onClick={() => setOpen(true)}
-        title="Delivery work"
-      >
-        ▤ Delivery{awaiting > 0 ? ` 🙋${awaiting}` : ""}
-      </button>
-    );
-  }
+  // HS-97-07 — one shelf: the floating tab is gone; the dock carries
+  // the launcher (with the awaiting badge) instead.
+  const awaiting = attempts.filter((a) => a.state === "waiting").length;
+  useEffect(() => {
+    announceLauncher({
+      id: "delivery-board",
+      label: "Delivery",
+      glyph: "▤",
+      open,
+      badge: awaiting > 0 ? awaiting : undefined,
+      activate: () => setOpen(true),
+    });
+    return () => retractLauncher("delivery-board");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, awaiting]);
+
+  if (!open) return null;
 
   return (
     <DeskWindowFrame

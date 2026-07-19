@@ -19,7 +19,7 @@ import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
-import { Dock } from "./components/DeskWindow";
+import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
 import { SurfaceWindows } from "./components/SurfaceWindows";
 import { TrustWindow } from "./components/TrustWindow";
 import { useProjections } from "./projections";
@@ -55,7 +55,6 @@ export default function DeskApp() {
       ) : (
         <WorldStage />
       )}
-      {!empty ? <RecordOrb /> : null}
       {chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
       <DeskToolInspector />
       <MissionControlConveyor />
@@ -67,7 +66,10 @@ export default function DeskApp() {
       <AttentionDrawer />
       <SurfaceWindows />
       <TrustWindow />
-      <Dock />
+      <Dock center={!empty ? <RecordOrb /> : null} />
+      <SnapGhost />
+      <Expose />
+      <Switcher />
     </div>
   );
 }
