@@ -631,6 +631,52 @@ def dictation() -> None:
 
 
 
+def meetingflow() -> None:
+    """HS-100-08 — the flow budget, pinned: arrival -> a meeting's
+    OUTCOMES face in at most 4 interactions; the face leads with
+    needs-you, folds the transcript as a receipt, and carries no tab
+    wall; at most 4 top-level concepts render before scrolling."""
+    clicks = 0
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(arrive_url(), wait_until="networkidle")
+        wait_world(page)
+        page.click(".desk-mark")
+        clicks += 1
+        page.click("nav.desk-menu button:has-text('Meetings')")
+        clicks += 1
+        page.wait_for_selector(
+            "[aria-label='Meetings'].desk-surface-window", timeout=10000
+        )
+        page.wait_for_timeout(1200)
+        row = page.locator(
+            ".desk-surface-window .surface-rows .surface-row-open"
+        ).first
+        row.wait_for(timeout=10000)
+        row.click()
+        clicks += 1
+        page.wait_for_selector(
+            ".desk-surface-window >> text=Needs you", timeout=10000
+        )
+        assert (
+            page.locator(".desk-surface-body [role=tablist]").count() == 0
+        ), "no tab wall in the window body"
+        assert page.locator(
+            ".desk-surface-window >> text=Transcript — the receipt"
+        ).count(), "the transcript folds as a receipt"
+        eyebrows = page.locator(
+            ".desk-surface-window .surface-outcome-sec .surface-eyebrow"
+        ).count()
+        assert eyebrows <= 4, f"too many concepts on the face: {eyebrows}"
+        assert clicks <= 4, f"flow budget blown: {clicks}"
+        print(
+            f"meetingflow: arrival -> outcomes face in {clicks} interactions, "
+            f"{eyebrows} outcome concepts, transcript folded, no tab wall"
+        )
+        browser.close()
+
+
 def meetings(intel: bool = False) -> None:
     """HS-95-06 — meetings live in-world. Record opens the live window in
     place; the fake mic feeds real speech; Stop inside the window settles
@@ -1754,6 +1800,8 @@ if __name__ == "__main__":
         dictation()
     elif mode == "speakflow":
         speakflow()
+    elif mode == "meetingflow":
+        meetingflow()
     elif mode == "meetings":
         meetings(intel="--intel" in sys.argv)
     elif mode == "config":

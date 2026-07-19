@@ -234,6 +234,11 @@
   .surface-split-open {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
+  /* HS-100-08 — a railed split: the list is a rail, the open detail
+     (the outcomes face) takes the room. */
+  .surface-split-railed .surface-split-open {
+    grid-template-columns: minmax(210px, 0.55fr) minmax(0, 1.45fr);
+  }
 }
 @container surface (max-width: 559.9px) {
   .surface-split-open .surface-split-main {
@@ -660,4 +665,19 @@
   max-width: 62ch;
   color: var(--text-muted);
   font-size: var(--desk-surface-body-size);
+}
+
+/* HS-100-08 — outcome sections: eyebrow-led groups on the meeting's
+   opening face (needs-you first, settled second, receipts folded). */
+.surface-outcome-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.surface-eyebrow {
+  font-size: var(--font-size-xs);
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }

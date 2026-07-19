@@ -5,7 +5,10 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
-PROGRESS (7/13)**. **HS-100-07, B3 Speak, DONE** (the flagship opens on
+PROGRESS (8/13)**. **HS-100-08, B4 Meetings, DONE** (outcomes first:
+needs-you leads, transcript folds to a receipt, plumbing behind the
+door; 3-interaction flow budget pinned). Earlier, **HS-100-07, B3
+Speak, DONE** (the flagship opens on
 the loop; wings in the head; one config door; the 4-interaction flow
 budget pinned as a walk leg). Earlier, **HS-100-06, B2 the honest mic,
 DONE** (a mic that

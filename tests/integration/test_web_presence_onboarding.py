@@ -37,5 +37,6 @@ def test_presence_tier_and_install_rules() -> None:
     # reversible, config-backed option in the canonical Settings surface.
     src = (_REPO / "web" / "src" / "pages" / "cores" / "SettingsCore.tsx").read_text()
     assert '"presence"' in src
-    assert "<Switch" in src
+    # HS-100 materials: Settings toggles are SurfaceToggle (one skin).
+    assert "<SurfaceToggle" in src
     assert '"/api/settings"' in src
