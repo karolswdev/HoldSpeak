@@ -32,15 +32,29 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { asRows, rowId, useResource } from "../pageSupport";
 import {
   ConfirmVerb,
+  EditInPlace,
   SurfaceCode,
   SurfaceColumns,
   SurfaceFacts,
   SurfaceRow,
   SurfaceRows,
   SurfaceSection,
+  SurfaceLibrary,
+  SurfaceLibraryGhost,
+  SurfaceLibraryTile,
   SurfaceState,
+  SurfaceStream,
+  SurfaceStreamDay,
+  SurfaceStreamEntry,
 } from "../../desk/surface/Surface";
-import { humanTime, presentValue } from "../../desk/surface/format";
+import {
+  humanTime,
+  isSameStreamDay,
+  presentValue,
+  streamDate,
+  streamDayLabel,
+  streamTime,
+} from "../../desk/surface/format";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 
 const WINGS = [
@@ -278,19 +292,14 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
           without typing into another app.
         </p>
       </div>
-      <Field label="Utterance">
-        {({ id, describedBy }) => (
-          <div className="desk-mic-row">
-            <TextArea
-              id={id}
-              aria-describedby={describedBy}
-              value={utterance}
-              onChange={(event) => setUtterance(event.target.value)}
-              placeholder="Explain the change I made…"
-            />
-          </div>
-        )}
-      </Field>
+      <div className="desk-mic-row">
+        <TextArea
+          aria-label="Utterance"
+          value={utterance}
+          onChange={(event) => setUtterance(event.target.value)}
+          placeholder="Explain the change I made…"
+        />
+      </div>
       <div className="surface-actions speak-run-row">
         <Button
           variant="primary"
@@ -301,20 +310,12 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
           {error && actions.includes("retry") ? "Retry dry test" : "Run dry test"}
         </Button>
         <Disclosure title="Grounding scope">
-          <Field
-            label="Project root"
-            description="Optional grounding scope; saved only on this device."
-          >
-            {({ id, describedBy }) => (
-              <TextInput
-                id={id}
-                aria-describedby={describedBy}
-                value={projectRoot}
-                onChange={(event) => setProjectRoot(event.target.value)}
-                placeholder="/path/to/project"
-              />
-            )}
-          </Field>
+          <TextInput
+            aria-label="Project root — optional grounding scope, saved only on this device"
+            placeholder="Project root (optional)"
+            value={projectRoot}
+            onChange={(event) => setProjectRoot(event.target.value)}
+          />
         </Disclosure>
       </div>
       {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
@@ -436,6 +437,17 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
   );
 }
 
+/** HS-101 B4 — Blocks reads like a library: the injection text IS
+ * the tile's face, the name and spoken matches ride the spine,
+ * create is a ghost tile in the shelf. Edits land on the material. */
+function blockSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function Blocks() {
   const [scope, setScope] = useState("global");
   const resource = useResource<JsonRecord>(
@@ -446,137 +458,193 @@ function Blocks() {
     (resource.data.document as JsonRecord | undefined)?.blocks,
     [],
   );
-  const [form, setForm] = useState({
-    id: "",
-    name: "",
-    examples: "",
-    injection: "",
-  });
   const [message, setMessage] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draft, setDraft] = useState({ name: "", examples: "", injection: "" });
+  const save = async (row: Record<string, unknown>, patch: JsonRecord) => {
+    setMessage("");
+    try {
+      await apiFetch(
+        `/api/dictation/blocks/${encodeURIComponent(String(row.id))}?scope=${scope}`,
+        { method: "PUT", json: { block: { ...row, ...patch } } },
+      );
+      await resource.reload();
+    } catch (error) {
+      setMessage(readableError(error));
+    }
+  };
+  const remove = async (row: Record<string, unknown>) => {
+    setMessage("");
+    try {
+      await apiFetch(
+        `/api/dictation/blocks/${encodeURIComponent(String(row.id))}?scope=${scope}`,
+        { method: "DELETE" },
+      );
+      await resource.reload();
+    } catch (error) {
+      setMessage(readableError(error));
+    }
+  };
   const create = async () => {
+    const name = draft.name.trim();
+    if (!name) return;
     setMessage("");
     try {
       await apiFetch(`/api/dictation/blocks?scope=${scope}`, {
         method: "POST",
         json: {
           block: {
-            id: form.id.trim(),
-            name: form.name.trim(),
-            match: form.examples.split("\n").filter(Boolean),
-            inject: form.injection,
+            id: blockSlug(name),
+            description: name,
+            match: {
+              examples: draft.examples
+                .split(/[,\n]/)
+                .map((part) => part.trim())
+                .filter(Boolean),
+            },
+            inject: { mode: "replace", template: draft.injection },
           },
         },
       });
-      setForm({ id: "", name: "", examples: "", injection: "" });
+      setDraft({ name: "", examples: "", injection: "" });
+      setDrafting(false);
       await resource.reload();
     } catch (error) {
       setMessage(readableError(error));
     }
   };
   return (
-    <SurfaceColumns
-      main={
-        <SurfaceSection
-          label="Routing blocks"
-          actions={
-            <Select
-              aria-label="Block scope"
-              value={scope}
-              onChange={(event) => setScope(event.target.value)}
-            >
-              <option value="global">Global</option>
-              <option value="project">Project</option>
-            </Select>
-          }
-        >
-          <SurfaceState
-            loading={resource.loading}
-            error={resource.error}
-            empty={!rows.length}
-            emptyLabel="No routing blocks"
-            emptyGlyph="⧉"
-            onRetry={() => void resource.reload()}
+    <SurfaceSection>
+      <SurfaceLibrary
+        count={rows.length}
+        countLabel={rows.length === 1 ? "block" : "blocks"}
+        controls={
+          <Select
+            aria-label="Block scope"
+            value={scope}
+            onChange={(event) => setScope(event.target.value)}
           >
-            <SurfaceRows>
-              {rows.map((row, index) => (
-                <SurfaceRow
-                  key={rowId(row, index)}
-                  title={String(row.name ?? row.id ?? "Block")}
-                  detail={
-                    presentValue(row.description ?? row.inject) || undefined
-                  }
-                  meta={
-                    <StatusPill>
-                      {String(row.enabled === false ? "off" : "active")}
-                    </StatusPill>
+            <option value="global">Global</option>
+            <option value="project">Project</option>
+          </Select>
+        }
+      >
+        <SurfaceState
+          loading={resource.loading}
+          error={resource.error}
+          onRetry={() => void resource.reload()}
+        >
+          {rows.map((row, index) => {
+            const match =
+              row.match && typeof row.match === "object"
+                ? (row.match as JsonRecord)
+                : {};
+            const examples = Array.isArray(match.examples)
+              ? match.examples
+              : [];
+            const inject =
+              row.inject && typeof row.inject === "object"
+                ? (row.inject as JsonRecord)
+                : {};
+            const mode = String(inject.mode ?? "replace");
+            return (
+              <SurfaceLibraryTile
+                key={rowId(row, index)}
+                face={
+                  <EditInPlace
+                    value={String(inject.template ?? "")}
+                    label={`${String(row.description ?? row.id)} template`}
+                    multiline
+                    onCommit={(next) =>
+                      void save(row, { inject: { ...inject, template: next } })
+                    }
+                  />
+                }
+                name={
+                  <EditInPlace
+                    value={String(row.description ?? row.id ?? "Block")}
+                    label={`${String(row.id)} name`}
+                    onCommit={(next) => void save(row, { description: next })}
+                  />
+                }
+                lamp={<span className="surface-mode">{mode}</span>}
+                says={
+                  examples.length
+                    ? examples.slice(0, 3).map((say, sayIndex) => (
+                        <span className="surface-say" key={sayIndex}>
+                          {String(say)}
+                        </span>
+                      ))
+                    : null
+                }
+                verbs={
+                  <ConfirmVerb
+                    label="Delete"
+                    confirmLabel="Delete?"
+                    onConfirm={() => void remove(row)}
+                  />
+                }
+              />
+            );
+          })}
+          {drafting ? (
+            <li className="surface-tile surface-tile-drafting">
+              <div className="surface-tile-face">
+                <TextArea
+                  aria-label="Injection text"
+                  placeholder="What this block injects"
+                  rows={4}
+                  value={draft.injection}
+                  onChange={(event) =>
+                    setDraft({ ...draft, injection: event.target.value })
                   }
                 />
-              ))}
-            </SurfaceRows>
-          </SurfaceState>
-        </SurfaceSection>
-      }
-      side={
-        <SurfaceSection label="New block">
-          <Field label="ID">
-            {({ id }) => (
-              <TextInput
-                id={id}
-                value={form.id}
-                onChange={(event) =>
-                  setForm({ ...form, id: event.target.value })
-                }
-              />
-            )}
-          </Field>
-          <Field label="Name">
-            {({ id }) => (
-              <TextInput
-                id={id}
-                value={form.name}
-                onChange={(event) =>
-                  setForm({ ...form, name: event.target.value })
-                }
-              />
-            )}
-          </Field>
-          <Field label="Example utterances">
-            {({ id }) => (
-              <TextArea
-                id={id}
-                value={form.examples}
-                onChange={(event) =>
-                  setForm({ ...form, examples: event.target.value })
-                }
-              />
-            )}
-          </Field>
-          <Field label="Injection">
-            {({ id }) => (
-              <TextArea
-                id={id}
-                value={form.injection}
-                onChange={(event) =>
-                  setForm({ ...form, injection: event.target.value })
-                }
-              />
-            )}
-          </Field>
-          <div className="surface-actions">
-            <Button
-              variant="primary"
-              disabled={!form.id.trim()}
-              onClick={create}
-            >
-              Create block
-            </Button>
-          </div>
-          {message ? (
-            <InlineMessage tone="error">{message}</InlineMessage>
-          ) : null}
-        </SurfaceSection>
-      }
-    />
+              </div>
+              <div className="surface-tile-spine">
+                <TextInput
+                  aria-label="Block name"
+                  placeholder="Name"
+                  value={draft.name}
+                  onChange={(event) =>
+                    setDraft({ ...draft, name: event.target.value })
+                  }
+                />
+                <TextInput
+                  aria-label="Spoken matches, comma separated"
+                  placeholder="Say: standup notes, stand up"
+                  value={draft.examples}
+                  onChange={(event) =>
+                    setDraft({ ...draft, examples: event.target.value })
+                  }
+                />
+                <div className="surface-actions">
+                  <Button
+                    dense
+                    variant="primary"
+                    disabled={!draft.name.trim()}
+                    onClick={() => void create()}
+                  >
+                    Create
+                  </Button>
+                  <Button dense variant="ghost" onClick={() => setDrafting(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </li>
+          ) : (
+            <SurfaceLibraryGhost
+              label="New block"
+              hint={
+                rows.length ? undefined : "No routing blocks on this scope yet"
+              }
+              onCreate={() => setDrafting(true)}
+            />
+          )}
+        </SurfaceState>
+        {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
+      </SurfaceLibrary>
+    </SurfaceSection>
   );
 }
 
@@ -725,6 +793,7 @@ function Knowledge() {
   );
 }
 
+/** HS-101 B3 — the Journal reads like a journal: a dated stream. */
 function Journal() {
   const resource = useResource<JsonRecord>(
     "/api/dictation/journal?limit=200",
@@ -740,6 +809,23 @@ function Journal() {
         .toLowerCase()
         .includes(query.toLowerCase()),
   );
+  const today = new Date();
+  const todayCount = rows.filter((row) => {
+    const date = streamDate(row.created_at ?? row.timestamp);
+    return date != null && isSameStreamDay(date, today);
+  }).length;
+  const taughtCount = rows.filter((row) => {
+    if (!row.corrected) return false;
+    const date = streamDate(row.created_at ?? row.timestamp);
+    return date != null && isSameStreamDay(date, today);
+  }).length;
+  const days: { label: string; rows: typeof filtered }[] = [];
+  for (const row of filtered) {
+    const label = streamDayLabel(streamDate(row.created_at ?? row.timestamp));
+    const bucket = days.at(-1);
+    if (bucket && bucket.label === label) bucket.rows.push(row);
+    else days.push({ label, rows: [row] });
+  }
   const remove = async (target: Record<string, unknown> | "all") => {
     await apiFetch(
       target === "all"
@@ -756,89 +842,150 @@ function Journal() {
     );
     setReplays((current) => ({ ...current, [String(row.id)]: result }));
   };
+  const editTranscript = async (
+    row: Record<string, unknown>,
+    next: string,
+  ) => {
+    await apiFetch(
+      `/api/dictation/journal/${encodeURIComponent(String(row.id))}`,
+      { method: "PUT", json: { transcript: next } },
+    );
+    await resource.reload();
+  };
   return (
-    <SurfaceSection
-      label="Dictation journal"
-      actions={
-        <ConfirmVerb
-          label="Clear journal"
-          confirmLabel="Clear all?"
-          disabled={!rows.length}
-          onConfirm={() => void remove("all")}
-        />
-      }
-    >
-      <Field label="Search journal">
-        {({ id }) => (
-          <TextInput
-            id={id}
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        )}
-      </Field>
-      <SurfaceState
-        loading={resource.loading}
-        error={resource.error}
-        empty={!filtered.length}
-        emptyLabel="No dictations on this device"
-        emptyGlyph="✎"
-        onRetry={() => void resource.reload()}
+    <SurfaceSection>
+      <SurfaceStream
+        count={todayCount}
+        countLabel={
+          taughtCount
+            ? `today · ${taughtCount} taught`
+            : "today"
+        }
+        controls={
+          <>
+            <TextInput
+              type="search"
+              aria-label="Search the journal"
+              placeholder="Search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <ConfirmVerb
+              label="Clear…"
+              confirmLabel="Clear all?"
+              disabled={!rows.length}
+              onConfirm={() => void remove("all")}
+            />
+          </>
+        }
       >
-        <SurfaceRows>
-          {filtered.map((row, index) => {
-            const replayResult = replays[String(row.id)];
-            const replayAfter =
-              replayResult?.after && typeof replayResult.after === "object"
-                ? (replayResult.after as JsonRecord)
-                : replayResult;
-            const replayText = String(replayAfter?.final_text ?? "");
-            return (
-              <SurfaceRow
-                key={rowId(row, index)}
-                title={String(row.transcript ?? "Untitled dictation")}
-                detail={
-                  humanTime(row.created_at ?? row.timestamp) ||
-                  presentValue(row.source) ||
-                  undefined
-                }
-                verbs={
-                  <>
-                    <Button dense onClick={() => void replay(row)}>
-                      Replay
-                    </Button>
-                    <ConfirmVerb
-                      label="Delete"
-                      confirmLabel="Delete?"
-                      onConfirm={() => void remove(row)}
+        <SurfaceState
+          loading={resource.loading}
+          error={resource.error}
+          empty={!filtered.length}
+          emptyLabel="No dictations on this device"
+          emptyGlyph="✎"
+          onRetry={() => void resource.reload()}
+        >
+          {days.map((day) => (
+            <SurfaceStreamDay key={day.label} label={day.label}>
+              {day.rows.map((row, index) => {
+                const replayResult = replays[String(row.id)];
+                const replayAfter =
+                  replayResult?.after && typeof replayResult.after === "object"
+                    ? (replayResult.after as JsonRecord)
+                    : replayResult;
+                const replayText = String(replayAfter?.final_text ?? "");
+                const learning =
+                  row.learning && typeof row.learning === "object"
+                    ? (row.learning as JsonRecord)
+                    : null;
+                const similar = Number(learning?.similar ?? 0);
+                const destination =
+                  presentValue(row.target_profile) || presentValue(row.intent);
+                const took = Number(row.total_ms ?? 0);
+                return (
+                  <SurfaceStreamEntry
+                    key={rowId(row, index)}
+                    when={streamTime(
+                      streamDate(row.created_at ?? row.timestamp),
+                    )}
+                    meta={
+                      <>
+                        {destination ? <span>→ {destination}</span> : null}
+                        {took > 0 ? <span>{Math.round(took)} ms</span> : null}
+                        {row.corrected ? (
+                          <span className="surface-learned">
+                            ✓ taught
+                            {learning?.matched && similar > 0
+                              ? ` · from ${similar} similar`
+                              : ""}
+                          </span>
+                        ) : null}
+                      </>
+                    }
+                    verbs={
+                      <>
+                        <Button dense onClick={() => void replay(row)}>
+                          Replay
+                        </Button>
+                        <Button
+                          dense
+                          variant="ghost"
+                          onClick={() =>
+                            void navigator.clipboard.writeText(
+                              String(row.transcript ?? ""),
+                            )
+                          }
+                        >
+                          Copy
+                        </Button>
+                        <ConfirmVerb
+                          label="Delete"
+                          confirmLabel="Delete?"
+                          onConfirm={() => void remove(row)}
+                        />
+                      </>
+                    }
+                    aside={
+                      replayResult ? (
+                        <div className="surface-preview" role="status">
+                          <span className="surface-preview-label">
+                            Replay — preview only
+                          </span>
+                          <p>
+                            {replayText ||
+                              "The replay completed without text."}
+                          </p>
+                          <div className="surface-actions">
+                            <Button
+                              dense
+                              variant="ghost"
+                              disabled={!replayText}
+                              onClick={() =>
+                                void navigator.clipboard.writeText(replayText)
+                              }
+                            >
+                              Copy result
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null
+                    }
+                  >
+                    <EditInPlace
+                      value={String(row.transcript ?? "")}
+                      label="transcript"
+                      multiline
+                      onCommit={(next) => void editTranscript(row, next)}
                     />
-                  </>
-                }
-              >
-                {replayResult ? (
-                  <div className="surface-preview" role="status">
-                    <span className="surface-preview-label">Preview only</span>
-                    <p>{replayText || "The replay completed without text."}</p>
-                    <div className="surface-actions">
-                      <Button
-                        dense
-                        variant="ghost"
-                        disabled={!replayText}
-                        onClick={() =>
-                          void navigator.clipboard.writeText(replayText)
-                        }
-                      >
-                        Copy result
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-              </SurfaceRow>
-            );
-          })}
-        </SurfaceRows>
-      </SurfaceState>
+                  </SurfaceStreamEntry>
+                );
+              })}
+            </SurfaceStreamDay>
+          ))}
+        </SurfaceState>
+      </SurfaceStream>
     </SurfaceSection>
   );
 }

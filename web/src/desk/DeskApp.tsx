@@ -18,6 +18,7 @@ import { DeliveryBoard } from "./components/DeliveryBoard";
 import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
+import { GlassDropLayer } from "./components/GlassDropLayer";
 import { DeskToolInspector } from "./components/DeskToolInspector";
 import { Dock, Expose, SnapGhost, Switcher } from "./components/DeskWindow";
 import { SurfaceWindows } from "./components/SurfaceWindows";
@@ -47,6 +48,7 @@ export default function DeskApp() {
   return (
     <div className="desk-next">
       <Atmosphere />
+      <GlassDropLayer />
       <DeskChrome showDailyStarts={!empty} />
       {empty ? (
         <EmptyDesk arrivalRequired={setup?.arrival_required === true} />

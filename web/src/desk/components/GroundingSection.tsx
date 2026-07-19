@@ -3,7 +3,8 @@
 // digest / transcript / its bound artifacts, each independently toggleable;
 // the gauge prices the selection live from REAL fetched lengths and a
 // past-budget selection refuses here, before any run.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDesk } from "../store";
 import {
   fetchGroundingMeeting,
   fetchGroundingResource,
@@ -27,6 +28,12 @@ export function GroundingSection(props: {
   const { meetings, resources = [], selection, onChange, limitTokens } = props;
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
+  // HS-101 B7 — the well lights while a desk object is in flight and
+  // receives it through the glass (the engine dispatches the drop).
+  const rootRef = useRef<HTMLDivElement>(null);
+  const draggingObject = useDesk(
+    (s) => Boolean(s.draggingId) && !String(s.draggingId).startsWith("zone:"),
+  );
 
   const used = groundingTokens(selection);
   const over = used > limitTokens;
@@ -74,8 +81,48 @@ export function GroundingSection(props: {
     });
   };
 
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const onGlassDrop = (event: Event) => {
+      const detail = (event as CustomEvent).detail as {
+        id?: string;
+        kind?: string;
+      } | null;
+      if (!detail?.id) return;
+      setOpen(true);
+      const meeting = meetings.find((m) => m.id === detail.id);
+      if (meeting) {
+        if (!picked(meeting.id)) void toggleMeeting(meeting);
+        return;
+      }
+      const res = resources.find(
+        (row) =>
+          row.id === detail.id ||
+          row.ref === detail.id ||
+          row.ref === `${detail.kind}:${detail.id}`,
+      );
+      if (
+        res &&
+        !(selection.resources || []).some((r) => r.ref === res.ref)
+      ) {
+        void toggleResource(res);
+      }
+    };
+    el.addEventListener("desk:glass-drop", onGlassDrop);
+    return () => el.removeEventListener("desk:glass-drop", onGlassDrop);
+  });
+
   return (
-    <div className={"desk-ground" + (open ? " is-open" : "")}>
+    <div
+      ref={rootRef}
+      data-glass-accept="desk-object"
+      className={
+        "desk-ground" +
+        (open ? " is-open" : "") +
+        (draggingObject ? " is-drop-ready" : "")
+      }
+    >
       <button
         type="button"
         className="desk-ground-head"

@@ -272,6 +272,10 @@
 
 .signal-switch,
 .signal-choice {
+  /* HS-101 B8 — anchor the hidden input INSIDE the control: unanchored
+     absolute positioning let it escape the window body and fake a
+     13px horizontal scroll (the grown geometry walk caught it). */
+  position: relative;
   min-height: 52px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);

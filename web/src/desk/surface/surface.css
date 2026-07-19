@@ -147,15 +147,20 @@
   gap: 4px;
   flex-shrink: 0;
   opacity: 0;
-  transition: opacity var(--duration-short) ease;
+  transform: translateY(2px);
+  transition:
+    opacity var(--duration-short) var(--ease-quart),
+    transform var(--duration-short) var(--ease-quart);
 }
 .surface-row:hover .surface-row-verbs,
 .surface-row:focus-within .surface-row-verbs {
   opacity: 1;
+  transform: translateY(0);
 }
 @media (pointer: coarse) {
   .surface-row-verbs {
     opacity: 1;
+    transform: none;
   }
 }
 
@@ -316,14 +321,102 @@
   gap: 6px;
 }
 
-/* A quiet inset preview (a replay result, a prepared answer). */
+/* HS-101 rule 6 — receipts float in aerogel: a suspended translucent
+   inset with a soft edge all the way around. The left accent rail is
+   BANNED (the owner's ban, 2026-07-19; test_interior_canon_guard.py
+   enforces it). */
+.surface-aerogel,
 .surface-preview {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px var(--desk-surface-row-pad-x);
-  border-left: 2px solid var(--accent-tint);
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--desk-aerogel-fill);
+  box-shadow:
+    inset 0 0 0 1px var(--desk-aerogel-edge),
+    var(--desk-aerogel-shadow);
+  backdrop-filter: var(--desk-aerogel-blur);
+  -webkit-backdrop-filter: var(--desk-aerogel-blur);
   font-size: var(--desk-surface-detail-size);
+  transform-origin: top center;
+  animation: surface-aerogel-in var(--duration-short) var(--ease-back);
+}
+
+/* HS-101 rule 5 — the desk is fluid: operating it answers with
+   motion. Aerogel receipts inflate from their row; sections (and so
+   wing faces, which compose them) rise in as they arrive; row lists
+   settle. Compositor-only, token-ridden, instant under reduced
+   motion (the block at the end of this file). */
+@keyframes surface-aerogel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes surface-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.surface-section {
+  animation: surface-rise-in var(--duration-medium) var(--ease-quart) both;
+}
+
+/* HS-101 — the interior type scale (DESIGN_SYSTEM.md, "The interior
+   canon"): display leads a face at most once; primary is what the
+   material IS. Body/secondary/caption stay the HS-98 tokens. */
+.surface-display {
+  font-family: var(--font-display);
+  font-size: var(--desk-type-display-size);
+  font-weight: var(--desk-type-display-weight);
+  line-height: var(--desk-type-display-lh);
+  letter-spacing: var(--letter-spacing-tight);
+}
+.surface-primary {
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+}
+
+/* HS-101 rule 1 — edit in place: the presented text is the editor.
+   Same geometry presented and editing; the ring is the only tell. */
+.surface-edit-in-place {
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  background: none;
+  border: 0;
+  padding: 1px 4px;
+  margin: -1px -4px;
+  border-radius: 6px;
+  max-width: 100%;
+}
+button.surface-edit-in-place {
+  cursor: text;
+}
+button.surface-edit-in-place:hover {
+  background: var(--wash-1);
+}
+.surface-edit-in-place.is-editing {
+  display: block;
+  width: 100%;
+  background: var(--wash-1);
+  box-shadow: 0 0 0 1px var(--accent);
+  outline: none;
+  resize: none;
+}
+.surface-edit-in-place.is-locked {
+  cursor: default;
 }
 .surface-preview > .surface-preview-label {
   font-size: var(--desk-surface-label-size);
@@ -680,4 +773,451 @@
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-faint);
+}
+
+/* HS-101 rule 5 — fluidity respects the hand that asked for none. */
+@media (prefers-reduced-motion: reduce) {
+  .surface-section,
+  .surface-aerogel,
+  .surface-preview {
+    animation: none;
+  }
+  .surface-row-verbs {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* HS-101 rule 2 — the dated stream (SurfaceStream). */
+.surface-stream {
+  display: flex;
+  flex-direction: column;
+}
+.surface-stream-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 4px 8px;
+}
+.surface-stream-count-label {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.surface-stream-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.surface-stream-day {
+  display: flex;
+  flex-direction: column;
+}
+.surface-stream-day-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 4px 6px;
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.surface-stream-day-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--wash-1);
+}
+.surface-stream-entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.surface-stream-entry {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 0 12px;
+  padding: 8px 10px 10px;
+  border-radius: var(--radius-sm);
+  animation: surface-rise-in var(--duration-medium) var(--ease-quart) both;
+}
+.surface-stream-entry:hover,
+.surface-stream-entry:focus-within {
+  background: var(--wash-1);
+}
+.surface-stream-when {
+  grid-column: 1;
+  padding-top: 3px;
+  text-align: right;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+}
+.surface-stream-said {
+  grid-column: 2;
+  font-size: var(--desk-type-primary-size);
+  font-weight: 480;
+  line-height: var(--desk-type-primary-lh);
+  overflow-wrap: anywhere;
+}
+.surface-stream-meta {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.surface-stream-verbs {
+  margin-left: auto;
+}
+.surface-stream-entry:hover .surface-stream-verbs,
+.surface-stream-entry:focus-within .surface-stream-verbs {
+  opacity: 1;
+  transform: translateY(0);
+}
+.surface-stream-controls input[type="search"] {
+  width: 150px;
+  min-width: 0;
+}
+.surface-stream-entry > .surface-aerogel,
+.surface-stream-entry > .surface-preview {
+  grid-column: 2;
+  margin-top: 8px;
+}
+@container surface (max-width: 559.9px) {
+  .surface-stream-entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .surface-stream-when,
+  .surface-stream-said,
+  .surface-stream-meta,
+  .surface-stream-entry > .surface-aerogel,
+  .surface-stream-entry > .surface-preview {
+    grid-column: 1;
+  }
+  .surface-stream-when {
+    text-align: left;
+    padding-top: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface-stream-entry {
+    animation: none;
+  }
+}
+
+/* HS-48/HS-101 — the honest learned chip: only when the router would
+   actually apply a taught correction (the API sends null otherwise). */
+.surface-learned {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  color: var(--ok);
+  background: var(--ok-soft);
+  box-shadow: inset 0 0 0 1px var(--ok-soft);
+}
+
+/* HS-101 rule 2 — the library (SurfaceLibrary): tiles wear their
+   payload as the face. */
+.surface-library-wrap {
+  display: flex;
+  flex-direction: column;
+}
+.surface-library {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.surface-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--wash-1);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  min-height: 150px;
+  animation: surface-rise-in var(--duration-medium) var(--ease-quart) both;
+}
+.surface-tile:hover,
+.surface-tile:focus-within {
+  background: var(--wash-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.surface-tile-face {
+  position: relative;
+  flex: 1;
+  padding: 11px 12px 8px;
+  background: var(--desk-window-well);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  line-height: 1.55;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow: hidden;
+  max-height: 120px;
+}
+.surface-tile-face::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 28px;
+  background: linear-gradient(transparent, var(--shadow-ink-2));
+  pointer-events: none;
+}
+.surface-tile-face .surface-edit-in-place {
+  font: inherit;
+  color: inherit;
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+.surface-tile-face .surface-edit-in-place.is-editing {
+  min-height: 90px;
+}
+.surface-tile-spine {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 12px 11px;
+}
+.surface-tile-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.surface-tile-name .lamp,
+.surface-tile-name > .surface-mode {
+  margin-left: auto;
+}
+.surface-mode {
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.lamp {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+}
+.lamp[data-on="true"] {
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok-soft);
+}
+.lamp[data-on="false"] {
+  background: var(--wash-2);
+}
+.surface-tile-says {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.surface-say {
+  font-size: var(--desk-surface-label-size);
+  color: var(--text-muted);
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--wash-1);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+.surface-say::before {
+  content: "“";
+  color: var(--text-faint);
+}
+.surface-say::after {
+  content: "”";
+  color: var(--text-faint);
+}
+.surface-tile > .surface-row-verbs {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+.surface-tile:hover > .surface-row-verbs,
+.surface-tile:focus-within > .surface-row-verbs {
+  opacity: 1;
+  transform: translateY(0);
+}
+.surface-tile-ghost {
+  background: none;
+  box-shadow: none;
+  border: 1.5px dashed var(--border);
+  overflow: visible;
+}
+.surface-tile-ghost:hover,
+.surface-tile-ghost:focus-within {
+  background: var(--wash-1);
+  box-shadow: none;
+}
+.surface-tile-ghost-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--desk-surface-body-size);
+  cursor: pointer;
+  border-radius: 12px;
+}
+.surface-tile-ghost-btn small {
+  color: var(--text-faint);
+  font-size: var(--desk-surface-label-size);
+}
+.surface-tile-ghost-plus {
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface-tile {
+    animation: none;
+  }
+}
+
+/* HS-101 rule 2 — the switchboard (SurfaceSwitchboard). */
+.surface-switchboard {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+@container surface (min-width: 560px) {
+  .surface-switchboard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .surface-bay-route {
+    grid-column: 1 / -1;
+  }
+}
+.surface-bay {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: var(--wash-1);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  animation: surface-rise-in var(--duration-medium) var(--ease-quart) both;
+}
+.surface-bay:hover,
+.surface-bay:focus-within {
+  background: var(--wash-2);
+}
+.surface-bay-route {
+  background: var(--accent-tint);
+  box-shadow: inset 0 0 0 1px var(--accent-soft);
+}
+.surface-bay-route:hover,
+.surface-bay-route:focus-within {
+  background: var(--accent-tint);
+}
+.surface-bay-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.surface-bay-who {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+  min-width: 0;
+}
+.surface-bay-state {
+  font-size: var(--desk-surface-detail-size);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.surface-bay-model {
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: var(--letter-spacing-tight);
+  font-size: var(--desk-type-primary-size);
+  color: var(--text-muted);
+}
+.surface-bay-route .surface-bay-model {
+  font-size: var(--desk-type-display-size);
+  line-height: var(--desk-type-display-lh);
+  color: var(--text);
+  margin: 1px 0;
+}
+.surface-bay-where {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.surface-bay-where span {
+  white-space: nowrap;
+}
+.surface-bay-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.surface-bay-tag {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-tint);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--accent-soft);
+}
+.surface-bay .surface-row-verbs {
+  position: absolute;
+  right: 9px;
+  bottom: 9px;
+  padding: 3px 5px;
+  border-radius: var(--radius-sm);
+  background: var(--desk-panel-fill);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+.surface-bay:hover .surface-row-verbs,
+.surface-bay:focus-within .surface-row-verbs {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface-bay {
+    animation: none;
+  }
 }

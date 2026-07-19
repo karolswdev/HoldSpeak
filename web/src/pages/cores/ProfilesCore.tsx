@@ -21,10 +21,10 @@ import {
 import { asRows, rowId, useResource } from "../pageSupport";
 import {
   ConfirmVerb,
-  SurfaceRow,
-  SurfaceRows,
+  SurfaceBay,
   SurfaceSection,
   SurfaceState,
+  SurfaceSwitchboard,
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
 
@@ -64,14 +64,43 @@ const blank = (): Profile => ({
   requires_key: true,
 });
 
+function lastSeenLabel(seconds: unknown): string {
+  const n = Number(seconds);
+  if (!Number.isFinite(n) || n < 0) return "offline";
+  if (n < 90) return "offline — last seen just now";
+  if (n < 5400) return `offline — last seen ${Math.round(n / 60)} m ago`;
+  return `offline — last seen ${Math.round(n / 3600)} h ago`;
+}
+
 export function ProfilesCore({ hero }: CoreProps) {
   const resource = useResource<Envelope>("/api/profiles", {});
+  const settings = useResource<Record<string, unknown>>("/api/settings", {});
   const [editing, setEditing] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const profiles = asRows(resource.data, ["profiles"]).filter(
     (row) => !row.deleted,
   );
+  const dictation = (settings.data.dictation ?? {}) as Record<string, unknown>;
+  const runtime = (dictation.runtime ?? {}) as Record<string, unknown>;
+  const defaultId = String(runtime.profile_id ?? "");
+  const makeDefault = async (profile: Profile) => {
+    setBusy(true);
+    setMessage("");
+    try {
+      await apiFetch("/api/settings", {
+        method: "PUT",
+        json: {
+          dictation: { runtime: { profile_id: String(profile.id) } },
+        },
+      });
+      await settings.reload();
+    } catch (error) {
+      setMessage(readableError(error));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const field = (key: string, value: unknown) =>
     setEditing((current) => (current ? { ...current, [key]: value } : current));
@@ -133,61 +162,106 @@ export function ProfilesCore({ hero }: CoreProps) {
               emptyGlyph="⇄"
             />
           ) : (
-            <SurfaceRows>
-              {profiles.map((profile, index) => {
-                const kind = String(profile.kind ?? "onDevice");
-                const node = String(profile.node ?? "");
-                const liveness = resource.data.mesh_liveness?.[node];
-                return (
-                  <SurfaceRow
-                    key={rowId(profile, index)}
-                    title={String(profile.name ?? "Untitled destination")}
-                    detail={
-                      kind === "openAICompatible"
-                        ? String(profile.base_url ?? "Endpoint")
-                        : kind === "meshNode"
-                          ? `mesh · ${node}`
-                          : String(profile.model_file ?? "This device")
-                    }
-                    meta={
-                      <StatusPill
-                        tone={
-                          kind === "meshNode"
-                            ? liveness?.live
-                              ? "success"
-                              : "warning"
-                            : "neutral"
-                        }
-                      >
-                        {kind === "meshNode"
-                          ? liveness?.live
-                            ? "live"
-                            : "offline"
-                          : destinationClassLabel(
-                              profileDestinationClass(profile),
-                            )}
-                      </StatusPill>
-                    }
-                    verbs={
-                      <>
-                        <Button
-                          dense
-                          onClick={() => setEditing({ ...profile })}
-                        >
-                          Edit
-                        </Button>
-                        <ConfirmVerb
-                          label="Delete"
-                          confirmLabel="Delete?"
-                          busy={busy}
-                          onConfirm={() => void remove(profile)}
+            <SurfaceSwitchboard>
+              {[...profiles]
+                .sort((a, b) =>
+                  String(a.id) === defaultId
+                    ? -1
+                    : String(b.id) === defaultId
+                      ? 1
+                      : 0,
+                )
+                .map((profile, index) => {
+                  const kind = String(profile.kind ?? "onDevice");
+                  const node = String(profile.node ?? "");
+                  const liveness = resource.data.mesh_liveness?.[node];
+                  const isMesh = kind === "meshNode";
+                  const live = isMesh ? Boolean(liveness?.live) : true;
+                  const isDefault =
+                    Boolean(defaultId) && String(profile.id) === defaultId;
+                  const model =
+                    String(profile.model ?? "") ||
+                    String(profile.model_file ?? "").split("/").pop() ||
+                    "";
+                  const stateText = isMesh
+                    ? live
+                      ? "· live"
+                      : `· ${lastSeenLabel(liveness?.last_seen_seconds)}`
+                    : "· ready";
+                  const ctx = Number(profile.context_limit ?? 0);
+                  return (
+                    <SurfaceBay
+                      key={rowId(profile, index)}
+                      route={isDefault}
+                      lamp={
+                        <span
+                          className="lamp"
+                          data-on={live ? "true" : "false"}
+                          aria-hidden="true"
                         />
-                      </>
-                    }
-                  />
-                );
-              })}
-            </SurfaceRows>
+                      }
+                      name={String(profile.name ?? "Untitled destination")}
+                      state={stateText}
+                      model={model || undefined}
+                      where={
+                        <>
+                          {kind === "openAICompatible" ? (
+                            <span>{String(profile.base_url ?? "")}</span>
+                          ) : null}
+                          {kind === "onDevice" ? <span>on device</span> : null}
+                          {isMesh ? <span>mesh · {node}</span> : null}
+                          {ctx > 0 ? (
+                            <span>ctx {Math.round(ctx / 1024)}k</span>
+                          ) : null}
+                        </>
+                      }
+                      badge={
+                        <StatusPill
+                          tone={
+                            isMesh && !live
+                              ? "warning"
+                              : profileDestinationClass(profile) ===
+                                  "external_service"
+                                ? "warning"
+                                : "success"
+                          }
+                        >
+                          {destinationClassLabel(
+                            profileDestinationClass(profile),
+                          )}
+                        </StatusPill>
+                      }
+                      tag={isDefault ? "Default" : undefined}
+                      verbs={
+                        <>
+                          {!isDefault ? (
+                            <Button
+                              dense
+                              variant="ghost"
+                              loading={busy}
+                              onClick={() => void makeDefault(profile)}
+                            >
+                              Make default
+                            </Button>
+                          ) : null}
+                          <Button
+                            dense
+                            onClick={() => setEditing({ ...profile })}
+                          >
+                            Edit
+                          </Button>
+                          <ConfirmVerb
+                            label="Delete"
+                            confirmLabel="Delete?"
+                            busy={busy}
+                            onConfirm={() => void remove(profile)}
+                          />
+                        </>
+                      }
+                    />
+                  );
+                })}
+            </SurfaceSwitchboard>
           )}
         </SurfaceSection>
         {editing ? (

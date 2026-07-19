@@ -1,15 +1,16 @@
 # Phase 101 — The Native Innards
 
-**Status:** IN PROGRESS (1/4, 2026-07-19) — the canon and the five
-mockups are cut; the phase is parked at the HS-101-02 gate for the
-owner's verdict. Chartered by the owner's
+**Status:** IN PROGRESS (3/4, 2026-07-19) — the canon is approved
+and BUILT: all nine ledger items live, full sweep 4122/0. Only the
+closeout sitting remains. Chartered by the owner's
 Phase-100 sitting verdict, verbatim: *"There's still, a lot of the
 windows you made? Still feel like a bunch of HTML slapped inside a
 'nicer' (still not nice enough) looking container…"* — widened the
 same day by the owner's standing order: *"let's also — just not be
 shy — and really push this into OS territory."*
 
-**Last updated:** 2026-07-19 (HS-101-01 done — canon + mockups).
+**Last updated:** 2026-07-19 (HS-101-03 done — the nine-item build
+shipped and swept green; the sitting remains).
 
 ## Why this phase exists
 
@@ -60,9 +61,9 @@ Two fronts, one phase, both from the owner's close-of-100 words:
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-101-01 | The interior canon + mockups | done | [story-01-interior-canon](./story-01-interior-canon.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-101-02 | The owner's gate | in-progress | [story-02-gate](./story-02-gate.md) | — |
-| HS-101-03 | The build (authored at the gate) | backlog | [story-03-build](./story-03-build.md) | — |
-| HS-101-04 | Closeout (the owner's sitting) | backlog | [story-04-closeout](./story-04-closeout.md) | — |
+| HS-101-02 | The owner's gate | done | [story-02-gate](./story-02-gate.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-101-03 | The build (authored at the gate) | done | [story-03-build](./story-03-build.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-101-04 | Closeout (the owner's sitting) | in-progress | [story-04-closeout](./story-04-closeout.md) | — |
 
 ## Where we are
 
@@ -72,13 +73,30 @@ the type scale rides `--desk-type-*` component tokens (gate clean),
 and the five mockups (journal stream / blocks library / runs-on
 switchboard / system shade / drag-through-glass) exist at 1440 AND
 393, census-derived from the canon doc and looked at.
-HS-101-02 round 1 is in and folded (2026-07-19): direction approved
-("this is absolutely turning into something more resembling of the
-actual OS"), with two amendments now in the canon — the left accent
-rail is BANNED verbatim (the Journal's replay receipt re-cut as an
-aerogel inset, `--desk-aerogel-*` tokens ratified, the six shipped
-rails in web/src marked to die at the build behind a named guard) and
-FLUIDITY is canon (rule 5 rewritten: operating the desk answers with
-motion; the build gets a dedicated fluid-desk story). Awaiting the
-owner's call on the amended canon; the build stories are authored
-from the APPROVED version.
+HS-101-02 is CLOSED on the owner's call. Round 1 (2026-07-19):
+direction approved ("this is absolutely turning into something more
+resembling of the actual OS") with two amendments folded into the
+canon — the left accent rail BANNED verbatim (aerogel insets
+instead, `--desk-aerogel-*` ratified, the six shipped rails marked
+to die) and FLUIDITY made canon (rule 5: operating the desk answers
+with motion). The call, verbatim: "Well, merge it in for me, and
+then keep going..." — PR #359 merged (`b858299b`); the amended canon
+is the approved canon. HS-101-03 is authored from it: the ledger
+B1–B9 (B9 added mid-build at the owner's ask — the agent panes and
+the delivery rails wear the canon). SHIPPED so far, each a gated
+commit with its guard, live-proven on a staged hub: B1 (the kit +
+the rail ban — all six shipped rails dead, aerogel lives,
+EditInPlace, the interior-canon guard), B2 (the fluid desk —
+fluidity census), B3 (the Journal as a dated stream + PUT
+edit-in-place, driven live), B4 (Blocks as a library — the create
+path's silently-broken schema fixed by honesty), B5 (Runs on as a
+switchboard — Make default on the real settings write), B6 (the
+system shade — honest groups; Recovered awaits a real feed), B8
+(⌘1–⌘4/⌘W/⌘M/⌘/ + the grown geometry walk, whose new interior
+assertions immediately killed three real defects; new keys leg).
+HS-101-03 is DONE: all nine items shipped, and the closing full
+sweep caught five real failures that were fixed before the flip
+(journal source-pins, API-surface consumers, role=dialog vs the
+desk locks, the null-read guard on a test). Full sweep 4122 passed /
+0 failed / 37 environment skips. Next: HS-101-04 — the assembled
+chain from merged main and the owner's sitting.

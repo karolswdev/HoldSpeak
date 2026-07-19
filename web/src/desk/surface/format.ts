@@ -52,3 +52,49 @@ export function presentValue(value: unknown): string {
     return "";
   return text;
 }
+
+/** HS-101 B3 — the dated stream's time grammar. The wire sends epoch
+ * seconds, epoch millis, or ISO strings; junk reads as null and the
+ * stream files it under "Undated" rather than inventing a date. */
+export function streamDate(value: unknown): Date | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Date(value > 1e12 ? value : value * 1000);
+  }
+  if (typeof value === "string" && value) {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  return null;
+}
+
+function sameDay(a: Date, b: Date): boolean {
+  return a.toDateString() === b.toDateString();
+}
+
+export function streamDayLabel(date: Date | null, now?: Date): string {
+  if (!date) return "Undated";
+  const today = now ?? new Date();
+  const dated = date.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  if (sameDay(date, today)) return `Today — ${dated}`;
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (sameDay(date, yesterday)) return `Yesterday — ${dated}`;
+  return dated;
+}
+
+export function streamTime(date: Date | null): string {
+  if (!date) return "";
+  return date.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+export function isSameStreamDay(a: Date, b: Date): boolean {
+  return sameDay(a, b);
+}

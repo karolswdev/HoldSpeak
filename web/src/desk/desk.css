@@ -135,6 +135,27 @@
   background: var(--desk-panel-fill);
   box-shadow: var(--desk-transient-shadow);
   backdrop-filter: var(--desk-window-blur);
+  /* HS-101 rule 5 — transient surfaces spring in (fluidity canon). */
+  transform-origin: top left;
+  animation: desk-transient-in var(--duration-short) var(--ease-back);
+}
+.desk-next .desk-menu-list.is-above {
+  transform-origin: bottom left;
+}
+@keyframes desk-transient-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-menu-list {
+    animation: none;
+  }
 }
 .desk-next .desk-menu-list.is-below {
   border-top-left-radius: var(--radius-xs);
@@ -331,7 +352,6 @@
   padding: var(--space-4);
   overflow: auto;
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
-  border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
   border-radius: 18px;
   background: var(--desk-window-fill);
   color: var(--text);
@@ -438,7 +458,6 @@
   padding: var(--space-4);
   overflow: auto;
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
-  border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
   border-radius: 18px;
   background: var(--desk-window-fill);
   color: var(--text);
@@ -746,7 +765,6 @@
   display: flex;
   flex-direction: column;
   border: 1px solid color-mix(in srgb, var(--k, #ff6b35) 34%, var(--border));
-  border-left: 3px solid color-mix(in srgb, var(--k, #ff6b35) 70%, transparent);
 }
 /* HS-99-02 — the title bar is a BAR (DESIGN_SYSTEM.md, the chrome
    ladder): the head tone sits one step above the body, separation is
@@ -2336,25 +2354,36 @@
 .desk-next .desk-chip.is-stale {
   opacity: 0.6;
 }
+/* HS-101 B9 — the pane reads like a SCRIPT: the terminal text is the
+   material on the well tone (HS-99 depth ladder — no bordered box),
+   inset like a screen. Shared by the session pull-out and the
+   delivery terminal window. */
 .desk-next .desk-session-pane {
   flex: 1;
   margin: 0;
-  padding: 10px;
-  border: 1px solid var(--surface-3);
-  border-radius: var(--radius-sm);
-  background: var(--surface-1);
+  padding: 12px 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--desk-window-well);
+  box-shadow:
+    inset 0 1px 0 var(--shade-1),
+    inset 0 0 0 1px var(--border-subtle);
   font-family: var(--font-mono);
   font-size: 11px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text);
   white-space: pre-wrap;
   word-break: break-word;
   overflow-y: auto;
   max-height: calc(100vh - 200px);
 }
+/* HS-101 rule 6: the asked question is a receipt — it floats in
+   aerogel (the left accent rail is banned). */
 .desk-next .desk-session-question {
-  border-left: 2px solid var(--accent);
-  padding-left: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--desk-aerogel-fill);
+  box-shadow: inset 0 0 0 1px var(--desk-aerogel-edge);
   max-height: 120px;
   overflow-y: auto;
 }
@@ -2698,7 +2727,6 @@
   flex-direction: column;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
-  border-left: 3px solid color-mix(in srgb, var(--accent) 70%, transparent);
   border-radius: 18px;
   background: var(--desk-window-fill);
   color: var(--text);
@@ -4213,4 +4241,306 @@
 }
 .desk-next .desk-dock-app.is-front {
   color: var(--text);
+}
+
+/* HS-101 B6 — the system shade: one surface behind the bell. Drops
+   from the bar on the transient material; honest groups inside. */
+.desk-next .desk-shade {
+  position: fixed;
+  top: 40px;
+  right: 10px;
+  z-index: var(--desk-z-popover);
+  width: min(380px, calc(100vw - 16px));
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--desk-transient-radius);
+  background: var(--desk-panel-fill);
+  box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
+  -webkit-backdrop-filter: var(--desk-window-blur);
+  transform-origin: top right;
+  animation: desk-shade-drop var(--duration-medium) var(--ease-back);
+}
+@keyframes desk-shade-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.desk-next .desk-shade-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 14px 6px;
+}
+.desk-next .desk-shade-title {
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .desk-shade-memory {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-detail-size);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+.desk-next .desk-shade-memory:hover {
+  background: var(--wash-1);
+  color: var(--text);
+}
+.desk-next .desk-shade-group {
+  padding: 4px 8px 8px;
+}
+.desk-next .desk-shade-group + .desk-shade-group {
+  border-top: 1px solid var(--wash-1);
+}
+.desk-next .desk-shade-group h4 {
+  margin: 0;
+  padding: 6px 6px 4px;
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.desk-next .desk-shade-group h4 b {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.desk-next .desk-shade-item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 2px 8px;
+  padding: 7px 6px 9px;
+  border-radius: var(--radius-md);
+}
+.desk-next .desk-shade-item:hover {
+  background: var(--wash-1);
+}
+.desk-next .desk-shade-glyph {
+  text-align: center;
+  padding-top: 1px;
+  color: var(--text-muted);
+}
+.desk-next .desk-shade-what {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.desk-next .desk-shade-what strong {
+  font-size: var(--desk-surface-body-size);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.desk-next .desk-shade-what small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-shade-do {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.desk-next .desk-shade-do a,
+.desk-next .desk-shade-do button {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--wash-2);
+  color: var(--text);
+  font-size: var(--desk-surface-detail-size);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.desk-next .desk-shade-do a:hover,
+.desk-next .desk-shade-do button:hover {
+  background: var(--surface-hover);
+}
+.desk-next .desk-shade-do .is-quiet {
+  background: none;
+  color: var(--text-faint);
+}
+.desk-next .desk-shade-quiet {
+  margin: 0;
+  padding: 4px 6px 8px;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-detail-size);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-shade {
+    animation: none;
+  }
+}
+
+/* HS-101 B8 — the shortcut sheet: drawn, on the transient material. */
+.desk-shortcut-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-popover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--shade-1);
+}
+.desk-shortcut-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px 22px;
+  width: min(620px, calc(100vw - 32px));
+  padding: 18px 22px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--desk-transient-radius);
+  background: var(--desk-panel-fill);
+  box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
+  -webkit-backdrop-filter: var(--desk-window-blur);
+  transform-origin: center;
+  animation: desk-transient-in var(--duration-short) var(--ease-back);
+}
+.desk-shortcut-panel h4 {
+  margin: 0 0 4px;
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.desk-shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 0;
+  font-size: var(--desk-surface-body-size);
+  color: var(--text-muted);
+}
+.desk-shortcut-row kbd {
+  min-width: 34px;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text);
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--desk-window-well);
+  box-shadow: inset 0 0 0 1px var(--border-subtle), inset 0 -1.5px 0 var(--shade-1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-shortcut-panel {
+    animation: none;
+  }
+}
+
+/* HS-101 B7 — the glass-drop well lights BEFORE the drop. */
+.desk-next .desk-ground.is-drop-ready {
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent-soft),
+    0 0 0 4px var(--accent-tint);
+  background: var(--accent-tint);
+  border-radius: var(--radius-md);
+  transition: box-shadow var(--duration-short) var(--ease-quart);
+}
+
+/* HS-101 B7 — the file-drop veil: lights before the drop, refuses by
+   name, and hands the result a verb. */
+.desk-next .desk-glassdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-popover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.desk-next .desk-glassdrop.is-armed {
+  background: var(--shade-1);
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
+}
+.desk-next .desk-glassdrop-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 22px;
+  border-radius: var(--desk-transient-radius);
+  background: var(--desk-panel-fill);
+  border: 1.5px dashed var(--accent-soft);
+  box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
+  -webkit-backdrop-filter: var(--desk-window-blur);
+  pointer-events: auto;
+  animation: desk-transient-in var(--duration-short) var(--ease-back);
+}
+.desk-next .desk-glassdrop-card strong {
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+}
+.desk-next .desk-glassdrop-card small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-glassdrop-verbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.desk-next .desk-glassdrop-verbs button {
+  height: 26px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 650;
+  font-size: var(--desk-surface-detail-size);
+  cursor: pointer;
+}
+.desk-next .desk-glassdrop-verbs .is-quiet {
+  background: var(--wash-2);
+  color: var(--text);
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-glassdrop-card {
+    animation: none;
+  }
+}
+
+/* HS-101 B9 — the delivery rails wear the interior scale: the item
+   IS the material (primary), kind/freshness are metadata. Scoped to
+   the delivery list; the desk's Files table keeps its own grammar. */
+.desk-next .desk-dlv-list .desk-list-table th[scope="row"] .desk-list-open {
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+}
+.desk-next .desk-dlv-list .desk-list-table td {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-dlv-list h2 {
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }

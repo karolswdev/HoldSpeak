@@ -14,6 +14,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { useDesk, type PanelRect } from "../store";
@@ -795,6 +796,19 @@ export function useOpenWindows() {
   );
 }
 
+/** HS-101 B8 — the front window: the last non-minimized id in the
+ * stacking order that is actually open (the ⌘W/⌘M target). */
+export function frontWindowId(): string | null {
+  const s = useDesk.getState();
+  for (let i = s.panelOrder.length - 1; i >= 0; i--) {
+    const id = s.panelOrder[i];
+    if (s.panelMin.includes(id)) continue;
+    if (registrySnapshot.some((w) => w.id === id)) return id;
+  }
+  const open = registrySnapshot.filter((w) => !s.panelMin.includes(w.id));
+  return open.length ? open[open.length - 1].id : null;
+}
+
 function useCompactViewport(): boolean {
   return useSyncExternalStore(
     (cb) => {
@@ -1239,6 +1253,53 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const panelOrder = useDesk((s) => s.panelOrder);
   const windows = useOpenWindows();
   const launchers = useLaunchers();
+  // HS-101 B8 — the global keyboard grammar (canon §6.2): ⌘1–⌘4 the
+  // four applications, ⌘W close, ⌘M minimize, ⌘/ the drawn sheet.
+  // (In a browser tab the UA may reserve ⌘W/⌘M; the desk still
+  // answers wherever the event reaches it.)
+  const [sheetOpen, setSheetOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      const typing = Boolean(
+        target &&
+          (target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable),
+      );
+      if (!e.shiftKey && e.key >= "1" && e.key <= "4") {
+        e.preventDefault();
+        const app = DOCK_APPS[Number(e.key) - 1];
+        const s = useDesk.getState();
+        if (registrySnapshot.some((w) => w.id === app.id)) {
+          if (s.panelMin.includes(app.id)) s.restorePanel(app.id);
+          s.focusPanel(app.id);
+        } else {
+          void import("../shell").then((m) =>
+            m.openSurfaceOr(app.key, app.fallback),
+          );
+        }
+      } else if (e.key === "w" && !typing) {
+        const id = frontWindowId();
+        if (id) {
+          e.preventDefault();
+          registrySnapshot.find((w) => w.id === id)?.close();
+        }
+      } else if (e.key === "m" && !typing) {
+        const id = frontWindowId();
+        if (id) {
+          e.preventDefault();
+          useDesk.getState().minimizePanel(id);
+        }
+      } else if (e.key === "/") {
+        e.preventDefault();
+        setSheetOpen((open) => !open);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
   // HS-99-04 — the dock chip menu (one menu vocabulary).
   const [chipMenu, setChipMenu] = useState<{
     id: string;
@@ -1469,6 +1530,71 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </DeskMenuItem>
         </DeskMenuList>
       ) : null}
+      {sheetOpen ? <ShortcutSheet onClose={() => setSheetOpen(false)} /> : null}
     </div>
+  );
+}
+
+/** HS-101 B8 — the shortcut sheet, drawn (never a doc link). */
+function ShortcutSheet({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const rows: [string, [string, string][]][] = [
+    [
+      "Applications",
+      [
+        ["⌘1", "Speak"],
+        ["⌘2", "Meetings"],
+        ["⌘3", "Agents"],
+        ["⌘4", "Settings"],
+      ],
+    ],
+    [
+      "Windows",
+      [
+        ["⌘W", "Close the front window"],
+        ["⌘M", "Minimize the front window"],
+        ["⌃`", "Cycle windows"],
+        ["⌃↑", "Overview"],
+        ["Esc", "Close / cancel"],
+      ],
+    ],
+    [
+      "Desk",
+      [
+        ["⌘K", "Search"],
+        ["⌘/", "This sheet"],
+      ],
+    ],
+  ];
+  return createPortal(
+    <div
+      className="desk-shortcut-sheet"
+      role="group"
+      aria-label="Keyboard shortcuts"
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="desk-shortcut-panel">
+        {rows.map(([group, keys]) => (
+          <section key={group}>
+            <h4>{group}</h4>
+            {keys.map(([cap, what]) => (
+              <div className="desk-shortcut-row" key={cap}>
+                <kbd>{cap}</kbd>
+                <span>{what}</span>
+              </div>
+            ))}
+          </section>
+        ))}
+      </div>
+    </div>,
+    document.body,
   );
 }

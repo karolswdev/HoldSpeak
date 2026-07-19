@@ -1399,7 +1399,8 @@
       ],
       "module": "web.routes.dictation.blocks",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1409,7 +1410,8 @@
       ],
       "module": "web.routes.dictation.blocks",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1419,7 +1421,8 @@
       ],
       "module": "web.routes.dictation.blocks",
       "consumers": [
-        "ios"
+        "ios",
+        "web"
       ]
     },
     {
@@ -1499,6 +1502,16 @@
       "path": "/api/dictation/journal/{entry_id}",
       "methods": [
         "DELETE"
+      ],
+      "module": "web.routes.dictation.pipeline",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/dictation/journal/{entry_id}",
+      "methods": [
+        "PUT"
       ],
       "module": "web.routes.dictation.pipeline",
       "consumers": [

@@ -8,6 +8,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type KeyboardEvent,
   type ReactNode,
 } from "react";
 import { Button } from "../../components/signal/Signal";
@@ -364,6 +365,307 @@ export function SurfaceToggle({
         <span />
       </span>
     </label>
+  );
+}
+
+/** HS-101 rule 2 — the dated stream: the composition for material
+ * that happens over time (the Journal). A head that leads with the
+ * one big fact, day bands, entries whose TEXT is the material at the
+ * primary step, verbs revealed on the entry. */
+export function SurfaceStream({
+  count,
+  countLabel,
+  controls,
+  children,
+}: {
+  count: ReactNode;
+  countLabel?: ReactNode;
+  controls?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="surface-stream">
+      <div className="surface-stream-head">
+        <span className="surface-display">{count}</span>
+        {countLabel ? (
+          <small className="surface-stream-count-label">{countLabel}</small>
+        ) : null}
+        {controls ? (
+          <span className="surface-stream-controls">{controls}</span>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function SurfaceStreamDay({
+  label,
+  children,
+}: {
+  label: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="surface-stream-day">
+      <h4 className="surface-stream-day-label">{label}</h4>
+      <ul className="surface-stream-entries">{children}</ul>
+    </section>
+  );
+}
+
+export function SurfaceStreamEntry({
+  when,
+  meta,
+  verbs,
+  aside,
+  children,
+}: {
+  when?: ReactNode;
+  meta?: ReactNode;
+  verbs?: ReactNode;
+  /** Below-the-entry material (a receipt, a preview) — sits beside
+   * the said-text in the grid, not inside it. */
+  aside?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <li className="surface-stream-entry">
+      {when != null ? (
+        <span className="surface-stream-when">{when}</span>
+      ) : null}
+      <div className="surface-stream-said">{children}</div>
+      {meta || verbs ? (
+        <div className="surface-stream-meta">
+          {meta}
+          {verbs ? (
+            <span className="surface-stream-verbs surface-row-verbs">
+              {verbs}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      {aside}
+    </li>
+  );
+}
+
+/** HS-101 rule 2 — the library: the composition for a shelf of kept
+ * material (Blocks). Tiles wear their PAYLOAD as the face; the name
+ * and provenance ride the spine; create is a ghost tile in the
+ * shelf, never a side form. */
+export function SurfaceLibrary({
+  count,
+  countLabel,
+  controls,
+  children,
+}: {
+  count: ReactNode;
+  countLabel?: ReactNode;
+  controls?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="surface-library-wrap">
+      <div className="surface-stream-head">
+        <span className="surface-display">{count}</span>
+        {countLabel ? (
+          <small className="surface-stream-count-label">{countLabel}</small>
+        ) : null}
+        {controls ? (
+          <span className="surface-stream-controls">{controls}</span>
+        ) : null}
+      </div>
+      <ul className="surface-library">{children}</ul>
+    </div>
+  );
+}
+
+export function SurfaceLibraryTile({
+  face,
+  name,
+  lamp,
+  says,
+  verbs,
+}: {
+  /** The payload rendered AS the tile's face (rule 2). */
+  face: ReactNode;
+  name: ReactNode;
+  /** Never color-only — pair with the name it describes. */
+  lamp?: ReactNode;
+  says?: ReactNode;
+  verbs?: ReactNode;
+}) {
+  return (
+    <li className="surface-tile">
+      <div className="surface-tile-face">{face}</div>
+      <div className="surface-tile-spine">
+        <div className="surface-tile-name surface-primary">
+          {name}
+          {lamp}
+        </div>
+        {says ? <div className="surface-tile-says">{says}</div> : null}
+      </div>
+      {verbs ? <div className="surface-row-verbs">{verbs}</div> : null}
+    </li>
+  );
+}
+
+export function SurfaceLibraryGhost({
+  label,
+  hint,
+  onCreate,
+}: {
+  label: ReactNode;
+  hint?: ReactNode;
+  onCreate: () => void;
+}) {
+  return (
+    <li className="surface-tile surface-tile-ghost">
+      <button type="button" className="surface-tile-ghost-btn" onClick={onCreate}>
+        <span className="surface-tile-ghost-plus" aria-hidden="true">
+          ＋
+        </span>
+        <span>{label}</span>
+        {hint ? <small>{hint}</small> : null}
+      </button>
+    </li>
+  );
+}
+
+/** HS-101 rule 2 — the switchboard: the composition for routing
+ * material (Runs on). One bay per destination; the route bay leads
+ * with its model at display step; lamps are never color-only; the
+ * boundary badge sits ON the bay, at the point of decision. */
+export function SurfaceSwitchboard({ children }: { children: ReactNode }) {
+  return <ul className="surface-switchboard">{children}</ul>;
+}
+
+export function SurfaceBay({
+  route,
+  lamp,
+  name,
+  state,
+  model,
+  where,
+  badge,
+  tag,
+  verbs,
+}: {
+  /** True on THE current route — the bay that leads. */
+  route?: boolean;
+  lamp?: ReactNode;
+  name: ReactNode;
+  /** Short liveness text beside the name (never color alone). */
+  state?: ReactNode;
+  model?: ReactNode;
+  where?: ReactNode;
+  badge?: ReactNode;
+  tag?: ReactNode;
+  verbs?: ReactNode;
+}) {
+  return (
+    <li className={route ? "surface-bay surface-bay-route" : "surface-bay"}>
+      <div className="surface-bay-main">
+        <div className="surface-bay-who surface-primary">
+          {lamp}
+          {name}
+          {state ? <span className="surface-bay-state">{state}</span> : null}
+        </div>
+        {model ? <div className="surface-bay-model">{model}</div> : null}
+        {where ? <div className="surface-bay-where">{where}</div> : null}
+      </div>
+      <div className="surface-bay-side">
+        {badge}
+        {tag ? <span className="surface-bay-tag">{tag}</span> : null}
+        {verbs ? <span className="surface-row-verbs">{verbs}</span> : null}
+      </div>
+    </li>
+  );
+}
+
+/** HS-101 rule 1 — data is the material: the presented text IS the
+ * editor. Click or Enter swaps it for a same-geometry editor;
+ * Enter/blur commits, Escape reverts. A value that cannot be edited
+ * stays presented and names why (never a bare disabled input). */
+export function EditInPlace({
+  value,
+  onCommit,
+  label,
+  disabledReason,
+  multiline,
+  className,
+}: {
+  value: string;
+  onCommit: (next: string) => void | Promise<void>;
+  label: string;
+  disabledReason?: string;
+  multiline?: boolean;
+  className?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const commit = () => {
+    setEditing(false);
+    const next = draft.trim();
+    if (next && next !== value) void onCommit(next);
+    else setDraft(value);
+  };
+  const revert = () => {
+    setDraft(value);
+    setEditing(false);
+  };
+  const cx = ["surface-edit-in-place", className].filter(Boolean).join(" ");
+  if (disabledReason) {
+    return (
+      <span
+        className={`${cx} is-locked`}
+        title={disabledReason}
+        aria-label={`${label} — ${disabledReason}`}
+      >
+        {value}
+      </span>
+    );
+  }
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        className={cx}
+        aria-label={`Edit ${label}`}
+        onClick={() => {
+          setDraft(value);
+          setEditing(true);
+        }}
+      >
+        {value}
+      </button>
+    );
+  }
+  const shared = {
+    className: `${cx} is-editing`,
+    "aria-label": label,
+    value: draft,
+    autoFocus: true,
+    onBlur: commit,
+    onKeyDown: (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        revert();
+      } else if (event.key === "Enter" && !(multiline && event.shiftKey)) {
+        event.preventDefault();
+        commit();
+      }
+    },
+  };
+  return multiline ? (
+    <textarea
+      {...shared}
+      rows={Math.max(2, draft.split("\n").length)}
+      onChange={(event) => setDraft(event.target.value)}
+    />
+  ) : (
+    <input {...shared} onChange={(event) => setDraft(event.target.value)} />
   );
 }
 

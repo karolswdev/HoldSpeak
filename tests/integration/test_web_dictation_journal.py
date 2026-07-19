@@ -138,7 +138,7 @@ def test_dictation_page_includes_journal_tab(test_client: TestClient) -> None:
     # HS-100-07: the Journal is a head wing of Speak.
     assert '{ id: "journal", label: "Journal" }' in source
     assert "/api/dictation/journal" in source
-    assert "Search journal" in source and "Clear journal" in source
+    assert "Search the journal" in source and "Clear all?" in source
 
 
 def test_dictation_journal_premium_and_a11y_markers(test_client: TestClient) -> None:

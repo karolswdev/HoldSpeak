@@ -52,6 +52,9 @@ _EXPECTED_ROUTES = {
     # HS-45-02: the dictation journal (review + curate). The correct-attach
     # route is HS-45-03 (the in-moment teach), wired here with its siblings.
     ("/api/dictation/journal", "GET"),
+    # HS-101 B3: edit the transcript record in place (the one write the
+    # interior canon's rule 1 needed; corrections stay /correct).
+    ("/api/dictation/journal/{entry_id}", "PUT"),
     ("/api/dictation/journal/{entry_id}", "DELETE"),
     ("/api/dictation/journal", "DELETE"),
     ("/api/dictation/journal/{entry_id}/correct", "POST"),
@@ -79,4 +82,4 @@ def test_dictation_route_table_is_unchanged_after_split() -> None:
 
 
 def test_dictation_route_count_is_stable() -> None:
-    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 37
+    assert len(_router_route_set()) == len(_EXPECTED_ROUTES) == 38

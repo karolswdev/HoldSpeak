@@ -107,7 +107,7 @@ type DragState =
       startY: number;
       hit: ReturnType<typeof hitTest>;
     }
-  | { type: "object"; pointerId: number; id: string }
+  | { type: "object"; pointerId: number; id: string; startU?: { x: number; y: number } }
   | { type: "zone"; pointerId: number; id: string }
   | {
       type: "zone-grip";
@@ -830,6 +830,9 @@ export class WorldEngine {
           type: "object",
           pointerId: d.pointerId,
           id: d.hit.object.id,
+          // HS-101 B7 — the home position: a drop through the glass
+          // hands the object over and returns it here (never consumed).
+          startU: useDesk.getState().positions[d.hit.object.id],
         };
       } else if (d.hit.type === "zone" || d.hit.type === "zone-title") {
         state.setDragging(`zone:${d.hit.zone.id}`);
@@ -923,10 +926,29 @@ export class WorldEngine {
       return;
     }
     if (d.type === "object") {
+      const obj = this.scene?.objects.find((o) => o.id === d.id);
+      // HS-101 B7 — through the glass: a drop landing on a marked DOM
+      // well hands the object to that well and the object returns home.
+      const overlay = document
+        .elementFromPoint(e.clientX, e.clientY)
+        ?.closest?.("[data-glass-accept~='desk-object']");
+      if (overlay && obj) {
+        state.setHoverZone(null);
+        overlay.dispatchEvent(
+          new CustomEvent("desk:glass-drop", {
+            bubbles: true,
+            detail: { id: d.id, kind: obj.kind },
+          }),
+        );
+        if (d.startU) state.setPosition(d.id, d.startU);
+        else state.clearPosition(d.id);
+        state.persistPositions();
+        setTimeout(() => useDesk.getState().setDragging(null), 0);
+        return;
+      }
       // Dropped onto a zone? File it (the real PUT); else persist the park.
       const over = state.hoverZoneId;
       state.setHoverZone(null);
-      const obj = this.scene?.objects.find((o) => o.id === d.id);
       if (over && obj) {
         void state.fileIntoDir(d.id, over, obj.kind);
       } else {
