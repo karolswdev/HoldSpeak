@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { Button } from "../../components/signal/Signal";
-import { presentValue } from "./format";
+import { humanTime, presentValue } from "./format";
 import "./surface.css";
 
 /** The one verb bar, sticky at the surface top. Primary verbs live
@@ -228,6 +228,55 @@ export function MetricStrip({
       ))}
     </div>
   );
+}
+
+/** A wire object as honest fact rows (rule 4): keys de-snaked, values
+ * through presentValue — meaningless entries OMITTED, never "—". */
+export function SurfaceFacts({
+  value,
+  limit = 18,
+}: {
+  value: unknown;
+  limit?: number;
+}) {
+  if (!value || typeof value !== "object") {
+    const text = presentValue(value);
+    return text ? <p className="surface-fact-line">{text}</p> : null;
+  }
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, item]) =>
+      ["string", "number", "boolean"].includes(typeof item),
+    )
+    .map(([key, item]) => {
+      // Rule 4 — a time-shaped value renders as a human phrase.
+      const timeish =
+        typeof item === "string" && /^\d{4}-\d{2}-\d{2}[T ]/.test(item)
+          ? humanTime(item)
+          : "";
+      return [key, timeish || presentValue(item)] as const;
+    })
+    .filter(([, text]) => text !== "")
+    .slice(0, limit);
+  if (!entries.length) return null;
+  return (
+    <dl className="surface-facts">
+      {entries.map(([key, text]) => (
+        <div key={key}>
+          <dt>{deSnakeLabel(key)}</dt>
+          <dd>{text}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function deSnakeLabel(key: string): string {
+  return key.replace(/[_-]+/g, " ");
+}
+
+/** A raw trace (JSON, hook output) on the surface material. */
+export function SurfaceCode({ children }: { children: ReactNode }) {
+  return <pre className="surface-code">{children}</pre>;
 }
 
 /** The inline two-step for destructive verbs (rule 5): first press

@@ -3362,6 +3362,9 @@
     bottom: 0;
     top: auto;
     width: auto;
+    /* HS-98-02: a desktop min-width (420px surface floor) must never
+       push a sheet past a 393px phone — the sheet owns the edge. */
+    min-width: 0;
     max-height: 78vh;
     border-radius: 18px 18px 0 0;
     overflow: auto;

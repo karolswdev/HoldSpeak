@@ -1,14 +1,14 @@
 # Phase 98 — Native Surfaces
 
-**Status:** IN PROGRESS (1/9, 2026-07-18) from the owner's standing
+**Status:** IN PROGRESS (2/9, 2026-07-18) from the owner's standing
 verdict ("none of the Desk OS feels like an OS — windows feel like
 glued-in HTML panes, zero consistent look and feel") and the 2026-07-18
 remediation audit. Phase 97 shipped the window grammar (placement,
 depth, motion, one shelf); this phase re-crafts what lives INSIDE the
 windows.
 
-**Last updated:** 2026-07-18 (HS-98-01 done: the idiom specced, the
-kit built, the seam guard armed, Cadence native).
+**Last updated:** 2026-07-18 (HS-98-02 done: Dictation native, voice
+walk green, two sheet/strip defects fixed).
 
 ## Why this phase exists
 
@@ -95,7 +95,7 @@ viewports, screenshots looked at.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-98-01 | The surface idiom | done | [story-01-surface-idiom](./story-01-surface-idiom.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-98-02 | Dictation, native | backlog | [story-02-dictation-native](./story-02-dictation-native.md) | — |
+| HS-98-02 | Dictation, native | done | [story-02-dictation-native](./story-02-dictation-native.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-98-03 | Meetings, native | backlog | [story-03-meetings-native](./story-03-meetings-native.md) | — |
 | HS-98-04 | The live pair | backlog | [story-04-live-pair](./story-04-live-pair.md) | — |
 | HS-98-05 | The config pair | backlog | [story-05-config-pair](./story-05-config-pair.md) | — |
@@ -106,6 +106,18 @@ viewports, screenshots looked at.
 
 ## Where we are
 
+**HS-98-02 done (2026-07-18): Dictation is native.** The flagship's
+nine tabs re-composed from the kit (columns, honest rows, inline
+two-step confirms replacing every modal in this core, the raw trace
+demoted behind a Disclosure); wire calls and verbs unchanged. Proven
+by the real-voice walk leg on the production bundle — Whisper's
+transcription landing in the NEW surface — plus shots at 1440/393
+looked at. The shots caught two defects, both fixed: the phone sheet
+overflowed 393 (desktop min-width beat sheet mode; `is-sheet` now
+`min-width: 0`) and the tab strip read as a boxed card (borderless
+with a hairline underline inside surfaces); SurfaceFacts also
+humanizes time-shaped values now. `npm run check` green (289 web
+tests). Next: HS-98-03 — Meetings, native. Earlier:
 **HS-98-01 done (2026-07-18): the surface idiom exists.** The spec
 landed first (DESIGN_SYSTEM.md "The surface idiom": six rules, the
 560px container breakpoint as canon), then the kit —

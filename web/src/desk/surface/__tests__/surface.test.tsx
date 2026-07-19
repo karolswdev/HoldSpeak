@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ConfirmVerb,
   MetricStrip,
+  SurfaceFacts,
   SurfaceRow,
   SurfaceRows,
   SurfaceState,
@@ -112,6 +113,23 @@ describe("rows and verbs (idiom rules 3–5)", () => {
     expect(screen.getByText("12")).toBeInTheDocument();
     expect(screen.queryByText("confidence")).toBeNull();
     expect(container.querySelectorAll(".surface-metrics > div")).toHaveLength(1);
+  });
+
+  it("SurfaceFacts de-snakes keys and omits meaningless values", () => {
+    const { container } = render(
+      <SurfaceFacts
+        value={{
+          final_target: "notes",
+          confidence: "unknown",
+          stage_count: 3,
+          nested: { skipped: true },
+        }}
+      />,
+    );
+    expect(screen.getByText("final target")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.queryByText("confidence")).toBeNull();
+    expect(container.querySelectorAll("dt")).toHaveLength(2);
   });
 
   it("ConfirmVerb: first press arms, second fires, arming self-disarms", () => {

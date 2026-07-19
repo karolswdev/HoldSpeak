@@ -5,7 +5,14 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, IN
-PROGRESS (1/9)**. **HS-98-01, The surface idiom, DONE**: the idiom
+PROGRESS (2/9)**. **HS-98-02, Dictation, native, DONE**: the
+flagship's nine tabs re-composed from the surface kit (columns,
+honest rows, inline two-step confirms replacing every modal in the
+core, the raw trace behind a Disclosure), wire calls unchanged —
+proven by the real-voice walk leg (Whisper's transcription landing in
+the NEW surface) and 1440/393 shots looked at, which caught and fixed
+two defects (the phone sheet overflowing 393 under a desktop
+min-width; the boxed tab strip). Earlier: **HS-98-01, The surface idiom, DONE**: the idiom
 specced into DESIGN_SYSTEM.md (six rules; the 560px container
 breakpoint as canon), the kit built (`web/src/desk/surface/` — one
 verb bar, hairline sections, dense honest rows with revealed verbs,

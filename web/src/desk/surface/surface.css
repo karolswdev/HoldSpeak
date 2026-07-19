@@ -266,6 +266,83 @@
   font-size: var(--desk-surface-detail-size);
 }
 
+/* Rule 4 — fact rows: de-snaked keys, meaningless values omitted. */
+.surface-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(96px, max-content) minmax(0, 1fr);
+  gap: 3px 14px;
+  font-size: var(--desk-surface-detail-size);
+}
+.surface-facts > div {
+  display: contents;
+}
+.surface-facts dt {
+  color: var(--text-muted);
+}
+.surface-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.surface-fact-line {
+  margin: 0;
+  font-size: var(--desk-surface-body-size);
+}
+
+/* A raw trace on the surface material. */
+.surface-code {
+  margin: 0;
+  padding: 8px var(--desk-surface-row-pad-x);
+  border-radius: var(--radius-sm);
+  background: var(--wash-1);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  overflow: auto;
+  max-height: 320px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* A quiet in-flow verb cluster (result ratings, recovery actions). */
+.surface-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* A quiet inset preview (a replay result, a prepared answer). */
+.surface-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px var(--desk-surface-row-pad-x);
+  border-left: 2px solid var(--accent-tint);
+  font-size: var(--desk-surface-detail-size);
+}
+.surface-preview > .surface-preview-label {
+  font-size: var(--desk-surface-label-size);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.surface-preview p {
+  margin: 0;
+}
+
+/* Rule 1 — inside a window the tab strip sits on the material: no
+   boxed card, a hairline underline, a visible thin scrollbar when the
+   window is narrower than the strip. */
+.desk-surface-body .signal-tabs {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 0 3px;
+  border-bottom: 1px solid var(--wash-1);
+  scrollbar-width: thin;
+}
+
 /* The kit is host-agnostic: its screen-reader utility must not depend
    on the desk shell's scoped copy. */
 .surface-state .sr-only {

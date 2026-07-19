@@ -58,11 +58,6 @@ ALLOWED: dict[str, set[str]] = {
         "data-list", "data-row", "Panel", "EmptyState", "ResourceState",
     },
     "ComponentsCore.tsx": {"page-grid", "Panel", "EmptyState", "Dialog"},
-    "DictationCore.tsx": {
-        "page-grid", "span-4", "span-8", "span-12", "data-list", "data-row",
-        "signal-eyebrow", "button-row", "code-block",
-        "Panel", "EmptyState", "ResourceState", "ConfirmAction",
-    },
     "HistoryCore.tsx": {
         "data-list", "data-row", "button-row", "code-block", "dialog-form",
         "Panel", "EmptyState", "ResourceState", "ConfirmAction", "Dialog",
