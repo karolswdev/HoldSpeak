@@ -209,3 +209,51 @@ describe("the lifecycle store + hs.desk.panels persistence", () => {
     expect(fresh.useDesk.getState().panelMin).toEqual([]);
   });
 });
+
+describe("HS-99-02: the title bar owns a right-click menu", () => {
+  it("opens on head contextmenu, executes verbs, closes on Escape", () => {
+    const onClose = vi.fn();
+    render(
+      <DeskWindowFrame id="hm" title="Menu test" open onClose={onClose}>
+        <p>body</p>
+      </DeskWindowFrame>,
+    );
+    const head = screen
+      .getByRole("region", { name: "Menu test" })
+      .querySelector("header") as HTMLElement;
+    fireEvent.contextMenu(head);
+    const menu = screen.getByRole("menu", { name: "Menu test window menu" });
+    expect(menu).toBeInTheDocument();
+    // The first Escape (bubbling through the SHELL, as in a real
+    // browser) closes the MENU only — the window must survive.
+    fireEvent.keyDown(screen.getByRole("region", { name: "Menu test" }), {
+      key: "Escape",
+    });
+    expect(
+      screen.queryByRole("menu", { name: "Menu test window menu" }),
+    ).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.contextMenu(head);
+    fireEvent.click(screen.getByRole("menuitem", { name: /Close/ }));
+    expect(onClose).toHaveBeenCalled();
+  });
+});
+
+describe("HS-99-04: the dock chip owns a right-click menu", () => {
+  it("opens on chip contextmenu and executes Close", () => {
+    const onClose = vi.fn();
+    render(
+      <>
+        <DeskWindowFrame id="dm" title="Chip menu" open onClose={onClose}>
+          <p>body</p>
+        </DeskWindowFrame>
+        <Dock />
+      </>,
+    );
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Focus Chip menu" }));
+    const menu = screen.getByRole("menu", { name: "Chip menu dock menu" });
+    expect(menu).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Close" }));
+    expect(onClose).toHaveBeenCalled();
+  });
+});

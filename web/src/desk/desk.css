@@ -121,24 +121,35 @@
 .desk-next .desk-menu-wrap {
   position: relative;
 }
-.desk-next .desk-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  min-width: 160px;
+/* HS-99-04 — ONE menu vocabulary: every desk popover (room menu, the
+   window-head menu, the dock chip menu) wears this material; the
+   corner nearest its anchor squares off (the borrowed touch). */
+.desk-next .desk-menu-list {
+  min-width: 168px;
   display: flex;
   flex-direction: column;
-  padding: 6px;
+  gap: 2px;
+  padding: 5px;
   border: 1px solid var(--border);
   border-radius: var(--desk-transient-radius);
   background: var(--desk-panel-fill);
   box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
 }
-.desk-next .desk-menu a,
-.desk-next .desk-menu button {
-  padding: 8px 12px;
+.desk-next .desk-menu-list.is-below {
+  border-top-left-radius: var(--radius-xs);
+}
+.desk-next .desk-menu-list.is-above {
+  border-bottom-left-radius: var(--radius-xs);
+}
+.desk-next .desk-menu-list a,
+.desk-next .desk-menu-list button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--text);
   text-decoration: none;
@@ -147,9 +158,23 @@
   font-size: var(--font-size-sm);
   cursor: pointer;
 }
-.desk-next .desk-menu a:hover,
-.desk-next .desk-menu button:hover {
-  background: var(--accent-tint);
+.desk-next .desk-menu-list a:hover,
+.desk-next .desk-menu-list button:hover,
+.desk-next .desk-menu-list a:focus-visible,
+.desk-next .desk-menu-list button:focus-visible {
+  background: var(--wash-2);
+}
+.desk-next .desk-menu-list svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: var(--text-muted);
+}
+/* The room menu anchors under the mark. */
+.desk-next .desk-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
 }
 .desk-next .desk-hub-dot {
   width: 9px;
@@ -708,12 +733,20 @@
   border: 1px solid color-mix(in srgb, var(--k, #ff6b35) 34%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--k, #ff6b35) 70%, transparent);
 }
+/* HS-99-02 — the title bar is a BAR (DESIGN_SYSTEM.md, the chrome
+   ladder): the head tone sits one step above the body, separation is
+   tonal (no border-bottom), and the verb buttons are full-height
+   squares flush to the window edge. */
 .desk-next .desk-pullout-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
+  height: 40px;
+  flex: none;
+  padding: 0 0 0 12px;
+  background: var(--desk-window-head-fill);
+  border-radius: calc(var(--desk-window-radius) - 1px)
+    calc(var(--desk-window-radius) - 1px) 0 0;
 }
 .desk-next .desk-pullout-head img {
   image-rendering: pixelated;
@@ -3192,33 +3225,62 @@
    minimized tray, the maximized stage, the phone sheet. ── */
 .desk-next .desk-window-verbs {
   margin-left: auto;
+  align-self: stretch;
+  height: 100%;
   display: inline-flex;
-  gap: 2px;
+  align-items: stretch;
+  gap: 0;
   flex: none;
 }
 .desk-next .desk-window-verb {
-  width: 26px;
-  height: 26px;
+  /* The hover fill is a VARIABLE the close button overrides — one
+     rule, and focus-visible shares it (PROZILLAOS_STUDY.md). */
+  --verb-hover: var(--wash-2);
+  --verb-hover-ink: var(--text);
+  height: 100%;
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0;
   background: transparent;
   color: var(--text-muted);
-  font-size: 13px;
   line-height: 1;
   cursor: pointer;
+  transition: background var(--duration-short) var(--ease-quart);
 }
-.desk-next .desk-window-verb:hover {
-  background: var(--border-subtle);
-  color: var(--text);
+.desk-next .desk-window-verb:hover,
+.desk-next .desk-window-verb:focus-visible {
+  background: var(--verb-hover);
+  color: var(--verb-hover-ink);
 }
-.desk-next .desk-window-verb.desk-window-close:hover {
-  background: color-mix(in srgb, var(--accent, #ff6b35) 26%, transparent);
+.desk-next .desk-window-verb:last-child {
+  border-top-right-radius: calc(var(--desk-window-radius) - 1px);
+}
+.desk-next .desk-window-verb.desk-window-close {
+  --verb-hover: var(--danger-fill);
+  --verb-hover-ink: var(--text);
+}
+.desk-next .desk-window-verb svg {
+  width: 14px;
+  height: 14px;
 }
 .desk-next .desk-window-shell.is-max {
   position: fixed;
-  border-radius: 14px;
+  /* HS-99-02 — corners square off when docked to the frame. */
+  border-radius: 0;
+}
+.desk-next .desk-window-shell.is-max .desk-pullout-head,
+.desk-next .desk-window-shell.is-max .desk-window-verb:last-child {
+  border-radius: 0;
+}
+
+/* HS-99-02/04 — the head and dock menus float fixed at the pointer;
+   material and items come from .desk-menu-list. */
+.desk-next .desk-head-menu,
+.desk-next .desk-dock-menu {
+  position: fixed;
+  z-index: var(--desk-z-popover);
 }
 /* ── HS-95-03: the dock — shell furniture above the window band (42+): a
    maximized window must never bury the way back to a parked one. ── */
@@ -3233,17 +3295,81 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 6px;
+  padding: 4px 6px 6px;
   border-radius: 14px;
-  background: rgba(12, 10, 17, 0.82);
+  /* HS-99-05 — the frosted shelf: the glass tint over a real blur
+     (the reference's two-layer bar, on our tokens). */
+  background: var(--desk-glass);
+  backdrop-filter: var(--desk-window-blur);
   border: 1px solid var(--border);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--desk-transient-shadow);
 }
 .desk-next .desk-dock-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   border-radius: 10px;
   background: var(--wash-2);
+  animation: desk-chip-in var(--duration-short) var(--ease-quart);
+}
+@keyframes desk-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+  }
+}
+/* HS-99-05 — the running underline: every open window reads on its
+   chip; the front window's is accent and wide; hover grows it. */
+.desk-next .desk-dock-chip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  transform: translateX(-50%);
+  width: 52%;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--text-faint);
+  transition:
+    width var(--duration-short) var(--ease-quart),
+    background var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-dock-chip.is-front::after {
+  width: 80%;
+  background: var(--accent);
+}
+.desk-next .desk-dock-chip:hover::after {
+  width: 94%;
+}
+.desk-next .desk-dock-chip.is-min::after {
+  width: 28%;
+}
+/* HS-99-05 — the glyph swells under the pointer (compositor-only). */
+.desk-next .desk-dock-main > span[aria-hidden="true"] {
+  display: inline-block;
+  transition: transform var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-dock-chip:hover .desk-dock-main > span[aria-hidden="true"],
+.desk-next .desk-dock-launch:hover > span[aria-hidden="true"] {
+  transform: scale(1.18);
+}
+.desk-next .desk-dock-launch {
+  position: relative;
+}
+.desk-next .desk-dock-launch > span[aria-hidden="true"] {
+  display: inline-block;
+  transition: transform var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-dock-launch.is-run::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--text-faint);
 }
 .desk-next .desk-dock-chip.is-front {
   background: color-mix(in srgb, var(--accent, #ff6b35) 22%, transparent);
@@ -3399,9 +3525,10 @@
   flex-direction: column;
   min-width: 420px;
 }
+/* HS-99-02 — the surface window's head is the SAME bar as the family
+   (the old padded/bordered override is gone; the base rule carries
+   the tone, height, and edge-flush verbs). */
 .desk-next .desk-surface-window .desk-pullout-head {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 8px;

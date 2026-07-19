@@ -10,12 +10,14 @@
 import {
   useEffect,
   useRef,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { useDesk, type PanelRect } from "../store";
+import { DeskMenuItem, DeskMenuList } from "./DeskMenu";
 // The physics constants mirror the CSS component tokens — one generated
 // source (design-tokens.json), no drift possible (HS-96-02).
 import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
@@ -843,6 +845,34 @@ export interface DeskWindowFrameProps {
 /** THE window. One chrome, one lifecycle, one physics contract — content
  * plugs in as children (Constitution, Article I: features do not own
  * surfaces). */
+/** HS-99-02 — the window verb glyphs: crisp inline SVG strokes that
+ * inherit currentColor (text glyphs read as characters, not chrome). */
+function VerbGlyph({
+  kind,
+}: {
+  kind: "minimize" | "maximize" | "restore" | "close";
+}) {
+  const paths: Record<string, string> = {
+    minimize: "M3 7h8",
+    maximize: "M3.5 3.5h7v7h-7Z",
+    restore: "M3 5.2h5.8V11H3Z M5.2 5.2V3H11v5.8H8.8",
+    close: "M3.5 3.5l7 7M10.5 3.5l-7 7",
+  };
+  return (
+    <svg
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={paths[kind]} />
+    </svg>
+  );
+}
+
 export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const {
     id,
@@ -883,6 +913,24 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+
+  // HS-99-02 — the head's right-click menu (chrome ladder rule 2).
+  const [headMenu, setHeadMenu] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!headMenu) return;
+    const close = () => setHeadMenu(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("pointerdown", close);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [headMenu]);
 
   // HS-97-04 — motion tells the story: close animates out; minimize
   // contracts toward the window's dock chip and restore returns from
@@ -1022,6 +1070,12 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       onKeyDown={(e) => {
         if (e.key === "Escape" && !e.defaultPrevented) {
           e.stopPropagation();
+          // HS-99-02 — an open head menu absorbs the first Escape; the
+          // window only closes on the next one.
+          if (headMenu) {
+            setHeadMenu(null);
+            return;
+          }
           requestClose();
         }
       }}
@@ -1055,6 +1109,13 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           if (t?.closest("button, a, input, textarea, select")) return;
           useDesk.getState().toggleMaximizePanel(id);
         }}
+        onContextMenu={(e) => {
+          // HS-99-02 — the bar owns its window verbs on right-click.
+          const t = e.target as HTMLElement | null;
+          if (t?.closest("button, a, input, textarea, select")) return;
+          e.preventDefault();
+          setHeadMenu({ x: e.clientX, y: e.clientY });
+        }}
       >
         {leading}
         {icon}
@@ -1069,7 +1130,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             aria-label={`Minimize ${name}`}
             onClick={requestMinimize}
           >
-            –
+            <VerbGlyph kind="minimize" />
           </button>
           {!compact && (
             <button
@@ -1078,7 +1139,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
               aria-label={maximized ? `Restore ${name}` : `Maximize ${name}`}
               onClick={() => useDesk.getState().toggleMaximizePanel(id)}
             >
-              {maximized ? "❐" : "⤢"}
+              <VerbGlyph kind={maximized ? "restore" : "maximize"} />
             </button>
           )}
           <button
@@ -1087,10 +1148,52 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             aria-label={`Close ${name}`}
             onClick={requestClose}
           >
-            ✕
+            <VerbGlyph kind="close" />
           </button>
         </span>
       </header>
+      {headMenu ? (
+        <DeskMenuList
+          className="desk-head-menu"
+          label={`${name} window menu`}
+          anchor="below"
+          style={{
+            left: Math.min(headMenu.x, window.innerWidth - 184),
+            top: Math.min(headMenu.y, window.innerHeight - 132),
+          }}
+          onClose={() => setHeadMenu(null)}
+        >
+          <DeskMenuItem
+            glyph={<VerbGlyph kind="minimize" />}
+            onSelect={() => {
+              setHeadMenu(null);
+              requestMinimize();
+            }}
+          >
+            Minimize
+          </DeskMenuItem>
+          {!compact && (
+            <DeskMenuItem
+              glyph={<VerbGlyph kind={maximized ? "restore" : "maximize"} />}
+              onSelect={() => {
+                setHeadMenu(null);
+                useDesk.getState().toggleMaximizePanel(id);
+              }}
+            >
+              {maximized ? "Restore" : "Maximize"}
+            </DeskMenuItem>
+          )}
+          <DeskMenuItem
+            glyph={<VerbGlyph kind="close" />}
+            onSelect={() => {
+              setHeadMenu(null);
+              requestClose();
+            }}
+          >
+            Close
+          </DeskMenuItem>
+        </DeskMenuList>
+      ) : null}
       {children}
       {!maxed && !compact ? win.grip : null}
       {!maxed && !compact ? win.edges : null}
@@ -1113,6 +1216,21 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const panelOrder = useDesk((s) => s.panelOrder);
   const windows = useOpenWindows();
   const launchers = useLaunchers();
+  // HS-99-04 — the dock chip menu (one menu vocabulary).
+  const [chipMenu, setChipMenu] = useState<{
+    id: string;
+    label: string;
+    x: number;
+    y: number;
+    minimized: boolean;
+    close: () => void;
+  } | null>(null);
+  useEffect(() => {
+    if (!chipMenu) return;
+    const close = () => setChipMenu(null);
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [chipMenu]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1193,6 +1311,17 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 if (minimized) s.restorePanel(c.id);
                 else s.focusPanel(c.id);
               }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setChipMenu({
+                  id: c.id,
+                  label: c.label,
+                  x: e.clientX,
+                  y: e.clientY,
+                  minimized,
+                  close: c.close,
+                });
+              }}
             >
               <span aria-hidden="true">{c.glyph}</span>
               <span className="desk-dock-label">{c.label}</span>
@@ -1229,6 +1358,37 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             ⟲
           </button>
         </>
+      ) : null}
+      {chipMenu ? (
+        <DeskMenuList
+          className="desk-dock-menu"
+          label={`${chipMenu.label} dock menu`}
+          anchor="above"
+          style={{
+            left: Math.min(chipMenu.x, window.innerWidth - 184),
+            top: Math.max(8, chipMenu.y - 104),
+          }}
+          onClose={() => setChipMenu(null)}
+        >
+          <DeskMenuItem
+            onSelect={() => {
+              const s = useDesk.getState();
+              if (chipMenu.minimized) s.restorePanel(chipMenu.id);
+              else s.minimizePanel(chipMenu.id);
+              setChipMenu(null);
+            }}
+          >
+            {chipMenu.minimized ? "Restore" : "Minimize"}
+          </DeskMenuItem>
+          <DeskMenuItem
+            onSelect={() => {
+              chipMenu.close();
+              setChipMenu(null);
+            }}
+          >
+            Close
+          </DeskMenuItem>
+        </DeskMenuList>
       ) : null}
     </div>
   );

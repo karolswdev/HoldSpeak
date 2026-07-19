@@ -245,3 +245,11 @@ features:
     recipes: [seeded-desk]
     priority: must
     status: live
+  - key: phase99.os.chrome
+    title: The OS chrome - tonal ladder, real title bars, skinned controls, drawn scrollbars, a living dock
+    domain: Phase 99 the os chrome
+    phases: [99]
+    surfaces: {web: 'yes', ipad: 'no', iphone: 'no'}
+    recipes: [seeded-desk]
+    priority: must
+    status: live

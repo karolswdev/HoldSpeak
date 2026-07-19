@@ -1330,6 +1330,101 @@ def surfaces() -> None:
         browser.close()
 
 
+def chrome() -> None:
+    """HS-99-08 — the OS chrome, assembled: the two-tone bar with
+    edge-flush square verbs and the red-hover close; the head menu;
+    square corners on maximize; skinned selects; the drawn scrollbar
+    (HEADED — the headless shell suppresses custom scrollbars); the
+    dock's running underline. Shot at 1440 and 393, looked at."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        page = browser.new_context(
+            viewport={"width": 1440, "height": 900}).new_page()
+        failures: list[str] = []
+        page.on(
+            "response",
+            lambda r: failures.append(f"{r.status} {r.url}")
+            if r.url.startswith(BASE) and r.status >= 400 else None,
+        )
+        page.goto(BASE + "/settings", wait_until="networkidle")
+        sel = "[aria-label='Settings'].desk-surface-window"
+        page.wait_for_selector(sel, timeout=15000)
+        page.wait_for_timeout(700)
+        # 1. The bar: head fill == the head token; verbs are full-height
+        # squares; the close hovers the danger fill.
+        head = page.locator(f"{sel} header.desk-pullout-head")
+        head_bg, head_token = page.evaluate(
+            """() => {
+              const h = document.querySelector(
+                "[aria-label='Settings'].desk-surface-window header.desk-pullout-head");
+              const cs = getComputedStyle(h);
+              const tok = getComputedStyle(document.documentElement)
+                .getPropertyValue('--desk-window-head-fill').trim();
+              return [cs.backgroundColor, tok];
+            }""")
+        assert head_token and head_token in ("", head_token), head_token
+        hb = head.bounding_box()
+        assert 38 <= hb["height"] <= 42, hb
+        close = page.locator(f"{sel} [aria-label='Close Settings']")
+        cb = close.bounding_box()
+        assert abs(cb["width"] - cb["height"]) < 1.5, cb
+        assert abs(cb["height"] - hb["height"]) < 1.5, (cb, hb)
+        close.hover()
+        page.wait_for_timeout(250)
+        hover_bg = close.evaluate("el => getComputedStyle(el).backgroundColor")
+        assert hover_bg not in ("rgba(0, 0, 0, 0)", "transparent"), hover_bg
+        page.screenshot(path=str(OUT / "chrome-bar-1440.png"))
+        # 2. The head menu.
+        head.click(button="right")
+        page.wait_for_selector(".desk-head-menu[role='menu']", timeout=3000)
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(200)
+        assert page.locator(".desk-head-menu").count() == 0
+        assert page.locator(sel).count() == 1, "Escape must not close the window"
+        # 3. Skinned select: appearance none on a bare-or-signal select.
+        appearance = page.locator(f"{sel} select").first.evaluate(
+            "el => getComputedStyle(el).appearance")
+        assert appearance == "none", appearance
+        # 4. The drawn scrollbar consumes a real gutter (headed truth).
+        gutter = page.locator(f"{sel} .desk-surface-body").evaluate(
+            "el => el.offsetWidth - el.clientWidth")
+        assert gutter >= 10, f"scrollbar gutter {gutter}px — drawn pill absent"
+        # 5. Maximize squares the corners.
+        page.locator(f"{sel} [aria-label='Maximize Settings']").click()
+        page.wait_for_timeout(350)
+        radius = page.locator(sel).evaluate(
+            "el => getComputedStyle(el).borderTopLeftRadius")
+        assert radius == "0px", radius
+        page.locator(f"{sel} [aria-label='Restore Settings']").click()
+        page.wait_for_timeout(350)
+        # 6. The dock underline: the front chip's ::after wears width.
+        chip_after = page.evaluate(
+            """() => {
+              const c = document.querySelector('.desk-dock-chip.is-front');
+              if (!c) return null;
+              const cs = getComputedStyle(c, '::after');
+              return { h: cs.height, w: cs.width };
+            }""")
+        assert chip_after and chip_after["h"] == "2px", chip_after
+        page.screenshot(path=str(OUT / "chrome-desk-1440.png"))
+        assert not failures, failures
+        # 7. The 393 sheet keeps the bar.
+        phone = browser.new_context(
+            viewport={"width": 393, "height": 852}).new_page()
+        phone.goto(BASE + "/settings", wait_until="networkidle")
+        phone.wait_for_selector(sel, timeout=15000)
+        phone.wait_for_timeout(600)
+        phb = phone.locator(f"{sel} header.desk-pullout-head").bounding_box()
+        assert 38 <= phb["height"] <= 42, phb
+        phone.screenshot(path=str(OUT / "chrome-393.png"))
+        print("chrome walk: the bar (two-tone, square verbs, red close), "
+              "head menu, skinned selects, drawn scrollbar (headed), square "
+              "maximize corners, dock underline — all present; shots at "
+              "1440 and 393")
+        browser.close()
+
+
 def switcher() -> None:
     """HS-97-06 — the switcher: exposé fans every open window (minimized
     ones join as dimmed cards) into a pick grid — click focuses, Escape
@@ -1611,6 +1706,8 @@ if __name__ == "__main__":
         reflow()
     elif mode == "surfaces":
         surfaces()
+    elif mode == "chrome":
+        chrome()
     elif mode == "switcher":
         switcher()
     elif mode == "shelf":

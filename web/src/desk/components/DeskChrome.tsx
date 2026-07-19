@@ -1,10 +1,11 @@
 // The Desk's floating system chrome. The room menu stays compact; the opposite
 // cluster exposes the three daily starts, one searchable tool shelf, layout,
 // and refresh. A fresh Desk renders the same starts centrally instead.
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { openSurface } from "../shell";
 import { useTrustWindow } from "./TrustWindow";
 import { useDesk } from "../store";
+import { DeskMenuList } from "./DeskMenu";
 import { egressBadge } from "../setup";
 import { DeskStartActions } from "./DeskStartActions";
 import { DeskToolShelf } from "./DeskToolShelf";
@@ -30,6 +31,7 @@ export function DeskChrome({
   const viewMode = useDesk((s) => s.viewMode);
   const { refresh, tidyDesk, setViewMode } = useDesk.getState();
   const [menuOpen, setMenuOpen] = useState(false);
+  const markRef = useRef<HTMLButtonElement | null>(null);
 
   const anyLive = Object.values(status).some((v) => v === "live");
   const hubState = error ? "degraded" : anyLive ? "live" : "connecting";
@@ -47,6 +49,7 @@ export function DeskChrome({
         <div className="desk-menu-wrap">
           <button
             type="button"
+            ref={markRef}
             className="desk-mark"
             aria-expanded={menuOpen}
             aria-haspopup="menu"
@@ -59,42 +62,13 @@ export function DeskChrome({
             HoldSpeak
           </button>
           {menuOpen && (
-            <nav
+            <DeskMenuList
               className="desk-menu"
-              role="menu"
+              label="HoldSpeak"
+              anchor="below"
               onMouseLeave={() => setMenuOpen(false)}
-              onKeyDown={(e) => {
-                // HS-96-05 — the Radix menu keyboard pattern, hand-rolled
-                // (the recorded decision: Signal stays; the patterns come).
-                const items = Array.from(
-                  e.currentTarget.querySelectorAll<HTMLElement>(
-                    "[role='menuitem']",
-                  ),
-                );
-                const at = items.indexOf(
-                  document.activeElement as HTMLElement,
-                );
-                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                  e.preventDefault();
-                  const step = e.key === "ArrowDown" ? 1 : -1;
-                  items[
-                    (at + step + items.length) % items.length
-                  ]?.focus();
-                } else if (e.key === "Escape") {
-                  e.preventDefault();
-                  setMenuOpen(false);
-                  (
-                    e.currentTarget.closest(".desk-menu-wrap")
-                      ?.querySelector(".desk-mark") as HTMLElement | null
-                  )?.focus();
-                } else if (e.key === "Home") {
-                  e.preventDefault();
-                  items[0]?.focus();
-                } else if (e.key === "End") {
-                  e.preventDefault();
-                  items[items.length - 1]?.focus();
-                }
-              }}
+              onClose={() => setMenuOpen(false)}
+              returnFocus={() => markRef.current?.focus()}
             >
               {ROOMS.map((r) => (
                 <button
@@ -111,7 +85,7 @@ export function DeskChrome({
                   {r.label}
                 </button>
               ))}
-            </nav>
+            </DeskMenuList>
           )}
         </div>
         <span

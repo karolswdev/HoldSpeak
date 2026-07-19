@@ -4,7 +4,74 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, CLOSED
+**Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, CLOSED
+(8/8, scaffolded and shipped the same day)**: the ProzillaOS-studied
+skin is on. Windows wear a real title BAR (two tones, full-height
+square SVG verbs flush to the edge, a red-hover close, square corners
+on maximize, a right-click head menu); no component can ship an
+unstyled control (bare selects/inputs inherit the Signal foundation
+mechanically — the drawn chevron, surface-toned options, skinned
+date/search/file controls); the drawn pill scrollbar replaced the
+browser's everywhere (headed-proven); one menu vocabulary runs the
+room, head, and dock menus; the dock is alive (frosted glass, running
+underlines, hover life); Settings wears a left rail and Meetings a
+status bar on the tonal ladder. Closed by the new HEADED `chrome`
+walk leg (which mechanically caught a stale head override the
+eyeball had passed) inside a twelve-leg assembled chain — zero failed
+API responses, storm 8.3ms median, `npm run check` 291, full sweep
+4114/0. Provenance: PROZILLAOS_STUDY.md (MIT, attributed). The
+owner's verdict rides Campaign 13. Earlier: **HS-99-07, The chrome floors, written, DONE**: the
+chrome ladder is a floors contract in DESIGN_SYSTEM.md (verification
+gotchas as canon), web/README carries the ladder step, and the
+architecture locks list names the Phase 99 lock with MIT provenance.
+Earlier: **HS-99-06, Interior archetypes, DONE**: the
+settings LEFT RAIL at wide windows (container-driven, active row a
+tonal step up), the meetings status bar on the well tone with honest
+counts, the verb bar continuing the title bar's tone, and the split
+detail on the rail tone. Earlier: **HS-99-05, The dock is alive, DONE**: frosted
+glass over a real blur, a running underline per open window (accent
+and wide on the front, growing on hover), run marks on launchers,
+glyph swell, chip entry motion — storm within envelope with the blur
+live. Earlier: **HS-99-04, Scrollbars and menus, DONE**: the drawn
+pill scrollbar product-wide (headed-proven — the headless shell
+suppresses custom scrollbars, and standard scrollbar properties would
+disable webkit styling in modern Chromium, now Firefox-scoped) and
+DeskMenuList as the one menu vocabulary behind the room, head, and
+new dock-chip menus. Earlier: **HS-99-03, Controls wear the skin, DONE**: the
+"unstyled selects" were the desk's own components shipping raw
+selects/inputs past Signal — bare controls inside the desk shell now
+inherit the control foundation mechanically (options, checkbox
+accent, date indicator, a drawn search-cancel glyph, a Signal file
+button), config round-trip captured green. Earlier: **HS-99-02, The title bar is a bar, DONE**: the
+whole window family wears a 40px two-tone head (tonal separation, no
+border), full-height square SVG verbs flush to the edge, a red-hover
+close via the variable-override pattern, square corners on maximize,
+and a right-click head menu — with the Escape-eats-the-window defect
+the shots caught fixed and pinned; frame/depth/placement floors
+captured green. Earlier: **HS-99-01, The study and the tokens, DONE**: the
+ProzillaOS study is canon (PROZILLAOS_STUDY.md — borrow/embrace/skip
+with MIT attribution), nine chrome tokens land the tonal ladder +
+scrollbar pair + control height + easing family, and the chrome-ladder
+spec is in DESIGN_SYSTEM.md before any consumer. Earlier the same
+day the phase was **SCAFFOLDED (0/8)** from the owner's live verdict on the staged Phase 98 build ("a
+step, but soooo much work to even begin dreaming of this looking and
+feeling like an OS — loads of unstyled selects; the windows deserve a
+huge overhaul") and the directed ProzillaOS study
+(github.com/prozilla-os/ProzillaOS, MIT — "see what we can borrow,
+what we can embrace"). A three-way source study (window system,
+skin/controls, desktop shell) named the missing chrome: a tonal depth
+ladder instead of borders, a real two-tone title BAR with edge-flush
+square controls and a red-hover close, custom pill scrollbars
+everywhere (we ship none), skinned form controls (the unstyled
+selects), one directional light source, a frosted living dock with a
+running-app underline, a shared menu vocabulary, tint formulas, and an
+easing family. Eight stories in
+[phase-99-the-os-chrome](./phase-99-the-os-chrome/): study+tokens
+first, then the bar, the controls, scrollbars+menus, the dock,
+interior archetypes (Settings rail, Meetings status bar), floors, and
+a chrome walk. What Phases 96–98 do better than the reference (focus
+chrome, snap, per-edge resize, reduced-motion) are floors and must not
+regress. Earlier: **Phase 98, Native Surfaces, CLOSED
 (9/9, scaffolded and shipped the same day)**: the window interiors are
 ONE visual product with the desk. The surface idiom (one material, the
 window as the viewport via container queries, denser scale, honest
@@ -464,6 +531,7 @@ canon, canon wins.
 | 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
 | 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | done | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
 | 98 | Native Surfaces: the window interiors re-crafted in one desk idiom — the surface kit, container-driven reflow, honest rows, the page grammar retired from the desk | done | [phase-98-native-surfaces](./phase-98-native-surfaces/) |
+| 99 | The OS Chrome: the ProzillaOS-studied skin — tonal depth ladder, a real title bar, skinned controls, custom scrollbars, a living dock, one menu vocabulary | done | [phase-99-the-os-chrome](./phase-99-the-os-chrome/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

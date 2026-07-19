@@ -264,6 +264,15 @@
   --desk-surface-label-size: 0.6875rem; /* HS-98: quiet section label size (11px) */
   --desk-surface-body-size: 0.8125rem; /* HS-98: surface body copy size (13px; matches --font-size-sm) */
   --desk-surface-detail-size: 0.75rem; /* HS-98: surface row detail size (12px; matches --font-size-xs) */
+  --desk-window-head-fill: rgba(26, 23, 34, 0.99); /* HS-99: the title-bar tone — one step ABOVE the window body; separation by tone, never a border (PROZILLAOS_STUDY.md) */
+  --desk-window-rail: rgba(18, 16, 24, 0.92); /* HS-99: rails/toolbars — between head and body on the tonal ladder */
+  --desk-window-well: rgba(8, 7, 12, 0.72); /* HS-99: the well tone — inputs and controls sit one step BELOW the body */
+  --desk-scrollbar-thumb: rgba(255, 255, 255, 0.14); /* HS-99: the pill scrollbar thumb, everywhere */
+  --desk-scrollbar-thumb-hover: rgba(255, 255, 255, 0.26); /* HS-99: the thumb under the pointer */
+  --desk-control-h: 36px; /* HS-99: control height on the well tone (selects, dense inputs) */
+  --ease-quart: cubic-bezier(0.76, 0, 0.24, 1); /* HS-99: the default chrome easing (in-out-quart) */
+  --ease-expo: cubic-bezier(0.87, 0, 0.13, 1); /* HS-99: the emphatic easing for large moves */
+  --ease-back: cubic-bezier(0.68, -0.4, 0.32, 1.4); /* HS-99: the playful overshoot (small elements only) */
 }
 
 @media (prefers-reduced-motion: reduce) {

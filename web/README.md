@@ -105,7 +105,16 @@ surface:
    entries; the focus and pressed state grammars are inherited — never
    hand-roll them; the window material is ONE `:where()` rule — no
    per-window recipes.
-6. **Window grammar** (HS-97; the physics floors chapter in
+6. **The chrome ladder** (HS-99; the chrome ladder chapter in
+   `DESIGN_SYSTEM.md` is the contract): interiors layer by TONE
+   (head/rail/well around the body fill), never by borders. Popovers
+   render through `DeskMenuList`/`DeskMenuItem` (`src/desk/components/
+   DeskMenu.tsx`) — never a hand-rolled menu. Bare `select`/`input`/
+   `textarea` elements inside the desk shell inherit the Signal
+   control foundation mechanically; never opt a control out of it.
+   Scrollbars are the drawn pill — verify HEADED (the headless shell
+   suppresses them).
+7. **Window grammar** (HS-97; the physics floors chapter in
    `DESIGN_SYSTEM.md` is the contract): windows are placed by the OS —
    never hand-position a surface window; its CSS default is only the
    placement seed. A fixed shelf verb registers through

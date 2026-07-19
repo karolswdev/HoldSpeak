@@ -78,7 +78,8 @@ body {
  * same top-lit depth, deliberate focus, and quiet motion as Signal cards.
  * Existing `.input` / `.select` controls adopt the foundation automatically.
  * ============================================================ */
-:where(.input, .select, .hs-control) {
+:where(.input, .select, .hs-control),
+.desk-next :where(select, textarea), .desk-next :where(input:where(:not([type]), [type="text"], [type="search"], [type="url"], [type="email"], [type="password"], [type="number"], [type="date"], [type="time"])) {
   width: 100%;
   min-height: 44px;
   appearance: none;
@@ -100,19 +101,22 @@ body {
     transform var(--duration-short) var(--ease-standard);
 }
 
-:where(.input, .select, .hs-control)::placeholder {
+:where(.input, .select, .hs-control)::placeholder,
+.desk-next :where(select, textarea)::placeholder, .desk-next :where(input:where(:not([type]), [type="text"], [type="search"], [type="url"], [type="email"], [type="password"], [type="number"], [type="date"], [type="time"]))::placeholder {
   color: var(--text-faint);
   font-weight: 400;
 }
 
-:where(.input, .select, .hs-control):hover:not(:disabled) {
+:where(.input, .select, .hs-control):hover:not(:disabled),
+.desk-next :where(select, textarea):hover:not(:disabled), .desk-next :where(input:where(:not([type]), [type="text"], [type="search"], [type="url"], [type="email"], [type="password"], [type="number"], [type="date"], [type="time"])):hover:not(:disabled) {
   border-color: var(--border-strong);
   background:
     linear-gradient(180deg, var(--wash-2), transparent 55%),
     var(--surface-2);
 }
 
-:where(.input, .select, .hs-control):focus {
+:where(.input, .select, .hs-control):focus,
+.desk-next :where(select, textarea):focus, .desk-next :where(input:where(:not([type]), [type="text"], [type="search"], [type="url"], [type="email"], [type="password"], [type="number"], [type="date"], [type="time"])):focus {
   outline: none;
   border-color: var(--accent);
   box-shadow:
@@ -121,7 +125,8 @@ body {
     0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
-:where(.input, .select, .hs-control):disabled {
+:where(.input, .select, .hs-control):disabled,
+.desk-next :where(select, textarea):disabled, .desk-next :where(input:where(:not([type]), [type="text"], [type="search"], [type="url"], [type="email"], [type="password"], [type="number"], [type="date"], [type="time"])):disabled {
   opacity: 0.55;
   cursor: not-allowed;
   background: var(--surface-1);
@@ -225,7 +230,8 @@ body {
   cursor: not-allowed;
 }
 
-:where(select.select, select.input, select.hs-control, .hs-select) {
+:where(select.select, select.input, select.hs-control, .hs-select),
+.desk-next select {
   appearance: none;
   padding-right: 2.65rem;
   background-image:
@@ -598,4 +604,104 @@ pre {
   gap: var(--space-2);
   justify-content: center;
   margin-top: var(--space-2);
+}
+
+
+/* ============================================================
+ * HS-99-03 — the OS skins EVERY control (DESIGN_SYSTEM.md, the chrome
+ * ladder rule 4). Bare elements inside the desk shell inherit the
+ * control foundation above (no surface can ship an unstyled control);
+ * the pieces below finish the skin: the option popup, the date and
+ * search adornments, the file button, the checkbox accent, and the
+ * denser desk control height.
+ * ============================================================ */
+.desk-next :where(select, textarea, input) {
+  min-height: var(--desk-control-h);
+}
+.desk-next textarea {
+  min-height: calc(var(--desk-control-h) * 2);
+}
+option {
+  background-color: var(--surface-2);
+  color: var(--text);
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0.55;
+  filter: invert(1);
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.9;
+}
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  height: 13px;
+  width: 13px;
+  background-color: var(--text-muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.5 3.5l7 7M10.5 3.5l-7 7' stroke='black' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.5 3.5l7 7M10.5 3.5l-7 7' stroke='black' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  cursor: pointer;
+}
+input[type="file"] {
+  color: var(--text-muted);
+  font: 500 var(--font-size-sm) / 1.35 var(--font-ui);
+}
+input[type="file"]::file-selector-button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 7px 12px;
+  margin-right: 10px;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--duration-short) var(--ease-quart);
+}
+input[type="file"]::file-selector-button:hover {
+  background: var(--surface-3);
+}
+
+/* ============================================================
+ * HS-99-04 — scrollbars belong to the OS (DESIGN_SYSTEM.md, the
+ * chrome ladder rule 3): a thin pill thumb on a transparent track,
+ * product-wide. The pill is carved by a transparent border +
+ * background-clip (PROZILLAOS_STUDY.md).
+ * ============================================================ */
+/* Chromium/Safari take the drawn pill below; ONLY engines without
+   ::-webkit-scrollbar (Firefox) get the standard properties — in
+   modern Chromium the standard properties would DISABLE the drawn
+   scrollbar entirely. */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--desk-scrollbar-thumb) transparent;
+  }
+}
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-pill);
+  border: 4px solid transparent;
+  background-color: var(--desk-scrollbar-thumb);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--desk-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
