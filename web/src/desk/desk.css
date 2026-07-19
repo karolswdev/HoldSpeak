@@ -3410,7 +3410,11 @@
     var(--desk-window-pad-x);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--desk-surface-section-gap);
+  /* HS-98-01: the WINDOW is the viewport — the surface kit reflows via
+     @container queries against this container, never viewport media. */
+  container-type: inline-size;
+  container-name: surface;
 }
 .desk-next .desk-core-verbs {
   display: flex;

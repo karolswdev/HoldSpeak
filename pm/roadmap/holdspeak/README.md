@@ -4,8 +4,21 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, SCAFFOLDED
-(0/9)** from the owner's standing verdict (windows feel like glued-in
+**Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, IN
+PROGRESS (1/9)**. **HS-98-01, The surface idiom, DONE**: the idiom
+specced into DESIGN_SYSTEM.md (six rules; the 560px container
+breakpoint as canon), the kit built (`web/src/desk/surface/` — one
+verb bar, hairline sections, dense honest rows with revealed verbs,
+one state grammar, container-query columns/split, the inline two-step
+ConfirmVerb, honest formatters) on seven new `--desk-surface-*`
+density tokens, `.desk-surface-body` made the `surface` size
+container, the shrink-only seam guard armed
+(`test_native_surfaces_guard.py`), and CadenceCore converted as the
+reference — proven live by the new `reflow` walk leg (one 1440
+viewport: side-by-side wide, stacked after the window's own edge
+narrows past the breakpoint; zero page grammar in the live DOM; shots
+looked at). Earlier the same day: **Phase 98 SCAFFOLDED (0/9)** from
+the owner's standing verdict (windows feel like glued-in
 HTML panes, zero consistent look and feel): Phase 97 gave the windows
 an OS grammar; this phase re-crafts what lives inside them. The seam
 is named mechanically — every demoted core is a Signal-era page
@@ -389,6 +402,7 @@ canon, canon wins.
 | 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | done | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
 | 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
 | 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | done | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
+| 98 | Native Surfaces: the window interiors re-crafted in one desk idiom — the surface kit, container-driven reflow, honest rows, the page grammar retired from the desk | in-progress | [phase-98-native-surfaces](./phase-98-native-surfaces/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

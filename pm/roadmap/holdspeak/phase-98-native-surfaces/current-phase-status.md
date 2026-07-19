@@ -1,13 +1,14 @@
 # Phase 98 — Native Surfaces
 
-**Status:** SCAFFOLDED (0/9, 2026-07-18) from the owner's standing
+**Status:** IN PROGRESS (1/9, 2026-07-18) from the owner's standing
 verdict ("none of the Desk OS feels like an OS — windows feel like
 glued-in HTML panes, zero consistent look and feel") and the 2026-07-18
 remediation audit. Phase 97 shipped the window grammar (placement,
 depth, motion, one shelf); this phase re-crafts what lives INSIDE the
 windows.
 
-**Last updated:** 2026-07-18 (scaffolded).
+**Last updated:** 2026-07-18 (HS-98-01 done: the idiom specced, the
+kit built, the seam guard armed, Cadence native).
 
 ## Why this phase exists
 
@@ -93,7 +94,7 @@ viewports, screenshots looked at.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-98-01 | The surface idiom | backlog | [story-01-surface-idiom](./story-01-surface-idiom.md) | — |
+| HS-98-01 | The surface idiom | done | [story-01-surface-idiom](./story-01-surface-idiom.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-98-02 | Dictation, native | backlog | [story-02-dictation-native](./story-02-dictation-native.md) | — |
 | HS-98-03 | Meetings, native | backlog | [story-03-meetings-native](./story-03-meetings-native.md) | — |
 | HS-98-04 | The live pair | backlog | [story-04-live-pair](./story-04-live-pair.md) | — |
@@ -105,5 +106,22 @@ viewports, screenshots looked at.
 
 ## Where we are
 
-Scaffolded 2026-07-18. Next: HS-98-01 — spec the idiom, build the kit,
-arm the seam guard.
+**HS-98-01 done (2026-07-18): the surface idiom exists.** The spec
+landed first (DESIGN_SYSTEM.md "The surface idiom": six rules, the
+560px container breakpoint as canon), then the kit —
+`web/src/desk/surface/` (SurfaceVerbs / SurfaceSection / SurfaceRows +
+Row / SurfaceState / SurfaceColumns / SurfaceSplit / MetricStrip /
+ConfirmVerb, plus the honest formatters humanTime/deSnake/
+presentValue) on seven new `--desk-surface-*` density tokens, with
+`.desk-surface-body` a size container so kit layouts answer to the
+WINDOW via `@container`. The seam guard
+(`tests/unit/test_native_surfaces_guard.py`) forbids the page grammar
+in cores with a shrink-only allowlist seeded at today's truth (stale
+rows fail; a plant proves the scanner). CadenceCore converted as the
+reference: zero page grammar, the modal confirm replaced by the inline
+two-step, loops and history as honest rows. Proven live by the new
+`reflow` walk leg on the production bundle: one 1440 viewport, the
+Cadence window side-by-side at its default width and stacked after its
+right edge dragged past the breakpoint, zero failed API responses —
+shots looked at. `npm run check` green (288 web tests); full sweep
+captured in evidence. Next: HS-98-02 — Dictation, native.

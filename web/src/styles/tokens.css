@@ -257,6 +257,13 @@
   --desk-transient-shadow: 0 18px 40px rgba(0, 0, 0, 0.5); /* menus/popovers elevation */
   --desk-window-pad-x: 14px; /* window body horizontal padding */
   --desk-window-pad-y: 12px; /* window body vertical padding */
+  --desk-surface-row-h: 40px; /* HS-98: dense surface row min height (OS density, not page density) */
+  --desk-surface-row-pad-x: 10px; /* HS-98: surface row horizontal padding */
+  --desk-surface-gap: 2px; /* HS-98: gap between surface rows */
+  --desk-surface-section-gap: 18px; /* HS-98: gap between surface sections */
+  --desk-surface-label-size: 0.6875rem; /* HS-98: quiet section label size (11px) */
+  --desk-surface-body-size: 0.8125rem; /* HS-98: surface body copy size (13px; matches --font-size-sm) */
+  --desk-surface-detail-size: 0.75rem; /* HS-98: surface row detail size (12px; matches --font-size-xs) */
 }
 
 @media (prefers-reduced-motion: reduce) {

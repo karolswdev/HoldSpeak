@@ -186,6 +186,49 @@ legs (`placement`, `arrangement`, `depth`, `frame`, `switcher`,
   reset verbs. No floating pills. Window identity in the head is icon
   plus title — the eyebrow is demoted (Article VII.1).
 
+## The surface idiom (HS-98)
+
+Window interiors are one visual product with the desk. The Signal
+page grammar (`page-grid`, `span-*`, `Panel`, `data-list`/`data-row`,
+`signal-eyebrow`, permanent `button-row` walls) is forbidden inside
+`pages/cores/` — mechanically, by
+`tests/unit/test_native_surfaces_guard.py`, whose per-file allowlist
+only shrinks. Cores compose the surface kit
+(`web/src/desk/surface/`), which owns the six rules:
+
+1. **One material, no double chrome.** The window frame is the only
+   chrome. Content sits directly on `--desk-window-fill`;
+   `SurfaceSection` groups with a hairline (`--border` over `--wash-1`)
+   and a quiet label (`--desk-surface-label-size`, `--text-muted`) —
+   never a nested card, never an eyebrow restating the title.
+2. **The window is the viewport.** `.desk-surface-body` is a size
+   container (`container-type: inline-size`, name `surface`). Kit
+   layouts (`SurfaceSplit`, `MetricStrip`) reflow via `@container
+   surface` queries at the one narrow breakpoint, **560px** (a raw px
+   constant in `surface.css` — container queries cannot read custom
+   properties; this line is its canon) — a core must never consult a
+   viewport media query.
+3. **A denser scale.** Rows sit on `--desk-surface-row-h` with
+   `--desk-surface-row-pad-x`; body copy is `--desk-surface-body-size`,
+   details `--desk-surface-detail-size`, section labels
+   `--desk-surface-label-size`. Sections breathe at
+   `--desk-surface-section-gap`, rows at `--desk-surface-gap`.
+4. **Rows say what they mean.** `SurfaceRow` renders title + detail
+   slots; times pass through `humanTime`, labels through `deSnake`,
+   values through `presentValue` — an unknown is omitted, never
+   printed as "unknown"/"0" theater.
+5. **Verbs have homes.** Primary verbs ride `SurfaceVerbs` (one bar at
+   the surface top); row verbs live in the row's verb slot and reveal
+   on hover/focus-within (always visible under coarse pointers and
+   reduced motion); destructive verbs use the inline two-step
+   `ConfirmVerb` (arm → fire, self-disarming), not a modal.
+6. **One state grammar.** `SurfaceState` renders loading, error, and
+   empty as one quiet treatment — glyph plus a short label in the
+   product voice, retry as a dense ghost button, no prose.
+
+The kit inherits the HS-96-03 state contract (global focus ring, the
+1px pressed settle) and adds nothing of its own.
+
 ## Adding a surface (styling rules)
 
 See `web/README.md` for the full add-a-surface path. Styling rules:
