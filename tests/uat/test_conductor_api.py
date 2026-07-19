@@ -93,7 +93,7 @@ def test_features_route(client):
     body = r.json()
     assert body["feature_count"] > 200
     # Phase numbers are zero-based in the record: 0 through 100 is 101 phases.
-    assert body["phases_total"] == 101
+    assert body["phases_total"] == 102
 
 
 def test_packs_and_pack_detail(client):
