@@ -5,7 +5,14 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
-PROGRESS (1/6)**. **HS-100-01, The grounding, DONE**: GROUNDING.md is
+PROGRESS (2/6)**. **HS-100-02, The judgment, DONE**: UIUX_JUDGMENT.md
+judges every surface (15 registry rows) and desk component (28)
+keep/merge/re-shape/kill against the grounding's jobs, census-proven
+complete from the code; three live flow traces measured the mangled
+paths (meeting→filed = nine concepts; dictation opens on diagnostics;
+mics silently vanish on non-secure origins) and proved the desk
+metaphor where it wins (tap→rope→ask = 4 clicks). Earlier same day,
+**HS-100-01, The grounding, DONE**: GROUNDING.md is
 written and fully cited — the four jobs ranked by evidence, the
 postures, the seams, four named canon drifts for the owner's ruling,
 and the complete owner-verdict record verbatim with its reading (the

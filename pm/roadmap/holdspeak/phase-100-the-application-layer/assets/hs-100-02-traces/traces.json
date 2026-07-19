@@ -1,0 +1,152 @@
+[
+  {
+    "flow": "flow-a-meeting",
+    "clicks": 3,
+    "steps": [
+      {
+        "n": 1,
+        "label": "arrive at the desk",
+        "clicks_so_far": 0,
+        "windows_open": 0,
+        "pullouts_open": 0,
+        "dead_end": null,
+        "shot": "flow-a-meeting-01.png"
+      },
+      {
+        "n": 2,
+        "label": "room menu open",
+        "clicks_so_far": 1,
+        "windows_open": 0,
+        "pullouts_open": 0,
+        "dead_end": null,
+        "shot": "flow-a-meeting-02.png"
+      },
+      {
+        "n": 3,
+        "label": "Meetings window open (HistoryCore)",
+        "clicks_so_far": 2,
+        "windows_open": 1,
+        "pullouts_open": 0,
+        "dead_end": null,
+        "shot": "flow-a-meeting-03.png"
+      },
+      {
+        "n": 4,
+        "label": "meeting detail \u2014 looking for actions/artifacts",
+        "clicks_so_far": 3,
+        "windows_open": 1,
+        "pullouts_open": 0,
+        "dead_end": "intel status in body: \u2026tings / Actions / Speakers / Projects / Queues / Filters / Release sync (trace seed) / 3m ago / Disabled / Review meeting / RELEASE SYNC (TRACE SEED) / Close / Transcript / Artifacts / Aftercare / Routing / Proposals /  / Karol: Quick s\u2026",
+        "shot": "flow-a-meeting-04.png"
+      },
+      {
+        "n": 5,
+        "label": "affordances pointing at a fix",
+        "fix_affordances": 1,
+        "clicks_so_far": 3
+      }
+    ]
+  },
+  {
+    "flow": "flow-b-dictation",
+    "clicks": 5,
+    "steps": [
+      {
+        "n": 1,
+        "label": "arrive at the desk",
+        "clicks_so_far": 0,
+        "windows_open": 0,
+        "pullouts_open": 0,
+        "dead_end": null,
+        "shot": "flow-b-dictation-01.png"
+      },
+      {
+        "n": 2,
+        "label": "Dictation window open",
+        "clicks_so_far": 1,
+        "windows_open": 1,
+        "pullouts_open": 0,
+        "dead_end": null,
+        "shot": "flow-b-dictation-02.png"
+      },
+      {
+        "n": 3,
+        "label": "real Whisper transcript landed: 'Hello world, hello world, hello world, hello'",
+        "clicks_so_far": 3,
+        "windows_open": 1,
+        "pullouts_open": 0,
+        "dead_end": null,
+        "shot": "flow-b-dictation-03.png"
+      },
+      {
+        "n": 4,
+        "label": "dry-run result with Right/Wrong verdict pair",
+        "clicks_so_far": 4,
+        "windows_open": 1,
+        "pullouts_open": 0,
+        "dead_end": null,
+        "shot": "flow-b-dictation-04.png"
+      },
+      {
+        "n": 5,
+        "label": "correction ritual open in place",
+        "clicks_so_far": 5,
+        "windows_open": 1,
+        "pullouts_open": 0,
+        "dead_end": null,
+        "shot": "flow-b-dictation-05.png"
+      }
+    ]
+  },
+  {
+    "flow": "flow-c-keep-ask",
+    "clicks": 4,
+    "steps": [
+      {
+        "n": 1,
+        "label": "arrive at the seeded desk",
+        "clicks_so_far": 0,
+        "windows_open": 0,
+        "pullouts_open": 0,
+        "dead_end": null,
+        "shot": "flow-c-keep-ask-01.png"
+      },
+      {
+        "n": 2,
+        "label": "pull-out open \u2014 the kept object is readable",
+        "clicks_so_far": 1,
+        "windows_open": 1,
+        "pullouts_open": 1,
+        "dead_end": null,
+        "shot": "flow-c-keep-ask-02.png"
+      },
+      {
+        "n": 3,
+        "label": "lasso roped a selection (askbar=1)",
+        "clicks_so_far": 2,
+        "windows_open": 0,
+        "pullouts_open": 0,
+        "dead_end": null,
+        "shot": "flow-c-keep-ask-03.png"
+      },
+      {
+        "n": 4,
+        "label": "Ask panel open with the roped grounding",
+        "clicks_so_far": 3,
+        "windows_open": 1,
+        "pullouts_open": 1,
+        "dead_end": null,
+        "shot": "flow-c-keep-ask-04.png"
+      },
+      {
+        "n": 5,
+        "label": "the honest response (or refusal) printed",
+        "clicks_so_far": 4,
+        "windows_open": 1,
+        "pullouts_open": 1,
+        "dead_end": null,
+        "shot": "flow-c-keep-ask-05.png"
+      }
+    ]
+  }
+]
