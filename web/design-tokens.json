@@ -1089,6 +1089,26 @@
         "name": "--desk-type-primary-lh",
         "value": "1.4",
         "doc": "HS-101: primary line height (spoken text breathes)"
+      },
+      {
+        "name": "--desk-aerogel-fill",
+        "value": "rgba(255, 255, 255, 0.045)",
+        "doc": "HS-101 (owner's gate amendment): the suspended receipt inset — faint fill, no accent rail (the left accent bar is banned)"
+      },
+      {
+        "name": "--desk-aerogel-edge",
+        "value": "rgba(255, 255, 255, 0.09)",
+        "doc": "HS-101: aerogel's soft all-around 1px edge"
+      },
+      {
+        "name": "--desk-aerogel-blur",
+        "value": "blur(18px) saturate(140%)",
+        "doc": "HS-101: aerogel backdrop — lighter than the window glass, enough to read as suspended"
+      },
+      {
+        "name": "--desk-aerogel-shadow",
+        "value": "0 10px 30px rgba(0, 0, 0, 0.35)",
+        "doc": "HS-101: the lift under a suspended receipt"
       }
     ]
   }

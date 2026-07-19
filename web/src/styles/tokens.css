@@ -292,6 +292,10 @@
   --desk-type-primary-size: 0.9375rem; /* HS-101: the primary line — what the material IS (15px; a deliberate step above --desk-surface-body-size) */
   --desk-type-primary-weight: 600; /* HS-101: primary line weight */
   --desk-type-primary-lh: 1.4; /* HS-101: primary line height (spoken text breathes) */
+  --desk-aerogel-fill: rgba(255, 255, 255, 0.045); /* HS-101 (owner's gate amendment): the suspended receipt inset — faint fill, no accent rail (the left accent bar is banned) */
+  --desk-aerogel-edge: rgba(255, 255, 255, 0.09); /* HS-101: aerogel's soft all-around 1px edge */
+  --desk-aerogel-blur: blur(18px) saturate(140%); /* HS-101: aerogel backdrop — lighter than the window glass, enough to read as suspended */
+  --desk-aerogel-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); /* HS-101: the lift under a suspended receipt */
 }
 
 @media (prefers-reduced-motion: reduce) {

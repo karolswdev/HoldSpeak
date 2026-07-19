@@ -289,6 +289,15 @@ nothing below ships before the HS-101-02 gate.** The HS-98 surface
 idiom and HS-99 chrome ladder stay floors; this canon governs what
 composes ON them.
 
+Gate revision (2026-07-19, the owner's first-round verdict): direction
+approved ("this is absolutely turning into something more resembling
+of the actual OS"), with two amendments folded in below — the left
+accent rail is BANNED verbatim ("that stupid ass accent on the left …
+it's literally a ban. NO"), receipts float in aerogel instead; and
+fluidity is now a requirement ("I'm honestly not so happy with how
+little 'fluidity' there is by this OS. Why aren't there effects,
+animations, transitions, when operating this desk?").
+
 ### The interior type scale
 
 Window bodies are nearly monosize today (13/12/11px). Real
@@ -334,10 +343,26 @@ sizes collapse to one step is a defect the geometry walk catches.
    a transcript or audio file anywhere on the desk and a Meeting
    imports. Drop targets light BEFORE the drop (the HS-95 drop-ready
    grammar); a refused drop names why.
-5. **Motion is meaning.** State changes animate what changed — the
-   correction-learned moment, an approve leaving the queue, a wing
-   switch — riding the `--duration-*`/`--ease-*` families,
-   compositor-only, instant under reduced motion. Nothing else moves.
+5. **The desk is fluid; motion has meaning.** Operating the desk
+   answers with motion: wings crossfade, verbs fade in where the
+   pointer arrives, stream entries settle as they load, the shade
+   drops with a spring, aerogel receipts inflate from their row, the
+   window grammar keeps its 97 springs. All of it rides the
+   `--duration-*`/`--ease-*` families, compositor-only, fast, and
+   instant under reduced motion. State changes animate what changed
+   with emphasis (the learned moment, an approve leaving the queue).
+   Idle never moves — fluidity is the desk answering the hand, never
+   decoration at rest.
+6. **Receipts float in aerogel; the left accent rail is banned.** A
+   nested record (a replay preview, a quoted receipt, a transcript
+   excerpt) is a suspended translucent inset — its own faint fill,
+   blur, a soft all-around edge, lifted by shadow (`--desk-aerogel-*`
+   tokens) — never a framed card and NEVER an accent bar on its left
+   edge. The owner's ban is absolute and product-wide; the six
+   existing `border-left` accent rails (`surface.css` `.surface-
+   preview`, five in `desk.css`) die at the build, and the build
+   ships a mechanical guard refusing any accent-colored `border-left`
+   in `web/src` CSS.
 
 ### The kit that carries it (designed here, wired at the build)
 
@@ -355,6 +380,8 @@ sizes collapse to one step is a defect the geometry walk catches.
   presented text; focus/click swaps to an editor of the same
   geometry; commit/revert grammar as above; disabled state names why.
 - `SystemShade` — one system surface behind the bell (see below).
+- The aerogel inset — the rule-6 receipt treatment as one kit piece,
+  so no surface hand-rolls its own nested-record chrome.
 - The glass-drop contract — `dragKind` (desk-object / chip / file) ×
   drop target (window face, desk, dock chip) with the drop-ready
   lighting and named refusals; one implementation, every window.

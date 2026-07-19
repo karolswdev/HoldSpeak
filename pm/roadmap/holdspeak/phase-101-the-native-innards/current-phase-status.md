@@ -60,7 +60,7 @@ Two fronts, one phase, both from the owner's close-of-100 words:
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-101-01 | The interior canon + mockups | done | [story-01-interior-canon](./story-01-interior-canon.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-101-02 | The owner's gate | backlog | [story-02-gate](./story-02-gate.md) | — |
+| HS-101-02 | The owner's gate | in-progress | [story-02-gate](./story-02-gate.md) | — |
 | HS-101-03 | The build (authored at the gate) | backlog | [story-03-build](./story-03-build.md) | — |
 | HS-101-04 | Closeout (the owner's sitting) | backlog | [story-04-closeout](./story-04-closeout.md) | — |
 
@@ -72,5 +72,13 @@ the type scale rides `--desk-type-*` component tokens (gate clean),
 and the five mockups (journal stream / blocks library / runs-on
 switchboard / system shade / drag-through-glass) exist at 1440 AND
 393, census-derived from the canon doc and looked at.
-Next: HS-101-02 — the owner's gate. Nothing builds before the
-verdict; the build stories are authored from the APPROVED canon.
+HS-101-02 round 1 is in and folded (2026-07-19): direction approved
+("this is absolutely turning into something more resembling of the
+actual OS"), with two amendments now in the canon — the left accent
+rail is BANNED verbatim (the Journal's replay receipt re-cut as an
+aerogel inset, `--desk-aerogel-*` tokens ratified, the six shipped
+rails in web/src marked to die at the build behind a named guard) and
+FLUIDITY is canon (rule 5 rewritten: operating the desk answers with
+motion; the build gets a dedicated fluid-desk story). Awaiting the
+owner's call on the amended canon; the build stories are authored
+from the APPROVED version.
