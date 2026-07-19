@@ -1,6 +1,6 @@
 # Phase 99 — The OS Chrome
 
-**Status:** IN PROGRESS (5/8, 2026-07-18) from the owner's live verdict
+**Status:** IN PROGRESS (6/8, 2026-07-18) from the owner's live verdict
 on the staged Phase 98 build: "a step, but we still have soooo much
 work to do to even begin dreaming of this looking and feeling like an
 OS — loads of unstyled selects; those windows still deserve a huge
@@ -8,8 +8,8 @@ overhaul" — with a direct study directive: ProzillaOS
 (github.com/prozilla-os/ProzillaOS, MIT), "see what we can borrow,
 what we can embrace, and deliver this kind of experience."
 
-**Last updated:** 2026-07-18 (HS-99-05 done: the dock is alive —
-frosted glass, running underlines, hover life).
+**Last updated:** 2026-07-18 (HS-99-06 done: the interior archetypes
+— settings rail, meetings status bar, the ladder applied).
 
 ## Why this phase exists
 
@@ -102,12 +102,19 @@ regress.
 | HS-99-03 | Controls wear the skin | done | [story-03-controls](./story-03-controls.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-99-04 | Scrollbars and menus | done | [story-04-scrollbars-menus](./story-04-scrollbars-menus.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-99-05 | The dock is alive | done | [story-05-dock-alive](./story-05-dock-alive.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-99-06 | Interior archetypes | backlog | [story-06-interior-archetypes](./story-06-interior-archetypes.md) | — |
+| HS-99-06 | Interior archetypes | done | [story-06-interior-archetypes](./story-06-interior-archetypes.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-99-07 | The chrome floors, written | backlog | [story-07-docs](./story-07-docs.md) | — |
 | HS-99-08 | Closeout: the chrome walk | backlog | [story-08-closeout](./story-08-closeout.md) | — |
 
 ## Where we are
 
+**HS-99-06 done (2026-07-18): the interior archetypes.** Settings
+gains the left rail at wide windows (active row a tonal step up; the
+strip returns narrow — all container-driven); Meetings gains the
+well-tone status bar with honest counts; the verb bar continues the
+title bar's tone and the split detail sits on the rail tone. Config/
+meetings/reflow legs captured green. `npm run check` green (291).
+Next: HS-99-07 — the chrome floors, written. Earlier:
 **HS-99-05 done (2026-07-18): the dock is alive.** Frosted glass over
 a real blur, a running underline per open window (front = wide
 accent; grows on hover; short when minimized), run marks on open

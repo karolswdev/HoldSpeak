@@ -5,7 +5,11 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, IN
-PROGRESS (5/8)**. **HS-99-05, The dock is alive, DONE**: frosted
+PROGRESS (6/8)**. **HS-99-06, Interior archetypes, DONE**: the
+settings LEFT RAIL at wide windows (container-driven, active row a
+tonal step up), the meetings status bar on the well tone with honest
+counts, the verb bar continuing the title bar's tone, and the split
+detail on the rail tone. Earlier: **HS-99-05, The dock is alive, DONE**: frosted
 glass over a real blur, a running underline per open window (accent
 and wide on the front, growing on hover), run marks on launchers,
 glyph swell, chip entry motion — storm within envelope with the blur

@@ -451,17 +451,6 @@ export function SettingsCore({ hero, scope }: CoreProps) {
               />
             )}
           </Field>
-          {query ? null : (
-            <Tabs
-              label="Settings sections"
-              active={selected}
-              onChange={setActive}
-              tabs={sections.map((id) => ({
-                id,
-                label: FRIENDLY[id] ?? title(id),
-              }))}
-            />
-          )}
           {message ? (
             <InlineMessage tone={message.error ? "error" : "success"}>
               {message.text}
@@ -480,12 +469,27 @@ export function SettingsCore({ hero, scope }: CoreProps) {
               </section>
             ))
           ) : selected ? (
-            <SettingsFields
-              value={resource.data[selected] as JsonRecord}
-              path={[selected]}
-              query=""
-              onChange={update}
-            />
+            /* HS-99-06 — the settings archetype: rail + panel at a wide
+               window; the strip returns when narrow. */
+            <div className="surface-railed">
+              <Tabs
+                label="Settings sections"
+                active={selected}
+                onChange={setActive}
+                tabs={sections.map((id) => ({
+                  id,
+                  label: FRIENDLY[id] ?? title(id),
+                }))}
+              />
+              <div className="surface-railed-panel">
+                <SettingsFields
+                  value={resource.data[selected] as JsonRecord}
+                  path={[selected]}
+                  query=""
+                  onChange={update}
+                />
+              </div>
+            </div>
           ) : (
             <InlineMessage tone="warning">
               No settings were returned by the hub.

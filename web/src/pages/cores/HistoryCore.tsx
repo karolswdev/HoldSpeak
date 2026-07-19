@@ -927,6 +927,13 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           />
         }
       />
+      <div className="surface-status">
+        <span>{`${rows.length} ${active === "meetings" ? (rows.length === 1 ? "meeting" : "meetings") : active}`}</span>
+        {query || speaker || tag || dateFrom || dateTo || openActions ? (
+          <span>filtered</span>
+        ) : null}
+        {selected ? <span>1 open</span> : null}
+      </div>
     </>
   );
 }
