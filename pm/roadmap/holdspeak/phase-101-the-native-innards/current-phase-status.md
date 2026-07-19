@@ -81,7 +81,16 @@ to die) and FLUIDITY made canon (rule 5: operating the desk answers
 with motion). The call, verbatim: "Well, merge it in for me, and
 then keep going..." — PR #359 merged (`b858299b`); the amended canon
 is the approved canon. HS-101-03 is authored from it: the ledger
-B1–B8 (kit + rail-ban guard, the fluid desk, journal stream, blocks
-library, runs-on switchboard, system shade, through-the-glass DnD,
-keyboard grammar + the grown geometry walk), each landing as a gated
-commit with its named guard. Building now — B1 first.
+B1–B9 (B9 added mid-build at the owner's ask — the agent panes and
+the delivery rails wear the canon). SHIPPED so far, each a gated
+commit with its guard, live-proven on a staged hub: B1 (the kit +
+the rail ban — all six shipped rails dead, aerogel lives,
+EditInPlace, the interior-canon guard), B2 (the fluid desk —
+fluidity census), B3 (the Journal as a dated stream + PUT
+edit-in-place, driven live), B4 (Blocks as a library — the create
+path's silently-broken schema fixed by honesty), B5 (Runs on as a
+switchboard — Make default on the real settings write), B6 (the
+system shade — honest groups; Recovered awaits a real feed), B8
+(⌘1–⌘4/⌘W/⌘M/⌘/ + the grown geometry walk, whose new interior
+assertions immediately killed three real defects; new keys leg).
+Open: B7 (through the glass) and B9 (the panes + the rails).

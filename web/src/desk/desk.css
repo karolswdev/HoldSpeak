@@ -4442,3 +4442,78 @@
     animation: none;
   }
 }
+
+/* HS-101 B7 — the glass-drop well lights BEFORE the drop. */
+.desk-next .desk-ground.is-drop-ready {
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent-soft),
+    0 0 0 4px var(--accent-tint);
+  background: var(--accent-tint);
+  border-radius: var(--radius-md);
+  transition: box-shadow var(--duration-short) var(--ease-quart);
+}
+
+/* HS-101 B7 — the file-drop veil: lights before the drop, refuses by
+   name, and hands the result a verb. */
+.desk-next .desk-glassdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-popover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.desk-next .desk-glassdrop.is-armed {
+  background: var(--shade-1);
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
+}
+.desk-next .desk-glassdrop-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 22px;
+  border-radius: var(--desk-transient-radius);
+  background: var(--desk-panel-fill);
+  border: 1.5px dashed var(--accent-soft);
+  box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
+  -webkit-backdrop-filter: var(--desk-window-blur);
+  pointer-events: auto;
+  animation: desk-transient-in var(--duration-short) var(--ease-back);
+}
+.desk-next .desk-glassdrop-card strong {
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+}
+.desk-next .desk-glassdrop-card small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-glassdrop-verbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.desk-next .desk-glassdrop-verbs button {
+  height: 26px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 650;
+  font-size: var(--desk-surface-detail-size);
+  cursor: pointer;
+}
+.desk-next .desk-glassdrop-verbs .is-quiet {
+  background: var(--wash-2);
+  color: var(--text);
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-glassdrop-card {
+    animation: none;
+  }
+}

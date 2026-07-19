@@ -319,7 +319,29 @@ export function AskPanel() {
         )}
 
         {phase === "printed" && result && (
-          <div className="desk-ask-card">
+          <div
+            className="desk-ask-card"
+            /* HS-101 B7 — the result drags OUT through the glass: release
+               it over the desk and it is kept (the same keep verb; the
+               desk files the minted artifact). */
+            draggable={!kept}
+            title={kept ? undefined : "Drag onto the desk to keep"}
+            onDragStart={(e) => {
+              e.dataTransfer.setData("application/x-holdspeak-chip", "ask");
+              e.dataTransfer.effectAllowed = "copy";
+            }}
+            onDragEnd={(e) => {
+              const under = document.elementFromPoint(e.clientX, e.clientY);
+              if (
+                under &&
+                (under.closest(".desk-world") ||
+                  under.classList.contains("desk-world-canvas")) &&
+                !kept
+              ) {
+                void keep();
+              }
+            }}
+          >
             <pre className="desk-pullout-md">{result.output}</pre>
             {result.actualPlacement && (
               <p className="quiet desk-run-receipt">

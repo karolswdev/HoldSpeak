@@ -16,8 +16,11 @@ library, runs-on switchboard, system shade, drag-through-glass).
 **HS-101-02 CLOSED on the owner's call** ("Well, merge it in for me,
 and then keep going..."; round 1 banned the left accent rail —
 aerogel insets instead — and made fluidity canon; PR #359 merged).
-**HS-101-03 in flight**: the B1–B8 build ledger authored from the
-approved canon. Earlier the same day: **Phase 100, The
+**HS-101-03 in flight, 7 of 9 ledger items live** (B1 kit+rail-ban,
+B2 fluidity, B3 journal stream, B4 blocks library, B5 switchboard,
+B6 system shade, B8 keyboard grammar + grown walk; open: B7 through
+the glass, B9 panes+rails at the owner's mid-build ask). Earlier the
+same day: **Phase 100, The
 Application Layer, CLOSED 13/13** on the owner's sitting ("It's
 better, I cannot lie"), merged PR #357; the standing method forged
 into **docs/internal/AGENT_BRIEF.md**.
