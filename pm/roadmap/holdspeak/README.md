@@ -4,8 +4,23 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, IN
-PROGRESS (7/8)**. **HS-99-07, The chrome floors, written, DONE**: the
+**Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, CLOSED
+(8/8, scaffolded and shipped the same day)**: the ProzillaOS-studied
+skin is on. Windows wear a real title BAR (two tones, full-height
+square SVG verbs flush to the edge, a red-hover close, square corners
+on maximize, a right-click head menu); no component can ship an
+unstyled control (bare selects/inputs inherit the Signal foundation
+mechanically — the drawn chevron, surface-toned options, skinned
+date/search/file controls); the drawn pill scrollbar replaced the
+browser's everywhere (headed-proven); one menu vocabulary runs the
+room, head, and dock menus; the dock is alive (frosted glass, running
+underlines, hover life); Settings wears a left rail and Meetings a
+status bar on the tonal ladder. Closed by the new HEADED `chrome`
+walk leg (which mechanically caught a stale head override the
+eyeball had passed) inside a twelve-leg assembled chain — zero failed
+API responses, storm 8.3ms median, `npm run check` 291, full sweep
+4114/0. Provenance: PROZILLAOS_STUDY.md (MIT, attributed). The
+owner's verdict rides Campaign 13. Earlier: **HS-99-07, The chrome floors, written, DONE**: the
 chrome ladder is a floors contract in DESIGN_SYSTEM.md (verification
 gotchas as canon), web/README carries the ladder step, and the
 architecture locks list names the Phase 99 lock with MIT provenance.
@@ -516,7 +531,7 @@ canon, canon wins.
 | 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
 | 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | done | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
 | 98 | Native Surfaces: the window interiors re-crafted in one desk idiom — the surface kit, container-driven reflow, honest rows, the page grammar retired from the desk | done | [phase-98-native-surfaces](./phase-98-native-surfaces/) |
-| 99 | The OS Chrome: the ProzillaOS-studied skin — tonal depth ladder, a real title bar, skinned controls, custom scrollbars, a living dock, one menu vocabulary | in-progress | [phase-99-the-os-chrome](./phase-99-the-os-chrome/) |
+| 99 | The OS Chrome: the ProzillaOS-studied skin — tonal depth ladder, a real title bar, skinned controls, custom scrollbars, a living dock, one menu vocabulary | done | [phase-99-the-os-chrome](./phase-99-the-os-chrome/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

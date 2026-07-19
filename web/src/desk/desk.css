@@ -3226,7 +3226,9 @@
 .desk-next .desk-window-verbs {
   margin-left: auto;
   align-self: stretch;
+  height: 100%;
   display: inline-flex;
+  align-items: stretch;
   gap: 0;
   flex: none;
 }
@@ -3523,9 +3525,10 @@
   flex-direction: column;
   min-width: 420px;
 }
+/* HS-99-02 — the surface window's head is the SAME bar as the family
+   (the old padded/bordered override is gone; the base rule carries
+   the tone, height, and edge-flush verbs). */
 .desk-next .desk-surface-window .desk-pullout-head {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 8px;

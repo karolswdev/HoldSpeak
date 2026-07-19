@@ -4,6 +4,7 @@ title: The desk reads as one built thing and answers the keyboard
 features:
   - phase96.design.system
   - phase98.native.surfaces
+  - phase99.os.chrome
 recipes:
   - seeded-desk
 form_factors: [desktop]
@@ -22,5 +23,11 @@ steps:
     where: /
   - do: Grab the Meetings window's right edge and drag it narrower, then wider, without touching the browser.
     expect: The content answers the WINDOW - two panes side by side when wide, stacked when narrow. The page never reflows; the window does.
+    where: /
+  - do: Look at any window's title bar. Hover the close button. Right-click the bar. Maximize.
+    expect: "A real bar: two tones with no divider line, full-height square controls flush to the edge, the close glowing red under the pointer, a Minimize/Maximize/Close menu on right-click, corners squaring off when maximized."
+    where: /
+  - do: Open Settings wide and scroll it. Open any select. Right-click a dock chip. Watch the dock as you switch windows.
+    expect: A drawn pill scrollbar (no browser scrollbar anywhere), skinned selects with a drawn chevron, a chip menu on the dock, and a running underline that follows the front window and grows under the pointer.
     where: /
 teardown: []

@@ -1,15 +1,19 @@
 # Phase 99 — The OS Chrome
 
-**Status:** IN PROGRESS (7/8, 2026-07-18) from the owner's live verdict
-on the staged Phase 98 build: "a step, but we still have soooo much
+**Status:** CLOSED (8/8, 2026-07-18 — scaffolded and shipped the same
+day) at machine-verifiable scope under the standing close directive;
+the owner's live verdict rides the next sitting (Campaign 13's
+design-polish scenario now walks the bar, the controls, the
+scrollbars, and the living dock). See
+[final-summary](./final-summary.md). Born from the owner's live
+verdict on the staged Phase 98 build: "a step, but we still have soooo much
 work to do to even begin dreaming of this looking and feeling like an
 OS — loads of unstyled selects; those windows still deserve a huge
 overhaul" — with a direct study directive: ProzillaOS
 (github.com/prozilla-os/ProzillaOS, MIT), "see what we can borrow,
 what we can embrace, and deliver this kind of experience."
 
-**Last updated:** 2026-07-18 (HS-99-07 done: the chrome floors
-written into canon).
+**Last updated:** 2026-07-18 (HS-99-08 done; phase CLOSED 8/8).
 
 ## Why this phase exists
 
@@ -104,10 +108,20 @@ regress.
 | HS-99-05 | The dock is alive | done | [story-05-dock-alive](./story-05-dock-alive.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-99-06 | Interior archetypes | done | [story-06-interior-archetypes](./story-06-interior-archetypes.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-99-07 | The chrome floors, written | done | [story-07-docs](./story-07-docs.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-99-08 | Closeout: the chrome walk | backlog | [story-08-closeout](./story-08-closeout.md) | — |
+| HS-99-08 | Closeout: the chrome walk | done | [story-08-closeout](./story-08-closeout.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Where we are
 
+**HS-99-08 done (2026-07-18): the chrome walks — phase CLOSED 8/8.**
+The new HEADED `chrome` leg asserts the assembled chrome mechanically
+(square full-height verbs — catching and killing a stale head
+override the eyeball had passed — red close, head menu, skinned
+selects, the 12px scrollbar gutter, square maximize corners, the dock
+underline). The assembled chain ran all twelve legs green in one
+captured run with zero failed API responses; storm 8.3ms median /
+10.0 p95 with everything live; `npm run check` 291; the full sweep
+4114/0. UAT feature + scenario steps + ledger shipped. Riders and
+handoffs in final-summary.md. Earlier:
 **HS-99-07 done (2026-07-18): the chrome floors are written.** The
 chrome ladder chapter is a shipped floors contract with its
 verification gotchas as canon; web/README's add-a-surface path
