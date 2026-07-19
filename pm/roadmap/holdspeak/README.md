@@ -5,7 +5,10 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
-PROGRESS (6/13)**. **HS-100-06, B2 the honest mic, DONE** (a mic that
+PROGRESS (7/13)**. **HS-100-07, B3 Speak, DONE** (the flagship opens on
+the loop; wings in the head; one config door; the 4-interaction flow
+budget pinned as a walk leg). Earlier, **HS-100-06, B2 the honest mic,
+DONE** (a mic that
 cannot capture says why instead of vanishing; proven on the LAN
 origin). Earlier, **HS-100-05, B1 the vocabulary guard, DONE** (canon
 vocabulary is now mechanical; the model-missing refusal names its fix).

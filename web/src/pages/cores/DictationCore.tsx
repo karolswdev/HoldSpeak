@@ -1,9 +1,10 @@
-// HS-95-05 — the Dictation surface's core: the whole daily cockpit
-// (readiness, dry run, blocks, memory, knowledge, journal, runtime,
-// hooks, nudges) hosted anywhere (see ActivityCore for the pattern).
-// HS-98-02 — re-crafted native: composed from the surface kit on the
-// window material (DESIGN_SYSTEM.md, "The surface idiom"); wire calls
-// and verbs unchanged.
+// HS-95-05 — the Dictation surface's core, hosted anywhere.
+// HS-98-02 — re-crafted native on the window material.
+// HS-100-07 — Speak: the application opens ON the job (speak, see it
+// land, judge it, teach it — trace B's loop is the entire front face);
+// Journal and Blocks are the wings; Memory/Knowledge/Runtime/Hooks/
+// Nudges and full readiness fold behind the one gear door
+// (APPLICATION_LAYER_THESIS.md §1.1). Wire calls and verbs unchanged.
 import { useEffect, useMemo, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
@@ -14,7 +15,6 @@ import {
   InlineMessage,
   Select,
   StatusPill,
-  Tabs,
   TextArea,
   TextInput,
 } from "../../components/signal/Signal";
@@ -41,18 +41,13 @@ import {
   SurfaceState,
 } from "../../desk/surface/Surface";
 import { humanTime, presentValue } from "../../desk/surface/format";
+import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 
-const TABS = [
-  ["ready", "Readiness"],
-  ["dry", "Try it"],
-  ["blocks", "Blocks"],
-  ["memory", "Memory"],
-  ["knowledge", "Knowledge"],
-  ["journal", "Journal"],
-  ["runtime", "Runtime"],
-  ["hooks", "Hooks"],
-  ["nudges", "Nudges"],
-].map(([id, label]) => ({ id, label }));
+const WINGS = [
+  { id: "speak", label: "Speak" },
+  { id: "journal", label: "Journal" },
+  { id: "blocks", label: "Blocks" },
+];
 
 function readableValue(value: unknown): string {
   if (value && typeof value === "object") {
@@ -102,7 +97,47 @@ function Readiness() {
   );
 }
 
-function DryRun() {
+/* HS-100-07 — one readiness status LINE under the loop: quiet when the
+   pipeline is live, a warning that opens the door when it is not. The
+   diagnostics wall lives behind the gear. */
+function ReadinessLine({ onOpenDoor }: { onOpenDoor: () => void }) {
+  const root = localStorage.getItem("holdspeak.projectRootOverride") ?? "";
+  const resource = useResource<JsonRecord>(
+    `/api/dictation/readiness${root ? `?project_root=${encodeURIComponent(root)}` : ""}`,
+    {},
+  );
+  if (resource.loading || resource.error) return null;
+  const config = (resource.data.config ?? {}) as JsonRecord;
+  const target = (resource.data.target ?? {}) as JsonRecord;
+  const warnings = Array.isArray(resource.data.warnings)
+    ? resource.data.warnings
+    : [];
+  const live = config.pipeline_enabled === true && warnings.length === 0;
+  if (live) {
+    const budget = config.max_total_latency_ms;
+    return (
+      <p className="speak-status" role="status">
+        <span className="speak-status-dot is-live" aria-hidden="true" />
+        Pipeline live
+        {target.label ? ` · types into ${presentValue(target.label)}` : ""}
+        {budget ? ` · ${presentValue(budget)} ms budget` : ""}
+      </p>
+    );
+  }
+  return (
+    <p className="speak-status is-warn" role="status">
+      <span className="speak-status-dot" aria-hidden="true" />
+      {config.pipeline_enabled === true
+        ? `${warnings.length} readiness ${warnings.length === 1 ? "warning" : "warnings"}`
+        : "The pipeline is off — speaking here still works on paper"}
+      <button type="button" className="speak-status-fix" onClick={onOpenDoor}>
+        Review
+      </button>
+    </p>
+  );
+}
+
+function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
   const {
     value: utterance,
     setDraft: setUtterance,
@@ -231,29 +266,41 @@ function DryRun() {
     }
   };
   return (
-    <SurfaceColumns
-      main={
-        <SurfaceSection label="Speak on paper">
-          <Field
-            label="Utterance"
-            description="Runs the real pipeline without typing into another app."
-          >
-            {({ id, describedBy }) => (
-              <div className="desk-mic-row">
-                <TextArea
-                  id={id}
-                  aria-describedby={describedBy}
-                  value={utterance}
-                  onChange={(event) => setUtterance(event.target.value)}
-                  placeholder="Explain the change I made…"
-                />
-                <MicButton
-                  draftScope="dictation-dry-run-voice"
-                  onText={(text) => setUtterance(text)}
-                />
-              </div>
-            )}
-          </Field>
+    <div className="speak-face">
+      <div className="speak-hero">
+        <MicButton
+          draftScope="dictation-dry-run-voice"
+          label="Hold to talk"
+          onText={(text) => setUtterance(text)}
+        />
+        <p className="speak-hint">
+          Hold to talk, or type below. Runs the real pipeline on paper,
+          without typing into another app.
+        </p>
+      </div>
+      <Field label="Utterance">
+        {({ id, describedBy }) => (
+          <div className="desk-mic-row">
+            <TextArea
+              id={id}
+              aria-describedby={describedBy}
+              value={utterance}
+              onChange={(event) => setUtterance(event.target.value)}
+              placeholder="Explain the change I made…"
+            />
+          </div>
+        )}
+      </Field>
+      <div className="surface-actions speak-run-row">
+        <Button
+          variant="primary"
+          loading={busy}
+          disabled={!utterance.trim()}
+          onClick={run}
+        >
+          {error && actions.includes("retry") ? "Retry dry test" : "Run dry test"}
+        </Button>
+        <Disclosure title="Grounding scope">
           <Field
             label="Project root"
             description="Optional grounding scope; saved only on this device."
@@ -268,155 +315,124 @@ function DryRun() {
               />
             )}
           </Field>
-          <div className="surface-actions">
+        </Disclosure>
+      </div>
+      {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
+      {utteranceRecovered && !error ? (
+        <InlineMessage tone="info">
+          Recovered your local dictation draft after relaunch.
+        </InlineMessage>
+      ) : null}
+      {error ? (
+        <div className="surface-actions">
+          {actions.includes("copy") ? (
             <Button
-              variant="primary"
-              loading={busy}
-              disabled={!utterance.trim()}
-              onClick={run}
+              dense
+              onClick={() => void navigator.clipboard.writeText(utterance)}
             >
-              {error && actions.includes("retry")
-                ? "Retry dry test"
-                : "Run dry test"}
+              Copy
+            </Button>
+          ) : null}
+          {actions.includes("keep_as_note") ? (
+            <Button dense onClick={keepDraft}>
+              Keep as Note
+            </Button>
+          ) : null}
+          {actions.includes("setup") ? (
+            <Button
+              dense
+              variant="secondary"
+              onClick={() => openSurfaceOr("configure-setup", "/setup")}
+            >
+              Setup
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+      {error && actions.includes("alternate_runs_on") && targets.length ? (
+        <RunsOnPicker
+          targets={targets}
+          selectedId={targetId}
+          onChange={(id) => void runElsewhere(id)}
+          disabled={busy}
+        />
+      ) : null}
+      {recoveryMessage ? (
+        <InlineMessage
+          tone={recoveryMessage.startsWith("Kept") ? "success" : "error"}
+        >
+          {recoveryMessage}
+        </InlineMessage>
+      ) : null}
+      {result ? (
+        <section className="speak-result" aria-label="Pipeline result">
+          <InlineMessage tone="success">
+            {String(
+              result.final_text ??
+                result.text ??
+                result.output ??
+                "Pipeline completed.",
+            )}
+          </InlineMessage>
+          <div className="surface-actions" aria-label="Rate this result">
+            <Button dense onClick={() => setVerdict("right")}>
+              Right
+            </Button>
+            <Button dense variant="ghost" onClick={() => setVerdict("wrong")}>
+              Wrong
             </Button>
           </div>
-          {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
-          {utteranceRecovered && !error ? (
-            <InlineMessage tone="info">
-              Recovered your local dictation draft after relaunch.
+          {verdict === "right" ? (
+            <InlineMessage tone="success">
+              Marked right. Nothing was written to correction memory.
             </InlineMessage>
           ) : null}
-          {error ? (
-            <div className="surface-actions">
-              {actions.includes("copy") ? (
-                <Button
-                  dense
-                  onClick={() => void navigator.clipboard.writeText(utterance)}
-                >
-                  Copy
-                </Button>
-              ) : null}
-              {actions.includes("keep_as_note") ? (
-                <Button dense onClick={keepDraft}>
-                  Keep as Note
-                </Button>
-              ) : null}
-              {actions.includes("setup") ? (
-                <Button
-                  dense
-                  variant="secondary"
-                  onClick={() => openSurfaceOr("configure-setup", "/setup")}
-                >
-                  Setup
-                </Button>
-              ) : null}
-            </div>
-          ) : null}
-          {error && actions.includes("alternate_runs_on") && targets.length ? (
-            <RunsOnPicker
-              targets={targets}
-              selectedId={targetId}
-              onChange={(id) => void runElsewhere(id)}
-              disabled={busy}
-            />
-          ) : null}
-          {recoveryMessage ? (
-            <InlineMessage
-              tone={recoveryMessage.startsWith("Kept") ? "success" : "error"}
-            >
-              {recoveryMessage}
-            </InlineMessage>
-          ) : null}
-        </SurfaceSection>
-      }
-      side={
-        <SurfaceSection label="Pipeline result">
-          {result ? (
-            <>
-              <InlineMessage tone="success">
-                {String(
-                  result.final_text ??
-                    result.text ??
-                    result.output ??
-                    "Pipeline completed.",
+          {verdict === "wrong" ? (
+            <Disclosure title="Correct this result" open>
+              <Field label="What should change?">
+                {({ id }) => (
+                  <Select
+                    id={id}
+                    value={correctionKind}
+                    onChange={(event) => setCorrectionKind(event.target.value)}
+                  >
+                    <option value="target">Delivery target</option>
+                    <option value="intent">Intent</option>
+                  </Select>
                 )}
-              </InlineMessage>
-              <Disclosure title="Raw trace">
-                <SurfaceCode>{JSON.stringify(result, null, 2)}</SurfaceCode>
-              </Disclosure>
-              <div className="surface-actions" aria-label="Rate this result">
-                <Button dense onClick={() => setVerdict("right")}>
-                  Right
-                </Button>
-                <Button
-                  dense
-                  variant="ghost"
-                  onClick={() => setVerdict("wrong")}
+              </Field>
+              <Field label="Correct value">
+                {({ id }) => (
+                  <TextInput
+                    id={id}
+                    value={correctionValue}
+                    onChange={(event) => setCorrectionValue(event.target.value)}
+                  />
+                )}
+              </Field>
+              <Button
+                loading={busy}
+                disabled={!correctionValue.trim()}
+                onClick={teach}
+              >
+                Teach correction
+              </Button>
+              {taught ? (
+                <InlineMessage
+                  tone={taught.startsWith("Correction") ? "success" : "error"}
                 >
-                  Wrong
-                </Button>
-              </div>
-              {verdict === "right" ? (
-                <InlineMessage tone="success">
-                  Marked right. Nothing was written to correction memory.
+                  {taught}
                 </InlineMessage>
               ) : null}
-              {verdict === "wrong" ? (
-                <Disclosure title="Correct this result" open>
-                  <Field label="What should change?">
-                    {({ id }) => (
-                      <Select
-                        id={id}
-                        value={correctionKind}
-                        onChange={(event) =>
-                          setCorrectionKind(event.target.value)
-                        }
-                      >
-                        <option value="target">Delivery target</option>
-                        <option value="intent">Intent</option>
-                      </Select>
-                    )}
-                  </Field>
-                  <Field label="Correct value">
-                    {({ id }) => (
-                      <TextInput
-                        id={id}
-                        value={correctionValue}
-                        onChange={(event) =>
-                          setCorrectionValue(event.target.value)
-                        }
-                      />
-                    )}
-                  </Field>
-                  <Button
-                    loading={busy}
-                    disabled={!correctionValue.trim()}
-                    onClick={teach}
-                  >
-                    Teach correction
-                  </Button>
-                  {taught ? (
-                    <InlineMessage
-                      tone={
-                        taught.startsWith("Correction") ? "success" : "error"
-                      }
-                    >
-                      {taught}
-                    </InlineMessage>
-                  ) : null}
-                </Disclosure>
-              ) : null}
-            </>
-          ) : (
-            <SurfaceState
-              empty
-              emptyLabel="No run yet"
-              emptyGlyph="▹"
-            />
-          )}
-        </SurfaceSection>
-      }
-    />
+            </Disclosure>
+          ) : null}
+          <Disclosure title="Raw trace">
+            <SurfaceCode>{JSON.stringify(result, null, 2)}</SurfaceCode>
+          </Disclosure>
+        </section>
+      ) : null}
+      <ReadinessLine onOpenDoor={onOpenDoor} />
+    </div>
   );
 }
 
@@ -998,19 +1014,30 @@ function Nudges() {
 }
 
 export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
-  const [active, setActive] = useState("ready");
+  const [view, setView] = useState("speak");
+  const [doorOpen, setDoorOpen] = useState(false);
+  useWindowWings(
+    <SurfaceWings
+      wings={WINGS}
+      active={doorOpen ? "" : view}
+      onChange={(id) => {
+        setDoorOpen(false);
+        setView(id);
+      }}
+      door="Configure dictation"
+      doorOpen={doorOpen}
+      onDoor={() => setDoorOpen((v) => !v)}
+    />,
+    [view, doorOpen],
+  );
+  const active = doorOpen ? "configure" : view;
   const current = useMemo(
     () =>
       ({
-        ready: <Readiness />,
-        dry: <DryRun />,
-        blocks: <Blocks />,
-        memory: <Memory />,
-        knowledge: <Knowledge />,
+        speak: <SpeakFace onOpenDoor={() => setDoorOpen(true)} />,
         journal: <Journal />,
-        runtime: <Runtime />,
-        hooks: <Hooks />,
-        nudges: <Nudges />,
+        blocks: <Blocks />,
+        configure: <Configure />,
       })[active],
     [active],
   );
@@ -1022,13 +1049,23 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
           <span aria-hidden="true">⌁</span> About {scopeLabel || scope}
         </p>
       ) : null}
-      <Tabs
-        label="Dictation sections"
-        tabs={TABS}
-        active={active}
-        onChange={setActive}
-      />
       {current}
     </>
+  );
+}
+
+/* HS-100-07 — the one door: everything that is configuration
+   (readiness diagnostics, memory, knowledge, runtime, hooks, nudges)
+   stacked behind the gear. No tab wall. */
+function Configure() {
+  return (
+    <div className="surface-door">
+      <Readiness />
+      <Memory />
+      <Knowledge />
+      <Runtime />
+      <Hooks />
+      <Nudges />
+    </div>
   );
 }

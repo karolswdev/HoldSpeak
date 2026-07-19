@@ -4030,3 +4030,135 @@
 .desk-next .desk-panepicker button {
   min-height: 30px;
 }
+
+/* ————— HS-100-07 — wings: the application's faces live in the HEAD
+   (the thesis's posture rule). Segmented well, one gear door. ————— */
+.desk-next .desk-pullout-head.has-wings .desk-pullout-title {
+  flex: none;
+  text-align: left;
+}
+.desk-next .desk-wings {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  margin-inline: auto;
+  padding: 3px;
+  border-radius: calc(var(--radius-sm) + 3px);
+  background: var(--desk-window-well);
+}
+.desk-next .desk-wing {
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 550;
+  padding: 3px 13px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--duration-short) var(--ease-quart),
+    color var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-wing:hover {
+  color: var(--text);
+}
+.desk-next .desk-wing.is-on {
+  background: var(--desk-window-head-fill);
+  color: var(--text);
+  box-shadow: 0 1px 4px var(--shade-1);
+}
+.desk-next .desk-wing-door {
+  padding: 3px 9px;
+}
+
+/* ————— HS-100-07 — Speak: the working posture is ONE generous column;
+   the loop is the face, the status is a line, the wall is a door. ————— */
+.desk-next .speak-face {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+  margin-inline: auto;
+  padding-top: 6px;
+  min-height: 100%;
+}
+.desk-next .speak-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 2px;
+}
+.desk-next .speak-hero .desk-mic {
+  width: 84px;
+  height: 84px;
+  font-size: 30px;
+  border-color: var(--accent);
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--accent),
+    var(--accent-strong) 75%
+  );
+  box-shadow:
+    0 0 0 10px var(--accent-soft),
+    0 0 30px var(--accent-soft);
+}
+.desk-next .speak-hero .desk-mic.is-listening {
+  animation: desk-next-mic-pulse 1.1s ease-in-out infinite;
+}
+.desk-next .speak-hint {
+  color: var(--text-faint);
+  font-size: var(--font-size-xs);
+  text-align: center;
+  max-width: 34em;
+}
+.desk-next .speak-run-row {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.desk-next .speak-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  background: var(--success-soft);
+  box-shadow: inset 0 0 0 1px var(--success);
+}
+.desk-next .speak-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--desk-window-head-fill);
+  color: var(--text-faint);
+  font-size: var(--font-size-xs);
+}
+.desk-next .speak-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  flex: none;
+}
+.desk-next .speak-status.is-warn .speak-status-dot {
+  background: var(--warning, var(--accent));
+}
+.desk-next .speak-status-fix {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.desk-next .surface-door {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}

@@ -827,6 +827,10 @@ export interface DeskWindowFrameProps {
   eyebrow?: string;
   /** Extra head content (badges, panel-specific verbs), left of the window verbs. */
   actions?: ReactNode;
+  /** HS-100-07 — the application's wing segments, centered in the head
+   * (the thesis's posture rule: faces live in the head, never as a tab
+   * wall in the body). */
+  wings?: ReactNode;
   /** Root classes — keep the panel's legacy class so its content CSS holds. */
   className?: string;
   minW?: number;
@@ -882,6 +886,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     glyph: glyphProp,
     leading,
     actions,
+    wings,
     className,
     minW,
     minH,
@@ -1099,7 +1104,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       aria-label={name}
     >
       <header
-        className="desk-pullout-head desk-window-handle"
+        className={`desk-pullout-head desk-window-handle${wings ? " has-wings" : ""}`}
         {...(compact || maxed ? {} : win.handleProps)}
         onDoubleClick={(e) => {
           // HS-97-05 — double-click the head toggles maximize (buttons
@@ -1156,6 +1161,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}
         <span className="desk-pullout-title desk-window-title">{title}</span>
+        {wings}
         {actions}
       </header>
       {headMenu ? (

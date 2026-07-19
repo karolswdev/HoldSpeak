@@ -6,14 +6,17 @@ import {
   Suspense,
   lazy,
   useEffect,
+  useState,
   type ComponentType,
   type LazyExoticComponent,
+  type ReactNode,
 } from "react";
 import { create } from "zustand";
 import { registerSurface } from "../shell";
 import { useDesk } from "../store";
 import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
+import { WingSlotContext } from "../surface/wings";
 import type { CoreProps } from "../../pages/cores/ActivityCore";
 
 interface SurfaceRow {
@@ -32,7 +35,7 @@ const SURFACES: SurfaceRow[] = [
   {
     key: "dictate",
     id: "surface-dictation",
-    title: "Dictation",
+    title: "Speak",
     glyph: "⌁",
     eyebrow: "Daily cockpit",
     minW: 560,
@@ -273,35 +276,57 @@ export function SurfaceWindows() {
         const isOpen = row.key in open;
         if (!isOpen) return null;
         return (
-          <DeskWindowFrame
+          <SurfaceWindowHost
             key={row.id}
-            id={row.id}
-            glyph={row.glyph}
-            eyebrow={row.eyebrow}
-            title={row.title}
-            minW={row.minW}
-            open
-            unmountOnMinimize
-            onClose={() =>
-              useSurfaceWindows.getState().closeSurfaceWindow(row.key)
-            }
-            className="desk-surface-window"
-          >
-            <div className="desk-surface-body">
-              <Suspense fallback={<p className="quiet">…</p>}>
-                <row.Core
-                  scope={open[row.key] ?? undefined}
-                  scopeLabel={
-                    open[row.key]
-                      ? (objectByRef(items, open[row.key]!)?.title ?? undefined)
-                      : undefined
-                  }
-                />
-              </Suspense>
-            </div>
-          </DeskWindowFrame>
+            row={row}
+            scope={open[row.key] ?? undefined}
+            items={items}
+          />
         );
       })}
     </>
+  );
+}
+
+/** One hosted core: owns the head's wing slot so the core can publish
+ * its faces into the window chrome (HS-100-07, the posture rule). */
+function SurfaceWindowHost({
+  row,
+  scope,
+  items,
+}: {
+  row: SurfaceRow;
+  scope: string | undefined;
+  items: ReturnType<typeof useDesk.getState>["items"];
+}) {
+  const [wings, setWings] = useState<ReactNode>(null);
+  return (
+    <DeskWindowFrame
+      id={row.id}
+      glyph={row.glyph}
+      eyebrow={row.eyebrow}
+      title={row.title}
+      minW={row.minW}
+      wings={wings}
+      open
+      unmountOnMinimize
+      onClose={() => useSurfaceWindows.getState().closeSurfaceWindow(row.key)}
+      className="desk-surface-window"
+    >
+      <div className="desk-surface-body">
+        <WingSlotContext.Provider value={setWings}>
+          <Suspense fallback={<p className="quiet">…</p>}>
+            <row.Core
+              scope={scope}
+              scopeLabel={
+                scope
+                  ? (objectByRef(items, scope)?.title ?? undefined)
+                  : undefined
+              }
+            />
+          </Suspense>
+        </WingSlotContext.Provider>
+      </div>
+    </DeskWindowFrame>
   );
 }
