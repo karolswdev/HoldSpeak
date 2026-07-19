@@ -15,7 +15,7 @@ source:
   inventory: pm/roadmap/holdspeak-uat/phase-2-the-inventory/directory/_raw-inventory-rows.json
   additions: uat/feature-additions.yaml
   phase_index: pm/roadmap/holdspeak/README.md
-  phases_total: 98
+  phases_total: 99
 features:
 - key: activity.candidates.meeting
   title: Activity-derived meeting candidates
@@ -3067,6 +3067,19 @@ features:
   - seeded-desk
   priority: must
   status: live
+- key: phase98.native.surfaces
+  title: Native surfaces - every window interior composes the surface idiom
+  domain: Phase 98 native surfaces
+  phases:
+  - 98
+  surfaces:
+    web: 'yes'
+    ipad: 'no'
+    iphone: 'no'
+  recipes:
+  - seeded-desk
+  priority: must
+  status: live
 - key: plugins.authoring.write-your-own
   title: Write your own meeting plugin or connector against a documented contract
   domain: public-docs-claims
@@ -4255,3 +4268,5 @@ phase_map:
   - phase96.design.system
   '97':
   - internal/no-uat-surface
+  '98':
+  - phase98.native.surfaces

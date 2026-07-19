@@ -914,6 +914,41 @@
         "name": "--desk-window-pad-y",
         "value": "12px",
         "doc": "window body vertical padding"
+      },
+      {
+        "name": "--desk-surface-row-h",
+        "value": "40px",
+        "doc": "HS-98: dense surface row min height (OS density, not page density)"
+      },
+      {
+        "name": "--desk-surface-row-pad-x",
+        "value": "10px",
+        "doc": "HS-98: surface row horizontal padding"
+      },
+      {
+        "name": "--desk-surface-gap",
+        "value": "2px",
+        "doc": "HS-98: gap between surface rows"
+      },
+      {
+        "name": "--desk-surface-section-gap",
+        "value": "18px",
+        "doc": "HS-98: gap between surface sections"
+      },
+      {
+        "name": "--desk-surface-label-size",
+        "value": "0.6875rem",
+        "doc": "HS-98: quiet section label size (11px)"
+      },
+      {
+        "name": "--desk-surface-body-size",
+        "value": "0.8125rem",
+        "doc": "HS-98: surface body copy size (13px; matches --font-size-sm)"
+      },
+      {
+        "name": "--desk-surface-detail-size",
+        "value": "0.75rem",
+        "doc": "HS-98: surface row detail size (12px; matches --font-size-xs)"
       }
     ]
   }

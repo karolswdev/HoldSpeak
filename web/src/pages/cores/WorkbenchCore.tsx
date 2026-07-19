@@ -12,7 +12,6 @@ import {
   Button,
   Field,
   InlineMessage,
-  Panel,
   TextArea,
 } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
@@ -21,6 +20,11 @@ import {
   parseLinearGraph,
   type LinearStep,
 } from "../../desk/graph";
+import {
+  SurfaceCode,
+  SurfaceSection,
+  SurfaceVerbs,
+} from "../../desk/surface/Surface";
 import {
   PRESETS,
   STEP_KINDS,
@@ -289,23 +293,23 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
   };
 
   const verbs = (
-          <div className="button-row">
-            {!linked &&
-              PRESETS.map((preset) => (
-                <Button
-                  dense
-                  key={preset.id}
-                  variant={workflow.id === preset.id ? "primary" : "secondary"}
-                  onClick={() => selectPreset(preset)}
-                >
-                  {preset.name}
-                </Button>
-              ))}
-          </div>
+    <>
+      {!linked &&
+        PRESETS.map((preset) => (
+          <Button
+            dense
+            key={preset.id}
+            variant={workflow.id === preset.id ? "primary" : "secondary"}
+            onClick={() => selectPreset(preset)}
+          >
+            {preset.name}
+          </Button>
+        ))}
+    </>
   );
   return (
     <>
-      {hero ? hero(verbs) : <div className="desk-core-verbs">{verbs}</div>}
+      {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
       {linked ? (
         <p className="desk-scope-chip">
           <span aria-hidden="true">⧉</span> Editing {workflow.name}
@@ -372,16 +376,13 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
           ))}
         </div>
         {selected ? (
-          <Panel
-            className="workbench-inspector"
-            title={selected.title}
-            eyebrow={`${selected.role} · ${selected.type}`}
-            actions={
+          <div className="workbench-inspector surface-float">
+            <header className="surface-float-head">
+              <strong>{selected.title}</strong>
               <Button dense variant="ghost" onClick={() => setSelected(null)}>
                 Close
               </Button>
-            }
-          >
+            </header>
             <Field
               label="Prompt"
               description={
@@ -400,10 +401,10 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
                 />
               )}
             </Field>
-          </Panel>
+          </div>
         ) : null}
       </div>
-      <Panel title="Run and return" eyebrow="Workflow result">
+      <SurfaceSection label="Run and return">
         <Field
           label="Material"
           description="The input stays here if the run fails, ready to retry."
@@ -417,8 +418,9 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
             />
           )}
         </Field>
-        <div className="button-row">
+        <div className="surface-actions">
           <Button
+            dense
             disabled={busy || support === "unsupported_graph"}
             onClick={() => void save()}
           >
@@ -426,23 +428,24 @@ export function WorkbenchCore({ hero, scope }: CoreProps) {
           </Button>
           <Button
             variant="primary"
+            dense
             disabled={busy || support === "unsupported_graph"}
             onClick={() => void run()}
           >
             Run {workflow.name}
           </Button>
           {artifactId && (
-            <button
-              type="button"
-              className="btn btn--secondary"
+            <Button
+              dense
+              variant="secondary"
               onClick={() => openPrimitive(`artifact:${artifactId}`)}
             >
               Return to kept Artifact
-            </button>
+            </Button>
           )}
         </div>
-        {runOutput && <pre className="code-block">{runOutput}</pre>}
-      </Panel>
+        {runOutput && <SurfaceCode>{runOutput}</SurfaceCode>}
+      </SurfaceSection>
     </>
   );
 }

@@ -4,7 +4,96 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, CLOSED
+**Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, CLOSED
+(9/9, scaffolded and shipped the same day)**: the window interiors are
+ONE visual product with the desk. The surface idiom (one material, the
+window as the viewport via container queries, denser scale, honest
+rows, verbs with homes, one state grammar) was specced into canon,
+built as a kit, and applied to ALL FOURTEEN cores — every editor and
+confirm left its modal, the seam guard's conversion ledger shrank to
+empty and locked closed, 69 dead page-grammar CSS rules (−377 lines)
+were pruned with every survivor's consumer named. Closeout: the new
+`surfaces` walk leg opened every window at 1440 and as the 393 sheet
+with ZERO page grammar in the live DOM and zero failed API responses
+(28 shots looked at); the assembled chain (real voice, real recording,
+config round-trip, 15 routes, reflow, the grammar legs) green in one
+captured run; storm 8.3ms median assembled on hardware GL; the full
+sweep 4114/0 after retargeting 11 integration pins from the old
+grammar to the new truth. The owner's live verdict rides Campaign 13
+(the design-polish scenario now looks INSIDE the windows and resizes
+them). Follow-ups staged: The Living World, HSM One Grammar on Glass.
+Earlier: **HS-98-08, The surface floors, written, DONE**: the
+surface idiom is an Article VIII floors chapter in DESIGN_SYSTEM.md
+(six rules, closed ledger, proof legs named); web/README's
+add-a-surface path now composes the kit step by step with the seam
+guard as the lock; the frontend architecture locks list carries the
+Phase 98 lock beside the 96 gates and 97 floors. Earlier: **HS-98-07, The long tail, seam retired, DONE**:
+Commands/Profiles/Companion/RuntimeDocs converted (editors left their
+modals for in-surface sections, deletes are inline two-steps) — all
+fourteen cores compose the kit, the guard's ledger is EMPTY and locked
+closed, the census pruned 69 dead react-app.css rules (−377 lines,
+every surviving class's consumer named), and all nine walk legs ran
+green in one captured chain after the pruning. Earlier: **HS-98-06, The builder set, DONE**: Workbench's
+canvas untouched with its inspector now a float on the one window
+material and presets on the verb bar; Studio's cards became dense
+launcher rows; the Components gallery demonstrates the current canon
+(sections, honest rows, states, the inline two-step — the modal demo
+left with the grammar) — proven by the `lastexits` leg (15 routes
+land; a real workflow saves through the new chrome) and shots looked
+at. Earlier: **HS-98-05, The config pair, DONE**: Settings'
+panels became sections on the material (posture, the recursive hub
+editor intact, credentials with two-step Rotate/Delete), Save on the
+verb bar, the Integrations alias landing scrolled to its section;
+Setup an honest pill + rows — proven by the `config` walk leg (a real
+change round-trips and persists byte-identically) and shots looked
+at. Earlier: **HS-98-04, The live pair, DONE**: LiveCore native
+(honest verb-bar status, metric strip, transcript as the split's main
+pane, the details modal now inline, devices omitting absent values
+instead of "—") and ActivityCore native (tabs + filter + honest rows,
+inline two-steps) — proven by the meetings and cores walk legs; the
+live shot caught and fixed "[object Object]" and a mid-recording
+"Ready to record". Earlier: **HS-98-03, Meetings, native, DONE**: the meeting
+detail left its modal for the split's second pane beside the archive
+(wide: two panes; narrow: detail replaces archive), import became an
+in-surface section, the archive is honest press-target rows with
+humanized times and state pills, filters fold into a quiet
+Disclosure, delete is an inline two-step — proven by the `meetings`
+walk leg (a real meeting recorded and reviewed scoped in-world) and
+1440/393 shots looked at. Earlier: **HS-98-02, Dictation, native, DONE**: the
+flagship's nine tabs re-composed from the surface kit (columns,
+honest rows, inline two-step confirms replacing every modal in the
+core, the raw trace behind a Disclosure), wire calls unchanged —
+proven by the real-voice walk leg (Whisper's transcription landing in
+the NEW surface) and 1440/393 shots looked at, which caught and fixed
+two defects (the phone sheet overflowing 393 under a desktop
+min-width; the boxed tab strip). Earlier: **HS-98-01, The surface idiom, DONE**: the idiom
+specced into DESIGN_SYSTEM.md (six rules; the 560px container
+breakpoint as canon), the kit built (`web/src/desk/surface/` — one
+verb bar, hairline sections, dense honest rows with revealed verbs,
+one state grammar, container-query columns/split, the inline two-step
+ConfirmVerb, honest formatters) on seven new `--desk-surface-*`
+density tokens, `.desk-surface-body` made the `surface` size
+container, the shrink-only seam guard armed
+(`test_native_surfaces_guard.py`), and CadenceCore converted as the
+reference — proven live by the new `reflow` walk leg (one 1440
+viewport: side-by-side wide, stacked after the window's own edge
+narrows past the breakpoint; zero page grammar in the live DOM; shots
+looked at). Earlier the same day: **Phase 98 SCAFFOLDED (0/9)** from
+the owner's standing verdict (windows feel like glued-in
+HTML panes, zero consistent look and feel): Phase 97 gave the windows
+an OS grammar; this phase re-crafts what lives inside them. The seam
+is named mechanically — every demoted core is a Signal-era page
+(`page-grid` spans on viewport media queries, `Panel` cards nesting
+chrome inside the window's chrome, raw `data-row` dumps) glued into a
+desk window. Nine stories in
+[phase-98-native-surfaces](./phase-98-native-surfaces/): the surface
+idiom specced then built as a kit (one material, the window as the
+viewport via container queries, denser scale, honest rows, verbs with
+homes, one state grammar) with a shrinking seam guard; all fourteen
+cores re-crafted (Dictation and Meetings first); the page grammar
+retired from the desk and its dead CSS pruned; floors written; a
+surfaces walk leg closing the phase on the production bundle. Earlier
+the same day: **Phase 97, The Window Grammar, CLOSED
 (9/9, scaffolded and shipped the same day)**: the Desk OS finally has
 an OS grammar, proven whole on the production bundle. The shadows are
 back under a mechanical generator lock; windows land whole and off
@@ -374,6 +463,7 @@ canon, canon wins.
 | 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | done | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
 | 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
 | 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | done | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
+| 98 | Native Surfaces: the window interiors re-crafted in one desk idiom — the surface kit, container-driven reflow, honest rows, the page grammar retired from the desk | done | [phase-98-native-surfaces](./phase-98-native-surfaces/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

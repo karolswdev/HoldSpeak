@@ -3362,6 +3362,9 @@
     bottom: 0;
     top: auto;
     width: auto;
+    /* HS-98-02: a desktop min-width (420px surface floor) must never
+       push a sheet past a 393px phone — the sheet owns the edge. */
+    min-width: 0;
     max-height: 78vh;
     border-radius: 18px 18px 0 0;
     overflow: auto;
@@ -3410,7 +3413,11 @@
     var(--desk-window-pad-x);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--desk-surface-section-gap);
+  /* HS-98-01: the WINDOW is the viewport — the surface kit reflows via
+     @container queries against this container, never viewport media. */
+  container-type: inline-size;
+  container-name: surface;
 }
 .desk-next .desk-core-verbs {
   display: flex;

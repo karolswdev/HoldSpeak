@@ -1,0 +1,423 @@
+/* ── HS-98-01: the surface idiom (docs/internal/DESIGN_SYSTEM.md) ──
+   Window interiors on the ONE material: no nested cards, no page
+   grids. Density rides the --desk-surface-* component tokens; layout
+   answers to the WINDOW via @container queries against the `surface`
+   container declared on .desk-surface-body in desk.css. The one
+   narrow breakpoint is 560px (canon in DESIGN_SYSTEM.md — container
+   queries cannot read custom properties). */
+
+/* Rule 5 — the one verb bar, sticky at the surface top. It hugs the
+   window head by cancelling the body padding, and repaints on the
+   window fill so rows scroll away beneath it. */
+.surface-verbs {
+  position: sticky;
+  top: calc(-1 * var(--desk-window-pad-y));
+  margin: calc(-1 * var(--desk-window-pad-y)) calc(-1 * var(--desk-window-pad-x)) 0;
+  padding: 8px var(--desk-window-pad-x);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--desk-window-fill);
+  border-bottom: 1px solid var(--wash-1);
+}
+.surface-verbs-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+}
+.surface-verbs-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* Rule 1 — a section is a hairline and a quiet label, never a card. */
+.surface-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.surface-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--wash-1);
+  padding-top: 8px;
+}
+.surface-verbs + .surface-section > .surface-section-head,
+.desk-surface-body > .surface-section:first-child > .surface-section-head {
+  border-top: 0;
+  padding-top: 0;
+}
+.surface-section-head h3 {
+  margin: 0;
+  font-size: var(--desk-surface-label-size);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Rules 3 + 4 — dense honest rows. */
+.surface-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-gap);
+}
+.surface-row {
+  border-radius: var(--radius-sm);
+  font-size: var(--desk-surface-body-size);
+}
+.surface-row-line {
+  min-height: var(--desk-surface-row-h);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px var(--desk-surface-row-pad-x);
+}
+.surface-row:hover,
+.surface-row:focus-within {
+  background: var(--wash-1);
+}
+.surface-row[data-selected] {
+  background: var(--accent-tint);
+}
+.surface-row-main,
+.surface-row-open {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.surface-row-open {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+}
+.surface-row-glyph {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.surface-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.surface-row-text strong {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.surface-row-text small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.surface-row-meta {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rule 5 — row verbs reveal on hover/focus; always present for coarse
+   pointers. Opacity only (the verbs stay in the tree for focus). */
+.surface-row-verbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--duration-short) ease;
+}
+.surface-row:hover .surface-row-verbs,
+.surface-row:focus-within .surface-row-verbs {
+  opacity: 1;
+}
+@media (pointer: coarse) {
+  .surface-row-verbs {
+    opacity: 1;
+  }
+}
+
+/* A row's expanded content (a reply box, a prepared move) sits inside
+   the row's inset, quiet. */
+.surface-row > :not(.surface-row-line) {
+  margin: 0 var(--desk-surface-row-pad-x) 8px;
+}
+
+/* A prepared next move (or any row exposition): quiet inset copy. */
+.surface-next-move {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--desk-surface-detail-size);
+}
+.surface-next-move p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+/* Rule 6 — one quiet state treatment. */
+.surface-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 26px 12px;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-body-size);
+  text-align: center;
+}
+.surface-state-glyph {
+  font-size: var(--font-size-lg);
+  opacity: 0.75;
+}
+.surface-state[data-kind="loading"] .surface-state-glyph {
+  animation: surface-state-pulse calc(var(--duration-long) * 4)
+    ease-in-out infinite;
+}
+@keyframes surface-state-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* Rule 2 — columns share a wide window, stack in a narrow one. */
+.surface-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--desk-surface-section-gap);
+  align-items: start;
+}
+@container surface (min-width: 560px) {
+  .surface-columns {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+.surface-columns-main,
+.surface-columns-side {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-section-gap);
+}
+
+/* Rule 2 — master–detail answers to the WINDOW. */
+.surface-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+@container surface (min-width: 560px) {
+  .surface-split-open {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+@container surface (max-width: 559.9px) {
+  .surface-split-open .surface-split-main {
+    display: none;
+  }
+}
+.surface-split-detail {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Rule 4 — the metric strip omits empty figures upstream. */
+.surface-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+.surface-metrics > div {
+  display: flex;
+  flex-direction: column;
+}
+.surface-metrics strong {
+  font-size: var(--font-size-md);
+  font-variant-numeric: tabular-nums;
+}
+.surface-metrics small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+
+/* Rule 4 — fact rows: de-snaked keys, meaningless values omitted. */
+.surface-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(96px, max-content) minmax(0, 1fr);
+  gap: 3px 14px;
+  font-size: var(--desk-surface-detail-size);
+}
+.surface-facts > div {
+  display: contents;
+}
+.surface-facts dt {
+  color: var(--text-muted);
+}
+.surface-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.surface-fact-line {
+  margin: 0;
+  font-size: var(--desk-surface-body-size);
+}
+
+/* A raw trace on the surface material. */
+.surface-code {
+  margin: 0;
+  padding: 8px var(--desk-surface-row-pad-x);
+  border-radius: var(--radius-sm);
+  background: var(--wash-1);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  overflow: auto;
+  max-height: 320px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* A quiet in-flow verb cluster (result ratings, recovery actions). */
+.surface-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* A quiet inset preview (a replay result, a prepared answer). */
+.surface-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px var(--desk-surface-row-pad-x);
+  border-left: 2px solid var(--accent-tint);
+  font-size: var(--desk-surface-detail-size);
+}
+.surface-preview > .surface-preview-label {
+  font-size: var(--desk-surface-label-size);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.surface-preview p {
+  margin: 0;
+}
+
+/* The transcript inside a surface: dense rows, quiet times. (The class
+   name is walk canon — the meetings leg waits on .transcript-list.) */
+.desk-surface-body .transcript-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-gap);
+  font-size: var(--desk-surface-body-size);
+}
+.desk-surface-body .transcript-list li {
+  display: flex;
+  gap: 10px;
+  padding: 4px var(--desk-surface-row-pad-x);
+  border-radius: var(--radius-sm);
+}
+.desk-surface-body .transcript-list li:hover {
+  background: var(--wash-1);
+}
+.desk-surface-body .transcript-list time {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+}
+.desk-surface-body .transcript-list p {
+  margin: 0;
+  min-width: 0;
+}
+
+/* Rule 1 — inside a window a disclosure is a quiet row, not a card. */
+.desk-surface-body .signal-disclosure {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+.desk-surface-body .signal-disclosure > summary,
+.desk-surface-body .signal-disclosure > .signal-disclosure-summary {
+  font-size: var(--desk-surface-body-size);
+}
+.desk-surface-body .signal-disclosure:hover {
+  background: var(--wash-1);
+}
+
+/* Rule 1 — inside a window the tab strip sits on the material: no
+   boxed card, a hairline underline, a visible thin scrollbar when the
+   window is narrower than the strip. */
+.desk-surface-body .signal-tabs {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 0 3px;
+  border-bottom: 1px solid var(--wash-1);
+  scrollbar-width: thin;
+}
+
+/* A float over a canvas (the workbench inspector): the one window
+   material, transient elevation — never a Signal card. */
+.surface-float {
+  background: var(--desk-window-fill);
+  border: 1px solid var(--border);
+  border-radius: var(--desk-transient-radius);
+  box-shadow: var(--desk-transient-shadow);
+  padding: 10px var(--desk-surface-row-pad-x);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.surface-float-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--desk-surface-body-size);
+}
+
+/* The kit is host-agnostic: its screen-reader utility must not depend
+   on the desk shell's scoped copy. */
+.surface-state .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

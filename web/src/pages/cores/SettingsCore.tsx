@@ -1,12 +1,11 @@
 // HS-95-07 — the Settings core: the whole cockpit, hosted anywhere.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CoreProps } from "./ActivityCore";
 import {
   Button,
   Disclosure,
   Field,
   InlineMessage,
-  Panel,
   Select,
   Switch,
   Tabs,
@@ -14,11 +13,13 @@ import {
 } from "../../components/signal/Signal";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
 import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
+import { PostureNote, useResource } from "../pageSupport";
 import {
-  PostureNote,
-  ResourceState,
-  useResource,
-} from "../pageSupport";
+  ConfirmVerb,
+  SurfaceSection,
+  SurfaceState,
+  SurfaceVerbs,
+} from "../../desk/surface/Surface";
 
 const SECTION_ORDER = [
   "ui",
@@ -365,25 +366,33 @@ export function SettingsCore({ hero, scope }: CoreProps) {
     }
   };
 
+  // HS-98-05: the Integrations alias lands on its section — the
+  // credentials (destination) block scrolls into view when scoped.
+  const credentialsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!integrationSubject || resource.loading) return;
+    credentialsRef.current?.scrollIntoView({ block: "start" });
+  }, [integrationSubject, resource.loading]);
+
   const verbs = (
-    <Button variant="primary" loading={saving} onClick={save}>
+    <Button variant="primary" dense loading={saving} onClick={save}>
       Save settings
     </Button>
   );
   return (
     <>
-      {hero ? hero(verbs) : <div className="desk-core-verbs">{verbs}</div>}
+      {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
       {integrationSubject ? (
         <p className="desk-scope-chip">
           <span aria-hidden="true">⇄</span> Integration destinations
         </p>
       ) : null}
-      <ResourceState
+      <SurfaceState
         loading={resource.loading}
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <Panel title="Control posture" eyebrow="Future operations">
+        <SurfaceSection label="Control posture">
           <Field
             label="Preset"
             description="Applies to future operations. Existing proposals keep their captured posture."
@@ -425,8 +434,8 @@ export function SettingsCore({ hero, scope }: CoreProps) {
                 : "hard invariants → grants → mode → feature default"}
             </p>
           </Disclosure>
-        </Panel>
-        <Panel title="Hub configuration" eyebrow="Signal editor">
+        </SurfaceSection>
+        <SurfaceSection label="Hub configuration">
           <Field
             label="Find a setting"
             description="Search matches section and setting names."
@@ -482,7 +491,7 @@ export function SettingsCore({ hero, scope }: CoreProps) {
               No settings were returned by the hub.
             </InlineMessage>
           )}
-          <div className="button-row">
+          <div className="surface-actions">
             <Button variant="primary" loading={saving} onClick={save}>
               Save settings
             </Button>
@@ -490,68 +499,70 @@ export function SettingsCore({ hero, scope }: CoreProps) {
               Discard changes
             </Button>
           </div>
-        </Panel>
-        <Panel title="Credentials" eyebrow="Write-only secrets">
-          <p>
-            Values stay on this hub. Reads show only whether each credential is
-            configured; replacement, rotation, and deletion never return it.
-          </p>
-          <div className="settings-fields">
-            {Object.entries(secrets).map(([secretId, state]) => (
-              <fieldset key={secretId}>
-                <legend>{SECRET_LABELS[secretId] ?? title(secretId)}</legend>
-                <p>
-                  {state.configured ? "Configured" : "Not configured"}
-                  {state.destination ? ` · ${state.destination}` : ""}
-                </p>
-                <Field label="Replacement value">
-                  {({ id }) => (
-                    <TextInput
-                      id={id}
-                      type="password"
-                      autoComplete="new-password"
-                      value={secretDrafts[secretId] ?? ""}
-                      onChange={(event) =>
-                        setSecretDrafts((drafts) => ({
-                          ...drafts,
-                          [secretId]: event.target.value,
-                        }))
-                      }
-                    />
-                  )}
-                </Field>
-                <div className="button-row">
-                  <Button
-                    loading={secretBusy === secretId}
-                    disabled={!secretDrafts[secretId]?.trim()}
-                    onClick={() => void changeSecret(secretId, "replace")}
-                  >
-                    Replace
-                  </Button>
-                  {ROTATABLE_SECRETS.has(secretId) ? (
+        </SurfaceSection>
+        <div ref={credentialsRef}>
+          <SurfaceSection label="Credentials">
+            <p>
+              Values stay on this hub. Reads show only whether each credential
+              is configured; replacement, rotation, and deletion never return
+              it.
+            </p>
+            <div className="settings-fields">
+              {Object.entries(secrets).map(([secretId, state]) => (
+                <fieldset key={secretId}>
+                  <legend>{SECRET_LABELS[secretId] ?? title(secretId)}</legend>
+                  <p>
+                    {state.configured ? "Configured" : "Not configured"}
+                    {state.destination ? ` · ${state.destination}` : ""}
+                  </p>
+                  <Field label="Replacement value">
+                    {({ id }) => (
+                      <TextInput
+                        id={id}
+                        type="password"
+                        autoComplete="new-password"
+                        value={secretDrafts[secretId] ?? ""}
+                        onChange={(event) =>
+                          setSecretDrafts((drafts) => ({
+                            ...drafts,
+                            [secretId]: event.target.value,
+                          }))
+                        }
+                      />
+                    )}
+                  </Field>
+                  <div className="surface-actions">
                     <Button
-                      variant="ghost"
+                      dense
                       loading={secretBusy === secretId}
-                      onClick={() => void changeSecret(secretId, "rotate")}
+                      disabled={!secretDrafts[secretId]?.trim()}
+                      onClick={() => void changeSecret(secretId, "replace")}
                     >
-                      Rotate
+                      Replace
                     </Button>
-                  ) : null}
-                  {state.configured ? (
-                    <Button
-                      variant="ghost"
-                      loading={secretBusy === secretId}
-                      onClick={() => void changeSecret(secretId, "delete")}
-                    >
-                      Delete
-                    </Button>
-                  ) : null}
-                </div>
-              </fieldset>
-            ))}
-          </div>
-        </Panel>
-      </ResourceState>
+                    {ROTATABLE_SECRETS.has(secretId) ? (
+                      <ConfirmVerb
+                        label="Rotate"
+                        confirmLabel="Rotate?"
+                        busy={secretBusy === secretId}
+                        onConfirm={() => void changeSecret(secretId, "rotate")}
+                      />
+                    ) : null}
+                    {state.configured ? (
+                      <ConfirmVerb
+                        label="Delete"
+                        confirmLabel="Delete?"
+                        busy={secretBusy === secretId}
+                        onConfirm={() => void changeSecret(secretId, "delete")}
+                      />
+                    ) : null}
+                  </div>
+                </fieldset>
+              ))}
+            </div>
+          </SurfaceSection>
+        </div>
+      </SurfaceState>
     </>
   );
 }

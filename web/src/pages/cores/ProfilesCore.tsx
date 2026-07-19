@@ -1,14 +1,14 @@
 // HS-95-07 — the Runs-on core: runtime destinations, hosted anywhere.
+// HS-98-07 — re-crafted native: the editor left its modal for an
+// in-surface section; delete is an inline two-step. Wire calls
+// unchanged.
 import { useState } from "react";
 import type { CoreProps } from "./ActivityCore";
 import {
   Button,
   Checkbox,
-  Dialog,
-  EmptyState,
   Field,
   InlineMessage,
-  Panel,
   Select,
   StatusPill,
   TextInput,
@@ -18,13 +18,15 @@ import {
   destinationClassLabel,
   type DestinationClass,
 } from "../../lib/productLanguage";
+import { asRows, rowId, useResource } from "../pageSupport";
 import {
-  ConfirmAction,
-  ResourceState,
-  asRows,
-  rowId,
-  useResource,
-} from "../pageSupport";
+  ConfirmVerb,
+  SurfaceRow,
+  SurfaceRows,
+  SurfaceSection,
+  SurfaceState,
+  SurfaceVerbs,
+} from "../../desk/surface/Surface";
 
 type Profile = Record<string, unknown>;
 type Envelope = {
@@ -65,7 +67,6 @@ const blank = (): Profile => ({
 export function ProfilesCore({ hero }: CoreProps) {
   const resource = useResource<Envelope>("/api/profiles", {});
   const [editing, setEditing] = useState<Profile | null>(null);
-  const [deleting, setDeleting] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const profiles = asRows(resource.data, ["profiles"]).filter(
@@ -95,15 +96,13 @@ export function ProfilesCore({ hero }: CoreProps) {
       setBusy(false);
     }
   };
-  const remove = async () => {
-    if (!deleting) return;
+  const remove = async (profile: Profile) => {
     setBusy(true);
     try {
       await apiFetch(
-        `/api/profiles/${encodeURIComponent(String(deleting.id))}`,
+        `/api/profiles/${encodeURIComponent(String(profile.id))}`,
         { method: "DELETE" },
       );
-      setDeleting(null);
       await resource.reload();
     } catch (error) {
       setMessage(readableError(error));
@@ -113,48 +112,44 @@ export function ProfilesCore({ hero }: CoreProps) {
   };
 
   const verbs = (
-          <Button variant="primary" onClick={() => setEditing(blank())}>
-            New destination
-          </Button>
+    <Button variant="primary" dense onClick={() => setEditing(blank())}>
+      New destination
+    </Button>
   );
   return (
     <>
-      {hero ? hero(verbs) : <div className="desk-core-verbs">{verbs}</div>}
-      <ResourceState
+      {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
+      {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
+      <SurfaceState
         loading={resource.loading}
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <Panel title="Destinations" eyebrow="Stored definitions">
-          {message ? (
-            <InlineMessage tone="error">{message}</InlineMessage>
-          ) : null}
+        <SurfaceSection label="Destinations">
           {!profiles.length ? (
-            <EmptyState title="No saved destinations">
-              Add a paired device, private endpoint, mesh node, or external
-              service. The hub keeps required keys.
-            </EmptyState>
+            <SurfaceState
+              empty
+              emptyLabel="No saved destinations"
+              emptyGlyph="⇄"
+            />
           ) : (
-            <ul className="data-list">
+            <SurfaceRows>
               {profiles.map((profile, index) => {
                 const kind = String(profile.kind ?? "onDevice");
                 const node = String(profile.node ?? "");
                 const liveness = resource.data.mesh_liveness?.[node];
                 return (
-                  <li className="data-row" key={rowId(profile, index)}>
-                    <div>
-                      <strong>
-                        {String(profile.name ?? "Untitled destination")}
-                      </strong>
-                      <small>
-                        {kind === "openAICompatible"
-                          ? String(profile.base_url ?? "Endpoint")
-                          : kind === "meshNode"
-                            ? `mesh · ${node}`
-                            : String(profile.model_file ?? "This device")}
-                      </small>
-                    </div>
-                    <div className="button-row">
+                  <SurfaceRow
+                    key={rowId(profile, index)}
+                    title={String(profile.name ?? "Untitled destination")}
+                    detail={
+                      kind === "openAICompatible"
+                        ? String(profile.base_url ?? "Endpoint")
+                        : kind === "meshNode"
+                          ? `mesh · ${node}`
+                          : String(profile.model_file ?? "This device")
+                    }
+                    meta={
                       <StatusPill
                         tone={
                           kind === "meshNode"
@@ -172,33 +167,40 @@ export function ProfilesCore({ hero }: CoreProps) {
                               profileDestinationClass(profile),
                             )}
                       </StatusPill>
-                      <Button dense onClick={() => setEditing({ ...profile })}>
-                        Edit
-                      </Button>
-                      <Button
-                        dense
-                        variant="ghost"
-                        onClick={() => setDeleting(profile)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </li>
+                    }
+                    verbs={
+                      <>
+                        <Button
+                          dense
+                          onClick={() => setEditing({ ...profile })}
+                        >
+                          Edit
+                        </Button>
+                        <ConfirmVerb
+                          label="Delete"
+                          confirmLabel="Delete?"
+                          busy={busy}
+                          onConfirm={() => void remove(profile)}
+                        />
+                      </>
+                    }
+                  />
                 );
               })}
-            </ul>
+            </SurfaceRows>
           )}
-        </Panel>
-      </ResourceState>
-      <Dialog
-        open={Boolean(editing)}
-        title={
-          editing?.id ? "Edit Runs on destination" : "New Runs on destination"
-        }
-        onClose={() => setEditing(null)}
-      >
+        </SurfaceSection>
         {editing ? (
-          <div className="dialog-form">
+          <SurfaceSection
+            label={
+              editing.id ? "Edit Runs on destination" : "New Runs on destination"
+            }
+            actions={
+              <Button dense variant="ghost" onClick={() => setEditing(null)}>
+                Cancel
+              </Button>
+            }
+          >
             <Field label="Name">
               {({ id }) => (
                 <TextInput
@@ -232,9 +234,7 @@ export function ProfilesCore({ hero }: CoreProps) {
                       id={id}
                       type="url"
                       value={String(editing.base_url ?? "")}
-                      onChange={(event) =>
-                        field("base_url", event.target.value)
-                      }
+                      onChange={(event) => field("base_url", event.target.value)}
                     />
                   )}
                 </Field>
@@ -262,9 +262,7 @@ export function ProfilesCore({ hero }: CoreProps) {
                   <TextInput
                     id={id}
                     value={String(editing.model_file ?? "")}
-                    onChange={(event) =>
-                      field("model_file", event.target.value)
-                    }
+                    onChange={(event) => field("model_file", event.target.value)}
                   />
                 )}
               </Field>
@@ -293,28 +291,14 @@ export function ProfilesCore({ hero }: CoreProps) {
                 />
               )}
             </Field>
-            {message ? (
-              <InlineMessage tone="error">{message}</InlineMessage>
-            ) : null}
-            <div className="button-row">
-              <Button variant="primary" loading={busy} onClick={save}>
+            <div className="surface-actions">
+              <Button variant="primary" dense loading={busy} onClick={save}>
                 Save destination
               </Button>
-              <Button variant="ghost" onClick={() => setEditing(null)}>
-                Cancel
-              </Button>
             </div>
-          </div>
+          </SurfaceSection>
         ) : null}
-      </Dialog>
-      <ConfirmAction
-        open={Boolean(deleting)}
-        title="Delete Runs on destination?"
-        detail={`Delete ${String(deleting?.name ?? "this destination")}. Any hub configuration that refers to it will need another destination.`}
-        busy={busy}
-        onConfirm={remove}
-        onClose={() => setDeleting(null)}
-      />
+      </SurfaceState>
     </>
   );
 }

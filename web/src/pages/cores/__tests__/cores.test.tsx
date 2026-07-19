@@ -30,12 +30,12 @@ function inWindow(children: React.ReactNode) {
 }
 
 describe("cores render chrome-free inside a desk window", () => {
-  it("ActivityCore: content without page chrome; verbs in the quiet row", () => {
+  it("ActivityCore: content without page chrome; verbs in the surface bar", () => {
     const { container } = inWindow(<ActivityCore />);
     expect(container.querySelector(".page-wrap")).toBeNull();
     expect(container.querySelector(".page-hero")).toBeNull();
     expect(container.querySelector(".workroom-bar")).toBeNull();
-    expect(container.querySelector(".desk-core-verbs")).toBeTruthy();
+    expect(container.querySelector(".surface-verbs")).toBeTruthy();
     expect(screen.getByText("Activity intelligence")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Refresh now" })).toBeTruthy();
   });

@@ -638,7 +638,7 @@ def meetings(intel: bool = False) -> None:
         review = page.locator("[aria-label=\'Meetings\'].desk-surface-window")
         # The scoped detail: a transcript list or its honest empty state.
         review.locator(
-            ".transcript-list, .signal-empty"
+            ".transcript-list, .signal-empty, .surface-state"
         ).first.wait_for(state="visible", timeout=20000)
         if intel:
             # Real intelligence, real model: poll the product's own routes
@@ -1206,6 +1206,130 @@ def frame() -> None:
         browser.close()
 
 
+def reflow() -> None:
+    """HS-98-01 — the window is the viewport: on ONE 1440 viewport, the
+    Cadence core (the reference native surface) lays its two groups
+    side by side in a wide window and stacks them when the WINDOW
+    narrows past the 560px container breakpoint — and its DOM carries
+    zero page grammar."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        failures: list[str] = []
+        page.on(
+            "response",
+            lambda r: failures.append(f"{r.status} {r.url}")
+            if r.url.startswith(BASE) and r.status >= 400 else None,
+        )
+        page.goto(BASE + "/cadence", wait_until="networkidle")
+        sel = "[aria-label='Cadence'].desk-surface-window"
+        page.wait_for_selector(sel, timeout=10000)
+        page.wait_for_selector(f"{sel} .surface-columns", timeout=5000)
+        page.wait_for_timeout(400)
+        # The idiom, mechanically: no page grammar inside the window.
+        for cls in (
+            ".page-grid", ".span-8", ".span-4", ".data-list", ".data-row",
+            ".signal-eyebrow", ".button-row", ".signal-panel", ".panel",
+        ):
+            assert page.locator(f"{sel} {cls}").count() == 0, f"page grammar: {cls}"
+        assert page.locator(f"{sel} .surface-verbs").count() == 1
+        # Wide window (default 640 ⇒ container > 560): columns share it.
+        def boxes():
+            main = page.locator(f"{sel} .surface-columns-main").bounding_box()
+            side = page.locator(f"{sel} .surface-columns-side").bounding_box()
+            return main, side
+        main, side = boxes()
+        assert side["x"] > main["x"] + main["width"] - 8, (
+            "wide window should read side-by-side", main, side)
+        page.screenshot(path=str(OUT / "reflow-wide-1440.png"))
+        # Narrow the WINDOW (the viewport never moves): drag the right
+        # edge until the container crosses the breakpoint; the columns
+        # stack.
+        b0 = page.locator(sel).bounding_box()
+        page.mouse.move(b0["x"] + b0["width"], b0["y"] + b0["height"] / 2)
+        page.mouse.down()
+        page.mouse.move(b0["x"] + 470, b0["y"] + b0["height"] / 2, steps=8)
+        page.mouse.up()
+        page.wait_for_timeout(400)
+        b1 = page.locator(sel).bounding_box()
+        assert b1["width"] < 540, ("resize did not narrow the window", b1)
+        main, side = boxes()
+        assert abs(side["x"] - main["x"]) < 8, (
+            "narrow window should stack", main, side)
+        assert side["y"] > main["y"] + 10, (
+            "narrow window should stack side below main", main, side)
+        page.screenshot(path=str(OUT / "reflow-narrow-1440.png"))
+        assert not failures, failures
+        print("reflow walk: Cadence reads side-by-side in a wide window, "
+              "stacks when the WINDOW narrows (one 1440 viewport), zero "
+              "page grammar in the DOM")
+        browser.close()
+
+
+SURFACE_ROUTES = [
+    ("/dictation", "Dictation"),
+    ("/live", "Live meeting"),
+    ("/history", "Meetings"),
+    ("/settings", "Settings"),
+    ("/profiles", "Runs on"),
+    ("/cadence", "Cadence"),
+    ("/setup", "Setup"),
+    ("/workbench", "Workbench"),
+    ("/studio", "Studio"),
+    ("/companion", "Personas and coders"),
+    ("/docs/dictation-runtime", "Runtime guide"),
+    ("/design/components", "Components"),
+    ("/activity", "Activity"),
+    ("/commands", "Commands"),
+]
+PAGE_GRAMMAR = (
+    ".page-grid", ".span-8", ".span-4", ".span-12", ".data-list",
+    ".data-row", ".signal-eyebrow", ".button-row", ".code-block",
+    ".dialog-form", ".signal-panel",
+)
+
+
+def surfaces() -> None:
+    """HS-98-09 — one visual product: EVERY registered surface opens on
+    the production bundle wearing the idiom — zero page grammar in the
+    live DOM — shot at 1440 and as the 393 sheet, all LOOKED AT."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        for name, w, h in (("1440", 1440, 900), ("393", 393, 852)):
+            ctx = browser.new_context(viewport={"width": w, "height": h})
+            page = ctx.new_page()
+            failures: list[str] = []
+            page.on(
+                "response",
+                lambda r: failures.append(f"{r.status} {r.url}")
+                if r.url.startswith(BASE) and r.status >= 400 else None,
+            )
+            for route, aria in SURFACE_ROUTES:
+                page.goto(BASE + route, wait_until="networkidle")
+                sel = f"[aria-label='{aria}'].desk-surface-window"
+                page.wait_for_selector(sel, timeout=15000)
+                page.wait_for_timeout(600)
+                for cls in PAGE_GRAMMAR:
+                    count = page.locator(f"{sel} {cls}").count()
+                    assert count == 0, f"{aria}: page grammar {cls} x{count}"
+                assert page.locator(
+                    f"{sel} .surface-section, {sel} .surface-verbs, "
+                    f"{sel} .surface-rows, {sel} .workbench-canvas"
+                ).count() > 0, f"{aria}: no surface idiom in the window"
+                slug = aria.lower().replace(" ", "-")
+                page.screenshot(path=str(OUT / f"surface-{slug}-{name}.png"))
+                page.click(f"[aria-label='Close {aria}']")
+                page.wait_for_timeout(250)
+            assert not failures, failures
+            ctx.close()
+        print(f"surfaces walk: all {len(SURFACE_ROUTES)} windows native at "
+              "1440 and 393 — zero page grammar in the live DOM, zero "
+              "failed API responses")
+        browser.close()
+
+
 def switcher() -> None:
     """HS-97-06 — the switcher: exposé fans every open window (minimized
     ones join as dimmed cards) into a pick grid — click focuses, Escape
@@ -1483,6 +1607,10 @@ if __name__ == "__main__":
         depth()
     elif mode == "frame":
         frame()
+    elif mode == "reflow":
+        reflow()
+    elif mode == "surfaces":
+        surfaces()
     elif mode == "switcher":
         switcher()
     elif mode == "shelf":

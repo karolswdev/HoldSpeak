@@ -1,16 +1,16 @@
-// HS-95-08 — the Signal component grammar gallery, hosted anywhere.
+// HS-95-08 — the component grammar gallery, hosted anywhere.
+// HS-98-06 — the gallery shows the CURRENT canon: Signal controls on
+// the surface idiom (sections, rows, states, the inline two-step) —
+// the page grammar and the modal demo are gone with the grammar.
 import type { CoreProps } from "./ActivityCore";
 import { useState } from "react";
 import {
   Button,
   Checkbox,
   ChoiceCard,
-  Dialog,
   Disclosure,
-  EmptyState,
   Field,
   InlineMessage,
-  Panel,
   Select,
   StatusPill,
   Switch,
@@ -19,16 +19,34 @@ import {
   TextInput,
   Toolbar,
 } from "../../components/signal/Signal";
+import {
+  ConfirmVerb,
+  MetricStrip,
+  SurfaceColumns,
+  SurfaceRow,
+  SurfaceRows,
+  SurfaceSection,
+  SurfaceState,
+  SurfaceVerbs,
+} from "../../desk/surface/Surface";
 
 export function ComponentsCore({ hero }: CoreProps) {
   const [tab, setTab] = useState("one");
-  const [dialog, setDialog] = useState(false);
   const [checked, setChecked] = useState(true);
+  const [confirmed, setConfirmed] = useState(0);
   return (
     <>
-      {hero ? hero(null) : null}
-      <Panel title="Buttons" eyebrow="44 px primary · 36 px dense">
-        <div className="gallery-row">
+      {hero ? (
+        hero(null)
+      ) : (
+        <SurfaceVerbs status="The Signal grammar on the surface idiom">
+          <Button dense variant="primary">
+            Primary verb
+          </Button>
+        </SurfaceVerbs>
+      )}
+      <SurfaceSection label="Buttons">
+        <div className="surface-actions">
           <Button variant="primary">Primary</Button>
           <Button>Secondary</Button>
           <Button variant="ghost">Ghost</Button>
@@ -37,87 +55,94 @@ export function ComponentsCore({ hero }: CoreProps) {
           <Button disabled>Disabled</Button>
           <Button dense>Dense action</Button>
         </div>
-      </Panel>
-      <div className="page-grid">
-        <Panel title="Fields" eyebrow="Labels and help">
-          <Field
-            label="Text input"
-            description="A persistent, associated description."
-          >
-            {({ id, describedBy }) => (
-              <TextInput
-                id={id}
-                aria-describedby={describedBy}
-                placeholder="Default state"
-              />
-            )}
-          </Field>
-          <Field label="Invalid input" error="Use a complete server address.">
-            {({ id, describedBy }) => (
-              <TextInput
-                id={id}
-                aria-describedby={describedBy}
-                aria-invalid="true"
-                defaultValue="localhost"
-              />
-            )}
-          </Field>
-          <Field label="Select">
-            {({ id }) => (
-              <Select id={id}>
-                <option>Automatic</option>
-                <option>On device</option>
-              </Select>
-            )}
-          </Field>
-          <Field label="Long text">
-            {({ id }) => (
-              <TextArea
-                id={id}
-                defaultValue="A composed area for longer source material."
-              />
-            )}
-          </Field>
-          <Field label="Disabled field" description="Editing is restricted by policy.">
-            {({ id, describedBy }) => (
-              <TextInput
-                id={id}
-                aria-describedby={describedBy}
-                value="Read-only state"
-                disabled
-                readOnly
-              />
-            )}
-          </Field>
-        </Panel>
-        <Panel title="Choice" eyebrow="Native semantics">
-          <Checkbox
-            label="Checked option"
-            description="A native checkbox with Signal presentation."
-            checked={checked}
-            onChange={(event) => setChecked(event.target.checked)}
-          />
-          <Switch
-            label="Runtime enabled"
-            description="A native checkbox with switch semantics."
-            checked={checked}
-            onChange={(event) => setChecked(event.target.checked)}
-          />
-          <ChoiceCard
-            name="gallery-choice"
-            label="On this Mac"
-            description="Runs with a local model."
-            defaultChecked
-          />
-          <ChoiceCard
-            name="gallery-choice"
-            label="Model server"
-            description="May cross a configured boundary."
-          />
-        </Panel>
-      </div>
-      <Panel title="Status and feedback" eyebrow="Never color alone">
-        <div className="gallery-row">
+      </SurfaceSection>
+      <SurfaceColumns
+        main={
+          <SurfaceSection label="Fields">
+            <Field
+              label="Text input"
+              description="A persistent, associated description."
+            >
+              {({ id, describedBy }) => (
+                <TextInput
+                  id={id}
+                  aria-describedby={describedBy}
+                  placeholder="Default state"
+                />
+              )}
+            </Field>
+            <Field label="Invalid input" error="Use a complete server address.">
+              {({ id, describedBy }) => (
+                <TextInput
+                  id={id}
+                  aria-describedby={describedBy}
+                  aria-invalid="true"
+                  defaultValue="localhost"
+                />
+              )}
+            </Field>
+            <Field label="Select">
+              {({ id }) => (
+                <Select id={id}>
+                  <option>Automatic</option>
+                  <option>On device</option>
+                </Select>
+              )}
+            </Field>
+            <Field label="Long text">
+              {({ id }) => (
+                <TextArea
+                  id={id}
+                  defaultValue="A composed area for longer source material."
+                />
+              )}
+            </Field>
+            <Field
+              label="Disabled field"
+              description="Editing is restricted by policy."
+            >
+              {({ id, describedBy }) => (
+                <TextInput
+                  id={id}
+                  aria-describedby={describedBy}
+                  value="Read-only state"
+                  disabled
+                  readOnly
+                />
+              )}
+            </Field>
+          </SurfaceSection>
+        }
+        side={
+          <SurfaceSection label="Choice">
+            <Checkbox
+              label="Checked option"
+              description="A native checkbox with Signal presentation."
+              checked={checked}
+              onChange={(event) => setChecked(event.target.checked)}
+            />
+            <Switch
+              label="Runtime enabled"
+              description="A native checkbox with switch semantics."
+              checked={checked}
+              onChange={(event) => setChecked(event.target.checked)}
+            />
+            <ChoiceCard
+              name="gallery-choice"
+              label="On this Mac"
+              description="Runs with a local model."
+              defaultChecked
+            />
+            <ChoiceCard
+              name="gallery-choice"
+              label="Model server"
+              description="May cross a configured boundary."
+            />
+          </SurfaceSection>
+        }
+      />
+      <SurfaceSection label="Status and feedback">
+        <div className="surface-actions">
           <StatusPill>neutral</StatusPill>
           <StatusPill tone="live">live</StatusPill>
           <StatusPill tone="success">success</StatusPill>
@@ -130,10 +155,17 @@ export function ComponentsCore({ hero }: CoreProps) {
           Review this before continuing.
         </InlineMessage>
         <InlineMessage tone="error">
-          Sync failed on the private endpoint. The draft is kept here. Retry sync.
+          Sync failed on the private endpoint. The draft is kept here. Retry
+          sync.
         </InlineMessage>
-      </Panel>
-      <Panel title="Navigation and disclosure" eyebrow="Keyboard-first">
+        <MetricStrip
+          items={[
+            { label: "figures", value: 12 },
+            { label: "omitted when empty", value: "" },
+          ]}
+        />
+      </SurfaceSection>
+      <SurfaceSection label="Navigation and disclosure">
         <Tabs
           label="Gallery tabs"
           tabs={[
@@ -157,28 +189,35 @@ export function ComponentsCore({ hero }: CoreProps) {
           <Button>Apply filter</Button>
           <Button variant="ghost">Reset</Button>
         </Toolbar>
-      </Panel>
-      <Panel title="Empty and dialog" eyebrow="Focus returns">
-        <EmptyState
-          title="A quiet empty state"
-          action={<Button onClick={() => setDialog(true)}>Open dialog</Button>}
-        >
-          Explain what belongs here and offer one useful next move.
-        </EmptyState>
-      </Panel>
-      <Dialog
-        open={dialog}
-        title="Dialog with focus return"
-        onClose={() => setDialog(false)}
-      >
-        <p>
-          Escape closes this native modal. Focus returns to the button that
-          opened it.
-        </p>
-        <Button variant="primary" onClick={() => setDialog(false)}>
-          Close dialog
-        </Button>
-      </Dialog>
+      </SurfaceSection>
+      <SurfaceSection label="Rows, states, and the two-step">
+        <SurfaceRows>
+          <SurfaceRow
+            glyph="◈"
+            title="An honest row"
+            detail="title + meaningful detail; unknowns omitted"
+            meta="just now"
+            verbs={
+              <ConfirmVerb
+                label="Delete"
+                confirmLabel="Delete?"
+                onConfirm={() => setConfirmed((count) => count + 1)}
+              />
+            }
+          />
+          <SurfaceRow
+            title="A press-target row"
+            detail="the row body is one press target"
+            onOpen={() => setConfirmed((count) => count + 1)}
+          />
+        </SurfaceRows>
+        {confirmed ? (
+          <InlineMessage tone="success">
+            {`Two-step fired ${confirmed} ${confirmed === 1 ? "time" : "times"} — no modal was involved.`}
+          </InlineMessage>
+        ) : null}
+        <SurfaceState empty emptyLabel="A quiet empty state" emptyGlyph="○" />
+      </SurfaceSection>
     </>
   );
 }

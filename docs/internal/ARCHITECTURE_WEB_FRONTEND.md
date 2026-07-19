@@ -64,7 +64,13 @@ the generator itself; `tests/unit/test_design_system_guard.py` — the
 state contract stays true), and the Phase 97 window-grammar floors
 (placement, order persistence, focus depth, motion, ghost/edge physics,
 exposé/switcher, one dock — the physics floors chapter in
-DESIGN_SYSTEM.md, walk-proven by the `desk_gl_walk.py` grammar legs). The design system itself is canon in
+DESIGN_SYSTEM.md, walk-proven by the `desk_gl_walk.py` grammar legs),
+and the Phase 98 surface-idiom lock
+(`tests/unit/test_native_surfaces_guard.py` — cores compose
+`web/src/desk/surface/`, the page grammar is forbidden with a CLOSED
+allowlist, and kit CSS reflows by `@container`, never viewport
+width media; the surface idiom chapter in DESIGN_SYSTEM.md is the
+contract). The design system itself is canon in
 `docs/internal/DESIGN_SYSTEM.md`: three-layer tokens from
 `web/design-tokens.json`, the generated TS mirror feeding window physics
 and GL palettes, the component state matrices, and the recorded Radix

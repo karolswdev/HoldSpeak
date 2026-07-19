@@ -1,22 +1,22 @@
 // HS-95-05 — the Dictation surface's core: the whole daily cockpit
 // (readiness, dry run, blocks, memory, knowledge, journal, runtime,
 // hooks, nudges) hosted anywhere (see ActivityCore for the pattern).
+// HS-98-02 — re-crafted native: composed from the surface kit on the
+// window material (DESIGN_SYSTEM.md, "The surface idiom"); wire calls
+// and verbs unchanged.
 import { useEffect, useMemo, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
 import {
   Button,
   Disclosure,
-  EmptyState,
   Field,
   InlineMessage,
-  Panel,
   Select,
   StatusPill,
   Tabs,
   TextArea,
   TextInput,
-  Toolbar,
 } from "../../components/signal/Signal";
 import { RunsOnPicker } from "../../desk/components/RunsOnPicker";
 import { MicButton } from "../../desk/components/MicButton";
@@ -29,14 +29,18 @@ import {
   type DictationFailure,
 } from "../../lib/dictationRecovery";
 import { useDurableDraft } from "../../lib/durableDraft";
+import { asRows, rowId, useResource } from "../pageSupport";
 import {
-  ConfirmAction,
-  ResourceState,
-  asRows,
-  rowId,
-  useResource,
-  valueAt,
-} from "../pageSupport";
+  ConfirmVerb,
+  SurfaceCode,
+  SurfaceColumns,
+  SurfaceFacts,
+  SurfaceRow,
+  SurfaceRows,
+  SurfaceSection,
+  SurfaceState,
+} from "../../desk/surface/Surface";
+import { humanTime, presentValue } from "../../desk/surface/format";
 
 const TABS = [
   ["ready", "Readiness"],
@@ -61,28 +65,6 @@ function readableValue(value: unknown): string {
   return String(value ?? "");
 }
 
-function JsonFacts({ value }: { value: unknown }) {
-  if (!value || typeof value !== "object")
-    return <p>{String(value ?? "No data")}</p>;
-  return (
-    <dl className="signal-facts">
-      {Object.entries(value as JsonRecord)
-        .filter(
-          ([, item]) =>
-            ["string", "number", "boolean"].includes(typeof item) ||
-            item === null,
-        )
-        .slice(0, 18)
-        .map(([key, item]) => (
-          <div key={key}>
-            <dt>{key.replace(/_/g, " ")}</dt>
-            <dd>{String(item ?? "—")}</dd>
-          </div>
-        ))}
-    </dl>
-  );
-}
-
 function Readiness() {
   const root = localStorage.getItem("holdspeak.projectRootOverride") ?? "";
   const resource = useResource<JsonRecord>(
@@ -93,34 +75,30 @@ function Readiness() {
     ? resource.data.warnings
     : [];
   return (
-    <ResourceState
+    <SurfaceState
       loading={resource.loading}
       error={resource.error}
       onRetry={() => void resource.reload()}
     >
-      <div className="page-grid">
-        <Panel
-          className="span-8"
-          title="Pipeline readiness"
-          eyebrow="Live hub report"
-        >
-          <JsonFacts value={resource.data.config} />
-          {warnings.map((warning, index) => (
-            <InlineMessage tone="warning" key={index}>
-              {readableValue(warning)}
-            </InlineMessage>
-          ))}
-        </Panel>
-        <Panel
-          className="span-4"
-          title="Resolved delivery"
-          eyebrow="Project context"
-        >
-          <JsonFacts value={resource.data.target} />
-          <JsonFacts value={resource.data.depth} />
-        </Panel>
-      </div>
-    </ResourceState>
+      <SurfaceColumns
+        main={
+          <SurfaceSection label="Pipeline readiness">
+            <SurfaceFacts value={resource.data.config} />
+            {warnings.map((warning, index) => (
+              <InlineMessage tone="warning" key={index}>
+                {readableValue(warning)}
+              </InlineMessage>
+            ))}
+          </SurfaceSection>
+        }
+        side={
+          <SurfaceSection label="Resolved delivery">
+            <SurfaceFacts value={resource.data.target} />
+            <SurfaceFacts value={resource.data.depth} />
+          </SurfaceSection>
+        }
+      />
+    </SurfaceState>
   );
 }
 
@@ -253,174 +231,192 @@ function DryRun() {
     }
   };
   return (
-    <div className="page-grid">
-      <Panel className="span-4" title="Speak on paper" eyebrow="No typing">
-        <Field
-          label="Utterance"
-          description="Runs the real pipeline without typing into another app."
-        >
-          {({ id, describedBy }) => (
-            <div className="desk-mic-row">
-              <TextArea
+    <SurfaceColumns
+      main={
+        <SurfaceSection label="Speak on paper">
+          <Field
+            label="Utterance"
+            description="Runs the real pipeline without typing into another app."
+          >
+            {({ id, describedBy }) => (
+              <div className="desk-mic-row">
+                <TextArea
+                  id={id}
+                  aria-describedby={describedBy}
+                  value={utterance}
+                  onChange={(event) => setUtterance(event.target.value)}
+                  placeholder="Explain the change I made…"
+                />
+                <MicButton
+                  draftScope="dictation-dry-run-voice"
+                  onText={(text) => setUtterance(text)}
+                />
+              </div>
+            )}
+          </Field>
+          <Field
+            label="Project root"
+            description="Optional grounding scope; saved only on this device."
+          >
+            {({ id, describedBy }) => (
+              <TextInput
                 id={id}
                 aria-describedby={describedBy}
-                value={utterance}
-                onChange={(event) => setUtterance(event.target.value)}
-                placeholder="Explain the change I made…"
+                value={projectRoot}
+                onChange={(event) => setProjectRoot(event.target.value)}
+                placeholder="/path/to/project"
               />
-              <MicButton
-                draftScope="dictation-dry-run-voice"
-                onText={(text) => setUtterance(text)}
-              />
-            </div>
-          )}
-        </Field>
-        <Field
-          label="Project root"
-          description="Optional grounding scope; saved only on this device."
-        >
-          {({ id, describedBy }) => (
-            <TextInput
-              id={id}
-              aria-describedby={describedBy}
-              value={projectRoot}
-              onChange={(event) => setProjectRoot(event.target.value)}
-              placeholder="/path/to/project"
-            />
-          )}
-        </Field>
-        <Button
-          variant="primary"
-          loading={busy}
-          disabled={!utterance.trim()}
-          onClick={run}
-        >
-          {error && actions.includes("retry") ? "Retry dry test" : "Run dry test"}
-        </Button>
-        {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
-        {utteranceRecovered && !error ? (
-          <InlineMessage tone="info">
-            Recovered your local dictation draft after relaunch.
-          </InlineMessage>
-        ) : null}
-        {error ? (
-          <div className="button-row">
-            {actions.includes("copy") ? (
-              <Button
-                dense
-                onClick={() => void navigator.clipboard.writeText(utterance)}
-              >
-                Copy
-              </Button>
-            ) : null}
-            {actions.includes("keep_as_note") ? (
-              <Button dense onClick={keepDraft}>
-                Keep as Note
-              </Button>
-            ) : null}
-            {actions.includes("setup") ? (
-              <button
-                type="button"
-                className="btn btn--secondary"
-                onClick={() => openSurfaceOr("configure-setup", "/setup")}
-              >
-                Setup
-              </button>
-            ) : null}
+            )}
+          </Field>
+          <div className="surface-actions">
+            <Button
+              variant="primary"
+              loading={busy}
+              disabled={!utterance.trim()}
+              onClick={run}
+            >
+              {error && actions.includes("retry")
+                ? "Retry dry test"
+                : "Run dry test"}
+            </Button>
           </div>
-        ) : null}
-        {error && actions.includes("alternate_runs_on") && targets.length ? (
-          <RunsOnPicker
-            targets={targets}
-            selectedId={targetId}
-            onChange={(id) => void runElsewhere(id)}
-            disabled={busy}
-          />
-        ) : null}
-        {recoveryMessage ? (
-          <InlineMessage
-            tone={recoveryMessage.startsWith("Kept") ? "success" : "error"}
-          >
-            {recoveryMessage}
-          </InlineMessage>
-        ) : null}
-      </Panel>
-      <Panel className="span-8" title="Pipeline result" eyebrow="Trace">
-        {result ? (
-          <>
-            <InlineMessage tone="success">
-              {String(
-                result.final_text ??
-                  result.text ??
-                  result.output ??
-                  "Pipeline completed.",
-              )}
+          {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
+          {utteranceRecovered && !error ? (
+            <InlineMessage tone="info">
+              Recovered your local dictation draft after relaunch.
             </InlineMessage>
-            <pre className="code-block">{JSON.stringify(result, null, 2)}</pre>
-            <div className="button-row" aria-label="Rate this result">
-              <Button dense onClick={() => setVerdict("right")}>
-                Right
-              </Button>
-              <Button dense variant="ghost" onClick={() => setVerdict("wrong")}>
-                Wrong
-              </Button>
+          ) : null}
+          {error ? (
+            <div className="surface-actions">
+              {actions.includes("copy") ? (
+                <Button
+                  dense
+                  onClick={() => void navigator.clipboard.writeText(utterance)}
+                >
+                  Copy
+                </Button>
+              ) : null}
+              {actions.includes("keep_as_note") ? (
+                <Button dense onClick={keepDraft}>
+                  Keep as Note
+                </Button>
+              ) : null}
+              {actions.includes("setup") ? (
+                <Button
+                  dense
+                  variant="secondary"
+                  onClick={() => openSurfaceOr("configure-setup", "/setup")}
+                >
+                  Setup
+                </Button>
+              ) : null}
             </div>
-            {verdict === "right" ? (
+          ) : null}
+          {error && actions.includes("alternate_runs_on") && targets.length ? (
+            <RunsOnPicker
+              targets={targets}
+              selectedId={targetId}
+              onChange={(id) => void runElsewhere(id)}
+              disabled={busy}
+            />
+          ) : null}
+          {recoveryMessage ? (
+            <InlineMessage
+              tone={recoveryMessage.startsWith("Kept") ? "success" : "error"}
+            >
+              {recoveryMessage}
+            </InlineMessage>
+          ) : null}
+        </SurfaceSection>
+      }
+      side={
+        <SurfaceSection label="Pipeline result">
+          {result ? (
+            <>
               <InlineMessage tone="success">
-                Marked right. Nothing was written to correction memory.
+                {String(
+                  result.final_text ??
+                    result.text ??
+                    result.output ??
+                    "Pipeline completed.",
+                )}
               </InlineMessage>
-            ) : null}
-            {verdict === "wrong" ? (
-              <Disclosure title="Correct this result" open>
-                <Field label="What should change?">
-                  {({ id }) => (
-                    <Select
-                      id={id}
-                      value={correctionKind}
-                      onChange={(event) =>
-                        setCorrectionKind(event.target.value)
+              <Disclosure title="Raw trace">
+                <SurfaceCode>{JSON.stringify(result, null, 2)}</SurfaceCode>
+              </Disclosure>
+              <div className="surface-actions" aria-label="Rate this result">
+                <Button dense onClick={() => setVerdict("right")}>
+                  Right
+                </Button>
+                <Button
+                  dense
+                  variant="ghost"
+                  onClick={() => setVerdict("wrong")}
+                >
+                  Wrong
+                </Button>
+              </div>
+              {verdict === "right" ? (
+                <InlineMessage tone="success">
+                  Marked right. Nothing was written to correction memory.
+                </InlineMessage>
+              ) : null}
+              {verdict === "wrong" ? (
+                <Disclosure title="Correct this result" open>
+                  <Field label="What should change?">
+                    {({ id }) => (
+                      <Select
+                        id={id}
+                        value={correctionKind}
+                        onChange={(event) =>
+                          setCorrectionKind(event.target.value)
+                        }
+                      >
+                        <option value="target">Delivery target</option>
+                        <option value="intent">Intent</option>
+                      </Select>
+                    )}
+                  </Field>
+                  <Field label="Correct value">
+                    {({ id }) => (
+                      <TextInput
+                        id={id}
+                        value={correctionValue}
+                        onChange={(event) =>
+                          setCorrectionValue(event.target.value)
+                        }
+                      />
+                    )}
+                  </Field>
+                  <Button
+                    loading={busy}
+                    disabled={!correctionValue.trim()}
+                    onClick={teach}
+                  >
+                    Teach correction
+                  </Button>
+                  {taught ? (
+                    <InlineMessage
+                      tone={
+                        taught.startsWith("Correction") ? "success" : "error"
                       }
                     >
-                      <option value="target">Delivery target</option>
-                      <option value="intent">Intent</option>
-                    </Select>
-                  )}
-                </Field>
-                <Field label="Correct value">
-                  {({ id }) => (
-                    <TextInput
-                      id={id}
-                      value={correctionValue}
-                      onChange={(event) =>
-                        setCorrectionValue(event.target.value)
-                      }
-                    />
-                  )}
-                </Field>
-                <Button
-                  loading={busy}
-                  disabled={!correctionValue.trim()}
-                  onClick={teach}
-                >
-                  Teach correction
-                </Button>
-                {taught ? (
-                  <InlineMessage
-                    tone={taught.startsWith("Correction") ? "success" : "error"}
-                  >
-                    {taught}
-                  </InlineMessage>
-                ) : null}
-              </Disclosure>
-            ) : null}
-          </>
-        ) : (
-          <EmptyState title="No run yet">
-            Your routed result, target and stage trace will appear here.
-          </EmptyState>
-        )}
-      </Panel>
-    </div>
+                      {taught}
+                    </InlineMessage>
+                  ) : null}
+                </Disclosure>
+              ) : null}
+            </>
+          ) : (
+            <SurfaceState
+              empty
+              emptyLabel="No run yet"
+              emptyGlyph="▹"
+            />
+          )}
+        </SurfaceSection>
+      }
+    />
   );
 }
 
@@ -462,92 +458,109 @@ function Blocks() {
     }
   };
   return (
-    <div className="page-grid">
-      <Panel
-        className="span-8"
-        title="Routing blocks"
-        eyebrow={String(resource.data.path ?? scope)}
-        actions={
-          <Select
-            aria-label="Block scope"
-            value={scope}
-            onChange={(event) => setScope(event.target.value)}
-          >
-            <option value="global">Global</option>
-            <option value="project">Project</option>
-          </Select>
-        }
-      >
-        <ResourceState
-          loading={resource.loading}
-          error={resource.error}
-          empty={!rows.length}
-          onRetry={() => void resource.reload()}
+    <SurfaceColumns
+      main={
+        <SurfaceSection
+          label="Routing blocks"
+          actions={
+            <Select
+              aria-label="Block scope"
+              value={scope}
+              onChange={(event) => setScope(event.target.value)}
+            >
+              <option value="global">Global</option>
+              <option value="project">Project</option>
+            </Select>
+          }
         >
-          <ul className="data-list">
-            {rows.map((row, index) => (
-              <li className="data-row" key={rowId(row, index)}>
-                <div>
-                  <strong>{String(row.name ?? row.id ?? "Block")}</strong>
-                  <small>{String(row.description ?? row.inject ?? "")}</small>
-                </div>
-                <StatusPill>
-                  {String(row.enabled === false ? "off" : "active")}
-                </StatusPill>
-              </li>
-            ))}
-          </ul>
-        </ResourceState>
-      </Panel>
-      <Panel className="span-4" title="New block" eyebrow="Intent routing">
-        <Field label="ID">
-          {({ id }) => (
-            <TextInput
-              id={id}
-              value={form.id}
-              onChange={(event) => setForm({ ...form, id: event.target.value })}
-            />
-          )}
-        </Field>
-        <Field label="Name">
-          {({ id }) => (
-            <TextInput
-              id={id}
-              value={form.name}
-              onChange={(event) =>
-                setForm({ ...form, name: event.target.value })
-              }
-            />
-          )}
-        </Field>
-        <Field label="Example utterances">
-          {({ id }) => (
-            <TextArea
-              id={id}
-              value={form.examples}
-              onChange={(event) =>
-                setForm({ ...form, examples: event.target.value })
-              }
-            />
-          )}
-        </Field>
-        <Field label="Injection">
-          {({ id }) => (
-            <TextArea
-              id={id}
-              value={form.injection}
-              onChange={(event) =>
-                setForm({ ...form, injection: event.target.value })
-              }
-            />
-          )}
-        </Field>
-        <Button variant="primary" disabled={!form.id.trim()} onClick={create}>
-          Create block
-        </Button>
-        {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
-      </Panel>
-    </div>
+          <SurfaceState
+            loading={resource.loading}
+            error={resource.error}
+            empty={!rows.length}
+            emptyLabel="No routing blocks"
+            emptyGlyph="⧉"
+            onRetry={() => void resource.reload()}
+          >
+            <SurfaceRows>
+              {rows.map((row, index) => (
+                <SurfaceRow
+                  key={rowId(row, index)}
+                  title={String(row.name ?? row.id ?? "Block")}
+                  detail={
+                    presentValue(row.description ?? row.inject) || undefined
+                  }
+                  meta={
+                    <StatusPill>
+                      {String(row.enabled === false ? "off" : "active")}
+                    </StatusPill>
+                  }
+                />
+              ))}
+            </SurfaceRows>
+          </SurfaceState>
+        </SurfaceSection>
+      }
+      side={
+        <SurfaceSection label="New block">
+          <Field label="ID">
+            {({ id }) => (
+              <TextInput
+                id={id}
+                value={form.id}
+                onChange={(event) =>
+                  setForm({ ...form, id: event.target.value })
+                }
+              />
+            )}
+          </Field>
+          <Field label="Name">
+            {({ id }) => (
+              <TextInput
+                id={id}
+                value={form.name}
+                onChange={(event) =>
+                  setForm({ ...form, name: event.target.value })
+                }
+              />
+            )}
+          </Field>
+          <Field label="Example utterances">
+            {({ id }) => (
+              <TextArea
+                id={id}
+                value={form.examples}
+                onChange={(event) =>
+                  setForm({ ...form, examples: event.target.value })
+                }
+              />
+            )}
+          </Field>
+          <Field label="Injection">
+            {({ id }) => (
+              <TextArea
+                id={id}
+                value={form.injection}
+                onChange={(event) =>
+                  setForm({ ...form, injection: event.target.value })
+                }
+              />
+            )}
+          </Field>
+          <div className="surface-actions">
+            <Button
+              variant="primary"
+              disabled={!form.id.trim()}
+              onClick={create}
+            >
+              Create block
+            </Button>
+          </div>
+          {message ? (
+            <InlineMessage tone="error">{message}</InlineMessage>
+          ) : null}
+        </SurfaceSection>
+      }
+    />
   );
 }
 
@@ -555,65 +568,58 @@ function Memory() {
   const resource = useResource<JsonRecord>("/api/dictation/corrections", {});
   const digest = useResource<JsonRecord>("/api/dictation/learning-digest", {});
   const rows = asRows(resource.data, ["items", "corrections"]);
-  const [deleting, setDeleting] = useState<Record<string, unknown> | null>(
-    null,
-  );
-  const remove = async () => {
-    if (!deleting) return;
+  const remove = async (row: Record<string, unknown>) => {
     await apiFetch(
-      `/api/dictation/corrections/${encodeURIComponent(String(deleting.id))}`,
+      `/api/dictation/corrections/${encodeURIComponent(String(row.id))}`,
       { method: "DELETE" },
     );
-    setDeleting(null);
     await resource.reload();
   };
   return (
-    <div className="page-grid">
-      <Panel
-        className="span-8"
-        title="Correction memory"
-        eyebrow="Local learning"
-      >
-        <ResourceState
-          loading={resource.loading}
-          error={resource.error}
-          empty={!rows.length}
-          onRetry={() => void resource.reload()}
-        >
-          <ul className="data-list">
-            {rows.map((row, index) => (
-              <li className="data-row" key={rowId(row, index)}>
-                <div>
-                  <strong>
-                    {String(row.gist ?? row.kind ?? "Correction")}
-                  </strong>
-                  <small>{String(row.value ?? row.replacement ?? "")}</small>
-                </div>
-                <Button dense variant="ghost" onClick={() => setDeleting(row)}>
-                  Forget
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </ResourceState>
-      </Panel>
-      <Panel className="span-4" title="Learning digest" eyebrow="Honest reach">
-        <ResourceState
-          loading={digest.loading}
-          error={digest.error}
-          onRetry={() => void digest.reload()}
-        >
-          <JsonFacts value={digest.data} />
-        </ResourceState>
-      </Panel>
-      <ConfirmAction
-        open={Boolean(deleting)}
-        title="Forget this correction?"
-        detail="Future dictations will no longer receive this learned nudge."
-        onConfirm={remove}
-        onClose={() => setDeleting(null)}
-      />
-    </div>
+    <SurfaceColumns
+      main={
+        <SurfaceSection label="Correction memory">
+          <SurfaceState
+            loading={resource.loading}
+            error={resource.error}
+            empty={!rows.length}
+            emptyLabel="Nothing learned yet"
+            emptyGlyph="◈"
+            onRetry={() => void resource.reload()}
+          >
+            <SurfaceRows>
+              {rows.map((row, index) => (
+                <SurfaceRow
+                  key={rowId(row, index)}
+                  title={String(row.gist ?? row.kind ?? "Correction")}
+                  detail={
+                    presentValue(row.value ?? row.replacement) || undefined
+                  }
+                  verbs={
+                    <ConfirmVerb
+                      label="Forget"
+                      confirmLabel="Forget?"
+                      onConfirm={() => void remove(row)}
+                    />
+                  }
+                />
+              ))}
+            </SurfaceRows>
+          </SurfaceState>
+        </SurfaceSection>
+      }
+      side={
+        <SurfaceSection label="Learning digest">
+          <SurfaceState
+            loading={digest.loading}
+            error={digest.error}
+            onRetry={() => void digest.reload()}
+          >
+            <SurfaceFacts value={digest.data} />
+          </SurfaceState>
+        </SurfaceSection>
+      }
+    />
   );
 }
 
@@ -641,13 +647,9 @@ function Knowledge() {
     }
   };
   return (
-    <div className="page-grid">
-      <Panel
-        className="span-12"
-        title="Project grounding"
-        eyebrow="Explicit scope"
-      >
-        <Toolbar label="Project scope">
+    <>
+      <SurfaceSection label="Project scope">
+        <div className="surface-actions">
           <Field label="Project root">
             {({ id }) => (
               <TextInput
@@ -666,40 +668,44 @@ function Knowledge() {
           >
             Use project
           </Button>
-        </Toolbar>
+        </div>
         {message ? (
           <InlineMessage tone={message.includes("saved") ? "success" : "error"}>
             {message}
           </InlineMessage>
         ) : null}
-      </Panel>
-      <Panel
-        title="Knowledge"
-        eyebrow={String(kb.data.path ?? "PROJECT_KB.md")}
-      >
-        <TextArea
-          aria-label="Project knowledge"
-          value={kbText || String(kb.data.content ?? "")}
-          onChange={(event) => setKbText(event.target.value)}
-        />
-        <Button variant="primary" onClick={() => void save("kb")}>
-          Save knowledge
-        </Button>
-      </Panel>
-      <Panel
-        title="Project instructions"
-        eyebrow={String(hs.data.path ?? ".hs context")}
-      >
-        <TextArea
-          aria-label="Project instructions"
-          value={hsText || String(hs.data.content ?? "")}
-          onChange={(event) => setHsText(event.target.value)}
-        />
-        <Button variant="primary" onClick={() => void save("hs")}>
-          Save instructions
-        </Button>
-      </Panel>
-    </div>
+      </SurfaceSection>
+      <SurfaceColumns
+        main={
+          <SurfaceSection label={String(kb.data.path ?? "Knowledge")}>
+            <TextArea
+              aria-label="Project knowledge"
+              value={kbText || String(kb.data.content ?? "")}
+              onChange={(event) => setKbText(event.target.value)}
+            />
+            <div className="surface-actions">
+              <Button variant="primary" onClick={() => void save("kb")}>
+                Save knowledge
+              </Button>
+            </div>
+          </SurfaceSection>
+        }
+        side={
+          <SurfaceSection label={String(hs.data.path ?? "Instructions")}>
+            <TextArea
+              aria-label="Project instructions"
+              value={hsText || String(hs.data.content ?? "")}
+              onChange={(event) => setHsText(event.target.value)}
+            />
+            <div className="surface-actions">
+              <Button variant="primary" onClick={() => void save("hs")}>
+                Save instructions
+              </Button>
+            </div>
+          </SurfaceSection>
+        }
+      />
+    </>
   );
 }
 
@@ -710,9 +716,6 @@ function Journal() {
   );
   const rows = asRows(resource.data, ["items"]);
   const [query, setQuery] = useState("");
-  const [deleting, setDeleting] = useState<
-    Record<string, unknown> | "all" | null
-  >(null);
   const [replays, setReplays] = useState<Record<string, JsonRecord>>({});
   const filtered = rows.filter(
     (row) =>
@@ -721,15 +724,13 @@ function Journal() {
         .toLowerCase()
         .includes(query.toLowerCase()),
   );
-  const remove = async () => {
-    if (!deleting) return;
+  const remove = async (target: Record<string, unknown> | "all") => {
     await apiFetch(
-      deleting === "all"
+      target === "all"
         ? "/api/dictation/journal"
-        : `/api/dictation/journal/${encodeURIComponent(String(deleting.id))}`,
+        : `/api/dictation/journal/${encodeURIComponent(String(target.id))}`,
       { method: "DELETE" },
     );
-    setDeleting(null);
     await resource.reload();
   };
   const replay = async (row: Record<string, unknown>) => {
@@ -740,18 +741,15 @@ function Journal() {
     setReplays((current) => ({ ...current, [String(row.id)]: result }));
   };
   return (
-    <Panel
-      title="Dictation journal"
-      eyebrow={`${rows.length} this-device entries`}
+    <SurfaceSection
+      label="Dictation journal"
       actions={
-        <Button
-          dense
-          variant="ghost"
+        <ConfirmVerb
+          label="Clear journal"
+          confirmLabel="Clear all?"
           disabled={!rows.length}
-          onClick={() => setDeleting("all")}
-        >
-          Clear journal
-        </Button>
+          onConfirm={() => void remove("all")}
+        />
       }
     >
       <Field label="Search journal">
@@ -764,13 +762,15 @@ function Journal() {
           />
         )}
       </Field>
-      <ResourceState
+      <SurfaceState
         loading={resource.loading}
         error={resource.error}
         empty={!filtered.length}
+        emptyLabel="No dictations on this device"
+        emptyGlyph="✎"
         onRetry={() => void resource.reload()}
       >
-        <ul className="data-list">
+        <SurfaceRows>
           {filtered.map((row, index) => {
             const replayResult = replays[String(row.id)];
             const replayAfter =
@@ -779,22 +779,32 @@ function Journal() {
                 : replayResult;
             const replayText = String(replayAfter?.final_text ?? "");
             return (
-              <li className="data-row journal-row" key={rowId(row, index)}>
-                <div className="journal-row-copy">
-                  <strong>
-                    {String(row.transcript ?? "Untitled dictation")}
-                  </strong>
-                  <small>
-                    {String(
-                      row.created_at ?? row.timestamp ?? row.source ?? "",
-                    )}
-                  </small>
-                  {replayResult ? (
-                    <div className="journal-replay" role="status">
-                      <span className="signal-eyebrow">Preview only</span>
-                      <p>
-                        {replayText || "The replay completed without text."}
-                      </p>
+              <SurfaceRow
+                key={rowId(row, index)}
+                title={String(row.transcript ?? "Untitled dictation")}
+                detail={
+                  humanTime(row.created_at ?? row.timestamp) ||
+                  presentValue(row.source) ||
+                  undefined
+                }
+                verbs={
+                  <>
+                    <Button dense onClick={() => void replay(row)}>
+                      Replay
+                    </Button>
+                    <ConfirmVerb
+                      label="Delete"
+                      confirmLabel="Delete?"
+                      onConfirm={() => void remove(row)}
+                    />
+                  </>
+                }
+              >
+                {replayResult ? (
+                  <div className="surface-preview" role="status">
+                    <span className="surface-preview-label">Preview only</span>
+                    <p>{replayText || "The replay completed without text."}</p>
+                    <div className="surface-actions">
                       <Button
                         dense
                         variant="ghost"
@@ -806,37 +816,14 @@ function Journal() {
                         Copy result
                       </Button>
                     </div>
-                  ) : null}
-                </div>
-                <div className="button-row">
-                  <Button dense onClick={() => void replay(row)}>
-                    Replay
-                  </Button>
-                  <Button
-                    dense
-                    variant="ghost"
-                    onClick={() => setDeleting(row)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </li>
+                  </div>
+                ) : null}
+              </SurfaceRow>
             );
           })}
-        </ul>
-      </ResourceState>
-      <ConfirmAction
-        open={Boolean(deleting)}
-        title={
-          deleting === "all"
-            ? "Clear the journal?"
-            : "Delete this journal entry?"
-        }
-        detail="This device's dictation history will be deleted and cannot be restored."
-        onConfirm={remove}
-        onClose={() => setDeleting(null)}
-      />
-    </Panel>
+        </SurfaceRows>
+      </SurfaceState>
+    </SurfaceSection>
   );
 }
 
@@ -871,7 +858,7 @@ function Runtime() {
     }
   };
   return (
-    <Panel title="Dictation runtime" eyebrow="One Runs on destination">
+    <SurfaceSection label="Dictation runtime">
       <Field label="Backend">
         {({ id }) => (
           <Select
@@ -919,17 +906,17 @@ function Runtime() {
           />
         )}
       </Field>
-      <Button variant="primary" loading={saving} onClick={save}>
-        Save runtime
-      </Button>
+      <div className="surface-actions">
+        <Button variant="primary" loading={saving} onClick={save}>
+          Save runtime
+        </Button>
+      </div>
       {message ? (
-        <InlineMessage
-          tone={message === "Runtime saved." ? "success" : "error"}
-        >
+        <InlineMessage tone={message === "Runtime saved." ? "success" : "error"}>
           {message}
         </InlineMessage>
       ) : null}
-    </Panel>
+    </SurfaceSection>
   );
 }
 
@@ -939,19 +926,18 @@ function Hooks() {
     {},
   );
   return (
-    <Panel title="Automation hooks" eyebrow="Project-aware context">
-      <ResourceState
+    <SurfaceSection label="Automation hooks">
+      <SurfaceState
         loading={resource.loading}
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <pre className="code-block">
-          {JSON.stringify(resource.data, null, 2)}
-        </pre>
-      </ResourceState>
-    </Panel>
+        <SurfaceCode>{JSON.stringify(resource.data, null, 2)}</SurfaceCode>
+      </SurfaceState>
+    </SurfaceSection>
   );
 }
+
 function Nudges() {
   const resource = useResource<JsonRecord>("/api/activity/nudges?limit=8", {});
   const rows = asRows(resource.data, ["nudges", "items"]);
@@ -971,43 +957,43 @@ function Nudges() {
     await resource.reload();
   };
   return (
-    <Panel title="Activity nudges" eyebrow="Source-cited context">
-      <ResourceState
+    <SurfaceSection label="Activity nudges">
+      <SurfaceState
         loading={resource.loading}
         error={resource.error}
         empty={!rows.length}
+        emptyLabel="No recent activity to cite"
+        emptyGlyph="⌁"
         onRetry={() => void resource.reload()}
       >
-        <ul className="data-list">
+        <SurfaceRows>
           {rows.map((row, index) => (
-            <li className="data-row" key={rowId(row, index)}>
-              <div>
-                <strong>
-                  {String(row.title ?? row.text ?? "Recent work")}
-                </strong>
-                <small>
-                  {String(
-                    row.citation ?? row.source ?? row.url ?? "Local activity",
-                  )}
-                </small>
-              </div>
-              <div className="button-row">
-                <Button dense onClick={() => void act(row, "select")}>
-                  Use as context
-                </Button>
-                <Button
-                  dense
-                  variant="ghost"
-                  onClick={() => void act(row, "dismiss")}
-                >
-                  Dismiss
-                </Button>
-              </div>
-            </li>
+            <SurfaceRow
+              key={rowId(row, index)}
+              title={String(row.title ?? row.text ?? "Recent work")}
+              detail={
+                presentValue(row.citation ?? row.source ?? row.url) ||
+                "Local activity"
+              }
+              verbs={
+                <>
+                  <Button dense onClick={() => void act(row, "select")}>
+                    Use as context
+                  </Button>
+                  <Button
+                    dense
+                    variant="ghost"
+                    onClick={() => void act(row, "dismiss")}
+                  >
+                    Dismiss
+                  </Button>
+                </>
+              }
+            />
           ))}
-        </ul>
-      </ResourceState>
-    </Panel>
+        </SurfaceRows>
+      </SurfaceState>
+    </SurfaceSection>
   );
 }
 

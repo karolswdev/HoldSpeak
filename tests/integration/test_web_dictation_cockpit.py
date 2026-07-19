@@ -35,12 +35,12 @@ def test_dictation_keeps_device_local_project_scope() -> None:
     page = _page()
     assert "holdspeak.projectRootOverride" in page
     assert "project_root" in page
-    assert "Project grounding" in page
+    assert "Project scope" in page
 
 
 def test_dictation_lists_are_react_owned_and_focus_safe() -> None:
     page = _page()
     assert ".innerHTML" not in page
     assert "document.querySelector" not in page
-    assert "ConfirmAction" in page
-    assert "ResourceState" in page
+    assert "ConfirmVerb" in page
+    assert "SurfaceState" in page

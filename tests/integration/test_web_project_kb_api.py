@@ -609,8 +609,8 @@ def test_dictation_page_includes_project_kb_section() -> None:
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
     js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    assert "Project grounding" in js
-    assert 'title="Knowledge"' in js and "Project instructions" in js
+    assert "Project scope" in js
+    assert '?? "Knowledge"' in js and '?? "Instructions"' in js
     assert "Automation hooks" in js
     assert "/api/dictation/project-kb" in js
     assert "/api/dictation/project-hs" in js
