@@ -5,7 +5,13 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
-PROGRESS (3/6)**. **HS-100-03, The thesis, DONE**: the application
+PROGRESS (4/13)**. **HS-100-04, The owner's gate, PASSED** — the
+thesis (four applications and a desk) approved as presented, verdict
+recorded verbatim; the build is unlocked as HS-100-05..12 (vocabulary
+guard, honest mic, Speak, Meetings, Agents, Settings + arrival, one
+launcher, geometry walk), each with a named mechanical guard, closing
+on the owner's sitting (HS-100-13). Earlier, **HS-100-03, The thesis,
+DONE**: the application
 layer's opinion — four applications and a desk (Speak / Meetings /
 Agents / Settings), posture-first interiors, one config door per app,
 Studio killed and the launchers collapsed to dock + ⌘K — with ten
