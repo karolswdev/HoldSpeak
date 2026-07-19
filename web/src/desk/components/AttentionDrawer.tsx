@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   authorityBasisLabel,
   controlModeLabel,
@@ -11,6 +11,7 @@ import {
   announceLauncher,
   retractLauncher,
 } from "./DeskWindow";
+import { SystemShade } from "./SystemShade";
 
 function when(raw: string) {
   const date = new Date(raw);
@@ -19,6 +20,9 @@ function when(raw: string) {
 
 export function AttentionDrawer() {
   const store = useProjections();
+  // HS-101 B6 — the bell opens the system shade; the full Desk-memory
+  // browser stays one verb away inside it.
+  const [shadeOpen, setShadeOpen] = useState(false);
   const selected = useMemo(
     () => store.projections.find((row) => row.id === store.selectedId) ?? null,
     [store.projections, store.selectedId],
@@ -42,7 +46,7 @@ export function AttentionDrawer() {
       glyph: "◎",
       open: store.open,
       badge: needs > 0 ? needs : undefined,
-      activate: () => store.setOpen(true),
+      activate: () => setShadeOpen(true),
     });
     return () => retractLauncher("attention");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,6 +54,11 @@ export function AttentionDrawer() {
 
   return (
     <>
+      <SystemShade
+        open={shadeOpen}
+        onClose={() => setShadeOpen(false)}
+        onOpenMemory={() => store.setOpen(true)}
+      />
       <DeskWindowFrame
         id="attention"
       glyph="◎"

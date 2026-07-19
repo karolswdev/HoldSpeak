@@ -4235,3 +4235,152 @@
 .desk-next .desk-dock-app.is-front {
   color: var(--text);
 }
+
+/* HS-101 B6 — the system shade: one surface behind the bell. Drops
+   from the bar on the transient material; honest groups inside. */
+.desk-next .desk-shade {
+  position: fixed;
+  top: 40px;
+  right: 10px;
+  z-index: var(--desk-z-popover);
+  width: min(380px, calc(100vw - 16px));
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--desk-transient-radius);
+  background: var(--desk-panel-fill);
+  box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
+  -webkit-backdrop-filter: var(--desk-window-blur);
+  transform-origin: top right;
+  animation: desk-shade-drop var(--duration-medium) var(--ease-back);
+}
+@keyframes desk-shade-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.desk-next .desk-shade-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 14px 6px;
+}
+.desk-next .desk-shade-title {
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .desk-shade-memory {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-detail-size);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+.desk-next .desk-shade-memory:hover {
+  background: var(--wash-1);
+  color: var(--text);
+}
+.desk-next .desk-shade-group {
+  padding: 4px 8px 8px;
+}
+.desk-next .desk-shade-group + .desk-shade-group {
+  border-top: 1px solid var(--wash-1);
+}
+.desk-next .desk-shade-group h4 {
+  margin: 0;
+  padding: 6px 6px 4px;
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.desk-next .desk-shade-group h4 b {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.desk-next .desk-shade-item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 2px 8px;
+  padding: 7px 6px 9px;
+  border-radius: var(--radius-md);
+}
+.desk-next .desk-shade-item:hover {
+  background: var(--wash-1);
+}
+.desk-next .desk-shade-glyph {
+  text-align: center;
+  padding-top: 1px;
+  color: var(--text-muted);
+}
+.desk-next .desk-shade-what {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.desk-next .desk-shade-what strong {
+  font-size: var(--desk-surface-body-size);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.desk-next .desk-shade-what small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-shade-do {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+.desk-next .desk-shade-do a,
+.desk-next .desk-shade-do button {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--wash-2);
+  color: var(--text);
+  font-size: var(--desk-surface-detail-size);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.desk-next .desk-shade-do a:hover,
+.desk-next .desk-shade-do button:hover {
+  background: var(--surface-hover);
+}
+.desk-next .desk-shade-do .is-quiet {
+  background: none;
+  color: var(--text-faint);
+}
+.desk-next .desk-shade-quiet {
+  margin: 0;
+  padding: 4px 6px 8px;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-detail-size);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-shade {
+    animation: none;
+  }
+}

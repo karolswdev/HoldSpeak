@@ -1053,7 +1053,6 @@ button.surface-edit-in-place:hover {
   position: absolute;
   top: 8px;
   right: 8px;
-  z-index: 1;
 }
 .surface-tile:hover > .surface-row-verbs,
 .surface-tile:focus-within > .surface-row-verbs {
