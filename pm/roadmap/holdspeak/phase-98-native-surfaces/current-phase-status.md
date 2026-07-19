@@ -1,14 +1,14 @@
 # Phase 98 — Native Surfaces
 
-**Status:** IN PROGRESS (6/9, 2026-07-18) from the owner's standing
+**Status:** IN PROGRESS (7/9, 2026-07-18) from the owner's standing
 verdict ("none of the Desk OS feels like an OS — windows feel like
 glued-in HTML panes, zero consistent look and feel") and the 2026-07-18
 remediation audit. Phase 97 shipped the window grammar (placement,
 depth, motion, one shelf); this phase re-crafts what lives INSIDE the
 windows.
 
-**Last updated:** 2026-07-18 (HS-98-06 done: the builder set native —
-canvas untouched, inspector floats on the material).
+**Last updated:** 2026-07-18 (HS-98-07 done: the long tail native, the
+seam RETIRED — ledger empty, 377 dead CSS lines gone).
 
 ## Why this phase exists
 
@@ -100,12 +100,24 @@ viewports, screenshots looked at.
 | HS-98-04 | The live pair | done | [story-04-live-pair](./story-04-live-pair.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-98-05 | The config pair | done | [story-05-config-pair](./story-05-config-pair.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-98-06 | The builder set | done | [story-06-builder-set](./story-06-builder-set.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-98-07 | The long tail, seam retired | backlog | [story-07-long-tail](./story-07-long-tail.md) | — |
+| HS-98-07 | The long tail, seam retired | done | [story-07-long-tail](./story-07-long-tail.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-98-08 | The surface floors, written | backlog | [story-08-docs](./story-08-docs.md) | — |
 | HS-98-09 | Closeout: the native walk | backlog | [story-09-closeout](./story-09-closeout.md) | — |
 
 ## Where we are
 
+**HS-98-07 done (2026-07-18): the seam is retired.** Commands,
+Profiles, Companion, and RuntimeDocs converted (both editors left
+their modals for in-surface sections; deletes are inline two-steps) —
+ALL FOURTEEN cores compose the kit, the guard's ledger is EMPTY and
+`test_ledger_is_closed` refuses reopening. The census pruned 69 dead
+react-app.css rules (−377 lines) and named every surviving class's
+consumer; four stale token-gate entries left with them (67 → 63).
+After pruning, all nine walk legs ran green in one captured chain
+(real voice, real recording, config round-trip, 15 routes, reflow,
+grammar). Riders named: FirstWords/AmbientLayer still speak
+signal-eyebrow/button-row outside the guard's scope. Next: HS-98-08 —
+the surface floors, written. Earlier:
 **HS-98-06 done (2026-07-18): the builder set is native.** Workbench
 keeps its canvas; the inspector floats on the ONE window material
 (surface-float, transient elevation), presets ride the verb bar, and

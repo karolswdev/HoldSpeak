@@ -1,21 +1,19 @@
 // HS-95-08 — the Companion core: the ONE roster of Personas and waiting
 // Coder sessions; a persona opens the chat window, a session opens the
 // session window (the reconciled surfaces — no duplicate chat/list).
+// HS-98-07 — re-crafted native on the surface kit; wire calls unchanged.
 import { openCoderSession, openPersona } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
-import {
-  Disclosure,
-  EmptyState,
-  Panel,
-  StatusPill,
-} from "../../components/signal/Signal";
-import {
-  ResourceState,
-  asRows,
-  rowId,
-  useResource,
-} from "../pageSupport";
+import { Disclosure, StatusPill } from "../../components/signal/Signal";
+import { asRows, rowId, useResource } from "../pageSupport";
 import { type JsonRecord } from "../../lib/api";
+import {
+  SurfaceRow,
+  SurfaceRows,
+  SurfaceSection,
+  SurfaceState,
+} from "../../desk/surface/Surface";
+import { presentValue } from "../../desk/surface/format";
 
 export function CompanionCore({ hero }: CoreProps) {
   const recipes = useResource<JsonRecord>("/api/recipes", {});
@@ -29,82 +27,72 @@ export function CompanionCore({ hero }: CoreProps) {
   ).filter((row) =>
     Boolean(
       (row.session as JsonRecord | undefined)?.awaiting_response ??
-      row.awaiting_response ??
-      row.state === "waiting",
+        row.awaiting_response ??
+        row.state === "waiting",
     ),
   );
   return (
     <>
       {hero ? hero(null) : null}
       {sessions.length ? (
-        <Panel title="Needs you" eyebrow="Live coding sessions">
-          <ul className="data-list">
+        <SurfaceSection label="Needs you">
+          <SurfaceRows>
             {sessions.map((row, index) => {
               const session = (row.session as JsonRecord | undefined) ?? row;
               return (
-                <li className="data-row" key={rowId(session, index)}>
-                  <button
-                    type="button"
-                    className="data-row-open"
-                    onClick={() =>
-                      openCoderSession(
-                        String(
-                          row.key ??
-                            session.key ??
-                            `${String(session.agent ?? "claude")}:${String(
-                              session.session_id ?? "",
-                            )}`,
-                        ),
-                      )
-                    }
-                  >
-                    <strong>
-                      {String(
-                        session.project ??
-                          session.cwd ??
-                          session.session_id ??
-                          "Coder session",
-                      )}
-                    </strong>
-                    <small>
-                      {String(
-                        session.summary ??
-                          session.question ??
-                          "Awaiting your response",
-                      )}
-                    </small>
-                  </button>
-                  <StatusPill tone="warning">Awaiting response</StatusPill>
-                </li>
+                <SurfaceRow
+                  key={rowId(session, index)}
+                  title={String(
+                    session.project ??
+                      session.cwd ??
+                      session.session_id ??
+                      "Coder session",
+                  )}
+                  detail={
+                    presentValue(session.summary ?? session.question) ||
+                    "Awaiting your response"
+                  }
+                  meta={<StatusPill tone="warning">Awaiting response</StatusPill>}
+                  onOpen={() =>
+                    openCoderSession(
+                      String(
+                        row.key ??
+                          session.key ??
+                          `${String(session.agent ?? "claude")}:${String(
+                            session.session_id ?? "",
+                          )}`,
+                      ),
+                    )
+                  }
+                />
               );
             })}
-          </ul>
-        </Panel>
+          </SurfaceRows>
+        </SurfaceSection>
       ) : null}
-      <Panel title="Personas" eyebrow={`${recipeRows.length} personas`}>
-        <ResourceState
+      <SurfaceSection label="Personas">
+        <SurfaceState
           loading={recipes.loading}
           error={recipes.error}
           empty={!recipeRows.length}
+          emptyLabel="No personas yet"
+          emptyGlyph="🤖"
           onRetry={() => void recipes.reload()}
         >
-          <div className="studio-grid">
+          <SurfaceRows>
             {recipeRows.map((recipe, index) => (
-              <button
-                type="button"
-                className="studio-card"
-                onClick={() => openPersona(String(recipe.id))}
+              <SurfaceRow
                 key={rowId(recipe, index)}
-              >
-                <span aria-hidden="true">{String(recipe.avatar ?? "🤖")}</span>
-                <strong>{String(recipe.name ?? "Persona")}</strong>
-                <p>{String(recipe.role ?? "")}</p>
-                <b>Open chat →</b>
-              </button>
+                glyph={String(recipe.avatar ?? "🤖")}
+                title={String(recipe.name ?? "Persona")}
+                detail={presentValue(recipe.role) || undefined}
+                meta="→"
+                onOpen={() => openPersona(String(recipe.id))}
+              />
             ))}
-          </div>
-        </ResourceState>
-      </Panel>
+          </SurfaceRows>
+        </SurfaceState>
+      </SurfaceSection>
       <Disclosure title="How it connects">
         <ol>
           <li>Point the companion at your hub over your own network.</li>

@@ -1,24 +1,28 @@
 // HS-95-04 — the Commands surface's core: the flat page's whole capability
 // without the flat chrome (see ActivityCore for the pattern rules).
+// HS-98-07 — re-crafted native: the editor left its modal for an
+// in-surface section; delete is an inline two-step. Wire calls
+// unchanged.
 import { useState } from "react";
 import {
   Button,
-  Dialog,
-  EmptyState,
   Field,
   InlineMessage,
-  Panel,
   Select,
   Switch,
   TextInput,
 } from "../../components/signal/Signal";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
-import {
-  ConfirmAction,
-  ResourceState,
-  useResource,
-} from "../pageSupport";
+import { useResource } from "../pageSupport";
 import type { CoreProps } from "./ActivityCore";
+import {
+  ConfirmVerb,
+  SurfaceRow,
+  SurfaceRows,
+  SurfaceSection,
+  SurfaceState,
+  SurfaceVerbs,
+} from "../../desk/surface/Surface";
 
 type Macro = { keyword: string; action: { kind: string; payload: string } };
 const blank = (): Macro => ({
@@ -43,7 +47,6 @@ export function CommandsCore({ hero }: CoreProps) {
     index: number;
     macro: Macro;
   } | null>(null);
-  const [deleting, setDeleting] = useState<number | null>(null);
   const [message, setMessage] = useState<{
     error?: boolean;
     text: string;
@@ -94,97 +97,109 @@ export function CommandsCore({ hero }: CoreProps) {
     await persist(next);
     setEditing(null);
   };
-  const remove = async () => {
-    if (deleting === null) return;
-    await persist(items.filter((_, index) => index !== deleting));
-    setDeleting(null);
-  };
 
+  const verbs = (
+    <>
+      <Button
+        dense
+        onClick={() => setEditing({ index: -1, macro: blank() })}
+      >
+        Add command
+      </Button>
+      <Switch
+        label={enabled ? "Commands on" : "Commands off"}
+        checked={enabled}
+        onChange={(event) => void persist(items, event.target.checked)}
+      />
+    </>
+  );
   return (
     <>
-      {hero ? hero(null) : null}
-      <ResourceState
+      {hero ? (
+        hero(verbs)
+      ) : (
+        <SurfaceVerbs status={`${items.length} macros`}>{verbs}</SurfaceVerbs>
+      )}
+      {message ? (
+        <InlineMessage tone={message.error ? "error" : "success"}>
+          {message.text}
+        </InlineMessage>
+      ) : null}
+      <SurfaceState
         loading={resource.loading}
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <Panel
-          title="Command board"
-          eyebrow={`${items.length} macros`}
-          actions={
-            <Switch
-              label={enabled ? "Commands on" : "Commands off"}
-              checked={enabled}
-              onChange={(event) => void persist(items, event.target.checked)}
-            />
-          }
-        >
-          {message ? (
-            <InlineMessage tone={message.error ? "error" : "success"}>
-              {message.text}
-            </InlineMessage>
-          ) : null}
-          {!items.length ? (
-            <EmptyState title="No voice commands">
-              <Button
-                variant="primary"
-                onClick={() => setEditing({ index: -1, macro: blank() })}
-              >
-                Add your first command
-              </Button>
-            </EmptyState>
+        <SurfaceSection label="Command board">
+          {!items.length && !editing ? (
+            <>
+              <SurfaceState
+                empty
+                emptyLabel="No voice commands"
+                emptyGlyph="❝"
+              />
+              <div className="surface-actions">
+                <Button
+                  variant="primary"
+                  dense
+                  onClick={() => setEditing({ index: -1, macro: blank() })}
+                >
+                  Add your first command
+                </Button>
+              </div>
+            </>
           ) : (
-            <ul className="data-list">
+            <SurfaceRows>
               {items.map((macro, index) => (
-                <li className="data-row" key={`${macro.keyword}-${index}`}>
-                  <div>
-                    <strong>“{macro.keyword}”</strong>
-                    <small>
-                      {preview(macro)}
-                      {macro.action.kind === "shell" ? " · runs code" : ""}
-                    </small>
-                  </div>
-                  <div className="button-row">
-                    <Button
-                      dense
-                      loading={busy}
-                      onClick={() => void test(macro)}
-                    >
-                      Test
-                    </Button>
-                    <Button
-                      dense
-                      variant="ghost"
-                      onClick={() =>
-                        setEditing({ index, macro: structuredClone(macro) })
-                      }
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      dense
-                      variant="ghost"
-                      onClick={() => setDeleting(index)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </li>
+                <SurfaceRow
+                  key={`${macro.keyword}-${index}`}
+                  title={`“${macro.keyword}”`}
+                  detail={
+                    preview(macro) +
+                    (macro.action.kind === "shell" ? " · runs code" : "")
+                  }
+                  verbs={
+                    <>
+                      <Button
+                        dense
+                        loading={busy}
+                        onClick={() => void test(macro)}
+                      >
+                        Test
+                      </Button>
+                      <Button
+                        dense
+                        variant="ghost"
+                        onClick={() =>
+                          setEditing({ index, macro: structuredClone(macro) })
+                        }
+                      >
+                        Edit
+                      </Button>
+                      <ConfirmVerb
+                        label="Delete"
+                        confirmLabel="Delete?"
+                        busy={busy}
+                        onConfirm={() =>
+                          void persist(items.filter((_, row) => row !== index))
+                        }
+                      />
+                    </>
+                  }
+                />
               ))}
-            </ul>
+            </SurfaceRows>
           )}
-          <Button onClick={() => setEditing({ index: -1, macro: blank() })}>
-            Add command
-          </Button>
-        </Panel>
-      </ResourceState>
-      <Dialog
-        open={Boolean(editing)}
-        title={editing?.index === -1 ? "New command" : "Edit command"}
-        onClose={() => setEditing(null)}
-      >
+        </SurfaceSection>
         {editing ? (
-          <div className="dialog-form">
+          <SurfaceSection
+            label={editing.index === -1 ? "New command" : "Edit command"}
+            actions={
+              <Button dense variant="ghost" onClick={() => setEditing(null)}>
+                Close
+              </Button>
+            }
+          >
             <Field
               label="Spoken keyword"
               description={`Matches: ${
@@ -267,9 +282,10 @@ export function CommandsCore({ hero }: CoreProps) {
                 matches.
               </InlineMessage>
             ) : null}
-            <div className="button-row">
+            <div className="surface-actions">
               <Button
                 variant="primary"
+                dense
                 loading={busy}
                 disabled={
                   !editing.macro.keyword.trim() ||
@@ -279,25 +295,13 @@ export function CommandsCore({ hero }: CoreProps) {
               >
                 Save command
               </Button>
-              <Button onClick={() => void test(editing.macro)}>
+              <Button dense onClick={() => void test(editing.macro)}>
                 Test without saving
               </Button>
             </div>
-          </div>
+          </SurfaceSection>
         ) : null}
-      </Dialog>
-      <ConfirmAction
-        open={deleting !== null}
-        title="Delete command?"
-        detail={
-          deleting === null
-            ? ""
-            : `“${items[deleting]?.keyword ?? "This command"}” will stop matching.`
-        }
-        busy={busy}
-        onConfirm={remove}
-        onClose={() => setDeleting(null)}
-      />
+      </SurfaceState>
     </>
   );
 }

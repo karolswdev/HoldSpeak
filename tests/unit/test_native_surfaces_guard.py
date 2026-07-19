@@ -43,22 +43,10 @@ FORBIDDEN = (
     "Dialog",
 )
 
-# file -> tokens that file is STILL allowed to carry (Phase 98 ledger;
-# shrink-only — see the stale-entry test).
-ALLOWED: dict[str, set[str]] = {
-    "CommandsCore.tsx": {
-        "data-list", "data-row", "button-row", "dialog-form",
-        "Panel", "EmptyState", "ResourceState", "ConfirmAction", "Dialog",
-    },
-    "CompanionCore.tsx": {
-        "data-list", "data-row", "Panel", "EmptyState", "ResourceState",
-    },
-    "ProfilesCore.tsx": {
-        "data-list", "data-row", "button-row", "dialog-form",
-        "Panel", "EmptyState", "ResourceState", "ConfirmAction", "Dialog",
-    },
-    "RuntimeDocsCore.tsx": {"code-block", "Panel"},
-}
+# HS-98-07: the conversion ledger is CLOSED — every core speaks the
+# surface idiom. This dict stays empty forever; the test below refuses
+# any attempt to reopen it.
+ALLOWED: dict[str, set[str]] = {}
 
 
 def violations(text: str) -> set[str]:
@@ -90,18 +78,10 @@ def test_cores_speak_the_surface_idiom() -> None:
         )
 
 
-def test_allowlist_only_shrinks() -> None:
-    """A converted file (or token) must LEAVE the ledger — stale rows
-    would let the page grammar quietly return."""
-    for name, tokens in ALLOWED.items():
-        path = CORES / name
-        assert path.exists(), f"allowlist names a dead file: {name}"
-        found = violations(path.read_text(encoding="utf-8"))
-        stale = tokens - found
-        assert not stale, (
-            f"{name}: allowlist rows {sorted(stale)} are stale — "
-            "delete them (the ledger only shrinks)"
-        )
+def test_ledger_is_closed() -> None:
+    """HS-98-07: the seam is retired. The ledger only ever shrank and
+    is now empty — reopening it would let the page grammar return."""
+    assert ALLOWED == {}, "the Phase 98 conversion ledger never reopens"
 
 
 def test_kit_css_answers_to_the_window() -> None:

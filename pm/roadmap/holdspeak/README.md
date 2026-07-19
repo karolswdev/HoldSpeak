@@ -5,7 +5,13 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, IN
-PROGRESS (6/9)**. **HS-98-06, The builder set, DONE**: Workbench's
+PROGRESS (7/9)**. **HS-98-07, The long tail, seam retired, DONE**:
+Commands/Profiles/Companion/RuntimeDocs converted (editors left their
+modals for in-surface sections, deletes are inline two-steps) — all
+fourteen cores compose the kit, the guard's ledger is EMPTY and locked
+closed, the census pruned 69 dead react-app.css rules (−377 lines,
+every surviving class's consumer named), and all nine walk legs ran
+green in one captured chain after the pruning. Earlier: **HS-98-06, The builder set, DONE**: Workbench's
 canvas untouched with its inspector now a float on the one window
 material and presets on the verb bar; Studio's cards became dense
 launcher rows; the Components gallery demonstrates the current canon

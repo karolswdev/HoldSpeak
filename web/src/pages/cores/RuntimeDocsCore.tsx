@@ -1,7 +1,8 @@
 // HS-95-08 — the runtime setup guide, hosted anywhere.
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
-import { Disclosure, InlineMessage, Panel } from "../../components/signal/Signal";
+import { Disclosure, InlineMessage } from "../../components/signal/Signal";
+import { SurfaceCode, SurfaceSection } from "../../desk/surface/Surface";
 
 export function RuntimeDocsCore({ hero }: CoreProps) {
   return (
@@ -11,32 +12,27 @@ export function RuntimeDocsCore({ hero }: CoreProps) {
         API keys are environment variables on the hub. They never belong in a
         browser field or profile response.
       </InlineMessage>
-      <Panel
-        title="Choose a runtime"
-        eyebrow="One Runs on destination, explicit reach"
-      >
+      <SurfaceSection label="Choose a runtime">
         <Disclosure title="Basic voice typing" open>
           <p>
             Install HoldSpeak and a Whisper backend. Leave the dictation LLM
             pipeline disabled to transcribe and type locally.
           </p>
-          <pre className="code-block">uv pip install -e '.[whisper]'</pre>
+          <SurfaceCode>uv pip install -e '.[whisper]'</SurfaceCode>
         </Disclosure>
         <Disclosure title="Apple Silicon with MLX">
           <p>
             Put an MLX model under <code>~/Models/mlx/</code>, then choose it
             during arrival or in Dictation → Runtime.
           </p>
-          <pre className="code-block">uv pip install -e '.[dictation-mlx]'</pre>
+          <SurfaceCode>uv pip install -e '.[dictation-mlx]'</SurfaceCode>
         </Disclosure>
         <Disclosure title="Local GGUF with llama.cpp">
           <p>
             Put a GGUF file under <code>~/Models/gguf/</code> and select its
             full path.
           </p>
-          <pre className="code-block">
-            uv pip install -e '.[dictation-llama]'
-          </pre>
+          <SurfaceCode>uv pip install -e '.[dictation-llama]'</SurfaceCode>
         </Disclosure>
         <Disclosure title="OpenAI-compatible endpoint">
           <p>
@@ -44,12 +40,10 @@ export function RuntimeDocsCore({ hero }: CoreProps) {
             needs a key, set <code>HOLDSPEAK_PROFILE_&lt;ID&gt;_KEY</code> on the
             hub.
           </p>
-          <pre className="code-block">
-            uv pip install -e '.[dictation-openai]'
-          </pre>
+          <SurfaceCode>uv pip install -e '.[dictation-openai]'</SurfaceCode>
         </Disclosure>
-      </Panel>
-      <Panel title="Verify" eyebrow="Readiness">
+      </SurfaceSection>
+      <SurfaceSection label="Verify">
         <ol>
           <li>
             Open{" "}
@@ -76,7 +70,7 @@ export function RuntimeDocsCore({ hero }: CoreProps) {
           <li>Use Try it to run one no-type dry test.</li>
           <li>Only then enable rewrite stages for daily dictation.</li>
         </ol>
-      </Panel>
+      </SurfaceSection>
     </>
   );
 }
