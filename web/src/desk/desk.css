@@ -2354,16 +2354,23 @@
 .desk-next .desk-chip.is-stale {
   opacity: 0.6;
 }
+/* HS-101 B9 — the pane reads like a SCRIPT: the terminal text is the
+   material on the well tone (HS-99 depth ladder — no bordered box),
+   inset like a screen. Shared by the session pull-out and the
+   delivery terminal window. */
 .desk-next .desk-session-pane {
   flex: 1;
   margin: 0;
-  padding: 10px;
-  border: 1px solid var(--surface-3);
-  border-radius: var(--radius-sm);
-  background: var(--surface-1);
+  padding: 12px 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--desk-window-well);
+  box-shadow:
+    inset 0 1px 0 var(--shade-1),
+    inset 0 0 0 1px var(--border-subtle);
   font-family: var(--font-mono);
   font-size: 11px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--text);
   white-space: pre-wrap;
   word-break: break-word;
@@ -4516,4 +4523,24 @@
   .desk-next .desk-glassdrop-card {
     animation: none;
   }
+}
+
+/* HS-101 B9 — the delivery rails wear the interior scale: the item
+   IS the material (primary), kind/freshness are metadata. Scoped to
+   the delivery list; the desk's Files table keeps its own grammar. */
+.desk-next .desk-dlv-list .desk-list-table th[scope="row"] .desk-list-open {
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+}
+.desk-next .desk-dlv-list .desk-list-table td {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-dlv-list h2 {
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
