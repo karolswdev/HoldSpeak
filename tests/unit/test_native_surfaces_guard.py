@@ -59,11 +59,6 @@ ALLOWED: dict[str, set[str]] = {
         "Panel", "EmptyState", "ResourceState", "ConfirmAction", "Dialog",
     },
     "RuntimeDocsCore.tsx": {"code-block", "Panel"},
-    "SettingsCore.tsx": {"button-row", "Panel", "ResourceState"},
-    "SetupCore.tsx": {
-        "page-grid", "span-4", "span-8", "data-list", "data-row",
-        "button-row", "Panel", "ResourceState",
-    },
     "WorkbenchCore.tsx": {"button-row", "code-block", "Panel"},
 }
 

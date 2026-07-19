@@ -1,14 +1,14 @@
 # Phase 98 — Native Surfaces
 
-**Status:** IN PROGRESS (4/9, 2026-07-18) from the owner's standing
+**Status:** IN PROGRESS (5/9, 2026-07-18) from the owner's standing
 verdict ("none of the Desk OS feels like an OS — windows feel like
 glued-in HTML panes, zero consistent look and feel") and the 2026-07-18
 remediation audit. Phase 97 shipped the window grammar (placement,
 depth, motion, one shelf); this phase re-crafts what lives INSIDE the
 windows.
 
-**Last updated:** 2026-07-18 (HS-98-04 done: the live pair native —
-transcript is the pane, devices are honest, modals gone).
+**Last updated:** 2026-07-18 (HS-98-05 done: the config pair native —
+settings sections on the material, scoped open lands).
 
 ## Why this phase exists
 
@@ -98,7 +98,7 @@ viewports, screenshots looked at.
 | HS-98-02 | Dictation, native | done | [story-02-dictation-native](./story-02-dictation-native.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-98-03 | Meetings, native | done | [story-03-meetings-native](./story-03-meetings-native.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-98-04 | The live pair | done | [story-04-live-pair](./story-04-live-pair.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-98-05 | The config pair | backlog | [story-05-config-pair](./story-05-config-pair.md) | — |
+| HS-98-05 | The config pair | done | [story-05-config-pair](./story-05-config-pair.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-98-06 | The builder set | backlog | [story-06-builder-set](./story-06-builder-set.md) | — |
 | HS-98-07 | The long tail, seam retired | backlog | [story-07-long-tail](./story-07-long-tail.md) | — |
 | HS-98-08 | The surface floors, written | backlog | [story-08-docs](./story-08-docs.md) | — |
@@ -106,6 +106,16 @@ viewports, screenshots looked at.
 
 ## Where we are
 
+**HS-98-05 done (2026-07-18): the config pair is native.** Settings'
+three panels became sections on the material (posture, hub
+configuration with the recursive editor intact, credentials with
+two-step Rotate/Delete); Save rides the verb bar; the Integrations
+alias scrolls its section into view on scoped open. Setup: an honest
+overall pill on the verb bar, checks as rows, the next step beside.
+Proven by the `config` walk leg (a real change round-trips and
+persists byte-identically through the NEW editor; scoped opens land)
+and shots looked at. `npm run check` green (289). Next: HS-98-06 —
+the builder set. Earlier:
 **HS-98-04 done (2026-07-18): the live pair is native.** LiveCore: an
 honest verb-bar status, a quiet metric strip, the transcript as the
 split's main pane (the details modal now an inline block), the rail

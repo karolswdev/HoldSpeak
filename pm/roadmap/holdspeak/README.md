@@ -5,7 +5,13 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, IN
-PROGRESS (4/9)**. **HS-98-04, The live pair, DONE**: LiveCore native
+PROGRESS (5/9)**. **HS-98-05, The config pair, DONE**: Settings'
+panels became sections on the material (posture, the recursive hub
+editor intact, credentials with two-step Rotate/Delete), Save on the
+verb bar, the Integrations alias landing scrolled to its section;
+Setup an honest pill + rows — proven by the `config` walk leg (a real
+change round-trips and persists byte-identically) and shots looked
+at. Earlier: **HS-98-04, The live pair, DONE**: LiveCore native
 (honest verb-bar status, metric strip, transcript as the split's main
 pane, the details modal now inline, devices omitting absent values
 instead of "—") and ActivityCore native (tabs + filter + honest rows,
