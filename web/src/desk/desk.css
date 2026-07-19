@@ -3293,17 +3293,81 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 6px;
+  padding: 4px 6px 6px;
   border-radius: 14px;
-  background: rgba(12, 10, 17, 0.82);
+  /* HS-99-05 — the frosted shelf: the glass tint over a real blur
+     (the reference's two-layer bar, on our tokens). */
+  background: var(--desk-glass);
+  backdrop-filter: var(--desk-window-blur);
   border: 1px solid var(--border);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--desk-transient-shadow);
 }
 .desk-next .desk-dock-chip {
+  position: relative;
   display: inline-flex;
   align-items: center;
   border-radius: 10px;
   background: var(--wash-2);
+  animation: desk-chip-in var(--duration-short) var(--ease-quart);
+}
+@keyframes desk-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+  }
+}
+/* HS-99-05 — the running underline: every open window reads on its
+   chip; the front window's is accent and wide; hover grows it. */
+.desk-next .desk-dock-chip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  transform: translateX(-50%);
+  width: 52%;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--text-faint);
+  transition:
+    width var(--duration-short) var(--ease-quart),
+    background var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-dock-chip.is-front::after {
+  width: 80%;
+  background: var(--accent);
+}
+.desk-next .desk-dock-chip:hover::after {
+  width: 94%;
+}
+.desk-next .desk-dock-chip.is-min::after {
+  width: 28%;
+}
+/* HS-99-05 — the glyph swells under the pointer (compositor-only). */
+.desk-next .desk-dock-main > span[aria-hidden="true"] {
+  display: inline-block;
+  transition: transform var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-dock-chip:hover .desk-dock-main > span[aria-hidden="true"],
+.desk-next .desk-dock-launch:hover > span[aria-hidden="true"] {
+  transform: scale(1.18);
+}
+.desk-next .desk-dock-launch {
+  position: relative;
+}
+.desk-next .desk-dock-launch > span[aria-hidden="true"] {
+  display: inline-block;
+  transition: transform var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-dock-launch.is-run::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--text-faint);
 }
 .desk-next .desk-dock-chip.is-front {
   background: color-mix(in srgb, var(--accent, #ff6b35) 22%, transparent);

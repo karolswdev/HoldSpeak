@@ -5,7 +5,11 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, IN
-PROGRESS (4/8)**. **HS-99-04, Scrollbars and menus, DONE**: the drawn
+PROGRESS (5/8)**. **HS-99-05, The dock is alive, DONE**: frosted
+glass over a real blur, a running underline per open window (accent
+and wide on the front, growing on hover), run marks on launchers,
+glyph swell, chip entry motion — storm within envelope with the blur
+live. Earlier: **HS-99-04, Scrollbars and menus, DONE**: the drawn
 pill scrollbar product-wide (headed-proven — the headless shell
 suppresses custom scrollbars, and standard scrollbar properties would
 disable webkit styling in modern Chromium, now Firefox-scoped) and

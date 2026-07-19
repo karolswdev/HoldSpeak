@@ -1,6 +1,6 @@
 # Phase 99 — The OS Chrome
 
-**Status:** IN PROGRESS (4/8, 2026-07-18) from the owner's live verdict
+**Status:** IN PROGRESS (5/8, 2026-07-18) from the owner's live verdict
 on the staged Phase 98 build: "a step, but we still have soooo much
 work to do to even begin dreaming of this looking and feeling like an
 OS — loads of unstyled selects; those windows still deserve a huge
@@ -8,8 +8,8 @@ overhaul" — with a direct study directive: ProzillaOS
 (github.com/prozilla-os/ProzillaOS, MIT), "see what we can borrow,
 what we can embrace, and deliver this kind of experience."
 
-**Last updated:** 2026-07-18 (HS-99-04 done: OS scrollbars everywhere
-+ one menu vocabulary across room/head/dock).
+**Last updated:** 2026-07-18 (HS-99-05 done: the dock is alive —
+frosted glass, running underlines, hover life).
 
 ## Why this phase exists
 
@@ -101,13 +101,21 @@ regress.
 | HS-99-02 | The title bar is a bar | done | [story-02-title-bar](./story-02-title-bar.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-99-03 | Controls wear the skin | done | [story-03-controls](./story-03-controls.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-99-04 | Scrollbars and menus | done | [story-04-scrollbars-menus](./story-04-scrollbars-menus.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-99-05 | The dock is alive | backlog | [story-05-dock-alive](./story-05-dock-alive.md) | — |
+| HS-99-05 | The dock is alive | done | [story-05-dock-alive](./story-05-dock-alive.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-99-06 | Interior archetypes | backlog | [story-06-interior-archetypes](./story-06-interior-archetypes.md) | — |
 | HS-99-07 | The chrome floors, written | backlog | [story-07-docs](./story-07-docs.md) | — |
 | HS-99-08 | Closeout: the chrome walk | backlog | [story-08-closeout](./story-08-closeout.md) | — |
 
 ## Where we are
 
+**HS-99-05 done (2026-07-18): the dock is alive.** Frosted glass over
+a real blur, a running underline per open window (front = wide
+accent; grows on hover; short when minimized), run marks on open
+launchers, glyphs swelling under the pointer, chips entering with a
+rise — instant under reduced motion. Shelf leg green; storm assembled
+8.3ms median / 10.2 p95 with the blur live. Chip exit animation
+recorded as a rider. `npm run check` green (291). Next: HS-99-06 —
+interior archetypes. Earlier:
 **HS-99-04 done (2026-07-18): scrollbars and menus.** The drawn pill
 scrollbar is product-wide (with two gotchas recorded: standard
 scrollbar properties DISABLE webkit styling in modern Chromium — now
