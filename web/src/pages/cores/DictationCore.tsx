@@ -32,6 +32,7 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { asRows, rowId, useResource } from "../pageSupport";
 import {
   ConfirmVerb,
+  EditInPlace,
   SurfaceCode,
   SurfaceColumns,
   SurfaceFacts,
@@ -39,8 +40,18 @@ import {
   SurfaceRows,
   SurfaceSection,
   SurfaceState,
+  SurfaceStream,
+  SurfaceStreamDay,
+  SurfaceStreamEntry,
 } from "../../desk/surface/Surface";
-import { humanTime, presentValue } from "../../desk/surface/format";
+import {
+  humanTime,
+  isSameStreamDay,
+  presentValue,
+  streamDate,
+  streamDayLabel,
+  streamTime,
+} from "../../desk/surface/format";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 
 const WINGS = [
@@ -725,6 +736,7 @@ function Knowledge() {
   );
 }
 
+/** HS-101 B3 — the Journal reads like a journal: a dated stream. */
 function Journal() {
   const resource = useResource<JsonRecord>(
     "/api/dictation/journal?limit=200",
@@ -740,6 +752,23 @@ function Journal() {
         .toLowerCase()
         .includes(query.toLowerCase()),
   );
+  const today = new Date();
+  const todayCount = rows.filter((row) => {
+    const date = streamDate(row.created_at ?? row.timestamp);
+    return date != null && isSameStreamDay(date, today);
+  }).length;
+  const taughtCount = rows.filter((row) => {
+    if (!row.corrected) return false;
+    const date = streamDate(row.created_at ?? row.timestamp);
+    return date != null && isSameStreamDay(date, today);
+  }).length;
+  const days: { label: string; rows: typeof filtered }[] = [];
+  for (const row of filtered) {
+    const label = streamDayLabel(streamDate(row.created_at ?? row.timestamp));
+    const bucket = days.at(-1);
+    if (bucket && bucket.label === label) bucket.rows.push(row);
+    else days.push({ label, rows: [row] });
+  }
   const remove = async (target: Record<string, unknown> | "all") => {
     await apiFetch(
       target === "all"
@@ -756,89 +785,150 @@ function Journal() {
     );
     setReplays((current) => ({ ...current, [String(row.id)]: result }));
   };
+  const editTranscript = async (
+    row: Record<string, unknown>,
+    next: string,
+  ) => {
+    await apiFetch(
+      `/api/dictation/journal/${encodeURIComponent(String(row.id))}`,
+      { method: "PUT", json: { transcript: next } },
+    );
+    await resource.reload();
+  };
   return (
-    <SurfaceSection
-      label="Dictation journal"
-      actions={
-        <ConfirmVerb
-          label="Clear journal"
-          confirmLabel="Clear all?"
-          disabled={!rows.length}
-          onConfirm={() => void remove("all")}
-        />
-      }
-    >
-      <Field label="Search journal">
-        {({ id }) => (
-          <TextInput
-            id={id}
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        )}
-      </Field>
-      <SurfaceState
-        loading={resource.loading}
-        error={resource.error}
-        empty={!filtered.length}
-        emptyLabel="No dictations on this device"
-        emptyGlyph="✎"
-        onRetry={() => void resource.reload()}
+    <SurfaceSection>
+      <SurfaceStream
+        count={todayCount}
+        countLabel={
+          taughtCount
+            ? `today · ${taughtCount} taught`
+            : "today"
+        }
+        controls={
+          <>
+            <TextInput
+              type="search"
+              aria-label="Search the journal"
+              placeholder="Search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <ConfirmVerb
+              label="Clear…"
+              confirmLabel="Clear all?"
+              disabled={!rows.length}
+              onConfirm={() => void remove("all")}
+            />
+          </>
+        }
       >
-        <SurfaceRows>
-          {filtered.map((row, index) => {
-            const replayResult = replays[String(row.id)];
-            const replayAfter =
-              replayResult?.after && typeof replayResult.after === "object"
-                ? (replayResult.after as JsonRecord)
-                : replayResult;
-            const replayText = String(replayAfter?.final_text ?? "");
-            return (
-              <SurfaceRow
-                key={rowId(row, index)}
-                title={String(row.transcript ?? "Untitled dictation")}
-                detail={
-                  humanTime(row.created_at ?? row.timestamp) ||
-                  presentValue(row.source) ||
-                  undefined
-                }
-                verbs={
-                  <>
-                    <Button dense onClick={() => void replay(row)}>
-                      Replay
-                    </Button>
-                    <ConfirmVerb
-                      label="Delete"
-                      confirmLabel="Delete?"
-                      onConfirm={() => void remove(row)}
+        <SurfaceState
+          loading={resource.loading}
+          error={resource.error}
+          empty={!filtered.length}
+          emptyLabel="No dictations on this device"
+          emptyGlyph="✎"
+          onRetry={() => void resource.reload()}
+        >
+          {days.map((day) => (
+            <SurfaceStreamDay key={day.label} label={day.label}>
+              {day.rows.map((row, index) => {
+                const replayResult = replays[String(row.id)];
+                const replayAfter =
+                  replayResult?.after && typeof replayResult.after === "object"
+                    ? (replayResult.after as JsonRecord)
+                    : replayResult;
+                const replayText = String(replayAfter?.final_text ?? "");
+                const learning =
+                  row.learning && typeof row.learning === "object"
+                    ? (row.learning as JsonRecord)
+                    : null;
+                const similar = Number(learning?.similar ?? 0);
+                const destination =
+                  presentValue(row.target_profile) || presentValue(row.intent);
+                const took = Number(row.total_ms ?? 0);
+                return (
+                  <SurfaceStreamEntry
+                    key={rowId(row, index)}
+                    when={streamTime(
+                      streamDate(row.created_at ?? row.timestamp),
+                    )}
+                    meta={
+                      <>
+                        {destination ? <span>→ {destination}</span> : null}
+                        {took > 0 ? <span>{Math.round(took)} ms</span> : null}
+                        {row.corrected ? (
+                          <span className="surface-learned">
+                            ✓ taught
+                            {learning?.matched && similar > 0
+                              ? ` · from ${similar} similar`
+                              : ""}
+                          </span>
+                        ) : null}
+                      </>
+                    }
+                    verbs={
+                      <>
+                        <Button dense onClick={() => void replay(row)}>
+                          Replay
+                        </Button>
+                        <Button
+                          dense
+                          variant="ghost"
+                          onClick={() =>
+                            void navigator.clipboard.writeText(
+                              String(row.transcript ?? ""),
+                            )
+                          }
+                        >
+                          Copy
+                        </Button>
+                        <ConfirmVerb
+                          label="Delete"
+                          confirmLabel="Delete?"
+                          onConfirm={() => void remove(row)}
+                        />
+                      </>
+                    }
+                    aside={
+                      replayResult ? (
+                        <div className="surface-preview" role="status">
+                          <span className="surface-preview-label">
+                            Replay — preview only
+                          </span>
+                          <p>
+                            {replayText ||
+                              "The replay completed without text."}
+                          </p>
+                          <div className="surface-actions">
+                            <Button
+                              dense
+                              variant="ghost"
+                              disabled={!replayText}
+                              onClick={() =>
+                                void navigator.clipboard.writeText(replayText)
+                              }
+                            >
+                              Copy result
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null
+                    }
+                  >
+                    <EditInPlace
+                      value={String(row.transcript ?? "")}
+                      label="transcript"
+                      multiline
+                      onCommit={(next) => void editTranscript(row, next)}
                     />
-                  </>
-                }
-              >
-                {replayResult ? (
-                  <div className="surface-preview" role="status">
-                    <span className="surface-preview-label">Preview only</span>
-                    <p>{replayText || "The replay completed without text."}</p>
-                    <div className="surface-actions">
-                      <Button
-                        dense
-                        variant="ghost"
-                        disabled={!replayText}
-                        onClick={() =>
-                          void navigator.clipboard.writeText(replayText)
-                        }
-                      >
-                        Copy result
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-              </SurfaceRow>
-            );
-          })}
-        </SurfaceRows>
-      </SurfaceState>
+                  </SurfaceStreamEntry>
+                );
+              })}
+            </SurfaceStreamDay>
+          ))}
+        </SurfaceState>
+      </SurfaceStream>
     </SurfaceSection>
   );
 }

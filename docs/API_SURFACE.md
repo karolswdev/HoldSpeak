@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 332 (plus static mounts). iOS-consumed: 88. Web-consumed: 241.
+Routes: 333 (plus static mounts). iOS-consumed: 88. Web-consumed: 242.
 
 ## device_audio_ws
 
@@ -250,6 +250,7 @@ Routes: 332 (plus static mounts). iOS-consumed: 88. Web-consumed: 241.
 | DELETE | `/api/dictation/journal` | ios, web |
 | GET | `/api/dictation/journal` | ios, web |
 | DELETE | `/api/dictation/journal/{entry_id}` | web |
+| PUT | `/api/dictation/journal/{entry_id}` | web |
 | POST | `/api/dictation/journal/{entry_id}/correct` | web |
 | POST | `/api/dictation/journal/{entry_id}/replay` | web |
 | GET | `/api/dictation/learning-digest` | ios, web |

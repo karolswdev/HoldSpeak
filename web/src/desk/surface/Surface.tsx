@@ -368,6 +368,88 @@ export function SurfaceToggle({
   );
 }
 
+/** HS-101 rule 2 — the dated stream: the composition for material
+ * that happens over time (the Journal). A head that leads with the
+ * one big fact, day bands, entries whose TEXT is the material at the
+ * primary step, verbs revealed on the entry. */
+export function SurfaceStream({
+  count,
+  countLabel,
+  controls,
+  children,
+}: {
+  count: ReactNode;
+  countLabel?: ReactNode;
+  controls?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="surface-stream">
+      <div className="surface-stream-head">
+        <span className="surface-display">{count}</span>
+        {countLabel ? (
+          <small className="surface-stream-count-label">{countLabel}</small>
+        ) : null}
+        {controls ? (
+          <span className="surface-stream-controls">{controls}</span>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function SurfaceStreamDay({
+  label,
+  children,
+}: {
+  label: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="surface-stream-day">
+      <h4 className="surface-stream-day-label">{label}</h4>
+      <ul className="surface-stream-entries">{children}</ul>
+    </section>
+  );
+}
+
+export function SurfaceStreamEntry({
+  when,
+  meta,
+  verbs,
+  aside,
+  children,
+}: {
+  when?: ReactNode;
+  meta?: ReactNode;
+  verbs?: ReactNode;
+  /** Below-the-entry material (a receipt, a preview) — sits beside
+   * the said-text in the grid, not inside it. */
+  aside?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <li className="surface-stream-entry">
+      {when != null ? (
+        <span className="surface-stream-when">{when}</span>
+      ) : null}
+      <div className="surface-stream-said">{children}</div>
+      {meta || verbs ? (
+        <div className="surface-stream-meta">
+          {meta}
+          {verbs ? (
+            <span className="surface-stream-verbs surface-row-verbs">
+              {verbs}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+      {aside}
+    </li>
+  );
+}
+
 /** HS-101 rule 1 — data is the material: the presented text IS the
  * editor. Click or Enter swaps it for a same-geometry editor;
  * Enter/blur commits, Escape reverts. A value that cannot be edited

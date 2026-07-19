@@ -735,6 +735,30 @@ def build_pipeline_router(
             }
         )
 
+    @router.put("/api/dictation/journal/{entry_id}")
+    async def api_dictation_journal_update(
+        entry_id: int, payload: dict[str, Any]
+    ) -> Any:
+        """HS-101 B3 — edit the transcript record in place.
+
+        The smallest possible write: one entry's transcript text.
+        Corrections stay the separate taught act (`/correct`); an empty
+        transcript refuses rather than blanking the record.
+        """
+        repo = _journal_repo()
+        if repo is None:
+            return JSONResponse({"error": "journal unavailable"}, status_code=404)
+        transcript = str(payload.get("transcript") or "").strip()
+        if not transcript:
+            return JSONResponse(
+                {"error": "transcript required"}, status_code=422
+            )
+        if repo.update_transcript(entry_id, transcript):
+            return JSONResponse({"updated": True, "transcript": transcript})
+        return JSONResponse(
+            {"updated": False, "error": "entry not found"}, status_code=404
+        )
+
     @router.delete("/api/dictation/journal/{entry_id}")
     async def api_dictation_journal_delete(entry_id: int) -> Any:
         """Delete one journal entry by id (HS-45-02)."""

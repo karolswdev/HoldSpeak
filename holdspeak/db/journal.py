@@ -146,6 +146,22 @@ class DictationJournalRepository(BaseRepository):
             )
             return bool(cursor.rowcount and cursor.rowcount > 0)
 
+    def update_transcript(self, entry_id: int, transcript: str) -> bool:
+        """HS-101 (edit in place): rewrite one entry's transcript record.
+
+        The presented text is the record — corrections stay the separate,
+        taught act (`mark_corrected`). Returns True if a row was updated.
+        """
+        text = str(transcript).strip()
+        if not text:
+            return False
+        with self._connection() as conn:
+            cursor = conn.execute(
+                "UPDATE dictation_journal SET transcript = ? WHERE id = ?",
+                (text, int(entry_id)),
+            )
+            return bool(cursor.rowcount and cursor.rowcount > 0)
+
     def delete(self, entry_id: int) -> bool:
         """Delete one entry by id. Returns True if a row was removed."""
         with self._connection() as conn:

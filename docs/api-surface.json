@@ -1506,6 +1506,16 @@
       ]
     },
     {
+      "path": "/api/dictation/journal/{entry_id}",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.dictation.pipeline",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/dictation/journal/{entry_id}/correct",
       "methods": [
         "POST"

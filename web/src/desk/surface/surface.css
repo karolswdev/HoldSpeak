@@ -787,3 +787,144 @@ button.surface-edit-in-place:hover {
     transform: none;
   }
 }
+
+/* HS-101 rule 2 — the dated stream (SurfaceStream). */
+.surface-stream {
+  display: flex;
+  flex-direction: column;
+}
+.surface-stream-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 4px 8px;
+}
+.surface-stream-count-label {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.surface-stream-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.surface-stream-day {
+  display: flex;
+  flex-direction: column;
+}
+.surface-stream-day-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 4px 6px;
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.surface-stream-day-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--wash-1);
+}
+.surface-stream-entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.surface-stream-entry {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 0 12px;
+  padding: 8px 10px 10px;
+  border-radius: var(--radius-sm);
+  animation: surface-rise-in var(--duration-medium) var(--ease-quart) both;
+}
+.surface-stream-entry:hover,
+.surface-stream-entry:focus-within {
+  background: var(--wash-1);
+}
+.surface-stream-when {
+  grid-column: 1;
+  padding-top: 3px;
+  text-align: right;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+}
+.surface-stream-said {
+  grid-column: 2;
+  font-size: var(--desk-type-primary-size);
+  font-weight: 480;
+  line-height: var(--desk-type-primary-lh);
+  overflow-wrap: anywhere;
+}
+.surface-stream-meta {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+.surface-stream-verbs {
+  margin-left: auto;
+}
+.surface-stream-entry:hover .surface-stream-verbs,
+.surface-stream-entry:focus-within .surface-stream-verbs {
+  opacity: 1;
+  transform: translateY(0);
+}
+.surface-stream-controls input[type="search"] {
+  width: 150px;
+  min-width: 0;
+}
+.surface-stream-entry > .surface-aerogel,
+.surface-stream-entry > .surface-preview {
+  grid-column: 2;
+  margin-top: 8px;
+}
+@container surface (max-width: 559.9px) {
+  .surface-stream-entry {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .surface-stream-when,
+  .surface-stream-said,
+  .surface-stream-meta,
+  .surface-stream-entry > .surface-aerogel,
+  .surface-stream-entry > .surface-preview {
+    grid-column: 1;
+  }
+  .surface-stream-when {
+    text-align: left;
+    padding-top: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface-stream-entry {
+    animation: none;
+  }
+}
+
+/* HS-48/HS-101 — the honest learned chip: only when the router would
+   actually apply a taught correction (the API sends null otherwise). */
+.surface-learned {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  color: var(--ok);
+  background: var(--ok-soft);
+  box-shadow: inset 0 0 0 1px var(--ok-soft);
+}

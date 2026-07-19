@@ -110,3 +110,29 @@ def test_ritual_correct_path_teaches_and_marks(persistent_db: Database, settings
     # and the correction landed in the store (teachable across restarts)
     stored = persistent_db.dictation_corrections.recent_corrections()
     assert any(r.kind == "intent" and r.value == "action_item" for r in stored)
+
+
+# ── HS-101 B3: edit the transcript record in place (the smallest write) ──────
+
+def test_journal_transcript_edit_in_place(persistent_db: Database, settings_path: Path) -> None:
+    Config().save(path=settings_path)
+    rec = persistent_db.dictation_journal.record(
+        source="dictation", transcript="ship the native winners brief", final_text="x"
+    )
+    client = _client(persistent_db)
+    resp = client.put(
+        f"/api/dictation/journal/{rec.id}", json={"transcript": "ship the Native Innards brief"}
+    )
+    assert resp.status_code == 200 and resp.json()["updated"] is True
+    assert (
+        persistent_db.dictation_journal.get(rec.id).transcript
+        == "ship the Native Innards brief"
+    )
+    # an emptied record refuses rather than blanking (Article VI)
+    refuse = client.put(f"/api/dictation/journal/{rec.id}", json={"transcript": "   "})
+    assert refuse.status_code == 422
+    # a missing entry names itself
+    gone = client.put("/api/dictation/journal/999999", json={"transcript": "y"})
+    assert gone.status_code == 404
+    # editing never fakes a correction: the taught act stays separate
+    assert persistent_db.dictation_journal.get(rec.id).corrected is False
