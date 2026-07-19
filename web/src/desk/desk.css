@@ -1112,7 +1112,36 @@
   gap: 3px;
 }
 .desk-next .desk-pullout-run {
+  /* Materials round 3.4 — the run area STACKS: picker, then one
+     composer row (mic · material · verb). The one-row cram that
+     crushed the picker and stretched the mic is dead. */
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.desk-next .desk-run-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desk-next .desk-run-composer input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+}
+.desk-next .desk-run-composer .desk-chip {
+  height: 36px;
+  flex: none;
+}
+.desk-next .desk-capability-contract {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.desk-next .desk-capability-contract > strong {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
 }
 

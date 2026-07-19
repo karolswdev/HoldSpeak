@@ -1,4 +1,5 @@
 import type { InferenceTarget } from "../api";
+import { humanizeWireValue } from "../../lib/productLanguage";
 
 const KIND_LABEL: Record<string, string> = {
   this_device: "This device",
@@ -39,8 +40,13 @@ export function RunsOnPicker(props: {
       </label>
       {selected && (
         <p className={selected.readiness.available ? "quiet" : "desk-run-warning"}>
-          {KIND_LABEL[selected.kind] || selected.kind} · {selected.boundary}
-          {sent.length ? ` · sends ${sent.join(", ")}` : ""}
+          {KIND_LABEL[selected.kind] || selected.kind} ·{" "}
+          {humanizeWireValue(selected.boundary)}
+          {sent.length
+            ? ` · sends ${sent
+                .map((value) => humanizeWireValue(value))
+                .join(", ")}`
+            : ""}
           {!selected.readiness.available ? ` · ${selected.readiness.reason}` : ""}
         </p>
       )}
