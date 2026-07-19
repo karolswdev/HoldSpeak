@@ -4,7 +4,22 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 97, The Window Grammar, CLOSED
+**Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, SCAFFOLDED
+(0/9)** from the owner's standing verdict (windows feel like glued-in
+HTML panes, zero consistent look and feel): Phase 97 gave the windows
+an OS grammar; this phase re-crafts what lives inside them. The seam
+is named mechanically — every demoted core is a Signal-era page
+(`page-grid` spans on viewport media queries, `Panel` cards nesting
+chrome inside the window's chrome, raw `data-row` dumps) glued into a
+desk window. Nine stories in
+[phase-98-native-surfaces](./phase-98-native-surfaces/): the surface
+idiom specced then built as a kit (one material, the window as the
+viewport via container queries, denser scale, honest rows, verbs with
+homes, one state grammar) with a shrinking seam guard; all fourteen
+cores re-crafted (Dictation and Meetings first); the page grammar
+retired from the desk and its dead CSS pruned; floors written; a
+surfaces walk leg closing the phase on the production bundle. Earlier
+the same day: **Phase 97, The Window Grammar, CLOSED
 (9/9, scaffolded and shipped the same day)**: the Desk OS finally has
 an OS grammar, proven whole on the production bundle. The shadows are
 back under a mechanical generator lock; windows land whole and off
