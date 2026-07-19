@@ -5,7 +5,13 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, IN
-PROGRESS (3/9)**. **HS-98-03, Meetings, native, DONE**: the meeting
+PROGRESS (4/9)**. **HS-98-04, The live pair, DONE**: LiveCore native
+(honest verb-bar status, metric strip, transcript as the split's main
+pane, the details modal now inline, devices omitting absent values
+instead of "—") and ActivityCore native (tabs + filter + honest rows,
+inline two-steps) — proven by the meetings and cores walk legs; the
+live shot caught and fixed "[object Object]" and a mid-recording
+"Ready to record". Earlier: **HS-98-03, Meetings, native, DONE**: the meeting
 detail left its modal for the split's second pane beside the archive
 (wide: two panes; narrow: detail replaces archive), import became an
 in-surface section, the archive is honest press-target rows with

@@ -1,14 +1,14 @@
 # Phase 98 — Native Surfaces
 
-**Status:** IN PROGRESS (3/9, 2026-07-18) from the owner's standing
+**Status:** IN PROGRESS (4/9, 2026-07-18) from the owner's standing
 verdict ("none of the Desk OS feels like an OS — windows feel like
 glued-in HTML panes, zero consistent look and feel") and the 2026-07-18
 remediation audit. Phase 97 shipped the window grammar (placement,
 depth, motion, one shelf); this phase re-crafts what lives INSIDE the
 windows.
 
-**Last updated:** 2026-07-18 (HS-98-03 done: Meetings native — the detail left its modal for the split; voice
-walk green, two sheet/strip defects fixed).
+**Last updated:** 2026-07-18 (HS-98-04 done: the live pair native —
+transcript is the pane, devices are honest, modals gone).
 
 ## Why this phase exists
 
@@ -97,7 +97,7 @@ viewports, screenshots looked at.
 | HS-98-01 | The surface idiom | done | [story-01-surface-idiom](./story-01-surface-idiom.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-98-02 | Dictation, native | done | [story-02-dictation-native](./story-02-dictation-native.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-98-03 | Meetings, native | done | [story-03-meetings-native](./story-03-meetings-native.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-98-04 | The live pair | backlog | [story-04-live-pair](./story-04-live-pair.md) | — |
+| HS-98-04 | The live pair | done | [story-04-live-pair](./story-04-live-pair.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-98-05 | The config pair | backlog | [story-05-config-pair](./story-05-config-pair.md) | — |
 | HS-98-06 | The builder set | backlog | [story-06-builder-set](./story-06-builder-set.md) | — |
 | HS-98-07 | The long tail, seam retired | backlog | [story-07-long-tail](./story-07-long-tail.md) | — |
@@ -106,6 +106,17 @@ viewports, screenshots looked at.
 
 ## Where we are
 
+**HS-98-04 done (2026-07-18): the live pair is native.** LiveCore: an
+honest verb-bar status, a quiet metric strip, the transcript as the
+split's main pane (the details modal now an inline block), the rail
+collapsing with the window, deferred jobs as facts, and devices as
+honest rows that OMIT absent battery/RSSI instead of printing "—".
+ActivityCore: one section, tabs + filter, honest rows, inline
+two-steps for Clear/Delete. The live shot caught "[object Object]"
+beside the intelligence pill and a mid-recording "Ready to record" —
+both fixed. Proven by the meetings + cores walk legs on the
+production bundle; shots looked at; `npm run check` green (289).
+Next: HS-98-05 — the config pair. Earlier:
 **HS-98-03 done (2026-07-18): Meetings is native.** The 933-line
 memory core re-composed: the meeting detail LEFT ITS MODAL and lives
 as the split's second pane beside the archive (two panes in a wide
