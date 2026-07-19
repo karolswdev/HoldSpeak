@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Journal — a dated stream (mockup)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .window { left: 50%; top: 70px; transform: translateX(-50%); width: 760px; height: 700px; }
+
+  .stream-head {
+    display: flex; align-items: baseline; gap: 14px; padding: 20px 26px 14px;
+  }
+  .stream-head .count { display: flex; align-items: baseline; gap: 8px; }
+  .stream-head .count small { font-size: var(--t-secondary); color: var(--ink-dim); font-weight: 400; }
+  .stream-head .spacer { flex: 1; }
+  .stream-head .search {
+    display: flex; align-items: center; gap: 7px; height: 28px; padding: 0 10px;
+    border-radius: 8px; background: var(--well); color: var(--ink-faint);
+    font-size: 12px; min-width: 150px;
+  }
+
+  .stream { padding: 0 10px 20px; display: flex; flex-direction: column; }
+
+  .day {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 16px 8px;
+  }
+  .day::after { content: ""; flex: 1; height: 1px; background: rgba(255, 255, 255, 0.06); }
+  .day .n { font-weight: 400; letter-spacing: 0.04em; color: var(--ink-faint); }
+
+  .entry {
+    display: grid; grid-template-columns: 52px 1fr; gap: 0 14px;
+    padding: 10px 16px 12px; border-radius: 10px;
+  }
+  .entry:hover, .entry.hovered { background: rgba(255, 255, 255, 0.035); }
+  .entry .when {
+    font-size: var(--t-secondary); color: var(--ink-faint);
+    padding-top: 3px; text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .entry .said { font-size: var(--t-primary); font-weight: 480; line-height: 1.45; color: var(--ink); }
+  .entry .said .fixed { color: var(--good); }
+  .entry .said del { color: var(--ink-faint); text-decoration-color: rgba(255,255,255,.3); font-weight: 400; }
+  .entry .meta {
+    grid-column: 2; display: flex; align-items: center; gap: 10px; margin-top: 5px;
+    font-size: var(--t-secondary); color: var(--ink-dim);
+  }
+  .entry .meta .dot { color: var(--ink-faint); }
+  .entry .verbs { top: auto; bottom: 9px; right: 12px; }
+
+  .replay {
+    grid-column: 2; margin-top: 8px; padding: 10px 12px; border-radius: 8px;
+    background: var(--well); border-left: 2px solid var(--accent);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .replay .tag { display: flex; align-items: center; gap: 8px; }
+  .replay p { font-size: var(--t-body); color: var(--ink-dim); line-height: 1.5; }
+
+  @media (max-width: 500px) {
+    .stream-head { padding: 14px 16px 10px; flex-wrap: wrap; }
+    .stream-head .search { display: none; }
+    .entry { grid-template-columns: 1fr; padding: 10px 12px 12px; }
+    .entry .when { text-align: left; padding-top: 0; }
+    .entry .meta { grid-column: 1; flex-wrap: wrap; }
+    .entry .verbs { position: static; opacity: 1; margin-top: 8px; justify-content: flex-start; grid-column: 1; display: flex; }
+    .replay { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="world">
+  <div class="obj" style="left:5%; top:26%"><img src="sprites/crystal.png" alt=""><span>Project KB</span></div>
+  <div class="obj" style="left:9%; top:64%"><img src="sprites/note.png" alt=""><span>Q3 architecture decisions</span></div>
+  <div class="obj" style="right:4%; top:32%"><img src="sprites/cassette2.png" alt=""><span>Release sync</span></div>
+</div>
+
+<header class="menubar">
+  <span class="mark">HoldSpeak</span>
+  <span class="trust"><span class="trust-dot"></span> This device</span>
+  <span class="right"><kbd>⌘K</kbd> <span class="clock-date">Sun, Jul 19</span> <strong>09:41</strong></span>
+</header>
+
+<section class="window" aria-label="Speak — Journal">
+  <div class="window-head">
+    <div class="lights"><span class="light c"></span><span class="light m"></span><span class="light z"></span></div>
+    <nav class="wings">
+      <a href="#">Speak</a>
+      <a href="#" class="on">Journal</a>
+      <a href="#">Blocks</a>
+    </nav>
+    <div class="head-side"><span>⚙</span></div>
+  </div>
+  <div class="window-body">
+
+    <div class="stream-head">
+      <div class="count">
+        <span class="t-display">14</span>
+        <small>today · 2 taught</small>
+      </div>
+      <div class="spacer"></div>
+      <div class="search">⌕ Search what you said</div>
+      <a class="verb" href="#">Clear…</a>
+    </div>
+
+    <div class="stream">
+
+      <div class="day t-caption">Today <span class="n">— Sun, Jul 19</span></div>
+
+      <div class="entry material hovered">
+        <div class="when">09:38</div>
+        <div class="said">Tightened the token gate: the component CSS allow-list now only shrinks — any new raw value fails validation.</div>
+        <div class="meta"><span>→ Terminal</span><span class="dot">·</span><span>320 ms</span></div>
+        <nav class="verbs"><a class="verb go" href="#">Replay</a><a class="verb" href="#">Copy</a><a class="verb danger" href="#">Delete</a></nav>
+      </div>
+
+      <div class="entry material">
+        <div class="when">09:12</div>
+        <div class="said">Ship the <del>native winners</del> <span class="fixed">Native Innards</span> phase brief to the delivery rails before the sitting.</div>
+        <div class="meta">
+          <span>→ VS Code</span><span class="dot">·</span><span>410 ms</span>
+          <span class="learned">✓ learned · from 3 similar</span>
+        </div>
+        <nav class="verbs"><a class="verb go" href="#">Replay</a><a class="verb" href="#">Copy</a><a class="verb danger" href="#">Delete</a></nav>
+      </div>
+
+      <div class="entry material">
+        <div class="when">08:57</div>
+        <div class="said editing">Draft a follow-up for the mesh edge review and cc the runtime channel<span class="caret"></span></div>
+        <div class="meta"><span>→ Mail</span><span class="dot">·</span><span>290 ms</span><span class="dot">·</span><span>editing in place</span></div>
+      </div>
+
+      <div class="day t-caption">Yesterday <span class="n">— Sat, Jul 18</span></div>
+
+      <div class="entry material">
+        <div class="when">17:26</div>
+        <div class="said">Summarize the desk remediation audit and pin the three worst interiors as the next fight.</div>
+        <div class="meta"><span>→ Terminal</span><span class="dot">·</span><span>350 ms</span></div>
+        <nav class="verbs"><a class="verb go" href="#">Replay</a><a class="verb" href="#">Copy</a><a class="verb danger" href="#">Delete</a></nav>
+      </div>
+
+      <div class="entry material">
+        <div class="when">16:04</div>
+        <div class="said">Standup notes: window grammar closed, chrome skin shipped, application layer next.</div>
+        <div class="meta"><span>→ Obsidian</span><span class="dot">·</span><span>380 ms</span></div>
+        <div class="replay">
+          <div class="tag"><span class="t-caption" style="color: var(--accent);">Replay — preview only</span></div>
+          <p>## Standup — Jul 18
+— Window grammar: closed. Chrome skin: shipped.
+— Next: the application layer.</p>
+          <nav style="display:flex; gap:6px;"><a class="verb" href="#">Copy result</a></nav>
+        </div>
+      </div>
+
+      <div class="day t-caption">Thu, Jul 16</div>
+
+      <div class="entry material">
+        <div class="when">11:42</div>
+        <div class="said">Open questions from the release sync: who owns the tag, and when does the worker land.</div>
+        <div class="meta"><span>→ Terminal</span><span class="dot">·</span><span>300 ms</span></div>
+        <nav class="verbs"><a class="verb go" href="#">Replay</a><a class="verb" href="#">Copy</a><a class="verb danger" href="#">Delete</a></nav>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<nav class="dock">
+  <a href="#" class="front running"><span class="glyph">⌁</span><span class="label">Speak</span></a>
+  <a href="#"><span class="glyph">▣</span><span class="label">Meetings</span></a>
+  <a href="#"><span class="glyph">✦</span><span class="label">Agents</span></a>
+  <a href="#"><span class="glyph">⚙</span><span class="label">Settings</span></a>
+  <span class="orb"></span>
+</nav>
+</body>
+</html>

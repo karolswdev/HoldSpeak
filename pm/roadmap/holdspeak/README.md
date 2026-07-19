@@ -4,19 +4,23 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-19 — **Phase 100, The Application Layer,
-CLOSED 13/13** on the owner's sitting: "It's better, I cannot lie" —
-the four-application layer (Speak / Meetings / Agents / Settings, one
-launcher, one vocabulary canon, the geometry walk) is merged (PR
-#357) and ratified as the primary application layer. The remainder
-the owner named (interiors still read as HTML in a nicer container)
-is forged into **docs/internal/AGENT_BRIEF.md** — the standing
-method, canon, and guards for every future agent — and chartered as
-**Phase 101, The Native Innards** (scaffolded, gate-first).
+**Last updated:** 2026-07-19 — **Phase 101, The Native Innards, at
+the gate (1/4)**: HS-101-01 ratified the interior canon
+(DESIGN_SYSTEM.md §"The interior canon (HS-101)": the five-step
+interior type scale as `--desk-type-*` tokens, data-as-material /
+purpose-built-composition / verbs-on-the-material rules, the
+SurfaceStream/Library/Switchboard + EditInPlace + SystemShade kit
+design, and the AGENT_BRIEF §6 OS-territory inventory) and cut the
+five census-derived mockups at 1440 + 393 (journal stream, blocks
+library, runs-on switchboard, system shade, drag-through-glass).
+The phase is parked at **HS-101-02 — the owner's gate**; nothing
+builds before the verdict. Earlier the same day: **Phase 100, The
+Application Layer, CLOSED 13/13** on the owner's sitting ("It's
+better, I cannot lie"), merged PR #357; the standing method forged
+into **docs/internal/AGENT_BRIEF.md**.
 
-**Current phase:** [**Phase 91 — One React Surface**](./phase-91-one-react-surface/current-phase-status.md)
-— **IN PROGRESS (9/10)**. HS-91-01 through HS-91-09 are done. HS-91-10 remains
-open for real owner UAT and the actual Swift DeskOS-versus-Web review.
+**Current phase:** [**Phase 101 — The Native Innards**](./phase-101-the-native-innards/current-phase-status.md)
+— **IN PROGRESS (1/4, at the owner's gate)**.
 
 <details>
 <summary>Prior roadmap status through Phase 90</summary>

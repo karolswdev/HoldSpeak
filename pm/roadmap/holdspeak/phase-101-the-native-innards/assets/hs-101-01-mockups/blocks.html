@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blocks — a library (mockup)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .window { left: 50%; top: 70px; transform: translateX(-50%); width: 860px; height: 700px; }
+
+  .lib-head { display: flex; align-items: baseline; gap: 14px; padding: 20px 26px 6px; }
+  .lib-head .count { display: flex; align-items: baseline; gap: 8px; }
+  .lib-head .count small { font-size: var(--t-secondary); color: var(--ink-dim); font-weight: 400; }
+  .lib-head .spacer { flex: 1; }
+  .scope { display: flex; gap: 2px; background: var(--well); border-radius: 9px; padding: 3px; }
+  .scope a { padding: 3px 12px; border-radius: 7px; color: var(--ink-dim); text-decoration: none; font-size: 12px; font-weight: 550; }
+  .scope a.on { background: rgba(255, 255, 255, 0.1); color: var(--ink); }
+
+  .shelf { padding: 14px 22px 22px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+  .tile {
+    display: flex; flex-direction: column; border-radius: 12px; overflow: hidden;
+    background: rgba(255, 255, 255, 0.035);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+    min-height: 180px;
+  }
+  .tile:hover, .tile.hovered { background: rgba(255, 255, 255, 0.055); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 6px 18px rgba(4,2,8,.35); }
+  .tile .face {
+    flex: 1; padding: 14px 14px 10px; font-family: var(--font-mono);
+    font-size: 11.5px; line-height: 1.55; color: var(--ink-dim);
+    background: var(--well); white-space: pre-wrap; overflow: hidden;
+    position: relative;
+  }
+  .tile .face::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34px;
+    background: linear-gradient(transparent, rgba(14, 10, 20, 0.75));
+  }
+  .tile .spine { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 7px; }
+  .tile .name { display: flex; align-items: center; gap: 8px; font-size: var(--t-primary); font-weight: var(--t-primary-w); }
+  .tile .name .lamp { margin-left: auto; }
+  .tile .says { display: flex; flex-wrap: wrap; gap: 5px; }
+  .say {
+    font-size: 11px; color: var(--ink-dim); padding: 2px 8px; border-radius: 9px;
+    background: rgba(255, 255, 255, 0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .say::before { content: "“"; color: var(--ink-faint); }
+  .say::after { content: "”"; color: var(--ink-faint); }
+  .tile .verbs { top: auto; bottom: 76px; right: 10px; z-index: 2; }
+
+  .tile.ghost {
+    align-items: center; justify-content: center; gap: 8px;
+    background: none; box-shadow: none;
+    border: 1.5px dashed rgba(255, 255, 255, 0.14); border-radius: 12px;
+    color: var(--ink-faint); font-size: 12.5px;
+  }
+  .tile.ghost .plus { font-size: 26px; line-height: 1; color: var(--ink-dim); }
+  .tile.ghost em { font-style: normal; color: var(--ink-faint); font-size: 11px; }
+
+  .tile.editing-tile .face { box-shadow: inset 0 0 0 1px rgba(255, 109, 61, 0.55); }
+
+  @media (max-width: 500px) {
+    .shelf { grid-template-columns: 1fr; padding: 10px 14px 18px; }
+    .lib-head { padding: 14px 16px 4px; }
+    .tile .verbs { position: static; opacity: 1; padding: 0 14px 10px; display: flex; }
+    .tile { min-height: 0; }
+    .tile .face { max-height: 92px; }
+  }
+</style>
+</head>
+<body>
+<div class="world">
+  <div class="obj" style="left:5%; top:30%"><img src="sprites/crystal.png" alt=""><span>Project KB</span></div>
+  <div class="obj" style="right:4%; top:60%"><img src="sprites/note3.png" alt=""><span>Standup notes</span></div>
+</div>
+
+<header class="menubar">
+  <span class="mark">HoldSpeak</span>
+  <span class="trust"><span class="trust-dot"></span> This device</span>
+  <span class="right"><kbd>⌘K</kbd> <span class="clock-date">Sun, Jul 19</span> <strong>09:41</strong></span>
+</header>
+
+<section class="window" aria-label="Speak — Blocks">
+  <div class="window-head">
+    <div class="lights"><span class="light c"></span><span class="light m"></span><span class="light z"></span></div>
+    <nav class="wings">
+      <a href="#">Speak</a>
+      <a href="#">Journal</a>
+      <a href="#" class="on">Blocks</a>
+    </nav>
+    <div class="head-side"><span>⚙</span></div>
+  </div>
+  <div class="window-body">
+
+    <div class="lib-head">
+      <div class="count">
+        <span class="t-display">6</span>
+        <small>blocks · 5 active</small>
+      </div>
+      <div class="spacer"></div>
+      <nav class="scope"><a href="#" class="on">Global</a><a href="#">Project</a></nav>
+    </div>
+
+    <div class="shelf">
+
+      <div class="tile material hovered">
+        <div class="face">## Standup — {date}
+— Yesterday:
+— Today:
+— Blocked:</div>
+        <div class="spine">
+          <div class="name">Standup notes <span class="lamp live"></span></div>
+          <div class="says"><span class="say">standup notes</span><span class="say">stand up</span></div>
+        </div>
+        <nav class="verbs"><a class="verb go" href="#">Edit</a><a class="verb danger" href="#">Delete</a></nav>
+      </div>
+
+      <div class="tile material">
+        <div class="face">**Bug:** {summary}
+
+**Repro:**
+1.
+**Expected / actual:**</div>
+        <div class="spine">
+          <div class="name">Bug report <span class="lamp live"></span></div>
+          <div class="says"><span class="say">bug report</span><span class="say">file a bug</span></div>
+        </div>
+      </div>
+
+      <div class="tile material editing-tile">
+        <div class="face">## What changed
+
+## Why
+
+## Proof<span class="caret"></span></div>
+        <div class="spine">
+          <div class="name"><span class="editing" style="padding: 1px 6px;">PR description</span> <span class="lamp live"></span></div>
+          <div class="says"><span class="say">pull request</span><span class="say">PR description</span></div>
+        </div>
+      </div>
+
+      <div class="tile material">
+        <div class="face">Decisions:
+Open questions:
+Actions — owner, due:</div>
+        <div class="spine">
+          <div class="name">Meeting recap <span class="lamp live"></span></div>
+          <div class="says"><span class="say">meeting recap</span></div>
+        </div>
+      </div>
+
+      <div class="tile material">
+        <div class="face">Thanks,
+Karol
+—
+Sent by voice, on my desk.</div>
+        <div class="spine">
+          <div class="name">Email sign-off <span class="lamp live"></span></div>
+          <div class="says"><span class="say">sign off</span></div>
+        </div>
+      </div>
+
+      <div class="tile material">
+        <div class="face">{ticket}: {summary}
+
+AC:
+- [ ]</div>
+        <div class="spine">
+          <div class="name">Jira ticket <span class="lamp off"></span> </div>
+          <div class="says"><span class="say">jira ticket</span><span class="say">new ticket</span></div>
+        </div>
+      </div>
+
+      <div class="tile ghost">
+        <span class="plus">＋</span>
+        <span>New block</span>
+        <em>or say “new block …”</em>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<nav class="dock">
+  <a href="#" class="front running"><span class="glyph">⌁</span><span class="label">Speak</span></a>
+  <a href="#"><span class="glyph">▣</span><span class="label">Meetings</span></a>
+  <a href="#"><span class="glyph">✦</span><span class="label">Agents</span></a>
+  <a href="#"><span class="glyph">⚙</span><span class="label">Settings</span></a>
+  <span class="orb"></span>
+</nav>
+</body>
+</html>

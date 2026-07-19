@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Runs on — a switchboard (mockup)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .window { left: 50%; top: 110px; transform: translateX(-50%); width: 780px; height: 580px; }
+
+  .board { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .board-head { display: flex; align-items: center; gap: 12px; }
+  .board-head .spacer { flex: 1; }
+
+  .bay {
+    position: relative; border-radius: 12px; padding: 16px 18px;
+    background: rgba(255, 255, 255, 0.035);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+    display: grid; grid-template-columns: 1fr auto; gap: 4px 12px;
+  }
+  .bay:hover, .bay.hovered { background: rgba(255, 255, 255, 0.05); }
+  .bay.route {
+    background: rgba(255, 109, 61, 0.05);
+    box-shadow: inset 0 0 0 1px rgba(255, 109, 61, 0.4), 0 0 24px rgba(255, 109, 61, 0.08);
+  }
+  .bay .who, .bay .model, .bay .where { grid-column: 1; }
+  .bay .who { display: flex; align-items: center; gap: 9px; font-size: var(--t-primary); font-weight: var(--t-primary-w); white-space: nowrap; }
+  .bay .who .state { font-size: var(--t-secondary); font-weight: 400; color: var(--ink-dim); }
+  .bay .model { font-family: var(--font-display); font-weight: 650; letter-spacing: -0.01em; }
+  .bay.route .model { font-size: var(--t-display); line-height: 1.15; margin: 2px 0; }
+  .bay:not(.route) .model { font-size: 15px; color: var(--ink-dim); }
+  .bay .where { font-size: var(--t-secondary); color: var(--ink-dim); display: flex; gap: 4px 10px; align-items: center; font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+  .bay .where span { white-space: nowrap; }
+  .bay .side { grid-column: 2; grid-row: 1 / span 3; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; justify-content: space-between; }
+  .bay .tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
+    color: var(--accent); background: rgba(255, 109, 61, 0.13);
+    padding: 2px 8px; border-radius: 9px; box-shadow: inset 0 0 0 1px rgba(255, 109, 61, 0.3);
+  }
+  .bay .verbs { position: static; opacity: 0; display: flex; gap: 6px; }
+  .bay:hover .verbs, .bay.hovered .verbs { opacity: 1; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid .bay { grid-template-columns: 1fr auto; }
+
+  .off-why { color: var(--ink-faint); }
+
+  @media (max-width: 500px) {
+    .board { padding: 14px 14px 20px; }
+    .grid { grid-template-columns: 1fr; }
+    .bay .verbs { opacity: 1; }
+    .bay.route .model { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="world">
+  <div class="obj" style="left:5%; top:34%"><img src="sprites/cartridge.png" alt=""><span>qwen3 32b</span></div>
+  <div class="obj" style="right:5%; top:62%"><img src="sprites/crystal.png" alt=""><span>Project KB</span></div>
+</div>
+
+<header class="menubar">
+  <span class="mark">HoldSpeak</span>
+  <span class="trust"><span class="trust-dot"></span> This device</span>
+  <span class="right"><kbd>⌘K</kbd> <span class="clock-date">Sun, Jul 19</span> <strong>09:41</strong></span>
+</header>
+
+<section class="window" aria-label="Runs on">
+  <div class="window-head">
+    <div class="lights"><span class="light c"></span><span class="light m"></span><span class="light z"></span></div>
+    <nav class="wings"><a href="#" class="on">Runs on</a></nav>
+    <div class="head-side"><span>⚙</span></div>
+  </div>
+  <div class="window-body">
+    <div class="board">
+
+      <div class="board-head">
+        <span class="t-caption">Where your words run</span>
+        <div class="spacer"></div>
+        <a class="verb go" href="#">＋ New destination</a>
+      </div>
+
+      <div class="bay route material hovered">
+        <div class="who"><span class="lamp live"></span> LAN llama.cpp <span class="state">· live · 41 ms</span></div>
+        <div class="model">qwen3-32b · Q6</div>
+        <div class="where"><span>192.168.1.43:8080</span><span>ctx 32k</span><span>Speak · Ask · Agents run here</span></div>
+        <div class="side">
+          <span class="badge local">LAN</span>
+          <span class="tag">DEFAULT</span>
+          <nav class="verbs"><a class="verb go" href="#">Edit</a><a class="verb danger" href="#">Delete</a></nav>
+        </div>
+      </div>
+
+      <div class="grid">
+
+        <div class="bay material">
+          <div class="who"><span class="lamp live"></span> This Mac <span class="state">· ready</span></div>
+          <div class="model">gemma-3-4b · Q4</div>
+          <div class="where"><span>on device</span><span>ctx 8k</span></div>
+          <div class="side">
+            <span class="badge local">LOCAL</span>
+            <nav class="verbs"><a class="verb" href="#">Make default</a><a class="verb go" href="#">Edit</a></nav>
+          </div>
+        </div>
+
+        <div class="bay material">
+          <div class="who"><span class="lamp off"></span> Mac Studio <span class="state">· mesh</span></div>
+          <div class="model">qwen3-30b-a3b</div>
+          <div class="where"><span class="off-why">offline — last seen 2 h ago</span></div>
+          <div class="side">
+            <span class="badge local">LAN</span>
+            <nav class="verbs"><a class="verb go" href="#">Edit</a><a class="verb danger" href="#">Delete</a></nav>
+          </div>
+        </div>
+
+        <div class="bay material">
+          <div class="who"><span class="lamp live"></span> OpenAI API <span class="state">· key required</span></div>
+          <div class="model">gpt-5.2</div>
+          <div class="where"><span>api.openai.com</span><span>ctx 200k</span></div>
+          <div class="side">
+            <span class="badge cloud">CLOUD</span>
+            <nav class="verbs"><a class="verb" href="#">Make default</a><a class="verb go" href="#">Edit</a></nav>
+          </div>
+        </div>
+
+        <div class="bay material">
+          <div class="who"><span class="lamp live"></span> iPhone <span class="state">· mesh · 2.6 s</span></div>
+          <div class="model">gemma-3n-e4b</div>
+          <div class="where"><span>the phone answers</span><span>ctx 4k</span></div>
+          <div class="side">
+            <span class="badge local">LAN</span>
+            <nav class="verbs"><a class="verb" href="#">Make default</a><a class="verb go" href="#">Edit</a></nav>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<nav class="dock">
+  <a href="#"><span class="glyph">⌁</span><span class="label">Speak</span></a>
+  <a href="#"><span class="glyph">▣</span><span class="label">Meetings</span></a>
+  <a href="#"><span class="glyph">✦</span><span class="label">Agents</span></a>
+  <a href="#" class="front running"><span class="glyph">⚙</span><span class="label">Settings</span></a>
+  <span class="orb"></span>
+</nav>
+</body>
+</html>

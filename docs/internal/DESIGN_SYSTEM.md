@@ -278,6 +278,123 @@ foundation catches it mechanically.
 7. **Tint math**: hover and selected states use the existing
    `--wash-*` / `--accent-tint` formulas — never new ad-hoc rgba.
 
+## The interior canon (HS-101)
+
+Chartered by the owner's Phase-100 close verdict ("a lot of the
+windows … still feel like a bunch of HTML slapped inside a nicer
+looking container") and the standing order ("just not be shy — really
+push this into OS territory"). Articles VI (honest), VII (the
+interface serves), VIII (native-grade craft). Status: **proposed —
+nothing below ships before the HS-101-02 gate.** The HS-98 surface
+idiom and HS-99 chrome ladder stay floors; this canon governs what
+composes ON them.
+
+### The interior type scale
+
+Window bodies are nearly monosize today (13/12/11px). Real
+applications have display numbers, primary lines, secondary metadata,
+captions. The ratified scale, five steps, all component tokens:
+
+| Step | Token(s) | Use |
+|---|---|---|
+| display | `--desk-type-display-size/-weight/-lh` (26px/650/1.15, `--font-display`) | the ONE big fact a face leads with: the day's count, the destination's model, the spoken utterance |
+| primary | `--desk-type-primary-size/-weight/-lh` (15px/600/1.4) | what the material IS: the journal entry's text, the block's name, a destination's name |
+| body | `--desk-surface-body-size` (13px) | continuous copy and dense-row titles (HS-98, unchanged) |
+| secondary | `--desk-surface-detail-size` (12px) | metadata: times, sources, counts |
+| caption | `--desk-surface-label-size` (11px) | section labels, eyebrows, keycaps |
+
+Rules: a window face uses at least THREE steps; display appears at
+most once per face (it is the headline, not a heading style); numbers
+at display scale ride `--font-display`. A face whose computed text
+sizes collapse to one step is a defect the geometry walk catches.
+
+### The composition rules
+
+1. **Data is the material, not data in fields.** A presented value
+   edits in place — click (or Enter) on the presented text turns THAT
+   text editable in situ; Escape reverts, blur/Enter commits. A
+   label-over-input stack is legal only inside a configuring face
+   (the gear door, Settings). Everywhere else it is a defect.
+2. **Purpose-built compositions.** A surface composes the shape its
+   material actually has: the Journal reads like a journal (a dated
+   stream), Blocks like a library (the injection text is the face),
+   Runs on like a switchboard (destinations are bays with lamps), a
+   transcript like a script. `SurfaceRows` is legal only for
+   genuinely homogeneous row material (settings groups, pick lists,
+   receipts); reaching for it first is the tell that a surface was
+   assembled, not designed.
+3. **Verbs live on the material.** Hover/selection reveals a verb
+   where the data is (row verbs, HS-98 rule 5, unchanged); the
+   surface-top verb bar shrinks to the rare global verb (at most one
+   per face). Coarse pointers and reduced motion keep verbs visible.
+4. **Direct manipulation reaches through the glass.** The desk's
+   physics extend INTO windows and back OUT: drag a desk object into
+   a window to hand it over (ground an ask, give a KB to an agent);
+   drag a result chip out of a window onto the desk to keep it; drop
+   a transcript or audio file anywhere on the desk and a Meeting
+   imports. Drop targets light BEFORE the drop (the HS-95 drop-ready
+   grammar); a refused drop names why.
+5. **Motion is meaning.** State changes animate what changed — the
+   correction-learned moment, an approve leaving the queue, a wing
+   switch — riding the `--duration-*`/`--ease-*` families,
+   compositor-only, instant under reduced motion. Nothing else moves.
+
+### The kit that carries it (designed here, wired at the build)
+
+- `SurfaceStream` — the dated stream: day headers (caption step) over
+  entries whose text is primary-step material; per-entry verbs on
+  hover; the day's count at display step in the stream head.
+- `SurfaceLibrary` — the library: content-forward tiles whose FACE is
+  the payload (a block's injection text, an artifact's body), name at
+  primary, provenance at secondary; a tile opens in place.
+- `SurfaceSwitchboard` — the switchboard: one bay per destination —
+  lamp (live/offline, never color-only), name at primary, model/route
+  at secondary, boundary badge at the point of decision; the active
+  route is visibly THE route.
+- `EditInPlace` — the in-place edit affordance behind rule 1: renders
+  presented text; focus/click swaps to an editor of the same
+  geometry; commit/revert grammar as above; disabled state names why.
+- `SystemShade` — one system surface behind the bell (see below).
+- The glass-drop contract — `dragKind` (desk-object / chip / file) ×
+  drop target (window face, desk, dock chip) with the drop-ready
+  lighting and named refusals; one implementation, every window.
+
+### OS territory (AGENT_BRIEF §6, ratified for the gate)
+
+1. **The system shade.** The attention bell opens a real shade — one
+   surface for what happened while you were away: the approve queue,
+   finished intelligence runs, learned corrections, recovered
+   captures. Honest counts (zero says zero), verbs inline, dismiss is
+   real. Re-shapes today's AttentionDrawer; same projections feed.
+2. **The global keyboard grammar.** ⌘1–⌘4 open/switch the four
+   applications; ⌘W closes and ⌘M minimizes the front window; ⌘/
+   draws the shortcut sheet (drawn, not a doc link). ⌘K, Ctrl+`,
+   Escape, exposé stay as shipped.
+3. **Right-click is universal.** Every desk object, row of material,
+   window head, dock chip, and the desk itself answer with the ONE
+   menu vocabulary (`DeskMenuList`). If a thing can be acted on, its
+   context menu says how.
+4. **Drag-and-drop is a system verb.** Composition rule 4, system-
+   wide: file drop imports, desk objects hand through the glass, chips
+   pull out onto the desk.
+5. **System moments.** Arrival boots fast, quiet, composed — never a
+   spinner pile. Recording state lives in the bar as a system
+   indicator. State that changes while a window is closed surfaces in
+   the shade, not in silence.
+6. **Files-grade browsing.** List mode grows into the desk's Finder:
+   sortable columns, type filters, keyboard range-selection, the same
+   context menus. Spatial for arranging, Files for finding.
+
+### The mockup roster (HS-101-01)
+
+Census-derived; each ships at 1440 AND 393, real content, looked at:
+
+- `journal` — Speak's Journal as a dated stream (worst innard 1)
+- `blocks` — Blocks as a library (worst innard 2)
+- `runs-on` — Runs on as a switchboard (worst innard 3)
+- `shade` — the system shade, open over the desk
+- `drag` — one drag-through-the-glass moment, mid-flight
+
 ## Adding a surface (styling rules)
 
 See `web/README.md` for the full add-a-surface path. Styling rules:
