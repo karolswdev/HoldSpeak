@@ -739,7 +739,7 @@ export function retractLauncher(id: string) {
   launcherRegistry.delete(id);
   publishLaunchers();
 }
-function useLaunchers() {
+export function useLaunchers() {
   return useSyncExternalStore(
     (cb) => {
       launcherListeners.add(cb);
@@ -827,6 +827,10 @@ export interface DeskWindowFrameProps {
   eyebrow?: string;
   /** Extra head content (badges, panel-specific verbs), left of the window verbs. */
   actions?: ReactNode;
+  /** HS-100-07 — the application's wing segments, centered in the head
+   * (the thesis's posture rule: faces live in the head, never as a tab
+   * wall in the body). */
+  wings?: ReactNode;
   /** Root classes — keep the panel's legacy class so its content CSS holds. */
   className?: string;
   minW?: number;
@@ -847,16 +851,16 @@ export interface DeskWindowFrameProps {
  * surfaces). */
 /** HS-99-02 — the window verb glyphs: crisp inline SVG strokes that
  * inherit currentColor (text glyphs read as characters, not chrome). */
-function VerbGlyph({
-  kind,
-}: {
-  kind: "minimize" | "maximize" | "restore" | "close";
-}) {
+function VerbGlyph({ kind }: { kind: string }) {
   const paths: Record<string, string> = {
     minimize: "M3 7h8",
     maximize: "M3.5 3.5h7v7h-7Z",
     restore: "M3 5.2h5.8V11H3Z M5.2 5.2V3H11v5.8H8.8",
     close: "M3.5 3.5l7 7M10.5 3.5l-7 7",
+    "light-close": "M3.6 3.6l6.8 6.8M10.4 3.6l-6.8 6.8",
+    "light-min": "M3 7h8",
+    "light-max": "M7 3v8M3 7h8",
+    "light-restore": "M4 7h6M7 4l-3 3 3 3M7 4l3 3-3 3",
   };
   return (
     <svg
@@ -882,6 +886,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     glyph: glyphProp,
     leading,
     actions,
+    wings,
     className,
     minW,
     minH,
@@ -1099,7 +1104,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       aria-label={name}
     >
       <header
-        className="desk-pullout-head desk-window-handle"
+        className={`desk-pullout-head desk-window-handle${wings ? " has-wings" : ""}`}
         {...(compact || maxed ? {} : win.handleProps)}
         onDoubleClick={(e) => {
           // HS-97-05 — double-click the head toggles maximize (buttons
@@ -1117,40 +1122,47 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           setHeadMenu({ x: e.clientX, y: e.clientY });
         }}
       >
+        {/* Materials spike — traffic lights on the LEFT (the strongest
+            native cue there is): red close, yellow minimize, green
+            maximize; grey when the window is not front; glyphs reveal
+            on cluster hover. */}
+        <span className="desk-traffic">
+          <button
+            type="button"
+            className="desk-light desk-light-close"
+            aria-label={`Close ${name}`}
+            onClick={requestClose}
+          >
+            <VerbGlyph kind="light-close" />
+          </button>
+          <button
+            type="button"
+            className="desk-light desk-light-min"
+            aria-label={`Minimize ${name}`}
+            onClick={requestMinimize}
+          >
+            <VerbGlyph kind="light-min" />
+          </button>
+          {!compact ? (
+            <button
+              type="button"
+              className="desk-light desk-light-max"
+              aria-label={maximized ? `Restore ${name}` : `Maximize ${name}`}
+              onClick={() => useDesk.getState().toggleMaximizePanel(id)}
+            >
+              <VerbGlyph kind={maximized ? "light-restore" : "light-max"} />
+            </button>
+          ) : (
+            <span aria-hidden="true" />
+          )}
+        </span>
         {leading}
         {icon}
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}
         <span className="desk-pullout-title desk-window-title">{title}</span>
+        {wings}
         {actions}
-        <span className="desk-window-verbs">
-          <button
-            type="button"
-            className="desk-window-verb"
-            aria-label={`Minimize ${name}`}
-            onClick={requestMinimize}
-          >
-            <VerbGlyph kind="minimize" />
-          </button>
-          {!compact && (
-            <button
-              type="button"
-              className="desk-window-verb"
-              aria-label={maximized ? `Restore ${name}` : `Maximize ${name}`}
-              onClick={() => useDesk.getState().toggleMaximizePanel(id)}
-            >
-              <VerbGlyph kind={maximized ? "restore" : "maximize"} />
-            </button>
-          )}
-          <button
-            type="button"
-            className="desk-window-verb desk-window-close"
-            aria-label={`Close ${name}`}
-            onClick={requestClose}
-          >
-            <VerbGlyph kind="close" />
-          </button>
-        </span>
       </header>
       {headMenu ? (
         <DeskMenuList
@@ -1211,6 +1223,17 @@ function mruOrder(ids: string[], order: string[]): string[] {
  * restores a parked one), ✕ closes, ⟲ resets the layout. Ctrl+` cycles
  * focus in MRU order, restoring as it lands. Shell furniture: it rides
  * above the window band, and it is invisible while nothing is open. */
+/** HS-100-11 — the dock IS the launcher: the four applications ride it
+ * always (running mark when their window is open); drawers and tools
+ * moved to the menu-bar bell and the search shelf. */
+const DOCK_APPS = [
+  { key: "dictate", id: "surface-dictation", label: "Speak", glyph: "⌁", fallback: "/dictation" },
+  { key: "review-meetings", id: "surface-meetings", label: "Meetings", glyph: "▣", fallback: "/history" },
+  { key: "inspect-personas-and-coders", id: "surface-companion", label: "Agents", glyph: "◉", fallback: "/companion" },
+  { key: "configure-settings", id: "surface-settings", label: "Settings", glyph: "⚙", fallback: "/settings" },
+] as const;
+const DOCK_APP_IDS = new Set<string>(DOCK_APPS.map((a) => a.id));
+
 export function Dock({ center }: { center?: ReactNode } = {}) {
   const panelMin = useDesk((s) => s.panelMin);
   const panelOrder = useDesk((s) => s.panelOrder);
@@ -1253,7 +1276,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  if (!center && windows.length === 0 && launchers.length === 0) return null;
+  void launchers; // consumed by the bell + search shelf (HS-100-11)
   // The front chip mirrors the shell's is-front rule: the last id in
   // the order that is open here and not minimized (HS-97-04).
   let front: string | undefined;
@@ -1268,26 +1291,82 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // it only renders as a launcher while its surface is closed.
   const shown = launchers.filter((l) => !windows.some((w) => w.id === l.id));
   return (
-    <div className="desk-dock" role="toolbar" aria-label="Dock">
-      {shown.map((l) => (
-        <button
-          key={l.id}
-          type="button"
-          className={"desk-dock-launch" + (l.open ? " is-run" : "")}
-          onClick={() => l.activate()}
-        >
-          <span aria-hidden="true">{l.glyph}</span>
-          <span className="desk-dock-label">{l.label}</span>
-          {l.badge ? (
-            <strong aria-label={`${l.badge} need attention`}>{l.badge}</strong>
-          ) : null}
-        </button>
-      ))}
+    <div
+      className="desk-dock"
+      role="toolbar"
+      aria-label="Dock"
+      onMouseMove={(e) => {
+        // Materials round 2 — magnification: a distance falloff swells
+        // chips near the pointer (macos-web curve, simplified; the CSS
+        // transition supplies the spring feel). Skipped under reduced
+        // motion.
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+          return;
+        const buttons = e.currentTarget.querySelectorAll<HTMLElement>(
+          ".desk-dock-main, .desk-dock-launch, .desk-dock-reset",
+        );
+        for (const el of buttons) {
+          const r = el.getBoundingClientRect();
+          const d = Math.abs(e.clientX - (r.x + r.width / 2));
+          const t = Math.max(0, 1 - d / 170);
+          const curve = t * t;
+          el.style.transform = curve > 0.01
+            ? `translateY(${(-5 * curve).toFixed(1)}px) scale(${(1 + 0.18 * curve).toFixed(3)})`
+            : "";
+        }
+      }}
+      onMouseLeave={(e) => {
+        for (const el of e.currentTarget.querySelectorAll<HTMLElement>(
+          ".desk-dock-main, .desk-dock-launch, .desk-dock-reset",
+        ))
+          el.style.transform = "";
+      }}
+    >
+      {DOCK_APPS.map((a) => {
+        const win = windows.find((w) => w.id === a.id);
+        const minimized = win ? panelMin.includes(a.id) : false;
+        return (
+          <button
+            key={a.id}
+            type="button"
+            className={
+              "desk-dock-launch desk-dock-app" +
+              (win ? " is-run" : "") +
+              (win && a.id === front && !minimized ? " is-front" : "")
+            }
+            aria-label={a.label}
+            onClick={() => {
+              const s = useDesk.getState();
+              if (win && minimized) s.restorePanel(a.id);
+              else if (win) s.focusPanel(a.id);
+              else
+                void import("../shell").then((m) =>
+                  m.openSurfaceOr(a.key, a.fallback),
+                );
+            }}
+            onContextMenu={(e) => {
+              if (!win) return;
+              e.preventDefault();
+              setChipMenu({
+                id: a.id,
+                label: a.label,
+                x: e.clientX,
+                y: e.clientY,
+                minimized,
+                close: win.close,
+              });
+            }}
+          >
+            <span aria-hidden="true">{a.glyph}</span>
+            <span className="desk-dock-label">{a.label}</span>
+          </button>
+        );
+      })}
       {center}
-      {shown.length > 0 && windows.length > 0 ? (
+      {windows.some((w) => !DOCK_APP_IDS.has(w.id)) ? (
         <span className="desk-dock-sep" aria-hidden="true" />
       ) : null}
-      {windows.map((c) => {
+      {windows.filter((w) => !DOCK_APP_IDS.has(w.id)).map((c) => {
         const minimized = panelMin.includes(c.id);
         return (
           <span

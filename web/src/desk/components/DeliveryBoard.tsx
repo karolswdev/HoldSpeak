@@ -165,7 +165,7 @@ function LaunchComposer({ sources }: { sources: DeliverySource[] }) {
         <select
           className="desk-classify-input"
           value={profileId}
-          aria-label="Persona"
+          aria-label="Agent"
           onChange={(e) => setProfileId(e.target.value)}
         >
           {profiles.map((p) => (

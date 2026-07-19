@@ -16,10 +16,15 @@ import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
 import { PostureNote, useResource } from "../pageSupport";
 import {
   ConfirmVerb,
+  SurfaceGroup,
   SurfaceSection,
+  SurfaceSettingRow,
   SurfaceState,
+  SurfaceToggle,
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
+import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
+import { RuntimeDocsCore } from "./RuntimeDocsCore";
 
 const SECTION_ORDER = [
   "ui",
@@ -40,7 +45,7 @@ const FRIENDLY: Record<string, string> = {
   dictation: "Voice typing",
   wake_word: "Wake Word",
   presence: "Presence",
-  meeting: "Meetings & intel",
+  meeting: "Meetings & intelligence",
   activity: "Activity",
   cadence: "Cadence",
   commands: "Commands",
@@ -71,6 +76,10 @@ function title(key: string) {
     .replace(/\b\w/g, (value) => value.toUpperCase());
 }
 
+/** HS-100 spike — the OS settings idiom: leaves render as rows
+ * (text left, compact control right) inside grouped inset lists;
+ * nested objects become their own labeled groups. Never a form
+ * stack. */
 function SettingsFields({
   value,
   path,
@@ -82,162 +91,249 @@ function SettingsFields({
   query: string;
   onChange(path: string[], value: unknown): void;
 }) {
-  const rows = Object.entries(value).filter(([key, item]) => {
-    if (item !== null && typeof item === "object" && !Array.isArray(item))
-      return true;
-    return (
-      !query ||
-      `${path.join(" ")} ${key}`.toLowerCase().includes(query.toLowerCase())
-    );
-  });
+  type Leaf = { key: string; item: unknown; path: string[] };
+  type Group = { label: string; leaves: Leaf[] };
+  const groups: Group[] = [];
+  const walk = (node: JsonRecord, nodePath: string[], label: string) => {
+    const leaves: Leaf[] = [];
+    for (const [key, item] of Object.entries(node)) {
+      const nextPath = [...nodePath, key];
+      if (item !== null && typeof item === "object" && !Array.isArray(item)) {
+        walk(
+          item as JsonRecord,
+          nextPath,
+          `${label ? label + " · " : ""}${title(key)}`,
+        );
+      } else if (
+        !query ||
+        `${nextPath.join(" ")}`.toLowerCase().includes(query.toLowerCase())
+      ) {
+        leaves.push({ key, item, path: nextPath });
+      }
+    }
+    if (leaves.length) groups.push({ label, leaves });
+  };
+  walk(value, path, "");
   return (
-    <div className="settings-fields">
-      {rows.map(([key, item]) => {
-        const nextPath = [...path, key];
-        if (item !== null && typeof item === "object" && !Array.isArray(item))
-          return (
-            <fieldset key={key}>
-              <legend>{title(key)}</legend>
-              <SettingsFields
-                value={item as JsonRecord}
-                path={nextPath}
-                query={query}
-                onChange={onChange}
-              />
-            </fieldset>
-          );
-        if (Array.isArray(item) && key === "spoken_symbols") {
-          const symbols = item as Array<{
-            spoken?: string;
-            symbol?: string;
-            attach?: string;
-          }>;
-          const updateSymbol = (index: number, patch: Record<string, string>) =>
-            onChange(
-              nextPath,
-              symbols.map((entry, row) =>
-                row === index ? { ...entry, ...patch } : entry,
-              ),
-            );
-          return (
-            <fieldset key={key}>
-              <legend>Spoken-symbol dictionary</legend>
-              {symbols.map((entry, index) => (
-                <div className="symbol-row" key={index}>
-                  <TextInput
-                    aria-label={`Spoken phrase ${index + 1}`}
-                    value={entry.spoken ?? ""}
-                    onChange={(event) =>
-                      updateSymbol(index, { spoken: event.target.value })
-                    }
-                    placeholder="arrow"
-                  />
-                  <TextInput
-                    aria-label={`Symbol ${index + 1}`}
-                    value={entry.symbol ?? ""}
-                    onChange={(event) =>
-                      updateSymbol(index, { symbol: event.target.value })
-                    }
-                    placeholder="→"
-                  />
-                  <Select
-                    aria-label={`Attachment ${index + 1}`}
-                    value={entry.attach ?? "none"}
-                    onChange={(event) =>
-                      updateSymbol(index, { attach: event.target.value })
-                    }
-                  >
-                    <option value="none">No attachment</option>
-                    <option value="left">Attach left</option>
-                    <option value="right">Attach right</option>
-                    <option value="both">Attach both</option>
-                  </Select>
-                  <Button
-                    dense
-                    variant="ghost"
-                    onClick={() =>
-                      onChange(
-                        nextPath,
-                        symbols.filter((_, row) => row !== index),
-                      )
-                    }
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <Button
-                onClick={() =>
-                  onChange(nextPath, [
-                    ...symbols,
-                    { spoken: "", symbol: "", attach: "none" },
-                  ])
-                }
-              >
-                Add spoken symbol
-              </Button>
-            </fieldset>
-          );
-        }
-        if (Array.isArray(item))
-          return (
-            <Field
-              key={key}
-              label={title(key)}
-              description="Comma-separated list."
-            >
-              {({ id, describedBy }) => (
-                <TextInput
-                  id={id}
-                  aria-describedby={describedBy}
-                  value={item.join(", ")}
-                  onChange={(event) =>
-                    onChange(
-                      nextPath,
-                      event.target.value
-                        .split(",")
-                        .map((part) => part.trim())
-                        .filter(Boolean),
-                    )
+    <>
+      {groups.map((group) => (
+        <SurfaceGroup
+          key={group.label || "general"}
+          label={group.label || undefined}
+        >
+          {group.leaves.map(({ key, item, path: leafPath }) => {
+            if (Array.isArray(item) && key === "spoken_symbols") {
+              const symbols = item as Array<{
+                spoken?: string;
+                symbol?: string;
+                attach?: string;
+              }>;
+              const updateSymbol = (
+                index: number,
+                patch: Record<string, string>,
+              ) =>
+                onChange(
+                  leafPath,
+                  symbols.map((entry, row) =>
+                    row === index ? { ...entry, ...patch } : entry,
+                  ),
+                );
+              return (
+                <SurfaceSettingRow
+                  key={key}
+                  wide
+                  label="Spoken-symbol dictionary"
+                  description="Say the phrase, type the symbol."
+                  control={
+                    <div className="surface-symbol-editor">
+                      {symbols.map((entry, index) => (
+                        <div className="symbol-row" key={index}>
+                          <TextInput
+                            aria-label={`Spoken phrase ${index + 1}`}
+                            value={entry.spoken ?? ""}
+                            onChange={(event) =>
+                              updateSymbol(index, {
+                                spoken: event.target.value,
+                              })
+                            }
+                            placeholder="arrow"
+                          />
+                          <TextInput
+                            aria-label={`Symbol ${index + 1}`}
+                            value={entry.symbol ?? ""}
+                            onChange={(event) =>
+                              updateSymbol(index, {
+                                symbol: event.target.value,
+                              })
+                            }
+                            placeholder="→"
+                          />
+                          <Select
+                            aria-label={`Attachment ${index + 1}`}
+                            value={entry.attach ?? "none"}
+                            onChange={(event) =>
+                              updateSymbol(index, {
+                                attach: event.target.value,
+                              })
+                            }
+                          >
+                            <option value="none">No attachment</option>
+                            <option value="left">Attach left</option>
+                            <option value="right">Attach right</option>
+                            <option value="both">Attach both</option>
+                          </Select>
+                          <Button
+                            dense
+                            variant="ghost"
+                            onClick={() =>
+                              onChange(
+                                leafPath,
+                                symbols.filter((_, row) => row !== index),
+                              )
+                            }
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        dense
+                        onClick={() =>
+                          onChange(leafPath, [
+                            ...symbols,
+                            { spoken: "", symbol: "", attach: "none" },
+                          ])
+                        }
+                      >
+                        Add spoken symbol
+                      </Button>
+                    </div>
                   }
                 />
-              )}
-            </Field>
-          );
-        if (typeof item === "boolean")
-          return (
-            <Switch
-              key={key}
-              label={title(key)}
-              checked={item}
-              onChange={(event) => onChange(nextPath, event.target.checked)}
-            />
-          );
-        return (
-          <Field key={key} label={title(key)}>
-            {({ id }) => (
-              <TextInput
-                id={id}
-                type={typeof item === "number" ? "number" : "text"}
-                value={item === null ? "" : String(item)}
-                onChange={(event) =>
-                  onChange(
-                    nextPath,
-                    typeof item === "number"
-                      ? Number(event.target.value)
-                      : event.target.value,
-                  )
+              );
+            }
+            if (Array.isArray(item))
+              return (
+                <SurfaceSettingRow
+                  key={key}
+                  wide
+                  label={title(key)}
+                  description="Comma-separated list."
+                  control={
+                    <TextInput
+                      aria-label={title(key)}
+                      value={item.join(", ")}
+                      onChange={(event) =>
+                        onChange(
+                          leafPath,
+                          event.target.value
+                            .split(",")
+                            .map((part) => part.trim())
+                            .filter(Boolean),
+                        )
+                      }
+                    />
+                  }
+                />
+              );
+            if (typeof item === "boolean")
+              return (
+                <SurfaceSettingRow
+                  key={key}
+                  label={title(key)}
+                  control={
+                    <SurfaceToggle
+                      label={title(key)}
+                      checked={item}
+                      onChange={(next) => onChange(leafPath, next)}
+                    />
+                  }
+                />
+              );
+            return (
+              <SurfaceSettingRow
+                key={key}
+                label={title(key)}
+                control={
+                  <TextInput
+                    aria-label={title(key)}
+                    type={typeof item === "number" ? "number" : "text"}
+                    value={item === null ? "" : String(item)}
+                    onChange={(event) =>
+                      onChange(
+                        leafPath,
+                        typeof item === "number"
+                          ? Number(event.target.value)
+                          : event.target.value,
+                      )
+                    }
+                  />
                 }
               />
-            )}
-          </Field>
-        );
-      })}
-    </div>
+            );
+          })}
+        </SurfaceGroup>
+      ))}
+    </>
   );
 }
 
+/** HS-100 spike — a tiny drawn icon set for settings rows. */
+function SettingGlyph({ name }: { name: string }) {
+  const paths: Record<string, string> = {
+    posture: "M8 1.8 13 3.8v3.4c0 3.2-2.1 5.6-5 6.9-2.9-1.3-5-3.7-5-6.9V3.8Z",
+    secret: "M3.5 7.5h9v5.5h-9Z M5.5 7.5V5.4a2.5 2.5 0 0 1 5 0v2.1",
+    ui: "M3 5h10M3 5v6h10V5M6 8h4",
+    hotkey: "M2.5 4.5h11v7h-11Z M4.5 6.5h1M7.5 6.5h1M10.5 6.5h1M5 9.5h6",
+    model: "M4 12V7m4 5V4m4 8V9",
+    dictation: "M8 2.5a2 2 0 0 1 2 2v3a2 2 0 1 1-4 0v-3a2 2 0 0 1 2-2Z M4.5 7.5a3.5 3.5 0 0 0 7 0M8 11v2.5",
+    wake_word: "M8 2l1.2 3.3L12.5 6.5 9.2 7.7 8 11 6.8 7.7 3.5 6.5 6.8 5.3Z",
+    presence: "M2.5 8s2-3.5 5.5-3.5S13.5 8 13.5 8s-2 3.5-5.5 3.5S2.5 8 2.5 8Z M8 8m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0",
+    meeting: "M5.5 6.5a2 2 0 1 0 0-.01M10.5 6.5a2 2 0 1 0 0-.01M2.5 12c0-1.7 1.3-3 3-3s3 1.3 3 3M8.5 12c0-1.7 1.3-3 3-3s3 1.3 3 3",
+    activity: "M2.5 8h2.5l1.5-3.5 2 7L10 8h3.5",
+    cadence: "M8 8V4.5M8 8l2.5 1.5M8 2.5A5.5 5.5 0 1 0 8 13.5 5.5 5.5 0 1 0 8 2.5Z",
+    commands: "M3 4.5l3 3.5-3 3.5M8 11.5h5",
+    device: "M4.5 2.5h7v11h-7Z M7 11.5h2",
+    mesh: "M4 4.5a1.5 1.5 0 1 0 0-.01M12 4.5a1.5 1.5 0 1 0 0-.01M8 11.5a1.5 1.5 0 1 0 0-.01M5 5.5l2 4.5M11 5.5l-2 4.5M5.5 4.5h5",
+  };
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path
+        d={
+          paths[name] ??
+          "M8 8m-2.6 0a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0-5.2 0"
+        }
+      />
+    </svg>
+  );
+}
+
+const SETTINGS_WINGS = [
+  { id: "settings", label: "Settings" },
+  { id: "guide", label: "Guide" },
+];
+
 export function SettingsCore({ hero, scope }: CoreProps) {
+  // HS-100-10 — the Runtime guide is the Guide wing (the standalone
+  // doc-window died; deep links land here via the registry alias).
+  const [wing, setWing] = useState(scope === "guide" ? "guide" : "settings");
+  useWindowWings(
+    <SurfaceWings wings={SETTINGS_WINGS} active={wing} onChange={setWing} />,
+    [wing],
+  );
+  if (wing === "guide") return <RuntimeDocsCore />;
+  return <SettingsFace hero={hero} scope={scope} />;
+}
+
+function SettingsFace({ hero, scope }: CoreProps) {
   const integrationSubject =
     scope && scope.startsWith("integration:")
       ? scope.slice("integration:".length)
@@ -393,32 +489,32 @@ export function SettingsCore({ hero, scope }: CoreProps) {
         onRetry={() => void resource.reload()}
       >
         <SurfaceSection label="Control posture">
-          <Field
-            label="Preset"
-            description="Applies to future operations. Existing proposals keep their captured posture."
-          >
-            {({ id, describedBy }) => (
-              <Select
-                id={id}
-                aria-describedby={describedBy}
-                value={String(authority.data.control_mode ?? "neutral")}
-                disabled={authorityBusy || authority.loading}
-                onChange={(event) => void setControlMode(event.target.value)}
-              >
-                {CONTROL_MODES.map((mode) => (
-                  <option key={mode} value={mode}>
-                    {controlModeLabel(mode)}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
-          <p>
-            <PostureNote
-              mode={String(authority.data.control_mode ?? "neutral")}
-              describe
+          <SurfaceGroup>
+            <SurfaceSettingRow
+              icon={<SettingGlyph name="posture" />}
+              label="Preset"
+              description={
+                <PostureNote
+                  mode={String(authority.data.control_mode ?? "neutral")}
+                  describe
+                />
+              }
+              control={
+                <Select
+                  aria-label="Control posture preset"
+                  value={String(authority.data.control_mode ?? "neutral")}
+                  disabled={authorityBusy || authority.loading}
+                  onChange={(event) => void setControlMode(event.target.value)}
+                >
+                  {CONTROL_MODES.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {controlModeLabel(mode)}
+                    </option>
+                  ))}
+                </Select>
+              }
             />
-          </p>
+          </SurfaceGroup>
           <Disclosure title="Policy details">
             <p>
               Authentication, secret custody, destination and payload binding,
@@ -436,21 +532,15 @@ export function SettingsCore({ hero, scope }: CoreProps) {
           </Disclosure>
         </SurfaceSection>
         <SurfaceSection label="Hub configuration">
-          <Field
-            label="Find a setting"
-            description="Search matches section and setting names."
-          >
-            {({ id, describedBy }) => (
-              <TextInput
-                id={id}
-                aria-describedby={describedBy}
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Try model, privacy, wake word…"
-              />
-            )}
-          </Field>
+          <div className="surface-search">
+            <TextInput
+              aria-label="Find a setting"
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Find a setting…"
+            />
+          </div>
           {message ? (
             <InlineMessage tone={message.error ? "error" : "success"}>
               {message.text}
@@ -478,10 +568,18 @@ export function SettingsCore({ hero, scope }: CoreProps) {
                 onChange={setActive}
                 tabs={sections.map((id) => ({
                   id,
-                  label: FRIENDLY[id] ?? title(id),
+                  label: (
+                    <>
+                      <SettingGlyph name={id} />
+                      {FRIENDLY[id] ?? title(id)}
+                    </>
+                  ),
                 }))}
               />
               <div className="surface-railed-panel">
+                <h2 className="surface-panel-title">
+                  {FRIENDLY[selected] ?? title(selected)}
+                </h2>
                 <SettingsFields
                   value={resource.data[selected] as JsonRecord}
                   path={[selected]}
@@ -511,20 +609,23 @@ export function SettingsCore({ hero, scope }: CoreProps) {
               is configured; replacement, rotation, and deletion never return
               it.
             </p>
-            <div className="settings-fields">
+            <SurfaceGroup>
               {Object.entries(secrets).map(([secretId, state]) => (
-                <fieldset key={secretId}>
-                  <legend>{SECRET_LABELS[secretId] ?? title(secretId)}</legend>
-                  <p>
-                    {state.configured ? "Configured" : "Not configured"}
-                    {state.destination ? ` · ${state.destination}` : ""}
-                  </p>
-                  <Field label="Replacement value">
-                    {({ id }) => (
+                <SurfaceSettingRow
+                  key={secretId}
+                  icon={<SettingGlyph name="secret" />}
+                  label={SECRET_LABELS[secretId] ?? title(secretId)}
+                  description={
+                    (state.configured ? "Configured" : "Not configured") +
+                    (state.destination ? ` · ${state.destination}` : "")
+                  }
+                  control={
+                    <span className="surface-actions">
                       <TextInput
-                        id={id}
+                        aria-label={`Replacement ${SECRET_LABELS[secretId] ?? title(secretId)}`}
                         type="password"
                         autoComplete="new-password"
+                        placeholder="Replace…"
                         value={secretDrafts[secretId] ?? ""}
                         onChange={(event) =>
                           setSecretDrafts((drafts) => ({
@@ -533,37 +634,35 @@ export function SettingsCore({ hero, scope }: CoreProps) {
                           }))
                         }
                       />
-                    )}
-                  </Field>
-                  <div className="surface-actions">
-                    <Button
-                      dense
-                      loading={secretBusy === secretId}
-                      disabled={!secretDrafts[secretId]?.trim()}
-                      onClick={() => void changeSecret(secretId, "replace")}
-                    >
-                      Replace
-                    </Button>
-                    {ROTATABLE_SECRETS.has(secretId) ? (
-                      <ConfirmVerb
-                        label="Rotate"
-                        confirmLabel="Rotate?"
-                        busy={secretBusy === secretId}
-                        onConfirm={() => void changeSecret(secretId, "rotate")}
-                      />
-                    ) : null}
-                    {state.configured ? (
-                      <ConfirmVerb
-                        label="Delete"
-                        confirmLabel="Delete?"
-                        busy={secretBusy === secretId}
-                        onConfirm={() => void changeSecret(secretId, "delete")}
-                      />
-                    ) : null}
-                  </div>
-                </fieldset>
+                      <Button
+                        dense
+                        loading={secretBusy === secretId}
+                        disabled={!secretDrafts[secretId]?.trim()}
+                        onClick={() => void changeSecret(secretId, "replace")}
+                      >
+                        Replace
+                      </Button>
+                      {ROTATABLE_SECRETS.has(secretId) ? (
+                        <ConfirmVerb
+                          label="Rotate"
+                          confirmLabel="Rotate?"
+                          busy={secretBusy === secretId}
+                          onConfirm={() => void changeSecret(secretId, "rotate")}
+                        />
+                      ) : null}
+                      {state.configured ? (
+                        <ConfirmVerb
+                          label="Delete"
+                          confirmLabel="Delete?"
+                          busy={secretBusy === secretId}
+                          onConfirm={() => void changeSecret(secretId, "delete")}
+                        />
+                      ) : null}
+                    </span>
+                  }
+                />
               ))}
-            </div>
+            </SurfaceGroup>
           </SurfaceSection>
         </div>
       </SurfaceState>

@@ -362,8 +362,19 @@ def _exception_matches(
     exception: Mapping[str, object], candidate: CopyCandidate
 ) -> bool:
     path = str(exception.get("path") or "")
+    if not fnmatch.fnmatch(candidate.path, path):
+        return False
     literals = tuple(str(value) for value in exception.get("literals") or ())
-    return fnmatch.fnmatch(candidate.path, path) and candidate.text in literals
+    if candidate.text in literals:
+        return True
+    # HS-100-10: a registry exception may carry `terms` — whole words
+    # whose presence excepts the candidate on the matched path (used to
+    # stage vocabulary migrations per client, e.g. the Apple surfaces'
+    # Persona -> Agent rename that lands with the HSM follow-up).
+    terms = tuple(str(value) for value in exception.get("terms") or ())
+    return any(
+        re.search(rf"\b{re.escape(term)}\b", candidate.text) for term in terms
+    )
 
 
 def _is_failure_statement(candidate: CopyCandidate) -> bool:
@@ -413,6 +424,8 @@ def violations(
             for exception in selected.exceptions
         )
         for rule in selected.prohibited_operational_patterns:
+            if excepted:
+                break
             if re.search(rule.pattern, candidate.text, re.IGNORECASE):
                 result.add(
                     CopyViolation(

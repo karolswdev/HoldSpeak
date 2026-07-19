@@ -223,7 +223,7 @@ export function PersonaChat(props: { personaId: string }) {
       <div className="desk-pullout-body desk-chat-scroll">
         {turns.length === 0 && !thinking && (
           <p className="desk-chat-empty">
-            Start a conversation with {String(persona.name || "this Persona")}.
+            Start a conversation with {String(persona.name || "this agent")}.
           </p>
         )}
         {turns.map((t) => (
@@ -297,7 +297,7 @@ export function PersonaChat(props: { personaId: string }) {
           <input
             autoFocus
             value={input}
-            placeholder={`Message ${String(persona.name || "")}`}
+            placeholder={"Message " + String(persona.name || "")}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") void send();

@@ -9,14 +9,18 @@ def _page() -> str:
 
 
 def test_dictation_is_one_typed_section_graph() -> None:
+    # HS-100-07: the cockpit became Speak — the loop is the front face,
+    # Journal/Blocks are wings in the WINDOW HEAD, and every former
+    # config tab stacks behind the one gear door. No tab wall.
     page = _page()
-    # HS-95-05: the eyebrow rides the window chrome (the SURFACES table).
     surfaces = (_REPO / "web/src/desk/components/SurfaceWindows.tsx").read_text()
-    assert '"Daily cockpit"' in surfaces
-    assert "Dictation" in page
-    for section in ("ready", "dry", "blocks", "memory", "knowledge", "journal", "runtime", "hooks", "nudges"):
-        assert f'["{section}"' in page
-    assert "useMemo" in page and "<Tabs" in page
+    assert '"Speak"' in surfaces
+    for wing in ("speak", "journal", "blocks"):
+        assert f'id: "{wing}"' in page
+    for door_section in ("<Readiness />", "<Memory />", "<Knowledge />",
+                         "<Runtime />", "<Hooks />", "<Nudges />"):
+        assert door_section in page, f"door must stack {door_section}"
+    assert "useWindowWings" in page and "<Tabs" not in page
 
 
 def test_dictation_preserves_primary_api_verbs() -> None:

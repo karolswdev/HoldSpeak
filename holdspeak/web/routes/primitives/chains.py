@@ -29,9 +29,9 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
         ready = bool(chain.steps) and not missing
         detail = ""
         if not chain.steps:
-            detail = "Add at least one Persona to this linear Sequence."
+            detail = "Add at least one Agent to this linear Sequence."
         elif missing:
-            detail = "Missing Personas: " + ", ".join(map(str, missing))
+            detail = "Missing Agents: " + ", ".join(map(str, missing))
         row = chain.to_dict()
         row["capability"] = capability_descriptor(
             kind="sequence", name=chain.name or chain.id,
@@ -143,10 +143,10 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             steps = list(chain.steps or [])
             if not steps:
                 invocation = lifecycle.fail(
-                    "This Sequence has no Personas. Add one before running.", state="unavailable"
+                    "This Sequence has no Agents. Add one before running.", state="unavailable"
                 )
                 return JSONResponse(
-                    {"error": "This Sequence has no Personas. Add one before running.",
+                    {"error": "This Sequence has no Agents. Add one before running.",
                      "invocation": invocation, "invocation_id": lifecycle.invocation_id}, status_code=409
                 )
 
@@ -155,7 +155,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
             for recipe_id in steps:
                 agent = db.recipes.get(str(recipe_id))
                 if agent is None:
-                    error = f"Persona {recipe_id} is unavailable; the Sequence was not run. Repair the Sequence and run it again."
+                    error = f"Agent {recipe_id} is unavailable; the Sequence was not run. Repair the Sequence and run it again."
                     invocation = lifecycle.fail(error, state="unavailable")
                     return JSONResponse(
                         {"error": error, "invocation": invocation,
@@ -235,7 +235,7 @@ def build_chains_router(ctx: WebContext) -> APIRouter:
                         status_code=502,
                     )
                 if not str(output or "").strip():
-                    error = f"{agent.name or 'Persona'} returned no output; input is retained for Retry."
+                    error = f"{agent.name or 'Agent'} returned no output; input is retained for Retry."
                     invocation = lifecycle.fail(error, state="empty", provider=getattr(intel, "active_provider", None))
                     return JSONResponse({"error": error, "chain_id": chain_id,
                                          "recipe_id": agent.id, "invocation": invocation,

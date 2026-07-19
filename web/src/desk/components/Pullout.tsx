@@ -18,6 +18,7 @@ import { useSteering } from "../steering";
 import { objGlow, type WorldObject } from "../world";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
+import { humanizeWireValue } from "../../lib/productLanguage";
 import { DeskWindowFrame } from "./DeskWindow";
 import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
@@ -442,19 +443,27 @@ export function Pullout({ o }: { o: WorldObject }) {
           </>
         )}
 
-        {(o.kind === "note" || o.kind === "kb") && (
-          <section>
-            <pre className="desk-pullout-md">
-              {String(
-                ir.bodyMarkdown ||
-                  (ir.memberIds || [])
-                    .map((m: string) => `· ${m}`)
-                    .join("\n") ||
-                  "",
-              )}
-            </pre>
-          </section>
-        )}
+        {(o.kind === "note" || o.kind === "kb") &&
+          (() => {
+            const body = String(
+              ir.bodyMarkdown ||
+                (ir.memberIds || [])
+                  .map((m: string) => `· ${m}`)
+                  .join("\n") ||
+                "",
+            );
+            return (
+              <section>
+                {body ? (
+                  <pre className="desk-pullout-md">{body}</pre>
+                ) : (
+                  <p className="quiet">
+                    Nothing written here yet — Edit adds content.
+                  </p>
+                )}
+              </section>
+            );
+          })()}
 
         {o.kind === "recipe" && (
           <section>
@@ -464,7 +473,7 @@ export function Pullout({ o }: { o: WorldObject }) {
             </pre>
             <button
               type="button"
-              className="desk-chip"
+              className="desk-chip is-primary"
               onClick={() => openChat(o.id)}
             >
               Chat with {o.title}
@@ -629,11 +638,13 @@ export function Pullout({ o }: { o: WorldObject }) {
               )}
               <p className="quiet">
                 Runs on{" "}
-                {(capability.supported_placements || ["this_machine"]).join(
-                  " · ",
-                )}
+                {(capability.supported_placements || ["this_machine"])
+                  .map((value: string) => humanizeWireValue(value))
+                  .join(" · ")}
                 {capability.effect_classes?.length
-                  ? ` · ${capability.effect_classes.join(" · ")}`
+                  ? ` · ${capability.effect_classes
+                      .map((value: string) => humanizeWireValue(value))
+                      .join(" · ")}`
                   : ""}
               </p>
               <button
@@ -669,41 +680,43 @@ export function Pullout({ o }: { o: WorldObject }) {
                 onChange={setRunTargetId}
                 disabled={runBusy}
               />
-              <MicButton
-                label={`Hold to fill ${runLabel.toLowerCase()} material`}
-                draftScope={`capability:${o.kind}:${o.id}`}
-                onText={(text) =>
-                  setRunInput((current) =>
-                    current ? `${current} ${text}` : text,
-                  )
-                }
-              />
-              <input
-                value={runInput}
-                placeholder="Material"
-                aria-label="Run material"
-                onChange={(e) => setRunInput(e.target.value)}
-              />
+              <div className="desk-run-composer">
+                <MicButton
+                  label={`Hold to fill ${runLabel.toLowerCase()} material`}
+                  draftScope={`capability:${o.kind}:${o.id}`}
+                  onText={(text) =>
+                    setRunInput((current) =>
+                      current ? `${current} ${text}` : text,
+                    )
+                  }
+                />
+                <input
+                  value={runInput}
+                  placeholder="Material"
+                  aria-label="Run material"
+                  onChange={(e) => setRunInput(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="desk-chip is-primary"
+                  onClick={() => void run()}
+                  disabled={
+                    runBusy ||
+                    !capabilityCanRun ||
+                    !runInput.trim() ||
+                    !selectedTarget?.readiness.available
+                  }
+                >
+                  {runBusy
+                    ? "Running…"
+                    : runState === "failed" || runState === "empty"
+                      ? `Retry ${runLabel}`
+                      : runLabel}
+                </button>
+              </div>
               {runInputRecovered ? (
                 <span className="quiet">Recovered local run material.</span>
               ) : null}
-              <button
-                type="button"
-                className="desk-chip"
-                onClick={() => void run()}
-                disabled={
-                  runBusy ||
-                  !capabilityCanRun ||
-                  !runInput.trim() ||
-                  !selectedTarget?.readiness.available
-                }
-              >
-                {runBusy
-                  ? "Running…"
-                  : runState === "failed" || runState === "empty"
-                    ? `Retry ${runLabel}`
-                    : runLabel}
-              </button>
             </div>
             {runWarning && <p className="desk-run-warning">⚠ {runWarning}</p>}
             {runOut && <pre className="desk-pullout-md">{runOut}</pre>}
@@ -850,7 +863,7 @@ export function Pullout({ o }: { o: WorldObject }) {
         {EDITABLE.has(o.kind) && (
           <button
             type="button"
-            className="desk-chip"
+            className="desk-chip is-primary"
             onClick={() => openEditor(o.id)}
           >
             Edit

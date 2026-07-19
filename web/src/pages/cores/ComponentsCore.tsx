@@ -180,6 +180,9 @@ export function ComponentsCore({ hero }: CoreProps) {
         />
       </SurfaceSection>
       <SurfaceSection label="Navigation and disclosure">
+        {/* HS-100-12: a gallery SPECIMEN, not window IA — the geometry
+            walk exempts data-specimen. */}
+        <div data-specimen="true">
         <Tabs
           label="Gallery tabs"
           tabs={[
@@ -190,6 +193,7 @@ export function ComponentsCore({ hero }: CoreProps) {
           active={tab}
           onChange={setTab}
         />
+        </div>
         <Disclosure title="Reveal advanced controls">
           <p>
             Disclosure keeps advanced depth available without flattening the

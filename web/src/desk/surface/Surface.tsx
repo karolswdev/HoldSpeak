@@ -119,6 +119,7 @@ export function SurfaceState({
   empty,
   emptyLabel = "Nothing yet",
   emptyGlyph = "○",
+  emptyImage,
   onRetry,
   children,
 }: {
@@ -127,6 +128,9 @@ export function SurfaceState({
   empty?: boolean;
   emptyLabel?: string;
   emptyGlyph?: string;
+  /** A pixel-sprite URL — the world's own objects carry the empty
+   * state (wins over the glyph). */
+  emptyImage?: string;
   onRetry?: () => void;
   children?: ReactNode;
 }) {
@@ -156,9 +160,18 @@ export function SurfaceState({
   if (empty)
     return (
       <div className="surface-state" data-kind="empty">
-        <span className="surface-state-glyph" aria-hidden>
-          {emptyGlyph}
-        </span>
+        {emptyImage ? (
+          <img
+            className="surface-state-sprite"
+            src={emptyImage}
+            alt=""
+            aria-hidden
+          />
+        ) : (
+          <span className="surface-state-glyph" aria-hidden>
+            {emptyGlyph}
+          </span>
+        )}
         <span>{emptyLabel}</span>
       </div>
     );
@@ -277,6 +290,81 @@ function deSnakeLabel(key: string): string {
 /** A raw trace (JSON, hook output) on the surface material. */
 export function SurfaceCode({ children }: { children: ReactNode }) {
   return <pre className="surface-code">{children}</pre>;
+}
+
+/** A grouped inset list on the rail tone — the OS settings idiom:
+ * rows divided by hairlines inside one rounded container, never a
+ * form stack. */
+export function SurfaceGroup({
+  label,
+  children,
+}: {
+  label?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="surface-group-wrap">
+      {label ? <h3 className="surface-group-label">{label}</h3> : null}
+      <div className="surface-group">{children}</div>
+    </section>
+  );
+}
+
+/** One setting: icon + label + quiet description on the LEFT, a
+ * compact control on the RIGHT (`wide` stacks the control under the
+ * text for editors). */
+export function SurfaceSettingRow({
+  icon,
+  label,
+  description,
+  control,
+  wide,
+}: {
+  icon?: ReactNode;
+  label: ReactNode;
+  description?: ReactNode;
+  control: ReactNode;
+  wide?: boolean;
+}) {
+  return (
+    <div className={wide ? "surface-setting-row is-wide" : "surface-setting-row"}>
+      {icon ? <span className="surface-setting-icon">{icon}</span> : null}
+      <span className="surface-setting-text">
+        <strong>{label}</strong>
+        {description ? <small>{description}</small> : null}
+      </span>
+      <span className="surface-setting-control">{control}</span>
+    </div>
+  );
+}
+
+/** A bare switch for row-right placement (the row carries the label). */
+export function SurfaceToggle({
+  label,
+  checked,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  checked: boolean;
+  onChange(next: boolean): void;
+  disabled?: boolean;
+}) {
+  return (
+    <label className="signal-switch surface-toggle">
+      <input
+        type="checkbox"
+        role="switch"
+        aria-label={label}
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span className="signal-switch-track" aria-hidden="true">
+        <span />
+      </span>
+    </label>
+  );
 }
 
 /** The inline two-step for destructive verbs (rule 5): first press

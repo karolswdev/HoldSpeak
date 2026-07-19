@@ -705,3 +705,29 @@ input[type="file"]::file-selector-button:hover {
 *::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* ============================================================
+ * Materials spike — fabricated control faces (the Fluent bottom
+ * stroke + the glass inner highlight): controls read as MADE objects,
+ * not flat HTML fills.
+ * ============================================================ */
+.btn--secondary,
+.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger) {
+  background: var(--wash-2);
+  border: 1px solid var(--wash-2);
+  border-bottom-color: var(--shade-1);
+  box-shadow: inset 0 1px 0 var(--gleam-1);
+}
+.btn--secondary:hover,
+.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):hover {
+  background: var(--gleam-2);
+}
+.btn--primary {
+  box-shadow:
+    inset 0 1px 0 var(--gleam-3),
+    0 1px 2px var(--shade-1);
+}
+.desk-next :where(select, textarea, input):not([type="checkbox"]):not([type="radio"]),
+:where(.input, .select, .hs-control) {
+  border-bottom-color: var(--shade-1);
+}

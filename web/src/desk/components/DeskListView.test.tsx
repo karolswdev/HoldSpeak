@@ -226,7 +226,7 @@ describe("HS-93-08 pagination at 1,000 items", () => {
         <DeskToolShelf />
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Tools/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Search/ }));
     fireEvent.change(
       screen.getByPlaceholderText("Search tools and Desk items"),
       { target: { value: "Meridian" } },
@@ -251,15 +251,14 @@ describe("HS-93-08 chrome toggle", () => {
         <DeskChrome />
       </MemoryRouter>,
     );
-    const toggle = screen.getByRole("button", { name: "List" });
-    expect(toggle).toHaveAttribute("aria-pressed", "false");
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    // HS-100-11: the toggle lives in the HoldSpeak menu now.
+    fireEvent.click(screen.getByRole("button", { name: "HoldSpeak" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "List view" }));
     expect(useDesk.getState().viewMode).toBe("list");
     expect(localStorage.getItem("hs.desk.view")).toBe("list");
     expect(window.location.search).toContain("view=list");
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(screen.getByRole("button", { name: "HoldSpeak" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Spatial view" }));
     expect(localStorage.getItem("hs.desk.view")).toBe("spatial");
     expect(window.location.search).not.toContain("view=list");
   });

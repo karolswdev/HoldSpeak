@@ -12,7 +12,6 @@ import {
   InlineMessage,
   StatusPill,
   Switch,
-  Tabs,
   TextInput,
 } from "../../components/signal/Signal";
 import { apiFetch, readableError, type JsonRecord } from "../../lib/api";
@@ -26,8 +25,9 @@ import {
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
 import { humanTime, presentValue } from "../../desk/surface/format";
+import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 
-const TABS = ["records", "rules", "candidates", "connectors"].map((id) => ({
+const WINGS = ["records", "rules", "candidates", "connectors"].map((id) => ({
   id,
   label: id[0].toUpperCase() + id.slice(1),
 }));
@@ -43,6 +43,10 @@ export interface CoreProps {
 
 export function ActivityCore({ hero }: CoreProps) {
   const [active, setActive] = useState("records");
+  useWindowWings(
+    <SurfaceWings wings={WINGS} active={active} onChange={setActive} />,
+    [active],
+  );
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -141,12 +145,6 @@ export function ActivityCore({ hero }: CoreProps) {
           ) : undefined
         }
       >
-        <Tabs
-          label="Activity sections"
-          tabs={TABS}
-          active={active}
-          onChange={setActive}
-        />
         <Field label="Filter this view">
           {({ id }) => (
             <TextInput

@@ -20,7 +20,7 @@ export const PRODUCT_TERMS = {
   zone: ["Zone", "Zones"],
   knowledge: ["Knowledge", "Knowledge collections"],
   project: ["Project", "Projects"],
-  persona: ["Persona", "Personas"],
+  persona: ["Agent", "Agents"],
   coder_session: ["Coder session", "Coder sessions"],
   workflow: ["Workflow", "Workflows"],
   sequence: ["Sequence", "Sequences"],

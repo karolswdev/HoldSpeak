@@ -60,12 +60,11 @@ describe("route demotion (HS-95-08): every former page is a deep link", () => {
     expect(table["/activity"].surface).toBe("inspect-activity");
     expect(table["/commands"].surface).toBe("configure-commands");
     expect(table["/cadence"].surface).toBe("configure-cadence");
-    expect(table["/studio"].surface).toBe("configure-tools");
     expect(table["/workbench"].surface).toBe("build-workflow");
     expect(table["/profiles"].surface).toBe("configure-runs-on");
     expect(table["/companion"].surface).toBe("inspect-personas-and-coders");
     expect(table["/setup"].surface).toBe("configure-setup");
-    expect(table["/docs/dictation-runtime"].surface).toBe("read-runtime-docs");
+    expect(table["/docs/dictation-runtime"].surface).toBe("read-runtime-docs"); // -> Settings Guide via the registry alias
     expect(table["/design/components"].surface).toBe("design-components");
   });
 

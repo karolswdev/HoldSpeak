@@ -1818,7 +1818,9 @@ class TestHistoryUiSmoke:
         assert "/api/meetings/" in js
         assert "/artifacts" in js
         assert "/export?format=" in js
-        assert "No aftercare yet" in js
+        # HS-100-08: aftercare rows render on the outcomes face; the empty
+        # state is the needs-you section's honest line.
+        assert "Nothing waiting on you" in js
 
     def test_settings_route_serves_the_global_settings_page(self, test_client):
         response = test_client.get("/settings")
@@ -1846,7 +1848,7 @@ class TestCompanionUiSmoke:
 
         assert '<div id="root"></div>' in response.text
         source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CompanionCore.tsx").read_text()
-        for marker in ("openPersona", "Needs you", "Personas", "How it connects", "no autonomous send"):
+        for marker in ("openPersona", "needs your answer", "Agents", "How it connects", "no autonomous send"):
             assert marker in source
 
 

@@ -48,13 +48,13 @@ describe("Phase 93 Desk arrival", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     const menu = screen.getByRole("menu", { name: "Create a Desk item" });
     expect(menu).toBeInTheDocument();
-    for (const label of ["Note", "Zone", "Knowledge", "Persona", "Workflow"]) {
+    for (const label of ["Note", "Zone", "Knowledge", "Agent", "Workflow"]) {
       expect(
         screen.getByRole("menuitem", { name: `Create ${label}` }),
       ).toBeInTheDocument();
     }
 
-    fireEvent.click(screen.getByRole("menuitem", { name: "Create Persona" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Create Agent" }));
     expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("recipe");
   });
 
@@ -64,7 +64,7 @@ describe("Phase 93 Desk arrival", () => {
         <DeskToolShelf />
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Tools/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Search/ }));
 
     // HS-95-04: the shelf is a dispatcher now — every advanced tool is a
     // button that opens its surface in-world (or falls back to the legacy
@@ -90,7 +90,7 @@ describe("Phase 93 Desk arrival", () => {
         <DeskToolShelf />
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Tools/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Search/ }));
     fireEvent.change(
       screen.getByRole("searchbox", { name: "Search tools and Desk items" }),
       { target: { value: "release" } },
@@ -164,7 +164,7 @@ describe("Phase 93 Desk arrival", () => {
         <DeskToolShelf />
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Tools/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Search/ }));
 
     expect(
       screen.getByRole("button", { name: /Project Orion/ }),
@@ -224,7 +224,7 @@ describe("Phase 93 Desk arrival", () => {
         <DeskToolShelf />
       </MemoryRouter>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /Tools/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Search/ }));
 
     const action = screen.getByRole("button", {
       name: /Ask Scout about Release checklist/,

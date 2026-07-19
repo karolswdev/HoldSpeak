@@ -162,7 +162,14 @@
 .desk-next .desk-menu-list button:hover,
 .desk-next .desk-menu-list a:focus-visible,
 .desk-next .desk-menu-list button:focus-visible {
-  background: var(--wash-2);
+  /* Materials spike — the native menu selection bar: accent fill,
+     contrast ink (macOS behavior). */
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+.desk-next .desk-menu-list button:hover svg,
+.desk-next .desk-menu-list button:focus-visible svg {
+  color: var(--text-on-accent);
 }
 .desk-next .desk-menu-list svg {
   width: 12px;
@@ -190,7 +197,15 @@
   background: var(--danger, #f87171);
 }
 .desk-next .desk-chip {
-  padding: 6px 12px;
+  /* Materials round 3.2 — ONE chip geometry: every chip is the same
+     height with the same padding; variants change COLOR only. */
+  height: 27px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1;
+  white-space: nowrap;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: rgba(12, 10, 18, 0.62);
@@ -743,10 +758,66 @@
   gap: 10px;
   height: 40px;
   flex: none;
-  padding: 0 0 0 12px;
+  padding: 0 12px;
   background: var(--desk-window-head-fill);
+  /* Materials round 2 — the UNIFIED header: the verb bar below shares
+     this tint and carries the hairline; head + verbs read as one
+     toolbar band (the mac unified-toolbar look). */
   border-radius: calc(var(--desk-window-radius) - 1px)
     calc(var(--desk-window-radius) - 1px) 0 0;
+}
+/* Materials spike — traffic lights (macos-web values): 12.8px discs
+   with darker rings; grey on an unfocused window; glyphs reveal and
+   the cluster swells on hover. */
+.desk-next .desk-traffic {
+  display: grid;
+  grid-template-columns: repeat(3, 12.8px);
+  gap: 8px;
+  align-items: center;
+  flex: none;
+}
+.desk-next .desk-light {
+  width: 12.8px;
+  height: 12.8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  background: var(--light-color, var(--light-idle));
+  box-shadow: 0 0 0 0.5px var(--light-ring, var(--shade-1));
+  transition: transform var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-light svg {
+  width: 8px;
+  height: 8px;
+  opacity: 0;
+  color: var(--shade-2);
+  transition: opacity var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-traffic:hover .desk-light,
+.desk-next .desk-traffic:focus-within .desk-light {
+  transform: scale(1.18);
+}
+.desk-next .desk-traffic:hover .desk-light svg,
+.desk-next .desk-traffic:focus-within .desk-light svg {
+  opacity: 1;
+}
+.desk-next .is-front .desk-light-close {
+  --light-color: var(--light-close);
+  --light-ring: var(--light-close-ring);
+}
+.desk-next .is-front .desk-light-min {
+  --light-color: var(--light-min);
+  --light-ring: var(--light-min-ring);
+}
+.desk-next .is-front .desk-light-max {
+  --light-color: var(--light-max);
+  --light-ring: var(--light-max-ring);
+}
+.desk-next .desk-window-title {
+  text-align: center;
 }
 .desk-next .desk-pullout-head img {
   image-rendering: pixelated;
@@ -778,12 +849,10 @@
    1px keyline ring; rest windows quiet down. One property, one ladder —
    never per-window recipes. Sheets keep their own form. */
 .desk-next .desk-window-shell:not(.is-sheet) {
-  box-shadow: var(--desk-window-shadow-rest);
+  box-shadow: var(--desk-glass-edge), var(--desk-window-shadow-rest);
 }
 .desk-next .desk-window-shell.is-front:not(.is-sheet) {
-  box-shadow:
-    0 0 0 1px var(--desk-window-keyline),
-    var(--desk-window-shadow);
+  box-shadow: var(--desk-glass-edge), var(--desk-window-shadow);
 }
 .desk-next .desk-window-handle {
   cursor: grab;
@@ -958,19 +1027,26 @@
 }
 .desk-next .desk-pullout-body section,
 .desk-next .desk-relationship-axes {
+  /* Materials round 3.2 — no card-in-window: the axes are sections on
+     the material, separated by hairlines. */
   display: grid;
-  gap: 6px;
-  padding: 10px 12px;
-  border: 1px solid var(--border-subtle, var(--border));
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.03);
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.desk-next .desk-relationship-axes h3:not(:first-child) {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--wash-1);
 }
 .desk-next .desk-pullout-body h3 {
   margin: 0 0 6px;
-  font-size: var(--font-size-xs);
+  font-size: var(--desk-surface-label-size);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--k, #ff6b35) 75%, var(--text-muted));
+  /* The object tint stays on the WINDOW EDGE; headings are quiet. */
+  color: var(--text-muted);
 }
 .desk-next .desk-pullout-body p,
 .desk-next .desk-pullout-body li {
@@ -1036,7 +1112,36 @@
   gap: 3px;
 }
 .desk-next .desk-pullout-run {
+  /* Materials round 3.4 — the run area STACKS: picker, then one
+     composer row (mic · material · verb). The one-row cram that
+     crushed the picker and stretched the mic is dead. */
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.desk-next .desk-run-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desk-next .desk-run-composer input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+}
+.desk-next .desk-run-composer .desk-chip {
+  height: 36px;
+  flex: none;
+}
+.desk-next .desk-capability-contract {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.desk-next .desk-capability-contract > strong {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
 }
 
@@ -1087,8 +1192,23 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 10px 14px;
-  border-top: 1px solid var(--border);
+  padding: 9px 12px;
+  border-top: 0.9px solid var(--shade-1);
+  background: var(--desk-window-head-fill);
+}
+.desk-next .desk-pullout-foot .desk-chip {
+  height: 30px;
+  padding: 0 14px;
+}
+.desk-next .desk-chip.is-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 var(--gleam-3);
+}
+.desk-next .desk-chip.is-primary:hover {
+  background: var(--accent-hover);
 }
 .desk-next .desk-pullout-file {
   display: flex;
@@ -1347,6 +1467,12 @@
 }
 .desk-next .desk-mic.is-failed {
   border-color: var(--danger, #f87171);
+}
+/* HS-100-06: capture unavailable — visible, disabled, reason in the
+   title. Never display: none (the mic must not vanish silently). */
+.desk-next .desk-mic.is-unsupported {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .desk-next .desk-mic-failure {
@@ -3349,6 +3475,15 @@
   display: inline-block;
   transition: transform var(--duration-short) var(--ease-quart);
 }
+/* Materials round 2 — dock magnification: chips and launchers swell
+   under the pointer with a distance falloff (JS drives --dock-mag
+   transforms; this transition makes it springy). */
+.desk-next .desk-dock-main,
+.desk-next .desk-dock-launch,
+.desk-next .desk-dock-reset {
+  transform-origin: bottom center;
+  transition: transform var(--duration-short) var(--ease-quart);
+}
 .desk-next .desk-dock-chip:hover .desk-dock-main > span[aria-hidden="true"],
 .desk-next .desk-dock-launch:hover > span[aria-hidden="true"] {
   transform: scale(1.18);
@@ -3625,8 +3760,10 @@
   :where(.desk-pullout, .desk-surface-window, .desk-trust-window) {
   border-radius: var(--desk-window-radius);
   background: var(--desk-window-fill);
-  border: 1px solid var(--border);
-  box-shadow: var(--desk-window-shadow);
+  border: 0;
+  /* Materials spike — the frosted-glass rim (inner dark + outer light
+     hairline) rides UNDER the elevation in the same shadow stack. */
+  box-shadow: var(--desk-glass-edge), var(--desk-window-shadow);
   backdrop-filter: var(--desk-window-blur);
 }
 
@@ -3654,4 +3791,426 @@
 /* The orb presses inward instead of down (it is a circle, not a chip). */
 .desk-next .desk-orb:active:not(:disabled) .desk-orb-core {
   transform: scale(0.92);
+}
+
+/* Materials spike — a WINDOW is not a form control: the shell never
+   wears the focus ring (front state is carried by the lifted shadow
+   and the colored traffic lights; interior elements keep the global
+   ring). */
+.desk-next .desk-window-shell:focus-visible {
+  outline: none;
+}
+
+
+/* ── Materials round 3: the MENU BAR. The floating pill clusters were
+   a website header; an OS has a thin frosted strip — app + menus on
+   the left, status and the clock on the right. Inner classes keep
+   their names (walk + raise-rule canon); the bar flattens them. ── */
+.desk-next .desk-menubar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 30px;
+  z-index: var(--desk-z-dock-under);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px 0 12px;
+  background: var(--desk-glass);
+  border-bottom: 0.9px solid var(--shade-1);
+}
+.desk-next .desk-menubar::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 30px;
+  backdrop-filter: var(--desk-window-blur);
+  z-index: var(--desk-z-stage);
+}
+.desk-next .desk-menubar .desk-chrome {
+  position: static;
+  pointer-events: auto;
+  gap: 2px;
+  z-index: auto;
+}
+/* Every control in the bar is a flat menu item, not a pill. */
+.desk-next .desk-menubar button,
+.desk-next .desk-menubar .desk-chip {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 5px;
+  min-height: 22px;
+  padding: 2px 9px;
+  font-size: var(--font-size-sm);
+  color: var(--text);
+}
+.desk-next .desk-menubar button:hover,
+.desk-next .desk-menubar button:focus-visible {
+  background: var(--wash-2);
+}
+.desk-next .desk-menubar .desk-mark {
+  font-weight: 700;
+}
+.desk-next .desk-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 8px;
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.desk-next .desk-clock strong {
+  font-weight: 600;
+}
+
+
+/* Materials round 3.1 — the bar FLATTENS everything it contains: the
+   daily-start pills (42px, bold, bordered) were overflowing the 30px
+   strip. Highest-specificity override, by name. */
+.desk-next .desk-menubar .desk-start-actions,
+.desk-next .desk-menubar .desk-start-actions.is-compact {
+  gap: 2px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.desk-next .desk-menubar .desk-start-action,
+.desk-next .desk-menubar .desk-create-button,
+.desk-next .desk-menubar .desk-start-actions.is-compact .desk-start-action,
+.desk-next .desk-menubar .desk-start-actions.is-compact .desk-create-button,
+.desk-next .desk-menubar .desk-tools-launch,
+.desk-next .desk-menubar .egress-badge,
+.desk-next .desk-menubar .desk-chip {
+  min-height: 24px;
+  height: 24px;
+  padding: 0 9px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 5px;
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-menubar .desk-start-action:hover,
+.desk-next .desk-menubar .desk-create-button:hover,
+.desk-next .desk-menubar .desk-tools-launch:hover,
+.desk-next .desk-menubar .egress-badge:hover,
+.desk-next .desk-menubar .desk-chip:hover {
+  background: var(--wash-2);
+}
+.desk-next .desk-menubar kbd {
+  font-size: 10px;
+  padding: 0 4px;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ── Materials round 3.3: the component sweep (no more surface left
+   behind). One pass over the legacy desk furniture: the in-world
+   editor, the Desk memory drawer, the Delivery sessions, the tool
+   shelf, and the pane picker all join the material grammar. ── */
+
+/* The in-world editor is a small window: the one material, a head
+   band, a primary Done. */
+.desk-next .desk-editor {
+  border: 0;
+  background: var(--desk-window-fill);
+  backdrop-filter: var(--desk-window-blur);
+  box-shadow: var(--desk-glass-edge), var(--desk-transient-shadow);
+}
+.desk-next .desk-editor-head {
+  margin: -14px -14px 0;
+  padding: 8px 12px;
+  background: var(--desk-window-head-fill);
+  border-bottom: 0.9px solid var(--shade-1);
+  border-radius: 16px 16px 0 0;
+  font-size: var(--desk-surface-label-size);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .desk-editor-foot button:last-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 var(--gleam-3);
+}
+
+/* Desk memory: figures are quiet metrics, not boxes; the filter row is
+   ONE control height; messages are quiet. */
+.desk-next .desk-attention-counts span {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0 14px 0 0;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+}
+.desk-next .desk-attention-counts b {
+  font-size: var(--font-size-lg);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .desk-attention-filters input,
+.desk-next .desk-attention-filters select,
+.desk-next .desk-attention-filters button {
+  min-height: 32px;
+  height: 32px;
+}
+.desk-next .desk-attention-filters select {
+  text-align: left;
+  min-width: 132px;
+}
+.desk-next .desk-attention-filters button {
+  border: 1px solid var(--border);
+  border-bottom-color: var(--shade-1);
+  border-radius: var(--radius-sm);
+  background: var(--wash-2);
+  color: var(--text);
+  padding: 0 14px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 var(--gleam-1);
+}
+.desk-next .desk-attention-error,
+.desk-next .desk-attention-empty {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-body-size);
+}
+
+/* Delivery: coder sessions are ROWS, not crammed inline chips. */
+.desk-next .desk-dlv-session-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 4px 10px;
+  margin: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--desk-surface-body-size);
+  text-align: left;
+  cursor: pointer;
+}
+.desk-next .desk-dlv-session-open:hover {
+  background: var(--wash-1);
+}
+.desk-next .desk-dlv-session-open small {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+
+/* The tool shelf joins the one material (the accent cage retires). */
+.desk-next .desk-tool-shelf {
+  border: 0;
+  box-shadow: var(--desk-glass-edge), var(--desk-transient-shadow);
+  background: var(--desk-window-fill);
+  backdrop-filter: var(--desk-window-blur);
+}
+
+/* The pane picker's spawn row: one control height. */
+.desk-next .desk-panepicker input,
+.desk-next .desk-panepicker button {
+  min-height: 30px;
+}
+
+/* ————— HS-100-07 — wings: the application's faces live in the HEAD
+   (the thesis's posture rule). Segmented well, one gear door. ————— */
+.desk-next .desk-pullout-head.has-wings .desk-pullout-title {
+  flex: none;
+  text-align: left;
+}
+.desk-next .desk-wings {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  margin-inline: auto;
+  padding: 3px;
+  border-radius: calc(var(--radius-sm) + 3px);
+  background: var(--desk-window-well);
+}
+.desk-next .desk-wing {
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 550;
+  padding: 3px 13px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--duration-short) var(--ease-quart),
+    color var(--duration-short) var(--ease-quart);
+}
+.desk-next .desk-wing:hover {
+  color: var(--text);
+}
+.desk-next .desk-wing.is-on {
+  background: var(--desk-window-head-fill);
+  color: var(--text);
+  box-shadow: 0 1px 4px var(--shade-1);
+}
+.desk-next .desk-wing-door {
+  padding: 3px 9px;
+}
+
+/* ————— HS-100-07 — Speak: the working posture is ONE generous column;
+   the loop is the face, the status is a line, the wall is a door. ————— */
+.desk-next .speak-face {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+  margin-inline: auto;
+  padding-top: 6px;
+  min-height: 100%;
+}
+.desk-next .speak-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 2px;
+}
+.desk-next .speak-hero .desk-mic {
+  width: 84px;
+  height: 84px;
+  font-size: 30px;
+  border-color: var(--accent);
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--accent),
+    var(--accent-strong) 75%
+  );
+  box-shadow:
+    0 0 0 10px var(--accent-soft),
+    0 0 30px var(--accent-soft);
+}
+.desk-next .speak-hero .desk-mic.is-listening {
+  animation: desk-next-mic-pulse 1.1s ease-in-out infinite;
+}
+.desk-next .speak-hint {
+  color: var(--text-faint);
+  font-size: var(--font-size-xs);
+  text-align: center;
+  max-width: 34em;
+}
+.desk-next .speak-run-row {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.desk-next .speak-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  background: var(--success-soft);
+  box-shadow: inset 0 0 0 1px var(--success);
+}
+.desk-next .speak-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--desk-window-head-fill);
+  color: var(--text-faint);
+  font-size: var(--font-size-xs);
+}
+.desk-next .speak-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  flex: none;
+}
+.desk-next .speak-status.is-warn .speak-status-dot {
+  background: var(--warning, var(--accent));
+}
+.desk-next .speak-status-fix {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.desk-next .surface-door {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* HS-100-10 — the arrival's one trust line. */
+.desk-next .desk-empty-trust {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-dim);
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-empty-trust-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  flex: none;
+}
+.desk-next .desk-empty-trust.is-mixed .desk-empty-trust-dot,
+.desk-next .desk-empty-trust.is-cloud .desk-empty-trust-dot {
+  background: var(--warning, var(--accent));
+}
+
+/* HS-100-11 — the system bar's attention bell (the dock carries the
+   applications; the approve-queue badge lives here). */
+.desk-next .desk-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+.desk-next .desk-bell:hover {
+  color: var(--text);
+  background: var(--desk-window-head-fill);
+}
+.desk-next .desk-bell strong {
+  font-size: var(--font-size-xs);
+  background: var(--accent);
+  color: var(--text-inverse, #fff);
+  border-radius: 8px;
+  padding: 0 5px;
+  line-height: 1.4;
+}
+.desk-next .desk-dock-app.is-front {
+  color: var(--text);
 }

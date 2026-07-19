@@ -95,27 +95,32 @@ mechanical).
 - **The Desk** answers "what is this" and "what do I do now": the two
   modes as start verbs (Dictate, Record) plus Create, with your material
   as objects in the world.
-- **Dictation** opens as a window holding the whole voice-typing mode:
-  voice typing, the journal, the learning digest and corrections, and
-  activity pre-briefing.
+- **Speak** opens as a window on the voice-typing loop itself (speak,
+  see it land, judge it, teach it); the journal and blocks are its
+  wings, and every knob folds behind one configuration door.
 - **Meetings** opens as a window holding the whole meeting mode: live
   capture, import, the archive with facets, and aftercare.
-- **Studio** is the advanced tier's launcher window (Workbench, Cadence,
-  Commands, Runs on, Activity, Personas). It sits below the two modes and
-  a first-run user is never dropped into it.
+- **Agents** opens as a window on who needs you: blocked coder
+  sessions first with an answer one verb away, then delivery work and
+  agent chat as wings. Builder tools (Workbench, Commands, Cadence,
+  Activity) are search-reachable, not a tier — there is no Studio.
 - **Settings** is the one configuration window.
 
 **The Desk** (`/desk`) is the spatial expression of the Primitive Framework: a
 warm 2.5D diorama where every primitive (meetings, notes, KBs, agents, and the
 rest) is a hand-drawn object you arrange by hand, file into shelf-zones, and
 dive through. It matches the iPad DeskOS look and feel and reuses the same
-`/api/*` primitive data. It lives in the Studio tier and is celebrated with an
-entry on Home; the two modes stay the front door.
+`/api/*` primitive data. **The Desk IS the front door** (Constitution,
+Article I — this paragraph was amended by HS-100-10 to close the drift
+Article I.4 named): the browser opens on the Desk, every capability is
+a window on it, and old route addresses survive only as deep links
+that land in-world.
 
-First-run arrival is a single surface (the `/welcome` wizard), which teaches
-the two modes and lands on Home. The rule for future work: the surface stays
-legible. A new capability joins one of the two modes or the Studio tier; it
-does not become a new top-level door by default.
+First-run arrival is the Desk itself: the two modes as start verbs and
+one trust line, nothing else. The rule for future work: the surface
+stays legible. A new capability joins one of the four applications
+(Speak, Meetings, Agents, Settings) or becomes a search-reachable
+tool; it does not become a new top-level door by default.
 
 ## The competitive frame (as of mid-2026; architecture-level on purpose)
 

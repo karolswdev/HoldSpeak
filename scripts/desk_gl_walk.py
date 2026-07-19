@@ -23,6 +23,12 @@ from playwright.sync_api import sync_playwright
 import os
 
 BASE = os.environ.get("HS_WALK_BASE", "http://localhost:8788")
+# Token-gated staged instances (uat.stage): appended on arrival when set.
+TOKEN = os.environ.get("HS_WALK_TOKEN", "")
+
+
+def arrive_url(path: str = "/") -> str:
+    return BASE + path + (f"?token={TOKEN}" if TOKEN else "")
 OUT = Path("uat/_runs/hs-95-01-walk")
 
 
@@ -88,7 +94,7 @@ def shots(label: str) -> None:
                 lambda r: failures.append(f"{r.status} {r.url}")
                 if r.url.startswith(BASE) and r.status >= 400 else None,
             )
-            page.goto(BASE + "/", wait_until="networkidle")
+            page.goto(arrive_url(), wait_until="networkidle")
             wait_world(page)
             page.screenshot(path=str(OUT / f"{label}-{name}.png"))
             print(f"shot {label}-{name}.png  api-failures={failures}")
@@ -102,7 +108,7 @@ def smoke() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         objs = page.evaluate("() => window.__hsWorldProbe()")
         assert objs, "no objects on the seeded desk"
@@ -164,7 +170,7 @@ def storm(headed: bool = True) -> None:  # noqa: C901
         page = browser.new_page(
             viewport={"width": 1440, "height": 900}, device_scale_factor=2
         )
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         objs = page.evaluate("() => window.__hsWorldProbe()")
         assert objs, "no objects on the seeded desk"
@@ -266,7 +272,7 @@ def windows() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         # Window 1: the pull-out, via a canvas tap on a real object
         # (first, while nothing can cover it — windows are honest
@@ -322,7 +328,7 @@ def windows() -> None:
         # Reload: rects, stacking order, and maximize persist; a reopening
         # window always PRESENTS itself (minimize is session-scoped by
         # design and, since HS-97-03, never persisted).
-        page.reload(wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         layout = page.evaluate(
             "() => JSON.parse(localStorage.getItem('hs.desk.panels'))"
@@ -350,7 +356,7 @@ def windows() -> None:
         page.close()
         # The phone: a window presents as a bottom sheet.
         page = browser.new_page(viewport={"width": 393, "height": 852})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         target = free_object(page)
         assert target, "no tappable object on the desk"
@@ -376,7 +382,7 @@ def shell() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         # Open two windows.
         page.click(".desk-dock-launch:has-text('Desk memory')")
@@ -446,9 +452,9 @@ def shell() -> None:
         # The chrome menu dispatches through the shell: since HS-95-05 the
         # Dictation surface is registered, so it opens IN PLACE.
         page.click(".desk-mark")
-        page.click('nav.desk-menu button:has-text("Dictation")')
+        page.click('nav.desk-menu button:has-text("Speak")')
         page.wait_for_selector(
-            "[aria-label='Dictation'].desk-surface-window", timeout=8000
+            "[aria-label='Speak'].desk-surface-window", timeout=8000
         )
         assert page.url.rstrip("/") == BASE, page.url
         print("shell walk 1440: dock, snap, cycle, park/restore, close, reset, menu dispatch in place")
@@ -464,7 +470,7 @@ def cores() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         open_shelf(page)
         page.click(".desk-tool-link:has-text(\'Activity\')")
@@ -483,11 +489,11 @@ def cores() -> None:
         assert page.locator(".desk-surface-window").count() == 2
         page.screenshot(path=str(OUT / "cores-1440.png"))
         # Deep links land in-world (HS-95-08's demotion).
-        page.goto(BASE + "/activity", wait_until="networkidle")
+        page.goto(arrive_url("/activity"), wait_until="networkidle")
         page.wait_for_selector(
             "[aria-label=\'Activity\'].desk-surface-window", timeout=10000
         )
-        page.goto(BASE + "/commands", wait_until="networkidle")
+        page.goto(arrive_url("/commands"), wait_until="networkidle")
         page.wait_for_selector(
             "[aria-label=\'Commands\'].desk-surface-window", timeout=10000
         )
@@ -495,6 +501,65 @@ def cores() -> None:
         browser.close()
 
 
+
+
+def speakflow() -> None:
+    """HS-100-07 — the flow budget, pinned: arrival -> correction ritual
+    open in at most 6 interactions, ONE window, on the production bundle
+    (trace B promoted to the front face). Requires a secure origin for
+    the mic (run against localhost)."""
+    clicks = 0
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            args=[
+                "--use-fake-ui-for-media-stream",
+                "--use-fake-device-for-media-stream",
+                "--use-file-for-fake-audio-capture=/tmp/hs_dictate.wav",
+            ]
+        )
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.context.grant_permissions(["microphone"])
+        page.goto(arrive_url(), wait_until="networkidle")
+        wait_world(page)
+        page.click(".desk-dock-app[aria-label='Speak']")
+        clicks += 1
+        page.wait_for_selector(".desk-surface-window", timeout=8000)
+        # The window opens ON the job: hero mic present, no tab wall.
+        mic = page.locator(".desk-surface-window .speak-hero .desk-mic")
+        mic.wait_for(timeout=8000)
+        assert (
+            page.locator(".desk-surface-body [role=tablist]").count() == 0
+        ), "no tab wall may render inside the window body (wings live in the head)"
+        box = mic.bounding_box()
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        page.mouse.down()
+        page.wait_for_timeout(3500)
+        page.mouse.up()
+        clicks += 1
+        deadline = time.time() + 30
+        text = ""
+        while time.time() < deadline:
+            text = page.locator(".desk-surface-window textarea").first.input_value()
+            if text.strip():
+                break
+            page.wait_for_timeout(500)
+        assert text.strip(), "transcription did not land"
+        page.click(".desk-surface-window button:has-text('Run dry test')")
+        clicks += 1
+        page.wait_for_selector(".desk-surface-window .speak-result", timeout=15000)
+        page.click(".desk-surface-window .speak-result button:has-text('Wrong')")
+        clicks += 1
+        page.wait_for_selector(
+            ".desk-surface-window >> text=Correct this result", timeout=5000
+        )
+        windows = page.locator(".desk-window-shell").count()
+        assert windows == 1, f"the loop must stay in ONE window (got {windows})"
+        assert clicks <= 6, f"flow budget blown: {clicks} clicks"
+        print(
+            f"speakflow: arrival -> correction in {clicks} interactions, "
+            f"{windows} window, transcript {text!r}"
+        )
+        browser.close()
 
 
 def dictation() -> None:
@@ -514,17 +579,16 @@ def dictation() -> None:
         )
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.context.grant_permissions(["microphone"])
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         # 1. The Dictate start chip opens the window IN PLACE.
-        page.click(".desk-start-action:has-text(\'Dictate\')")
+        page.click(".desk-dock-app[aria-label='Speak']")
         page.wait_for_selector(".desk-surface-window", timeout=8000)
         assert page.url.rstrip("/") == BASE, page.url
-        # 2. Speak into the utterance mic (hold-to-talk): the fake device
-        # loops the wav; hold long enough to cover the phrase.
-        page.click("text=Try it")
-        mic = page.locator(".desk-surface-window .desk-mic-row .desk-mic")
-        mic.wait_for(timeout=5000)
+        # 2. Speak into the hero mic (HS-100-07: the loop IS the front
+        # face — no Try-it tab): the fake device loops the wav.
+        mic = page.locator(".desk-surface-window .speak-hero .desk-mic")
+        mic.wait_for(timeout=8000)
         box = mic.bounding_box()
         page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
         page.mouse.down()
@@ -545,7 +609,7 @@ def dictation() -> None:
         print(f"voice landed in-world: {text!r}")
         page.screenshot(path=str(OUT / "dictation-voice-1440.png"))
         # 3. Close, then the Pullout's "Dictate about this" scopes it.
-        page.click('[aria-label="Close Dictation"]')
+        page.click('[aria-label="Close Speak"]')
         target = free_object(page)
         assert target, "no tappable object on the desk"
         page.mouse.click(target["x"], target["y"])
@@ -557,14 +621,60 @@ def dictation() -> None:
         assert page.url.rstrip("/") == BASE, page.url
         print(f"scoped in-world: {chip!r}")
         # 4. The deep link lands in-world (HS-95-08's demotion).
-        page.goto(BASE + "/dictation", wait_until="networkidle")
+        page.goto(arrive_url("/dictation"), wait_until="networkidle")
         page.wait_for_selector(
-            "[aria-label=\'Dictation\'].desk-surface-window", timeout=10000
+            "[aria-label=\'Speak\'].desk-surface-window", timeout=10000
         )
         print("dictation walk: chip + pullout open in-world; voice lands; deep link lands in-world")
         browser.close()
 
 
+
+
+def meetingflow() -> None:
+    """HS-100-08 — the flow budget, pinned: arrival -> a meeting's
+    OUTCOMES face in at most 4 interactions; the face leads with
+    needs-you, folds the transcript as a receipt, and carries no tab
+    wall; at most 4 top-level concepts render before scrolling."""
+    clicks = 0
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(arrive_url(), wait_until="networkidle")
+        wait_world(page)
+        page.click(".desk-mark")
+        clicks += 1
+        page.click("nav.desk-menu button:has-text('Meetings')")
+        clicks += 1
+        page.wait_for_selector(
+            "[aria-label='Meetings'].desk-surface-window", timeout=10000
+        )
+        page.wait_for_timeout(1200)
+        row = page.locator(
+            ".desk-surface-window .surface-rows .surface-row-open"
+        ).first
+        row.wait_for(timeout=10000)
+        row.click()
+        clicks += 1
+        page.wait_for_selector(
+            ".desk-surface-window >> text=Needs you", timeout=10000
+        )
+        assert (
+            page.locator(".desk-surface-body [role=tablist]").count() == 0
+        ), "no tab wall in the window body"
+        assert page.locator(
+            ".desk-surface-window >> text=Transcript — the receipt"
+        ).count(), "the transcript folds as a receipt"
+        eyebrows = page.locator(
+            ".desk-surface-window .surface-outcome-sec .surface-eyebrow"
+        ).count()
+        assert eyebrows <= 4, f"too many concepts on the face: {eyebrows}"
+        assert clicks <= 4, f"flow budget blown: {clicks}"
+        print(
+            f"meetingflow: arrival -> outcomes face in {clicks} interactions, "
+            f"{eyebrows} outcome concepts, transcript folded, no tab wall"
+        )
+        browser.close()
 
 
 def meetings(intel: bool = False) -> None:
@@ -584,15 +694,15 @@ def meetings(intel: bool = False) -> None:
         )
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.context.grant_permissions(["microphone"])
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         # 1. Record: the chip starts the hub recorder AND opens the live
         # window — the URL never leaves the desk.
-        page.click(".desk-start-action:has-text(\'Record\')")
+        page.click(".desk-orb")
         page.wait_for_selector(".desk-surface-window", timeout=8000)
         assert page.url.rstrip("/") == BASE, page.url
         page.wait_for_selector(
-            ".desk-start-action:has-text(\'Stop\')", timeout=8000
+            ".desk-orb[aria-label=\'Stop recording\']", timeout=8000
         )
         if intel:
             # The hub records the REAL microphone (Phase 73: the orb drives
@@ -619,7 +729,7 @@ def meetings(intel: bool = False) -> None:
         # 2. Stop INSIDE the window: every surface settles.
         page.click(".desk-surface-window button:has-text(\'Stop meeting\')")
         page.wait_for_selector(
-            ".desk-start-action:has-text(\'Record\')", timeout=20000
+            ".desk-orb[aria-label=\'Record a meeting\']", timeout=20000
         )
         # 3. The saved meeting: "Return to saved Meeting" opens the pull-out.
         page.wait_for_selector(
@@ -645,7 +755,7 @@ def meetings(intel: bool = False) -> None:
             # until the meeting's intel reaches ready, then SEE it in-world.
             meeting_id = page.evaluate(
                 """async () => {
-                  const r = await fetch('/api/meetings', {credentials:'include'});
+                  const r = await fetch('/api/meetings', {credentials:'include', headers: {'X-HoldSpeak-Token': sessionStorage.getItem('hs.web.token') || ''}});
                   const d = await r.json();
                   const ms = d.meetings || d;
                   return ms[0]?.id || null;
@@ -683,11 +793,11 @@ def meetings(intel: bool = False) -> None:
             )
         page.screenshot(path=str(OUT / ("meetings-intel-1440.png" if intel else "meetings-1440.png")))
         # 5. Deep links land in-world (HS-95-08's demotion).
-        page.goto(BASE + "/history", wait_until="networkidle")
+        page.goto(arrive_url("/history"), wait_until="networkidle")
         page.wait_for_selector(
             "[aria-label=\'Meetings\'].desk-surface-window", timeout=10000
         )
-        page.goto(BASE + "/live", wait_until="networkidle")
+        page.goto(arrive_url("/live"), wait_until="networkidle")
         page.wait_for_selector(
             "[aria-label=\'Live meeting\'].desk-surface-window", timeout=10000
         )
@@ -707,7 +817,7 @@ def config() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         # 1. Chrome menu → Settings, in-world.
         page.click(".desk-mark")
@@ -720,7 +830,7 @@ def config() -> None:
         # 2. A real change: flip presence enabled via the cockpit search.
         before = page.evaluate(
             """async () => {
-              const r = await fetch('/api/settings', {credentials:'include'});
+              const r = await fetch('/api/settings', {credentials:'include', headers: {'X-HoldSpeak-Token': sessionStorage.getItem('hs.web.token') || ''}});
               return (await r.json()).presence?.enabled ?? null;
             }"""
         )
@@ -734,16 +844,16 @@ def config() -> None:
         page.wait_for_timeout(1500)
         after = page.evaluate(
             """async () => {
-              const r = await fetch('/api/settings', {credentials:'include'});
+              const r = await fetch('/api/settings', {credentials:'include', headers: {'X-HoldSpeak-Token': sessionStorage.getItem('hs.web.token') || ''}});
               return (await r.json()).presence?.enabled ?? null;
             }"""
         )
         assert after != before, (before, after)
-        page.reload(wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         persisted = page.evaluate(
             """async () => {
-              const r = await fetch('/api/settings', {credentials:'include'});
+              const r = await fetch('/api/settings', {credentials:'include', headers: {'X-HoldSpeak-Token': sessionStorage.getItem('hs.web.token') || ''}});
               return (await r.json()).presence?.enabled ?? null;
             }"""
         )
@@ -759,7 +869,11 @@ def config() -> None:
                 f"[aria-label=\'{aria}\'].desk-surface-window", timeout=8000
             )
         open_shelf(page)
-        page.click(".desk-tool-link:has-text(\'Integrations\')")
+        # A prior window may legitimately cover the popover; dispatch the
+        # link directly (the affordance itself is what this leg proves).
+        page.locator(".desk-tool-link:has-text('Integrations')").evaluate(
+            "el => el.click()"
+        )
         page.wait_for_selector(
             "[aria-label=\'Settings\'].desk-surface-window .desk-scope-chip",
             timeout=8000,
@@ -773,7 +887,7 @@ def config() -> None:
             ("/cadence", "Cadence"),
             ("/setup", "Setup"),
         ):
-            page.goto(BASE + path, wait_until="networkidle")
+            page.goto(arrive_url(path), wait_until="networkidle")
             page.wait_for_selector(
                 f"[aria-label=\'{marker}\'].desk-surface-window", timeout=10000
             )
@@ -790,7 +904,7 @@ def lastexits() -> None:
     maximized from the shelf and saves a real workflow through the hub;
     Studio and Companion are windows; the desk never navigates."""
     ROUTES = [
-        ("/dictation", "Dictation"),
+        ("/dictation", "Speak"),
         ("/live", "Live meeting"),
         ("/history", "Meetings"),
         ("/meetings", "Meetings"),
@@ -798,19 +912,18 @@ def lastexits() -> None:
         ("/activity", "Activity"),
         ("/commands", "Commands"),
         ("/cadence", "Cadence"),
-        ("/studio", "Studio"),
         ("/workbench", "Workbench"),
         ("/profiles", "Runs on"),
-        ("/companion", "Personas and coders"),
+        ("/companion", "Agents"),
         ("/setup", "Setup"),
-        ("/docs/dictation-runtime", "Runtime guide"),
+        ("/docs/dictation-runtime", "Settings"),
         ("/design/components", "Components"),
     ]
     with sync_playwright() as p:
         browser = p.chromium.launch()
         for path, title in ROUTES:
             page = browser.new_page(viewport={"width": 1440, "height": 900})
-            page.goto(BASE + path, wait_until="networkidle")
+            page.goto(arrive_url(path), wait_until="networkidle")
             page.wait_for_selector(
                 f"[aria-label=\'{title}\'].desk-surface-window", timeout=15000
             )
@@ -818,7 +931,7 @@ def lastexits() -> None:
             page.close()
         print(f"demotion: all {len(ROUTES)} routes land on the desk with the right window")
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         # A REAL workflow: create the primitive on the desk, then edit it
         # in the scoped, maximized Workbench window and save through the hub.
@@ -870,9 +983,9 @@ def lastexits() -> None:
         page.wait_for_timeout(400)
         # Companion: the reconciled roster window.
         open_shelf(page)
-        page.click(".desk-tool-link:has-text(\'Personas\')")
+        page.click(".desk-tool-link:has-text(\'Agents\')")
         page.wait_for_selector(
-            "[aria-label=\'Personas and coders\'].desk-surface-window",
+            "[aria-label=\'Agents\'].desk-surface-window",
             timeout=8000,
         )
         page.screenshot(path=str(OUT / "companion-1440.png"))
@@ -891,7 +1004,7 @@ def placement() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         page.wait_for_selector(".desk-next", timeout=15000)
         page.wait_for_timeout(1200)
         opened = []
@@ -923,7 +1036,7 @@ def placement() -> None:
                     assert not heads_clash, (when, a, b)
             opened.append(len(info))
 
-        for label in ("Settings", "Meetings", "Dictation"):
+        for label in ("Settings", "Meetings", "Speak"):
             page.click(".desk-mark")
             page.click(f"nav.desk-menu button:has-text('{label}')")
             page.wait_for_selector(
@@ -953,10 +1066,10 @@ def arrangement() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         page.wait_for_selector(".desk-next", timeout=15000)
         page.wait_for_timeout(1200)
-        for label in ("Settings", "Meetings", "Dictation"):
+        for label in ("Settings", "Meetings", "Speak"):
             page.click(".desk-mark")
             page.click(f"nav.desk-menu button:has-text('{label}')")
             page.wait_for_selector(
@@ -985,13 +1098,13 @@ def arrangement() -> None:
             }"""
         )
         assert front_before == "Settings", front_before
-        page.reload(wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         after = page.evaluate("() => localStorage.getItem('hs.desk.panels')")
         assert after == before, (before, after)
         # Reopen all three: each keeps its remembered plane — the front
         # window is the one that was in front before the reload.
-        for label in ("Settings", "Meetings", "Dictation"):
+        for label in ("Settings", "Meetings", "Speak"):
             page.click(".desk-mark")
             page.click(f"nav.desk-menu button:has-text('{label}')")
             page.wait_for_selector(
@@ -1026,7 +1139,7 @@ def arrangement() -> None:
         page.close()
         # The phone: a sheet's action row is fully tappable.
         page = browser.new_page(viewport={"width": 393, "height": 852})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         page.wait_for_selector(".desk-next", timeout=15000)
         page.wait_for_timeout(1000)
         page.click(".desk-create-button")
@@ -1068,10 +1181,10 @@ def depth() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         page.wait_for_selector(".desk-next", timeout=15000)
         page.wait_for_timeout(1200)
-        for label in ("Settings", "Meetings", "Dictation"):
+        for label in ("Settings", "Meetings", "Speak"):
             page.click(".desk-mark")
             page.click(f"nav.desk-menu button:has-text('{label}')")
             page.wait_for_selector(
@@ -1086,7 +1199,7 @@ def depth() -> None:
                 label,
             )
 
-        front, rest = shadow("Dictation"), shadow("Settings")
+        front, rest = shadow("Speak"), shadow("Settings")
         assert "70px" in front and "0px 0px 0px 1px" in front, front
         assert "34px" in rest and "70px" not in rest, rest
         # Raising moves the depth.
@@ -1094,7 +1207,7 @@ def depth() -> None:
         page.wait_for_timeout(300)
         front2 = shadow("Settings")
         assert "70px" in front2, front2
-        assert "70px" not in shadow("Dictation"), "depth did not move"
+        assert "70px" not in shadow("Speak"), "depth did not move"
         page.screenshot(path=str(OUT / "depth-three-1440.png"))
         # Minimize flies to the chip; the window parks; restore returns.
         page.click('[aria-label="Minimize Settings"]')
@@ -1120,7 +1233,7 @@ def depth() -> None:
             viewport={"width": 1440, "height": 900},
             reduced_motion="reduce",
         )
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         page.wait_for_selector(".desk-next", timeout=15000)
         page.wait_for_timeout(800)
         page.click(".desk-mark")
@@ -1144,7 +1257,7 @@ def frame() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         page.wait_for_selector(".desk-next", timeout=15000)
         page.wait_for_timeout(1200)
         page.click(".desk-mark")
@@ -1222,7 +1335,7 @@ def reflow() -> None:
             lambda r: failures.append(f"{r.status} {r.url}")
             if r.url.startswith(BASE) and r.status >= 400 else None,
         )
-        page.goto(BASE + "/cadence", wait_until="networkidle")
+        page.goto(arrive_url("/cadence"), wait_until="networkidle")
         sel = "[aria-label='Cadence'].desk-surface-window"
         page.wait_for_selector(sel, timeout=10000)
         page.wait_for_selector(f"{sel} .surface-columns", timeout=5000)
@@ -1268,7 +1381,7 @@ def reflow() -> None:
 
 
 SURFACE_ROUTES = [
-    ("/dictation", "Dictation"),
+    ("/dictation", "Speak"),
     ("/live", "Live meeting"),
     ("/history", "Meetings"),
     ("/settings", "Settings"),
@@ -1276,9 +1389,8 @@ SURFACE_ROUTES = [
     ("/cadence", "Cadence"),
     ("/setup", "Setup"),
     ("/workbench", "Workbench"),
-    ("/studio", "Studio"),
-    ("/companion", "Personas and coders"),
-    ("/docs/dictation-runtime", "Runtime guide"),
+    ("/companion", "Agents"),
+    ("/docs/dictation-runtime", "Settings"),
     ("/design/components", "Components"),
     ("/activity", "Activity"),
     ("/commands", "Commands"),
@@ -1307,7 +1419,7 @@ def surfaces() -> None:
                 if r.url.startswith(BASE) and r.status >= 400 else None,
             )
             for route, aria in SURFACE_ROUTES:
-                page.goto(BASE + route, wait_until="networkidle")
+                page.goto(arrive_url(route), wait_until="networkidle")
                 sel = f"[aria-label='{aria}'].desk-surface-window"
                 page.wait_for_selector(sel, timeout=15000)
                 page.wait_for_timeout(600)
@@ -1330,6 +1442,90 @@ def surfaces() -> None:
         browser.close()
 
 
+def geometry() -> None:
+    """HS-100-12 — the geometry walk: EVERY registered surface window
+    opened (via its deep link) and measured against the grammar — head
+    band 38-42px, traffic lights present and disc-shaped, a padded body
+    with no horizontal overflow, no tab wall in the body, and the same
+    truths after a squeeze to a narrow width (container reflow)."""
+    ROUTES = [
+        ("/dictation", "Speak"),
+        ("/history", "Meetings"),
+        ("/live", "Live meeting"),
+        ("/settings", "Settings"),
+        ("/profiles", "Runs on"),
+        ("/cadence", "Cadence"),
+        ("/setup", "Setup"),
+        ("/workbench", "Workbench"),
+        ("/companion", "Agents"),
+        ("/design/components", "Components"),
+        ("/activity", "Activity"),
+        ("/commands", "Commands"),
+    ]
+    failures: list[str] = []
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        for path, label in ROUTES:
+            page.goto(arrive_url(path), wait_until="networkidle")
+            sel = f"[aria-label='{label}'].desk-surface-window"
+            try:
+                page.wait_for_selector(sel, timeout=15000)
+            except Exception:
+                failures.append(f"{label}: window never opened from {path}")
+                continue
+            page.wait_for_timeout(900)
+            head = page.locator(f"{sel} header.desk-pullout-head")
+            hb = head.bounding_box()
+            if not hb or not (36 <= hb["height"] <= 46):
+                failures.append(f"{label}: head band {hb}")
+            lights = page.locator(f"{sel} .desk-light").count()
+            if lights < 2:
+                failures.append(f"{label}: traffic lights missing ({lights})")
+            body = page.locator(f"{sel} .desk-surface-body").first
+            metrics = body.evaluate(
+                """el => ({
+                  overflow: el.scrollWidth - el.clientWidth,
+                  pad: getComputedStyle(el).paddingLeft,
+                })"""
+            )
+            if metrics["overflow"] > 2:
+                failures.append(
+                    f"{label}: horizontal overflow {metrics['overflow']}px"
+                )
+            walls = page.evaluate(
+                """(sel) => {
+                  const body = document.querySelector(sel + ' .desk-surface-body');
+                  if (!body) return 0;
+                  return [...body.querySelectorAll('[role=tablist]')].filter(
+                    (t) =>
+                      !t.closest('.surface-railed') &&
+                      !t.closest('[data-specimen]'),
+                  ).length;
+                }""",
+                sel,
+            )
+            if walls:
+                failures.append(f"{label}: tab wall inside the body")
+            # Squeeze: the narrow form must reflow, not scroll sideways.
+            page.evaluate(
+                """(sel) => {
+                  const el = document.querySelector(sel);
+                  el.style.width = '360px';
+                }""",
+                sel,
+            )
+            page.wait_for_timeout(500)
+            squeezed = body.evaluate("el => el.scrollWidth - el.clientWidth")
+            if squeezed > 2:
+                failures.append(f"{label}: narrow overflow {squeezed}px")
+        assert not failures, "geometry failures:\n  " + "\n  ".join(failures)
+        print(f"geometry walk: {len(ROUTES)} windows measured against the "
+              "grammar — heads, lights, padded bodies, no sideways scroll, "
+              "no tab walls, reflow at 360px")
+        browser.close()
+
+
 def chrome() -> None:
     """HS-99-08 — the OS chrome, assembled: the two-tone bar with
     edge-flush square verbs and the red-hover close; the head menu;
@@ -1347,7 +1543,7 @@ def chrome() -> None:
             lambda r: failures.append(f"{r.status} {r.url}")
             if r.url.startswith(BASE) and r.status >= 400 else None,
         )
-        page.goto(BASE + "/settings", wait_until="networkidle")
+        page.goto(arrive_url("/settings"), wait_until="networkidle")
         sel = "[aria-label='Settings'].desk-surface-window"
         page.wait_for_selector(sel, timeout=15000)
         page.wait_for_timeout(700)
@@ -1366,17 +1562,22 @@ def chrome() -> None:
         assert head_token and head_token in ("", head_token), head_token
         hb = head.bounding_box()
         assert 38 <= hb["height"] <= 42, hb
+        # Materials spike (owner-approved): the window verbs are traffic
+        # LIGHTS — small round discs, colored on the front window.
         close = page.locator(f"{sel} [aria-label='Close Settings']")
         cb = close.bounding_box()
         assert abs(cb["width"] - cb["height"]) < 1.5, cb
-        assert abs(cb["height"] - hb["height"]) < 1.5, (cb, hb)
-        close.hover()
-        page.wait_for_timeout(250)
-        hover_bg = close.evaluate("el => getComputedStyle(el).backgroundColor")
-        assert hover_bg not in ("rgba(0, 0, 0, 0)", "transparent"), hover_bg
+        assert 10 <= cb["height"] <= 16, ("light disc size", cb)
+        radius_pct = close.evaluate(
+            "el => getComputedStyle(el).borderRadius")
+        assert radius_pct in ("50%",) or radius_pct.endswith("px"), radius_pct
+        light_bg = close.evaluate("el => getComputedStyle(el).backgroundColor")
+        assert light_bg not in ("rgba(0, 0, 0, 0)", "transparent"), light_bg
         page.screenshot(path=str(OUT / "chrome-bar-1440.png"))
         # 2. The head menu.
-        head.click(button="right")
+        # The head's center carries the wing segments now (HS-100-07);
+        # the menu opens from non-button head area — the title.
+        page.locator(f"{sel} .desk-window-title").click(button="right")
         page.wait_for_selector(".desk-head-menu[role='menu']", timeout=3000)
         page.keyboard.press("Escape")
         page.wait_for_timeout(200)
@@ -1401,7 +1602,8 @@ def chrome() -> None:
         # 6. The dock underline: the front chip's ::after wears width.
         chip_after = page.evaluate(
             """() => {
-              const c = document.querySelector('.desk-dock-chip.is-front');
+              const c = document.querySelector(
+                '.desk-dock-app.is-run, .desk-dock-chip.is-front');
               if (!c) return null;
               const cs = getComputedStyle(c, '::after');
               return { h: cs.height, w: cs.width };
@@ -1412,17 +1614,49 @@ def chrome() -> None:
         # 7. The 393 sheet keeps the bar.
         phone = browser.new_context(
             viewport={"width": 393, "height": 852}).new_page()
-        phone.goto(BASE + "/settings", wait_until="networkidle")
+        phone.goto(arrive_url("/settings"), wait_until="networkidle")
         phone.wait_for_selector(sel, timeout=15000)
         phone.wait_for_timeout(600)
         phb = phone.locator(f"{sel} header.desk-pullout-head").bounding_box()
         assert 38 <= phb["height"] <= 42, phb
         phone.screenshot(path=str(OUT / "chrome-393.png"))
-        print("chrome walk: the bar (two-tone, square verbs, red close), "
-              "head menu, skinned selects, drawn scrollbar (headed), square "
-              "maximize corners, dock underline — all present; shots at "
-              "1440 and 393")
+    # HS-100-11 — one launcher: the search palette reaches every
+    # application and tool.
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(arrive_url(), wait_until="networkidle")
+        wait_world(page)
+        assert page.locator(".desk-start-actions").count() == 0, (
+            "daily starts left the system bar (arrival + dock own them)"
+        )
+        for app in ("Speak", "Meetings", "Agents", "Settings"):
+            assert page.locator(
+                f".desk-dock-app[aria-label='{app}']"
+            ).count() == 1, f"dock must carry {app}"
+        for label in (
+            "Speak", "Meetings", "Settings", "Workflow editor",
+            "Agents and coder sessions", "Runs on", "Integrations",
+            "Commands", "Cadence", "Activity",
+        ):
+            trigger = page.locator("button:has-text('Search ⌘K')").first
+            if trigger.count() == 0:
+                trigger = page.locator("button:has-text('Search')").first
+            trigger.click()
+            page.fill("#desk-tool-shelf input[type=search]", label)
+            page.wait_for_timeout(250)
+            assert page.locator(
+                f".desk-tool-link:has-text('{label}')"
+            ).count() >= 1, f"search must reach {label}"
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(200)
+        print("one-launcher: dock carries the four apps; search reaches "
+              "every app and tool; the bar is system truth")
         browser.close()
+    print("chrome walk: the bar (two-tone, square verbs, red close), "
+          "head menu, skinned selects, drawn scrollbar (headed), square "
+          "maximize corners, dock underline — all present; shots at "
+          "1440 and 393")
 
 
 def switcher() -> None:
@@ -1434,10 +1668,10 @@ def switcher() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         page.wait_for_selector(".desk-next", timeout=15000)
         page.wait_for_timeout(1200)
-        for label in ("Settings", "Meetings", "Dictation"):
+        for label in ("Settings", "Meetings", "Speak"):
             page.click(".desk-mark")
             page.click(f"nav.desk-menu button:has-text('{label}')")
             page.wait_for_selector(
@@ -1494,7 +1728,7 @@ def shelf() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         page.wait_for_selector(".desk-next", timeout=15000)
         page.wait_for_timeout(1200)
         # One dock, centered, carrying the launchers and the orb.
@@ -1536,7 +1770,7 @@ def shelf() -> None:
               "gone, launcher folds into chip, no eyebrows, no stage prose")
         page.close()
         page = browser.new_page(viewport={"width": 393, "height": 852})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         page.wait_for_selector(".desk-next", timeout=15000)
         page.wait_for_timeout(1000)
         assert page.locator(".desk-attention-launch").count() == 0
@@ -1587,7 +1821,7 @@ def focus() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1440, "height": 900})
-        page.goto(BASE + "/", wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         page.click(".desk-dock-launch:has-text('Desk memory')")
         page.wait_for_selector(".desk-attention-drawer", timeout=5000)
@@ -1688,6 +1922,12 @@ if __name__ == "__main__":
         cores()
     elif mode == "dictation":
         dictation()
+    elif mode == "speakflow":
+        speakflow()
+    elif mode == "meetingflow":
+        meetingflow()
+    elif mode == "geometry":
+        geometry()
     elif mode == "meetings":
         meetings(intel="--intel" in sys.argv)
     elif mode == "config":

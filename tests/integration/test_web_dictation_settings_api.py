@@ -435,7 +435,8 @@ def test_dictation_page_includes_runtime_section() -> None:
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    assert '["runtime", "Runtime"]' in source
+    # HS-100-07: runtime configuration lives behind the Speak door.
+    assert "<Runtime />" in source
     assert "Dictation runtime" in source and 'label="Runs on"' in source
 
 

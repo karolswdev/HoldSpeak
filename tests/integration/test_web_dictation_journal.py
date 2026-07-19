@@ -135,7 +135,8 @@ def test_delete_without_repo_404s(test_client: TestClient, settings_path: Path) 
 def test_dictation_page_includes_journal_tab(test_client: TestClient) -> None:
     assert '<div id="root"></div>' in test_client.get("/dictation").text
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
-    assert '["journal", "Journal"]' in source
+    # HS-100-07: the Journal is a head wing of Speak.
+    assert '{ id: "journal", label: "Journal" }' in source
     assert "/api/dictation/journal" in source
     assert "Search journal" in source and "Clear journal" in source
 

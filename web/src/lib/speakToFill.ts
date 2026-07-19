@@ -28,6 +28,21 @@ export function speakToFillSupported(): boolean {
   );
 }
 
+/** Why capture is unavailable, or null when it is available.
+ *
+ * The mic must never vanish silently (Article VI): on a plain-HTTP LAN
+ * origin the browser withholds `navigator.mediaDevices` entirely, and
+ * the honest state is a disabled mic that says so. */
+export function speakToFillUnsupportedReason(): string | null {
+  if (speakToFillSupported()) return null;
+  if (!navigator.mediaDevices && window.isSecureContext === false)
+    return (
+      "Mic capture needs a secure origin. Open this hub via localhost " +
+      "or HTTPS to speak."
+    );
+  return "This browser cannot capture microphone audio.";
+}
+
 export async function startCapture(): Promise<void> {
   if (active) await cancelCapture();
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

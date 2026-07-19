@@ -862,8 +862,8 @@
       },
       {
         "name": "--desk-window-fill",
-        "value": "rgba(13, 11, 18, 0.985)",
-        "doc": "the window body fill (R2-06: objects must not ghost through)"
+        "value": "rgba(21, 17, 29, 0.58)",
+        "doc": "the window material TINT — real vibrancy over the world (materials spike; was 0.985 paint)"
       },
       {
         "name": "--desk-panel-fill",
@@ -877,13 +877,13 @@
       },
       {
         "name": "--desk-window-shadow",
-        "value": "0 26px 70px {primitive.color.shadow.60}",
-        "doc": "the ONE window elevation (the FRONT window wears it)"
+        "value": "0 8px 10px rgba(0, 0, 0, 0.28), 0 68px 80px rgba(0, 0, 0, 0.56)",
+        "doc": "FRONT window: contact + ambient two-layer (macos-web recipe)"
       },
       {
         "name": "--desk-window-shadow-rest",
-        "value": "0 14px 34px {primitive.color.shadow.42}",
-        "doc": "rest windows quiet down (HS-97-04 focus depth)"
+        "value": "0 8px 10px rgba(0, 0, 0, 0.14), 0 34px 60px rgba(0, 0, 0, 0.28)",
+        "doc": "rest windows: the same two-layer at half strength"
       },
       {
         "name": "--desk-window-keyline",
@@ -892,8 +892,8 @@
       },
       {
         "name": "--desk-window-blur",
-        "value": "blur(10px)",
-        "doc": "the window glass"
+        "value": "blur(26px) saturate(160%)",
+        "doc": "the window glass — heavy blur + saturation so the world glows through"
       },
       {
         "name": "--desk-transient-radius",
@@ -952,18 +952,18 @@
       },
       {
         "name": "--desk-window-head-fill",
-        "value": "rgba(26, 23, 34, 0.99)",
-        "doc": "HS-99: the title-bar tone — one step ABOVE the window body; separation by tone, never a border (PROZILLAOS_STUDY.md)"
+        "value": "rgba(255, 255, 255, 0.035)",
+        "doc": "the title bar wash on the material (seamless vibrancy, hairline below)"
       },
       {
         "name": "--desk-window-rail",
-        "value": "rgba(18, 16, 24, 0.92)",
-        "doc": "HS-99: rails/toolbars — between head and body on the tonal ladder"
+        "value": "rgba(255, 255, 255, 0.05)",
+        "doc": "rails/groups: a translucent white tile on the material"
       },
       {
         "name": "--desk-window-well",
-        "value": "rgba(8, 7, 12, 0.72)",
-        "doc": "HS-99: the well tone — inputs and controls sit one step BELOW the body"
+        "value": "rgba(0, 0, 0, 0.28)",
+        "doc": "wells/inputs: a translucent dark inset on the material"
       },
       {
         "name": "--desk-scrollbar-thumb",
@@ -994,6 +994,71 @@
         "name": "--ease-back",
         "value": "cubic-bezier(0.68, -0.4, 0.32, 1.4)",
         "doc": "HS-99: the playful overshoot (small elements only)"
+      },
+      {
+        "name": "--desk-glass-edge",
+        "value": "inset 0 0 0 0.9px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.14)",
+        "doc": "the frosted-glass rim: inner dark hairline + outer light hairline (every floating surface wears it)"
+      },
+      {
+        "name": "--light-close",
+        "value": "#ff5f56",
+        "doc": "traffic light: close"
+      },
+      {
+        "name": "--light-close-ring",
+        "value": "#e0443e",
+        "doc": "traffic light: close ring"
+      },
+      {
+        "name": "--light-min",
+        "value": "#ffbd2e",
+        "doc": "traffic light: minimize"
+      },
+      {
+        "name": "--light-min-ring",
+        "value": "#dea123",
+        "doc": "traffic light: minimize ring"
+      },
+      {
+        "name": "--light-max",
+        "value": "#27c93f",
+        "doc": "traffic light: maximize"
+      },
+      {
+        "name": "--light-max-ring",
+        "value": "#1aab29",
+        "doc": "traffic light: maximize ring"
+      },
+      {
+        "name": "--light-idle",
+        "value": "rgba(255, 255, 255, 0.22)",
+        "doc": "traffic lights on an unfocused window"
+      },
+      {
+        "name": "--shade-1",
+        "value": "rgba(0, 0, 0, 0.3)",
+        "doc": "the inner dark hairline / shade wash (glass-edge family)"
+      },
+      {
+        "name": "--shade-2",
+        "value": "rgba(0, 0, 0, 0.62)",
+        "doc": "strong dark ink on light elements (traffic-light glyphs)"
+      },
+      {
+        "name": "--gleam-1",
+        "value": "rgba(255, 255, 255, 0.07)",
+        "doc": "inner top highlight on fabricated control faces"
+      },
+      {
+        "name": "--gleam-2",
+        "value": "rgba(255, 255, 255, 0.09)",
+        "doc": "hover lift on fabricated secondary faces"
+      },
+      {
+        "name": "--gleam-3",
+        "value": "rgba(255, 255, 255, 0.22)",
+        "doc": "inner top highlight on the primary (accent) face"
       }
     ]
   }

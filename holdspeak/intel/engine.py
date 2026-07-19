@@ -120,7 +120,10 @@ class MeetingIntel:
 
         model_path = self._resolved_model_path()
         if not model_path.exists():
-            raise MeetingIntelError(f"Intel model not found: {model_path}")
+            raise MeetingIntelError(
+                "No language model on this hub. Pick one in Settings under"
+                " Intelligence."
+            )
 
         kwargs: dict[str, object] = {
             "model_path": str(model_path),

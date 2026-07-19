@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arrival — mockup</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .arrive {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 26px; z-index: 10;
+  }
+  .starts { display: flex; gap: 18px; }
+  .start {
+    width: 210px; padding: 26px 22px; border-radius: 16px; text-align: center;
+    background: var(--window-fill);
+    backdrop-filter: var(--window-blur);
+    -webkit-backdrop-filter: var(--window-blur);
+    box-shadow: var(--glass-edge), 0 14px 40px rgba(4,2,8,.45);
+    color: var(--ink); text-decoration: none;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .start .big { font-size: 34px; line-height: 1; }
+  .start strong { font-size: 15.5px; font-weight: 650; }
+  .start span { color: var(--ink-dim); font-size: 12px; }
+  .start.rec .big {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff9d72, #e04c17 72%);
+    box-shadow: 0 0 20px rgba(255,109,61,.5), inset 0 1px 4px rgba(255,255,255,.35);
+  }
+  .trustline { display: flex; align-items: center; gap: 8px; color: var(--ink-dim); font-size: 12.5px; }
+  @media (max-width: 500px) {
+    .starts { flex-direction: column; }
+    .start { width: 240px; padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="world"></div>
+
+<header class="menubar">
+  <span class="mark">HoldSpeak</span>
+  <span class="trust"><span class="trust-dot"></span> This device</span>
+  <span class="right"><kbd>⌘K</kbd> <span>Sun, Jul 19</span> <strong>09:39</strong></span>
+</header>
+
+<div class="arrive">
+  <div class="starts">
+    <a class="start" href="#">
+      <span class="big">🎙</span>
+      <strong>Speak</strong>
+      <span>Hold <b>fn</b> and talk — it types where you work</span>
+    </a>
+    <a class="start rec" href="#">
+      <span class="big"></span>
+      <strong>Record a meeting</strong>
+      <span>It ends with decisions and actions, not a file</span>
+    </a>
+  </div>
+  <div class="trustline"><span class="trust-dot"></span> Everything runs on this device — nothing leaves it</div>
+</div>
+
+<nav class="dock">
+  <a href="#"><span class="glyph">⌁</span><span class="label">Speak</span></a>
+  <a href="#"><span class="glyph">▣</span><span class="label">Meetings</span></a>
+  <a href="#"><span class="glyph">🤝</span><span class="label">Agents</span></a>
+  <a href="#"><span class="glyph">⚙</span><span class="label">Settings</span></a>
+  <span class="orb" title="Record"></span>
+</nav>
+</body>
+</html>

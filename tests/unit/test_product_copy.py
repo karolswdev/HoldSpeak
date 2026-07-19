@@ -208,7 +208,9 @@ def test_copy_contract_covers_postures_failures_and_bounded_exceptions() -> None
         assert exception_id not in exception_ids
         exception_ids.add(exception_id)
         assert str(exception["path"]).endswith((".swift", ".tsx", ".md"))
-        assert exception["literals"]
+        # HS-100-10: an exception carries literals OR terms (a staged
+        # vocabulary migration names whole words instead).
+        assert exception.get("literals") or exception.get("terms")
         assert len(str(exception["reason"]).strip()) >= 40
 
 

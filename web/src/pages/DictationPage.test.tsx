@@ -84,7 +84,7 @@ async function openTryIt() {
       <DictationCore />
     </MemoryRouter>,
   );
-  fireEvent.click(screen.getByRole("tab", { name: "Try it" }));
+  // HS-100-07: the loop IS the front face — no tab to reach it.
   const editor = await screen.findByLabelText("Utterance");
   fireEvent.change(editor, {
     target: { value: "A draft that must not disappear." },

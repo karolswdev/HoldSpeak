@@ -173,7 +173,7 @@ export function FirstWords({
   const Heading = embedded ? "h2" : "h1";
   return (
     <section className="desk-first-words" aria-labelledby="first-words-title">
-      <span className="signal-eyebrow">Dictation</span>
+      <span className="surface-eyebrow">Voice typing</span>
       <Heading id="first-words-title">Dictate one sentence</Heading>
       <p>Hold to speak. Your words stay editable here before you use them.</p>
       <button

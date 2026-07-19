@@ -145,14 +145,17 @@ def test_proposal_rows_render_the_central_policy_and_refusal_truth():
     assert "operation.effect_class" in page
     assert "operation.destination" in page
     assert "policy.authority_basis" in page
-    assert 'emptyLabel="No proposals"' in page
+    # HS-100-08: an empty needs-you face says so honestly.
+    assert 'emptyLabel="Nothing waiting on you"' in page
 
 
 def test_history_app_wires_the_export_route():
     js = (_REPO / "web/src/pages/cores/HistoryCore.tsx").read_text()
     assert "proposeSlack" in js
     assert "/export/slack" in js
-    assert "setActive(\"proposals\")" in js
+    # HS-100-08: proposals live ON the outcomes face — no tab to flip to;
+    # proposing refreshes the same face's proposal rows.
+    assert "setProposals(" in js
 
 
 def test_settings_field_ships_the_honest_copy():

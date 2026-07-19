@@ -4,7 +4,71 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, CLOSED
+**Last updated:** 2026-07-19 — **Phase 100, The Application Layer, **BUILD
+COMPLETE AT MACHINE SCOPE (12/13)** — B1–B8 all shipped; the geometry
+walk polices every window and the assembled chain is green (21 walk
+legs, headed storm, full pytest sweep, 296 vitest, empty vocabulary
+allowlist); the closeout (HS-100-13) awaits the owner's sitting over
+the built layer. Earlier, **HS-100-11, B7 one launcher, DONE** (the dock
+carries the four applications; the bar is system truth with the
+attention bell and ⌘K; the shelf is the search palette). Earlier,
+**HS-100-10, B6 Settings + arrival, DONE** (Studio
+dead; Guide wing; two-start arrival; ONE vocabulary canon — the
+product-language registry amended to Agent, allowlist locked empty;
+POSITIONING amended to the Desk-first front door). Earlier,
+**HS-100-09, B5 Agents, DONE** (blocked-first with
+the Answer verb; Personas left the glass; the vocabulary allowlist
+shrank to two files). Earlier, **HS-100-08, B4 Meetings, DONE** (outcomes first:
+needs-you leads, transcript folds to a receipt, plumbing behind the
+door; 3-interaction flow budget pinned). Earlier, **HS-100-07, B3
+Speak, DONE** (the flagship opens on
+the loop; wings in the head; one config door; the 4-interaction flow
+budget pinned as a walk leg). Earlier, **HS-100-06, B2 the honest mic,
+DONE** (a mic that
+cannot capture says why instead of vanishing; proven on the LAN
+origin). Earlier, **HS-100-05, B1 the vocabulary guard, DONE** (canon
+vocabulary is now mechanical; the model-missing refusal names its fix).
+Earlier, **HS-100-04, The owner's gate, PASSED** — the
+thesis (four applications and a desk) approved as presented, verdict
+recorded verbatim; the build is unlocked as HS-100-05..12 (vocabulary
+guard, honest mic, Speak, Meetings, Agents, Settings + arrival, one
+launcher, geometry walk), each with a named mechanical guard, closing
+on the owner's sitting (HS-100-13). Earlier, **HS-100-03, The thesis,
+DONE**: the application
+layer's opinion — four applications and a desk (Speak / Meetings /
+Agents / Settings), posture-first interiors, one config door per app,
+Studio killed and the launchers collapsed to dock + ⌘K — with ten
+mockups (five screens at 1440 and 393) on the spike's material,
+census-proven complete, and a B1–B8 build plan each with a named
+guard. The owner's gate (HS-100-04) is next; nothing builds on main
+before that verdict. Earlier same day, **HS-100-02, The judgment,
+DONE**: UIUX_JUDGMENT.md
+judges every surface (15 registry rows) and desk component (28)
+keep/merge/re-shape/kill against the grounding's jobs, census-proven
+complete from the code; three live flow traces measured the mangled
+paths (meeting→filed = nine concepts; dictation opens on diagnostics;
+mics silently vanish on non-secure origins) and proved the desk
+metaphor where it wins (tap→rope→ask = 4 clicks). Earlier same day,
+**HS-100-01, The grounding, DONE**: GROUNDING.md is
+written and fully cited — the four jobs ranked by evidence, the
+postures, the seams, four named canon drifts for the owner's ruling,
+and the complete owner-verdict record verbatim with its reading (the
+capabilities were never the complaint; the layer they wear was).
+Earlier the phase was **SCAFFOLDED (0/6)** by the owner's direct halt-and-reground directive
+after the Phase 99 close and the materials spike both failed the felt
+bar: *"a deep, deep, deep grounding in the philosophy, seams, use
+cases — then form an opinion on the entire UI/UX with regards to its
+applicability to the Desk OS — then finally deliver something
+beautiful, not mangled, easy to use: a proper application layer to
+drive the value of HoldSpeak."* The phase inverts the failed order:
+ground (the jobs, the seams, the lived use cases — GROUNDING.md,
+fully cited) → judge (every surface and flow against the jobs —
+keep/merge/re-shape/kill) → propose (the application-layer thesis +
+real mockups) → THE OWNER'S GATE (nothing builds before the verdict)
+→ build → close on the owner's sitting. The materials spike
+(design/inset-groups-spike, six rounds: vibrancy glass, traffic
+lights, menu bar + clock, grouped interiors, component sweep) is
+parked as thesis INPUT, not merged by default. Earlier: **Phase 99, The OS Chrome, CLOSED
 (8/8, scaffolded and shipped the same day)**: the ProzillaOS-studied
 skin is on. Windows wear a real title BAR (two tones, full-height
 square SVG verbs flush to the edge, a red-hover close, square corners
@@ -532,6 +596,7 @@ canon, canon wins.
 | 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | done | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
 | 98 | Native Surfaces: the window interiors re-crafted in one desk idiom — the surface kit, container-driven reflow, honest rows, the page grammar retired from the desk | done | [phase-98-native-surfaces](./phase-98-native-surfaces/) |
 | 99 | The OS Chrome: the ProzillaOS-studied skin — tonal depth ladder, a real title bar, skinned controls, custom scrollbars, a living dock, one menu vocabulary | done | [phase-99-the-os-chrome](./phase-99-the-os-chrome/) |
+| 100 | The Application Layer: ground the philosophy/seams/use cases, judge the entire UI/UX against them, thesis + mockups, the owner's gate, then the build | in-progress | [phase-100-the-application-layer](./phase-100-the-application-layer/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
