@@ -1,7 +1,7 @@
 // The Desk's floating system chrome. The room menu stays compact; the opposite
 // cluster exposes the three daily starts, one searchable tool shelf, layout,
 // and refresh. A fresh Desk renders the same starts centrally instead.
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { openSurface } from "../shell";
 import { useTrustWindow } from "./TrustWindow";
 import { useDesk } from "../store";
@@ -17,6 +17,30 @@ const ROOMS = [
   { label: "Studio", action: "configure-tools" },
   { label: "Settings", action: "configure-settings" },
 ];
+
+/** The OS clock — every desktop has one. */
+function DeskClock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(t);
+  }, []);
+  const time = now.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const day = now.toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+  return (
+    <span className="desk-clock" aria-label={`${day} ${time}`}>
+      <span>{day}</span>
+      <strong>{time}</strong>
+    </span>
+  );
+}
 
 export function DeskChrome({
   showDailyStarts = true,
@@ -44,7 +68,7 @@ export function DeskChrome({
   const badge = egressBadge(setup);
 
   return (
-    <>
+    <div className="desk-menubar">
       <div className="desk-chrome desk-chrome-tl">
         <div className="desk-menu-wrap">
           <button
@@ -139,7 +163,8 @@ export function DeskChrome({
         >
           ↻
         </button>
+        <DeskClock />
       </div>
-    </>
+    </div>
   );
 }
