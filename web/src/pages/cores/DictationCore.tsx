@@ -292,19 +292,14 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
           without typing into another app.
         </p>
       </div>
-      <Field label="Utterance">
-        {({ id, describedBy }) => (
-          <div className="desk-mic-row">
-            <TextArea
-              id={id}
-              aria-describedby={describedBy}
-              value={utterance}
-              onChange={(event) => setUtterance(event.target.value)}
-              placeholder="Explain the change I made…"
-            />
-          </div>
-        )}
-      </Field>
+      <div className="desk-mic-row">
+        <TextArea
+          aria-label="Utterance"
+          value={utterance}
+          onChange={(event) => setUtterance(event.target.value)}
+          placeholder="Explain the change I made…"
+        />
+      </div>
       <div className="surface-actions speak-run-row">
         <Button
           variant="primary"
@@ -315,20 +310,12 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
           {error && actions.includes("retry") ? "Retry dry test" : "Run dry test"}
         </Button>
         <Disclosure title="Grounding scope">
-          <Field
-            label="Project root"
-            description="Optional grounding scope; saved only on this device."
-          >
-            {({ id, describedBy }) => (
-              <TextInput
-                id={id}
-                aria-describedby={describedBy}
-                value={projectRoot}
-                onChange={(event) => setProjectRoot(event.target.value)}
-                placeholder="/path/to/project"
-              />
-            )}
-          </Field>
+          <TextInput
+            aria-label="Project root — optional grounding scope, saved only on this device"
+            placeholder="Project root (optional)"
+            value={projectRoot}
+            onChange={(event) => setProjectRoot(event.target.value)}
+          />
         </Disclosure>
       </div>
       {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}

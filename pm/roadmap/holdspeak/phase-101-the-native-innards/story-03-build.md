@@ -66,6 +66,19 @@ motion.
   before the drop; refused drops name why.
   *Guard: vitest on the drop contract (kind × target matrix incl.
   refusals); a walk leg proves the file-drop import live.*
+- **B9 — The agent panes and the delivery rails wear the canon**
+  (added mid-build at the owner's ask: "hoping the panes, you know,
+  agent panes..., and the delivery-workbench integration"). The
+  steering pull-out / terminal pane composes as a SCRIPT (the pane
+  text is the material; the asked question already floats in aerogel
+  from B1), verbs on the material, the type scale inside; the
+  DeliveryBoard / dossier surfaces compose as receipts on the same
+  scale. Survey what the advanced delivery-workbench now serves
+  (the local rails read through `.githooks/dw` — newer receipts
+  land as available); a deeper dw re-integration beyond the surfaces
+  is recorded as a rider for its own phase.
+  *Guard: the B8 interior assertions cover the pane and delivery
+  windows; vitest on the script composition.*
 - **B8 — The keyboard grammar and the grown walk.** ⌘1–⌘4 open the
   four applications, ⌘W closes and ⌘M minimizes the front window,
   ⌘/ draws the shortcut sheet; `desk_gl_walk.py geometry` grows the

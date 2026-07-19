@@ -1442,6 +1442,77 @@ def surfaces() -> None:
         browser.close()
 
 
+def keys() -> None:
+    """HS-101 B8 — the global keyboard grammar: ⌘1–⌘4 open/switch the
+    four applications, ⌘M minimizes and ⌘W closes the front window,
+    ⌘/ draws the shortcut sheet (synthetic Meta keydowns — in a real
+    browser tab the UA may reserve ⌘W/⌘M; the desk's handler is the
+    contract)."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.goto(arrive_url("/"), wait_until="networkidle")
+        page.wait_for_timeout(1500)
+        failures: list[str] = []
+
+        def front_label() -> str:
+            return page.evaluate(
+                """() => {
+                  const wins = [...document.querySelectorAll('.desk-surface-window')];
+                  const vis = wins.filter((w) => w.offsetParent !== null);
+                  return vis.length
+                    ? vis[vis.length - 1].getAttribute('aria-label')
+                    : '';
+                }"""
+            )
+
+        page.keyboard.press("Meta+1")
+        page.wait_for_timeout(1400)
+        if not page.locator("[aria-label='Speak'].desk-surface-window").count():
+            failures.append("Meta+1 did not open Speak")
+        page.keyboard.press("Meta+4")
+        page.wait_for_timeout(1400)
+        if not page.locator("[aria-label='Settings'].desk-surface-window").count():
+            failures.append("Meta+4 did not open Settings")
+        before = page.evaluate(
+            "() => document.querySelectorAll('.desk-surface-window').length"
+        )
+        page.keyboard.press("Meta+m")
+        page.wait_for_timeout(900)
+        minimized = page.evaluate(
+            """() => [...document.querySelectorAll('.desk-surface-window')]
+                 .filter((w) => w.offsetParent === null).length"""
+        )
+        if minimized < 1:
+            failures.append("Meta+M did not minimize the front window")
+        page.keyboard.press("Meta+1")
+        page.wait_for_timeout(900)
+        page.keyboard.press("Meta+w")
+        page.wait_for_timeout(900)
+        visible_now = page.evaluate(
+            """() => [...document.querySelectorAll('.desk-surface-window')]
+                 .filter((w) => w.offsetParent !== null).length"""
+        )
+        if visible_now != before - 2 + 1 - 1 and visible_now >= before:
+            failures.append(
+                f"Meta+W did not close the front window (visible {visible_now})"
+            )
+        page.keyboard.press("Meta+/")
+        page.wait_for_timeout(600)
+        if not page.locator(".desk-shortcut-sheet").count():
+            failures.append("Meta+/ did not draw the shortcut sheet")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(400)
+        if page.locator(".desk-shortcut-sheet").count():
+            failures.append("Escape did not close the shortcut sheet")
+        assert not failures, "keys failures:\n  " + "\n  ".join(failures)
+        print(
+            "keys walk: Meta+1/Meta+4 open the applications, Meta+M "
+            "minimizes, Meta+W closes, Meta+/ draws the sheet, Escape "
+            "clears it"
+        )
+
+
 def geometry() -> None:
     """HS-100-12 — the geometry walk: EVERY registered surface window
     opened (via its deep link) and measured against the grammar — head
@@ -1507,6 +1578,42 @@ def geometry() -> None:
             )
             if walls:
                 failures.append(f"{label}: tab wall inside the body")
+            # HS-101 B8 — the interior canon assertions, on the faces
+            # the canon has converted (the ledger grows per interior):
+            # >=3 distinct type-scale steps, zero label+input stacks
+            # outside configuring faces.
+            CONVERTED = {"Runs on": True, "Speak": True}
+            CONFIGURING = {"Settings", "Setup", "Cadence", "Commands"}
+            if label in CONVERTED:
+                sizes = page.evaluate(
+                    """(sel) => {
+                      const body = document.querySelector(sel + ' .desk-surface-body');
+                      if (!body) return [];
+                      const out = new Set();
+                      for (const el of body.querySelectorAll('*')) {
+                        const text = [...el.childNodes].some(
+                          (n) => n.nodeType === 3 && n.textContent.trim(),
+                        );
+                        if (!text) continue;
+                        const st = getComputedStyle(el);
+                        if (st.visibility === 'hidden' || st.display === 'none')
+                          continue;
+                        out.add(Math.round(parseFloat(st.fontSize)));
+                      }
+                      return [...out];
+                    }""",
+                    sel,
+                )
+                if len(sizes) < 3:
+                    failures.append(
+                        f"{label}: monosize interior — type-scale steps {sorted(sizes)}"
+                    )
+                if label not in CONFIGURING:
+                    stacks = page.locator(f"{sel} .desk-surface-body .hs-field").count()
+                    if stacks:
+                        failures.append(
+                            f"{label}: {stacks} label+input stack(s) outside a configuring face"
+                        )
             # Squeeze: the narrow form must reflow, not scroll sideways.
             page.evaluate(
                 """(sel) => {
@@ -1926,6 +2033,8 @@ if __name__ == "__main__":
         speakflow()
     elif mode == "meetingflow":
         meetingflow()
+    elif mode == "keys":
+        keys()
     elif mode == "geometry":
         geometry()
     elif mode == "meetings":

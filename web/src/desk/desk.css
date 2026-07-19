@@ -4384,3 +4384,61 @@
     animation: none;
   }
 }
+
+/* HS-101 B8 — the shortcut sheet: drawn, on the transient material. */
+.desk-shortcut-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-popover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--shade-1);
+}
+.desk-shortcut-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px 22px;
+  width: min(620px, calc(100vw - 32px));
+  padding: 18px 22px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--desk-transient-radius);
+  background: var(--desk-panel-fill);
+  box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
+  -webkit-backdrop-filter: var(--desk-window-blur);
+  transform-origin: center;
+  animation: desk-transient-in var(--duration-short) var(--ease-back);
+}
+.desk-shortcut-panel h4 {
+  margin: 0 0 4px;
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.desk-shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 0;
+  font-size: var(--desk-surface-body-size);
+  color: var(--text-muted);
+}
+.desk-shortcut-row kbd {
+  min-width: 34px;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text);
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--desk-window-well);
+  box-shadow: inset 0 0 0 1px var(--border-subtle), inset 0 -1.5px 0 var(--shade-1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-shortcut-panel {
+    animation: none;
+  }
+}
