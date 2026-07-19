@@ -8,6 +8,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type KeyboardEvent,
   type ReactNode,
 } from "react";
 import { Button } from "../../components/signal/Signal";
@@ -364,6 +365,91 @@ export function SurfaceToggle({
         <span />
       </span>
     </label>
+  );
+}
+
+/** HS-101 rule 1 — data is the material: the presented text IS the
+ * editor. Click or Enter swaps it for a same-geometry editor;
+ * Enter/blur commits, Escape reverts. A value that cannot be edited
+ * stays presented and names why (never a bare disabled input). */
+export function EditInPlace({
+  value,
+  onCommit,
+  label,
+  disabledReason,
+  multiline,
+  className,
+}: {
+  value: string;
+  onCommit: (next: string) => void | Promise<void>;
+  label: string;
+  disabledReason?: string;
+  multiline?: boolean;
+  className?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const commit = () => {
+    setEditing(false);
+    const next = draft.trim();
+    if (next && next !== value) void onCommit(next);
+    else setDraft(value);
+  };
+  const revert = () => {
+    setDraft(value);
+    setEditing(false);
+  };
+  const cx = ["surface-edit-in-place", className].filter(Boolean).join(" ");
+  if (disabledReason) {
+    return (
+      <span
+        className={`${cx} is-locked`}
+        title={disabledReason}
+        aria-label={`${label} — ${disabledReason}`}
+      >
+        {value}
+      </span>
+    );
+  }
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        className={cx}
+        aria-label={`Edit ${label}`}
+        onClick={() => {
+          setDraft(value);
+          setEditing(true);
+        }}
+      >
+        {value}
+      </button>
+    );
+  }
+  const shared = {
+    className: `${cx} is-editing`,
+    "aria-label": label,
+    value: draft,
+    autoFocus: true,
+    onBlur: commit,
+    onKeyDown: (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        revert();
+      } else if (event.key === "Enter" && !(multiline && event.shiftKey)) {
+        event.preventDefault();
+        commit();
+      }
+    },
+  };
+  return multiline ? (
+    <textarea
+      {...shared}
+      rows={Math.max(2, draft.split("\n").length)}
+      onChange={(event) => setDraft(event.target.value)}
+    />
+  ) : (
+    <input {...shared} onChange={(event) => setDraft(event.target.value)} />
   );
 }
 

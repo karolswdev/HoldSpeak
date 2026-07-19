@@ -316,14 +316,71 @@
   gap: 6px;
 }
 
-/* A quiet inset preview (a replay result, a prepared answer). */
+/* HS-101 rule 6 — receipts float in aerogel: a suspended translucent
+   inset with a soft edge all the way around. The left accent rail is
+   BANNED (the owner's ban, 2026-07-19; test_interior_canon_guard.py
+   enforces it). */
+.surface-aerogel,
 .surface-preview {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px var(--desk-surface-row-pad-x);
-  border-left: 2px solid var(--accent-tint);
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--desk-aerogel-fill);
+  box-shadow:
+    inset 0 0 0 1px var(--desk-aerogel-edge),
+    var(--desk-aerogel-shadow);
+  backdrop-filter: var(--desk-aerogel-blur);
+  -webkit-backdrop-filter: var(--desk-aerogel-blur);
   font-size: var(--desk-surface-detail-size);
+}
+
+/* HS-101 — the interior type scale (DESIGN_SYSTEM.md, "The interior
+   canon"): display leads a face at most once; primary is what the
+   material IS. Body/secondary/caption stay the HS-98 tokens. */
+.surface-display {
+  font-family: var(--font-display);
+  font-size: var(--desk-type-display-size);
+  font-weight: var(--desk-type-display-weight);
+  line-height: var(--desk-type-display-lh);
+  letter-spacing: var(--letter-spacing-tight);
+}
+.surface-primary {
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+}
+
+/* HS-101 rule 1 — edit in place: the presented text is the editor.
+   Same geometry presented and editing; the ring is the only tell. */
+.surface-edit-in-place {
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  background: none;
+  border: 0;
+  padding: 1px 4px;
+  margin: -1px -4px;
+  border-radius: 6px;
+  max-width: 100%;
+}
+button.surface-edit-in-place {
+  cursor: text;
+}
+button.surface-edit-in-place:hover {
+  background: var(--wash-1);
+}
+.surface-edit-in-place.is-editing {
+  display: block;
+  width: 100%;
+  background: var(--wash-1);
+  box-shadow: 0 0 0 1px var(--accent);
+  outline: none;
+  resize: none;
+}
+.surface-edit-in-place.is-locked {
+  cursor: default;
 }
 .surface-preview > .surface-preview-label {
   font-size: var(--desk-surface-label-size);
