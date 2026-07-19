@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 101
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-101-02
 - **Unblocks:** HS-101-04
 
@@ -96,15 +96,17 @@ B3/B4, named in their commits; everything else rides existing routes.
 
 ## Acceptance criteria
 
-- [ ] B1 — kit + rail ban (zero `border-left` accent rails ship)
-- [ ] B2 — the fluid desk
-- [ ] B3 — the Journal stream
-- [ ] B4 — the Blocks library
-- [ ] B5 — the Runs-on switchboard
-- [ ] B6 — the system shade
-- [ ] B7 — through the glass
-- [ ] B8 — keyboard grammar + the grown geometry walk, green in the
+- [x] B1 — kit + rail ban (zero `border-left` accent rails ship)
+- [x] B2 — the fluid desk
+- [x] B3 — the Journal stream
+- [x] B4 — the Blocks library
+- [x] B5 — the Runs-on switchboard
+- [x] B6 — the system shade
+- [x] B7 — through the glass
+- [x] B8 — keyboard grammar + the grown geometry walk, green in the
       chain
+- [x] B9 — the agent panes + the delivery rails wear the canon
+      (the dw re-integration recorded as its own-phase rider)
 
 ## Test plan
 
