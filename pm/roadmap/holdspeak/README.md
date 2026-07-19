@@ -4,8 +4,25 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, IN
-PROGRESS (8/9)**. **HS-98-08, The surface floors, written, DONE**: the
+**Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, CLOSED
+(9/9, scaffolded and shipped the same day)**: the window interiors are
+ONE visual product with the desk. The surface idiom (one material, the
+window as the viewport via container queries, denser scale, honest
+rows, verbs with homes, one state grammar) was specced into canon,
+built as a kit, and applied to ALL FOURTEEN cores — every editor and
+confirm left its modal, the seam guard's conversion ledger shrank to
+empty and locked closed, 69 dead page-grammar CSS rules (−377 lines)
+were pruned with every survivor's consumer named. Closeout: the new
+`surfaces` walk leg opened every window at 1440 and as the 393 sheet
+with ZERO page grammar in the live DOM and zero failed API responses
+(28 shots looked at); the assembled chain (real voice, real recording,
+config round-trip, 15 routes, reflow, the grammar legs) green in one
+captured run; storm 8.3ms median assembled on hardware GL; the full
+sweep 4114/0 after retargeting 11 integration pins from the old
+grammar to the new truth. The owner's live verdict rides Campaign 13
+(the design-polish scenario now looks INSIDE the windows and resizes
+them). Follow-ups staged: The Living World, HSM One Grammar on Glass.
+Earlier: **HS-98-08, The surface floors, written, DONE**: the
 surface idiom is an Article VIII floors chapter in DESIGN_SYSTEM.md
 (six rules, closed ledger, proof legs named); web/README's
 add-a-surface path now composes the kit step by step with the seam
@@ -446,7 +463,7 @@ canon, canon wins.
 | 95 | The Desk OS: the desk becomes the one operating surface — WebGL stage, OS-grade windows and dock, every service surfaced through OS primitives, flat routes demoted to deep links | done | [phase-95-the-desk-os](./phase-95-the-desk-os/) |
 | 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
 | 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | done | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
-| 98 | Native Surfaces: the window interiors re-crafted in one desk idiom — the surface kit, container-driven reflow, honest rows, the page grammar retired from the desk | in-progress | [phase-98-native-surfaces](./phase-98-native-surfaces/) |
+| 98 | Native Surfaces: the window interiors re-crafted in one desk idiom — the surface kit, container-driven reflow, honest rows, the page grammar retired from the desk | done | [phase-98-native-surfaces](./phase-98-native-surfaces/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

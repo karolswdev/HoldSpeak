@@ -3,6 +3,7 @@ execution_target: web_react
 title: The desk reads as one built thing and answers the keyboard
 features:
   - phase96.design.system
+  - phase98.native.surfaces
 recipes:
   - seeded-desk
 form_factors: [desktop]
@@ -15,5 +16,11 @@ steps:
     where: /
   - do: Put the mouse away. Tab through the desk; open a window with Enter; press Escape.
     expect: The orange focus ring is visible on every stop; focus moves INTO an opened window and returns when Escape closes it; tabbing the world surfaces each object as a readable chip above the dock.
+    where: /
+  - do: Open Dictation, Meetings, and Settings. Look INSIDE the windows - the lists, the labels, the buttons.
+    expect: "One idiom on the window material: a single verb bar up top, hairline sections with quiet uppercase labels (no cards inside cards), dense rows that reveal their verbs on hover, honest values (no raw timestamps, no 'unknown'), and destructive verbs that arm inline instead of opening a modal."
+    where: /
+  - do: Grab the Meetings window's right edge and drag it narrower, then wider, without touching the browser.
+    expect: The content answers the WINDOW - two panes side by side when wide, stacked when narrow. The page never reflows; the window does.
     where: /
 teardown: []

@@ -10,7 +10,7 @@ def test_history_uses_bounded_archive_and_detail_sections() -> None:
         assert f'"{tab}"' in page
     for tab in ("transcript", "artifacts", "aftercare", "routing", "proposals"):
         assert f'"{tab}"' in page
-    assert "MeetingDetail" in page and "ImportDialog" in page
+    assert "MeetingDetail" in page and "ImportSection" in page
 
 
 def test_history_keeps_approval_and_export_governance() -> None:
@@ -21,4 +21,4 @@ def test_history_keeps_approval_and_export_governance() -> None:
     assert "row.policy_snapshot" in page and "row.operation" in page
     assert "apiBlob" in page
     assert "commitment" in page and "authority_basis" in page
-    assert "ConfirmAction" in page
+    assert "ConfirmVerb" in page

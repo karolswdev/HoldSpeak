@@ -237,3 +237,11 @@ features:
     recipes: [seeded-desk]
     priority: must
     status: live
+  - key: phase98.native.surfaces
+    title: Native surfaces - every window interior composes the surface idiom
+    domain: Phase 98 native surfaces
+    phases: [98]
+    surfaces: {web: 'yes', ipad: 'no', iphone: 'no'}
+    recipes: [seeded-desk]
+    priority: must
+    status: live

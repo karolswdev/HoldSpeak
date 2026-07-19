@@ -1,14 +1,16 @@
 # Phase 98 — Native Surfaces
 
-**Status:** IN PROGRESS (8/9, 2026-07-18) from the owner's standing
-verdict ("none of the Desk OS feels like an OS — windows feel like
-glued-in HTML panes, zero consistent look and feel") and the 2026-07-18
-remediation audit. Phase 97 shipped the window grammar (placement,
-depth, motion, one shelf); this phase re-crafts what lives INSIDE the
-windows.
+**Status:** CLOSED (9/9, 2026-07-18 — scaffolded and shipped the same
+day) at machine-verifiable scope under the standing close directive;
+the owner's live verdict rides the next UAT sitting (Campaign 13's
+desk-os-design-polish scenario now walks the native interiors). Born
+from the owner's standing verdict ("none of the Desk OS feels like an
+OS — windows feel like glued-in HTML panes, zero consistent look and
+feel") and the 2026-07-18 remediation audit. Phase 97 shipped the
+window grammar; this phase re-crafted what lives INSIDE the windows.
+See [final-summary](./final-summary.md).
 
-**Last updated:** 2026-07-18 (HS-98-08 done: the surface floors
-written into canon).
+**Last updated:** 2026-07-18 (HS-98-09 done; phase CLOSED 9/9).
 
 ## Why this phase exists
 
@@ -102,10 +104,24 @@ viewports, screenshots looked at.
 | HS-98-06 | The builder set | done | [story-06-builder-set](./story-06-builder-set.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-98-07 | The long tail, seam retired | done | [story-07-long-tail](./story-07-long-tail.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-98-08 | The surface floors, written | done | [story-08-docs](./story-08-docs.md) | [evidence-story-08](./evidence-story-08.md) |
-| HS-98-09 | Closeout: the native walk | backlog | [story-09-closeout](./story-09-closeout.md) | — |
+| HS-98-09 | Closeout: the native walk | done | [story-09-closeout](./story-09-closeout.md) | [evidence-story-09](./evidence-story-09.md) |
 
 ## Where we are
 
+**HS-98-09 done (2026-07-18): the native walk — phase CLOSED 9/9.**
+The new `surfaces` leg opened all fourteen windows at 1440 and as the
+393 sheet on the production bundle: zero page grammar in the live DOM,
+zero failed API responses, 28 shots looked at. The assembled chain
+(smoke through grammar plus reflow and surfaces) green in one captured
+run; storm assembled 8.3ms median / 9.2 p95 on hardware GL (the
+envelope holds; the 48-vs-1 layout-event delta recorded honestly as
+hover furniture under the drag path). The first full sweep caught 11
+integration tests still pinning the OLD grammar by string — each
+retargeted with intent intact — and the re-run sweep closed at 4114
+passed / 0 failed. UAT: the phase98.native.surfaces feature, the
+Campaign 13 look-INSIDE + window-reflow steps, the regenerated ledger.
+Riders and the Living World / One Grammar on Glass handoffs in
+final-summary.md. Earlier:
 **HS-98-08 done (2026-07-18): the surface floors are written.**
 DESIGN_SYSTEM.md's surface idiom chapter is an Article VIII floors
 contract (six rules, closed ledger, proof legs named); web/README's

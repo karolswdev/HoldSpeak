@@ -124,7 +124,7 @@ def test_dictation_page_route_serves_html() -> None:
         "/api/dictation/project-kb",
     ):
         assert endpoint in js
-    assert "New block" in js and "Project grounding" in js
+    assert "New block" in js and "Project scope" in js
 
 
 @pytest.fixture

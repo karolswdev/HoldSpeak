@@ -145,7 +145,7 @@ def test_web_settings_uses_only_dedicated_secret_operations() -> None:
     source = (
         Path(__file__).resolve().parents[2] / "web/src/pages/cores/SettingsCore.tsx"
     ).read_text()
-    assert "Write-only secrets" in source
+    assert "Values stay on this hub" in source
     assert "/api/settings/secrets/${secretId}" in source
     assert "/api/settings/secrets/${secretId}/rotate" in source
     assert 'type="password"' in source

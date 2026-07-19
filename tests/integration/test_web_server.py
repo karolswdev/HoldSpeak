@@ -330,7 +330,7 @@ class TestDashboardEndpoint:
         assert response.status_code == 200
         js = self._bundled_runtime_js(test_client)
         assert "intel_egress" in js
-        assert "Hub-reported" in js
+        assert 'label="Intelligence"' in js
 
     def test_dashboard_includes_idle_mode_guidance_markers(self, test_client):
         """The rebuilt runtime renders copy that distinguishes idle vs.
@@ -1806,7 +1806,7 @@ class TestHistoryUiSmoke:
 
         assert '<div id="root"></div>' in response.text
         js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/HistoryCore.tsx").read_text()
-        for marker in ("meetings", "actions", "speakers", "projects", "queues", "MeetingDetail", "ImportDialog"):
+        for marker in ("meetings", "actions", "speakers", "projects", "queues", "MeetingDetail", "ImportSection"):
             assert marker in js
         for endpoint in (
             "/api/speakers",

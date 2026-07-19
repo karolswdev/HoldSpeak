@@ -1267,6 +1267,69 @@ def reflow() -> None:
         browser.close()
 
 
+SURFACE_ROUTES = [
+    ("/dictation", "Dictation"),
+    ("/live", "Live meeting"),
+    ("/history", "Meetings"),
+    ("/settings", "Settings"),
+    ("/profiles", "Runs on"),
+    ("/cadence", "Cadence"),
+    ("/setup", "Setup"),
+    ("/workbench", "Workbench"),
+    ("/studio", "Studio"),
+    ("/companion", "Personas and coders"),
+    ("/docs/dictation-runtime", "Runtime guide"),
+    ("/design/components", "Components"),
+    ("/activity", "Activity"),
+    ("/commands", "Commands"),
+]
+PAGE_GRAMMAR = (
+    ".page-grid", ".span-8", ".span-4", ".span-12", ".data-list",
+    ".data-row", ".signal-eyebrow", ".button-row", ".code-block",
+    ".dialog-form", ".signal-panel",
+)
+
+
+def surfaces() -> None:
+    """HS-98-09 — one visual product: EVERY registered surface opens on
+    the production bundle wearing the idiom — zero page grammar in the
+    live DOM — shot at 1440 and as the 393 sheet, all LOOKED AT."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        for name, w, h in (("1440", 1440, 900), ("393", 393, 852)):
+            ctx = browser.new_context(viewport={"width": w, "height": h})
+            page = ctx.new_page()
+            failures: list[str] = []
+            page.on(
+                "response",
+                lambda r: failures.append(f"{r.status} {r.url}")
+                if r.url.startswith(BASE) and r.status >= 400 else None,
+            )
+            for route, aria in SURFACE_ROUTES:
+                page.goto(BASE + route, wait_until="networkidle")
+                sel = f"[aria-label='{aria}'].desk-surface-window"
+                page.wait_for_selector(sel, timeout=15000)
+                page.wait_for_timeout(600)
+                for cls in PAGE_GRAMMAR:
+                    count = page.locator(f"{sel} {cls}").count()
+                    assert count == 0, f"{aria}: page grammar {cls} x{count}"
+                assert page.locator(
+                    f"{sel} .surface-section, {sel} .surface-verbs, "
+                    f"{sel} .surface-rows, {sel} .workbench-canvas"
+                ).count() > 0, f"{aria}: no surface idiom in the window"
+                slug = aria.lower().replace(" ", "-")
+                page.screenshot(path=str(OUT / f"surface-{slug}-{name}.png"))
+                page.click(f"[aria-label='Close {aria}']")
+                page.wait_for_timeout(250)
+            assert not failures, failures
+            ctx.close()
+        print(f"surfaces walk: all {len(SURFACE_ROUTES)} windows native at "
+              "1440 and 393 — zero page grammar in the live DOM, zero "
+              "failed API responses")
+        browser.close()
+
+
 def switcher() -> None:
     """HS-97-06 — the switcher: exposé fans every open window (minimized
     ones join as dimmed cards) into a pick grid — click focuses, Escape
@@ -1546,6 +1609,8 @@ if __name__ == "__main__":
         frame()
     elif mode == "reflow":
         reflow()
+    elif mode == "surfaces":
+        surfaces()
     elif mode == "switcher":
         switcher()
     elif mode == "shelf":
