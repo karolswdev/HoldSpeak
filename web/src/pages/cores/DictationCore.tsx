@@ -39,6 +39,9 @@ import {
   SurfaceRow,
   SurfaceRows,
   SurfaceSection,
+  SurfaceLibrary,
+  SurfaceLibraryGhost,
+  SurfaceLibraryTile,
   SurfaceState,
   SurfaceStream,
   SurfaceStreamDay,
@@ -447,6 +450,17 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
   );
 }
 
+/** HS-101 B4 — Blocks reads like a library: the injection text IS
+ * the tile's face, the name and spoken matches ride the spine,
+ * create is a ghost tile in the shelf. Edits land on the material. */
+function blockSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function Blocks() {
   const [scope, setScope] = useState("global");
   const resource = useResource<JsonRecord>(
@@ -457,137 +471,193 @@ function Blocks() {
     (resource.data.document as JsonRecord | undefined)?.blocks,
     [],
   );
-  const [form, setForm] = useState({
-    id: "",
-    name: "",
-    examples: "",
-    injection: "",
-  });
   const [message, setMessage] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draft, setDraft] = useState({ name: "", examples: "", injection: "" });
+  const save = async (row: Record<string, unknown>, patch: JsonRecord) => {
+    setMessage("");
+    try {
+      await apiFetch(
+        `/api/dictation/blocks/${encodeURIComponent(String(row.id))}?scope=${scope}`,
+        { method: "PUT", json: { block: { ...row, ...patch } } },
+      );
+      await resource.reload();
+    } catch (error) {
+      setMessage(readableError(error));
+    }
+  };
+  const remove = async (row: Record<string, unknown>) => {
+    setMessage("");
+    try {
+      await apiFetch(
+        `/api/dictation/blocks/${encodeURIComponent(String(row.id))}?scope=${scope}`,
+        { method: "DELETE" },
+      );
+      await resource.reload();
+    } catch (error) {
+      setMessage(readableError(error));
+    }
+  };
   const create = async () => {
+    const name = draft.name.trim();
+    if (!name) return;
     setMessage("");
     try {
       await apiFetch(`/api/dictation/blocks?scope=${scope}`, {
         method: "POST",
         json: {
           block: {
-            id: form.id.trim(),
-            name: form.name.trim(),
-            match: form.examples.split("\n").filter(Boolean),
-            inject: form.injection,
+            id: blockSlug(name),
+            description: name,
+            match: {
+              examples: draft.examples
+                .split(/[,\n]/)
+                .map((part) => part.trim())
+                .filter(Boolean),
+            },
+            inject: { mode: "replace", template: draft.injection },
           },
         },
       });
-      setForm({ id: "", name: "", examples: "", injection: "" });
+      setDraft({ name: "", examples: "", injection: "" });
+      setDrafting(false);
       await resource.reload();
     } catch (error) {
       setMessage(readableError(error));
     }
   };
   return (
-    <SurfaceColumns
-      main={
-        <SurfaceSection
-          label="Routing blocks"
-          actions={
-            <Select
-              aria-label="Block scope"
-              value={scope}
-              onChange={(event) => setScope(event.target.value)}
-            >
-              <option value="global">Global</option>
-              <option value="project">Project</option>
-            </Select>
-          }
-        >
-          <SurfaceState
-            loading={resource.loading}
-            error={resource.error}
-            empty={!rows.length}
-            emptyLabel="No routing blocks"
-            emptyGlyph="⧉"
-            onRetry={() => void resource.reload()}
+    <SurfaceSection>
+      <SurfaceLibrary
+        count={rows.length}
+        countLabel={rows.length === 1 ? "block" : "blocks"}
+        controls={
+          <Select
+            aria-label="Block scope"
+            value={scope}
+            onChange={(event) => setScope(event.target.value)}
           >
-            <SurfaceRows>
-              {rows.map((row, index) => (
-                <SurfaceRow
-                  key={rowId(row, index)}
-                  title={String(row.name ?? row.id ?? "Block")}
-                  detail={
-                    presentValue(row.description ?? row.inject) || undefined
-                  }
-                  meta={
-                    <StatusPill>
-                      {String(row.enabled === false ? "off" : "active")}
-                    </StatusPill>
+            <option value="global">Global</option>
+            <option value="project">Project</option>
+          </Select>
+        }
+      >
+        <SurfaceState
+          loading={resource.loading}
+          error={resource.error}
+          onRetry={() => void resource.reload()}
+        >
+          {rows.map((row, index) => {
+            const match =
+              row.match && typeof row.match === "object"
+                ? (row.match as JsonRecord)
+                : {};
+            const examples = Array.isArray(match.examples)
+              ? match.examples
+              : [];
+            const inject =
+              row.inject && typeof row.inject === "object"
+                ? (row.inject as JsonRecord)
+                : {};
+            const mode = String(inject.mode ?? "replace");
+            return (
+              <SurfaceLibraryTile
+                key={rowId(row, index)}
+                face={
+                  <EditInPlace
+                    value={String(inject.template ?? "")}
+                    label={`${String(row.description ?? row.id)} template`}
+                    multiline
+                    onCommit={(next) =>
+                      void save(row, { inject: { ...inject, template: next } })
+                    }
+                  />
+                }
+                name={
+                  <EditInPlace
+                    value={String(row.description ?? row.id ?? "Block")}
+                    label={`${String(row.id)} name`}
+                    onCommit={(next) => void save(row, { description: next })}
+                  />
+                }
+                lamp={<span className="surface-mode">{mode}</span>}
+                says={
+                  examples.length
+                    ? examples.slice(0, 3).map((say, sayIndex) => (
+                        <span className="surface-say" key={sayIndex}>
+                          {String(say)}
+                        </span>
+                      ))
+                    : null
+                }
+                verbs={
+                  <ConfirmVerb
+                    label="Delete"
+                    confirmLabel="Delete?"
+                    onConfirm={() => void remove(row)}
+                  />
+                }
+              />
+            );
+          })}
+          {drafting ? (
+            <li className="surface-tile surface-tile-drafting">
+              <div className="surface-tile-face">
+                <TextArea
+                  aria-label="Injection text"
+                  placeholder="What this block injects"
+                  rows={4}
+                  value={draft.injection}
+                  onChange={(event) =>
+                    setDraft({ ...draft, injection: event.target.value })
                   }
                 />
-              ))}
-            </SurfaceRows>
-          </SurfaceState>
-        </SurfaceSection>
-      }
-      side={
-        <SurfaceSection label="New block">
-          <Field label="ID">
-            {({ id }) => (
-              <TextInput
-                id={id}
-                value={form.id}
-                onChange={(event) =>
-                  setForm({ ...form, id: event.target.value })
-                }
-              />
-            )}
-          </Field>
-          <Field label="Name">
-            {({ id }) => (
-              <TextInput
-                id={id}
-                value={form.name}
-                onChange={(event) =>
-                  setForm({ ...form, name: event.target.value })
-                }
-              />
-            )}
-          </Field>
-          <Field label="Example utterances">
-            {({ id }) => (
-              <TextArea
-                id={id}
-                value={form.examples}
-                onChange={(event) =>
-                  setForm({ ...form, examples: event.target.value })
-                }
-              />
-            )}
-          </Field>
-          <Field label="Injection">
-            {({ id }) => (
-              <TextArea
-                id={id}
-                value={form.injection}
-                onChange={(event) =>
-                  setForm({ ...form, injection: event.target.value })
-                }
-              />
-            )}
-          </Field>
-          <div className="surface-actions">
-            <Button
-              variant="primary"
-              disabled={!form.id.trim()}
-              onClick={create}
-            >
-              Create block
-            </Button>
-          </div>
-          {message ? (
-            <InlineMessage tone="error">{message}</InlineMessage>
-          ) : null}
-        </SurfaceSection>
-      }
-    />
+              </div>
+              <div className="surface-tile-spine">
+                <TextInput
+                  aria-label="Block name"
+                  placeholder="Name"
+                  value={draft.name}
+                  onChange={(event) =>
+                    setDraft({ ...draft, name: event.target.value })
+                  }
+                />
+                <TextInput
+                  aria-label="Spoken matches, comma separated"
+                  placeholder="Say: standup notes, stand up"
+                  value={draft.examples}
+                  onChange={(event) =>
+                    setDraft({ ...draft, examples: event.target.value })
+                  }
+                />
+                <div className="surface-actions">
+                  <Button
+                    dense
+                    variant="primary"
+                    disabled={!draft.name.trim()}
+                    onClick={() => void create()}
+                  >
+                    Create
+                  </Button>
+                  <Button dense variant="ghost" onClick={() => setDrafting(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </li>
+          ) : (
+            <SurfaceLibraryGhost
+              label="New block"
+              hint={
+                rows.length ? undefined : "No routing blocks on this scope yet"
+              }
+              onCreate={() => setDrafting(true)}
+            />
+          )}
+        </SurfaceState>
+        {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
+      </SurfaceLibrary>
+    </SurfaceSection>
   );
 }
 

@@ -928,3 +928,174 @@ button.surface-edit-in-place:hover {
   background: var(--ok-soft);
   box-shadow: inset 0 0 0 1px var(--ok-soft);
 }
+
+/* HS-101 rule 2 — the library (SurfaceLibrary): tiles wear their
+   payload as the face. */
+.surface-library-wrap {
+  display: flex;
+  flex-direction: column;
+}
+.surface-library {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.surface-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--wash-1);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  min-height: 150px;
+  animation: surface-rise-in var(--duration-medium) var(--ease-quart) both;
+}
+.surface-tile:hover,
+.surface-tile:focus-within {
+  background: var(--wash-2);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.surface-tile-face {
+  position: relative;
+  flex: 1;
+  padding: 11px 12px 8px;
+  background: var(--desk-window-well);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  line-height: 1.55;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  overflow: hidden;
+  max-height: 120px;
+}
+.surface-tile-face::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 28px;
+  background: linear-gradient(transparent, var(--shadow-ink-2));
+  pointer-events: none;
+}
+.surface-tile-face .surface-edit-in-place {
+  font: inherit;
+  color: inherit;
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+.surface-tile-face .surface-edit-in-place.is-editing {
+  min-height: 90px;
+}
+.surface-tile-spine {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 12px 11px;
+}
+.surface-tile-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.surface-tile-name .lamp,
+.surface-tile-name > .surface-mode {
+  margin-left: auto;
+}
+.surface-mode {
+  font-size: var(--desk-surface-label-size);
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.lamp {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+}
+.lamp[data-on="true"] {
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok-soft);
+}
+.lamp[data-on="false"] {
+  background: var(--wash-2);
+}
+.surface-tile-says {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.surface-say {
+  font-size: var(--desk-surface-label-size);
+  color: var(--text-muted);
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--wash-1);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+.surface-say::before {
+  content: "“";
+  color: var(--text-faint);
+}
+.surface-say::after {
+  content: "”";
+  color: var(--text-faint);
+}
+.surface-tile > .surface-row-verbs {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+}
+.surface-tile:hover > .surface-row-verbs,
+.surface-tile:focus-within > .surface-row-verbs {
+  opacity: 1;
+  transform: translateY(0);
+}
+.surface-tile-ghost {
+  background: none;
+  box-shadow: none;
+  border: 1.5px dashed var(--border);
+  overflow: visible;
+}
+.surface-tile-ghost:hover,
+.surface-tile-ghost:focus-within {
+  background: var(--wash-1);
+  box-shadow: none;
+}
+.surface-tile-ghost-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--desk-surface-body-size);
+  cursor: pointer;
+  border-radius: 12px;
+}
+.surface-tile-ghost-btn small {
+  color: var(--text-faint);
+  font-size: var(--desk-surface-label-size);
+}
+.surface-tile-ghost-plus {
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface-tile {
+    animation: none;
+  }
+}

@@ -450,6 +450,89 @@ export function SurfaceStreamEntry({
   );
 }
 
+/** HS-101 rule 2 — the library: the composition for a shelf of kept
+ * material (Blocks). Tiles wear their PAYLOAD as the face; the name
+ * and provenance ride the spine; create is a ghost tile in the
+ * shelf, never a side form. */
+export function SurfaceLibrary({
+  count,
+  countLabel,
+  controls,
+  children,
+}: {
+  count: ReactNode;
+  countLabel?: ReactNode;
+  controls?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="surface-library-wrap">
+      <div className="surface-stream-head">
+        <span className="surface-display">{count}</span>
+        {countLabel ? (
+          <small className="surface-stream-count-label">{countLabel}</small>
+        ) : null}
+        {controls ? (
+          <span className="surface-stream-controls">{controls}</span>
+        ) : null}
+      </div>
+      <ul className="surface-library">{children}</ul>
+    </div>
+  );
+}
+
+export function SurfaceLibraryTile({
+  face,
+  name,
+  lamp,
+  says,
+  verbs,
+}: {
+  /** The payload rendered AS the tile's face (rule 2). */
+  face: ReactNode;
+  name: ReactNode;
+  /** Never color-only — pair with the name it describes. */
+  lamp?: ReactNode;
+  says?: ReactNode;
+  verbs?: ReactNode;
+}) {
+  return (
+    <li className="surface-tile">
+      <div className="surface-tile-face">{face}</div>
+      <div className="surface-tile-spine">
+        <div className="surface-tile-name surface-primary">
+          {name}
+          {lamp}
+        </div>
+        {says ? <div className="surface-tile-says">{says}</div> : null}
+      </div>
+      {verbs ? <div className="surface-row-verbs">{verbs}</div> : null}
+    </li>
+  );
+}
+
+export function SurfaceLibraryGhost({
+  label,
+  hint,
+  onCreate,
+}: {
+  label: ReactNode;
+  hint?: ReactNode;
+  onCreate: () => void;
+}) {
+  return (
+    <li className="surface-tile surface-tile-ghost">
+      <button type="button" className="surface-tile-ghost-btn" onClick={onCreate}>
+        <span className="surface-tile-ghost-plus" aria-hidden="true">
+          ＋
+        </span>
+        <span>{label}</span>
+        {hint ? <small>{hint}</small> : null}
+      </button>
+    </li>
+  );
+}
+
 /** HS-101 rule 1 — data is the material: the presented text IS the
  * editor. Click or Enter swaps it for a same-geometry editor;
  * Enter/blur commits, Escape reverts. A value that cannot be edited
