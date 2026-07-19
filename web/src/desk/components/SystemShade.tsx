@@ -68,7 +68,7 @@ export function SystemShade({
   const learned = (corrections ?? []).slice(0, 3);
 
   return (
-    <div className="desk-shade" ref={panel} role="dialog" aria-label="While you were away">
+    <div className="desk-shade" ref={panel} role="group" aria-label="While you were away">
       <div className="desk-shade-head">
         <span className="desk-shade-title">While you were away</span>
         <button

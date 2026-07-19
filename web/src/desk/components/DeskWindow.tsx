@@ -1575,7 +1575,7 @@ function ShortcutSheet({ onClose }: { onClose: () => void }) {
   return createPortal(
     <div
       className="desk-shortcut-sheet"
-      role="dialog"
+      role="group"
       aria-label="Keyboard shortcuts"
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) onClose();

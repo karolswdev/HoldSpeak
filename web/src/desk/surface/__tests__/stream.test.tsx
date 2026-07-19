@@ -48,7 +48,7 @@ describe("the stream time grammar", () => {
 
 describe("the stream composition", () => {
   it("head leads with the count at display step; entries carry when/said/meta/verbs", () => {
-    render(
+    const { container } = render(
       <SurfaceStream count={14} countLabel="today · 2 taught">
         <SurfaceStreamDay label="Today — Sun, Jul 19">
           <SurfaceStreamEntry
@@ -61,11 +61,11 @@ describe("the stream composition", () => {
         </SurfaceStreamDay>
       </SurfaceStream>,
     );
-    const count = document.querySelector(".surface-stream-head .surface-display");
+    const count = container.querySelector(".surface-stream-head .surface-display");
     expect(count?.textContent).toBe("14");
     expect(screen.getByText("today · 2 taught")).toBeTruthy();
     expect(screen.getByText("Today — Sun, Jul 19")).toBeTruthy();
-    const entry = document.querySelector(".surface-stream-entry");
+    const entry = container.querySelector(".surface-stream-entry");
     expect(entry?.querySelector(".surface-stream-when")?.textContent).toBe(
       "09:38",
     );
