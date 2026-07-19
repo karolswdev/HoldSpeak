@@ -23,6 +23,8 @@ import {
   SurfaceToggle,
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
+import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
+import { RuntimeDocsCore } from "./RuntimeDocsCore";
 
 const SECTION_ORDER = [
   "ui",
@@ -43,7 +45,7 @@ const FRIENDLY: Record<string, string> = {
   dictation: "Voice typing",
   wake_word: "Wake Word",
   presence: "Presence",
-  meeting: "Meetings & intel",
+  meeting: "Meetings & intelligence",
   activity: "Activity",
   cadence: "Cadence",
   commands: "Commands",
@@ -314,7 +316,24 @@ function SettingGlyph({ name }: { name: string }) {
   );
 }
 
+const SETTINGS_WINGS = [
+  { id: "settings", label: "Settings" },
+  { id: "guide", label: "Guide" },
+];
+
 export function SettingsCore({ hero, scope }: CoreProps) {
+  // HS-100-10 — the Runtime guide is the Guide wing (the standalone
+  // doc-window died; deep links land here via the registry alias).
+  const [wing, setWing] = useState(scope === "guide" ? "guide" : "settings");
+  useWindowWings(
+    <SurfaceWings wings={SETTINGS_WINGS} active={wing} onChange={setWing} />,
+    [wing],
+  );
+  if (wing === "guide") return <RuntimeDocsCore />;
+  return <SettingsFace hero={hero} scope={scope} />;
+}
+
+function SettingsFace({ hero, scope }: CoreProps) {
   const integrationSubject =
     scope && scope.startsWith("integration:")
       ? scope.slice("integration:".length)

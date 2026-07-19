@@ -5,7 +5,7 @@ recovery. Work can run on this device, a paired device, a private endpoint, or
 an external service; each operational surface names the applicable boundary.
 
 The Web app opens on the **Desk**, where Meetings, Notes, Artifacts, Projects,
-Personas, Workflows, Integrations, Coder sessions, attention, and Receipts are
+Agents, Workflows, Integrations, Coder sessions, attention, and Receipts are
 available. Dictation, Meetings, Studio, and Settings are focused workrooms.
 
 > New here? Start with the [main README](../README.md) for the pitch and a
@@ -85,7 +85,7 @@ available. Dictation, Meetings, Studio, and Settings are focused workrooms.
 ## Extend: build on it
 
 - **[The Desk](./WEB_DESK.md)**: work with Meetings, Notes, Knowledge,
-  Personas, Sequences, Workflows, Artifacts, and Coder sessions; place durable
+  Agents, Sequences, Workflows, Artifacts, and Coder sessions; place durable
   items in Zones and inspect their results and Receipts.
 - **[Plugin Authoring](./PLUGIN_AUTHORING.md)**: write a meeting-intel plugin. The
   `HostPlugin` contract, prompt to LLM to structured output, rendering, sequences, and

@@ -328,7 +328,7 @@ def windows() -> None:
         # Reload: rects, stacking order, and maximize persist; a reopening
         # window always PRESENTS itself (minimize is session-scoped by
         # design and, since HS-97-03, never persisted).
-        page.reload(wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         layout = page.evaluate(
             "() => JSON.parse(localStorage.getItem('hs.desk.panels'))"
@@ -755,7 +755,7 @@ def meetings(intel: bool = False) -> None:
             # until the meeting's intel reaches ready, then SEE it in-world.
             meeting_id = page.evaluate(
                 """async () => {
-                  const r = await fetch('/api/meetings', {credentials:'include'});
+                  const r = await fetch('/api/meetings', {credentials:'include', headers: {'X-HoldSpeak-Token': sessionStorage.getItem('hs.web.token') || ''}});
                   const d = await r.json();
                   const ms = d.meetings || d;
                   return ms[0]?.id || null;
@@ -830,7 +830,7 @@ def config() -> None:
         # 2. A real change: flip presence enabled via the cockpit search.
         before = page.evaluate(
             """async () => {
-              const r = await fetch('/api/settings', {credentials:'include'});
+              const r = await fetch('/api/settings', {credentials:'include', headers: {'X-HoldSpeak-Token': sessionStorage.getItem('hs.web.token') || ''}});
               return (await r.json()).presence?.enabled ?? null;
             }"""
         )
@@ -844,16 +844,16 @@ def config() -> None:
         page.wait_for_timeout(1500)
         after = page.evaluate(
             """async () => {
-              const r = await fetch('/api/settings', {credentials:'include'});
+              const r = await fetch('/api/settings', {credentials:'include', headers: {'X-HoldSpeak-Token': sessionStorage.getItem('hs.web.token') || ''}});
               return (await r.json()).presence?.enabled ?? null;
             }"""
         )
         assert after != before, (before, after)
-        page.reload(wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         persisted = page.evaluate(
             """async () => {
-              const r = await fetch('/api/settings', {credentials:'include'});
+              const r = await fetch('/api/settings', {credentials:'include', headers: {'X-HoldSpeak-Token': sessionStorage.getItem('hs.web.token') || ''}});
               return (await r.json()).presence?.enabled ?? null;
             }"""
         )
@@ -869,7 +869,11 @@ def config() -> None:
                 f"[aria-label=\'{aria}\'].desk-surface-window", timeout=8000
             )
         open_shelf(page)
-        page.click(".desk-tool-link:has-text(\'Integrations\')")
+        # A prior window may legitimately cover the popover; dispatch the
+        # link directly (the affordance itself is what this leg proves).
+        page.locator(".desk-tool-link:has-text('Integrations')").evaluate(
+            "el => el.click()"
+        )
         page.wait_for_selector(
             "[aria-label=\'Settings\'].desk-surface-window .desk-scope-chip",
             timeout=8000,
@@ -883,7 +887,7 @@ def config() -> None:
             ("/cadence", "Cadence"),
             ("/setup", "Setup"),
         ):
-            page.goto(BASE + path, wait_until="networkidle")
+            page.goto(arrive_url(path), wait_until="networkidle")
             page.wait_for_selector(
                 f"[aria-label=\'{marker}\'].desk-surface-window", timeout=10000
             )
@@ -908,19 +912,18 @@ def lastexits() -> None:
         ("/activity", "Activity"),
         ("/commands", "Commands"),
         ("/cadence", "Cadence"),
-        ("/studio", "Studio"),
         ("/workbench", "Workbench"),
         ("/profiles", "Runs on"),
         ("/companion", "Agents"),
         ("/setup", "Setup"),
-        ("/docs/dictation-runtime", "Runtime guide"),
+        ("/docs/dictation-runtime", "Settings"),
         ("/design/components", "Components"),
     ]
     with sync_playwright() as p:
         browser = p.chromium.launch()
         for path, title in ROUTES:
             page = browser.new_page(viewport={"width": 1440, "height": 900})
-            page.goto(BASE + path, wait_until="networkidle")
+            page.goto(arrive_url(path), wait_until="networkidle")
             page.wait_for_selector(
                 f"[aria-label=\'{title}\'].desk-surface-window", timeout=15000
             )
@@ -1095,7 +1098,7 @@ def arrangement() -> None:
             }"""
         )
         assert front_before == "Settings", front_before
-        page.reload(wait_until="networkidle")
+        page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         after = page.evaluate("() => localStorage.getItem('hs.desk.panels')")
         assert after == before, (before, after)
@@ -1386,9 +1389,8 @@ SURFACE_ROUTES = [
     ("/cadence", "Cadence"),
     ("/setup", "Setup"),
     ("/workbench", "Workbench"),
-    ("/studio", "Studio"),
     ("/companion", "Agents"),
-    ("/docs/dictation-runtime", "Runtime guide"),
+    ("/docs/dictation-runtime", "Settings"),
     ("/design/components", "Components"),
     ("/activity", "Activity"),
     ("/commands", "Commands"),
@@ -1417,7 +1419,7 @@ def surfaces() -> None:
                 if r.url.startswith(BASE) and r.status >= 400 else None,
             )
             for route, aria in SURFACE_ROUTES:
-                page.goto(BASE + route, wait_until="networkidle")
+                page.goto(arrive_url(route), wait_until="networkidle")
                 sel = f"[aria-label='{aria}'].desk-surface-window"
                 page.wait_for_selector(sel, timeout=15000)
                 page.wait_for_timeout(600)

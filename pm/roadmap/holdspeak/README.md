@@ -5,7 +5,11 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
-PROGRESS (9/13)**. **HS-100-09, B5 Agents, DONE** (blocked-first with
+PROGRESS (10/13)**. **HS-100-10, B6 Settings + arrival, DONE** (Studio
+dead; Guide wing; two-start arrival; ONE vocabulary canon — the
+product-language registry amended to Agent, allowlist locked empty;
+POSITIONING amended to the Desk-first front door). Earlier,
+**HS-100-09, B5 Agents, DONE** (blocked-first with
 the Answer verb; Personas left the glass; the vocabulary allowlist
 shrank to two files). Earlier, **HS-100-08, B4 Meetings, DONE** (outcomes first:
 needs-you leads, transcript folds to a receipt, plumbing behind the

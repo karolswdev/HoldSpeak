@@ -4162,3 +4162,23 @@
   flex-direction: column;
   gap: 22px;
 }
+
+/* HS-100-10 — the arrival's one trust line. */
+.desk-next .desk-empty-trust {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-dim);
+  font-size: var(--font-size-sm);
+}
+.desk-next .desk-empty-trust-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  flex: none;
+}
+.desk-next .desk-empty-trust.is-mixed .desk-empty-trust-dot,
+.desk-next .desk-empty-trust.is-cloud .desk-empty-trust-dot {
+  background: var(--warning, var(--accent));
+}

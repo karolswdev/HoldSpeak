@@ -43,7 +43,7 @@ comes back as typed, reviewable artifacts:
 
 Launch `holdspeak` and the browser opens on the Desk: everything the two
 modes produce, living as objects in one spatial world. Meetings, notes,
-Knowledge, Personas, and their Artifacts appear on the Desk; Zones are
+Knowledge, Agents, and their Artifacts appear on the Desk; Zones are
 shelves you drag things onto; tap anything and it opens in place.
 
 <p align="center">
@@ -66,7 +66,7 @@ run. The question is answered from those records (the hub reads them from
 its own store), the kept card names them, and an unknown reference refuses
 with its id instead of guessing.
 
-**Talk to your Personas.** Tap an avatar on the rail and it opens a
+**Talk to your Agents.** Tap an avatar on the rail and it opens a
 conversation, not a one-shot prompt: turns accumulate, the thread survives a
 reload, each reply wears the badge for where that turn actually ran, and any
 reply can be kept on the Desk as an Artifact. The attach control rides the
@@ -82,7 +82,7 @@ through the same conversation surface, grounding included.
 - **Every run names its destination.** Transcription and model-backed work can
   run on this device, a paired device, a private endpoint, or an external
   OpenAI-compatible service.
-  Name those as reusable **Runs on destinations** and assign one per Persona;
+  Name those as reusable **Runs on destinations** and assign one per Agent;
   the destination definition syncs across your surfaces while the API key stays
   on each one. A destination can name another of your machines: run
   `holdspeak mesh serve` there and every run against that destination executes on

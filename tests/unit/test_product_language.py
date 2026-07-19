@@ -31,8 +31,8 @@ def test_registry_is_versioned_complete_and_strict() -> None:
     registry = load_product_language(REGISTRY_PATH)
 
     assert registry.version == 2
-    assert registry.label("recipe") == "Persona"
-    assert registry.label("agent", plural=True) == "Personas"
+    assert registry.label("recipe") == "Agent"  # HS-100-10: the canon word
+    assert registry.label("agent", plural=True) == "Agents"  # HS-100-10
     assert registry.label("directory") == "Zone"
     assert registry.label("kb") == "Knowledge"
     assert registry.label("chain") == "Sequence"
@@ -68,8 +68,8 @@ def test_registry_is_versioned_complete_and_strict() -> None:
 
 
 def test_module_accessor_uses_the_same_registry() -> None:
-    assert product_label("persona") == "Persona"
-    assert product_label("recipe") == "Persona"
+    assert product_label("persona") == "Agent"  # HS-100-10
+    assert product_label("recipe") == "Agent"  # HS-100-10
     assert product_label("coder", plural=True) == "Coder sessions"
     assert control_mode_wire("Secure") == "safe"
     assert control_mode_wire("normal") == "neutral"
@@ -105,8 +105,10 @@ def test_compatibility_exceptions_are_explicit_and_bounded() -> None:
         assert len(exception["reason"].strip()) >= 24
 
 
+# HS-100-10: "agent" became the registry's own product term (the
+# Persona rename) and is no longer ambiguous.
 _EXACT_UNQUALIFIED = re.compile(
-    r"^(?:profiles?|agents?|actions?|contexts?|targets?|pending|local)$",
+    r"^(?:profiles?|actions?|contexts?|targets?|pending|local)$",
     re.IGNORECASE,
 )
 _TS_VISIBLE = re.compile(

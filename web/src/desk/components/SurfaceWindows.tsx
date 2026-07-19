@@ -138,19 +138,6 @@ const SURFACES: SurfaceRow[] = [
     ),
   },
   {
-    key: "configure-tools",
-    id: "surface-studio",
-    title: "Studio",
-    glyph: "◇",
-    eyebrow: "Focused workspace",
-    minW: 520,
-    Core: lazy(() =>
-      import("../../pages/cores/StudioCore").then((m) => ({
-        default: m.StudioCore,
-      })),
-    ),
-  },
-  {
     key: "inspect-personas-and-coders",
     id: "surface-companion",
     title: "Agents",
@@ -160,19 +147,6 @@ const SURFACES: SurfaceRow[] = [
     Core: lazy(() =>
       import("../../pages/cores/CompanionCore").then((m) => ({
         default: m.CompanionCore,
-      })),
-    ),
-  },
-  {
-    key: "read-runtime-docs",
-    id: "surface-runtime-docs",
-    title: "Runtime guide",
-    glyph: "📘",
-    eyebrow: "Setup guide",
-    minW: 560,
-    Core: lazy(() =>
-      import("../../pages/cores/RuntimeDocsCore").then((m) => ({
-        default: m.RuntimeDocsCore,
       })),
     ),
   },
@@ -243,6 +217,9 @@ const SURFACE_ALIASES: Record<string, { target: string; scope?: string }> = {
     scope: "integration:destinations",
   },
   "configure-integration": { target: "configure-settings" },
+  // HS-100-10 — the Runtime guide is Settings' Guide wing; old
+  // dispatches and deep links keep landing.
+  "read-runtime-docs": { target: "configure-settings", scope: "guide" },
 };
 
 export function SurfaceWindows() {

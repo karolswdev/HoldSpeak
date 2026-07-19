@@ -38,13 +38,9 @@ _BANNED = {
     "abs-path": re.compile(r"/Users/|/home/\w"),
 }
 
-# Today's offenders, frozen. Shrink-only: entries may ONLY be removed.
-_ALLOWLIST: dict[str, frozenset[str]] = {
-    # HS-100-09 shrank the persona entries to StudioCore alone (it dies
-    # in HS-100-10 along with the intel copy in SettingsCore).
-    "pages/cores/SettingsCore.tsx": frozenset({"intel"}),
-    "pages/cores/StudioCore.tsx": frozenset({"persona"}),
-}
+# HS-100-10 emptied the allowlist (Studio died; Settings speaks
+# "intelligence"). It stays empty: any entry added here is a defect.
+_ALLOWLIST: dict[str, frozenset[str]] = {}
 
 
 def _sources() -> list[Path]:

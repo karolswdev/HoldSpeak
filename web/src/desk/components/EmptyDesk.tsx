@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { FirstWords } from "./FirstWords";
 import { DeskStartActions } from "./DeskStartActions";
+import { useDesk } from "../store";
+import { egressBadge } from "../setup";
 
-// The fresh Desk leads with its three daily actions. The optional first-value
-// dictation exercise stays below those actions instead of replacing the front
-// door with an onboarding lesson.
+// HS-100-10 — the arrival (thesis §2): the two modes as start verbs and
+// ONE trust line. No headline prose, no checklist wall (Article VII).
 export function EmptyDesk({
   arrivalRequired = false,
 }: {
   arrivalRequired?: boolean;
 }) {
   const [continued, setContinued] = useState(false);
+  const setup = useDesk((s) => s.setup);
+  const badge = egressBadge(setup);
   return (
     <div
       className={`desk-empty${arrivalRequired && !continued ? " is-first-value" : ""}`}
@@ -18,11 +21,13 @@ export function EmptyDesk({
       <div className="desk-empty-mark" aria-hidden="true">
         ◍
       </div>
-      <h1 className="desk-empty-word">Start on your Desk</h1>
-      <p className="desk-empty-line">
-        Dictate text, record a meeting, or create a Desk item.
-      </p>
       <DeskStartActions />
+      <p className={`desk-empty-trust is-${badge.scope}`} title={badge.title}>
+        <span className="desk-empty-trust-dot" aria-hidden="true" />
+        {badge.scope === "local"
+          ? "Everything runs on this device"
+          : badge.text}
+      </p>
       {arrivalRequired && !continued ? (
         <FirstWords embedded onDismiss={() => setContinued(true)} />
       ) : null}

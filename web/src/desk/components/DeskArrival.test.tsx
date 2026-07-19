@@ -48,13 +48,13 @@ describe("Phase 93 Desk arrival", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     const menu = screen.getByRole("menu", { name: "Create a Desk item" });
     expect(menu).toBeInTheDocument();
-    for (const label of ["Note", "Zone", "Knowledge", "Persona", "Workflow"]) {
+    for (const label of ["Note", "Zone", "Knowledge", "Agent", "Workflow"]) {
       expect(
         screen.getByRole("menuitem", { name: `Create ${label}` }),
       ).toBeInTheDocument();
     }
 
-    fireEvent.click(screen.getByRole("menuitem", { name: "Create Persona" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Create Agent" }));
     expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("recipe");
   });
 

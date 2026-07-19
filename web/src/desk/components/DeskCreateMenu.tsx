@@ -17,7 +17,7 @@ export const DESK_CREATE_CHOICES: ReadonlyArray<{
   },
   {
     kind: "recipe",
-    label: "Persona",
+    label: "Agent",
     description: "Save reusable behavior.",
   },
   {

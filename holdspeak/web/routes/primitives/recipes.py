@@ -29,7 +29,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         row["capability"] = capability_descriptor(
             kind="persona", name=recipe.name or recipe.id,
             supported_placements=[f"profile:{recipe.profile_id}"] if recipe.profile_id else ["this_machine"],
-            action_label=f"Ask {recipe.name or 'Persona'}",
+            action_label=f"Ask {recipe.name or 'Agent'}",
         )
         return row
 
@@ -64,7 +64,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         if not str(body.get("name") or "").strip():
-            return JSONResponse({"error": "Persona name is required"}, status_code=400)
+            return JSONResponse({"error": "Agent name is required"}, status_code=400)
         try:
             from ....db import get_database
             recipe = get_database().recipes.upsert(
@@ -83,7 +83,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             from ....db import get_database
             recipe = get_database().recipes.get(recipe_id)
             if recipe is None:
-                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
             return JSONResponse({"recipe": _payload(recipe)})
         except Exception as exc:
             return error_500(exc, log, "Failed to get recipe")
@@ -98,7 +98,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             existing = db.recipes.get(recipe_id)
             if existing is None:
-                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
             recipe = db.recipes.upsert(recipe_id=recipe_id, **_recipe_fields(body, existing))
             return JSONResponse({"recipe": _payload(recipe)})
         except Exception as exc:
@@ -110,7 +110,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             from ....db import get_database
             removed = get_database().recipes.delete(recipe_id)
             if not removed:
-                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
             return JSONResponse({"success": True})
         except Exception as exc:
             return error_500(exc, log, "Failed to delete recipe")
@@ -132,7 +132,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             recipe = db.recipes.get(recipe_id)
             if recipe is None:
-                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
 
             lifecycle = RunLifecycle.begin(
                 db, definition_ref=f"persona:{recipe_id}", body=body,
@@ -144,10 +144,10 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             user_prompt = _render_user_prompt(recipe.user_template, variables or {}, user_input)
             if not user_prompt.strip():
                 invocation = lifecycle.fail(
-                    "nothing to run: provide `input` or a Persona input template", state="empty"
+                    "nothing to run: provide `input` or a Agent input template", state="empty"
                 )
                 return JSONResponse(
-                    {"error": "nothing to run: provide `input` or a Persona input template",
+                    {"error": "nothing to run: provide `input` or a Agent input template",
                      "invocation": invocation, "invocation_id": lifecycle.invocation_id},
                     status_code=400,
                 )
@@ -204,7 +204,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
                      "invocation": invocation, "invocation_id": lifecycle.invocation_id}, status_code=502
                 )
             if not str(output or "").strip():
-                error = "Persona returned no output; your input is retained for Retry."
+                error = "Agent returned no output; your input is retained for Retry."
                 _run_frame(ctx, "error", kind="recipe", ref=recipe_id,
                            name=recipe.name or recipe_id, error=error)
                 invocation = lifecycle.fail(error, state="empty", provider=getattr(intel, "active_provider", None))
@@ -319,7 +319,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             db = get_database()
             recipe = db.recipes.get(recipe_id)
             if recipe is None:
-                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
             name = recipe.name or recipe_id
 
             blocks: list[str] = []
@@ -447,7 +447,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
             from ....db import get_database
             recipe = get_database().recipes.get(recipe_id)
             if recipe is None:
-                return JSONResponse({"error": f"Unknown Persona: {recipe_id}"}, status_code=404)
+                return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
             artifact_id = _persist_run_artifact(
                 kind="recipe", name=recipe.name or recipe_id,
                 user_input=str(body.get("question") or ""),

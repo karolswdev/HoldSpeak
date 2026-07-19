@@ -77,7 +77,7 @@ endpoint owns model loading; HoldSpeak needs no local weights.
   model, then choose it where work runs:
   - **Meeting intelligence:** Settings → **Runs on**.
   - **Dictation:** Dictation → Runtime → **Runs on**.
-  - **Personas:** use the Persona editor's **Runs on** picker.
+  - **Agents:** use the Agent editor's **Runs on** picker.
 - **Configure by hand:** the compatibility shape lives in `config.json` and
   still works when no destination is selected:
   `dictation.runtime.openai_compatible_base_url` + `_model` + `_api_key_env`
@@ -103,7 +103,7 @@ persistence contracts retain the `profile` compatibility name.
   one model, app wide. Most users never need more.
 - **Advanced.** Keep a list of named destinations (this device, or any
   OpenAI-compatible endpoint such as OpenRouter or Claude) and assign one
-  **per Persona**. Scout can run on this device while Editor runs on an endpoint
+  **per Agent**. Scout can run on this device while Editor runs on an endpoint
   and Critic runs on a third. Every place that touches a model shows a small
   "Runs on" control with the resolved default already selected and changeable
   at the point of use.
@@ -119,7 +119,7 @@ each surface and is joined only at request time. See
 Runs on destinations also drive the desktop hub's pipelines: meeting intelligence and
 the dictation rewrite each carry a "Runs on" picker (Settings → Cloud &
 advanced, and Dictation → Runtime), so one destination can serve
-Personas, Meetings, and dictation. `holdspeak doctor` reports
+Agents, Meetings, and dictation. `holdspeak doctor` reports
 which destination each pipeline resolves to, warns when an assigned destination is
 missing, and names the exact `HOLDSPEAK_PROFILE_<ID>_KEY` variable to export
 when a destination needs a key on this machine.
@@ -146,11 +146,11 @@ against an offline node refuses immediately and names the node, and
 `holdspeak doctor` lists every edge with its age under "Mesh edges". The
 serving machine needs a real provider of its own (a local model or an
 endpoint) in its config; the hub-side destination only names where the run
-goes. Relay runs are chat, Persona, meeting-intelligence, and dictation
+goes. Relay runs are chat, Agent, meeting-intelligence, and dictation
 rewrites; the prompt travels only between the hub and the executing node.
 
 Manage Runs on destinations on the Web compatibility route `/profiles`, or in
-native Settings; assign a Persona in the Persona editor.
+native Settings; assign a Agent in the Agent editor.
 
 ## Current suggestions (a moving target)
 

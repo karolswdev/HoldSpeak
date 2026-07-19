@@ -63,8 +63,8 @@
       "meaning": "An ongoing endeavor or work scope, distinct from placement and grounding."
     },
     "persona": {
-      "singular": "Persona",
-      "plural": "Personas",
+      "singular": "Agent",
+      "plural": "Agents",
       "category": "capability",
       "meaning": "Saved reusable behavior made from instructions, tools, and knowledge."
     },
@@ -72,7 +72,7 @@
       "singular": "Coder session",
       "plural": "Coder sessions",
       "category": "presence",
-      "meaning": "A live Claude or Codex process, never a saved Persona."
+      "meaning": "A live Claude or Codex process, never a saved agent."
     },
     "workflow": {
       "singular": "Workflow",
@@ -143,13 +143,50 @@
     "profile": "runs_on"
   },
   "lifecycle_axes": {
-    "readiness": ["unconfigured", "configured", "ready", "unavailable"],
-    "availability": ["offline", "connecting", "available", "degraded"],
-    "sync": ["local_only", "pending_sync", "synced", "sync_error"],
-    "work": ["queued", "running", "succeeded", "failed", "cancelled"],
-    "review": ["unreviewed", "accepted", "dismissed"],
-    "authority": ["not_requested", "proposed", "approved", "rejected", "expired", "revoked"],
-    "attention": ["unseen", "needs_attention", "acknowledged", "resolved"]
+    "readiness": [
+      "unconfigured",
+      "configured",
+      "ready",
+      "unavailable"
+    ],
+    "availability": [
+      "offline",
+      "connecting",
+      "available",
+      "degraded"
+    ],
+    "sync": [
+      "local_only",
+      "pending_sync",
+      "synced",
+      "sync_error"
+    ],
+    "work": [
+      "queued",
+      "running",
+      "succeeded",
+      "failed",
+      "cancelled"
+    ],
+    "review": [
+      "unreviewed",
+      "accepted",
+      "dismissed"
+    ],
+    "authority": [
+      "not_requested",
+      "proposed",
+      "approved",
+      "rejected",
+      "expired",
+      "revoked"
+    ],
+    "attention": [
+      "unseen",
+      "needs_attention",
+      "acknowledged",
+      "resolved"
+    ]
   },
   "destination_classes": [
     "this_device",
@@ -157,8 +194,16 @@
     "private_endpoint",
     "external_service"
   ],
-  "decision_kinds": ["review", "approval", "grant"],
-  "control_modes": ["safe", "neutral", "yolo"],
+  "decision_kinds": [
+    "review",
+    "approval",
+    "grant"
+  ],
+  "control_modes": [
+    "safe",
+    "neutral",
+    "yolo"
+  ],
   "control_mode_labels": {
     "safe": "Secure",
     "neutral": "Normal",
@@ -221,8 +266,20 @@
       "resolved": "Resolved"
     }
   },
-  "meeting_projections": ["summary", "action_items", "transcript", "topics"],
-  "guarded_terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+  "meeting_projections": [
+    "summary",
+    "action_items",
+    "transcript",
+    "topics"
+  ],
+  "guarded_terms": [
+    "Profile",
+    "Action",
+    "Context",
+    "Target",
+    "Pending",
+    "Local"
+  ],
   "copy_contract": {
     "version": 1,
     "classifications": [
@@ -233,12 +290,17 @@
       "error_recovery",
       "marketing_sdk_exception"
     ],
-    "generic_consequential_verbs": ["Approve", "Apply", "Open", "Run"],
+    "generic_consequential_verbs": [
+      "Approve",
+      "Apply",
+      "Open",
+      "Run"
+    ],
     "prohibited_operational_patterns": [
       {
         "id": "legacy-product-nouns",
-        "pattern": "\\b(?:Agent Desk|Agents?|Profiles?|Recipes?|Chains?|Knowledge Base)\\b",
-        "reason": "Primary UI uses Coder session, Runs on, Persona, Sequence, and Knowledge."
+        "pattern": "\\b(?:Agent Desk|Personas?|Profiles?|Recipes?|Chains?|Knowledge Base)\\b",
+        "reason": "Primary UI uses Coder session, Runs on, Agent, Sequence, and Knowledge."
       },
       {
         "id": "raw-control-mode-labels",
@@ -295,13 +357,17 @@
       {
         "id": "swift-artifact-open-v1",
         "path": "apple/App/MeetingCapture/ReviewUI.swift",
-        "literals": ["Open"],
+        "literals": [
+          "Open"
+        ],
         "reason": "Open reveals read-only Artifact detail and has no external, destructive, queued, or authority-changing effect."
       },
       {
         "id": "swift-desk-open-v1",
         "path": "apple/App/MeetingCapture/DeskDioramaStage.swift",
-        "literals": ["Open"],
+        "literals": [
+          "Open"
+        ],
         "reason": "Open reveals the selected Desk item's local inspector and does not execute or queue an effect."
       },
       {
@@ -316,8 +382,20 @@
       {
         "id": "swift-review-glog-v1",
         "path": "apple/App/MeetingCapture/ReviewUI.swift",
-        "literals": ["w{value} FAIL {value}: {value"],
+        "literals": [
+          "w{value} FAIL {value}: {value"
+        ],
         "reason": "Generation worker glog lines are internal debug-log diagnostics that never render on a product surface; the census only sees the literal because it interpolates the caught error."
+      },
+      {
+        "path": "apple/*.swift",
+        "terms": [
+          "Persona",
+          "Personas"
+        ],
+        "reason": "HS-100-10 renamed the canon to Agent on the web; the Apple surfaces consume the thesis in the HSM follow-up phase and keep the old noun until then.",
+        "id": "apple-agent-rename-pending-v1",
+        "literals": []
       }
     ]
   },
@@ -327,7 +405,15 @@
       "registry_version": 2,
       "kind": "wire",
       "path": "holdspeak/db/{models,core,actuators}.py",
-      "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+      "terms": [
+        "Profile",
+        "Agent",
+        "Action",
+        "Context",
+        "Target",
+        "Pending",
+        "Local"
+      ],
       "reason": "Persistence model and legacy wire names remain stable during the additive language migration."
     },
     {
@@ -335,7 +421,15 @@
       "registry_version": 2,
       "kind": "wire",
       "path": "holdspeak/web/routes/{authority,actuator_shared,mesh,primitives/*.py}",
-      "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+      "terms": [
+        "Profile",
+        "Agent",
+        "Action",
+        "Context",
+        "Target",
+        "Pending",
+        "Local"
+      ],
       "reason": "Public API compatibility and qualified architectural identifiers retain their existing wire names."
     },
     {
@@ -343,7 +437,10 @@
       "registry_version": 2,
       "kind": "migration",
       "path": "web/src/desk/api.ts",
-      "terms": ["Profile", "Agent"],
+      "terms": [
+        "Profile",
+        "Agent"
+      ],
       "reason": "The API adapter consumes legacy recipe/profile wires but emits canonical product labels."
     },
     {
@@ -351,7 +448,15 @@
       "registry_version": 2,
       "kind": "wire",
       "path": "apple/Sources/Contracts/{Models,Primitives,ProductLanguage,InferenceTarget}.swift",
-      "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+      "terms": [
+        "Profile",
+        "Agent",
+        "Action",
+        "Context",
+        "Target",
+        "Pending",
+        "Local"
+      ],
       "reason": "Codable compatibility types preserve public wire identifiers."
     },
     {
@@ -359,7 +464,15 @@
       "registry_version": 2,
       "kind": "sdk",
       "path": "apple/Sources/RuntimeCore/{Companion/*.swift,Desk/ContextEnvelope.swift}",
-      "terms": ["Profile", "Agent", "Action", "Context", "Target", "Pending", "Local"],
+      "terms": [
+        "Profile",
+        "Agent",
+        "Action",
+        "Context",
+        "Target",
+        "Pending",
+        "Local"
+      ],
       "reason": "Qualified implementation types remain internal and are not product labels."
     }
   ]

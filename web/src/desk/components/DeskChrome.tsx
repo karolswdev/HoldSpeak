@@ -14,7 +14,6 @@ const ROOMS = [
   { label: "Desk", action: "return-to-desk" },
   { label: "Speak", action: "dictate" },
   { label: "Meetings", action: "review-meetings" },
-  { label: "Studio", action: "configure-tools" },
   { label: "Settings", action: "configure-settings" },
 ];
 

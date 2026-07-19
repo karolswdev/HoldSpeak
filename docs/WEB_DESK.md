@@ -1,7 +1,7 @@
 # The Desk
 
 The Desk is HoldSpeak's operating surface. Launch `holdspeak` and open `/`
-to work with Meetings, Notes, Knowledge, Personas, Sequences, Workflows,
+to work with Meetings, Notes, Knowledge, Agents, Sequences, Workflows,
 Artifacts, and live Coder sessions. Zones provide placement for durable
 work. The world itself renders on a WebGL stage; every product surface
 (Dictation, Meetings, Settings, Workbench, and the rest) opens as a window
@@ -22,7 +22,7 @@ Desk items use distinct visual forms:
 - **meetings** are cassette tapes,
 - **notes** are notepads,
 - **Knowledge** collections are crystals,
-- **Personas** and **Coder sessions** are characters,
+- **Agents** and **Coder sessions** are characters,
 - **Sequences** and **Workflows** are cartridges,
 - **artifacts** are typed pages, each carrying its lineage.
 
@@ -37,9 +37,9 @@ Primary controls stay compact:
   Meetings, Studio, Settings) opens as a window in place. Beside it, the
   hub dot (green when connected) and the current data-boundary badge.
 - **Top right**: **Dictate**, **Record**, and one **Create** menu for Note,
-  Zone, Knowledge, Persona, and Workflow.
+  Zone, Knowledge, Agent, and Workflow.
 - **Tool shelf**: advanced Desk tools and Runs on destinations.
-- **Right edge**: the Persona rail.
+- **Right edge**: the Agent rail.
 
 ## Windows, the dock, and tiles
 
@@ -61,8 +61,8 @@ scope the link named.
 
 ## Create, in place
 
-Choose **Create**, then select Note, Zone, Knowledge, Persona, or Workflow.
-The new item opens in context. Persona and Workflow editors expose their Runs
+Choose **Create**, then select Note, Zone, Knowledge, Agent, or Workflow.
+The new item opens in context. Agent and Workflow editors expose their Runs
 on destination and Knowledge only when those settings are relevant.
 
 ## Open, in place
@@ -95,17 +95,17 @@ stage as an object.
 
 ## Converse from the rail
 
-The right-edge rail holds Personas, each with its Runs on status. Select one
+The right-edge rail holds Agents, each with its Runs on status. Select one
 to open its **conversation**, a docked thread rather than a one-shot prompt.
 Turns accumulate, the
-thread survives a reload (it lives on this device; Personas sync, threads
+thread survives a reload (it lives on this device; Agents sync, threads
 stay yours), and **Clear** empties it when you want a fresh start.
 
 Each reply names where that turn ran. **Keep as Artifact** stores the Result
-as an Artifact on the Desk with lineage naming the Persona. Nothing is
+as an Artifact on the Desk with lineage naming the Agent. Nothing is
 stored until you save it.
 
-Below the Personas, the rail lists available models from each Runs on
+Below the Agents, the rail lists available models from each Runs on
 destination. Select one to open a conversation pinned to that model. If the
 model is unavailable, the run fails before execution and lists available
 alternatives.
@@ -128,7 +128,7 @@ records.
 
 ## Rope things together and Ask AI
 
-Contextual Ask needs no saved Persona. Drag on the
+Contextual Ask needs no saved Agent. Drag on the
 empty desk and a rope follows your pointer; everything inside it is
 selected (shift-click or cmd-click ropes objects one at a time). A bar
 rises with the count and one action: **Ask AI**.
