@@ -4,7 +4,26 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, CLOSED
+**Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, SCAFFOLDED
+(0/8)** from the owner's live verdict on the staged Phase 98 build ("a
+step, but soooo much work to even begin dreaming of this looking and
+feeling like an OS — loads of unstyled selects; the windows deserve a
+huge overhaul") and the directed ProzillaOS study
+(github.com/prozilla-os/ProzillaOS, MIT — "see what we can borrow,
+what we can embrace"). A three-way source study (window system,
+skin/controls, desktop shell) named the missing chrome: a tonal depth
+ladder instead of borders, a real two-tone title BAR with edge-flush
+square controls and a red-hover close, custom pill scrollbars
+everywhere (we ship none), skinned form controls (the unstyled
+selects), one directional light source, a frosted living dock with a
+running-app underline, a shared menu vocabulary, tint formulas, and an
+easing family. Eight stories in
+[phase-99-the-os-chrome](./phase-99-the-os-chrome/): study+tokens
+first, then the bar, the controls, scrollbars+menus, the dock,
+interior archetypes (Settings rail, Meetings status bar), floors, and
+a chrome walk. What Phases 96–98 do better than the reference (focus
+chrome, snap, per-edge resize, reduced-motion) are floors and must not
+regress. Earlier: **Phase 98, Native Surfaces, CLOSED
 (9/9, scaffolded and shipped the same day)**: the window interiors are
 ONE visual product with the desk. The surface idiom (one material, the
 window as the viewport via container queries, denser scale, honest
@@ -464,6 +483,7 @@ canon, canon wins.
 | 96 | The Design System: the vendored design-system + ui-styling skills applied to the Desk OS — three-layer tokens with a validator lock, component state specs, one material grammar, the accessibility pass | done | [phase-96-the-design-system](./phase-96-the-design-system/) |
 | 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | done | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
 | 98 | Native Surfaces: the window interiors re-crafted in one desk idiom — the surface kit, container-driven reflow, honest rows, the page grammar retired from the desk | done | [phase-98-native-surfaces](./phase-98-native-surfaces/) |
+| 99 | The OS Chrome: the ProzillaOS-studied skin — tonal depth ladder, a real title bar, skinned controls, custom scrollbars, a living dock, one menu vocabulary | in-progress | [phase-99-the-os-chrome](./phase-99-the-os-chrome/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

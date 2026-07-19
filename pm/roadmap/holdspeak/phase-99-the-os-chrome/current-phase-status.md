@@ -1,0 +1,113 @@
+# Phase 99 — The OS Chrome
+
+**Status:** SCAFFOLDED (0/8, 2026-07-18) from the owner's live verdict
+on the staged Phase 98 build: "a step, but we still have soooo much
+work to do to even begin dreaming of this looking and feeling like an
+OS — loads of unstyled selects; those windows still deserve a huge
+overhaul" — with a direct study directive: ProzillaOS
+(github.com/prozilla-os/ProzillaOS, MIT), "see what we can borrow,
+what we can embrace, and deliver this kind of experience."
+
+**Last updated:** 2026-07-18 (scaffolded; the three-way ProzillaOS
+study is canon in docs/internal/PROZILLAOS_STUDY.md as of HS-99-01).
+
+## Why this phase exists
+
+Phase 97 fixed how windows behave; Phase 98 fixed how interiors
+compose. Both verdicts came back the same way: better, not an OS. The
+ProzillaOS study names WHY — a browser desktop reads as an OS through
+a small set of relentless chrome techniques we simply do not have:
+
+- **Native scrollbars everywhere.** We ship ZERO scrollbar CSS — the
+  browser's scrollbars are the loudest single "this is a webpage"
+  tell on every scrolling window.
+- **Native form controls.** `<select>` inherits only the field base;
+  its popup, chevron, and options are the browser's. Date inputs,
+  file inputs, and search inputs are raw. The owner saw it
+  immediately.
+- **The title bar is a card header.** Padding, a border-bottom, and
+  26px hover-dot verbs — where an OS window has a two-tone bar whose
+  full-height square controls reach the edges, and whose close
+  hovers red.
+- **No tonal depth scale.** One window fill for everything; ProzillaOS
+  layers five background steps so head/toolbar/rail/well/body
+  separate WITHOUT borders. Borderless tonal separation is most of
+  what "solid object" means.
+- **No context-menu vocabulary, no icon language, no running-app
+  indicator on the dock, no shared hover/selected tint formula.**
+
+Constitution Articles VII and VIII govern; Article X records the
+borrow (MIT, attributed). What we already do BETTER than the
+reference — focus keyline + rest/front shadows, per-edge resize, snap
+tiling, exposé, reduced-motion honesty — are floors and must not
+regress.
+
+## The chrome moves (borrowed, named)
+
+1. **Depth is tonal.** A five-step surface ladder (component tokens)
+   under every window: head one step above body, wells one below,
+   rails/toolbars between — separation by tone, not borders.
+2. **The title bar is a bar.** Two-tone head, full-height square
+   verb buttons (aspect-ratio 1) flush to the window edge, SVG
+   glyphs, close hovers `--danger`; corners square off on maximize;
+   the head owns a right-click menu (minimize/maximize/close).
+3. **Scrollbars belong to the OS.** Pill thumbs on transparent
+   tracks, token-colored, thin, everywhere.
+4. **Controls wear the skin.** `appearance: none` selects with a
+   drawn chevron and surface-colored options; skinned date/search/
+   file/number inputs; every control on the well tone.
+5. **One light source.** The window/transient shadows become
+   directional and compositional (size/opacity/spread primitives) so
+   every floating surface agrees where the light is.
+6. **The dock is alive.** A running underline that grows on hover,
+   icon scale on hover, the frosted two-layer material.
+7. **Tint math, not guesses.** Hover = 20% mix, selected = 40% mix,
+   via `color-mix` formulas as tokens.
+8. **Motion has a family.** The quart/expo/back easing tokens join
+   the duration tokens; chrome transitions reference them.
+
+## Scope
+
+### In
+
+- the study committed as canon (attribution included) + the token
+  additions (surface ladder, easings, tint formulas, scrollbar and
+  control tokens, compositional shadows);
+- the title bar re-craft on `DeskWindowFrame` (all windows: surface,
+  pull-out, trust) + head context menu + maximize corner behavior;
+- the full native-control skin (select/option, date, search, file,
+  number, checkbox row) in one place, gated;
+- custom scrollbars, product-wide;
+- dock running-indicator + hover motion + frosted layering;
+- interior archetypes where they pay: Settings gains the left-rail
+  two-pane at wide containers; Meetings gains a status bar; icon
+  buttons gain the halo grammar;
+- docs as floors; the closeout walk gains a `chrome` leg; shots at
+  1440/393 looked at.
+
+### Out
+
+- world/object art and object-to-window morph (The Living World);
+- iPad parity (HSM consumes this after);
+- new surfaces/routes/capabilities; wire contracts stay byte-identical;
+- skin/theme SWITCHING (ProzillaOS's skin registry) — one skin,
+  Signal, done well; the token seams it needs are recorded as a rider.
+
+## Story status
+
+| ID | Story | Status | Story file | Evidence |
+|---|---|---|---|---|
+| HS-99-01 | The study and the tokens | backlog | [story-01-study-and-tokens](./story-01-study-and-tokens.md) | — |
+| HS-99-02 | The title bar is a bar | backlog | [story-02-title-bar](./story-02-title-bar.md) | — |
+| HS-99-03 | Controls wear the skin | backlog | [story-03-controls](./story-03-controls.md) | — |
+| HS-99-04 | Scrollbars and menus | backlog | [story-04-scrollbars-menus](./story-04-scrollbars-menus.md) | — |
+| HS-99-05 | The dock is alive | backlog | [story-05-dock-alive](./story-05-dock-alive.md) | — |
+| HS-99-06 | Interior archetypes | backlog | [story-06-interior-archetypes](./story-06-interior-archetypes.md) | — |
+| HS-99-07 | The chrome floors, written | backlog | [story-07-docs](./story-07-docs.md) | — |
+| HS-99-08 | Closeout: the chrome walk | backlog | [story-08-closeout](./story-08-closeout.md) | — |
+
+## Where we are
+
+Scaffolded 2026-07-18 from the owner's live verdict and the completed
+three-way ProzillaOS study (window system, skin/controls, desktop
+shell). Next: HS-99-01.
