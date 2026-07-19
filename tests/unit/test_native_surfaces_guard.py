@@ -53,13 +53,11 @@ ALLOWED: dict[str, set[str]] = {
     "CompanionCore.tsx": {
         "data-list", "data-row", "Panel", "EmptyState", "ResourceState",
     },
-    "ComponentsCore.tsx": {"page-grid", "Panel", "EmptyState", "Dialog"},
     "ProfilesCore.tsx": {
         "data-list", "data-row", "button-row", "dialog-form",
         "Panel", "EmptyState", "ResourceState", "ConfirmAction", "Dialog",
     },
     "RuntimeDocsCore.tsx": {"code-block", "Panel"},
-    "WorkbenchCore.tsx": {"button-row", "code-block", "Panel"},
 }
 
 

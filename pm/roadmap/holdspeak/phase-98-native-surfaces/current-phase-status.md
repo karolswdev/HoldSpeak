@@ -1,14 +1,14 @@
 # Phase 98 — Native Surfaces
 
-**Status:** IN PROGRESS (5/9, 2026-07-18) from the owner's standing
+**Status:** IN PROGRESS (6/9, 2026-07-18) from the owner's standing
 verdict ("none of the Desk OS feels like an OS — windows feel like
 glued-in HTML panes, zero consistent look and feel") and the 2026-07-18
 remediation audit. Phase 97 shipped the window grammar (placement,
 depth, motion, one shelf); this phase re-crafts what lives INSIDE the
 windows.
 
-**Last updated:** 2026-07-18 (HS-98-05 done: the config pair native —
-settings sections on the material, scoped open lands).
+**Last updated:** 2026-07-18 (HS-98-06 done: the builder set native —
+canvas untouched, inspector floats on the material).
 
 ## Why this phase exists
 
@@ -99,13 +99,23 @@ viewports, screenshots looked at.
 | HS-98-03 | Meetings, native | done | [story-03-meetings-native](./story-03-meetings-native.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-98-04 | The live pair | done | [story-04-live-pair](./story-04-live-pair.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-98-05 | The config pair | done | [story-05-config-pair](./story-05-config-pair.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-98-06 | The builder set | backlog | [story-06-builder-set](./story-06-builder-set.md) | — |
+| HS-98-06 | The builder set | done | [story-06-builder-set](./story-06-builder-set.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-98-07 | The long tail, seam retired | backlog | [story-07-long-tail](./story-07-long-tail.md) | — |
 | HS-98-08 | The surface floors, written | backlog | [story-08-docs](./story-08-docs.md) | — |
 | HS-98-09 | Closeout: the native walk | backlog | [story-09-closeout](./story-09-closeout.md) | — |
 
 ## Where we are
 
+**HS-98-06 done (2026-07-18): the builder set is native.** Workbench
+keeps its canvas; the inspector floats on the ONE window material
+(surface-float, transient elevation), presets ride the verb bar, and
+run-and-return is a quiet section. Studio's cards became dense
+launcher rows. The Components gallery now demonstrates the CURRENT
+canon — sections, columns, honest rows, states, and the inline
+two-step; the modal demo left with the grammar. Proven by the
+`lastexits` leg (15 routes land; Workbench saves a real workflow
+through the new chrome) and shots looked at. `npm run check` green
+(289). Next: HS-98-07 — the long tail, seam retired. Earlier:
 **HS-98-05 done (2026-07-18): the config pair is native.** Settings'
 three panels became sections on the material (posture, hub
 configuration with the recursive editor intact, credentials with

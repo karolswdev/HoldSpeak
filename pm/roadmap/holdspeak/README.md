@@ -5,7 +5,14 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, IN
-PROGRESS (5/9)**. **HS-98-05, The config pair, DONE**: Settings'
+PROGRESS (6/9)**. **HS-98-06, The builder set, DONE**: Workbench's
+canvas untouched with its inspector now a float on the one window
+material and presets on the verb bar; Studio's cards became dense
+launcher rows; the Components gallery demonstrates the current canon
+(sections, honest rows, states, the inline two-step — the modal demo
+left with the grammar) — proven by the `lastexits` leg (15 routes
+land; a real workflow saves through the new chrome) and shots looked
+at. Earlier: **HS-98-05, The config pair, DONE**: Settings'
 panels became sections on the material (posture, the recursive hub
 editor intact, credentials with two-step Rotate/Delete), Save on the
 verb bar, the Integrations alias landing scrolled to its section;

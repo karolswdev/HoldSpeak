@@ -388,6 +388,26 @@
   scrollbar-width: thin;
 }
 
+/* A float over a canvas (the workbench inspector): the one window
+   material, transient elevation — never a Signal card. */
+.surface-float {
+  background: var(--desk-window-fill);
+  border: 1px solid var(--border);
+  border-radius: var(--desk-transient-radius);
+  box-shadow: var(--desk-transient-shadow);
+  padding: 10px var(--desk-surface-row-pad-x);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.surface-float-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--desk-surface-body-size);
+}
+
 /* The kit is host-agnostic: its screen-reader utility must not depend
    on the desk shell's scoped copy. */
 .surface-state .sr-only {
