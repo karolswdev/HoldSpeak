@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 100
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-100-02
 

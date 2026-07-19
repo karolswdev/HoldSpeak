@@ -1,6 +1,6 @@
 # Phase 100 — The Application Layer
 
-**Status:** SCAFFOLDED (0/6, 2026-07-19) by the owner's direct
+**Status:** IN PROGRESS (1/6, 2026-07-19) by the owner's direct
 directive, verbatim in spirit: *"a phase that will cause a deep, deep,
 deep grounding in the philosophy, seams, use cases — to then form an
 opinion on the entire UI/UX with regards to its applicability to the
@@ -8,7 +8,7 @@ Desk OS — and then finally deliver something beautiful, not mangled,
 easy to use: a proper application layer on our Desk OS to drive the
 value of HoldSpeak."*
 
-**Last updated:** 2026-07-19 (scaffolded; grounding begins).
+**Last updated:** 2026-07-19 (HS-100-01 done: GROUNDING.md is written and cited).
 
 ## Why this phase exists — the honest post-mortem
 
@@ -76,7 +76,7 @@ and the opinion exist and the owner has gated them.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-100-01 | The grounding | backlog | [story-01-grounding](./story-01-grounding.md) | — |
+| HS-100-01 | The grounding | done | [story-01-grounding](./story-01-grounding.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-100-02 | The judgment | backlog | [story-02-judgment](./story-02-judgment.md) | — |
 | HS-100-03 | The thesis | backlog | [story-03-thesis](./story-03-thesis.md) | — |
 | HS-100-04 | The owner's gate | backlog | [story-04-gate](./story-04-gate.md) | — |
@@ -85,5 +85,11 @@ and the opinion exist and the owner has gated them.
 
 ## Where we are
 
-Scaffolded 2026-07-19, minutes after the directive. The spike is
-parked on its branch as thesis input. Next: HS-100-01 — the grounding.
+**HS-100-01 done (2026-07-19): the grounding is written.**
+docs/internal/GROUNDING.md — the identity as ratified, the four jobs
+ranked by evidence (say-it-and-it-lands; a meeting becomes filed
+outcomes; steer your agents; live at the Desk) with the felt-value
+moment and seam per job, the four postures, four named drifts for the
+owner's ruling, the non-goals, and every owner verdict verbatim with
+its reading: the capabilities were never the complaint — the layer
+they wear was, every time. Next: HS-100-02 — the judgment.

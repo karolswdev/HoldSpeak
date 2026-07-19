@@ -4,8 +4,13 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-19 — **Phase 100, The Application Layer,
-SCAFFOLDED (0/6)** by the owner's direct halt-and-reground directive
+**Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
+PROGRESS (1/6)**. **HS-100-01, The grounding, DONE**: GROUNDING.md is
+written and fully cited — the four jobs ranked by evidence, the
+postures, the seams, four named canon drifts for the owner's ruling,
+and the complete owner-verdict record verbatim with its reading (the
+capabilities were never the complaint; the layer they wear was).
+Earlier the phase was **SCAFFOLDED (0/6)** by the owner's direct halt-and-reground directive
 after the Phase 99 close and the materials spike both failed the felt
 bar: *"a deep, deep, deep grounding in the philosophy, seams, use
 cases — then form an opinion on the entire UI/UX with regards to its
