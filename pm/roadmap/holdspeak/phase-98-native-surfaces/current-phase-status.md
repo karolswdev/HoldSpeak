@@ -1,14 +1,14 @@
 # Phase 98 — Native Surfaces
 
-**Status:** IN PROGRESS (7/9, 2026-07-18) from the owner's standing
+**Status:** IN PROGRESS (8/9, 2026-07-18) from the owner's standing
 verdict ("none of the Desk OS feels like an OS — windows feel like
 glued-in HTML panes, zero consistent look and feel") and the 2026-07-18
 remediation audit. Phase 97 shipped the window grammar (placement,
 depth, motion, one shelf); this phase re-crafts what lives INSIDE the
 windows.
 
-**Last updated:** 2026-07-18 (HS-98-07 done: the long tail native, the
-seam RETIRED — ledger empty, 377 dead CSS lines gone).
+**Last updated:** 2026-07-18 (HS-98-08 done: the surface floors
+written into canon).
 
 ## Why this phase exists
 
@@ -101,11 +101,19 @@ viewports, screenshots looked at.
 | HS-98-05 | The config pair | done | [story-05-config-pair](./story-05-config-pair.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-98-06 | The builder set | done | [story-06-builder-set](./story-06-builder-set.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-98-07 | The long tail, seam retired | done | [story-07-long-tail](./story-07-long-tail.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-98-08 | The surface floors, written | backlog | [story-08-docs](./story-08-docs.md) | — |
+| HS-98-08 | The surface floors, written | done | [story-08-docs](./story-08-docs.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-98-09 | Closeout: the native walk | backlog | [story-09-closeout](./story-09-closeout.md) | — |
 
 ## Where we are
 
+**HS-98-08 done (2026-07-18): the surface floors are written.**
+DESIGN_SYSTEM.md's surface idiom chapter is an Article VIII floors
+contract (six rules, closed ledger, proof legs named); web/README's
+add-a-surface path composes the kit step by step with the guard as
+the lock; the frontend architecture locks list carries the Phase 98
+surface-idiom lock beside the 96 gates and 97 floors. 194 doc/design
+guards green; `npm run check` green. Next: HS-98-09 — the closeout
+walk. Earlier:
 **HS-98-07 done (2026-07-18): the seam is retired.** Commands,
 Profiles, Companion, and RuntimeDocs converted (both editors left
 their modals for in-surface sections; deletes are inline two-steps) —

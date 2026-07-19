@@ -5,7 +5,12 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 98, Native Surfaces, IN
-PROGRESS (7/9)**. **HS-98-07, The long tail, seam retired, DONE**:
+PROGRESS (8/9)**. **HS-98-08, The surface floors, written, DONE**: the
+surface idiom is an Article VIII floors chapter in DESIGN_SYSTEM.md
+(six rules, closed ledger, proof legs named); web/README's
+add-a-surface path now composes the kit step by step with the seam
+guard as the lock; the frontend architecture locks list carries the
+Phase 98 lock beside the 96 gates and 97 floors. Earlier: **HS-98-07, The long tail, seam retired, DONE**:
 Commands/Profiles/Companion/RuntimeDocs converted (editors left their
 modals for in-surface sections, deletes are inline two-steps) — all
 fourteen cores compose the kit, the guard's ledger is EMPTY and locked

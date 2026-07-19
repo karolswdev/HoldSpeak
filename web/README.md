@@ -84,9 +84,20 @@ surface:
    menu and the tool shelf dispatch through `desk/shell.ts`; the no-exit
    lock (`tests/unit/test_desk_no_exit_guard.py`) forbids desk navigation
    outright.
-4. **Style seam**: window-hosted cores render inside
-   `.desk-surface-body`; never reintroduce `.page-*` chrome classes in a
-   core.
+4. **Compose the surface kit** (HS-98): a core builds its interior
+   from `src/desk/surface/` — `SurfaceVerbs` (one sticky verb bar),
+   `SurfaceSection` (hairline + quiet label, never a nested card),
+   `SurfaceRows`/`SurfaceRow` (dense honest rows, revealed verbs),
+   `SurfaceState` (the one loading/empty/error treatment),
+   `SurfaceColumns`/`SurfaceSplit` (@container reflow — the WINDOW is
+   the viewport; `.desk-surface-body` is the `surface` container),
+   `ConfirmVerb` (destructive verbs are inline two-steps, never
+   modals), and the honest formatters (`humanTime`/`deSnake`/
+   `presentValue` — unknowns are omitted, not printed). The page
+   grammar (`page-grid`, `span-*`, `Panel`, `data-list`/`data-row`,
+   `button-row`, `Dialog`, …) is forbidden in cores —
+   `tests/unit/test_native_surfaces_guard.py` enforces it and its
+   ledger is closed.
 5. **Styling rules** (`docs/internal/DESIGN_SYSTEM.md` is the canon):
    component tokens only — `npm run tokens:gate` fails raw colors,
    z-index, and ms literals in component CSS; new recurring values become

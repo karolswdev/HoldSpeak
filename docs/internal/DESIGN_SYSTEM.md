@@ -188,13 +188,18 @@ legs (`placement`, `arrangement`, `depth`, `frame`, `switcher`,
 
 ## The surface idiom (HS-98)
 
-Window interiors are one visual product with the desk. The Signal
-page grammar (`page-grid`, `span-*`, `Panel`, `data-list`/`data-row`,
-`signal-eyebrow`, permanent `button-row` walls) is forbidden inside
+Window interiors are one visual product with the desk — these six
+rules are Article VIII floors, like the physics above: once shipped,
+no change may regress them. The Signal page grammar (`page-grid`,
+`span-*`, `Panel`, `data-list`/`data-row`, `signal-eyebrow`,
+permanent `button-row` walls, modal confirms) is forbidden inside
 `pages/cores/` — mechanically, by
-`tests/unit/test_native_surfaces_guard.py`, whose per-file allowlist
-only shrinks. Cores compose the surface kit
-(`web/src/desk/surface/`), which owns the six rules:
+`tests/unit/test_native_surfaces_guard.py`. The Phase 98 conversion
+ledger CLOSED with HS-98-07: the allowlist is empty and the guard
+refuses reopening it. Every core composes the surface kit
+(`web/src/desk/surface/`), which owns the six rules (proven by the
+`reflow` walk leg and the closeout's `surfaces` leg on the production
+bundle):
 
 1. **One material, no double chrome.** The window frame is the only
    chrome. Content sits directly on `--desk-window-fill`;
