@@ -148,7 +148,45 @@ action rows. Native innards means:
 Each of these lands the Phase-100 way: mock the worst three interiors
 first, gate with the owner, build with a guard. Never patch-and-hope.
 
-## 6. Mechanics the walks depend on (learned the hard way)
+## 6. OS TERRITORY — don't be shy (the owner's standing order)
+
+At the Phase-100 close the owner added: *"let's also — just not be
+shy — and really push this into OS territory."* That is a standing
+ambition order, not a suggestion. The Desk OS should not gesture at
+being an operating surface; it should BEHAVE like one, unapologetically
+— always in product truth (Article VI), never as theater. The
+inventory to mock, gate, and build:
+
+1. **The system shade.** The attention bell opens a real shade — one
+   system surface for "what happened while you were away": the
+   approve queue, finished intelligence runs, learned corrections,
+   recovered captures. Dismissible, honest counts, verbs inline.
+2. **A global keyboard grammar.** ⌘1–⌘4 open/switch the four
+   applications; ⌘W closes and ⌘M minimizes the front window; ⌘K is
+   search (shipped); Ctrl+` cycles (shipped); Escape grammar
+   (shipped). ⌘/ shows the shortcut sheet — drawn, not a doc link.
+3. **Right-click is universal.** Every desk object, every row of
+   material, every window head (shipped), every dock chip (shipped),
+   and the desk itself answer with the ONE menu vocabulary. If a
+   thing can be acted on, its context menu says how.
+4. **Drag-and-drop is a system verb.** Drop a .vtt/.srt/.txt or audio
+   file anywhere on the desk → a Meeting imports. Drag a desk object
+   INTO a window (ground an ask, hand a KB to an agent chat). Drag a
+   result chip OUT of a window onto the desk → it is kept. The desk's
+   physics reach through the glass in both directions.
+5. **System moments.** Arrival is a boot moment — fast, quiet,
+   composed (never a spinner pile). Recording state lives in the bar
+   like a system indicator. State that changes while a window is
+   closed surfaces in the shade, not in silence.
+6. **Files-grade object browsing.** List mode grows into the desk's
+   Finder: sortable columns, type filters, keyboard range-selection,
+   the same context menus. Spatial for arranging, Files for finding.
+
+Each lands the §2 way — mocked, owner-gated, built with a guard. The
+bar for all of it: a person who has used a real desktop should feel
+their reflexes WORK here.
+
+## 7. Mechanics the walks depend on (learned the hard way)
 
 - Staged runs are token-gated: walk arrivals via `arrive_url()` +
   `HS_WALK_TOKEN`; in-page fetches need the `X-HoldSpeak-Token`
