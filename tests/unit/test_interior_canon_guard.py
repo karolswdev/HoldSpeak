@@ -52,3 +52,37 @@ def test_aerogel_tokens_exist() -> None:
         "--desk-aerogel-shadow",
     ):
         assert name in tokens, f"{name} missing from generated tokens.css"
+
+
+def test_fluidity_census() -> None:
+    """HS-101 rule 5 (B2) — the desk is fluid: the named operating
+    moments carry token-ridden, compositor-only motion, and reduced
+    motion silences every one of them."""
+    surface = (WEB_SRC / "desk" / "surface" / "surface.css").read_text(
+        encoding="utf-8"
+    )
+    desk = (WEB_SRC / "desk" / "desk.css").read_text(encoding="utf-8")
+    moments = {
+        "aerogel receipts inflate": (
+            surface,
+            "animation: surface-aerogel-in var(--duration-short) var(--ease-back)",
+        ),
+        "sections (and wing faces) rise in": (
+            surface,
+            "animation: surface-rise-in var(--duration-medium) var(--ease-quart)",
+        ),
+        "row verbs ease to the pointer": (
+            surface,
+            "transform var(--duration-short) var(--ease-quart)",
+        ),
+        "transient menus spring": (
+            desk,
+            "animation: desk-transient-in var(--duration-short) var(--ease-back)",
+        ),
+    }
+    missing = [name for name, (text, needle) in moments.items() if needle not in text]
+    assert not missing, f"fluid moments lost their motion: {missing}"
+    for name, text in (("surface.css", surface), ("desk.css", desk)):
+        assert "@media (prefers-reduced-motion: reduce)" in text, (
+            f"{name} lost its reduced-motion silence"
+        )

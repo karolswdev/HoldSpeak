@@ -135,6 +135,27 @@
   background: var(--desk-panel-fill);
   box-shadow: var(--desk-transient-shadow);
   backdrop-filter: var(--desk-window-blur);
+  /* HS-101 rule 5 — transient surfaces spring in (fluidity canon). */
+  transform-origin: top left;
+  animation: desk-transient-in var(--duration-short) var(--ease-back);
+}
+.desk-next .desk-menu-list.is-above {
+  transform-origin: bottom left;
+}
+@keyframes desk-transient-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-menu-list {
+    animation: none;
+  }
 }
 .desk-next .desk-menu-list.is-below {
   border-top-left-radius: var(--radius-xs);
