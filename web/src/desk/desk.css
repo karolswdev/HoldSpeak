@@ -121,24 +121,35 @@
 .desk-next .desk-menu-wrap {
   position: relative;
 }
-.desk-next .desk-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  min-width: 160px;
+/* HS-99-04 — ONE menu vocabulary: every desk popover (room menu, the
+   window-head menu, the dock chip menu) wears this material; the
+   corner nearest its anchor squares off (the borrowed touch). */
+.desk-next .desk-menu-list {
+  min-width: 168px;
   display: flex;
   flex-direction: column;
-  padding: 6px;
+  gap: 2px;
+  padding: 5px;
   border: 1px solid var(--border);
   border-radius: var(--desk-transient-radius);
   background: var(--desk-panel-fill);
   box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
 }
-.desk-next .desk-menu a,
-.desk-next .desk-menu button {
-  padding: 8px 12px;
+.desk-next .desk-menu-list.is-below {
+  border-top-left-radius: var(--radius-xs);
+}
+.desk-next .desk-menu-list.is-above {
+  border-bottom-left-radius: var(--radius-xs);
+}
+.desk-next .desk-menu-list a,
+.desk-next .desk-menu-list button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--text);
   text-decoration: none;
@@ -147,9 +158,23 @@
   font-size: var(--font-size-sm);
   cursor: pointer;
 }
-.desk-next .desk-menu a:hover,
-.desk-next .desk-menu button:hover {
-  background: var(--accent-tint);
+.desk-next .desk-menu-list a:hover,
+.desk-next .desk-menu-list button:hover,
+.desk-next .desk-menu-list a:focus-visible,
+.desk-next .desk-menu-list button:focus-visible {
+  background: var(--wash-2);
+}
+.desk-next .desk-menu-list svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: var(--text-muted);
+}
+/* The room menu anchors under the mark. */
+.desk-next .desk-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
 }
 .desk-next .desk-hub-dot {
   width: 9px;
@@ -3248,45 +3273,12 @@
   border-radius: 0;
 }
 
-/* HS-99-02 — the head's right-click menu: the desk transient
-   material, one column of window verbs. */
-.desk-next .desk-head-menu {
+/* HS-99-02/04 — the head and dock menus float fixed at the pointer;
+   material and items come from .desk-menu-list. */
+.desk-next .desk-head-menu,
+.desk-next .desk-dock-menu {
   position: fixed;
   z-index: var(--desk-z-popover);
-  min-width: 168px;
-  padding: 5px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  background: var(--desk-glass);
-  border: 1px solid var(--border);
-  border-radius: var(--desk-transient-radius);
-  box-shadow: var(--desk-transient-shadow);
-  backdrop-filter: var(--desk-window-blur);
-}
-.desk-next .desk-head-menu button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: var(--font-size-sm);
-  text-align: left;
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.desk-next .desk-head-menu button:hover,
-.desk-next .desk-head-menu button:focus-visible {
-  background: var(--wash-2);
-}
-.desk-next .desk-head-menu button svg {
-  width: 12px;
-  height: 12px;
-  flex: none;
-  color: var(--text-muted);
 }
 /* ── HS-95-03: the dock — shell furniture above the window band (42+): a
    maximized window must never bury the way back to a parked one. ── */

@@ -1,6 +1,6 @@
 # Phase 99 — The OS Chrome
 
-**Status:** IN PROGRESS (3/8, 2026-07-18) from the owner's live verdict
+**Status:** IN PROGRESS (4/8, 2026-07-18) from the owner's live verdict
 on the staged Phase 98 build: "a step, but we still have soooo much
 work to do to even begin dreaming of this looking and feeling like an
 OS — loads of unstyled selects; those windows still deserve a huge
@@ -8,8 +8,8 @@ overhaul" — with a direct study directive: ProzillaOS
 (github.com/prozilla-os/ProzillaOS, MIT), "see what we can borrow,
 what we can embrace, and deliver this kind of experience."
 
-**Last updated:** 2026-07-18 (HS-99-03 done: every control wears the
-skin — the desk's raw selects/inputs were the culprits).
+**Last updated:** 2026-07-18 (HS-99-04 done: OS scrollbars everywhere
++ one menu vocabulary across room/head/dock).
 
 ## Why this phase exists
 
@@ -100,7 +100,7 @@ regress.
 | HS-99-01 | The study and the tokens | done | [story-01-study-and-tokens](./story-01-study-and-tokens.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-99-02 | The title bar is a bar | done | [story-02-title-bar](./story-02-title-bar.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-99-03 | Controls wear the skin | done | [story-03-controls](./story-03-controls.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-99-04 | Scrollbars and menus | backlog | [story-04-scrollbars-menus](./story-04-scrollbars-menus.md) | — |
+| HS-99-04 | Scrollbars and menus | done | [story-04-scrollbars-menus](./story-04-scrollbars-menus.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-99-05 | The dock is alive | backlog | [story-05-dock-alive](./story-05-dock-alive.md) | — |
 | HS-99-06 | Interior archetypes | backlog | [story-06-interior-archetypes](./story-06-interior-archetypes.md) | — |
 | HS-99-07 | The chrome floors, written | backlog | [story-07-docs](./story-07-docs.md) | — |
@@ -108,6 +108,16 @@ regress.
 
 ## Where we are
 
+**HS-99-04 done (2026-07-18): scrollbars and menus.** The drawn pill
+scrollbar is product-wide (with two gotchas recorded: standard
+scrollbar properties DISABLE webkit styling in modern Chromium — now
+Firefox-scoped — and the headless shell suppresses custom scrollbars,
+so the proof is headed, gutter 12px measured). DeskMenuList/Item is
+the ONE menu vocabulary (keyboard pattern, transient material,
+anchor-corner squaring) behind the room menu, the head menu, and the
+new dock chip right-click menu, pinned by vitest. Windows + shelf
+legs captured green. `npm run check` green (291). Next: HS-99-05 —
+the dock is alive. Earlier:
 **HS-99-03 done (2026-07-18): controls wear the skin.** The audit
 found the real "unstyled selects": the desk's own components shipped
 raw selects/inputs bypassing Signal. Bare controls inside the desk

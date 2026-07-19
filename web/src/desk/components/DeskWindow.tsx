@@ -17,6 +17,7 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { useDesk, type PanelRect } from "../store";
+import { DeskMenuItem, DeskMenuList } from "./DeskMenu";
 // The physics constants mirror the CSS component tokens — one generated
 // source (design-tokens.json), no drift possible (HS-96-02).
 import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
@@ -1152,50 +1153,46 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         </span>
       </header>
       {headMenu ? (
-        <div
+        <DeskMenuList
           className="desk-head-menu"
-          role="menu"
-          aria-label={`${name} window menu`}
+          label={`${name} window menu`}
+          anchor="below"
           style={{
             left: Math.min(headMenu.x, window.innerWidth - 184),
             top: Math.min(headMenu.y, window.innerHeight - 132),
           }}
-          onPointerDown={(e) => e.stopPropagation()}
+          onClose={() => setHeadMenu(null)}
         >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
+          <DeskMenuItem
+            glyph={<VerbGlyph kind="minimize" />}
+            onSelect={() => {
               setHeadMenu(null);
               requestMinimize();
             }}
           >
-            <VerbGlyph kind="minimize" /> Minimize
-          </button>
+            Minimize
+          </DeskMenuItem>
           {!compact && (
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
+            <DeskMenuItem
+              glyph={<VerbGlyph kind={maximized ? "restore" : "maximize"} />}
+              onSelect={() => {
                 setHeadMenu(null);
                 useDesk.getState().toggleMaximizePanel(id);
               }}
             >
-              <VerbGlyph kind={maximized ? "restore" : "maximize"} />
-              {maximized ? " Restore" : " Maximize"}
-            </button>
+              {maximized ? "Restore" : "Maximize"}
+            </DeskMenuItem>
           )}
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
+          <DeskMenuItem
+            glyph={<VerbGlyph kind="close" />}
+            onSelect={() => {
               setHeadMenu(null);
               requestClose();
             }}
           >
-            <VerbGlyph kind="close" /> Close
-          </button>
-        </div>
+            Close
+          </DeskMenuItem>
+        </DeskMenuList>
       ) : null}
       {children}
       {!maxed && !compact ? win.grip : null}
@@ -1219,6 +1216,21 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const panelOrder = useDesk((s) => s.panelOrder);
   const windows = useOpenWindows();
   const launchers = useLaunchers();
+  // HS-99-04 — the dock chip menu (one menu vocabulary).
+  const [chipMenu, setChipMenu] = useState<{
+    id: string;
+    label: string;
+    x: number;
+    y: number;
+    minimized: boolean;
+    close: () => void;
+  } | null>(null);
+  useEffect(() => {
+    if (!chipMenu) return;
+    const close = () => setChipMenu(null);
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [chipMenu]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -1299,6 +1311,17 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 if (minimized) s.restorePanel(c.id);
                 else s.focusPanel(c.id);
               }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setChipMenu({
+                  id: c.id,
+                  label: c.label,
+                  x: e.clientX,
+                  y: e.clientY,
+                  minimized,
+                  close: c.close,
+                });
+              }}
             >
               <span aria-hidden="true">{c.glyph}</span>
               <span className="desk-dock-label">{c.label}</span>
@@ -1335,6 +1358,37 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             ⟲
           </button>
         </>
+      ) : null}
+      {chipMenu ? (
+        <DeskMenuList
+          className="desk-dock-menu"
+          label={`${chipMenu.label} dock menu`}
+          anchor="above"
+          style={{
+            left: Math.min(chipMenu.x, window.innerWidth - 184),
+            top: Math.max(8, chipMenu.y - 104),
+          }}
+          onClose={() => setChipMenu(null)}
+        >
+          <DeskMenuItem
+            onSelect={() => {
+              const s = useDesk.getState();
+              if (chipMenu.minimized) s.restorePanel(chipMenu.id);
+              else s.minimizePanel(chipMenu.id);
+              setChipMenu(null);
+            }}
+          >
+            {chipMenu.minimized ? "Restore" : "Minimize"}
+          </DeskMenuItem>
+          <DeskMenuItem
+            onSelect={() => {
+              chipMenu.close();
+              setChipMenu(null);
+            }}
+          >
+            Close
+          </DeskMenuItem>
+        </DeskMenuList>
       ) : null}
     </div>
   );

@@ -5,7 +5,12 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, IN
-PROGRESS (3/8)**. **HS-99-03, Controls wear the skin, DONE**: the
+PROGRESS (4/8)**. **HS-99-04, Scrollbars and menus, DONE**: the drawn
+pill scrollbar product-wide (headed-proven — the headless shell
+suppresses custom scrollbars, and standard scrollbar properties would
+disable webkit styling in modern Chromium, now Firefox-scoped) and
+DeskMenuList as the one menu vocabulary behind the room, head, and
+new dock-chip menus. Earlier: **HS-99-03, Controls wear the skin, DONE**: the
 "unstyled selects" were the desk's own components shipping raw
 selects/inputs past Signal — bare controls inside the desk shell now
 inherit the control foundation mechanically (options, checkbox
