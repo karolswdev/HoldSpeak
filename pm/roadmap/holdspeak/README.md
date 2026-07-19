@@ -4,7 +4,22 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, CLOSED
+**Last updated:** 2026-07-19 — **Phase 100, The Application Layer,
+SCAFFOLDED (0/6)** by the owner's direct halt-and-reground directive
+after the Phase 99 close and the materials spike both failed the felt
+bar: *"a deep, deep, deep grounding in the philosophy, seams, use
+cases — then form an opinion on the entire UI/UX with regards to its
+applicability to the Desk OS — then finally deliver something
+beautiful, not mangled, easy to use: a proper application layer to
+drive the value of HoldSpeak."* The phase inverts the failed order:
+ground (the jobs, the seams, the lived use cases — GROUNDING.md,
+fully cited) → judge (every surface and flow against the jobs —
+keep/merge/re-shape/kill) → propose (the application-layer thesis +
+real mockups) → THE OWNER'S GATE (nothing builds before the verdict)
+→ build → close on the owner's sitting. The materials spike
+(design/inset-groups-spike, six rounds: vibrancy glass, traffic
+lights, menu bar + clock, grouped interiors, component sweep) is
+parked as thesis INPUT, not merged by default. Earlier: **Phase 99, The OS Chrome, CLOSED
 (8/8, scaffolded and shipped the same day)**: the ProzillaOS-studied
 skin is on. Windows wear a real title BAR (two tones, full-height
 square SVG verbs flush to the edge, a red-hover close, square corners
@@ -532,6 +547,7 @@ canon, canon wins.
 | 97 | The Window Grammar: windows land well, stack honestly, remember everything, move with intent, switch visibly, one shelf — the OS grammar as physics floors | done | [phase-97-the-window-grammar](./phase-97-the-window-grammar/) |
 | 98 | Native Surfaces: the window interiors re-crafted in one desk idiom — the surface kit, container-driven reflow, honest rows, the page grammar retired from the desk | done | [phase-98-native-surfaces](./phase-98-native-surfaces/) |
 | 99 | The OS Chrome: the ProzillaOS-studied skin — tonal depth ladder, a real title bar, skinned controls, custom scrollbars, a living dock, one menu vocabulary | done | [phase-99-the-os-chrome](./phase-99-the-os-chrome/) |
+| 100 | The Application Layer: ground the philosophy/seams/use cases, judge the entire UI/UX against them, thesis + mockups, the owner's gate, then the build | in-progress | [phase-100-the-application-layer](./phase-100-the-application-layer/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
