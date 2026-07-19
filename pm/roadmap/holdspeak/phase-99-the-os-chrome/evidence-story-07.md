@@ -245,5 +245,5 @@ computing gzip size...
 - **ARCHITECTURE_WEB_FRONTEND.md:** the locks list carries the Phase
   99 chrome ladder beside the 96 gates, 97 floors, and 98 idiom lock,
   with the MIT provenance named.
-- **Suites:** 194 doc/design/guard tests + `npm run check` (291)
+- **Suites:** 143 doc/design/guard tests + `npm run check` (291)
   captured green.
