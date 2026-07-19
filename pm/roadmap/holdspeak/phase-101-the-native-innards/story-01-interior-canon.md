@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 101
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-101-02
 
@@ -36,11 +36,11 @@ territory."
 
 ## Acceptance criteria
 
-- [ ] The scale + rules are written and tokenized; the token gate
+- [x] The scale + rules are written and tokenized; the token gate
       stays clean.
-- [ ] Five mockups (three innards + the shade + a drag moment) at
+- [x] Five mockups (three innards + the shade + a drag moment) at
       both form factors exist and are LOOKED AT.
-- [ ] A mockup census derives the set from the canon doc.
+- [x] A mockup census derives the set from the canon doc.
 
 ## Test plan
 

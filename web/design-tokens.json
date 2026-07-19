@@ -1059,6 +1059,56 @@
         "name": "--gleam-3",
         "value": "rgba(255, 255, 255, 0.22)",
         "doc": "inner top highlight on the primary (accent) face"
+      },
+      {
+        "name": "--desk-type-display-size",
+        "value": "1.625rem",
+        "doc": "HS-101: the interior display step — the one big fact a surface leads with (26px; matches --font-size-2xl)"
+      },
+      {
+        "name": "--desk-type-display-weight",
+        "value": "650",
+        "doc": "HS-101: display step weight (rides --font-display)"
+      },
+      {
+        "name": "--desk-type-display-lh",
+        "value": "1.15",
+        "doc": "HS-101: display step line height (numbers sit tight)"
+      },
+      {
+        "name": "--desk-type-primary-size",
+        "value": "0.9375rem",
+        "doc": "HS-101: the primary line — what the material IS (15px; a deliberate step above --desk-surface-body-size)"
+      },
+      {
+        "name": "--desk-type-primary-weight",
+        "value": "600",
+        "doc": "HS-101: primary line weight"
+      },
+      {
+        "name": "--desk-type-primary-lh",
+        "value": "1.4",
+        "doc": "HS-101: primary line height (spoken text breathes)"
+      },
+      {
+        "name": "--desk-aerogel-fill",
+        "value": "rgba(255, 255, 255, 0.045)",
+        "doc": "HS-101 (owner's gate amendment): the suspended receipt inset — faint fill, no accent rail (the left accent bar is banned)"
+      },
+      {
+        "name": "--desk-aerogel-edge",
+        "value": "rgba(255, 255, 255, 0.09)",
+        "doc": "HS-101: aerogel's soft all-around 1px edge"
+      },
+      {
+        "name": "--desk-aerogel-blur",
+        "value": "blur(18px) saturate(140%)",
+        "doc": "HS-101: aerogel backdrop — lighter than the window glass, enough to read as suspended"
+      },
+      {
+        "name": "--desk-aerogel-shadow",
+        "value": "0 10px 30px rgba(0, 0, 0, 0.35)",
+        "doc": "HS-101: the lift under a suspended receipt"
       }
     ]
   }

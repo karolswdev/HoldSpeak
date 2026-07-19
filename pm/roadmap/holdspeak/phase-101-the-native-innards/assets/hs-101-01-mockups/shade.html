@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The system shade (mockup)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .menubar .bell {
+    display: inline-flex; align-items: center; gap: 5px; color: var(--ink);
+  }
+  .menubar .bell strong {
+    min-width: 16px; height: 16px; border-radius: 8px; padding: 0 4px;
+    background: var(--accent); color: #1a0d06; font-size: 10.5px; font-weight: 750;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+
+  .shade {
+    position: fixed; top: 36px; right: 10px; width: 380px; z-index: 45;
+    background: var(--window-fill);
+    backdrop-filter: var(--window-blur);
+    -webkit-backdrop-filter: var(--window-blur);
+    border-radius: 14px;
+    box-shadow: var(--glass-edge), var(--window-shadow);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .shade-head {
+    display: flex; align-items: baseline; gap: 10px; padding: 14px 16px 8px;
+  }
+  .shade-head small { color: var(--ink-faint); font-size: 11.5px; margin-left: auto; }
+
+  .shade-group { padding: 6px 8px 8px; }
+  .shade-group + .shade-group { border-top: 1px solid rgba(255, 255, 255, 0.05); }
+  .shade-group .g-head { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+  .shade-group .g-head .n { color: var(--ink-dim); font-weight: 400; }
+  .shade-group .g-head .clear { margin-left: auto; font-size: 11px; color: var(--ink-faint); text-decoration: none; }
+
+  .item {
+    display: grid; grid-template-columns: 26px 1fr; gap: 2px 10px;
+    padding: 8px 8px 10px; border-radius: 10px;
+  }
+  .item:hover, .item.hovered { background: rgba(255, 255, 255, 0.04); }
+  .item .glyph { font-size: 15px; text-align: center; padding-top: 1px; }
+  .item .what { font-size: var(--t-body); line-height: 1.45; }
+  .item .what strong { font-weight: 600; }
+  .item .sub { grid-column: 2; display: flex; align-items: center; gap: 8px; font-size: var(--t-secondary); color: var(--ink-dim); flex-wrap: wrap; }
+  .item .do { grid-column: 2; display: flex; gap: 6px; margin-top: 6px; align-items: center; }
+  .chipverb {
+    display: inline-flex; align-items: center; gap: 5px; height: 25px; padding: 0 11px;
+    border-radius: 8px; font-size: 11.5px; font-weight: 650; text-decoration: none;
+    color: var(--ink); background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+  }
+  .chipverb.primary { background: linear-gradient(#ff855b, #e85a24); box-shadow: 0 2px 10px rgba(255,109,61,.3), inset 0 1px 0 rgba(255,255,255,.28); }
+  .chipverb.quiet { background: none; box-shadow: none; color: var(--ink-faint); }
+
+  .window.dim { opacity: 0.55; filter: saturate(0.8); }
+  .window { left: 12%; top: 110px; width: 620px; height: 480px; }
+
+  @media (max-width: 500px) {
+    .shade { left: 8px; right: 8px; width: auto; top: 34px; }
+    .window { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="world">
+  <div class="obj" style="left:6%; top:70%"><img src="sprites/note.png" alt=""><span>Q3 architecture decisions</span></div>
+  <div class="obj" style="left:20%; top:74%"><img src="sprites/cassette2.png" alt=""><span>Release sync</span></div>
+</div>
+
+<header class="menubar">
+  <span class="mark">HoldSpeak</span>
+  <span class="trust"><span class="trust-dot"></span> This device</span>
+  <span class="right"><span class="bell">◎ <strong>4</strong></span> <kbd>⌘K</kbd> <span class="clock-date">Sun, Jul 19</span> <strong>09:41</strong></span>
+</header>
+
+<section class="window dim" aria-label="Meetings">
+  <div class="window-head">
+    <div class="lights"><span class="light c" style="background: var(--hairline)"></span><span class="light m" style="background: var(--hairline)"></span><span class="light z" style="background: var(--hairline)"></span></div>
+    <nav class="wings"><a href="#" class="on">Outcomes</a><a href="#">Record</a><a href="#">Artifacts</a></nav>
+    <div class="head-side"><span>⚙</span></div>
+  </div>
+  <div class="window-body">
+    <div style="padding: 18px 22px; display: flex; flex-direction: column; gap: 12px;">
+      <span class="t-caption">Open questions · 2</span>
+      <span style="font-size: var(--t-primary); font-weight: 600;">Who owns the release tag?</span>
+      <span class="t-secondary">Release sync · 09:22</span>
+      <span style="font-size: var(--t-primary); font-weight: 600;">When does the Apple worker land?</span>
+      <span class="t-secondary">Release sync · 09:22</span>
+    </div>
+  </div>
+</section>
+
+<aside class="shade" aria-label="While you were away">
+  <div class="shade-head">
+    <span class="t-caption" style="font-size: 12px;">While you were away</span>
+    <small>last seen 08:12</small>
+  </div>
+
+  <div class="shade-group">
+    <div class="g-head t-caption">Approve <span class="n">· 2</span> <a class="clear" href="#">Clear</a></div>
+
+    <div class="item material hovered">
+      <span class="glyph">▣</span>
+      <div class="what"><strong>File issue:</strong> “Worker owns the release tag” — from Release sync</div>
+      <div class="sub"><span class="badge cloud">CLOUD</span><span>github.com/karolswdev/HoldSpeak</span></div>
+      <div class="do"><a class="chipverb primary" href="#">Approve</a><a class="chipverb" href="#">Open</a><a class="chipverb quiet" href="#">Skip</a></div>
+    </div>
+
+    <div class="item material">
+      <span class="glyph">▣</span>
+      <div class="what"><strong>Send to Slack:</strong> the standup recap → #runtime</div>
+      <div class="sub"><span class="badge cloud">CLOUD</span><span>hooks.slack.com</span></div>
+      <div class="do"><a class="chipverb primary" href="#">Approve</a><a class="chipverb quiet" href="#">Skip</a></div>
+    </div>
+  </div>
+
+  <div class="shade-group">
+    <div class="g-head t-caption">Finished <span class="n">· 1</span></div>
+    <div class="item material">
+      <span class="glyph">✦</span>
+      <div class="what">Intelligence on <strong>Release sync</strong> finished — 3 actions, 2 decisions</div>
+      <div class="sub"><span class="badge local">LOCAL</span><span>09:22 · 41 s</span></div>
+      <div class="do"><a class="chipverb" href="#">Open outcomes</a></div>
+    </div>
+  </div>
+
+  <div class="shade-group">
+    <div class="g-head t-caption">Learned <span class="n">· 1</span></div>
+    <div class="item material">
+      <span class="glyph">⌁</span>
+      <div class="what">“native winners” → <strong>“Native Innards”</strong></div>
+      <div class="sub"><span class="learned">✓ learned · from 3 similar</span></div>
+    </div>
+  </div>
+
+  <div class="shade-group">
+    <div class="g-head t-caption">Recovered <span class="n">· 0</span></div>
+    <div class="item">
+      <span class="glyph" style="color: var(--ink-faint)">◌</span>
+      <div class="what" style="color: var(--ink-faint)">Nothing needed recovery</div>
+    </div>
+  </div>
+</aside>
+
+<nav class="dock">
+  <a href="#"><span class="glyph">⌁</span><span class="label">Speak</span></a>
+  <a href="#" class="running"><span class="glyph">▣</span><span class="label">Meetings</span></a>
+  <a href="#"><span class="glyph">✦</span><span class="label">Agents</span></a>
+  <a href="#"><span class="glyph">⚙</span><span class="label">Settings</span></a>
+  <span class="orb"></span>
+</nav>
+</body>
+</html>

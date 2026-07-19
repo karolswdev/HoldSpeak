@@ -286,6 +286,16 @@
   --gleam-1: rgba(255, 255, 255, 0.07); /* inner top highlight on fabricated control faces */
   --gleam-2: rgba(255, 255, 255, 0.09); /* hover lift on fabricated secondary faces */
   --gleam-3: rgba(255, 255, 255, 0.22); /* inner top highlight on the primary (accent) face */
+  --desk-type-display-size: 1.625rem; /* HS-101: the interior display step — the one big fact a surface leads with (26px; matches --font-size-2xl) */
+  --desk-type-display-weight: 650; /* HS-101: display step weight (rides --font-display) */
+  --desk-type-display-lh: 1.15; /* HS-101: display step line height (numbers sit tight) */
+  --desk-type-primary-size: 0.9375rem; /* HS-101: the primary line — what the material IS (15px; a deliberate step above --desk-surface-body-size) */
+  --desk-type-primary-weight: 600; /* HS-101: primary line weight */
+  --desk-type-primary-lh: 1.4; /* HS-101: primary line height (spoken text breathes) */
+  --desk-aerogel-fill: rgba(255, 255, 255, 0.045); /* HS-101 (owner's gate amendment): the suspended receipt inset — faint fill, no accent rail (the left accent bar is banned) */
+  --desk-aerogel-edge: rgba(255, 255, 255, 0.09); /* HS-101: aerogel's soft all-around 1px edge */
+  --desk-aerogel-blur: blur(18px) saturate(140%); /* HS-101: aerogel backdrop — lighter than the window glass, enough to read as suspended */
+  --desk-aerogel-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); /* HS-101: the lift under a suspended receipt */
 }
 
 @media (prefers-reduced-motion: reduce) {

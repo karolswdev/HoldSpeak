@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Through the glass (mockup)</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .window { right: 8%; top: 80px; width: 640px; height: 620px; }
+
+  .chat { display: flex; flex-direction: column; height: 100%; }
+  .thread { flex: 1; padding: 18px 22px; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px; overflow: hidden; }
+
+  .msg { max-width: 78%; display: flex; flex-direction: column; gap: 5px; }
+  .msg .who { display: flex; gap: 8px; align-items: center; }
+  .msg .who img { width: 18px; height: 18px; image-rendering: pixelated; }
+  .msg .bubble {
+    padding: 10px 13px; border-radius: 12px; font-size: var(--t-body); line-height: 1.5;
+    background: rgba(255, 255, 255, 0.055);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+  .msg.me { align-self: flex-end; align-items: flex-end; }
+  .msg.me .bubble { background: rgba(255, 109, 61, 0.12); box-shadow: inset 0 0 0 1px rgba(255, 109, 61, 0.22); }
+  .msg .bubble code { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-dim); }
+
+  .composer { flex: none; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .well {
+    border-radius: 12px; padding: 12px 14px; min-height: 84px;
+    background: var(--well);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+    display: flex; flex-direction: column; gap: 10px;
+    position: relative;
+  }
+  .well.drop-ready {
+    box-shadow: inset 0 0 0 1.5px rgba(255, 109, 61, 0.65), 0 0 0 4px rgba(255, 109, 61, 0.1), 0 0 30px rgba(255, 109, 61, 0.12);
+    background: rgba(255, 109, 61, 0.05);
+  }
+  .well .placeholder { color: var(--ink-faint); font-size: var(--t-body); }
+  .well .grounds { display: flex; gap: 7px; align-items: center; }
+  .ghost-chip {
+    display: inline-flex; align-items: center; gap: 7px; height: 27px; padding: 0 11px;
+    border-radius: 8px; font-size: 12.5px; color: var(--ink-dim);
+    border: 1.5px dashed rgba(255, 109, 61, 0.55); background: rgba(255, 109, 61, 0.07);
+  }
+  .ghost-chip img { width: 16px; height: 16px; image-rendering: pixelated; opacity: 0.75; }
+  .well .foot { display: flex; align-items: center; gap: 10px; margin-top: auto; }
+  .well .foot .mic { width: 26px; height: 26px; border-radius: 50%; flex: none;
+    background: radial-gradient(circle at 35% 30%, #ff9d72, #e04c17 72%);
+    box-shadow: 0 0 12px rgba(255, 109, 61, 0.4); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .well .foot .spacer { flex: 1; }
+
+  /* the lifted object, mid-flight */
+  .lifted {
+    position: fixed; left: 34%; top: 46%; z-index: 60; width: 120px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    color: var(--ink); font-size: 12px; text-align: center;
+    transform: rotate(-5deg) scale(1.06);
+    pointer-events: none;
+  }
+  .lifted img {
+    width: 64px; height: 64px; image-rendering: pixelated;
+    filter: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 18px rgba(251, 191, 36, 0.35));
+  }
+  .cursor {
+    position: fixed; left: calc(34% + 68px); top: calc(46% + 34px); z-index: 61;
+    width: 17px; height: 24px; pointer-events: none;
+    background: #fff;
+    clip-path: polygon(0 0, 0 82%, 24% 64%, 40% 100%, 54% 94%, 38% 60%, 62% 56%);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.7));
+  }
+
+  /* where it came from */
+  .origin {
+    position: absolute; left: 7%; top: 30%; width: 120px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .origin .spot {
+    width: 64px; height: 64px; border-radius: 12px;
+    border: 1.5px dashed rgba(255, 255, 255, 0.18);
+  }
+  .origin span { color: var(--ink-faint); font-size: 12px; }
+
+  @media (max-width: 500px) {
+    .window { inset: 30px 0 64px 0 !important; }
+    .lifted { left: 4%; top: 64%; }
+    .lifted span { display: none; }
+    .cursor { left: calc(4% + 68px); top: calc(64% + 34px); }
+    .origin { display: none; }
+    .msg { max-width: 92%; }
+  }
+</style>
+</head>
+<body>
+<div class="world">
+  <div class="origin"><div class="spot"></div><span>Project KB</span></div>
+  <div class="obj" style="left:6%; top:64%"><img src="sprites/note.png" alt=""><span>Q3 architecture decisions</span></div>
+</div>
+
+<header class="menubar">
+  <span class="mark">HoldSpeak</span>
+  <span class="trust"><span class="trust-dot"></span> This device</span>
+  <span class="right"><kbd>⌘K</kbd> <span class="clock-date">Sun, Jul 19</span> <strong>09:41</strong></span>
+</header>
+
+<section class="window" aria-label="Agents — Chat">
+  <div class="window-head">
+    <div class="lights"><span class="light c"></span><span class="light m"></span><span class="light z"></span></div>
+    <nav class="wings">
+      <a href="#">Agents</a>
+      <a href="#">Delivery</a>
+      <a href="#" class="on">Chat</a>
+    </nav>
+    <div class="head-side"><span>⚙</span></div>
+  </div>
+  <div class="window-body">
+    <div class="chat">
+      <div class="thread">
+        <div class="msg">
+          <div class="who"><img src="sprites/agent_o3.png" alt=""><span class="t-caption" style="letter-spacing:.05em">Coder · phase-101 · blocked</span></div>
+          <div class="bubble">Should the interior type scale ride the component layer as <code>--desk-type-*</code>, or extend the semantic ramp? The token gate treats them differently.</div>
+        </div>
+        <div class="msg me">
+          <div class="who"><span class="t-caption" style="letter-spacing:.05em">You · by voice</span></div>
+          <div class="bubble">Component layer. The scale is desk-only — the semantic ramp stays the light-theme attach point.</div>
+        </div>
+        <div class="msg">
+          <div class="who"><img src="sprites/agent_o3.png" alt=""><span class="t-caption" style="letter-spacing:.05em">Coder · phase-101</span></div>
+          <div class="bubble">Done. Do we have a canon doc for which surfaces get the stream composition first?</div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="well drop-ready">
+          <div class="grounds">
+            <span class="ghost-chip"><img src="sprites/crystal.png" alt="">Project KB — ground this</span>
+          </div>
+          <div class="placeholder">The journal, the blocks library, the switchboard — it’s in the KB…</div>
+          <div class="foot">
+            <span class="mic">🎙</span>
+            <span class="t-caption">hold to talk</span>
+            <span class="spacer"></span>
+            <span class="badge local">LOCAL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="lifted"><img src="sprites/crystal.png" alt=""><span>Project KB</span></div>
+<div class="cursor"></div>
+
+<nav class="dock">
+  <a href="#"><span class="glyph">⌁</span><span class="label">Speak</span></a>
+  <a href="#"><span class="glyph">▣</span><span class="label">Meetings</span></a>
+  <a href="#" class="front running"><span class="glyph">✦</span><span class="label">Agents</span></a>
+  <a href="#"><span class="glyph">⚙</span><span class="label">Settings</span></a>
+  <span class="orb"></span>
+</nav>
+</body>
+</html>
