@@ -197,7 +197,15 @@
   background: var(--danger, #f87171);
 }
 .desk-next .desk-chip {
-  padding: 6px 12px;
+  /* Materials round 3.2 — ONE chip geometry: every chip is the same
+     height with the same padding; variants change COLOR only. */
+  height: 27px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1;
+  white-space: nowrap;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: rgba(12, 10, 18, 0.62);
@@ -1019,19 +1027,26 @@
 }
 .desk-next .desk-pullout-body section,
 .desk-next .desk-relationship-axes {
+  /* Materials round 3.2 — no card-in-window: the axes are sections on
+     the material, separated by hairlines. */
   display: grid;
-  gap: 6px;
-  padding: 10px 12px;
-  border: 1px solid var(--border-subtle, var(--border));
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.03);
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.desk-next .desk-relationship-axes h3:not(:first-child) {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--wash-1);
 }
 .desk-next .desk-pullout-body h3 {
   margin: 0 0 6px;
-  font-size: var(--font-size-xs);
+  font-size: var(--desk-surface-label-size);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--k, #ff6b35) 75%, var(--text-muted));
+  /* The object tint stays on the WINDOW EDGE; headings are quiet. */
+  color: var(--text-muted);
 }
 .desk-next .desk-pullout-body p,
 .desk-next .desk-pullout-body li {
@@ -1148,8 +1163,23 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 10px 14px;
-  border-top: 1px solid var(--border);
+  padding: 9px 12px;
+  border-top: 0.9px solid var(--shade-1);
+  background: var(--desk-window-head-fill);
+}
+.desk-next .desk-pullout-foot .desk-chip {
+  height: 30px;
+  padding: 0 14px;
+}
+.desk-next .desk-chip.is-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 var(--gleam-3);
+}
+.desk-next .desk-chip.is-primary:hover {
+  background: var(--accent-hover);
 }
 .desk-next .desk-pullout-file {
   display: flex;

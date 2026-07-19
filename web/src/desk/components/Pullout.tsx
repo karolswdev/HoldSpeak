@@ -442,19 +442,27 @@ export function Pullout({ o }: { o: WorldObject }) {
           </>
         )}
 
-        {(o.kind === "note" || o.kind === "kb") && (
-          <section>
-            <pre className="desk-pullout-md">
-              {String(
-                ir.bodyMarkdown ||
-                  (ir.memberIds || [])
-                    .map((m: string) => `· ${m}`)
-                    .join("\n") ||
-                  "",
-              )}
-            </pre>
-          </section>
-        )}
+        {(o.kind === "note" || o.kind === "kb") &&
+          (() => {
+            const body = String(
+              ir.bodyMarkdown ||
+                (ir.memberIds || [])
+                  .map((m: string) => `· ${m}`)
+                  .join("\n") ||
+                "",
+            );
+            return (
+              <section>
+                {body ? (
+                  <pre className="desk-pullout-md">{body}</pre>
+                ) : (
+                  <p className="quiet">
+                    Nothing written here yet — Edit adds content.
+                  </p>
+                )}
+              </section>
+            );
+          })()}
 
         {o.kind === "recipe" && (
           <section>
@@ -850,7 +858,7 @@ export function Pullout({ o }: { o: WorldObject }) {
         {EDITABLE.has(o.kind) && (
           <button
             type="button"
-            className="desk-chip"
+            className="desk-chip is-primary"
             onClick={() => openEditor(o.id)}
           >
             Edit
