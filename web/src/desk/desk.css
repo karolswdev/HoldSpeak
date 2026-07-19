@@ -3876,3 +3876,122 @@
   background: transparent;
   box-shadow: none;
 }
+
+/* ── Materials round 3.3: the component sweep (no more surface left
+   behind). One pass over the legacy desk furniture: the in-world
+   editor, the Desk memory drawer, the Delivery sessions, the tool
+   shelf, and the pane picker all join the material grammar. ── */
+
+/* The in-world editor is a small window: the one material, a head
+   band, a primary Done. */
+.desk-next .desk-editor {
+  border: 0;
+  background: var(--desk-window-fill);
+  backdrop-filter: var(--desk-window-blur);
+  box-shadow: var(--desk-glass-edge), var(--desk-transient-shadow);
+}
+.desk-next .desk-editor-head {
+  margin: -14px -14px 0;
+  padding: 8px 12px;
+  background: var(--desk-window-head-fill);
+  border-bottom: 0.9px solid var(--shade-1);
+  border-radius: 16px 16px 0 0;
+  font-size: var(--desk-surface-label-size);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.desk-next .desk-editor-foot button:last-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--text-on-accent);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 var(--gleam-3);
+}
+
+/* Desk memory: figures are quiet metrics, not boxes; the filter row is
+   ONE control height; messages are quiet. */
+.desk-next .desk-attention-counts span {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0 14px 0 0;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+}
+.desk-next .desk-attention-counts b {
+  font-size: var(--font-size-lg);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.desk-next .desk-attention-filters input,
+.desk-next .desk-attention-filters select,
+.desk-next .desk-attention-filters button {
+  min-height: 32px;
+  height: 32px;
+}
+.desk-next .desk-attention-filters select {
+  text-align: left;
+  min-width: 132px;
+}
+.desk-next .desk-attention-filters button {
+  border: 1px solid var(--border);
+  border-bottom-color: var(--shade-1);
+  border-radius: var(--radius-sm);
+  background: var(--wash-2);
+  color: var(--text);
+  padding: 0 14px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 var(--gleam-1);
+}
+.desk-next .desk-attention-error,
+.desk-next .desk-attention-empty {
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-body-size);
+}
+
+/* Delivery: coder sessions are ROWS, not crammed inline chips. */
+.desk-next .desk-dlv-session-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+  padding: 4px 10px;
+  margin: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--desk-surface-body-size);
+  text-align: left;
+  cursor: pointer;
+}
+.desk-next .desk-dlv-session-open:hover {
+  background: var(--wash-1);
+}
+.desk-next .desk-dlv-session-open small {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+
+/* The tool shelf joins the one material (the accent cage retires). */
+.desk-next .desk-tool-shelf {
+  border: 0;
+  box-shadow: var(--desk-glass-edge), var(--desk-transient-shadow);
+  background: var(--desk-window-fill);
+  backdrop-filter: var(--desk-window-blur);
+}
+
+/* The pane picker's spawn row: one control height. */
+.desk-next .desk-panepicker input,
+.desk-next .desk-panepicker button {
+  min-height: 30px;
+}
