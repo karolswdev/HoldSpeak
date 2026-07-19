@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   cancelCapture,
   speakToFillSupported,
+  speakToFillUnsupportedReason,
   startCapture,
   stopAndTranscribe,
   retryPendingTranscription,
@@ -52,8 +53,26 @@ export function MicButton({
     };
   }, [draftScope]);
 
+  // HS-100-06: a mic that cannot capture is visible, disabled, and says
+  // why — it never vanishes silently (Article VI; the LAN-origin trap).
   const captureSupported = speakToFillSupported();
-  if (!captureSupported && !audioRetained) return null;
+  if (!captureSupported && !audioRetained) {
+    const reason =
+      speakToFillUnsupportedReason() ??
+      "This browser cannot capture microphone audio.";
+    return (
+      <button
+        type="button"
+        className="desk-mic is-unsupported"
+        disabled
+        title={reason}
+        aria-label={`${label} (unavailable: ${reason})`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span aria-hidden="true">🎙</span>
+      </button>
+    );
+  }
 
   const start = async () => {
     holding.current = true;

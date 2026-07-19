@@ -1468,6 +1468,12 @@
 .desk-next .desk-mic.is-failed {
   border-color: var(--danger, #f87171);
 }
+/* HS-100-06: capture unavailable — visible, disabled, reason in the
+   title. Never display: none (the mic must not vanish silently). */
+.desk-next .desk-mic.is-unsupported {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 .desk-next .desk-mic-failure {
   max-width: 24rem;
