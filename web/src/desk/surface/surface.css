@@ -1099,3 +1099,126 @@ button.surface-edit-in-place:hover {
     animation: none;
   }
 }
+
+/* HS-101 rule 2 — the switchboard (SurfaceSwitchboard). */
+.surface-switchboard {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+@container surface (min-width: 560px) {
+  .surface-switchboard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .surface-bay-route {
+    grid-column: 1 / -1;
+  }
+}
+.surface-bay {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: var(--wash-1);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  animation: surface-rise-in var(--duration-medium) var(--ease-quart) both;
+}
+.surface-bay:hover,
+.surface-bay:focus-within {
+  background: var(--wash-2);
+}
+.surface-bay-route {
+  background: var(--accent-tint);
+  box-shadow: inset 0 0 0 1px var(--accent-soft);
+}
+.surface-bay-route:hover,
+.surface-bay-route:focus-within {
+  background: var(--accent-tint);
+}
+.surface-bay-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.surface-bay-who {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+  min-width: 0;
+}
+.surface-bay-state {
+  font-size: var(--desk-surface-detail-size);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.surface-bay-model {
+  font-family: var(--font-display);
+  font-weight: 650;
+  letter-spacing: var(--letter-spacing-tight);
+  font-size: var(--desk-type-primary-size);
+  color: var(--text-muted);
+}
+.surface-bay-route .surface-bay-model {
+  font-size: var(--desk-type-display-size);
+  line-height: var(--desk-type-display-lh);
+  color: var(--text);
+  margin: 1px 0;
+}
+.surface-bay-where {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.surface-bay-where span {
+  white-space: nowrap;
+}
+.surface-bay-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.surface-bay-tag {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-tint);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--accent-soft);
+}
+.surface-bay .surface-row-verbs {
+  position: absolute;
+  right: 9px;
+  bottom: 9px;
+  padding: 3px 5px;
+  border-radius: var(--radius-sm);
+  background: var(--desk-panel-fill);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+.surface-bay:hover .surface-row-verbs,
+.surface-bay:focus-within .surface-row-verbs {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface-bay {
+    animation: none;
+  }
+}

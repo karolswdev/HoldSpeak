@@ -533,6 +533,57 @@ export function SurfaceLibraryGhost({
   );
 }
 
+/** HS-101 rule 2 — the switchboard: the composition for routing
+ * material (Runs on). One bay per destination; the route bay leads
+ * with its model at display step; lamps are never color-only; the
+ * boundary badge sits ON the bay, at the point of decision. */
+export function SurfaceSwitchboard({ children }: { children: ReactNode }) {
+  return <ul className="surface-switchboard">{children}</ul>;
+}
+
+export function SurfaceBay({
+  route,
+  lamp,
+  name,
+  state,
+  model,
+  where,
+  badge,
+  tag,
+  verbs,
+}: {
+  /** True on THE current route — the bay that leads. */
+  route?: boolean;
+  lamp?: ReactNode;
+  name: ReactNode;
+  /** Short liveness text beside the name (never color alone). */
+  state?: ReactNode;
+  model?: ReactNode;
+  where?: ReactNode;
+  badge?: ReactNode;
+  tag?: ReactNode;
+  verbs?: ReactNode;
+}) {
+  return (
+    <li className={route ? "surface-bay surface-bay-route" : "surface-bay"}>
+      <div className="surface-bay-main">
+        <div className="surface-bay-who surface-primary">
+          {lamp}
+          {name}
+          {state ? <span className="surface-bay-state">{state}</span> : null}
+        </div>
+        {model ? <div className="surface-bay-model">{model}</div> : null}
+        {where ? <div className="surface-bay-where">{where}</div> : null}
+      </div>
+      <div className="surface-bay-side">
+        {badge}
+        {tag ? <span className="surface-bay-tag">{tag}</span> : null}
+        {verbs ? <span className="surface-row-verbs">{verbs}</span> : null}
+      </div>
+    </li>
+  );
+}
+
 /** HS-101 rule 1 — data is the material: the presented text IS the
  * editor. Click or Enter swaps it for a same-geometry editor;
  * Enter/blur commits, Escape reverts. A value that cannot be edited
