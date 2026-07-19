@@ -13,14 +13,17 @@ SurfaceStream/Library/Switchboard + EditInPlace + SystemShade kit
 design, and the AGENT_BRIEF §6 OS-territory inventory) and cut the
 five census-derived mockups at 1440 + 393 (journal stream, blocks
 library, runs-on switchboard, system shade, drag-through-glass).
-The phase is parked at **HS-101-02 — the owner's gate**; nothing
-builds before the verdict. Earlier the same day: **Phase 100, The
+**HS-101-02 CLOSED on the owner's call** ("Well, merge it in for me,
+and then keep going..."; round 1 banned the left accent rail —
+aerogel insets instead — and made fluidity canon; PR #359 merged).
+**HS-101-03 in flight**: the B1–B8 build ledger authored from the
+approved canon. Earlier the same day: **Phase 100, The
 Application Layer, CLOSED 13/13** on the owner's sitting ("It's
 better, I cannot lie"), merged PR #357; the standing method forged
 into **docs/internal/AGENT_BRIEF.md**.
 
 **Current phase:** [**Phase 101 — The Native Innards**](./phase-101-the-native-innards/current-phase-status.md)
-— **IN PROGRESS (1/4, at the owner's gate)**.
+— **IN PROGRESS (2/4, building the B1–B8 ledger)**.
 
 <details>
 <summary>Prior roadmap status through Phase 90</summary>

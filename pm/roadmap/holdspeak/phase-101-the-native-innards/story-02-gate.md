@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 101
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-101-01
 - **Unblocks:** HS-101-03
 
@@ -20,8 +20,8 @@ mockups (the Phase-100 method, AGENT_BRIEF.md §2 — it is the law).
 
 ## Acceptance criteria
 
-- [ ] The owner's explicit approval, recorded verbatim.
-- [ ] HS-101-03 authored from the approved version.
+- [x] The owner's explicit approval, recorded verbatim.
+- [x] HS-101-03 authored from the approved version.
 
 ## Test plan
 
