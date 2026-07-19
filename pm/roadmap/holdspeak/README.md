@@ -5,7 +5,12 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, IN
-PROGRESS (2/8)**. **HS-99-02, The title bar is a bar, DONE**: the
+PROGRESS (3/8)**. **HS-99-03, Controls wear the skin, DONE**: the
+"unstyled selects" were the desk's own components shipping raw
+selects/inputs past Signal — bare controls inside the desk shell now
+inherit the control foundation mechanically (options, checkbox
+accent, date indicator, a drawn search-cancel glyph, a Signal file
+button), config round-trip captured green. Earlier: **HS-99-02, The title bar is a bar, DONE**: the
 whole window family wears a 40px two-tone head (tonal separation, no
 border), full-height square SVG verbs flush to the edge, a red-hover
 close via the variable-override pattern, square corners on maximize,

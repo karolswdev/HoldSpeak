@@ -1,6 +1,6 @@
 # Phase 99 — The OS Chrome
 
-**Status:** IN PROGRESS (2/8, 2026-07-18) from the owner's live verdict
+**Status:** IN PROGRESS (3/8, 2026-07-18) from the owner's live verdict
 on the staged Phase 98 build: "a step, but we still have soooo much
 work to do to even begin dreaming of this looking and feeling like an
 OS — loads of unstyled selects; those windows still deserve a huge
@@ -8,8 +8,8 @@ overhaul" — with a direct study directive: ProzillaOS
 (github.com/prozilla-os/ProzillaOS, MIT), "see what we can borrow,
 what we can embrace, and deliver this kind of experience."
 
-**Last updated:** 2026-07-18 (HS-99-02 done: the title bar is a bar —
-two-tone, edge-flush square verbs, red close, head menu).
+**Last updated:** 2026-07-18 (HS-99-03 done: every control wears the
+skin — the desk's raw selects/inputs were the culprits).
 
 ## Why this phase exists
 
@@ -99,7 +99,7 @@ regress.
 |---|---|---|---|---|
 | HS-99-01 | The study and the tokens | done | [story-01-study-and-tokens](./story-01-study-and-tokens.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-99-02 | The title bar is a bar | done | [story-02-title-bar](./story-02-title-bar.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-99-03 | Controls wear the skin | backlog | [story-03-controls](./story-03-controls.md) | — |
+| HS-99-03 | Controls wear the skin | done | [story-03-controls](./story-03-controls.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-99-04 | Scrollbars and menus | backlog | [story-04-scrollbars-menus](./story-04-scrollbars-menus.md) | — |
 | HS-99-05 | The dock is alive | backlog | [story-05-dock-alive](./story-05-dock-alive.md) | — |
 | HS-99-06 | Interior archetypes | backlog | [story-06-interior-archetypes](./story-06-interior-archetypes.md) | — |
@@ -108,6 +108,16 @@ regress.
 
 ## Where we are
 
+**HS-99-03 done (2026-07-18): controls wear the skin.** The audit
+found the real "unstyled selects": the desk's own components shipped
+raw selects/inputs bypassing Signal. Bare controls inside the desk
+shell now inherit the Signal foundation at zero specificity — no
+component can ship an unstyled control again — at the denser desk
+height, with the drawn chevron; options sit on the surface tone,
+checkboxes wear the accent, the date indicator and search-cancel
+glyph are drawn, and the file button is a Signal face. Config
+round-trip captured green; shots looked at. `npm run check` green
+(290). Next: HS-99-04 — scrollbars and menus. Earlier:
 **HS-99-02 done (2026-07-18): the title bar is a bar.** The whole
 window family wears a 40px two-tone head (one tonal step above the
 body, no border), full-height square verb buttons flush to the edge

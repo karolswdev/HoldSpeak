@@ -97,6 +97,20 @@ export function ComponentsCore({ hero }: CoreProps) {
                 />
               )}
             </Field>
+            <Field label="Date" description="The picker indicator wears the skin.">
+              {({ id }) => <TextInput id={id} type="date" />}
+            </Field>
+            <Field label="Search" description="The cancel glyph is drawn, not native.">
+              {({ id }) => (
+                <TextInput id={id} type="search" defaultValue="clearable" />
+              )}
+            </Field>
+            <Field label="Number">
+              {({ id }) => <TextInput id={id} type="number" defaultValue={16384} />}
+            </Field>
+            <Field label="File" description="The selector button is a Signal face.">
+              {({ id }) => <input id={id} className="hs-control" type="file" />}
+            </Field>
             <Field
               label="Disabled field"
               description="Editing is restricted by policy."
