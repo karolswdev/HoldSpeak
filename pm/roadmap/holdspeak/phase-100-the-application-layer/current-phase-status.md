@@ -1,6 +1,6 @@
 # Phase 100 — The Application Layer
 
-**Status:** IN PROGRESS (2/6, 2026-07-19) by the owner's direct
+**Status:** IN PROGRESS (3/6, 2026-07-19) by the owner's direct
 directive, verbatim in spirit: *"a phase that will cause a deep, deep,
 deep grounding in the philosophy, seams, use cases — to then form an
 opinion on the entire UI/UX with regards to its applicability to the
@@ -8,7 +8,7 @@ Desk OS — and then finally deliver something beautiful, not mangled,
 easy to use: a proper application layer on our Desk OS to drive the
 value of HoldSpeak."*
 
-**Last updated:** 2026-07-19 (HS-100-02 done: the judgment is written, census-checked, trace-evidenced).
+**Last updated:** 2026-07-19 (HS-100-03 done: the thesis + mocked applications at both form factors; the owner's gate is next).
 
 ## Why this phase exists — the honest post-mortem
 
@@ -78,23 +78,22 @@ and the opinion exist and the owner has gated them.
 |---|---|---|---|---|
 | HS-100-01 | The grounding | done | [story-01-grounding](./story-01-grounding.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-100-02 | The judgment | done | [story-02-judgment](./story-02-judgment.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-100-03 | The thesis | backlog | [story-03-thesis](./story-03-thesis.md) | — |
+| HS-100-03 | The thesis | done | [story-03-thesis](./story-03-thesis.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-100-04 | The owner's gate | backlog | [story-04-gate](./story-04-gate.md) | — |
 | HS-100-05 | The build (shaped at the gate) | backlog | [story-05-build](./story-05-build.md) | — |
 | HS-100-06 | Closeout | backlog | [story-06-closeout](./story-06-closeout.md) | — |
 
 ## Where we are
 
-**HS-100-02 done (2026-07-19): the judgment is written.**
-docs/internal/UIUX_JUDGMENT.md — all 15 registry rows and 28 desk
-components judged keep/merge/re-shape/kill with job citations
-(scripts/judgment_census.py proves zero omissions from the code);
-three live end-to-end flow traces on the staged spike build (meeting
-→filed = nine concepts; speak→correction = 5 clicks one window but
-opens on diagnostics, and MicButton silently dies on non-secure
-origins; tap→rope→ask = 4 clicks, the metaphor's proof). The desk
-metaphor is ruled kept — its failure is at the window boundary. The
-spike's materials carry; the patch-components method does not. Next:
-HS-100-03 — the thesis. (Earlier: HS-100-01 shipped GROUNDING.md —
-the four ranked jobs, postures, drifts, and the verbatim
-owner-verdict record.)
+**HS-100-03 done (2026-07-19): the thesis is written and mocked.**
+docs/internal/APPLICATION_LAYER_THESIS.md — four applications and a
+desk (Speak / Meetings / Agents / Settings), posture-first interiors
+with one config door each, the kill/merge accounting (Studio dies,
+three launchers collapse to dock + ⌘K), and the B1–B8 build plan with
+a guard per story. Ten mockups (five screens × 1440/393) on the
+spike's material with real sprites and real trace content, census-
+proven complete (scripts/mockup_census.py). Next: HS-100-04 — the
+owner's gate. NOTHING builds on main before that verdict. (Earlier
+today: HS-100-01 GROUNDING.md; HS-100-02 UIUX_JUDGMENT.md +
+judgment_census + the three live flow traces.)
+

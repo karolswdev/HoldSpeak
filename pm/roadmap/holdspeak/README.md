@@ -5,7 +5,15 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
-PROGRESS (2/6)**. **HS-100-02, The judgment, DONE**: UIUX_JUDGMENT.md
+PROGRESS (3/6)**. **HS-100-03, The thesis, DONE**: the application
+layer's opinion — four applications and a desk (Speak / Meetings /
+Agents / Settings), posture-first interiors, one config door per app,
+Studio killed and the launchers collapsed to dock + ⌘K — with ten
+mockups (five screens at 1440 and 393) on the spike's material,
+census-proven complete, and a B1–B8 build plan each with a named
+guard. The owner's gate (HS-100-04) is next; nothing builds on main
+before that verdict. Earlier same day, **HS-100-02, The judgment,
+DONE**: UIUX_JUDGMENT.md
 judges every surface (15 registry rows) and desk component (28)
 keep/merge/re-shape/kill against the grounding's jobs, census-proven
 complete from the code; three live flow traces measured the mangled

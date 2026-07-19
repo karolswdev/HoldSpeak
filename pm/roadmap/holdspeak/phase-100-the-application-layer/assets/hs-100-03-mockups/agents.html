@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agents — mockup</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .window { left: 50%; top: 80px; transform: translateX(-50%); width: 880px; height: 660px; }
+  .main { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+  .main > * { flex: none; }
+  .blocked {
+    border-radius: 12px; overflow: hidden;
+    background: rgba(255, 109, 61, 0.06);
+    box-shadow: inset 0 0 0 1px rgba(255, 109, 61, 0.28), 0 6px 24px rgba(255,109,61,.08);
+  }
+  .blocked-head { display: flex; gap: 12px; align-items: center; padding: 14px 16px; }
+  .blocked-head img { width: 40px; height: 40px; image-rendering: pixelated; }
+  .blocked-head strong { font-size: 14px; }
+  .blocked-head .sub { color: var(--ink-dim); font-size: 12px; }
+  .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px rgba(255,109,61,.8); flex: none; margin-left: auto; }
+  .question {
+    margin: 0 16px; padding: 13px 16px; border-radius: 10px;
+    background: var(--well); font-size: 14px; line-height: 1.5;
+    font-family: var(--font-mono); font-size: 12.5px;
+  }
+  .composer { display: flex; gap: 10px; padding: 14px 16px; align-items: center; }
+  .composer .mic-s {
+    width: 40px; height: 40px; border-radius: 50%; flex: none;
+    background: radial-gradient(circle at 35% 30%, #ff9d72, #e04c17 72%);
+    box-shadow: 0 0 14px rgba(255, 109, 61, 0.45), inset 0 1px 3px rgba(255,255,255,.35);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .composer input {
+    flex: 1; height: 38px; border-radius: 10px; border: 0; padding: 0 14px;
+    background: var(--well); box-shadow: inset 0 0 0 1px rgba(255,255,255,.07);
+    color: var(--ink); font: inherit; font-size: 13.5px;
+  }
+  .composer input::placeholder { color: var(--ink-faint); }
+  .srow img { width: 30px; height: 30px; image-rendering: pixelated; }
+  .state { font-size: 11px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; padding: 2px 8px; border-radius: 9px; flex: none; }
+  .state.run { color: var(--good); background: rgba(53,212,154,.1); }
+  .state.idle { color: var(--ink-faint); background: rgba(255,255,255,.05); }
+  .pane { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); }
+  @media (max-width: 500px) {
+    .main { padding: 14px; }
+    .composer { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="world">
+  <div class="obj" style="left:6%; top:34%"><img src="sprites/note3.png" alt=""><span>Standup follow-ups</span></div>
+</div>
+
+<header class="menubar">
+  <span class="mark">HoldSpeak</span>
+  <span class="trust"><span class="trust-dot"></span> This device</span>
+  <span class="right"><kbd>⌘K</kbd> <span>Sun, Jul 19</span> <strong>09:47</strong></span>
+</header>
+
+<section class="window" aria-label="Agents">
+  <div class="window-head">
+    <div class="lights"><span class="light c"></span><span class="light m"></span><span class="light z"></span></div>
+    <nav class="wings">
+      <a class="on" href="#">Sessions</a><a href="#">Delivery</a><a href="#">Chat</a>
+    </nav>
+    <div class="head-side"><span>⚙</span></div>
+  </div>
+  <div class="window-body main">
+
+    <span class="eyebrow">Blocked — needs your answer</span>
+    <div class="blocked">
+      <div class="blocked-head">
+        <img src="sprites/agent_o3.png" alt="">
+        <div class="grow"><strong>coder · holdspeak</strong>
+          <div class="sub">tmux main:2 · blocked 4 min · working HS-100-05</div></div>
+        <span class="pulse"></span>
+      </div>
+      <div class="question">The schema snapshot drifted after the migration.
+Regenerate it with the no-op regex recipe, or hand-edit the
+three changed tables?</div>
+      <div class="composer">
+        <span class="mic-s">🎙</span>
+        <input placeholder="Answer by voice or type — lands as keystrokes in the pane">
+        <a class="chip quiet" href="#">Draft with AI</a>
+        <a class="chip primary" href="#">Answer</a>
+      </div>
+    </div>
+
+    <span class="eyebrow">Running — 2</span>
+    <div class="group rows">
+      <div class="row srow"><img src="sprites/agent_o7.png" alt="">
+        <div class="grow">coder · holdspeak-mobile
+          <div class="sub pane">▍swift test — 412/519 · 3 min quiet</div></div>
+        <span class="state run">running</span>
+        <a class="chip quiet" href="#">Watch</a></div>
+      <div class="row srow"><img src="sprites/agent_o12.png" alt="">
+        <div class="grow">review agent · PR #356
+          <div class="sub pane">▍reading web/src/desk/desk.css</div></div>
+        <span class="state run">running</span>
+        <a class="chip quiet" href="#">Watch</a></div>
+    </div>
+
+    <span class="eyebrow">Idle — 1</span>
+    <div class="group rows">
+      <div class="row srow"><img src="sprites/cartridge.png" alt="">
+        <div class="grow">Summarize like a PM
+          <div class="sub">last ran on Release sync · today</div></div>
+        <span class="state idle">idle</span>
+        <a class="chip quiet" href="#">Run on…</a></div>
+    </div>
+
+  </div>
+</section>
+
+<nav class="dock">
+  <a href="#"><span class="glyph">⌁</span><span class="label">Speak</span></a>
+  <a href="#"><span class="glyph">▣</span><span class="label">Meetings</span></a>
+  <a class="front running" href="#"><span class="glyph">🤝</span><span class="label">Agents</span></a>
+  <a href="#"><span class="glyph">⚙</span><span class="label">Settings</span></a>
+  <span class="orb" title="Record"></span>
+</nav>
+</body>
+</html>

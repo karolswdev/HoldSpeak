@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speak — mockup</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .window { left: 50%; top: 90px; transform: translateX(-50%); width: 720px; height: 640px; }
+  .speak { display: flex; flex-direction: column; align-items: center; padding: 34px 44px 24px; gap: 20px; height: 100%; }
+  .mic {
+    width: 96px; height: 96px; border-radius: 50%; flex: none;
+    background: radial-gradient(circle at 35% 30%, #ff9d72, #e04c17 72%);
+    box-shadow: 0 0 0 10px rgba(255, 109, 61, 0.09), 0 0 0 22px rgba(255, 109, 61, 0.04),
+      0 0 34px rgba(255, 109, 61, 0.5), inset 0 2px 6px rgba(255, 255, 255, 0.35);
+    display: flex; align-items: center; justify-content: center; font-size: 34px;
+  }
+  .hint { color: var(--ink-faint); font-size: 12px; }
+  .hint kbd { font-family: var(--font-ui); border: 1px solid var(--hairline); border-radius: 4px; padding: 0 5px; font-size: 11px; }
+  .utter { font-size: 17px; line-height: 1.5; color: var(--ink-dim); text-align: center; max-width: 34em; }
+  .utter em { color: var(--ink); font-style: normal; }
+  .result {
+    width: 100%; border-radius: 12px; padding: 16px 18px;
+    background: rgba(53, 212, 154, 0.07);
+    box-shadow: inset 0 0 0 1px rgba(53, 212, 154, 0.22);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .result p { font-size: 14.5px; line-height: 1.55; }
+  .grounds { display: flex; gap: 8px; flex-wrap: wrap; }
+  .verdict { display: flex; gap: 10px; align-items: center; }
+  .verdict .spacer { flex: 1; }
+  .statusline {
+    margin-top: auto; display: flex; align-items: center; gap: 8px;
+    color: var(--ink-faint); font-size: 12px; padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05); width: 100%;
+    justify-content: center;
+  }
+  @media (max-width: 500px) {
+    .speak { padding: 22px 18px 16px; }
+    .utter { font-size: 15.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="world">
+  <div class="obj" style="left:6%; top:24%"><img src="sprites/crystal.png" alt=""><span>Project KB</span></div>
+  <div class="obj" style="left:10%; top:62%"><img src="sprites/note.png" alt=""><span>Q3 architecture decisions</span></div>
+  <div class="obj" style="right:5%; top:30%"><img src="sprites/cassette2.png" alt=""><span>Release sync</span></div>
+</div>
+
+<header class="menubar">
+  <span class="mark">HoldSpeak</span>
+  <span class="trust"><span class="trust-dot"></span> This device</span>
+  <span class="right"><kbd>⌘K</kbd> <span>Sun, Jul 19</span> <strong>09:41</strong></span>
+</header>
+
+<section class="window" aria-label="Speak">
+  <div class="window-head">
+    <div class="lights"><span class="light c"></span><span class="light m"></span><span class="light z"></span></div>
+    <nav class="wings">
+      <a class="on" href="#">Speak</a><a href="#">Journal</a><a href="#">Blocks</a>
+    </nav>
+    <div class="head-side"><span title="Everything else lives behind one door">⚙</span></div>
+  </div>
+  <div class="window-body speak">
+    <div class="mic">🎙</div>
+    <div class="hint">Hold <kbd>fn</kbd> and talk — it types where your cursor is</div>
+    <p class="utter">“explain the change i made to the token gate, uh, the
+      allow list one — cite the test”</p>
+    <div class="result">
+      <p>Tightened the token gate: the component-CSS allow-list now only
+        shrinks — any new raw value fails <em>validate-tokens.cjs</em>.
+        Covered by <em>test_design_token_gate.py</em>.</p>
+      <div class="grounds">
+        <span class="chip"><img src="sprites/crystal.png" alt=""> Project KB</span>
+        <span class="chip"><img src="sprites/paper.png" alt=""> LL-118</span>
+        <span class="chip quiet">types into Terminal</span>
+      </div>
+      <div class="verdict">
+        <a class="chip primary" href="#">Right</a>
+        <a class="chip" href="#">Wrong — teach it</a>
+        <span class="spacer"></span>
+        <span class="badge local">local</span>
+      </div>
+    </div>
+    <div class="statusline">
+      <span class="trust-dot"></span> Pipeline live · grounded on 2 objects · 320 ms
+    </div>
+  </div>
+</section>
+
+<nav class="dock">
+  <a class="front running" href="#"><span class="glyph">⌁</span><span class="label">Speak</span></a>
+  <a href="#"><span class="glyph">▣</span><span class="label">Meetings</span></a>
+  <a href="#"><span class="glyph">🤝</span><span class="label">Agents</span></a>
+  <a href="#"><span class="glyph">⚙</span><span class="label">Settings</span></a>
+  <span class="orb" title="Record"></span>
+</nav>
+</body>
+</html>

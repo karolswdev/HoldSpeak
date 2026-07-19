@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — mockup</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .window { left: 50%; top: 80px; transform: translateX(-50%); width: 760px; height: 660px; }
+  .main { padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px; }
+  .main > * { flex: none; }
+  .ghead { display: flex; align-items: center; gap: 10px; padding: 2px 4px; }
+  .ghead .eyebrow { font-size: 11.5px; }
+  .setrow .value { color: var(--ink-dim); font-size: 12.5px; text-align: right; }
+  .fixrow { background: rgba(255, 189, 46, 0.05); }
+  @media (max-width: 500px) { .main { padding: 14px; } }
+</style>
+</head>
+<body>
+<div class="world">
+  <div class="obj" style="right:6%; top:64%"><img src="sprites/crystal.png" alt=""><span>Project KB</span></div>
+</div>
+
+<header class="menubar">
+  <span class="mark">HoldSpeak</span>
+  <span class="trust"><span class="trust-dot"></span> This device</span>
+  <span class="right"><kbd>⌘K</kbd> <span>Sun, Jul 19</span> <strong>09:50</strong></span>
+</header>
+
+<section class="window" aria-label="Settings">
+  <div class="window-head">
+    <div class="lights"><span class="light c"></span><span class="light m"></span><span class="light z"></span></div>
+    <nav class="wings"><a class="on" href="#">Settings</a><a href="#">Runs on</a></nav>
+    <div class="head-side"><span>Search settings…</span></div>
+  </div>
+  <div class="window-body main">
+
+    <div class="ghead"><span class="eyebrow">Voice</span><span class="badge local">local</span></div>
+    <div class="group rows">
+      <div class="row setrow">
+        <div class="grow">Hold to talk<div class="sub">the key that arms dictation</div></div>
+        <span class="value"><kbd style="border:1px solid var(--hairline);border-radius:4px;padding:1px 7px;font-size:11px">fn</kbd></span></div>
+      <div class="row setrow">
+        <div class="grow">Voice model<div class="sub">Whisper, on this device</div></div>
+        <span class="value">large-v3-turbo</span></div>
+      <div class="row setrow">
+        <div class="grow">Wake word<div class="sub">arms, never types</div></div>
+        <span class="toggle"></span></div>
+    </div>
+
+    <div class="ghead"><span class="eyebrow">Intelligence</span><span class="badge local">local</span></div>
+    <div class="group rows">
+      <div class="row setrow fixrow">
+        <div class="grow">Language model<div class="sub">not found on this hub — meetings and asks pause until one is picked</div></div>
+        <a class="chip primary" href="#">Pick a model</a></div>
+      <div class="row setrow">
+        <div class="grow">Meeting intelligence<div class="sub">artifacts, aftercare, follow-ups</div></div>
+        <span class="toggle on"></span></div>
+    </div>
+
+    <div class="ghead"><span class="eyebrow">Egress</span><span class="badge cloud">local + cloud</span></div>
+    <div class="group rows">
+      <div class="row setrow">
+        <div class="grow">GitHub issues<div class="sub">only approved actions leave; the payload is shown first</div></div>
+        <span class="toggle on"></span></div>
+      <div class="row setrow">
+        <div class="grow">Slack<div class="sub">one webhook, values stay on this hub</div></div>
+        <span class="toggle"></span></div>
+    </div>
+
+    <div class="ghead"><span class="eyebrow">Hub</span></div>
+    <div class="group rows">
+      <div class="row setrow">
+        <div class="grow">Runtime guide<div class="sub">what runs where, and how to move it</div></div>
+        <a class="chip quiet" href="#">Read</a></div>
+      <div class="row setrow">
+        <div class="grow">Backups<div class="sub">last snapshot today 07:00</div></div>
+        <a class="chip quiet" href="#">Back up now</a></div>
+    </div>
+
+  </div>
+</section>
+
+<nav class="dock">
+  <a href="#"><span class="glyph">⌁</span><span class="label">Speak</span></a>
+  <a href="#"><span class="glyph">▣</span><span class="label">Meetings</span></a>
+  <a href="#"><span class="glyph">🤝</span><span class="label">Agents</span></a>
+  <a class="front running" href="#"><span class="glyph">⚙</span><span class="label">Settings</span></a>
+  <span class="orb" title="Record"></span>
+</nav>
+</body>
+</html>
