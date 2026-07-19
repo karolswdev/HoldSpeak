@@ -5,7 +5,13 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, IN
-PROGRESS (1/8)**. **HS-99-01, The study and the tokens, DONE**: the
+PROGRESS (2/8)**. **HS-99-02, The title bar is a bar, DONE**: the
+whole window family wears a 40px two-tone head (tonal separation, no
+border), full-height square SVG verbs flush to the edge, a red-hover
+close via the variable-override pattern, square corners on maximize,
+and a right-click head menu — with the Escape-eats-the-window defect
+the shots caught fixed and pinned; frame/depth/placement floors
+captured green. Earlier: **HS-99-01, The study and the tokens, DONE**: the
 ProzillaOS study is canon (PROZILLAOS_STUDY.md — borrow/embrace/skip
 with MIT attribution), nine chrome tokens land the tonal ladder +
 scrollbar pair + control height + easing family, and the chrome-ladder

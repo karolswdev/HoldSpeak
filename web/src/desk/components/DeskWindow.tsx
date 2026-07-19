@@ -10,6 +10,7 @@
 import {
   useEffect,
   useRef,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
@@ -843,6 +844,34 @@ export interface DeskWindowFrameProps {
 /** THE window. One chrome, one lifecycle, one physics contract — content
  * plugs in as children (Constitution, Article I: features do not own
  * surfaces). */
+/** HS-99-02 — the window verb glyphs: crisp inline SVG strokes that
+ * inherit currentColor (text glyphs read as characters, not chrome). */
+function VerbGlyph({
+  kind,
+}: {
+  kind: "minimize" | "maximize" | "restore" | "close";
+}) {
+  const paths: Record<string, string> = {
+    minimize: "M3 7h8",
+    maximize: "M3.5 3.5h7v7h-7Z",
+    restore: "M3 5.2h5.8V11H3Z M5.2 5.2V3H11v5.8H8.8",
+    close: "M3.5 3.5l7 7M10.5 3.5l-7 7",
+  };
+  return (
+    <svg
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d={paths[kind]} />
+    </svg>
+  );
+}
+
 export function DeskWindowFrame(props: DeskWindowFrameProps) {
   const {
     id,
@@ -883,6 +912,24 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+
+  // HS-99-02 — the head's right-click menu (chrome ladder rule 2).
+  const [headMenu, setHeadMenu] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!headMenu) return;
+    const close = () => setHeadMenu(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("pointerdown", close);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("pointerdown", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [headMenu]);
 
   // HS-97-04 — motion tells the story: close animates out; minimize
   // contracts toward the window's dock chip and restore returns from
@@ -1022,6 +1069,12 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       onKeyDown={(e) => {
         if (e.key === "Escape" && !e.defaultPrevented) {
           e.stopPropagation();
+          // HS-99-02 — an open head menu absorbs the first Escape; the
+          // window only closes on the next one.
+          if (headMenu) {
+            setHeadMenu(null);
+            return;
+          }
           requestClose();
         }
       }}
@@ -1055,6 +1108,13 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
           if (t?.closest("button, a, input, textarea, select")) return;
           useDesk.getState().toggleMaximizePanel(id);
         }}
+        onContextMenu={(e) => {
+          // HS-99-02 — the bar owns its window verbs on right-click.
+          const t = e.target as HTMLElement | null;
+          if (t?.closest("button, a, input, textarea, select")) return;
+          e.preventDefault();
+          setHeadMenu({ x: e.clientX, y: e.clientY });
+        }}
       >
         {leading}
         {icon}
@@ -1069,7 +1129,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             aria-label={`Minimize ${name}`}
             onClick={requestMinimize}
           >
-            –
+            <VerbGlyph kind="minimize" />
           </button>
           {!compact && (
             <button
@@ -1078,7 +1138,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
               aria-label={maximized ? `Restore ${name}` : `Maximize ${name}`}
               onClick={() => useDesk.getState().toggleMaximizePanel(id)}
             >
-              {maximized ? "❐" : "⤢"}
+              <VerbGlyph kind={maximized ? "restore" : "maximize"} />
             </button>
           )}
           <button
@@ -1087,10 +1147,56 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             aria-label={`Close ${name}`}
             onClick={requestClose}
           >
-            ✕
+            <VerbGlyph kind="close" />
           </button>
         </span>
       </header>
+      {headMenu ? (
+        <div
+          className="desk-head-menu"
+          role="menu"
+          aria-label={`${name} window menu`}
+          style={{
+            left: Math.min(headMenu.x, window.innerWidth - 184),
+            top: Math.min(headMenu.y, window.innerHeight - 132),
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setHeadMenu(null);
+              requestMinimize();
+            }}
+          >
+            <VerbGlyph kind="minimize" /> Minimize
+          </button>
+          {!compact && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setHeadMenu(null);
+                useDesk.getState().toggleMaximizePanel(id);
+              }}
+            >
+              <VerbGlyph kind={maximized ? "restore" : "maximize"} />
+              {maximized ? " Restore" : " Maximize"}
+            </button>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setHeadMenu(null);
+              requestClose();
+            }}
+          >
+            <VerbGlyph kind="close" /> Close
+          </button>
+        </div>
+      ) : null}
       {children}
       {!maxed && !compact ? win.grip : null}
       {!maxed && !compact ? win.edges : null}

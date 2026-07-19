@@ -1,6 +1,6 @@
 # Phase 99 — The OS Chrome
 
-**Status:** IN PROGRESS (1/8, 2026-07-18) from the owner's live verdict
+**Status:** IN PROGRESS (2/8, 2026-07-18) from the owner's live verdict
 on the staged Phase 98 build: "a step, but we still have soooo much
 work to do to even begin dreaming of this looking and feeling like an
 OS — loads of unstyled selects; those windows still deserve a huge
@@ -8,8 +8,8 @@ overhaul" — with a direct study directive: ProzillaOS
 (github.com/prozilla-os/ProzillaOS, MIT), "see what we can borrow,
 what we can embrace, and deliver this kind of experience."
 
-**Last updated:** 2026-07-18 (HS-99-01 done: the study is canon, the
-chrome tokens exist, the ladder is specced).
+**Last updated:** 2026-07-18 (HS-99-02 done: the title bar is a bar —
+two-tone, edge-flush square verbs, red close, head menu).
 
 ## Why this phase exists
 
@@ -98,7 +98,7 @@ regress.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-99-01 | The study and the tokens | done | [story-01-study-and-tokens](./story-01-study-and-tokens.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-99-02 | The title bar is a bar | backlog | [story-02-title-bar](./story-02-title-bar.md) | — |
+| HS-99-02 | The title bar is a bar | done | [story-02-title-bar](./story-02-title-bar.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-99-03 | Controls wear the skin | backlog | [story-03-controls](./story-03-controls.md) | — |
 | HS-99-04 | Scrollbars and menus | backlog | [story-04-scrollbars-menus](./story-04-scrollbars-menus.md) | — |
 | HS-99-05 | The dock is alive | backlog | [story-05-dock-alive](./story-05-dock-alive.md) | — |
@@ -108,6 +108,16 @@ regress.
 
 ## Where we are
 
+**HS-99-02 done (2026-07-18): the title bar is a bar.** The whole
+window family wears a 40px two-tone head (one tonal step above the
+body, no border), full-height square verb buttons flush to the edge
+with inline-SVG glyphs, the close hovering `--danger-fill` via the
+variable-override pattern, corners squaring off on maximize, and a
+right-click head menu (Minimize/Maximize/Close) on the transient
+material. The shots caught Escape-with-menu-open closing the window —
+the shell now absorbs the first Escape, pinned by vitest. Frame/
+depth/placement floors captured green. `npm run check` green (290).
+Next: HS-99-03 — controls wear the skin. Earlier:
 **HS-99-01 done (2026-07-18): the study is canon and the tokens
 exist.** PROZILLAOS_STUDY.md records the borrow/embrace/skip
 inventory with MIT attribution and the concrete numbers; nine

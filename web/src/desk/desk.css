@@ -708,12 +708,20 @@
   border: 1px solid color-mix(in srgb, var(--k, #ff6b35) 34%, var(--border));
   border-left: 3px solid color-mix(in srgb, var(--k, #ff6b35) 70%, transparent);
 }
+/* HS-99-02 — the title bar is a BAR (DESIGN_SYSTEM.md, the chrome
+   ladder): the head tone sits one step above the body, separation is
+   tonal (no border-bottom), and the verb buttons are full-height
+   squares flush to the window edge. */
 .desk-next .desk-pullout-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
+  height: 40px;
+  flex: none;
+  padding: 0 0 0 12px;
+  background: var(--desk-window-head-fill);
+  border-radius: calc(var(--desk-window-radius) - 1px)
+    calc(var(--desk-window-radius) - 1px) 0 0;
 }
 .desk-next .desk-pullout-head img {
   image-rendering: pixelated;
@@ -3192,33 +3200,93 @@
    minimized tray, the maximized stage, the phone sheet. ── */
 .desk-next .desk-window-verbs {
   margin-left: auto;
+  align-self: stretch;
   display: inline-flex;
-  gap: 2px;
+  gap: 0;
   flex: none;
 }
 .desk-next .desk-window-verb {
-  width: 26px;
-  height: 26px;
+  /* The hover fill is a VARIABLE the close button overrides — one
+     rule, and focus-visible shares it (PROZILLAOS_STUDY.md). */
+  --verb-hover: var(--wash-2);
+  --verb-hover-ink: var(--text);
+  height: 100%;
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0;
   background: transparent;
   color: var(--text-muted);
-  font-size: 13px;
   line-height: 1;
   cursor: pointer;
+  transition: background var(--duration-short) var(--ease-quart);
 }
-.desk-next .desk-window-verb:hover {
-  background: var(--border-subtle);
-  color: var(--text);
+.desk-next .desk-window-verb:hover,
+.desk-next .desk-window-verb:focus-visible {
+  background: var(--verb-hover);
+  color: var(--verb-hover-ink);
 }
-.desk-next .desk-window-verb.desk-window-close:hover {
-  background: color-mix(in srgb, var(--accent, #ff6b35) 26%, transparent);
+.desk-next .desk-window-verb:last-child {
+  border-top-right-radius: calc(var(--desk-window-radius) - 1px);
+}
+.desk-next .desk-window-verb.desk-window-close {
+  --verb-hover: var(--danger-fill);
+  --verb-hover-ink: var(--text);
+}
+.desk-next .desk-window-verb svg {
+  width: 14px;
+  height: 14px;
 }
 .desk-next .desk-window-shell.is-max {
   position: fixed;
-  border-radius: 14px;
+  /* HS-99-02 — corners square off when docked to the frame. */
+  border-radius: 0;
+}
+.desk-next .desk-window-shell.is-max .desk-pullout-head,
+.desk-next .desk-window-shell.is-max .desk-window-verb:last-child {
+  border-radius: 0;
+}
+
+/* HS-99-02 — the head's right-click menu: the desk transient
+   material, one column of window verbs. */
+.desk-next .desk-head-menu {
+  position: fixed;
+  z-index: var(--desk-z-popover);
+  min-width: 168px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--desk-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--desk-transient-radius);
+  box-shadow: var(--desk-transient-shadow);
+  backdrop-filter: var(--desk-window-blur);
+}
+.desk-next .desk-head-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.desk-next .desk-head-menu button:hover,
+.desk-next .desk-head-menu button:focus-visible {
+  background: var(--wash-2);
+}
+.desk-next .desk-head-menu button svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  color: var(--text-muted);
 }
 /* ── HS-95-03: the dock — shell furniture above the window band (42+): a
    maximized window must never bury the way back to a parked one. ── */
