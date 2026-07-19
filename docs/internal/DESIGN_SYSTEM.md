@@ -238,8 +238,16 @@ The kit inherits the HS-96-03 state contract (global focus ring, the
 
 The OS chrome program (owner-directed; provenance and the full
 borrow/embrace/skip inventory in
-[PROZILLAOS_STUDY.md](PROZILLAOS_STUDY.md), MIT-attributed). The
-rules, each a floor once its story ships:
+[PROZILLAOS_STUDY.md](PROZILLAOS_STUDY.md), MIT-attributed). All
+seven rules SHIPPED in Phase 99 and are Article VIII floors — no
+change may regress them. Verification gotchas that are themselves
+canon: custom scrollbars must be verified HEADED (the headless shell
+suppresses them), and the standard `scrollbar-width/color` properties
+stay Firefox-scoped (`@supports not selector(::-webkit-scrollbar)`)
+because modern Chromium disables `::-webkit-scrollbar` styling when
+they are set. The bare-control inheritance means NO component may
+ship a raw `select`/`input`/`textarea` inside the desk shell — the
+foundation catches it mechanically.
 
 1. **Depth is tonal.** The window ladder:
    `--desk-window-head-fill` (head, one step above) >

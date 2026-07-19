@@ -65,12 +65,17 @@ state contract stays true), and the Phase 97 window-grammar floors
 (placement, order persistence, focus depth, motion, ghost/edge physics,
 exposé/switcher, one dock — the physics floors chapter in
 DESIGN_SYSTEM.md, walk-proven by the `desk_gl_walk.py` grammar legs),
-and the Phase 98 surface-idiom lock
+the Phase 98 surface-idiom lock
 (`tests/unit/test_native_surfaces_guard.py` — cores compose
 `web/src/desk/surface/`, the page grammar is forbidden with a CLOSED
 allowlist, and kit CSS reflows by `@container`, never viewport
 width media; the surface idiom chapter in DESIGN_SYSTEM.md is the
-contract). The design system itself is canon in
+contract), and the Phase 99 chrome ladder (DESIGN_SYSTEM.md: tonal
+depth, the title bar anatomy with its head menu, the mechanical
+bare-control inheritance, the drawn scrollbars with their
+headed-verification rule, the one menu vocabulary in
+`web/src/desk/components/DeskMenu.tsx`, the living dock —
+provenance in PROZILLAOS_STUDY.md, MIT-attributed). The design system itself is canon in
 `docs/internal/DESIGN_SYSTEM.md`: three-layer tokens from
 `web/design-tokens.json`, the generated TS mirror feeding window physics
 and GL palettes, the component state matrices, and the recorded Radix

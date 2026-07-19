@@ -5,7 +5,11 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, IN
-PROGRESS (6/8)**. **HS-99-06, Interior archetypes, DONE**: the
+PROGRESS (7/8)**. **HS-99-07, The chrome floors, written, DONE**: the
+chrome ladder is a floors contract in DESIGN_SYSTEM.md (verification
+gotchas as canon), web/README carries the ladder step, and the
+architecture locks list names the Phase 99 lock with MIT provenance.
+Earlier: **HS-99-06, Interior archetypes, DONE**: the
 settings LEFT RAIL at wide windows (container-driven, active row a
 tonal step up), the meetings status bar on the well tone with honest
 counts, the verb bar continuing the title bar's tone, and the split
