@@ -949,6 +949,51 @@
         "name": "--desk-surface-detail-size",
         "value": "0.75rem",
         "doc": "HS-98: surface row detail size (12px; matches --font-size-xs)"
+      },
+      {
+        "name": "--desk-window-head-fill",
+        "value": "rgba(26, 23, 34, 0.99)",
+        "doc": "HS-99: the title-bar tone — one step ABOVE the window body; separation by tone, never a border (PROZILLAOS_STUDY.md)"
+      },
+      {
+        "name": "--desk-window-rail",
+        "value": "rgba(18, 16, 24, 0.92)",
+        "doc": "HS-99: rails/toolbars — between head and body on the tonal ladder"
+      },
+      {
+        "name": "--desk-window-well",
+        "value": "rgba(8, 7, 12, 0.72)",
+        "doc": "HS-99: the well tone — inputs and controls sit one step BELOW the body"
+      },
+      {
+        "name": "--desk-scrollbar-thumb",
+        "value": "rgba(255, 255, 255, 0.14)",
+        "doc": "HS-99: the pill scrollbar thumb, everywhere"
+      },
+      {
+        "name": "--desk-scrollbar-thumb-hover",
+        "value": "rgba(255, 255, 255, 0.26)",
+        "doc": "HS-99: the thumb under the pointer"
+      },
+      {
+        "name": "--desk-control-h",
+        "value": "36px",
+        "doc": "HS-99: control height on the well tone (selects, dense inputs)"
+      },
+      {
+        "name": "--ease-quart",
+        "value": "cubic-bezier(0.76, 0, 0.24, 1)",
+        "doc": "HS-99: the default chrome easing (in-out-quart)"
+      },
+      {
+        "name": "--ease-expo",
+        "value": "cubic-bezier(0.87, 0, 0.13, 1)",
+        "doc": "HS-99: the emphatic easing for large moves"
+      },
+      {
+        "name": "--ease-back",
+        "value": "cubic-bezier(0.68, -0.4, 0.32, 1.4)",
+        "doc": "HS-99: the playful overshoot (small elements only)"
       }
     ]
   }

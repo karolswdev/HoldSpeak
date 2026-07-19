@@ -1,6 +1,6 @@
 # Phase 99 — The OS Chrome
 
-**Status:** SCAFFOLDED (0/8, 2026-07-18) from the owner's live verdict
+**Status:** IN PROGRESS (1/8, 2026-07-18) from the owner's live verdict
 on the staged Phase 98 build: "a step, but we still have soooo much
 work to do to even begin dreaming of this looking and feeling like an
 OS — loads of unstyled selects; those windows still deserve a huge
@@ -8,8 +8,8 @@ overhaul" — with a direct study directive: ProzillaOS
 (github.com/prozilla-os/ProzillaOS, MIT), "see what we can borrow,
 what we can embrace, and deliver this kind of experience."
 
-**Last updated:** 2026-07-18 (scaffolded; the three-way ProzillaOS
-study is canon in docs/internal/PROZILLAOS_STUDY.md as of HS-99-01).
+**Last updated:** 2026-07-18 (HS-99-01 done: the study is canon, the
+chrome tokens exist, the ladder is specced).
 
 ## Why this phase exists
 
@@ -97,7 +97,7 @@ regress.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-99-01 | The study and the tokens | backlog | [story-01-study-and-tokens](./story-01-study-and-tokens.md) | — |
+| HS-99-01 | The study and the tokens | done | [story-01-study-and-tokens](./story-01-study-and-tokens.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-99-02 | The title bar is a bar | backlog | [story-02-title-bar](./story-02-title-bar.md) | — |
 | HS-99-03 | Controls wear the skin | backlog | [story-03-controls](./story-03-controls.md) | — |
 | HS-99-04 | Scrollbars and menus | backlog | [story-04-scrollbars-menus](./story-04-scrollbars-menus.md) | — |
@@ -108,6 +108,11 @@ regress.
 
 ## Where we are
 
-Scaffolded 2026-07-18 from the owner's live verdict and the completed
-three-way ProzillaOS study (window system, skin/controls, desktop
-shell). Next: HS-99-01.
+**HS-99-01 done (2026-07-18): the study is canon and the tokens
+exist.** PROZILLAOS_STUDY.md records the borrow/embrace/skip
+inventory with MIT attribution and the concrete numbers; nine
+component tokens land the tonal ladder (head/rail/well around the
+body), the scrollbar thumb pair, the control height, and the easing
+family; DESIGN_SYSTEM.md's "The chrome ladder" spec landed BEFORE any
+consumer. Token gates clean (no new allow-list entries); `npm run
+check` green (289). Next: HS-99-02 — the title bar is a bar.

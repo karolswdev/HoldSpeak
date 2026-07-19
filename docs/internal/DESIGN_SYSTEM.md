@@ -234,6 +234,42 @@ bundle):
 The kit inherits the HS-96-03 state contract (global focus ring, the
 1px pressed settle) and adds nothing of its own.
 
+## The chrome ladder (HS-99)
+
+The OS chrome program (owner-directed; provenance and the full
+borrow/embrace/skip inventory in
+[PROZILLAOS_STUDY.md](PROZILLAOS_STUDY.md), MIT-attributed). The
+rules, each a floor once its story ships:
+
+1. **Depth is tonal.** The window ladder:
+   `--desk-window-head-fill` (head, one step above) >
+   `--desk-window-fill` (body) > `--desk-window-rail`
+   (toolbars/rails) > `--desk-window-well` (inputs/wells, below).
+   Surfaces separate by tone; borders are reserved for the window's
+   own outline and hairlines within content.
+2. **The title bar is a bar** (HS-99-02): head on the head tone with
+   NO border-bottom; verb buttons are full-height `aspect-ratio: 1`,
+   flush to the window edge; hover fill is a variable the close
+   button overrides to the danger ramp; `focus-visible` shares the
+   hover rule; corners square off when maximized; right-click on the
+   bar offers Minimize/Maximize/Close.
+3. **Scrollbars belong to the OS** (HS-99-04): thin pill thumb
+   (`--desk-scrollbar-thumb`, hover variant) on a transparent track,
+   product-wide; Firefox via `scrollbar-width`/`scrollbar-color`.
+4. **Controls wear the skin** (HS-99-03): selects are
+   `appearance: none` with a drawn chevron on the well tone at
+   `--desk-control-h`; date/search/file/number inputs and the
+   checkbox row wear the same treatment; options inherit surface
+   colors.
+5. **The dock is alive** (HS-99-05): frosted two-layer material, a
+   running underline per open window (grows on hover), compositor
+   hover scale, enter/exit motion — all instant under reduced motion.
+6. **Motion has a family**: `--ease-quart` (default) / `--ease-expo`
+   (large moves) / `--ease-back` (small playful) beside the duration
+   tokens; chrome transitions name them.
+7. **Tint math**: hover and selected states use the existing
+   `--wash-*` / `--accent-tint` formulas — never new ad-hoc rgba.
+
 ## Adding a surface (styling rules)
 
 See `web/README.md` for the full add-a-surface path. Styling rules:

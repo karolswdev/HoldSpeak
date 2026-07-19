@@ -4,8 +4,13 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, SCAFFOLDED
-(0/8)** from the owner's live verdict on the staged Phase 98 build ("a
+**Last updated:** 2026-07-18 — **Phase 99, The OS Chrome, IN
+PROGRESS (1/8)**. **HS-99-01, The study and the tokens, DONE**: the
+ProzillaOS study is canon (PROZILLAOS_STUDY.md — borrow/embrace/skip
+with MIT attribution), nine chrome tokens land the tonal ladder +
+scrollbar pair + control height + easing family, and the chrome-ladder
+spec is in DESIGN_SYSTEM.md before any consumer. Earlier the same
+day the phase was **SCAFFOLDED (0/8)** from the owner's live verdict on the staged Phase 98 build ("a
 step, but soooo much work to even begin dreaming of this looking and
 feeling like an OS — loads of unstyled selects; the windows deserve a
 huge overhaul") and the directed ProzillaOS study
