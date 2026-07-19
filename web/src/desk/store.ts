@@ -381,7 +381,7 @@ export const useDesk = create<DeskState>((set, get) => ({
     const posts: Record<string, [string, string, Record<string, unknown>]> = {
       note: ["/api/notes", "note", { title: "New note", body_markdown: "" }],
       kb: ["/api/kbs", "kb", { name: "New Knowledge" }],
-      recipe: ["/api/recipes", "recipe", { name: "New Persona", avatar: "🤖" }],
+      recipe: ["/api/recipes", "recipe", { name: "New Agent", avatar: "🤖" }],
       zone: ["/api/directories", "directory", { name: "New zone" }],
       // HSM-22-03 — a workflow is born with a real one-step linear graph in
       // the canonical wire shape (never an empty {} the run route must refuse).

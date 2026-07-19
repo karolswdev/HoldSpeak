@@ -153,7 +153,7 @@ const SURFACES: SurfaceRow[] = [
   {
     key: "inspect-personas-and-coders",
     id: "surface-companion",
-    title: "Personas and coders",
+    title: "Agents",
     glyph: "🤝",
     eyebrow: "Companion",
     minW: 560,

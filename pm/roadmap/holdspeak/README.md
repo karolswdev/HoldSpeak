@@ -5,7 +5,9 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
-PROGRESS (8/13)**. **HS-100-08, B4 Meetings, DONE** (outcomes first:
+PROGRESS (9/13)**. **HS-100-09, B5 Agents, DONE** (blocked-first with
+the Answer verb; Personas left the glass; the vocabulary allowlist
+shrank to two files). Earlier, **HS-100-08, B4 Meetings, DONE** (outcomes first:
 needs-you leads, transcript folds to a receipt, plumbing behind the
 door; 3-interaction flow budget pinned). Earlier, **HS-100-07, B3
 Speak, DONE** (the flagship opens on

@@ -911,7 +911,7 @@ def lastexits() -> None:
         ("/studio", "Studio"),
         ("/workbench", "Workbench"),
         ("/profiles", "Runs on"),
-        ("/companion", "Personas and coders"),
+        ("/companion", "Agents"),
         ("/setup", "Setup"),
         ("/docs/dictation-runtime", "Runtime guide"),
         ("/design/components", "Components"),
@@ -980,9 +980,9 @@ def lastexits() -> None:
         page.wait_for_timeout(400)
         # Companion: the reconciled roster window.
         open_shelf(page)
-        page.click(".desk-tool-link:has-text(\'Personas\')")
+        page.click(".desk-tool-link:has-text(\'Agents\')")
         page.wait_for_selector(
-            "[aria-label=\'Personas and coders\'].desk-surface-window",
+            "[aria-label=\'Agents\'].desk-surface-window",
             timeout=8000,
         )
         page.screenshot(path=str(OUT / "companion-1440.png"))
@@ -1387,7 +1387,7 @@ SURFACE_ROUTES = [
     ("/setup", "Setup"),
     ("/workbench", "Workbench"),
     ("/studio", "Studio"),
-    ("/companion", "Personas and coders"),
+    ("/companion", "Agents"),
     ("/docs/dictation-runtime", "Runtime guide"),
     ("/design/components", "Components"),
     ("/activity", "Activity"),

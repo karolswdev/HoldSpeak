@@ -21,7 +21,7 @@ export const DESK_TOOLS = [
   },
   {
     href: "/companion",
-    label: "Personas and Coder sessions",
+    label: "Agents and coder sessions",
     description: "Use saved behavior and inspect live sessions.",
     glyph: "◉",
     action: "inspect-personas-and-coders",

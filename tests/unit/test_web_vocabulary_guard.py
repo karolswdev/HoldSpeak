@@ -40,11 +40,8 @@ _BANNED = {
 
 # Today's offenders, frozen. Shrink-only: entries may ONLY be removed.
 _ALLOWLIST: dict[str, frozenset[str]] = {
-    "desk/components/DeskToolShelf.tsx": frozenset({"persona"}),
-    "desk/components/PersonaChat.tsx": frozenset({"persona"}),
-    "desk/components/SurfaceWindows.tsx": frozenset({"persona"}),
-    "desk/store.ts": frozenset({"persona"}),
-    "pages/cores/CompanionCore.tsx": frozenset({"persona"}),
+    # HS-100-09 shrank the persona entries to StudioCore alone (it dies
+    # in HS-100-10 along with the intel copy in SettingsCore).
     "pages/cores/SettingsCore.tsx": frozenset({"intel"}),
     "pages/cores/StudioCore.tsx": frozenset({"persona"}),
 }
