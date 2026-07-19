@@ -83,7 +83,7 @@ def test_run_intel_command_process_reports_runtime_failure(monkeypatch, capsys) 
     monkeypatch.setattr(
         intel_command,
         "get_intel_runtime_status",
-        lambda *args, **kwargs: (False, "Intel model not found"),
+        lambda *args, **kwargs: (False, "No language model on this hub"),
     )
 
     rc = intel_command.run_intel_command(

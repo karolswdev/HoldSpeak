@@ -91,7 +91,10 @@ def get_local_intel_runtime_status(
 
     resolved = Path(model_path).expanduser()
     if not resolved.exists():
-        return False, f"Intel model not found: {resolved}"
+        return False, (
+            "No language model on this hub. Pick one in Settings under"
+            " Intelligence."
+        )
 
     return True, None
 

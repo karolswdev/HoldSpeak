@@ -1,6 +1,6 @@
 # Phase 100 — The Application Layer
 
-**Status:** IN PROGRESS (4/13, 2026-07-19) — THE THESIS IS APPROVED; the build is unlocked by the owner's direct
+**Status:** IN PROGRESS (5/13, 2026-07-19) — building on the approved thesis by the owner's direct
 directive, verbatim in spirit: *"a phase that will cause a deep, deep,
 deep grounding in the philosophy, seams, use cases — to then form an
 opinion on the entire UI/UX with regards to its applicability to the
@@ -8,7 +8,7 @@ Desk OS — and then finally deliver something beautiful, not mangled,
 easy to use: a proper application layer on our Desk OS to drive the
 value of HoldSpeak."*
 
-**Last updated:** 2026-07-19 (HS-100-04 done: the owner called it — the verdict is recorded verbatim; B1–B8 authored as HS-100-05..12).
+**Last updated:** 2026-07-19 (HS-100-05 done: the vocabulary guard is live; the trace-C refusal names its fix).
 
 ## Why this phase exists — the honest post-mortem
 
@@ -81,7 +81,7 @@ and the opinion exist and the owner has gated them.
 | HS-100-02 | The judgment | done | [story-02-judgment](./story-02-judgment.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-100-03 | The thesis | done | [story-03-thesis](./story-03-thesis.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-100-04 | The owner's gate | done | [story-04-gate](./story-04-gate.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-100-05 | B1: the vocabulary guard | backlog | [story-05-vocabulary-guard](./story-05-vocabulary-guard.md) | — |
+| HS-100-05 | B1: the vocabulary guard | done | [story-05-vocabulary-guard](./story-05-vocabulary-guard.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-100-06 | B2: the honest mic | backlog | [story-06-honest-mic](./story-06-honest-mic.md) | — |
 | HS-100-07 | B3: Speak | backlog | [story-07-speak](./story-07-speak.md) | — |
 | HS-100-08 | B4: Meetings | backlog | [story-08-meetings](./story-08-meetings.md) | — |
@@ -99,6 +99,6 @@ step forward. Keep being better and better." Zero revision rounds;
 the thesis stands as presented. B1–B8 are authored as HS-100-05..12
 (one story, one guard, one commit each); the closeout is HS-100-13
 and still closes only on the owner's live sitting over the BUILT
-layer. Next: HS-100-05 — the vocabulary guard. (Earlier today:
+layer. B1 shipped: the vocabulary guard is live with seven allowlisted offender files to burn down, and the model-missing refusal names its fix instead of leaking a path. Next: HS-100-06 — the honest mic. (Earlier today:
 01 GROUNDING.md · 02 UIUX_JUDGMENT.md + traces · 03 the thesis +
 ten mockups.)

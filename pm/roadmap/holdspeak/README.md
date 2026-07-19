@@ -5,7 +5,9 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-19 — **Phase 100, The Application Layer, IN
-PROGRESS (4/13)**. **HS-100-04, The owner's gate, PASSED** — the
+PROGRESS (5/13)**. **HS-100-05, B1 the vocabulary guard, DONE** (canon
+vocabulary is now mechanical; the model-missing refusal names its fix).
+Earlier, **HS-100-04, The owner's gate, PASSED** — the
 thesis (four applications and a desk) approved as presented, verdict
 recorded verbatim; the build is unlocked as HS-100-05..12 (vocabulary
 guard, honest mic, Speak, Meetings, Agents, Settings + arrival, one
