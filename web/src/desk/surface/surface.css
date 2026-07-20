@@ -753,10 +753,12 @@ button.surface-edit-in-place:hover {
 
 /* Materials round 2 — the panel title: interiors get a real heading. */
 .surface-panel-title {
-  margin: 2px 0 4px;
-  font-size: 1.35rem;
+  margin: 2px 0 6px;
+  font-size: var(--desk-surface-label-size);
   font-weight: 650;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 /* Materials round 2 — the world lives in the windows: pixel sprites
@@ -1269,4 +1271,28 @@ button.surface-edit-in-place:hover {
 .surface-section-head input[type="search"] {
   width: 150px;
   min-width: 0;
+}
+
+/* HS-101 round 3 — the configuring archetype on OS density: setting
+   rows sit on the surface row grammar, not 52px form rows; the save
+   whisper replaces the button; boundary notes are captions. */
+.desk-surface-body .surface-setting-row {
+  min-height: var(--desk-surface-row-h);
+}
+.desk-surface-body .surface-setting-row .signal-switch,
+.desk-surface-body .surface-setting-row .signal-choice {
+  min-height: 32px;
+}
+.settings-save-whisper {
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-faint);
+  transition: color var(--duration-short) var(--ease-quart);
+}
+.settings-save-whisper.is-saving {
+  color: var(--text-muted);
+}
+.surface-boundary-note {
+  margin: 0;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-faint);
 }
