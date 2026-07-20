@@ -4,29 +4,26 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-19 — **Phase 101, The Native Innards, at
-the gate (1/4)**: HS-101-01 ratified the interior canon
-(DESIGN_SYSTEM.md §"The interior canon (HS-101)": the five-step
-interior type scale as `--desk-type-*` tokens, data-as-material /
-purpose-built-composition / verbs-on-the-material rules, the
-SurfaceStream/Library/Switchboard + EditInPlace + SystemShade kit
-design, and the AGENT_BRIEF §6 OS-territory inventory) and cut the
-five census-derived mockups at 1440 + 393 (journal stream, blocks
-library, runs-on switchboard, system shade, drag-through-glass).
-**HS-101-02 CLOSED on the owner's call** ("Well, merge it in for me,
-and then keep going..."; round 1 banned the left accent rail —
-aerogel insets instead — and made fluidity canon; PR #359 merged).
-**HS-101-03 in flight, 7 of 9 ledger items live** (B1 kit+rail-ban,
-B2 fluidity, B3 journal stream, B4 blocks library, B5 switchboard,
-B6 system shade, B8 keyboard grammar + grown walk; open: B7 through
-the glass, B9 panes+rails at the owner's mid-build ask). Earlier the
-same day: **Phase 100, The
-Application Layer, CLOSED 13/13** on the owner's sitting ("It's
-better, I cannot lie"), merged PR #357; the standing method forged
-into **docs/internal/AGENT_BRIEF.md**.
+**Last updated:** 2026-07-20 — **Phase 102, The Refit, SCAFFOLDED
+(0/7)** from the owner's direct six-target order ("exact, direct and
+precise refactorings"): Runs on destination management, the Live
+Meeting face, the Ask AI composer, the Meetings wings
+(Outcomes/Record/Artifacts), the selection mark yielding to open,
+and the Speech Settings gear face (screenshot-convicted). The design
+authority is the HS-101-02-approved interior canon; each story works
+the round-9 way — hands first, headed, both viewports. Earlier the
+same day: **HS-101-04 round 9 (the reflex round, PR #365) merged** —
+single-click selects / double-click opens, cards open beside their
+object and coexist as real windows, growth animates, right-click
+answers on the world, the note edits in place, the ⌘K shelf's
+z-defect fixed; the owner's 101 sitting remains open in parallel.
+Phase 101 itself stands at 3/4 (canon ratified and built, PR #359;
+sweep 4122/0).
 
-**Current phase:** [**Phase 101 — The Native Innards**](./phase-101-the-native-innards/current-phase-status.md)
-— **IN PROGRESS (2/4, building the B1–B8 ledger)**.
+**Current phase:** [**Phase 102 — The Refit**](./phase-102-the-refit/current-phase-status.md)
+— **SCAFFOLDED (0/7, HS-102-01 ready)**. The
+[Phase 101](./phase-101-the-native-innards/current-phase-status.md)
+closeout sitting (HS-101-04) stays open alongside.
 
 <details>
 <summary>Prior roadmap status through Phase 90</summary>
