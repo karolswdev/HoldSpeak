@@ -166,7 +166,7 @@ function ImportSection({
               ⇣
             </span>
             <span className="surface-primary">Drop it here — or browse</span>
-            <small>.wav .mp3 .m4a .ogg .flac · .vtt .srt .txt</small>
+            <small>.wav direct · .mp3 .m4a .ogg .flac need ffmpeg · .vtt .srt .txt</small>
           </>
         )}
       </label>
