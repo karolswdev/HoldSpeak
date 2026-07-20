@@ -89,7 +89,7 @@ describe("HS-93-08 semantic list mode: same records", () => {
     expect(kickoff.closest("tr")).toHaveTextContent("Meeting");
     expect(
       screen.getByRole("button", { name: "Scout" }).closest("tr"),
-    ).toHaveTextContent("Persona");
+    ).toHaveTextContent("Agent");
 
     // The attention count rides the same projection subject the floater uses.
     expect(

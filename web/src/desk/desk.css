@@ -765,6 +765,25 @@
   display: flex;
   flex-direction: column;
   border: 1px solid color-mix(in srgb, var(--k, #ff6b35) 34%, var(--border));
+  /* OS chrome is not selectable text; the MATERIAL below re-enables. */
+  user-select: none;
+}
+/* Round 8 — the OBJECT card fits its material: no fixed bottom, so a
+   short object never opens onto a two-thirds void. Working surfaces
+   (chat, sessions, terminals) keep the full-height sheet. */
+.desk-next .desk-pullout.is-card {
+  bottom: auto;
+  max-height: calc(100dvh - 96px);
+}
+.desk-next .desk-pullout .surface-material,
+.desk-next .desk-pullout .surface-say,
+.desk-next .desk-pullout .desk-pullout-md,
+.desk-next .desk-pullout input,
+.desk-next .desk-pullout textarea {
+  user-select: text;
+}
+.desk-next .desk-pullout .desk-pullout-body {
+  min-height: 0;
 }
 /* HS-99-02 — the title bar is a BAR (DESIGN_SYSTEM.md, the chrome
    ladder): the head tone sits one step above the body, separation is
@@ -1043,20 +1062,14 @@
   flex-direction: column;
   gap: var(--space-3);
 }
-.desk-next .desk-pullout-body section,
-.desk-next .desk-relationship-axes {
-  /* Materials round 3.2 — no card-in-window: the axes are sections on
-     the material, separated by hairlines. */
+.desk-next .desk-pullout-body section {
+  /* Materials round 3.2 — no card-in-window: sections sit on the
+     material, separated by hairlines. */
   display: grid;
   gap: 8px;
   padding: 0;
   border: 0;
   background: transparent;
-}
-.desk-next .desk-relationship-axes h3:not(:first-child) {
-  margin-top: 10px;
-  padding-top: 12px;
-  border-top: 1px solid var(--wash-1);
 }
 .desk-next .desk-pullout-body h3 {
   margin: 0 0 6px;
@@ -1096,30 +1109,6 @@
   max-height: 320px;
   overflow-y: auto;
 }
-.desk-next .desk-pullout-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 10px;
-  margin-bottom: 4px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: rgba(10, 9, 14, 0.5);
-  color: var(--text);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  text-align: left;
-}
-.desk-next .desk-pullout-row:hover {
-  border-color: color-mix(in srgb, var(--k, #ff6b35) 55%, var(--border));
-}
-.desk-next .desk-pullout-row-type {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
 .desk-next .desk-pullout-lineage {
   display: flex;
   flex-wrap: wrap;
@@ -1129,38 +1118,63 @@
   display: inline-flex;
   gap: 3px;
 }
-.desk-next .desk-pullout-run {
-  /* Materials round 3.4 — the run area STACKS: picker, then one
-     composer row (mic · material · verb). The one-row cram that
-     crushed the picker and stretched the mic is dead. */
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* HS-101 round 8 — the pull-out recomposed: the object's material
+   leads, the run lane is the ONE chat-well composer, belonging folds
+   into a single disclosure, and section walls are gone. */
+.desk-next .desk-pullout-facts {
+  font-size: var(--font-size-xs);
 }
-.desk-next .desk-run-composer {
+.desk-next .desk-pullout-agent {
+  justify-items: stretch;
+}
+.desk-next .desk-pullout-agent .desk-chat-hello {
+  padding: 10px 0 2px;
+}
+.desk-next .desk-pullout-agent-chat {
+  justify-self: center;
+  min-height: 34px;
+  padding: 0 18px;
+}
+.desk-next .desk-pullout-capability-foot {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 10px;
 }
-.desk-next .desk-run-composer input {
+.desk-next .desk-pullout-capability-foot .quiet {
+  font-size: var(--font-size-xs);
+}
+.desk-next .desk-pullout-filed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.desk-next .desk-pullout-filed-axis {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.desk-next .desk-pullout-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.desk-next .desk-chat-composer textarea {
   flex: 1;
   min-width: 0;
-  height: 36px;
+  resize: none;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  padding: 8px 0;
 }
-.desk-next .desk-run-composer .desk-chip {
-  height: 36px;
-  flex: none;
-}
-.desk-next .desk-capability-contract {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: flex-start;
-}
-.desk-next .desk-capability-contract > strong {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.desk-next .desk-chat-composer textarea:focus {
+  outline: none;
 }
 
 .desk-next .runs-on-picker {
@@ -1196,15 +1210,6 @@
   margin: 0;
   font-size: 11px;
 }
-.desk-next .desk-pullout-run input {
-  flex: 1;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--desk-glass);
-  color: var(--text);
-  font-size: var(--font-size-sm);
-}
 .desk-next .desk-pullout-foot {
   display: flex;
   align-items: center;
@@ -1228,12 +1233,6 @@
 .desk-next .desk-chip.is-primary:hover {
   background: var(--accent-hover);
 }
-.desk-next .desk-pullout-file {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
 /* the dive camera: the world scales in as the zone's members take the stage */
 .desk-next .desk-world {
   transition:
@@ -4615,7 +4614,9 @@
 }
 .desk-next .desk-chat-well-foot .runs-on-picker select {
   height: 24px;
+  min-height: 24px;
   padding: 0 22px 0 8px;
+  border: 0;
   font-size: var(--desk-surface-label-size);
   color: var(--text-muted);
   background-color: transparent;

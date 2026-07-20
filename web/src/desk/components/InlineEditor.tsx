@@ -132,7 +132,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
               {
                 note: "Note",
                 kb: "Knowledge",
-                recipe: "Persona",
+                recipe: "Agent",
                 workflow: "Workflow",
               } as Record<string, string>
             )[o.kind] || o.kind}

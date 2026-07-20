@@ -270,6 +270,10 @@ export interface DeskWindowOptions {
   minH?: number;
   /** Pass false while the panel renders nothing (launcher-only mounts). */
   open?: boolean;
+  /** Round 8 — a content-sized card: height stays CSS-driven (the
+   * material decides) until the user arranges the window; the HS-97-09
+   * max-height seed inflation is skipped. */
+  fitContent?: boolean;
 }
 
 /** The desk-window physics (Phase 93). Module-private since HS-95-02:
@@ -280,6 +284,10 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   const open = opts.open ?? true;
   const rect = useDesk((s) => s.panelRects[id]);
   const orderIndex = useDesk((s) => s.panelOrder.indexOf(id));
+  const arranged = useDesk((s) => s.panelSaved.includes(id));
+  // A fit-content card pins its height DURING the first resize drag,
+  // before the arrangement persists on pointer-up.
+  const [liveResize, setLiveResize] = useState(false);
   const elRef = useRef<HTMLElement | null>(null);
 
   const measure = (): PanelRect => {
@@ -346,7 +354,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       // full-band window is a choice (resize/maximize), not a default
       // (HS-97-09).
       const el = elRef.current;
-      if (el) {
+      if (el && !opts.fitContent) {
         const mh = parseFloat(getComputedStyle(el).maxHeight);
         const cap = Math.max(
           minH,
@@ -419,6 +427,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   const resizeBind = useDrag(
     ({ movement: [mx, my], last, memo }) => {
       const base: PanelRect = memo?.base ?? measure();
+      setLiveResize(!last);
       useDesk
         .getState()
         .setPanelRect(
@@ -436,6 +445,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     ({ args, movement: [mx, my], last, memo }) => {
       const mode = String(args?.[0] ?? "br");
       const base: PanelRect = memo?.base ?? measure();
+      setLiveResize(!last);
       useDesk
         .getState()
         .setPanelRect(id, resizeEdge(mode, base, mx, my, minW, minH), last);
@@ -478,11 +488,14 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         top: rect.y,
         left: rect.x,
         width: rect.w,
-        height: rect.h,
         right: "auto",
         bottom: "auto",
-        maxHeight: "none",
         zIndex: Z_BASE + Math.max(orderIndex, 0),
+        // A content-sized card keeps its CSS height (the material
+        // decides) until the user arranges it; arranged rects pin.
+        ...(opts.fitContent && !arranged && !liveResize
+          ? {}
+          : { height: rect.h, maxHeight: "none" }),
       }
     : { zIndex: Z_BASE + Math.max(orderIndex, 0) };
 
@@ -849,6 +862,8 @@ export interface DeskWindowFrameProps {
   className?: string;
   minW?: number;
   minH?: number;
+  /** Content-sized card: see DeskWindowOptions.fitContent. */
+  fitContent?: boolean;
   open: boolean;
   onClose: () => void;
   /** Heavy content may unmount while minimized (default: stays mounted). */
@@ -904,6 +919,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     className,
     minW,
     minH,
+    fitContent,
     open,
     onClose,
     unmountOnMinimize,
@@ -926,7 +942,12 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   });
   const compact = useCompactViewport();
   const reducedMotion = useReducedMotion();
-  const win = useDeskWindow(id, { minW, minH, open: open && !minimized });
+  const win = useDeskWindow(id, {
+    minW,
+    minH,
+    fitContent,
+    open: open && !minimized,
+  });
   const glyph = glyphProp ?? (typeof icon === "string" ? icon : "▢");
   const name = label ?? (typeof title === "string" ? title : id);
 

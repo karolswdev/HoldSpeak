@@ -656,9 +656,11 @@ def meetingflow() -> None:
         row.wait_for(timeout=10000)
         row.click()
         clicks += 1
-        page.wait_for_selector(
-            ".desk-surface-window >> text=Needs you", timeout=10000
-        )
+        # The face leads with needs-you — or, since HS-101 round 6, the
+        # HONEST line when intelligence is off and made no outcomes.
+        page.locator(".desk-surface-window >> text=Needs you").or_(
+            page.locator(".desk-surface-window >> text=Intelligence is off")
+        ).first.wait_for(timeout=10000)
         assert (
             page.locator(".desk-surface-body [role=tablist]").count() == 0
         ), "no tab wall in the window body"

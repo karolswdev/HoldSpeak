@@ -108,11 +108,6 @@
     },
     {
       "file": "src/desk/desk.css",
-      "match": "rgba(10, 9, 14, 0.5)",
-      "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
-    },
-    {
-      "file": "src/desk/desk.css",
       "match": "rgba(255, 255, 255, 0.055)",
       "reason": "hand-tuned one-off (glass/glow/ink shade) — consolidation is HS-96-04's material fold"
     },
