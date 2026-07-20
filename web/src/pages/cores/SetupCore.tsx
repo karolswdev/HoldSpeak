@@ -18,7 +18,7 @@ import {
   SurfaceState,
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
-import { presentValue } from "../../desk/surface/format";
+import { deSnake, presentValue } from "../../desk/surface/format";
 
 type SetupStatus = {
   overall?: string;
@@ -81,7 +81,7 @@ export function SetupCore({ hero }: CoreProps) {
                     : "warning"
               }
             >
-              {presentValue(resource.data.overall) || "checking"}
+              {deSnake(String(resource.data.overall ?? "")) || "checking"}
             </StatusPill>
           }
         >

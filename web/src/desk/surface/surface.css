@@ -1430,3 +1430,44 @@ button.surface-edit-in-place:hover {
   margin: 0;
   line-height: 1.55;
 }
+
+/* HS-101 round 7 — the import is a drop well, not a form: the same
+   verb the desk already answers, with browse folded in. */
+.surface-dropwell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 110px;
+  padding: 16px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    border-color var(--duration-short) var(--ease-quart),
+    background var(--duration-short) var(--ease-quart);
+}
+.surface-dropwell:hover {
+  border-color: var(--accent-soft);
+  background: var(--accent-tint);
+}
+.surface-dropwell.has-file {
+  border-style: solid;
+  border-color: var(--accent-soft);
+  background: var(--accent-tint);
+  color: var(--text);
+}
+.surface-dropwell input[type="file"] {
+  display: none;
+}
+.surface-dropwell small {
+  color: var(--text-faint);
+  font-size: var(--desk-surface-label-size);
+}
+.surface-dropwell-glyph {
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}

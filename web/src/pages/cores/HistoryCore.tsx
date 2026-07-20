@@ -138,49 +138,60 @@ function ImportSection({
         </Button>
       }
     >
-      <Field
-        label="File"
-        description="WAV works directly. Compressed audio needs ffmpeg. VTT, SRT and TXT keep transcript structure."
+      <label
+        className={"surface-dropwell" + (file ? " has-file" : "")}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const dropped = event.dataTransfer?.files?.[0];
+          if (dropped) setFile(dropped);
+        }}
       >
-        {({ id, describedBy }) => (
-          <input
-            className="hs-control"
-            id={id}
-            aria-describedby={describedBy}
-            type="file"
-            accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac,.vtt,.srt,.txt"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-          />
+        <input
+          type="file"
+          accept="audio/*,.wav,.mp3,.m4a,.ogg,.flac,.vtt,.srt,.txt"
+          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+        />
+        {file ? (
+          <>
+            <span className="surface-dropwell-name surface-primary">
+              {file.name}
+            </span>
+            <small>Drop another file to replace it</small>
+          </>
+        ) : (
+          <>
+            <span className="surface-dropwell-glyph" aria-hidden="true">
+              ⇣
+            </span>
+            <span className="surface-primary">Drop it here — or browse</span>
+            <small>.wav .mp3 .m4a .ogg .flac · .vtt .srt .txt</small>
+          </>
         )}
-      </Field>
-      <Field label="Title">
-        {({ id }) => (
+      </label>
+      {file ? (
+        <div className="surface-actions">
           <TextInput
-            id={id}
+            aria-label="Title"
+            placeholder="Title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
           />
-        )}
-      </Field>
-      <Field label="Speaker">
-        {({ id }) => (
           <TextInput
-            id={id}
+            aria-label="Speaker"
+            placeholder="Speaker"
             value={speaker}
             onChange={(event) => setSpeaker(event.target.value)}
           />
-        )}
-      </Field>
-      <Field label="Tags" description="Comma-separated.">
-        {({ id, describedBy }) => (
           <TextInput
-            id={id}
-            aria-describedby={describedBy}
+            aria-label="Tags, comma separated"
+            placeholder="Tags"
             value={tags}
             onChange={(event) => setTags(event.target.value)}
           />
-        )}
-      </Field>
+        </div>
+      ) : null}
       {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
       <div className="surface-actions">
         <Button
