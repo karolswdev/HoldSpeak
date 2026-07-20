@@ -72,6 +72,52 @@ def free_object(page, prefix: str | None = None):
     )
 
 
+def launch_tool(page, label):
+    """HS-100-11 — drawers launch from the BELL (Desk memory) or the
+    search shelf, never the dock (the dock carries the applications)."""
+    if label == "Desk memory":
+        # The bell opens the system shade (HS-101 B6); the full Desk
+        # memory browser is one verb inside it.
+        page.click(".desk-bell")
+        page.wait_for_selector(".desk-shade", timeout=3000)
+        page.click(".desk-shade-memory")
+        return
+    # ⌘K — the search shelf reaches every tool even when a window
+    # covers the bar chip.
+    page.keyboard.press("Meta+k")
+    page.wait_for_selector(".desk-tool-shelf", timeout=3000)
+    page.fill("#desk-tool-shelf input[type=search]", label)
+    page.wait_for_timeout(300)
+    page.click(f".desk-tool-link:has-text('{label}')")
+
+
+def open_object(page, target):
+    """Open an object's card with the OS click grammar (HS-101 round 9):
+    a mouse DOUBLE-click opens; a single click only selects. The open
+    motion (the card flies out of its object) settles before physics."""
+    page.mouse.dblclick(target["x"], target["y"])
+    page.wait_for_timeout(450)
+
+
+def settled_box(locator, page):
+    """A window box AFTER its motion settles (two identical reads) —
+    hands grab settled windows; headless measures mid-flight."""
+    prev = None
+    for _ in range(25):
+        cur = locator.bounding_box()
+        if (
+            prev
+            and cur
+            and abs(cur["x"] - prev["x"]) < 0.5
+            and abs(cur["y"] - prev["y"]) < 0.5
+            and abs(cur["width"] - prev["width"]) < 0.5
+        ):
+            return cur
+        prev = cur
+        page.wait_for_timeout(100)
+    return prev
+
+
 def open_shelf(page):
     """Open the tool shelf if it is not already open (the launch chip
     TOGGLES; a leg must never close the shelf it means to use)."""
@@ -113,12 +159,27 @@ def smoke() -> None:
         objs = page.evaluate("() => window.__hsWorldProbe()")
         assert objs, "no objects on the seeded desk"
         target = objs[0]
-        # 1. Tap-to-open THROUGH the canvas at the rendered position.
+        # 1. The OS click grammar THROUGH the canvas (round 9): a single
+        # click SELECTS (the Ask bar answers the selection, no card); a
+        # double-click OPENS the card.
         page.mouse.click(target["x"], target["y"])
         page.wait_for_timeout(500)
-        assert page.locator(".desk-pullout").count() > 0, "tap did not open"
+        assert page.locator(".desk-pullout").count() == 0, (
+            "a single click must select, not open"
+        )
+        assert page.locator(".desk-askbar").count() > 0, (
+            "a single click did not select (no ask bar)"
+        )
+        page.mouse.dblclick(target["x"], target["y"])
+        page.wait_for_timeout(500)
+        assert page.locator(".desk-pullout").count() > 0, (
+            "double-click did not open"
+        )
         page.keyboard.press("Escape")
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(600)
+        assert page.locator(".desk-pullout").count() == 0, (
+            "Escape did not close the card"
+        )
         # 2. Drag: press on the object, move far, release on background.
         page.mouse.move(target["x"], target["y"])
         page.mouse.down()
@@ -279,21 +340,22 @@ def windows() -> None:
         # geometry since HS-97-02).
         target = free_object(page)
         assert target, "no tappable object on the desk"
-        page.mouse.click(target["x"], target["y"])
+        open_object(page, target)
         page.wait_for_selector(".desk-pullout", timeout=5000)
-        # Window 2: Desk memory (attention drawer).
-        page.click(".desk-dock-launch:has-text('Desk memory')")
-        page.wait_for_selector(".desk-attention-drawer", timeout=5000)
-        # Window 3: the Delivery board.
-        page.click(".desk-dock-launch:has-text('Delivery')")
+        # Window 2: the Delivery board (search shelf, while nothing
+        # covers the shelf).
+        launch_tool(page, "Delivery")
         page.wait_for_selector(".desk-dlv-board", timeout=5000)
+        # Window 3: Desk memory (the bell's shade carries the verb).
+        launch_tool(page, "Desk memory")
+        page.wait_for_selector(".desk-attention-drawer", timeout=5000)
         assert page.locator(".desk-window-shell").count() >= 3
         # Drag the pull-out by its head to a deliberate spot.
         head = page.locator(".desk-pullout.desk-window-shell").first.locator(
             ".desk-window-handle"
         )
-        hb = head.bounding_box()
-        page.mouse.move(hb["x"] + 40, hb["y"] + 10)
+        hb = settled_box(head, page)
+        page.mouse.move(hb["x"] + 120, hb["y"] + 10)
         page.mouse.down()
         page.mouse.move(300, 200, steps=8)
         page.mouse.up()
@@ -334,17 +396,17 @@ def windows() -> None:
             "() => JSON.parse(localStorage.getItem('hs.desk.panels'))"
         )
         assert layout["max"] == ["delivery-board"], layout
-        assert "pullout" in layout["rects"], layout
+        assert any(k.startswith("pullout") for k in layout["rects"]), layout
         assert "min" not in layout, layout
         assert isinstance(layout.get("order"), list), layout
-        page.click(".desk-dock-launch:has-text('Desk memory')")
+        launch_tool(page, "Desk memory")
         page.wait_for_selector(".desk-attention-drawer:visible", timeout=3000)
         min_now = page.evaluate(
             "() => JSON.parse(localStorage.getItem('hs.desk.panels')).min"
         )
         assert min_now is None, min_now
         # The delivery board reopens maximized (persisted lifecycle).
-        page.click(".desk-dock-launch:has-text('Delivery')")
+        launch_tool(page, "Delivery")
         page.wait_for_selector(".desk-dlv-board", timeout=5000)
         assert "is-max" in (
             page.locator(".desk-dlv-board").get_attribute("class") or ""
@@ -360,7 +422,7 @@ def windows() -> None:
         wait_world(page)
         target = free_object(page)
         assert target, "no tappable object on the desk"
-        page.mouse.click(target["x"], target["y"])
+        open_object(page, target)
         page.wait_for_selector(".desk-pullout", timeout=5000)
         cls = page.locator(".desk-pullout.desk-window-shell").first.get_attribute(
             "class"
@@ -385,11 +447,11 @@ def shell() -> None:
         page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
         # Open two windows.
-        page.click(".desk-dock-launch:has-text('Desk memory')")
+        launch_tool(page, "Desk memory")
         page.wait_for_selector(".desk-attention-drawer", timeout=5000)
         target = free_object(page)
         assert target, "no tappable object on the desk"
-        page.mouse.click(target["x"], target["y"])
+        open_object(page, target)
         page.wait_for_selector(".desk-pullout", timeout=5000)
         # The dock shows both chips.
         page.wait_for_selector(".desk-dock", timeout=3000)
@@ -398,8 +460,8 @@ def shell() -> None:
         head = page.locator(".desk-pullout.desk-window-shell").first.locator(
             ".desk-window-handle"
         )
-        hb = head.bounding_box()
-        page.mouse.move(hb["x"] + 40, hb["y"] + 10)
+        hb = settled_box(head, page)
+        page.mouse.move(hb["x"] + 120, hb["y"] + 10)
         page.mouse.down()
         page.mouse.move(6, 450, steps=10)
         page.mouse.up()
@@ -612,7 +674,7 @@ def dictation() -> None:
         page.click('[aria-label="Close Speak"]')
         target = free_object(page)
         assert target, "no tappable object on the desk"
-        page.mouse.click(target["x"], target["y"])
+        open_object(page, target)
         page.wait_for_selector(".desk-pullout", timeout=5000)
         page.click(".desk-pullout button:has-text(\'Dictate about this\')")
         page.wait_for_selector(".desk-surface-window .desk-scope-chip",
@@ -968,7 +1030,7 @@ def lastexits() -> None:
             )
             page.screenshot(path=str(OUT / "lastexits-debug.png"))
             raise AssertionError(f"no tappable workflow object: {dump}")
-        page.mouse.click(wf["x"], wf["y"])
+        open_object(page, wf)
         page.wait_for_selector(".desk-pullout", timeout=8000)
         page.click(".desk-pullout button:has-text(\'Edit Workflow\')")
         wb = page.locator("[aria-label=\'Workbench\'].desk-surface-window")
@@ -1082,7 +1144,7 @@ def arrangement() -> None:
         head = page.locator(
             "[aria-label='Settings'].desk-surface-window .desk-window-handle"
         )
-        hb = head.bounding_box()
+        hb = settled_box(head, page)
         page.mouse.move(hb["x"] + 60, hb["y"] + 10)
         page.mouse.down()
         page.mouse.move(hb["x"] + 220, hb["y"] + 160, steps=8)
@@ -1151,7 +1213,7 @@ def arrangement() -> None:
         page.wait_for_timeout(500)
         objs = page.evaluate("() => window.__hsWorldProbe()")
         assert objs, "no object on the phone desk"
-        page.mouse.click(objs[0]["x"], objs[0]["y"])
+        open_object(page, objs[0])
         page.wait_for_selector(".desk-pullout", timeout=8000)
         page.wait_for_timeout(400)
         hit = page.evaluate(
@@ -1549,7 +1611,7 @@ def geometry() -> None:
                 continue
             page.wait_for_timeout(900)
             head = page.locator(f"{sel} header.desk-pullout-head")
-            hb = head.bounding_box()
+            hb = settled_box(head, page)
             if not hb or not (36 <= hb["height"] <= 46):
                 failures.append(f"{label}: head band {hb}")
             lights = page.locator(f"{sel} .desk-light").count()
@@ -1669,7 +1731,7 @@ def chrome() -> None:
               return [cs.backgroundColor, tok];
             }""")
         assert head_token and head_token in ("", head_token), head_token
-        hb = head.bounding_box()
+        hb = settled_box(head, page)
         assert 38 <= hb["height"] <= 42, hb
         # Materials spike (owner-approved): the window verbs are traffic
         # LIGHTS — small round discs, colored on the front window.
@@ -1862,7 +1924,7 @@ def shelf() -> None:
         assert page.locator("text=Select an item for actions").count() == 0
         page.screenshot(path=str(OUT / "shelf-idle-1440.png"))
         # A launcher opens its surface; the launcher folds into the chip.
-        page.click(".desk-dock-launch:has-text('Desk memory')")
+        launch_tool(page, "Desk memory")
         page.wait_for_selector(".desk-attention-drawer", timeout=5000)
         page.wait_for_timeout(400)
         assert page.locator(".desk-dock-launch:has-text('Desk memory')").count() == 0
@@ -1932,7 +1994,7 @@ def focus() -> None:
         page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.goto(arrive_url(), wait_until="networkidle")
         wait_world(page)
-        page.click(".desk-dock-launch:has-text('Desk memory')")
+        launch_tool(page, "Desk memory")
         page.wait_for_selector(".desk-attention-drawer", timeout=5000)
         seen = []
         for _ in range(14):

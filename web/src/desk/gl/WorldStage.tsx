@@ -7,13 +7,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
 import { useProjections } from "../projections";
-import { objectByRef, objUnit } from "../world";
+import { objectByRef, objUnit, type WorldObject } from "../world";
 import { InlineEditor } from "../components/InlineEditor";
 import { Pullout } from "../components/Pullout";
 import { AskBar, AskPanel } from "../components/AskPanel";
 import { MicButton } from "../components/MicButton";
-import { WorldEngine } from "./engine";
+import { DeskMenuItem, DeskMenuList } from "../components/DeskMenu";
+import { WorldEngine, type WorldMenuTarget } from "./engine";
 import { buildScene, type WorldScene } from "./sceneModel";
+
+/** Kinds whose material can be edited (mirrors the Pullout's set). */
+const WORLD_EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
 
 export { MAX_FLOATERS } from "./sceneModel";
 
@@ -25,7 +29,7 @@ export function WorldStage() {
   const items = useDesk((s) => s.items);
   const divedZone = useDesk((s) => s.divedZone);
   const editingId = useDesk((s) => s.editingId);
-  const pulloutId = useDesk((s) => s.pulloutId);
+  const pullouts = useDesk((s) => s.pullouts);
   const askOpen = useDesk((s) => s.askOpen);
   const renamingZoneId = useDesk((s) => s.renamingZoneId);
   const editorPos = useDesk((s) =>
@@ -47,6 +51,13 @@ export function WorldStage() {
     top: number;
     w: number;
     h: number;
+  } | null>(null);
+  // §6.3 — right-click is universal: the world's objects and zones
+  // answer with the ONE menu vocabulary.
+  const [worldMenu, setWorldMenu] = useState<{
+    target: WorldMenuTarget;
+    x: number;
+    y: number;
   } | null>(null);
 
   // The a11y/chip scene: the same pure projection the engine draws from,
@@ -93,6 +104,7 @@ export function WorldStage() {
     const engine = new WorldEngine(canvas, host, {
       onLasso: setLasso,
       onRenameZone: (zoneId) => useDesk.getState().setRenamingZone(zoneId),
+      onContextMenu: (target, x, y) => setWorldMenu({ target, x, y }),
     });
     engineRef.current = engine;
     void engine.init();
@@ -101,6 +113,42 @@ export function WorldStage() {
       engine.destroy();
     };
   }, []);
+
+  // Escape on the desk (no window focused — focused windows own their
+  // own Escape and stop it) closes the FRONT-MOST object card. Capture
+  // phase so an open in-world editor keeps its Escape to itself.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      // A focused window (or field) owns its own Escape.
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.(".desk-window-shell, .desk-editor, input, textarea"))
+        return;
+      const s = useDesk.getState();
+      if (s.editingId || s.renamingZoneId || s.askOpen) return;
+      if (s.pullouts.length) s.closePullout();
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, []);
+
+  // The world menu dismisses like every desk menu: outside press, Escape.
+  useEffect(() => {
+    if (!worldMenu) return;
+    const close = () => setWorldMenu(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        close();
+      }
+    };
+    window.addEventListener("pointerdown", close);
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("pointerdown", close);
+      window.removeEventListener("keydown", onKey, true);
+    };
+  }, [worldMenu]);
 
   const { surface } = useDesk.getState();
   const editingIdx = scene.objects.findIndex((o) => o.id === editingId);
@@ -115,7 +163,9 @@ export function WorldStage() {
           editorPos ? { [editingId]: editorPos } : {},
         )
       : null;
-  const pullout = pulloutId ? objectByRef(items, pulloutId) : null;
+  const openCards = pullouts
+    .map((p) => ({ ...p, obj: objectByRef(items, p.id) }))
+    .filter((p): p is typeof p & { obj: WorldObject } => Boolean(p.obj));
   const renameZone =
     scene.zones.find((z) => z.id === renamingZoneId) || null;
 
@@ -154,7 +204,80 @@ export function WorldStage() {
       {editingObj && editorU && (
         <InlineEditor key={editingObj.id} o={editingObj} u={editorU} />
       )}
-      {pullout && <Pullout key={pullout.id} o={pullout} />}
+      {openCards.map((p) => (
+        <Pullout key={p.id} o={p.obj} origin={p.origin} />
+      ))}
+      {worldMenu && (
+        <DeskMenuList
+          className="desk-world-menu"
+          label={
+            worldMenu.target.type === "object"
+              ? `${worldMenu.target.title} menu`
+              : `${worldMenu.target.title} zone menu`
+          }
+          anchor="below"
+          style={{
+            position: "fixed",
+            left: Math.min(worldMenu.x, window.innerWidth - 184),
+            top: Math.min(worldMenu.y, window.innerHeight - 132),
+          }}
+          onClose={() => setWorldMenu(null)}
+        >
+          {worldMenu.target.type === "object" ? (
+            <>
+              <DeskMenuItem
+                onSelect={() => {
+                  const t = worldMenu.target as Extract<
+                    WorldMenuTarget,
+                    { type: "object" }
+                  >;
+                  setWorldMenu(null);
+                  useDesk
+                    .getState()
+                    .openPullout(t.id, { x: worldMenu.x, y: worldMenu.y });
+                }}
+              >
+                Open
+              </DeskMenuItem>
+              {WORLD_EDITABLE.has(worldMenu.target.kind) && (
+                <DeskMenuItem
+                  onSelect={() => {
+                    const t = worldMenu.target as Extract<
+                      WorldMenuTarget,
+                      { type: "object" }
+                    >;
+                    setWorldMenu(null);
+                    useDesk.getState().openEditor(t.id);
+                  }}
+                >
+                  Edit
+                </DeskMenuItem>
+              )}
+            </>
+          ) : (
+            <>
+              <DeskMenuItem
+                onSelect={() => {
+                  const t = worldMenu.target;
+                  setWorldMenu(null);
+                  useDesk.getState().diveInto(t.id);
+                }}
+              >
+                Open
+              </DeskMenuItem>
+              <DeskMenuItem
+                onSelect={() => {
+                  const t = worldMenu.target;
+                  setWorldMenu(null);
+                  useDesk.getState().setRenamingZone(t.id);
+                }}
+              >
+                Rename
+              </DeskMenuItem>
+            </>
+          )}
+        </DeskMenuList>
+      )}
       {lasso && (
         <div
           className="desk-lasso"

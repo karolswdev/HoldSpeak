@@ -41,7 +41,7 @@ beforeEach(() => {
     divedZone: null,
     positions: {},
     selectedIds: [],
-    pulloutId: null,
+    pullouts: [],
     editingId: null,
     askOpen: false,
   });
