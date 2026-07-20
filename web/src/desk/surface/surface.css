@@ -1307,3 +1307,167 @@ button.surface-edit-in-place:hover {
   font-size: var(--desk-surface-detail-size);
   color: var(--text-faint);
 }
+
+/* HS-101 round 5 — bespoke configuration: choice bays + the keycap. */
+.settings-destination {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-bays {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+.settings-bay {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--wash-1);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--duration-short) var(--ease-quart),
+    box-shadow var(--duration-short) var(--ease-quart);
+}
+.settings-bay:hover {
+  background: var(--wash-2);
+}
+.settings-bay.is-selected {
+  background: var(--accent-tint);
+  box-shadow: inset 0 0 0 1.5px var(--accent-soft);
+}
+.settings-bay-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.settings-bay.is-selected .settings-bay-dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.settings-bay-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.settings-bay-text strong {
+  font-size: var(--desk-surface-body-size);
+  font-weight: 600;
+}
+.settings-bay-text small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-label-size);
+}
+.settings-keycap {
+  min-width: 56px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--desk-window-well);
+  box-shadow:
+    inset 0 0 0 1px var(--border-subtle),
+    inset 0 -2px 0 var(--shade-1);
+  color: var(--text);
+  font-size: var(--desk-surface-body-size);
+  font-weight: 650;
+  cursor: pointer;
+}
+.settings-keycap.is-listening {
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent-soft),
+    0 0 0 3px var(--accent-tint);
+  animation: surface-state-pulse calc(var(--duration-long) * 3) ease-in-out infinite;
+}
+
+/* HS-101 round 6 — the opened record's head: the name is the
+   material, the facts are secondary, the foot separates export from
+   destruction. The transcript reads like a script. */
+.surface-detail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.surface-detail-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.surface-detail-title small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+}
+.surface-detail-foot {
+  align-items: center;
+}
+.surface-detail-foot-gap {
+  flex: 1;
+}
+.desk-surface-body .transcript-list time {
+  flex: none;
+  width: 52px;
+  text-align: right;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+  padding-top: 1px;
+}
+.desk-surface-body .transcript-list p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* HS-101 round 7 — the import is a drop well, not a form: the same
+   verb the desk already answers, with browse folded in. */
+.surface-dropwell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 110px;
+  padding: 16px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    border-color var(--duration-short) var(--ease-quart),
+    background var(--duration-short) var(--ease-quart);
+}
+.surface-dropwell:hover {
+  border-color: var(--accent-soft);
+  background: var(--accent-tint);
+}
+.surface-dropwell.has-file {
+  border-style: solid;
+  border-color: var(--accent-soft);
+  background: var(--accent-tint);
+  color: var(--text);
+}
+.surface-dropwell input[type="file"] {
+  display: none;
+}
+.surface-dropwell small {
+  color: var(--text-faint);
+  font-size: var(--desk-surface-label-size);
+}
+.surface-dropwell-glyph {
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}

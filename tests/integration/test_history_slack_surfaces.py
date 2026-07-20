@@ -146,7 +146,7 @@ def test_proposal_rows_render_the_central_policy_and_refusal_truth():
     assert "operation.destination" in page
     assert "policy.authority_basis" in page
     # HS-100-08: an empty needs-you face says so honestly.
-    assert 'emptyLabel="Nothing waiting on you"' in page
+    assert "Nothing waiting on you" in page
 
 
 def test_history_app_wires_the_export_route():

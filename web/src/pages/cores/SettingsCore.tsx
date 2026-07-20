@@ -23,6 +23,7 @@ import {
   SurfaceToggle,
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
+import { HotkeyCapture, RuntimeDestination } from "./settingsBespoke";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 
@@ -129,17 +130,33 @@ function SettingsFields({
 }) {
   type Leaf = { key: string; item: unknown; path: string[] };
   type Group = { label: string; leaves: Leaf[] };
+  // HS-101 round 5 — bespoke components own their complex ideas.
+  if (path.length === 1 && path[0] === "hotkey") {
+    return (
+      <HotkeyCapture
+        value={value}
+        onCommit={(next) => onChange(path, { ...value, ...next })}
+      />
+    );
+  }
   const groups: Group[] = [];
   const walk = (node: JsonRecord, nodePath: string[], label: string) => {
     const leaves: Leaf[] = [];
     for (const [key, item] of Object.entries(node)) {
       const nextPath = [...nodePath, key];
       if (item !== null && typeof item === "object" && !Array.isArray(item)) {
-        walk(
-          item as JsonRecord,
-          nextPath,
-          `${label ? label + " · " : ""}${title(key)}`,
-        );
+        if (nextPath.join(".") === "dictation.runtime") {
+          groups.push({
+            label: "Runtime",
+            leaves: [{ key: "__runtime__", item, path: nextPath }],
+          });
+        } else {
+          walk(
+            item as JsonRecord,
+            nextPath,
+            `${label ? label + " · " : ""}${title(key)}`,
+          );
+        }
       } else if (
         !query ||
         `${nextPath.join(" ")}`.toLowerCase().includes(query.toLowerCase())
@@ -152,7 +169,20 @@ function SettingsFields({
   walk(value, path, "");
   return (
     <>
-      {groups.map((group) => (
+      {groups.map((group) => {
+        const runtime = group.leaves.find((leaf) => leaf.key === "__runtime__");
+        if (runtime) {
+          return (
+            <div key="runtime">
+              <h4 className="surface-panel-title">Runtime</h4>
+              <RuntimeDestination
+                value={runtime.item as JsonRecord}
+                onCommit={(next) => onChange(runtime.path, next)}
+              />
+            </div>
+          );
+        }
+        return (
         <SurfaceGroup
           key={group.label || "general"}
           label={group.label || undefined}
@@ -309,7 +339,8 @@ function SettingsFields({
             );
           })}
         </SurfaceGroup>
-      ))}
+        );
+      })}
     </>
   );
 }
