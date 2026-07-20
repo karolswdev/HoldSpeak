@@ -70,10 +70,46 @@ type SecretState = { configured?: boolean; destination?: string };
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
+/* HS-101 round 4 — the glass never wears wire keys: curated names
+ * for the fields people actually meet, an acronym dictionary for the
+ * rest ("Mlx Model" and "Openai Compatible Api Key Env" are config
+ * dump, not settings). */
+const FRIENDLY_FIELDS: Record<string, string> = {
+  mlx_model: "MLX model",
+  llama_cpp_model_path: "llama.cpp model file",
+  openai_compatible_model: "Model (OpenAI-compatible)",
+  openai_compatible_base_url: "Endpoint URL",
+  openai_compatible_api_key_env: "API key env var",
+  profile_id: "Runs on profile",
+  max_total_latency_ms: "Latency budget (ms)",
+  journal_retention: "Journal retention",
+  n_ctx: "Context window",
+};
+const ACRONYMS: Record<string, string> = {
+  Mlx: "MLX",
+  Openai: "OpenAI",
+  Api: "API",
+  Url: "URL",
+  Id: "ID",
+  Ui: "UI",
+  Llm: "LLM",
+  Cpp: "C++",
+  Ms: "ms",
+  Env: "env",
+  Ip: "IP",
+  Db: "DB",
+  Vad: "VAD",
+};
+
 function title(key: string) {
+  const curated = FRIENDLY_FIELDS[key];
+  if (curated) return curated;
   return key
     .replace(/_/g, " ")
-    .replace(/\b\w/g, (value) => value.toUpperCase());
+    .replace(/\b\w/g, (value) => value.toUpperCase())
+    .split(" ")
+    .map((word) => ACRONYMS[word] ?? word)
+    .join(" ");
 }
 
 /** HS-100 spike — the OS settings idiom: leaves render as rows
@@ -371,6 +407,28 @@ function SettingsFace({ hero, scope }: CoreProps) {
     active && sections.includes(active) ? active : (sections[0] ?? "");
   const secrets = (resource.data._secrets ?? {}) as Record<string, SecretState>;
 
+  /* HS-101 round 3 — the configuring archetype saves ON CHANGE
+     (Article VII: no ceremony): every edit lands debounced; the verb
+     bar whispers Saving…/Saved instead of wearing buttons. */
+  const [savedTick, setSavedTick] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(saveTimer.current), []);
+  const save = async (payload?: JsonRecord) => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const result = await apiFetch<{ settings?: JsonRecord }>(
+        "/api/settings",
+        { method: "PUT", json: payload ?? resource.data },
+      );
+      resource.setData(result.settings ?? payload ?? resource.data);
+      setSavedTick(true);
+    } catch (error) {
+      setMessage({ error: true, text: readableError(error) });
+    } finally {
+      setSaving(false);
+    }
+  };
   const update = (path: string[], next: unknown) => {
     const draft = clone(resource.data);
     let cursor = draft;
@@ -380,25 +438,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
     });
     resource.setData(draft);
     setMessage(null);
-  };
-
-  const save = async () => {
-    setSaving(true);
-    setMessage(null);
-    try {
-      const result = await apiFetch<{ settings?: JsonRecord }>(
-        "/api/settings",
-        { method: "PUT", json: resource.data },
-      );
-      resource.setData(result.settings ?? resource.data);
-      setMessage({
-        text: "Settings saved. The running hub has the new configuration.",
-      });
-    } catch (error) {
-      setMessage({ error: true, text: readableError(error) });
-    } finally {
-      setSaving(false);
-    }
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => void save(draft), 700);
   };
 
   const changeSecret = async (
@@ -471,9 +512,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
   }, [integrationSubject, resource.loading]);
 
   const verbs = (
-    <Button variant="primary" dense loading={saving} onClick={save}>
-      Save settings
-    </Button>
+    <span
+      className={"settings-save-whisper" + (saving ? " is-saving" : "")}
+      role="status"
+    >
+      {saving ? "Saving…" : savedTick ? "Saved" : ""}
+    </span>
   );
   return (
     <>
@@ -516,31 +560,31 @@ function SettingsFace({ hero, scope }: CoreProps) {
             />
           </SurfaceGroup>
           <Disclosure title="Policy details">
-            <p>
-              Authentication, secret custody, destination and payload binding,
-              pane identity, receipts, configuration, and schema checks never
-              change.
+            <p className="surface-boundary-note">
+              Hard invariants never change: authentication, secret custody,
+              destination and payload binding, pane identity, receipts.
             </p>
-            <p>
-              Source: {String(authority.data.source ?? "config")} ·{" "}
-              {String(authority.data.policy_version ?? "operation policy")} ·
-              precedence:{" "}
+            <p className="surface-boundary-note">
+              {String(authority.data.source ?? "config")} ·{" "}
+              {String(authority.data.policy_version ?? "operation policy")} ·{" "}
               {Array.isArray(authority.data.precedence)
                 ? authority.data.precedence.join(" → ")
                 : "hard invariants → grants → mode → feature default"}
             </p>
           </Disclosure>
         </SurfaceSection>
-        <SurfaceSection label="Hub configuration">
-          <div className="surface-search">
+        <SurfaceSection
+          label="Hub configuration"
+          actions={
             <TextInput
               aria-label="Find a setting"
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Find a setting…"
+              placeholder="Find a setting"
             />
-          </div>
+          }
+        >
           {message ? (
             <InlineMessage tone={message.error ? "error" : "success"}>
               {message.text}
@@ -593,21 +637,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
               No settings were returned by the hub.
             </InlineMessage>
           )}
-          <div className="surface-actions">
-            <Button variant="primary" loading={saving} onClick={save}>
-              Save settings
-            </Button>
-            <Button variant="ghost" onClick={() => void resource.reload()}>
-              Discard changes
-            </Button>
-          </div>
         </SurfaceSection>
         <div ref={credentialsRef}>
           <SurfaceSection label="Credentials">
-            <p>
-              Values stay on this hub. Reads show only whether each credential
-              is configured; replacement, rotation, and deletion never return
-              it.
+            <p className="surface-boundary-note">
+              Values stay on this hub — reads show configured or not, never
+              the value.
             </p>
             <SurfaceGroup>
               {Object.entries(secrets).map(([secretId, state]) => (
