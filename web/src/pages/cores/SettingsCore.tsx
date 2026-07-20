@@ -70,10 +70,46 @@ type SecretState = { configured?: boolean; destination?: string };
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
+/* HS-101 round 4 — the glass never wears wire keys: curated names
+ * for the fields people actually meet, an acronym dictionary for the
+ * rest ("Mlx Model" and "Openai Compatible Api Key Env" are config
+ * dump, not settings). */
+const FRIENDLY_FIELDS: Record<string, string> = {
+  mlx_model: "MLX model",
+  llama_cpp_model_path: "llama.cpp model file",
+  openai_compatible_model: "Model (OpenAI-compatible)",
+  openai_compatible_base_url: "Endpoint URL",
+  openai_compatible_api_key_env: "API key env var",
+  profile_id: "Runs on profile",
+  max_total_latency_ms: "Latency budget (ms)",
+  journal_retention: "Journal retention",
+  n_ctx: "Context window",
+};
+const ACRONYMS: Record<string, string> = {
+  Mlx: "MLX",
+  Openai: "OpenAI",
+  Api: "API",
+  Url: "URL",
+  Id: "ID",
+  Ui: "UI",
+  Llm: "LLM",
+  Cpp: "C++",
+  Ms: "ms",
+  Env: "env",
+  Ip: "IP",
+  Db: "DB",
+  Vad: "VAD",
+};
+
 function title(key: string) {
+  const curated = FRIENDLY_FIELDS[key];
+  if (curated) return curated;
   return key
     .replace(/_/g, " ")
-    .replace(/\b\w/g, (value) => value.toUpperCase());
+    .replace(/\b\w/g, (value) => value.toUpperCase())
+    .split(" ")
+    .map((word) => ACRONYMS[word] ?? word)
+    .join(" ");
 }
 
 /** HS-100 spike — the OS settings idiom: leaves render as rows

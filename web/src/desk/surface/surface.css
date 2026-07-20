@@ -18,7 +18,12 @@
   align-items: center;
   gap: 8px;
   background: var(--desk-window-fill);
+  /* HS-101 round 4 — frost what scrolls beneath: content must never
+     ghost through the bar. */
+  backdrop-filter: var(--desk-aerogel-blur);
+  -webkit-backdrop-filter: var(--desk-aerogel-blur);
   border-bottom: 1px solid var(--wash-1);
+  z-index: var(--z-sticky);
 }
 .surface-verbs-status {
   display: flex;
@@ -579,6 +584,12 @@ button.surface-edit-in-place:hover {
     grid-template-columns: 172px minmax(0, 1fr);
     gap: 16px;
     align-items: start;
+  }
+  /* HS-101 round 4 — the rail rides along: scrolling a long group
+     must never leave half the window dead. */
+  .surface-railed > [role="tablist"] {
+    position: sticky;
+    top: 8px;
   }
   .surface-railed > .signal-tabs {
     flex-direction: column;
