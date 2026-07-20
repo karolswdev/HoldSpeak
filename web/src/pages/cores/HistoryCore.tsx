@@ -399,15 +399,40 @@ function MeetingDetail({
     />
   );
 
+  const startedAt = detail?.started_at ?? meeting.started_at;
+  const durationS = Number(detail?.duration_seconds ?? meeting.duration_seconds ?? 0);
+  const intelStatus = detail?.intel_status;
+  const intelOff =
+    (typeof intelStatus === "object" && intelStatus !== null
+      ? String((intelStatus as JsonRecord).state ?? "")
+      : String(intelStatus ?? "")) === "disabled";
+  const hasOutcomes =
+    proposalRows.length > 0 || openActions.length > 0 || settledActions.length > 0;
   return (
-    <SurfaceSection
-      label={String(detail?.title ?? meeting.title ?? "Meeting detail")}
-      actions={
+    <SurfaceSection>
+      <div className="surface-detail-head">
+        <div className="surface-detail-title">
+          <strong className="surface-primary">
+            {String(detail?.title ?? meeting.title ?? "Meeting")}
+          </strong>
+          <small>
+            {[
+              humanTime(startedAt),
+              durationS > 0
+                ? `${Math.max(1, Math.round(durationS / 60))} min`
+                : "",
+              segments.length
+                ? `${segments.length} segment${segments.length === 1 ? "" : "s"}`
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </small>
+        </div>
         <Button dense variant="ghost" onClick={onClose}>
           Close
         </Button>
-      }
-    >
+      </div>
       {error ? <InlineMessage tone="error">{error}</InlineMessage> : null}
       {detail?.capture_status && detail.capture_status !== "finalized" ? (
         <InlineMessage tone="warning">
@@ -455,21 +480,26 @@ function MeetingDetail({
         )
       ) : (
         <>
-          {/* 1 — what needs you: undecided proposals, then open actions. */}
+          {/* 1 — what needs you: undecided proposals, then open actions.
+              Intelligence OFF says so honestly instead of celebrating
+              an empty queue it never filled. */}
           <div className="surface-outcome-sec">
-            <span className="surface-eyebrow">
-              {`Needs you — ${proposalRows.filter((row) => row.status === "proposed").length + openActions.length}`}
-            </span>
+            {intelOff && !hasOutcomes ? (
+              <p className="surface-boundary-note">
+                Intelligence is off — no outcomes were made for this
+                meeting.
+              </p>
+            ) : (
+              <span className="surface-eyebrow">
+                {`Needs you — ${proposalRows.filter((row) => row.status === "proposed").length + openActions.length}`}
+              </span>
+            )}
             {proposalsBlock}
             {openActions.length ? (
               <SurfaceRows>{openActions.map(actionRow)}</SurfaceRows>
             ) : null}
-            {!proposalRows.length && !openActions.length ? (
-              <SurfaceState
-                empty
-                emptyLabel="Nothing waiting on you"
-                emptyGlyph="✓"
-              />
+            {!intelOff && !proposalRows.length && !openActions.length ? (
+              <p className="surface-boundary-note">✓ Nothing waiting on you</p>
             ) : null}
             {aftercare.slack_configured ? (
               <div className="surface-actions">
@@ -507,12 +537,23 @@ function MeetingDetail({
               vocabulary): behind disclosures, never a wall. */}
           <Disclosure
             title={`Transcript — the receipt (${segments.length} segments)`}
+            open={!hasOutcomes && segments.length > 0}
           >
             {segments.length ? (
               <ol className="transcript-list">
                 {segments.map((row, index) => (
                   <li key={rowId(row, index)}>
-                    <time>{String(row.timestamp ?? row.start ?? "")}</time>
+                    <time>
+                      {(() => {
+                        const s = Number(row.start_time ?? row.start ?? NaN);
+                        if (!Number.isFinite(s)) {
+                          return String(row.timestamp ?? "");
+                        }
+                        const m = Math.floor(s / 60);
+                        const sec = Math.floor(s % 60);
+                        return `${m}:${String(sec).padStart(2, "0")}`;
+                      })()}
+                    </time>
                     <p>{String(row.text ?? row.transcript ?? "")}</p>
                   </li>
                 ))}
@@ -526,17 +567,21 @@ function MeetingDetail({
               <SurfaceCode>{JSON.stringify(timelineRows, null, 2)}</SurfaceCode>
             </Disclosure>
           ) : null}
-          <div className="surface-actions">
-            <Select
-              aria-label="Export format"
-              defaultValue="markdown"
-              onChange={(event) => void exportMeeting(event.target.value)}
-            >
-              <option value="markdown">Export…</option>
-              <option value="txt">Plain text</option>
-              <option value="json">JSON</option>
-              <option value="srt">SRT</option>
-            </Select>
+          <div className="surface-actions surface-detail-foot">
+            <span className="surface-eyebrow">Export</span>
+            <Button dense variant="ghost" onClick={() => void exportMeeting("markdown")}>
+              Markdown
+            </Button>
+            <Button dense variant="ghost" onClick={() => void exportMeeting("txt")}>
+              Text
+            </Button>
+            <Button dense variant="ghost" onClick={() => void exportMeeting("json")}>
+              JSON
+            </Button>
+            <Button dense variant="ghost" onClick={() => void exportMeeting("srt")}>
+              SRT
+            </Button>
+            <span className="surface-detail-foot-gap" />
             <ConfirmVerb
               label="Delete meeting"
               confirmLabel="Delete meeting?"
