@@ -126,11 +126,18 @@ type DragState =
     }
   | { type: "scroll"; pointerId: number; lastY: number };
 
+/** §6.3 — what a right-click on the world hit. */
+export type WorldMenuTarget =
+  | { type: "object"; id: string; ref: string; kind: string; title: string }
+  | { type: "zone"; id: string; title: string };
+
 export interface EngineCallbacks {
   /** DOM overlays follow the GL lasso (kept as the proven .desk-lasso div). */
   onLasso(box: { left: number; top: number; w: number; h: number } | null): void;
   /** Tapping a zone title opens the DOM rename overlay. */
   onRenameZone(zoneId: string): void;
+  /** Right-click answered: the DOM renders the ONE menu vocabulary. */
+  onContextMenu?(target: WorldMenuTarget, x: number, y: number): void;
 }
 
 export class WorldEngine {
@@ -153,6 +160,10 @@ export class WorldEngine {
   private scene: WorldScene | null = null;
   private drag: DragState = { type: "idle" };
   private hoverKey: string | null = null;
+  /** The OS click grammar (round 9): a mouse tap SELECTS; a second tap
+   * on the same object within the double-click window OPENS. */
+  private lastTap: { key: string; t: number; x: number; y: number } | null =
+    null;
   private unsubscribers: (() => void)[] = [];
   private reduceMotion = false;
   private destroyed = false;
@@ -744,18 +755,61 @@ export class WorldEngine {
     const move = (e: PointerEvent) => this.onMove(e);
     const up = (e: PointerEvent) => this.onUp(e);
     const hover = (e: PointerEvent) => this.onHover(e);
+    const menu = (e: MouseEvent) => this.onContextMenu(e);
     c.addEventListener("pointerdown", down);
     c.addEventListener("pointermove", move);
     c.addEventListener("pointermove", hover);
     c.addEventListener("pointerup", up);
     c.addEventListener("pointercancel", up);
+    c.addEventListener("contextmenu", menu);
     this.unsubscribers.push(() => {
       c.removeEventListener("pointerdown", down);
       c.removeEventListener("pointermove", move);
       c.removeEventListener("pointermove", hover);
       c.removeEventListener("pointerup", up);
       c.removeEventListener("pointercancel", up);
+      c.removeEventListener("contextmenu", menu);
     });
+  }
+
+  /** §6.3 — right-click is universal: objects and zones answer with the
+   * desk's menu; the empty desk keeps the browser's own. */
+  private onContextMenu(e: MouseEvent): void {
+    if (!this.scene || !this.callbacks.onContextMenu) return;
+    const rect = this.worldRect();
+    const hit = hitTest(
+      this.scene,
+      rect,
+      e.clientX - rect.left,
+      e.clientY - rect.top,
+    );
+    if (hit.type === "object") {
+      e.preventDefault();
+      this.drag = { type: "idle" };
+      this.callbacks.onContextMenu(
+        {
+          type: "object",
+          id: hit.object.id,
+          ref: hit.object.selectionRef,
+          kind: hit.object.kind,
+          title: hit.object.title,
+        },
+        e.clientX,
+        e.clientY,
+      );
+    } else if (
+      hit.type === "zone" ||
+      hit.type === "zone-title" ||
+      hit.type === "zone-grip"
+    ) {
+      e.preventDefault();
+      this.drag = { type: "idle" };
+      this.callbacks.onContextMenu(
+        { type: "zone", id: hit.zone.id, title: hit.zone.title },
+        e.clientX,
+        e.clientY,
+      );
+    }
   }
 
   private local(e: PointerEvent): { x: number; y: number; rect: WorldRect } {
@@ -893,6 +947,7 @@ export class WorldEngine {
       if (right - left < 8 && bottom - top < 8) {
         // A bare tap on the desk settles the selection — unless the Ask
         // composer holds the rope (HSM-16-04).
+        this.lastTap = null;
         if (!state.askOpen) state.clearSelection();
         return;
       }
@@ -912,13 +967,40 @@ export class WorldEngine {
       if (hit.type === "object") {
         if (e.shiftKey || e.metaKey || e.ctrlKey) {
           state.toggleSelected(hit.object.selectionRef);
-        } else {
+          this.lastTap = null;
+        } else if (e.pointerType === "touch" || e.pointerType === "pen") {
+          // Touch keeps tap-to-open (the iPad's grammar: no hover, no
+          // double-click reflex on glass).
           state.setDragging(null);
-          state.openPullout(hit.object.id);
+          state.openPullout(hit.object.id, { x: e.clientX, y: e.clientY });
+        } else {
+          // The desktop reflex: click selects, double-click opens.
+          const now = performance.now();
+          const prior = this.lastTap;
+          const again =
+            prior &&
+            prior.key === hit.object.key &&
+            now - prior.t < 400 &&
+            Math.hypot(e.clientX - prior.x, e.clientY - prior.y) < 8;
+          if (again) {
+            this.lastTap = null;
+            state.setDragging(null);
+            state.openPullout(hit.object.id, { x: e.clientX, y: e.clientY });
+          } else {
+            this.lastTap = {
+              key: hit.object.key,
+              t: now,
+              x: e.clientX,
+              y: e.clientY,
+            };
+            state.setSelected([hit.object.selectionRef]);
+          }
         }
       } else if (hit.type === "zone") {
+        this.lastTap = null;
         state.diveInto(hit.zone.id);
       } else if (hit.type === "zone-title") {
+        this.lastTap = null;
         this.callbacks.onRenameZone(hit.zone.id);
       } else if (hit.type === "zone-grip") {
         // A grip tap does nothing (DOM parity: click stopped propagation).

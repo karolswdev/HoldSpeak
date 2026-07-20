@@ -11,8 +11,7 @@ describe("desk windows", () => {
       panelRects: {},
       panelSaved: [],
       panelOrder: [],
-      pulloutId: null,
-      pulloutBackId: null,
+      pullouts: [],
       editingId: null,
       askOpen: false,
       chatPersonaId: null,
@@ -100,16 +99,54 @@ describe("desk windows", () => {
   it("windows coexist: opening the composer keeps the pull-out open", () => {
     useDesk.getState().openPullout("note:n1");
     useDesk.getState().openAsk();
-    expect(useDesk.getState().pulloutId).toBe("note:n1");
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual(["note:n1"]);
     expect(useDesk.getState().askOpen).toBe(true);
 
     useDesk.getState().openToolInspector("project", "orion");
     expect(useDesk.getState().askOpen).toBe(true);
-    expect(useDesk.getState().pulloutId).toBe("note:n1");
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual(["note:n1"]);
     expect(useDesk.getState().toolInspector).toEqual({
       kind: "project",
       id: "orion",
     });
+  });
+
+  it("object cards coexist; reopening focuses; close targets one card", () => {
+    useDesk.getState().openPullout("note:n1", { x: 100, y: 200 });
+    useDesk.getState().openPullout("meeting:m1", { x: 500, y: 300 });
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([
+      "note:n1",
+      "meeting:m1",
+    ]);
+    expect(useDesk.getState().panelOrder).toEqual([
+      "pullout:note:n1",
+      "pullout:meeting:m1",
+    ]);
+
+    // Reopening an open object focuses its card — never a duplicate.
+    useDesk.getState().openPullout("note:n1");
+    expect(useDesk.getState().pullouts).toHaveLength(2);
+    expect(useDesk.getState().panelOrder).toEqual([
+      "pullout:meeting:m1",
+      "pullout:note:n1",
+    ]);
+
+    // An id-less close takes the FRONT card (note:n1 after the refocus).
+    useDesk.getState().closePullout();
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual([
+      "meeting:m1",
+    ]);
+    useDesk.getState().closePullout("meeting:m1");
+    expect(useDesk.getState().pullouts).toEqual([]);
+  });
+
+  it("the origin rides the card; the editor takes only its own card", () => {
+    useDesk.getState().openPullout("note:n1", { x: 42, y: 43 });
+    useDesk.getState().openPullout("kb:k1");
+    expect(useDesk.getState().pullouts[0].origin).toEqual({ x: 42, y: 43 });
+    expect(useDesk.getState().pullouts[1].origin).toBeNull();
+    useDesk.getState().openEditor("kb:k1");
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toEqual(["note:n1"]);
   });
 });
 

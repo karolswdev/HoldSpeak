@@ -9,6 +9,7 @@
 // The hook is module-private on purpose: windows do not hand-wire physics.
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -274,6 +275,10 @@ export interface DeskWindowOptions {
    * material decides) until the user arranges the window; the HS-97-09
    * max-height seed inflation is skipped. */
   fitContent?: boolean;
+  /** Round 9 — the client point this window opened FROM (the tapped
+   * desk object). The window seats itself beside it and the open/close
+   * motion flies out of and back into it — spatial, not a side dock. */
+  origin?: { x: number; y: number } | null;
 }
 
 /** The desk-window physics (Phase 93). Module-private since HS-95-02:
@@ -318,7 +323,10 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   // bars, always whole inside the working band); a persisted rect is
   // clamped into the band and otherwise untouched (the arrangement is
   // sacred). Sheets (compact viewports) own their own form.
-  useEffect(() => {
+  // Round 9: a LAYOUT effect — the window never paints a frame at its
+  // CSS home before the engine seats it (the teleport flash), and an
+  // origin window's entrance motion starts before first paint.
+  useLayoutEffect(() => {
     if (!open) return;
     // Present, don't blindly raise: a window rehydrating on reload keeps
     // its remembered plane in the stacking order (HS-97-03).
@@ -365,7 +373,43 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         if (Number.isFinite(mh) && mh > seed.h)
           seed.h = Math.min(mh, cap);
       }
-      s.setPanelRect(id, placeWindow(seed, others, vw, vh, minW, minH));
+      const origin = opts.origin;
+      if (origin) {
+        // The spatial seat: beside the object it opened from — the
+        // right flank when it fits, the left otherwise; placeWindow
+        // still nudges it off other title bars and into the band.
+        const rightX = origin.x + 28;
+        const leftX = origin.x - seed.w - 28;
+        seed.x =
+          rightX + seed.w <= vw - MARGIN ? rightX : Math.max(MARGIN, leftX);
+        seed.y = origin.y - 56;
+      }
+      const placed = placeWindow(seed, others, vw, vh, minW, minH);
+      s.setPanelRect(id, placed);
+      if (
+        origin &&
+        el &&
+        typeof el.animate === "function" &&
+        !(
+          typeof window.matchMedia === "function" &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        )
+      ) {
+        // The open flies OUT of the object (the minimize grammar,
+        // pointed at the world instead of the dock).
+        const dx = origin.x - (placed.x + placed.w / 2);
+        const dy = origin.y - (placed.y + Math.min(placed.h, 320) / 2);
+        el.animate(
+          [
+            {
+              transform: `translate(${dx}px, ${dy}px) scale(0.05)`,
+              opacity: 0,
+            },
+            { transform: "translate(0, 0) scale(1)", opacity: 1 },
+          ],
+          { duration: 240, easing: "cubic-bezier(.2, .8, .2, 1)" },
+        );
+      }
     }
     return () => {
       // An unarranged (never persisted) rect is ephemeral: forget it so
@@ -378,6 +422,52 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, open]);
+
+  // Round 9 — growth settles with motion: a content-sized card whose
+  // material arrives async (a meeting detail, a relationships fetch)
+  // GROWS smoothly instead of popping. Only while the height is still
+  // CSS-driven (unarranged, not mid-resize: those set style.height).
+  useEffect(() => {
+    if (!opts.fitContent || arranged || !open) return;
+    const el = elRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    if (
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+      return;
+    let last = el.getBoundingClientRect().height;
+    let animating = false;
+    const ro = new ResizeObserver(() => {
+      if (animating) return;
+      // An explicit height (arranged pin, live resize, maximize) is the
+      // user's geometry — never animated under them.
+      if (el.style.height) {
+        last = el.getBoundingClientRect().height;
+        return;
+      }
+      const h = el.getBoundingClientRect().height;
+      if (!last || Math.abs(h - last) < 3) {
+        last = h;
+        return;
+      }
+      const from = last;
+      last = h;
+      if (typeof el.animate !== "function") return;
+      animating = true;
+      const anim = el.animate(
+        [{ height: `${from}px` }, { height: `${h}px` }],
+        { duration: 200, easing: "cubic-bezier(.2, .8, .2, 1)" },
+      );
+      anim.onfinish = anim.oncancel = () => {
+        animating = false;
+        last = el.getBoundingClientRect().height;
+      };
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opts.fitContent, arranged, open]);
 
   const dragBind = useDrag(
     ({ event, first, last, movement: [mx, my], memo }) => {
@@ -864,6 +954,8 @@ export interface DeskWindowFrameProps {
   minH?: number;
   /** Content-sized card: see DeskWindowOptions.fitContent. */
   fitContent?: boolean;
+  /** The client point this window opened from: see DeskWindowOptions. */
+  origin?: { x: number; y: number } | null;
   open: boolean;
   onClose: () => void;
   /** Heavy content may unmount while minimized (default: stays mounted). */
@@ -920,6 +1012,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     minW,
     minH,
     fitContent,
+    origin,
     open,
     onClose,
     unmountOnMinimize,
@@ -946,6 +1039,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     minW,
     minH,
     fitContent,
+    origin,
     open: open && !minimized,
   });
   const glyph = glyphProp ?? (typeof icon === "string" ? icon : "▢");
@@ -1000,12 +1094,29 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
       return;
     }
     leavingRef.current = true;
+    // Round 9 — a window born from a desk object returns INTO it; the
+    // rest keep the quiet scale-fade.
+    const r = origin && !compact ? el.getBoundingClientRect() : null;
     const anim = el.animate(
-      [
-        { opacity: 1, transform: "scale(1)" },
-        { opacity: 0, transform: "scale(0.96)" },
-      ],
-      { duration: 140, easing: "ease-in", fill: "forwards" },
+      origin && r
+        ? [
+            { opacity: 1, transform: "translate(0, 0) scale(1)" },
+            {
+              opacity: 0,
+              transform: `translate(${origin.x - (r.x + r.width / 2)}px, ${
+                origin.y - (r.y + r.height / 2)
+              }px) scale(0.05)`,
+            },
+          ]
+        : [
+            { opacity: 1, transform: "scale(1)" },
+            { opacity: 0, transform: "scale(0.96)" },
+          ],
+      {
+        duration: origin && r ? 200 : 140,
+        easing: origin && r ? "cubic-bezier(.4, 0, .8, .4)" : "ease-in",
+        fill: "forwards",
+      },
     );
     anim.onfinish = () => {
       leavingRef.current = false;
@@ -1128,7 +1239,13 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         (isFront ? " is-front" : "")
       }
       style={style}
-      initial={reducedMotion || !entrance ? false : { x: 60, opacity: 0 }}
+      // An origin window's entrance is the fly-out-of-the-object WAAPI
+      // (pre-paint, in the placement effect) — never the side slide.
+      initial={
+        reducedMotion || !entrance || (origin && !compact)
+          ? false
+          : { x: 60, opacity: 0 }
+      }
       animate={{ x: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 320, damping: 30 }}
       onPointerDown={(e) => {

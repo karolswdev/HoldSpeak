@@ -37,8 +37,7 @@ function resetStore(seed: Items) {
     items: seed,
     selectedIds: [],
     divedZone: null,
-    pulloutId: null,
-    pulloutBackId: null,
+    pullouts: [],
     editingId: null,
     askOpen: false,
     panelRects: {},
@@ -105,7 +104,7 @@ describe("HS-93-08 semantic list mode: same records", () => {
   it("opens the SAME pull-out record a floater click opens", () => {
     const { container } = renderList();
     fireEvent.click(screen.getByRole("button", { name: "Release checklist" }));
-    const pulloutId = useDesk.getState().pulloutId;
+    const pulloutId = useDesk.getState().pullouts.at(-1)?.id;
     expect(pulloutId).toBe(qualifiedRef("note", "n1"));
     // The spatial DeskObject opens with the bare id; both refs resolve to
     // the identical record through the one lookup.
@@ -235,7 +234,9 @@ describe("HS-93-08 pagination at 1,000 items", () => {
       name: /Meridian launch brief/,
     });
     fireEvent.click(hit);
-    expect(useDesk.getState().pulloutId).toBe(qualifiedRef("kb", "needle"));
+    expect(useDesk.getState().pullouts.at(-1)?.id).toBe(
+      qualifiedRef("kb", "needle"),
+    );
   });
 });
 

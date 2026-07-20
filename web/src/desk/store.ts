@@ -181,9 +181,11 @@ interface DeskState {
   newIds: string[];
   /** The world object id whose in-world editor is open (one at a time). */
   editingId: string | null;
-  /** The object whose pull-out is open, + one level of back (HS-73-04). */
-  pulloutId: string | null;
-  pulloutBackId: string | null;
+  /** Open object cards (HS-101 round 9): real windows — they COEXIST,
+   * each remembering the tap point it opened from (the origin its
+   * open/close motion flies to). Order is open order; the panel order
+   * decides stacking. */
+  pullouts: { id: string; origin: { x: number; y: number } | null }[];
   /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
@@ -238,8 +240,13 @@ interface DeskState {
     patch: Record<string, unknown>,
   ): Promise<void>;
   renameZone(id: string, name: string): Promise<void>;
-  openPullout(id: string): void;
-  closePullout(): void;
+  /** Open an object card. A second object opens a SECOND card (windows
+   * coexist); reopening an open object focuses its card. `origin` is
+   * the client point the open gesture happened at (the card flies out
+   * of it and back into it on close). */
+  openPullout(id: string, origin?: { x: number; y: number }): void;
+  /** Close one card by object id; with no id, the front-most card. */
+  closePullout(id?: string): void;
   setHoverZone(id: string | null): void;
   setRenamingZone(id: string | null): void;
   diveInto(zoneId: string): void;
@@ -342,8 +349,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   setup: null,
   newIds: [],
   editingId: null,
-  pulloutId: null,
-  pulloutBackId: null,
+  pullouts: [],
   hoverZoneId: null,
   renamingZoneId: null,
   selectedIds: [],
@@ -436,10 +442,11 @@ export const useDesk = create<DeskState>((set, get) => ({
   },
 
   openEditor(id) {
+    // The object's own card yields to its editor; other cards keep
+    // their seats (windows coexist).
     set({
       editingId: id,
-      pulloutId: null,
-      pulloutBackId: null,
+      pullouts: get().pullouts.filter((p) => p.id !== id),
       toolInspector: null,
     });
   },
@@ -510,8 +517,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   diveInto(zoneId) {
     set({
       divedZone: zoneId,
-      pulloutId: null,
-      pulloutBackId: null,
+      pullouts: [],
       editingId: null,
       toolInspector: null,
     });
@@ -520,19 +526,28 @@ export const useDesk = create<DeskState>((set, get) => ({
     set({ divedZone: null });
   },
 
-  openPullout(id) {
-    const current = get().pulloutId;
-    set({
-      pulloutId: id,
-      // One-deep stack: opening from inside a pull-out remembers where to
-      // go back to (an artifact row inside a meeting's drawer).
-      pulloutBackId: current && current !== id ? current : null,
-      editingId: null,
-    });
-    get().focusPanel("pullout");
+  openPullout(id, origin) {
+    const open = get().pullouts;
+    if (!open.some((p) => p.id === id))
+      set({ pullouts: [...open, { id, origin: origin ?? null }] });
+    set({ editingId: null });
+    get().focusPanel(`pullout:${id}`);
   },
-  closePullout() {
-    set({ pulloutId: null, pulloutBackId: null });
+  closePullout(id) {
+    const open = get().pullouts;
+    if (open.length === 0) return;
+    const victim =
+      id ??
+      // Front-most card: the last pullout panel in the stacking order
+      // (cards never focused yet fall back to open order).
+      [...open]
+        .sort(
+          (a, b) =>
+            get().panelOrder.indexOf(`pullout:${a.id}`) -
+            get().panelOrder.indexOf(`pullout:${b.id}`),
+        )
+        .pop()?.id;
+    set({ pullouts: open.filter((p) => p.id !== victim) });
   },
 
   async fileIntoDir(pid, dirId, kind = "note") {

@@ -3,8 +3,7 @@
 // world stays alive behind it; "Open full" is the ONE navigation on the
 // desk; Escape or ✕ closes (it is a desk window — it survives clicks
 // elsewhere and can be moved, resized, and raised).
-import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useState } from "react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
 import { apiRequest } from "../../lib/api";
@@ -62,17 +61,23 @@ function intelligenceState(value: string): string {
   return labels[value] || value.replace(/_/g, " ");
 }
 
-export function Pullout({ o }: { o: WorldObject }) {
-  const reducedMotion = useReducedMotion();
+export function Pullout({
+  o,
+  origin,
+}: {
+  o: WorldObject;
+  /** The client point the open gesture happened at (spatial motion). */
+  origin?: { x: number; y: number } | null;
+}) {
   const items = useDesk((s) => s.items);
   const profiles = useDesk((s) => s.profiles);
   const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const selectedIds = useDesk((s) => s.selectedIds);
-  const backId = useDesk((s) => s.pulloutBackId);
   const {
     closePullout,
     openPullout,
     openEditor,
+    updatePrimitive,
     fileIntoDir,
     removeFromDir,
     answerCoder,
@@ -102,6 +107,18 @@ export function Pullout({ o }: { o: WorldObject }) {
   const [answered, setAnswered] = useState<
     "selected" | "sent" | "failed" | null
   >(null);
+  // Round 9 — canon rule 1: the note's material edits IN PLACE on the
+  // card. Escape reverts; Done (or ⌘Enter) commits through the real PUT.
+  const [editingBody, setEditingBody] = useState(false);
+  const [bodyDraft, setBodyDraft] = useState("");
+  const startBodyEdit = () => {
+    setBodyDraft(String((o.ref as any).bodyMarkdown || ""));
+    setEditingBody(true);
+  };
+  const commitBodyEdit = () => {
+    void updatePrimitive("note", o.id, { body_markdown: bodyDraft });
+    setEditingBody(false);
+  };
   const contextualAction = contextualCapabilityActions(items, selectedIds).find(
     (action) => action.id === o.id && action.kind === o.kind,
   );
@@ -124,17 +141,9 @@ export function Pullout({ o }: { o: WorldObject }) {
     recovered: coderDraftRecovered,
   } = useDurableDraft(`coder-reply:${coderSessionId}`);
 
-  useEffect(() => {
-    // A desk window closes deliberately (✕ or Escape) — never from a stray
-    // click elsewhere on the desk; arranged windows coexist.
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closePullout();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-    };
-  }, []);
+  // Escape scope: the focused card closes itself (DeskWindowFrame); a
+  // desk-scoped Escape closes the FRONT card (the WorldStage listener).
+  // Cards never close from a stray click elsewhere — windows coexist.
 
   useEffect(() => {
     if (o.kind !== "meeting") return;
@@ -300,28 +309,17 @@ export function Pullout({ o }: { o: WorldObject }) {
 
   return (
     <DeskWindowFrame
-      id="pullout"
+      id={`pullout:${o.id}`}
       glyph="▤"
       label={o.title}
       className="desk-pullout is-card"
       fitContent
+      origin={origin}
       rootStyle={{ "--k": objGlow(o.kind) } as React.CSSProperties}
       icon={<img src={spriteUrl(o.kind, o.id)} alt="" width={30} height={30} />}
       title={o.title}
       open
-      onClose={closePullout}
-      leading={
-        backId ? (
-          <button
-            type="button"
-            className="desk-chip quiet"
-            onClick={() => openPullout(backId)}
-            aria-label="Back"
-          >
-            ←
-          </button>
-        ) : null
-      }
+      onClose={() => closePullout(o.id)}
       actions={
         <>
           {egress && (
@@ -374,7 +372,7 @@ export function Pullout({ o }: { o: WorldObject }) {
               meetingId={o.id}
               onResolved={async (result) => {
                 if (result.deleted) {
-                  closePullout();
+                  closePullout(o.id);
                 } else if (result.meeting) {
                   setDetail(result.meeting as MeetingDetail);
                 }
@@ -463,6 +461,29 @@ export function Pullout({ o }: { o: WorldObject }) {
             const members = ((ir.memberIds as string[]) || [])
               .map((m) => ({ ref: m, member: objectByRef(items, m) }))
               .filter(({ member }) => member);
+            if (o.kind === "note" && editingBody)
+              return (
+                <section>
+                  <textarea
+                    className="desk-pullout-editbox"
+                    aria-label={`${o.title} content`}
+                    value={bodyDraft}
+                    autoFocus
+                    rows={Math.max(6, bodyDraft.split("\n").length + 1)}
+                    placeholder="Write"
+                    onChange={(e) => setBodyDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        e.stopPropagation();
+                        setEditingBody(false);
+                      } else if (e.key === "Enter" && e.metaKey) {
+                        e.preventDefault();
+                        commitBodyEdit();
+                      }
+                    }}
+                  />
+                </section>
+              );
             if (body)
               return (
                 <section>
@@ -652,7 +673,7 @@ export function Pullout({ o }: { o: WorldObject }) {
                 type="button"
                 className="desk-chip quiet"
                 onClick={() => {
-                  closePullout();
+                  closePullout(o.id);
                   useSteering
                     .getState()
                     .openSession(
@@ -944,7 +965,7 @@ export function Pullout({ o }: { o: WorldObject }) {
       </div>
 
       <footer className="desk-pullout-foot">
-        {FILABLE.has(o.kind) && (
+        {FILABLE.has(o.kind) && !editingBody && (
           <button
             type="button"
             className="desk-chip quiet"
@@ -964,14 +985,50 @@ export function Pullout({ o }: { o: WorldObject }) {
             Record follow-up
           </button>
         )}
-        {EDITABLE.has(o.kind) && (
-          <button
-            type="button"
-            className="desk-chip is-primary"
-            onClick={() => openEditor(o.id)}
-          >
-            Edit
-          </button>
+        {o.kind === "note" ? (
+          editingBody ? (
+            <>
+              <MicButton
+                label="Hold to fill"
+                draftScope={`card-edit:${o.id}`}
+                onText={(t) =>
+                  setBodyDraft((current) => (current ? `${current} ${t}` : t))
+                }
+              />
+              <button
+                type="button"
+                className="desk-chip quiet"
+                onClick={() => setEditingBody(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="desk-chip is-primary"
+                onClick={commitBodyEdit}
+              >
+                Done
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="desk-chip is-primary"
+              onClick={startBodyEdit}
+            >
+              Edit
+            </button>
+          )
+        ) : (
+          EDITABLE.has(o.kind) && (
+            <button
+              type="button"
+              className="desk-chip is-primary"
+              onClick={() => openEditor(o.id)}
+            >
+              Edit
+            </button>
+          )
         )}
       </footer>
     </DeskWindowFrame>

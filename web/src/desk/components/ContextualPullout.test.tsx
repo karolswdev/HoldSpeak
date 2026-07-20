@@ -34,7 +34,7 @@ describe("HS-93-04 contextual pull-out actions", () => {
       profiles: [],
       inferenceTargets: [],
       selectedIds: ["note:release"],
-      pulloutBackId: null,
+      pullouts: [],
       closePullout: vi.fn(),
       openPullout: vi.fn(),
       openEditor: vi.fn(),

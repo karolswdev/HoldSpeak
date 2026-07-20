@@ -775,12 +775,32 @@
   bottom: auto;
   max-height: calc(100dvh - 96px);
 }
-.desk-next .desk-pullout .surface-material,
-.desk-next .desk-pullout .surface-say,
-.desk-next .desk-pullout .desk-pullout-md,
+/* Round 9 — the MATERIAL is copyable text (facts lines, receipts,
+   rendered bodies, transcripts); only the chrome (chips, disclosure
+   summaries, eyebrows) stays un-selectable like any OS control. */
+.desk-next .desk-pullout .desk-pullout-body,
 .desk-next .desk-pullout input,
 .desk-next .desk-pullout textarea {
   user-select: text;
+}
+.desk-next .desk-pullout .desk-pullout-body .desk-chip,
+.desk-next .desk-pullout .desk-pullout-body summary,
+.desk-next .desk-pullout .desk-pullout-body .surface-eyebrow {
+  user-select: none;
+}
+/* Round 9 — canon rule 1: the note's text edits in place, in the same
+   reading geometry the material renders in. No box, no third chrome. */
+.desk-next .desk-pullout-editbox {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--desk-surface-body-size);
+  line-height: 1.55;
+  resize: vertical;
 }
 .desk-next .desk-pullout .desk-pullout-body {
   min-height: 0;
@@ -4629,6 +4649,8 @@
 
 /* HS-101 sitting round 2 — the ambient card yields to an open right
    sheet instead of burying its composer. */
-body:has(.desk-next .desk-pullout) .ambient-qlippy {
+/* Object cards (.is-card) float anywhere since round 9 — only the
+   right-docked working sheets still displace the ambient card. */
+body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   right: 452px;
 }

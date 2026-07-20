@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { openSurface } from "../shell";
 import { qualifiedRef } from "../api";
 import { modelChatId } from "../chat";
@@ -286,7 +287,12 @@ export function DeskToolShelf() {
       >
         <span aria-hidden="true">⌕</span> Search <kbd>⌘K</kbd>
       </button>
+      {/* Round 9 — the shelf PORTALS to the desk root: rendered inside
+          the chrome bar it inherited the bar's z-30 stacking context and
+          every desk window (z 42+) covered the ⌘K results — a palette
+          must sit above the window band, always. */}
       {open ? (
+        createPortal(
         <aside
           ref={rootRef}
           id="desk-tool-shelf"
@@ -581,7 +587,9 @@ export function DeskToolShelf() {
               )}
             </section>
           ) : null}
-        </aside>
+        </aside>,
+        launchRef.current?.closest(".desk-next") ?? document.body,
+        )
       ) : null}
     </>
   );

@@ -544,8 +544,10 @@ button.surface-edit-in-place:hover {
 }
 .desk-surface-body .signal-disclosure > summary::before {
   content: "▸";
-  font-size: 0.5625rem;
-  color: var(--text-faint);
+  /* Round 9 — the caret must READ as a caret (it rendered as a faint
+     dot at 9px): detail size, muted not faint. */
+  font-size: 0.6875rem;
+  color: var(--text-muted);
   transition: transform var(--duration-short) var(--ease-quart);
 }
 .desk-surface-body .signal-disclosure[open] > summary::before {

@@ -23,7 +23,7 @@ export function DeskListView() {
   const items = useDesk((s) => s.items);
   const divedZone = useDesk((s) => s.divedZone);
   const selectedIds = useDesk((s) => s.selectedIds);
-  const pulloutId = useDesk((s) => s.pulloutId);
+  const pullouts = useDesk((s) => s.pullouts);
   const editingId = useDesk((s) => s.editingId);
   const askOpen = useDesk((s) => s.askOpen);
   const subjectCounts = useProjections((s) => s.subject_counts);
@@ -60,7 +60,9 @@ export function DeskListView() {
       )
     : null;
 
-  const pullout = pulloutId ? objectByRef(items, pulloutId) : null;
+  const openCards = pullouts
+    .map((p) => ({ ...p, obj: objectByRef(items, p.id) }))
+    .filter((p) => Boolean(p.obj));
   const editing = editingId ? objectByRef(items, editingId) : null;
 
   const showMore = () => {
@@ -186,7 +188,9 @@ export function DeskListView() {
       {editing && (
         <InlineEditor key={editing.id} o={editing} u={{ x: 0.5, y: 0.4 }} />
       )}
-      {pullout && <Pullout key={pullout.id} o={pullout} />}
+      {openCards.map((p) => (
+        <Pullout key={p.id} o={p.obj!} origin={p.origin} />
+      ))}
       <AskBar />
       {askOpen && <AskPanel />}
     </div>
