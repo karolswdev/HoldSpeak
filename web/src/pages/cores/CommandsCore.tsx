@@ -118,7 +118,7 @@ export function CommandsCore({ hero }: CoreProps) {
       {hero ? (
         hero(verbs)
       ) : (
-        <SurfaceVerbs status={`${items.length} macros`}>{verbs}</SurfaceVerbs>
+        <SurfaceVerbs status={`${items.length} ${items.length === 1 ? "command" : "commands"}`}>{verbs}</SurfaceVerbs>
       )}
       {message ? (
         <InlineMessage tone={message.error ? "error" : "success"}>
@@ -138,7 +138,7 @@ export function CommandsCore({ hero }: CoreProps) {
                 emptyLabel="No voice commands"
                 emptyGlyph="❝"
               />
-              <div className="surface-actions">
+              <div className="surface-actions is-centered">
                 <Button
                   variant="primary"
                   dense

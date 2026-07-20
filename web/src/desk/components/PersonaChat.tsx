@@ -222,9 +222,17 @@ export function PersonaChat(props: { personaId: string }) {
 
       <div className="desk-pullout-body desk-chat-scroll">
         {turns.length === 0 && !thinking && (
-          <p className="desk-chat-empty">
-            Start a conversation with {String(persona.name || "this agent")}.
-          </p>
+          <div className="desk-chat-hello">
+            <span className="desk-chat-hello-avatar" aria-hidden="true">
+              {String(persona.avatar || "🤖")}
+            </span>
+            <strong className="surface-primary">
+              {String(persona.name || "This agent")}
+            </strong>
+            {persona.role ? (
+              <small>{String(persona.role)}</small>
+            ) : null}
+          </div>
         )}
         {turns.map((t) => (
           <div
@@ -273,12 +281,6 @@ export function PersonaChat(props: { personaId: string }) {
       </div>
 
       <footer className="desk-chat-foot">
-        <RunsOnPicker
-          targets={inferenceTargets}
-          selectedId={inferenceTargetId}
-          onChange={setInferenceTargetId}
-          disabled={thinking}
-        />
         <GroundingSection
           meetings={(items.meeting || []).map((m: any) => ({
             id: m.id,
@@ -289,33 +291,43 @@ export function PersonaChat(props: { personaId: string }) {
           onChange={setAndSaveGrounding}
           limitTokens={limitTokens}
         />
-        <div className="desk-chat-composer">
-          <MicButton
-            draftScope={`persona-chat:${personaId}`}
-            onText={(t) => setInput((v) => (v ? v + " " + t : t))}
-          />
-          <input
-            autoFocus
-            value={input}
-            placeholder={"Message " + String(persona.name || "")}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") void send();
-            }}
-          />
-          <button
-            type="button"
-            className="desk-chip"
-            disabled={!input.trim() || thinking || overBudget}
-            title={
-              overBudget
-                ? "Grounding exceeds the context limit. Remove material."
-                : undefined
-            }
-            onClick={() => void send()}
-          >
-            {thinking ? "…" : "Send"}
-          </button>
+        <div className="desk-chat-well">
+          <div className="desk-chat-composer">
+            <MicButton
+              draftScope={`persona-chat:${personaId}`}
+              onText={(t) => setInput((v) => (v ? v + " " + t : t))}
+            />
+            <input
+              autoFocus
+              value={input}
+              placeholder={"Message " + String(persona.name || "")}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void send();
+              }}
+            />
+            <button
+              type="button"
+              className="desk-chip"
+              disabled={!input.trim() || thinking || overBudget}
+              title={
+                overBudget
+                  ? "Grounding exceeds the context limit. Remove material."
+                  : undefined
+              }
+              onClick={() => void send()}
+            >
+              {thinking ? "…" : "Send"}
+            </button>
+          </div>
+          <div className="desk-chat-well-foot">
+            <RunsOnPicker
+              targets={inferenceTargets}
+              selectedId={inferenceTargetId}
+              onChange={setInferenceTargetId}
+              disabled={thinking}
+            />
+          </div>
         </div>
         {inputRecovered ? (
           <span className="quiet">Recovered local message draft.</span>

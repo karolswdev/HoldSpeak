@@ -698,17 +698,18 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   /* The rail: this week's meetings, search-first; the filter wall
      stays folded. */
   const rail = (
-    <SurfaceSection label="Meetings">
-      <Field label="Search meetings">
-        {({ id }) => (
-          <TextInput
-            id={id}
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        )}
-      </Field>
+    <SurfaceSection
+      label="Meetings"
+      actions={
+        <TextInput
+          type="search"
+          aria-label="Search meetings"
+          placeholder="Search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      }
+    >
       <Disclosure title="Filters">
         <div className="surface-actions">
           <Field label="From">

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch, readableError, type JsonRecord } from "../lib/api";
 import { useRuntimeBus, useRuntimeFrame } from "../runtime/RuntimeBus";
 import { useProjections } from "../desk/projections";
+import { humanizeWireValue } from "../lib/productLanguage";
 import { Button, InlineMessage, StatusPill } from "./signal/Signal";
 
 type Preview = { token?: string; text?: string; kind?: "wake" | "preview" };
@@ -188,7 +189,7 @@ function Qlippy() {
       <div>
         <span className="signal-eyebrow">
           {projection
-            ? `${projection.projection_kind} · ${projection.subject_label}`
+            ? `${humanizeWireValue(String(projection.projection_kind))} · ${humanizeWireValue(String(projection.subject_label))}`
             : card!.frameType.replace(/_/g, " ")}
         </span>
         <strong>

@@ -32,7 +32,10 @@ export function RunsOnPicker(props: {
         >
           {props.targets.map((target) => (
             <option key={target.id} value={target.id} disabled={!target.readiness.available}>
-              {target.name} · {KIND_LABEL[target.kind] || target.kind}
+              {target.name}
+              {(KIND_LABEL[target.kind] || target.kind) !== target.name
+                ? ` · ${KIND_LABEL[target.kind] || target.kind}`
+                : ""}
               {!target.readiness.available ? ` · unavailable: ${target.readiness.reason}` : ""}
             </option>
           ))}
