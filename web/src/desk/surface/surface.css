@@ -1307,3 +1307,86 @@ button.surface-edit-in-place:hover {
   font-size: var(--desk-surface-detail-size);
   color: var(--text-faint);
 }
+
+/* HS-101 round 5 — bespoke configuration: choice bays + the keycap. */
+.settings-destination {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-bays {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+.settings-bay {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--wash-1);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--duration-short) var(--ease-quart),
+    box-shadow var(--duration-short) var(--ease-quart);
+}
+.settings-bay:hover {
+  background: var(--wash-2);
+}
+.settings-bay.is-selected {
+  background: var(--accent-tint);
+  box-shadow: inset 0 0 0 1.5px var(--accent-soft);
+}
+.settings-bay-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.settings-bay.is-selected .settings-bay-dot {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.settings-bay-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.settings-bay-text strong {
+  font-size: var(--desk-surface-body-size);
+  font-weight: 600;
+}
+.settings-bay-text small {
+  color: var(--text-muted);
+  font-size: var(--desk-surface-label-size);
+}
+.settings-keycap {
+  min-width: 56px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--desk-window-well);
+  box-shadow:
+    inset 0 0 0 1px var(--border-subtle),
+    inset 0 -2px 0 var(--shade-1);
+  color: var(--text);
+  font-size: var(--desk-surface-body-size);
+  font-weight: 650;
+  cursor: pointer;
+}
+.settings-keycap.is-listening {
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent-soft),
+    0 0 0 3px var(--accent-tint);
+  animation: surface-state-pulse calc(var(--duration-long) * 3) ease-in-out infinite;
+}
