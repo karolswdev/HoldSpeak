@@ -466,12 +466,50 @@ button.surface-edit-in-place:hover {
   border-radius: var(--radius-sm);
   background: transparent;
 }
+/* HS-101 sitting round 2 — a disclosure must READ as one: the desk
+   stripped the card (rule 1) but left bare bold text. The summary is
+   a quiet chip with a turning caret; the wash lives on the summary,
+   never the whole block. */
 .desk-surface-body .signal-disclosure > summary,
 .desk-surface-body .signal-disclosure > .signal-disclosure-summary {
-  font-size: var(--desk-surface-body-size);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 26px;
+  margin: 2px 0;
+  padding: 2px 9px 2px 7px;
+  border-radius: var(--radius-sm);
+  list-style: none;
+  font-size: var(--desk-surface-detail-size);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.desk-surface-body .signal-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.desk-surface-body .signal-disclosure > summary::before {
+  content: "▸";
+  font-size: 0.5625rem;
+  color: var(--text-faint);
+  transition: transform var(--duration-short) var(--ease-quart);
+}
+.desk-surface-body .signal-disclosure[open] > summary::before {
+  transform: rotate(90deg);
+}
+.desk-surface-body .signal-disclosure > summary:hover {
+  background: var(--wash-1);
+  color: var(--text);
 }
 .desk-surface-body .signal-disclosure:hover {
-  background: var(--wash-1);
+  background: transparent;
+}
+.desk-surface-body .signal-disclosure > div {
+  padding: 4px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* Rule 1 — inside a window the tab strip sits on the material: no
@@ -1220,4 +1258,15 @@ button.surface-edit-in-place:hover {
   .surface-bay {
     animation: none;
   }
+}
+
+/* HS-101 sitting round 2 — a verb under a centered empty state
+   centers with it; the search control in a section head stays
+   bounded. */
+.surface-actions.is-centered {
+  justify-content: center;
+}
+.surface-section-head input[type="search"] {
+  width: 150px;
+  min-width: 0;
 }

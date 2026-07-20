@@ -287,10 +287,7 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
           label="Hold to talk"
           onText={(text) => setUtterance(text)}
         />
-        <p className="speak-hint">
-          Hold to talk, or type below. Runs the real pipeline on paper,
-          without typing into another app.
-        </p>
+        <p className="speak-hint">Hold to talk, or type below — on paper</p>
       </div>
       <div className="desk-mic-row">
         <TextArea
