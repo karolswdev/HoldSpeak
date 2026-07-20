@@ -61,10 +61,16 @@ def _prose_segments(path: Path):
         if path.suffix == ".tsx":
             segments += [m.group(1).strip() for m in _JSX_TEXT_RE.finditer(line)]
         for seg in segments:
-            if seg.strip().startswith("/"):
+            text = seg.strip()
+            if text.startswith("/"):
                 continue  # URL/path, not copy
             if " " in seg and sum(c.isalpha() for c in seg) >= 3:
                 yield lineno, seg
+            elif text[:1].isupper() and text.isalpha():
+                # A lone Capitalized word is a display label ("Persona"
+                # on a chip) — the round-8 miss. Lowercase single words
+                # stay exempt: those are wire keys, not copy.
+                yield lineno, text
 
 
 def _scan() -> dict[str, set[str]]:
@@ -112,7 +118,7 @@ def test_refusals_never_leak_paths() -> None:
 def test_guard_patterns_catch_seeded_violations() -> None:
     """Proven both ways, like the voice guard."""
     for hit in ("Intel model not found", "the intel summary", "New Persona",
-                "Personas and coders"):
+                "Personas and coders", "Persona", "Intel"):
         assert any(rx.search(hit) for rx in _BANNED.values()), hit
     for keep in ("Meeting intelligence", "intelligent routing",
                  "personal notes stay local"):

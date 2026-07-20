@@ -3,7 +3,7 @@
 // HS-100-09 — Agents (thesis §1.3): the application opens on WHO NEEDS
 // YOU — blocked sessions first with their question and an Answer verb
 // one step from the pane; then running. Delivery and Chat are the
-// wings. "Personas" leaves the glass; the canon word is agents.
+// wings. The persona noun leaves the glass; the canon word is agents.
 import { useMemo, useState } from "react";
 import { openCoderSession, openPersona } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";

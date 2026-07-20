@@ -286,7 +286,7 @@ export async function loadAll(): Promise<LoadResult> {
           .map(fromWireRecipe);
         status.recipe = "live";
       })
-      .catch((e) => fail("recipe", "Personas", e)),
+      .catch((e) => fail("recipe", "Agents", e)),
     fetchJson("/api/kbs")
       .then((d) => {
         items.kb = (d.kbs || []).filter((k: any) => !k.deleted).map(fromWireKb);

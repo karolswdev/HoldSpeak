@@ -102,7 +102,7 @@ export const KIND_LABEL: Record<string, string> = {
   kb: "Knowledge",
   meeting: "Meeting",
   note: "Note",
-  recipe: "Persona",
+  recipe: "Agent",
   workflow: "Workflow",
 };
 
