@@ -4,8 +4,18 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-22 — **Phase 102, The Refit, 4/7**:
-HS-102-04 (the Meetings wings) shipped — Artifacts recomposed from a
+**Last updated:** 2026-07-22 — **Phase 102, The Refit, 5/7**:
+HS-102-05 (the selection mark yields to open) shipped — a
+click-grammar fix: opening a card (double-click, touch tap-open, the
+context menu's Open, the a11y layer) now clears the selection ring +
+"N selected · Ask AI" bar in the same frame the card appears, in all
+four paths through `openPullout`, guarded so the Ask composer's held
+selection (the HSM-16-04 carve-out) is never stripped mid-compose.
+Proven live on a real seeded desk at 1440+393 (mark, then open — ring
+and bar gone) plus the Ask carve-out (open Ask, double-click a
+different object, Ask keeps its context); the `smoke()` walk leg grew
+three assertions and passed live. Earlier the same day: **HS-102-04
+(the Meetings wings) shipped** — Artifacts recomposed from a
 `Disclosure`+`SurfaceCode` dump to the SAME `SurfaceLibrary`
 composition Blocks already uses (artifact body as the tile face via
 `Material`); Outcomes rows sort needs-you first with a new `quiet`
@@ -15,7 +25,7 @@ data: a transcript imported through the real wire, run through the
 real plugin chain against the LAN model at `192.168.1.43` — 4
 artifacts, correctly library-composed at both viewports; the
 `meetingflow` walk leg grown and run live against populated data.
-Earlier the same day: **HS-102-03 (Ask AI) shipped** — the composer is
+Earlier: **HS-102-03 (Ask AI) shipped** — the composer is
 now one well (`desk-chat-well`, the same grammar `PersonaChat` and the
 capability cards already use), Runs on/grounding/rails fold into the
 well's foot as captions, and the printed answer renders through
@@ -35,9 +45,8 @@ choice bays (Endpoint/This device/Paired device/Mesh node) expanding
 in place on the switchboard, reusing the `RuntimeDestination` pattern
 and closing a `SurfaceBay` kit gap, proven live at 1440+393 with
 inline URL refusal, edit-in-place, make-default, and two-step delete;
-wire byte-identical. Remaining: the selection mark yielding to open,
-and the Speech Settings gear face (screenshot-convicted). The design
-authority is the HS-101-02-approved
+wire byte-identical. Remaining: the Speech Settings gear face
+(screenshot-convicted). The design authority is the HS-101-02-approved
 interior canon; each story works the round-9 way — hands first,
 headed, both viewports. Earlier: **HS-101-04 round 9 (the reflex
 round, PR #365) merged** — single-click selects / double-click opens,
@@ -48,7 +57,7 @@ parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
 **Current phase:** [**Phase 102 — The Refit**](./phase-102-the-refit/current-phase-status.md)
-— **IN PROGRESS (4/7, HS-102-05 next)**. The
+— **IN PROGRESS (5/7, HS-102-06 next)**. The
 [Phase 101](./phase-101-the-native-innards/current-phase-status.md)
 closeout sitting (HS-101-04) stays open alongside.
 

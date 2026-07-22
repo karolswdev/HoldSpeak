@@ -170,10 +170,21 @@ def smoke() -> None:
         assert page.locator(".desk-askbar").count() > 0, (
             "a single click did not select (no ask bar)"
         )
+        marked = page.evaluate("() => window.__hsWorldProbe()")[0]
+        assert marked["selected"], "a single click did not mark the ring"
         page.mouse.dblclick(target["x"], target["y"])
         page.wait_for_timeout(500)
         assert page.locator(".desk-pullout").count() > 0, (
             "double-click did not open"
+        )
+        # HS-102-05 — open CONSUMES the mark: no ring, no ask bar left
+        # standing behind the opened card.
+        assert page.locator(".desk-askbar").count() == 0, (
+            "double-click open left the selection mark standing"
+        )
+        opened = page.evaluate("() => window.__hsWorldProbe()")[0]
+        assert not opened["selected"], (
+            "double-click open left the selection ring on the object"
         )
         page.keyboard.press("Escape")
         page.wait_for_timeout(600)

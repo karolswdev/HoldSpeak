@@ -232,9 +232,9 @@ export function WorldStage() {
                     { type: "object" }
                   >;
                   setWorldMenu(null);
-                  useDesk
-                    .getState()
-                    .openPullout(t.id, { x: worldMenu.x, y: worldMenu.y });
+                  const ds = useDesk.getState();
+                  ds.openPullout(t.id, { x: worldMenu.x, y: worldMenu.y });
+                  if (!ds.askOpen) ds.setSelected([]);
                 }}
               >
                 Open
@@ -319,7 +319,9 @@ export function WorldStage() {
                 useDesk.getState().toggleSelected(o.selectionRef);
                 return;
               }
-              useDesk.getState().openPullout(o.id);
+              const ds = useDesk.getState();
+              ds.openPullout(o.id);
+              if (!ds.askOpen) ds.setSelected([]);
             }}
           >
             {o.title}

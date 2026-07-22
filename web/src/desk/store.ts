@@ -710,7 +710,9 @@ export const useDesk = create<DeskState>((set, get) => ({
   openAsk() {
     // Desk windows coexist (focus, don't destroy): opening the composer
     // settles the in-world editor but leaves sibling windows arranged as
-    // the user left them; the selection stays visible behind the panel.
+    // the user left them. The Ask composer is the one deliberate carve-out
+    // (HSM-16-04): it holds its selection rope, unlike card-open, which
+    // now clears the mark on open.
     set({ askOpen: true, editingId: null });
     get().focusPanel("ask");
   },

@@ -244,6 +244,7 @@ export class WorldEngine {
         ref: o.selectionRef,
         x: rect.left + o.u.x * rect.width,
         y: rect.top + o.u.y * rect.height,
+        selected: o.selected,
       }));
     };
     (window as unknown as Record<string, unknown>).__hsWorldZoneProbe = () => {
@@ -973,6 +974,7 @@ export class WorldEngine {
           // double-click reflex on glass).
           state.setDragging(null);
           state.openPullout(hit.object.id, { x: e.clientX, y: e.clientY });
+          if (!state.askOpen) state.setSelected([]);
         } else {
           // The desktop reflex: click selects, double-click opens.
           const now = performance.now();
@@ -986,6 +988,7 @@ export class WorldEngine {
             this.lastTap = null;
             state.setDragging(null);
             state.openPullout(hit.object.id, { x: e.clientX, y: e.clientY });
+            if (!state.askOpen) state.setSelected([]);
           } else {
             this.lastTap = {
               key: hit.object.key,

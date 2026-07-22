@@ -1,13 +1,13 @@
 # Phase 102 — The Refit
 
-**Status:** IN PROGRESS (4/7, 2026-07-22). Chartered by the owner's
+**Status:** IN PROGRESS (5/7, 2026-07-22). Chartered by the owner's
 direct order after the round-9 reflex round merged: *"I really want
 us to create another phase, a phase where we will do exact, direct
 and precise refactorings to a variety of things."* Six named
 targets, two with screenshots; the owner's words per target are
 quoted verbatim in each story.
 
-**Last updated:** 2026-07-22 (HS-102-04 done; HS-102-05 next).
+**Last updated:** 2026-07-22 (HS-102-05 done; HS-102-06 next).
 
 ## Why this phase exists
 
@@ -64,7 +64,7 @@ craft), Article IX.4 (the felt verdict outranks every green suite).
 | HS-102-02 | Live Meeting — a working face | done | [story-02-live-meeting](./story-02-live-meeting.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-102-03 | Ask AI — the composer refit | done | [story-03-ask-ai](./story-03-ask-ai.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-102-04 | The Meetings wings — Outcomes / Record / Artifacts | done | [story-04-meetings-wings](./story-04-meetings-wings.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-102-05 | The selection mark yields to open | backlog | [story-05-selection-mark](./story-05-selection-mark.md) | — |
+| HS-102-05 | The selection mark yields to open | done | [story-05-selection-mark](./story-05-selection-mark.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-102-06 | Speech Settings — one composed face | backlog | [story-06-speech-settings](./story-06-speech-settings.md) | — |
 | HS-102-07 | Closeout — the owner's sitting | backlog | [story-07-closeout](./story-07-closeout.md) | — |
 
@@ -164,3 +164,32 @@ interactions, artifacts wing confirmed `.surface-library`. New guard:
 `test_history_core_artifacts_wing_is_the_library`. Full vitest
 (312/312), tsc, token gate, interior-canon + vocabulary guards green.
 Next: HS-102-05 (the selection mark yields to open).
+
+**2026-07-22 — HS-102-05 (the selection mark yields to open) shipped.**
+A click-grammar fix, not a surface recompose: opening a card (mouse
+double-click, touch tap-open, the world context menu's Open, and the
+a11y activation layer — all four paths through `openPullout`) now
+calls the store's existing `setSelected([])` right after opening,
+clearing the ring + "N selected · Ask AI" bar in the same frame the
+card appears. Guarded by `if (!state.askOpen)` throughout so the Ask
+composer's held selection rope (the HSM-16-04 carve-out) is never
+stripped mid-compose — verified live: select → open Ask AI → double-
+click a different object → Ask AI keeps its original context while
+the second object's card opens alongside it. `openAsk()`'s comment
+("the selection stays visible behind the panel") reworded to name the
+carve-out explicitly, since it no longer describes every open.
+`web/src/desk/gl/engine.ts` (`onUp`'s two open branches) and
+`web/src/desk/gl/WorldStage.tsx` (context-menu Open + the a11y
+layer) — four call sites, one mechanism, no new store action.
+`__hsWorldProbe()` grew a `selected` field so the walk can assert
+ring state without a DOM proxy. Proven live on a real seeded desk
+(`uat.stage --recipe seeded-desk`) at 1440 and 393: mark-then-open
+screenshots show the ring/bar present after a single click and gone
+the instant the card opens. `scripts/desk_gl_walk.py`'s `smoke()` leg
+grew three assertions on the existing tap-open path (marked before,
+unmarked + bar-gone after) and passed live: `smoke: tap-open ok, drag
+ok (330px), lasso bar=1, zone drag 319px`. Full vitest (312/312), tsc,
+build, token gate, interior-canon + vocabulary guards green. No new
+interior-canon guard — this story's regression coverage is the grown
+walk leg, not a raw-wire-dump pattern. Next: HS-102-06 (Speech
+Settings).
