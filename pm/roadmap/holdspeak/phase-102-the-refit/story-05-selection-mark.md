@@ -20,6 +20,19 @@ bar standing behind the opened card. The owner's grammar: the open
 CONSUMES the mark — double-click opens the card and the mark (ring +
 selection bar) clears.
 
+## Design direction
+
+`web/src/desk/store.ts:707-709` already has a `clearSelection()` that
+sets both `selectedIds: []` AND `askOpen: false` — calling it from the
+open branch would wrongly close a held Ask composer too, violating
+this story's own HSM-16-04 carve-out. Use `setSelected([])` (line 704)
+instead, which touches only `selectedIds` — do not add a new store
+action or a second selection-clearing path; the mechanism already
+exists, it's just never called from open. The comment at line 713
+("the selection stays visible behind the panel") documents the
+CURRENT wrong behavior as if intentional — update or remove it once
+the open path clears the mark, so it stops reading as design intent.
+
 ## Scope
 
 - In: the engine tap arm (`web/src/desk/gl/engine.ts`, the

@@ -1200,6 +1200,14 @@ button.surface-edit-in-place:hover {
   }
 }
 
+/* HS-102-01 — an empty switchboard's own quiet caption; the "add"
+   affordance is the ghost bay below it, never a separate CTA. */
+.surface-empty-caption {
+  margin: 0 0 10px;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+}
+
 /* HS-101 rule 2 — the switchboard (SurfaceSwitchboard). */
 .surface-switchboard {
   list-style: none;
@@ -1321,6 +1329,44 @@ button.surface-edit-in-place:hover {
   .surface-bay {
     animation: none;
   }
+}
+
+/* HS-102-01 — the bay expands in place to become its own editor
+   (create AND edit are the same in-place mechanism); a ghost bay is
+   the switchboard's own "add" affordance, never a header button. */
+.surface-bay-expanded {
+  grid-column: 1 / -1;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 15px;
+}
+.surface-bay-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+.surface-bay-ghost {
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--border-subtle);
+  border-style: dashed;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.surface-bay-ghost:hover,
+.surface-bay-ghost:focus-within {
+  background: var(--wash-1);
+  color: var(--text);
+}
+.surface-bay-ghost .surface-bay-main {
+  flex: none;
+  align-items: center;
+}
+.surface-bay-ghost .surface-bay-who {
+  font-family: var(--font-display);
+  font-weight: 600;
 }
 
 /* HS-101 sitting round 2 — a verb under a centered empty state

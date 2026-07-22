@@ -1,13 +1,13 @@
 # Phase 102 — The Refit
 
-**Status:** SCAFFOLDED (0/7, 2026-07-20). Chartered by the owner's
+**Status:** IN PROGRESS (1/7, 2026-07-22). Chartered by the owner's
 direct order after the round-9 reflex round merged: *"I really want
 us to create another phase, a phase where we will do exact, direct
 and precise refactorings to a variety of things."* Six named
 targets, two with screenshots; the owner's words per target are
 quoted verbatim in each story.
 
-**Last updated:** 2026-07-20 (scaffolded; HS-102-01 ready).
+**Last updated:** 2026-07-22 (HS-102-01 done; HS-102-02 next).
 
 ## Why this phase exists
 
@@ -60,7 +60,7 @@ craft), Article IX.4 (the felt verdict outranks every green suite).
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-102-01 | Runs on — destinations easy as heck | ready | [story-01-runs-on](./story-01-runs-on.md) | — |
+| HS-102-01 | Runs on — destinations easy as heck | done | [story-01-runs-on](./story-01-runs-on.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-102-02 | Live Meeting — a working face | backlog | [story-02-live-meeting](./story-02-live-meeting.md) | — |
 | HS-102-03 | Ask AI — the composer refit | backlog | [story-03-ask-ai](./story-03-ask-ai.md) | — |
 | HS-102-04 | The Meetings wings — Outcomes / Record / Artifacts | backlog | [story-04-meetings-wings](./story-04-meetings-wings.md) | — |
@@ -75,3 +75,31 @@ day round 9 (the reflex round, PR #365) merged. HS-102-01 is ready;
 each build story starts with its hands-first ledger. The phase
 closes on the owner's sitting over the assembled chain
 (HS-102-07), per Article IX.4.
+
+**2026-07-21 — each build story (01-06) gained a "Design direction"
+section**, grounded in a live headed drive against a fresh staged
+instance (not the spec prose): the exact raw-wire fields, form
+stacks, and stat strips the owner's words convicted, confirmed
+current and unfixed, plus the specific existing kit component each
+story must reuse (`RuntimeDestination`, `SurfaceBay`, `SurfaceLibrary`,
+`Material`, `SurfaceStream`, `SurfaceGroup`/`SurfaceSettingRow`,
+`EditInPlace`) so the six refits converge on ONE kit rather than six
+independent near-misses. HS-102-07 grew a matching acceptance bullet:
+the sitting checks shipped surfaces against their story's direction,
+not just the walk legs, and refuses a second implementation of any
+named component.
+
+**2026-07-22 — HS-102-01 (Runs on) shipped.** Live-drive ledger
+confirmed the exact form-stack the story convicted; the fix reused
+`RuntimeDestination`'s choice-bay pattern and closed the
+`SurfaceBay` expand-slot gap the design direction named (now a kit
+piece, not a local fork). One real defect caught mid-drive and fixed
+before evidence capture: `Checkbox` (self-labeling) double-rendered
+its text inside a `SurfaceSettingRow` that also carried the label —
+swapped for the bare `SurfaceToggle` `RuntimeDestination` itself
+uses. Proven live at 1440 and 393 (create via the switchboard's own
+ghost bay, edit-in-place, inline URL refusal before save, make
+default, two-step delete); `/api/profiles` wire untouched. New guard:
+`test_profiles_core_never_regresses_to_a_field_stack`. Full vitest
+(312/312), tsc, token gate, and the interior-canon + vocabulary
+guards green. Next: HS-102-02 (Live Meeting).

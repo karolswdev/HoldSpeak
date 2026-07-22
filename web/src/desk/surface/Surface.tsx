@@ -551,11 +551,15 @@ export function SurfaceBay({
   badge,
   tag,
   verbs,
+  expanded,
+  editor,
+  ghost,
+  onClick,
 }: {
   /** True on THE current route — the bay that leads. */
   route?: boolean;
   lamp?: ReactNode;
-  name: ReactNode;
+  name?: ReactNode;
   /** Short liveness text beside the name (never color alone). */
   state?: ReactNode;
   model?: ReactNode;
@@ -563,9 +567,43 @@ export function SurfaceBay({
   badge?: ReactNode;
   tag?: ReactNode;
   verbs?: ReactNode;
+  /** HS-102-01 — the bay IS the editor while true: the summary row
+   * (name/model/where/badge) yields to `editor` in place, spanning
+   * the switchboard's full width. No separate form section. */
+  expanded?: boolean;
+  editor?: ReactNode;
+  /** A dashed, low-emphasis bay for the switchboard's "add" affordance
+   * (never a floating header button for the same act). */
+  ghost?: boolean;
+  onClick?: () => void;
 }) {
+  if (expanded) {
+    return (
+      <li className="surface-bay surface-bay-expanded">
+        <div className="surface-bay-editor">{editor}</div>
+      </li>
+    );
+  }
   return (
-    <li className={route ? "surface-bay surface-bay-route" : "surface-bay"}>
+    <li
+      className={
+        (route ? "surface-bay surface-bay-route" : "surface-bay") +
+        (ghost ? " surface-bay-ghost" : "")
+      }
+      {...(ghost && onClick
+        ? {
+            role: "button",
+            tabIndex: 0,
+            onClick,
+            onKeyDown: (event: KeyboardEvent<HTMLLIElement>) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            },
+          }
+        : {})}
+    >
       <div className="surface-bay-main">
         <div className="surface-bay-who surface-primary">
           {lamp}

@@ -54,6 +54,25 @@ def test_aerogel_tokens_exist() -> None:
         assert name in tokens, f"{name} missing from generated tokens.css"
 
 
+def test_profiles_core_never_regresses_to_a_field_stack() -> None:
+    """HS-102-01 — creating/editing a Runs on destination is choice
+    bays + SurfaceGroup rows, never the old label-over-input `Field`/
+    `Select` stack the story convicted. Named by story so the next
+    "quick fix" can't quietly bring the old form back."""
+    source = (WEB_SRC / "pages" / "cores" / "ProfilesCore.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "<Field" not in source, (
+        "HS-102-01 regression: ProfilesCore.tsx must not render a "
+        "label-over-input <Field> stack in its create/edit path — use "
+        "SurfaceGroup/SurfaceSettingRow choice bays instead."
+    )
+    assert "<Select" not in source, (
+        "HS-102-01 regression: destination Kind is chosen by bay, "
+        "never a bare <Select> the person has to simulate in their head."
+    )
+
+
 def test_fluidity_census() -> None:
     """HS-101 rule 5 (B2) — the desk is fluid: the named operating
     moments carry token-ridden, compositor-only motion, and reduced

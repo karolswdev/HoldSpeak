@@ -4,24 +4,27 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-20 — **Phase 102, The Refit, SCAFFOLDED
-(0/7)** from the owner's direct six-target order ("exact, direct and
-precise refactorings"): Runs on destination management, the Live
-Meeting face, the Ask AI composer, the Meetings wings
-(Outcomes/Record/Artifacts), the selection mark yielding to open,
-and the Speech Settings gear face (screenshot-convicted). The design
-authority is the HS-101-02-approved interior canon; each story works
-the round-9 way — hands first, headed, both viewports. Earlier the
-same day: **HS-101-04 round 9 (the reflex round, PR #365) merged** —
-single-click selects / double-click opens, cards open beside their
-object and coexist as real windows, growth animates, right-click
-answers on the world, the note edits in place, the ⌘K shelf's
-z-defect fixed; the owner's 101 sitting remains open in parallel.
-Phase 101 itself stands at 3/4 (canon ratified and built, PR #359;
-sweep 4122/0).
+**Last updated:** 2026-07-22 — **Phase 102, The Refit, 1/7**:
+HS-102-01 (Runs on) shipped — destination create/edit is now choice
+bays (Endpoint/This device/Paired device/Mesh node) expanding in
+place on the switchboard, reusing the `RuntimeDestination` pattern and
+closing a `SurfaceBay` kit gap, proven live at 1440+393 with inline
+URL refusal, edit-in-place, make-default, and two-step delete; wire
+byte-identical. Remaining: the Live Meeting face, the Ask AI composer,
+the Meetings wings (Outcomes/Record/Artifacts), the selection mark
+yielding to open, and the Speech Settings gear face
+(screenshot-convicted). The design authority is the HS-101-02-approved
+interior canon; each story works the round-9 way — hands first,
+headed, both viewports. Earlier: **HS-101-04 round 9 (the reflex
+round, PR #365) merged** — single-click selects / double-click opens,
+cards open beside their object and coexist as real windows, growth
+animates, right-click answers on the world, the note edits in place,
+the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
+parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
+PR #359; sweep 4122/0).
 
 **Current phase:** [**Phase 102 — The Refit**](./phase-102-the-refit/current-phase-status.md)
-— **SCAFFOLDED (0/7, HS-102-01 ready)**. The
+— **IN PROGRESS (1/7, HS-102-02 next)**. The
 [Phase 101](./phase-101-the-native-innards/current-phase-status.md)
 closeout sitting (HS-101-04) stays open alongside.
 

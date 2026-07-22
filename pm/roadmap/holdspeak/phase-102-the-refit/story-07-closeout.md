@@ -23,6 +23,18 @@ surfaces, not on a green sweep alone (Article IX.4).
 ## Acceptance criteria
 
 - [ ] Machine proof green AND the owner's sitting verdict recorded.
+- [ ] Each of the six stories' "Design direction" section (added
+      2026-07-21) is checked against the SHIPPED surface, not just its
+      acceptance criteria — a story can pass its own checklist while
+      quietly drifting from the cited component (a hand-rolled
+      lookalike instead of the reused `Surface.tsx` kit piece). Name
+      any drift found; it blocks the sitting's pass verdict.
+- [ ] No new kit fork: grep the diff for a second implementation of
+      any component named in a Design direction section
+      (`SurfaceBay`, `SurfaceLibrary`, `EditInPlace`,
+      `RuntimeDestination`, `SurfaceGroup`/`SurfaceSettingRow`,
+      `Material`, `SurfaceStream`) — one owner per shape, per the
+      canon's own rule 2.
 
 ## Test plan
 

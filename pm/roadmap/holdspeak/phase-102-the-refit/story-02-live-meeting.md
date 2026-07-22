@@ -40,6 +40,48 @@ moment the person just wants to hit Record. The working posture rule
   Meetings (HS-102-04); the recording orb/bar indicator (shipped,
   system moments).
 
+## Design direction (grounded in a live drive, 2026-07-21)
+
+Driven headed: the moment `Record meeting` fires — before a word is
+spoken, `00:00`/`0 segments` — the face already shows a four-cell
+`connected/00:00/0/recording` stat strip, a "Bookmark" section with an
+"Optional label" input + "Add bookmark" button, an "Intent routing"
+preset `<Select>` defaulted to "Balanced," and a "Preview route"
+`<textarea>` with helper copy. All of it renders at the FIRST instant,
+not after some threshold — the working-posture failure is immediate.
+
+1. **One verb, display step, alone at the top.** Stop/Start is the
+   only thing that renders above the fold at idle-and-just-started;
+   everything else in this story's scope earns its place only once
+   it's needed (rule below). No `MetricStrip`-shaped four-cell grid —
+   it's the literal thing convicted; replace `connected/00:00/0/
+   recording` with ONE composed facts line at secondary-step type
+   (`--desk-surface-detail-size`), e.g. "Connected · 00:00 · This
+   device."
+2. **Transcript as `SurfaceStream`.** Reuse `SurfaceStream` /
+   `SurfaceStreamEntry` (`Surface.tsx:375-455`) — the same shape the
+   Journal wing already rides — for the live transcript, not a bare
+   "Listening for speech" placeholder div with nothing around it.
+3. **Bookmark is a `SurfaceStreamEntry` hover verb, not a form.** Kill
+   the standalone "Bookmark" section (label + input + button) entirely.
+   Marking a moment is a verb that appears on the transcript stream
+   itself at the point in time it marks (hover/press reveals it, per
+   composition rule 3); naming it happens inline afterward on the
+   entry, never in a pre-filled form waiting above the transcript.
+4. **Intent routing preset + Preview route die on this face or move
+   behind a gear door.** `LiveCore.tsx` has no `door`/`doorOpen` wings
+   split today (unlike `DictationCore.tsx`'s `Configure dictation`
+   door, `wings.tsx:70-76`) — add one if this plumbing survives at
+   all; the working posture (AGENT_BRIEF §3) does not carry
+   configuration knobs on its headline face regardless of load state.
+5. **Deferred plugin jobs table (`total jobs`/`queued jobs`/`running
+   jobs`/`failed jobs`/`queued due jobs`/`scheduled retry jobs`) is
+   raw wire in the glass (Article VI) — same defect class as
+   HS-102-06's pipeline dump.** Either fold it behind the gear as a
+   diagnostics disclosure, or compose it as one honest line
+   ("processing 2 of 3 · Process pending") — never six labeled numbers
+   in a grid on the working face.
+
 ## Acceptance criteria
 
 - [ ] Hands-first ledger recorded (headed, 1440 + 393, idle AND
