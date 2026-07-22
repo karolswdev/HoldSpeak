@@ -4,16 +4,24 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-22 — **Phase 102, The Refit, 1/7**:
-HS-102-01 (Runs on) shipped — destination create/edit is now choice
-bays (Endpoint/This device/Paired device/Mesh node) expanding in
-place on the switchboard, reusing the `RuntimeDestination` pattern and
-closing a `SurfaceBay` kit gap, proven live at 1440+393 with inline
-URL refusal, edit-in-place, make-default, and two-step delete; wire
-byte-identical. Remaining: the Live Meeting face, the Ask AI composer,
-the Meetings wings (Outcomes/Record/Artifacts), the selection mark
-yielding to open, and the Speech Settings gear face
-(screenshot-convicted). The design authority is the HS-101-02-approved
+**Last updated:** 2026-07-22 — **Phase 102, The Refit, 2/7**:
+HS-102-02 (Live Meeting) shipped — the room's stat strip, Bookmark
+form, Intent routing preset, Preview-route textarea, and Deferred-
+plugin-jobs dump (all visible at the FIRST instant of a live meeting,
+before a word was spoken) fold behind a new "Configure meeting" gear
+door; the working face is now one verb, one quiet facts line, and the
+transcript as a `SurfaceStream`, with Bookmark as an inline verb on
+the stream instead of a form section; proven live at 1440+393,
+`/api/*` wire byte-identical. Earlier the same day: **HS-102-01 (Runs
+on) shipped** — destination create/edit is now choice bays (Endpoint/
+This device/Paired device/Mesh node) expanding in place on the
+switchboard, reusing the `RuntimeDestination` pattern and closing a
+`SurfaceBay` kit gap, proven live at 1440+393 with inline URL refusal,
+edit-in-place, make-default, and two-step delete; wire byte-identical.
+Remaining: the Ask AI composer, the Meetings wings
+(Outcomes/Record/Artifacts), the selection mark yielding to open, and
+the Speech Settings gear face (screenshot-convicted). The design
+authority is the HS-101-02-approved
 interior canon; each story works the round-9 way — hands first,
 headed, both viewports. Earlier: **HS-101-04 round 9 (the reflex
 round, PR #365) merged** — single-click selects / double-click opens,
@@ -24,7 +32,7 @@ parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
 **Current phase:** [**Phase 102 — The Refit**](./phase-102-the-refit/current-phase-status.md)
-— **IN PROGRESS (1/7, HS-102-02 next)**. The
+— **IN PROGRESS (2/7, HS-102-03 next)**. The
 [Phase 101](./phase-101-the-native-innards/current-phase-status.md)
 closeout sitting (HS-101-04) stays open alongside.
 

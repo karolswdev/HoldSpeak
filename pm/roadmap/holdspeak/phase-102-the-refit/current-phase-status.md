@@ -1,13 +1,13 @@
 # Phase 102 — The Refit
 
-**Status:** IN PROGRESS (1/7, 2026-07-22). Chartered by the owner's
+**Status:** IN PROGRESS (2/7, 2026-07-22). Chartered by the owner's
 direct order after the round-9 reflex round merged: *"I really want
 us to create another phase, a phase where we will do exact, direct
 and precise refactorings to a variety of things."* Six named
 targets, two with screenshots; the owner's words per target are
 quoted verbatim in each story.
 
-**Last updated:** 2026-07-22 (HS-102-01 done; HS-102-02 next).
+**Last updated:** 2026-07-22 (HS-102-02 done; HS-102-03 next).
 
 ## Why this phase exists
 
@@ -61,7 +61,7 @@ craft), Article IX.4 (the felt verdict outranks every green suite).
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-102-01 | Runs on — destinations easy as heck | done | [story-01-runs-on](./story-01-runs-on.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-102-02 | Live Meeting — a working face | backlog | [story-02-live-meeting](./story-02-live-meeting.md) | — |
+| HS-102-02 | Live Meeting — a working face | done | [story-02-live-meeting](./story-02-live-meeting.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-102-03 | Ask AI — the composer refit | backlog | [story-03-ask-ai](./story-03-ask-ai.md) | — |
 | HS-102-04 | The Meetings wings — Outcomes / Record / Artifacts | backlog | [story-04-meetings-wings](./story-04-meetings-wings.md) | — |
 | HS-102-05 | The selection mark yields to open | backlog | [story-05-selection-mark](./story-05-selection-mark.md) | — |
@@ -103,3 +103,21 @@ default, two-step delete); `/api/profiles` wire untouched. New guard:
 `test_profiles_core_never_regresses_to_a_field_stack`. Full vitest
 (312/312), tsc, token gate, and the interior-canon + vocabulary
 guards green. Next: HS-102-02 (Live Meeting).
+
+**2026-07-22 — HS-102-02 (Live Meeting) shipped.** The live drive
+confirmed the room even lacks a reachable "before recording" state in
+normal use (the Record chip both opens and starts) — the stat strip,
+Bookmark form, Intent routing preset, Preview-route textarea, and
+Deferred-plugin-jobs dump all rendered at the FIRST instant of a live
+meeting. `LiveCore.tsx` gained the same `door`/`doorOpen` gear split
+`DictationCore.tsx` already uses (Intent routing/Preview
+route/Deferred jobs/Devices moved behind "Configure meeting");
+`MetricStrip` is gone, replaced by one `SurfaceFacts` line; the
+transcript now rides `SurfaceStream`/`SurfaceStreamEntry`; Bookmark is
+a `+ Bookmark` verb opening a transient inline composer (the wire only
+accepts a label at creation, so the POST defers to commit rather than
+firing empty). Proven live: start → real captured segment → bookmark
+→ configure door → stop, both viewports, `RecordOrb` entry point at
+393px. New guard: `test_live_core_never_regresses_to_a_stat_strip`.
+Full vitest (312/312), tsc, token gate, interior-canon + vocabulary
+guards green. Next: HS-102-03 (Ask AI).

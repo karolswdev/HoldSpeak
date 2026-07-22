@@ -54,6 +54,21 @@ def test_aerogel_tokens_exist() -> None:
         assert name in tokens, f"{name} missing from generated tokens.css"
 
 
+def test_live_core_never_regresses_to_a_stat_strip() -> None:
+    """HS-102-02 — the Live Meeting face is the working posture: one
+    verb, one quiet facts line. `MetricStrip` was the literal four-cell
+    connection/duration/segments/room grid the story convicted; it must
+    never come back on this face."""
+    source = (WEB_SRC / "pages" / "cores" / "LiveCore.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "MetricStrip" not in source, (
+        "HS-102-02 regression: LiveCore.tsx must not reintroduce "
+        "MetricStrip — duration/segments/connection compose as ONE "
+        "quiet SurfaceFacts line instead."
+    )
+
+
 def test_profiles_core_never_regresses_to_a_field_stack() -> None:
     """HS-102-01 — creating/editing a Runs on destination is choice
     bays + SurfaceGroup rows, never the old label-over-input `Field`/
