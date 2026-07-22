@@ -95,6 +95,13 @@
 .surface-row[data-selected] {
   background: var(--accent-tint);
 }
+/* HS-102-04 — a quiet row (nothing pending) reads lower-emphasis than
+   a row waiting on a verdict; the state pill still carries the fact,
+   this is weight only, never the sole signal. */
+.surface-row[data-quiet] .surface-row-text strong {
+  font-weight: 500;
+  color: var(--text-muted);
+}
 .surface-row-main,
 .surface-row-open {
   display: flex;
@@ -1531,6 +1538,15 @@ button.surface-edit-in-place:hover {
 .desk-surface-body .transcript-list p {
   margin: 0;
   line-height: 1.55;
+}
+
+/* HS-102-04 — the Record wing's two verbs lead at display step,
+   above the drop well; the divider caption stays quiet. */
+.surface-record-lead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
 /* HS-101 round 7 — the import is a drop well, not a form: the same

@@ -76,6 +76,7 @@ export function SurfaceRow({
   selected,
   onOpen,
   children,
+  quiet,
 }: {
   glyph?: ReactNode;
   title: ReactNode;
@@ -85,6 +86,10 @@ export function SurfaceRow({
   selected?: boolean;
   onOpen?: () => void;
   children?: ReactNode;
+  /** HS-102-04 — a row with nothing pending reads quieter than one
+   * waiting on a verdict (composition rule 2's reviewing posture);
+   * never the only signal (pair with `meta`, never color/weight alone). */
+  quiet?: boolean;
 }) {
   const body = (
     <>
@@ -97,7 +102,11 @@ export function SurfaceRow({
     </>
   );
   return (
-    <li className="surface-row" data-selected={selected || undefined}>
+    <li
+      className="surface-row"
+      data-selected={selected || undefined}
+      data-quiet={quiet || undefined}
+    >
       <div className="surface-row-line">
         {onOpen ? (
           <button type="button" className="surface-row-open" onClick={onOpen}>

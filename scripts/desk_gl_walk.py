@@ -738,6 +738,24 @@ def meetingflow() -> None:
             f"meetingflow: arrival -> outcomes face in {clicks} interactions, "
             f"{eyebrows} outcome concepts, transcript folded, no tab wall"
         )
+        # HS-102-04 — the Artifacts wing is the library composition
+        # (SurfaceLibrary), never a Disclosure+SurfaceCode dump, when
+        # populated; the honest empty state when it isn't.
+        page.click(".desk-surface-window .desk-wings button:has-text('Artifacts')")
+        page.wait_for_timeout(500)
+        populated = page.locator(".desk-surface-window .surface-library").count() > 0
+        empty = page.locator(
+            ".desk-surface-window >> text=No artifacts yet"
+        ).count() > 0
+        assert populated or empty, "artifacts wing rendered neither the library nor the honest empty state"
+        assert (
+            page.locator(".desk-surface-window .surface-library .desk-pullout-md").count()
+            == 0
+        ), "artifacts wing regressed to a raw dump inside the library"
+        print(
+            "meetingflow: artifacts wing is the library composition "
+            f"({'populated' if populated else 'empty, honest'})"
+        )
         browser.close()
 
 

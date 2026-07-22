@@ -89,6 +89,23 @@ def test_ask_panel_never_regresses_to_a_pre_box_or_section_stack() -> None:
     )
 
 
+def test_history_core_artifacts_wing_is_the_library() -> None:
+    """HS-102-04 — the Meetings Artifacts wing is the library
+    composition (SurfaceLibrary/SurfaceLibraryTile, the artifact body
+    as the tile face), never a Disclosure+SurfaceCode dump. `Disclosure`
+    and `SurfaceCode` stay legal elsewhere in this file (the Outcomes
+    routing receipt, round 6, out of scope) — this pins the POSITIVE
+    shape rather than banning either import outright."""
+    source = (WEB_SRC / "pages" / "cores" / "HistoryCore.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "SurfaceLibrary" in source and "SurfaceLibraryTile" in source, (
+        "HS-102-04 regression: the Artifacts wing must compose through "
+        "SurfaceLibrary/SurfaceLibraryTile, matching the Blocks wing "
+        "(DictationCore.tsx) — not a second library shape."
+    )
+
+
 def test_profiles_core_never_regresses_to_a_field_stack() -> None:
     """HS-102-01 — creating/editing a Runs on destination is choice
     bays + SurfaceGroup rows, never the old label-over-input `Field`/

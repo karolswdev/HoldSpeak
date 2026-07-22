@@ -1,13 +1,13 @@
 # Phase 102 — The Refit
 
-**Status:** IN PROGRESS (3/7, 2026-07-22). Chartered by the owner's
+**Status:** IN PROGRESS (4/7, 2026-07-22). Chartered by the owner's
 direct order after the round-9 reflex round merged: *"I really want
 us to create another phase, a phase where we will do exact, direct
 and precise refactorings to a variety of things."* Six named
 targets, two with screenshots; the owner's words per target are
 quoted verbatim in each story.
 
-**Last updated:** 2026-07-22 (HS-102-03 done; HS-102-04 next).
+**Last updated:** 2026-07-22 (HS-102-04 done; HS-102-05 next).
 
 ## Why this phase exists
 
@@ -63,7 +63,7 @@ craft), Article IX.4 (the felt verdict outranks every green suite).
 | HS-102-01 | Runs on — destinations easy as heck | done | [story-01-runs-on](./story-01-runs-on.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-102-02 | Live Meeting — a working face | done | [story-02-live-meeting](./story-02-live-meeting.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-102-03 | Ask AI — the composer refit | done | [story-03-ask-ai](./story-03-ask-ai.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-102-04 | The Meetings wings — Outcomes / Record / Artifacts | backlog | [story-04-meetings-wings](./story-04-meetings-wings.md) | — |
+| HS-102-04 | The Meetings wings — Outcomes / Record / Artifacts | done | [story-04-meetings-wings](./story-04-meetings-wings.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-102-05 | The selection mark yields to open | backlog | [story-05-selection-mark](./story-05-selection-mark.md) | — |
 | HS-102-06 | Speech Settings — one composed face | backlog | [story-06-speech-settings](./story-06-speech-settings.md) | — |
 | HS-102-07 | Closeout — the owner's sitting | backlog | [story-07-closeout](./story-07-closeout.md) | — |
@@ -143,3 +143,24 @@ it; corrected same day, the deferred bullet on HS-102-07 removed.)
 New guard: `test_ask_panel_never_regresses_to_a_pre_box_or_section_stack`.
 Full vitest (312/312), tsc, token gate, interior-canon + vocabulary
 guards green. Next: HS-102-04 (the Meetings wings).
+
+**2026-07-22 — HS-102-04 (the Meetings wings) shipped.** Artifacts:
+the `Disclosure`+`SurfaceCode` dump replaced by `SurfaceLibrary`/
+`SurfaceLibraryTile` — the SAME components Blocks already uses —
+artifact body as the tile FACE via `Material`, an Open verb to the
+round-9 object card. Outcomes: `SurfaceRow` gained a `quiet` prop (kit
+addition); the meetings rail sorts needs-you (error/warning tone)
+rows first, settled rows read quieter. Record: a leading "Record
+meeting" verb + quiet caption sit above the existing round-7 drop
+well. Proven live with REAL data, not fixtures: a transcript imported
+through `/api/meetings/import`, run through the real plugin chain
+(`holdspeak intel --reroute`) against the LAN model at `192.168.1.43`
+— 4 real synthesized artifacts, correctly library-composed at both
+viewports. One defect caught and fixed mid-drive: plugin artifact
+bodies self-title with a heading matching their own name, duplicating
+against the tile spine — stripped before render. `meetingflow` walk
+leg grown and run live (populated, not just empty): budget still 3
+interactions, artifacts wing confirmed `.surface-library`. New guard:
+`test_history_core_artifacts_wing_is_the_library`. Full vitest
+(312/312), tsc, token gate, interior-canon + vocabulary guards green.
+Next: HS-102-05 (the selection mark yields to open).

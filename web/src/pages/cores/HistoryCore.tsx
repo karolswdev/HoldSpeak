@@ -4,7 +4,7 @@
 // as the split's second pane; import is an in-surface section; rows
 // are honest; confirms are inline two-steps. Wire calls unchanged.
 import { useEffect, useMemo, useState } from "react";
-import { openSurfaceOr } from "../../desk/shell";
+import { openPrimitive, openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
 import {
   Button,
@@ -33,6 +33,8 @@ import { PostureNote, asRows, rowId, useResource } from "../pageSupport";
 import {
   ConfirmVerb,
   SurfaceCode,
+  SurfaceLibrary,
+  SurfaceLibraryTile,
   SurfaceRow,
   SurfaceRows,
   SurfaceSection,
@@ -40,6 +42,7 @@ import {
   SurfaceState,
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
+import { Material } from "../../desk/surface/Material";
 import { humanTime, presentValue } from "../../desk/surface/format";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { spriteUrl } from "../../desk/sprites";
@@ -95,9 +98,11 @@ function download(blob: Blob, name: string) {
 function ImportSection({
   onDone,
   onImported,
+  scope,
 }: {
   onDone(): void;
   onImported(): void;
+  scope?: string;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -131,13 +136,21 @@ function ImportSection({
   };
   return (
     <SurfaceSection
-      label="Import a recording or transcript"
       actions={
         <Button dense variant="ghost" onClick={onDone}>
           Close
         </Button>
       }
     >
+      <div className="surface-record-lead">
+        <Button
+          variant="primary"
+          onClick={() => openSurfaceOr("record-live", "/live", scope)}
+        >
+          Record meeting
+        </Button>
+        <span className="quiet">or drop a recording below</span>
+      </div>
       <label
         className={"surface-dropwell" + (file ? " has-file" : "")}
         onDragOver={(event) => event.preventDefault()}
@@ -470,22 +483,53 @@ function MeetingDetail({
       />
       {view === "artifacts" ? (
         artifactRows.length ? (
-          <>
-            {artifactRows.map((row, index) => (
-              <Disclosure
-                key={rowId(row, index)}
-                title={String(row.title ?? row.artifact_type ?? "Artifact")}
-              >
-                <SurfaceCode>
-                  {String(
-                    row.body_markdown ??
-                      row.content ??
-                      JSON.stringify(row, null, 2),
-                  )}
-                </SurfaceCode>
-              </Disclosure>
-            ))}
-          </>
+          <SurfaceLibrary
+            count={artifactRows.length}
+            countLabel={artifactRows.length === 1 ? "artifact" : "artifacts"}
+          >
+            {artifactRows.map((row, index) => {
+              const title = String(row.title ?? row.artifact_type ?? "Artifact");
+              let body = String(row.body_markdown ?? row.content ?? "").trim();
+              // Plugin-authored bodies often self-title with a leading
+              // markdown heading matching `title` — the tile's spine
+              // already carries the name, so drop the redundant echo.
+              const headingEcho = new RegExp(
+                `^#{1,3}\\s+${title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\n+`,
+                "i",
+              );
+              body = body.replace(headingEcho, "");
+              return (
+                <SurfaceLibraryTile
+                  key={rowId(row, index)}
+                  face={
+                    body ? (
+                      <Material>{body}</Material>
+                    ) : (
+                      <SurfaceCode>{JSON.stringify(row, null, 2)}</SurfaceCode>
+                    )
+                  }
+                  name={title}
+                  says={
+                    <span>
+                      {String(detail?.title ?? meeting.title ?? "Meeting")}
+                      {" · "}
+                      {humanTime(row.created_at) || "just now"}
+                    </span>
+                  }
+                  verbs={
+                    <Button
+                      dense
+                      onClick={() =>
+                        openPrimitive(`artifact:${String(row.id)}`)
+                      }
+                    >
+                      Open
+                    </Button>
+                  }
+                />
+              );
+            })}
+          </SurfaceLibrary>
         ) : (
           <SurfaceState empty emptyLabel="No artifacts yet" emptyGlyph="◇" />
         )
@@ -720,26 +764,29 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       </Button>
     </>
   );
+  const rowTone = (row: JsonRecord) =>
+    row.status === "failed" ||
+    ["error", "failed", "import_failed"].includes(
+      String(row.intel_status ?? ""),
+    ) ||
+    ["capture_failed", "recoverable", "recording"].includes(
+      String(row.capture_status ?? ""),
+    )
+      ? "error"
+      : ["partial", "skipped", "queued"].includes(
+            String(row.intel_status ?? ""),
+          )
+        ? "warning"
+        : row.status === "complete"
+          ? "success"
+          : "neutral";
+  // HS-102-04 — the reviewing posture: a row needing a look (error or
+  // warning tone) leads; a fully settled row reads quieter, never
+  // uniform (composition rule 2).
+  const needsYou = (row: JsonRecord) =>
+    rowTone(row) === "error" || rowTone(row) === "warning";
   const rowState = (row: JsonRecord) => (
-    <StatusPill
-      tone={
-        row.status === "failed" ||
-        ["error", "failed", "import_failed"].includes(
-          String(row.intel_status ?? ""),
-        ) ||
-        ["capture_failed", "recoverable", "recording"].includes(
-          String(row.capture_status ?? ""),
-        )
-          ? "error"
-          : ["partial", "skipped", "queued"].includes(
-                String(row.intel_status ?? ""),
-              )
-            ? "warning"
-            : row.status === "complete"
-              ? "success"
-              : "neutral"
-      }
-    >
+    <StatusPill tone={rowTone(row)}>
       {displayState(
         (row.capture_status !== "finalized"
           ? row.capture_status
@@ -862,12 +909,17 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         onRetry={() => void meetings.reload()}
       >
         <SurfaceRows>
-          {meetingRows.map((row, index) => (
+          {[...meetingRows]
+            .sort(
+              (a, b) => Number(needsYou(b)) - Number(needsYou(a)),
+            )
+            .map((row, index) => (
             <SurfaceRow
               key={rowId(row, index)}
               title={String(row.title ?? "Meeting")}
               detail={humanTime(row.started_at ?? row.created_at) || undefined}
               meta={rowState(row)}
+              quiet={!needsYou(row)}
               selected={Boolean(
                 selected && String(selected.id) === String(row.id),
               )}
@@ -988,6 +1040,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     <ImportSection
       onDone={() => setView("outcomes")}
       onImported={() => void meetings.reload()}
+      scope={scope}
     />
   ) : view === "artifacts" ? (
     selected ? (
