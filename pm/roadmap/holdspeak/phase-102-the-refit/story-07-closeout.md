@@ -35,12 +35,6 @@ surfaces, not on a green sweep alone (Article IX.4).
       `RuntimeDestination`, `SurfaceGroup`/`SurfaceSettingRow`,
       `Material`, `SurfaceStream`) — one owner per shape, per the
       canon's own rule 2.
-- [ ] HS-102-03's deferred leg closes here: drive one real grounded
-      Ask AI against a configured model (`.43` or a staged endpoint —
-      the sandboxed build environment has no reachable model, only
-      the honest-refusal path was provable there) and confirm the
-      `Material` render + "Keep on the desk" flow live, both
-      viewports.
 
 ## Test plan
 

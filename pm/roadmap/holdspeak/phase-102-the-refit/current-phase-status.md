@@ -122,22 +122,24 @@ firing empty). Proven live: start → real captured segment → bookmark
 Full vitest (312/312), tsc, token gate, interior-canon + vocabulary
 guards green. Next: HS-102-03 (Ask AI).
 
-**2026-07-22 — HS-102-03 (Ask AI) shipped, with one deferred leg.**
-`AskPanel.tsx` recomposed to the one-well grammar `PersonaChat.tsx`
-and the capability-card composer already use (`desk-chat-well` /
-`desk-chat-composer` / `desk-chat-well-foot`) — mic + question +
-verb inline, `RunsOnPicker`/`GroundingSection`/`RailsPicker` folded
-into the well's foot as captions (a scoped CSS rule strips their
+**2026-07-22 — HS-102-03 (Ask AI) shipped.** `AskPanel.tsx`
+recomposed to the one-well grammar `PersonaChat.tsx` and the
+capability-card composer already use (`desk-chat-well` /
+`desk-chat-composer` / `desk-chat-well-foot`) — mic + question + verb
+inline, `RunsOnPicker`/`GroundingSection`/`RailsPicker` folded into
+the well's foot as captions (a scoped CSS rule strips their
 bordered-card chrome only in that context, leaving PersonaChat's own
 placement untouched). `desk-pullout-md`'s raw-markdown `<pre>` is
 gone; the printed answer renders through `Material` (HS-101 round
-8's renderer, reused not reinvented). Proven live end to end through
-the empty state, the grounding disclosure open, and — since this
-sandbox has no reachable language model — the HONEST failure state
-("No language model on this hub"), at both viewports. **Deferred to
-HS-102-07 (the owner's sitting):** a real grounded ask against a
-configured model, confirming the `Material` render + Keep flow live
-— the one acceptance-criteria leg this environment cannot prove.
+8's renderer, reused not reinvented). Proven live end to end,
+including a REAL grounded ask against the LAN model at `192.168.1.43`
+(registered as a `Runs on` destination through the unchanged
+`/api/profiles` wire): selected a note → picked the destination →
+asked → a correct, `Material`-rendered answer with an honest egress
+badge and receipt → Keep minted a real desk artifact. (A first pass
+of the evidence wrongly claimed the LAN model was unreachable from
+this sandbox and deferred that leg to HS-102-07 — the owner caught
+it; corrected same day, the deferred bullet on HS-102-07 removed.)
 New guard: `test_ask_panel_never_regresses_to_a_pre_box_or_section_stack`.
 Full vitest (312/312), tsc, token gate, interior-canon + vocabulary
 guards green. Next: HS-102-04 (the Meetings wings).

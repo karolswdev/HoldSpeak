@@ -9,11 +9,11 @@ HS-102-03 (Ask AI) shipped — the composer is now one well
 (`desk-chat-well`, the same grammar `PersonaChat` and the capability
 cards already use), Runs on/grounding/rails fold into the well's foot
 as captions, and the printed answer renders through `Material`
-instead of a raw-markdown `<pre>`; proven live through the empty state,
-grounding open, and the honest no-model refusal at both viewports —
-**one leg deferred to HS-102-07's owner sitting**: a real grounded
-answer against a configured model, since this sandbox has no reachable
-LLM. Earlier the same day: **HS-102-02 (Live Meeting) shipped** — the
+instead of a raw-markdown `<pre>`; proven live end to end INCLUDING a
+real grounded ask against the LAN model at `192.168.1.43` (registered
+through the unchanged `/api/profiles` wire) — a correct answer,
+`Material`-rendered, kept as a real desk artifact. Earlier the same
+day: **HS-102-02 (Live Meeting) shipped** — the
 room's stat strip, Bookmark form, Intent routing preset, Preview-route
 textarea, and Deferred-plugin-jobs dump (all visible at the FIRST
 instant of a live meeting, before a word was spoken) fold behind a new

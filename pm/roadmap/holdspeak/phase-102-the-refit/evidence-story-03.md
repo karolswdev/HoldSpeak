@@ -137,20 +137,39 @@ handoff (one gesture, unchanged).
 - `assets/hs-102-03-after-mobile-393.png` — the same composer at
   393px: single column, well-foot wraps cleanly, no overflow.
 
-## Deferred verification (honest gap, not claimed done)
+### Correction (2026-07-22, same day): the real grounded answer, proven live
 
-This staged instance and this sandbox have no reachable language
-model (no LAN egress from the sandboxed shell; no model configured
-locally) — the ANSWERED state (a real `Material`-rendered response
-+ Keep-on-the-desk) could not be produced live in this session, only
-the refusal path. `Material` itself is not new or unproven code — it
-is the exact component already live-verified in HS-101 round 8 for
-the Blocks and Journal wings — but AskPanel's specific wiring of it
-has only been proven by code review + the interior-canon guard below,
-not a live grounded answer. HS-102-07 (the owner's sitting) should
-close this: drive one real grounded ask against a configured
-destination (`.43` or a staged endpoint) and confirm the Material
-render + Keep flow before signing off the phase.
+The first pass of this evidence file wrongly claimed the LAN model at
+`192.168.1.43:8080` was unreachable from this sandbox and deferred the
+answered-state proof to HS-102-07. That was wrong — the owner caught
+it; `curl http://192.168.1.43:8080/v1/models` answers directly from
+this shell. Re-run with the real model, through the real wire, no
+shortcuts:
+
+- Registered `.43` as a real `Runs on` destination via
+  `POST /api/profiles` (`kind: openAICompatible`,
+  `base_url: http://192.168.1.43:8080`,
+  `model: Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf`) — the exact wire
+  HS-102-01 shipped, byte-identical, no shortcut route.
+- `assets/hs-102-03-after-destination-picked.png` — the well-foot's
+  `RunsOnPicker` set to the LAN destination, inline in the same
+  composer.
+- `assets/hs-102-03-after-real-answer.png` — asked "In one sentence,
+  what is the biggest risk mentioned?" against a real note ("Q3
+  planning," body naming mesh-worker deadlocking as the risk). The
+  model answered correctly and the printed card is `Material` —
+  clean prose, no markdown box — with the receipt as a quiet caption
+  ("Ran on LAN llama.cpp (.43) · cloud · Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf
+  · private_network") and the egress badge honestly reading
+  "→ Leaves device · 192.168.1.43 · Qwythos-9B-Clau…".
+- `assets/hs-102-03-after-keep-materialized.png` — "Keep" minted a
+  real artifact ("Summarize") on the desk wearing the NEW beat, same
+  as every other run-born output.
+
+The acceptance criterion ("select an object → Ask → grounded answer →
+keep → the artifact materializes") is now fully proven live, not
+deferred. HS-102-07's added bullet about this gap is stale and is
+removed in the same commit as this correction.
 
 ## Guard added
 
