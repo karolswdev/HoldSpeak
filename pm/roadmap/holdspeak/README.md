@@ -4,21 +4,29 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-22 — **Phase 102, The Refit, 2/7**:
-HS-102-02 (Live Meeting) shipped — the room's stat strip, Bookmark
-form, Intent routing preset, Preview-route textarea, and Deferred-
-plugin-jobs dump (all visible at the FIRST instant of a live meeting,
-before a word was spoken) fold behind a new "Configure meeting" gear
-door; the working face is now one verb, one quiet facts line, and the
-transcript as a `SurfaceStream`, with Bookmark as an inline verb on
-the stream instead of a form section; proven live at 1440+393,
-`/api/*` wire byte-identical. Earlier the same day: **HS-102-01 (Runs
-on) shipped** — destination create/edit is now choice bays (Endpoint/
-This device/Paired device/Mesh node) expanding in place on the
-switchboard, reusing the `RuntimeDestination` pattern and closing a
-`SurfaceBay` kit gap, proven live at 1440+393 with inline URL refusal,
-edit-in-place, make-default, and two-step delete; wire byte-identical.
-Remaining: the Ask AI composer, the Meetings wings
+**Last updated:** 2026-07-22 — **Phase 102, The Refit, 3/7**:
+HS-102-03 (Ask AI) shipped — the composer is now one well
+(`desk-chat-well`, the same grammar `PersonaChat` and the capability
+cards already use), Runs on/grounding/rails fold into the well's foot
+as captions, and the printed answer renders through `Material`
+instead of a raw-markdown `<pre>`; proven live through the empty state,
+grounding open, and the honest no-model refusal at both viewports —
+**one leg deferred to HS-102-07's owner sitting**: a real grounded
+answer against a configured model, since this sandbox has no reachable
+LLM. Earlier the same day: **HS-102-02 (Live Meeting) shipped** — the
+room's stat strip, Bookmark form, Intent routing preset, Preview-route
+textarea, and Deferred-plugin-jobs dump (all visible at the FIRST
+instant of a live meeting, before a word was spoken) fold behind a new
+"Configure meeting" gear door; the working face is now one verb, one
+quiet facts line, and the transcript as a `SurfaceStream`, with
+Bookmark as an inline verb on the stream instead of a form section;
+proven live at 1440+393, `/api/*` wire byte-identical. Earlier:
+**HS-102-01 (Runs on) shipped** — destination create/edit is now
+choice bays (Endpoint/This device/Paired device/Mesh node) expanding
+in place on the switchboard, reusing the `RuntimeDestination` pattern
+and closing a `SurfaceBay` kit gap, proven live at 1440+393 with
+inline URL refusal, edit-in-place, make-default, and two-step delete;
+wire byte-identical. Remaining: the Meetings wings
 (Outcomes/Record/Artifacts), the selection mark yielding to open, and
 the Speech Settings gear face (screenshot-convicted). The design
 authority is the HS-101-02-approved
@@ -32,7 +40,7 @@ parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
 **Current phase:** [**Phase 102 — The Refit**](./phase-102-the-refit/current-phase-status.md)
-— **IN PROGRESS (2/7, HS-102-03 next)**. The
+— **IN PROGRESS (3/7, HS-102-04 next)**. The
 [Phase 101](./phase-101-the-native-innards/current-phase-status.md)
 closeout sitting (HS-101-04) stays open alongside.
 

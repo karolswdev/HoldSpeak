@@ -69,6 +69,26 @@ def test_live_core_never_regresses_to_a_stat_strip() -> None:
     )
 
 
+def test_ask_panel_never_regresses_to_a_pre_box_or_section_stack() -> None:
+    """HS-102-03 — the Ask AI composer is ONE well (mic + material +
+    verb, grounding/rails/runs-on as captions in the well's foot) and
+    the answer renders as `Material`, never `desk-pullout-md` raw
+    markdown in a `<pre>`. Named by story so a future "quick fix"
+    can't quietly bring either regression back."""
+    source = (WEB_SRC / "desk" / "components" / "AskPanel.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "desk-pullout-md" not in source, (
+        "HS-102-03 regression: AskPanel.tsx must not render the answer "
+        "as raw markdown in a <pre> — use Material instead."
+    )
+    assert "desk-chat-well" in source, (
+        "HS-102-03 regression: AskPanel.tsx must compose its question "
+        "as the one-well grammar (desk-chat-well), not a stack of "
+        "separate sections."
+    )
+
+
 def test_profiles_core_never_regresses_to_a_field_stack() -> None:
     """HS-102-01 — creating/editing a Runs on destination is choice
     bays + SurfaceGroup rows, never the old label-over-input `Field`/

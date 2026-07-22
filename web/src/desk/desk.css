@@ -4647,6 +4647,29 @@
   color: var(--text-faint);
 }
 
+/* HS-102-03 — Ask AI's grounding/rails read as captions in the well's
+   foot, not their own bordered sections (composition rule 1); the
+   collapsed head is a caption row, the expanded body still gets full
+   width so its list doesn't squeeze into the row. */
+.desk-next .desk-chat-well-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.desk-next .desk-chat-well-foot .desk-ground {
+  border: 0;
+  background: none;
+  border-radius: 0;
+}
+.desk-next .desk-chat-well-foot .desk-ground.is-open {
+  flex-basis: 100%;
+}
+.desk-next .desk-chat-well-foot .desk-ground-head {
+  padding: 0;
+  font-size: var(--desk-surface-label-size);
+}
+
 /* HS-101 sitting round 2 — the ambient card yields to an open right
    sheet instead of burying its composer. */
 /* Object cards (.is-card) float anywhere since round 9 — only the
