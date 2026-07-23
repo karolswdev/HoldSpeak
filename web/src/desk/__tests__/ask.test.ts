@@ -89,7 +89,31 @@ describe("the run/keep wire", () => {
       // response omits it — an ungrounded ask against an older shape).
       contextIds: [],
       contextTitles: [],
+      // HS-103-03: empty when the response carries no per-claim signal
+      // (an ungrounded ask, or an older response shape).
+      groundingClaims: [],
     });
+  });
+
+  it("runAsk parses grounding_claims into the quiet per-claim flag shape", async () => {
+    vi.stubGlobal("fetch", () =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            output: "- a\n- b",
+            grounding_claims: [
+              { text: "a", score: 1, label: "entailed", flagged: false },
+              { text: "b", score: 0.1, label: "unsupported", flagged: true },
+            ],
+          }),
+      }),
+    );
+    const r = await runAsk({ prompt: "Go", lens: "Distill", context: [] });
+    expect(r.groundingClaims).toEqual([
+      { text: "a", score: 1, label: "entailed", flagged: false },
+      { text: "b", score: 0.1, label: "unsupported", flagged: true },
+    ]);
   });
 
   it("keepAsk posts the /api/ask/keep payload (id+title per card) and returns the artifact id", async () => {

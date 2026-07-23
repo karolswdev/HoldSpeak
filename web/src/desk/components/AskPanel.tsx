@@ -367,6 +367,21 @@ export function AskPanel() {
             }}
           >
             <Material className="desk-ask-answer">{result.output}</Material>
+            {result.groundingClaims.some((c) => c.flagged) && (
+              <ul className="desk-ask-grounding-flags">
+                {result.groundingClaims
+                  .filter((c) => c.flagged)
+                  .map((c, i) => (
+                    <li
+                      key={i}
+                      className="desk-chip quiet is-flagged"
+                      title="Possibly unsupported by the cited material"
+                    >
+                      {c.label === "partial" ? "◐" : "◇"} {c.text}
+                    </li>
+                  ))}
+              </ul>
+            )}
             {result.actualPlacement && (
               <p className="quiet desk-run-receipt">
                 Ran on{" "}

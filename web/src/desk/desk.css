@@ -246,6 +246,24 @@
 .desk-next .desk-chip.quiet {
   color: var(--text-muted);
 }
+/* HS-103-03 — a quiet per-claim grounding flag: a fact, not a button, so it
+   wraps its full text instead of the chip's usual single-line truncation. */
+.desk-next .desk-ask-grounding-flags {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.desk-next .desk-chip.is-flagged {
+  height: auto;
+  min-height: 27px;
+  padding: 5px 12px;
+  white-space: normal;
+  cursor: default;
+  text-align: left;
+}
 .desk-next .desk-chip[aria-pressed="true"] {
   border-color: var(--accent);
   background: rgba(255, 107, 53, 0.14);

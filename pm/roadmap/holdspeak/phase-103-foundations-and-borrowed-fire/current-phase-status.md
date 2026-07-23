@@ -1,6 +1,6 @@
 # Phase 103 - Foundations & Borrowed Fire
 
-**Status:** IN PROGRESS (2/6, 2026-07-22). Chartered from a four-agent
+**Status:** IN PROGRESS (3/6, 2026-07-22). Chartered from a four-agent
 research pass the owner commissioned directly: three independent Opus
 4.8 analysts examining `ViuGiaLai/researchmind` from different angles
 (architecture/engineering, product/UX, feasibility/risk/licensing) to
@@ -11,8 +11,9 @@ reports' findings into the additional stories, with a healthy dose of
 skepticism against blind adoption and realism about single-owner
 delivery timelines.
 
-**Last updated:** 2026-07-22 (HS-103-02 shipped: the dash-in-glass guard
-found 33 offenders, not the 3 named — all fixed).
+**Last updated:** 2026-07-22 (HS-103-03 shipped: Ask-AI answers now
+carry a quiet per-claim grounding flag, proven live against a real LAN
+model with an adversarial fabricated-fact prompt).
 
 ## Why this phase exists
 
@@ -69,7 +70,7 @@ agent-steering feature provable by anyone, not just archaeology.
 |---|---|---|---|---|
 | HS-103-01 | Session restoration — the desk remembers it was open | done | [story-01-session-restoration](./story-01-session-restoration.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-103-02 | The voice guard reads the glass, not just the docs | done | [story-02-voice-guard-on-glass](./story-02-voice-guard-on-glass.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-103-03 | Grounding verification — does the artifact say what the source says | backlog | [story-03-grounding-verification](./story-03-grounding-verification.md) | — |
+| HS-103-03 | Grounding verification — does the artifact say what the source says | done | [story-03-grounding-verification](./story-03-grounding-verification.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-103-04 | Endpoint health — honest fallback across Runs-on destinations | backlog | [story-04-endpoint-health](./story-04-endpoint-health.md) | — |
 | HS-103-05 | A provable steering demo — the flagship feature, on demand | backlog | [story-05-steering-demo-recipe](./story-05-steering-demo-recipe.md) | — |
 | HS-103-06 | Closeout | backlog | [story-06-closeout](./story-06-closeout.md) | — |
@@ -151,7 +152,23 @@ also carried. Confirmed live on a staged hub. The full pytest run
 showed 7 failures; verified via `git stash` that all 7 are pre-existing
 and unrelated to this story (1 a build-vs-test race from a manual
 rebuild during the run, 6 a stale generated API-surface manifest/ledger).
-Next: HS-103-03.
+
+**2026-07-22 — HS-103-03 shipped.** Picked Ask-AI (not meeting
+artifacts) as the one integration point. `holdspeak/grounding.py` grew
+a dependency-free lexical entailment scorer (`entailment_score`,
+`classify_support` — entailed/partial/unsupported, `decompose_claims`,
+`score_claims`); `POST /api/ask` attaches `grounding_claims` alongside
+`output` whenever there's real cited material, skipped for a
+context-free ask. The web layer (`ask.ts`/`AskPanel.tsx`) surfaces
+flagged claims as a quiet existing-vocabulary chip under the answer.
+Proven live, real metal: staged hub, a real note, a real profile
+pointed at the LAN llama.cpp endpoint, an adversarial prompt asking for
+one true bullet + one fabricated one — the uncontrolled model output
+scored exactly as expected (true bullet entailed/unflagged, fabricated
+bullet unsupported/flagged), screenshotted through the real desk UI.
+No new network egress (pure regex/set code, asserted by grep). Full
+pytest run: same 6 pre-existing unrelated failures, no new ones.
+Next: HS-103-04.
 
 ## Active risks
 

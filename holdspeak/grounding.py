@@ -11,8 +11,9 @@ discipline).
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from .db.relationships import qualified_ref
 
@@ -297,14 +298,113 @@ def compose_steer(
     }
 
 
+# HS-103-03 — grounding VERIFICATION: a citation today asserts provenance
+# ("this came from somewhere"); this adds support ("is this actually backed
+# by what it cites"). Adapted from researchmind's claim_decomposition.py +
+# citation_entailment.py pattern (carry the IDEA, not the code — this repo's
+# greenfield posture favors a from-scratch reimplementation over vendoring a
+# different stack's file): a dependency-free lexical token-overlap scorer, no
+# model call, no network egress. A quiet SIGNAL only — never a hard verdict,
+# never blocks or mutates the generated content (a lexical checker false-flags
+# legitimate paraphrase too often to assert "this is wrong").
+_STOPWORDS = frozenset(
+    """
+    a an the this that these those is are was were be been being do does did
+    have has had having will would shall should may might must can could
+    of in on at to for with by from as and or but not no nor so yet
+    it its it's he she they them his her their our your my we you i
+    there here what which who whom when where why how all any both each
+    few more most other some such only own same than too very just
+    """.split()
+)
+_WORD_RE = re.compile(r"[a-z0-9]+")
+
+# Two named thresholds (expect to revisit once real usage data exists):
+# ENTAILED — most of the claim's content words appear in the source; PARTIAL —
+# roughly a third to two-thirds do (a legitimate paraphrase lands here, not in
+# UNSUPPORTED); below PARTIAL, too little of the claim traces to the source to
+# call it grounded.
+ENTAILMENT_ENTAILED_THRESHOLD = 0.6
+ENTAILMENT_PARTIAL_THRESHOLD = 0.3
+
+SupportLabel = Literal["entailed", "partial", "unsupported"]
+
+
+def _content_tokens(text: str) -> set[str]:
+    return {
+        w for w in _WORD_RE.findall(text.lower())
+        if len(w) > 2 and w not in _STOPWORDS
+    }
+
+
+def entailment_score(claim: str, source_text: str) -> float:
+    """How much of `claim`'s content is traceable to `source_text`, as the
+    fraction of the claim's significant (non-stopword) tokens that also
+    appear in the source. Pure, deterministic, no I/O — a claim with no
+    content tokens (too short/trivial to assess) scores 1.0 (never flagged);
+    a non-empty claim against an empty source scores 0.0."""
+    claim_tokens = _content_tokens(claim)
+    if not claim_tokens:
+        return 1.0
+    source_tokens = _content_tokens(source_text)
+    if not source_tokens:
+        return 0.0
+    return len(claim_tokens & source_tokens) / len(claim_tokens)
+
+
+def classify_support(score: float) -> SupportLabel:
+    if score >= ENTAILMENT_ENTAILED_THRESHOLD:
+        return "entailed"
+    if score >= ENTAILMENT_PARTIAL_THRESHOLD:
+        return "partial"
+    return "unsupported"
+
+
+def decompose_claims(text: str) -> list[str]:
+    """Split generated text into atomic claim candidates: one per non-empty
+    line (bullets and short paragraphs alike), markdown markers stripped,
+    headers and fragments too short to assess dropped."""
+    claims: list[str] = []
+    for raw_line in text.split("\n"):
+        line = re.sub(r"^\s*(?:[-*]|\d+\.)\s+", "", raw_line.strip())
+        if not line or line.startswith("#") or len(line) < 8:
+            continue
+        claims.append(line)
+    return claims
+
+
+def score_claims(text: str, source_text: str) -> list[dict[str, Any]]:
+    """Decompose `text` into claims and score each against `source_text`.
+    Additive metadata only — never mutates `text` itself. A soft signal:
+    only `unsupported`/`partial` claims are worth a quiet UI flag; `entailed`
+    is not (see `classify_support`)."""
+    out: list[dict[str, Any]] = []
+    for claim in decompose_claims(text):
+        score = entailment_score(claim, source_text)
+        label = classify_support(score)
+        out.append({
+            "text": claim,
+            "score": round(score, 3),
+            "label": label,
+            "flagged": label != "entailed",
+        })
+    return out
+
+
 __all__ = [
     "GROUNDING_EXPANDS",
     "GROUNDING_MAX_REFS",
     "GROUNDING_TRANSCRIPT_CAP",
     "STEER_CONTEXT_CAP_BYTES",
+    "ENTAILMENT_ENTAILED_THRESHOLD",
+    "ENTAILMENT_PARTIAL_THRESHOLD",
     "GroundingBlock",
+    "classify_support",
     "compose_steer",
+    "decompose_claims",
+    "entailment_score",
     "hydrate_grounding_blocks",
     "hydrate_refs",
     "meeting_digest",
+    "score_claims",
 ]
