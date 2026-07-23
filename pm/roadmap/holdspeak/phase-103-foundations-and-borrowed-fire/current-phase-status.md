@@ -1,6 +1,6 @@
 # Phase 103 - Foundations & Borrowed Fire
 
-**Status:** IN PROGRESS (4/6, 2026-07-22). Chartered from a four-agent
+**Status:** IN PROGRESS (5/6, 2026-07-22). Chartered from a four-agent
 research pass the owner commissioned directly: three independent Opus
 4.8 analysts examining `ViuGiaLai/researchmind` from different angles
 (architecture/engineering, product/UX, feasibility/risk/licensing) to
@@ -11,10 +11,10 @@ reports' findings into the additional stories, with a healthy dose of
 skepticism against blind adoption and realism about single-owner
 delivery timelines.
 
-**Last updated:** 2026-07-22 (HS-103-04 shipped: a real circuit breaker
-proven live — 3 consecutive failures against a dead endpoint opened
-the circuit, the doctor surface named it, the 4th call failed in 18ms
-instead of ~1.3s).
+**Last updated:** 2026-07-22 (HS-103-05 shipped: one recipe now boots a
+populated desk AND a live armed steering pane; the flagship feature
+proven end to end — a real keystroke typed through the desk UI landed
+in a real tmux pane, at both viewports).
 
 ## Why this phase exists
 
@@ -73,7 +73,7 @@ agent-steering feature provable by anyone, not just archaeology.
 | HS-103-02 | The voice guard reads the glass, not just the docs | done | [story-02-voice-guard-on-glass](./story-02-voice-guard-on-glass.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-103-03 | Grounding verification — does the artifact say what the source says | done | [story-03-grounding-verification](./story-03-grounding-verification.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-103-04 | Endpoint health — honest fallback across Runs-on destinations | done | [story-04-endpoint-health](./story-04-endpoint-health.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-103-05 | A provable steering demo — the flagship feature, on demand | backlog | [story-05-steering-demo-recipe](./story-05-steering-demo-recipe.md) | — |
+| HS-103-05 | A provable steering demo — the flagship feature, on demand | done | [story-05-steering-demo-recipe](./story-05-steering-demo-recipe.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-103-06 | Closeout | backlog | [story-06-closeout](./story-06-closeout.md) | — |
 
 ## Where we are
@@ -190,7 +190,29 @@ in-process — the only way "doctor" can see a live in-memory breaker)
 named it, and the 4th call failed in 18ms instead of the ~1.2-1.5s the
 real attempts took. Full pytest run: same 6 pre-existing unrelated
 failures, no new ones, full intel/dictation/doctor suites green.
-Next: HS-103-05.
+
+**2026-07-22 — HS-103-05 shipped.** New
+`uat/recipes/seeded-desk-steering.yaml`, composing `seeded-desk` +
+`agent-pane-armed` via `includes:` (confirmed `includes:` + a
+restated own `probe:` compose cleanly — no bespoke Python needed;
+`RecipeEngine.apply()`'s "the target's own probe is authoritative"
+design means the new recipe restates the full assertion union rather
+than inheriting the children's probes automatically, exactly matching
+how `agent-pane-armed` itself already composes on top of
+`agent-pane-awaiting-input`). Reuses `uat/conductor/induction/steering.py`'s
+existing spawn/arm primitives verbatim. Registered in `uat.stage
+--list`'s catalog; `--once` re-apply confirmed `probe ok=True`
+(idempotent) with clean teardown. Then drove the actual flagship
+feature live through the real desk UI (headed Playwright, 1440 + 393):
+found the pane via the search-shelf "Panes" drawer (not `CompanionCore`'s
+"Agents" tab, which reads an unrelated real-coder-session registry —
+a correction to the story's own loose wording, recorded in evidence),
+attached, re-armed through the UI when the recipe's 300s TTL had
+lapsed mid-walk, typed a marker string into the steer composer, and
+watched it land VERBATIM in the live tmux pane's real output with a
+printed delivery receipt — at both viewports. The most ambitious
+shipped feature is now provable by anyone with one command.
+Next: HS-103-06 (closeout).
 
 ## Active risks
 

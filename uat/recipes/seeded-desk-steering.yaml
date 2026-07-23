@@ -1,0 +1,26 @@
+title: A seeded desk with a live, armed steering pane
+description: >
+  Composes seeded-desk (believable notes/KBs/zones, injected through the
+  product's own /api/desk routes) with agent-pane-armed (a real tmux coder
+  pane, spawned via the product's own /api/coders factory route and armed
+  for steering) — one instance that demonstrates the flagship "steer a live
+  coding agent from the desk" story end to end: a desk worth looking at AND
+  a live, awaiting-input pane reachable from the desk's Agents surface,
+  ready to attach and steer. Fully local (tmux + the product's own routes);
+  no .43.
+deck: golden-local
+requires: []
+includes:
+  - seeded-desk
+  - agent-pane-armed
+probe:
+  - notes_min_count: 3
+  - egress_scope_is: local
+  - note_exists: uat-seed-note-decisions
+  - note_exists: uat-seed-note-glossary
+  - kb_exists: uat-seed-kb-project
+  - kb_exists: uat-seed-kb-incidents
+  - zone_exists: {id: uat-seed-zone-decisions, members: [uat-seed-note-decisions, uat-seed-note-standup]}
+  - recipe_exists: uat-seed-recipe-pm
+  - grant_live: coder
+  - audit_min: 1
