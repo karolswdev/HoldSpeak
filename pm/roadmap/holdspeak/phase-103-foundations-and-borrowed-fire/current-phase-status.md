@@ -1,6 +1,6 @@
 # Phase 103 - Foundations & Borrowed Fire
 
-**Status:** IN PROGRESS (0/6, 2026-07-22). Chartered from a four-agent
+**Status:** IN PROGRESS (1/6, 2026-07-22). Chartered from a four-agent
 research pass the owner commissioned directly: three independent Opus
 4.8 analysts examining `ViuGiaLai/researchmind` from different angles
 (architecture/engineering, product/UX, feasibility/risk/licensing) to
@@ -11,8 +11,8 @@ reports' findings into the additional stories, with a healthy dose of
 skepticism against blind adoption and realism about single-owner
 delivery timelines.
 
-**Last updated:** 2026-07-22 (scaffolded from the research debate;
-stories drafted, none started).
+**Last updated:** 2026-07-22 (HS-103-01 shipped: the open-window set
+now persists; Reset Layout's claimed geometry bug did not reproduce).
 
 ## Why this phase exists
 
@@ -67,7 +67,7 @@ agent-steering feature provable by anyone, not just archaeology.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-103-01 | Session restoration — the desk remembers it was open | backlog | [story-01-session-restoration](./story-01-session-restoration.md) | — |
+| HS-103-01 | Session restoration — the desk remembers it was open | done | [story-01-session-restoration](./story-01-session-restoration.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-103-02 | The voice guard reads the glass, not just the docs | backlog | [story-02-voice-guard-on-glass](./story-02-voice-guard-on-glass.md) | — |
 | HS-103-03 | Grounding verification — does the artifact say what the source says | backlog | [story-03-grounding-verification](./story-03-grounding-verification.md) | — |
 | HS-103-04 | Endpoint health — honest fallback across Runs-on destinations | backlog | [story-04-endpoint-health](./story-04-endpoint-health.md) | — |
@@ -122,8 +122,20 @@ Six stories drafted: the durability fix (HS-103-01), the guard-gap fix
 audit could not verify live, through no fault of the code, just a gap
 in the seeded-desk UAT recipe — becomes provable by composing two
 UAT-recipe primitives that already exist but have never been combined
-(HS-103-05), and closeout (HS-103-06). Nothing started yet. Next:
-HS-103-01.
+(HS-103-05), and closeout (HS-103-06).
+
+**2026-07-22 — HS-103-01 shipped.** `useSurfaceWindows` (open windows)
+now persists to its own `hs.desk.open-windows` localStorage slot,
+manual load/save functions matching `store.ts`'s existing pattern (no
+new `zustand/persist` dependency) — chosen over folding into the
+already-multi-writer `hs.desk.panels` blob (see the story's evidence
+for the full reasoning). Reset Layout's stale-geometry half of the
+audit finding was investigated with a targeted regression test and
+confirmed live on a staged hub (headed Playwright, 1440 + 393): it
+does not reproduce on the current codebase — `resetLayout()` already
+clears an open window's geometry reactively — so no production change
+was needed there; the regression test now pins the correct behavior.
+Next: HS-103-02.
 
 ## Active risks
 
