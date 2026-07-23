@@ -214,10 +214,14 @@ shipped feature is now provable by anyone with one command.
 
 **2026-07-22 — HS-103-06 machine proof + drift-check complete; the
 sitting is the one thing left.** Full assembled chain green: pytest
-(4144 passed, 37 skipped, the same 6 pre-existing unrelated failures
-this phase has documented since HS-103-02), web tsc/vitest(318)/build/
-tokens-gate, and the vocabulary + interior-canon + doc-drift guards (33
-passed, including HS-103-02's new dash rule). Checked each of
+(4143 passed, 37 skipped, 7 failed — 6 are the SAME pre-existing
+unrelated failures this phase has documented since HS-103-02; the 7th,
+a `test_live_bus.py` e2e test, reproduced only this run and was
+confirmed order-dependent flakiness — passes cleanly in isolation, a
+background-thread db-teardown race in code no HS-103 story touches,
+not a regression), web tsc/vitest(318)/build/tokens-gate, and the
+vocabulary + interior-canon + doc-drift guards (33 passed, including
+HS-103-02's new dash rule). Checked each of
 HS-103-01 through -05 against its OWN research-finding section (not
 just its acceptance criteria) — no undisclosed drift found. Two things
 worth naming plainly rather than letting pass silently: HS-103-01's
