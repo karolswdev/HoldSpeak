@@ -76,8 +76,22 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 102 — The Refit**](./phase-102-the-refit/current-phase-status.md)
-— **IN PROGRESS (6/7, HS-102-07 closeout next)**. The
+**Current phase:** [**Phase 103 — Foundations & Borrowed Fire**](./phase-103-foundations-and-borrowed-fire/current-phase-status.md)
+— **IN PROGRESS (0/6)**. Chartered 2026-07-22 from a four-agent
+research pass (3 independent Opus 4.8 analysts on
+`ViuGiaLai/researchmind`, 1 independent Opus 4.8 skeptical audit of
+HoldSpeak's own Desk-OS claim) the owner commissioned directly, debated,
+and approved into six stories: session restoration (the one
+load-bearing durability gap the independent audit found — the desk
+remembers window geometry but not that a window was open), a
+voice-guard coverage fix (three canon-violating dash/prose leaks the
+audit caught live), and two skepticism-survived researchmind
+carry-overs (per-claim grounding verification, endpoint health) plus a
+UAT-harness fix so the flagship agent-steering feature is provable
+end to end. [Phase 102 — The Refit](./phase-102-the-refit/current-phase-status.md)
+remains open alongside at **IN PROGRESS (6/7, HS-102-07 closeout
+next)** — its closeout needs the owner's own sitting (Article IX.4),
+not a research pass. The
 [Phase 101](./phase-101-the-native-innards/current-phase-status.md)
 closeout sitting (HS-101-04) stays open alongside.
 
@@ -231,6 +245,7 @@ canon, canon wins.
 | 99 | The OS Chrome: the ProzillaOS-studied skin — tonal depth ladder, a real title bar, skinned controls, custom scrollbars, a living dock, one menu vocabulary | done | [phase-99-the-os-chrome](./phase-99-the-os-chrome/) |
 | 100 | The Application Layer: ground the philosophy/seams/use cases, judge the entire UI/UX against them, thesis + mockups, the owner's gate, then the build | done | [phase-100-the-application-layer](./phase-100-the-application-layer/) |
 | 101 | The Native Innards: interior type scale, data as material, purpose-built compositions — mocked, owner-gated, then built (AGENT_BRIEF.md §5) | backlog | [phase-101-the-native-innards](./phase-101-the-native-innards/) |
+| 103 | Foundations & Borrowed Fire: fix the desk's session-restoration gap, sweep the voice guard onto rendered UI, and land two skepticism-tested carry-overs from a four-agent research pass on `ViuGiaLai/researchmind` (grounding verification, endpoint health). Chartered from the owner's own research-debate commission, not a screenshot conviction. | in-progress (0/6) | [phase-103-foundations-and-borrowed-fire](./phase-103-foundations-and-borrowed-fire/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
