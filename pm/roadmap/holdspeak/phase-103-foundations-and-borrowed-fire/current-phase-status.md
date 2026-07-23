@@ -1,6 +1,6 @@
 # Phase 103 - Foundations & Borrowed Fire
 
-**Status:** IN PROGRESS (3/6, 2026-07-22). Chartered from a four-agent
+**Status:** IN PROGRESS (4/6, 2026-07-22). Chartered from a four-agent
 research pass the owner commissioned directly: three independent Opus
 4.8 analysts examining `ViuGiaLai/researchmind` from different angles
 (architecture/engineering, product/UX, feasibility/risk/licensing) to
@@ -11,9 +11,10 @@ reports' findings into the additional stories, with a healthy dose of
 skepticism against blind adoption and realism about single-owner
 delivery timelines.
 
-**Last updated:** 2026-07-22 (HS-103-03 shipped: Ask-AI answers now
-carry a quiet per-claim grounding flag, proven live against a real LAN
-model with an adversarial fabricated-fact prompt).
+**Last updated:** 2026-07-22 (HS-103-04 shipped: a real circuit breaker
+proven live — 3 consecutive failures against a dead endpoint opened
+the circuit, the doctor surface named it, the 4th call failed in 18ms
+instead of ~1.3s).
 
 ## Why this phase exists
 
@@ -71,7 +72,7 @@ agent-steering feature provable by anyone, not just archaeology.
 | HS-103-01 | Session restoration — the desk remembers it was open | done | [story-01-session-restoration](./story-01-session-restoration.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-103-02 | The voice guard reads the glass, not just the docs | done | [story-02-voice-guard-on-glass](./story-02-voice-guard-on-glass.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-103-03 | Grounding verification — does the artifact say what the source says | done | [story-03-grounding-verification](./story-03-grounding-verification.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-103-04 | Endpoint health — honest fallback across Runs-on destinations | backlog | [story-04-endpoint-health](./story-04-endpoint-health.md) | — |
+| HS-103-04 | Endpoint health — honest fallback across Runs-on destinations | done | [story-04-endpoint-health](./story-04-endpoint-health.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-103-05 | A provable steering demo — the flagship feature, on demand | backlog | [story-05-steering-demo-recipe](./story-05-steering-demo-recipe.md) | — |
 | HS-103-06 | Closeout | backlog | [story-06-closeout](./story-06-closeout.md) | — |
 
@@ -168,7 +169,28 @@ scored exactly as expected (true bullet entailed/unflagged, fabricated
 bullet unsupported/flagged), screenshotted through the real desk UI.
 No new network egress (pure regex/set code, asserted by grep). Full
 pytest run: same 6 pre-existing unrelated failures, no new ones.
-Next: HS-103-04.
+
+**2026-07-22 — HS-103-04 shipped.** A new `holdspeak/intel/endpoint_health.py`
+(`EndpointHealth`, reimplemented from scratch, not vendored) — a
+thread-safe circuit breaker keyed by endpoint identity, two named
+constants (3 consecutive failures opens the circuit, 30s cooldown
+before a half-open probe). Wired into the two named call sites:
+`MeetingIntel._chat_completion_text`'s cloud branch (meeting-intel) and
+`OpenAICompatibleRuntime.classify` (dictation-runtime) — local
+in-process model loads intentionally left unwired (not a network
+endpoint the breaker's framing fits). `holdspeak doctor` grew an
+"Endpoint health" check naming any open circuit. Caught and fixed a
+real test-isolation risk before it could bite: `default_health` is a
+process-wide singleton, so an autouse `_reset_endpoint_health` fixture
+was added to `tests/conftest.py` to keep it from leaking state across
+the pytest session. Proven live on a real staged hub: 3 consecutive
+real connection failures against a dead local port opened the circuit,
+`GET /api/setup/status` (which calls the SAME `collect_doctor_checks()`
+in-process — the only way "doctor" can see a live in-memory breaker)
+named it, and the 4th call failed in 18ms instead of the ~1.2-1.5s the
+real attempts took. Full pytest run: same 6 pre-existing unrelated
+failures, no new ones, full intel/dictation/doctor suites green.
+Next: HS-103-05.
 
 ## Active risks
 

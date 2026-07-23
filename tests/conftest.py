@@ -338,3 +338,19 @@ def _isolate_agent_session_registry(tmp_path_factory, monkeypatch):
 
     registry = tmp_path_factory.mktemp("agent-registry") / "agent_sessions.json"
     monkeypatch.setattr(agent_context, "AGENT_CONTEXT_FILE", registry)
+
+
+@pytest.fixture(autouse=True)
+def _reset_endpoint_health():
+    """HS-103-04: `default_health` is one process-wide breaker so real call
+    sites share state — but that makes it global mutable state across the
+    WHOLE test session too. Without a reset, a test that deliberately drives
+    an endpoint to consecutive failures could leave its circuit open for an
+    unrelated later test keying into the same identity (e.g. the same
+    default base URL). Reset before AND after so a test can't pollute a
+    sibling either direction."""
+    from holdspeak.intel.endpoint_health import default_health
+
+    default_health.reset()
+    yield
+    default_health.reset()
