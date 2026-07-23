@@ -1,13 +1,13 @@
 # Phase 102 — The Refit
 
-**Status:** IN PROGRESS (5/7, 2026-07-22). Chartered by the owner's
+**Status:** IN PROGRESS (6/7, 2026-07-22). Chartered by the owner's
 direct order after the round-9 reflex round merged: *"I really want
 us to create another phase, a phase where we will do exact, direct
 and precise refactorings to a variety of things."* Six named
 targets, two with screenshots; the owner's words per target are
 quoted verbatim in each story.
 
-**Last updated:** 2026-07-22 (HS-102-05 done; HS-102-06 next).
+**Last updated:** 2026-07-22 (HS-102-06 done; HS-102-07 closeout next).
 
 ## Why this phase exists
 
@@ -65,7 +65,7 @@ craft), Article IX.4 (the felt verdict outranks every green suite).
 | HS-102-03 | Ask AI — the composer refit | done | [story-03-ask-ai](./story-03-ask-ai.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-102-04 | The Meetings wings — Outcomes / Record / Artifacts | done | [story-04-meetings-wings](./story-04-meetings-wings.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-102-05 | The selection mark yields to open | done | [story-05-selection-mark](./story-05-selection-mark.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-102-06 | Speech Settings — one composed face | backlog | [story-06-speech-settings](./story-06-speech-settings.md) | — |
+| HS-102-06 | Speech Settings — one composed face | done | [story-06-speech-settings](./story-06-speech-settings.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-102-07 | Closeout — the owner's sitting | backlog | [story-07-closeout](./story-07-closeout.md) | — |
 
 ## Where we are
@@ -193,3 +193,36 @@ build, token gate, interior-canon + vocabulary guards green. No new
 interior-canon guard — this story's regression coverage is the grown
 walk leg, not a raw-wire-dump pattern. Next: HS-102-06 (Speech
 Settings).
+
+**2026-07-22 — HS-102-06 (Speech Settings) shipped.** The worst
+offender per the owner's screenshots is recomposed: `Readiness()`
+turns the two raw wire dumps into a `SurfaceGroup`/`SurfaceSettingRow`
+pipeline line (live `SurfaceToggle`) + a composed delivery sentence,
+with the `missing_project_kb` warning carrying its own inline "Create
+it" verb and every other warning reading as one composed line (no
+banners); raw fields moved behind a "Wire details" `Disclosure`. A
+second real defect caught along the way: the Learning digest's
+`SurfaceFacts` was accidentally showing ONLY the metadata wrapper
+(window/enabled/generated_at) while the real counts sat hidden in
+`totals` — composed into one sentence + a top-3 breakdown. Knowledge
+and Instructions are no longer free-text boxes with orange Save
+buttons that silently 400'd on every click (a pre-existing wire
+mismatch this recompose fixed): Knowledge is `SurfaceRows` of real
+facts (`{kb: {<KEY>: value}}`, matching `/api/dictation/project-kb`'s
+actual validated shape) with a "+ Add fact" composer; Instructions
+binds `.hs/instructions.md` via `EditInPlace`, correctly PUT as
+`{files: {...}}`. `EditInPlace` (`Surface.tsx`, shared kit) gained
+`onFocus={select()}` so placeholder-shaped empty values get replaced
+by typing instead of appended after (caught live, fixed, re-verified
+— every other `EditInPlace` call site benefits). `Runtime()` embeds
+the SAME `RuntimeDestination` component Settings already uses for
+`dictation.runtime`, killing the third Backend/Runs-on/Latency-budget
+`Field`/`Select` stack; saves debounce on change with a
+"Saving…/Saved" whisper, matching the configuring archetype
+everywhere else. Proven live on a real staged+seeded desk, both
+viewports: KB starter created inline, a real fact added and persisted
+across reload, Instructions edited and correctly saved (post select-
+on-focus fix), the runtime bay switched, pipeline toggled live. New
+guard: `test_dictation_core_speech_settings_never_regresses`. Full
+vitest (312/312), tsc, build, token gate, interior-canon + vocabulary
+guards green. Next: HS-102-07 closeout (the owner's sitting).

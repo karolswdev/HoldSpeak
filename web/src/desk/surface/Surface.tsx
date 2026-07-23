@@ -694,6 +694,11 @@ export function EditInPlace({
     "aria-label": label,
     value: draft,
     autoFocus: true,
+    // Placeholder-shaped values ("No knowledge yet — click to add")
+    // ride the same `value` prop as real content; select it on focus
+    // so typing REPLACES the placeholder instead of appending after it.
+    onFocus: (event: { target: HTMLInputElement | HTMLTextAreaElement }) =>
+      event.target.select(),
     onBlur: commit,
     onKeyDown: (event: KeyboardEvent) => {
       if (event.key === "Escape") {

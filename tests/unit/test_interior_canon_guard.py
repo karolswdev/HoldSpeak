@@ -125,6 +125,32 @@ def test_profiles_core_never_regresses_to_a_field_stack() -> None:
     )
 
 
+def test_dictation_core_speech_settings_never_regresses() -> None:
+    """HS-102-06 — the Speak gear face (Readiness/Knowledge/Runtime) is
+    composed groups + EditInPlace + the shared RuntimeDestination, never
+    the raw-wire dumps / Save-button forms / label-over-Select stack the
+    owner's screenshots convicted ("an absolute joke — a cacophony of
+    tiles, panes, forms, form groups")."""
+    source = (WEB_SRC / "pages" / "cores" / "DictationCore.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "Save knowledge" not in source and "Save instructions" not in source, (
+        "HS-102-06 regression: Knowledge/Instructions must save on commit "
+        "through EditInPlace, never an orange Save button."
+    )
+    assert "RuntimeDestination" in source, (
+        "HS-102-06 regression: the dictation runtime knobs must embed the "
+        "ONE shared RuntimeDestination component (settingsBespoke.tsx), "
+        "never re-derive Backend/Runs on/Latency budget as a third "
+        "Field/Select stack."
+    )
+    assert "SurfaceGroup" in source and "SurfaceToggle" in source, (
+        "HS-102-06 regression: Pipeline readiness must compose through "
+        "SurfaceGroup/SurfaceSettingRow/SurfaceToggle, not a bare "
+        "SurfaceFacts key-value dump of the raw readiness wire."
+    )
+
+
 def test_fluidity_census() -> None:
     """HS-101 rule 5 (B2) — the desk is fluid: the named operating
     moments carry token-ridden, compositor-only motion, and reduced
