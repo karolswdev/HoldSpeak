@@ -237,11 +237,18 @@
   backdrop-filter: blur(6px);
   transition:
     border-color var(--duration-short) var(--ease-standard),
-    background var(--duration-short) var(--ease-standard);
+    background var(--duration-short) var(--ease-standard),
+    transform var(--duration-short) var(--ease-standard);
 }
 .desk-next .desk-chip:hover {
   border-color: var(--accent);
   background: rgba(255, 107, 53, 0.1);
+}
+/* HS-103-07 — a send/ask verb should carry a little weight on press, not
+   just the browser's stock click; transform-only, so it costs nothing to
+   composite and respects prefers-reduced-motion below. */
+.desk-next .desk-chip:not(:disabled):active {
+  transform: scale(0.94);
 }
 .desk-next .desk-chip.quiet {
   color: var(--text-muted);
@@ -2068,9 +2075,25 @@
 }
 .desk-next .desk-chat-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding-left: 4px;
+}
+/* HS-103-07 — each turn prints in, like the Ask card's own birth beat;
+   :last-child only fires on the newly-inserted node, not every re-render. */
+.desk-next .desk-chat-turn:last-child {
+  animation: desk-chat-turn-in 0.32s cubic-bezier(0.2, 1, 0.4, 1);
+}
+@keyframes desk-chat-turn-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .desk-next .desk-chat-foot {
   display: grid;
@@ -3033,8 +3056,13 @@
   .desk-next .desk-mc-pin.awaiting,
   .desk-next .desk-chat-thinking,
   .desk-next .desk-ask-routing,
-  .desk-next .desk-ask-card {
+  .desk-next .desk-ask-card,
+  .desk-next .desk-chat-turn:last-child,
+  .desk-next .desk-chat-hello-avatar {
     animation: none !important;
+  }
+  .desk-next .desk-chip:not(:disabled):active {
+    transform: none;
   }
 }
 
@@ -4603,10 +4631,26 @@
 .desk-next .desk-chat-hello-avatar {
   font-size: var(--font-size-3xl);
   filter: drop-shadow(0 6px 14px var(--shadow-ink-3));
+  animation: desk-chat-hello-in 0.4s cubic-bezier(0.2, 1, 0.4, 1);
+}
+@keyframes desk-chat-hello-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 .desk-next .desk-chat-hello small {
   color: var(--text-faint);
   font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-chat-hello-hint {
+  color: var(--text-faint);
+  font-size: var(--font-size-sm);
+  margin-top: 4px;
 }
 .desk-next .desk-chat-foot {
   display: flex;

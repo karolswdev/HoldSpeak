@@ -232,6 +232,7 @@ export function PersonaChat(props: { personaId: string }) {
             {persona.role ? (
               <small>{String(persona.role)}</small>
             ) : null}
+            <span className="desk-chat-hello-hint">Say something to start.</span>
           </div>
         )}
         {turns.map((t) => (
@@ -247,18 +248,6 @@ export function PersonaChat(props: { personaId: string }) {
                 {badge(t) && (
                   <span className={`egress-badge is-${badge(t)!.scope}`}>
                     {badge(t)!.text}
-                  </span>
-                )}
-                {t.actualPlacement && (
-                  <span className="quiet">
-                    Ran on{" "}
-                    {String(
-                      t.actualPlacement.target_name ||
-                        t.actualPlacement.target_id,
-                    )}
-                    {t.actualPlacement.boundary
-                      ? ` · ${String(t.actualPlacement.boundary)}`
-                      : ""}
                   </span>
                 )}
                 <button

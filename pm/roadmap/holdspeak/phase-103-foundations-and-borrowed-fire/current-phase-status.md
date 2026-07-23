@@ -1,7 +1,6 @@
 # Phase 103 - Foundations & Borrowed Fire
 
-**Status:** IN PROGRESS (5/7, 2026-07-22 — a 7th story was scaffolded
-mid-sitting; see below). Chartered from a four-agent
+**Status:** IN PROGRESS (6/7, 2026-07-23). Chartered from a four-agent
 research pass the owner commissioned directly: three independent Opus
 4.8 analysts examining `ViuGiaLai/researchmind` from different angles
 (architecture/engineering, product/UX, feasibility/risk/licensing) to
@@ -12,11 +11,12 @@ reports' findings into the additional stories, with a healthy dose of
 skepticism against blind adoption and realism about single-owner
 delivery timelines.
 
-**Last updated:** 2026-07-22 (the owner's sitting verdict is recorded:
-the 5 shipped stories stand, but the AI chat surfaces need "2 notches
-better" — the owner chose to hold the phase open for it rather than
-spin off a new phase. HS-103-07 scaffolded; HS-103-06 now depends on
-it too).
+**Last updated:** 2026-07-23 (HS-103-07 shipped: a real screenshot
+survey found the actual gap — not missing bubbles, a repeating
+egress/receipt clutter bug that broke line-wrapping on every reply —
+fixed, plus turn-entrance motion, a warmer empty state, and shared
+send-press feedback. A second, shorter sitting is the last thing left
+before HS-103-06 can flip done).
 
 ## Why this phase exists
 
@@ -65,7 +65,7 @@ agent-steering feature provable by anyone, not just archaeology.
       build && npm run tokens:gate` green.
 - [x] The interior-canon + vocabulary guards (including HS-103-02's
       new dash-in-glass rule) green.
-- [ ] HS-103-07 (the AI chat surfaces — scaffolded 2026-07-22 mid-sitting,
+- [x] HS-103-07 (the AI chat surfaces — scaffolded 2026-07-22 mid-sitting,
       per the owner's own verdict) shipped with evidence.
 - [ ] HS-103-06 closeout: the owner's sitting verdict recorded, per
       Article IX.4 — **first pass recorded 2026-07-22** (see "Where we
@@ -82,7 +82,7 @@ agent-steering feature provable by anyone, not just archaeology.
 | HS-103-04 | Endpoint health — honest fallback across Runs-on destinations | done | [story-04-endpoint-health](./story-04-endpoint-health.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-103-05 | A provable steering demo — the flagship feature, on demand | done | [story-05-steering-demo-recipe](./story-05-steering-demo-recipe.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-103-06 | Closeout | in-progress | [story-06-closeout](./story-06-closeout.md) | — |
-| HS-103-07 | The AI chat surfaces feel like a cool part of the system | backlog | [story-07-the-ai-chat-surfaces-feel-like-a-cool-part-of-the-system](./story-07-the-ai-chat-surfaces-feel-like-a-cool-part-of-the-system.md) | — |
+| HS-103-07 | The AI chat surfaces feel like a cool part of the system | done | [story-07-the-ai-chat-surfaces-feel-like-a-cool-part-of-the-system](./story-07-the-ai-chat-surfaces-feel-like-a-cool-part-of-the-system.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
@@ -268,6 +268,33 @@ turn-bubble distinction, no thinking-state life, a settings-form feel
 next to the rest of the desk's personality). HS-103-06 now also
 depends on HS-103-07. Next: build HS-103-07, then a second, shorter
 sitting.
+
+**2026-07-23 — HS-103-07 shipped.** The scope note's own assumption
+("no turn-bubble distinction") turned out to be WRONG on investigation
+— a first survey only caught `PersonaChat.tsx`'s empty state (no model
+was configured), which looked bubble-less; staging a real LAN-backed
+profile and driving an actual 2-turn conversation showed the bubbles,
+thinking-dots, and print-in animation already existed. What the real
+conversation exposed instead: `.desk-chat-meta` crammed an egress
+badge, a redundant "Ran on {target}" text span, and a "Keep as
+Artifact" button into one `flex-nowrap` row on EVERY reply — the
+redundant span had nowhere to go and wrapped into a broken 3-line
+stack, repeating information the badge already stated, every single
+turn. That repeating clutter (not an absence of craft) was the real
+"settings form" feeling. Fixed: dropped the redundant span, added
+`flex-wrap` so it can never re-break, added a turn-entrance animation
+(`desk-chat-turn:last-child`, matching the existing `desk-ask-print`
+convention), a warmer empty-state hint line, and a shared
+`.desk-chip:active` press-feedback that also lands on Ask AI's and the
+steering composer's Send buttons for free. `AskPanel.tsx` and
+`SessionPullout.tsx` needed no dedicated edits — both already had the
+same generation-theater vocabulary (`desk-ask-routing`, `desk-ask-print`)
+or don't have PersonaChat's repeating-metadata problem (steering is
+fire-and-forget, not a stacking thread). Live proof: before/after
+screenshots at 1440 + 393 showing the wrap bug gone. Full chain green
+(tsc/vitest 318/build/tokens-gate, vocabulary + interior-canon + doc-drift
+guards). Next: the second, shorter sitting — then HS-103-06 can flip
+done and this phase closes.
 
 ## Active risks
 
