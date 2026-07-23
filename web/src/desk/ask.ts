@@ -23,7 +23,7 @@ export const ASK_LENSES: Array<{ name: string; instruction: string }> = [
   {
     name: "Action items",
     instruction:
-      "Extract the concrete action items as a short list, each as 'task — owner — due' when known.",
+      "Extract the concrete action items as a short list, each as 'task, owner, due' when known.",
   },
   {
     name: "Risks",

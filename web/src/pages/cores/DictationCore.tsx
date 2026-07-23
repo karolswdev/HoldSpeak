@@ -146,7 +146,7 @@ function Readiness() {
           label={
             enabled
               ? "Types automatically as you speak"
-              : "Off — speaking here still works on paper"
+              : "Off. Speaking here stays a draft."
           }
           description={`${presentValue(config.backend) || "automatic"} · budget ${presentValue(config.max_total_latency_ms) || "—"} ms`}
           control={
@@ -223,7 +223,7 @@ function ReadinessLine({ onOpenDoor }: { onOpenDoor: () => void }) {
       <span className="speak-status-dot" aria-hidden="true" />
       {config.pipeline_enabled === true
         ? `${warnings.length} readiness ${warnings.length === 1 ? "warning" : "warnings"}`
-        : "The pipeline is off — speaking here still works on paper"}
+        : "Pipeline off. Speaking here stays a draft."}
       <button type="button" className="speak-status-fix" onClick={onOpenDoor}>
         Review
       </button>
@@ -367,7 +367,7 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
           label="Hold to talk"
           onText={(text) => setUtterance(text)}
         />
-        <p className="speak-hint">Hold to talk, or type below — on paper</p>
+        <p className="speak-hint">Hold to talk, or type below. This stays a draft.</p>
       </div>
       <div className="desk-mic-row">
         <TextArea
@@ -388,7 +388,7 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
         </Button>
         <Disclosure title="Grounding scope">
           <TextInput
-            aria-label="Project root — optional grounding scope, saved only on this device"
+            aria-label="Project root: optional grounding scope, saved only on this device"
             placeholder="Project root (optional)"
             value={projectRoot}
             onChange={(event) => setProjectRoot(event.target.value)}
@@ -874,7 +874,7 @@ function Knowledge() {
     const key = draftKey.trim();
     if (!key || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
       setMessage(
-        "Fact names must look like BLUEBIRD or api_key — letters, numbers, underscore, starting with a letter or underscore.",
+        "Fact names must look like BLUEBIRD or api_key: letters, numbers, underscore, starting with a letter or underscore.",
       );
       return;
     }
@@ -992,7 +992,7 @@ function Knowledge() {
             <EditInPlace
               value={
                 String(instructionsFile.content ?? "") ||
-                "No instructions yet — click to add."
+                "No instructions yet. Click to add."
               }
               label="Project instructions"
               multiline

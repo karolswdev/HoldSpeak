@@ -93,7 +93,7 @@ export function CompanionCore({ hero }: CoreProps) {
   };
   const sessionsFace = (
     <>
-      <SurfaceSection label="Blocked — needs your answer">
+      <SurfaceSection label="Blocked: needs your answer">
         {blocked.length ? (
           <SurfaceRows>
             {blocked.map((row, index) => sessionRow(row, index, "blocked"))}

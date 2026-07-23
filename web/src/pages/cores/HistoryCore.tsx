@@ -178,7 +178,7 @@ function ImportSection({
             <span className="surface-dropwell-glyph" aria-hidden="true">
               ⇣
             </span>
-            <span className="surface-primary">Drop it here — or browse</span>
+            <span className="surface-primary">Drop it here, or browse</span>
             <small>.wav direct · .mp3 .m4a .ogg .flac need ffmpeg · .vtt .srt .txt</small>
           </>
         )}
@@ -546,7 +546,7 @@ function MeetingDetail({
               </p>
             ) : (
               <span className="surface-eyebrow">
-                {`Needs you — ${proposalRows.filter((row) => row.status === "proposed").length + openActions.length}`}
+                {`Needs you: ${proposalRows.filter((row) => row.status === "proposed").length + openActions.length}`}
               </span>
             )}
             {proposalsBlock}
@@ -583,7 +583,7 @@ function MeetingDetail({
           {settledActions.length ? (
             <div className="surface-outcome-sec">
               <span className="surface-eyebrow">
-                {`Settled — ${settledActions.length}`}
+                {`Settled: ${settledActions.length}`}
               </span>
               <SurfaceRows>{settledActions.map(actionRow)}</SurfaceRows>
             </div>
@@ -591,7 +591,7 @@ function MeetingDetail({
           {/* 3 — the receipts ("transcript" and "routing" stay quoted
               vocabulary): behind disclosures, never a wall. */}
           <Disclosure
-            title={`Transcript — the receipt (${segments.length} segments)`}
+            title={`Transcript: the receipt (${segments.length} segments)`}
             open={!hasOutcomes && segments.length > 0}
           >
             {segments.length ? (

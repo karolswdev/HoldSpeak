@@ -79,10 +79,10 @@ export function streamDayLabel(date: Date | null, now?: Date): string {
     month: "short",
     day: "numeric",
   });
-  if (sameDay(date, today)) return `Today — ${dated}`;
+  if (sameDay(date, today)) return `Today: ${dated}`;
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-  if (sameDay(date, yesterday)) return `Yesterday — ${dated}`;
+  if (sameDay(date, yesterday)) return `Yesterday: ${dated}`;
   return dated;
 }
 

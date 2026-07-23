@@ -48,7 +48,7 @@ vi.mock("../../../desk/shell", () => ({
 describe("Agents (HS-100-09)", () => {
   it("renders blocked sessions before running, with the Answer verb", async () => {
     render(<CompanionCore />);
-    const blockedHead = await screen.findByText("Blocked — needs your answer");
+    const blockedHead = await screen.findByText("Blocked: needs your answer");
     await screen.findByText("holdspeak");
     const runningHead = screen.getByRole("heading", { name: "Running" });
     expect(
@@ -61,7 +61,7 @@ describe("Agents (HS-100-09)", () => {
 
   it("never says Personas", async () => {
     const { container } = render(<CompanionCore />);
-    await screen.findByText("Blocked — needs your answer");
+    await screen.findByText("Blocked: needs your answer");
     expect(container.textContent).not.toMatch(/personas?/i);
   });
 });

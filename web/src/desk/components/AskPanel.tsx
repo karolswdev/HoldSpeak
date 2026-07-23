@@ -302,7 +302,7 @@ export function AskPanel() {
                   disabled={!prompt.trim() || overBudget}
                   title={
                     overBudget
-                      ? "Grounding is past the window — pick less"
+                      ? "Grounding is past the window: pick less"
                       : undefined
                   }
                   onClick={() => void ask()}

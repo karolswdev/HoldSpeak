@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     document.title = `HoldSpeak${
       location.pathname === "/"
         ? ""
-        : ` — ${location.pathname.split("/").filter(Boolean).at(-1) ?? "Web"}`
+        : ` · ${location.pathname.split("/").filter(Boolean).at(-1) ?? "Web"}`
     }`;
   }, [location.pathname]);
 

@@ -394,7 +394,7 @@ export function Pullout({
             ) : (
               <p className="quiet">
                 {detail?.intel_status?.state === "disabled"
-                  ? "Intelligence is off — no outcomes were made for this meeting."
+                  ? "Intelligence is off. No outcomes were made for this meeting."
                   : detail?.intel_status?.state
                     ? `Intelligence ${intelligenceState(detail.intel_status.state)}`
                     : "Intelligence queued"}

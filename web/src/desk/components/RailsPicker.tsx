@@ -32,7 +32,7 @@ function useRailsRows(): RailsRow[] {
           project: p.slug,
           kind: "roadmap",
           id: p.slug,
-          title: `${p.slug} — roadmap`,
+          title: `${p.slug}: roadmap`,
         });
         const cur = p.currentPhase;
         if (cur) {
@@ -41,7 +41,7 @@ function useRailsRows(): RailsRow[] {
             project: p.slug,
             kind: "phase",
             id: String(cur.number),
-            title: `Phase ${cur.number} — ${cur.title}`,
+            title: `Phase ${cur.number}: ${cur.title}`,
           });
           for (const st of p.stories.filter((s) => s.phase === cur.number)) {
             rows.push({

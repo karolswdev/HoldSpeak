@@ -668,7 +668,7 @@ export function EditInPlace({
       <span
         className={`${cx} is-locked`}
         title={disabledReason}
-        aria-label={`${label} — ${disabledReason}`}
+        aria-label={`${label}: ${disabledReason}`}
       >
         {value}
       </span>
@@ -694,7 +694,7 @@ export function EditInPlace({
     "aria-label": label,
     value: draft,
     autoFocus: true,
-    // Placeholder-shaped values ("No knowledge yet — click to add")
+    // Placeholder-shaped values ("No knowledge yet. Click to add.")
     // ride the same `value` prop as real content; select it on focus
     // so typing REPLACES the placeholder instead of appending after it.
     onFocus: (event: { target: HTMLInputElement | HTMLTextAreaElement }) =>

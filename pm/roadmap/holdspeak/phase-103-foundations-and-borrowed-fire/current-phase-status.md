@@ -1,6 +1,6 @@
 # Phase 103 - Foundations & Borrowed Fire
 
-**Status:** IN PROGRESS (1/6, 2026-07-22). Chartered from a four-agent
+**Status:** IN PROGRESS (2/6, 2026-07-22). Chartered from a four-agent
 research pass the owner commissioned directly: three independent Opus
 4.8 analysts examining `ViuGiaLai/researchmind` from different angles
 (architecture/engineering, product/UX, feasibility/risk/licensing) to
@@ -11,8 +11,8 @@ reports' findings into the additional stories, with a healthy dose of
 skepticism against blind adoption and realism about single-owner
 delivery timelines.
 
-**Last updated:** 2026-07-22 (HS-103-01 shipped: the open-window set
-now persists; Reset Layout's claimed geometry bug did not reproduce).
+**Last updated:** 2026-07-22 (HS-103-02 shipped: the dash-in-glass guard
+found 33 offenders, not the 3 named — all fixed).
 
 ## Why this phase exists
 
@@ -68,7 +68,7 @@ agent-steering feature provable by anyone, not just archaeology.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-103-01 | Session restoration — the desk remembers it was open | done | [story-01-session-restoration](./story-01-session-restoration.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-103-02 | The voice guard reads the glass, not just the docs | backlog | [story-02-voice-guard-on-glass](./story-02-voice-guard-on-glass.md) | — |
+| HS-103-02 | The voice guard reads the glass, not just the docs | done | [story-02-voice-guard-on-glass](./story-02-voice-guard-on-glass.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-103-03 | Grounding verification — does the artifact say what the source says | backlog | [story-03-grounding-verification](./story-03-grounding-verification.md) | — |
 | HS-103-04 | Endpoint health — honest fallback across Runs-on destinations | backlog | [story-04-endpoint-health](./story-04-endpoint-health.md) | — |
 | HS-103-05 | A provable steering demo — the flagship feature, on demand | backlog | [story-05-steering-demo-recipe](./story-05-steering-demo-recipe.md) | — |
@@ -135,7 +135,23 @@ confirmed live on a staged hub (headed Playwright, 1440 + 393): it
 does not reproduce on the current codebase — `resetLayout()` already
 clears an open window's geometry reactively — so no production change
 was needed there; the regression test now pins the correct behavior.
-Next: HS-103-02.
+
+**2026-07-22 — HS-103-02 shipped.** Extended `test_web_vocabulary_guard.py`
+with a dash-in-prose rule (reusing its existing regex-scan machinery,
+no JSX parser) that exempts numeric ranges (`3–4`, `F1–F12`) and
+template-literal interpolation (a nested `x || "—"` placeholder). Fixed
+a pre-existing false-positive in the SHARED scan helper along the way
+(a bare `/*` inside a string, e.g. `audio/*`, was mistaken for a JSDoc
+comment open and swallowed real code up to the next unrelated `*/`).
+Running the finished guard once, before any fixes, surfaced **33
+offending lines**, not the 3 the audit named — every one composed
+without a dash (period/comma/colon/semicolon/parentheses per context)
+and without the "on paper" reassurance idiom the three named lines
+also carried. Confirmed live on a staged hub. The full pytest run
+showed 7 failures; verified via `git stash` that all 7 are pre-existing
+and unrelated to this story (1 a build-vs-test race from a manual
+rebuild during the run, 6 a stale generated API-surface manifest/ledger).
+Next: HS-103-03.
 
 ## Active risks
 

@@ -105,9 +105,9 @@ const blank = (): Profile => ({
 function lastSeenLabel(seconds: unknown): string {
   const n = Number(seconds);
   if (!Number.isFinite(n) || n < 0) return "offline";
-  if (n < 90) return "offline — last seen just now";
-  if (n < 5400) return `offline — last seen ${Math.round(n / 60)} m ago`;
-  return `offline — last seen ${Math.round(n / 3600)} h ago`;
+  if (n < 90) return "offline, last seen just now";
+  if (n < 5400) return `offline, last seen ${Math.round(n / 60)} m ago`;
+  return `offline, last seen ${Math.round(n / 3600)} h ago`;
 }
 
 export function ProfilesCore(_props: CoreProps) {
