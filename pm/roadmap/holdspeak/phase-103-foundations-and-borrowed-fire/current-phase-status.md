@@ -1,6 +1,7 @@
 # Phase 103 - Foundations & Borrowed Fire
 
-**Status:** IN PROGRESS (5/6, 2026-07-22). Chartered from a four-agent
+**Status:** IN PROGRESS (5/7, 2026-07-22 — a 7th story was scaffolded
+mid-sitting; see below). Chartered from a four-agent
 research pass the owner commissioned directly: three independent Opus
 4.8 analysts examining `ViuGiaLai/researchmind` from different angles
 (architecture/engineering, product/UX, feasibility/risk/licensing) to
@@ -11,9 +12,11 @@ reports' findings into the additional stories, with a healthy dose of
 skepticism against blind adoption and realism about single-owner
 delivery timelines.
 
-**Last updated:** 2026-07-22 (HS-103-06: machine proof green, per-story
-drift-check done, retrospective written — the owner's sitting is the
-one thing left before this phase closes).
+**Last updated:** 2026-07-22 (the owner's sitting verdict is recorded:
+the 5 shipped stories stand, but the AI chat surfaces need "2 notches
+better" — the owner chose to hold the phase open for it rather than
+spin off a new phase. HS-103-07 scaffolded; HS-103-06 now depends on
+it too).
 
 ## Why this phase exists
 
@@ -54,15 +57,20 @@ agent-steering feature provable by anyone, not just archaeology.
 
 ## Exit criteria (evidence required)
 
-- [ ] All five build stories (HS-103-01 through HS-103-05) shipped
-      with evidence.
-- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green.
-- [ ] `cd web && npx tsc --noEmit -p . && npx vitest run && npm run
+- [x] The original five build stories (HS-103-01 through HS-103-05)
+      shipped with evidence.
+- [x] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green (same
+      pre-existing, unrelated failures documented per-story).
+- [x] `cd web && npx tsc --noEmit -p . && npx vitest run && npm run
       build && npm run tokens:gate` green.
-- [ ] The interior-canon + vocabulary guards (including HS-103-02's
+- [x] The interior-canon + vocabulary guards (including HS-103-02's
       new dash-in-glass rule) green.
+- [ ] HS-103-07 (the AI chat surfaces — scaffolded 2026-07-22 mid-sitting,
+      per the owner's own verdict) shipped with evidence.
 - [ ] HS-103-06 closeout: the owner's sitting verdict recorded, per
-      Article IX.4.
+      Article IX.4 — **first pass recorded 2026-07-22** (see "Where we
+      are"); a second, shorter sitting confirms HS-103-07 meets the "2
+      notches better" bar before this box is fully checked.
 
 ## Story status
 
@@ -74,6 +82,7 @@ agent-steering feature provable by anyone, not just archaeology.
 | HS-103-04 | Endpoint health — honest fallback across Runs-on destinations | done | [story-04-endpoint-health](./story-04-endpoint-health.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-103-05 | A provable steering demo — the flagship feature, on demand | done | [story-05-steering-demo-recipe](./story-05-steering-demo-recipe.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-103-06 | Closeout | in-progress | [story-06-closeout](./story-06-closeout.md) | — |
+| HS-103-07 | The AI chat surfaces feel like a cool part of the system | backlog | [story-07-the-ai-chat-surfaces-feel-like-a-cool-part-of-the-system](./story-07-the-ai-chat-surfaces-feel-like-a-cool-part-of-the-system.md) | — |
 
 ## Where we are
 
@@ -239,10 +248,26 @@ any agent, earns a verify pass before being trusted, exactly as this
 phase did with the resetLayout claim. Full write-up:
 `evidence-story-06.md` (kept UNTRACKED per this project's own
 precedent for closeout evidence pending the owner's verdict — see
-Phase 101's `evidence-story-04.md`). HS-103-06 stays `in-progress`:
-Article IX.4 requires the OWNER's felt verdict over the assembled
-chain, recorded verbatim — not something machine proof or an agent can
-render. Next: the owner's sitting.
+Phase 101's `evidence-story-04.md`).
+
+**2026-07-22 — the owner's sitting, recorded.** Verdict, verbatim: "the
+parts of talking with the AI, the chat interface, and so on - still
+need a bettered quality pass and a much more streamlined and 'oh, I'm
+talking to a real cool part of the system' kind of vibe... all the AI
+Chat interfaces... need 2 notches better." Asked directly whether this
+closes Phase 103 (chat-quality spun into a new later phase) or holds
+it open, the owner chose to **hold Phase 103 open**. The five shipped
+build stories stand — no drift found against any of their own research
+findings — but the chain as a whole doesn't yet earn a pass because the
+chat surfaces (a dimension none of the four research findings touched)
+aren't there yet. Scaffolded HS-103-07 ("The AI chat surfaces feel like
+a cool part of the system") the same sitting, scope grounded in a live
+screenshot survey of `AskPanel.tsx`, `PersonaChat.tsx`, and
+`SessionPullout.tsx`'s steer composer (plain single-line composers, no
+turn-bubble distinction, no thinking-state life, a settings-form feel
+next to the rest of the desk's personality). HS-103-06 now also
+depends on HS-103-07. Next: build HS-103-07, then a second, shorter
+sitting.
 
 ## Active risks
 
