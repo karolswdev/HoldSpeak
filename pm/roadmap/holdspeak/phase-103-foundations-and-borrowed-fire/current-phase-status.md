@@ -11,10 +11,9 @@ reports' findings into the additional stories, with a healthy dose of
 skepticism against blind adoption and realism about single-owner
 delivery timelines.
 
-**Last updated:** 2026-07-22 (HS-103-05 shipped: one recipe now boots a
-populated desk AND a live armed steering pane; the flagship feature
-proven end to end — a real keystroke typed through the desk UI landed
-in a real tmux pane, at both viewports).
+**Last updated:** 2026-07-22 (HS-103-06: machine proof green, per-story
+drift-check done, retrospective written — the owner's sitting is the
+one thing left before this phase closes).
 
 ## Why this phase exists
 
@@ -74,7 +73,7 @@ agent-steering feature provable by anyone, not just archaeology.
 | HS-103-03 | Grounding verification — does the artifact say what the source says | done | [story-03-grounding-verification](./story-03-grounding-verification.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-103-04 | Endpoint health — honest fallback across Runs-on destinations | done | [story-04-endpoint-health](./story-04-endpoint-health.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-103-05 | A provable steering demo — the flagship feature, on demand | done | [story-05-steering-demo-recipe](./story-05-steering-demo-recipe.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-103-06 | Closeout | backlog | [story-06-closeout](./story-06-closeout.md) | — |
+| HS-103-06 | Closeout | in-progress | [story-06-closeout](./story-06-closeout.md) | — |
 
 ## Where we are
 
@@ -212,7 +211,34 @@ lapsed mid-walk, typed a marker string into the steer composer, and
 watched it land VERBATIM in the live tmux pane's real output with a
 printed delivery receipt — at both viewports. The most ambitious
 shipped feature is now provable by anyone with one command.
-Next: HS-103-06 (closeout).
+
+**2026-07-22 — HS-103-06 machine proof + drift-check complete; the
+sitting is the one thing left.** Full assembled chain green: pytest
+(4144 passed, 37 skipped, the same 6 pre-existing unrelated failures
+this phase has documented since HS-103-02), web tsc/vitest(318)/build/
+tokens-gate, and the vocabulary + interior-canon + doc-drift guards (33
+passed, including HS-103-02's new dash rule). Checked each of
+HS-103-01 through -05 against its OWN research-finding section (not
+just its acceptance criteria) — no undisclosed drift found. Two things
+worth naming plainly rather than letting pass silently: HS-103-01's
+second named defect (the `resetLayout()` leak) never reproduced under
+investigation — a live, hands-on audit's diagnosis still needs
+independent verification before being trusted; HS-103-04 deliberately
+shipped only the circuit-breaker half of researchmind's file, not the
+provider-ranking half (a conscious, scoped choice, not an oversight).
+Retrospective on the four-agent research method: worth repeating for
+"what should we build next" questions — the external agents' blind
+convergence on one file was a real signal a single agent can't produce,
+and the internal audit's hands-on scrutiny found two real gaps a
+code-only review plausibly would have missed — but every finding, from
+any agent, earns a verify pass before being trusted, exactly as this
+phase did with the resetLayout claim. Full write-up:
+`evidence-story-06.md` (kept UNTRACKED per this project's own
+precedent for closeout evidence pending the owner's verdict — see
+Phase 101's `evidence-story-04.md`). HS-103-06 stays `in-progress`:
+Article IX.4 requires the OWNER's felt verdict over the assembled
+chain, recorded verbatim — not something machine proof or an agent can
+render. Next: the owner's sitting.
 
 ## Active risks
 
