@@ -115,7 +115,7 @@ provenance.
 | HS-104-01 | The capability ledger — what each adapter actually knows | done | [story-01-capability-ledger](./story-01-capability-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-104-02 | The tool-call gate — a held hand, not a watched one | done | [story-02-tool-call-gate](./story-02-tool-call-gate.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-104-03 | The gate under attack — restart, replay, TOCTOU | done | [story-03-gate-threat-model](./story-03-gate-threat-model.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-104-04 | PR receipts — paying the candidate-Y deferral | backlog | [story-04-pr-receipts](./story-04-pr-receipts.md) | — |
+| HS-104-04 | PR receipts — paying the candidate-Y deferral | in-progress | [story-04-pr-receipts](./story-04-pr-receipts.md) | — |
 | HS-104-05 | Session receipts — honest numbers on the card | backlog | [story-05-session-receipts](./story-05-session-receipts.md) | — |
 | HS-104-06 | Docs — the gate and the watch at the entry points | backlog | [story-06-docs](./story-06-docs.md) | — |
 | HS-104-07 | Closeout — the walk and the sitting | backlog | [story-07-closeout](./story-07-closeout.md) | — |

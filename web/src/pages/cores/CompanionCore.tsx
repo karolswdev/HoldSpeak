@@ -19,6 +19,7 @@ import {
 import { presentValue } from "../../desk/surface/format";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { DeliveryListSection } from "../../desk/components/DeliveryListSection";
+import { PrReceiptsSection } from "../../desk/components/PrReceiptsSection";
 
 const WINGS = [
   { id: "sessions", label: "Sessions" },
@@ -152,6 +153,7 @@ export function CompanionCore({ hero }: CoreProps) {
   const deliveryFace = (
     <SurfaceSection label="Delivery work">
       <DeliveryListSection />
+      <PrReceiptsSection />
       <p className="quiet">
         Stories, attempts, and sessions ride the delivery board; open one to
         steer it.

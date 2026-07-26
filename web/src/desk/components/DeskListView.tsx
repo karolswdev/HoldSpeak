@@ -15,6 +15,7 @@ import { InlineEditor } from "./InlineEditor";
 import { Pullout } from "./Pullout";
 import { AskBar, AskPanel } from "./AskPanel";
 import { DeliveryListSection } from "./DeliveryListSection";
+import { PrReceiptsSection } from "./PrReceiptsSection";
 
 /** Rows per page — a plain "show more" pagination, no virtualization dep. */
 export const LIST_PAGE = 100;
@@ -185,6 +186,7 @@ export function DeskListView() {
         ) : null}
       </section>
       <DeliveryListSection />
+      <PrReceiptsSection />
       {editing && (
         <InlineEditor key={editing.id} o={editing} u={{ x: 0.5, y: 0.4 }} />
       )}

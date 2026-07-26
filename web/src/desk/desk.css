@@ -3379,6 +3379,55 @@
   margin-bottom: var(--space-1);
 }
 
+/* HS-104-04 — PR receipts: rows wear match + observed-at; the diff
+   opens in place under its row, mono, scrolling in its own box. */
+.desk-next .desk-pr-receipts h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.desk-next .desk-pr-refresh {
+  margin-left: auto;
+}
+.desk-next .desk-pr-source h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  margin: var(--space-2) 0 var(--space-1);
+}
+.desk-next .desk-pr-source h3 small {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-pr-attmeans {
+  font-size: var(--desk-surface-detail-size);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--wash-2);
+  color: var(--text-muted);
+}
+.desk-next .desk-pr-attmeans.is-exact {
+  background: var(--wash-1);
+  color: var(--text);
+}
+.desk-next .desk-pr-receipts tr.is-needs-you th[scope="row"] {
+  color: var(--danger, #e5484d);
+}
+.desk-next .desk-pr-diff {
+  max-height: 320px;
+  overflow: auto;
+  margin: 0;
+  padding: var(--space-1);
+  background: var(--wash-1);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre;
+}
+
 /* ── HS-95-01: the GL world (the z ladder's ground rule: the canvas is the
    bottom of the desk — world pixels on the GPU; DOM overlays (rename row,
    inline editor, lasso, chips) sit above it inside .desk-world; windows

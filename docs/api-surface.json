@@ -1119,6 +1119,46 @@
       ]
     },
     {
+      "path": "/api/delivery/prs",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_prs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/prs/refresh",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_prs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/prs/{source_id}/{number}/diff",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.delivery_prs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/delivery/prs/{source_id}/{number}/fetch",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.delivery_prs",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/delivery/snapshot",
       "methods": [
         "GET"
