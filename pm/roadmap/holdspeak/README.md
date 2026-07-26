@@ -8,10 +8,12 @@
 1/10**: HS-106-03 turned Article XI's migration debt register into
 checked-in law and an executable fence — exactly 40 static effect
 statements, 4 covered and 36 not, with additions and removals named by
-file:line and family. The empty broker field is already bounded by a
-300-line module budget and a zero driver-specific conditional census;
-four mutations proved every fence fails loudly, and no effect site was
-rerouted. HS-106-01 and HS-106-02 remain the other pure-hardening
+file:line and family. Import origins survive from-imports, renamed
+imports, module aliases, and callable aliases across all five families.
+The empty broker field is already bounded by a 300-line module budget
+and a zero driver-specific conditional census; mutations proved every
+fence fails loudly, and no effect site was rerouted. HS-106-01 and
+HS-106-02 remain the other pure-hardening
 prerequisites before the broker spine. Earlier: **Phase 104 (Borrowed Fire II)
 CLOSED 8/8, all in one day**: the ledger, the fail-closed gate, the
 gate under attack, PR receipts, session receipts, docs, the

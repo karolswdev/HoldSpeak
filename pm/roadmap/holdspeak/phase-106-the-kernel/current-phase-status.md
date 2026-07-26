@@ -174,8 +174,10 @@ debt register is now checked-in data: 40 static statements, 4 covered
 and 36 not, with the ratified 4/8/5/13/10 family split and the ban on
 agent principals reaching its named paths stated in the artifact. A
 filesystem AST walk fences additions and removals by stable selector
-while reporting the live file:line and family; four mutation proofs
-showed both directions fail by name. The broker field is still empty,
+while reporting the live file:line and family. Imported origins survive
+plain from-imports, renamed imports, module aliases, and simple callable
+aliases across all five families; the follow-up mutation named seven
+such sites in one pass. The broker field is still empty,
 but its 300-line module budget and zero driver-specific conditional
 census already stand around it, including match, ternary, registry,
 and table dispatch. No effect site was rerouted. HS-106-01 and

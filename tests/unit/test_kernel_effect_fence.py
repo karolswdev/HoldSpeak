@@ -66,7 +66,8 @@ class CallRule:
             return False
         if self.scopes and scope not in self.scopes:
             return False
-        return target in self.targets and (
+        resolved_target = full.rsplit(".", 1)[-1] if full else target
+        return (target in self.targets or resolved_target in self.targets) and (
             not self.full_suffixes
             or any(full == suffix or full.endswith(f".{suffix}") for suffix in self.full_suffixes)
         )
@@ -93,6 +94,15 @@ _CALL_RULES = (
             "TextTyper._paste_text",
             "TextTyper._type_text_slowly",
             "TextTyper._press_enter",
+        ),
+    ),
+    CallRule(
+        FAMILY_RAW_DESKTOP,
+        ("press", "release", "type"),
+        full_suffixes=(
+            "pynput.keyboard.Controller().press",
+            "pynput.keyboard.Controller().release",
+            "pynput.keyboard.Controller().type",
         ),
     ),
     CallRule(
@@ -220,6 +230,7 @@ class _EffectVisitor(ast.NodeVisitor):
     def __init__(self, relative_path: str) -> None:
         self.relative_path = relative_path
         self.scope_stack: list[str] = []
+        self.bindings: list[dict[str, str]] = [{}]
         self.ordinals: defaultdict[tuple[str, str], int] = defaultdict(int)
         self.sites: list[EffectSite] = []
 
@@ -227,21 +238,93 @@ class _EffectVisitor(ast.NodeVisitor):
     def scope(self) -> str:
         return ".".join(self.scope_stack) or "<module>"
 
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        self.scope_stack.append(node.name)
-        self.generic_visit(node)
+    def _push_scope(self, name: str) -> None:
+        self.scope_stack.append(name)
+        self.bindings.append({})
+
+    def _pop_scope(self) -> None:
+        self.bindings.pop()
         self.scope_stack.pop()
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        self.scope_stack.append(node.name)
+    def _resolve_name(self, name: str) -> str:
+        seen: set[str] = set()
+        current = name
+        while current not in seen:
+            seen.add(current)
+            bound = next(
+                (scope[current] for scope in reversed(self.bindings) if current in scope),
+                None,
+            )
+            if bound is None or bound == current:
+                break
+            current = bound
+        return current
+
+    def _resolved_expr(self, node: ast.AST) -> str:
+        if isinstance(node, ast.Name):
+            return self._resolve_name(node.id)
+        if isinstance(node, ast.Attribute):
+            prefix = self._resolved_expr(node.value)
+            return f"{prefix}.{node.attr}" if prefix else node.attr
+        if isinstance(node, ast.Call):
+            return f"{self._resolved_expr(node.func)}()"
+        return ""
+
+    def _bind(self, target: ast.expr, origin: str) -> None:
+        if isinstance(target, ast.Name):
+            if origin:
+                self.bindings[-1][target.id] = origin
+            else:
+                self.bindings[-1].pop(target.id, None)
+
+    def visit_Import(self, node: ast.Import) -> None:
+        for alias in node.names:
+            local = alias.asname or alias.name.split(".", 1)[0]
+            origin = alias.name if alias.asname else local
+            self.bindings[-1][local] = origin
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        module = node.module or ""
+        for alias in node.names:
+            if alias.name == "*":
+                continue
+            local = alias.asname or alias.name
+            origin = f"{module}.{alias.name}" if module else alias.name
+            self.bindings[-1][local] = origin
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        self.visit(node.value)
+        origin = self._resolved_expr(node.value)
+        for target in node.targets:
+            self._bind(target, origin)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        if node.value is not None:
+            self.visit(node.value)
+            self._bind(node.target, self._resolved_expr(node.value))
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        self._push_scope(node.name)
         self.generic_visit(node)
-        self.scope_stack.pop()
+        self._pop_scope()
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._push_scope(node.name)
+        arguments = (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs)
+        for argument in arguments:
+            self.bindings[-1][argument.arg] = argument.arg
+        if node.args.vararg is not None:
+            self.bindings[-1][node.args.vararg.arg] = node.args.vararg.arg
+        if node.args.kwarg is not None:
+            self.bindings[-1][node.args.kwarg.arg] = node.args.kwarg.arg
+        self.generic_visit(node)
+        self._pop_scope()
 
     visit_AsyncFunctionDef = visit_FunctionDef
 
     def visit_Call(self, node: ast.Call) -> None:
         target = _call_target(node.func)
-        full = _dotted_expr(node.func)
+        full = self._resolved_expr(node.func)
         ordinal_key = (self.scope, target)
         self.ordinals[ordinal_key] += 1
         ordinal = self.ordinals[ordinal_key]
@@ -298,7 +381,8 @@ def _classify_call(
     *, path: str, scope: str, target: str, full: str, node: ast.Call
 ) -> str | None:
     process_targets = {"run", "Popen", "call", "check_call", "check_output"}
-    if target in process_targets and any(
+    resolved_target = full.rsplit(".", 1)[-1] if full else target
+    if resolved_target in process_targets and any(
         "osascript" in value.lower() for value in _literal_strings(node)
     ):
         return FAMILY_RAW_DESKTOP
@@ -350,6 +434,13 @@ def _ledger_key(entry: dict[str, Any]) -> tuple[str, str, str, int]:
     )
 
 
+def _unledgered_message(site: EffectSite) -> str:
+    return (
+        f"UNLEDGERED effect site: {site.label} "
+        f"scope={site.scope} target={site.target} ordinal={site.ordinal}"
+    )
+
+
 def test_effect_family_classifier_fixtures() -> None:
     fixtures = (
         ("holdspeak/scratch.py", "send_text_to_pane(pane='p', text='x')", FAMILY_TMUX),
@@ -364,6 +455,57 @@ def test_effect_family_classifier_fixtures() -> None:
             f"fixture for {expected} classified as "
             f"{[site.family for site in found]}"
         )
+
+
+def test_import_and_callable_aliases_cannot_evade_any_effect_family() -> None:
+    fixtures = (
+        # Subprocess: plain from-import, aliased from-import, module alias, and
+        # every process API named by the census scope.
+        ("subprocess run from-import", "from subprocess import run\nrun(['true'])", FAMILY_SUBPROCESS),
+        ("subprocess run alias", "from subprocess import run as sneaky\nsneaky(['true'])", FAMILY_SUBPROCESS),
+        ("subprocess module alias", "import subprocess as sp\nsp.run(['true'])", FAMILY_SUBPROCESS),
+        ("subprocess Popen alias", "from subprocess import Popen as launch\nlaunch(['true'])", FAMILY_SUBPROCESS),
+        ("subprocess call alias", "from subprocess import call as invoke\ninvoke(['true'])", FAMILY_SUBPROCESS),
+        ("subprocess check_output alias", "from subprocess import check_output as output\noutput(['true'])", FAMILY_SUBPROCESS),
+        ("subprocess check_call alias", "from subprocess import check_call as checked\nchecked(['true'])", FAMILY_SUBPROCESS),
+        # Tmux transport: both imported boundary names survive renaming.
+        ("tmux text alias", "from holdspeak.tmux_transport import send_text_to_pane as push\npush(pane='p', text='x')", FAMILY_TMUX),
+        ("tmux keys module alias", "import holdspeak.tmux_transport as tmux\ntmux.send_keys_to_pane(pane='p', keys=[])", FAMILY_TMUX),
+        # TextTyper: class aliases and aliases of the bound method itself.
+        ("TextTyper class alias", "from holdspeak.typer import TextTyper as Typer\nTyper().type_text('x')", FAMILY_TYPER),
+        ("TextTyper bound method alias", "from holdspeak.typer import TextTyper as Typer\nwriter = Typer().type_text\nwriter('x')", FAMILY_TYPER),
+        # Egress: HTTP, socket, and model-call aliases all retain provenance.
+        ("urlopen alias", "from urllib.request import urlopen as fetch\nfetch('https://example.test')", FAMILY_EGRESS),
+        ("urllib module alias", "import urllib.request as net\nnet.urlopen('https://example.test')", FAMILY_EGRESS),
+        ("socket alias", "from socket import create_connection as connect\nconnect(('example.test', 443))", FAMILY_EGRESS),
+        ("model method alias", "request = client.chat.completions.create\nrequest()", FAMILY_EGRESS),
+        # Raw desktop: clipboard, pyautogui, AX/Quartz, and AppleScript process
+        # aliases remain raw primitives rather than generic subprocess sites.
+        ("clipboard alias", "from pyperclip import copy as stash\nstash('x')", FAMILY_RAW_DESKTOP),
+        ("clipboard module alias", "import pyperclip as clipboard\nclipboard.copy('x')", FAMILY_RAW_DESKTOP),
+        ("pyautogui alias", "from pyautogui import hotkey as chord\nchord('ctrl', 'v')", FAMILY_RAW_DESKTOP),
+        ("pynput controller alias", "from pynput.keyboard import Controller as Keys\nkeyboard = Keys()\nkeyboard.press('x')", FAMILY_RAW_DESKTOP),
+        ("Quartz alias", "from Quartz import CGEventPost as post\npost(0, event)", FAMILY_RAW_DESKTOP),
+        ("AX alias", "from ApplicationServices import AXUIElementSetAttributeValue as set_ax\nset_ax(element, attr, value)", FAMILY_RAW_DESKTOP),
+        ("AppleScript process alias", "from subprocess import run as execute\nexecute(['osascript', '-e', script])", FAMILY_RAW_DESKTOP),
+    )
+
+    for name, source, expected_family in fixtures:
+        sites = _classify_source("holdspeak/alias_mutation.py", source)
+        assert len(sites) == 1, f"{name} escaped or double-counted: {sites}"
+        site = sites[0]
+        assert site.family == expected_family, (
+            f"{name} classified as {site.family}, expected {expected_family}"
+        )
+        message = _unledgered_message(site)
+        assert "holdspeak/alias_mutation.py:" in message
+        assert f"[{expected_family}]" in message
+        assert f"target={site.target}" in message
+
+    shadowed = "from subprocess import run\ndef harmless(run):\n    run(['not-the-import'])\n"
+    assert not _classify_source("holdspeak/shadowed.py", shadowed), (
+        "a function argument must shadow an imported effect name"
+    )
 
 
 def test_effect_ledger_is_complete_and_current() -> None:
@@ -385,8 +527,7 @@ def test_effect_ledger_is_complete_and_current() -> None:
     ]
 
     failures = [
-        f"UNLEDGERED effect site: {site.label} "
-        f"scope={site.scope} target={site.target} ordinal={site.ordinal}"
+        _unledgered_message(site)
         for site in sorted(unledgered, key=lambda item: (item.path, item.line))
     ]
     failures.extend(
