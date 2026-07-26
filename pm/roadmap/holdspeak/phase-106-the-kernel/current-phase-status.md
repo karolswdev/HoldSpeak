@@ -1,6 +1,6 @@
 # Phase 106 - The Kernel
 
-**Status:** ACTIVE (0/10). Chartered 2026-07-26 from
+**Status:** ACTIVE (1/10). Chartered 2026-07-26 from
 [`PLAN_KERNEL_OPERATION_BROKER.md`](../../../docs/internal/PLAN_KERNEL_OPERATION_BROKER.md)
 (the RFC, three council passes) and the owner's direct charge:
 
@@ -11,7 +11,7 @@
 > records decisions and then creates artifacts out of those
 > decisions and meetings."
 
-**Last updated:** 2026-07-26 (chartered; no story shipped yet).
+**Last updated:** 2026-07-26 (HS-106-03 shipped; 1/10).
 
 ## Why this phase exists
 
@@ -109,7 +109,7 @@ receipt for every consequence.
 |---|---|---|---|---|
 | HS-106-01 | Article XI ratified, with the migration provision | ready | [story-01-article-xi](./story-01-article-xi.md) | — |
 | HS-106-02 | Principal separation on loopback | ready | [story-02-principals](./story-02-principals.md) | — |
-| HS-106-03 | The effect census, pinned as a test | ready | [story-03-census-test](./story-03-census-test.md) | — |
+| HS-106-03 | The effect census, pinned as a test | done | [story-03-census-test](./story-03-census-test.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-106-04 | The broker and the journal — four calls | ready | [story-04-broker-journal](./story-04-broker-journal.md) | — |
 | HS-106-05 | Thin slice I — terminal input | ready | [story-05-slice-terminal](./story-05-slice-terminal.md) | — |
 | HS-106-06 | Thin slice II — actuator egress | ready | [story-06-slice-actuator](./story-06-slice-actuator.md) | — |
@@ -169,12 +169,15 @@ pretending.
 
 ## Where we are
 
-**2026-07-26 — chartered, 0/10.** The RFC ladder is now a phase.
-Nothing is built yet. The fourth council pass has already run and
-returned **do not ratify yet**; the owner overruled it in favour of
-ratifying with a migration provision, and both the verdict and the
-dissent are on the record. HS-106-02 and HS-106-03 are activated
-first — both are pure hardening, unblocked by the constitutional
-question, and Sol's findings made 02 more urgent than the RFC
-assumed: the gate's decision route currently takes `actor` from the
-request body and defaults it to `owner`.
+**2026-07-26 — HS-106-03 shipped, 1/10.** The Article XI migration
+debt register is now checked-in data: 40 static statements, 4 covered
+and 36 not, with the ratified 4/8/5/13/10 family split and the ban on
+agent principals reaching its named paths stated in the artifact. A
+filesystem AST walk fences additions and removals by stable selector
+while reporting the live file:line and family; four mutation proofs
+showed both directions fail by name. The broker field is still empty,
+but its 300-line module budget and zero driver-specific conditional
+census already stand around it, including match, ternary, registry,
+and table dispatch. No effect site was rerouted. HS-106-01 and
+HS-106-02 remain the other pure-hardening prerequisites before the
+broker spine.

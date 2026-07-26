@@ -4,15 +4,15 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 106 (The Kernel) CHARTERED,
-0/10**: the RFC's ladder becomes a phase, from the owner's charge
-that HoldSpeak come a lot closer to a web Operating System for the
-Tech-Lead/Architect who works with AI daily. Article XI goes to the
-Constitution behind a migration provision (the fourth council pass
-refused the drafted clauses on evidence; its rewrite was adopted,
-its dissent recorded, the owner ruled to ratify early with declared
-debt). HS-106-02 and HS-106-03 activate first — pure hardening,
-unblocked by the constitutional question. Earlier: **Phase 104 (Borrowed Fire II)
+**Last updated:** 2026-07-26 — **Phase 106 (The Kernel) ACTIVE,
+1/10**: HS-106-03 turned Article XI's migration debt register into
+checked-in law and an executable fence — exactly 40 static effect
+statements, 4 covered and 36 not, with additions and removals named by
+file:line and family. The empty broker field is already bounded by a
+300-line module budget and a zero driver-specific conditional census;
+four mutations proved every fence fails loudly, and no effect site was
+rerouted. HS-106-01 and HS-106-02 remain the other pure-hardening
+prerequisites before the broker spine. Earlier: **Phase 104 (Borrowed Fire II)
 CLOSED 8/8, all in one day**: the ledger, the fail-closed gate, the
 gate under attack, PR receipts, session receipts, docs, the
 seven-beat walk, and the sitting's own rider — **HS-104-08 the icon

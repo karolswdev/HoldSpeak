@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 106
-- **Status:** ready
+- **Status:** done
 - **Depends on:** none
 - **Unblocks:** HS-106-04, HS-106-05, HS-106-06, HS-106-07
 
