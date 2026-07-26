@@ -4,7 +4,22 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-22 — **Phase 102, The Refit, 6/7**:
+**Last updated:** 2026-07-25 — **Phases 104 + 105 scaffolded; the
+kernel RFC drafted.** Phase 105 (Workbench — the owner's "Workbench
+2.0 on steroids" verdict made seven implementation-grade stories:
+icon system, drop-onto, zone windows, Info-on-everything, menu bar,
+docs, sitting-loop closeout) and Phase 104 (Borrowed Fire II — the
+AgentGlass-derived tool-call gate, PR receipts paying the Phase-94
+candidate-Y deferral, honest session receipts) are chartered;
+activation order is 103 close → 105 → 104.
+`docs/internal/PLAN_KERNEL_OPERATION_BROKER.md` (DRAFT) records the
+kernel pivot — a three-model council (resident + Codex + gpt-5.6-sol,
+opinions archived under `proposals/`) converged on an operation
+broker (read/submit/decide/events + an executor plane) and a
+proposed Article XI awaiting the owner's ratification. Standing
+direction recorded in both charters: ALL iPad/HSM legs held — the
+web desk is polished to the atom as the spec a Swift recreation
+later builds from. Earlier: **Phase 102, The Refit, 6/7**:
 HS-102-06 (Speech Settings) shipped — the worst offender per the
 owner's screenshots ("an absolute joke — a cacophony of tiles,
 panes, forms, form groups") is recomposed: the two raw wire dumps
