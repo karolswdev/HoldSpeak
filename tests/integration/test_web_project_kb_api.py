@@ -610,7 +610,9 @@ def test_dictation_page_includes_project_kb_section() -> None:
     assert '<div id="root"></div>' in response.text
     js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "Project scope" in js
-    assert '?? "Knowledge"' in js and '?? "Instructions"' in js
+    # HS-102-06: Knowledge is a real facts list + Instructions binds
+    # .hs/instructions.md edited in place (the ?? fallbacks retired).
+    assert "function Knowledge" in js and "saveInstructions" in js
     assert "Automation hooks" in js
     assert "/api/dictation/project-kb" in js
     assert "/api/dictation/project-hs" in js

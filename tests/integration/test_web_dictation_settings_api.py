@@ -437,7 +437,9 @@ def test_dictation_page_includes_runtime_section() -> None:
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     # HS-100-07: runtime configuration lives behind the Speak door.
     assert "<Runtime />" in source
-    assert "Dictation runtime" in source and 'label="Runs on"' in source
+    # HS-102-06: the runtime face embeds the shared RuntimeDestination
+    # instead of restating a Backend/Runs-on stack.
+    assert 'label="Dictation runtime"' in source and "RuntimeDestination" in source
 
 
 def test_dictation_page_includes_copilot_depth_controls() -> None:

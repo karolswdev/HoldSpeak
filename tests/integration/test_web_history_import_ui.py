@@ -10,7 +10,9 @@ def _page() -> str:
 
 def test_history_has_audio_and_transcript_import() -> None:
     page = _page()
-    assert "Import a recording or transcript" in page
+    # HS-102-04: Record leads; import is the in-surface ImportSection
+    # with the drop well ("or drop a recording below").
+    assert "Record meeting" in page and "ImportSection" in page
     for suffix in (".wav", ".mp3", ".m4a", ".flac", ".vtt", ".srt", ".txt"):
         assert suffix in page
     assert "ffmpeg" in page

@@ -1662,7 +1662,9 @@
         "POST"
       ],
       "module": "web.routes.dictation.kb",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/dictation/readiness",
