@@ -92,8 +92,10 @@ def test_features_route(client):
     assert r.status_code == 200
     body = r.json()
     assert body["feature_count"] > 200
-    # Phase numbers are zero-based in the record: 0 through 100 is 101 phases.
-    assert body["phases_total"] == 102
+    # Phase numbers are zero-based in the record; the roadmap only grows.
+    # A hardcoded total staled on every scaffold (caught by the HS-105-07
+    # closeout sweep at 103) — pin the floor, not the moving count.
+    assert body["phases_total"] >= 102
 
 
 def test_packs_and_pack_detail(client):
