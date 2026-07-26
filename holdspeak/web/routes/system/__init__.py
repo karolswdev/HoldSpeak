@@ -10,6 +10,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from ...context import WebContext
+from .agent_capabilities import build_agent_capabilities_router
 from .coder_steering_routes import build_coder_steering_router
 from .coders import build_coders_router
 from .health import build_health_router
@@ -21,6 +22,7 @@ from .ws import build_ws_router
 def build_system_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     router.include_router(build_health_router(ctx))
+    router.include_router(build_agent_capabilities_router())
     router.include_router(build_coders_router(ctx))
     router.include_router(build_coder_steering_router(ctx))
     router.include_router(build_settings_router(ctx))

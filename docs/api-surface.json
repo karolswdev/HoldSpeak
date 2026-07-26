@@ -389,6 +389,16 @@
       ]
     },
     {
+      "path": "/api/agents/capabilities",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.agent_capabilities",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/all-action-items",
       "methods": [
         "GET"

@@ -116,7 +116,7 @@ public enum ProductLanguage {
         .result: ("Result", "Results"), .artifact: ("Artifact", "Artifacts"),
         .note: ("Note", "Notes"), .zone: ("Zone", "Zones"),
         .knowledge: ("Knowledge", "Knowledge collections"), .project: ("Project", "Projects"),
-        .persona: ("Persona", "Personas"), .coderSession: ("Coder session", "Coder sessions"),
+        .persona: ("Agent", "Agents"), .coderSession: ("Coder session", "Coder sessions"),
         .workflow: ("Workflow", "Workflows"), .sequence: ("Sequence", "Sequences"),
         .integration: ("Integration", "Integrations"), .runsOn: ("Runs on", "Runs on"),
         .proposedAction: ("Proposed action", "Proposed actions"), .review: ("Review", "Reviews"),
