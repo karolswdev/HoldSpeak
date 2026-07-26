@@ -16,7 +16,7 @@ OS-grade first; this phase's shade cards and receipt lines land on
 the icon/state/Info grammar Phase 105 installs. Activation order:
 Phase 103 close → Phase 105 → this phase.
 
-**Last updated:** 2026-07-26 (the HS-104-07 walk passed live; awaiting the owner's sitting).
+**Last updated:** 2026-07-26 (HS-104-08 shipped — the icon family reforged per the sitting rider; awaiting the owner's sitting).
 
 ## Why this phase exists
 
@@ -119,6 +119,7 @@ provenance.
 | HS-104-05 | Session receipts — honest numbers on the card | done | [story-05-session-receipts](./story-05-session-receipts.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-104-06 | Docs — the gate and the watch at the entry points | done | [story-06-docs](./story-06-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-104-07 | Closeout — the walk and the sitting | in-progress | [story-07-closeout](./story-07-closeout.md) | — |
+| HS-104-08 | The icon family reforged — Workbench 2.0, but amazing | done | [story-08-workbench-icons](./story-08-workbench-icons.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Decisions deferred (parked, not committed)
 
@@ -134,6 +135,18 @@ provenance.
   37/61 executor spine once PR receipts exist.
 
 ## Where we are
+
+**2026-07-26 — the icon family reforged (the sitting's rider,
+HS-104-08).** At the sitting gate the owner chartered a rider, the
+HS-103-07 precedent: crystals and bitmoji avatars OUT, Workbench
+2.0-but-amazing IN. Shipped the same evening via the documented
+Pixellab recipe: 16 cassettes, 12 memo pages, 13 bound TOMES for
+knowledge, 14 mechanical AUTOMATON heads for agents, plus the
+drawer / cartridge / paper singles — 58 bases × three states on
+disk, pools updated in sprites.ts, the dead families deleted, the
+iconCell guard green, and the new world read on the real staged
+desk at 1440 + 393 (assets/story-08, incl. the full contact
+sheet). The sitting now judges the reforged desk.
 
 **2026-07-26 — the walk passed; the sitting is yours.** HS-104-07's
 seven machine beats ran live in ONE staged session

@@ -5,7 +5,13 @@
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
 **Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II):
-machine scope COMPLETE, the sitting pending** — the HS-104-07 walk
+HS-104-08 the icon family reforged** (the sitting's chartered rider):
+crystals and avatar bitmojis are gone — knowledge is a bound tome,
+an agent is a mechanical automaton head, and the whole 58-sprite
+family regenerated in one Workbench-2.0-modern language via the
+documented Pixellab recipe, states on disk, guard green, read on
+the real desk at both densities. Earlier: **machine scope COMPLETE,
+the sitting pending** — the HS-104-07 walk
 passed live in one staged session (`seeded-desk-watched-hand`):
 arm + honest readback, a real held call approved from the shade, a
 real deny whose reason course-corrected the agent verbatim, expiry /
