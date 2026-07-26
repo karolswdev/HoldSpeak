@@ -84,16 +84,19 @@ interface ObjectNode {
   data: SceneObject;
 }
 
+/** HS-105-01/03 — a zone is a DRAWER ICON in the uniform cell (the tray,
+ * its thumbs strip, its resize grip, and its "drop things here" prose all
+ * died). The `_sel` drawer image lights when the zone is a drop target. */
 interface ZoneNode {
   root: Container;
-  shadow: NineSliceSprite;
-  panel: Sprite;
-  panelKey: string;
-  title: Text;
-  count: Text;
-  thumbs: Container;
-  thumbKeys: string;
-  grip: Sprite;
+  shadow: Sprite;
+  glow: Sprite;
+  sprite: Sprite;
+  spriteUrl: string;
+  label: Text;
+  labelText: string;
+  countBadge: Container | null;
+  countText: string;
   lift: number;
   liftTarget: number;
   scale: number;
@@ -576,44 +579,44 @@ export class WorldEngine {
 
   private createZoneNode(): ZoneNode {
     const root = new Container();
-    const shadow = new NineSliceSprite({
-      texture: zoneShadowTexture(),
-      leftWidth: 32,
-      topHeight: 32,
-      rightWidth: 32,
-      bottomHeight: 32,
-    });
-    shadow.alpha = 0.85;
-    const panel = new Sprite();
-    const title = new Text({
+    const shadow = new Sprite(shadowTexture());
+    shadow.anchor.set(0.5);
+    const glow = new Sprite();
+    glow.anchor.set(0.5);
+    glow.alpha = 0.5;
+    const sprite = new Sprite();
+    sprite.anchor.set(0.5);
+    const label = new Text({
       text: "",
       style: {
         fontFamily: bodyFont(),
-        fontSize: 13,
+        fontSize: 12,
+        lineHeight: 15,
         fontWeight: "600",
         fill: TEXT_COLOR,
+        align: "center",
+        dropShadow: {
+          alpha: 0.7,
+          angle: Math.PI / 2,
+          blur: 3,
+          color: 0x000000,
+          distance: 1,
+        },
       },
       resolution: Math.min((window.devicePixelRatio || 1) * 1.5, 3),
     });
-    const count = new Text({
-      text: "",
-      style: { fontFamily: bodyFont(), fontSize: 12, fill: TEXT_MUTED },
-      resolution: Math.min((window.devicePixelRatio || 1) * 1.5, 3),
-    });
-    const thumbs = new Container();
-    const grip = new Sprite();
-    grip.alpha = 0;
-    root.addChild(shadow, panel, title, count, thumbs, grip);
+    label.anchor.set(0.5, 0);
+    root.addChild(shadow, glow, sprite, label);
     return {
       root,
       shadow,
-      panel,
-      panelKey: "",
-      title,
-      count,
-      thumbs,
-      thumbKeys: "",
-      grip,
+      glow,
+      sprite,
+      spriteUrl: "",
+      label,
+      labelText: "",
+      countBadge: null,
+      countText: "",
       lift: 0,
       liftTarget: 0,
       scale: 1,
@@ -630,67 +633,55 @@ export class WorldEngine {
     this.zoneLayer.sortableChildren = true;
     node.root.pivot.set(0, 0);
     const emphasized = z.dropReady || this.hoverKey === `zone:${z.id}`;
-    const panelKey = `${z.tint}:${Math.round(z.width)}x${z.height}:${emphasized ? 1 : 0}`;
-    if (node.panelKey !== panelKey) {
-      node.panelKey = panelKey;
-      node.panel.texture = zonePanelTexture(
-        z.tint,
-        z.width,
-        z.height,
-        emphasized,
-      );
-    }
-    node.shadow.position.set(-14, -8);
-    node.shadow.width = z.width + 28;
-    node.shadow.height = z.height + 34;
-    node.title.text = z.title;
-    node.title.position.set(16, 11);
-    const countText =
-      z.count === 0
-        ? "drop things here"
-        : z.count === 1
-          ? "1 item"
-          : `${z.count} items`;
-    node.count.text = countText;
-    node.count.position.set(
-      z.thumbs.length > 0 ? 16 + z.thumbs.length * 26 + (z.more ? 26 : 0) : 16,
-      z.thumbs.length > 0 ? z.height - 27 : z.height - 29,
-    );
-    const thumbKeys =
-      z.thumbs.map((t) => t.id).join(",") + (z.more ? `+${z.more}` : "");
-    if (node.thumbKeys !== thumbKeys) {
-      node.thumbKeys = thumbKeys;
-      node.thumbs.removeChildren().forEach((c) => c.destroy({ children: true }));
-      z.thumbs.forEach((t, i) => {
-        const s = new Sprite();
-        const tex = loadSprite(t.sprite, (loaded) => {
-          s.texture = loaded;
-        });
-        if (tex) s.texture = tex;
-        s.width = 22;
-        s.height = 22;
-        s.position.set(16 + i * 26, z.height - 33);
-        node.thumbs.addChild(s);
+    // The cell's centerline (the root stays top-left anchored so the tick's
+    // y math is unchanged).
+    const cx = z.width / 2;
+    const cy = LIFT / 2;
+    if (node.spriteUrl !== z.sprite) {
+      node.spriteUrl = z.sprite;
+      const tex = loadSprite(z.sprite, (t) => {
+        if (node.spriteUrl === z.sprite) node.sprite.texture = t;
       });
-      if (z.more > 0) {
-        const more = new Text({
-          text: `+${z.more}`,
-          style: { fontFamily: bodyFont(), fontSize: 11, fill: TEXT_MUTED },
-          resolution: 2,
-        });
-        more.position.set(16 + z.thumbs.length * 26, z.height - 30);
-        node.thumbs.addChild(more);
-      }
+      if (tex) node.sprite.texture = tex;
     }
-    if (!node.grip.texture || node.grip.texture === Texture.EMPTY) {
-      node.grip.texture = gripTexture(z.tint);
+    node.sprite.width = SPRITE;
+    node.sprite.height = SPRITE;
+    node.sprite.position.set(cx, cy);
+    if (!node.glow.texture || node.glow.texture === Texture.EMPTY) {
+      node.glow.texture = glowTexture(z.tint);
     }
-    node.grip.position.set(z.width - GRIP - 3, z.height - GRIP - 3);
-    node.grip.alpha = emphasized || z.dragging ? 0.9 : 0.35;
+    node.glow.width = LIFT + 40;
+    node.glow.height = LIFT + 40;
+    node.glow.position.set(cx, cy);
+    node.glow.alpha = emphasized ? 0.85 : 0.5;
+    node.shadow.position.set(cx, cy + SPRITE / 2 + 8);
+    node.shadow.width = 54;
+    node.shadow.height = 12;
+    if (node.labelText !== z.title) {
+      node.labelText = z.title;
+      const measure = (s: string) => {
+        node.label.text = s;
+        return node.label.width;
+      };
+      node.label.text = clampLabel(z.title, measure, 98);
+    }
+    node.label.position.set(cx, cy + SPRITE / 2 + 8);
+    // Member count: the live badge (memberIds.length), bottom-right of the
+    // art — counts and marks only, never prose.
+    const countText = z.count > 0 ? String(z.count) : "";
+    if (countText !== node.countText) {
+      node.countText = countText;
+      node.countBadge?.destroy({ children: true });
+      node.countBadge = countText
+        ? makeBadge(countText, 0x242833, 0xf2f3f5, 9)
+        : null;
+      if (node.countBadge) node.root.addChild(node.countBadge);
+    }
+    node.countBadge?.position.set(cx + SPRITE / 2 - 4, cy + SPRITE / 2 - 4);
     node.liftTarget = z.dropReady ? -4 : emphasized ? -2 : 0;
     node.scaleTarget = z.dropReady ? 1.04 : 1;
-    // Rename hides the GL title (the DOM input overlays it).
-    node.title.visible = !z.renaming;
+    // Rename hides the GL label (the DOM input overlays it).
+    node.label.visible = !z.renaming;
   }
 
   // ── per-frame (transform-only) ──────────────────────────────────────────

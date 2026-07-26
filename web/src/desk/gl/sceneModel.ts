@@ -91,11 +91,16 @@ export interface SceneZone {
   id: string;
   title: string;
   u: UnitPos;
-  /** Resolved width in px for the given world width. */
+  /** HS-105-01/03 — a zone renders as a DRAWER ICON in the uniform cell
+   * (the tray + its "drop things here" prose died); width/height are the
+   * cell now. */
   width: number;
   height: number;
   tint: string;
   count: number;
+  /** The drawer sprite url; the `_sel` image when the zone is a lit
+   * drop target (the real second image, never a filter). */
+  sprite: string;
   thumbs: SceneZoneThumb[];
   more: number;
   dropReady: boolean;
@@ -215,30 +220,20 @@ export function buildScene(input: SceneInputs): WorldScene {
               (input.compact ? 0.2 : 0.13) +
               (Math.floor(i / cols) * 12) / 100,
           };
-    const savedWidth = input.zoneWidths[z.id];
-    const width = savedWidth
-      ? Math.min(ZONE_MAX_W, Math.max(ZONE_MIN_W, savedWidth))
-      : Math.min(
-          ZONE_DEFAULT_MAX_W,
-          Math.max(ZONE_MIN_W, (wPct / 100) * input.worldWidth),
-        );
     const memberIds = (((z.ref as any).memberIds as string[]) || []).slice();
-    const thumbs: SceneZoneThumb[] = memberIds.slice(0, 4).map((mid) => {
-      const r = resolveRef(input.items, mid);
-      const kind = r.kind || "note";
-      return { id: mid, kind, sprite: spriteUrl(kind, mid) };
-    });
+    const dropReady = input.hoverZoneId === z.id;
     return {
       id: z.id,
       title: z.title,
       u,
-      width,
-      height: thumbs.length > 0 ? ZONE_THUMBS_H : ZONE_H,
+      width: OBJ_W,
+      height: OBJ_H,
       tint: ZONE_TINTS[variantIndex(z.id, ZONE_TINTS.length)],
       count: memberIds.length,
-      thumbs,
-      more: Math.max(0, memberIds.length - 4),
-      dropReady: input.hoverZoneId === z.id,
+      sprite: spriteUrl("directory", z.id, dropReady ? "sel" : "rest"),
+      thumbs: [],
+      more: 0,
+      dropReady,
       dragging: input.draggingId === zoneKey,
       renaming: input.renamingZoneId === z.id,
     };
@@ -306,16 +301,10 @@ export function hitTest(
       localY >= r.top &&
       localY <= r.top + r.height;
     if (!inside) continue;
-    const gripPad = 6;
-    if (
-      localX >= r.left + r.width - GRIP - gripPad &&
-      localY >= r.top + r.height - GRIP - gripPad
-    ) {
-      return { type: "zone-grip", zone: z };
-    }
-    // The title row: tapping it starts rename (DOM parity — the title span
-    // stopped propagation and opened the rename input).
-    if (localY <= r.top + 30) return { type: "zone-title", zone: z };
+    // HS-105-01/03 — the drawer cell: tapping the LABEL band starts rename
+    // (the old tray's title row is gone with the tray; the resize grip died
+    // with it — an icon has no resize).
+    if (localY >= r.top + LIFT) return { type: "zone-title", zone: z };
     return { type: "zone", zone: z };
   }
   for (let i = scene.objects.length - 1; i >= 0; i--) {
