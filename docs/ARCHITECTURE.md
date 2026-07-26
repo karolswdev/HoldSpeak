@@ -347,6 +347,41 @@ re-verifying the pinned pane before it ends anything. Those verbs live behind th
 web desk's session surface, so a person spawns, drives, renames, and ends a
 session from glass, each act its own line in the audit.
 
+### The tool-call gate
+
+The gate is the same spine pointed the other way: instead of the desk typing
+into an agent, an opted-in Claude Code session stops before a matched tool
+call and asks the desk. Its PreToolUse hook redacts the arguments (sha256 plus
+a 120-character head; the full payload never crosses the wire), posts a
+proposal to the loopback hub, and blocks its own loop, polling for the
+decision. The proposal row is a record, never authority: only the waiting hook
+can let the call proceed. Held proposals surface on the shade as needs-you
+cards with Approve and Deny plus a one-line reason that rides back to the
+agent verbatim. Every state flip passes one census-pinned transition (first
+write wins), expiry is a deny, a hub restart invalidates every held row, and
+armed-plus-any-error denies by name; the unarmed hook is inert. On session
+end, a Stop-hook leg reports the session's token totals (numbers and model
+only) so the receipt line can print reported figures the capability ledger
+(`agent_capabilities.py`) actually vouches for.
+
+```mermaid
+flowchart LR
+    A[Claude Code<br/>PreToolUse hook] -- "redacted proposal" --> H[Hub<br/>gate_proposals]
+    H -- "needs you card" --> S[Shade]
+    S -- "Approve / Deny + reason" --> H
+    A -- "poll decision" --> H
+    H -- "deny reason verbatim" --> A
+```
+
+The delivery collector gained a PR pass on the same receipt discipline: one
+batched `gh pr list` per registered source, run by the Refresh verb or an
+explicitly set per-source cadence, mapped to rows carrying state, the CI
+conclusion, the observed-at stamp, and an attribution label that never claims
+more than the match proves (exact worktree identity, a name-match heuristic,
+or unattributed). A failing poll degrades to a named stale row and keeps the
+last good rows; the see-diff verb is local-only, offering an explicit fetch
+when commits are absent.
+
 ### The rails as material
 
 The delivery rails are also material a run can ground on. An open phase, a

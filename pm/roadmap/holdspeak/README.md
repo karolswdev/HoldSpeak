@@ -4,8 +4,13 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 5/7:
-HS-104-05 session receipts** — one line, three tiers, every number
+**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 6/7:
+HS-104-06 docs** — the gate, PR receipts, and session receipts at
+the real entry points (USER_GUIDE beside the steering material,
+SECURITY boundary + egress row, ARCHITECTURE paragraph + rendered
+mermaid, one README paragraph leading with off-by-default), every
+claim truth-audited on the shipped tree. Earlier the same day:
+**HS-104-05 session receipts** — one line, three tiers, every number
 labeled: hub-record truths always; token figures only where the
 ledger vouches (the gate hook's Stop leg reports the agent's own
 transcript totals, cache figures separate); cost only with a price
