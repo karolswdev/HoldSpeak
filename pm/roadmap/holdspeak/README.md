@@ -4,8 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 2/7:
-HS-104-02 the tool-call gate** — a steered agent's risky call now
+**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 3/7:
+HS-104-03 the gate under attack** — the hostile checklist pinned as
+tests that bite: restart / replay / TOCTOU over real HTTP against a
+real spawned hub (SIGKILLed mid-hold and restarted), expiry race +
+double decision on the injectable clock, unarmed latency budgeted,
+redaction grep-censused; the load-bearing three proven by mutation
+(guard out → named failure → guard back → green). Earlier the same
+day: **HS-104-02 the tool-call gate** — a steered agent's risky call now
 stops and asks the desk: fail-closed PreToolUse hook (inert unless
 BOTH opt-ins; armed errors always deny by name, no timeout
 auto-allow anywhere), proposals persisted as records never authority
