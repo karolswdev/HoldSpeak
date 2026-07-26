@@ -4,7 +4,7 @@
 // chrome is the floating
 // minimal cluster (DeskChrome); a fresh desk shows the guiding empty state.
 import { useEffect } from "react";
-import { useDesk } from "./store";
+import { defaultViewFor, useDesk } from "./store";
 import { Atmosphere } from "./gl/Atmosphere";
 import { WorldStage } from "./gl/WorldStage";
 import { DeskListView } from "./components/DeskListView";
@@ -52,7 +52,8 @@ export default function DeskApp() {
       <DeskChrome showDailyStarts={!empty} />
       {empty ? (
         <EmptyDesk arrivalRequired={setup?.arrival_required === true} />
-      ) : viewMode === "list" ? (
+      ) : defaultViewFor(viewMode, total, window.innerWidth <= 720) ===
+        "list" ? (
         <DeskListView />
       ) : (
         <WorldStage />

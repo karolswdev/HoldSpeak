@@ -1,0 +1,150 @@
+# HS-105-01 - the density walk's forty-object desk: 12 notes, 4 KBs (real
+# member counts), 6 recipes, 3 chains, 2 workflows, 3 zones - plus the
+# staged recipe's own objects pushes the world past forty. Deterministic
+# ids upsert in place.
+notes:
+- id: dense-note-00
+  title: Project glossary
+  body_markdown: 'Density-walk note 0: Project glossary.'
+  tags:
+  - dense-desk
+- id: dense-note-01
+  title: Standup notes
+  body_markdown: 'Density-walk note 1: Standup notes.'
+  tags:
+  - dense-desk
+- id: dense-note-02
+  title: Roadmap sketch
+  body_markdown: 'Density-walk note 2: Roadmap sketch.'
+  tags:
+  - dense-desk
+- id: dense-note-03
+  title: Kernel RFC notes
+  body_markdown: 'Density-walk note 3: Kernel RFC notes.'
+  tags:
+  - dense-desk
+- id: dense-note-04
+  title: Retro actions
+  body_markdown: 'Density-walk note 4: Retro actions.'
+  tags:
+  - dense-desk
+- id: dense-note-05
+  title: API sketch
+  body_markdown: 'Density-walk note 5: API sketch.'
+  tags:
+  - dense-desk
+- id: dense-note-06
+  title: Release checklist notes
+  body_markdown: 'Density-walk note 6: Release checklist notes.'
+  tags:
+  - dense-desk
+- id: dense-note-07
+  title: Owner feedback log
+  body_markdown: 'Density-walk note 7: Owner feedback log.'
+  tags:
+  - dense-desk
+- id: dense-note-08
+  title: Bug triage notes
+  body_markdown: 'Density-walk note 8: Bug triage notes.'
+  tags:
+  - dense-desk
+- id: dense-note-09
+  title: Interview notes
+  body_markdown: 'Density-walk note 9: Interview notes.'
+  tags:
+  - dense-desk
+- id: dense-note-10
+  title: Design critique
+  body_markdown: 'Density-walk note 10: Design critique.'
+  tags:
+  - dense-desk
+- id: dense-note-11
+  title: Migration plan
+  body_markdown: 'Density-walk note 11: Migration plan.'
+  tags:
+  - dense-desk
+kbs:
+- id: dense-kb-0
+  name: Project KB
+  member_ids:
+  - note:dense-note-00
+  - note:dense-note-01
+- id: dense-kb-1
+  name: Incident runbooks
+  member_ids:
+  - note:dense-note-00
+  - note:dense-note-01
+  - note:dense-note-02
+- id: dense-kb-2
+  name: Design tokens KB
+  member_ids:
+  - note:dense-note-00
+  - note:dense-note-01
+  - note:dense-note-02
+  - note:dense-note-03
+- id: dense-kb-3
+  name: Voice canon
+  member_ids:
+  - note:dense-note-00
+  - note:dense-note-01
+  - note:dense-note-02
+  - note:dense-note-03
+  - note:dense-note-04
+recipes:
+- id: dense-recipe-0
+  name: Summarize like a PM
+  role: PM
+  system_prompt: Summarize crisply.
+  user_template: '{{input}}'
+- id: dense-recipe-1
+  name: Draft release notes
+  role: PM
+  system_prompt: Summarize crisply.
+  user_template: '{{input}}'
+- id: dense-recipe-2
+  name: Triage inbox
+  role: PM
+  system_prompt: Summarize crisply.
+  user_template: '{{input}}'
+- id: dense-recipe-3
+  name: Review a diff
+  role: PM
+  system_prompt: Summarize crisply.
+  user_template: '{{input}}'
+- id: dense-recipe-4
+  name: Weekly digest
+  role: PM
+  system_prompt: Summarize crisply.
+  user_template: '{{input}}'
+- id: dense-recipe-5
+  name: Extract decisions
+  role: PM
+  system_prompt: Summarize crisply.
+  user_template: '{{input}}'
+chains:
+- id: dense-chain-0
+  name: Ship checklist
+  steps: []
+- id: dense-chain-1
+  name: Morning brief
+  steps: []
+- id: dense-chain-2
+  name: Aftercare run
+  steps: []
+workflows:
+- id: dense-wf-0
+  name: Digest weekly
+  prompt: run
+- id: dense-wf-1
+  name: Import sweep
+  prompt: run
+directories:
+- id: dense-zone-0
+  name: Decisions
+  member_ids: []
+- id: dense-zone-1
+  name: Archive
+  member_ids: []
+- id: dense-zone-2
+  name: Reference
+  member_ids: []

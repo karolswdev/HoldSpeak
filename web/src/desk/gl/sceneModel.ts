@@ -33,10 +33,15 @@ export const MAX_FLOATERS = 200;
  * CSS zone-tint tokens (HS-96-02). */
 export const ZONE_TINTS: readonly string[] = ZONE_TINT_POOL;
 
-export const OBJ_W = 128;
-export const LIFT = 96;
-export const SPRITE = 88;
-export const SPRITE_SMALL = 74;
+/** HS-105-01 — the gated cell contract. Sprites are 64×64 pixel art and
+ * render 1:1 (integer-true: the 88px fractional upscale was the mush the
+ * owner called out). EVERY kind renders in the SAME cell — uniformity is
+ * the OS feeling; the small-note differential died with the mascot scale.
+ * Badges anchor to the ART bounds at rest and to the BOX when selected. */
+export const OBJ_W = 104;
+export const LIFT = 80; // the selection box
+export const SPRITE = 64; // the art, 1:1
+export const SPRITE_SMALL = 64; // uniform cell (kept for callers; == SPRITE)
 export const LABEL_H = 34;
 export const OBJ_H = LIFT + 2 + LABEL_H;
 export const ZONE_MIN_W = 148;
@@ -67,6 +72,13 @@ export interface SceneObject {
   isNew: boolean;
   editing: boolean;
   attention: number;
+  /** HS-105-01 — state-at-rest badges, each fed by a named live field
+   * (the audited badge-source map; a badge with no source is not drawn):
+   * count = memberIds.length (kb/directory objects), fresh = lastModified
+   * within the recency window, stale = the coder wire's own stale flag. */
+  count: number | null;
+  fresh: boolean;
+  stale: boolean;
 }
 
 export interface SceneZoneThumb {
@@ -122,6 +134,18 @@ function projectionSubject(o: WorldObject): string {
     : qualifiedRef(o.kind, o.id);
 }
 
+/** HS-105-01 — the freshness window: edited within the last 48h wears the
+ * tick. Injectable now() so tests never race the clock. */
+export const FRESH_WINDOW_MS = 48 * 3600 * 1000;
+export function isFresh(
+  lastModified: unknown,
+  now: number = Date.now(),
+): boolean {
+  if (typeof lastModified !== "string" || !lastModified) return false;
+  const t = Date.parse(lastModified);
+  return Number.isFinite(t) && now - t >= 0 && now - t <= FRESH_WINDOW_MS;
+}
+
 export function buildScene(input: SceneInputs): WorldScene {
   const allWorld = worldObjects(input.items, input.divedZone);
   const capped =
@@ -133,6 +157,11 @@ export function buildScene(input: SceneInputs): WorldScene {
     const m = objMotion(o);
     const selectionRef = qualifiedRef(o.kind, o.id);
     const counts = input.subjectCounts[projectionSubject(o)];
+    const ref = o.ref as Record<string, unknown>;
+    const memberIds = Array.isArray(ref.memberIds)
+      ? (ref.memberIds as string[])
+      : null;
+    const stale = Boolean(ref.stale);
     return {
       key: `${o.kind}:${o.id}`,
       kind: o.kind,
@@ -144,7 +173,16 @@ export function buildScene(input: SceneInputs): WorldScene {
       tilt: m.tilt,
       scale: m.scale,
       glow: objGlow(o.kind),
-      sprite: spriteUrl(o.kind, o.id),
+      sprite: spriteUrl(
+        o.kind,
+        o.id,
+        input.selectedIds.includes(selectionRef) ||
+          input.selectedIds.includes(o.id)
+          ? "sel"
+          : stale
+            ? "stale"
+            : "rest",
+      ),
       small: o.kind === "note" || o.kind === "artifact",
       selected:
         input.selectedIds.includes(selectionRef) ||
@@ -153,6 +191,9 @@ export function buildScene(input: SceneInputs): WorldScene {
       isNew: input.newIds.includes(o.id),
       editing: input.editingId === o.id,
       attention: counts?.needs_attention || 0,
+      count: memberIds ? memberIds.length : null,
+      fresh: isFresh(ref.lastModified),
+      stale,
     };
   });
 

@@ -115,37 +115,39 @@ export function objUnit(
 ): UnitPos {
   const saved = positions[o.id];
   if (saved && typeof saved.x === "number") return saved;
+  // HS-105-01: the default home is a DETERMINISTIC clean grid (the
+  // Workbench Clean Up rule) — the per-object random jitter died with the
+  // mascot scale: at forty objects it stacked cells and occluded labels.
+  // A user drag still parks anything anywhere; only defaults grid.
+  const compact = typeof window !== "undefined" && window.innerWidth <= 720;
   const cols = Math.max(
-    2,
-    Math.min(6, Math.ceil(Math.sqrt(Math.max(1, n) * 1.25))),
+    compact ? 3 : 4,
+    Math.min(compact ? 4 : 8, Math.ceil(Math.sqrt(Math.max(1, n) * 1.6))),
   );
   const rows = Math.max(1, Math.ceil(n / cols));
   const col = i % cols;
   const row = Math.floor(i / cols);
-  const jx = (oh(o.id + "x") - 0.5) * (0.7 / cols);
-  const jy = (oh(o.id + "y") - 0.5) * (0.6 / rows);
-  // Default homes stay clear of the chrome band: the top clusters occupy
-  // one row on wide screens and wrap much deeper on phones. A user drag
-  // may still park anything anywhere; only defaults respect the band.
-  const compact = typeof window !== "undefined" && window.innerWidth <= 720;
-  // Zones default one band above (0.20 compact / 0.13 wide, see World).
-  const yMin = compact ? 0.32 : 0.18;
-  const xMin = compact ? 0.14 : 0.07;
+  // Default homes stay clear of the chrome band and the zone band.
+  const yMin = compact ? 0.32 : 0.2;
+  const xMin = compact ? 0.12 : 0.06;
   return {
-    x: Math.min(1 - xMin, Math.max(xMin, (col + 0.5) / cols + jx)),
+    x: Math.min(1 - xMin, Math.max(xMin, xMin + (1 - 2 * xMin) * ((col + 0.5) / cols))),
     y: Math.min(
-      0.92,
-      Math.max(yMin, yMin + (1 - yMin - 0.08) * ((row + 0.5) / rows) + jy),
+      0.9,
+      Math.max(yMin, yMin + (1 - yMin - 0.1) * ((row + 0.5) / rows)),
     ),
   };
 }
 
-/** Per-object float phase / tilt / scale (the CSS custom props). */
+/** Per-object float phase. HS-105-01: the random tilt and 0.92–1.08 scale
+ * jitter died with the mascot scale — pixel art renders integer-true and
+ * axis-aligned (the Workbench discipline); the positional bob keeps the
+ * desk alive without blurring a single pixel. */
 export function objMotion(o: WorldObject) {
   return {
     phase: -(oh(o.id) * 4.5),
-    tilt: (oh(o.id + "t") - 0.5) * 5,
-    scale: 0.92 + oh(o.id + "s") * 0.16,
+    tilt: 0,
+    scale: 1,
   };
 }
 

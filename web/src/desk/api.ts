@@ -127,6 +127,9 @@ export const fromWireNote = (n: any): DeskItem => ({
   bodyMarkdown: n.body_markdown,
   tags: n.tags || [],
   createdAt: n.created_at,
+  // HS-105-01: the freshness badge's named source (notes[].last_modified);
+  // the adapter used to discard it — the badge-source map's finding 4.
+  lastModified: n.last_modified || n.updated_at || null,
 });
 
 export const fromWireRecipe = (a: any): DeskItem => ({
@@ -149,6 +152,8 @@ export const fromWireKb = (k: any): DeskItem => ({
   name: k.name,
   memberIds: k.member_ids || [],
   createdAt: k.created_at,
+  // HS-105-01: freshness source (kbs[].last_modified), previously discarded.
+  lastModified: k.last_modified || null,
 });
 
 export const fromWireDirectory = (d: any): DeskItem => ({
