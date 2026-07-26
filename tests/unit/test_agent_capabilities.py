@@ -46,12 +46,15 @@ EXPECTED = {
         Capability.REPO_HEAD: Standing.UNAVAILABLE,
         Capability.BLOCKING: Standing.UNAVAILABLE,
     },
+    # HS-104-02 flipped tool_hooks + blocking (PreToolUse intercepts and
+    # the hook blocks on the decision) and session_identity to inferred
+    # (the session_id is self-reported by the agent process).
     "claude-code-hooks": {
-        Capability.TOOL_HOOKS: Standing.UNAVAILABLE,
-        Capability.SESSION_IDENTITY: Standing.UNAVAILABLE,
+        Capability.TOOL_HOOKS: Standing.AUTHORITATIVE,
+        Capability.SESSION_IDENTITY: Standing.INFERRED,
         Capability.USAGE_TOKENS: Standing.UNAVAILABLE,
         Capability.REPO_HEAD: Standing.UNAVAILABLE,
-        Capability.BLOCKING: Standing.UNAVAILABLE,
+        Capability.BLOCKING: Standing.AUTHORITATIVE,
     },
 }
 

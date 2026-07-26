@@ -1797,6 +1797,64 @@
       ]
     },
     {
+      "path": "/api/gate/audit",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/gate/config",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/gate/proposals",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/gate/proposals",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/gate/proposals/{proposal_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": []
+    },
+    {
+      "path": "/api/gate/proposals/{proposal_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/grounding/resolve",
       "methods": [
         "POST"

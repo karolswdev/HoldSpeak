@@ -1,6 +1,6 @@
 # Phase 104 - Borrowed Fire II: The Watched Hand
 
-**Status:** IN PROGRESS (1/7, 2026-07-26). Chartered from a second
+**Status:** IN PROGRESS (2/7, 2026-07-26). Chartered from a second
 external-research pass in the Phase-103 mold: a study of
 `SirAllap/agentglass` (an MIT-licensed mission-control dashboard for
 AI coding agents — Claude Code hooks + OTel ingestion, a PreToolUse
@@ -16,7 +16,7 @@ OS-grade first; this phase's shade cards and receipt lines land on
 the icon/state/Info grammar Phase 105 installs. Activation order:
 Phase 103 close → Phase 105 → this phase.
 
-**Last updated:** 2026-07-26 (HS-104-01 shipped).
+**Last updated:** 2026-07-26 (HS-104-02 shipped; the gate is live).
 
 ## Why this phase exists
 
@@ -113,7 +113,7 @@ provenance.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-104-01 | The capability ledger — what each adapter actually knows | done | [story-01-capability-ledger](./story-01-capability-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-104-02 | The tool-call gate — a held hand, not a watched one | backlog | [story-02-tool-call-gate](./story-02-tool-call-gate.md) | — |
+| HS-104-02 | The tool-call gate — a held hand, not a watched one | done | [story-02-tool-call-gate](./story-02-tool-call-gate.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-104-03 | The gate under attack — restart, replay, TOCTOU | backlog | [story-03-gate-threat-model](./story-03-gate-threat-model.md) | — |
 | HS-104-04 | PR receipts — paying the candidate-Y deferral | backlog | [story-04-pr-receipts](./story-04-pr-receipts.md) | — |
 | HS-104-05 | Session receipts — honest numbers on the card | backlog | [story-05-session-receipts](./story-05-session-receipts.md) | — |
@@ -134,6 +134,22 @@ provenance.
   37/61 executor spine once PR receipts exist.
 
 ## Where we are
+
+**2026-07-26 — the gate is live (2/7).** HS-104-02 shipped the same
+day: `gate_proposals` + `gate_audit` (schema v25, one transition
+chokepoint, census-pinned), the fail-closed PreToolUse hook
+(`holdspeak gate hook`, inert unless BOTH opt-ins are set; every
+error path inside an armed match is a deny with its name), the
+`holdspeak gate` owner verbs (install prints the block — it never
+edits `~/.claude`), decision cards on the shade with the in-place
+deny reason, restart invalidation on startup, and the ledger flip
+(`claude-code-hooks` tool_hooks + blocking → authoritative) in the
+same commit. Proven on REAL metal: two real `claude -p` sessions —
+one held call approved from the real desk UI (the command ran only
+then), one denied with a reason that reached the agent verbatim and
+visibly course-corrected it; hub-down, expiry, and a two-process
+kill-mid-hold all denied by name (evidence-story-02.md, shots in
+assets/story-02). Next: HS-104-03, the gate under attack.
 
 **2026-07-26 — activated; the ledger is in (1/7).** Phase 105 closed
 this morning and this phase went live. HS-104-01 shipped the same

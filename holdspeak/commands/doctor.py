@@ -1272,6 +1272,7 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_system_audio_capture(),
         _check_connector_packs(),
         _check_agent_capabilities(),
+        _check_tool_call_gate(),
     ]
 
 
@@ -1300,6 +1301,38 @@ def _check_agent_capabilities() -> DoctorCheck:
             f"{len(LEDGER)} adapters declared, "
             f"{len(LEDGER_CONSUMERS)} consumers, all backed by the ledger"
         ),
+    )
+
+
+def _check_tool_call_gate() -> DoctorCheck:
+    """HS-104-02: the gate's double opt-in, read plainly. Off is the
+    healthy default; armed names every held repo so the fail-closed
+    trade is always visible."""
+    from ..coder_gate import load_gate_config
+
+    config = load_gate_config()
+    if not config.armed and not config.repos:
+        return DoctorCheck(
+            name="Tool-call gate",
+            status="PASS",
+            detail="off (default); `holdspeak gate install` + arm + allow to hold agent calls",
+        )
+    if config.armed and config.repos:
+        held = "; ".join(
+            f"{', '.join(tools)} in {repo}" for repo, tools in sorted(config.repos.items())
+        )
+        return DoctorCheck(
+            name="Tool-call gate",
+            status="PASS",
+            detail=f"ARMED, fail-closed: {held}",
+        )
+    missing = "no repos held" if config.armed else "master switch off"
+    present = "master switch armed" if config.armed else f"{len(config.repos)} repo(s) held"
+    return DoctorCheck(
+        name="Tool-call gate",
+        status="WARN",
+        detail=f"half opted-in ({present}, but {missing}); the gate is inert",
+        fix="Complete or clear the opt-in: `holdspeak gate arm` / `gate allow --repo <path>` / `gate disarm`",
     )
 
 

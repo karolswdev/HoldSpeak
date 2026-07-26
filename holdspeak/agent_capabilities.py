@@ -61,10 +61,12 @@ ADAPTERS = ("tmux-pane", "delivery-node", "mesh-node", "claude-code-hooks")
 # - mesh-node (intel/mesh_relay.py): a relayed inference endpoint.
 #   The hub knows which node it addressed (its own registry — hence
 #   inferred, not vouched by the far side) and nothing else.
-# - claude-code-hooks: declared here so HS-104-02 has a row to make
-#   true. Every cell starts ``unavailable`` — the ledger never
-#   promises ahead of the code; HS-104-02 flips exactly the entries
-#   it implements, in its own commit.
+# - claude-code-hooks (coder_gate.py + gate_routes.py, HS-104-02):
+#   PreToolUse fires before the call and the hook blocks on the
+#   decision, so tool_hooks and blocking are authoritative — flipped
+#   in the same commit as the gate itself. The hook's session_id is
+#   self-reported by the agent process (inferred). Usage and repo
+#   head stay unavailable until a story implements them.
 LEDGER: MappingProxyType[str, MappingProxyType[Capability, Standing]] = MappingProxyType({
     "tmux-pane": MappingProxyType({
         Capability.TOOL_HOOKS: Standing.UNAVAILABLE,
@@ -88,11 +90,11 @@ LEDGER: MappingProxyType[str, MappingProxyType[Capability, Standing]] = MappingP
         Capability.BLOCKING: Standing.UNAVAILABLE,
     }),
     "claude-code-hooks": MappingProxyType({
-        Capability.TOOL_HOOKS: Standing.UNAVAILABLE,
-        Capability.SESSION_IDENTITY: Standing.UNAVAILABLE,
+        Capability.TOOL_HOOKS: Standing.AUTHORITATIVE,
+        Capability.SESSION_IDENTITY: Standing.INFERRED,
         Capability.USAGE_TOKENS: Standing.UNAVAILABLE,
         Capability.REPO_HEAD: Standing.UNAVAILABLE,
-        Capability.BLOCKING: Standing.UNAVAILABLE,
+        Capability.BLOCKING: Standing.AUTHORITATIVE,
     }),
 })
 
@@ -161,8 +163,16 @@ class LedgerConsumer:
     capability: Capability
 
 
-# HS-104-02 and HS-104-05 append here as they land their call sites.
-LEDGER_CONSUMERS: tuple[LedgerConsumer, ...] = ()
+# HS-104-05 appends here as it lands its call sites.
+LEDGER_CONSUMERS: tuple[LedgerConsumer, ...] = (
+    # HS-104-02: the tool-call gate's two capability-bearing routes.
+    LedgerConsumer(
+        "web.routes.system.gate_routes.receive", "claude-code-hooks", Capability.TOOL_HOOKS
+    ),
+    LedgerConsumer(
+        "web.routes.system.gate_routes.decide", "claude-code-hooks", Capability.BLOCKING
+    ),
+)
 
 
 def consumer_violations(
