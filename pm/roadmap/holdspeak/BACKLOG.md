@@ -665,3 +665,41 @@ keyboard equivalents on the verb registry; artifact ("paper") sprite
 regeneration per the icon discipline; pull-down screens/workspaces;
 the in-place icon editor. Each lands the Phase-105 way: mock, owner
 gate, guard, live walk.
+
+### AB. The watched hand's parked candidates — cut or deferred by the Phase-104 council
+
+Recorded at the HS-104-07 close (charter:
+`phase-104-borrowed-fire-ii/current-phase-status.md` §"Decisions
+deferred"). Three named candidates, each with the scope the council
+left it:
+
+- **Observed-archives adapter** — an opt-in scanner over
+  `~/.claude/projects` exposing last-seen + confidence per archived
+  session; materializes NO desk objects until correlated with a live
+  pane or Work attempt (the census-as-desk-objects idea was cut: an
+  archive proves neither liveness nor attachability).
+- **Context gauge on the selected session** — a quiet,
+  Reduce-Motion-safe gauge labeled `reported` / `estimated` /
+  `unavailable`, paired with a REAL compact/handoff verb; blocked on
+  the capability ledger declaring context reporting per adapter
+  first (drift-with-context physics was cut as an Article I
+  violation).
+- **The merge actuator** — bound to PR + head SHA + merge method,
+  stale-head refusal, a Receipt; a clean story on the Phase-37/61
+  executor spine now that PR receipts exist. Read stays read-only
+  until this lands as its own consented actuator.
+
+### AC. Sync clocks drift on arrival — the equal-clock conflict rule can misread
+
+Diagnosed 2026-07-26 while it flaked CI twice (integration
+`test_one_place_relationships`, `assert 200 == 409`). The push merge
+(`web/routes/sync.py`) creates/updates projects through repository
+calls that stamp the DESTINATION's own `updated_at` instead of
+preserving the incoming `last_modified`; when the write crosses a
+second boundary relative to the source's stamp, a later conflicting
+push at the source's clock reads `local newer` and silently returns
+200 where the equal-clock rule should 409. Fix shape: the merge
+passes the incoming clock through to the write (repositories accept
+an explicit `updated_at`), keeping cross-device clocks comparable;
+the flaky test then pins the boundary with a frozen clock instead of
+racing the wall.

@@ -1,0 +1,19 @@
+title: The steering demo plus the watched hand (Phase 104)
+description: >
+  Extends seeded-desk-steering (the HS-103-05 flagship demo world: a
+  believable desk plus a real armed tmux pane) with the Phase-104
+  surfaces verified present: the tool-call gate's config route
+  answering (off by default is the healthy state; arming is the
+  OWNER's two agent-side opt-ins, never seeded) and the agent
+  capability ledger serving all adapters. One recipe family for the
+  agent-steering surface — the HS-104-07 walk and the owner sitting
+  stage this world, then arm the gate by hand exactly as a user
+  would.
+deck: golden-local
+requires: []
+includes:
+  - seeded-desk-steering
+probe:
+  - grant_live: coder
+  - audit_min: 1
+  - gate_surface_live: {}
