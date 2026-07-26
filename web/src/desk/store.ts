@@ -336,6 +336,9 @@ interface DeskState {
   fileIntoDir(pid: string, dirId: string, kind?: string): Promise<void>;
   /** The toggle-off half (the legacy toggleFile parity). */
   removeFromDir(pid: string, dirId: string, kind?: string): Promise<void>;
+  /** HS-105-02 — the drop matrix's Add-to-Knowledge verb (the same
+   * membership PUT the card's Filed strip toggles). */
+  fileIntoKnowledge(ref: string, kbId: string): Promise<void>;
   /** Select a coder session as the dictation target (answerCoder parity). */
   answerCoder(agent: string, sessionId: string): Promise<boolean>;
   /** Speak straight into the waiting coder (HS-78-03): select the
@@ -684,6 +687,20 @@ export const useDesk = create<DeskState>((set, get) => ({
     }
     // Filing forgets a free position (the object lives on the shelf now).
     get().clearPosition(pid);
+    await get().refresh();
+  },
+
+  async fileIntoKnowledge(ref, kbId) {
+    // HS-105-02 — the drop matrix's Add-to-Knowledge verb: the SAME
+    // membership PUT the card's Filed strip uses, reversible there.
+    try {
+      await apiRequest(
+        `/api/kbs/${encodeURIComponent(kbId)}/members/${encodeURIComponent(ref)}`,
+        { method: "PUT" },
+      );
+    } catch {
+      /* the refresh reports reachability */
+    }
     await get().refresh();
   },
 

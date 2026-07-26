@@ -69,14 +69,26 @@ export function DeskMenuList({
 export function DeskMenuItem({
   glyph,
   onSelect,
+  disabled,
   children,
 }: {
   glyph?: ReactNode;
   onSelect(): void;
+  /** HS-105-05 — ghosting over hiding: a disabled item stays visible
+   * (aria-disabled) and refuses to run; the caller renders the reason. */
+  disabled?: boolean;
   children: ReactNode;
 }) {
   return (
-    <button type="button" role="menuitem" onClick={onSelect}>
+    <button
+      type="button"
+      role="menuitem"
+      aria-disabled={disabled || undefined}
+      className={disabled ? "is-ghost" : undefined}
+      onClick={() => {
+        if (!disabled) onSelect();
+      }}
+    >
       {glyph}
       {children}
     </button>
