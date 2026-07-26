@@ -51,6 +51,9 @@ import {
   zoneShadowTexture,
 } from "./textures";
 import { parseColor } from "./colors";
+import { dropRule } from "../dropMatrix";
+// @ts-ignore — shared ESM module (see ../sprites.d.ts)
+import { spriteUrl as spriteStateUrl } from "../sprites";
 
 const ACCENT = "#ff6b35";
 const TEXT_COLOR = 0xf2f3f5;
@@ -144,6 +147,10 @@ export interface EngineCallbacks {
   onRenameZone(zoneId: string): void;
   /** Right-click answered: the DOM renders the ONE menu vocabulary. */
   onContextMenu?(target: WorldMenuTarget, x: number, y: number): void;
+  /** HS-105-02 — the drop verb tag under the cursor (the consent
+   * surface): the DOM renders the named verb while a viable target is
+   * lit; null clears it. */
+  onDropHint?(hint: { verb: string; x: number; y: number } | null): void;
 }
 
 export class WorldEngine {
@@ -166,6 +173,9 @@ export class WorldEngine {
   private scene: WorldScene | null = null;
   private drag: DragState = { type: "idle" };
   private hoverKey: string | null = null;
+  /** HS-105-02 — the lit drop target during an object drag (its key and
+   * the matrix rule); the target wears its real `_sel` image. */
+  private dropTarget: { key: string; action: string } | null = null;
   /** The OS click grammar (round 9): a mouse tap SELECTS; a second tap
    * on the same object within the double-click window OPENS. */
   private lastTap: { key: string; t: number; x: number; y: number } | null =
@@ -530,6 +540,56 @@ export class WorldEngine {
       node.wasNew = false;
     }
     node.root.scale.set(o.scale);
+  }
+
+  /** HS-105-02 — light/unlight the drop target under an object drag. */
+  private updateDropTarget(
+    target: SceneObject | null,
+    draggedId: string,
+    clientX: number,
+    clientY: number,
+  ): void {
+    const dragged = this.scene?.objects.find((o) => o.id === draggedId);
+    const rule =
+      target && dragged && target.id !== dragged.id
+        ? dropRule(target.kind, dragged.kind)
+        : null;
+    const nextKey = rule && target ? target.key : null;
+    if (this.dropTarget?.key !== nextKey) {
+      // Restore the previous target's own state image.
+      if (this.dropTarget) {
+        const prev = this.objects.get(this.dropTarget.key);
+        const po = prev?.data;
+        if (prev && po) this.setObjectSprite(prev, po.sprite);
+      }
+      this.dropTarget =
+        rule && target ? { key: target.key, action: rule.action } : null;
+      if (rule && target) {
+        const node = this.objects.get(target.key);
+        if (node)
+          this.setObjectSprite(
+            node,
+            spriteStateUrl(target.kind, target.id, "sel"),
+          );
+      }
+    }
+    this.callbacks.onDropHint?.(
+      rule ? { verb: rule.verb, x: clientX, y: clientY } : null,
+    );
+  }
+
+  private setObjectSprite(node: ObjectNode, url: string): void {
+    node.spriteUrl = url;
+    const tex = loadSprite(url, (t) => {
+      if (node.spriteUrl === url) {
+        node.sprite.texture = t;
+        node.highlight.texture = t;
+      }
+    });
+    if (tex) {
+      node.sprite.texture = tex;
+      node.highlight.texture = tex;
+    }
   }
 
   private drawRing(node: ObjectNode, o: SceneObject): void {
@@ -958,6 +1018,15 @@ export class WorldEngine {
           ? hit.zone.id
           : null,
       );
+      // HS-105-02 — object-onto-object: consult the drop matrix; a
+      // viable target lights via its REAL `_sel` image and the verb tag
+      // rides the cursor (the consent surface). Inert pairs stay inert.
+      this.updateDropTarget(
+        hit.type === "object" ? hit.object : null,
+        (this.drag as { id: string }).id,
+        e.clientX,
+        e.clientY,
+      );
     } else if (this.drag.type === "zone") {
       const u = clientToUnit(e.clientX, e.clientY, rect, ZONE_CLAMP);
       state.setPosition(`zone:${this.drag.id}`, u);
@@ -1084,6 +1153,29 @@ export class WorldEngine {
             detail: { id: d.id, kind: obj.kind },
           }),
         );
+        if (d.startU) state.setPosition(d.id, d.startU);
+        else state.clearPosition(d.id);
+        state.persistPositions();
+        setTimeout(() => useDesk.getState().setDragging(null), 0);
+        return;
+      }
+      // HS-105-02 — dropped onto a matrix target? Perform the NAMED verb
+      // and return the object home (a drop is an entrance, not a move).
+      const dropped = this.dropTarget;
+      this.updateDropTarget(null, d.id, 0, 0);
+      if (dropped && obj) {
+        const target = this.scene?.objects.find((o) => o.key === dropped.key);
+        if (target) {
+          if (dropped.action === "ground-into") {
+            // The object rides in as the held source (the HSM-16-04
+            // selection carve-out): the target's card opens with the
+            // one-press run beside it — consent stays at the verb.
+            state.setSelected([obj.selectionRef]);
+            state.openPullout(target.id, { x: e.clientX, y: e.clientY });
+          } else if (dropped.action === "file-knowledge") {
+            void state.fileIntoKnowledge(obj.selectionRef, target.id);
+          }
+        }
         if (d.startU) state.setPosition(d.id, d.startU);
         else state.clearPosition(d.id);
         state.persistPositions();

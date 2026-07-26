@@ -4889,3 +4889,58 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
 .desk-info-window .info-kind {
   font-size: var(--font-size-xs);
 }
+
+/* HS-105-02 — the drop verb tag: the consent surface under the cursor. */
+.desk-drop-verb {
+  z-index: var(--desk-z-transient);
+  background: var(--accent);
+  color: var(--accent-on);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  box-shadow: var(--elev-2);
+}
+
+/* HS-105-05 — the verb bar: real pull-down menus from the one registry. */
+.desk-verbbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.desk-verbbar-item {
+  position: relative;
+}
+.desk-verbbar-title {
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.desk-verbbar-title:hover,
+.desk-verbbar-title.on {
+  background: var(--canvas-raised);
+  color: var(--text);
+}
+.desk-verbbar-menu {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  min-width: 176px;
+  z-index: var(--desk-z-popover);
+}
+.desk-verbbar-menu .is-ghost {
+  color: var(--text-faint);
+  cursor: default;
+}
+@media (max-width: 720px) {
+  /* The phone's bar has no room for pull-downs; the shelf reaches
+     every verb there (one registry, the palette face). */
+  .desk-verbbar {
+    display: none;
+  }
+}

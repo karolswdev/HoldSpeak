@@ -488,6 +488,50 @@ AIPI-Lite is an optional portable device for meeting controls, status feedback,
 and spoken replies to a waiting Claude/Codex session. Firmware and bridge setup
 are in the [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md).
 
+## Using The Desk
+
+The desk is an operating surface: every object on it is a working icon.
+
+**Icons carry state at rest.** Pixel art renders 1:1 in one uniform cell for
+every kind. Badges show only live facts: a member count sits bottom-right on
+Knowledge and drawers, a green tick top-right marks something edited in the
+last two days, an amber dot top-left means it needs you, and a stale Coder
+session wears its faded image. A badge you do not see means the fact does not
+exist. The desk never decorates.
+
+**Select and open.** With a mouse, one click selects (the cell box appears and
+the label inverts); double-click opens. On touch, a tap opens. Every object
+and every drawer answers right-click with the same menu.
+
+**Drawers are directories.** A zone renders as a drawer icon with its member
+count. Double-click a drawer and it opens as a real window beside the desk;
+the desk stays visible and several drawers can be open at once. Each drawer
+window offers an Icons view and a List view (Name, Kind, Modified; click a
+column to sort), and it remembers its view, sort, size, and position across
+reloads. In the List view, a row's Take out returns that member to the desk.
+
+**Drop to compose.** Drag an object over another: a viable target lights up
+and a tag under the cursor names exactly what release does. Drop a note on an
+Agent and its card opens with the note's content held as the run material.
+You press Ask; a drop never runs a model by itself. Drop a note on a
+Knowledge crystal and it files there, the same membership the card's Filed
+strip shows. Drop anything on a drawer to file it. Pairs with no named verb
+do nothing.
+
+**Info on everything.** Right-click anything and choose Info: one card shows
+its identity (the name edits in place), what it measures, where it is filed,
+where it came from, and, for Agents, a Runs on property you can change
+right there. The same card serves every kind.
+
+**The menu bar.** Desk, Object, and Go menus sit in the top bar. Object verbs
+follow your selection; a verb that cannot run right now stays visible with
+the reason beside it. Go reaches every application and tool, the same list
+the ⌘K search reaches.
+
+The full written law for this grammar lives in
+[`web/ICON-DISCIPLINE.md`](../web/ICON-DISCIPLINE.md) and
+[`docs/internal/DESK_GRAMMAR.md`](internal/DESK_GRAMMAR.md).
+
 ## Mission Control On The Desk
 
 If you plan work with [Delivery Workbench](https://github.com/karolswdev/delivery-workbench),

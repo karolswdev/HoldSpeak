@@ -56,6 +56,12 @@ shape for any substantial UI/UX work:
 
 ## 3. The design canon (the choices, and why they were made)
 
+- **The world layer speaks the Workbench grammar** (Phase 105). The
+  law is [DESK_GRAMMAR.md](DESK_GRAMMAR.md) — icon cells, state
+  images, the drop matrix, drawer windows, the Info contract, the
+  verb registry — and the art recipe is `web/ICON-DISCIPLINE.md`.
+  Read both before touching the world.
+
 - **The desk is the operating surface; four applications and a desk.**
   Speak, Meetings, Agents, Settings. A new capability joins one of
   them or becomes a search-reachable tool. It does NOT become a new

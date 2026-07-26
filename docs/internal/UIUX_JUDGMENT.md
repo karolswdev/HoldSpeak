@@ -103,6 +103,11 @@ aliases. "Posture" is GROUNDING §4's lens.
 | FirstWords | arrival | **re-shape** | Same posture; still on pre-98 idiom (`signal-eyebrow`) — convert or fold into arrival. |
 | Pullout | Job 4 / reviewing | **keep (re-shape edges)** | The object reader is central; the spike normalized its chrome; persona/coder tails never live-passed (§5.7). |
 | SessionPullout | Job 3 / working | **re-shape** | The steering seam's front end deserves the Job-3 headline treatment, not a side sheet stacked with facts. |
+| ZoneWindow | Jobs 1-3 / reviewing | **keep** | HS-105-03: a drawer opened into a remembering window (icons/list, per-zone memory) is the directories answer the owner named; remainder = Clean up/Snapshot need drag-reorder. |
+| InfoWindow | Jobs 1-3 / reviewing+configuring | **keep** | HS-105-04: one contract-derived card; properties only where a real update path exists; Receipts waits for the kernel journal. |
+| DeskMenuBar | Jobs 1-3 / working | **keep** | HS-105-05: the registry's browsable face; ghosts with the reason; Go pinned to the shelf's truth. |
+| SystemShade | Jobs 1-3 / reviewing | **keep** | The attention bell's shade: what happened while away, verbs inline; the Phase-104 gate cards land here. |
+| GlassDropLayer | Jobs 1-3 / working | **keep** | The through-the-glass drop seam (HS-101 B7): world objects hand into DOM wells; joined by the HS-105-02 matrix on the world side. |
 | PersonaChat | Job 3 / working | **re-shape + rename** | Vocabulary + never live-walked; the chat belongs inside the agent surface. |
 | AskPanel | Job 4 / working | **keep (fix copy)** | Trace C's hero. Fix: "intel" vocabulary, path leak, and the refusal must point at its fix. |
 | GroundingSection | Job 4 | **keep** | Receipts for what rode the ask — Article IV made visible. |

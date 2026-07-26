@@ -1,6 +1,6 @@
 # Phase 105 - Workbench
 
-**Status:** IN PROGRESS (3/7, 2026-07-26). Chartered from the owner's
+**Status:** IN PROGRESS (4/7, 2026-07-26). Chartered from the owner's
 direct verdict on the desk's world layer: "I honestly want the Desk
 OS to feel like an OS. Not a gimmick with huge lamp-like icons that
 don't do shit and just make it look bad. Think Workbench 2.0 but on
@@ -8,7 +8,7 @@ steroids." Takes activation precedence over Phase 104 (Borrowed Fire
 II), which is re-sequenced behind it — the innards land better on a
 desk that already has the icon/state/Info grammar.
 
-**Last updated:** 2026-07-26 (HS-105-04 shipped — see "Where we are").
+**Last updated:** 2026-07-26 (HS-105-02 shipped — see "Where we are").
 
 ## Why this phase exists
 
@@ -95,11 +95,11 @@ bench where they are used.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-105-01 | The icon system — handles, not mascots | done | [story-01-icon-system](./story-01-icon-system.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-105-02 | Drop-onto — composition by direct manipulation | backlog | [story-02-drop-onto](./story-02-drop-onto.md) | — |
+| HS-105-02 | Drop-onto — composition by direct manipulation | done | [story-02-drop-onto](./story-02-drop-onto.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-105-03 | Zones are windows — density with chosen altitude | done | [story-03-zones-are-windows](./story-03-zones-are-windows.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-105-04 | Info on everything — the inspectable desk | done | [story-04-info-on-everything](./story-04-info-on-everything.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-105-05 | The menu bar — the system admits what it can do | backlog | [story-05-menu-bar](./story-05-menu-bar.md) | — |
-| HS-105-06 | Docs — the bench at the entry points | backlog | [story-06-docs](./story-06-docs.md) | — |
+| HS-105-05 | The menu bar — the system admits what it can do | done | [story-05-menu-bar](./story-05-menu-bar.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-105-06 | Docs — the bench at the entry points | done | [story-06-docs](./story-06-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-105-07 | Closeout — the sitting loop and the spec ledger | backlog | [story-07-closeout](./story-07-closeout.md) | — |
 
 ## Sequencing
@@ -123,6 +123,20 @@ grammar rather than the diorama.
   104, which supplies its data spine.
 
 ## Where we are
+
+**2026-07-26 — HS-105-02 SHIPPED: drop-onto.** The matrix is contract
+data (`dropMatrix.ts`; unlisted pairs refuse by omission,
+guard-pinned): during a drag a viable target lights via its REAL
+`_sel` image and the verb tag rides the cursor ("Hold as source" /
+"Add to Knowledge" — consent states what release does).
+Groundable→capability opens the target's card with the dropped
+object's CONTENT as held run material (proven: the BLUEBIRD glossary
+text prefilled, Ask armed — a drop never fires a model);
+filable→Knowledge lands the SAME membership PUT the Filed strip
+toggles (proven on the wire). A drop is an entrance — the object
+returns home. Guards: dropMatrix.test.ts; suite 336/336. Remainder:
+multi-drops, cross-window re-filing, the orb target. Next:
+HS-105-05 (the menu bar).
 
 **2026-07-26 — HS-105-04 SHIPPED: Info on everything.** Right-click
 anything (objects AND drawers) → ONE contract-derived Info card

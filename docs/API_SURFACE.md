@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 333 (plus static mounts). iOS-consumed: 88. Web-consumed: 246.
+Routes: 333 (plus static mounts). iOS-consumed: 88. Web-consumed: 248.
 
 ## device_audio_ws
 
@@ -446,8 +446,8 @@ Routes: 333 (plus static mounts). iOS-consumed: 88. Web-consumed: 246.
 | GET | `/api/kbs/{kb_id}` | web |
 | PUT | `/api/kbs/{kb_id}` | web |
 | GET | `/api/kbs/{kb_id}/members` | server only |
-| DELETE | `/api/kbs/{kb_id}/members/{resource_ref:path}` | server only |
-| PUT | `/api/kbs/{kb_id}/members/{resource_ref:path}` | server only |
+| DELETE | `/api/kbs/{kb_id}/members/{resource_ref:path}` | web |
+| PUT | `/api/kbs/{kb_id}/members/{resource_ref:path}` | web |
 
 ## web.routes.primitives.notes
 

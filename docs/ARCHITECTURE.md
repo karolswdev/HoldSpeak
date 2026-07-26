@@ -374,6 +374,21 @@ each surface derives its rendering from that contract rather than keeping
 its own model. The desktop hub owns the canonical store; the iPad and the
 web desk are authoring ports onto it.
 
+On the web desk the world layer speaks the Workbench grammar (Phase
+105, law in [DESK_GRAMMAR.md](internal/DESK_GRAMMAR.md)): every
+primitive renders as a working icon in one uniform cell (64px pixel
+art 1:1, a real on-disk state-image set of rest/`_sel`/`_stale`, and
+badges fed only by named live fields) and composes by direct manipulation
+through a declared drop matrix (`web/src/desk/dropMatrix.ts`).
+Directories are drawers that open into remembering windows
+(icons/list views persisted per zone); every object answers one
+contract-derived Info card (`infoContract.ts`, properties only where
+a real update path exists); and desk verbs live in one registry
+(`verbRegistry.ts`) rendered by both the menu bar and the search
+shelf. The verb registry's wire face is deliberately deferred to the
+kernel's userland dispatch
+([PLAN_KERNEL_OPERATION_BROKER.md](internal/PLAN_KERNEL_OPERATION_BROKER.md)).
+
 Not everything on a desk is the same kind of data, and the sync model
 keeps four classes apart:
 

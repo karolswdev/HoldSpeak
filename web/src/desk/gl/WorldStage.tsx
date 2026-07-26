@@ -50,6 +50,11 @@ export function WorldStage() {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<WorldEngine | null>(null);
+  const [dropHint, setDropHint] = useState<{
+    verb: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const [lasso, setLasso] = useState<{
     left: number;
     top: number;
@@ -109,6 +114,7 @@ export function WorldStage() {
       onLasso: setLasso,
       onRenameZone: (zoneId) => useDesk.getState().setRenamingZone(zoneId),
       onContextMenu: (target, x, y) => setWorldMenu({ target, x, y }),
+      onDropHint: setDropHint,
     });
     engineRef.current = engine;
     void engine.init();
@@ -217,6 +223,19 @@ export function WorldStage() {
       {infoWindows.map((w) => (
         <InfoWindow key={w.ref} refId={w.ref} origin={w.origin} />
       ))}
+      {dropHint && (
+        <span
+          className="desk-drop-verb"
+          role="status"
+          style={{
+            position: "fixed",
+            left: dropHint.x + 14,
+            top: dropHint.y + 18,
+          }}
+        >
+          {dropHint.verb}
+        </span>
+      )}
       {worldMenu && (
         <DeskMenuList
           className="desk-world-menu"

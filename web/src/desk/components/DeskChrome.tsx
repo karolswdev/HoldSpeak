@@ -8,6 +8,7 @@ import { defaultViewFor, useDesk } from "../store";
 import { DeskMenuList } from "./DeskMenu";
 import { egressBadge } from "../setup";
 import { DeskToolShelf } from "./DeskToolShelf";
+import { DeskMenuBar } from "./DeskMenuBar";
 import { useLaunchers } from "./DeskWindow";
 
 const ROOMS = [
@@ -185,6 +186,7 @@ export function DeskChrome({
             </DeskMenuList>
           )}
         </div>
+        <DeskMenuBar />
         <span
           className={`desk-hub-dot is-${hubState}`}
           title={hubTitle}
