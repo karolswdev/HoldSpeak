@@ -1,6 +1,6 @@
 # Phase 104 - Borrowed Fire II: The Watched Hand
 
-**Status:** IN PROGRESS (5/7, 2026-07-26). Chartered from a second
+**Status:** IN PROGRESS (6/7, 2026-07-26). Chartered from a second
 external-research pass in the Phase-103 mold: a study of
 `SirAllap/agentglass` (an MIT-licensed mission-control dashboard for
 AI coding agents — Claude Code hooks + OTel ingestion, a PreToolUse
@@ -16,7 +16,7 @@ OS-grade first; this phase's shade cards and receipt lines land on
 the icon/state/Info grammar Phase 105 installs. Activation order:
 Phase 103 close → Phase 105 → this phase.
 
-**Last updated:** 2026-07-26 (HS-104-05 shipped; the numbers wear their provenance).
+**Last updated:** 2026-07-26 (HS-104-06 shipped; the docs meet the reader at the door).
 
 ## Why this phase exists
 
@@ -117,7 +117,7 @@ provenance.
 | HS-104-03 | The gate under attack — restart, replay, TOCTOU | done | [story-03-gate-threat-model](./story-03-gate-threat-model.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-104-04 | PR receipts — paying the candidate-Y deferral | done | [story-04-pr-receipts](./story-04-pr-receipts.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-104-05 | Session receipts — honest numbers on the card | done | [story-05-session-receipts](./story-05-session-receipts.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-104-06 | Docs — the gate and the watch at the entry points | backlog | [story-06-docs](./story-06-docs.md) | — |
+| HS-104-06 | Docs — the gate and the watch at the entry points | done | [story-06-docs](./story-06-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-104-07 | Closeout — the walk and the sitting | backlog | [story-07-closeout](./story-07-closeout.md) | — |
 
 ## Decisions deferred (parked, not committed)
@@ -134,6 +134,20 @@ provenance.
   37/61 executor spine once PR receipts exist.
 
 ## Where we are
+
+**2026-07-26 — the docs meet the reader at the door (6/7).**
+HS-104-06 shipped the written surface at the real entry points:
+USER_GUIDE gained "The Gate" (fail-closed trade first, both opt-ins,
+the shade decision, deny-reason ride-back, expiry/restart honesty),
+"Pull Request Receipts" (refresh semantics, observed-at, the
+attribution labels in plain words), and "Session Receipts" (the
+three tiers; a missing cost line is a feature); SECURITY.md the
+gate's consent boundary + the PR egress row; ARCHITECTURE.md the
+gate paragraph + mermaid (render guard green) + the PR pass;
+README one POSITIONING-voiced paragraph leading with off-by-default.
+Truth-audited against the shipped CLI/hub; the doc-drift guard
+caught and killed a roadmap-vocabulary leak. Next: HS-104-07, the
+walk and the sitting.
 
 **2026-07-26 — the numbers wear their provenance (5/7).** HS-104-05
 shipped the three-tier receipt line: always-true (elapsed, steers,

@@ -81,6 +81,16 @@ about.
 engine and each Runs on destination's model. One tap opens a chat pinned to that model,
 through the same conversation surface, grounding included.
 
+**The gate: your agent asks first.** Off by default, and armed only by two
+deliberate steps of yours, a Claude Code session's risky Bash call can stop
+and ask the Desk before it runs: the held call rises in the shade with a
+redacted preview, Approve lets it run, and Deny sends your one-line reason
+back to the agent verbatim. Armed, the gate fails closed: an unreachable hub
+means a denied call, never a silent pass. The work your sessions ship shows
+up beside them as receipts too: registered repositories' pull requests as
+honest rows (state, CI conclusion, when observed, and how the match was made),
+and a one-line session receipt whose every number states its provenance.
+
 ## Data boundaries
 
 - **Every run names its destination.** Transcription and model-backed work can
@@ -352,6 +362,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 | Wire up the AIPI-Lite companion | [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AIPI_LITE_DEV_WORKFLOW.md) |
 | Put Coder sessions on the Desk | [Claude/Codex automation hooks](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
 | Install Claude / Codex automation hooks | [Claude/Codex automation hooks](https://github.com/karolswdev/HoldSpeak/blob/main/docs/AGENT_HOOK_INSTALL.md) |
+| Hold an agent's risky calls for my approval | [The Gate](https://github.com/karolswdev/HoldSpeak/blob/main/docs/USER_GUIDE.md#the-gate-a-steered-agent-asks-first) |
 | Understand what's stored and what can leave my machine | [Security & Privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) |
 
 ## Configuration

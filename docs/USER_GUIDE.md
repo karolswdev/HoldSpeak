@@ -553,6 +553,31 @@ The belt itself never writes. The one way to act from it is the story-flip
 proposal, which rides the same propose, approve, execute flow as every other
 action on the desk, and the repository's own commit gate keeps the final say.
 
+### Pull Request Receipts
+
+Repositories registered as Delivery sources also show their pull requests as
+receipt rows in the desk's list view: number, title, state, the CI conclusion
+(never the logs), the author, and when the row was last observed. Rows that
+need you sort first: open with failing CI, then open, then drafts, with merged
+and closed kept quiet below.
+
+Refresh is a verb, not a background habit. Clicking **Refresh** runs one
+batched `gh` call per registered source; that is the section's only network
+touch, and the badge beside the title says so. If you want a cadence, set
+`pr_refresh_seconds` on the source's registry entry yourself; nothing polls
+until you do. A refresh that fails marks the rows stale, keeps the last good
+rows, and names the failure; the observed-at stamp always tells you how old
+what you are reading is.
+
+Each row states how it was matched to your work, and never claims more than
+the match proves: **exact** means the head commit or branch is a registered
+worktree's; **name match** means only that a branch name resembles a Work
+attempt's story id; everything else is unattributed. Two verbs: **See diff**
+renders the real local diff in place, and when the commits are not in your
+local checkout it says so and offers a fetch as an explicit act, because a
+fetch is network. **Open on GitHub** leaves the desk, and says so by being a
+link.
+
 ## Steer A Session From The Desk
 
 Watching is free; every steer resolves authority and is audited. Local steering
@@ -641,6 +666,58 @@ YOLO can steer directly. Kill requires that arm and asks you to confirm, because
 ending a session cannot be undone; Rename retains its strict name/argument
 validation while its full policy classification remains open. Spawn, steer,
 rename, and kill each leave their own line in the audit.
+
+## The Gate: A Steered Agent Asks First
+
+Armed, the gate is fail-closed. That is a real trade, stated plainly: if the
+hub is down, unreachable, or answers with an error while the gate is armed, a
+matched tool call is denied with the reason named, not waved through. A gate
+that cannot reach you refuses to pretend it asked. If you want an agent that
+never waits on the hub, leave the gate off; off is the default and the hook is
+inert.
+
+Steering lets you type into a session. The gate is the other direction: a
+Claude Code session you have opted in can stop before a risky tool call and
+ask the desk. The agent's PreToolUse hook posts a proposal to the hub and
+waits; the call runs only after you approve it.
+
+Arming takes two deliberate steps, and both are yours to make:
+
+1. `holdspeak gate install` prints a hook block. You add it to
+   `~/.claude/settings.json` yourself; HoldSpeak never edits another
+   application's configuration.
+2. `holdspeak gate arm` flips the master switch, and
+   `holdspeak gate allow --repo <path>` names the repository whose calls are
+   held (Bash only in this release). Both opt-ins must be set;
+   `holdspeak gate status` and `holdspeak doctor` read the armed state back.
+
+A held call appears in the shade's **Needs you** group as a card naming the
+session, the tool, a redacted argument preview (a hash and the first 120
+characters; the full arguments never reach the hub), and how long the agent
+has been waiting. Two verbs: **Approve** lets the call run. **Deny** opens a
+one-line reason edited in place, and that reason reaches the agent verbatim,
+so it can course-correct instead of blindly retrying.
+
+A hold that nobody decides expires as a deny, with the reason returned to the
+agent. A hub restart invalidates every held proposal rather than resuming it;
+the agent proposes again by retrying. Every arrival and every decision writes
+an audit row you can read back at `GET /api/gate/audit`.
+
+## Session Receipts
+
+A steered session's pull-out and a delivery attempt's card carry one receipt
+line. Every number on it states its provenance:
+
+- Elapsed time, steers, and holds come from records the hub itself wrote.
+  They are always shown.
+- Token figures appear only when the adapter can vouch for them: a gated
+  Claude Code session reports its own transcript totals when it ends, with
+  cache read and cache write kept as separate figures. A bare tmux pane
+  reports nothing, so its line shows no token numbers at all.
+- Cost appears only when tokens are reported AND you have added a price row
+  for the model in `~/.holdspeak/pricing.json`. It renders as
+  `≈ $X.XX (price table, date)`. A missing cost line is a feature: no price
+  row means no estimate, and the desk will not print a made-up zero.
 
 ## Ground A Run On The Rails
 

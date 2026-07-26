@@ -146,6 +146,36 @@ SQLCipher) becomes warranted and should be its own story.
    gate keeping the final say. A remote node's rail events reach the journal
    only as events (no repo file bodies cross the wire), each stamped with
    its origin node, and a node gone quiet reads stale rather than fabricated.
+7. **The tool-call gate** (`coder_gate.py`, `db/gate.py`,
+   `web/routes/system/gate_routes.py`): a Claude Code session you opted in
+   can hold a matched tool call for a desk decision. The boundary rules
+   mirror the steering chokepoint's:
+   - **One chokepoint.** Every proposal state flip passes through the one
+     private transition method in `db/gate.py` (first write wins; a losing
+     race gets a typed 409 naming the standing decision). A second flipping
+     code path is a census failure (`tests/unit/test_gate_chokepoint.py`).
+   - **The record is never authority.** A stored proposal cannot cause
+     execution; only the live hook waiting on the decision can let the call
+     proceed. Approve rides back to that hook or nowhere.
+   - **Fail-closed when armed.** Armed plus any error (hub down, HTTP error,
+     poll timeout, expiry) is a deny with its reason named; the hook has no
+     allow-on-error path, and there is no timeout-auto-allow. Unarmed, the
+     hook is inert: no rows, no hub contact, bounded latency.
+   - **Restart invalidation.** Hub startup flips every held proposal to
+     `invalidated`; nothing held pre-restart is decidable post-restart. The
+     agent proposes again by retrying, never resumes.
+   - **Redaction.** The hook sends a sha256 and the first 120 characters of
+     the canonical arguments; the full payload never crosses the wire, never
+     lands in a row, and the hub-side gate modules are grep-censused against
+     touching it. Deny reasons are bounded one-liners.
+   - **The install never edits another app's config.** `holdspeak gate
+     install` prints the hook block; adding it to `~/.claude/settings.json`
+     is the user's own act. Arming is a second, separate opt-in
+     (master switch AND a per-repo matcher), read back by `doctor`.
+   - The gate's Stop-hook leg reports the session's token totals (numbers
+     and the model name only, summed from the agent's own transcript
+     locally) to the loopback hub for the session receipt line. No message
+     text leaves the hook process.
 
 ---
 
@@ -168,6 +198,7 @@ adds implementation detail but is not a second product inventory.
 | **Desk GitHub issue** (`web/routes/desk_actuators.py` → `gh issue create`) | The GitHub connector is enabled AND you approve one specific proposal | The issue title and body, exactly as previewed, through your own `gh` CLI | Opt-in + per-action approval; runs your authenticated `gh`, never a stored token of ours. Distinct from the read-only enrichment row below. |
 | **Connector CLI enrichment** (`gh`, `jira` via subprocess) | User enables the connector pack | Entity IDs (PR/issue/ticket numbers) to the user's own CLI tools, which call their services | Opt-in + manifest permissions (`shell:exec`, `network:outbound`). |
 | **Mission-control receipts** (`missioncontrol_bridge.py` → `gh pr list`) | A rails repo is named in your project map (`~/.holdspeak/delivery_workbench.json`) and the desk conveyor is open | Nothing composed: a read of that repo's open pull requests through your own authenticated `gh` CLI (GitHub learns which repo asked) | The map is yours to author; the belt's routes are GET-only end to end (fitness-tested); `gh` missing or failing renders as a typed absence, never a retry loop. |
+| **PR receipts** (`delivery/pr_receipts.py` → `gh pr list`) | You click **Refresh** on the Pull requests section, or you set `pr_refresh_seconds` on a source's registry entry yourself | Nothing composed: one batched read of that registered repo's pull requests through your own authenticated `gh` (GitHub learns which repo asked). The optional **fetch** offered when a diff's commits are absent locally is a separate, explicit `git fetch` | Manual verb by default, never ambient; the cadence is per-source and hand-set. `gh` is grep-censused to this one module; a failing refresh degrades to a named stale row, keeping last-known-good. |
 | **Mesh relay** (`intel/mesh_relay.py` → the hub relay queue) | A run against a Runs on destination whose compatibility kind is `meshNode` | The prompt and the result, between the hub and the machine you named (both yours; the worker authenticates with the hub token) | You author the destination, and the node serves only while `holdspeak mesh serve` runs on it (stopping it reads offline within seconds). No key ever transits: the node resolves the run through its own config and env. |
 | **Web runtime responses** | A client requests data | Whatever the API returns (transcripts, action items, etc.) | Loopback by default; token-gated off-loopback. |
 | **Device audio link** | A paired device streams audio | Audio in; status/LCD text out | PSK; same-LAN today. |
