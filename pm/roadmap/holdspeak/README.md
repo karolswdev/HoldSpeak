@@ -4,7 +4,15 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II)
+**Last updated:** 2026-07-26 — **Phase 106 (The Kernel) CHARTERED,
+0/10**: the RFC's ladder becomes a phase, from the owner's charge
+that HoldSpeak come a lot closer to a web Operating System for the
+Tech-Lead/Architect who works with AI daily. Article XI goes to the
+Constitution behind a migration provision (the fourth council pass
+refused the drafted clauses on evidence; its rewrite was adopted,
+its dissent recorded, the owner ruled to ratify early with declared
+debt). HS-106-02 and HS-106-03 activate first — pure hardening,
+unblocked by the constitutional question. Earlier: **Phase 104 (Borrowed Fire II)
 CLOSED 8/8, all in one day**: the ledger, the fail-closed gate, the
 gate under attack, PR receipts, session receipts, docs, the
 seven-beat walk, and the sitting's own rider — **HS-104-08 the icon
@@ -173,7 +181,7 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** not yet scaffolded — the kernel program per `docs/internal/PLAN_KERNEL_OPERATION_BROKER.md` is next (awaiting owner ratification; the Phase-104 gate and capability ledger are its vertebrae). Previous: [**Phase 104 — Borrowed Fire II**](./phase-104-borrowed-fire-ii/current-phase-status.md), **CLOSED (8/8, 2026-07-26)** — built, walked, ridden (HS-104-08, the icon reforge the sitting chartered), and accepted the same day ("Yup. Better. Let's close out the phase."). Previous: [Phase 105 — Workbench](./phase-105-workbench/current-phase-status.md), **CLOSED (7/7, 2026-07-26)** — the owner's acceptance carried the standing rider that 104 and the kernel are the "actual OS" program. Previous: [Phase 103 — Foundations & Borrowed Fire](./phase-103-foundations-and-borrowed-fire/current-phase-status.md) — **CLOSED (7/7, 2026-07-25)**.
+**Current phase:** [**Phase 106 — The Kernel**](./phase-106-the-kernel/current-phase-status.md) — **ACTIVE (0/10, chartered 2026-07-26)**: the RFC's strangler ladder as a phase — Article XI with the owner's migration provision, principal separation on loopback (the confused deputy), the 40-site effect census pinned as a test, the broker and hash-chained journal behind four calls (`read`/`submit`/`decide`/`events`), three HETEROGENEOUS driver slices (terminal input → actuator egress → inference runs) with the kill criterion applied for real at the third, and then the first §9 userland program: **PR follow-through** — see the PR that needs you, decide once, send a scoped agent at it, propose the comment, and get a receipt for every consequence. The fourth council pass (Sol) returned **do not ratify yet** with file-level evidence; its rewritten clauses 1-5 were adopted, the drafted clause 6 deleted, and the owner ruled to ratify early behind a temporary migration provision that names the unmigrated paths as declared debt and forbids agent access to them. Previous: [**Phase 104 — Borrowed Fire II**](./phase-104-borrowed-fire-ii/current-phase-status.md), **CLOSED (8/8, 2026-07-26)** — built, walked, ridden (HS-104-08, the icon reforge the sitting chartered), and accepted the same day ("Yup. Better. Let's close out the phase."). Previous: [Phase 105 — Workbench](./phase-105-workbench/current-phase-status.md), **CLOSED (7/7, 2026-07-26)** — the owner's acceptance carried the standing rider that 104 and the kernel are the "actual OS" program. Previous: [Phase 103 — Foundations & Borrowed Fire](./phase-103-foundations-and-borrowed-fire/current-phase-status.md) — **CLOSED (7/7, 2026-07-25)**.
 — **IN PROGRESS (0/6)**. Chartered 2026-07-22 from a four-agent
 research pass (3 independent Opus 4.8 analysts on
 `ViuGiaLai/researchmind`, 1 independent Opus 4.8 skeptical audit of
@@ -343,6 +351,7 @@ canon, canon wins.
 | 100 | The Application Layer: ground the philosophy/seams/use cases, judge the entire UI/UX against them, thesis + mockups, the owner's gate, then the build | done | [phase-100-the-application-layer](./phase-100-the-application-layer/) |
 | 101 | The Native Innards: interior type scale, data as material, purpose-built compositions — mocked, owner-gated, then built (AGENT_BRIEF.md §5) | backlog | [phase-101-the-native-innards](./phase-101-the-native-innards/) |
 | 103 | Foundations & Borrowed Fire: fix the desk's session-restoration gap, sweep the voice guard onto rendered UI, and land two skepticism-tested carry-overs from a four-agent research pass on `ViuGiaLai/researchmind` (grounding verification, endpoint health). Chartered from the owner's own research-debate commission, not a screenshot conviction. | in-progress (0/6) | [phase-103-foundations-and-borrowed-fire](./phase-103-foundations-and-borrowed-fire/) |
+| 106 | Every consequential action in HoldSpeak enters through one named kernel — read/submit/decide/events — and the first tech-lead userland program rides on it. | active | [phase-106-the-kernel](./phase-106-the-kernel/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
