@@ -1,6 +1,6 @@
 # Phase 105 - Workbench
 
-**Status:** IN PROGRESS (2/7, 2026-07-26). Chartered from the owner's
+**Status:** IN PROGRESS (3/7, 2026-07-26). Chartered from the owner's
 direct verdict on the desk's world layer: "I honestly want the Desk
 OS to feel like an OS. Not a gimmick with huge lamp-like icons that
 don't do shit and just make it look bad. Think Workbench 2.0 but on
@@ -8,7 +8,7 @@ steroids." Takes activation precedence over Phase 104 (Borrowed Fire
 II), which is re-sequenced behind it — the innards land better on a
 desk that already has the icon/state/Info grammar.
 
-**Last updated:** 2026-07-26 (HS-105-03 shipped — see "Where we are").
+**Last updated:** 2026-07-26 (HS-105-04 shipped — see "Where we are").
 
 ## Why this phase exists
 
@@ -97,7 +97,7 @@ bench where they are used.
 | HS-105-01 | The icon system — handles, not mascots | done | [story-01-icon-system](./story-01-icon-system.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-105-02 | Drop-onto — composition by direct manipulation | backlog | [story-02-drop-onto](./story-02-drop-onto.md) | — |
 | HS-105-03 | Zones are windows — density with chosen altitude | done | [story-03-zones-are-windows](./story-03-zones-are-windows.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-105-04 | Info on everything — the inspectable desk | backlog | [story-04-info-on-everything](./story-04-info-on-everything.md) | — |
+| HS-105-04 | Info on everything — the inspectable desk | done | [story-04-info-on-everything](./story-04-info-on-everything.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-105-05 | The menu bar — the system admits what it can do | backlog | [story-05-menu-bar](./story-05-menu-bar.md) | — |
 | HS-105-06 | Docs — the bench at the entry points | backlog | [story-06-docs](./story-06-docs.md) | — |
 | HS-105-07 | Closeout — the sitting loop and the spec ledger | backlog | [story-07-closeout](./story-07-closeout.md) | — |
@@ -123,6 +123,21 @@ grammar rather than the diorama.
   104, which supplies its data spine.
 
 ## Where we are
+
+**2026-07-26 — HS-105-04 SHIPPED: Info on everything.** Right-click
+anything (objects AND drawers) → ONE contract-derived Info card
+(`infoContract.ts` declares, `InfoWindow` derives — no kind
+hand-builds, guard-pinned): Identity with the name editing IN PLACE
+through the real update paths (the world icon re-labels live),
+honest Footprint measures (null = absence, never zero), Filed chips
+opening zone windows, Lineage openable. Properties = tooltypes at
+their honest v1: the vocabulary is pinned to exactly
+`recipe.runs_on` (the recipe PUT's profile_id) and round-trip-proven
+against the wire (select "LAN llama" → GET shows the profile_id).
+Receipts deliberately absent in v1 (no per-object route; the kernel
+journal is its future feed) per the gate's constraint. Cards coexist
+as real desk windows. Guards: infoContract.test.ts; suite 332/332.
+Next: HS-105-02 (drop-onto).
 
 **2026-07-26 — HS-105-03 SHIPPED: drawers OPEN.** First, the owner
 caught the shipped 01 claiming drawers the glass didn't show (zones

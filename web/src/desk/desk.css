@@ -4829,3 +4829,63 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
 .desk-zone-window .zone-unfile:focus-visible {
   opacity: 1;
 }
+
+/* HS-105-04 — the Info card: one contract-derived surface. */
+.desk-info-window .desk-info-body section h3 {
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.desk-info-window .info-kv {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: var(--space-1) var(--space-3);
+  align-items: baseline;
+}
+.desk-info-window .info-kv b {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: var(--font-size-sm);
+}
+.desk-info-window .info-id {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+}
+.desk-info-window .info-name {
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed var(--border-subtle);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  cursor: text;
+  padding: 0;
+  text-align: left;
+  width: max-content;
+}
+.desk-info-window .info-name-input {
+  background: var(--field-bg);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  padding: 0 var(--space-1);
+}
+.desk-info-window .info-props {
+  display: grid;
+  gap: var(--space-2);
+}
+.desk-info-window .info-prop {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: var(--space-3);
+  align-items: center;
+}
+.desk-info-window .info-prop code {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+.desk-info-window .info-kind {
+  font-size: var(--font-size-xs);
+}

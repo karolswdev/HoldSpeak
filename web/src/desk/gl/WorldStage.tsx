@@ -11,6 +11,7 @@ import { objectByRef, objUnit, type WorldObject } from "../world";
 import { InlineEditor } from "../components/InlineEditor";
 import { Pullout } from "../components/Pullout";
 import { ZoneWindow } from "../components/ZoneWindow";
+import { InfoWindow } from "../components/InfoWindow";
 import { AskBar, AskPanel } from "../components/AskPanel";
 import { MicButton } from "../components/MicButton";
 import { DeskMenuItem, DeskMenuList } from "../components/DeskMenu";
@@ -32,6 +33,7 @@ export function WorldStage() {
   const editingId = useDesk((s) => s.editingId);
   const pullouts = useDesk((s) => s.pullouts);
   const zoneWindows = useDesk((s) => s.zoneWindows);
+  const infoWindows = useDesk((s) => s.infoWindows);
   const askOpen = useDesk((s) => s.askOpen);
   const renamingZoneId = useDesk((s) => s.renamingZoneId);
   const editorPos = useDesk((s) =>
@@ -212,6 +214,9 @@ export function WorldStage() {
       {zoneWindows.map((w) => (
         <ZoneWindow key={w.id} zoneId={w.id} origin={w.origin} />
       ))}
+      {infoWindows.map((w) => (
+        <InfoWindow key={w.ref} refId={w.ref} origin={w.origin} />
+      ))}
       {worldMenu && (
         <DeskMenuList
           className="desk-world-menu"
@@ -244,6 +249,20 @@ export function WorldStage() {
               >
                 Open
               </DeskMenuItem>
+              <DeskMenuItem
+                onSelect={() => {
+                  const t = worldMenu.target as Extract<
+                    WorldMenuTarget,
+                    { type: "object" }
+                  >;
+                  setWorldMenu(null);
+                  useDesk
+                    .getState()
+                    .openInfoWindow(t.ref, { x: worldMenu.x, y: worldMenu.y });
+                }}
+              >
+                Info
+              </DeskMenuItem>
               {WORLD_EDITABLE.has(worldMenu.target.kind) && (
                 <DeskMenuItem
                   onSelect={() => {
@@ -271,6 +290,20 @@ export function WorldStage() {
                 }}
               >
                 Open
+              </DeskMenuItem>
+              <DeskMenuItem
+                onSelect={() => {
+                  const t = worldMenu.target;
+                  setWorldMenu(null);
+                  useDesk
+                    .getState()
+                    .openInfoWindow(`zone:${t.id}`, {
+                      x: worldMenu.x,
+                      y: worldMenu.y,
+                    });
+                }}
+              >
+                Info
               </DeskMenuItem>
               <DeskMenuItem
                 onSelect={() => {
