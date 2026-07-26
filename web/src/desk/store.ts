@@ -254,6 +254,10 @@ interface DeskState {
   /** Per-zone remembered expression: view + sort (`hs.desk.zone-views`).
    * The window remembers — that is what makes it a window. */
   zoneViewPrefs: Record<string, ZoneViewPref>;
+  /** HS-105-04 — open Info cards (transient inspection windows; they
+   * coexist but do not persist across reload). Ref is `kind:id`, bare
+   * id, or `zone:<id>`. */
+  infoWindows: { ref: string; origin: { x: number; y: number } | null }[];
   /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
@@ -321,6 +325,9 @@ interface DeskState {
   closeZoneWindow(id: string): void;
   /** Remember a zone window's expression (view/sort), persisted. */
   setZoneViewPref(id: string, pref: Partial<ZoneViewPref>): void;
+  /** HS-105-04 — Info on everything (right-click → Info). */
+  openInfoWindow(ref: string, origin?: { x: number; y: number }): void;
+  closeInfoWindow(ref: string): void;
   setHoverZone(id: string | null): void;
   setRenamingZone(id: string | null): void;
   diveInto(zoneId: string): void;
@@ -426,6 +433,7 @@ export const useDesk = create<DeskState>((set, get) => ({
   pullouts: [],
   zoneWindows: loadZoneWindows(),
   zoneViewPrefs: loadZoneViewPrefs(),
+  infoWindows: [],
   hoverZoneId: null,
   renamingZoneId: null,
   selectedIds: [],
@@ -639,6 +647,15 @@ export const useDesk = create<DeskState>((set, get) => ({
     const next = get().zoneWindows.filter((w) => w.id !== id);
     set({ zoneWindows: next });
     persistZoneWindows(next);
+  },
+  openInfoWindow(ref, origin) {
+    const open = get().infoWindows;
+    if (!open.some((w) => w.ref === ref))
+      set({ infoWindows: [...open, { ref, origin: origin ?? null }] });
+    get().focusPanel(`info:${ref}`);
+  },
+  closeInfoWindow(ref) {
+    set({ infoWindows: get().infoWindows.filter((w) => w.ref !== ref) });
   },
   setZoneViewPref(id, pref) {
     const current = get().zoneViewPrefs[id] || {
