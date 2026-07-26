@@ -1,6 +1,8 @@
 # Phase 103 - Foundations & Borrowed Fire
 
-**Status:** IN PROGRESS (6/7, 2026-07-23). Chartered from a four-agent
+**Status:** CLOSED (7/7, 2026-07-25). The owner's second sitting
+accepted HS-103-07's chat-surface craft ("I accept", recorded
+verbatim in evidence-story-06.md), closing HS-103-06 and the phase. Chartered from a four-agent
 research pass the owner commissioned directly: three independent Opus
 4.8 analysts examining `ViuGiaLai/researchmind` from different angles
 (architecture/engineering, product/UX, feasibility/risk/licensing) to
@@ -11,12 +13,16 @@ reports' findings into the additional stories, with a healthy dose of
 skepticism against blind adoption and realism about single-owner
 delivery timelines.
 
-**Last updated:** 2026-07-23 (HS-103-07 shipped: a real screenshot
-survey found the actual gap — not missing bubbles, a repeating
-egress/receipt clutter bug that broke line-wrapping on every reply —
-fixed, plus turn-entrance motion, a warmer empty state, and shared
-send-press feedback. A second, shorter sitting is the last thing left
-before HS-103-06 can flip done).
+**Last updated:** 2026-07-25 (CLOSED: the second sitting accepted;
+before it, the phase's own documented pre-existing failure family —
+the stale API-surface manifest + four refit-stale assertions — was
+paid on PR #367's repair commit and the machine chain re-run clean on
+merged main: pytest 4148/37/0-unrelated, web 318/318 + build +
+tokens gate, recorded in evidence-story-06.md. Earlier, 2026-07-23:
+HS-103-07 shipped — not missing bubbles but a repeating
+egress/receipt clutter bug breaking line-wrap on every reply, fixed,
+plus turn-entrance motion, a warmer empty state, and shared
+send-press feedback).
 
 ## Why this phase exists
 
@@ -67,10 +73,10 @@ agent-steering feature provable by anyone, not just archaeology.
       new dash-in-glass rule) green.
 - [x] HS-103-07 (the AI chat surfaces — scaffolded 2026-07-22 mid-sitting,
       per the owner's own verdict) shipped with evidence.
-- [ ] HS-103-06 closeout: the owner's sitting verdict recorded, per
-      Article IX.4 — **first pass recorded 2026-07-22** (see "Where we
-      are"); a second, shorter sitting confirms HS-103-07 meets the "2
-      notches better" bar before this box is fully checked.
+- [x] HS-103-06 closeout: the owner's sitting verdict recorded, per
+      Article IX.4 — first pass recorded 2026-07-22; the second
+      sitting (2026-07-25) accepted HS-103-07 against the "2 notches
+      better" bar ("I accept", verbatim in evidence-story-06.md).
 
 ## Story status
 
@@ -81,7 +87,7 @@ agent-steering feature provable by anyone, not just archaeology.
 | HS-103-03 | Grounding verification — does the artifact say what the source says | done | [story-03-grounding-verification](./story-03-grounding-verification.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-103-04 | Endpoint health — honest fallback across Runs-on destinations | done | [story-04-endpoint-health](./story-04-endpoint-health.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-103-05 | A provable steering demo — the flagship feature, on demand | done | [story-05-steering-demo-recipe](./story-05-steering-demo-recipe.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-103-06 | Closeout | in-progress | [story-06-closeout](./story-06-closeout.md) | — |
+| HS-103-06 | Closeout | done | [story-06-closeout](./story-06-closeout.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-103-07 | The AI chat surfaces feel like a cool part of the system | done | [story-07-the-ai-chat-surfaces-feel-like-a-cool-part-of-the-system](./story-07-the-ai-chat-surfaces-feel-like-a-cool-part-of-the-system.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are

@@ -4,7 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-25 — **Phases 104 + 105 scaffolded; the
+**Last updated:** 2026-07-25 — **Phase 103 CLOSED (7/7)**: the
+owner's second sitting accepted HS-103-07's chat-surface craft ("I
+accept"); before it, the phase's documented pre-existing failure
+family was paid on PR #367's repair commit and the machine chain
+re-ran clean on merged main (pytest 4148/37 with zero unrelated
+failures, web 318/318 + build + tokens gate) — full record in
+evidence-story-06.md. The roadmap pointer moves to Phase 105.
+Earlier the same day: **Phases 104 + 105 scaffolded; the
 kernel RFC drafted.** Phase 105 (Workbench — the owner's "Workbench
 2.0 on steroids" verdict made seven implementation-grade stories:
 icon system, drop-onto, zone windows, Info-on-everything, menu bar,
@@ -91,7 +98,7 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 103 — Foundations & Borrowed Fire**](./phase-103-foundations-and-borrowed-fire/current-phase-status.md)
+**Current phase:** [**Phase 105 — Workbench**](./phase-105-workbench/current-phase-status.md) (activated by the Phase 103 close; Phase 104 — Borrowed Fire II — follows it, then the kernel phases per `docs/internal/PLAN_KERNEL_OPERATION_BROKER.md`). Previous: [Phase 103 — Foundations & Borrowed Fire](./phase-103-foundations-and-borrowed-fire/current-phase-status.md) — **CLOSED (7/7, 2026-07-25)**.
 — **IN PROGRESS (0/6)**. Chartered 2026-07-22 from a four-agent
 research pass (3 independent Opus 4.8 analysts on
 `ViuGiaLai/researchmind`, 1 independent Opus 4.8 skeptical audit of
