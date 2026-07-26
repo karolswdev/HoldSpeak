@@ -125,6 +125,47 @@ function saveZoneWidths(widths: Record<string, number>) {
  * `?view=list` so a bookmarked or shared address opens the same expression. */
 export type DeskView = "spatial" | "list";
 
+/** HS-105-03 — a zone window's remembered expression. */
+export interface ZoneViewPref {
+  view: "icons" | "list";
+  sort: "name" | "kind" | "modified";
+  dir: "asc" | "desc";
+}
+const ZONE_VIEWS_KEY = "hs.desk.zone-views";
+const ZONE_WINDOWS_KEY = "hs.desk.zone-windows";
+
+function loadZoneViewPrefs(): Record<string, ZoneViewPref> {
+  try {
+    const raw = localStorage.getItem(ZONE_VIEWS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, ZoneViewPref>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function loadZoneWindows(): { id: string; origin: null }[] {
+  try {
+    const raw = localStorage.getItem(ZONE_WINDOWS_KEY);
+    const ids = raw ? (JSON.parse(raw) as string[]) : [];
+    return Array.isArray(ids)
+      ? ids.filter((v) => typeof v === "string").map((id) => ({ id, origin: null }))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistZoneWindows(open: { id: string }[]) {
+  try {
+    localStorage.setItem(
+      ZONE_WINDOWS_KEY,
+      JSON.stringify(open.map((w) => w.id)),
+    );
+  } catch {
+    /* storage may be unavailable */
+  }
+}
+
 const VIEW_KEY = "hs.desk.view";
 
 /** HS-105-01 — the phone's density altitude: a 104px cell cannot grid a
@@ -206,6 +247,13 @@ interface DeskState {
    * open/close motion flies to). Order is open order; the panel order
    * decides stacking. */
   pullouts: { id: string; origin: { x: number; y: number } | null }[];
+  /** HS-105-03 — open zone windows (drawers opened into real desk
+   * windows). They coexist like pullouts and persist across reload
+   * (`hs.desk.zone-windows`, the HS-103-01 restoration rule). */
+  zoneWindows: { id: string; origin: { x: number; y: number } | null }[];
+  /** Per-zone remembered expression: view + sort (`hs.desk.zone-views`).
+   * The window remembers — that is what makes it a window. */
+  zoneViewPrefs: Record<string, ZoneViewPref>;
   /** The zone a live drag is hovering (the drop affordance, HS-73-05). */
   hoverZoneId: string | null;
   /** The freshly-created zone whose rename is focused. */
@@ -267,6 +315,12 @@ interface DeskState {
   openPullout(id: string, origin?: { x: number; y: number }): void;
   /** Close one card by object id; with no id, the front-most card. */
   closePullout(id?: string): void;
+  /** HS-105-03 — open a drawer as a real desk window (the OPEN grammar;
+   * dive survives only as the Focus verb). Reopening focuses. */
+  openZoneWindow(id: string, origin?: { x: number; y: number }): void;
+  closeZoneWindow(id: string): void;
+  /** Remember a zone window's expression (view/sort), persisted. */
+  setZoneViewPref(id: string, pref: Partial<ZoneViewPref>): void;
   setHoverZone(id: string | null): void;
   setRenamingZone(id: string | null): void;
   diveInto(zoneId: string): void;
@@ -370,6 +424,8 @@ export const useDesk = create<DeskState>((set, get) => ({
   newIds: [],
   editingId: null,
   pullouts: [],
+  zoneWindows: loadZoneWindows(),
+  zoneViewPrefs: loadZoneViewPrefs(),
   hoverZoneId: null,
   renamingZoneId: null,
   selectedIds: [],
@@ -568,6 +624,35 @@ export const useDesk = create<DeskState>((set, get) => ({
         )
         .pop()?.id;
     set({ pullouts: open.filter((p) => p.id !== victim) });
+  },
+
+  openZoneWindow(id, origin) {
+    const open = get().zoneWindows;
+    if (!open.some((w) => w.id === id)) {
+      const next = [...open, { id, origin: origin ?? null }];
+      set({ zoneWindows: next });
+      persistZoneWindows(next);
+    }
+    get().focusPanel(`zone:${id}`);
+  },
+  closeZoneWindow(id) {
+    const next = get().zoneWindows.filter((w) => w.id !== id);
+    set({ zoneWindows: next });
+    persistZoneWindows(next);
+  },
+  setZoneViewPref(id, pref) {
+    const current = get().zoneViewPrefs[id] || {
+      view: "icons",
+      sort: "name",
+      dir: "asc",
+    };
+    const next = { ...get().zoneViewPrefs, [id]: { ...current, ...pref } };
+    set({ zoneViewPrefs: next });
+    try {
+      localStorage.setItem(ZONE_VIEWS_KEY, JSON.stringify(next));
+    } catch {
+      /* storage may be unavailable */
+    }
   },
 
   async fileIntoDir(pid, dirId, kind = "note") {

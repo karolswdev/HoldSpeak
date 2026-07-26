@@ -4739,3 +4739,93 @@
 body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   right: 452px;
 }
+
+/* HS-105-03 — the zone window: a drawer opened into a real desk window.
+   Icons view speaks the world's cell contract; List is the density
+   altitude. Values ride the token vars only. */
+.desk-zone-window .zone-wings {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+.desk-zone-window .zone-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--space-3) var(--space-1);
+}
+.desk-zone-window .zone-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--text);
+}
+.desk-zone-window .zone-cell:hover,
+.desk-zone-window .zone-cell:focus-visible {
+  background: var(--canvas-raised);
+}
+.desk-zone-window .zone-cell img {
+  image-rendering: pixelated;
+}
+.desk-zone-window .zone-cell-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-zone-window .zone-list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+.desk-zone-window .zone-list th {
+  text-align: left;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.desk-zone-window .zone-list td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+.desk-zone-window .zone-list-ic img {
+  image-rendering: pixelated;
+  vertical-align: middle;
+}
+.desk-zone-window .zone-sort {
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+}
+.desk-zone-window .zone-sort.on {
+  color: var(--text);
+}
+.desk-zone-window .zone-list-open {
+  background: none;
+  border: 0;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+  font-size: var(--font-size-sm);
+}
+.desk-zone-window .zone-list-open:hover {
+  text-decoration: underline;
+}
+.desk-zone-window .zone-unfile {
+  opacity: 0;
+}
+.desk-zone-window .zone-list tr:hover .zone-unfile,
+.desk-zone-window .zone-unfile:focus-visible {
+  opacity: 1;
+}

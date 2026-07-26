@@ -1,6 +1,6 @@
 # Phase 105 - Workbench
 
-**Status:** IN PROGRESS (1/7, 2026-07-25). Chartered from the owner's
+**Status:** IN PROGRESS (2/7, 2026-07-26). Chartered from the owner's
 direct verdict on the desk's world layer: "I honestly want the Desk
 OS to feel like an OS. Not a gimmick with huge lamp-like icons that
 don't do shit and just make it look bad. Think Workbench 2.0 but on
@@ -8,7 +8,7 @@ steroids." Takes activation precedence over Phase 104 (Borrowed Fire
 II), which is re-sequenced behind it — the innards land better on a
 desk that already has the icon/state/Info grammar.
 
-**Last updated:** 2026-07-25 (HS-105-01 shipped — see "Where we are").
+**Last updated:** 2026-07-26 (HS-105-03 shipped — see "Where we are").
 
 ## Why this phase exists
 
@@ -96,7 +96,7 @@ bench where they are used.
 |---|---|---|---|---|
 | HS-105-01 | The icon system — handles, not mascots | done | [story-01-icon-system](./story-01-icon-system.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-105-02 | Drop-onto — composition by direct manipulation | backlog | [story-02-drop-onto](./story-02-drop-onto.md) | — |
-| HS-105-03 | Zones are windows — density with chosen altitude | backlog | [story-03-zones-are-windows](./story-03-zones-are-windows.md) | — |
+| HS-105-03 | Zones are windows — density with chosen altitude | done | [story-03-zones-are-windows](./story-03-zones-are-windows.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-105-04 | Info on everything — the inspectable desk | backlog | [story-04-info-on-everything](./story-04-info-on-everything.md) | — |
 | HS-105-05 | The menu bar — the system admits what it can do | backlog | [story-05-menu-bar](./story-05-menu-bar.md) | — |
 | HS-105-06 | Docs — the bench at the entry points | backlog | [story-06-docs](./story-06-docs.md) | — |
@@ -123,6 +123,26 @@ grammar rather than the diorama.
   104, which supplies its data spine.
 
 ## Where we are
+
+**2026-07-26 — HS-105-03 SHIPPED: drawers OPEN.** First, the owner
+caught the shipped 01 claiming drawers the glass didn't show (zones
+rendered as tray panels outside the sprite system) — fixed as an 01
+rider (PR #370): a zone IS a drawer icon in the uniform cell, count
+badge live, `drawer_sel` lighting on drop-ready, the tray + its
+"drop things here" prose deleted. Then the open grammar: double-click
+a drawer → a REAL desk window (ZoneWindow on DeskWindowFrame) flying
+from the gesture point — desk visible, several coexisting, dock chips
+free via the panel system; Icons view (the cell contract) and List
+view (Name/Kind/Modified, sortable, hover Take-out un-files); THE
+WINDOW REMEMBERS (view+sort per zone `hs.desk.zone-views`, the open
+set `hs.desk.zone-windows`, rect via panels) and RESTORES across
+reload — proven live 4-beat walk, shots read. Dive retired to the
+Focus menu verb. The walk caught a real crash (fresh-object zustand
+selector looping React) — fixed at cause. Guards: zoneWindow.test.tsx;
+suite 328/328. Remainder recorded: Clean up/Snapshot + free
+arrangement (need drag-reorder), drag-between-windows. Next per the
+root-cause order: HS-105-04 (Info/tooltypes — properties on
+everything).
 
 **2026-07-25 — HS-105-01 SHIPPED (the same evening it was gated).**
 The mush had a root: 64×64 pixel sources rendered at a FRACTIONAL
