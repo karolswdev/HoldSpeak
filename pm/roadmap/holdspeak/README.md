@@ -4,8 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 3/7:
-HS-104-03 the gate under attack** — the hostile checklist pinned as
+**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 4/7:
+HS-104-04 PR receipts** — the candidate-Y deferral paid: registered
+sources' PRs as honest receipt rows (one batched `gh` call, CI
+conclusion not logs, observed-at always printed, attribution wearing
+its epistemics: exact / name-match-only / unattributed), needs-you
+ordering, local-only See-diff with an explicit-fetch offer, stale
+rows retained and named on a real network yank. Earlier the same
+day: **HS-104-03 the gate under attack** — the hostile checklist pinned as
 tests that bite: restart / replay / TOCTOU over real HTTP against a
 real spawned hub (SIGKILLed mid-hold and restarted), expiry race +
 double decision on the injectable clock, unarmed latency budgeted,

@@ -17,6 +17,7 @@ from .desk_actuators import build_desk_actuators_router
 from .core import build_core_router
 from .delivery import build_delivery_router
 from .delivery_attempts import build_delivery_attempts_router
+from .delivery_prs import build_delivery_prs_router
 from .delivery_dossiers import build_delivery_dossiers_router
 from .delivery_node import build_delivery_node_router
 from .delivery_terminal import build_delivery_terminal_router
@@ -42,6 +43,7 @@ __all__ = [
     "build_core_router",
     "build_delivery_router",
     "build_delivery_attempts_router",
+    "build_delivery_prs_router",
     "build_delivery_dossiers_router",
     "build_delivery_node_router",
     "build_delivery_terminal_router",

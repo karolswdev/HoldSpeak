@@ -121,6 +121,10 @@ class SourceRecord:
     clone_key: str  # server-side only: hash of the resolved common dir
     node_id: Optional[str] = None  # reserved for the node link (HS-94-03)
     worktrees: list[WorktreeRecord] = field(default_factory=list)
+    # HS-104-04: PR-receipt cadence, EXPLICITLY set per source (hand-edited
+    # registry entry or a future settings verb). None = manual refresh only;
+    # the PR pass is never ambient by default.
+    pr_refresh_seconds: Optional[float] = None
 
     @property
     def primary_path(self) -> Optional[str]:
@@ -136,7 +140,7 @@ class SourceRecord:
         }
 
     def to_stored(self) -> dict[str, Any]:
-        return {
+        stored = {
             "source_id": self.source_id,
             "node_id": self.node_id,
             "label": self.label,
@@ -144,6 +148,9 @@ class SourceRecord:
             "clone_key": self.clone_key,
             "worktrees": [wt.to_stored() for wt in self.worktrees],
         }
+        if self.pr_refresh_seconds is not None:
+            stored["pr_refresh_seconds"] = self.pr_refresh_seconds
+        return stored
 
 
 class DeliveryRegistry:
@@ -192,6 +199,11 @@ class DeliveryRegistry:
             fingerprint=str(entry.get("fingerprint") or ""),
             clone_key=str(entry.get("clone_key") or ""),
             node_id=entry.get("node_id"),
+            pr_refresh_seconds=(
+                float(entry["pr_refresh_seconds"])
+                if isinstance(entry.get("pr_refresh_seconds"), (int, float))
+                else None
+            ),
             worktrees=[
                 WorktreeRecord(
                     worktree_id=str(wt.get("worktree_id") or ""),
