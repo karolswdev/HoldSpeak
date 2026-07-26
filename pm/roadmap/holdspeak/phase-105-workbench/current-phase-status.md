@@ -1,6 +1,10 @@
 # Phase 105 - Workbench
 
-**Status:** IN PROGRESS (4/7, 2026-07-26). Chartered from the owner's
+**Status:** CLOSED (7/7, 2026-07-26). The owner's sitting accepted:
+"I accept. Although I still think that we need to do a much better
+job at making the OS an actual OS. I'm guessing that's Phase 104?" —
+the rider stands as the bar for 104 and the kernel phases.
+Chartered from the owner's
 direct verdict on the desk's world layer: "I honestly want the Desk
 OS to feel like an OS. Not a gimmick with huge lamp-like icons that
 don't do shit and just make it look bad. Think Workbench 2.0 but on
@@ -8,7 +12,7 @@ steroids." Takes activation precedence over Phase 104 (Borrowed Fire
 II), which is re-sequenced behind it — the innards land better on a
 desk that already has the icon/state/Info grammar.
 
-**Last updated:** 2026-07-26 (HS-105-02 shipped — see "Where we are").
+**Last updated:** 2026-07-26 (CLOSED 7/7: sweep 4150/37/0, composite walk 6/6, the sitting accepted; spec ledger in final-summary.md).
 
 ## Why this phase exists
 
@@ -100,7 +104,7 @@ bench where they are used.
 | HS-105-04 | Info on everything — the inspectable desk | done | [story-04-info-on-everything](./story-04-info-on-everything.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-105-05 | The menu bar — the system admits what it can do | done | [story-05-menu-bar](./story-05-menu-bar.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-105-06 | Docs — the bench at the entry points | done | [story-06-docs](./story-06-docs.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-105-07 | Closeout — the sitting loop and the spec ledger | backlog | [story-07-closeout](./story-07-closeout.md) | — |
+| HS-105-07 | Closeout — the sitting loop and the spec ledger | done | [story-07-closeout](./story-07-closeout.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Sequencing
 
@@ -123,6 +127,17 @@ grammar rather than the diorama.
   104, which supplies its data spine.
 
 ## Where we are
+
+**2026-07-26 — CLOSED 7/7.** HS-105-05 (menu bar: one registry, real
+menus, ghost-with-reason, Go pinned to the shelf's truth; the wire
+face waits for the kernel) and HS-105-06 (docs: DESK_GRAMMAR.md law +
+entry points; the doc guard refused six dashes) shipped on PR #373
+with 02. HS-105-07 closed on merged main 8e56ba7f: full sweep 4150
+passed / 37 skipped / ZERO failures (the sweep first caught and
+collected two ledger drifts), web chain green, the composite six-beat
+walk 6/6 with beat 6 proven both ways, final-summary.md carrying the
+SPEC LEDGER, BACKLOG candidate AA carrying the remainders, and the
+owner's verdict recorded verbatim in evidence-story-07.md.
 
 **2026-07-26 — HS-105-02 SHIPPED: drop-onto.** The matrix is contract
 data (`dropMatrix.ts`; unlisted pairs refuse by omission,

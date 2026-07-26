@@ -652,3 +652,16 @@ walk-blocking defects fixed and re-walked, or the phase does not close"*
 loaded by the conductor). Run the sitting, record the verdict verbatim,
 triage findings per TRIAGE.md. The Article VII Dialog-grammar drift in
 re-homed cores and Article IV mic coverage ride the same triage.
+
+### AA. Workbench remainders — the Phase-105 grammar's next notches
+
+Recorded at the HS-105-07 close (law: `docs/internal/DESK_GRAMMAR.md`
+§7). Drawer-window drag-reorder (unlocks the Clean up and Snapshot
+verbs plus free member arrangement inside the icons view);
+cross-window drag re-filing; the record orb as a drop target
+(Speak-with-context); multi-object drops; per-object Receipts once
+the kernel journal serves a per-object route; window-head menus and
+keyboard equivalents on the verb registry; artifact ("paper") sprite
+regeneration per the icon discipline; pull-down screens/workspaces;
+the in-place icon editor. Each lands the Phase-105 way: mock, owner
+gate, guard, live walk.
