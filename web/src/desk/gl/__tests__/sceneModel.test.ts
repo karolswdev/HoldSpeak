@@ -12,6 +12,8 @@ import {
   ropeObjects,
   zoneRect,
   MAX_FLOATERS,
+  OBJ_H,
+  OBJ_W,
   type SceneInputs,
 } from "../sceneModel";
 import {
@@ -73,12 +75,14 @@ describe("buildScene", () => {
     expect(m.u).toEqual(objUnit(world[w], w, world.length, {}));
   });
 
-  it("keeps a filed object off the stage and inside its zone's thumbs", () => {
+  it("keeps a filed object off the stage; the drawer wears the count", () => {
+    // HS-105-01/03: the tray thumbs died with the tray — the drawer icon
+    // carries the live member count instead.
     const scene = buildScene(inputs({ items: someItems }));
     expect(scene.objects.some((o) => o.id === "n2")).toBe(false);
     expect(scene.zones).toHaveLength(1);
-    expect(scene.zones[0].thumbs.map((t) => t.id)).toEqual(["note:n2"]);
     expect(scene.zones[0].count).toBe(1);
+    expect(scene.zones[0].sprite).toContain("drawer");
   });
 
   it("caps at MAX_FLOATERS with the honest overflow", () => {
@@ -118,7 +122,9 @@ describe("buildScene", () => {
     expect(n.editing).toBe(true);
   });
 
-  it("gives zones saved positions/widths precedence over the default grid", () => {
+  it("gives zones saved positions precedence; the cell is fixed-size", () => {
+    // HS-105-01/03: the drawer cell has no resize — saved widths are
+    // ignored; the arrangement (position) stays sacred.
     const scene = buildScene(
       inputs({
         items: someItems,
@@ -127,14 +133,16 @@ describe("buildScene", () => {
       }),
     );
     expect(scene.zones[0].u).toEqual({ x: 0.7, y: 0.6 });
-    expect(scene.zones[0].width).toBe(420);
+    expect(scene.zones[0].width).toBe(OBJ_W);
+    expect(scene.zones[0].height).toBe(OBJ_H);
   });
 
-  it("clamps a saved zone width to the grip's own bounds", () => {
+  it("a drop-ready drawer wears the real second image", () => {
     const scene = buildScene(
-      inputs({ items: someItems, zoneWidths: { d1: 9999 } }),
+      inputs({ items: someItems, hoverZoneId: "d1" }),
     );
-    expect(scene.zones[0].width).toBe(560);
+    expect(scene.zones[0].dropReady).toBe(true);
+    expect(scene.zones[0].sprite).toContain("drawer_sel");
   });
 });
 
@@ -195,16 +203,18 @@ describe("hitTest (DOM stacking parity: zones above resting objects)", () => {
 
   it("prefers the overlapping zone over the object beneath", () => {
     const zr = zoneRect(scene.zones[0], RECT);
-    const hit = hitTest(scene, RECT, zr.cx, zr.top + zr.height - 8);
-    expect(["zone", "zone-grip"]).toContain(hit.type);
+    const hit = hitTest(scene, RECT, zr.cx, zr.top + 8);
+    expect(hit.type).toBe("zone");
   });
 
-  it("resolves the grip corner and the title row distinctly", () => {
+  it("resolves the drawer body and the label band distinctly", () => {
+    // HS-105-01/03: the grip died with the tray; rename rides the label
+    // band beneath the art.
     const zr = zoneRect(scene.zones[0], RECT);
-    const grip = hitTest(scene, RECT, zr.left + zr.width - 8, zr.top + zr.height - 8);
-    expect(grip.type).toBe("zone-grip");
-    const title = hitTest(scene, RECT, zr.cx, zr.top + 12);
-    expect(title.type).toBe("zone-title");
+    const body = hitTest(scene, RECT, zr.cx, zr.top + 12);
+    expect(body.type).toBe("zone");
+    const label = hitTest(scene, RECT, zr.cx, zr.top + zr.height - 8);
+    expect(label.type).toBe("zone-title");
   });
 
   it("ignores the dragged object for the drop hit-test", () => {
