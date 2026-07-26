@@ -99,7 +99,7 @@ bench where they are used.
 | HS-105-03 | Zones are windows — density with chosen altitude | done | [story-03-zones-are-windows](./story-03-zones-are-windows.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-105-04 | Info on everything — the inspectable desk | done | [story-04-info-on-everything](./story-04-info-on-everything.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-105-05 | The menu bar — the system admits what it can do | done | [story-05-menu-bar](./story-05-menu-bar.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-105-06 | Docs — the bench at the entry points | backlog | [story-06-docs](./story-06-docs.md) | — |
+| HS-105-06 | Docs — the bench at the entry points | done | [story-06-docs](./story-06-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-105-07 | Closeout — the sitting loop and the spec ledger | backlog | [story-07-closeout](./story-07-closeout.md) | — |
 
 ## Sequencing

@@ -43,8 +43,12 @@ comes back as typed, reviewable artifacts:
 
 Launch `holdspeak` and the browser opens on the Desk: everything the two
 modes produce, living as objects in one spatial world. Meetings, notes,
-Knowledge, Agents, and their Artifacts appear on the Desk; Zones are
-shelves you drag things onto; tap anything and it opens in place.
+Knowledge, Agents, and their Artifacts appear on the Desk as working
+icons that carry their state (member counts, freshness, needs-you);
+Zones are drawers that open into remembering windows; drop an object
+onto an Agent or a Knowledge crystal and the named verb under the
+cursor says exactly what release does; right-click anything for Info.
+Click selects, double-click opens.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects (meetings as cassettes, notes, a Knowledge plant, an Artifact page) floating on a warm dark stage; a Q3 release Zone tray holding one filed Meeting; Coder session avatars on a right-edge rail; a record orb bottom-center; a compact HoldSpeak menu and an egress badge top-left." width="760">
