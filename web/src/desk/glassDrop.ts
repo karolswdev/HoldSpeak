@@ -38,6 +38,6 @@ export function glassFileRefusal(name: string): string {
   const dot = name.lastIndexOf(".");
   const suffix = dot >= 0 ? name.slice(dot).toLowerCase() : "";
   return suffix
-    ? `Can't import ${suffix} — transcript (.vtt .srt .txt) or audio only`
-    : "Can't import a file without a type — transcript or audio only";
+    ? `Can't import ${suffix}: transcript (.vtt .srt .txt) or audio only`
+    : "Can't import a file without a type: transcript or audio only";
 }

@@ -2,14 +2,17 @@
 // HS-98-07 — re-crafted native: the editor left its modal for an
 // in-surface section; delete is an inline two-step. Wire calls
 // unchanged.
+// HS-102-01 — the refit: creating/editing a destination is a choice
+// among BAYS (endpoint / this device / paired device / mesh node,
+// only the chosen path's fields render) that opens IN PLACE on the
+// switchboard — the same idea `RuntimeDestination`
+// (`settingsBespoke.tsx`) already proved for Settings, applied here
+// instead of re-derived. No modal, no form section below the list.
 import { useState } from "react";
 import type { CoreProps } from "./ActivityCore";
 import {
   Button,
-  Checkbox,
-  Field,
   InlineMessage,
-  Select,
   StatusPill,
   TextInput,
 } from "../../components/signal/Signal";
@@ -22,11 +25,46 @@ import { asRows, rowId, useResource } from "../pageSupport";
 import {
   ConfirmVerb,
   SurfaceBay,
+  SurfaceGroup,
   SurfaceSection,
+  SurfaceSettingRow,
   SurfaceState,
   SurfaceSwitchboard,
-  SurfaceVerbs,
+  SurfaceToggle,
 } from "../../desk/surface/Surface";
+
+const KIND_BAYS: Array<{ value: string; name: string; caption: string }> = [
+  {
+    value: "openAICompatible",
+    name: "Endpoint",
+    caption: "An OpenAI-compatible API, anywhere",
+  },
+  {
+    value: "onDevice",
+    name: "This device",
+    caption: "A model file already on this machine",
+  },
+  {
+    value: "desktop",
+    name: "Paired device",
+    caption: "Another HoldSpeak-paired Mac",
+  },
+  {
+    value: "meshNode",
+    name: "Mesh node",
+    caption: "A configured mesh worker",
+  },
+];
+
+function validUrl(value: string): boolean {
+  if (!value.trim()) return true;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 type Profile = Record<string, unknown>;
 type Envelope = {
@@ -67,12 +105,12 @@ const blank = (): Profile => ({
 function lastSeenLabel(seconds: unknown): string {
   const n = Number(seconds);
   if (!Number.isFinite(n) || n < 0) return "offline";
-  if (n < 90) return "offline — last seen just now";
-  if (n < 5400) return `offline — last seen ${Math.round(n / 60)} m ago`;
-  return `offline — last seen ${Math.round(n / 3600)} h ago`;
+  if (n < 90) return "offline, last seen just now";
+  if (n < 5400) return `offline, last seen ${Math.round(n / 60)} m ago`;
+  return `offline, last seen ${Math.round(n / 3600)} h ago`;
 }
 
-export function ProfilesCore({ hero }: CoreProps) {
+export function ProfilesCore(_props: CoreProps) {
   const resource = useResource<Envelope>("/api/profiles", {});
   const settings = useResource<Record<string, unknown>>("/api/settings", {});
   const [editing, setEditing] = useState<Profile | null>(null);
@@ -109,6 +147,13 @@ export function ProfilesCore({ hero }: CoreProps) {
       setMessage("A Runs on destination needs a name.");
       return;
     }
+    if (
+      editing.kind === "openAICompatible" &&
+      !validUrl(String(editing.base_url ?? ""))
+    ) {
+      setMessage("The Base URL isn't a valid http(s) address.");
+      return;
+    }
     setBusy(true);
     setMessage("");
     try {
@@ -140,14 +185,139 @@ export function ProfilesCore({ hero }: CoreProps) {
     }
   };
 
-  const verbs = (
-    <Button variant="primary" dense onClick={() => setEditing(blank())}>
-      New destination
-    </Button>
-  );
+  const editorFor = (target: Profile) => {
+    const urlInvalid =
+      target.kind === "openAICompatible" &&
+      !validUrl(String(target.base_url ?? ""));
+    return (
+      <>
+        <div
+          className="settings-bays"
+          role="radiogroup"
+          aria-label="Destination kind"
+        >
+          {KIND_BAYS.map((bay) => (
+            <button
+              key={bay.value}
+              type="button"
+              role="radio"
+              aria-checked={target.kind === bay.value}
+              className={
+                "settings-bay" +
+                (target.kind === bay.value ? " is-selected" : "")
+              }
+              onClick={() => field("kind", bay.value)}
+            >
+              <span className="settings-bay-dot" aria-hidden="true" />
+              <span className="settings-bay-text">
+                <strong>{bay.name}</strong>
+                <small>{bay.caption}</small>
+              </span>
+            </button>
+          ))}
+        </div>
+        <SurfaceGroup>
+          <SurfaceSettingRow
+            label="Name"
+            control={
+              <TextInput
+                aria-label="Name"
+                value={String(target.name ?? "")}
+                onChange={(event) => field("name", event.target.value)}
+              />
+            }
+          />
+          {target.kind === "openAICompatible" ? (
+            <>
+              <SurfaceSettingRow
+                label="Base URL"
+                description={urlInvalid ? "Not a valid http(s) address" : undefined}
+                control={
+                  <TextInput
+                    aria-label="Base URL"
+                    type="url"
+                    value={String(target.base_url ?? "")}
+                    onChange={(event) => field("base_url", event.target.value)}
+                  />
+                }
+              />
+              <SurfaceSettingRow
+                label="Model"
+                control={
+                  <TextInput
+                    aria-label="Model"
+                    value={String(target.model ?? "")}
+                    onChange={(event) => field("model", event.target.value)}
+                  />
+                }
+              />
+              <SurfaceSettingRow
+                label="Requires its own key on the hub"
+                control={
+                  <SurfaceToggle
+                    label="Requires its own key on the hub"
+                    checked={Boolean(target.requires_key)}
+                    onChange={(checked) => field("requires_key", checked)}
+                  />
+                }
+              />
+            </>
+          ) : null}
+          {target.kind === "onDevice" ? (
+            <SurfaceSettingRow
+              label="Model file"
+              control={
+                <TextInput
+                  aria-label="Model file"
+                  value={String(target.model_file ?? "")}
+                  onChange={(event) =>
+                    field("model_file", event.target.value)
+                  }
+                />
+              }
+            />
+          ) : null}
+          {target.kind === "meshNode" ? (
+            <SurfaceSettingRow
+              label="Node name"
+              control={
+                <TextInput
+                  aria-label="Node name"
+                  value={String(target.node ?? "")}
+                  onChange={(event) => field("node", event.target.value)}
+                />
+              }
+            />
+          ) : null}
+          <SurfaceSettingRow
+            label="Context window"
+            control={
+              <TextInput
+                aria-label="Context window"
+                type="number"
+                min={1024}
+                value={Number(target.context_limit ?? 16384)}
+                onChange={(event) =>
+                  field("context_limit", Number(event.target.value))
+                }
+              />
+            }
+          />
+        </SurfaceGroup>
+        <div className="surface-actions">
+          <Button dense variant="ghost" onClick={() => setEditing(null)}>
+            Cancel
+          </Button>
+          <Button variant="primary" dense loading={busy} onClick={save}>
+            {target.id ? "Save" : "Add destination"}
+          </Button>
+        </div>
+      </>
+    );
+  };
+
   return (
     <>
-      {hero ? hero(verbs) : <SurfaceVerbs>{verbs}</SurfaceVerbs>}
       {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
       <SurfaceState
         loading={resource.loading}
@@ -156,13 +326,12 @@ export function ProfilesCore({ hero }: CoreProps) {
       >
         <SurfaceSection label="Destinations">
           {!profiles.length ? (
-            <SurfaceState
-              empty
-              emptyLabel="No saved destinations"
-              emptyGlyph="⇄"
-            />
-          ) : (
-            <SurfaceSwitchboard>
+            <p className="surface-empty-caption">
+              Nothing runs anywhere but this device yet — add a
+              destination below.
+            </p>
+          ) : null}
+          <SurfaceSwitchboard>
               {[...profiles]
                 .sort((a, b) =>
                   String(a.id) === defaultId
@@ -172,6 +341,18 @@ export function ProfilesCore({ hero }: CoreProps) {
                       : 0,
                 )
                 .map((profile, index) => {
+                  const isEditingThis =
+                    Boolean(editing?.id) &&
+                    String(editing?.id) === String(profile.id);
+                  if (isEditingThis && editing) {
+                    return (
+                      <SurfaceBay
+                        key={rowId(profile, index)}
+                        expanded
+                        editor={editorFor(editing)}
+                      />
+                    );
+                  }
                   const kind = String(profile.kind ?? "onDevice");
                   const node = String(profile.node ?? "");
                   const liveness = resource.data.mesh_liveness?.[node];
@@ -261,117 +442,17 @@ export function ProfilesCore({ hero }: CoreProps) {
                     />
                   );
                 })}
-            </SurfaceSwitchboard>
-          )}
+              {editing && !editing.id ? (
+                <SurfaceBay expanded editor={editorFor(editing)} />
+              ) : (
+                <SurfaceBay
+                  ghost
+                  name="+ New destination"
+                  onClick={() => setEditing(blank())}
+                />
+              )}
+          </SurfaceSwitchboard>
         </SurfaceSection>
-        {editing ? (
-          <SurfaceSection
-            label={
-              editing.id ? "Edit Runs on destination" : "New Runs on destination"
-            }
-            actions={
-              <Button dense variant="ghost" onClick={() => setEditing(null)}>
-                Cancel
-              </Button>
-            }
-          >
-            <Field label="Name">
-              {({ id }) => (
-                <TextInput
-                  id={id}
-                  value={String(editing.name ?? "")}
-                  onChange={(event) => field("name", event.target.value)}
-                />
-              )}
-            </Field>
-            <Field label="Kind">
-              {({ id }) => (
-                <Select
-                  id={id}
-                  value={String(editing.kind)}
-                  onChange={(event) => field("kind", event.target.value)}
-                >
-                  <option value="openAICompatible">
-                    OpenAI-compatible endpoint
-                  </option>
-                  <option value="onDevice">This device</option>
-                  <option value="desktop">Paired device</option>
-                  <option value="meshNode">Mesh node</option>
-                </Select>
-              )}
-            </Field>
-            {editing.kind === "openAICompatible" ? (
-              <>
-                <Field label="Base URL">
-                  {({ id }) => (
-                    <TextInput
-                      id={id}
-                      type="url"
-                      value={String(editing.base_url ?? "")}
-                      onChange={(event) => field("base_url", event.target.value)}
-                    />
-                  )}
-                </Field>
-                <Field label="Model">
-                  {({ id }) => (
-                    <TextInput
-                      id={id}
-                      value={String(editing.model ?? "")}
-                      onChange={(event) => field("model", event.target.value)}
-                    />
-                  )}
-                </Field>
-                <Checkbox
-                  label="Requires its own key on the hub"
-                  checked={Boolean(editing.requires_key)}
-                  onChange={(event) =>
-                    field("requires_key", event.target.checked)
-                  }
-                />
-              </>
-            ) : null}
-            {editing.kind === "onDevice" ? (
-              <Field label="Model file">
-                {({ id }) => (
-                  <TextInput
-                    id={id}
-                    value={String(editing.model_file ?? "")}
-                    onChange={(event) => field("model_file", event.target.value)}
-                  />
-                )}
-              </Field>
-            ) : null}
-            {editing.kind === "meshNode" ? (
-              <Field label="Node name">
-                {({ id }) => (
-                  <TextInput
-                    id={id}
-                    value={String(editing.node ?? "")}
-                    onChange={(event) => field("node", event.target.value)}
-                  />
-                )}
-              </Field>
-            ) : null}
-            <Field label="Context window">
-              {({ id }) => (
-                <TextInput
-                  id={id}
-                  type="number"
-                  min={1024}
-                  value={Number(editing.context_limit ?? 16384)}
-                  onChange={(event) =>
-                    field("context_limit", Number(event.target.value))
-                  }
-                />
-              )}
-            </Field>
-            <div className="surface-actions">
-              <Button variant="primary" dense loading={busy} onClick={save}>
-                Save destination
-              </Button>
-            </div>
-          </SurfaceSection>
-        ) : null}
       </SurfaceState>
     </>
   );

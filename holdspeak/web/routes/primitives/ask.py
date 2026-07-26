@@ -26,6 +26,7 @@ from ....grounding import (
     GROUNDING_MAX_REFS as _GROUNDING_MAX_REFS,
     hydrate_grounding_blocks as _hydrate_grounding,
     meeting_digest as _meeting_digest,
+    score_claims as _score_claims,
 )
 from ....intel.providers import endpoint_egress
 from ...context import WebContext
@@ -432,6 +433,13 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
             }
             if grounding_echo is not None:
                 payload["grounding"] = grounding_echo
+            # HS-103-03: a per-claim support signal — quiet, additive, never
+            # blocking. Only scored when there's real cited source material to
+            # check against; a context-free ask has nothing to be unsupported
+            # BY, so it's skipped rather than flagging everything.
+            source_text = (material + "\n\n" + envelope) if envelope else material
+            if source_text.strip():
+                payload["grounding_claims"] = _score_claims(output, source_text)
             return JSONResponse(payload)
         except Exception as exc:
             return error_500(exc, log, "Failed to run ask")

@@ -336,7 +336,9 @@ def test_dictation_page_includes_readiness_panel() -> None:
     assert '<div id="root"></div>' in response.text
     js = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/DictationCore.tsx").read_text()
     assert "/api/dictation/readiness" in js
-    assert "Pipeline readiness" in js and "Runs on" in js
+    # HS-100-07/HS-102-06: readiness is the composed ReadinessLine under
+    # the loop (panel copy retired); Runs on lives inside RuntimeDestination.
+    assert "ReadinessLine" in js and "RuntimeDestination" in js
     assert "warnings" in js
 
 

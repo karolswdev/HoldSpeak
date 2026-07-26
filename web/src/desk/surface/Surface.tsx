@@ -76,6 +76,7 @@ export function SurfaceRow({
   selected,
   onOpen,
   children,
+  quiet,
 }: {
   glyph?: ReactNode;
   title: ReactNode;
@@ -85,6 +86,10 @@ export function SurfaceRow({
   selected?: boolean;
   onOpen?: () => void;
   children?: ReactNode;
+  /** HS-102-04 — a row with nothing pending reads quieter than one
+   * waiting on a verdict (composition rule 2's reviewing posture);
+   * never the only signal (pair with `meta`, never color/weight alone). */
+  quiet?: boolean;
 }) {
   const body = (
     <>
@@ -97,7 +102,11 @@ export function SurfaceRow({
     </>
   );
   return (
-    <li className="surface-row" data-selected={selected || undefined}>
+    <li
+      className="surface-row"
+      data-selected={selected || undefined}
+      data-quiet={quiet || undefined}
+    >
       <div className="surface-row-line">
         {onOpen ? (
           <button type="button" className="surface-row-open" onClick={onOpen}>
@@ -551,11 +560,15 @@ export function SurfaceBay({
   badge,
   tag,
   verbs,
+  expanded,
+  editor,
+  ghost,
+  onClick,
 }: {
   /** True on THE current route — the bay that leads. */
   route?: boolean;
   lamp?: ReactNode;
-  name: ReactNode;
+  name?: ReactNode;
   /** Short liveness text beside the name (never color alone). */
   state?: ReactNode;
   model?: ReactNode;
@@ -563,9 +576,43 @@ export function SurfaceBay({
   badge?: ReactNode;
   tag?: ReactNode;
   verbs?: ReactNode;
+  /** HS-102-01 — the bay IS the editor while true: the summary row
+   * (name/model/where/badge) yields to `editor` in place, spanning
+   * the switchboard's full width. No separate form section. */
+  expanded?: boolean;
+  editor?: ReactNode;
+  /** A dashed, low-emphasis bay for the switchboard's "add" affordance
+   * (never a floating header button for the same act). */
+  ghost?: boolean;
+  onClick?: () => void;
 }) {
+  if (expanded) {
+    return (
+      <li className="surface-bay surface-bay-expanded">
+        <div className="surface-bay-editor">{editor}</div>
+      </li>
+    );
+  }
   return (
-    <li className={route ? "surface-bay surface-bay-route" : "surface-bay"}>
+    <li
+      className={
+        (route ? "surface-bay surface-bay-route" : "surface-bay") +
+        (ghost ? " surface-bay-ghost" : "")
+      }
+      {...(ghost && onClick
+        ? {
+            role: "button",
+            tabIndex: 0,
+            onClick,
+            onKeyDown: (event: KeyboardEvent<HTMLLIElement>) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            },
+          }
+        : {})}
+    >
       <div className="surface-bay-main">
         <div className="surface-bay-who surface-primary">
           {lamp}
@@ -621,7 +668,7 @@ export function EditInPlace({
       <span
         className={`${cx} is-locked`}
         title={disabledReason}
-        aria-label={`${label} — ${disabledReason}`}
+        aria-label={`${label}: ${disabledReason}`}
       >
         {value}
       </span>
@@ -647,6 +694,11 @@ export function EditInPlace({
     "aria-label": label,
     value: draft,
     autoFocus: true,
+    // Placeholder-shaped values ("No knowledge yet. Click to add.")
+    // ride the same `value` prop as real content; select it on focus
+    // so typing REPLACES the placeholder instead of appending after it.
+    onFocus: (event: { target: HTMLInputElement | HTMLTextAreaElement }) =>
+      event.target.select(),
     onBlur: commit,
     onKeyDown: (event: KeyboardEvent) => {
       if (event.key === "Escape") {

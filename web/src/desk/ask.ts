@@ -23,7 +23,7 @@ export const ASK_LENSES: Array<{ name: string; instruction: string }> = [
   {
     name: "Action items",
     instruction:
-      "Extract the concrete action items as a short list, each as 'task — owner — due' when known.",
+      "Extract the concrete action items as a short list, each as 'task, owner, due' when known.",
   },
   {
     name: "Risks",
@@ -84,6 +84,18 @@ export interface AskRunResult {
   /** The lineage the hub actually read — grounding rows folded in (HS-83-01). */
   contextIds: string[];
   contextTitles: string[];
+  /** HS-103-03: a quiet per-claim support signal against the cited material —
+   * additive metadata only, never present when there was no source to check
+   * against (a context-free ask). */
+  groundingClaims: GroundingClaim[];
+}
+
+/** One decomposed claim from the answer, scored against the cited material. */
+export interface GroundingClaim {
+  text: string;
+  score: number;
+  label: "entailed" | "partial" | "unsupported";
+  flagged: boolean;
 }
 
 /** Run the ask through the hub. Persists nothing — keep/bin is yours.
@@ -115,6 +127,7 @@ export async function runAsk(opts: {
     actualPlacement: null,
     contextIds: [],
     contextTitles: [],
+    groundingClaims: [],
   });
   try {
     const res = await apiRequest("/api/ask", {
@@ -158,6 +171,14 @@ export async function runAsk(opts: {
         : [],
       contextTitles: Array.isArray(data.context_titles)
         ? data.context_titles.map(String)
+        : [],
+      groundingClaims: Array.isArray(data.grounding_claims)
+        ? data.grounding_claims.map((c: Record<string, unknown>) => ({
+            text: String(c.text || ""),
+            score: Number(c.score) || 0,
+            label: c.label === "entailed" || c.label === "partial" ? c.label : "unsupported",
+            flagged: Boolean(c.flagged),
+          }))
         : [],
     };
   } catch (e) {

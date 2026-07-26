@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 102
-- **Status:** ready
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-102-07
 
@@ -42,6 +42,47 @@ so BEFORE Save, by name).
 - Out: the `/api/profiles` wire contract (byte-identical); the
   switchboard bay composition itself (B5, keep); Settings'
   RuntimeDestination (already bespoke).
+
+## Design direction (grounded in a live drive, 2026-07-21)
+
+Driven headed against a fresh staged instance: `New destination` is a
+literal `Name` / `Kind`-as-`<Select>` / `Base URL` / `Model` /
+"Requires its own key on the hub" checkbox / `Context window` stack —
+the exact composition canon rule 1 outlaws. Do not invent a new
+component for the fix; one already exists and already solves this
+shape:
+
+1. **Reuse `RuntimeDestination` verbatim, don't reinvent it.**
+   `web/src/pages/cores/settingsBespoke.tsx` (round 5) already turns
+   "where does voice typing run" into choice bays that reveal only
+   the chosen path's fields ("these things are complicated enough
+   that they can't just be dumbed down to a bunch of input boxes" —
+   the owner's bar that built it). Lift its choice-bay pattern
+   (kind-as-bay-picker, not kind-as-`<Select>`) into `ProfilesCore.tsx`
+   directly, or factor it into one shared piece both call — never a
+   second hand-rolled version of the same idea.
+2. **`SurfaceBay` (`Surface.tsx:544`) needs an expand slot.** It has
+   no in-place-edit affordance today — this story is the one that
+   adds it (an `expanded`/`onToggle` prop, or an `EditInPlace`-style
+   swap of the bay's body for the create/edit form), so editing opens
+   ON the bay's own `<li>`, not in a `NEW RUNS ON DESTINATION` section
+   bolted below the `DESTINATIONS` list. Ship the prop as a `SurfaceBay`
+   kit addition, not a `ProfilesCore`-local fork.
+3. **Bays by kind, named exactly:** Endpoint (OpenAI-compatible) / This
+   device / Paired device / Mesh node. Each bay's expanded body shows
+   ONLY that kind's fields (an endpoint needs Base URL + Model + key
+   toggle; "this device" needs none of those).
+4. **Honest validation inline, before Save exists as a concept.** A
+   malformed URL refuses by name as it's typed (not on submit); a
+   "Check" verb pings the real endpoint for a reachable kind and the
+   bay's `state`/`lamp` (already wired for liveness — see
+   `04-settings.png`'s Settings groups for the same honest-toggle
+   language) reflects it live while editing, before commit.
+5. **No `New destination` button floating as a lone CTA above an
+   empty list.** The empty state's own affordance IS a bay-shaped
+   "add" row at the switchboard's foot (consistent with rule 2 —
+   creation and editing are the same in-place mechanism, not two
+   different UI idioms for the same act).
 
 ## Acceptance criteria
 

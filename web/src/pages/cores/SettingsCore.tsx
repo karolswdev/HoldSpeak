@@ -672,7 +672,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         <div ref={credentialsRef}>
           <SurfaceSection label="Credentials">
             <p className="surface-boundary-note">
-              Values stay on this hub — reads show configured or not, never
+              Values stay on this hub. Reads show configured or not, never
               the value.
             </p>
             <SurfaceGroup>

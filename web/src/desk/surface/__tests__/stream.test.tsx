@@ -29,10 +29,10 @@ describe("the stream time grammar", () => {
   it("streamDayLabel: Today, Yesterday, then the honest date — Undated for null", () => {
     const now = new Date(2026, 6, 19, 12, 0, 0);
     expect(streamDayLabel(new Date(2026, 6, 19, 9, 0), now)).toMatch(
-      /^Today — /,
+      /^Today: /,
     );
     expect(streamDayLabel(new Date(2026, 6, 18, 23, 59), now)).toMatch(
-      /^Yesterday — /,
+      /^Yesterday: /,
     );
     expect(streamDayLabel(new Date(2026, 6, 16), now)).not.toMatch(
       /Today|Yesterday/,
@@ -50,7 +50,7 @@ describe("the stream composition", () => {
   it("head leads with the count at display step; entries carry when/said/meta/verbs", () => {
     const { container } = render(
       <SurfaceStream count={14} countLabel="today · 2 taught">
-        <SurfaceStreamDay label="Today — Sun, Jul 19">
+        <SurfaceStreamDay label="Today: Sun, Jul 19">
           <SurfaceStreamEntry
             when="09:38"
             meta={<span>→ Terminal</span>}
@@ -64,7 +64,7 @@ describe("the stream composition", () => {
     const count = container.querySelector(".surface-stream-head .surface-display");
     expect(count?.textContent).toBe("14");
     expect(screen.getByText("today · 2 taught")).toBeTruthy();
-    expect(screen.getByText("Today — Sun, Jul 19")).toBeTruthy();
+    expect(screen.getByText("Today: Sun, Jul 19")).toBeTruthy();
     const entry = container.querySelector(".surface-stream-entry");
     expect(entry?.querySelector(".surface-stream-when")?.textContent).toBe(
       "09:38",

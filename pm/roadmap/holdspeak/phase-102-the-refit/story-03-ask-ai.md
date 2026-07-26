@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 102
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-102-07
 
@@ -38,6 +38,35 @@ native.
 - Out: the ask wire route and grounding composition
   (`buildGrounding`, byte-identical); the selection grammar
   (HS-102-05); RailsPicker internals.
+
+## Design direction
+
+1. **Kill `desk-pullout-md` at `AskPanel.tsx:345` by name.** It is a
+   literal `<pre className="desk-pullout-md">{result.output}</pre>` —
+   raw markdown source in a box. Replace with `Material`
+   (`web/src/desk/surface/Material.tsx`) — the same small React-node
+   renderer HS-101 round 8 already built for exactly this job
+   (headings/lists/paragraphs/bold/italic/code/links, no `innerHTML`,
+   unknown syntax falls back to plain text). Do not write a second
+   renderer.
+2. **One composer well, not a stack of sections.** `AskPanel.tsx`
+   today mounts `MicButton` (line 287) and `GroundingSection` (line
+   301) as separate blocks around the question input. Recompose into
+   ONE bordered well: mic + question material + the Ask verb inline
+   inside it, matching the grammar the agent chat and capability cards
+   already converged on (rounds 2 and 8) — do not invent a third
+   variant of "a well with a verb in it."
+3. **`GroundingSection`/`RailsPicker` fold into the well's FOOT as
+   captions**, not a labeled section above or below the well — "Runs
+   on: <destination>" and "Grounded: N objects" read as quiet caption-
+   step text at the bottom edge of the same well, not their own
+   `SurfaceSection`.
+4. **The answer, once it exists, is `Material` + a quiet caption
+   receipt** ("answered via <destination>, N tokens" at
+   `--desk-surface-label-size`) **+ one verb: "Keep on the desk."** No
+   other chrome around the answer.
+5. **Failure states are honest by name** in the same well (a refused
+   grounding, a dead endpoint) — never a silent empty answer.
 
 ## Acceptance criteria
 

@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from typing import Any
 from urllib.parse import urlparse
 
+from holdspeak.intel.endpoint_health import default_health as _endpoint_health
 from holdspeak.logging_config import get_logger
 from holdspeak.plugins.dictation.grammars import StructuredOutputSchema
 from holdspeak.plugins.dictation.runtime import RuntimeUnavailableError
@@ -97,6 +99,13 @@ class OpenAICompatibleRuntime:
     ) -> dict[str, Any]:
         self.load()
         assert self._client is not None
+        # HS-103-04: fail fast, honestly, without attempting the network call
+        # at all, when this endpoint has just failed several times in a row.
+        endpoint_key = f"dictation:{self.base_url}"
+        ok, refusal = _endpoint_health.check(endpoint_key)
+        if not ok:
+            raise RuntimeError(refusal or "endpoint unreachable")
+
         schema_hint = _schema_hint(schema)
         messages = [
             {
@@ -111,38 +120,46 @@ class OpenAICompatibleRuntime:
                 "content": f"{prompt}\n\nAllowed output schema:\n{schema_hint}",
             },
         ]
+        started = time.monotonic()
         try:
-            response = self._client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                response_format={"type": "json_object"},
-                extra_body={"thinking": False},
-            )
-        except Exception as exc:
-            if not _response_format_unsupported(exc):
-                log.error("OpenAI-compatible dictation classify failed: %s", exc, exc_info=True)
-                raise RuntimeError(f"OpenAI-compatible classify failed: {exc}") from exc
-            # Some OpenAI-compatible servers reject response_format as a
-            # bad-request error rather than a Python TypeError.
             try:
                 response = self._client.chat.completions.create(
                     model=self.model,
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
+                    response_format={"type": "json_object"},
                     extra_body={"thinking": False},
                 )
-            except Exception as retry_exc:
-                log.error(
-                    "OpenAI-compatible dictation classify retry failed: %s",
-                    retry_exc,
-                    exc_info=True,
-                )
-                raise RuntimeError(
-                    f"OpenAI-compatible classify failed: {retry_exc}"
-                ) from retry_exc
+            except Exception as exc:
+                if not _response_format_unsupported(exc):
+                    log.error("OpenAI-compatible dictation classify failed: %s", exc, exc_info=True)
+                    raise RuntimeError(f"OpenAI-compatible classify failed: {exc}") from exc
+                # Some OpenAI-compatible servers reject response_format as a
+                # bad-request error rather than a Python TypeError.
+                try:
+                    response = self._client.chat.completions.create(
+                        model=self.model,
+                        messages=messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        extra_body={"thinking": False},
+                    )
+                except Exception as retry_exc:
+                    log.error(
+                        "OpenAI-compatible dictation classify retry failed: %s",
+                        retry_exc,
+                        exc_info=True,
+                    )
+                    raise RuntimeError(
+                        f"OpenAI-compatible classify failed: {retry_exc}"
+                    ) from retry_exc
+        except Exception:
+            _endpoint_health.record_failure(endpoint_key)
+            raise
+        _endpoint_health.record_success(
+            endpoint_key, latency_ms=(time.monotonic() - started) * 1000
+        )
 
         text = _extract_message_text(response)
         data = _parse_json_object(text)

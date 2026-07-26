@@ -191,20 +191,44 @@ const SURFACES: SurfaceRow[] = [
   },
 ];
 
+/** HS-103-01 — which surface windows were open survives a reload, the
+ * same manual-localStorage shape `store.ts` already uses for positions
+ * and panel rects (own key: this store is the sole writer). */
+const OPEN_KEY = "hs.desk.open-windows";
+
+function loadOpenWindows(): Record<string, string | null> {
+  try {
+    return JSON.parse(localStorage.getItem(OPEN_KEY) || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveOpenWindows(open: Record<string, string | null>) {
+  try {
+    localStorage.setItem(OPEN_KEY, JSON.stringify(open));
+  } catch {
+    /* storage may be unavailable; the open set just won't persist */
+  }
+}
+
 interface SurfaceState {
-  open: Record<string, string | undefined | null>;
+  open: Record<string, string | null>;
   openSurfaceWindow(key: string, scope?: string): void;
   closeSurfaceWindow(key: string): void;
 }
 
 export const useSurfaceWindows = create<SurfaceState>((set, get) => ({
-  open: {},
+  open: loadOpenWindows(),
   openSurfaceWindow(key, scope) {
-    set({ open: { ...get().open, [key]: scope ?? null } });
+    const open = { ...get().open, [key]: scope ?? null };
+    set({ open });
+    saveOpenWindows(open);
   },
   closeSurfaceWindow(key) {
     const { [key]: _dropped, ...rest } = get().open;
     set({ open: rest });
+    saveOpenWindows(rest);
   },
 }));
 

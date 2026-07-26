@@ -5,9 +5,10 @@
 // Journal and Blocks are the wings; Memory/Knowledge/Runtime/Hooks/
 // Nudges and full readiness fold behind the one gear door
 // (APPLICATION_LAYER_THESIS.md §1.1). Wire calls and verbs unchanged.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
 import type { CoreProps } from "./ActivityCore";
+import { RuntimeDestination } from "./settingsBespoke";
 import {
   Button,
   Disclosure,
@@ -36,9 +37,11 @@ import {
   SurfaceCode,
   SurfaceColumns,
   SurfaceFacts,
+  SurfaceGroup,
   SurfaceRow,
   SurfaceRows,
   SurfaceSection,
+  SurfaceSettingRow,
   SurfaceLibrary,
   SurfaceLibraryGhost,
   SurfaceLibraryTile,
@@ -46,6 +49,7 @@ import {
   SurfaceStream,
   SurfaceStreamDay,
   SurfaceStreamEntry,
+  SurfaceToggle,
 } from "../../desk/surface/Surface";
 import {
   humanTime,
@@ -74,39 +78,115 @@ function readableValue(value: unknown): string {
   return String(value ?? "");
 }
 
+/* HS-102-06 — the two raw dumps compose into honest sentences: what
+   runs, where, at what budget, and why (with the remedy AT the point
+   of the state, not a disconnected banner). Wire fields stay
+   reachable behind a Disclosure for anyone who needs them. */
 function Readiness() {
   const root = localStorage.getItem("holdspeak.projectRootOverride") ?? "";
+  const query = root ? `?project_root=${encodeURIComponent(root)}` : "";
   const resource = useResource<JsonRecord>(
-    `/api/dictation/readiness${root ? `?project_root=${encodeURIComponent(root)}` : ""}`,
+    `/api/dictation/readiness${query}`,
     {},
   );
+  const [pending, setPending] = useState(false);
+  const [kbBusy, setKbBusy] = useState(false);
+  const config = (resource.data.config ?? {}) as JsonRecord;
+  const target = (resource.data.target ?? {}) as JsonRecord;
+  const depth = (resource.data.depth ?? {}) as JsonRecord;
   const warnings = Array.isArray(resource.data.warnings)
-    ? resource.data.warnings
+    ? (resource.data.warnings as JsonRecord[])
     : [];
+  const enabled = config.pipeline_enabled === true;
+  const togglePipeline = async (next: boolean) => {
+    setPending(true);
+    try {
+      await apiFetch("/api/settings", {
+        method: "PUT",
+        json: { dictation: { pipeline: { enabled: next } } },
+      });
+      await resource.reload();
+    } finally {
+      setPending(false);
+    }
+  };
+  const createStarterKb = async () => {
+    setKbBusy(true);
+    try {
+      await apiFetch(`/api/dictation/project-kb/starter${query}`, {
+        method: "POST",
+      });
+      await resource.reload();
+    } finally {
+      setKbBusy(false);
+    }
+  };
+  const confidencePct =
+    typeof target.confidence === "number"
+      ? Math.round((target.confidence as number) * 100)
+      : null;
+  const deliveryLine = target.label
+    ? `Last typed into ${presentValue(target.label)}${
+        target.source === "hints" ? " via the browser bridge" : ""
+      }${confidencePct !== null ? ` · ${confidencePct}% confidence` : ""}`
+    : "No delivery detected yet";
+  const runs = Number(depth.runs ?? 0);
+  const hasKbWarning = warnings.some((w) => w.code === "missing_project_kb");
+  const otherWarnings = warnings.filter(
+    (w) => w.code !== "pipeline_disabled" && w.code !== "missing_project_kb",
+  );
   return (
     <SurfaceState
       loading={resource.loading}
       error={resource.error}
       onRetry={() => void resource.reload()}
     >
-      <SurfaceColumns
-        main={
-          <SurfaceSection label="Pipeline readiness">
-            <SurfaceFacts value={resource.data.config} />
-            {warnings.map((warning, index) => (
-              <InlineMessage tone="warning" key={index}>
-                {readableValue(warning)}
-              </InlineMessage>
-            ))}
-          </SurfaceSection>
-        }
-        side={
-          <SurfaceSection label="Resolved delivery">
-            <SurfaceFacts value={resource.data.target} />
-            <SurfaceFacts value={resource.data.depth} />
-          </SurfaceSection>
-        }
-      />
+      <SurfaceGroup label="Pipeline">
+        <SurfaceSettingRow
+          label={
+            enabled
+              ? "Types automatically as you speak"
+              : "Off. Speaking here stays a draft."
+          }
+          description={`${presentValue(config.backend) || "automatic"} · budget ${presentValue(config.max_total_latency_ms) || "—"} ms`}
+          control={
+            <SurfaceToggle
+              label="Dictation pipeline"
+              checked={enabled}
+              disabled={pending}
+              onChange={(next) => void togglePipeline(next)}
+            />
+          }
+        />
+        {hasKbWarning ? (
+          <SurfaceSettingRow
+            label="Project KB file is missing"
+            description="A starter file lets dictation ground on this project's facts"
+            control={
+              <Button dense loading={kbBusy} onClick={() => void createStarterKb()}>
+                Create it
+              </Button>
+            }
+          />
+        ) : null}
+        {otherWarnings.map((warning, index) => (
+          <p className="surface-fact-line" key={String(warning.code ?? index)}>
+            {presentValue(warning.message) || readableValue(warning)}
+          </p>
+        ))}
+      </SurfaceGroup>
+      <SurfaceGroup label="Delivery">
+        <SurfaceSettingRow
+          label={deliveryLine}
+          description={runs > 0 ? `${runs} runs so far` : "No runs yet"}
+          control={null}
+        />
+      </SurfaceGroup>
+      <Disclosure title="Wire details">
+        <SurfaceFacts value={config} />
+        <SurfaceFacts value={target} />
+        <SurfaceFacts value={depth} />
+      </Disclosure>
     </SurfaceState>
   );
 }
@@ -143,7 +223,7 @@ function ReadinessLine({ onOpenDoor }: { onOpenDoor: () => void }) {
       <span className="speak-status-dot" aria-hidden="true" />
       {config.pipeline_enabled === true
         ? `${warnings.length} readiness ${warnings.length === 1 ? "warning" : "warnings"}`
-        : "The pipeline is off — speaking here still works on paper"}
+        : "Pipeline off. Speaking here stays a draft."}
       <button type="button" className="speak-status-fix" onClick={onOpenDoor}>
         Review
       </button>
@@ -287,7 +367,7 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
           label="Hold to talk"
           onText={(text) => setUtterance(text)}
         />
-        <p className="speak-hint">Hold to talk, or type below — on paper</p>
+        <p className="speak-hint">Hold to talk, or type below. This stays a draft.</p>
       </div>
       <div className="desk-mic-row">
         <TextArea
@@ -308,7 +388,7 @@ function SpeakFace({ onOpenDoor }: { onOpenDoor: () => void }) {
         </Button>
         <Disclosure title="Grounding scope">
           <TextInput
-            aria-label="Project root — optional grounding scope, saved only on this device"
+            aria-label="Project root: optional grounding scope, saved only on this device"
             placeholder="Project root (optional)"
             value={projectRoot}
             onChange={(event) => setProjectRoot(event.target.value)}
@@ -696,7 +776,7 @@ function Memory() {
             error={digest.error}
             onRetry={() => void digest.reload()}
           >
-            <SurfaceFacts value={digest.data} />
+            <LearningDigestFacts digest={digest.data} />
           </SurfaceState>
         </SurfaceSection>
       }
@@ -704,6 +784,52 @@ function Memory() {
   );
 }
 
+/* HS-102-06 — the digest's window/enabled/generated-at wrapper is
+   metadata, not the fact; SurfaceFacts on the raw object was
+   accidentally surfacing exactly that (the only top-level scalars)
+   while the real counts sat hidden inside `totals`. Compose the
+   totals into one honest sentence instead. */
+function LearningDigestFacts({ digest }: { digest: JsonRecord }) {
+  const totals = (digest.totals ?? {}) as JsonRecord;
+  const made = Number(totals.corrections_made ?? 0);
+  const corrected = Number(totals.dictations_corrected ?? 0);
+  const nudged = Number(totals.similar_nudged ?? 0);
+  const topBlocks = asRows(digest, ["by_block"]).slice(0, 3);
+  if (!made && !corrected) {
+    return <p className="surface-fact-line">Nothing learned this week yet</p>;
+  }
+  return (
+    <>
+      <p className="surface-fact-line">
+        {made} correction{made === 1 ? "" : "s"} taught this week
+        {corrected ? ` · ${corrected} dictation${corrected === 1 ? "" : "s"} corrected` : ""}
+        {nudged ? ` · reached ${nudged} similar` : ""}
+      </p>
+      {topBlocks.length ? (
+        <SurfaceFacts
+          value={Object.fromEntries(
+            topBlocks.map((row) => [
+              String(row.block_id ?? "block"),
+              row.count,
+            ]),
+          )}
+        />
+      ) : null}
+    </>
+  );
+}
+
+/* HS-102-06 — Knowledge is `{kb: {<KEY>: <string|null>, ...}}`
+   (`/api/dictation/project-kb`, validated `[A-Za-z_][A-Za-z0-9_]*`
+   keys) — a facts glossary, not free text; the old single textarea +
+   orange save button was never wired to this shape (it PUT
+   `{content}}`, which the route has always refused — a pre-existing
+   defect this recompose fixes along with the surface). Each fact is
+   its own row, edited in place; a small composer adds a new one.
+   Instructions binds to the primary `.hs/instructions.md` file
+   (`/api/dictation/project-hs`'s `{files: {<name>: <content>}}`
+   shape) — the other named `.hs` files stay out of this face's
+   scope. */
 function Knowledge() {
   const [root, setRoot] = useState(
     () => localStorage.getItem("holdspeak.projectRootOverride") ?? "",
@@ -711,81 +837,171 @@ function Knowledge() {
   const query = root ? `?project_root=${encodeURIComponent(root)}` : "";
   const kb = useResource<JsonRecord>(`/api/dictation/project-kb${query}`, {});
   const hs = useResource<JsonRecord>(`/api/dictation/project-hs${query}`, {});
-  const [kbText, setKbText] = useState("");
-  const [hsText, setHsText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [savedTick, setSavedTick] = useState(false);
   const [message, setMessage] = useState("");
-  const save = async (kind: "kb" | "hs") => {
+  const [draftKey, setDraftKey] = useState("");
+  const [draftValue, setDraftValue] = useState("");
+  const kbFacts = (kb.data.kb ?? {}) as Record<string, unknown>;
+  const kbEntries = Object.entries(kbFacts);
+  const instructionsFile = (
+    ((hs.data.files ?? {}) as JsonRecord)["instructions.md"] ?? {}
+  ) as JsonRecord;
+  const putKb = async (next: Record<string, unknown>) => {
+    setSaving(true);
     setMessage("");
     try {
-      await apiFetch(`/api/dictation/project-${kind}${query}`, {
+      await apiFetch(`/api/dictation/project-kb${query}`, {
         method: "PUT",
-        json: kind === "kb" ? { content: kbText } : { content: hsText },
+        json: { kb: next },
       });
-      setMessage("Project context saved.");
-      kind === "kb" ? await kb.reload() : await hs.reload();
+      setSavedTick(true);
+      await kb.reload();
     } catch (error) {
       setMessage(readableError(error));
+    } finally {
+      setSaving(false);
     }
   };
+  const setFact = (key: string, value: string) =>
+    void putKb({ ...kbFacts, [key]: value });
+  const forgetFact = (key: string) => {
+    const next = { ...kbFacts };
+    delete next[key];
+    void putKb(next);
+  };
+  const addFact = () => {
+    const key = draftKey.trim();
+    if (!key || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
+      setMessage(
+        "Fact names must look like BLUEBIRD or api_key: letters, numbers, underscore, starting with a letter or underscore.",
+      );
+      return;
+    }
+    void putKb({ ...kbFacts, [key]: draftValue.trim() });
+    setDraftKey("");
+    setDraftValue("");
+  };
+  const saveInstructions = async (content: string) => {
+    setSaving(true);
+    setMessage("");
+    try {
+      await apiFetch(`/api/dictation/project-hs${query}`, {
+        method: "PUT",
+        json: { files: { "instructions.md": content } },
+      });
+      setSavedTick(true);
+      await hs.reload();
+    } catch (error) {
+      setMessage(readableError(error));
+    } finally {
+      setSaving(false);
+    }
+  };
+  const whisper = (
+    <span
+      className={"settings-save-whisper" + (saving ? " is-saving" : "")}
+      role="status"
+    >
+      {saving ? "Saving…" : savedTick ? "Saved" : ""}
+    </span>
+  );
   return (
     <>
-      <SurfaceSection label="Project scope">
-        <div className="surface-actions">
-          <Field label="Project root">
-            {({ id }) => (
-              <TextInput
-                id={id}
-                value={root}
-                onChange={(event) => setRoot(event.target.value)}
-              />
-            )}
-          </Field>
-          <Button
-            onClick={() => {
-              localStorage.setItem("holdspeak.projectRootOverride", root);
-              void kb.reload();
-              void hs.reload();
-            }}
-          >
-            Use project
-          </Button>
-        </div>
-        {message ? (
-          <InlineMessage tone={message.includes("saved") ? "success" : "error"}>
-            {message}
-          </InlineMessage>
-        ) : null}
-      </SurfaceSection>
+      <SurfaceGroup label="Project scope">
+        <SurfaceSettingRow
+          label={
+            <EditInPlace
+              value={root || "This device's working directory"}
+              label="Project root"
+              onCommit={(next) =>
+                setRoot(
+                  next === "This device's working directory" ? "" : next,
+                )
+              }
+            />
+          }
+          description="Where dictation looks for Knowledge and Instructions"
+          control={
+            <Button
+              dense
+              onClick={() => {
+                localStorage.setItem("holdspeak.projectRootOverride", root);
+                void kb.reload();
+                void hs.reload();
+              }}
+            >
+              Use project
+            </Button>
+          }
+        />
+      </SurfaceGroup>
+      {whisper}
       <SurfaceColumns
         main={
-          <SurfaceSection label={String(kb.data.path ?? "Knowledge")}>
-            <TextArea
-              aria-label="Project knowledge"
-              value={kbText || String(kb.data.content ?? "")}
-              onChange={(event) => setKbText(event.target.value)}
-            />
+          <SurfaceSection label="Knowledge">
+            {kbEntries.length ? (
+              <SurfaceRows>
+                {kbEntries.map(([key, value]) => (
+                  <SurfaceRow
+                    key={key}
+                    title={key}
+                    detail={
+                      <EditInPlace
+                        value={String(value ?? "") || "(empty) click to add"}
+                        label={`${key} value`}
+                        onCommit={(next) => setFact(key, next)}
+                      />
+                    }
+                    verbs={
+                      <ConfirmVerb
+                        label="Forget"
+                        confirmLabel="Forget?"
+                        onConfirm={() => forgetFact(key)}
+                      />
+                    }
+                  />
+                ))}
+              </SurfaceRows>
+            ) : (
+              <p className="surface-fact-line">
+                No facts yet — add one below.
+              </p>
+            )}
             <div className="surface-actions">
-              <Button variant="primary" onClick={() => void save("kb")}>
-                Save knowledge
+              <TextInput
+                aria-label="Fact name"
+                placeholder="BLUEBIRD"
+                value={draftKey}
+                onChange={(event) => setDraftKey(event.target.value)}
+              />
+              <TextInput
+                aria-label="Fact value"
+                placeholder="the codename for…"
+                value={draftValue}
+                onChange={(event) => setDraftValue(event.target.value)}
+              />
+              <Button dense disabled={!draftKey.trim()} onClick={addFact}>
+                Add fact
               </Button>
             </div>
           </SurfaceSection>
         }
         side={
-          <SurfaceSection label={String(hs.data.path ?? "Instructions")}>
-            <TextArea
-              aria-label="Project instructions"
-              value={hsText || String(hs.data.content ?? "")}
-              onChange={(event) => setHsText(event.target.value)}
+          <SurfaceSection label="Instructions">
+            <EditInPlace
+              value={
+                String(instructionsFile.content ?? "") ||
+                "No instructions yet. Click to add."
+              }
+              label="Project instructions"
+              multiline
+              onCommit={(next) => void saveInstructions(next)}
             />
-            <div className="surface-actions">
-              <Button variant="primary" onClick={() => void save("hs")}>
-                Save instructions
-              </Button>
-            </div>
           </SurfaceSection>
         }
       />
+      {message ? <InlineMessage tone="error">{message}</InlineMessage> : null}
     </>
   );
 }
@@ -987,95 +1203,51 @@ function Journal() {
   );
 }
 
+/* HS-102-06 — the runtime knobs live in exactly ONE composed place:
+   `RuntimeDestination` (settingsBespoke.tsx), the same component
+   Settings uses for this exact same `dictation.runtime` value. This
+   face embeds it rather than re-stating Backend/Runs on/Latency
+   budget as a third label-over-Select stack. Saves on change,
+   debounced, like every other configuring surface (HS-101 round 3). */
 function Runtime() {
   const settings = useResource<JsonRecord>("/api/settings", {});
-  const profiles = useResource<JsonRecord>("/api/profiles", {});
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+  const [savedTick, setSavedTick] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(saveTimer.current), []);
   const runtime = ((settings.data.dictation as JsonRecord | undefined)
     ?.runtime ?? {}) as JsonRecord;
-  const profileRows = asRows(profiles.data, ["profiles"]);
-  const patch = (key: string, value: unknown) =>
-    settings.setData({
-      ...settings.data,
-      dictation: {
-        ...(settings.data.dictation as JsonRecord),
-        runtime: { ...runtime, [key]: value },
-      },
-    });
-  const save = async () => {
+  const save = async (dictation: JsonRecord) => {
     setSaving(true);
     try {
-      await apiFetch("/api/settings", {
-        method: "PUT",
-        json: { dictation: settings.data.dictation },
-      });
-      setMessage("Runtime saved.");
-    } catch (error) {
-      setMessage(readableError(error));
+      await apiFetch("/api/settings", { method: "PUT", json: { dictation } });
+      setSavedTick(true);
     } finally {
       setSaving(false);
     }
   };
+  const patch = (next: JsonRecord) => {
+    const dictation = {
+      ...(settings.data.dictation as JsonRecord),
+      runtime: { ...runtime, ...next },
+    };
+    settings.setData({ ...settings.data, dictation });
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => void save(dictation), 700);
+  };
   return (
-    <SurfaceSection label="Dictation runtime">
-      <Field label="Backend">
-        {({ id }) => (
-          <Select
-            id={id}
-            value={String(runtime.backend ?? "auto")}
-            onChange={(event) => patch("backend", event.target.value)}
-          >
-            <option value="auto">Automatic</option>
-            <option value="mlx">MLX</option>
-            <option value="llama_cpp">llama.cpp</option>
-            <option value="openai_compatible">OpenAI-compatible</option>
-          </Select>
-        )}
-      </Field>
-      <Field label="Runs on">
-        {({ id }) => (
-          <Select
-            id={id}
-            value={String(runtime.profile_id ?? "")}
-            onChange={(event) =>
-              patch("profile_id", event.target.value || null)
-            }
-          >
-            <option value="">Hub default</option>
-            {profileRows.map((profile, index) => (
-              <option key={rowId(profile, index)} value={String(profile.id)}>
-                {String(profile.name)}
-              </option>
-            ))}
-          </Select>
-        )}
-      </Field>
-      <Field label="Latency budget (ms)">
-        {({ id }) => (
-          <TextInput
-            id={id}
-            type="number"
-            value={Number(
-              (
-                (settings.data.dictation as JsonRecord | undefined)
-                  ?.pipeline as JsonRecord | undefined
-              )?.max_total_latency_ms ?? 1200,
-            )}
-            readOnly
-          />
-        )}
-      </Field>
-      <div className="surface-actions">
-        <Button variant="primary" loading={saving} onClick={save}>
-          Save runtime
-        </Button>
-      </div>
-      {message ? (
-        <InlineMessage tone={message === "Runtime saved." ? "success" : "error"}>
-          {message}
-        </InlineMessage>
-      ) : null}
+    <SurfaceSection
+      label="Dictation runtime"
+      actions={
+        <span
+          className={"settings-save-whisper" + (saving ? " is-saving" : "")}
+          role="status"
+        >
+          {saving ? "Saving…" : savedTick ? "Saved" : ""}
+        </span>
+      }
+    >
+      <RuntimeDestination value={runtime} onCommit={patch} />
     </SurfaceSection>
   );
 }

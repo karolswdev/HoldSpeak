@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 102
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-102-07
 
@@ -40,6 +40,39 @@ the payload, `SurfaceLibrary` exists in the kit).
 - Out: meeting detail (round 6, shipped); import wire routes;
   intelligence plugins; the meetingflow budget (must stay ≤ 3
   interactions — the leg pins it).
+
+## Design direction
+
+Driven headed: all three wings currently render clean but generic
+empty states ("Nothing here yet" / "Open a meeting to read its
+artifacts") — the defect is in the POPULATED composition, which
+requires imported material to see (do that first, per the ledger
+requirement below).
+
+1. **Artifacts: copy the Blocks wing's `SurfaceLibrary` usage
+   verbatim.** `DictationCore.tsx:515-643` already composes Blocks as
+   a library — `SurfaceLibrary` / `SurfaceLibraryTile` /
+   `SurfaceLibraryGhost` (`Surface.tsx:457-538`) — content-forward
+   tiles whose face IS the payload. `HistoryCore.tsx`'s Artifacts wing
+   is the SAME shape (a library of bodies) and should call the SAME
+   three components the SAME way: artifact body as the tile face,
+   name at primary, provenance (which meeting, when) at secondary. Do
+   not design a second library composition — import the pattern.
+2. **Outcomes: `SurfaceRows` is legal here ONLY if genuinely
+   homogeneous** (composition rule 2) — but "reviewing posture" means
+   dense rows with verdict VERBS inline (approve/dismiss/flip, live on
+   the row per composition rule 3), receipts folded behind a
+   `Disclosure`, not a uniform list where every row looks like every
+   other row regardless of what it needs from the person. "Needs you"
+   items lead; a row with nothing pending is visually quieter than one
+   waiting on a verdict.
+3. **Record: the two verbs (record now / drop-import) lead at display
+   step**, above any field. Detail fields (Title/Tags) render only
+   once material exists to attach them to (round-7 drop-well grammar,
+   already shipped elsewhere — reuse it, don't re-derive it).
+4. **Facet/filter chrome shrinks to caption step** in all three wings
+   — it is wayfinding, not content, and currently competes visually
+   with the material it's supposed to help find.
 
 ## Acceptance criteria
 

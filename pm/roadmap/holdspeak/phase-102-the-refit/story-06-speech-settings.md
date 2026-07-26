@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 102
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** —
 - **Unblocks:** HS-102-07
 
@@ -54,6 +54,63 @@ owner's screenshots convict it line by line:
 - Out: the wire routes (unchanged); Settings' own bespoke components
   (round 5, keep); the Journal and Blocks wings (HS-101 B3/B4,
   shipped).
+
+## Design direction (grounded in a live drive, 2026-07-21 — this face,
+as it exists right now, confirms every line of the problem statement)
+
+Driven headed against a fresh staged instance, the gear face renders,
+verbatim: `PIPELINE READINESS — pipeline enabled: false, max total
+latency ms: 600, backend: auto`; `RESOLVED DELIVERY — id: browser,
+label: Browser, confidence: 0.78, source: hints, app name: Safari,
+window title: <window title>, runs: 0, budget ms: 600`; two bordered
+warning boxes ("Dictation pipeline is disabled." / "Project KB file is
+missing.") with no remedy attached; a bare "Project root" input +
+"Use project" button; and empty Knowledge/Instructions textareas. The
+Settings app's own Appearance group (`/settings`, `Show Audio Meter` /
+`History Lines` / `Theme`) — visible in the SAME session — already
+demonstrates the target composition. Copy that shape; do not invent
+a new one.
+
+1. **`SurfaceGroup` + `SurfaceSettingRow` + `SurfaceToggle`
+   (`Surface.tsx:299-373`) are already proven in this exact app.**
+   Every remaining ALL-CAPS tile section on this face becomes groups
+   built from those three components — the six-tile cacophony dies by
+   reuse, not by a new layout system.
+2. **Compose the two raw dumps into honest sentences, field by
+   field:**
+   - `pipeline enabled: false` + `backend: auto` + `max total latency
+     ms: 600` → one line: "Types automatically as you speak · off ·
+     budget 600ms" with the state as a `SurfaceToggle` (flips the same
+     PUT) and "Turn on" inline where it's off — not a separate warning
+     box below.
+   - `id/label/confidence/source/app name/window title/runs/budget
+     ms` → one composed line, e.g. "Last typed into **Safari** via the
+     browser bridge · 78% confidence," with the raw fields (id, source,
+     runs, budget) behind a `Disclosure` (already imported in
+     `settingsBespoke.tsx:18`) for anyone who needs the wire values —
+     never on by default.
+3. **"Dictation pipeline is disabled." / "Project KB file is missing."
+   carry their remedy AT the point of the state**, inline in the
+   composed sentence from rule 2 (a "Turn on" / "Create it" verb right
+   there) — delete the standalone bordered banners entirely.
+4. **Knowledge and Instructions become `EditInPlace`
+   (`Surface.tsx:591`).** The presented text IS the interface; commit
+   on blur/Enter through the same PUT the current Save buttons call.
+   Delete both orange "Save knowledge" / "Save instructions" buttons —
+   HS-101 round 3 already set this precedent for Settings; this face
+   was the one still missing it.
+5. **The DICTATION RUNTIME group (Backend / Runs on / Latency budget)
+   embeds `RuntimeDestination` (`settingsBespoke.tsx:139`) or links to
+   Settings' existing owner of that same component — it does not
+   re-state the same three knobs as a third label-over-`<Select>`
+   stack.** If HS-102-01 lands first, this story consumes whatever
+   `ProfilesCore.tsx` composition that story ships instead of
+   `RuntimeDestination` directly — one owner, never three copies of
+   the same control.
+6. **PROJECT SCOPE's bare "Project root" input + "Use project" button
+   becomes one `SurfaceSettingRow`** with the project path as
+   `EditInPlace` text and "Use project" as the row's inline verb, not
+   a two-element form floating under its own eyebrow.
 
 ## Acceptance criteria
 

@@ -95,6 +95,13 @@
 .surface-row[data-selected] {
   background: var(--accent-tint);
 }
+/* HS-102-04 — a quiet row (nothing pending) reads lower-emphasis than
+   a row waiting on a verdict; the state pill still carries the fact,
+   this is weight only, never the sole signal. */
+.surface-row[data-quiet] .surface-row-text strong {
+  font-weight: 500;
+  color: var(--text-muted);
+}
 .surface-row-main,
 .surface-row-open {
   display: flex;
@@ -988,6 +995,12 @@ button.surface-edit-in-place:hover {
   width: 150px;
   min-width: 0;
 }
+/* HS-102-02 — the live-meeting Bookmark composer: a transient inline
+   input in the stream's own controls slot, never a form section. */
+.live-bookmark-composer input {
+  width: 180px;
+  min-width: 0;
+}
 .surface-stream-entry > .surface-aerogel,
 .surface-stream-entry > .surface-preview {
   grid-column: 2;
@@ -1200,6 +1213,14 @@ button.surface-edit-in-place:hover {
   }
 }
 
+/* HS-102-01 — an empty switchboard's own quiet caption; the "add"
+   affordance is the ghost bay below it, never a separate CTA. */
+.surface-empty-caption {
+  margin: 0 0 10px;
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+}
+
 /* HS-101 rule 2 — the switchboard (SurfaceSwitchboard). */
 .surface-switchboard {
   list-style: none;
@@ -1321,6 +1342,44 @@ button.surface-edit-in-place:hover {
   .surface-bay {
     animation: none;
   }
+}
+
+/* HS-102-01 — the bay expands in place to become its own editor
+   (create AND edit are the same in-place mechanism); a ghost bay is
+   the switchboard's own "add" affordance, never a header button. */
+.surface-bay-expanded {
+  grid-column: 1 / -1;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 15px;
+}
+.surface-bay-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+.surface-bay-ghost {
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--border-subtle);
+  border-style: dashed;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.surface-bay-ghost:hover,
+.surface-bay-ghost:focus-within {
+  background: var(--wash-1);
+  color: var(--text);
+}
+.surface-bay-ghost .surface-bay-main {
+  flex: none;
+  align-items: center;
+}
+.surface-bay-ghost .surface-bay-who {
+  font-family: var(--font-display);
+  font-weight: 600;
 }
 
 /* HS-101 sitting round 2 — a verb under a centered empty state
@@ -1479,6 +1538,15 @@ button.surface-edit-in-place:hover {
 .desk-surface-body .transcript-list p {
   margin: 0;
   line-height: 1.55;
+}
+
+/* HS-102-04 — the Record wing's two verbs lead at display step,
+   above the drop well; the divider caption stays quiet. */
+.surface-record-lead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
 /* HS-101 round 7 — the import is a drop well, not a form: the same

@@ -6,6 +6,7 @@ monkeypatches (incl. the egress-invariant test) reach the engine.
 
 from __future__ import annotations
 
+import time
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Optional, Union
@@ -13,6 +14,7 @@ from typing import Any, Optional, Union
 import holdspeak.intel as _intel_pkg
 
 from ..logging_config import get_logger
+from .endpoint_health import default_health as _endpoint_health
 from .models import (
     DEFAULT_INTEL_CLOUD_API_KEY_ENV,
     DEFAULT_INTEL_CLOUD_MODEL,
@@ -164,6 +166,12 @@ class MeetingIntel:
         """Backward-compatible alias for older tests/callers."""
         self._ensure_runtime_loaded()
 
+    def _cloud_endpoint_key(self) -> str:
+        """HS-103-04: the breaker's identity for this engine's cloud
+        endpoint — the base URL when self-hosted, else the model name (the
+        default OpenAI endpoint is one shared identity)."""
+        return f"cloud:{self.cloud_base_url or self.cloud_model}"
+
     def _chat_completion_text(
         self,
         messages: list[dict[str, str]],
@@ -188,6 +196,13 @@ class MeetingIntel:
             return str(raw)
 
         assert self._openai_client is not None
+        # HS-103-04: fail fast, honestly, without attempting the network call
+        # at all, when this endpoint has just failed several times in a row.
+        endpoint_key = self._cloud_endpoint_key()
+        ok, refusal = _endpoint_health.check(endpoint_key)
+        if not ok:
+            raise MeetingIntelError(refusal or "endpoint unreachable")
+
         base_kwargs: dict[str, object] = {
             "model": self.cloud_model,
             "messages": messages,
@@ -200,6 +215,7 @@ class MeetingIntel:
         if self.cloud_store:
             base_kwargs["store"] = True
 
+        started = time.monotonic()
         try:
             try:
                 response = self._openai_client.chat.completions.create(**base_kwargs)
@@ -212,6 +228,7 @@ class MeetingIntel:
                 fallback_kwargs["max_completion_tokens"] = max_tokens
                 response = self._openai_client.chat.completions.create(**fallback_kwargs)
         except Exception as exc:
+            _endpoint_health.record_failure(endpoint_key)
             raise MeetingIntelError(
                 _describe_cloud_exception(
                     exc,
@@ -219,6 +236,9 @@ class MeetingIntel:
                     base_url=self.cloud_base_url,
                 )
             ) from exc
+        _endpoint_health.record_success(
+            endpoint_key, latency_ms=(time.monotonic() - started) * 1000
+        )
 
         raw = response.choices[0].message.content if response.choices else ""
         return _extract_openai_message_text(raw)

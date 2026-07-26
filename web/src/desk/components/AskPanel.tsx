@@ -34,6 +34,7 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
 import { RunsOnPicker } from "./RunsOnPicker";
 import { DeskWindowFrame } from "./DeskWindow";
+import { Material } from "../surface/Material";
 
 export function AskPanel() {
   const reducedMotion = useReducedMotion();
@@ -276,44 +277,67 @@ export function AskPanel() {
                 </button>
               ))}
             </div>
-            <div className="desk-ask-prompt">
-              <textarea
-                rows={4}
-                value={prompt}
-                placeholder="Say what to do with these"
-                autoFocus
-                onChange={(e) => setPrompt(e.target.value)}
-              />
-              <MicButton
-                draftScope="desk-ask"
-                onText={(t) => setPrompt((v) => (v ? v + " " + t : t))}
-              />
+            <div className="desk-chat-well">
+              <div className="desk-chat-composer">
+                <MicButton
+                  draftScope="desk-ask"
+                  onText={(t) => setPrompt((v) => (v ? v + " " + t : t))}
+                />
+                <textarea
+                  rows={3}
+                  value={prompt}
+                  placeholder="Say what to do with these"
+                  autoFocus
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void ask();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="desk-chip is-primary"
+                  disabled={!prompt.trim() || overBudget}
+                  title={
+                    overBudget
+                      ? "Grounding is past the window: pick less"
+                      : undefined
+                  }
+                  onClick={() => void ask()}
+                >
+                  Ask
+                </button>
+              </div>
+              <div className="desk-chat-well-foot">
+                <RunsOnPicker
+                  targets={inferenceTargets}
+                  selectedId={profileId}
+                  onChange={setProfileId}
+                  disabled={phase === "routing"}
+                />
+                <GroundingSection
+                  meetings={(items.meeting || []).map((m) => ({
+                    id: m.id,
+                    title: String(m.title || "Untitled meeting"),
+                    startedAt: (m as any).startedAt,
+                  }))}
+                  resources={groundableResources}
+                  selection={grounding}
+                  onChange={setGrounding}
+                  limitTokens={limitTokens}
+                />
+                <RailsPicker
+                  picks={rails}
+                  onChange={setRails}
+                  limitTokens={limitTokens}
+                />
+              </div>
             </div>
             {promptRecovered ? (
               <span className="quiet">Recovered local Ask draft.</span>
             ) : null}
-            <RunsOnPicker
-              targets={inferenceTargets}
-              selectedId={profileId}
-              onChange={setProfileId}
-              disabled={phase === "routing"}
-            />
-            <GroundingSection
-              meetings={(items.meeting || []).map((m) => ({
-                id: m.id,
-                title: String(m.title || "Untitled meeting"),
-                startedAt: (m as any).startedAt,
-              }))}
-              resources={groundableResources}
-              selection={grounding}
-              onChange={setGrounding}
-              limitTokens={limitTokens}
-            />
-            <RailsPicker
-              picks={rails}
-              onChange={setRails}
-              limitTokens={limitTokens}
-            />
             {error && <p className="desk-run-warning">⚠ {error}</p>}
           </>
         )}
@@ -342,7 +366,22 @@ export function AskPanel() {
               }
             }}
           >
-            <pre className="desk-pullout-md">{result.output}</pre>
+            <Material className="desk-ask-answer">{result.output}</Material>
+            {result.groundingClaims.some((c) => c.flagged) && (
+              <ul className="desk-ask-grounding-flags">
+                {result.groundingClaims
+                  .filter((c) => c.flagged)
+                  .map((c, i) => (
+                    <li
+                      key={i}
+                      className="desk-chip quiet is-flagged"
+                      title="Possibly unsupported by the cited material"
+                    >
+                      {c.label === "partial" ? "◐" : "◇"} {c.text}
+                    </li>
+                  ))}
+              </ul>
+            )}
             {result.actualPlacement && (
               <p className="quiet desk-run-receipt">
                 Ran on{" "}
@@ -370,24 +409,9 @@ export function AskPanel() {
 
       <footer className="desk-pullout-foot">
         {phase === "compose" && (
-          <>
-            <button type="button" className="desk-chip quiet" onClick={bin}>
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="desk-chip"
-              disabled={!prompt.trim() || overBudget}
-              title={
-                overBudget
-                  ? "Grounding is past the window — pick less"
-                  : undefined
-              }
-              onClick={() => void ask()}
-            >
-              Ask
-            </button>
-          </>
+          <button type="button" className="desk-chip quiet" onClick={bin}>
+            Cancel
+          </button>
         )}
         {phase === "routing" && (
           <span className="desk-ask-routing">routing…</span>

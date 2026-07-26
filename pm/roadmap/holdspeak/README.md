@@ -4,24 +4,109 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-20 — **Phase 102, The Refit, SCAFFOLDED
-(0/7)** from the owner's direct six-target order ("exact, direct and
-precise refactorings"): Runs on destination management, the Live
-Meeting face, the Ask AI composer, the Meetings wings
-(Outcomes/Record/Artifacts), the selection mark yielding to open,
-and the Speech Settings gear face (screenshot-convicted). The design
-authority is the HS-101-02-approved interior canon; each story works
-the round-9 way — hands first, headed, both viewports. Earlier the
-same day: **HS-101-04 round 9 (the reflex round, PR #365) merged** —
-single-click selects / double-click opens, cards open beside their
-object and coexist as real windows, growth animates, right-click
-answers on the world, the note edits in place, the ⌘K shelf's
-z-defect fixed; the owner's 101 sitting remains open in parallel.
-Phase 101 itself stands at 3/4 (canon ratified and built, PR #359;
-sweep 4122/0).
+**Last updated:** 2026-07-25 — **Phases 104 + 105 scaffolded; the
+kernel RFC drafted.** Phase 105 (Workbench — the owner's "Workbench
+2.0 on steroids" verdict made seven implementation-grade stories:
+icon system, drop-onto, zone windows, Info-on-everything, menu bar,
+docs, sitting-loop closeout) and Phase 104 (Borrowed Fire II — the
+AgentGlass-derived tool-call gate, PR receipts paying the Phase-94
+candidate-Y deferral, honest session receipts) are chartered;
+activation order is 103 close → 105 → 104.
+`docs/internal/PLAN_KERNEL_OPERATION_BROKER.md` (DRAFT) records the
+kernel pivot — a three-model council (resident + Codex + gpt-5.6-sol,
+opinions archived under `proposals/`) converged on an operation
+broker (read/submit/decide/events + an executor plane) and a
+proposed Article XI awaiting the owner's ratification. Standing
+direction recorded in both charters: ALL iPad/HSM legs held — the
+web desk is polished to the atom as the spec a Swift recreation
+later builds from. Earlier: **Phase 102, The Refit, 6/7**:
+HS-102-06 (Speech Settings) shipped — the worst offender per the
+owner's screenshots ("an absolute joke — a cacophony of tiles,
+panes, forms, form groups") is recomposed: the two raw wire dumps
+(Pipeline readiness / Resolved delivery) become a composed
+`SurfaceGroup` line with a live toggle and an inline "Create it" verb
+on the missing-KB warning; Knowledge and Instructions lose their
+orange Save buttons that had ALWAYS 400'd (a pre-existing wire
+mismatch — `project-kb` needs `{kb: {<KEY>: value}}`, not
+`{content}}`) in favor of a real facts list + `.hs/instructions.md`
+edited correctly in place; the runtime knobs now embed the SAME
+`RuntimeDestination` Settings already uses instead of a third
+Backend/Runs-on/Latency-budget stack. A second live-caught defect: the
+Learning digest was showing only its metadata wrapper while the real
+counts sat hidden in `totals`. `EditInPlace` (shared kit) gained
+select-on-focus so placeholder-shaped empty values get replaced by
+typing, not appended after — every call site in the app benefits.
+Proven live on a real seeded desk, both viewports: KB created, a real
+fact added and persisted, Instructions saved correctly, the runtime
+bay switched. New guard:
+`test_dictation_core_speech_settings_never_regresses`. Earlier the
+same day: **HS-102-05 (the selection mark yields to open) shipped** —
+a click-grammar fix: opening a card (double-click, touch tap-open, the
+context menu's Open, the a11y layer) now clears the selection ring +
+"N selected · Ask AI" bar in the same frame the card appears, in all
+four paths through `openPullout`, guarded so the Ask composer's held
+selection (the HSM-16-04 carve-out) is never stripped mid-compose.
+Proven live on a real seeded desk at 1440+393 (mark, then open — ring
+and bar gone) plus the Ask carve-out (open Ask, double-click a
+different object, Ask keeps its context); the `smoke()` walk leg grew
+three assertions and passed live. Earlier: **HS-102-04
+(the Meetings wings) shipped** — Artifacts recomposed from a
+`Disclosure`+`SurfaceCode` dump to the SAME `SurfaceLibrary`
+composition Blocks already uses (artifact body as the tile face via
+`Material`); Outcomes rows sort needs-you first with a new `quiet`
+treatment for settled meetings; Record leads with a "Record meeting"
+verb above the existing drop well. Proven live with REAL synthesized
+data: a transcript imported through the real wire, run through the
+real plugin chain against the LAN model at `192.168.1.43` — 4
+artifacts, correctly library-composed at both viewports; the
+`meetingflow` walk leg grown and run live against populated data.
+Earlier: **HS-102-03 (Ask AI) shipped** — the composer is
+now one well (`desk-chat-well`, the same grammar `PersonaChat` and the
+capability cards already use), Runs on/grounding/rails fold into the
+well's foot as captions, and the printed answer renders through
+`Material` instead of a raw-markdown `<pre>`; proven live end to end
+including a real grounded ask against the LAN model — a correct
+answer, `Material`-rendered, kept as a real desk artifact. Earlier:
+**HS-102-02 (Live Meeting) shipped** — the
+room's stat strip, Bookmark form, Intent routing preset, Preview-route
+textarea, and Deferred-plugin-jobs dump (all visible at the FIRST
+instant of a live meeting, before a word was spoken) fold behind a new
+"Configure meeting" gear door; the working face is now one verb, one
+quiet facts line, and the transcript as a `SurfaceStream`, with
+Bookmark as an inline verb on the stream instead of a form section;
+proven live at 1440+393, `/api/*` wire byte-identical. Earlier:
+**HS-102-01 (Runs on) shipped** — destination create/edit is now
+choice bays (Endpoint/This device/Paired device/Mesh node) expanding
+in place on the switchboard, reusing the `RuntimeDestination` pattern
+and closing a `SurfaceBay` kit gap, proven live at 1440+393 with
+inline URL refusal, edit-in-place, make-default, and two-step delete;
+wire byte-identical. Remaining: HS-102-07 closeout (the owner's
+sitting). The design authority is the HS-101-02-approved
+interior canon; each story works the round-9 way — hands first,
+headed, both viewports. Earlier: **HS-101-04 round 9 (the reflex
+round, PR #365) merged** — single-click selects / double-click opens,
+cards open beside their object and coexist as real windows, growth
+animates, right-click answers on the world, the note edits in place,
+the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
+parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
+PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 102 — The Refit**](./phase-102-the-refit/current-phase-status.md)
-— **SCAFFOLDED (0/7, HS-102-01 ready)**. The
+**Current phase:** [**Phase 103 — Foundations & Borrowed Fire**](./phase-103-foundations-and-borrowed-fire/current-phase-status.md)
+— **IN PROGRESS (0/6)**. Chartered 2026-07-22 from a four-agent
+research pass (3 independent Opus 4.8 analysts on
+`ViuGiaLai/researchmind`, 1 independent Opus 4.8 skeptical audit of
+HoldSpeak's own Desk-OS claim) the owner commissioned directly, debated,
+and approved into six stories: session restoration (the one
+load-bearing durability gap the independent audit found — the desk
+remembers window geometry but not that a window was open), a
+voice-guard coverage fix (three canon-violating dash/prose leaks the
+audit caught live), and two skepticism-survived researchmind
+carry-overs (per-claim grounding verification, endpoint health) plus a
+UAT-harness fix so the flagship agent-steering feature is provable
+end to end. [Phase 102 — The Refit](./phase-102-the-refit/current-phase-status.md)
+remains open alongside at **IN PROGRESS (6/7, HS-102-07 closeout
+next)** — its closeout needs the owner's own sitting (Article IX.4),
+not a research pass. The
 [Phase 101](./phase-101-the-native-innards/current-phase-status.md)
 closeout sitting (HS-101-04) stays open alongside.
 
@@ -175,6 +260,7 @@ canon, canon wins.
 | 99 | The OS Chrome: the ProzillaOS-studied skin — tonal depth ladder, a real title bar, skinned controls, custom scrollbars, a living dock, one menu vocabulary | done | [phase-99-the-os-chrome](./phase-99-the-os-chrome/) |
 | 100 | The Application Layer: ground the philosophy/seams/use cases, judge the entire UI/UX against them, thesis + mockups, the owner's gate, then the build | done | [phase-100-the-application-layer](./phase-100-the-application-layer/) |
 | 101 | The Native Innards: interior type scale, data as material, purpose-built compositions — mocked, owner-gated, then built (AGENT_BRIEF.md §5) | backlog | [phase-101-the-native-innards](./phase-101-the-native-innards/) |
+| 103 | Foundations & Borrowed Fire: fix the desk's session-restoration gap, sweep the voice guard onto rendered UI, and land two skepticism-tested carry-overs from a four-agent research pass on `ViuGiaLai/researchmind` (grounding verification, endpoint health). Chartered from the owner's own research-debate commission, not a screenshot conviction. | in-progress (0/6) | [phase-103-foundations-and-borrowed-fire](./phase-103-foundations-and-borrowed-fire/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

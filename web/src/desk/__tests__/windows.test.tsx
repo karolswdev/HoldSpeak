@@ -163,6 +163,24 @@ describe("focus depth (HS-97-04)", () => {
   });
 });
 
+describe("HS-103-01: Reset Layout clears an open window's rect too", () => {
+  it("an open, arranged window loses its inline geometry on reset (no stale rect survives)", () => {
+    render(<Host />);
+    act(() => {
+      useDesk.getState().setPanelRect("t1", { x: 10, y: 20, w: 400, h: 300 }, true);
+    });
+    const shell = screen.getByRole("region", { name: "Test window" });
+    expect(shell.style.top).toBe("20px");
+    expect(shell.style.left).toBe("10px");
+    act(() => {
+      useDesk.getState().resetLayout();
+    });
+    expect(shell.style.top).toBe("");
+    expect(shell.style.left).toBe("");
+    expect(useDesk.getState().panelRects.t1).toBeUndefined();
+  });
+});
+
 describe("the lifecycle store + hs.desk.panels persistence", () => {
   it("round-trips rects + order + max through one slot; min stays out (HS-97-03)", () => {
     useDesk.getState().setPanelRect("a", { x: 10, y: 20, w: 400, h: 300 }, true);

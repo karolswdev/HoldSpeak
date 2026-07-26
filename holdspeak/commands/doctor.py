@@ -1207,6 +1207,30 @@ def _check_connector_packs() -> DoctorCheck:
     )
 
 
+def _check_endpoint_health() -> DoctorCheck:
+    """HS-103-04: an honest circuit-open surface. PASS when nothing has
+    tripped the breaker (including a hub that has never called an endpoint
+    yet); WARN, naming every open circuit, when a dictation or meeting-intel
+    endpoint has failed enough consecutive times to be refusing fast."""
+    from ..intel.endpoint_health import default_health
+
+    snapshot = default_health.snapshot()
+    open_endpoints = {key: row for key, row in snapshot.items() if row["circuit_open"]}
+    if not open_endpoints:
+        detail = "no endpoint circuits open" if snapshot else "no endpoint calls recorded yet"
+        return DoctorCheck(name="Endpoint health", status="PASS", detail=detail)
+    names = ", ".join(
+        f"{key} ({row['consecutive_failures']} consecutive failures)"
+        for key, row in sorted(open_endpoints.items())
+    )
+    return DoctorCheck(
+        name="Endpoint health",
+        status="WARN",
+        detail=f"circuit open: {names}",
+        fix="The endpoint has been unreachable; it will retry automatically after its cooldown.",
+    )
+
+
 def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
     """Collect all doctor checks in display order.
 
@@ -1228,6 +1252,7 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_web_auth(config),
         _check_meeting_intel_runtime(config),
         _check_meeting_intel_egress(config),
+        _check_endpoint_health(),
         _check_trust_destinations(config),
         _check_runtime_profiles(config),
         _check_inference_targets(),

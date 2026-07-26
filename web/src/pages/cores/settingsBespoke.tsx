@@ -74,7 +74,7 @@ export function HotkeyCapture({
       const name = CODE_TO_NAME[event.code];
       if (!name) {
         setRefused(
-          `${event.code} can't be a hold key — use a modifier (⌥ ⌃ ⌘ ⇧, left or right), ⇪, or F1–F12`,
+          `${event.code} can't be a hold key: use a modifier (⌥ ⌃ ⌘ ⇧, left or right), ⇪, or F1–F12`,
         );
         return;
       }
@@ -92,7 +92,7 @@ export function HotkeyCapture({
         label="Push-to-talk key"
         description={
           listening
-            ? refused || "Press the key to hold — Esc cancels"
+            ? refused || "Press the key to hold. Esc cancels."
             : "Hold it to talk, release to type"
         }
         control={

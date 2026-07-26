@@ -13,6 +13,148 @@ with the live status docs, the status docs win.
 
 ---
 
+## 0. LATEST (2026-07-22) — Phase 102 "The Refit" in flight, 4/7
+
+Everything below section 1 is old (Phase 31–43 era) and kept for
+history only. For the live picture, read
+[`phase-102-the-refit/current-phase-status.md`](./phase-102-the-refit/current-phase-status.md)
+and the roadmap `README.md` — this section is just the fast pickup.
+
+**What Phase 102 is.** The owner's direct order after round 9 landed:
+six named, screenshot-convicted surfaces that still "feel like HTML
+slapped inside a nicer container," fixed one at a time against the
+already-ratified HS-101 interior canon (`docs/internal/DESIGN_SYSTEM.md`
+§"The interior canon"). No new capabilities, no wire changes — the
+existing canon applied exactly, surface by surface. Each of the six
+build stories (`story-01`…`story-06`) carries a **Design direction**
+section written 2026-07-21 that names the exact defect and the exact
+existing kit component to reuse — read the target story file before
+touching code, it's already scoped.
+
+**Shipped (commits, local to `main`, none pushed):**
+- `ece49f39` HS-102-01 Runs on — destination create/edit is choice
+  bays (`RuntimeDestination` pattern reused); `SurfaceBay` gained an
+  `expanded`/`editor`/`ghost` slot (kit addition, `Surface.tsx`).
+- `4ca941e8` HS-102-02 Live Meeting — working posture; plumbing moved
+  behind a new `door`/`doorOpen` gear split (the `DictationCore.tsx`
+  pattern); `MetricStrip` banned from this file by guard.
+- `c2b17506` + `92015e68` HS-102-03 Ask AI — one composer well
+  (`desk-chat-well`, the `PersonaChat`/capability-card grammar);
+  answers render through `Material`. **The `92015e68` commit is a
+  same-day correction** — the first evidence pass wrongly claimed the
+  LAN model was unreachable and deferred a whole acceptance leg; it
+  wasn't unreachable, the owner caught it in one line. See §0.1.
+- `9720521d` HS-102-04 Meetings wings — Artifacts is now
+  `SurfaceLibrary`/`SurfaceLibraryTile` (same as Blocks); Outcomes
+  rows sort needs-you first (`SurfaceRow` gained a `quiet` prop, kit
+  addition); Record leads with a verb above the drop well.
+  `scripts/desk_gl_walk.py`'s `meetingflow` leg grew an
+  artifacts-library assertion.
+
+**Remaining:**
+- `HS-102-05` — the selection mark yields to open. Small, mechanical:
+  `web/src/desk/store.ts` has `clearSelection()` (clears
+  `selectedIds` AND `askOpen`) and `setSelected([])` (clears only
+  `selectedIds`) — the open branch must call `setSelected([])`, not
+  `clearSelection()`, or it'll wrongly close a held Ask composer. The
+  story file's Design direction section already names the exact line
+  numbers.
+- `HS-102-06` — Speech Settings (`DictationCore.tsx`'s configure
+  wing). The worst offender per the owner's own screenshots (raw
+  wire dumps, orange Save buttons, six-tile cacophony) — story-06's
+  Design direction is the most detailed of the six, field-by-field.
+  Reuse `SurfaceGroup`/`SurfaceSettingRow`/`SurfaceToggle` (already
+  proven in Settings' Appearance group) and `EditInPlace` for
+  Knowledge/Instructions.
+- `HS-102-07` — closeout. Depends on 01–06 all done. Runs the full
+  chain + an owner sitting (Article IX.4 — the felt verdict, not just
+  green). Its acceptance criteria already include: check each shipped
+  story against its OWN Design direction section (not just its
+  checklist), and grep the diff for a second implementation of any
+  named kit component (`SurfaceBay`, `SurfaceLibrary`, `EditInPlace`,
+  `RuntimeDestination`, `SurfaceGroup`/`SurfaceSettingRow`, `Material`,
+  `SurfaceStream`) — one owner per shape.
+
+### 0.1 — Gotcha that cost real time: test unreachability claims, don't assume them
+
+There is a real, reachable LAN LLM at `192.168.1.43:8080`
+(OpenAI-compatible, currently serving
+`Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf`). A stale memory note said
+"sandboxed Bash can't reach LAN IPs" and this session trusted it
+without testing — wrong, for this environment: a plain `curl
+http://192.168.1.43:8080/v1/models` answers directly. **Always curl
+it first.** See `feedback_test_before_claiming_unreachable.md` and
+the corrected `reference_lan_llm_endpoint.md` in the agent memory
+store. This matters for Phase 102 specifically because several
+acceptance criteria want a REAL grounded run, not a fixture — use the
+recipe below.
+
+### 0.2 — The story-by-story recipe (repeat for 05, 06)
+
+1. `.githooks/dw story status holdspeak 102 0N in-progress`
+2. Read the target story file's Design direction section (already
+   written) + the actual current component source.
+3. Boot a throwaway staged instance: fresh isolated `HOME`,
+   `HOME=/tmp/hs-eval-X HOLDSPEAK_WEB_PORT=8788
+   HOLDSPEAK_WEB_HOST=127.0.0.1 uv run holdspeak web --no-open &`,
+   confirm `curl -s -o /dev/null -w '%{http_code}\n'
+   http://127.0.0.1:8788/` returns 200.
+4. Implement, reusing the named kit component — extend
+   `web/src/desk/surface/Surface.tsx` (+ `surface.css`) when the kit
+   is missing a slot, exactly like `SurfaceBay`'s expand slot and
+   `SurfaceRow`'s `quiet` prop were added; don't invent a parallel
+   component family.
+5. `cd web && npx tsc --noEmit -p . && npx vitest run --no-color &&
+   npm run build --silent && npm run tokens:gate --silent` — all must
+   be clean.
+6. Add a named regression guard to
+   `tests/unit/test_interior_canon_guard.py` (grep-based, mirrors the
+   four already there) and run
+   `uv run pytest -q tests/unit/test_interior_canon_guard.py
+   tests/unit/test_web_vocabulary_guard.py`.
+7. Kill the old server, rebuild (`npm run build`), restart on a FRESH
+   isolated `HOME`, and live-drive the fix headed at 1440×950 and
+   393×852 with Playwright (see any `pm/roadmap/holdspeak/phase-102-the-refit/evidence-story-0N.md`
+   for the exact script shape — free-object double-click helper,
+   `.desk-tool-shelf` search-and-launch helper, etc.). For a REAL
+   grounded run (Ask AI, Meetings intelligence), register `.43` as a
+   `Runs on` destination via `POST /api/profiles` (`kind:
+   openAICompatible`, `base_url: http://192.168.1.43:8080`, `model:
+   Qwythos-9B-Claude-Mythos-5-1M-Q6_K.gguf`, `requires_key: false`),
+   or for meeting intel set `PUT /api/settings` →
+   `meeting.intel_provider: cloud` + `intel_cloud_base_url` +
+   `intel_cloud_model`, import a transcript via
+   `POST /api/meetings/import`, then run
+   `holdspeak intel --reroute <meeting_id> --profile balanced` to
+   synthesize real plugin artifacts. Kill the server
+   (`lsof -ti :8788 | xargs kill -9`) and delete the throwaway `HOME`
+   when done.
+8. `.githooks/dw evidence capture holdspeak 102 0N -- sh -c "<the
+   full test/build/guard chain>"`, then copy screenshots into
+   `pm/roadmap/holdspeak/phase-102-the-refit/assets/` and hand-write
+   the ledger/fix/proof narrative into the generated
+   `evidence-story-0N.md` (see 01–04 for the shape: ledger, fix,
+   driven-live-after, guard added).
+9. `.githooks/dw story status holdspeak 102 0N done`, then
+   `.githooks/dw check holdspeak` — expect ONLY the pre-existing
+   `phase-101-the-native-innards/evidence-story-04.md` warning (leave
+   that file untouched, it's a known, separate, untracked artifact
+   from the Phase-101 sitting loop — do not stage or fix it).
+10. Update `current-phase-status.md`'s header count + a new dated
+    "Where we are" paragraph, and the roadmap `README.md`'s "Last
+    updated" block — same pattern as the four already shipped.
+11. Stage exactly the touched files (never `git add -A`),
+    `.githooks/dw contract new --story HS-102-0N --tests-capture
+    pm/roadmap/holdspeak/phase-102-the-refit/evidence-story-0N.md`,
+    honestly flip all 7 boxes in `.tmp/CONTRACT.md`,
+    `.githooks/dw gate --porcelain` (expect `gate=pass`), then
+    `git commit`.
+
+Nothing in this phase has been pushed or PR'd yet — all five commits
+so far are local to `main`. Ask the owner before pushing/opening a PR.
+
+---
+
 ## 1. TL;DR — where things stand
 
 - **LATEST (2026-06-06): Phases 33–43 shipped since this doc was first written.**

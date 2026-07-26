@@ -237,14 +237,39 @@
   backdrop-filter: blur(6px);
   transition:
     border-color var(--duration-short) var(--ease-standard),
-    background var(--duration-short) var(--ease-standard);
+    background var(--duration-short) var(--ease-standard),
+    transform var(--duration-short) var(--ease-standard);
 }
 .desk-next .desk-chip:hover {
   border-color: var(--accent);
   background: rgba(255, 107, 53, 0.1);
 }
+/* HS-103-07 — a send/ask verb should carry a little weight on press, not
+   just the browser's stock click; transform-only, so it costs nothing to
+   composite and respects prefers-reduced-motion below. */
+.desk-next .desk-chip:not(:disabled):active {
+  transform: scale(0.94);
+}
 .desk-next .desk-chip.quiet {
   color: var(--text-muted);
+}
+/* HS-103-03 — a quiet per-claim grounding flag: a fact, not a button, so it
+   wraps its full text instead of the chip's usual single-line truncation. */
+.desk-next .desk-ask-grounding-flags {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.desk-next .desk-chip.is-flagged {
+  height: auto;
+  min-height: 27px;
+  padding: 5px 12px;
+  white-space: normal;
+  cursor: default;
+  text-align: left;
 }
 .desk-next .desk-chip[aria-pressed="true"] {
   border-color: var(--accent);
@@ -2050,9 +2075,25 @@
 }
 .desk-next .desk-chat-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding-left: 4px;
+}
+/* HS-103-07 — each turn prints in, like the Ask card's own birth beat;
+   :last-child only fires on the newly-inserted node, not every re-render. */
+.desk-next .desk-chat-turn:last-child {
+  animation: desk-chat-turn-in 0.32s cubic-bezier(0.2, 1, 0.4, 1);
+}
+@keyframes desk-chat-turn-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .desk-next .desk-chat-foot {
   display: grid;
@@ -3015,8 +3056,13 @@
   .desk-next .desk-mc-pin.awaiting,
   .desk-next .desk-chat-thinking,
   .desk-next .desk-ask-routing,
-  .desk-next .desk-ask-card {
+  .desk-next .desk-ask-card,
+  .desk-next .desk-chat-turn:last-child,
+  .desk-next .desk-chat-hello-avatar {
     animation: none !important;
+  }
+  .desk-next .desk-chip:not(:disabled):active {
+    transform: none;
   }
 }
 
@@ -4585,10 +4631,26 @@
 .desk-next .desk-chat-hello-avatar {
   font-size: var(--font-size-3xl);
   filter: drop-shadow(0 6px 14px var(--shadow-ink-3));
+  animation: desk-chat-hello-in 0.4s cubic-bezier(0.2, 1, 0.4, 1);
+}
+@keyframes desk-chat-hello-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 .desk-next .desk-chat-hello small {
   color: var(--text-faint);
   font-size: var(--desk-surface-detail-size);
+}
+.desk-next .desk-chat-hello-hint {
+  color: var(--text-faint);
+  font-size: var(--font-size-sm);
+  margin-top: 4px;
 }
 .desk-next .desk-chat-foot {
   display: flex;
@@ -4645,6 +4707,29 @@
   margin: 0;
   font-size: var(--desk-surface-label-size);
   color: var(--text-faint);
+}
+
+/* HS-102-03 — Ask AI's grounding/rails read as captions in the well's
+   foot, not their own bordered sections (composition rule 1); the
+   collapsed head is a caption row, the expanded body still gets full
+   width so its list doesn't squeeze into the row. */
+.desk-next .desk-chat-well-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.desk-next .desk-chat-well-foot .desk-ground {
+  border: 0;
+  background: none;
+  border-radius: 0;
+}
+.desk-next .desk-chat-well-foot .desk-ground.is-open {
+  flex-basis: 100%;
+}
+.desk-next .desk-chat-well-foot .desk-ground-head {
+  padding: 0;
+  font-size: var(--desk-surface-label-size);
 }
 
 /* HS-101 sitting round 2 — the ambient card yields to an open right

@@ -54,6 +54,103 @@ def test_aerogel_tokens_exist() -> None:
         assert name in tokens, f"{name} missing from generated tokens.css"
 
 
+def test_live_core_never_regresses_to_a_stat_strip() -> None:
+    """HS-102-02 — the Live Meeting face is the working posture: one
+    verb, one quiet facts line. `MetricStrip` was the literal four-cell
+    connection/duration/segments/room grid the story convicted; it must
+    never come back on this face."""
+    source = (WEB_SRC / "pages" / "cores" / "LiveCore.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "MetricStrip" not in source, (
+        "HS-102-02 regression: LiveCore.tsx must not reintroduce "
+        "MetricStrip — duration/segments/connection compose as ONE "
+        "quiet SurfaceFacts line instead."
+    )
+
+
+def test_ask_panel_never_regresses_to_a_pre_box_or_section_stack() -> None:
+    """HS-102-03 — the Ask AI composer is ONE well (mic + material +
+    verb, grounding/rails/runs-on as captions in the well's foot) and
+    the answer renders as `Material`, never `desk-pullout-md` raw
+    markdown in a `<pre>`. Named by story so a future "quick fix"
+    can't quietly bring either regression back."""
+    source = (WEB_SRC / "desk" / "components" / "AskPanel.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "desk-pullout-md" not in source, (
+        "HS-102-03 regression: AskPanel.tsx must not render the answer "
+        "as raw markdown in a <pre> — use Material instead."
+    )
+    assert "desk-chat-well" in source, (
+        "HS-102-03 regression: AskPanel.tsx must compose its question "
+        "as the one-well grammar (desk-chat-well), not a stack of "
+        "separate sections."
+    )
+
+
+def test_history_core_artifacts_wing_is_the_library() -> None:
+    """HS-102-04 — the Meetings Artifacts wing is the library
+    composition (SurfaceLibrary/SurfaceLibraryTile, the artifact body
+    as the tile face), never a Disclosure+SurfaceCode dump. `Disclosure`
+    and `SurfaceCode` stay legal elsewhere in this file (the Outcomes
+    routing receipt, round 6, out of scope) — this pins the POSITIVE
+    shape rather than banning either import outright."""
+    source = (WEB_SRC / "pages" / "cores" / "HistoryCore.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "SurfaceLibrary" in source and "SurfaceLibraryTile" in source, (
+        "HS-102-04 regression: the Artifacts wing must compose through "
+        "SurfaceLibrary/SurfaceLibraryTile, matching the Blocks wing "
+        "(DictationCore.tsx) — not a second library shape."
+    )
+
+
+def test_profiles_core_never_regresses_to_a_field_stack() -> None:
+    """HS-102-01 — creating/editing a Runs on destination is choice
+    bays + SurfaceGroup rows, never the old label-over-input `Field`/
+    `Select` stack the story convicted. Named by story so the next
+    "quick fix" can't quietly bring the old form back."""
+    source = (WEB_SRC / "pages" / "cores" / "ProfilesCore.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "<Field" not in source, (
+        "HS-102-01 regression: ProfilesCore.tsx must not render a "
+        "label-over-input <Field> stack in its create/edit path — use "
+        "SurfaceGroup/SurfaceSettingRow choice bays instead."
+    )
+    assert "<Select" not in source, (
+        "HS-102-01 regression: destination Kind is chosen by bay, "
+        "never a bare <Select> the person has to simulate in their head."
+    )
+
+
+def test_dictation_core_speech_settings_never_regresses() -> None:
+    """HS-102-06 — the Speak gear face (Readiness/Knowledge/Runtime) is
+    composed groups + EditInPlace + the shared RuntimeDestination, never
+    the raw-wire dumps / Save-button forms / label-over-Select stack the
+    owner's screenshots convicted ("an absolute joke — a cacophony of
+    tiles, panes, forms, form groups")."""
+    source = (WEB_SRC / "pages" / "cores" / "DictationCore.tsx").read_text(
+        encoding="utf-8"
+    )
+    assert "Save knowledge" not in source and "Save instructions" not in source, (
+        "HS-102-06 regression: Knowledge/Instructions must save on commit "
+        "through EditInPlace, never an orange Save button."
+    )
+    assert "RuntimeDestination" in source, (
+        "HS-102-06 regression: the dictation runtime knobs must embed the "
+        "ONE shared RuntimeDestination component (settingsBespoke.tsx), "
+        "never re-derive Backend/Runs on/Latency budget as a third "
+        "Field/Select stack."
+    )
+    assert "SurfaceGroup" in source and "SurfaceToggle" in source, (
+        "HS-102-06 regression: Pipeline readiness must compose through "
+        "SurfaceGroup/SurfaceSettingRow/SurfaceToggle, not a bare "
+        "SurfaceFacts key-value dump of the raw readiness wire."
+    )
+
+
 def test_fluidity_census() -> None:
     """HS-101 rule 5 (B2) — the desk is fluid: the named operating
     moments carry token-ridden, compositor-only motion, and reduced

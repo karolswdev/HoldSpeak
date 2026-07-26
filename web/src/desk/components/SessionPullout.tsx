@@ -85,7 +85,7 @@ function ArmChip() {
       <button
         type="button"
         className="desk-chip desk-arm-chip is-armed"
-        title="armed — tap to disarm"
+        title="armed: tap to disarm"
         onClick={() => void useSteering.getState().disarm()}
       >
         ⏻ {mmss(remaining)}
@@ -116,7 +116,7 @@ const KEY_BUTTONS: Array<{
   title: string;
   loud?: boolean;
 }> = [
-  { label: "^C", key: "C-c", title: "interrupt — Ctrl-C", loud: true },
+  { label: "^C", key: "C-c", title: "interrupt: Ctrl-C", loud: true },
   { label: "Esc", key: "Escape", title: "Escape" },
   { label: "Tab", key: "Tab", title: "Tab" },
   { label: "⏎", key: "Enter", title: "Enter" },
@@ -434,7 +434,7 @@ function SteerComposer() {
         <button
           type="button"
           className={"desk-chip desk-steer-enter" + (submitOn ? " is-on" : "")}
-          title={submitOn ? "Enter after send" : "no Enter — text only"}
+          title={submitOn ? "Enter after send" : "no Enter: text only"}
           onClick={() => setSubmitOn((v) => !v)}
         >
           ⏎
@@ -677,7 +677,7 @@ export function SessionPullout() {
         ) : (
           <p className="desk-session-state">
             ✕ {PANE_STATE_LABEL[paneStatus] || paneStatus}
-            {paneDetail ? ` — ${paneDetail}` : ""}
+            {paneDetail ? `: ${paneDetail}` : ""}
           </p>
         )}
       </div>

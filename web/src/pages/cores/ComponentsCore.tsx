@@ -231,7 +231,7 @@ export function ComponentsCore({ hero }: CoreProps) {
         </SurfaceRows>
         {confirmed ? (
           <InlineMessage tone="success">
-            {`Two-step fired ${confirmed} ${confirmed === 1 ? "time" : "times"} — no modal was involved.`}
+            {`Two-step fired ${confirmed} ${confirmed === 1 ? "time" : "times"}. No modal was involved.`}
           </InlineMessage>
         ) : null}
         <SurfaceState empty emptyLabel="A quiet empty state" emptyGlyph="○" />

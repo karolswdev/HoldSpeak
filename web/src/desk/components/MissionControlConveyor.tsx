@@ -63,10 +63,10 @@ function SessionPin({
         (manual ? " manual" : "")
       }
       title={
-        `${session.key} — watch live` +
-        (manual ? " — manually pinned (not the correlator's verdict)" : "") +
+        `${session.key}: watch live` +
+        (manual ? "; manually pinned (not the correlator's verdict)" : "") +
         (session.awaitingResponse
-          ? ` — awaiting a response: ${session.lastAssistantText.slice(0, 200)}`
+          ? `; awaiting a response: ${session.lastAssistantText.slice(0, 200)}`
           : "") +
         (session.stale ? " (stale)" : "")
       }
@@ -112,7 +112,7 @@ function PhaseBelt({
               (p.status === "closed" ? " closed" : "") +
               (current && p.number === current.number ? " current" : "")
             }
-            title={`${p.title} — ${p.storiesDone}/${p.storiesTotal}`}
+            title={`${p.title}: ${p.storiesDone}/${p.storiesTotal}`}
           >
             {p.number}
           </span>
