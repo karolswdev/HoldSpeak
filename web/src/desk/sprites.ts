@@ -14,15 +14,20 @@ function numbered(base: string, count: number): string[] {
     index ? `${base}${index + 1}` : base,
   );
 }
-const avatars = Array.from({ length: 16 }, (_, index) => `agent_o${index}`);
+// HS-104-08 (the owner's sitting rider): the family reforged in one
+// Workbench-2.0-modern language. The crystal is gone — knowledge is a
+// bound TOME. The avatar bitmoji is gone — an agent is a mechanical
+// AUTOMATON head, a machine handle, not a mascot. Pool sizes are the
+// candidate picks that survived ICON-DISCIPLINE review.
+const automatons = numbered("automaton", 14);
 export const VARIANTS: Record<string, string[]> = {
-  meeting: numbered("cassette", 17),
-  note: numbered("note", 16),
-  kb: numbered("crystal", 16),
+  meeting: numbered("cassette", 16),
+  note: numbered("note", 12),
+  kb: numbered("tome", 13),
   model: ["cartridge"],
-  agent: avatars,
-  recipe: avatars,
-  coder: avatars,
+  agent: automatons,
+  recipe: automatons,
+  coder: automatons,
   artifact: ["paper"],
   chain: ["cartridge"],
   workflow: ["cartridge"],
