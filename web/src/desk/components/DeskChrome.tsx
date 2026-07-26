@@ -4,7 +4,7 @@
 import { useEffect, useState, useRef } from "react";
 import { openSurface } from "../shell";
 import { useTrustWindow } from "./TrustWindow";
-import { useDesk } from "../store";
+import { defaultViewFor, useDesk } from "../store";
 import { DeskMenuList } from "./DeskMenu";
 import { egressBadge } from "../setup";
 import { DeskToolShelf } from "./DeskToolShelf";
@@ -123,9 +123,32 @@ export function DeskChrome({
             >
               {[
                 {
-                  label: viewMode === "list" ? "Spatial view" : "List view",
+                  // Resolve an unset (density-defaulted) choice so the verb
+                  // always names the OTHER view (HS-105-01).
+                  label:
+                    defaultViewFor(
+                      viewMode,
+                      Object.values(useDesk.getState().items).reduce(
+                        (n, l) => n + l.length,
+                        0,
+                      ),
+                      window.innerWidth <= 720,
+                    ) === "list"
+                      ? "Spatial view"
+                      : "List view",
                   run: () =>
-                    setViewMode(viewMode === "list" ? "spatial" : "list"),
+                    setViewMode(
+                      defaultViewFor(
+                        viewMode,
+                        Object.values(useDesk.getState().items).reduce(
+                          (n, l) => n + l.length,
+                          0,
+                        ),
+                        window.innerWidth <= 720,
+                      ) === "list"
+                        ? "spatial"
+                        : "list",
+                    ),
                 },
                 ...(Object.keys(positions).length > 0
                   ? [{ label: "Arrange desk", run: tidyDesk }]

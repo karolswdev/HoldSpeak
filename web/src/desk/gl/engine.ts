@@ -46,7 +46,6 @@ import {
   gripTexture,
   loadSprite,
   moteTexture,
-  paperTexture,
   shadowTexture,
   zonePanelTexture,
   zoneShadowTexture,
@@ -69,8 +68,12 @@ interface ObjectNode {
   highlight: Sprite;
   paper: Sprite | null;
   label: Text;
+  labelBg: Graphics;
   badge: Container | null;
   badgeText: string;
+  countBadge: Container | null;
+  countText: string;
+  freshDot: Graphics | null;
   newBadge: Container | null;
   spriteUrl: string;
   labelText: string;
@@ -361,8 +364,10 @@ export class WorldEngine {
       resolution: Math.min((window.devicePixelRatio || 1) * 1.5, 3),
     });
     label.anchor.set(0.5, 0);
+    const labelBg = new Graphics();
+    labelBg.visible = false;
     lift.addChild(glow, ring, sprite, highlight);
-    root.addChild(shadow, lift, label);
+    root.addChild(shadow, lift, labelBg, label);
     return {
       root,
       shadow,
@@ -374,8 +379,12 @@ export class WorldEngine {
       highlight,
       paper: null,
       label,
+      labelBg,
       badge: null,
       badgeText: "",
+      countBadge: null,
+      countText: "",
+      freshDot: null,
       newBadge: null,
       spriteUrl: "",
       labelText: "",
@@ -397,7 +406,10 @@ export class WorldEngine {
     node.root.position.set(p.x, p.y);
     node.root.zIndex = o.dragging ? 20 : 0;
     this.objectLayer.sortableChildren = true;
-    const size = o.small ? SPRITE_SMALL : SPRITE;
+    // HS-105-01: one uniform cell — 64px art, 1:1, every kind. The
+    // small-note differential and the paper ruling overlay died with the
+    // mascot scale (the sprite IS the paper at pixel-true size).
+    const size = SPRITE;
     if (node.spriteUrl !== o.sprite) {
       node.spriteUrl = o.sprite;
       const tex = loadSprite(o.sprite, (t) => {
@@ -415,25 +427,22 @@ export class WorldEngine {
     node.sprite.height = size;
     node.highlight.width = size;
     node.highlight.height = size;
-    if (o.small && !node.paper) {
-      node.paper = new Sprite(paperTexture());
-      node.paper.anchor.set(0.5);
-      node.paper.position.set(0.5, 0.5);
-      node.lift.addChild(node.paper);
+    if (node.paper) {
+      node.paper.destroy();
+      node.paper = null;
     }
-    if (node.paper) node.paper.visible = o.small;
     // Glow pool: kind tint, accent for new; alpha handled per-frame.
     const wantTint = o.isNew ? ACCENT : o.glow;
     if (node.glowTint !== wantTint) {
       node.glowTint = wantTint;
       node.glow.texture = glowTexture(wantTint);
     }
-    node.glow.width = LIFT + 60;
-    node.glow.height = LIFT + 60;
-    // Shadow sits at lift bottom + ~40px (DOM: top 90px from lift top).
-    node.shadow.position.set(0, 90 - LIFT / 2 + 8);
-    node.shadow.width = 70;
-    node.shadow.height = 16;
+    node.glow.width = LIFT + 40;
+    node.glow.height = LIFT + 40;
+    // Shadow sits just under the art (art bottom = SPRITE/2).
+    node.shadow.position.set(0, SPRITE / 2 + 8);
+    node.shadow.width = 54;
+    node.shadow.height = 12;
     // Ring: selected = steady dashed; new = pulsing solid (per-frame).
     // Redrawn only when its state actually flips — never on drags.
     const ringState = `${o.selected ? "s" : ""}${o.isNew ? "n" : ""}`;
@@ -441,19 +450,34 @@ export class WorldEngine {
       node.ringState = ringState;
       this.drawRing(node, o);
     }
-    // Label: two-line clamp at 118px.
+    // Label: two-line clamp at the cell width.
     if (node.labelText !== o.title) {
       node.labelText = o.title;
-      const style = node.label.style;
       const measure = (s: string) => {
         node.label.text = s;
         return node.label.width;
       };
-      void style;
-      node.label.text = clampLabel(o.title, measure, 118);
+      node.label.text = clampLabel(o.title, measure, 98);
     }
-    node.label.position.set(0, LIFT / 2 + 4);
-    // Attention badge (projection counts) + NEW badge.
+    // HS-105-01 — the Workbench label inversion: a selected object's label
+    // sits on an accent chip in dark text (the second half of the
+    // dual-state acknowledgement).
+    node.label.style.fill = o.selected ? 0x171522 : TEXT_MUTED;
+    node.labelBg.clear();
+    node.labelBg.visible = o.selected;
+    if (o.selected) {
+      const w = node.label.width + 10;
+      const h = node.label.height + 4;
+      node.labelBg.roundRect(-w / 2, -2, w, h, 4);
+      node.labelBg.fill({ color: parseColorNum(ACCENT), alpha: 0.92 });
+    }
+    node.label.position.set(0, SPRITE / 2 + 8);
+    node.labelBg.position.set(0, SPRITE / 2 + 8);
+    // HS-105-01 — the gated badge anchors. Badges anchor to the ART bounds
+    // at rest and slide to the BOX bounds when selected (the gate's second
+    // finding: dots detached from the sprite read as floaters).
+    const half = (o.selected ? LIFT : SPRITE) / 2;
+    // needs-you (Attention projection): top-left.
     const badgeText = o.attention > 0 ? String(o.attention) : "";
     if (badgeText !== node.badgeText) {
       node.badgeText = badgeText;
@@ -461,20 +485,42 @@ export class WorldEngine {
       node.badge = badgeText
         ? makeBadge(badgeText, 0xff4d4f, 0xffffff, 10)
         : null;
-      if (node.badge) {
-        node.badge.position.set(LIFT / 2 - 8, -LIFT / 2 + 6);
-        node.lift.addChild(node.badge);
-      }
+      if (node.badge) node.lift.addChild(node.badge);
     }
+    node.badge?.position.set(-half + 4, -half + 4);
+    // member count (kbs/zone objects — memberIds.length): bottom-right.
+    const countText = o.count !== null && o.count > 0 ? String(o.count) : "";
+    if (countText !== node.countText) {
+      node.countText = countText;
+      node.countBadge?.destroy({ children: true });
+      node.countBadge = countText
+        ? makeBadge(countText, 0x242833, 0xf2f3f5, 9)
+        : null;
+      if (node.countBadge) node.lift.addChild(node.countBadge);
+    }
+    node.countBadge?.position.set(half - 4, half - 4);
+    // freshness tick (lastModified within the window): top-right.
+    if (o.fresh && !node.freshDot) {
+      const dot = new Graphics();
+      dot.circle(0, 0, 3.5);
+      dot.fill({ color: 0x34d399, alpha: 0.95 });
+      node.freshDot = dot;
+      node.lift.addChild(dot);
+    }
+    if (!o.fresh && node.freshDot) {
+      node.freshDot.destroy();
+      node.freshDot = null;
+    }
+    node.freshDot?.position.set(half - 3, -half + 3);
     if (o.isNew && !node.newBadge) {
       node.newBadge = makeBadge("NEW", parseColorNum(ACCENT), 0x06121f, 9);
-      node.newBadge.position.set(LIFT / 2 - 10, -LIFT / 2 + 2);
       node.lift.addChild(node.newBadge);
       if (!node.wasNew) {
         node.ringBornAt = performance.now();
         node.wasNew = true;
       }
     }
+    if (node.newBadge) node.newBadge.position.set(half - 10, -half + 2);
     if (!o.isNew && node.newBadge) {
       node.newBadge.destroy({ children: true });
       node.newBadge = null;
@@ -484,6 +530,10 @@ export class WorldEngine {
   }
 
   private drawRing(node: ObjectNode, o: SceneObject): void {
+    // HS-105-01 — selection is the CELL: a rounded-rect box at the lift
+    // bounds (tinted fill + outline), the gate's approved treatment; the
+    // orbiting dashed circle died with the mascot. NEW keeps a pulsing
+    // outline of the same box (alpha animated per-frame in tick()).
     const g = node.ring;
     g.clear();
     if (!o.selected && !o.isNew) {
@@ -491,19 +541,16 @@ export class WorldEngine {
       return;
     }
     g.visible = true;
-    const r = LIFT / 2 - 2;
+    const half = LIFT / 2;
+    const accent = parseColorNum(ACCENT);
     if (o.selected) {
-      // Dashed steady ring at 1.15 scale (the roped look).
-      const dashes = 26;
-      for (let i = 0; i < dashes; i++) {
-        const a0 = (i / dashes) * Math.PI * 2;
-        const a1 = a0 + (Math.PI * 2) / dashes / 1.9;
-        g.arc(0, 0, r * 1.15, a0, a1);
-        g.stroke({ width: 2, color: parseColorNum(ACCENT), alpha: 0.9 });
-      }
+      g.roundRect(-half, -half, LIFT, LIFT, 10);
+      g.fill({ color: accent, alpha: 0.1 });
+      g.roundRect(-half, -half, LIFT, LIFT, 10);
+      g.stroke({ width: 1.5, color: accent, alpha: 0.55 });
     } else {
-      g.circle(0, 0, r);
-      g.stroke({ width: 2, color: parseColorNum(ACCENT), alpha: 0.85 });
+      g.roundRect(-half, -half, LIFT, LIFT, 10);
+      g.stroke({ width: 2, color: accent, alpha: 0.85 });
     }
   }
 

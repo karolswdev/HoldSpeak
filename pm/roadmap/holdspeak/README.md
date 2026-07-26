@@ -4,7 +4,16 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-25 — **Phase 103 CLOSED (7/7)**: the
+**Last updated:** 2026-07-25 — **Phase 105 (Workbench) 1/7:
+HS-105-01 shipped the same evening** — the icon system: one uniform
+cell (64px pixel art rendered 1:1, killing the fractional-upscale
+mush), real dual-state images on disk for all 68 sprites, a drawer
+for directories, badges only from named live routes, deterministic
+clean-grid defaults, and the phone leading with the list at density;
+gated by the owner on a real-art mockup ("I accept"), proven by a
+live density walk that caught and fixed two defects, guarded by
+`iconCell.test.ts` + `web/ICON-DISCIPLINE.md`. Earlier the same day:
+**Phase 103 CLOSED (7/7)**: the
 owner's second sitting accepted HS-103-07's chat-surface craft ("I
 accept"); before it, the phase's documented pre-existing failure
 family was paid on PR #367's repair commit and the machine chain

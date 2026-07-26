@@ -1,6 +1,6 @@
 # Phase 105 - Workbench
 
-**Status:** SCAFFOLDED (0/7, 2026-07-25). Chartered from the owner's
+**Status:** IN PROGRESS (1/7, 2026-07-25). Chartered from the owner's
 direct verdict on the desk's world layer: "I honestly want the Desk
 OS to feel like an OS. Not a gimmick with huge lamp-like icons that
 don't do shit and just make it look bad. Think Workbench 2.0 but on
@@ -8,7 +8,7 @@ steroids." Takes activation precedence over Phase 104 (Borrowed Fire
 II), which is re-sequenced behind it — the innards land better on a
 desk that already has the icon/state/Info grammar.
 
-**Last updated:** 2026-07-25 (scaffolded; no story started).
+**Last updated:** 2026-07-25 (HS-105-01 shipped — see "Where we are").
 
 ## Why this phase exists
 
@@ -94,7 +94,7 @@ bench where they are used.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-105-01 | The icon system — handles, not mascots | backlog | [story-01-icon-system](./story-01-icon-system.md) | — |
+| HS-105-01 | The icon system — handles, not mascots | done | [story-01-icon-system](./story-01-icon-system.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-105-02 | Drop-onto — composition by direct manipulation | backlog | [story-02-drop-onto](./story-02-drop-onto.md) | — |
 | HS-105-03 | Zones are windows — density with chosen altitude | backlog | [story-03-zones-are-windows](./story-03-zones-are-windows.md) | — |
 | HS-105-04 | Info on everything — the inspectable desk | backlog | [story-04-info-on-everything](./story-04-info-on-everything.md) | — |
@@ -124,6 +124,41 @@ grammar rather than the diorama.
 
 ## Where we are
 
-**2026-07-25 — scaffolded.** The owner's verdict and the Workbench
-2.0 thesis recorded; seven implementation-grade stories drafted.
-Nothing started; activation follows the Phase 103 close.
+**2026-07-25 — HS-105-01 SHIPPED (the same evening it was gated).**
+The mush had a root: 64×64 pixel sources rendered at a FRACTIONAL
+1.375× upscale, at illustration scale, stateless. Now: one uniform
+cell (64px art 1:1, 80px selection box), REAL state images on disk
+for all 68 sprites (`gen-sprite-states.py`: _sel brighten+rim,
+_stale desaturate; sel > stale > rest picked in the scene), the
+selected label inverting onto an accent chip, selection as the CELL
+box, a drawer for directories (was "paper"), live badges only from
+named routes (member counts, 48h freshness — the adapters now keep
+`last_modified` — needs-you, coder-stale), and integer-true motion
+(tilt/scale jitter dead). The density walk caught two defects live
+and both were fixed at cause: random-jitter default homes stacked
+cells (→ deterministic clean grid, the Workbench Clean Up rule), and
+a 104px cell cannot grid 33 objects at 393px (→ an unset view choice
+leads with the LIST above 16 objects on compact; explicit choice
+always wins). Guard: `iconCell.test.ts` (7 pins); law:
+`web/ICON-DISCIPLINE.md`. Final shots read at both viewports; web
+chain green (tsc, 325/325, build, tokens gate). Next per the owner's
+root-cause order: HS-105-03 (zones are windows).
+
+**2026-07-25 — activated; HS-105-01 gated and building.** Phase 103
+closed the same day; the pointer moved here. HS-105-01's mockup gate
+ran per the AGENT_BRIEF §2 method (real Pixellab dual-state art, the
+cell contract, the audited badge map, both form factors, own-eyes
+critique). The owner's verdict, verbatim: **"Gimmick comes from some
+of the art, but really from the fact that there's no real idea of
+directories, properties of them, and so on, and so forth, but also
+because of arts. I accept."** Two consequences recorded: (1) the
+build proceeds as mocked plus the two gate findings (distinct
+silhouette per kind — color alone is soup at density; badges anchor
+to art bounds at rest, box bounds when selected); (2) the owner's
+diagnosis names directories + properties as the gimmick's ROOT, so
+the story order within the phase becomes 01 → 03 (zones are
+windows) → 04 (Info/tooltypes) → 02 (drop-onto) → 05 (menu bar) —
+the two root-cause stories run before composition and menus.
+
+**2026-07-25 — scaffolded.** The Workbench 2.0 thesis recorded;
+seven implementation-grade stories drafted.

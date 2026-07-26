@@ -26,7 +26,9 @@ export const VARIANTS: Record<string, string[]> = {
   artifact: ["paper"],
   chain: ["cartridge"],
   workflow: ["cartridge"],
-  directory: ["paper"],
+  // HS-105-01: a directory is a DRAWER (the Workbench silhouette rule) —
+  // never paper. The owner's diagnosis: "no real idea of directories".
+  directory: ["drawer"],
 };
 export const SPRITE_BASE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/`;
 export function variantIndex(id: string, poolLength: number): number {
@@ -36,6 +38,15 @@ export function spriteName(kind: string, id: string): string {
   const pool = VARIANTS[kind] ?? VARIANTS.note;
   return pool[variantIndex(id, pool.length)];
 }
-export function spriteUrl(kind: string, id: string): string {
-  return `${SPRITE_BASE}${spriteName(kind, id)}.png`;
+/** HS-105-01 — sprite STATES are real second images on disk (derived by
+ * web/scripts/gen-sprite-states.py), never runtime filters: the Workbench
+ * dual-image rule. `rest` is the base file. */
+export type SpriteState = "rest" | "sel" | "stale";
+export function spriteUrl(
+  kind: string,
+  id: string,
+  state: SpriteState = "rest",
+): string {
+  const suffix = state === "rest" ? "" : `_${state}`;
+  return `${SPRITE_BASE}${spriteName(kind, id)}${suffix}.png`;
 }

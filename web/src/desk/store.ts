@@ -127,15 +127,35 @@ export type DeskView = "spatial" | "list";
 
 const VIEW_KEY = "hs.desk.view";
 
-function loadViewMode(): DeskView {
+/** HS-105-01 — the phone's density altitude: a 104px cell cannot grid a
+ * dense desk inside a 393px world (measured, not guessed — the density
+ * walk showed the soup). Above this count, a compact desk with NO saved
+ * choice leads with the list; an explicit user choice (URL or saved key)
+ * always wins — the arrangement stays the user's. */
+export const COMPACT_LIST_THRESHOLD = 16;
+
+function loadViewMode(): DeskView | "unset" {
   try {
     const fromUrl = new URLSearchParams(window.location.search).get("view");
     if (fromUrl === "list") return "list";
     if (fromUrl === "spatial") return "spatial";
-    return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "spatial";
+    const saved = localStorage.getItem(VIEW_KEY);
+    if (saved === "list") return "list";
+    if (saved === "spatial") return "spatial";
+    return "unset"; // resolved against density by defaultViewFor
   } catch {
     return "spatial";
   }
+}
+
+/** Resolve an unset view choice against the loaded desk's density. */
+export function defaultViewFor(
+  mode: DeskView | "unset",
+  objectCount: number,
+  compact: boolean,
+): DeskView {
+  if (mode === "list" || mode === "spatial") return mode;
+  return compact && objectCount > COMPACT_LIST_THRESHOLD ? "list" : "spatial";
 }
 
 function persistViewMode(mode: DeskView) {
@@ -220,7 +240,7 @@ interface DeskState {
   /** Maximized windows (full stage; the saved rect is kept), persisted. */
   panelMax: string[];
   /** HS-93-08 — which expression of the Desk renders (spatial or list). */
-  viewMode: DeskView;
+  viewMode: DeskView | "unset";
 
   refresh(): Promise<void>;
   /** Switch Desk expression; persists and mirrors `?view=list` in the URL. */
