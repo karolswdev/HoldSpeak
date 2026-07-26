@@ -52,7 +52,8 @@ EXPECTED = {
     "claude-code-hooks": {
         Capability.TOOL_HOOKS: Standing.AUTHORITATIVE,
         Capability.SESSION_IDENTITY: Standing.INFERRED,
-        Capability.USAGE_TOKENS: Standing.UNAVAILABLE,
+        # HS-104-05: the Stop hook reports transcript usage totals.
+        Capability.USAGE_TOKENS: Standing.AUTHORITATIVE,
         Capability.REPO_HEAD: Standing.UNAVAILABLE,
         Capability.BLOCKING: Standing.AUTHORITATIVE,
     },

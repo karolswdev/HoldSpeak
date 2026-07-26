@@ -1895,6 +1895,16 @@
       ]
     },
     {
+      "path": "/api/gate/usage",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/grounding/resolve",
       "methods": [
         "POST"
@@ -2910,6 +2920,16 @@
       "module": "web.routes.system.health",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/sessions/{session_key}/receipt",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.gate_routes",
+      "consumers": [
         "web"
       ]
     },

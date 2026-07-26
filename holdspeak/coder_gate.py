@@ -292,6 +292,93 @@ def _send(req: "urlrequest.Request", timeout: float) -> tuple[int, dict[str, Any
         return exc.code, payload if isinstance(payload, dict) else {}
 
 
+# -- the usage report leg (HS-104-05) --------------------------------------
+
+
+def summarize_transcript_usage(transcript_path: Path) -> Optional[dict[str, Any]]:
+    """Session token totals from the agent's OWN transcript (the
+    file Claude Code hands the Stop hook). Only NUMBERS and the model
+    name are extracted — no message text ever leaves this function.
+    Each cache figure stays its own total, never summed."""
+    totals = {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_read_tokens": 0,
+        "cache_creation_tokens": 0,
+    }
+    model = ""
+    saw_usage = False
+    try:
+        with transcript_path.open("r", encoding="utf-8", errors="replace") as handle:
+            for line in handle:
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                message = entry.get("message") if isinstance(entry, dict) else None
+                if not isinstance(message, dict):
+                    continue
+                usage = message.get("usage")
+                if not isinstance(usage, dict):
+                    continue
+                saw_usage = True
+                model = str(message.get("model") or model)
+                totals["input_tokens"] += int(usage.get("input_tokens") or 0)
+                totals["output_tokens"] += int(usage.get("output_tokens") or 0)
+                totals["cache_read_tokens"] += int(usage.get("cache_read_input_tokens") or 0)
+                totals["cache_creation_tokens"] += int(
+                    usage.get("cache_creation_input_tokens") or 0
+                )
+    except OSError:
+        return None
+    if not saw_usage:
+        return None
+    return {"model": model, **totals}
+
+
+def run_stop_hook(
+    payload: Mapping[str, Any],
+    *,
+    config: GateConfig | None = None,
+    hub_url: str | None = None,
+    http_post: Callable[[str, dict[str, Any], float], tuple[int, dict[str, Any]]] | None = None,
+) -> bool:
+    """The Stop-event leg: report the session's usage totals to the
+    hub, for sessions in a gate-held repo only (the same double
+    opt-in). Telemetry, not consent — every failure is silent and
+    the agent's stop is never blocked. Returns whether a report was
+    sent."""
+    cfg = config if config is not None else load_gate_config()
+    cwd = str(payload.get("cwd") or "").strip()
+    # The matcher's repo opt-in, tool-independent: usage reports ride
+    # for any repo the gate holds at all.
+    held_repo = any(
+        gate_matches(cfg, cwd=cwd, tool=tool)
+        for tools in cfg.repos.values()
+        for tool in tools
+    )
+    if not cfg.armed or not held_repo:
+        return False
+    session_id = str(payload.get("session_id") or "").strip()
+    transcript = str(payload.get("transcript_path") or "").strip()
+    if not session_id or not transcript:
+        return False
+    usage = summarize_transcript_usage(Path(transcript).expanduser())
+    if usage is None:
+        return False
+    base = (hub_url or os.environ.get("HOLDSPEAK_HUB_URL") or DEFAULT_HUB_URL).rstrip("/")
+    post = http_post or _default_post
+    try:
+        status, _ = post(
+            f"{base}/api/gate/usage",
+            {"session_key": f"claude:{session_id}", **usage},
+            5.0,
+        )
+    except Exception:
+        return False
+    return status == 200
+
+
 # -- install ---------------------------------------------------------------
 
 
@@ -312,7 +399,20 @@ def install_block(executable: str = "holdspeak") -> str:
                         }
                     ],
                 }
-            ]
+            ],
+            # HS-104-05: the session-receipt usage report. Same
+            # command; the hook dispatches on hook_event_name.
+            "Stop": [
+                {
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": f"{executable} gate hook",
+                            "timeout": 15,
+                        }
+                    ]
+                }
+            ],
         }
     }
     return json.dumps(block, indent=2)

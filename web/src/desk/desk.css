@@ -4533,6 +4533,15 @@
   font-size: var(--desk-surface-detail-size);
 }
 
+/* HS-104-05 — the session receipt line: one line, minimal ink. */
+.desk-next .desk-receipt-line {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 /* HS-101 B8 — the shortcut sheet: drawn, on the transient material. */
 .desk-shortcut-sheet {
   position: fixed;

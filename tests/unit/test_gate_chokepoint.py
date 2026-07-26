@@ -66,8 +66,10 @@ def test_state_flip_verbs_have_pinned_callers() -> None:
 def test_gate_routes_go_through_require_capability() -> None:
     text = (REPO / "holdspeak/web/routes/system/gate_routes.py").read_text(encoding="utf-8")
     calls = re.findall(r"require_capability\(\s*\"claude-code-hooks\",\s*Capability\.(\w+)\s*\)", text)
-    assert sorted(calls) == ["BLOCKING", "TOOL_HOOKS"], (
-        "the receive route must require TOOL_HOOKS and the decide route BLOCKING"
+    # HS-104-05 added the usage receiver (USAGE_TOKENS) beside the
+    # HS-104-02 pair — a reviewed edit in that story's commit.
+    assert sorted(calls) == ["BLOCKING", "TOOL_HOOKS", "USAGE_TOKENS"], (
+        "receive requires TOOL_HOOKS, decide BLOCKING, usage USAGE_TOKENS"
     )
 
 

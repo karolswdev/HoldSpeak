@@ -92,7 +92,9 @@ LEDGER: MappingProxyType[str, MappingProxyType[Capability, Standing]] = MappingP
     "claude-code-hooks": MappingProxyType({
         Capability.TOOL_HOOKS: Standing.AUTHORITATIVE,
         Capability.SESSION_IDENTITY: Standing.INFERRED,
-        Capability.USAGE_TOKENS: Standing.UNAVAILABLE,
+        # HS-104-05: the Stop hook reports session totals read from
+        # the agent's own transcript — the adapter's own record.
+        Capability.USAGE_TOKENS: Standing.AUTHORITATIVE,
         Capability.REPO_HEAD: Standing.UNAVAILABLE,
         Capability.BLOCKING: Standing.AUTHORITATIVE,
     }),
@@ -163,7 +165,6 @@ class LedgerConsumer:
     capability: Capability
 
 
-# HS-104-05 appends here as it lands its call sites.
 LEDGER_CONSUMERS: tuple[LedgerConsumer, ...] = (
     # HS-104-02: the tool-call gate's two capability-bearing routes.
     LedgerConsumer(
@@ -171,6 +172,14 @@ LEDGER_CONSUMERS: tuple[LedgerConsumer, ...] = (
     ),
     LedgerConsumer(
         "web.routes.system.gate_routes.decide", "claude-code-hooks", Capability.BLOCKING
+    ),
+    # HS-104-05: session receipts' reported tier — the usage receiver
+    # and the tier assembly both act on reported tokens.
+    LedgerConsumer(
+        "web.routes.system.gate_routes.usage", "claude-code-hooks", Capability.USAGE_TOKENS
+    ),
+    LedgerConsumer(
+        "session_receipts.build_receipt", "claude-code-hooks", Capability.USAGE_TOKENS
     ),
 )
 
