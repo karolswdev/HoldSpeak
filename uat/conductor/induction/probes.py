@@ -584,6 +584,24 @@ class ProbeEvaluator:
         refused = resp.status_code != 200
         return (refused, f"unarmed keys refused={refused} (HTTP {resp.status_code})")
 
+    def _check_gate_surface_live(self, _arg):
+        """HS-104-07: the watched-hand surface answers — the gate's
+        config route (off by default is a valid state) and the
+        capability ledger both serve."""
+        try:
+            config = self.client.get_json("/api/gate/config")
+            caps = self.client.get_json("/api/agents/capabilities")
+        except Exception as exc:
+            return (False, f"gate surface unreachable: {exc}")
+        config_ok = config.get("gate_schema") == 1 and "armed" in config
+        adapters = {row.get("adapter") for row in caps.get("adapters", [])}
+        caps_ok = "claude-code-hooks" in adapters
+        return (
+            config_ok and caps_ok,
+            f"gate config schema={config.get('gate_schema')} armed={config.get('armed')}; "
+            f"ledger adapters={len(adapters)}",
+        )
+
     # --- doctor (subprocess, product-routed) ------------------------------
 
     def _check_doctor_names_dead_endpoint(self, _arg):

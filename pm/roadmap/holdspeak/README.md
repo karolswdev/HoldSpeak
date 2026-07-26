@@ -4,8 +4,16 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 6/7:
-HS-104-06 docs** — the gate, PR receipts, and session receipts at
+**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II):
+machine scope COMPLETE, the sitting pending** — the HS-104-07 walk
+passed live in one staged session (`seeded-desk-watched-hand`):
+arm + honest readback, a real held call approved from the shade, a
+real deny whose reason course-corrected the agent verbatim, expiry /
+kill-mid-hold / inert-unarmed crown cases, PR receipts with a real
+network yank, the three-tier receipt line with the price-row
+absence rule, and the full sweep green. The phase flips CLOSED when
+the owner drives the same seven beats and the verdict lands
+(Article IX.4). Earlier the same day: **HS-104-06 docs** — the gate, PR receipts, and session receipts at
 the real entry points (USER_GUIDE beside the steering material,
 SECURITY boundary + egress row, ARCHITECTURE paragraph + rendered
 mermaid, one README paragraph leading with off-by-default), every

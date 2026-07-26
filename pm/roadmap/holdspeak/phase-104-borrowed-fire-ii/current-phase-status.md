@@ -1,6 +1,6 @@
 # Phase 104 - Borrowed Fire II: The Watched Hand
 
-**Status:** IN PROGRESS (6/7, 2026-07-26). Chartered from a second
+**Status:** MACHINE SCOPE COMPLETE (6/7 shipped; the HS-104-07 walk passed live 2026-07-26 — the phase flips CLOSED when the owner's sitting verdict lands, Article IX.4). Chartered from a second
 external-research pass in the Phase-103 mold: a study of
 `SirAllap/agentglass` (an MIT-licensed mission-control dashboard for
 AI coding agents — Claude Code hooks + OTel ingestion, a PreToolUse
@@ -16,7 +16,7 @@ OS-grade first; this phase's shade cards and receipt lines land on
 the icon/state/Info grammar Phase 105 installs. Activation order:
 Phase 103 close → Phase 105 → this phase.
 
-**Last updated:** 2026-07-26 (HS-104-06 shipped; the docs meet the reader at the door).
+**Last updated:** 2026-07-26 (the HS-104-07 walk passed live; awaiting the owner's sitting).
 
 ## Why this phase exists
 
@@ -118,7 +118,7 @@ provenance.
 | HS-104-04 | PR receipts — paying the candidate-Y deferral | done | [story-04-pr-receipts](./story-04-pr-receipts.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-104-05 | Session receipts — honest numbers on the card | done | [story-05-session-receipts](./story-05-session-receipts.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-104-06 | Docs — the gate and the watch at the entry points | done | [story-06-docs](./story-06-docs.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-104-07 | Closeout — the walk and the sitting | backlog | [story-07-closeout](./story-07-closeout.md) | — |
+| HS-104-07 | Closeout — the walk and the sitting | in-progress | [story-07-closeout](./story-07-closeout.md) | — |
 
 ## Decisions deferred (parked, not committed)
 
@@ -134,6 +134,30 @@ provenance.
   37/61 executor spine once PR receipts exist.
 
 ## Where we are
+
+**2026-07-26 — the walk passed; the sitting is yours.** HS-104-07's
+seven machine beats ran live in ONE staged session
+(`uat.stage --recipe seeded-desk-watched-hand` — the HS-103-05
+recipe family extended with the `gate_surface_live` probe, not
+forked): (1) both opt-ins armed, ledger + doctor reading it back;
+(2) a real `claude -p` session's Bash call held, approved from the
+real shade, `WALK_APPROVE_MARKER` ran; (3) a second session denied
+with "walk beat three, use printf not echo" — the reason verbatim in
+the agent's report, the agent proposing printf; (4) expiry denied by
+name, a REAL kill-mid-hold denied the polling hook and invalidated
+on restart (two-process), the unarmed hook inert at 0.73s total;
+(5) PR receipts live on this repo — heuristic and unattributed
+labels on real PRs, a 98 KB real local diff, a real Wi-Fi yank
+degrading to stale with 50 rows retained, the verb recovering it;
+(6) session receipts — all three tiers on the attempt card, the
+price-row add/remove flipping the estimate present/ABSENT; (7) the
+sweep green (full pytest with the metal exclusion; web tsc + 350
+vitest + build + tokens gate; guards; censuses — outputs read from
+files). Candidates parked (BACKLOG §AB), the sync-clock CI flake
+diagnosed and recorded (BACKLOG §AC), the spec ledger written
+(final-summary.md). **Next: the owner drives the same seven beats
+hands-on; the verdict lands here verbatim; a rejected beat reopens
+its story.**
 
 **2026-07-26 — the docs meet the reader at the door (6/7).**
 HS-104-06 shipped the written surface at the real entry points:
