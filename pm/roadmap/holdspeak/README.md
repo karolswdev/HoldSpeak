@@ -4,8 +4,18 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 1/7:
-HS-104-01 the capability ledger** — `holdspeak/agent_capabilities.py`
+**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 2/7:
+HS-104-02 the tool-call gate** — a steered agent's risky call now
+stops and asks the desk: fail-closed PreToolUse hook (inert unless
+BOTH opt-ins; armed errors always deny by name, no timeout
+auto-allow anywhere), proposals persisted as records never authority
+(schema v25, one transition chokepoint, census-pinned), Approve/Deny
+with an in-place reason on the shade, restart invalidation, redaction
+to sha256 + 120 chars everywhere. Proven on real metal: two real
+`claude -p` sessions — approve ran the held command, the deny reason
+reached the agent verbatim and course-corrected it; hub-down /
+expiry / kill-mid-hold all denied by name. Earlier the same day:
+**HS-104-01 the capability ledger** — `holdspeak/agent_capabilities.py`
 (4 adapters × 5 capabilities, hand-declared standings:
 authoritative / inferred / unavailable), `GET /api/agents/capabilities`
 + contract schema validated against the live payload, the "Agent

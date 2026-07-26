@@ -67,6 +67,10 @@ index idx_first_value_attempts_started: CREATE INDEX idx_first_value_attempts_st
 ON first_value_attempts(started_at DESC)
 index idx_first_value_events_attempt: CREATE INDEX idx_first_value_events_attempt
 ON first_value_events(attempt_id, occurred_at)
+index idx_gate_audit_proposal: CREATE INDEX idx_gate_audit_proposal ON gate_audit(proposal_id)
+index idx_gate_audit_ts: CREATE INDEX idx_gate_audit_ts ON gate_audit(ts)
+index idx_gate_proposals_session: CREATE INDEX idx_gate_proposals_session ON gate_proposals(session_key)
+index idx_gate_proposals_state: CREATE INDEX idx_gate_proposals_state ON gate_proposals(state)
 index idx_intel_job_attempts_meeting: CREATE INDEX idx_intel_job_attempts_meeting ON intel_job_attempts(meeting_id, created_at DESC)
 index idx_intel_jobs_status: CREATE INDEX idx_intel_jobs_status ON intel_jobs(status, requested_at)
 index idx_intent_window_scores_meeting: CREATE INDEX idx_intent_window_scores_meeting ON intent_window_scores(meeting_id, window_id)
@@ -531,6 +535,34 @@ table first_value_events: CREATE TABLE first_value_events (
     attempt_id TEXT NOT NULL REFERENCES first_value_attempts(id) ON DELETE CASCADE,
     kind TEXT NOT NULL,
     occurred_at TEXT NOT NULL
+)
+table gate_audit: CREATE TABLE gate_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts TEXT NOT NULL DEFAULT (datetime('now')),
+    proposal_id TEXT NOT NULL,
+    session_key TEXT NOT NULL,
+    tool TEXT NOT NULL,
+    args_sha256 TEXT NOT NULL,
+    event TEXT NOT NULL,
+    detail TEXT,
+    decided_by TEXT
+)
+table gate_proposals: CREATE TABLE gate_proposals (
+    id TEXT PRIMARY KEY,
+    session_key TEXT NOT NULL,
+    agent TEXT NOT NULL DEFAULT '',
+    tool TEXT NOT NULL,
+    args_sha256 TEXT NOT NULL,
+    args_head TEXT NOT NULL DEFAULT '',
+    cwd TEXT NOT NULL DEFAULT '',
+    operation_json TEXT NOT NULL DEFAULT '{}',
+    policy_snapshot_json TEXT NOT NULL DEFAULT '{}',
+    created_at REAL NOT NULL,
+    expires_at REAL NOT NULL,
+    state TEXT NOT NULL DEFAULT 'held',
+    decided_by TEXT,
+    decided_at REAL,
+    reason TEXT
 )
 table intel_job_attempts: CREATE TABLE intel_job_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

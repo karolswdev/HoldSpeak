@@ -5,6 +5,7 @@
 // filters, receipt detail) stays one verb away.
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, type JsonRecord } from "../../lib/api";
+import { gateAge, useGate } from "../gate";
 import { useProjections } from "../projections";
 import { humanTime } from "../surface/format";
 
@@ -20,8 +21,22 @@ export function SystemShade({
   onOpenMemory: () => void;
 }) {
   const store = useProjections();
+  const gate = useGate();
   const [corrections, setCorrections] = useState<Correction[] | null>(null);
+  const [denyingId, setDenyingId] = useState<string | null>(null);
+  const [denyReason, setDenyReason] = useState("");
   const panel = useRef<HTMLDivElement>(null);
+
+  // A held proposal is a BLOCKED agent: poll while the shade is open
+  // so a decision (or an expiry) resolves on glass without a reopen.
+  useEffect(() => {
+    if (!open) return;
+    void useGate.getState().refresh();
+    const timer = window.setInterval(() => {
+      void useGate.getState().refresh();
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -85,8 +100,79 @@ export function SystemShade({
 
       <section className="desk-shade-group" aria-label="Needs you">
         <h4>
-          Needs you <b>· {store.counts.needs_attention || 0}</b>
+          Needs you <b>· {(store.counts.needs_attention || 0) + gate.held.length}</b>
         </h4>
+        {gate.held.map((proposal) => (
+          <div className="desk-shade-item desk-gate-item" key={proposal.id}>
+            <span className="desk-shade-glyph" aria-hidden="true">
+              ⊘
+            </span>
+            <div className="desk-shade-what">
+              <strong>
+                {proposal.tool} held · {proposal.session_key}
+              </strong>
+              <small>
+                <code>{proposal.args_head}</code>
+              </small>
+              <small>waiting {gateAge(proposal)}</small>
+              {denyingId === proposal.id ? (
+                <span className="desk-shade-do">
+                  <input
+                    type="text"
+                    className="desk-gate-reason"
+                    placeholder="Reason for the agent, one line"
+                    value={denyReason}
+                    autoFocus
+                    onChange={(event) => setDenyReason(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        void gate.decide(proposal.id, "denied", denyReason);
+                        setDenyingId(null);
+                        setDenyReason("");
+                      }
+                      if (event.key === "Escape") setDenyingId(null);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void gate.decide(proposal.id, "denied", denyReason);
+                      setDenyingId(null);
+                      setDenyReason("");
+                    }}
+                  >
+                    Send deny
+                  </button>
+                  <button
+                    type="button"
+                    className="is-quiet"
+                    onClick={() => setDenyingId(null)}
+                  >
+                    Back
+                  </button>
+                </span>
+              ) : (
+                <span className="desk-shade-do">
+                  <button
+                    type="button"
+                    onClick={() => void gate.decide(proposal.id, "approved")}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDenyingId(proposal.id);
+                      setDenyReason("");
+                    }}
+                  >
+                    Deny
+                  </button>
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
         {needs.length ? (
           needs.map((row) => (
             <div className="desk-shade-item" key={row.id}>
@@ -117,7 +203,7 @@ export function SystemShade({
               </div>
             </div>
           ))
-        ) : (
+        ) : gate.held.length ? null : (
           <p className="desk-shade-quiet">Nothing needs you</p>
         )}
       </section>

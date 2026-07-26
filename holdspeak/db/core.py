@@ -13,6 +13,7 @@ from ..logging_config import get_logger
 from .meetings import MeetingRepository
 from .intel import IntelRepository
 from .mesh_relay import MeshRelayRepository
+from .gate import GateProposalRepository
 from .steering import SteeringAuditRepository
 from .projections import ProjectionRepository
 from .plugins import PluginArtifactRepository
@@ -48,7 +49,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 24  # v24: hub half of command Receipts (HS-94-06)
+SCHEMA_VERSION = 25  # v25: the tool-call gate's proposals + audit (HS-104-02)
 
 
 class SchemaVersionError(RuntimeError):
@@ -1199,6 +1200,44 @@ CREATE TABLE IF NOT EXISTS steering_audit (
 CREATE INDEX IF NOT EXISTS idx_steering_audit_ts ON steering_audit(ts);
 CREATE INDEX IF NOT EXISTS idx_steering_audit_key ON steering_audit(session_key);
 
+-- HS-104-02: the tool-call gate. A proposal is a RECORD, never authority —
+-- nothing in this table can cause execution; only a live hook waiting on a
+-- decision can proceed. Arguments are redacted at the edge (sha256 + first
+-- 120 chars), never stored in full.
+CREATE TABLE IF NOT EXISTS gate_proposals (
+    id TEXT PRIMARY KEY,
+    session_key TEXT NOT NULL,
+    agent TEXT NOT NULL DEFAULT '',
+    tool TEXT NOT NULL,
+    args_sha256 TEXT NOT NULL,
+    args_head TEXT NOT NULL DEFAULT '',
+    cwd TEXT NOT NULL DEFAULT '',
+    operation_json TEXT NOT NULL DEFAULT '{}',
+    policy_snapshot_json TEXT NOT NULL DEFAULT '{}',
+    created_at REAL NOT NULL,
+    expires_at REAL NOT NULL,
+    state TEXT NOT NULL DEFAULT 'held',
+    decided_by TEXT,
+    decided_at REAL,
+    reason TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_gate_proposals_state ON gate_proposals(state);
+CREATE INDEX IF NOT EXISTS idx_gate_proposals_session ON gate_proposals(session_key);
+
+CREATE TABLE IF NOT EXISTS gate_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts TEXT NOT NULL DEFAULT (datetime('now')),
+    proposal_id TEXT NOT NULL,
+    session_key TEXT NOT NULL,
+    tool TEXT NOT NULL,
+    args_sha256 TEXT NOT NULL,
+    event TEXT NOT NULL,
+    detail TEXT,
+    decided_by TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_gate_audit_ts ON gate_audit(ts);
+CREATE INDEX IF NOT EXISTS idx_gate_audit_proposal ON gate_audit(proposal_id);
+
 -- Work attempts (HS-94-04, PLATFORM-CONTRACT §4.2): one bounded undertaking
 -- of one primary Story, bound to node/source/worktree/session/target with
 -- explicit association provenance. attempt_id is opaque and never reused.
@@ -1313,6 +1352,7 @@ class Database:
         self.model_manifests = ModelManifestRepository(self._connection, self)
         self.mesh_relay = MeshRelayRepository(self._connection, self)
         self.steering = SteeringAuditRepository(self._connection, self)
+        self.gate = GateProposalRepository(self._connection, self)  # HS-104-02
         self.projections = ProjectionRepository(self._connection, self)
         self.work_attempts = WorkAttemptRepository(self._connection, self)  # HS-94-04
         self.delivery_receipts = DeliveryCommandReceiptRepository(self._connection, self)  # HS-94-06

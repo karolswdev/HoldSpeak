@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://holdspeak.dev/contracts/v0/gate-proposal.schema.json",
+  "title": "GateProposal",
+  "description": "HS-104-02: a tool-call gate proposal on the wire (POST/GET /api/gate/proposals). The record is a proposal, never authority — only the live hook waiting on the decision can let the call proceed. Arguments are redacted at the agent edge: sha256 + first 120 characters, never the full payload. States: held (the only non-terminal), approved, denied, expired, invalidated. Spec artifact for the future Swift recreation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id", "session_key", "agent", "tool", "args_sha256", "args_head",
+    "cwd", "operation", "policy_snapshot", "created_at", "expires_at",
+    "state", "decided_by", "decided_at", "reason"
+  ],
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "description": "Idempotency key minted by the hook, once per invocation." },
+    "session_key": { "type": "string", "minLength": 1 },
+    "agent": { "type": "string" },
+    "tool": { "type": "string", "minLength": 1 },
+    "args_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "args_head": { "type": "string", "maxLength": 120 },
+    "cwd": { "type": "string" },
+    "operation": { "type": "object" },
+    "policy_snapshot": { "type": "object" },
+    "created_at": { "type": "number", "description": "Epoch seconds." },
+    "expires_at": { "type": "number", "description": "Epoch seconds; expiry is a deny, never an allow." },
+    "state": { "enum": ["held", "approved", "denied", "expired", "invalidated"] },
+    "decided_by": { "type": ["string", "null"] },
+    "decided_at": { "type": ["number", "null"] },
+    "reason": { "type": ["string", "null"], "description": "Rides back to the agent verbatim on deny." }
+  }
+}

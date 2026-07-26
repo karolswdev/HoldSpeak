@@ -4458,6 +4458,32 @@
   }
 }
 
+/* HS-104-02 — a held tool call on the shade: the redacted argument
+   preview in mono, the deny reason edited in place (no modal). */
+.desk-next .desk-gate-item {
+  background: var(--wash-1);
+}
+.desk-next .desk-gate-item .desk-shade-what code {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--desk-surface-detail-size);
+  color: var(--text-muted);
+}
+.desk-next .desk-gate-reason {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--line, var(--wash-2));
+  border-radius: var(--radius-sm);
+  background: var(--surface, transparent);
+  color: var(--text);
+  font-size: var(--desk-surface-detail-size);
+}
+
 /* HS-101 B8 — the shortcut sheet: drawn, on the transient material. */
 .desk-shortcut-sheet {
   position: fixed;

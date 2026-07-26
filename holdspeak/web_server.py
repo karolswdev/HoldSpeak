@@ -647,6 +647,13 @@ class MeetingWebServer:
 
         @app.on_event("startup")
         async def _startup() -> None:
+            # HS-104-02 restart honesty: revalidate-or-expire, never resume.
+            try:
+                from .web.routes.system.gate_routes import invalidate_held_on_startup
+
+                invalidate_held_on_startup()
+            except Exception as e:
+                log.error(f"gate startup invalidation failed: {e}")
             self._loop = asyncio.get_running_loop()
             self._duration_task = asyncio.create_task(self._duration_loop())
             self._coder_frames_task = asyncio.create_task(self._coder_frames_loop())

@@ -13,6 +13,7 @@ from ...context import WebContext
 from .agent_capabilities import build_agent_capabilities_router
 from .coder_steering_routes import build_coder_steering_router
 from .coders import build_coders_router
+from .gate_routes import build_gate_router
 from .health import build_health_router
 from .settings import build_settings_router
 from .voice import build_voice_router
@@ -25,6 +26,7 @@ def build_system_router(ctx: WebContext) -> APIRouter:
     router.include_router(build_agent_capabilities_router())
     router.include_router(build_coders_router(ctx))
     router.include_router(build_coder_steering_router(ctx))
+    router.include_router(build_gate_router(ctx))
     router.include_router(build_settings_router(ctx))
     router.include_router(build_voice_router(ctx))
     router.include_router(build_ws_router(ctx))

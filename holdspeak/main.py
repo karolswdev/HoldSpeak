@@ -18,6 +18,7 @@ from .commands.agent_hook import (
     build_argparse_subparsers as _build_agent_hook_subparsers,
     run_agent_hook_command,
 )
+from .commands.gate import build_gate_subparsers as _build_gate_subparsers
 from .commands.device import run_device_psk_command
 from .commands.dictation import (
     _build_argparse_subparsers as _build_dictation_subparsers,
@@ -259,6 +260,13 @@ Logs are written to: {LOG_FILE}
     )
     _build_agent_hook_subparsers(agent_hook_parser)
 
+    # gate subcommand (HS-104-02) — the tool-call gate's owner verbs
+    gate_parser = subparsers.add_parser(
+        "gate",
+        help="The tool-call gate: hold a steered agent's risky calls for the desk",
+    )
+    _build_gate_subparsers(gate_parser)
+
     # cadence subcommand (CAD-1-05) — inspect the Cadence Engine
     cadence_parser = subparsers.add_parser(
         "cadence",
@@ -443,6 +451,11 @@ Logs are written to: {LOG_FILE}
     # Handle agent-hook subcommand
     if args.command == "agent-hook":
         raise SystemExit(run_agent_hook_command(args))
+
+    if args.command == "gate":
+        from .commands.gate import run_gate_command
+
+        raise SystemExit(run_gate_command(args))
 
     if args.command == "cadence":
         raise SystemExit(run_cadence_command(args))
