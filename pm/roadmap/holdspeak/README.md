@@ -4,8 +4,11 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II):
-HS-104-08 the icon family reforged** (the sitting's chartered rider):
+**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II)
+CLOSED 8/8, all in one day**: the ledger, the fail-closed gate, the
+gate under attack, PR receipts, session receipts, docs, the
+seven-beat walk, and the sitting's own rider — **HS-104-08 the icon
+family reforged** (the sitting's chartered rider):
 crystals and avatar bitmojis are gone — knowledge is a bound tome,
 an agent is a mechanical automaton head, and the whole 58-sprite
 family regenerated in one Workbench-2.0-modern language via the
@@ -170,7 +173,7 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 104 — Borrowed Fire II**](./phase-104-borrowed-fire-ii/current-phase-status.md) (activated by the Phase 105 close; the kernel phases per `docs/internal/PLAN_KERNEL_OPERATION_BROKER.md` follow). Previous: [Phase 105 — Workbench](./phase-105-workbench/current-phase-status.md), **CLOSED (7/7, 2026-07-26)** — the owner's acceptance carried the standing rider that 104 and the kernel are the "actual OS" program. Previous: [Phase 103 — Foundations & Borrowed Fire](./phase-103-foundations-and-borrowed-fire/current-phase-status.md) — **CLOSED (7/7, 2026-07-25)**.
+**Current phase:** not yet scaffolded — the kernel program per `docs/internal/PLAN_KERNEL_OPERATION_BROKER.md` is next (awaiting owner ratification; the Phase-104 gate and capability ledger are its vertebrae). Previous: [**Phase 104 — Borrowed Fire II**](./phase-104-borrowed-fire-ii/current-phase-status.md), **CLOSED (8/8, 2026-07-26)** — built, walked, ridden (HS-104-08, the icon reforge the sitting chartered), and accepted the same day ("Yup. Better. Let's close out the phase."). Previous: [Phase 105 — Workbench](./phase-105-workbench/current-phase-status.md), **CLOSED (7/7, 2026-07-26)** — the owner's acceptance carried the standing rider that 104 and the kernel are the "actual OS" program. Previous: [Phase 103 — Foundations & Borrowed Fire](./phase-103-foundations-and-borrowed-fire/current-phase-status.md) — **CLOSED (7/7, 2026-07-25)**.
 — **IN PROGRESS (0/6)**. Chartered 2026-07-22 from a four-agent
 research pass (3 independent Opus 4.8 analysts on
 `ViuGiaLai/researchmind`, 1 independent Opus 4.8 skeptical audit of

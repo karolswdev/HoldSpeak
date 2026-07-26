@@ -115,3 +115,43 @@ def test_project_identity_and_relationship_round_trip_cross_device(tmp_path, mon
         "id": "p1",
         "last_modified": pulled["projects"][0]["meta"]["last_modified"],
     }
+
+
+def test_project_merge_preserves_the_incoming_sync_clock(tmp_path, monkeypatch) -> None:
+    """BACKLOG §AC, fixed: the destination stores the SOURCE's clock, not
+    its own arrival time — so an equal-clock conflicting push always 409s,
+    on a fast machine or a slow runner alike. Pinned with a fixed past
+    instant so the naive design (restamp with now) fails deterministically."""
+    destination = Database(tmp_path / "clock-dest.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: destination)
+    app = FastAPI()
+    app.include_router(build_sync_router(WebContext(get_state=lambda: {})))
+    client = TestClient(app)
+
+    frozen = "2020-01-01T00:00:00Z"
+    source = Database(tmp_path / "clock-src.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: source)
+    source.projects.create_project(project_id="p-clock", name="Frozen", updated_at=frozen)
+    src_app = FastAPI()
+    src_app.include_router(build_sync_router(WebContext(get_state=lambda: {})))
+    record = [
+        r for r in TestClient(src_app).get("/api/sync/pull").json()["projects"]
+        if r["meta"]["id"] == "p-clock"
+    ][0]
+    assert record["meta"]["last_modified"] == frozen
+    monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: destination)
+    assert client.post("/api/sync/push", json={"projects": [record]}).status_code == 200
+    stored = destination.projects.get_project("p-clock")
+    # The incoming clock, not arrival time (repos parse to datetime).
+    assert stored.updated_at.strftime("%Y-%m-%dT%H:%M:%S") == "2020-01-01T00:00:00"
+
+    import copy
+    conflicting = copy.deepcopy(record)
+    conflicting["value"]["name"] = "Different at same clock"
+
+    conflict = client.post("/api/sync/push", json={"projects": [conflicting]})
+    assert conflict.status_code == 409
+    assert conflict.json()["conflict"]["kind"] == "project"
+
+    # An idempotent replay of the SAME value at the same clock stays 200.
+    assert client.post("/api/sync/push", json={"projects": [record]}).status_code == 200

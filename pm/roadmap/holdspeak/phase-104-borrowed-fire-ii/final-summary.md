@@ -1,8 +1,11 @@
 # Phase 104 — Borrowed Fire II: The Watched Hand — final summary
 
-**Machine scope complete 2026-07-26 (7 stories built and walked in
-one day); the phase flips CLOSED when the owner's sitting verdict
-lands (Article IX.4).** Chartered from the AgentGlass study + the
+**CLOSED 8/8, 2026-07-26 — built, walked, ridden, and accepted in
+one day.** The sitting's first pass chartered a rider (HS-104-08:
+crystals and bitmoji avatars out, the family reforged
+Workbench-2.0-modern via the documented Pixellab recipe); the
+acceptance landed on the reforged desk: "Yup. Better. Let's close
+out the phase." Chartered from the AgentGlass study + the
 adversarial council review; the council's cuts held all phase (no
 census-as-objects, no context physics, no cockpit sprawl), and the
 three kept ideas shipped at their redesigned scope:
@@ -42,7 +45,11 @@ three kept ideas shipped at their redesigned scope:
 - **HS-104-07** — the walk: all seven beats live in one staged
   session (`seeded-desk-watched-hand`, the HS-103-05 recipe family
   extended, not forked), sweeps green, candidates parked, this
-  ledger written. The sitting is the owner's.
+  ledger written; closed on the recorded sitting verdict.
+- **HS-104-08** — the sitting's rider: the 58-sprite world family
+  reforged in one Workbench-2.0-modern language (knowledge a TOME,
+  an agent an AUTOMATON head), per ICON-DISCIPLINE, states on disk,
+  proven on the real desk at both densities.
 
 ## The spec ledger (per the standing web-is-the-spec direction)
 

@@ -1,6 +1,6 @@
 # Phase 104 - Borrowed Fire II: The Watched Hand
 
-**Status:** MACHINE SCOPE COMPLETE (6/7 shipped; the HS-104-07 walk passed live 2026-07-26 — the phase flips CLOSED when the owner's sitting verdict lands, Article IX.4). Chartered from a second
+**Status:** CLOSED (8/8, 2026-07-26). The owner's sitting accepted the same day, gated on the HS-104-08 icon rider; the verdict is recorded below verbatim. Chartered from a second
 external-research pass in the Phase-103 mold: a study of
 `SirAllap/agentglass` (an MIT-licensed mission-control dashboard for
 AI coding agents — Claude Code hooks + OTel ingestion, a PreToolUse
@@ -16,7 +16,7 @@ OS-grade first; this phase's shade cards and receipt lines land on
 the icon/state/Info grammar Phase 105 installs. Activation order:
 Phase 103 close → Phase 105 → this phase.
 
-**Last updated:** 2026-07-26 (HS-104-08 shipped — the icon family reforged per the sitting rider; awaiting the owner's sitting).
+**Last updated:** 2026-07-26 (CLOSED — the sitting accepted).
 
 ## Why this phase exists
 
@@ -94,17 +94,17 @@ provenance.
 
 ## Exit criteria (evidence required)
 
-- [ ] HS-104-01 through HS-104-05 shipped with evidence, each proven
+- [x] HS-104-01 through HS-104-05 shipped with evidence, each proven
       live against a real staged hub (and the gate against a real
       Claude Code session, real metal per standing practice).
-- [ ] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green (any
+- [x] `uv run pytest -q --ignore=tests/e2e/test_metal.py` green (any
       pre-existing unrelated failures documented per-story).
-- [ ] `cd web && npx tsc --noEmit -p . && npx vitest run && npm run
+- [x] `cd web && npx tsc --noEmit -p . && npx vitest run && npm run
       build && npm run tokens:gate` green.
-- [ ] The voice/vocabulary guards green, including the HS-103-02
+- [x] The voice/vocabulary guards green, including the HS-103-02
       dash-in-glass rule, on every new surface string.
-- [ ] HS-104-06 docs shipped touching the real entry points.
-- [ ] HS-104-07 closeout: the walk passed live, the parked candidates
+- [x] HS-104-06 docs shipped touching the real entry points.
+- [x] HS-104-07 closeout: the walk passed live, the parked candidates
       recorded in BACKLOG.md, and the owner's sitting verdict recorded
       per Article IX.4.
 
@@ -118,7 +118,7 @@ provenance.
 | HS-104-04 | PR receipts — paying the candidate-Y deferral | done | [story-04-pr-receipts](./story-04-pr-receipts.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-104-05 | Session receipts — honest numbers on the card | done | [story-05-session-receipts](./story-05-session-receipts.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-104-06 | Docs — the gate and the watch at the entry points | done | [story-06-docs](./story-06-docs.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-104-07 | Closeout — the walk and the sitting | in-progress | [story-07-closeout](./story-07-closeout.md) | — |
+| HS-104-07 | Closeout — the walk and the sitting | done | [story-07-closeout](./story-07-closeout.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-104-08 | The icon family reforged — Workbench 2.0, but amazing | done | [story-08-workbench-icons](./story-08-workbench-icons.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Decisions deferred (parked, not committed)
@@ -135,6 +135,23 @@ provenance.
   37/61 executor spine once PR receipts exist.
 
 ## Where we are
+
+**2026-07-26 — CLOSED.** The sitting's first pass returned a rider,
+not an acceptance: *"I was half-expecting you to pick up the
+generation of new, Workbench-like-but-modern assets with pixellab.
+So I will only accept once you have done that. Gone are the
+'crystals' for KB, gone are cute-ass bitmojis, in are more Workbench
+2.0-but-amazing icons."* — chartered as HS-104-08 and shipped the
+same evening. On seeing the reforged desk the owner's verdict,
+verbatim: **"Yup. Better. Let's close out the phase."** The phase
+closes 8/8; HS-104-07's evidence ships with this flip; the exit
+criteria all hold (stories with live evidence, full pytest 4241/0
+with the metal exclusion, web tsc + vitest + build + tokens gate,
+guards incl. the dash-in-glass rule, docs at the entry points, the
+walk passed live, candidates parked, the sitting recorded here).
+Next: the kernel program per PLAN_KERNEL_OPERATION_BROKER.md (not
+yet scaffolded — the gate's propose/decide spine and the capability
+ledger are its vertebrae).
 
 **2026-07-26 — the icon family reforged (the sitting's rider,
 HS-104-08).** At the sitting gate the owner chartered a rider, the

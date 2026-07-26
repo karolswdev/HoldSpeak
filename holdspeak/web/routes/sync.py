@@ -664,6 +664,10 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
                     project_id=project_id,
                     name=str(value.get("name") or project_id),
                     description=str(value.get("description") or ""),
+                    # Preserve the incoming clock (the relationship buckets
+                    # already do): a destination that restamps arrival time
+                    # can never detect an equal-clock conflict again.
+                    updated_at=incoming or None,
                 )
             elif existing is not None:
                 db.projects.update_project(
@@ -671,6 +675,7 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
                     name=str(value.get("name") or existing.name),
                     description=str(value.get("description") or existing.description),
                     is_archived=bool(meta.get("deleted") or value.get("is_archived")),
+                    updated_at=incoming or None,
                 )
             merged_projects += 1
         received["projects"] = merged_projects
