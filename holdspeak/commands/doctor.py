@@ -1271,7 +1271,36 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_pactl(),
         _check_system_audio_capture(),
         _check_connector_packs(),
+        _check_agent_capabilities(),
     ]
+
+
+def _check_agent_capabilities() -> DoctorCheck:
+    """HS-104-01: the capability-ledger census. Fails when any registered
+    ledger consumer requests a capability its adapter declares
+    ``unavailable`` — a lying surface caught before it renders."""
+    from ..agent_capabilities import LEDGER, LEDGER_CONSUMERS, consumer_violations
+
+    violations = consumer_violations()
+    if violations:
+        return DoctorCheck(
+            name="Agent capabilities",
+            status="FAIL",
+            detail=f"{len(violations)} consumer(s) outrun the ledger",
+            fix=(
+                "Align the consumer with holdspeak/agent_capabilities.py "
+                "(flip the standing in the same commit as the code, or drop "
+                "the consumer):\n  " + "\n  ".join(violations)
+            ),
+        )
+    return DoctorCheck(
+        name="Agent capabilities",
+        status="PASS",
+        detail=(
+            f"{len(LEDGER)} adapters declared, "
+            f"{len(LEDGER_CONSUMERS)} consumers, all backed by the ledger"
+        ),
+    )
 
 
 def _summarize(checks: list[DoctorCheck]) -> tuple[int, int, int]:

@@ -4,7 +4,15 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 105 (Workbench) CLOSED 7/7 in
+**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 1/7:
+HS-104-01 the capability ledger** — `holdspeak/agent_capabilities.py`
+(4 adapters × 5 capabilities, hand-declared standings:
+authoritative / inferred / unavailable), `GET /api/agents/capabilities`
++ contract schema validated against the live payload, the "Agent
+capabilities" doctor census (red on a consumer the ledger cannot
+back), and `require_capability` — the enforcement hook the gate
+(HS-104-02) and session receipts (HS-104-05) must route through.
+Earlier: **Phase 105 (Workbench) CLOSED 7/7 in
 two days**: icon system (1:1 pixel handles, real state images, live
 badges), drawers opening into remembering windows, Info/tooltypes on
 everything, drop-onto composition with named verbs, the menu bar on

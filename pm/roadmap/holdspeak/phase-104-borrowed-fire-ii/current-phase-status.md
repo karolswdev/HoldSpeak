@@ -1,6 +1,6 @@
 # Phase 104 - Borrowed Fire II: The Watched Hand
 
-**Status:** SCAFFOLDED (0/7, 2026-07-25). Chartered from a second
+**Status:** IN PROGRESS (1/7, 2026-07-26). Chartered from a second
 external-research pass in the Phase-103 mold: a study of
 `SirAllap/agentglass` (an MIT-licensed mission-control dashboard for
 AI coding agents — Claude Code hooks + OTel ingestion, a PreToolUse
@@ -16,7 +16,7 @@ OS-grade first; this phase's shade cards and receipt lines land on
 the icon/state/Info grammar Phase 105 installs. Activation order:
 Phase 103 close → Phase 105 → this phase.
 
-**Last updated:** 2026-07-25 (scaffolded; no story started).
+**Last updated:** 2026-07-26 (HS-104-01 shipped).
 
 ## Why this phase exists
 
@@ -112,7 +112,7 @@ provenance.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-104-01 | The capability ledger — what each adapter actually knows | backlog | [story-01-capability-ledger](./story-01-capability-ledger.md) | — |
+| HS-104-01 | The capability ledger — what each adapter actually knows | done | [story-01-capability-ledger](./story-01-capability-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-104-02 | The tool-call gate — a held hand, not a watched one | backlog | [story-02-tool-call-gate](./story-02-tool-call-gate.md) | — |
 | HS-104-03 | The gate under attack — restart, replay, TOCTOU | backlog | [story-03-gate-threat-model](./story-03-gate-threat-model.md) | — |
 | HS-104-04 | PR receipts — paying the candidate-Y deferral | backlog | [story-04-pr-receipts](./story-04-pr-receipts.md) | — |
@@ -134,6 +134,17 @@ provenance.
   37/61 executor spine once PR receipts exist.
 
 ## Where we are
+
+**2026-07-26 — activated; the ledger is in (1/7).** Phase 105 closed
+this morning and this phase went live. HS-104-01 shipped the same
+day: the frozen declaration table (`holdspeak/agent_capabilities.py`,
+4 adapters × 5 capabilities), `GET /api/agents/capabilities` with its
+contract schema validated against the live payload, the "Agent
+capabilities" doctor census (red on a consumer the ledger cannot
+back), and `require_capability` — the enforcement hook HS-104-02 and
+HS-104-05 must route through. `claude-code-hooks` sits all-
+`unavailable` until the gate story makes its cells true. Next:
+HS-104-02, the tool-call gate.
 
 **2026-07-25 — scaffolded, then re-sequenced.** The AgentGlass study
 and the council critique are recorded in this charter; seven
