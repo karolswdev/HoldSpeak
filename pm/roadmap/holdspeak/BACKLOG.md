@@ -689,7 +689,15 @@ left it:
   executor spine now that PR receipts exist. Read stays read-only
   until this lands as its own consented actuator.
 
-### AC. Sync clocks drift on arrival — the equal-clock conflict rule can misread
+### AC. Sync clocks drift on arrival — FIXED 2026-07-26 (same day)
+
+Fixed at the Phase-104 close after a third CI strike:
+`create_project`/`update_project` accept the incoming sync clock and
+the push merge passes `meta.last_modified` through (matching what
+the relationship buckets already did); pinned by
+`test_project_merge_preserves_the_incoming_sync_clock` with a frozen
+2020 instant that fails the naive restamp design deterministically.
+Original diagnosis, kept for the record:
 
 Diagnosed 2026-07-26 while it flaked CI twice (integration
 `test_one_place_relationships`, `assert 200 == 409`). The push merge

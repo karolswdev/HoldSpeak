@@ -32,8 +32,14 @@ class ProjectRepository(BaseRepository):
         team_members: Optional[list[str]] = None,
         context: Optional[dict[str, Any]] = None,
         detection_threshold: float = 0.4,
+        updated_at: Optional[str] = None,
     ) -> None:
-        """Insert a new project knowledge base."""
+        """Insert a new project knowledge base.
+
+        ``updated_at`` preserves an INCOMING sync clock (the cross-device
+        merge must keep clocks comparable — a destination that restamps
+        arrival time can never see an equal-clock conflict again).
+        """
         clean_id = str(project_id).strip()
         clean_name = str(name).strip()
         if not clean_id:
@@ -41,7 +47,7 @@ class ProjectRepository(BaseRepository):
         if not clean_name:
             raise ValueError("project name is required")
         threshold = max(0.0, min(1.0, float(detection_threshold)))
-        now_iso = datetime.now().isoformat()
+        now_iso = str(updated_at).strip() if updated_at else datetime.now().isoformat()
         with self._connection() as conn:
             conn.execute(
                 """
@@ -72,6 +78,9 @@ class ProjectRepository(BaseRepository):
             "name", "description", "keywords", "team_members",
             "context", "detection_threshold", "is_archived",
         }
+        # The sync merge passes the INCOMING clock through so cross-device
+        # clocks stay comparable; every other caller stamps now.
+        sync_clock = fields.pop("updated_at", None)
         updates: list[str] = []
         params: list[Any] = []
         for key, value in fields.items():
@@ -104,7 +113,7 @@ class ProjectRepository(BaseRepository):
         if not updates:
             return
         updates.append("updated_at = ?")
-        params.append(datetime.now().isoformat())
+        params.append(str(sync_clock).strip() if sync_clock else datetime.now().isoformat())
         params.append(clean_id)
         with self._connection() as conn:
             conn.execute(
