@@ -2006,7 +2006,9 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.kbs",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/kbs/{kb_id}/members/{resource_ref:path}",
@@ -2014,7 +2016,9 @@
         "PUT"
       ],
       "module": "web.routes.primitives.kbs",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/meeting",
