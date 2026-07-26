@@ -4,7 +4,14 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-25 — **Phase 105 (Workbench) 1/7:
+**Last updated:** 2026-07-26 — **Phase 105 (Workbench) CLOSED 7/7 in
+two days**: icon system (1:1 pixel handles, real state images, live
+badges), drawers opening into remembering windows, Info/tooltypes on
+everything, drop-onto composition with named verbs, the menu bar on
+one verb registry, the Desk Grammar written as law, and a closeout of
+sweep 4150/37/0 + a six-beat composite walk; the owner's sitting
+accepted with the rider that Phase 104 + the kernel are the "actual
+OS" program. Earlier: **Phase 105 (Workbench) 1/7:
 HS-105-01 shipped the same evening** — the icon system: one uniform
 cell (64px pixel art rendered 1:1, killing the fractional-upscale
 mush), real dual-state images on disk for all 68 sprites, a drawer
@@ -107,7 +114,7 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 105 — Workbench**](./phase-105-workbench/current-phase-status.md) (activated by the Phase 103 close; Phase 104 — Borrowed Fire II — follows it, then the kernel phases per `docs/internal/PLAN_KERNEL_OPERATION_BROKER.md`). Previous: [Phase 103 — Foundations & Borrowed Fire](./phase-103-foundations-and-borrowed-fire/current-phase-status.md) — **CLOSED (7/7, 2026-07-25)**.
+**Current phase:** [**Phase 104 — Borrowed Fire II**](./phase-104-borrowed-fire-ii/current-phase-status.md) (activated by the Phase 105 close; the kernel phases per `docs/internal/PLAN_KERNEL_OPERATION_BROKER.md` follow). Previous: [Phase 105 — Workbench](./phase-105-workbench/current-phase-status.md), **CLOSED (7/7, 2026-07-26)** — the owner's acceptance carried the standing rider that 104 and the kernel are the "actual OS" program. Previous: [Phase 103 — Foundations & Borrowed Fire](./phase-103-foundations-and-borrowed-fire/current-phase-status.md) — **CLOSED (7/7, 2026-07-25)**.
 — **IN PROGRESS (0/6)**. Chartered 2026-07-22 from a four-agent
 research pass (3 independent Opus 4.8 analysts on
 `ViuGiaLai/researchmind`, 1 independent Opus 4.8 skeptical audit of
