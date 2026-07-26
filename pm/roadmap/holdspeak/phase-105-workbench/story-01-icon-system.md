@@ -22,7 +22,7 @@ at mascot scale whose only message is their category.
 An icon is a live handle; the desk's objects are pictures. Three
 concrete failures: (1) scale — the sprite footprint is illustration-
 sized, so five objects fill a screen and forty would be chaos; (2)
-statelessness — a KB with 14 facts, an agent whose endpoint circuit
+statelessness — a KB with 14 members, an agent whose endpoint circuit
 is open (HS-103-04 serves this today), a note edited an hour ago,
 and their untouched twins render identically; (3) no rendered state
 images — selection is a ring bolted on, and armed/stale/needs-you
@@ -44,14 +44,24 @@ have no visual grammar at the object at all.
    texture pipeline (`textures.ts` / `sprites.ts`) loads the set;
    the engine picks by object state from the store — no component
    ever composes state ad hoc.
-3. **Badges are data the hub already serves.** At rest: item/fact
-   counts on containers and KBs, a freshness tick (edited-recently),
-   the egress mark where a profile leaves the device, the open-
-   circuit mark from endpoint health, needs-you from Attention.
-   Counts and marks ONLY — a badge that needs a sentence is a card's
-   job (Article VII). Each badge names its source route in the
-   contract so the Swift recreation inherits the mapping, not the
-   guesswork.
+3. **Badges are data the hub already serves.** At rest: member/item
+   counts on containers and KBs (`kbs[].member_ids.length` — the
+   desk KB is a membership bag, DISTINCT from Project Facts, per the
+   `KBRecord` docstring and the Phase-47 rule), a freshness tick
+   (edited-recently), the egress mark where a profile leaves the
+   device, the open-circuit mark from endpoint health, needs-you
+   from Attention. Counts and marks ONLY — a badge that needs a
+   sentence is a card's job (Article VII). Each badge names its
+   source route in the contract so the Swift recreation inherits the
+   mapping, not the guesswork. **Start from the audited source map
+   in [research-badge-source-map.md](./research-badge-source-map.md)**
+   (static audit, 2026-07-25, spot-verified): it marks each
+   kind × badge SOURCE (exact route + field, file:line) or ABSENT —
+   an ABSENT badge is dropped or gets a real new hub field, never
+   fabricated client-side. Notable ABSENTs it proves: per-profile
+   open-circuit (only the global `endpoint-health` doctor section
+   exists — a structured per-target row is the new-field candidate),
+   per-object sync state, and any "fact count" on a desk KB.
 4. **Palette discipline over charm.** The icon palette derives from
    the Phase-96 token set (a locked ramp per material family, one
    light source, no per-icon color freedom). Regenerate the existing
@@ -78,7 +88,8 @@ have no visual grammar at the object at all.
 - Every existing primitive kind renders in the uniform cell with a
   real selected-state image and correct at-rest badges fed by live
   routes (proven against a staged hub with the states induced, not
-  mocked: a KB with facts, an open circuit, a needs-you item).
+  mocked: a KB with members, an open circuit surfaced through a
+  structured field, a needs-you item).
 - The forty-object density walk passes headed at 1440 + 393.
 - The icon discipline document exists and the tokens gate covers the
   icon ramp.
