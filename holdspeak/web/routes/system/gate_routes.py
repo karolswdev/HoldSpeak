@@ -165,6 +165,40 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
             )
         return JSONResponse(_wire(proposal))
 
+    @router.post("/api/gate/usage")
+    async def api_gate_usage(request: Request) -> Any:
+        # web.routes.system.gate_routes.usage — the ledger consumer
+        # (HS-104-05): reported figures land only for an adapter the
+        # ledger vouches usage_tokens for.
+        require_capability("claude-code-hooks", Capability.USAGE_TOKENS)
+        body = await request.json()
+        if not isinstance(body, dict):
+            return JSONResponse({"error": "body must be an object"}, status_code=400)
+        session_key = str(body.get("session_key") or "").strip()
+        if not session_key:
+            return JSONResponse({"error": "session_key is required"}, status_code=400)
+        try:
+            get_database().gate.report_usage(
+                session_key=session_key,
+                model=str(body.get("model") or ""),
+                input_tokens=int(body.get("input_tokens") or 0),
+                output_tokens=int(body.get("output_tokens") or 0),
+                cache_read_tokens=int(body.get("cache_read_tokens") or 0),
+                cache_creation_tokens=int(body.get("cache_creation_tokens") or 0),
+            )
+        except (TypeError, ValueError):
+            return JSONResponse({"error": "figures must be integers"}, status_code=400)
+        return JSONResponse({"success": True})
+
+    @router.get("/api/sessions/{session_key}/receipt")
+    async def api_session_receipt(session_key: str) -> Any:
+        # web.routes.system.gate_routes.receipt — the render call
+        # site; the reported/estimated tiers inside build_receipt go
+        # through require_capability (census-pinned).
+        from ....session_receipts import build_receipt
+
+        return JSONResponse(build_receipt(session_key, db=get_database()))
+
     @router.get("/api/gate/audit")
     async def api_gate_audit(limit: int = 100) -> Any:
         entries = get_database().gate.audit_entries(limit=max(1, min(limit, 500)))

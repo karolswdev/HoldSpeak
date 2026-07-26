@@ -7,6 +7,7 @@
 // operation with a voice-fillable label and its destination shown up front.
 import { useEffect, useMemo, useState } from "react";
 import { MicButton } from "./MicButton";
+import { ReceiptLine } from "./ReceiptLine";
 import {
   activeAttempts,
   sourceRecovery,
@@ -86,6 +87,9 @@ function AttemptRow({
         {attempt.worktreeId ? ` · wt ${attempt.worktreeId.slice(0, 8)}` : ""}
         {!attempt.exact ? " · inexact" : ""}
       </span>
+      {attempt.sessionId ? (
+        <ReceiptLine sessionKey={`claude:${attempt.sessionId}`} />
+      ) : null}
       {target ? (
         <button
           type="button"

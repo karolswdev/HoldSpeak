@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { MicButton } from "./MicButton";
 import { GroundingSection } from "./GroundingSection";
+import { ReceiptLine } from "./ReceiptLine";
 import { RailsPicker } from "./RailsPicker";
 import { useDesk } from "../store";
 import {
@@ -701,6 +702,7 @@ export function SessionPullout() {
         </footer>
       )}
       <footer className="desk-pullout-foot">
+        <ReceiptLine sessionKey={openKey} />
         <ClassifySection sessionKey={openKey} />
       </footer>
     </DeskWindowFrame>

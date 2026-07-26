@@ -4,8 +4,15 @@
 > pick up, and the repo conventions that bite (PMO commit gate, write-once
 > evidence, no `Co-Authored-By`, metal-test exclusion).
 
-**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 4/7:
-HS-104-04 PR receipts** — the candidate-Y deferral paid: registered
+**Last updated:** 2026-07-26 — **Phase 104 (Borrowed Fire II) 5/7:
+HS-104-05 session receipts** — one line, three tiers, every number
+labeled: hub-record truths always; token figures only where the
+ledger vouches (the gate hook's Stop leg reports the agent's own
+transcript totals, cache figures separate); cost only with a price
+row, absent otherwise; per-tool hold latency sample-floored. Proven
+on a real gated claude session and a real steered pane (which
+honestly renders NO token line). Earlier the same day:
+**HS-104-04 PR receipts** — the candidate-Y deferral paid: registered
 sources' PRs as honest receipt rows (one batched `gh` call, CI
 conclusion not logs, observed-at always printed, attribution wearing
 its epistemics: exact / name-match-only / unattributed), needs-you

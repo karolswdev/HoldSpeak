@@ -49,7 +49,7 @@ log = get_logger("db")
 
 # Default database location
 DEFAULT_DB_PATH = Path.home() / ".local" / "share" / "holdspeak" / "holdspeak.db"
-SCHEMA_VERSION = 25  # v25: the tool-call gate's proposals + audit (HS-104-02)
+SCHEMA_VERSION = 26  # v26: per-session reported usage for receipts (HS-104-05)
 
 
 class SchemaVersionError(RuntimeError):
@@ -1237,6 +1237,20 @@ CREATE TABLE IF NOT EXISTS gate_audit (
 );
 CREATE INDEX IF NOT EXISTS idx_gate_audit_ts ON gate_audit(ts);
 CREATE INDEX IF NOT EXISTS idx_gate_audit_proposal ON gate_audit(proposal_id);
+
+-- HS-104-05: the REPORTED tier of a session receipt. One row per
+-- session, replaced on every report; each cache figure stays its own
+-- column (never summed into one number). Rows exist only for
+-- adapters whose ledger standing for usage_tokens is authoritative.
+CREATE TABLE IF NOT EXISTS session_usage (
+    session_key TEXT PRIMARY KEY,
+    model TEXT NOT NULL DEFAULT '',
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    cache_read_tokens INTEGER NOT NULL DEFAULT 0,
+    cache_creation_tokens INTEGER NOT NULL DEFAULT 0,
+    reported_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
 -- Work attempts (HS-94-04, PLATFORM-CONTRACT §4.2): one bounded undertaking
 -- of one primary Story, bound to node/source/worktree/session/target with

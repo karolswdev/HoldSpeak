@@ -131,6 +131,11 @@ def _cmd_hook(*, stdin: TextIO, out: TextIO) -> int:
         return _EXIT_OK
     if not isinstance(payload, dict):
         return _EXIT_OK
+    if str(payload.get("hook_event_name") or "") == "Stop":
+        from ..coder_gate import run_stop_hook
+
+        run_stop_hook(payload)  # telemetry: silent, never blocks the stop
+        return _EXIT_OK
     decision = run_hook(payload)
     output = decision.to_hook_output()
     if output is not None:

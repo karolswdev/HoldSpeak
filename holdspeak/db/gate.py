@@ -328,6 +328,72 @@ class GateProposalRepository(BaseRepository):
             for row in rows
         ]
 
+    # -- reported usage (HS-104-05) ----------------------------------------
+
+    def report_usage(
+        self,
+        *,
+        session_key: str,
+        model: str,
+        input_tokens: int,
+        output_tokens: int,
+        cache_read_tokens: int,
+        cache_creation_tokens: int,
+    ) -> None:
+        """Replace the session's reported figures (the hook reports
+        session totals, not deltas). Cache figures stay separate."""
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO session_usage (
+                    session_key, model, input_tokens, output_tokens,
+                    cache_read_tokens, cache_creation_tokens, reported_at
+                ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+                ON CONFLICT(session_key) DO UPDATE SET
+                    model = excluded.model,
+                    input_tokens = excluded.input_tokens,
+                    output_tokens = excluded.output_tokens,
+                    cache_read_tokens = excluded.cache_read_tokens,
+                    cache_creation_tokens = excluded.cache_creation_tokens,
+                    reported_at = excluded.reported_at
+                """,
+                (
+                    session_key,
+                    model,
+                    max(0, int(input_tokens)),
+                    max(0, int(output_tokens)),
+                    max(0, int(cache_read_tokens)),
+                    max(0, int(cache_creation_tokens)),
+                ),
+            )
+
+    def usage_for(self, session_key: str) -> Optional[dict[str, Any]]:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM session_usage WHERE session_key = ?",
+                (session_key,),
+            ).fetchone()
+        if row is None:
+            return None
+        return {
+            "session_key": row["session_key"],
+            "model": row["model"],
+            "input_tokens": row["input_tokens"],
+            "output_tokens": row["output_tokens"],
+            "cache_read_tokens": row["cache_read_tokens"],
+            "cache_creation_tokens": row["cache_creation_tokens"],
+            "reported_at": row["reported_at"],
+        }
+
+    def proposals_for_session(self, session_key: str, *, limit: int = 500) -> list[GateProposal]:
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM gate_proposals WHERE session_key = ? "
+                "ORDER BY created_at ASC LIMIT ?",
+                (session_key, limit),
+            ).fetchall()
+        return [self._to_proposal(row) for row in rows]
+
     # -- internals ---------------------------------------------------------
 
     def _audit(
