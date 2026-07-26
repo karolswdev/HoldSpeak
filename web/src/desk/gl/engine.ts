@@ -1038,8 +1038,29 @@ export class WorldEngine {
           }
         }
       } else if (hit.type === "zone") {
-        this.lastTap = null;
-        state.diveInto(hit.zone.id);
+        // HS-105-03 — a drawer OPENS into a real desk window: touch/pen
+        // tap-to-open; mouse keeps the desktop reflex (double-click).
+        // Dive is no longer the open grammar (it survives as Focus in
+        // the drawer's context menu).
+        if (e.pointerType === "touch" || e.pointerType === "pen") {
+          this.lastTap = null;
+          state.openZoneWindow(hit.zone.id, { x: e.clientX, y: e.clientY });
+        } else {
+          const now = performance.now();
+          const prior = this.lastTap;
+          const zoneKey = `zone:${hit.zone.id}`;
+          const again =
+            prior &&
+            prior.key === zoneKey &&
+            now - prior.t < 400 &&
+            Math.hypot(e.clientX - prior.x, e.clientY - prior.y) < 8;
+          if (again) {
+            this.lastTap = null;
+            state.openZoneWindow(hit.zone.id, { x: e.clientX, y: e.clientY });
+          } else {
+            this.lastTap = { key: zoneKey, t: now, x: e.clientX, y: e.clientY };
+          }
+        }
       } else if (hit.type === "zone-title") {
         this.lastTap = null;
         this.callbacks.onRenameZone(hit.zone.id);

@@ -10,6 +10,7 @@ import { useProjections } from "../projections";
 import { objectByRef, objUnit, type WorldObject } from "../world";
 import { InlineEditor } from "../components/InlineEditor";
 import { Pullout } from "../components/Pullout";
+import { ZoneWindow } from "../components/ZoneWindow";
 import { AskBar, AskPanel } from "../components/AskPanel";
 import { MicButton } from "../components/MicButton";
 import { DeskMenuItem, DeskMenuList } from "../components/DeskMenu";
@@ -30,6 +31,7 @@ export function WorldStage() {
   const divedZone = useDesk((s) => s.divedZone);
   const editingId = useDesk((s) => s.editingId);
   const pullouts = useDesk((s) => s.pullouts);
+  const zoneWindows = useDesk((s) => s.zoneWindows);
   const askOpen = useDesk((s) => s.askOpen);
   const renamingZoneId = useDesk((s) => s.renamingZoneId);
   const editorPos = useDesk((s) =>
@@ -207,6 +209,9 @@ export function WorldStage() {
       {openCards.map((p) => (
         <Pullout key={p.id} o={p.obj} origin={p.origin} />
       ))}
+      {zoneWindows.map((w) => (
+        <ZoneWindow key={w.id} zoneId={w.id} origin={w.origin} />
+      ))}
       {worldMenu && (
         <DeskMenuList
           className="desk-world-menu"
@@ -260,10 +265,21 @@ export function WorldStage() {
                 onSelect={() => {
                   const t = worldMenu.target;
                   setWorldMenu(null);
-                  useDesk.getState().diveInto(t.id);
+                  useDesk
+                    .getState()
+                    .openZoneWindow(t.id, { x: worldMenu.x, y: worldMenu.y });
                 }}
               >
                 Open
+              </DeskMenuItem>
+              <DeskMenuItem
+                onSelect={() => {
+                  const t = worldMenu.target;
+                  setWorldMenu(null);
+                  useDesk.getState().diveInto(t.id);
+                }}
+              >
+                Focus
               </DeskMenuItem>
               <DeskMenuItem
                 onSelect={() => {
@@ -298,7 +314,7 @@ export function WorldStage() {
             type="button"
             data-zone-id={z.id}
             aria-label={`${z.title} zone, ${z.count} ${z.count === 1 ? "item" : "items"}`}
-            onClick={() => useDesk.getState().diveInto(z.id)}
+            onClick={() => useDesk.getState().openZoneWindow(z.id)}
           >
             {z.title}
           </button>
