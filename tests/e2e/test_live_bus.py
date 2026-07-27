@@ -29,6 +29,19 @@ pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 PORT = 8917
 
 
+# HS-106-02 made every request derive a principal, including on loopback, so a
+# browser that never bootstraps the owner token is refused at the socket
+# (`principal=none missing_right=owner`).  The real Desk gets its token from the
+# tokenized first-load URL; this harness has to do the same, and both servers in
+# the restart test must share one token or the reconnect authenticates against a
+# credential the page has never seen.
+TOKEN = "live-bus-e2e-owner-token"
+
+
+def _page_url(route: str) -> str:
+    return f"http://127.0.0.1:{PORT}{route}?token={TOKEN}"
+
+
 def _make_server():
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
@@ -39,6 +52,7 @@ def _make_server():
             get_state=lambda: {"activity": {"state": "idle", "source": "runtime"}},
         ),
         host="127.0.0.1",
+        auth_token=TOKEN,
     )
 
 
@@ -91,7 +105,7 @@ def test_every_live_page_opens_exactly_one_runtime_socket(browser):
             page = browser.new_page()
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
-            n = _count_runtime_sockets(page, f"http://127.0.0.1:{PORT}{route}")
+            n = _count_runtime_sockets(page, _page_url(route))
             page.close()
             assert n == 1, f"{route} opened {n} runtime sockets (want exactly 1)"
             assert not errors, f"{route} page errors: {errors}"
@@ -105,7 +119,7 @@ def test_a_real_broadcast_reaches_the_presence_card_via_the_bus(browser):
     uv.start()
     try:
         page = browser.new_page()
-        page.goto(f"http://127.0.0.1:{PORT}/presence", wait_until="networkidle")
+        page.goto(_page_url("/presence"), wait_until="networkidle")
         page.wait_for_timeout(800)
         server.broadcast(
             "runtime_activity",
@@ -134,7 +148,7 @@ def test_the_bus_reconnects_after_a_server_restart(browser):
     sockets: list[str] = []
     page.on("websocket", lambda ws: sockets.append(ws.url))
     try:
-        page.goto(f"http://127.0.0.1:{PORT}/presence", wait_until="networkidle")
+        page.goto(_page_url("/presence"), wait_until="networkidle")
         page.wait_for_timeout(1000)
         first = sum(1 for u in sockets if u.rstrip("/").endswith("/ws"))
         assert first == 1
